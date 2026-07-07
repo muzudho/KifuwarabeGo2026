@@ -1,5 +1,6 @@
 namespace KifuwarabeGo2026.Presentation;
 
+using KifuwarabeGo2026.Application;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -26,7 +27,7 @@ public sealed class GoScreenRenderer
         _stoneDark = CreateStoneTexture(128, lightStone: false);
     }
 
-    public void Draw(int boardSize, string modeName, Point mousePosition)
+    public void Draw(GoAppSession session, Point mousePosition)
     {
         var mousePoint = VirtualScreen.ToVirtualPoint(_graphicsDevice.Viewport, mousePosition);
 
@@ -35,8 +36,8 @@ public sealed class GoScreenRenderer
             transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));
 
         DrawBackground();
-        DrawBoard(boardSize);
-        DrawSidePanel(boardSize, modeName, mousePoint);
+        DrawBoard(session, mousePoint);
+        DrawSidePanel(session, mousePoint);
 
         _spriteBatch.End();
     }
@@ -56,6 +57,27 @@ public sealed class GoScreenRenderer
         return ButtonBounds(2).Contains(point) ? 19 : null;
     }
 
+    public static bool GetStartPlayingButtonHit(Point point) => StartPlayingButtonBounds.Contains(point);
+
+    public static bool GetPassButtonHit(Point point) => PassButtonBounds.Contains(point);
+
+    public static bool TryGetBoardIntersection(Point point, int boardSize, out Point intersection)
+    {
+        var layout = GetBoardLayout(boardSize);
+        var nearestX = (int)MathF.Round((point.X - layout.Start.X) / layout.Cell);
+        var nearestY = (int)MathF.Round((point.Y - layout.Start.Y) / layout.Cell);
+        if (nearestX < 0 || nearestX >= boardSize || nearestY < 0 || nearestY >= boardSize)
+        {
+            intersection = Point.Zero;
+            return false;
+        }
+
+        var center = BoardPoint(layout.Start, layout.Cell, nearestX, nearestY);
+        var closeEnough = Vector2.Distance(new Vector2(point.X, point.Y), center) <= Math.Max(16f, layout.Cell * 0.42f);
+        intersection = new Point(nearestX, nearestY);
+        return closeEnough;
+    }
+
     private void DrawBackground()
     {
         FillRect(new Rectangle(0, 0, VirtualScreen.Width, VirtualScreen.Height), new Color(11, 13, 18));
@@ -72,27 +94,26 @@ public sealed class GoScreenRenderer
         DrawGlow(new Vector2(1700, 850), 360, new Color(144, 59, 48, 72));
     }
 
-    private void DrawBoard(int boardSize)
+    private void DrawBoard(GoAppSession session, Point mousePoint)
     {
+        var boardSize = session.BoardSize;
         var boardOuter = new Rectangle(54, 50, 980, 980);
-        var board = new Rectangle(88, 84, 912, 912);
 
         FillRect(new Rectangle(boardOuter.X + 18, boardOuter.Y + 22, boardOuter.Width, boardOuter.Height), new Color(0, 0, 0, 125));
         FillRect(boardOuter, new Color(66, 42, 28));
         FillRect(new Rectangle(boardOuter.X + 8, boardOuter.Y + 8, boardOuter.Width - 16, boardOuter.Height - 16), new Color(180, 126, 62));
-        FillRect(board, new Color(221, 166, 82));
+        FillRect(BoardBounds, new Color(221, 166, 82));
 
         for (var i = 0; i < 24; i++)
         {
-            var x = board.X + i * 38;
-            DrawLine(new Vector2(x, board.Y), new Vector2(x + 220, board.Bottom), 1, new Color(246, 196, 113, 42));
+            var x = BoardBounds.X + i * 38;
+            DrawLine(new Vector2(x, BoardBounds.Y), new Vector2(x + 220, BoardBounds.Bottom), 1, new Color(246, 196, 113, 42));
         }
 
-        var margin = 38f;
-        var playable = board.Width - margin * 2;
-        var cell = playable / (boardSize - 1);
-        var start = new Vector2(board.X + margin, board.Y + margin);
-        var end = new Vector2(board.Right - margin, board.Bottom - margin);
+        var layout = GetBoardLayout(boardSize);
+        var start = layout.Start;
+        var cell = layout.Cell;
+        var end = new Vector2(BoardBounds.Right - BoardMargin, BoardBounds.Bottom - BoardMargin);
 
         for (var i = 0; i < boardSize; i++)
         {
@@ -108,12 +129,14 @@ public sealed class GoScreenRenderer
             DrawCircle(center, Math.Max(5, cell * 0.1f), new Color(55, 38, 25));
         }
 
-        DrawSampleStones(boardSize, start, cell);
+        DrawPlacedStones(session, start, cell);
+        DrawHoverStone(session, mousePoint, cell);
         DrawBoardFrameHighlights(boardOuter);
     }
 
-    private void DrawSidePanel(int boardSize, string modeName, Point mousePoint)
+    private void DrawSidePanel(GoAppSession session, Point mousePoint)
     {
+        var boardSize = session.BoardSize;
         var panel = new Rectangle(1102, 78, 760, 924);
         FillRect(new Rectangle(panel.X + 16, panel.Y + 18, panel.Width, panel.Height), new Color(0, 0, 0, 120));
         FillRect(panel, new Color(21, 25, 32, 236));
@@ -121,18 +144,22 @@ public sealed class GoScreenRenderer
 
         DrawText("KIFUWARABE GO 2026", new Vector2(1142, 116), new Color(244, 238, 218), 1.15f);
         DrawText($"BOARD {boardSize} x {boardSize}", new Vector2(1144, 178), new Color(99, 223, 185), 0.9f);
-        DrawText($"MODE {modeName}", new Vector2(1448, 184), new Color(227, 224, 210), 0.58f);
+        DrawText($"MODE {session.CurrentMode.DisplayName}", new Vector2(1448, 184), new Color(227, 224, 210), 0.58f);
         DrawBoardSizeButtons(boardSize, mousePoint);
+        DrawModeButtons(session, mousePoint);
 
         DrawInfoStrip(1144, 344, "BLACK", "Kifuwarabe", new Color(26, 27, 30), Color.White);
         DrawInfoStrip(1144, 442, "WHITE", "Human", new Color(236, 229, 211), new Color(24, 24, 24));
-        DrawInfoStrip(1144, 540, "KOMI", "6.5", new Color(148, 64, 53), Color.White);
+        var turnLabel = session.CurrentTurn == GoStone.Black ? "BLACK" : "WHITE";
+        var turnChip = session.CurrentTurn == GoStone.Black ? new Color(26, 27, 30) : new Color(236, 229, 211);
+        var turnText = session.CurrentTurn == GoStone.Black ? Color.White : new Color(24, 24, 24);
+        DrawInfoStrip(1144, 540, "TURN", turnLabel, turnChip, turnText);
 
         FillRect(new Rectangle(1144, 668, 668, 238), new Color(14, 18, 23));
         DrawRect(new Rectangle(1144, 668, 668, 238), 2, new Color(68, 83, 94));
         DrawText("LOCAL BOARD PREVIEW", new Vector2(1178, 700), new Color(180, 195, 195), 0.58f);
         DrawMiniBoard(new Rectangle(1178, 754, 152, 152));
-        DrawText("Mouse: board size buttons", new Vector2(1370, 768), new Color(227, 224, 210), 0.58f);
+        DrawText("Mouse: start, pass, board points", new Vector2(1370, 768), new Color(227, 224, 210), 0.58f);
         DrawText("Keys: 1=9  2=13  3=19", new Vector2(1370, 816), new Color(227, 224, 210), 0.58f);
         DrawText("Alt+F4: quit", new Vector2(1370, 864), new Color(227, 224, 210), 0.58f);
     }
@@ -155,6 +182,29 @@ public sealed class GoScreenRenderer
     }
 
     private static Rectangle ButtonBounds(int index) => new(1144 + index * 224, 248, 188, 62);
+
+    private static Rectangle StartPlayingButtonBounds => new(1144, 606, 320, 56);
+
+    private static Rectangle PassButtonBounds => new(1492, 606, 320, 56);
+
+    private void DrawModeButtons(GoAppSession session, Point mousePoint)
+    {
+        DrawCommandButton(StartPlayingButtonBounds, "START", session.CurrentMode.Kind == GoAppModeKind.Playing, mousePoint);
+        DrawCommandButton(PassButtonBounds, "PASS", false, mousePoint, enabled: session.CurrentMode.Kind == GoAppModeKind.Playing);
+    }
+
+    private void DrawCommandButton(Rectangle bounds, string label, bool selected, Point mousePoint, bool enabled = true)
+    {
+        var hovered = enabled && bounds.Contains(mousePoint);
+        var fill = !enabled ? new Color(28, 31, 36) : selected ? new Color(39, 125, 97) : hovered ? new Color(56, 67, 77) : new Color(32, 38, 47);
+        var border = !enabled ? new Color(58, 65, 70) : selected ? new Color(147, 244, 200) : new Color(103, 119, 130);
+        FillRect(bounds, fill);
+        DrawRect(bounds, 2, border);
+
+        var textColor = enabled ? Color.White : new Color(130, 138, 142);
+        var size = _font.MeasureString(label) * 0.62f;
+        DrawText(label, new Vector2(bounds.Center.X - size.X / 2, bounds.Center.Y - size.Y / 2), textColor, 0.62f);
+    }
 
     private void DrawInfoStrip(int x, int y, string label, string value, Color chipColor, Color chipTextColor)
     {
@@ -183,22 +233,50 @@ public sealed class GoScreenRenderer
         DrawStone(new Vector2(rect.X + margin + cell * 5, rect.Y + margin + cell * 4), 9, black: false);
     }
 
-    private void DrawSampleStones(int boardSize, Vector2 start, float cell)
+    private void DrawPlacedStones(GoAppSession session, Vector2 start, float cell)
     {
-        var points = boardSize switch
+        for (var y = 0; y < session.BoardSize; y++)
         {
-            9 => new[] { (2, 2, true), (6, 2, false), (4, 4, true), (2, 6, false), (5, 6, true) },
-            13 => new[] { (3, 3, true), (9, 3, false), (6, 6, true), (3, 9, false), (8, 9, true), (10, 7, false) },
-            _ => new[] { (3, 3, true), (15, 3, false), (9, 9, true), (3, 15, false), (14, 14, true), (15, 10, false), (10, 15, true) },
-        };
-
-        foreach (var point in points)
-        {
-            DrawStone(BoardPoint(start, cell, point.Item1, point.Item2), cell * 0.44f, point.Item3);
+            for (var x = 0; x < session.BoardSize; x++)
+            {
+                var stone = session.GetStone(x, y);
+                if (stone != GoStone.Empty)
+                {
+                    DrawStone(BoardPoint(start, cell, x, y), cell * 0.44f, stone == GoStone.Black);
+                }
+            }
         }
     }
 
+    private void DrawHoverStone(GoAppSession session, Point mousePoint, float cell)
+    {
+        if (session.CurrentMode.Kind != GoAppModeKind.Playing ||
+            !TryGetBoardIntersection(mousePoint, session.BoardSize, out var intersection) ||
+            session.GetStone(intersection.X, intersection.Y) != GoStone.Empty)
+        {
+            return;
+        }
+
+        var layout = GetBoardLayout(session.BoardSize);
+        var center = BoardPoint(layout.Start, layout.Cell, intersection.X, intersection.Y);
+        var black = session.CurrentTurn == GoStone.Black;
+        DrawCircle(center, cell * 0.55f, black ? new Color(8, 10, 14, 95) : new Color(255, 250, 232, 110));
+        DrawCircle(center, cell * 0.36f, black ? new Color(8, 10, 14, 90) : new Color(255, 250, 232, 95));
+    }
+
     private static Vector2 BoardPoint(Vector2 start, float cell, int x, int y) => new(start.X + cell * x, start.Y + cell * y);
+
+    private const float BoardMargin = 38f;
+
+    private static readonly Rectangle BoardBounds = new(88, 84, 912, 912);
+
+    private static (Vector2 Start, float Cell) GetBoardLayout(int boardSize)
+    {
+        var playable = BoardBounds.Width - BoardMargin * 2;
+        var cell = playable / (boardSize - 1);
+        var start = new Vector2(BoardBounds.X + BoardMargin, BoardBounds.Y + BoardMargin);
+        return (start, cell);
+    }
 
     private static Point[] GetStarPoints(int boardSize)
     {

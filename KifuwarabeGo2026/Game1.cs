@@ -3,14 +3,17 @@ namespace KifuwarabeGo2026;
 using KifuwarabeGo2026.Application;
 using KifuwarabeGo2026.Presentation;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System;
 
 public class Game1 : Game
 {
     private readonly GraphicsDeviceManager _graphics;
     private readonly GoAppSession _session = new();
     private GoScreenRenderer? _renderer;
+    private SoundEffect? _placeStoneSound;
     private MouseState _previousMouse;
 
     public Game1()
@@ -29,6 +32,7 @@ public class Game1 : Game
     protected override void LoadContent()
     {
         _renderer = new GoScreenRenderer(GraphicsDevice, Content);
+        _placeStoneSound = CreatePlaceStoneSound();
     }
 
     protected override void Update(GameTime gameTime)
@@ -40,7 +44,7 @@ public class Game1 : Game
         }
 
         UpdateBoardSizeByKeyboard(keyboard);
-        UpdateBoardSizeByMouse();
+        UpdateMouseInput();
 
         base.Update(gameTime);
     }
@@ -48,7 +52,7 @@ public class Game1 : Game
     protected override void Draw(GameTime gameTime)
     {
         GraphicsDevice.Clear(new Color(11, 13, 18));
-        _renderer?.Draw(_session.BoardSize, _session.CurrentMode.DisplayName, Mouse.GetState().Position);
+        _renderer?.Draw(_session, Mouse.GetState().Position);
 
         base.Draw(gameTime);
     }
@@ -69,7 +73,7 @@ public class Game1 : Game
         }
     }
 
-    private void UpdateBoardSizeByMouse()
+    private void UpdateMouseInput()
     {
         var mouse = Mouse.GetState();
         if (_previousMouse.LeftButton == ButtonState.Released && mouse.LeftButton == ButtonState.Pressed)
@@ -80,8 +84,46 @@ public class Game1 : Game
             {
                 _session.ChangeBoardSize(boardSize.Value);
             }
+            else if (GoScreenRenderer.GetStartPlayingButtonHit(point))
+            {
+                _session.StartPlaying();
+            }
+            else if (GoScreenRenderer.GetPassButtonHit(point))
+            {
+                if (_session.Pass())
+                {
+                    _placeStoneSound?.Play(0.45f, 0.25f, 0f);
+                }
+            }
+            else if (GoScreenRenderer.TryGetBoardIntersection(point, _session.BoardSize, out var intersection))
+            {
+                if (_session.TryPlaceStone(intersection.X, intersection.Y))
+                {
+                    _placeStoneSound?.Play();
+                }
+            }
         }
 
         _previousMouse = mouse;
+    }
+
+    private static SoundEffect CreatePlaceStoneSound()
+    {
+        const int sampleRate = 44100;
+        const float duration = 0.09f;
+        var sampleCount = (int)(sampleRate * duration);
+        var buffer = new byte[sampleCount * sizeof(short)];
+
+        for (var i = 0; i < sampleCount; i++)
+        {
+            var t = i / (float)sampleRate;
+            var envelope = MathF.Exp(-42f * t);
+            var wave = MathF.Sin(MathF.Tau * 520f * t) * 0.55f + MathF.Sin(MathF.Tau * 210f * t) * 0.45f;
+            var sample = (short)(wave * envelope * short.MaxValue * 0.55f);
+            buffer[i * 2] = (byte)(sample & 0xff);
+            buffer[i * 2 + 1] = (byte)((sample >> 8) & 0xff);
+        }
+
+        return new SoundEffect(buffer, sampleRate, AudioChannels.Mono);
     }
 }
