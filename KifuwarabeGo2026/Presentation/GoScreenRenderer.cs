@@ -133,7 +133,7 @@ public sealed class GoScreenRenderer
         DrawMiniBoard(new Rectangle(1178, 754, 152, 152));
         DrawText("Mouse: board size buttons", new Vector2(1370, 768), new Color(227, 224, 210), 0.58f);
         DrawText("Keys: 1=9  2=13  3=19", new Vector2(1370, 816), new Color(227, 224, 210), 0.58f);
-        DrawText("Esc: quit", new Vector2(1370, 864), new Color(227, 224, 210), 0.58f);
+        DrawText("Alt+F4: quit", new Vector2(1370, 864), new Color(227, 224, 210), 0.58f);
     }
 
     private void DrawBoardSizeButtons(int boardSize, Point mousePoint)
