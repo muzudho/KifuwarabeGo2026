@@ -1,5 +1,6 @@
 namespace KifuwarabeGo2026;
 
+using KifuwarabeGo2026.Application;
 using KifuwarabeGo2026.Presentation;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -8,9 +9,9 @@ using Microsoft.Xna.Framework.Input;
 public class Game1 : Game
 {
     private readonly GraphicsDeviceManager _graphics;
+    private readonly GoAppSession _session = new();
     private GoScreenRenderer? _renderer;
     private MouseState _previousMouse;
-    private int _boardSize = 19;
 
     public Game1()
     {
@@ -47,7 +48,7 @@ public class Game1 : Game
     protected override void Draw(GameTime gameTime)
     {
         GraphicsDevice.Clear(new Color(11, 13, 18));
-        _renderer?.Draw(_boardSize, Mouse.GetState().Position);
+        _renderer?.Draw(_session.BoardSize, _session.CurrentMode.DisplayName, Mouse.GetState().Position);
 
         base.Draw(gameTime);
     }
@@ -56,15 +57,15 @@ public class Game1 : Game
     {
         if (keyboard.IsKeyDown(Keys.D1) || keyboard.IsKeyDown(Keys.NumPad1))
         {
-            _boardSize = 9;
+            _session.ChangeBoardSize(9);
         }
         else if (keyboard.IsKeyDown(Keys.D2) || keyboard.IsKeyDown(Keys.NumPad2))
         {
-            _boardSize = 13;
+            _session.ChangeBoardSize(13);
         }
         else if (keyboard.IsKeyDown(Keys.D3) || keyboard.IsKeyDown(Keys.NumPad3))
         {
-            _boardSize = 19;
+            _session.ChangeBoardSize(19);
         }
     }
 
@@ -74,7 +75,11 @@ public class Game1 : Game
         if (_previousMouse.LeftButton == ButtonState.Released && mouse.LeftButton == ButtonState.Pressed)
         {
             var point = VirtualScreen.ToVirtualPoint(GraphicsDevice.Viewport, mouse.Position);
-            _boardSize = GoScreenRenderer.GetBoardSizeButtonHit(point) ?? _boardSize;
+            var boardSize = GoScreenRenderer.GetBoardSizeButtonHit(point);
+            if (boardSize.HasValue)
+            {
+                _session.ChangeBoardSize(boardSize.Value);
+            }
         }
 
         _previousMouse = mouse;

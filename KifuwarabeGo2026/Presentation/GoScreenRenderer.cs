@@ -26,7 +26,7 @@ public sealed class GoScreenRenderer
         _stoneDark = CreateStoneTexture(128, lightStone: false);
     }
 
-    public void Draw(int boardSize, Point mousePosition)
+    public void Draw(int boardSize, string modeName, Point mousePosition)
     {
         var mousePoint = VirtualScreen.ToVirtualPoint(_graphicsDevice.Viewport, mousePosition);
 
@@ -36,7 +36,7 @@ public sealed class GoScreenRenderer
 
         DrawBackground();
         DrawBoard(boardSize);
-        DrawSidePanel(boardSize, mousePoint);
+        DrawSidePanel(boardSize, modeName, mousePoint);
 
         _spriteBatch.End();
     }
@@ -112,7 +112,7 @@ public sealed class GoScreenRenderer
         DrawBoardFrameHighlights(boardOuter);
     }
 
-    private void DrawSidePanel(int boardSize, Point mousePoint)
+    private void DrawSidePanel(int boardSize, string modeName, Point mousePoint)
     {
         var panel = new Rectangle(1102, 78, 760, 924);
         FillRect(new Rectangle(panel.X + 16, panel.Y + 18, panel.Width, panel.Height), new Color(0, 0, 0, 120));
@@ -121,6 +121,7 @@ public sealed class GoScreenRenderer
 
         DrawText("KIFUWARABE GO 2026", new Vector2(1142, 116), new Color(244, 238, 218), 1.15f);
         DrawText($"BOARD {boardSize} x {boardSize}", new Vector2(1144, 178), new Color(99, 223, 185), 0.9f);
+        DrawText($"MODE {modeName}", new Vector2(1448, 184), new Color(227, 224, 210), 0.58f);
         DrawBoardSizeButtons(boardSize, mousePoint);
 
         DrawInfoStrip(1144, 344, "BLACK", "Kifuwarabe", new Color(26, 27, 30), Color.White);
