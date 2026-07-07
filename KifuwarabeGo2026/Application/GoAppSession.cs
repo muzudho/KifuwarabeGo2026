@@ -63,12 +63,15 @@ public sealed class GoAppSession
         return _stones[x, y];
     }
 
+    /// <summary>
+    /// 石を置けるか試すぜ（＾▽＾）
+    /// </summary>
+    /// <param name="x"></param>
+    /// <param name="y"></param>
+    /// <returns></returns>
     public bool TryPlaceStone(int x, int y)
     {
-        if (CurrentMode.Kind != GoAppModeKind.Playing || !IsOnBoard(x, y) || _stones[x, y] != GoStone.Empty)
-        {
-            return false;
-        }
+        if (CurrentMode.Kind != GoAppModeKind.Playing || !IsOnBoard(x, y) || _stones[x, y] != GoStone.Empty) return false;
 
         _stones[x, y] = CurrentTurn;
         PassTurn();
