@@ -32,6 +32,8 @@ public sealed class GoAppSession
 
     public int WhiteAgehama { get; private set; }
 
+    public GoPoint? KoPoint { get; private set; }
+
     public void ChangeMode(GoAppModeKind modeKind)
     {
         CurrentMode = _modes[modeKind];
@@ -71,7 +73,7 @@ public sealed class GoAppSession
     /// <returns></returns>
     public bool TryPlaceStone(int x, int y)
     {
-        if (CurrentMode.Kind != GoAppModeKind.Playing || !_board.TryPlaceStone(x, y, CurrentTurn, out var capturedStones))
+        if (CurrentMode.Kind != GoAppModeKind.Playing || !_board.TryPlaceStone(x, y, CurrentTurn, KoPoint, out var capturedStones, out var nextKoPoint))
         {
             return false;
         }
@@ -85,6 +87,7 @@ public sealed class GoAppSession
             WhiteAgehama += capturedStones;
         }
 
+        KoPoint = nextKoPoint;
         PassTurn();
         return true;
     }
@@ -96,6 +99,7 @@ public sealed class GoAppSession
             return false;
         }
 
+        KoPoint = null;
         PassTurn();
         return true;
     }
@@ -106,6 +110,7 @@ public sealed class GoAppSession
         CurrentTurn = GoStone.Black;
         BlackAgehama = 0;
         WhiteAgehama = 0;
+        KoPoint = null;
     }
 
     private void PassTurn()

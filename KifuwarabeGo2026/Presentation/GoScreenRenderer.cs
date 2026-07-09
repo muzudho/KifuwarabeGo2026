@@ -131,6 +131,7 @@ public sealed class GoScreenRenderer
         }
 
         DrawPlacedStones(session, start, cell);
+        DrawKoMark(session, start, cell);
         DrawHoverStone(session, mousePoint, cell);
         DrawBoardFrameHighlights(boardOuter);
     }
@@ -285,7 +286,8 @@ public sealed class GoScreenRenderer
     {
         if (session.CurrentMode.Kind != GoAppModeKind.Playing ||
             !TryGetBoardIntersection(mousePoint, session.BoardSize, out var intersection) ||
-            session.GetStone(intersection.X, intersection.Y) != GoStone.Empty)
+            session.GetStone(intersection.X, intersection.Y) != GoStone.Empty ||
+            (session.KoPoint is { } ko && ko.X == intersection.X && ko.Y == intersection.Y))
         {
             return;
         }
@@ -295,6 +297,24 @@ public sealed class GoScreenRenderer
         var black = session.CurrentTurn == GoStone.Black;
         DrawCircle(center, cell * 0.55f, black ? new Color(8, 10, 14, 95) : new Color(255, 250, 232, 110));
         DrawCircle(center, cell * 0.36f, black ? new Color(8, 10, 14, 90) : new Color(255, 250, 232, 95));
+    }
+
+    private void DrawKoMark(GoAppSession session, Vector2 start, float cell)
+    {
+        if (session.KoPoint is not { } ko)
+        {
+            return;
+        }
+
+        var center = BoardPoint(start, cell, ko.X, ko.Y);
+        var radius = Math.Max(12f, cell * 0.26f);
+        var bounds = new Rectangle((int)(center.X - radius), (int)(center.Y - radius), (int)(radius * 2), (int)(radius * 2));
+        FillRect(bounds, new Color(143, 38, 38, 210));
+        DrawRect(bounds, 2, new Color(255, 230, 160));
+
+        const string label = "KO";
+        var size = _font.MeasureString(label) * 0.34f;
+        DrawText(label, new Vector2(center.X - size.X / 2, center.Y - size.Y / 2), Color.White, 0.34f);
     }
 
     private static Vector2 BoardPoint(Vector2 start, float cell, int x, int y) => new(start.X + cell * x, start.Y + cell * y);

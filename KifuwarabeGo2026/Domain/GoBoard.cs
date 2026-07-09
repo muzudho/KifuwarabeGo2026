@@ -30,16 +30,23 @@ public sealed class GoBoard
         return _stones[x, y];
     }
 
-    public bool TryPlaceStone(int x, int y, GoStone stone, out int capturedStones)
+    public bool TryPlaceStone(int x, int y, GoStone stone, GoPoint? forbiddenKoPoint, out int capturedStones, out GoPoint? koPoint)
     {
         capturedStones = 0;
+        koPoint = null;
         if (stone == GoStone.Empty || !IsOnBoard(x, y) || _stones[x, y] != GoStone.Empty)
+        {
+            return false;
+        }
+
+        if (forbiddenKoPoint is { } ko && ko.X == x && ko.Y == y)
         {
             return false;
         }
 
         _stones[x, y] = stone;
         var opponent = OppositeOf(stone);
+        var removedStones = new List<(int X, int Y, GoStone Stone)>();
         foreach (var neighbor in EnumerateNeighbors(x, y))
         {
             if (_stones[neighbor.X, neighbor.Y] != opponent)
@@ -50,7 +57,7 @@ public sealed class GoBoard
             var ren = CollectRen(neighbor.X, neighbor.Y);
             if (!HasLiberty(ren))
             {
-                capturedStones += RemoveRen(ren);
+                capturedStones += RemoveRen(ren, removedStones);
             }
         }
 
@@ -58,8 +65,15 @@ public sealed class GoBoard
         if (!HasLiberty(placedRen))
         {
             _stones[x, y] = GoStone.Empty;
+            RestoreStones(removedStones);
             capturedStones = 0;
             return false;
+        }
+
+        if (capturedStones == 1 && placedRen.Count == 1 && CountLiberties(placedRen) == 1)
+        {
+            var capturedPoint = removedStones[0];
+            koPoint = new GoPoint(capturedPoint.X, capturedPoint.Y);
         }
 
         return true;
@@ -119,14 +133,40 @@ public sealed class GoBoard
         return false;
     }
 
-    private int RemoveRen(List<(int X, int Y)> ren)
+    private int CountLiberties(List<(int X, int Y)> ren)
+    {
+        var liberties = new HashSet<(int X, int Y)>();
+        foreach (var point in ren)
+        {
+            foreach (var neighbor in EnumerateNeighbors(point.X, point.Y))
+            {
+                if (_stones[neighbor.X, neighbor.Y] == GoStone.Empty)
+                {
+                    liberties.Add(neighbor);
+                }
+            }
+        }
+
+        return liberties.Count;
+    }
+
+    private int RemoveRen(List<(int X, int Y)> ren, List<(int X, int Y, GoStone Stone)> removedStones)
     {
         foreach (var point in ren)
         {
+            removedStones.Add((point.X, point.Y, _stones[point.X, point.Y]));
             _stones[point.X, point.Y] = GoStone.Empty;
         }
 
         return ren.Count;
+    }
+
+    private void RestoreStones(List<(int X, int Y, GoStone Stone)> removedStones)
+    {
+        foreach (var stone in removedStones)
+        {
+            _stones[stone.X, stone.Y] = stone.Stone;
+        }
     }
 
     private IEnumerable<(int X, int Y)> EnumerateNeighbors(int x, int y)
