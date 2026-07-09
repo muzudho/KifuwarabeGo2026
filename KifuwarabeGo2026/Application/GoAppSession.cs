@@ -1,11 +1,12 @@
 namespace KifuwarabeGo2026.Application;
 
+using KifuwarabeGo2026.Domain;
 using System;
 using System.Collections.Generic;
 
 public sealed class GoAppSession
 {
-    private GoStone[,] _stones;
+    private GoBoard _board;
 
     private readonly Dictionary<GoAppModeKind, GoAppMode> _modes = new()
     {
@@ -18,7 +19,7 @@ public sealed class GoAppSession
     public GoAppSession()
     {
         CurrentMode = _modes[GoAppModeKind.Resting];
-        _stones = new GoStone[BoardSize, BoardSize];
+        _board = new GoBoard(BoardSize);
     }
 
     public GoAppMode CurrentMode { get; private set; }
@@ -26,6 +27,10 @@ public sealed class GoAppSession
     public int BoardSize { get; private set; } = 19;
 
     public GoStone CurrentTurn { get; private set; } = GoStone.Black;
+
+    public int BlackAgehama { get; private set; }
+
+    public int WhiteAgehama { get; private set; }
 
     public void ChangeMode(GoAppModeKind modeKind)
     {
@@ -55,12 +60,7 @@ public sealed class GoAppSession
 
     public GoStone GetStone(int x, int y)
     {
-        if (!IsOnBoard(x, y))
-        {
-            throw new ArgumentOutOfRangeException(nameof(x), "Point is outside the board.");
-        }
-
-        return _stones[x, y];
+        return _board.GetStone(x, y);
     }
 
     /// <summary>
@@ -71,9 +71,20 @@ public sealed class GoAppSession
     /// <returns></returns>
     public bool TryPlaceStone(int x, int y)
     {
-        if (CurrentMode.Kind != GoAppModeKind.Playing || !IsOnBoard(x, y) || _stones[x, y] != GoStone.Empty) return false;
+        if (CurrentMode.Kind != GoAppModeKind.Playing || !_board.TryPlaceStone(x, y, CurrentTurn, out var capturedStones))
+        {
+            return false;
+        }
 
-        _stones[x, y] = CurrentTurn;
+        if (CurrentTurn == GoStone.Black)
+        {
+            BlackAgehama += capturedStones;
+        }
+        else
+        {
+            WhiteAgehama += capturedStones;
+        }
+
         PassTurn();
         return true;
     }
@@ -91,11 +102,11 @@ public sealed class GoAppSession
 
     private void ClearBoard()
     {
-        _stones = new GoStone[BoardSize, BoardSize];
+        _board = new GoBoard(BoardSize);
         CurrentTurn = GoStone.Black;
+        BlackAgehama = 0;
+        WhiteAgehama = 0;
     }
-
-    private bool IsOnBoard(int x, int y) => x >= 0 && x < BoardSize && y >= 0 && y < BoardSize;
 
     private void PassTurn()
     {

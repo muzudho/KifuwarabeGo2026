@@ -1,6 +1,7 @@
 namespace KifuwarabeGo2026.Presentation;
 
 using KifuwarabeGo2026.Application;
+using KifuwarabeGo2026.Domain;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -150,18 +151,19 @@ public sealed class GoScreenRenderer
 
         DrawInfoStrip(1144, 344, "BLACK", "Kifuwarabe", new Color(26, 27, 30), Color.White);
         DrawInfoStrip(1144, 442, "WHITE", "Human", new Color(236, 229, 211), new Color(24, 24, 24));
+        DrawAgehamaStrip(session);
         var turnLabel = session.CurrentTurn == GoStone.Black ? "BLACK" : "WHITE";
         var turnChip = session.CurrentTurn == GoStone.Black ? new Color(26, 27, 30) : new Color(236, 229, 211);
         var turnText = session.CurrentTurn == GoStone.Black ? Color.White : new Color(24, 24, 24);
-        DrawInfoStrip(1144, 540, "TURN", turnLabel, turnChip, turnText);
+        DrawInfoStrip(1144, 614, "TURN", turnLabel, turnChip, turnText);
 
-        FillRect(new Rectangle(1144, 668, 668, 238), new Color(14, 18, 23));
-        DrawRect(new Rectangle(1144, 668, 668, 238), 2, new Color(68, 83, 94));
-        DrawText("LOCAL BOARD PREVIEW", new Vector2(1178, 700), new Color(180, 195, 195), 0.58f);
-        DrawMiniBoard(new Rectangle(1178, 754, 152, 152));
-        DrawText("Mouse: start, pass, board points", new Vector2(1370, 768), new Color(227, 224, 210), 0.58f);
-        DrawText("Keys: 1=9  2=13  3=19", new Vector2(1370, 816), new Color(227, 224, 210), 0.58f);
-        DrawText("Alt+F4: quit", new Vector2(1370, 864), new Color(227, 224, 210), 0.58f);
+        FillRect(new Rectangle(1144, 740, 668, 238), new Color(14, 18, 23));
+        DrawRect(new Rectangle(1144, 740, 668, 238), 2, new Color(68, 83, 94));
+        DrawText("LOCAL BOARD PREVIEW", new Vector2(1178, 772), new Color(180, 195, 195), 0.58f);
+        DrawMiniBoard(new Rectangle(1178, 826, 152, 152));
+        DrawText("Mouse: start, pass, board points", new Vector2(1370, 840), new Color(227, 224, 210), 0.58f);
+        DrawText("Keys: 1=9  2=13  3=19", new Vector2(1370, 888), new Color(227, 224, 210), 0.58f);
+        DrawText("Alt+F4: quit", new Vector2(1370, 936), new Color(227, 224, 210), 0.58f);
     }
 
     private void DrawBoardSizeButtons(int boardSize, Point mousePoint)
@@ -183,9 +185,9 @@ public sealed class GoScreenRenderer
 
     private static Rectangle ButtonBounds(int index) => new(1144 + index * 224, 248, 188, 62);
 
-    private static Rectangle StartPlayingButtonBounds => new(1144, 606, 320, 56);
+    private static Rectangle StartPlayingButtonBounds => new(1144, 678, 320, 56);
 
-    private static Rectangle PassButtonBounds => new(1492, 606, 320, 56);
+    private static Rectangle PassButtonBounds => new(1492, 678, 320, 56);
 
     private void DrawModeButtons(GoAppSession session, Point mousePoint)
     {
@@ -214,6 +216,16 @@ public sealed class GoScreenRenderer
         DrawRect(new Rectangle(x + 18, y + 16, 132, 40), 1, new Color(120, 130, 126));
         DrawText(label, new Vector2(x + 38, y + 25), chipTextColor, 0.46f);
         DrawText(value, new Vector2(x + 184, y + 20), Color.White, 0.62f);
+    }
+
+    private void DrawAgehamaStrip(GoAppSession session)
+    {
+        var bounds = new Rectangle(1144, 540, 668, 56);
+        FillRect(bounds, new Color(24, 31, 37));
+        DrawRect(bounds, 1, new Color(70, 85, 94));
+        DrawText("AGEHAMA", new Vector2(bounds.X + 20, bounds.Y + 16), new Color(180, 195, 195), 0.46f);
+        DrawText($"BLACK {session.BlackAgehama}", new Vector2(bounds.X + 220, bounds.Y + 14), Color.White, 0.5f);
+        DrawText($"WHITE {session.WhiteAgehama}", new Vector2(bounds.X + 430, bounds.Y + 14), Color.White, 0.5f);
     }
 
     private void DrawMiniBoard(Rectangle rect)
