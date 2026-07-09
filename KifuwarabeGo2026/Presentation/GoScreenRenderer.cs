@@ -43,19 +43,20 @@ public sealed class GoScreenRenderer
         _spriteBatch.End();
     }
 
-    public static int? GetBoardSizeButtonHit(Point point)
+    public static int? GetBoardSizeButtonHit(Point point, GoAppModeKind modeKind)
     {
-        if (ButtonBounds(0).Contains(point))
+        var y = modeKind == GoAppModeKind.GameOver ? GameOverBoardSizeButtonY : SetupBoardSizeButtonY;
+        if (BoardSizeButtonBounds(0, y).Contains(point))
         {
             return 9;
         }
 
-        if (ButtonBounds(1).Contains(point))
+        if (BoardSizeButtonBounds(1, y).Contains(point))
         {
             return 13;
         }
 
-        return ButtonBounds(2).Contains(point) ? 19 : null;
+        return BoardSizeButtonBounds(2, y).Contains(point) ? 19 : null;
     }
 
     public static bool GetStartPlayingButtonHit(Point point) => StartPlayingButtonBounds.Contains(point);
@@ -165,7 +166,7 @@ public sealed class GoScreenRenderer
         DrawText("KIFUWARABE GO 2026", new Vector2(1142, 116), new Color(244, 238, 218), 1.15f);
         DrawText($"BOARD {boardSize} x {boardSize}", new Vector2(1144, 178), new Color(99, 223, 185), 0.9f);
         DrawText($"MODE {session.CurrentMode.DisplayName}", new Vector2(1448, 184), new Color(227, 224, 210), 0.58f);
-        DrawBoardSizeButtons(boardSize, mousePoint);
+        DrawBoardSizeButtons(boardSize, mousePoint, SetupBoardSizeButtonY);
         DrawCommandButton(StartPlayingButtonBounds, "START", false, mousePoint);
 
         DrawInfoStrip(1144, 344, "BLACK", "Kifuwarabe", new Color(26, 27, 30), Color.White);
@@ -203,23 +204,26 @@ public sealed class GoScreenRenderer
     private void DrawGameOverSidePanel(GoAppSession session, Point mousePoint)
     {
         DrawText("GAME OVER", new Vector2(1144, 132), new Color(255, 230, 160), 0.9f);
-        DrawInfoStrip(1144, 190, "END", "TWO PASSES", new Color(80, 48, 38), Color.White);
 
-        DrawText("FINAL AGEHAMA", new Vector2(1144, 318), new Color(180, 195, 195), 0.62f);
-        DrawAgehamaStrip(session, 366);
+        DrawText("GAME RESULT", new Vector2(1144, 262), new Color(180, 195, 195), 0.62f);
+        DrawInfoStrip(1144, 310, "END", "TWO PASSES", new Color(80, 48, 38), Color.White);
 
-        DrawText("BOARD SIZE", new Vector2(1144, 220), new Color(180, 195, 195), 0.62f);
-        DrawBoardSizeButtons(session.BoardSize, mousePoint);
-        DrawCommandButton(StartPlayingButtonBounds, "NEW GAME", false, mousePoint);
+        DrawText("FINAL AGEHAMA", new Vector2(1144, 446), new Color(180, 195, 195), 0.62f);
+        DrawAgehamaStrip(session, 494);
+
+        DrawText("BOARD SIZE", new Vector2(1144, 650), new Color(180, 195, 195), 0.62f);
+        DrawBoardSizeButtons(session.BoardSize, mousePoint, GameOverBoardSizeButtonY);
+
+        DrawCommandButton(new Rectangle(1144, 790, 320, 56), "NEW GAME", false, mousePoint);
     }
 
-    private void DrawBoardSizeButtons(int boardSize, Point mousePoint)
+    private void DrawBoardSizeButtons(int boardSize, Point mousePoint, int y)
     {
         var labels = new[] { "9 x 9", "13 x 13", "19 x 19" };
         var sizes = new[] { 9, 13, 19 };
         for (var i = 0; i < labels.Length; i++)
         {
-            var bounds = ButtonBounds(i);
+            var bounds = BoardSizeButtonBounds(i, y);
             var selected = boardSize == sizes[i];
             var hovered = bounds.Contains(mousePoint);
             FillRect(bounds, selected ? new Color(39, 125, 97) : hovered ? new Color(50, 62, 72) : new Color(32, 38, 47));
@@ -230,7 +234,11 @@ public sealed class GoScreenRenderer
         }
     }
 
-    private static Rectangle ButtonBounds(int index) => new(1144 + index * 224, 248, 188, 62);
+    private const int SetupBoardSizeButtonY = 248;
+
+    private const int GameOverBoardSizeButtonY = 692;
+
+    private static Rectangle BoardSizeButtonBounds(int index, int y) => new(1144 + index * 224, y, 188, 62);
 
     private static Rectangle StartPlayingButtonBounds => new(1144, 678, 320, 56);
 

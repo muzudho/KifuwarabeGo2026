@@ -82,7 +82,7 @@ public class Game1 : Game
         if (_previousMouse.LeftButton == ButtonState.Released && mouse.LeftButton == ButtonState.Pressed)
         {
             var point = VirtualScreen.ToVirtualPoint(GraphicsDevice.Viewport, mouse.Position);
-            if (_session.CurrentMode.Kind != GoAppModeKind.Playing && GoScreenRenderer.GetBoardSizeButtonHit(point) is { } boardSize)
+            if (_session.CurrentMode.Kind != GoAppModeKind.Playing && GoScreenRenderer.GetBoardSizeButtonHit(point, _session.CurrentMode.Kind) is { } boardSize)
             {
                 _session.ChangeBoardSize(boardSize);
             }
