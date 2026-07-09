@@ -62,6 +62,10 @@ public sealed class GoScreenRenderer
     public static bool GetStartPlayingButtonHit(Point point, GoAppModeKind modeKind) =>
         (modeKind == GoAppModeKind.GameOver ? NewGameButtonBounds : StartPlayingButtonBounds).Contains(point);
 
+    public static GoPlayerKind? GetBlackPlayerKindButtonHit(Point point) => GetPlayerKindButtonHit(point, BlackPlayerKindButtonY);
+
+    public static GoPlayerKind? GetWhitePlayerKindButtonHit(Point point) => GetPlayerKindButtonHit(point, WhitePlayerKindButtonY);
+
     public static bool GetPassButtonHit(Point point) => PassButtonBounds.Contains(point);
 
     public static bool GetResignButtonHit(Point point) => ResignButtonBounds.Contains(point);
@@ -173,8 +177,10 @@ public sealed class GoScreenRenderer
         DrawBoardSizeButtons(boardSize, mousePoint, SetupBoardSizeButtonY);
         DrawCommandButton(StartPlayingButtonBounds, "START", false, mousePoint);
 
-        DrawInfoStrip(1144, 344, "BLACK", "Kifuwarabe", new Color(26, 27, 30), Color.White);
-        DrawInfoStrip(1144, 442, "WHITE", "Human", new Color(236, 229, 211), new Color(24, 24, 24));
+        DrawInfoStrip(1144, 344, "BLACK", PlayerKindLabel(session.BlackPlayerKind), new Color(26, 27, 30), Color.White);
+        DrawPlayerKindButtons(session.BlackPlayerKind, mousePoint, BlackPlayerKindButtonY);
+        DrawInfoStrip(1144, 442, "WHITE", PlayerKindLabel(session.WhitePlayerKind), new Color(236, 229, 211), new Color(24, 24, 24));
+        DrawPlayerKindButtons(session.WhitePlayerKind, mousePoint, WhitePlayerKindButtonY);
         DrawAgehamaStrip(session);
 
         FillRect(new Rectangle(1144, 740, 668, 238), new Color(14, 18, 23));
@@ -196,8 +202,8 @@ public sealed class GoScreenRenderer
         DrawInfoStrip(1144, 180, "TURN", turnLabel, turnChip, turnText);
 
         DrawText("PLAYERS", new Vector2(1144, 300), new Color(180, 195, 195), 0.62f);
-        DrawInfoStrip(1144, 348, "BLACK", "Kifuwarabe", new Color(26, 27, 30), Color.White);
-        DrawInfoStrip(1144, 446, "WHITE", "Human", new Color(236, 229, 211), new Color(24, 24, 24));
+        DrawInfoStrip(1144, 348, "BLACK", PlayerKindLabel(session.BlackPlayerKind), new Color(26, 27, 30), Color.White);
+        DrawInfoStrip(1144, 446, "WHITE", PlayerKindLabel(session.WhitePlayerKind), new Color(236, 229, 211), new Color(24, 24, 24));
 
         DrawText("AGEHAMA", new Vector2(1144, 566), new Color(180, 195, 195), 0.62f);
         DrawAgehamaStrip(session, 614);
@@ -252,11 +258,23 @@ public sealed class GoScreenRenderer
         }
     }
 
+    private void DrawPlayerKindButtons(GoPlayerKind selectedKind, Point mousePoint, int y)
+    {
+        DrawCommandButton(PlayerKindButtonBounds(0, y), "HUMAN", selectedKind == GoPlayerKind.Human, mousePoint);
+        DrawCommandButton(PlayerKindButtonBounds(1, y), "COMPUTER", selectedKind == GoPlayerKind.Computer, mousePoint);
+    }
+
     private const int SetupBoardSizeButtonY = 248;
 
     private const int GameOverBoardSizeButtonY = 756;
 
+    private const int BlackPlayerKindButtonY = 354;
+
+    private const int WhitePlayerKindButtonY = 452;
+
     private static Rectangle BoardSizeButtonBounds(int index, int y) => new(1144 + index * 224, y, 188, 62);
+
+    private static Rectangle PlayerKindButtonBounds(int index, int y) => new(1536 + index * 140, y, 132, 52);
 
     private static Rectangle StartPlayingButtonBounds => new(1144, 678, 320, 56);
 
@@ -265,6 +283,18 @@ public sealed class GoScreenRenderer
     private static Rectangle PassButtonBounds => new(1144, 872, 320, 72);
 
     private static Rectangle ResignButtonBounds => new(1492, 872, 320, 72);
+
+    private static GoPlayerKind? GetPlayerKindButtonHit(Point point, int y)
+    {
+        if (PlayerKindButtonBounds(0, y).Contains(point))
+        {
+            return GoPlayerKind.Human;
+        }
+
+        return PlayerKindButtonBounds(1, y).Contains(point) ? GoPlayerKind.Computer : null;
+    }
+
+    private static string PlayerKindLabel(GoPlayerKind playerKind) => playerKind == GoPlayerKind.Human ? "Human" : "Computer";
 
     private void DrawCommandButton(Rectangle bounds, string label, bool selected, Point mousePoint, bool enabled = true)
     {

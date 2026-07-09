@@ -31,6 +31,10 @@ public sealed class GoAppSession
 
     public GoStone CurrentTurn { get; private set; } = GoStone.Black;
 
+    public GoPlayerKind BlackPlayerKind { get; private set; } = GoPlayerKind.Human;
+
+    public GoPlayerKind WhitePlayerKind { get; private set; } = GoPlayerKind.Computer;
+
     public int BlackAgehama { get; private set; }
 
     public int WhiteAgehama { get; private set; }
@@ -77,6 +81,30 @@ public sealed class GoAppSession
         BoardSize = boardSize;
         ClearBoard();
     }
+
+    public void SetPlayerKind(GoStone stone, GoPlayerKind playerKind)
+    {
+        if (stone == GoStone.Black)
+        {
+            BlackPlayerKind = playerKind;
+            return;
+        }
+
+        if (stone == GoStone.White)
+        {
+            WhitePlayerKind = playerKind;
+            return;
+        }
+
+        throw new ArgumentOutOfRangeException(nameof(stone), stone, "Player kind can be set only for black or white.");
+    }
+
+    public GoPlayerKind GetPlayerKind(GoStone stone) => stone switch
+    {
+        GoStone.Black => BlackPlayerKind,
+        GoStone.White => WhitePlayerKind,
+        _ => throw new ArgumentOutOfRangeException(nameof(stone), stone, "Player kind can be read only for black or white."),
+    };
 
     public GoStone GetStone(int x, int y)
     {

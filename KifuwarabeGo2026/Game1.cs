@@ -90,6 +90,14 @@ public class Game1 : Game
             {
                 _session.StartPlaying();
             }
+            else if (_session.CurrentMode.Kind != GoAppModeKind.Playing && GoScreenRenderer.GetBlackPlayerKindButtonHit(point) is { } blackPlayerKind)
+            {
+                _session.SetPlayerKind(Domain.GoStone.Black, blackPlayerKind);
+            }
+            else if (_session.CurrentMode.Kind != GoAppModeKind.Playing && GoScreenRenderer.GetWhitePlayerKindButtonHit(point) is { } whitePlayerKind)
+            {
+                _session.SetPlayerKind(Domain.GoStone.White, whitePlayerKind);
+            }
             else if (GoScreenRenderer.GetPassButtonHit(point))
             {
                 if (_session.Pass())

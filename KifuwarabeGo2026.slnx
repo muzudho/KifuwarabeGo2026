@@ -1,3 +1,4 @@
 <Solution>
+  <Project Path="KifuwarabeGo2026.Engine/KifuwarabeGo2026.Engine.csproj" />
   <Project Path="KifuwarabeGo2026/KifuwarabeGo2026.csproj" />
 </Solution>
