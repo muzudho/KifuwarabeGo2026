@@ -52,6 +52,28 @@ public sealed class GoBoard
         return _stones[x, y];
     }
 
+    public int CountStones(GoStone stone)
+    {
+        if (stone == GoStone.Empty)
+        {
+            return 0;
+        }
+
+        var count = 0;
+        for (var y = 0; y < Size; y++)
+        {
+            for (var x = 0; x < Size; x++)
+            {
+                if (_stones[x, y] == stone)
+                {
+                    count++;
+                }
+            }
+        }
+
+        return count;
+    }
+
     public bool TryPlaceStone(int x, int y, GoStone stone, GoPoint? forbiddenKoPoint, out int capturedStones, out GoPoint? koPoint)
     {
         capturedStones = 0;

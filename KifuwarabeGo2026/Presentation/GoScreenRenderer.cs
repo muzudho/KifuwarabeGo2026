@@ -59,9 +59,12 @@ public sealed class GoScreenRenderer
         return BoardSizeButtonBounds(2, y).Contains(point) ? 19 : null;
     }
 
-    public static bool GetStartPlayingButtonHit(Point point) => StartPlayingButtonBounds.Contains(point);
+    public static bool GetStartPlayingButtonHit(Point point, GoAppModeKind modeKind) =>
+        (modeKind == GoAppModeKind.GameOver ? NewGameButtonBounds : StartPlayingButtonBounds).Contains(point);
 
     public static bool GetPassButtonHit(Point point) => PassButtonBounds.Contains(point);
+
+    public static bool GetResignButtonHit(Point point) => ResignButtonBounds.Contains(point);
 
     public static bool TryGetBoardIntersection(Point point, int boardSize, out Point intersection)
     {
@@ -199,7 +202,11 @@ public sealed class GoScreenRenderer
         DrawText("AGEHAMA", new Vector2(1144, 566), new Color(180, 195, 195), 0.62f);
         DrawAgehamaStrip(session, 614);
 
+        DrawText("PURE GO SCORE", new Vector2(1144, 710), new Color(180, 195, 195), 0.62f);
+        DrawStoneCountStrip(session, 758);
+
         DrawCommandButton(PassButtonBounds, "PASS", false, mousePoint);
+        DrawCommandButton(ResignButtonBounds, "RESIGN", false, mousePoint);
     }
 
     private void DrawGameOverSidePanel(GoAppSession session, Point mousePoint)
@@ -216,13 +223,16 @@ public sealed class GoScreenRenderer
             DrawText(winnerLabel, new Vector2(1144, 396), new Color(99, 223, 185), 0.62f);
         }
 
-        DrawText("FINAL AGEHAMA", new Vector2(1144, 446), new Color(180, 195, 195), 0.62f);
-        DrawAgehamaStrip(session, 494);
+        DrawText("FINAL STONES", new Vector2(1144, 446), new Color(180, 195, 195), 0.62f);
+        DrawStoneCountStrip(session, 494);
 
-        DrawText("BOARD SIZE", new Vector2(1144, 650), new Color(180, 195, 195), 0.62f);
+        DrawText("FINAL AGEHAMA", new Vector2(1144, 584), new Color(180, 195, 195), 0.62f);
+        DrawAgehamaStrip(session, 632);
+
+        DrawText("BOARD SIZE", new Vector2(1144, 708), new Color(180, 195, 195), 0.62f);
         DrawBoardSizeButtons(session.BoardSize, mousePoint, GameOverBoardSizeButtonY);
 
-        DrawCommandButton(new Rectangle(1144, 790, 320, 56), "NEW GAME", false, mousePoint);
+        DrawCommandButton(NewGameButtonBounds, "NEW GAME", false, mousePoint);
     }
 
     private void DrawBoardSizeButtons(int boardSize, Point mousePoint, int y)
@@ -244,13 +254,17 @@ public sealed class GoScreenRenderer
 
     private const int SetupBoardSizeButtonY = 248;
 
-    private const int GameOverBoardSizeButtonY = 692;
+    private const int GameOverBoardSizeButtonY = 756;
 
     private static Rectangle BoardSizeButtonBounds(int index, int y) => new(1144 + index * 224, y, 188, 62);
 
     private static Rectangle StartPlayingButtonBounds => new(1144, 678, 320, 56);
 
-    private static Rectangle PassButtonBounds => new(1144, 872, 668, 72);
+    private static Rectangle NewGameButtonBounds => new(1492, 874, 320, 56);
+
+    private static Rectangle PassButtonBounds => new(1144, 872, 320, 72);
+
+    private static Rectangle ResignButtonBounds => new(1492, 872, 320, 72);
 
     private void DrawCommandButton(Rectangle bounds, string label, bool selected, Point mousePoint, bool enabled = true)
     {
@@ -283,6 +297,41 @@ public sealed class GoScreenRenderer
         DrawText("AGEHAMA", new Vector2(bounds.X + 20, bounds.Y + 16), new Color(180, 195, 195), 0.46f);
         DrawText($"BLACK {session.BlackAgehama}", new Vector2(bounds.X + 220, bounds.Y + 14), Color.White, 0.5f);
         DrawText($"WHITE {session.WhiteAgehama}", new Vector2(bounds.X + 430, bounds.Y + 14), Color.White, 0.5f);
+    }
+
+    private void DrawStoneCountStrip(GoAppSession session, int y)
+    {
+        var bounds = new Rectangle(1144, y, 668, 82);
+        var blackStones = session.BlackStoneCount;
+        var whiteStones = session.WhiteStoneCount;
+        var total = blackStones + whiteStones;
+        var leader = blackStones == whiteStones ? "EVEN" : blackStones > whiteStones ? $"BLACK +{blackStones - whiteStones}" : $"WHITE +{whiteStones - blackStones}";
+
+        FillRect(bounds, new Color(24, 31, 37));
+        DrawRect(bounds, 1, new Color(70, 85, 94));
+        DrawText("STONES", new Vector2(bounds.X + 20, bounds.Y + 15), new Color(180, 195, 195), 0.46f);
+        DrawText($"BLACK {blackStones}", new Vector2(bounds.X + 150, bounds.Y + 13), Color.White, 0.5f);
+        DrawText($"WHITE {whiteStones}", new Vector2(bounds.X + 334, bounds.Y + 13), Color.White, 0.5f);
+        DrawText(leader, new Vector2(bounds.X + 518, bounds.Y + 13), new Color(99, 223, 185), 0.5f);
+
+        var bar = new Rectangle(bounds.X + 20, bounds.Y + 52, bounds.Width - 40, 14);
+        FillRect(bar, new Color(14, 18, 23));
+        if (total > 0)
+        {
+            var blackWidth = (int)MathF.Round(bar.Width * (blackStones / (float)total));
+            if (blackWidth > 0)
+            {
+                FillRect(new Rectangle(bar.X, bar.Y, blackWidth, bar.Height), new Color(9, 10, 13));
+            }
+
+            var whiteWidth = bar.Width - blackWidth;
+            if (whiteWidth > 0)
+            {
+                FillRect(new Rectangle(bar.X + blackWidth, bar.Y, whiteWidth, bar.Height), new Color(230, 224, 207));
+            }
+        }
+
+        DrawRect(bar, 1, new Color(95, 108, 116));
     }
 
     private void DrawMiniBoard(Rectangle rect)

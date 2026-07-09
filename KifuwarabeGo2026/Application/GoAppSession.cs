@@ -35,6 +35,10 @@ public sealed class GoAppSession
 
     public int WhiteAgehama { get; private set; }
 
+    public int BlackStoneCount => _board.CountStones(GoStone.Black);
+
+    public int WhiteStoneCount => _board.CountStones(GoStone.White);
+
     public GoPoint? KoPoint { get; private set; }
 
     public int ConsecutivePasses { get; private set; }
@@ -162,11 +166,26 @@ public sealed class GoAppSession
         PassTurn();
         if (ConsecutivePasses >= 2)
         {
-            Winner = null;
-            GameOverReason = "TWO PASSES";
+            DecidePureGoResult();
             ChangeMode(GoAppModeKind.GameOver);
         }
 
+        return true;
+    }
+
+    public bool Resign()
+    {
+        if (CurrentMode.Kind != GoAppModeKind.Playing)
+        {
+            return false;
+        }
+
+        var resigned = CurrentTurn;
+        Winner = OppositeOf(resigned);
+        KoPoint = null;
+        ConsecutivePasses = 0;
+        GameOverReason = $"{StoneName(resigned)} RESIGNS";
+        ChangeMode(GoAppModeKind.GameOver);
         return true;
     }
 
@@ -192,6 +211,14 @@ public sealed class GoAppSession
     {
         _positionHashes.Clear();
         _positionHashes.Add(_board.CurrentHash);
+    }
+
+    private void DecidePureGoResult()
+    {
+        var blackStones = BlackStoneCount;
+        var whiteStones = WhiteStoneCount;
+        Winner = blackStones == whiteStones ? null : blackStones > whiteStones ? GoStone.Black : GoStone.White;
+        GameOverReason = Winner is null ? "PURE GO DRAW" : $"PURE GO {StoneName(Winner.Value)} +{Math.Abs(blackStones - whiteStones)}";
     }
 
     private static GoStone OppositeOf(GoStone stone) => stone == GoStone.Black ? GoStone.White : GoStone.Black;

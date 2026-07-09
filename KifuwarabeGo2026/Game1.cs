@@ -86,7 +86,7 @@ public class Game1 : Game
             {
                 _session.ChangeBoardSize(boardSize);
             }
-            else if (_session.CurrentMode.Kind != GoAppModeKind.Playing && GoScreenRenderer.GetStartPlayingButtonHit(point))
+            else if (_session.CurrentMode.Kind != GoAppModeKind.Playing && GoScreenRenderer.GetStartPlayingButtonHit(point, _session.CurrentMode.Kind))
             {
                 _session.StartPlaying();
             }
@@ -95,6 +95,13 @@ public class Game1 : Game
                 if (_session.Pass())
                 {
                     _placeStoneSound?.Play(0.45f, 0.25f, 0f);
+                }
+            }
+            else if (GoScreenRenderer.GetResignButtonHit(point))
+            {
+                if (_session.Resign())
+                {
+                    _placeStoneSound?.Play(0.45f, -0.25f, 0f);
                 }
             }
             else if (GoScreenRenderer.TryGetBoardIntersection(point, _session.BoardSize, out var intersection))
