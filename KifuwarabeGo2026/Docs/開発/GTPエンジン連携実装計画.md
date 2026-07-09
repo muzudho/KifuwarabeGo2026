@@ -28,6 +28,27 @@ KifuwarabeGo2026.Engine          別プロセスの思考エンジン
 
 最初は `KifuwarabeGo2026.Gtp` を別プロジェクトにせず GUI プロジェクト内のフォルダーで始めてもよい。ただし、責務は最初から分けておく。
 
+## 現在の実装状況
+
+2026-07-09 時点で、GUI の対局者設定、別プロセス用 GTP エンジン、GUI 側 GTP クライアント層の土台まで実装済み。
+
+実装済み:
+
+- GUI セットアップ画面で黒番・白番を `Human` / `Computer` から選択できる。
+- `GoAppSession` に `BlackPlayerKind`、`WhitePlayerKind` を持たせている。
+- `KifuwarabeGo2026.Engine` コンソールプロジェクトをソリューションへ追加済み。
+- `KifuwarabeGo2026.Engine` は標準入力から GTP コマンドを読み、標準出力へ GTP 応答だけを返す。
+- GUI プロジェクト内の `Gtp` フォルダーに `GtpEngineClient`、`GtpEngineSettings`、`GtpResponse`、`GtpCoordinate` を追加済み。
+- `GtpEngineClient` は別プロセス起動、標準入出力、応答読み取り、タイムアウト、`quit`、送受信ログの土台を持つ。
+
+未実装:
+
+- GUI の対局開始時に `GtpEngineClient` を起動する処理。
+- 対局開始時の `boardsize` / `clear_board` 送信。
+- 人間の着手、パス、投了をエンジンへ同期する処理。
+- `Computer` 手番で `genmove` を送り、応答手を盤へ反映する処理。
+- 思考中の入力抑制とエラー表示。
+
 ## 実装ステップ
 
 ### 1. GUI に対局者設定を追加する
@@ -172,12 +193,44 @@ GTP 連携が一通り動いてから作る。
 
 次の状態まで進めれば、GUI と思考エンジンの分離が実証できる。
 
-1. 白番を `Computer` に設定できる。
-2. GUI が `KifuwarabeGo2026.Engine.exe` を起動できる。
-3. 対局開始時に `boardsize` と `clear_board` を送れる。
-4. 人間の黒番着手後、GUI がエンジンへ `play black ...` を送れる。
-5. GUI が `genmove white` を送り、返ってきた白番着手を盤に置ける。
-6. パスと投了の結果を GUI とエンジンの間で破綻なく扱える。
+1. 白番を `Computer` に設定できる。状態: 完了。
+2. GUI が `KifuwarabeGo2026.Engine.exe` を起動できる。状態: クライアント層の土台は完了、対局ループ接続は未実装。
+3. 対局開始時に `boardsize` と `clear_board` を送れる。状態: 未実装。
+4. 人間の黒番着手後、GUI がエンジンへ `play black ...` を送れる。状態: 座標変換の土台は完了、対局ループ接続は未実装。
+5. GUI が `genmove white` を送り、返ってきた白番着手を盤に置ける。状態: 未実装。
+6. パスと投了の結果を GUI とエンジンの間で破綻なく扱える。状態: 未実装。
+
+## 検証メモ
+
+ビルド確認:
+
+```powershell
+dotnet build KifuwarabeGo2026.slnx
+```
+
+エンジン単体の GTP 応答確認:
+
+```powershell
+@('protocol_version','name','boardsize 9','clear_board','play black D4','genmove white','quit') | dotnet run --project KifuwarabeGo2026.Engine\KifuwarabeGo2026.Engine.csproj
+```
+
+確認できた応答例:
+
+```text
+= 2
+
+= Kifuwarabe Random GTP
+
+=
+
+=
+
+=
+
+= D3
+
+=
+```
 
 ## 後回しにすること
 
