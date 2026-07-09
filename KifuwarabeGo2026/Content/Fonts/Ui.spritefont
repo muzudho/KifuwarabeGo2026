@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <XnaContent xmlns:Graphics="Microsoft.Xna.Framework.Content.Pipeline.Graphics">
   <Asset Type="Graphics:FontDescription">
-    <FontName>Segoe UI</FontName>
+    <FontName>Meiryo</FontName>
     <Size>36</Size>
     <Spacing>2</Spacing>
     <UseKerning>true</UseKerning>
@@ -17,12 +17,32 @@
         <End>&#20013;</End>
       </CharacterRegion>
       <CharacterRegion>
+        <Start>&#23550;</Start>
+        <End>&#23550;</End>
+      </CharacterRegion>
+      <CharacterRegion>
+        <Start>&#23616;</Start>
+        <End>&#23616;</End>
+      </CharacterRegion>
+      <CharacterRegion>
         <Start>&#20633;</Start>
         <End>&#20633;</End>
       </CharacterRegion>
       <CharacterRegion>
         <Start>&#28310;</Start>
         <End>&#28310;</End>
+      </CharacterRegion>
+      <CharacterRegion>
+        <Start>&#12434;</Start>
+        <End>&#12434;</End>
+      </CharacterRegion>
+      <CharacterRegion>
+        <Start>&#12461;</Start>
+        <End>&#12461;</End>
+      </CharacterRegion>
+      <CharacterRegion>
+        <Start>&#12467;</Start>
+        <End>&#12540;</End>
       </CharacterRegion>
     </CharacterRegions>
   </Asset>
