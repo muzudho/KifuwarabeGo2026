@@ -149,6 +149,12 @@ public sealed class GoScreenRenderer
             return;
         }
 
+        if (session.CurrentMode.Kind == GoAppModeKind.GameOver)
+        {
+            DrawGameOverSidePanel(session, mousePoint);
+            return;
+        }
+
         DrawSetupSidePanel(session, mousePoint);
     }
 
@@ -192,6 +198,19 @@ public sealed class GoScreenRenderer
         DrawAgehamaStrip(session, 614);
 
         DrawCommandButton(PassButtonBounds, "PASS", false, mousePoint);
+    }
+
+    private void DrawGameOverSidePanel(GoAppSession session, Point mousePoint)
+    {
+        DrawText("GAME OVER", new Vector2(1144, 132), new Color(255, 230, 160), 0.9f);
+        DrawInfoStrip(1144, 190, "END", "TWO PASSES", new Color(80, 48, 38), Color.White);
+
+        DrawText("FINAL AGEHAMA", new Vector2(1144, 318), new Color(180, 195, 195), 0.62f);
+        DrawAgehamaStrip(session, 366);
+
+        DrawText("BOARD SIZE", new Vector2(1144, 220), new Color(180, 195, 195), 0.62f);
+        DrawBoardSizeButtons(session.BoardSize, mousePoint);
+        DrawCommandButton(StartPlayingButtonBounds, "NEW GAME", false, mousePoint);
     }
 
     private void DrawBoardSizeButtons(int boardSize, Point mousePoint)

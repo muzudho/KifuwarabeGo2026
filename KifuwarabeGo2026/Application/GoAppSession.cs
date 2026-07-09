@@ -11,6 +11,7 @@ public sealed class GoAppSession
     private readonly Dictionary<GoAppModeKind, GoAppMode> _modes = new()
     {
         [GoAppModeKind.Playing] = new PlayingMode(),
+        [GoAppModeKind.GameOver] = new GameOverMode(),
         [GoAppModeKind.BoardEditing] = new BoardEditingMode(),
         [GoAppModeKind.Reviewing] = new ReviewingMode(),
         [GoAppModeKind.Resting] = new RestingMode(),
@@ -34,6 +35,8 @@ public sealed class GoAppSession
 
     public GoPoint? KoPoint { get; private set; }
 
+    public int ConsecutivePasses { get; private set; }
+
     public void ChangeMode(GoAppModeKind modeKind)
     {
         CurrentMode = _modes[modeKind];
@@ -41,6 +44,11 @@ public sealed class GoAppSession
 
     public void StartPlaying()
     {
+        if (CurrentMode.Kind == GoAppModeKind.GameOver)
+        {
+            ClearBoard();
+        }
+
         ChangeMode(GoAppModeKind.Playing);
     }
 
@@ -88,6 +96,7 @@ public sealed class GoAppSession
         }
 
         KoPoint = nextKoPoint;
+        ConsecutivePasses = 0;
         PassTurn();
         return true;
     }
@@ -100,7 +109,13 @@ public sealed class GoAppSession
         }
 
         KoPoint = null;
+        ConsecutivePasses++;
         PassTurn();
+        if (ConsecutivePasses >= 2)
+        {
+            ChangeMode(GoAppModeKind.GameOver);
+        }
+
         return true;
     }
 
@@ -111,6 +126,7 @@ public sealed class GoAppSession
         BlackAgehama = 0;
         WhiteAgehama = 0;
         KoPoint = null;
+        ConsecutivePasses = 0;
     }
 
     private void PassTurn()
