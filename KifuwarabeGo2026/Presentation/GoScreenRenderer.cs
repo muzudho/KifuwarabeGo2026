@@ -392,8 +392,9 @@ public sealed class GoScreenRenderer
             var shade = 1f - MathHelper.Clamp(distance * 0.55f, 0f, 0.55f);
             if (lightStone)
             {
-                var value = (byte)MathHelper.Clamp(214 + highlight * 38 - distance * 34, 170, 255);
-                return new Color(value, value, (byte)MathHelper.Clamp(value - 12, 150, 245)) * shade;
+                var value = (byte)MathHelper.Clamp(232 + highlight * 22 - distance * 22, 205, 255);
+                var blue = (byte)MathHelper.Clamp(value - 10, 195, 245);
+                return new Color(value, value, blue, (byte)255);
             }
 
             var baseValue = 18 + highlight * 72 - distance * 12;
