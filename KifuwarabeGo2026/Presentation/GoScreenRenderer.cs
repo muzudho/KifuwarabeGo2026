@@ -137,25 +137,33 @@ public sealed class GoScreenRenderer
 
     private void DrawSidePanel(GoAppSession session, Point mousePoint)
     {
-        var boardSize = session.BoardSize;
         var panel = new Rectangle(1102, 78, 760, 924);
         FillRect(new Rectangle(panel.X + 16, panel.Y + 18, panel.Width, panel.Height), new Color(0, 0, 0, 120));
         FillRect(panel, new Color(21, 25, 32, 236));
         DrawRect(panel, 2, new Color(82, 111, 114));
 
+        if (session.CurrentMode.Kind == GoAppModeKind.Playing)
+        {
+            DrawPlayingSidePanel(session, mousePoint);
+            return;
+        }
+
+        DrawSetupSidePanel(session, mousePoint);
+    }
+
+    private void DrawSetupSidePanel(GoAppSession session, Point mousePoint)
+    {
+        var boardSize = session.BoardSize;
+
         DrawText("KIFUWARABE GO 2026", new Vector2(1142, 116), new Color(244, 238, 218), 1.15f);
         DrawText($"BOARD {boardSize} x {boardSize}", new Vector2(1144, 178), new Color(99, 223, 185), 0.9f);
         DrawText($"MODE {session.CurrentMode.DisplayName}", new Vector2(1448, 184), new Color(227, 224, 210), 0.58f);
         DrawBoardSizeButtons(boardSize, mousePoint);
-        DrawModeButtons(session, mousePoint);
+        DrawCommandButton(StartPlayingButtonBounds, "START", false, mousePoint);
 
         DrawInfoStrip(1144, 344, "BLACK", "Kifuwarabe", new Color(26, 27, 30), Color.White);
         DrawInfoStrip(1144, 442, "WHITE", "Human", new Color(236, 229, 211), new Color(24, 24, 24));
         DrawAgehamaStrip(session);
-        var turnLabel = session.CurrentTurn == GoStone.Black ? "BLACK" : "WHITE";
-        var turnChip = session.CurrentTurn == GoStone.Black ? new Color(26, 27, 30) : new Color(236, 229, 211);
-        var turnText = session.CurrentTurn == GoStone.Black ? Color.White : new Color(24, 24, 24);
-        DrawInfoStrip(1144, 614, "TURN", turnLabel, turnChip, turnText);
 
         FillRect(new Rectangle(1144, 740, 668, 238), new Color(14, 18, 23));
         DrawRect(new Rectangle(1144, 740, 668, 238), 2, new Color(68, 83, 94));
@@ -164,6 +172,25 @@ public sealed class GoScreenRenderer
         DrawText("Mouse: start, pass, board points", new Vector2(1370, 840), new Color(227, 224, 210), 0.58f);
         DrawText("Keys: 1=9  2=13  3=19", new Vector2(1370, 888), new Color(227, 224, 210), 0.58f);
         DrawText("Alt+F4: quit", new Vector2(1370, 936), new Color(227, 224, 210), 0.58f);
+    }
+
+    private void DrawPlayingSidePanel(GoAppSession session, Point mousePoint)
+    {
+        DrawText("TURN", new Vector2(1144, 132), new Color(180, 195, 195), 0.62f);
+
+        var turnLabel = session.CurrentTurn == GoStone.Black ? "BLACK" : "WHITE";
+        var turnChip = session.CurrentTurn == GoStone.Black ? new Color(26, 27, 30) : new Color(236, 229, 211);
+        var turnText = session.CurrentTurn == GoStone.Black ? Color.White : new Color(24, 24, 24);
+        DrawInfoStrip(1144, 180, "TURN", turnLabel, turnChip, turnText);
+
+        DrawText("PLAYERS", new Vector2(1144, 300), new Color(180, 195, 195), 0.62f);
+        DrawInfoStrip(1144, 348, "BLACK", "Kifuwarabe", new Color(26, 27, 30), Color.White);
+        DrawInfoStrip(1144, 446, "WHITE", "Human", new Color(236, 229, 211), new Color(24, 24, 24));
+
+        DrawText("AGEHAMA", new Vector2(1144, 566), new Color(180, 195, 195), 0.62f);
+        DrawAgehamaStrip(session, 614);
+
+        DrawCommandButton(PassButtonBounds, "PASS", false, mousePoint);
     }
 
     private void DrawBoardSizeButtons(int boardSize, Point mousePoint)
@@ -187,13 +214,7 @@ public sealed class GoScreenRenderer
 
     private static Rectangle StartPlayingButtonBounds => new(1144, 678, 320, 56);
 
-    private static Rectangle PassButtonBounds => new(1492, 678, 320, 56);
-
-    private void DrawModeButtons(GoAppSession session, Point mousePoint)
-    {
-        DrawCommandButton(StartPlayingButtonBounds, "START", session.CurrentMode.Kind == GoAppModeKind.Playing, mousePoint);
-        DrawCommandButton(PassButtonBounds, "PASS", false, mousePoint, enabled: session.CurrentMode.Kind == GoAppModeKind.Playing);
-    }
+    private static Rectangle PassButtonBounds => new(1144, 872, 668, 72);
 
     private void DrawCommandButton(Rectangle bounds, string label, bool selected, Point mousePoint, bool enabled = true)
     {
@@ -218,9 +239,9 @@ public sealed class GoScreenRenderer
         DrawText(value, new Vector2(x + 184, y + 20), Color.White, 0.62f);
     }
 
-    private void DrawAgehamaStrip(GoAppSession session)
+    private void DrawAgehamaStrip(GoAppSession session, int y = 540)
     {
-        var bounds = new Rectangle(1144, 540, 668, 56);
+        var bounds = new Rectangle(1144, y, 668, 56);
         FillRect(bounds, new Color(24, 31, 37));
         DrawRect(bounds, 1, new Color(70, 85, 94));
         DrawText("AGEHAMA", new Vector2(bounds.X + 20, bounds.Y + 16), new Color(180, 195, 195), 0.46f);

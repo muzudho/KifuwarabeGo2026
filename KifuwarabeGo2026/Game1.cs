@@ -43,7 +43,10 @@ public class Game1 : Game
             Exit();
         }
 
-        UpdateBoardSizeByKeyboard(keyboard);
+        if (_session.CurrentMode.Kind != GoAppModeKind.Playing)
+        {
+            UpdateBoardSizeByKeyboard(keyboard);
+        }
         UpdateMouseInput();
 
         base.Update(gameTime);
@@ -79,12 +82,11 @@ public class Game1 : Game
         if (_previousMouse.LeftButton == ButtonState.Released && mouse.LeftButton == ButtonState.Pressed)
         {
             var point = VirtualScreen.ToVirtualPoint(GraphicsDevice.Viewport, mouse.Position);
-            var boardSize = GoScreenRenderer.GetBoardSizeButtonHit(point);
-            if (boardSize.HasValue)
+            if (_session.CurrentMode.Kind != GoAppModeKind.Playing && GoScreenRenderer.GetBoardSizeButtonHit(point) is { } boardSize)
             {
-                _session.ChangeBoardSize(boardSize.Value);
+                _session.ChangeBoardSize(boardSize);
             }
-            else if (GoScreenRenderer.GetStartPlayingButtonHit(point))
+            else if (_session.CurrentMode.Kind != GoAppModeKind.Playing && GoScreenRenderer.GetStartPlayingButtonHit(point))
             {
                 _session.StartPlaying();
             }
