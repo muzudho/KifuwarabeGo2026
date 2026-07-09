@@ -6,6 +6,7 @@ using System.Collections.Generic;
 public sealed class GoBoard
 {
     private readonly GoStone[,] _stones;
+    private readonly ulong[,,] _zobristTable;
 
     public GoBoard(int size)
     {
@@ -16,9 +17,30 @@ public sealed class GoBoard
 
         Size = size;
         _stones = new GoStone[size, size];
+        _zobristTable = CreateZobristTable(size);
+    }
+
+    private GoBoard(GoBoard source)
+    {
+        Size = source.Size;
+        _stones = new GoStone[Size, Size];
+        _zobristTable = source._zobristTable;
+        CurrentHash = source.CurrentHash;
+
+        for (var y = 0; y < Size; y++)
+        {
+            for (var x = 0; x < Size; x++)
+            {
+                _stones[x, y] = source._stones[x, y];
+            }
+        }
     }
 
     public int Size { get; }
+
+    public ulong CurrentHash { get; private set; }
+
+    public GoBoard Clone() => new(this);
 
     public GoStone GetStone(int x, int y)
     {
@@ -44,7 +66,7 @@ public sealed class GoBoard
             return false;
         }
 
-        _stones[x, y] = stone;
+        SetStone(x, y, stone);
         var opponent = OppositeOf(stone);
         var removedStones = new List<(int X, int Y, GoStone Stone)>();
         foreach (var neighbor in EnumerateNeighbors(x, y))
@@ -64,7 +86,7 @@ public sealed class GoBoard
         var placedRen = CollectRen(x, y);
         if (!HasLiberty(placedRen))
         {
-            _stones[x, y] = GoStone.Empty;
+            SetStone(x, y, GoStone.Empty);
             RestoreStones(removedStones);
             capturedStones = 0;
             return false;
@@ -155,7 +177,7 @@ public sealed class GoBoard
         foreach (var point in ren)
         {
             removedStones.Add((point.X, point.Y, _stones[point.X, point.Y]));
-            _stones[point.X, point.Y] = GoStone.Empty;
+            SetStone(point.X, point.Y, GoStone.Empty);
         }
 
         return ren.Count;
@@ -165,8 +187,58 @@ public sealed class GoBoard
     {
         foreach (var stone in removedStones)
         {
-            _stones[stone.X, stone.Y] = stone.Stone;
+            SetStone(stone.X, stone.Y, stone.Stone);
         }
+    }
+
+    private void SetStone(int x, int y, GoStone stone)
+    {
+        var oldStone = _stones[x, y];
+        if (oldStone == stone)
+        {
+            return;
+        }
+
+        if (oldStone != GoStone.Empty)
+        {
+            CurrentHash ^= _zobristTable[x, y, StoneHashIndex(oldStone)];
+        }
+
+        _stones[x, y] = stone;
+
+        if (stone != GoStone.Empty)
+        {
+            CurrentHash ^= _zobristTable[x, y, StoneHashIndex(stone)];
+        }
+    }
+
+    private static int StoneHashIndex(GoStone stone) => stone == GoStone.Black ? 0 : 1;
+
+    private static ulong[,,] CreateZobristTable(int size)
+    {
+        var table = new ulong[size, size, 2];
+        var state = 0x9e3779b97f4a7c15UL ^ (ulong)size;
+        for (var y = 0; y < size; y++)
+        {
+            for (var x = 0; x < size; x++)
+            {
+                for (var stone = 0; stone < 2; stone++)
+                {
+                    table[x, y, stone] = NextRandomUlong(ref state);
+                }
+            }
+        }
+
+        return table;
+    }
+
+    private static ulong NextRandomUlong(ref ulong state)
+    {
+        state += 0x9e3779b97f4a7c15UL;
+        var value = state;
+        value = (value ^ (value >> 30)) * 0xbf58476d1ce4e5b9UL;
+        value = (value ^ (value >> 27)) * 0x94d049bb133111ebUL;
+        return value ^ (value >> 31);
     }
 
     private IEnumerable<(int X, int Y)> EnumerateNeighbors(int x, int y)

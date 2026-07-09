@@ -7,6 +7,7 @@ using System.Collections.Generic;
 public sealed class GoAppSession
 {
     private GoBoard _board;
+    private readonly HashSet<ulong> _positionHashes = new();
 
     private readonly Dictionary<GoAppModeKind, GoAppMode> _modes = new()
     {
@@ -21,6 +22,7 @@ public sealed class GoAppSession
     {
         CurrentMode = _modes[GoAppModeKind.Resting];
         _board = new GoBoard(BoardSize);
+        ResetPositionHistory();
     }
 
     public GoAppMode CurrentMode { get; private set; }
@@ -36,6 +38,10 @@ public sealed class GoAppSession
     public GoPoint? KoPoint { get; private set; }
 
     public int ConsecutivePasses { get; private set; }
+
+    public string GameOverReason { get; private set; } = "";
+
+    public GoStone? Winner { get; private set; }
 
     public void ChangeMode(GoAppModeKind modeKind)
     {
@@ -73,6 +79,37 @@ public sealed class GoAppSession
         return _board.GetStone(x, y);
     }
 
+    public bool IsSuperKoPoint(int x, int y)
+    {
+        if (CurrentMode.Kind != GoAppModeKind.Playing)
+        {
+            return false;
+        }
+
+        var trialBoard = _board.Clone();
+        return trialBoard.TryPlaceStone(x, y, CurrentTurn, KoPoint, out _, out _) &&
+            _positionHashes.Contains(trialBoard.CurrentHash);
+    }
+
+    public IEnumerable<GoPoint> EnumerateSuperKoPoints()
+    {
+        if (CurrentMode.Kind != GoAppModeKind.Playing)
+        {
+            yield break;
+        }
+
+        for (var y = 0; y < BoardSize; y++)
+        {
+            for (var x = 0; x < BoardSize; x++)
+            {
+                if (IsSuperKoPoint(x, y))
+                {
+                    yield return new GoPoint(x, y);
+                }
+            }
+        }
+    }
+
     /// <summary>
     /// 石を置けるか試すぜ（＾▽＾）
     /// </summary>
@@ -86,6 +123,7 @@ public sealed class GoAppSession
             return false;
         }
 
+        var placedBy = CurrentTurn;
         if (CurrentTurn == GoStone.Black)
         {
             BlackAgehama += capturedStones;
@@ -95,6 +133,17 @@ public sealed class GoAppSession
             WhiteAgehama += capturedStones;
         }
 
+        if (_positionHashes.Contains(_board.CurrentHash))
+        {
+            KoPoint = null;
+            ConsecutivePasses = 0;
+            Winner = OppositeOf(placedBy);
+            GameOverReason = $"{StoneName(placedBy)} SUPER KO LOSS";
+            ChangeMode(GoAppModeKind.GameOver);
+            return true;
+        }
+
+        _positionHashes.Add(_board.CurrentHash);
         KoPoint = nextKoPoint;
         ConsecutivePasses = 0;
         PassTurn();
@@ -113,6 +162,8 @@ public sealed class GoAppSession
         PassTurn();
         if (ConsecutivePasses >= 2)
         {
+            Winner = null;
+            GameOverReason = "TWO PASSES";
             ChangeMode(GoAppModeKind.GameOver);
         }
 
@@ -127,10 +178,23 @@ public sealed class GoAppSession
         WhiteAgehama = 0;
         KoPoint = null;
         ConsecutivePasses = 0;
+        Winner = null;
+        GameOverReason = "";
+        ResetPositionHistory();
     }
 
     private void PassTurn()
     {
         CurrentTurn = CurrentTurn == GoStone.Black ? GoStone.White : GoStone.Black;
     }
+
+    private void ResetPositionHistory()
+    {
+        _positionHashes.Clear();
+        _positionHashes.Add(_board.CurrentHash);
+    }
+
+    private static GoStone OppositeOf(GoStone stone) => stone == GoStone.Black ? GoStone.White : GoStone.Black;
+
+    private static string StoneName(GoStone stone) => stone == GoStone.Black ? "BLACK" : "WHITE";
 }

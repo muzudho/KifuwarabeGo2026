@@ -132,6 +132,7 @@ public sealed class GoScreenRenderer
         }
 
         DrawPlacedStones(session, start, cell);
+        DrawSuperKoMarks(session, start, cell);
         DrawKoMark(session, start, cell);
         DrawHoverStone(session, mousePoint, cell);
         DrawBoardFrameHighlights(boardOuter);
@@ -206,7 +207,14 @@ public sealed class GoScreenRenderer
         DrawText("GAME OVER", new Vector2(1144, 132), new Color(255, 230, 160), 0.9f);
 
         DrawText("GAME RESULT", new Vector2(1144, 262), new Color(180, 195, 195), 0.62f);
-        DrawInfoStrip(1144, 310, "END", "TWO PASSES", new Color(80, 48, 38), Color.White);
+        var result = string.IsNullOrWhiteSpace(session.GameOverReason) ? "GAME OVER" : session.GameOverReason;
+        DrawInfoStrip(1144, 310, "END", result, new Color(80, 48, 38), Color.White);
+
+        if (session.Winner is { } winner)
+        {
+            var winnerLabel = winner == GoStone.Black ? "BLACK WINS" : "WHITE WINS";
+            DrawText(winnerLabel, new Vector2(1144, 396), new Color(99, 223, 185), 0.62f);
+        }
 
         DrawText("FINAL AGEHAMA", new Vector2(1144, 446), new Color(180, 195, 195), 0.62f);
         DrawAgehamaStrip(session, 494);
@@ -314,7 +322,8 @@ public sealed class GoScreenRenderer
         if (session.CurrentMode.Kind != GoAppModeKind.Playing ||
             !TryGetBoardIntersection(mousePoint, session.BoardSize, out var intersection) ||
             session.GetStone(intersection.X, intersection.Y) != GoStone.Empty ||
-            (session.KoPoint is { } ko && ko.X == intersection.X && ko.Y == intersection.Y))
+            (session.KoPoint is { } ko && ko.X == intersection.X && ko.Y == intersection.Y) ||
+            session.IsSuperKoPoint(intersection.X, intersection.Y))
         {
             return;
         }
@@ -324,6 +333,23 @@ public sealed class GoScreenRenderer
         var black = session.CurrentTurn == GoStone.Black;
         DrawCircle(center, cell * 0.55f, black ? new Color(8, 10, 14, 95) : new Color(255, 250, 232, 110));
         DrawCircle(center, cell * 0.36f, black ? new Color(8, 10, 14, 90) : new Color(255, 250, 232, 95));
+    }
+
+    private void DrawSuperKoMarks(GoAppSession session, Vector2 start, float cell)
+    {
+        foreach (var point in session.EnumerateSuperKoPoints())
+        {
+            var center = BoardPoint(start, cell, point.X, point.Y);
+            var radius = Math.Max(15f, cell * 0.32f);
+            var bounds = new Rectangle((int)(center.X - radius), (int)(center.Y - radius), (int)(radius * 2), (int)(radius * 2));
+            FillRect(bounds, new Color(82, 39, 138, 198));
+            DrawRect(bounds, 2, new Color(235, 206, 255));
+
+            const string label = "S-KO";
+            var scale = cell < 55 ? 0.24f : 0.3f;
+            var size = _font.MeasureString(label) * scale;
+            DrawText(label, new Vector2(center.X - size.X / 2, center.Y - size.Y / 2), Color.White, scale);
+        }
     }
 
     private void DrawKoMark(GoAppSession session, Vector2 start, float cell)
