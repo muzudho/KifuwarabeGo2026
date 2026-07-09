@@ -57,6 +57,13 @@ public sealed class GoAppSession
 
     public string EngineErrorMessage { get; private set; } = "";
 
+    public bool CanAcceptHumanMove =>
+        CurrentMode.Kind == GoAppModeKind.Playing &&
+        IsEngineReady &&
+        !IsEngineThinking &&
+        string.IsNullOrWhiteSpace(EngineErrorMessage) &&
+        GetPlayerKind(CurrentTurn) == GoPlayerKind.Human;
+
     public void ChangeMode(GoAppModeKind modeKind)
     {
         CurrentMode = _modes[modeKind];
@@ -70,6 +77,14 @@ public sealed class GoAppSession
         }
 
         ChangeMode(GoAppModeKind.Playing);
+    }
+
+    public void CancelPlaying()
+    {
+        ChangeMode(GoAppModeKind.Resting);
+        IsEngineReady = true;
+        IsEngineThinking = false;
+        EngineErrorMessage = "";
     }
 
     public void ChangeBoardSize(int boardSize)

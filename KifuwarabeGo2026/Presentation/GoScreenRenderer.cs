@@ -39,7 +39,7 @@ public sealed class GoScreenRenderer
         DrawBackground();
         if (ShouldShowEnginePreparing(session))
         {
-            DrawEnginePreparing();
+            DrawEnginePreparing(mousePoint);
         }
         else
         {
@@ -53,8 +53,7 @@ public sealed class GoScreenRenderer
 
     private static bool ShouldShowEnginePreparing(GoAppSession session) =>
         session.CurrentMode.Kind == GoAppModeKind.Playing &&
-        !session.IsEngineReady &&
-        string.IsNullOrWhiteSpace(session.EngineErrorMessage);
+        !session.CanAcceptHumanMove;
 
     public static int? GetBoardSizeButtonHit(Point point, GoAppModeKind modeKind)
     {
@@ -82,6 +81,8 @@ public sealed class GoScreenRenderer
     public static bool GetPassButtonHit(Point point) => PassButtonBounds.Contains(point);
 
     public static bool GetResignButtonHit(Point point) => ResignButtonBounds.Contains(point);
+
+    public static bool GetCancelPlayingButtonHit(Point point) => CancelPlayingButtonBounds.Contains(point);
 
     public static bool TryGetBoardIntersection(Point point, int boardSize, out Point intersection)
     {
@@ -158,18 +159,20 @@ public sealed class GoScreenRenderer
         DrawBoardFrameHighlights(boardOuter);
     }
 
-    private void DrawEnginePreparing()
+    private void DrawEnginePreparing(Point mousePoint)
     {
         var area = new Rectangle(54, 50, 980, 980);
         FillRect(new Rectangle(area.X + 18, area.Y + 22, area.Width, area.Height), new Color(0, 0, 0, 125));
         FillRect(area, new Color(15, 19, 25));
         DrawRect(area, 2, new Color(82, 111, 114));
 
-        const string label = "準備中";
+        const string label = "コンピューター準備中";
         const float scale = 1.3f;
         var size = _font.MeasureString(label) * scale;
-        var position = new Vector2(area.Center.X - size.X / 2, area.Center.Y - size.Y / 2);
+        var position = new Vector2(area.Center.X - size.X / 2, area.Center.Y - size.Y / 2 - 56);
         DrawText(label, position, new Color(244, 238, 218), scale);
+
+        DrawCommandButton(CancelPlayingButtonBounds, "対局をキャンセル", false, mousePoint);
     }
 
     private void DrawSidePanel(GoAppSession session, Point mousePoint)
@@ -310,6 +313,8 @@ public sealed class GoScreenRenderer
     private static Rectangle PassButtonBounds => new(1144, 872, 320, 72);
 
     private static Rectangle ResignButtonBounds => new(1492, 872, 320, 72);
+
+    private static Rectangle CancelPlayingButtonBounds => new(344, 570, 400, 72);
 
     private static GoPlayerKind? GetPlayerKindButtonHit(Point point, int y)
     {

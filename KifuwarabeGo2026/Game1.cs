@@ -18,13 +18,14 @@ public class Game1 : Game
 {
     private readonly GraphicsDeviceManager _graphics;
     private readonly GoAppSession _session = new();
-    private readonly CancellationTokenSource _engineCancellation = new();
+    private CancellationTokenSource _engineCancellation = new();
     private GoScreenRenderer? _renderer;
     private SoundEffect? _placeStoneSound;
     private MouseState _previousMouse;
     private GtpEngineClient? _gtpEngine;
-    private Task<EngineCommandResult>? _pendingEngineCommand;
+    private Task<EngineCommandCompletion>? _pendingEngineCommand;
     private readonly Queue<Func<CancellationToken, Task<EngineCommandResult>>> _engineCommandQueue = new();
+    private int _engineCommandGeneration;
 
     public Game1()
     {
@@ -112,6 +113,11 @@ public class Game1 : Game
             {
                 _session.SetPlayerKind(Domain.GoStone.White, whitePlayerKind);
             }
+            else if (ShouldShowEnginePreparing() && GoScreenRenderer.GetCancelPlayingButtonHit(point))
+            {
+                CancelGtpGame();
+                _session.CancelPlaying();
+            }
             else if (_session.CurrentMode.Kind == GoAppModeKind.Playing && !CanAcceptHumanMove())
             {
                 // Engine turns and engine setup are handled from Update().
@@ -158,11 +164,11 @@ public class Game1 : Game
         base.Dispose(disposing);
     }
 
-    private bool CanAcceptHumanMove() =>
+    private bool CanAcceptHumanMove() => _session.CanAcceptHumanMove;
+
+    private bool ShouldShowEnginePreparing() =>
         _session.CurrentMode.Kind == GoAppModeKind.Playing &&
-        _session.IsEngineReady &&
-        string.IsNullOrWhiteSpace(_session.EngineErrorMessage) &&
-        _session.GetPlayerKind(_session.CurrentTurn) == GoPlayerKind.Human;
+        !_session.CanAcceptHumanMove;
 
     private void StartGtpGameIfNeeded()
     {
@@ -250,15 +256,17 @@ public class Game1 : Game
     {
         _session.ClearEngineError();
         _session.SetEngineThinking(true);
+        var generation = _engineCommandGeneration;
+        var cancellationToken = _engineCancellation.Token;
         _pendingEngineCommand = Task.Run(async () =>
         {
             try
             {
-                return await command(_engineCancellation.Token);
+                return new EngineCommandCompletion(await command(cancellationToken), generation);
             }
             catch (Exception ex)
             {
-                return EngineCommandResult.Failure(ex.Message);
+                return new EngineCommandCompletion(EngineCommandResult.Failure(ex.Message), generation);
             }
         });
     }
@@ -271,7 +279,14 @@ public class Game1 : Game
         }
 
         _pendingEngineCommand = null;
-        var result = completedCommand.GetAwaiter().GetResult();
+        var completion = completedCommand.GetAwaiter().GetResult();
+        if (completion.Generation != _engineCommandGeneration)
+        {
+            StartQueuedEngineCommandIfNeeded();
+            return;
+        }
+
+        var result = completion.Result;
         _session.SetEngineThinking(false);
         if (result.ErrorMessage is not null)
         {
@@ -328,6 +343,33 @@ public class Game1 : Game
     private bool HasComputerPlayer() =>
         _session.BlackPlayerKind == GoPlayerKind.Computer || _session.WhitePlayerKind == GoPlayerKind.Computer;
 
+    private void CancelGtpGame()
+    {
+        _engineCommandGeneration++;
+        _engineCommandQueue.Clear();
+        _pendingEngineCommand = null;
+        _engineCancellation.Cancel();
+        _engineCancellation.Dispose();
+        _engineCancellation = new CancellationTokenSource();
+
+        var engine = _gtpEngine;
+        _gtpEngine = null;
+        if (engine is not null)
+        {
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await engine.DisposeAsync();
+                }
+                catch
+                {
+                    // Cancellation should return the GUI to setup even if the engine process is already gone.
+                }
+            });
+        }
+    }
+
     private static string FormatColor(GoStone stone) => stone == GoStone.Black ? "black" : "white";
 
     private static GtpEngineSettings CreateDefaultEngineSettings()
@@ -351,6 +393,8 @@ public class Game1 : Game
             $"run --project \"{engineProject}\"",
             EnableGtpLog: true);
     }
+
+    private sealed record EngineCommandCompletion(EngineCommandResult Result, int Generation);
 
     private sealed record EngineCommandResult(string? MoveText, string? ErrorMessage, bool MakesEngineReady = false)
     {
