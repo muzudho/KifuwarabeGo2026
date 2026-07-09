@@ -1,20 +1,30 @@
 namespace KifuwarabeGo2026;
 
 using KifuwarabeGo2026.Application;
+using KifuwarabeGo2026.Domain;
+using KifuwarabeGo2026.Gtp;
 using KifuwarabeGo2026.Presentation;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 
 public class Game1 : Game
 {
     private readonly GraphicsDeviceManager _graphics;
     private readonly GoAppSession _session = new();
+    private readonly CancellationTokenSource _engineCancellation = new();
     private GoScreenRenderer? _renderer;
     private SoundEffect? _placeStoneSound;
     private MouseState _previousMouse;
+    private GtpEngineClient? _gtpEngine;
+    private Task<EngineCommandResult>? _pendingEngineCommand;
+    private readonly Queue<Func<CancellationToken, Task<EngineCommandResult>>> _engineCommandQueue = new();
 
     public Game1()
     {
@@ -42,6 +52,9 @@ public class Game1 : Game
         {
             Exit();
         }
+
+        CompletePendingEngineCommand();
+        RequestComputerMoveIfReady();
 
         if (_session.CurrentMode.Kind != GoAppModeKind.Playing)
         {
@@ -89,6 +102,7 @@ public class Game1 : Game
             else if (_session.CurrentMode.Kind != GoAppModeKind.Playing && GoScreenRenderer.GetStartPlayingButtonHit(point, _session.CurrentMode.Kind))
             {
                 _session.StartPlaying();
+                StartGtpGameIfNeeded();
             }
             else if (_session.CurrentMode.Kind != GoAppModeKind.Playing && GoScreenRenderer.GetBlackPlayerKindButtonHit(point) is { } blackPlayerKind)
             {
@@ -98,11 +112,17 @@ public class Game1 : Game
             {
                 _session.SetPlayerKind(Domain.GoStone.White, whitePlayerKind);
             }
+            else if (_session.CurrentMode.Kind == GoAppModeKind.Playing && !CanAcceptHumanMove())
+            {
+                // Engine turns and engine setup are handled from Update().
+            }
             else if (GoScreenRenderer.GetPassButtonHit(point))
             {
+                var passedBy = _session.CurrentTurn;
                 if (_session.Pass())
                 {
                     _placeStoneSound?.Play(0.45f, 0.25f, 0f);
+                    SyncHumanPassIfNeeded(passedBy);
                 }
             }
             else if (GoScreenRenderer.GetResignButtonHit(point))
@@ -114,14 +134,233 @@ public class Game1 : Game
             }
             else if (GoScreenRenderer.TryGetBoardIntersection(point, _session.BoardSize, out var intersection))
             {
+                var placedBy = _session.CurrentTurn;
                 if (_session.TryPlaceStone(intersection.X, intersection.Y))
                 {
                     _placeStoneSound?.Play();
+                    SyncHumanMoveIfNeeded(placedBy, new GoPoint(intersection.X, intersection.Y));
                 }
             }
         }
 
         _previousMouse = mouse;
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _engineCancellation.Cancel();
+            _gtpEngine?.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            _engineCancellation.Dispose();
+        }
+
+        base.Dispose(disposing);
+    }
+
+    private bool CanAcceptHumanMove() =>
+        _session.CurrentMode.Kind == GoAppModeKind.Playing &&
+        _session.IsEngineReady &&
+        string.IsNullOrWhiteSpace(_session.EngineErrorMessage) &&
+        _session.GetPlayerKind(_session.CurrentTurn) == GoPlayerKind.Human;
+
+    private void StartGtpGameIfNeeded()
+    {
+        if (!HasComputerPlayer())
+        {
+            _session.SetEngineReady(true);
+            return;
+        }
+
+        _session.SetEngineReady(false);
+        _gtpEngine ??= new GtpEngineClient(CreateDefaultEngineSettings(), TimeSpan.FromSeconds(10));
+        BeginEngineCommand(async cancellationToken =>
+        {
+            await _gtpEngine.StartAsync(cancellationToken);
+            await _gtpEngine.SendCommandExpectSuccessAsync($"boardsize {_session.BoardSize}", cancellationToken);
+            await _gtpEngine.SendCommandExpectSuccessAsync("clear_board", cancellationToken);
+            return EngineCommandResult.EngineReady();
+        });
+    }
+
+    private void SyncHumanMoveIfNeeded(GoStone stone, GoPoint point)
+    {
+        if (!HasComputerPlayer() || _gtpEngine is null)
+        {
+            return;
+        }
+
+        var color = FormatColor(stone);
+        var vertex = GtpCoordinate.FormatVertex(point, _session.BoardSize);
+        BeginEngineCommand(async cancellationToken =>
+        {
+            await _gtpEngine.SendCommandExpectSuccessAsync($"play {color} {vertex}", cancellationToken);
+            return EngineCommandResult.Success();
+        });
+    }
+
+    private void SyncHumanPassIfNeeded(GoStone stone)
+    {
+        if (!HasComputerPlayer() || _gtpEngine is null)
+        {
+            return;
+        }
+
+        var color = FormatColor(stone);
+        BeginEngineCommand(async cancellationToken =>
+        {
+            await _gtpEngine.SendCommandExpectSuccessAsync($"play {color} pass", cancellationToken);
+            return EngineCommandResult.Success();
+        });
+    }
+
+    private void RequestComputerMoveIfReady()
+    {
+        if (_pendingEngineCommand is not null ||
+            _gtpEngine is null ||
+            _session.CurrentMode.Kind != GoAppModeKind.Playing ||
+            _session.IsEngineThinking ||
+            !string.IsNullOrWhiteSpace(_session.EngineErrorMessage) ||
+            _session.GetPlayerKind(_session.CurrentTurn) != GoPlayerKind.Computer)
+        {
+            return;
+        }
+
+        var color = FormatColor(_session.CurrentTurn);
+        BeginEngineCommand(async cancellationToken =>
+        {
+            var response = await _gtpEngine.SendCommandAsync($"genmove {color}", cancellationToken);
+            response.ThrowIfError($"genmove {color}");
+            return EngineCommandResult.EngineMove(response.Payload);
+        });
+    }
+
+    private void BeginEngineCommand(Func<CancellationToken, Task<EngineCommandResult>> command)
+    {
+        if (_pendingEngineCommand is not null)
+        {
+            _engineCommandQueue.Enqueue(command);
+            return;
+        }
+
+        StartEngineCommand(command);
+    }
+
+    private void StartEngineCommand(Func<CancellationToken, Task<EngineCommandResult>> command)
+    {
+        _session.ClearEngineError();
+        _session.SetEngineThinking(true);
+        _pendingEngineCommand = Task.Run(async () =>
+        {
+            try
+            {
+                return await command(_engineCancellation.Token);
+            }
+            catch (Exception ex)
+            {
+                return EngineCommandResult.Failure(ex.Message);
+            }
+        });
+    }
+
+    private void CompletePendingEngineCommand()
+    {
+        if (_pendingEngineCommand is not { IsCompleted: true } completedCommand)
+        {
+            return;
+        }
+
+        _pendingEngineCommand = null;
+        var result = completedCommand.GetAwaiter().GetResult();
+        _session.SetEngineThinking(false);
+        if (result.ErrorMessage is not null)
+        {
+            _session.SetEngineError(result.ErrorMessage);
+            return;
+        }
+
+        if (result.MakesEngineReady)
+        {
+            _session.SetEngineReady(true);
+        }
+
+        if (result.MoveText is null)
+        {
+            StartQueuedEngineCommandIfNeeded();
+            return;
+        }
+
+        if (GtpCoordinate.IsPass(result.MoveText))
+        {
+            if (_session.Pass())
+            {
+                _placeStoneSound?.Play(0.45f, 0.25f, 0f);
+            }
+
+            StartQueuedEngineCommandIfNeeded();
+            return;
+        }
+
+        if (!GtpCoordinate.TryParseVertex(result.MoveText, _session.BoardSize, out var point))
+        {
+            _session.SetEngineError($"Invalid GTP vertex: {result.MoveText}");
+            return;
+        }
+
+        if (!_session.TryPlaceStone(point.X, point.Y))
+        {
+            _session.SetEngineError($"Illegal GTP move: {result.MoveText}");
+            return;
+        }
+
+        _placeStoneSound?.Play();
+        StartQueuedEngineCommandIfNeeded();
+    }
+
+    private void StartQueuedEngineCommandIfNeeded()
+    {
+        if (_pendingEngineCommand is null && _engineCommandQueue.Count > 0)
+        {
+            StartEngineCommand(_engineCommandQueue.Dequeue());
+        }
+    }
+
+    private bool HasComputerPlayer() =>
+        _session.BlackPlayerKind == GoPlayerKind.Computer || _session.WhitePlayerKind == GoPlayerKind.Computer;
+
+    private static string FormatColor(GoStone stone) => stone == GoStone.Black ? "black" : "white";
+
+    private static GtpEngineSettings CreateDefaultEngineSettings()
+    {
+        var baseDirectory = AppContext.BaseDirectory;
+        var configuration = new DirectoryInfo(baseDirectory).Parent?.Name ?? "Debug";
+        var repositoryRoot = Path.GetFullPath(Path.Combine(baseDirectory, "..", "..", "..", ".."));
+        var executableName = OperatingSystem.IsWindows() ? "KifuwarabeGo2026.Engine.exe" : "KifuwarabeGo2026.Engine";
+        var engineDirectory = Path.Combine(repositoryRoot, "KifuwarabeGo2026.Engine", "bin", configuration, "net8.0");
+        var engineExecutable = Path.Combine(engineDirectory, executableName);
+        if (File.Exists(engineExecutable))
+        {
+            return new GtpEngineSettings("Kifuwarabe Random GTP", engineExecutable, engineDirectory, "", EnableGtpLog: true);
+        }
+
+        var engineProject = Path.Combine(repositoryRoot, "KifuwarabeGo2026.Engine", "KifuwarabeGo2026.Engine.csproj");
+        return new GtpEngineSettings(
+            "Kifuwarabe Random GTP",
+            "dotnet",
+            repositoryRoot,
+            $"run --project \"{engineProject}\"",
+            EnableGtpLog: true);
+    }
+
+    private sealed record EngineCommandResult(string? MoveText, string? ErrorMessage, bool MakesEngineReady = false)
+    {
+        public static EngineCommandResult Success() => new(null, null);
+
+        public static EngineCommandResult EngineReady() => new(null, null, MakesEngineReady: true);
+
+        public static EngineCommandResult EngineMove(string moveText) => new(moveText, null);
+
+        public static EngineCommandResult Failure(string errorMessage) => new(null, errorMessage);
     }
 
     private static SoundEffect CreatePlaceStoneSound()

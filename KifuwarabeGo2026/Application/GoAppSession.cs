@@ -51,6 +51,12 @@ public sealed class GoAppSession
 
     public GoStone? Winner { get; private set; }
 
+    public bool IsEngineThinking { get; private set; }
+
+    public bool IsEngineReady { get; private set; } = true;
+
+    public string EngineErrorMessage { get; private set; } = "";
+
     public void ChangeMode(GoAppModeKind modeKind)
     {
         CurrentMode = _modes[modeKind];
@@ -105,6 +111,27 @@ public sealed class GoAppSession
         GoStone.White => WhitePlayerKind,
         _ => throw new ArgumentOutOfRangeException(nameof(stone), stone, "Player kind can be read only for black or white."),
     };
+
+    public void SetEngineThinking(bool isThinking)
+    {
+        IsEngineThinking = isThinking;
+    }
+
+    public void SetEngineReady(bool isReady)
+    {
+        IsEngineReady = isReady;
+    }
+
+    public void ClearEngineError()
+    {
+        EngineErrorMessage = "";
+    }
+
+    public void SetEngineError(string message)
+    {
+        EngineErrorMessage = message;
+        IsEngineThinking = false;
+    }
 
     public GoStone GetStone(int x, int y)
     {
@@ -227,6 +254,7 @@ public sealed class GoAppSession
         ConsecutivePasses = 0;
         Winner = null;
         GameOverReason = "";
+        IsEngineReady = true;
         ResetPositionHistory();
     }
 
