@@ -114,6 +114,12 @@ public sealed class GoAppSession
         EngineErrorMessage = "";
     }
 
+    public void ReturnToSetup()
+    {
+        ClearBoard();
+        ChangeMode(GoAppModeKind.Resting);
+    }
+
     public void ChangeBoardSize(int boardSize)
     {
         if (boardSize is not (9 or 13 or 19))

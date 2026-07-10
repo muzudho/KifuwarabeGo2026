@@ -45,7 +45,12 @@ public sealed class GoScreenRenderer
 
     public static int? GetBoardSizeButtonHit(Point point, GoAppModeKind modeKind)
     {
-        var y = modeKind == GoAppModeKind.GameOver ? GameOverBoardSizeButtonY : SetupBoardSizeButtonY;
+        if (modeKind == GoAppModeKind.GameOver)
+        {
+            return null;
+        }
+
+        var y = SetupBoardSizeButtonY;
         if (BoardSizeButtonBounds(0, y).Contains(point))
         {
             return 9;
@@ -110,7 +115,9 @@ public sealed class GoScreenRenderer
     public static bool GetSaveTournamentRulesButtonHit(Point point) => SaveTournamentRulesButtonBounds.Contains(point);
 
     public static bool GetStartPlayingButtonHit(Point point, GoAppModeKind modeKind) =>
-        (modeKind == GoAppModeKind.GameOver ? NewGameButtonBounds : StartPlayingButtonBounds).Contains(point);
+        modeKind != GoAppModeKind.GameOver && StartPlayingButtonBounds.Contains(point);
+
+    public static bool GetReturnToSetupButtonHit(Point point) => ReturnToSetupButtonBounds.Contains(point);
 
     public static GoPlayerKind? GetBlackPlayerKindButtonHit(Point point) => GetPlayerKindButtonHit(point, BlackPlayerKindButtonY);
 
@@ -286,26 +293,28 @@ public sealed class GoScreenRenderer
     {
         DrawText("GAME OVER", new Vector2(1144, 132), new Color(255, 230, 160), 0.9f);
 
-        DrawText("GAME RESULT", new Vector2(1144, 262), new Color(180, 195, 195), 0.62f);
         var result = string.IsNullOrWhiteSpace(session.GameOverReason) ? "GAME OVER" : session.GameOverReason;
-        DrawInfoStrip(1144, 310, "END", result, new Color(80, 48, 38), Color.White);
+        var winnerLabel = session.Winner is { } winner
+            ? winner == GoStone.Black ? "BLACK WINS" : "WHITE WINS"
+            : "NO WINNER";
 
-        if (session.Winner is { } winner)
-        {
-            var winnerLabel = winner == GoStone.Black ? "BLACK WINS" : "WHITE WINS";
-            DrawText(winnerLabel, new Vector2(1144, 396), new Color(99, 223, 185), 0.62f);
-        }
+        var resultSection = new Rectangle(1144, 236, 668, 176);
+        DrawResultSection(resultSection, "RESULT");
+        DrawResultRow(new Rectangle(1164, 290, 628, 44), "END", result, new Color(80, 48, 38), Color.White);
+        DrawResultRow(new Rectangle(1164, 346, 628, 44), "WINNER", winnerLabel, new Color(39, 68, 65), new Color(99, 223, 185));
 
-        DrawText("FINAL STONES", new Vector2(1144, 446), new Color(180, 195, 195), 0.62f);
+        var scoreSection = new Rectangle(1144, 436, 668, 236);
+        DrawResultSection(scoreSection, "SCORE");
         DrawStoneCountStrip(session, 494);
+        DrawAgehamaStrip(session, 604);
 
-        DrawText("FINAL AGEHAMA", new Vector2(1144, 584), new Color(180, 195, 195), 0.62f);
-        DrawAgehamaStrip(session, 632);
+        var tournamentSection = new Rectangle(1144, 696, 668, 134);
+        DrawResultSection(tournamentSection, "TOURNAMENT");
+        DrawResultRow(new Rectangle(1164, 750, 628, 56), "RULES", session.TournamentDisplayName, new Color(39, 68, 65), Color.White);
 
-        DrawText("BOARD SIZE", new Vector2(1144, 708), new Color(180, 195, 195), 0.62f);
-        DrawBoardSizeButtons(session.BoardSize, mousePoint, GameOverBoardSizeButtonY);
-
-        DrawCommandButton(NewGameButtonBounds, "NEW GAME", false, mousePoint);
+        var actionSection = new Rectangle(1144, 854, 668, 126);
+        DrawResultSection(actionSection, "ACTION");
+        DrawCommandButton(ReturnToSetupButtonBounds, "RULE SETUP", false, mousePoint);
     }
 
     private void DrawBoardSizeButtons(int boardSize, Point mousePoint, int y)
@@ -361,8 +370,6 @@ public sealed class GoScreenRenderer
 
     private const int SetupBoardSizeButtonY = 476;
 
-    private const int GameOverBoardSizeButtonY = 756;
-
     private const int BlackPlayerKindButtonY = 710;
 
     private const int WhitePlayerKindButtonY = 808;
@@ -385,7 +392,7 @@ public sealed class GoScreenRenderer
 
     private static Rectangle SaveTournamentRulesButtonBounds => new(1144, 920, 320, 56);
 
-    private static Rectangle NewGameButtonBounds => new(1492, 874, 320, 56);
+    private static Rectangle ReturnToSetupButtonBounds => new(1318, 910, 320, 56);
 
     private static Rectangle PassButtonBounds => new(1144, 920, 320, 72);
 
@@ -476,6 +483,24 @@ public sealed class GoScreenRenderer
         DrawRect(new Rectangle(x + 18, y + 16, 132, 40), 1, new Color(120, 130, 126));
         DrawText(label, new Vector2(x + 38, y + 25), chipTextColor, 0.46f);
         DrawText(value, new Vector2(x + 184, y + 20), Color.White, 0.62f);
+    }
+
+    private void DrawResultSection(Rectangle bounds, string title)
+    {
+        FillRect(bounds, new Color(17, 22, 29, 215));
+        DrawRect(bounds, 1, new Color(58, 78, 86));
+        DrawText(title, new Vector2(bounds.X + 18, bounds.Y + 14), new Color(180, 195, 195), 0.5f);
+        DrawLine(new Vector2(bounds.X + 18, bounds.Y + 48), new Vector2(bounds.Right - 18, bounds.Y + 48), 1, new Color(64, 82, 90));
+    }
+
+    private void DrawResultRow(Rectangle bounds, string label, string value, Color chipColor, Color valueColor)
+    {
+        FillRect(bounds, new Color(24, 31, 37));
+        DrawRect(bounds, 1, new Color(70, 85, 94));
+        FillRect(new Rectangle(bounds.X + 14, bounds.Y + 10, 126, bounds.Height - 20), chipColor);
+        DrawRect(new Rectangle(bounds.X + 14, bounds.Y + 10, 126, bounds.Height - 20), 1, new Color(120, 130, 126));
+        DrawText(label, new Vector2(bounds.X + 32, bounds.Y + 14), Color.White, 0.38f);
+        DrawFittedText(value, new Rectangle(bounds.X + 164, bounds.Y + 6, bounds.Width - 182, bounds.Height - 12), valueColor, 0.58f);
     }
 
     private void DrawAgehamaStrip(GoAppSession session, int y = 540)
@@ -704,6 +729,14 @@ public sealed class GoScreenRenderer
     {
         _spriteBatch.DrawString(_font, text, position + new Vector2(2, 2), new Color(0, 0, 0, 125), 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
         _spriteBatch.DrawString(_font, text, position, color, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+    }
+
+    private void DrawFittedText(string text, Rectangle bounds, Color color, float scale)
+    {
+        var measured = _font.MeasureString(text);
+        var fittedScale = MathF.Min(scale, MathF.Min(bounds.Width / Math.Max(1f, measured.X), bounds.Height / Math.Max(1f, measured.Y)));
+        var size = measured * fittedScale;
+        DrawText(text, new Vector2(bounds.X, bounds.Center.Y - size.Y / 2), color, fittedScale);
     }
 
     private Texture2D CreateTexture(int width, int height, Func<int, int, Color> colorFactory)

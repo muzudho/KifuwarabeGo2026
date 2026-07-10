@@ -111,40 +111,45 @@ public class Game1 : Game
         if (_previousMouse.LeftButton == ButtonState.Released && mouse.LeftButton == ButtonState.Pressed)
         {
             var point = VirtualScreen.ToVirtualPoint(GraphicsDevice.Viewport, mouse.Position);
-            if (_session.CurrentMode.Kind != GoAppModeKind.Playing && GoScreenRenderer.GetTournamentRulesButtonHit(point, _session.TournamentRulesList.Count) is { } tournamentRulesIndex)
+            var isSetupMode = _session.CurrentMode.Kind != GoAppModeKind.Playing && _session.CurrentMode.Kind != GoAppModeKind.GameOver;
+            if (isSetupMode && GoScreenRenderer.GetTournamentRulesButtonHit(point, _session.TournamentRulesList.Count) is { } tournamentRulesIndex)
             {
                 _session.SelectTournamentRules(tournamentRulesIndex);
             }
-            else if (_session.CurrentMode.Kind != GoAppModeKind.Playing && GoScreenRenderer.GetRuleKindButtonHit(point) is { } ruleKind)
+            else if (isSetupMode && GoScreenRenderer.GetRuleKindButtonHit(point) is { } ruleKind)
             {
                 _session.ChangeRuleKind(ruleKind);
             }
-            else if (_session.CurrentMode.Kind != GoAppModeKind.Playing && GoScreenRenderer.GetBoardSizeButtonHit(point, _session.CurrentMode.Kind) is { } boardSize)
+            else if (isSetupMode && GoScreenRenderer.GetBoardSizeButtonHit(point, _session.CurrentMode.Kind) is { } boardSize)
             {
                 _session.ChangeBoardSize(boardSize);
             }
-            else if (_session.CurrentMode.Kind != GoAppModeKind.Playing && GoScreenRenderer.GetKomiStepButtonHit(point) is { } komiStep)
+            else if (isSetupMode && GoScreenRenderer.GetKomiStepButtonHit(point) is { } komiStep)
             {
                 _session.ChangeKomi(komiStep);
             }
-            else if (_session.CurrentMode.Kind != GoAppModeKind.Playing && GoScreenRenderer.GetMainTimeStepButtonHit(point) is { } mainTimeStep)
+            else if (isSetupMode && GoScreenRenderer.GetMainTimeStepButtonHit(point) is { } mainTimeStep)
             {
                 _session.ChangeMainTime(mainTimeStep);
             }
-            else if (_session.CurrentMode.Kind != GoAppModeKind.Playing && GoScreenRenderer.GetSaveTournamentRulesButtonHit(point))
+            else if (isSetupMode && GoScreenRenderer.GetSaveTournamentRulesButtonHit(point))
             {
                 SaveCurrentTournamentRules();
             }
-            else if (_session.CurrentMode.Kind != GoAppModeKind.Playing && GoScreenRenderer.GetStartPlayingButtonHit(point, _session.CurrentMode.Kind))
+            else if (_session.CurrentMode.Kind == GoAppModeKind.GameOver && GoScreenRenderer.GetReturnToSetupButtonHit(point))
+            {
+                _session.ReturnToSetup();
+            }
+            else if (isSetupMode && GoScreenRenderer.GetStartPlayingButtonHit(point, _session.CurrentMode.Kind))
             {
                 _session.StartPlaying();
                 StartGtpGameIfNeeded();
             }
-            else if (_session.CurrentMode.Kind != GoAppModeKind.Playing && GoScreenRenderer.GetBlackPlayerKindButtonHit(point) is { } blackPlayerKind)
+            else if (isSetupMode && GoScreenRenderer.GetBlackPlayerKindButtonHit(point) is { } blackPlayerKind)
             {
                 _session.SetPlayerKind(Domain.GoStone.Black, blackPlayerKind);
             }
-            else if (_session.CurrentMode.Kind != GoAppModeKind.Playing && GoScreenRenderer.GetWhitePlayerKindButtonHit(point) is { } whitePlayerKind)
+            else if (isSetupMode && GoScreenRenderer.GetWhitePlayerKindButtonHit(point) is { } whitePlayerKind)
             {
                 _session.SetPlayerKind(Domain.GoStone.White, whitePlayerKind);
             }
