@@ -136,6 +136,7 @@ public class Game1 : Game
                 if (_session.Resign())
                 {
                     _placeStoneSound?.Play(0.45f, -0.25f, 0f);
+                    StopGtpGame();
                 }
             }
             else if (GoScreenRenderer.TryGetBoardIntersection(point, _session.BoardSize, out var intersection))
@@ -199,10 +200,11 @@ public class Game1 : Game
 
         var color = FormatColor(stone);
         var vertex = GtpCoordinate.FormatVertex(point, _session.BoardSize);
+        var closeEngineAfterSync = _session.CurrentMode.Kind == GoAppModeKind.GameOver;
         BeginEngineCommand(async cancellationToken =>
         {
             await _gtpEngine.SendCommandExpectSuccessAsync($"play {color} {vertex}", cancellationToken);
-            return EngineCommandResult.Success();
+            return EngineCommandResult.Success(closeEngineAfterSync);
         });
     }
 
@@ -214,10 +216,11 @@ public class Game1 : Game
         }
 
         var color = FormatColor(stone);
+        var closeEngineAfterSync = _session.CurrentMode.Kind == GoAppModeKind.GameOver;
         BeginEngineCommand(async cancellationToken =>
         {
             await _gtpEngine.SendCommandExpectSuccessAsync($"play {color} pass", cancellationToken);
-            return EngineCommandResult.Success();
+            return EngineCommandResult.Success(closeEngineAfterSync);
         });
     }
 
@@ -302,6 +305,12 @@ public class Game1 : Game
 
         if (result.MoveText is null)
         {
+            if (result.ClosesEngine)
+            {
+                StopGtpGame();
+                return;
+            }
+
             StartQueuedEngineCommandIfNeeded();
             return;
         }
@@ -313,6 +322,7 @@ public class Game1 : Game
                 _placeStoneSound?.Play(0.45f, 0.25f, 0f);
             }
 
+            StopGtpGameIfGameOver();
             StartQueuedEngineCommandIfNeeded();
             return;
         }
@@ -330,6 +340,7 @@ public class Game1 : Game
         }
 
         _placeStoneSound?.Play();
+        StopGtpGameIfGameOver();
         StartQueuedEngineCommandIfNeeded();
     }
 
@@ -345,6 +356,19 @@ public class Game1 : Game
         _session.BlackPlayerKind == GoPlayerKind.Computer || _session.WhitePlayerKind == GoPlayerKind.Computer;
 
     private void CancelGtpGame()
+    {
+        StopGtpGame();
+    }
+
+    private void StopGtpGameIfGameOver()
+    {
+        if (_session.CurrentMode.Kind == GoAppModeKind.GameOver)
+        {
+            StopGtpGame();
+        }
+    }
+
+    private void StopGtpGame()
     {
         _engineCommandGeneration++;
         _engineCommandQueue.Clear();
@@ -399,9 +423,9 @@ public class Game1 : Game
 
     private sealed record EngineCommandCompletion(EngineCommandResult Result, int Generation);
 
-    private sealed record EngineCommandResult(string? MoveText, string? ErrorMessage, bool MakesEngineReady = false)
+    private sealed record EngineCommandResult(string? MoveText, string? ErrorMessage, bool MakesEngineReady = false, bool ClosesEngine = false)
     {
-        public static EngineCommandResult Success() => new(null, null);
+        public static EngineCommandResult Success(bool closesEngine = false) => new(null, null, ClosesEngine: closesEngine);
 
         public static EngineCommandResult EngineReady() => new(null, null, MakesEngineReady: true);
 

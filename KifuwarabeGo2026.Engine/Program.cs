@@ -20,7 +20,7 @@ internal sealed class GtpEngine
         string? line;
         while ((line = input.ReadLine()) is not null)
         {
-            var commandLine = line.Trim();
+            var commandLine = line.Trim().TrimStart('\uFEFF');
             if (commandLine.Length == 0)
             {
                 continue;

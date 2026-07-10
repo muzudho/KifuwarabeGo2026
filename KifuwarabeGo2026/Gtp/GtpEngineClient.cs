@@ -36,8 +36,8 @@ public sealed class GtpEngineClient : IAsyncDisposable
             RedirectStandardOutput = true,
             UseShellExecute = false,
             CreateNoWindow = true,
-            StandardInputEncoding = Encoding.UTF8,
-            StandardOutputEncoding = Encoding.UTF8,
+            StandardInputEncoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false),
+            StandardOutputEncoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false),
         };
 
         _process = Process.Start(startInfo) ?? throw new InvalidOperationException($"Could not start GTP engine: {_settings.ExecutablePath}");
