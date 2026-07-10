@@ -39,7 +39,7 @@ public sealed class GoScreenRenderer
         DrawBackground();
         if (ShouldShowEnginePreparing(session))
         {
-            DrawEnginePreparing(mousePoint);
+            DrawEnginePreparing(session, mousePoint);
         }
         else
         {
@@ -159,18 +159,32 @@ public sealed class GoScreenRenderer
         DrawBoardFrameHighlights(boardOuter);
     }
 
-    private void DrawEnginePreparing(Point mousePoint)
+    private void DrawEnginePreparing(GoAppSession session, Point mousePoint)
     {
         var area = new Rectangle(54, 50, 980, 980);
         FillRect(new Rectangle(area.X + 18, area.Y + 22, area.Width, area.Height), new Color(0, 0, 0, 125));
         FillRect(area, new Color(15, 19, 25));
         DrawRect(area, 2, new Color(82, 111, 114));
 
-        const string label = "コンピューター準備中";
+        var hasError = !string.IsNullOrWhiteSpace(session.EngineErrorMessage);
+        var label = hasError ? "エンジンエラー" : "コンピューター準備中";
         const float scale = 1.3f;
         var size = _font.MeasureString(label) * scale;
         var position = new Vector2(area.Center.X - size.X / 2, area.Center.Y - size.Y / 2 - 56);
-        DrawText(label, position, new Color(244, 238, 218), scale);
+        DrawText(label, position, hasError ? new Color(255, 183, 146) : new Color(244, 238, 218), scale);
+
+        if (hasError)
+        {
+            DrawText(TrimForDisplay(session.EngineErrorMessage, 72), new Vector2(area.X + 112, area.Center.Y + 32), new Color(244, 238, 218), 0.58f);
+            if (!string.IsNullOrWhiteSpace(session.EngineLogPath))
+            {
+                DrawText($"GTP LOG {TrimForDisplay(session.EngineLogPath, 112)}", new Vector2(area.X + 112, area.Center.Y + 86), new Color(180, 195, 195), 0.42f);
+            }
+        }
+        else if (session.IsEngineThinking)
+        {
+            DrawText("GTPコマンドの応答を待っています", new Vector2(area.X + 300, area.Center.Y + 28), new Color(180, 195, 195), 0.58f);
+        }
 
         DrawCommandButton(CancelPlayingButtonBounds, "対局をキャンセル", false, mousePoint);
     }
@@ -240,6 +254,12 @@ public sealed class GoScreenRenderer
 
         DrawText("PURE GO SCORE", new Vector2(1144, 710), new Color(180, 195, 195), 0.62f);
         DrawStoneCountStrip(session, 758);
+
+        if (HasComputerPlayer(session))
+        {
+            DrawText("ENGINE", new Vector2(1144, 846), new Color(180, 195, 195), 0.46f);
+            DrawText(GetEngineStatusText(session), new Vector2(1288, 846), GetEngineStatusColor(session), 0.46f);
+        }
 
         DrawCommandButton(PassButtonBounds, "PASS", false, mousePoint);
         DrawCommandButton(ResignButtonBounds, "RESIGN", false, mousePoint);
@@ -327,6 +347,42 @@ public sealed class GoScreenRenderer
     }
 
     private static string PlayerKindLabel(GoPlayerKind playerKind) => playerKind == GoPlayerKind.Human ? "Human" : "Computer";
+
+    private static bool HasComputerPlayer(GoAppSession session) =>
+        session.BlackPlayerKind == GoPlayerKind.Computer || session.WhitePlayerKind == GoPlayerKind.Computer;
+
+    private static string GetEngineStatusText(GoAppSession session)
+    {
+        if (!string.IsNullOrWhiteSpace(session.EngineErrorMessage))
+        {
+            return "ERROR";
+        }
+
+        if (!session.IsEngineReady)
+        {
+            return "STARTING";
+        }
+
+        return session.IsEngineThinking ? "THINKING" : "READY";
+    }
+
+    private static Color GetEngineStatusColor(GoAppSession session)
+    {
+        if (!string.IsNullOrWhiteSpace(session.EngineErrorMessage))
+        {
+            return new Color(255, 183, 146);
+        }
+
+        return session.IsEngineThinking || !session.IsEngineReady
+            ? new Color(255, 230, 160)
+            : new Color(99, 223, 185);
+    }
+
+    private static string TrimForDisplay(string text, int maxCharacters)
+    {
+        var normalized = text.ReplaceLineEndings(" ");
+        return normalized.Length <= maxCharacters ? normalized : normalized[..Math.Max(0, maxCharacters - 3)] + "...";
+    }
 
     private void DrawCommandButton(Rectangle bounds, string label, bool selected, Point mousePoint, bool enabled = true)
     {

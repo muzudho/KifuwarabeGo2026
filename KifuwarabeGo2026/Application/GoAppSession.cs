@@ -57,6 +57,8 @@ public sealed class GoAppSession
 
     public string EngineErrorMessage { get; private set; } = "";
 
+    public string EngineLogPath { get; private set; } = "";
+
     public bool CanAcceptHumanMove =>
         CurrentMode.Kind == GoAppModeKind.Playing &&
         IsEngineReady &&
@@ -137,9 +139,15 @@ public sealed class GoAppSession
         IsEngineReady = isReady;
     }
 
+    public void SetEngineLogPath(string path)
+    {
+        EngineLogPath = path;
+    }
+
     public void ClearEngineError()
     {
         EngineErrorMessage = "";
+        EngineLogPath = "";
     }
 
     public void SetEngineError(string message)

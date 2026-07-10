@@ -179,6 +179,7 @@ public class Game1 : Game
         }
 
         _session.SetEngineReady(false);
+        _session.SetEngineLogPath(GetDefaultGtpLogPath());
         _gtpEngine ??= new GtpEngineClient(CreateDefaultEngineSettings(), TimeSpan.FromSeconds(10));
         BeginEngineCommand(async cancellationToken =>
         {
@@ -393,6 +394,8 @@ public class Game1 : Game
             $"run --project \"{engineProject}\"",
             EnableGtpLog: true);
     }
+
+    private static string GetDefaultGtpLogPath() => Path.Combine(AppContext.BaseDirectory, "logs", "gtp.log");
 
     private sealed record EngineCommandCompletion(EngineCommandResult Result, int Generation);
 
