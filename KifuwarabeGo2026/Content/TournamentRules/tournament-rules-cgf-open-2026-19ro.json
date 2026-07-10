@@ -1,0 +1,8 @@
+{
+  "displayName": "CGF Open 2026 19-ro",
+  "rule": "chinese",
+  "boardSize": 19,
+  "komi": 7.5,
+  "mainTimeMinutes": 30,
+  "mainTimeSeconds": 0
+}

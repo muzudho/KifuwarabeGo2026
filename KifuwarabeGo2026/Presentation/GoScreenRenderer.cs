@@ -59,6 +59,56 @@ public sealed class GoScreenRenderer
         return BoardSizeButtonBounds(2, y).Contains(point) ? 19 : null;
     }
 
+    public static int? GetTournamentRulesButtonHit(Point point, int tournamentRulesCount)
+    {
+        for (var i = 0; i < Math.Min(tournamentRulesCount, MaxTournamentRulesButtons); i++)
+        {
+            if (TournamentRulesButtonBounds(i).Contains(point))
+            {
+                return i;
+            }
+        }
+
+        return null;
+    }
+
+    public static GoRuleKind? GetRuleKindButtonHit(Point point)
+    {
+        if (RuleKindButtonBounds(0).Contains(point))
+        {
+            return GoRuleKind.Japanese;
+        }
+
+        if (RuleKindButtonBounds(1).Contains(point))
+        {
+            return GoRuleKind.PureGo;
+        }
+
+        return RuleKindButtonBounds(2).Contains(point) ? GoRuleKind.Chinese : null;
+    }
+
+    public static decimal? GetKomiStepButtonHit(Point point)
+    {
+        if (KomiStepButtonBounds(0).Contains(point))
+        {
+            return -0.5m;
+        }
+
+        return KomiStepButtonBounds(1).Contains(point) ? 0.5m : null;
+    }
+
+    public static TimeSpan? GetMainTimeStepButtonHit(Point point)
+    {
+        if (MainTimeStepButtonBounds(0).Contains(point))
+        {
+            return TimeSpan.FromMinutes(-1);
+        }
+
+        return MainTimeStepButtonBounds(1).Contains(point) ? TimeSpan.FromMinutes(1) : null;
+    }
+
+    public static bool GetSaveTournamentRulesButtonHit(Point point) => SaveTournamentRulesButtonBounds.Contains(point);
+
     public static bool GetStartPlayingButtonHit(Point point, GoAppModeKind modeKind) =>
         (modeKind == GoAppModeKind.GameOver ? NewGameButtonBounds : StartPlayingButtonBounds).Contains(point);
 
@@ -173,25 +223,25 @@ public sealed class GoScreenRenderer
     {
         var boardSize = session.BoardSize;
 
-        DrawText("KIFUWARABE GO 2026", new Vector2(1142, 116), new Color(244, 238, 218), 1.15f);
-        DrawText($"BOARD {boardSize} x {boardSize}", new Vector2(1144, 178), new Color(99, 223, 185), 0.9f);
-        DrawText($"MODE {session.CurrentMode.DisplayName}", new Vector2(1448, 184), new Color(227, 224, 210), 0.58f);
+        DrawText("KIFUWARABE GO 2026", new Vector2(1142, 104), new Color(244, 238, 218), 1.0f);
+        DrawText($"MODE {session.CurrentMode.DisplayName}", new Vector2(1540, 112), new Color(227, 224, 210), 0.5f);
+        DrawText("TOURNAMENT", new Vector2(1144, 166), new Color(180, 195, 195), 0.5f);
+        DrawTournamentRulesButtons(session, mousePoint);
+
+        DrawText("RULE", new Vector2(1144, 348), new Color(180, 195, 195), 0.5f);
+        DrawRuleKindButtons(session.RuleKind, mousePoint);
+        DrawText($"BOARD {boardSize} x {boardSize}", new Vector2(1144, 438), new Color(99, 223, 185), 0.62f);
         DrawBoardSizeButtons(boardSize, mousePoint, SetupBoardSizeButtonY);
-        DrawCommandButton(StartPlayingButtonBounds, "START", false, mousePoint);
 
-        DrawInfoStrip(1144, 344, "BLACK", PlayerKindLabel(session.BlackPlayerKind), new Color(26, 27, 30), Color.White);
+        DrawRulesNumberStrip(1144, 552, "KOMI", FormatKomi(session.Komi), KomiStepButtonBounds(0), "-0.5", KomiStepButtonBounds(1), "+0.5", mousePoint);
+        DrawRulesNumberStrip(1144, 624, "TIME", FormatMainTime(session.MainTime), MainTimeStepButtonBounds(0), "-1m", MainTimeStepButtonBounds(1), "+1m", mousePoint);
+
+        DrawInfoStrip(1144, 700, "BLACK", PlayerKindLabel(session.BlackPlayerKind), new Color(26, 27, 30), Color.White);
         DrawPlayerKindButtons(session.BlackPlayerKind, mousePoint, BlackPlayerKindButtonY);
-        DrawInfoStrip(1144, 442, "WHITE", PlayerKindLabel(session.WhitePlayerKind), new Color(236, 229, 211), new Color(24, 24, 24));
+        DrawInfoStrip(1144, 798, "WHITE", PlayerKindLabel(session.WhitePlayerKind), new Color(236, 229, 211), new Color(24, 24, 24));
         DrawPlayerKindButtons(session.WhitePlayerKind, mousePoint, WhitePlayerKindButtonY);
-        DrawAgehamaStrip(session);
-
-        FillRect(new Rectangle(1144, 740, 668, 238), new Color(14, 18, 23));
-        DrawRect(new Rectangle(1144, 740, 668, 238), 2, new Color(68, 83, 94));
-        DrawText("LOCAL BOARD PREVIEW", new Vector2(1178, 772), new Color(180, 195, 195), 0.58f);
-        DrawMiniBoard(new Rectangle(1178, 826, 152, 152));
-        DrawText("Mouse: start, pass, board points", new Vector2(1370, 840), new Color(227, 224, 210), 0.58f);
-        DrawText("Keys: 1=9  2=13  3=19", new Vector2(1370, 888), new Color(227, 224, 210), 0.58f);
-        DrawText("Alt+F4: quit", new Vector2(1370, 936), new Color(227, 224, 210), 0.58f);
+        DrawCommandButton(SaveTournamentRulesButtonBounds, SaveTournamentRulesLabel(session), false, mousePoint);
+        DrawCommandButton(StartPlayingButtonBounds, "START", false, mousePoint);
     }
 
     private void DrawPlayingSidePanel(GoAppSession session, Point mousePoint)
@@ -275,25 +325,65 @@ public sealed class GoScreenRenderer
         }
     }
 
+    private void DrawTournamentRulesButtons(GoAppSession session, Point mousePoint)
+    {
+        var count = Math.Min(session.TournamentRulesList.Count, MaxTournamentRulesButtons);
+        for (var i = 0; i < count; i++)
+        {
+            var rules = session.TournamentRulesList[i];
+            DrawCommandButton(TournamentRulesButtonBounds(i), rules.DisplayName, i == session.SelectedTournamentRulesIndex, mousePoint, scale: 0.44f);
+        }
+    }
+
+    private void DrawRuleKindButtons(GoRuleKind selectedKind, Point mousePoint)
+    {
+        DrawCommandButton(RuleKindButtonBounds(0), "JAPANESE", selectedKind == GoRuleKind.Japanese, mousePoint, scale: 0.44f);
+        DrawCommandButton(RuleKindButtonBounds(1), "PURE GO", selectedKind == GoRuleKind.PureGo, mousePoint, scale: 0.44f);
+        DrawCommandButton(RuleKindButtonBounds(2), "CHINESE", selectedKind == GoRuleKind.Chinese, mousePoint, scale: 0.44f);
+    }
+
+    private void DrawRulesNumberStrip(int x, int y, string label, string value, Rectangle minusBounds, string minusLabel, Rectangle plusBounds, string plusLabel, Point mousePoint)
+    {
+        var bounds = new Rectangle(x, y, 668, 56);
+        FillRect(bounds, new Color(24, 31, 37));
+        DrawRect(bounds, 1, new Color(70, 85, 94));
+        DrawText(label, new Vector2(bounds.X + 20, bounds.Y + 16), new Color(180, 195, 195), 0.42f);
+        DrawText(value, new Vector2(bounds.X + 176, bounds.Y + 13), Color.White, 0.52f);
+        DrawCommandButton(minusBounds, minusLabel, false, mousePoint, scale: 0.42f);
+        DrawCommandButton(plusBounds, plusLabel, false, mousePoint, scale: 0.42f);
+    }
+
     private void DrawPlayerKindButtons(GoPlayerKind selectedKind, Point mousePoint, int y)
     {
         DrawCommandButton(PlayerKindButtonBounds(0, y), "HUMAN", selectedKind == GoPlayerKind.Human, mousePoint);
         DrawCommandButton(PlayerKindButtonBounds(1, y), "COMPUTER", selectedKind == GoPlayerKind.Computer, mousePoint);
     }
 
-    private const int SetupBoardSizeButtonY = 248;
+    private const int SetupBoardSizeButtonY = 476;
 
     private const int GameOverBoardSizeButtonY = 756;
 
-    private const int BlackPlayerKindButtonY = 354;
+    private const int BlackPlayerKindButtonY = 710;
 
-    private const int WhitePlayerKindButtonY = 452;
+    private const int WhitePlayerKindButtonY = 808;
+
+    private const int MaxTournamentRulesButtons = 3;
 
     private static Rectangle BoardSizeButtonBounds(int index, int y) => new(1144 + index * 224, y, 188, 62);
 
+    private static Rectangle TournamentRulesButtonBounds(int index) => new(1144, 198 + index * 48, 668, 40);
+
+    private static Rectangle RuleKindButtonBounds(int index) => new(1144 + index * 224, 382, 188, 50);
+
+    private static Rectangle KomiStepButtonBounds(int index) => new(1588 + index * 112, 560, 92, 40);
+
+    private static Rectangle MainTimeStepButtonBounds(int index) => new(1588 + index * 112, 632, 92, 40);
+
     private static Rectangle PlayerKindButtonBounds(int index, int y) => new(1536 + index * 140, y, 132, 52);
 
-    private static Rectangle StartPlayingButtonBounds => new(1144, 678, 320, 56);
+    private static Rectangle StartPlayingButtonBounds => new(1492, 920, 320, 56);
+
+    private static Rectangle SaveTournamentRulesButtonBounds => new(1144, 920, 320, 56);
 
     private static Rectangle NewGameButtonBounds => new(1492, 874, 320, 56);
 
@@ -353,7 +443,17 @@ public sealed class GoScreenRenderer
             : $"{elapsed.Minutes:00}:{elapsed.Seconds:00}";
     }
 
-    private void DrawCommandButton(Rectangle bounds, string label, bool selected, Point mousePoint, bool enabled = true)
+    private static string FormatMainTime(TimeSpan mainTime) =>
+        mainTime == TimeSpan.Zero ? "NO LIMIT" : FormatElapsedTime(mainTime);
+
+    private static string FormatKomi(decimal komi) => komi.ToString("0.0");
+
+    private static string SaveTournamentRulesLabel(GoAppSession session) =>
+        string.IsNullOrWhiteSpace(session.TournamentRulesSaveMessage)
+            ? "SAVE RULES"
+            : $"SAVE RULES {session.TournamentRulesSaveMessage}";
+
+    private void DrawCommandButton(Rectangle bounds, string label, bool selected, Point mousePoint, bool enabled = true, float scale = 0.62f)
     {
         var hovered = enabled && bounds.Contains(mousePoint);
         var fill = !enabled ? new Color(28, 31, 36) : selected ? new Color(39, 125, 97) : hovered ? new Color(56, 67, 77) : new Color(32, 38, 47);
@@ -362,8 +462,10 @@ public sealed class GoScreenRenderer
         DrawRect(bounds, 2, border);
 
         var textColor = enabled ? Color.White : new Color(130, 138, 142);
-        var size = _font.MeasureString(label) * 0.62f;
-        DrawText(label, new Vector2(bounds.Center.X - size.X / 2, bounds.Center.Y - size.Y / 2), textColor, 0.62f);
+        var measured = _font.MeasureString(label);
+        var fittedScale = MathF.Min(scale, MathF.Min((bounds.Width - 20) / Math.Max(1f, measured.X), (bounds.Height - 10) / Math.Max(1f, measured.Y)));
+        var size = measured * fittedScale;
+        DrawText(label, new Vector2(bounds.Center.X - size.X / 2, bounds.Center.Y - size.Y / 2), textColor, fittedScale);
     }
 
     private void DrawInfoStrip(int x, int y, string label, string value, Color chipColor, Color chipTextColor)

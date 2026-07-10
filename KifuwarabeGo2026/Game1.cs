@@ -10,6 +10,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,6 +19,7 @@ public class Game1 : Game
 {
     private readonly GraphicsDeviceManager _graphics;
     private readonly GoAppSession _session = new();
+    private readonly TournamentRulesCatalog _tournamentRulesCatalog;
     private CancellationTokenSource _engineCancellation = new();
     private GoScreenRenderer? _renderer;
     private SoundEffect? _placeStoneSound;
@@ -29,6 +31,9 @@ public class Game1 : Game
 
     public Game1()
     {
+        _tournamentRulesCatalog = TournamentRulesCatalog.LoadFromDefaultLocation();
+        _session.SetTournamentRules(_tournamentRulesCatalog.Rules);
+
         _graphics = new GraphicsDeviceManager(this);
         _graphics.PreferredBackBufferWidth = VirtualScreen.Width;
         _graphics.PreferredBackBufferHeight = VirtualScreen.Height;
@@ -61,6 +66,7 @@ public class Game1 : Game
         if (_session.CurrentMode.Kind != GoAppModeKind.Playing)
         {
             UpdateBoardSizeByKeyboard(keyboard);
+            UpdateTournamentRulesByKeyboard(keyboard);
         }
         UpdateMouseInput();
 
@@ -91,15 +97,43 @@ public class Game1 : Game
         }
     }
 
+    private void UpdateTournamentRulesByKeyboard(KeyboardState keyboard)
+    {
+        if (keyboard.IsKeyDown(Keys.F5))
+        {
+            SaveCurrentTournamentRules();
+        }
+    }
+
     private void UpdateMouseInput()
     {
         var mouse = Mouse.GetState();
         if (_previousMouse.LeftButton == ButtonState.Released && mouse.LeftButton == ButtonState.Pressed)
         {
             var point = VirtualScreen.ToVirtualPoint(GraphicsDevice.Viewport, mouse.Position);
-            if (_session.CurrentMode.Kind != GoAppModeKind.Playing && GoScreenRenderer.GetBoardSizeButtonHit(point, _session.CurrentMode.Kind) is { } boardSize)
+            if (_session.CurrentMode.Kind != GoAppModeKind.Playing && GoScreenRenderer.GetTournamentRulesButtonHit(point, _session.TournamentRulesList.Count) is { } tournamentRulesIndex)
+            {
+                _session.SelectTournamentRules(tournamentRulesIndex);
+            }
+            else if (_session.CurrentMode.Kind != GoAppModeKind.Playing && GoScreenRenderer.GetRuleKindButtonHit(point) is { } ruleKind)
+            {
+                _session.ChangeRuleKind(ruleKind);
+            }
+            else if (_session.CurrentMode.Kind != GoAppModeKind.Playing && GoScreenRenderer.GetBoardSizeButtonHit(point, _session.CurrentMode.Kind) is { } boardSize)
             {
                 _session.ChangeBoardSize(boardSize);
+            }
+            else if (_session.CurrentMode.Kind != GoAppModeKind.Playing && GoScreenRenderer.GetKomiStepButtonHit(point) is { } komiStep)
+            {
+                _session.ChangeKomi(komiStep);
+            }
+            else if (_session.CurrentMode.Kind != GoAppModeKind.Playing && GoScreenRenderer.GetMainTimeStepButtonHit(point) is { } mainTimeStep)
+            {
+                _session.ChangeMainTime(mainTimeStep);
+            }
+            else if (_session.CurrentMode.Kind != GoAppModeKind.Playing && GoScreenRenderer.GetSaveTournamentRulesButtonHit(point))
+            {
+                SaveCurrentTournamentRules();
             }
             else if (_session.CurrentMode.Kind != GoAppModeKind.Playing && GoScreenRenderer.GetStartPlayingButtonHit(point, _session.CurrentMode.Kind))
             {
@@ -187,9 +221,16 @@ public class Game1 : Game
         {
             await _gtpEngine.StartAsync(cancellationToken);
             await _gtpEngine.SendCommandExpectSuccessAsync($"boardsize {_session.BoardSize}", cancellationToken);
+            await _gtpEngine.SendCommandExpectSuccessAsync($"komi {_session.Komi.ToString(CultureInfo.InvariantCulture)}", cancellationToken);
             await _gtpEngine.SendCommandExpectSuccessAsync("clear_board", cancellationToken);
             return EngineCommandResult.EngineReady();
         });
+    }
+
+    private void SaveCurrentTournamentRules()
+    {
+        _tournamentRulesCatalog.Save(_session.CurrentTournamentRules);
+        _session.MarkTournamentRulesSaved();
     }
 
     private void SyncHumanMoveIfNeeded(GoStone stone, GoPoint point)

@@ -1,0 +1,8 @@
+{
+  "DisplayName": "CGF Open 2026 9-ro",
+  "Rule": "pureGo",
+  "BoardSize": 9,
+  "Komi": 7.0,
+  "MainTimeMinutes": 10,
+  "MainTimeSeconds": 0
+}

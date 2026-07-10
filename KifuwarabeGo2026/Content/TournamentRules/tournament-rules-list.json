@@ -1,0 +1,16 @@
+{
+  "tournamentRules": [
+    {
+      "displayName": "CGF Open 2026 9-ro",
+      "filePath": "tournament-rules-cgf-open-2026-9ro.json"
+    },
+    {
+      "displayName": "CGF Open 2026 13-ro",
+      "filePath": "tournament-rules-cgf-open-2026-13ro.json"
+    },
+    {
+      "displayName": "CGF Open 2026 19-ro",
+      "filePath": "tournament-rules-cgf-open-2026-19ro.json"
+    }
+  ]
+}

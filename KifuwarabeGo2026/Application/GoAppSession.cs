@@ -3,11 +3,14 @@ namespace KifuwarabeGo2026.Application;
 using KifuwarabeGo2026.Domain;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 public sealed class GoAppSession
 {
     private GoBoard _board;
     private readonly HashSet<ulong> _positionHashes = new();
+    private readonly List<TournamentRules> _tournamentRules = new();
+    private TournamentRules _currentTournamentRules = new();
 
     private readonly Dictionary<GoAppModeKind, GoAppMode> _modes = new()
     {
@@ -28,6 +31,22 @@ public sealed class GoAppSession
     public GoAppMode CurrentMode { get; private set; }
 
     public int BoardSize { get; private set; } = 19;
+
+    public IReadOnlyList<TournamentRules> TournamentRulesList => _tournamentRules;
+
+    public int SelectedTournamentRulesIndex { get; private set; }
+
+    public string TournamentRulesSaveMessage { get; private set; } = "";
+
+    public string TournamentDisplayName => _currentTournamentRules.DisplayName;
+
+    public GoRuleKind RuleKind => _currentTournamentRules.Rule;
+
+    public decimal Komi => _currentTournamentRules.Komi;
+
+    public TimeSpan MainTime => _currentTournamentRules.MainTime;
+
+    public TournamentRules CurrentTournamentRules => _currentTournamentRules.Clone();
 
     public GoStone CurrentTurn { get; private set; } = GoStone.Black;
 
@@ -108,7 +127,63 @@ public sealed class GoAppSession
         }
 
         BoardSize = boardSize;
+        _currentTournamentRules.BoardSize = boardSize;
+        TournamentRulesSaveMessage = "UNSAVED";
         ClearBoard();
+    }
+
+    public void SetTournamentRules(IEnumerable<TournamentRules> rules)
+    {
+        _tournamentRules.Clear();
+        _tournamentRules.AddRange(rules.Select(rule => rule.Clone()));
+        if (_tournamentRules.Count == 0)
+        {
+            _tournamentRules.Add(new TournamentRules());
+        }
+
+        SelectTournamentRules(0);
+    }
+
+    public void SelectTournamentRules(int index)
+    {
+        if (index < 0 || index >= _tournamentRules.Count)
+        {
+            throw new ArgumentOutOfRangeException(nameof(index), index, "Tournament rules index is out of range.");
+        }
+
+        SelectedTournamentRulesIndex = index;
+        ApplyTournamentRules(_tournamentRules[index]);
+        TournamentRulesSaveMessage = "";
+    }
+
+    public void ChangeRuleKind(GoRuleKind ruleKind)
+    {
+        _currentTournamentRules.Rule = ruleKind;
+        TournamentRulesSaveMessage = "UNSAVED";
+    }
+
+    public void ChangeKomi(decimal step)
+    {
+        _currentTournamentRules.Komi = Math.Clamp(_currentTournamentRules.Komi + step, -99.5m, 99.5m);
+        TournamentRulesSaveMessage = "UNSAVED";
+    }
+
+    public void ChangeMainTime(TimeSpan step)
+    {
+        var totalSeconds = Math.Max(0, (int)(_currentTournamentRules.MainTime + step).TotalSeconds);
+        _currentTournamentRules.MainTimeMinutes = totalSeconds / 60;
+        _currentTournamentRules.MainTimeSeconds = totalSeconds % 60;
+        TournamentRulesSaveMessage = "UNSAVED";
+    }
+
+    public void MarkTournamentRulesSaved()
+    {
+        if (SelectedTournamentRulesIndex >= 0 && SelectedTournamentRulesIndex < _tournamentRules.Count)
+        {
+            _tournamentRules[SelectedTournamentRulesIndex] = _currentTournamentRules.Clone();
+        }
+
+        TournamentRulesSaveMessage = "SAVED";
     }
 
     public void SetPlayerKind(GoStone stone, GoPlayerKind playerKind)
@@ -305,6 +380,14 @@ public sealed class GoAppSession
         GameOverReason = "";
         IsEngineReady = true;
         ResetPositionHistory();
+    }
+
+    private void ApplyTournamentRules(TournamentRules rules)
+    {
+        _currentTournamentRules = rules.Clone();
+        BoardSize = _currentTournamentRules.BoardSize is 9 or 13 or 19 ? _currentTournamentRules.BoardSize : 19;
+        _currentTournamentRules.BoardSize = BoardSize;
+        ClearBoard();
     }
 
     private void PassTurn()

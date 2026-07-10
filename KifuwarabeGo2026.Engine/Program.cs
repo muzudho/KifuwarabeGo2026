@@ -14,6 +14,7 @@ internal sealed class GtpEngine
     private readonly Random _random = new();
     private EngineBoard _board = new(19);
     private Point? _koPoint;
+    private decimal _komi = 6.5m;
 
     public void Run(TextReader input, TextWriter output)
     {
@@ -60,6 +61,9 @@ internal sealed class GtpEngine
                 _board = new EngineBoard(_board.Size);
                 _koPoint = null;
                 return false;
+            case "komi":
+                ExecuteKomi(tokens, out error);
+                return false;
             case "play":
                 ExecutePlay(tokens, out error);
                 return false;
@@ -85,6 +89,18 @@ internal sealed class GtpEngine
 
         _board = new EngineBoard(size);
         _koPoint = null;
+    }
+
+    private void ExecuteKomi(string[] tokens, out string? error)
+    {
+        error = null;
+        if (tokens.Length != 2 || !decimal.TryParse(tokens[1], System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var komi))
+        {
+            error = "usage: komi number";
+            return;
+        }
+
+        _komi = komi;
     }
 
     private void ExecutePlay(string[] tokens, out string? error)
