@@ -39,6 +39,10 @@ public sealed class GoAppSession
 
     public int WhiteAgehama { get; private set; }
 
+    public TimeSpan BlackElapsedTime { get; private set; }
+
+    public TimeSpan WhiteElapsedTime { get; private set; }
+
     public int BlackStoneCount => _board.CountStones(GoStone.Black);
 
     public int WhiteStoneCount => _board.CountStones(GoStone.White);
@@ -78,6 +82,8 @@ public sealed class GoAppSession
             ClearBoard();
         }
 
+        BlackElapsedTime = TimeSpan.Zero;
+        WhiteElapsedTime = TimeSpan.Zero;
         ChangeMode(GoAppModeKind.Playing);
     }
 
@@ -154,6 +160,24 @@ public sealed class GoAppSession
     {
         EngineErrorMessage = message;
         IsEngineThinking = false;
+    }
+
+    public void AddCurrentTurnElapsedTime(TimeSpan elapsed)
+    {
+        if (CurrentMode.Kind != GoAppModeKind.Playing ||
+            !IsEngineReady ||
+            !string.IsNullOrWhiteSpace(EngineErrorMessage))
+        {
+            return;
+        }
+
+        if (CurrentTurn == GoStone.Black)
+        {
+            BlackElapsedTime += elapsed;
+            return;
+        }
+
+        WhiteElapsedTime += elapsed;
     }
 
     public GoStone GetStone(int x, int y)
@@ -273,6 +297,8 @@ public sealed class GoAppSession
         CurrentTurn = GoStone.Black;
         BlackAgehama = 0;
         WhiteAgehama = 0;
+        BlackElapsedTime = TimeSpan.Zero;
+        WhiteElapsedTime = TimeSpan.Zero;
         KoPoint = null;
         ConsecutivePasses = 0;
         Winner = null;

@@ -37,23 +37,11 @@ public sealed class GoScreenRenderer
             transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));
 
         DrawBackground();
-        if (ShouldShowEnginePreparing(session))
-        {
-            DrawEnginePreparing(session, mousePoint);
-        }
-        else
-        {
-            DrawBoard(session, mousePoint);
-        }
-
+        DrawBoard(session, mousePoint);
         DrawSidePanel(session, mousePoint);
 
         _spriteBatch.End();
     }
-
-    private static bool ShouldShowEnginePreparing(GoAppSession session) =>
-        session.CurrentMode.Kind == GoAppModeKind.Playing &&
-        !session.CanAcceptHumanMove;
 
     public static int? GetBoardSizeButtonHit(Point point, GoAppModeKind modeKind)
     {
@@ -159,36 +147,6 @@ public sealed class GoScreenRenderer
         DrawBoardFrameHighlights(boardOuter);
     }
 
-    private void DrawEnginePreparing(GoAppSession session, Point mousePoint)
-    {
-        var area = new Rectangle(54, 50, 980, 980);
-        FillRect(new Rectangle(area.X + 18, area.Y + 22, area.Width, area.Height), new Color(0, 0, 0, 125));
-        FillRect(area, new Color(15, 19, 25));
-        DrawRect(area, 2, new Color(82, 111, 114));
-
-        var hasError = !string.IsNullOrWhiteSpace(session.EngineErrorMessage);
-        var label = hasError ? "エンジンエラー" : "コンピューター準備中";
-        const float scale = 1.3f;
-        var size = _font.MeasureString(label) * scale;
-        var position = new Vector2(area.Center.X - size.X / 2, area.Center.Y - size.Y / 2 - 56);
-        DrawText(label, position, hasError ? new Color(255, 183, 146) : new Color(244, 238, 218), scale);
-
-        if (hasError)
-        {
-            DrawText(TrimForDisplay(session.EngineErrorMessage, 72), new Vector2(area.X + 112, area.Center.Y + 32), new Color(244, 238, 218), 0.58f);
-            if (!string.IsNullOrWhiteSpace(session.EngineLogPath))
-            {
-                DrawText($"GTP LOG {TrimForDisplay(session.EngineLogPath, 112)}", new Vector2(area.X + 112, area.Center.Y + 86), new Color(180, 195, 195), 0.42f);
-            }
-        }
-        else if (session.IsEngineThinking)
-        {
-            DrawText("GTPコマンドの応答を待っています", new Vector2(area.X + 300, area.Center.Y + 28), new Color(180, 195, 195), 0.58f);
-        }
-
-        DrawCommandButton(CancelPlayingButtonBounds, "対局をキャンセル", false, mousePoint);
-    }
-
     private void DrawSidePanel(GoAppSession session, Point mousePoint)
     {
         var panel = new Rectangle(1102, 78, 760, 924);
@@ -249,20 +207,29 @@ public sealed class GoScreenRenderer
         DrawInfoStrip(1144, 348, "BLACK", PlayerKindLabel(session.BlackPlayerKind), new Color(26, 27, 30), Color.White);
         DrawInfoStrip(1144, 446, "WHITE", PlayerKindLabel(session.WhitePlayerKind), new Color(236, 229, 211), new Color(24, 24, 24));
 
-        DrawText("AGEHAMA", new Vector2(1144, 566), new Color(180, 195, 195), 0.62f);
-        DrawAgehamaStrip(session, 614);
+        DrawText("TIME", new Vector2(1144, 544), new Color(180, 195, 195), 0.62f);
+        DrawTimeStrip(session, 592);
 
-        DrawText("PURE GO SCORE", new Vector2(1144, 710), new Color(180, 195, 195), 0.62f);
-        DrawStoneCountStrip(session, 758);
+        DrawText("AGEHAMA", new Vector2(1144, 688), new Color(180, 195, 195), 0.52f);
+        DrawAgehamaStrip(session, 728);
+
+        DrawText("PURE GO SCORE", new Vector2(1144, 792), new Color(180, 195, 195), 0.52f);
+        DrawStoneCountStrip(session, 826);
 
         if (HasComputerPlayer(session))
         {
-            DrawText("ENGINE", new Vector2(1144, 846), new Color(180, 195, 195), 0.46f);
-            DrawText(GetEngineStatusText(session), new Vector2(1288, 846), GetEngineStatusColor(session), 0.46f);
+            DrawText("ENGINE", new Vector2(1488, 544), new Color(180, 195, 195), 0.46f);
+            DrawText(GetEngineStatusText(session), new Vector2(1632, 544), GetEngineStatusColor(session), 0.46f);
         }
 
-        DrawCommandButton(PassButtonBounds, "PASS", false, mousePoint);
-        DrawCommandButton(ResignButtonBounds, "RESIGN", false, mousePoint);
+        if (session.CanAcceptHumanMove)
+        {
+            DrawCommandButton(PassButtonBounds, "PASS", false, mousePoint);
+            DrawCommandButton(ResignButtonBounds, "RESIGN", false, mousePoint);
+            return;
+        }
+
+        DrawCommandButton(CancelPlayingButtonBounds, "CANCEL", false, mousePoint);
     }
 
     private void DrawGameOverSidePanel(GoAppSession session, Point mousePoint)
@@ -330,11 +297,11 @@ public sealed class GoScreenRenderer
 
     private static Rectangle NewGameButtonBounds => new(1492, 874, 320, 56);
 
-    private static Rectangle PassButtonBounds => new(1144, 872, 320, 72);
+    private static Rectangle PassButtonBounds => new(1144, 920, 320, 72);
 
-    private static Rectangle ResignButtonBounds => new(1492, 872, 320, 72);
+    private static Rectangle ResignButtonBounds => new(1492, 920, 320, 72);
 
-    private static Rectangle CancelPlayingButtonBounds => new(344, 570, 400, 72);
+    private static Rectangle CancelPlayingButtonBounds => new(1144, 920, 668, 72);
 
     private static GoPlayerKind? GetPlayerKindButtonHit(Point point, int y)
     {
@@ -378,10 +345,12 @@ public sealed class GoScreenRenderer
             : new Color(99, 223, 185);
     }
 
-    private static string TrimForDisplay(string text, int maxCharacters)
+    private static string FormatElapsedTime(TimeSpan elapsed)
     {
-        var normalized = text.ReplaceLineEndings(" ");
-        return normalized.Length <= maxCharacters ? normalized : normalized[..Math.Max(0, maxCharacters - 3)] + "...";
+        var totalHours = (int)elapsed.TotalHours;
+        return totalHours > 0
+            ? $"{totalHours}:{elapsed.Minutes:00}:{elapsed.Seconds:00}"
+            : $"{elapsed.Minutes:00}:{elapsed.Seconds:00}";
     }
 
     private void DrawCommandButton(Rectangle bounds, string label, bool selected, Point mousePoint, bool enabled = true)
@@ -415,6 +384,27 @@ public sealed class GoScreenRenderer
         DrawText("AGEHAMA", new Vector2(bounds.X + 20, bounds.Y + 16), new Color(180, 195, 195), 0.46f);
         DrawText($"BLACK {session.BlackAgehama}", new Vector2(bounds.X + 220, bounds.Y + 14), Color.White, 0.5f);
         DrawText($"WHITE {session.WhiteAgehama}", new Vector2(bounds.X + 430, bounds.Y + 14), Color.White, 0.5f);
+    }
+
+    private void DrawTimeStrip(GoAppSession session, int y)
+    {
+        var bounds = new Rectangle(1144, y, 668, 74);
+        FillRect(bounds, new Color(24, 31, 37));
+        DrawRect(bounds, 1, new Color(70, 85, 94));
+
+        var blackActive = session.CurrentMode.Kind == GoAppModeKind.Playing && session.CurrentTurn == GoStone.Black;
+        var whiteActive = session.CurrentMode.Kind == GoAppModeKind.Playing && session.CurrentTurn == GoStone.White;
+        DrawPlayerTime(new Rectangle(bounds.X + 18, bounds.Y + 14, 300, 46), "BLACK", session.BlackElapsedTime, blackActive, blackStone: true);
+        DrawPlayerTime(new Rectangle(bounds.X + 350, bounds.Y + 14, 300, 46), "WHITE", session.WhiteElapsedTime, whiteActive, blackStone: false);
+    }
+
+    private void DrawPlayerTime(Rectangle bounds, string label, TimeSpan elapsed, bool active, bool blackStone)
+    {
+        FillRect(bounds, active ? new Color(39, 68, 65) : new Color(30, 36, 43));
+        DrawRect(bounds, 1, active ? new Color(99, 223, 185) : new Color(70, 85, 94));
+        DrawCircle(new Vector2(bounds.X + 24, bounds.Center.Y), 9, blackStone ? new Color(10, 12, 16) : new Color(230, 224, 207));
+        DrawText(label, new Vector2(bounds.X + 46, bounds.Y + 14), new Color(180, 195, 195), 0.38f);
+        DrawText(FormatElapsedTime(elapsed), new Vector2(bounds.X + 154, bounds.Y + 10), Color.White, 0.56f);
     }
 
     private void DrawStoneCountStrip(GoAppSession session, int y)
@@ -487,6 +477,7 @@ public sealed class GoScreenRenderer
     private void DrawHoverStone(GoAppSession session, Point mousePoint, float cell)
     {
         if (session.CurrentMode.Kind != GoAppModeKind.Playing ||
+            !session.CanAcceptHumanMove ||
             !TryGetBoardIntersection(mousePoint, session.BoardSize, out var intersection) ||
             session.GetStone(intersection.X, intersection.Y) != GoStone.Empty ||
             (session.KoPoint is { } ko && ko.X == intersection.X && ko.Y == intersection.Y) ||

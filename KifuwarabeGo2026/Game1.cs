@@ -56,6 +56,7 @@ public class Game1 : Game
 
         CompletePendingEngineCommand();
         RequestComputerMoveIfReady();
+        _session.AddCurrentTurnElapsedTime(gameTime.ElapsedGameTime);
 
         if (_session.CurrentMode.Kind != GoAppModeKind.Playing)
         {
