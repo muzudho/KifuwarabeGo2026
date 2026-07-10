@@ -45,11 +45,16 @@ public sealed class GtpEngineClient : IAsyncDisposable
         if (_settings.EnableGtpLog)
         {
             Directory.CreateDirectory(Path.Combine(AppContext.BaseDirectory, "logs"));
-            _logWriter = new StreamWriter(Path.Combine(AppContext.BaseDirectory, "logs", "gtp.log"), append: true, Encoding.UTF8)
+            var logStream = new FileStream(
+                Path.Combine(AppContext.BaseDirectory, "logs", "gtp.log"),
+                FileMode.Append,
+                FileAccess.Write,
+                FileShare.ReadWrite);
+            _logWriter = new StreamWriter(logStream, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false))
             {
                 AutoFlush = true,
             };
-            await _logWriter.WriteLineAsync($"# start {_settings.Name} {DateTimeOffset.Now:O}").WaitAsync(_commandTimeout, cancellationToken);
+            await _logWriter.WriteLineAsync(FormatLogLine($"# start {_settings.Name} {DateTimeOffset.Now:O}")).WaitAsync(_commandTimeout, cancellationToken);
         }
     }
 
@@ -154,7 +159,11 @@ public sealed class GtpEngineClient : IAsyncDisposable
     {
         if (_logWriter is not null)
         {
-            await _logWriter.WriteLineAsync(line.AsMemory(), cancellationToken).WaitAsync(_commandTimeout, cancellationToken);
+            await _logWriter.WriteLineAsync(FormatLogLine(line).AsMemory(), cancellationToken).WaitAsync(_commandTimeout, cancellationToken);
         }
     }
+
+    private string FormatLogLine(string line) => string.IsNullOrWhiteSpace(_settings.LogPrefix)
+        ? line
+        : $"{_settings.LogPrefix} {line}";
 }

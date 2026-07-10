@@ -245,8 +245,10 @@ public sealed class GoScreenRenderer
 
         DrawInfoStrip(1144, 700, "BLACK", PlayerKindLabel(session.BlackPlayerKind), new Color(26, 27, 30), Color.White);
         DrawPlayerKindButtons(session.BlackPlayerKind, mousePoint, BlackPlayerKindButtonY);
+        DrawSetupEngineName(session.BlackPlayerKind, BlackPlayerKindButtonY + 64);
         DrawInfoStrip(1144, 798, "WHITE", PlayerKindLabel(session.WhitePlayerKind), new Color(236, 229, 211), new Color(24, 24, 24));
         DrawPlayerKindButtons(session.WhitePlayerKind, mousePoint, WhitePlayerKindButtonY);
+        DrawSetupEngineName(session.WhitePlayerKind, WhitePlayerKindButtonY + 64);
         DrawCommandButton(SaveTournamentRulesButtonBounds, SaveTournamentRulesLabel(session), false, mousePoint);
         DrawCommandButton(StartPlayingButtonBounds, "START", false, mousePoint);
     }
@@ -368,6 +370,17 @@ public sealed class GoScreenRenderer
         DrawCommandButton(PlayerKindButtonBounds(1, y), "COMPUTER", selectedKind == GoPlayerKind.Computer, mousePoint);
     }
 
+    private void DrawSetupEngineName(GoPlayerKind playerKind, int y)
+    {
+        if (playerKind != GoPlayerKind.Computer)
+        {
+            return;
+        }
+
+        DrawText("ENGINE", new Vector2(1164, y), new Color(180, 195, 195), 0.32f);
+        DrawText(DefaultEngineName, new Vector2(1288, y), new Color(99, 223, 185), 0.32f);
+    }
+
     private const int SetupBoardSizeButtonY = 476;
 
     private const int BlackPlayerKindButtonY = 710;
@@ -375,6 +388,8 @@ public sealed class GoScreenRenderer
     private const int WhitePlayerKindButtonY = 808;
 
     private const int MaxTournamentRulesButtons = 3;
+
+    private const string DefaultEngineName = "Kifuwarabe Random GTP";
 
     private static Rectangle BoardSizeButtonBounds(int index, int y) => new(1144 + index * 224, y, 188, 62);
 

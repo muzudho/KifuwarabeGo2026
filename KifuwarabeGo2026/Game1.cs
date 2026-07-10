@@ -12,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -24,7 +25,7 @@ public class Game1 : Game
     private GoScreenRenderer? _renderer;
     private SoundEffect? _placeStoneSound;
     private MouseState _previousMouse;
-    private GtpEngineClient? _gtpEngine;
+    private readonly Dictionary<GoStone, GtpEngineClient> _gtpEngines = new();
     private Task<EngineCommandCompletion>? _pendingEngineCommand;
     private readonly Queue<Func<CancellationToken, Task<EngineCommandResult>>> _engineCommandQueue = new();
     private int _engineCommandGeneration;
@@ -198,7 +199,12 @@ public class Game1 : Game
         if (disposing)
         {
             _engineCancellation.Cancel();
-            _gtpEngine?.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            foreach (var engine in _gtpEngines.Values)
+            {
+                engine.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            }
+
+            _gtpEngines.Clear();
             _engineCancellation.Dispose();
         }
 
@@ -221,13 +227,20 @@ public class Game1 : Game
 
         _session.SetEngineReady(false);
         _session.SetEngineLogPath(GetDefaultGtpLogPath());
-        _gtpEngine ??= new GtpEngineClient(CreateDefaultEngineSettings(), TimeSpan.FromSeconds(10));
+        EnsureGtpEngineForComputerPlayer(GoStone.Black);
+        EnsureGtpEngineForComputerPlayer(GoStone.White);
+
+        var enginesToStart = GetEngineSnapshot();
         BeginEngineCommand(async cancellationToken =>
         {
-            await _gtpEngine.StartAsync(cancellationToken);
-            await _gtpEngine.SendCommandExpectSuccessAsync($"boardsize {_session.BoardSize}", cancellationToken);
-            await _gtpEngine.SendCommandExpectSuccessAsync($"komi {_session.Komi.ToString(CultureInfo.InvariantCulture)}", cancellationToken);
-            await _gtpEngine.SendCommandExpectSuccessAsync("clear_board", cancellationToken);
+            foreach (var engine in enginesToStart)
+            {
+                await engine.Client.StartAsync(cancellationToken);
+                await engine.Client.SendCommandExpectSuccessAsync($"boardsize {_session.BoardSize}", cancellationToken);
+                await engine.Client.SendCommandExpectSuccessAsync($"komi {_session.Komi.ToString(CultureInfo.InvariantCulture)}", cancellationToken);
+                await engine.Client.SendCommandExpectSuccessAsync("clear_board", cancellationToken);
+            }
+
             return EngineCommandResult.EngineReady();
         });
     }
@@ -240,7 +253,8 @@ public class Game1 : Game
 
     private void SyncHumanMoveIfNeeded(GoStone stone, GoPoint point)
     {
-        if (!HasComputerPlayer() || _gtpEngine is null)
+        var enginesToSync = GetEngineSnapshot();
+        if (enginesToSync.Count == 0)
         {
             return;
         }
@@ -250,14 +264,15 @@ public class Game1 : Game
         var closeEngineAfterSync = _session.CurrentMode.Kind == GoAppModeKind.GameOver;
         BeginEngineCommand(async cancellationToken =>
         {
-            await _gtpEngine.SendCommandExpectSuccessAsync($"play {color} {vertex}", cancellationToken);
+            await SyncPlayToEnginesAsync(enginesToSync, color, vertex, cancellationToken);
             return EngineCommandResult.Success(closeEngineAfterSync);
         });
     }
 
     private void SyncHumanPassIfNeeded(GoStone stone)
     {
-        if (!HasComputerPlayer() || _gtpEngine is null)
+        var enginesToSync = GetEngineSnapshot();
+        if (enginesToSync.Count == 0)
         {
             return;
         }
@@ -266,29 +281,36 @@ public class Game1 : Game
         var closeEngineAfterSync = _session.CurrentMode.Kind == GoAppModeKind.GameOver;
         BeginEngineCommand(async cancellationToken =>
         {
-            await _gtpEngine.SendCommandExpectSuccessAsync($"play {color} pass", cancellationToken);
+            await SyncPlayToEnginesAsync(enginesToSync, color, "pass", cancellationToken);
             return EngineCommandResult.Success(closeEngineAfterSync);
         });
     }
 
     private void RequestComputerMoveIfReady()
     {
+        var currentTurn = _session.CurrentTurn;
         if (_pendingEngineCommand is not null ||
-            _gtpEngine is null ||
             _session.CurrentMode.Kind != GoAppModeKind.Playing ||
             _session.IsEngineThinking ||
             !string.IsNullOrWhiteSpace(_session.EngineErrorMessage) ||
-            _session.GetPlayerKind(_session.CurrentTurn) != GoPlayerKind.Computer)
+            _session.GetPlayerKind(currentTurn) != GoPlayerKind.Computer)
         {
             return;
         }
 
-        var color = FormatColor(_session.CurrentTurn);
+        var engine = GetEngine(currentTurn);
+        if (engine is null)
+        {
+            _session.SetEngineError($"{FormatColor(currentTurn)} GTP engine is not ready.");
+            return;
+        }
+
+        var color = FormatColor(currentTurn);
         BeginEngineCommand(async cancellationToken =>
         {
-            var response = await _gtpEngine.SendCommandAsync($"genmove {color}", cancellationToken);
+            var response = await engine.SendCommandAsync($"genmove {color}", cancellationToken);
             response.ThrowIfError($"genmove {color}");
-            return EngineCommandResult.EngineMove(response.Payload);
+            return EngineCommandResult.EngineMove(response.Payload, currentTurn);
         });
     }
 
@@ -369,7 +391,7 @@ public class Game1 : Game
                 _placeStoneSound?.Play(0.45f, 0.25f, 0f);
             }
 
-            StopGtpGameIfGameOver();
+            SyncComputerMoveToOtherEnginesIfNeeded(result.PlayedBy, "pass");
             StartQueuedEngineCommandIfNeeded();
             return;
         }
@@ -387,8 +409,32 @@ public class Game1 : Game
         }
 
         _placeStoneSound?.Play();
-        StopGtpGameIfGameOver();
+        SyncComputerMoveToOtherEnginesIfNeeded(result.PlayedBy, GtpCoordinate.FormatVertex(point, _session.BoardSize));
         StartQueuedEngineCommandIfNeeded();
+    }
+
+    private void SyncComputerMoveToOtherEnginesIfNeeded(GoStone? playedBy, string vertex)
+    {
+        if (playedBy is null)
+        {
+            StopGtpGameIfGameOver();
+            return;
+        }
+
+        var enginesToSync = GetEngineSnapshotExcept(playedBy.Value);
+        if (enginesToSync.Count == 0)
+        {
+            StopGtpGameIfGameOver();
+            return;
+        }
+
+        var color = FormatColor(playedBy.Value);
+        var closeEngineAfterSync = _session.CurrentMode.Kind == GoAppModeKind.GameOver;
+        BeginEngineCommand(async cancellationToken =>
+        {
+            await SyncPlayToEnginesAsync(enginesToSync, color, vertex, cancellationToken);
+            return EngineCommandResult.Success(closeEngineAfterSync);
+        });
     }
 
     private void StartQueuedEngineCommandIfNeeded()
@@ -401,6 +447,40 @@ public class Game1 : Game
 
     private bool HasComputerPlayer() =>
         _session.BlackPlayerKind == GoPlayerKind.Computer || _session.WhitePlayerKind == GoPlayerKind.Computer;
+
+    private void EnsureGtpEngineForComputerPlayer(GoStone stone)
+    {
+        if (_session.GetPlayerKind(stone) != GoPlayerKind.Computer || _gtpEngines.ContainsKey(stone))
+        {
+            return;
+        }
+
+        _gtpEngines[stone] = new GtpEngineClient(CreateDefaultEngineSettings(stone), TimeSpan.FromSeconds(10));
+    }
+
+    private GtpEngineClient? GetEngine(GoStone stone) =>
+        _gtpEngines.TryGetValue(stone, out var engine) ? engine : null;
+
+    private List<EngineEntry> GetEngineSnapshot() =>
+        _gtpEngines.Select(pair => new EngineEntry(pair.Key, pair.Value)).ToList();
+
+    private List<EngineEntry> GetEngineSnapshotExcept(GoStone stone) =>
+        _gtpEngines
+            .Where(pair => pair.Key != stone)
+            .Select(pair => new EngineEntry(pair.Key, pair.Value))
+            .ToList();
+
+    private static async Task SyncPlayToEnginesAsync(
+        IReadOnlyList<EngineEntry> engines,
+        string color,
+        string vertex,
+        CancellationToken cancellationToken)
+    {
+        foreach (var engine in engines)
+        {
+            await engine.Client.SendCommandExpectSuccessAsync($"play {color} {vertex}", cancellationToken);
+        }
+    }
 
     private void CancelGtpGame()
     {
@@ -424,15 +504,15 @@ public class Game1 : Game
         _engineCancellation.Dispose();
         _engineCancellation = new CancellationTokenSource();
 
-        var engine = _gtpEngine;
-        _gtpEngine = null;
-        if (engine is not null)
+        var engines = GetEngineSnapshot();
+        _gtpEngines.Clear();
+        foreach (var engine in engines)
         {
             _ = Task.Run(async () =>
             {
                 try
                 {
-                    await engine.DisposeAsync();
+                    await engine.Client.DisposeAsync();
                 }
                 catch
                 {
@@ -444,7 +524,7 @@ public class Game1 : Game
 
     private static string FormatColor(GoStone stone) => stone == GoStone.Black ? "black" : "white";
 
-    private static GtpEngineSettings CreateDefaultEngineSettings()
+    private static GtpEngineSettings CreateDefaultEngineSettings(GoStone stone)
     {
         var baseDirectory = AppContext.BaseDirectory;
         var configuration = new DirectoryInfo(baseDirectory).Parent?.Name ?? "Debug";
@@ -452,9 +532,10 @@ public class Game1 : Game
         var executableName = OperatingSystem.IsWindows() ? "KifuwarabeGo2026.Engine.exe" : "KifuwarabeGo2026.Engine";
         var engineDirectory = Path.Combine(repositoryRoot, "KifuwarabeGo2026.Engine", "bin", configuration, "net8.0");
         var engineExecutable = Path.Combine(engineDirectory, executableName);
+        var logPrefix = stone == GoStone.Black ? "[black-engine]" : "[white-engine]";
         if (File.Exists(engineExecutable))
         {
-            return new GtpEngineSettings("Kifuwarabe Random GTP", engineExecutable, engineDirectory, "", EnableGtpLog: true);
+            return new GtpEngineSettings("Kifuwarabe Random GTP", engineExecutable, engineDirectory, "", EnableGtpLog: true, logPrefix);
         }
 
         var engineProject = Path.Combine(repositoryRoot, "KifuwarabeGo2026.Engine", "KifuwarabeGo2026.Engine.csproj");
@@ -463,23 +544,26 @@ public class Game1 : Game
             "dotnet",
             repositoryRoot,
             $"run --project \"{engineProject}\"",
-            EnableGtpLog: true);
+            EnableGtpLog: true,
+            logPrefix);
     }
 
     private static string GetDefaultGtpLogPath() => Path.Combine(AppContext.BaseDirectory, "logs", "gtp.log");
 
     private sealed record EngineCommandCompletion(EngineCommandResult Result, int Generation);
 
-    private sealed record EngineCommandResult(string? MoveText, string? ErrorMessage, bool MakesEngineReady = false, bool ClosesEngine = false)
+    private sealed record EngineCommandResult(string? MoveText, GoStone? PlayedBy, string? ErrorMessage, bool MakesEngineReady = false, bool ClosesEngine = false)
     {
-        public static EngineCommandResult Success(bool closesEngine = false) => new(null, null, ClosesEngine: closesEngine);
+        public static EngineCommandResult Success(bool closesEngine = false) => new(null, null, null, ClosesEngine: closesEngine);
 
-        public static EngineCommandResult EngineReady() => new(null, null, MakesEngineReady: true);
+        public static EngineCommandResult EngineReady() => new(null, null, null, MakesEngineReady: true);
 
-        public static EngineCommandResult EngineMove(string moveText) => new(moveText, null);
+        public static EngineCommandResult EngineMove(string moveText, GoStone playedBy) => new(moveText, playedBy, null);
 
-        public static EngineCommandResult Failure(string errorMessage) => new(null, errorMessage);
+        public static EngineCommandResult Failure(string errorMessage) => new(null, null, errorMessage);
     }
+
+    private sealed record EngineEntry(GoStone Stone, GtpEngineClient Client);
 
     private static SoundEffect CreatePlaceStoneSound()
     {

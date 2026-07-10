@@ -5,4 +5,5 @@ public sealed record GtpEngineSettings(
     string ExecutablePath,
     string WorkingDirectory,
     string Arguments,
-    bool EnableGtpLog);
+    bool EnableGtpLog,
+    string LogPrefix = "");

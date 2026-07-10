@@ -234,7 +234,6 @@ public sealed class GoAppSession
     public void ClearEngineError()
     {
         EngineErrorMessage = "";
-        EngineLogPath = "";
     }
 
     public void SetEngineError(string message)
