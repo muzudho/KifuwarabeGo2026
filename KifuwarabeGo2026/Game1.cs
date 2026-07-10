@@ -24,6 +24,7 @@ public class Game1 : Game
     private CancellationTokenSource _engineCancellation = new();
     private GoScreenRenderer? _renderer;
     private SoundEffect? _placeStoneSound;
+    private SoundEffectInstance? _placeStoneSoundInstance;
     private MouseState _previousMouse;
     private readonly Dictionary<GoStone, GtpEngineClient> _gtpEngines = new();
     private Task<EngineCommandCompletion>? _pendingEngineCommand;
@@ -50,6 +51,7 @@ public class Game1 : Game
     {
         _renderer = new GoScreenRenderer(GraphicsDevice, Content);
         _placeStoneSound = CreatePlaceStoneSound();
+        _placeStoneSoundInstance = _placeStoneSound.CreateInstance();
     }
 
     protected override void Update(GameTime gameTime)
@@ -168,7 +170,7 @@ public class Game1 : Game
                 var passedBy = _session.CurrentTurn;
                 if (_session.Pass())
                 {
-                    _placeStoneSound?.Play(0.45f, 0.25f, 0f);
+                    PlayPlaceStoneSound(0.45f, 0.25f, 0f);
                     SyncHumanPassIfNeeded(passedBy);
                 }
             }
@@ -176,7 +178,7 @@ public class Game1 : Game
             {
                 if (_session.Resign())
                 {
-                    _placeStoneSound?.Play(0.45f, -0.25f, 0f);
+                    PlayPlaceStoneSound(0.45f, -0.25f, 0f);
                     StopGtpGame();
                 }
             }
@@ -185,7 +187,7 @@ public class Game1 : Game
                 var placedBy = _session.CurrentTurn;
                 if (_session.TryPlaceStone(intersection.X, intersection.Y))
                 {
-                    _placeStoneSound?.Play();
+                    PlayPlaceStoneSound();
                     SyncHumanMoveIfNeeded(placedBy, new GoPoint(intersection.X, intersection.Y));
                 }
             }
@@ -205,6 +207,8 @@ public class Game1 : Game
             }
 
             _gtpEngines.Clear();
+            _placeStoneSoundInstance?.Dispose();
+            _placeStoneSound?.Dispose();
             _engineCancellation.Dispose();
         }
 
@@ -388,7 +392,7 @@ public class Game1 : Game
         {
             if (_session.Pass())
             {
-                _placeStoneSound?.Play(0.45f, 0.25f, 0f);
+                PlayPlaceStoneSound(0.45f, 0.25f, 0f);
             }
 
             SyncComputerMoveToOtherEnginesIfNeeded(result.PlayedBy, "pass");
@@ -408,9 +412,22 @@ public class Game1 : Game
             return;
         }
 
-        _placeStoneSound?.Play();
+        PlayPlaceStoneSound();
         SyncComputerMoveToOtherEnginesIfNeeded(result.PlayedBy, GtpCoordinate.FormatVertex(point, _session.BoardSize));
         StartQueuedEngineCommandIfNeeded();
+    }
+
+    private void PlayPlaceStoneSound(float volume = 1f, float pitch = 0f, float pan = 0f)
+    {
+        if (_placeStoneSoundInstance is null || _placeStoneSoundInstance.State == SoundState.Playing)
+        {
+            return;
+        }
+
+        _placeStoneSoundInstance.Volume = volume;
+        _placeStoneSoundInstance.Pitch = pitch;
+        _placeStoneSoundInstance.Pan = pan;
+        _placeStoneSoundInstance.Play();
     }
 
     private void SyncComputerMoveToOtherEnginesIfNeeded(GoStone? playedBy, string vertex)
