@@ -83,6 +83,9 @@ public sealed class GoScreenRenderer
     public static bool GetTournamentRulesAddPanelDisplayNameBoxHit(Point point) =>
         TournamentRulesAddPanelDisplayNameRowBounds.Contains(point);
 
+    public int GetTournamentRulesAddPanelDisplayNameCaretIndex(Point point, string text) =>
+        GetTextBoxCaretIndex(point.X, text, TournamentRulesAddPanelDisplayNameTextBounds, 0.46f);
+
     public static bool GetTournamentRulesAddPanelFileBrowseButtonHit(Point point) =>
         TournamentRulesAddPanelFileBrowseButtonBounds.Contains(point);
 
@@ -514,7 +517,7 @@ public sealed class GoScreenRenderer
         FillRect(new Rectangle(bounds.X + 12, bounds.Y + 10, 118, 36), new Color(39, 68, 65));
         DrawFittedText("DISPLAY", new Rectangle(bounds.X + 24, bounds.Y + 12, 94, 28), Color.White, 0.34f);
 
-        var textBounds = new Rectangle(bounds.X + 152, bounds.Y + 7, bounds.Width - 168, 42);
+        var textBounds = TournamentRulesAddPanelDisplayNameTextBounds;
         DrawFittedText(displayName, textBounds, Color.White, 0.46f);
         if (active)
         {
@@ -548,6 +551,30 @@ public sealed class GoScreenRenderer
         var fittedScale = MathF.Min(textScale, MathF.Min(textBounds.Width / Math.Max(1f, measuredText.X), textBounds.Height / Math.Max(1f, measuredText.Y)));
         var x = textBounds.X + MathF.Min(textBounds.Width - 2, _font.MeasureString(prefix).X * fittedScale);
         DrawLine(new Vector2(x, textBounds.Y + 5), new Vector2(x, textBounds.Bottom - 5), 2, new Color(147, 244, 200));
+    }
+
+    private int GetTextBoxCaretIndex(int pointX, string text, Rectangle textBounds, float textScale)
+    {
+        if (string.IsNullOrEmpty(text) || pointX <= textBounds.X)
+        {
+            return 0;
+        }
+
+        var measuredText = _font.MeasureString(text);
+        var fittedScale = MathF.Min(textScale, MathF.Min(textBounds.Width / Math.Max(1f, measuredText.X), textBounds.Height / Math.Max(1f, measuredText.Y)));
+        var previousX = (float)textBounds.X;
+        for (var i = 0; i < text.Length; i++)
+        {
+            var nextX = textBounds.X + MathF.Min(textBounds.Width - 2, _font.MeasureString(text[..(i + 1)]).X * fittedScale);
+            if (pointX < (previousX + nextX) * 0.5f)
+            {
+                return i;
+            }
+
+            previousX = nextX;
+        }
+
+        return text.Length;
     }
 
     private void DrawTournamentRulesSelectionListItem(Rectangle bounds, GoAppSession session, int index, Point mousePoint)
@@ -813,6 +840,9 @@ public sealed class GoScreenRenderer
     private static Rectangle TournamentRulesAddPanelCloseButtonBounds => new(1318, 156, 132, 48);
 
     private static Rectangle TournamentRulesAddPanelDisplayNameRowBounds => new(AddPanelControlX, 244, 668, 56);
+
+    private static Rectangle TournamentRulesAddPanelDisplayNameTextBounds =>
+        new(TournamentRulesAddPanelDisplayNameRowBounds.X + 152, TournamentRulesAddPanelDisplayNameRowBounds.Y + 7, TournamentRulesAddPanelDisplayNameRowBounds.Width - 168, 42);
 
     private static Rectangle TournamentRulesAddPanelFileRowBounds => new(AddPanelControlX, 710, 668, 56);
 

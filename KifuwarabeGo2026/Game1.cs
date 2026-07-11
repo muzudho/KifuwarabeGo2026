@@ -89,7 +89,12 @@ public class Game1 : Game
             var point = VirtualScreen.ToVirtualPoint(GraphicsDevice.Viewport, mouse.Position);
             var isSetupMode = _session.CurrentMode.Kind != GoAppModeKind.Playing && _session.CurrentMode.Kind != GoAppModeKind.GameOver;
             var handledByGtpEngineSelectionDialog = isSetupMode && TryHandleGtpEngineSelectionDialogClick(point);
-            var handledByTournamentRulesSetting = !handledByGtpEngineSelectionDialog && isSetupMode && _tournamentRulesSetting.TryHandleMouseClick(point);
+            Func<Point, string, int>? getDisplayNameCaretIndex = _renderer is null
+                ? null
+                : _renderer.GetTournamentRulesAddPanelDisplayNameCaretIndex;
+            var handledByTournamentRulesSetting = !handledByGtpEngineSelectionDialog &&
+                isSetupMode &&
+                _tournamentRulesSetting.TryHandleMouseClick(point, getDisplayNameCaretIndex);
             if (handledByGtpEngineSelectionDialog || handledByTournamentRulesSetting)
             {
                 _previousMouse = mouse;

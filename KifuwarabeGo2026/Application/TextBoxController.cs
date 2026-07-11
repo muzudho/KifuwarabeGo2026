@@ -2,6 +2,7 @@ namespace KifuwarabeGo2026.Application;
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
+using System;
 
 public sealed class TextBoxController
 {
@@ -27,10 +28,20 @@ public sealed class TextBoxController
 
     public void Begin(string text)
     {
+        Begin(text, text.Length);
+    }
+
+    public void Begin(string text, int caretIndex)
+    {
         Text = text;
-        CaretIndex = Text.Length;
+        SetCaretIndex(caretIndex);
         IsCaretNavigationKeyHeld = false;
         ResetCaretKeyRepeat();
+    }
+
+    public void SetCaretIndex(int caretIndex)
+    {
+        CaretIndex = Math.Clamp(caretIndex, 0, Text.Length);
     }
 
     public void Clear()

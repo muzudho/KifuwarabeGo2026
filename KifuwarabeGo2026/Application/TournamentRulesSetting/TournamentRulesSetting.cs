@@ -74,7 +74,7 @@ public sealed class TournamentRulesSetting
         return true;
     }
 
-    public bool TryHandleMouseClick(Point point)
+    public bool TryHandleMouseClick(Point point, Func<Point, string, int>? getDisplayNameCaretIndex = null)
     {
         if (_session.IsTournamentRulesSelectionDialogOpen)
         {
@@ -83,7 +83,7 @@ public sealed class TournamentRulesSetting
 
         if (_session.IsTournamentRulesAddPanelOpen)
         {
-            return TryHandleTournamentRulesAddPanelClick(point);
+            return TryHandleTournamentRulesAddPanelClick(point, getDisplayNameCaretIndex);
         }
 
         if (GoScreenRenderer.GetTournamentRulesBrowseButtonHit(point))
@@ -95,7 +95,7 @@ public sealed class TournamentRulesSetting
         return false;
     }
 
-    private bool TryHandleTournamentRulesAddPanelClick(Point point)
+    private bool TryHandleTournamentRulesAddPanelClick(Point point, Func<Point, string, int>? getDisplayNameCaretIndex)
     {
         if (GoScreenRenderer.GetTournamentRulesAddPanelCloseButtonHit(point))
         {
@@ -106,7 +106,7 @@ public sealed class TournamentRulesSetting
 
         if (GoScreenRenderer.GetTournamentRulesAddPanelDisplayNameBoxHit(point))
         {
-            BeginDisplayNameEdit();
+            MoveOrBeginDisplayNameEdit(point, getDisplayNameCaretIndex);
             return true;
         }
 
@@ -207,11 +207,33 @@ public sealed class TournamentRulesSetting
 
     private void BeginDisplayNameEdit()
     {
-        _displayNameTextBox.Begin(_session.TournamentDisplayName);
+        BeginDisplayNameEdit(_session.TournamentDisplayName.Length);
+    }
+
+    private void BeginDisplayNameEdit(int caretIndex)
+    {
+        _displayNameTextBox.Begin(_session.TournamentDisplayName, caretIndex);
         SyncDisplayNameDraft();
         _session.BeginTournamentRulesDisplayNameEdit();
         _session.SetTournamentRulesDisplayNameDraft(_displayNameTextBox.Text, _displayNameTextBox.CaretIndex);
         UpdateDisplayNameWarning();
+    }
+
+    private void MoveOrBeginDisplayNameEdit(Point point, Func<Point, string, int>? getDisplayNameCaretIndex)
+    {
+        var text = _session.IsTournamentRulesDisplayNameEditing
+            ? _displayNameTextBox.Text
+            : _session.TournamentDisplayName;
+        var caretIndex = getDisplayNameCaretIndex?.Invoke(point, text) ?? text.Length;
+
+        if (_session.IsTournamentRulesDisplayNameEditing)
+        {
+            _displayNameTextBox.SetCaretIndex(caretIndex);
+            SyncDisplayNameDraft();
+            return;
+        }
+
+        BeginDisplayNameEdit(caretIndex);
     }
 
     private void HandleDisplayNameKeyboard(KeyboardState keyboard, GameTime gameTime)
