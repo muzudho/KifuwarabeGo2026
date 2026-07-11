@@ -38,6 +38,10 @@ public sealed class GoAppSession
 
     public int SelectedTournamentRulesIndex { get; private set; }
 
+    public bool IsTournamentRulesSelectionDialogOpen { get; private set; }
+
+    public int TournamentRulesSelectionPageIndex { get; private set; }
+
     public string TournamentRulesSaveMessage { get; private set; } = "";
 
     public string TournamentDisplayName => _currentTournamentRules.DisplayName;
@@ -172,6 +176,23 @@ public sealed class GoAppSession
         SelectedTournamentRulesIndex = index;
         ApplyTournamentRules(_tournamentRules[index]);
         TournamentRulesSaveMessage = "";
+    }
+
+    public void OpenTournamentRulesSelectionDialog()
+    {
+        IsTournamentRulesSelectionDialogOpen = true;
+        TournamentRulesSelectionPageIndex = SelectedTournamentRulesIndex / TournamentRulesSelectionPageSize;
+    }
+
+    public void CloseTournamentRulesSelectionDialog()
+    {
+        IsTournamentRulesSelectionDialogOpen = false;
+    }
+
+    public void MoveTournamentRulesSelectionPage(int step)
+    {
+        var pageCount = Math.Max(1, (int)Math.Ceiling(_tournamentRules.Count / (double)TournamentRulesSelectionPageSize));
+        TournamentRulesSelectionPageIndex = Math.Clamp(TournamentRulesSelectionPageIndex + step, 0, pageCount - 1);
     }
 
     public void ChangeRuleKind(GoRuleKind ruleKind)
@@ -453,6 +474,8 @@ public sealed class GoAppSession
         _currentTournamentRules.BoardSize = BoardSize;
         ClearBoard();
     }
+
+    public const int TournamentRulesSelectionPageSize = 6;
 
     private void PassTurn()
     {

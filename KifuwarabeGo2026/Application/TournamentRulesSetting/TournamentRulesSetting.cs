@@ -33,6 +33,11 @@ public sealed class TournamentRulesSetting
 
     public bool TryHandleMouseClick(Point point)
     {
+        if (_session.IsTournamentRulesSelectionDialogOpen)
+        {
+            return TryHandleTournamentRulesSelectionDialogClick(point);
+        }
+
         if (GoScreenRenderer.GetTournamentRulesBrowseButtonHit(point))
         {
             _browseTournamentRules();
@@ -70,6 +75,35 @@ public sealed class TournamentRulesSetting
         }
 
         return false;
+    }
+
+    private bool TryHandleTournamentRulesSelectionDialogClick(Point point)
+    {
+        if (GoScreenRenderer.GetTournamentRulesSelectionDialogCloseButtonHit(point))
+        {
+            _session.CloseTournamentRulesSelectionDialog();
+            return true;
+        }
+
+        if (GoScreenRenderer.GetTournamentRulesSelectionDialogPreviousPageButtonHit(point))
+        {
+            _session.MoveTournamentRulesSelectionPage(-1);
+            return true;
+        }
+
+        if (GoScreenRenderer.GetTournamentRulesSelectionDialogNextPageButtonHit(point))
+        {
+            _session.MoveTournamentRulesSelectionPage(1);
+            return true;
+        }
+
+        if (GoScreenRenderer.GetTournamentRulesSelectionDialogListItemHit(point, _session) is { } index)
+        {
+            _session.SelectTournamentRules(index);
+            return true;
+        }
+
+        return true;
     }
 
     private void UpdateBoardSizeByKeyboard(KeyboardState keyboard)

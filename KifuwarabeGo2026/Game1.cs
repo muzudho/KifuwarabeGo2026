@@ -122,8 +122,7 @@ public class Game1 : Game
 
     private void OpenTournamentRulesSelectionDialog()
     {
-        var nextIndex = (_session.SelectedTournamentRulesIndex + 1) % Math.Max(1, _session.TournamentRulesList.Count);
-        _session.SelectTournamentRules(nextIndex);
+        _session.OpenTournamentRulesSelectionDialog();
     }
 
     private void OpenGtpEngineSelectionDialog(GoStone stone)

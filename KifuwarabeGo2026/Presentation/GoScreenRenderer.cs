@@ -6,6 +6,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using System;
+using System.IO;
 
 public sealed class GoScreenRenderer
 {
@@ -39,6 +40,7 @@ public sealed class GoScreenRenderer
         DrawBackground();
         DrawBoard(session, mousePoint);
         DrawSidePanel(session, mousePoint);
+        DrawTournamentRulesSelectionDialog(session, mousePoint);
 
         _spriteBatch.End();
     }
@@ -66,6 +68,31 @@ public sealed class GoScreenRenderer
 
     public static bool GetTournamentRulesBrowseButtonHit(Point point) =>
         TournamentRulesSelector.ContainsBrowseButton(point);
+
+    public static bool GetTournamentRulesSelectionDialogCloseButtonHit(Point point) =>
+        TournamentRulesSelectionDialogCloseButtonBounds.Contains(point);
+
+    public static bool GetTournamentRulesSelectionDialogPreviousPageButtonHit(Point point) =>
+        TournamentRulesSelectionDialogPreviousPageButtonBounds.Contains(point);
+
+    public static bool GetTournamentRulesSelectionDialogNextPageButtonHit(Point point) =>
+        TournamentRulesSelectionDialogNextPageButtonBounds.Contains(point);
+
+    public static int? GetTournamentRulesSelectionDialogListItemHit(Point point, GoAppSession session)
+    {
+        for (var i = 0; i < GoAppSession.TournamentRulesSelectionPageSize; i++)
+        {
+            if (!TournamentRulesSelectionDialogListItemBounds(i).Contains(point))
+            {
+                continue;
+            }
+
+            var index = session.TournamentRulesSelectionPageIndex * GoAppSession.TournamentRulesSelectionPageSize + i;
+            return index < session.TournamentRulesList.Count ? index : null;
+        }
+
+        return null;
+    }
 
     public static GoRuleKind? GetRuleKindButtonHit(Point point)
     {
@@ -315,6 +342,90 @@ public sealed class GoScreenRenderer
         DrawCommandButton(ReturnToSetupButtonBounds, "RULE SETUP", false, mousePoint);
     }
 
+    private void DrawTournamentRulesSelectionDialog(GoAppSession session, Point mousePoint)
+    {
+        if (!session.IsTournamentRulesSelectionDialogOpen)
+        {
+            return;
+        }
+
+        FillRect(new Rectangle(0, 0, VirtualScreen.Width, VirtualScreen.Height), new Color(0, 0, 0, 105));
+        FillRect(new Rectangle(TournamentRulesSelectionDialogBounds.X + 18, TournamentRulesSelectionDialogBounds.Y + 20, TournamentRulesSelectionDialogBounds.Width, TournamentRulesSelectionDialogBounds.Height), new Color(0, 0, 0, 145));
+        FillRect(TournamentRulesSelectionDialogBounds, new Color(19, 24, 31, 248));
+        DrawRect(TournamentRulesSelectionDialogBounds, 2, new Color(116, 145, 146));
+
+        DrawText("TOURNAMENT RULES", new Vector2(TournamentRulesSelectionDialogBounds.X + 30, TournamentRulesSelectionDialogBounds.Y + 24), new Color(244, 238, 218), 0.78f);
+        DrawCommandButton(TournamentRulesSelectionDialogCloseButtonBounds, "CLOSE", false, mousePoint, scale: 0.42f);
+
+        DrawText("LIST", new Vector2(TournamentRulesSelectionDialogListBounds.X, TournamentRulesSelectionDialogListBounds.Y - 34), new Color(180, 195, 195), 0.46f);
+        DrawText("PROPERTIES", new Vector2(TournamentRulesSelectionDialogPropertyBounds.X, TournamentRulesSelectionDialogPropertyBounds.Y - 34), new Color(180, 195, 195), 0.46f);
+
+        FillRect(TournamentRulesSelectionDialogListBounds, new Color(15, 20, 26));
+        DrawRect(TournamentRulesSelectionDialogListBounds, 1, new Color(67, 84, 92));
+
+        var startIndex = session.TournamentRulesSelectionPageIndex * GoAppSession.TournamentRulesSelectionPageSize;
+        for (var i = 0; i < GoAppSession.TournamentRulesSelectionPageSize; i++)
+        {
+            var index = startIndex + i;
+            if (index >= session.TournamentRulesList.Count)
+            {
+                break;
+            }
+
+            DrawTournamentRulesSelectionListItem(TournamentRulesSelectionDialogListItemBounds(i), session, index, mousePoint);
+        }
+
+        DrawTournamentRulesSelectionProperties(session);
+
+        var pageCount = Math.Max(1, (int)Math.Ceiling(session.TournamentRulesList.Count / (double)GoAppSession.TournamentRulesSelectionPageSize));
+        DrawCommandButton(TournamentRulesSelectionDialogPreviousPageButtonBounds, "PREV", false, mousePoint, enabled: session.TournamentRulesSelectionPageIndex > 0, scale: 0.42f);
+        DrawText($"PAGE {session.TournamentRulesSelectionPageIndex + 1} / {pageCount}", new Vector2(TournamentRulesSelectionDialogBounds.X + 350, TournamentRulesSelectionDialogBounds.Bottom - 62), new Color(227, 224, 210), 0.48f);
+        DrawCommandButton(TournamentRulesSelectionDialogNextPageButtonBounds, "NEXT", false, mousePoint, enabled: session.TournamentRulesSelectionPageIndex < pageCount - 1, scale: 0.42f);
+    }
+
+    private void DrawTournamentRulesSelectionListItem(Rectangle bounds, GoAppSession session, int index, Point mousePoint)
+    {
+        var rules = session.TournamentRulesList[index];
+        var selected = index == session.SelectedTournamentRulesIndex;
+        var hovered = bounds.Contains(mousePoint);
+        FillRect(bounds, selected ? new Color(38, 103, 86) : hovered ? new Color(43, 52, 62) : new Color(24, 31, 37));
+        DrawRect(bounds, 1, selected ? new Color(147, 244, 200) : new Color(70, 85, 94));
+        DrawText($"{index + 1:00}", new Vector2(bounds.X + 14, bounds.Y + 16), selected ? new Color(177, 255, 215) : new Color(180, 195, 195), 0.4f);
+        DrawFittedText(rules.DisplayName, new Rectangle(bounds.X + 62, bounds.Y + 6, bounds.Width - 82, 32), Color.White, 0.5f);
+        DrawText($"{rules.Rule}  {rules.BoardSize}x{rules.BoardSize}  KOMI {FormatKomi(rules.Komi)}", new Vector2(bounds.X + 62, bounds.Y + 42), new Color(204, 211, 206), 0.34f);
+    }
+
+    private void DrawTournamentRulesSelectionProperties(GoAppSession session)
+    {
+        FillRect(TournamentRulesSelectionDialogPropertyBounds, new Color(15, 20, 26));
+        DrawRect(TournamentRulesSelectionDialogPropertyBounds, 1, new Color(67, 84, 92));
+
+        if (session.SelectedTournamentRulesIndex < 0 || session.SelectedTournamentRulesIndex >= session.TournamentRulesList.Count)
+        {
+            DrawText("NO RULES", new Vector2(TournamentRulesSelectionDialogPropertyBounds.X + 24, TournamentRulesSelectionDialogPropertyBounds.Y + 24), Color.White, 0.5f);
+            return;
+        }
+
+        var rules = session.TournamentRulesList[session.SelectedTournamentRulesIndex];
+        var y = TournamentRulesSelectionDialogPropertyBounds.Y + 22;
+        DrawPropertyRow(y, "NAME", rules.DisplayName);
+        DrawPropertyRow(y + 70, "RULE", rules.Rule.ToString());
+        DrawPropertyRow(y + 140, "BOARD", $"{rules.BoardSize} x {rules.BoardSize}");
+        DrawPropertyRow(y + 210, "KOMI", FormatKomi(rules.Komi));
+        DrawPropertyRow(y + 280, "TIME", FormatMainTime(rules.MainTime));
+        DrawPropertyRow(y + 350, "FILE", string.IsNullOrWhiteSpace(rules.FilePath) ? "-" : Path.GetFileName(rules.FilePath));
+    }
+
+    private void DrawPropertyRow(int y, string label, string value)
+    {
+        var bounds = new Rectangle(TournamentRulesSelectionDialogPropertyBounds.X + 18, y, TournamentRulesSelectionDialogPropertyBounds.Width - 36, 52);
+        FillRect(bounds, new Color(24, 31, 37));
+        DrawRect(bounds, 1, new Color(70, 85, 94));
+        FillRect(new Rectangle(bounds.X + 12, bounds.Y + 10, 118, 32), new Color(39, 68, 65));
+        DrawFittedText(label, new Rectangle(bounds.X + 24, bounds.Y + 10, 94, 32), Color.White, 0.34f);
+        DrawFittedText(value, new Rectangle(bounds.X + 152, bounds.Y + 7, bounds.Width - 168, 38), Color.White, 0.46f);
+    }
+
     private void DrawBoardSizeButtons(int boardSize, Point mousePoint, int y)
     {
         var labels = new[] { "9 x 9", "13 x 13", "19 x 19" };
@@ -384,6 +495,21 @@ public sealed class GoScreenRenderer
     private static Rectangle BoardSizeButtonBounds(int index, int y) => new(1144 + index * 224, y, 188, 62);
 
     private static LabeledBrowseSelector TournamentRulesSelector => new(new Rectangle(1144, 198, 668, 56), "RULES", "");
+
+    private static Rectangle TournamentRulesSelectionDialogBounds => new(230, 126, 1460, 820);
+
+    private static Rectangle TournamentRulesSelectionDialogListBounds => new(270, 242, 650, 560);
+
+    private static Rectangle TournamentRulesSelectionDialogPropertyBounds => new(950, 242, 700, 560);
+
+    private static Rectangle TournamentRulesSelectionDialogCloseButtonBounds => new(1518, 156, 132, 48);
+
+    private static Rectangle TournamentRulesSelectionDialogPreviousPageButtonBounds => new(270, 854, 150, 52);
+
+    private static Rectangle TournamentRulesSelectionDialogNextPageButtonBounds => new(770, 854, 150, 52);
+
+    private static Rectangle TournamentRulesSelectionDialogListItemBounds(int index) =>
+        new(TournamentRulesSelectionDialogListBounds.X + 16, TournamentRulesSelectionDialogListBounds.Y + 16 + index * 88, TournamentRulesSelectionDialogListBounds.Width - 32, 72);
 
     private static Rectangle RuleKindButtonBounds(int index) => new(1144 + index * 224, 382, 188, 50);
 
