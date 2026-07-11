@@ -333,7 +333,6 @@ public sealed class GoScreenRenderer
         var boardSize = session.BoardSize;
 
         DrawText("KIFUWARABE GO 2026", new Vector2(1142, 104), new Color(244, 238, 218), 1.0f);
-        DrawText($"MODE {session.CurrentMode.DisplayName}", new Vector2(1540, 112), new Color(227, 224, 210), 0.5f);
         DrawText("TOURNAMENT", new Vector2(1144, 166), new Color(180, 195, 195), 0.5f);
         DrawLabeledBrowseSelector(TournamentRulesSelector with { Value = session.TournamentDisplayName }, mousePoint);
 
