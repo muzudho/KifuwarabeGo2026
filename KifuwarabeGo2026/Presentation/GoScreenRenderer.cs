@@ -148,6 +148,9 @@ public sealed class GoScreenRenderer
     public static bool GetGtpEngineSelectionDialogCloseButtonHit(Point point) =>
         GtpEngineSelectionDialogCloseButtonBounds.Contains(point);
 
+    public static bool GetGtpEngineSelectionDialogAddButtonHit(Point point) =>
+        GtpEngineSelectionDialogAddButtonBounds.Contains(point);
+
     public static bool GetGtpEngineSelectionDialogEditButtonHit(Point point) =>
         GtpEngineSelectionDialogEditButtonBounds.Contains(point);
 
@@ -731,6 +734,7 @@ public sealed class GoScreenRenderer
         DrawCommandButton(GtpEngineSelectionDialogPreviousPageButtonBounds, "PREV", false, mousePoint, enabled: session.GtpEngineSelectionPageIndex > 0, scale: 0.42f);
         DrawText($"PAGE {session.GtpEngineSelectionPageIndex + 1} / {pageCount}", new Vector2(GtpEngineSelectionDialogBounds.X + 350, GtpEngineSelectionDialogBounds.Bottom - 62), new Color(227, 224, 210), 0.48f);
         DrawCommandButton(GtpEngineSelectionDialogNextPageButtonBounds, "NEXT", false, mousePoint, enabled: session.GtpEngineSelectionPageIndex < pageCount - 1, scale: 0.42f);
+        DrawCommandButton(GtpEngineSelectionDialogAddButtonBounds, "ADD", false, mousePoint, scale: 0.42f);
         DrawCommandButton(GtpEngineSelectionDialogEditButtonBounds, "EDIT", false, mousePoint, enabled: session.GtpEngineProfiles.Count > 0, scale: 0.42f);
         DrawCommandButton(GtpEngineSelectionDialogDeleteButtonBounds, "DELETE", false, mousePoint, enabled: session.CanDeleteSelectedGtpEngine, scale: 0.42f);
         DrawGtpEngineDeleteConfirmation(session, mousePoint);
@@ -748,7 +752,7 @@ public sealed class GoScreenRenderer
         FillRect(GtpEngineEditPanelBounds, new Color(19, 24, 31, 248));
         DrawRect(GtpEngineEditPanelBounds, 2, new Color(116, 145, 146));
 
-        DrawText("EDIT GTP ENGINE", new Vector2(GtpEngineEditPanelBounds.X + 30, GtpEngineEditPanelBounds.Y + 24), new Color(244, 238, 218), 0.78f);
+        DrawText(session.IsGtpEngineAddPanelMode ? "ADD GTP ENGINE" : "EDIT GTP ENGINE", new Vector2(GtpEngineEditPanelBounds.X + 30, GtpEngineEditPanelBounds.Y + 24), new Color(244, 238, 218), 0.78f);
         DrawCommandButton(GtpEngineEditPanelCloseButtonBounds, "BACK", false, mousePoint, scale: 0.42f);
 
         FillRect(GtpEngineEditPanelEditorBounds, new Color(15, 20, 26));
@@ -1037,6 +1041,8 @@ public sealed class GoScreenRenderer
     private static Rectangle GtpEngineSelectionDialogPreviousPageButtonBounds => new(270, 854, 150, 52);
 
     private static Rectangle GtpEngineSelectionDialogNextPageButtonBounds => new(770, 854, 150, 52);
+
+    private static Rectangle GtpEngineSelectionDialogAddButtonBounds => new(968, 854, 150, 52);
 
     private static Rectangle GtpEngineSelectionDialogEditButtonBounds => new(1138, 854, 150, 52);
 

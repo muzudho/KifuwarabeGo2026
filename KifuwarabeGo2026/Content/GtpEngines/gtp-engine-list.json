@@ -2,16 +2,23 @@
   "gtpEngines": [
     {
       "displayName": "Kifuwarabe Random GTP",
-      "executablePath": "../../../KifuwarabeGo2026.Engine/bin/Debug/net8.0/KifuwarabeGo2026.Engine.exe",
-      "workingDirectory": "../../../KifuwarabeGo2026.Engine/bin/Debug/net8.0",
+      "executablePath": "..\\..\\..\\KifuwarabeGo2026.Engine\\bin\\Debug\\net8.0\\KifuwarabeGo2026.Engine.exe",
+      "workingDirectory": "..\\..\\..\\KifuwarabeGo2026.Engine\\bin\\Debug\\net8.0",
       "arguments": "",
       "enableGtpLog": true
     },
     {
       "displayName": "Kifuwarabe dotnet run",
       "executablePath": "dotnet",
-      "workingDirectory": "../../..",
-      "arguments": "run --project \"KifuwarabeGo2026.Engine/KifuwarabeGo2026.Engine.csproj\"",
+      "workingDirectory": "..\\..\\..",
+      "arguments": "run --project \u0022KifuwarabeGo2026.Engine/KifuwarabeGo2026.Engine.csproj\u0022",
+      "enableGtpLog": true
+    },
+    {
+      "displayName": "muzudho-test",
+      "executablePath": "..\\..\\bin\\Debug\\net8.0-windows\\KifuwarabeGo2026.exe",
+      "workingDirectory": "..\\..\\bin\\Debug\\net8.0-windows",
+      "arguments": "",
       "enableGtpLog": true
     }
   ]

@@ -214,6 +214,12 @@ public class Game1 : Game
             return true;
         }
 
+        if (GoScreenRenderer.GetGtpEngineSelectionDialogAddButtonHit(point))
+        {
+            _session.OpenGtpEngineAddPanel();
+            return true;
+        }
+
         if (GoScreenRenderer.GetGtpEngineSelectionDialogEditButtonHit(point))
         {
             _session.OpenGtpEngineEditPanel();

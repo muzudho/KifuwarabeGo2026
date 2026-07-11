@@ -99,6 +99,8 @@ public sealed class GoAppSession
 
     public bool IsGtpEngineEditPanelOpen { get; private set; }
 
+    public bool IsGtpEngineAddPanelMode { get; private set; }
+
     public GtpEngineProfileEditField? ActiveGtpEngineEditField { get; private set; }
 
     public int GtpEngineEditCaretIndex { get; private set; }
@@ -450,6 +452,7 @@ public sealed class GoAppSession
         IsTournamentRulesAddPanelOpen = false;
         IsTournamentRulesDeleteConfirmationOpen = false;
         IsGtpEngineEditPanelOpen = false;
+        IsGtpEngineAddPanelMode = false;
         IsGtpEngineSelectionDialogOpen = true;
         IsGtpEngineDeleteConfirmationOpen = false;
         GtpEngineSelectionTargetStone = stone;
@@ -476,8 +479,28 @@ public sealed class GoAppSession
         IsTournamentRulesDeleteConfirmationOpen = false;
         IsGtpEngineSelectionDialogOpen = false;
         IsGtpEngineEditPanelOpen = true;
+        IsGtpEngineAddPanelMode = false;
         CloseGtpEngineDeleteConfirmation();
         GtpEngineEditDraft = _gtpEngineProfiles[index].Clone();
+        ActiveGtpEngineEditField = null;
+        GtpEngineEditCaretIndex = 0;
+        GtpEngineEditWarning = "";
+        GtpEngineEditSaveMessage = "";
+    }
+
+    public void OpenGtpEngineAddPanel()
+    {
+        IsTournamentRulesSelectionDialogOpen = false;
+        IsTournamentRulesAddPanelOpen = false;
+        IsTournamentRulesDeleteConfirmationOpen = false;
+        IsGtpEngineSelectionDialogOpen = false;
+        IsGtpEngineEditPanelOpen = true;
+        IsGtpEngineAddPanelMode = true;
+        CloseGtpEngineDeleteConfirmation();
+        GtpEngineEditDraft = new GtpEngineProfile
+        {
+            DisplayName = "New GTP Engine",
+        };
         ActiveGtpEngineEditField = null;
         GtpEngineEditCaretIndex = 0;
         GtpEngineEditWarning = "";
@@ -487,6 +510,7 @@ public sealed class GoAppSession
     public void CloseGtpEngineEditPanel()
     {
         IsGtpEngineEditPanelOpen = false;
+        IsGtpEngineAddPanelMode = false;
         ActiveGtpEngineEditField = null;
         GtpEngineEditWarning = "";
         GtpEngineEditSaveMessage = "";
@@ -581,7 +605,18 @@ public sealed class GoAppSession
 
     public void SaveGtpEngineEditDraft(GtpEngineProfile profile)
     {
-        ReplaceSelectedGtpEngine(profile);
+        if (IsGtpEngineAddPanelMode)
+        {
+            _gtpEngineProfiles.Add(profile.Clone());
+            SelectGtpEngine(GtpEngineSelectionTargetStone, _gtpEngineProfiles.Count - 1);
+            GtpEngineSelectionPageIndex = (_gtpEngineProfiles.Count - 1) / GtpEngineSelectionPageSize;
+            IsGtpEngineAddPanelMode = false;
+        }
+        else
+        {
+            ReplaceSelectedGtpEngine(profile);
+        }
+
         GtpEngineEditDraft = _gtpEngineProfiles[SelectedGtpEngineIndex].Clone();
         GtpEngineEditSaveMessage = "SAVED";
         GtpEngineEditWarning = "";
