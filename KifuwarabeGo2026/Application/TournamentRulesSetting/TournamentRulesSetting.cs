@@ -23,6 +23,11 @@ public sealed class TournamentRulesSetting
 
     public void UpdateByKeyboard(KeyboardState keyboard)
     {
+        if (!_session.IsTournamentRulesAddPanelOpen)
+        {
+            return;
+        }
+
         UpdateBoardSizeByKeyboard(keyboard);
 
         if (keyboard.IsKeyDown(Keys.F5))
@@ -38,9 +43,25 @@ public sealed class TournamentRulesSetting
             return TryHandleTournamentRulesSelectionDialogClick(point);
         }
 
+        if (_session.IsTournamentRulesAddPanelOpen)
+        {
+            return TryHandleTournamentRulesAddPanelClick(point);
+        }
+
         if (GoScreenRenderer.GetTournamentRulesBrowseButtonHit(point))
         {
             _browseTournamentRules();
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool TryHandleTournamentRulesAddPanelClick(Point point)
+    {
+        if (GoScreenRenderer.GetTournamentRulesAddPanelCloseButtonHit(point))
+        {
+            _session.CloseTournamentRulesAddPanel();
             return true;
         }
 
@@ -97,6 +118,12 @@ public sealed class TournamentRulesSetting
             return true;
         }
 
+        if (GoScreenRenderer.GetTournamentRulesSelectionDialogAddButtonHit(point))
+        {
+            CreateNewTournamentRules();
+            return true;
+        }
+
         if (GoScreenRenderer.GetTournamentRulesSelectionDialogPreviousPageButtonHit(point))
         {
             _session.MoveTournamentRulesSelectionPage(-1);
@@ -116,6 +143,14 @@ public sealed class TournamentRulesSetting
         }
 
         return true;
+    }
+
+    private void CreateNewTournamentRules()
+    {
+        var rules = _catalog.CreateNew(_session.CurrentTournamentRules);
+        _session.AddAndSelectTournamentRules(rules);
+        _session.OpenTournamentRulesAddPanel();
+        _session.MarkTournamentRulesSaved();
     }
 
     private void UpdateBoardSizeByKeyboard(KeyboardState keyboard)

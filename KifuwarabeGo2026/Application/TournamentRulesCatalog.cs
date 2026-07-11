@@ -87,6 +87,34 @@ public sealed class TournamentRulesCatalog
         File.WriteAllText(rules.FilePath, JsonSerializer.Serialize(Normalize(rules.Clone()), JsonOptions));
     }
 
+    public TournamentRules CreateNew(TournamentRules source)
+    {
+        var listDirectory = Path.GetDirectoryName(ListPath) ?? AppContext.BaseDirectory;
+        Directory.CreateDirectory(listDirectory);
+
+        var rules = Normalize(source.Clone());
+        rules.DisplayName = CreateNewDisplayName();
+        rules.FilePath = CreateUniqueRulesPath(listDirectory);
+        Save(rules);
+        AppendListEntry(rules);
+        return rules;
+    }
+
+    private void AppendListEntry(TournamentRules rules)
+    {
+        var listDirectory = Path.GetDirectoryName(ListPath) ?? AppContext.BaseDirectory;
+        var list = File.Exists(ListPath)
+            ? JsonSerializer.Deserialize<TournamentRulesList>(File.ReadAllText(ListPath), JsonOptions) ?? new TournamentRulesList()
+            : new TournamentRulesList();
+        list.TournamentRules.Add(new TournamentRulesListEntry
+        {
+            DisplayName = rules.DisplayName,
+            FilePath = Path.GetRelativePath(listDirectory, rules.FilePath),
+        });
+
+        File.WriteAllText(ListPath, JsonSerializer.Serialize(list, JsonOptions));
+    }
+
     private static TournamentRules Normalize(TournamentRules rules)
     {
         rules.DisplayName = string.IsNullOrWhiteSpace(rules.DisplayName) ? "Unnamed tournament" : rules.DisplayName.Trim();
@@ -110,6 +138,22 @@ public sealed class TournamentRulesCatalog
         MainTimeSeconds = 0,
         MoveLimit = 400,
     };
+
+    private static string CreateNewDisplayName() => $"New tournament {DateTime.Now:yyyyMMdd-HHmmss}";
+
+    private static string CreateUniqueRulesPath(string directory)
+    {
+        var baseName = $"tournament-rules-custom-{DateTime.Now:yyyyMMdd-HHmmss}";
+        var path = Path.Combine(directory, $"{baseName}.json");
+        var suffix = 2;
+        while (File.Exists(path))
+        {
+            path = Path.Combine(directory, $"{baseName}-{suffix}.json");
+            suffix++;
+        }
+
+        return path;
+    }
 
     private sealed class TournamentRulesList
     {

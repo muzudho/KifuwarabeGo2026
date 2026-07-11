@@ -41,6 +41,7 @@ public sealed class GoScreenRenderer
         DrawBoard(session, mousePoint);
         DrawSidePanel(session, mousePoint);
         DrawTournamentRulesSelectionDialog(session, mousePoint);
+        DrawTournamentRulesAddPanel(session, mousePoint);
         DrawGtpEngineSelectionDialog(session, mousePoint);
 
         _spriteBatch.End();
@@ -53,7 +54,7 @@ public sealed class GoScreenRenderer
             return null;
         }
 
-        var y = SetupBoardSizeButtonY;
+        var y = AddPanelBoardSizeButtonY;
         if (BoardSizeButtonBounds(0, y).Contains(point))
         {
             return 9;
@@ -72,6 +73,12 @@ public sealed class GoScreenRenderer
 
     public static bool GetTournamentRulesSelectionDialogCloseButtonHit(Point point) =>
         TournamentRulesSelectionDialogCloseButtonBounds.Contains(point);
+
+    public static bool GetTournamentRulesSelectionDialogAddButtonHit(Point point) =>
+        TournamentRulesSelectionDialogAddButtonBounds.Contains(point);
+
+    public static bool GetTournamentRulesAddPanelCloseButtonHit(Point point) =>
+        TournamentRulesAddPanelCloseButtonBounds.Contains(point);
 
     public static bool GetTournamentRulesSelectionDialogPreviousPageButtonHit(Point point) =>
         TournamentRulesSelectionDialogPreviousPageButtonBounds.Contains(point);
@@ -330,28 +337,22 @@ public sealed class GoScreenRenderer
 
     private void DrawSetupSidePanel(GoAppSession session, Point mousePoint)
     {
-        var boardSize = session.BoardSize;
-
         DrawText("KIFUWARABE GO 2026", new Vector2(1142, 104), new Color(244, 238, 218), 1.0f);
         DrawText("TOURNAMENT", new Vector2(1144, 166), new Color(180, 195, 195), 0.5f);
         DrawLabeledBrowseSelector(TournamentRulesSelector with { Value = session.TournamentDisplayName }, mousePoint);
 
-        DrawText("RULE", new Vector2(1144, 348), new Color(180, 195, 195), 0.5f);
-        DrawRuleKindButtons(session.RuleKind, mousePoint);
-        DrawText($"BOARD {boardSize} x {boardSize}", new Vector2(1144, 438), new Color(99, 223, 185), 0.62f);
-        DrawBoardSizeButtons(boardSize, mousePoint, SetupBoardSizeButtonY);
+        DrawText("CURRENT RULES", new Vector2(1144, 294), new Color(180, 195, 195), 0.5f);
+        DrawInfoStrip(1144, 334, "RULE", session.RuleKind.ToString(), new Color(39, 68, 65), Color.White);
+        DrawInfoStrip(1144, 406, "BOARD", $"{session.BoardSize} x {session.BoardSize}", new Color(39, 68, 65), Color.White);
+        DrawInfoStrip(1144, 478, "KOMI", FormatKomi(session.Komi), new Color(39, 68, 65), Color.White);
+        DrawInfoStrip(1144, 550, "MOVES", FormatMoveLimit(session.MoveLimit), new Color(39, 68, 65), Color.White);
 
-        DrawRulesNumberStrip(1144, 532, "KOMI", FormatKomi(session.Komi), KomiStepButtonBounds(0), "-0.5", KomiStepButtonBounds(1), "+0.5", mousePoint);
-        DrawRulesNumberStrip(1144, 596, "TIME", FormatMainTime(session.MainTime), MainTimeStepButtonBounds(0), "-1m", MainTimeStepButtonBounds(1), "+1m", mousePoint);
-        DrawRulesNumberStrip(1144, 660, "MOVES", FormatMoveLimit(session.MoveLimit), MoveLimitStepButtonBounds(0), "-10", MoveLimitStepButtonBounds(1), "+10", mousePoint);
-
-        DrawInfoStrip(1144, 724, "BLACK", PlayerKindLabel(session.BlackPlayerKind), new Color(26, 27, 30), Color.White);
+        DrawInfoStrip(1144, 646, "BLACK", PlayerKindLabel(session.BlackPlayerKind), new Color(26, 27, 30), Color.White);
         DrawPlayerKindButtons(session.BlackPlayerKind, mousePoint, BlackPlayerKindButtonY);
         DrawSetupEngineButtons(session, GoStone.Black, mousePoint, BlackEngineButtonY);
-        DrawInfoStrip(1144, 814, "WHITE", PlayerKindLabel(session.WhitePlayerKind), new Color(236, 229, 211), new Color(24, 24, 24));
+        DrawInfoStrip(1144, 766, "WHITE", PlayerKindLabel(session.WhitePlayerKind), new Color(236, 229, 211), new Color(24, 24, 24));
         DrawPlayerKindButtons(session.WhitePlayerKind, mousePoint, WhitePlayerKindButtonY);
         DrawSetupEngineButtons(session, GoStone.White, mousePoint, WhiteEngineButtonY);
-        DrawCommandButton(SaveTournamentRulesButtonBounds, SaveTournamentRulesLabel(session), false, mousePoint);
         DrawCommandButton(StartPlayingButtonBounds, "START", false, mousePoint);
     }
 
@@ -462,6 +463,36 @@ public sealed class GoScreenRenderer
         DrawCommandButton(TournamentRulesSelectionDialogPreviousPageButtonBounds, "PREV", false, mousePoint, enabled: session.TournamentRulesSelectionPageIndex > 0, scale: 0.42f);
         DrawText($"PAGE {session.TournamentRulesSelectionPageIndex + 1} / {pageCount}", new Vector2(TournamentRulesSelectionDialogBounds.X + 350, TournamentRulesSelectionDialogBounds.Bottom - 62), new Color(227, 224, 210), 0.48f);
         DrawCommandButton(TournamentRulesSelectionDialogNextPageButtonBounds, "NEXT", false, mousePoint, enabled: session.TournamentRulesSelectionPageIndex < pageCount - 1, scale: 0.42f);
+        DrawCommandButton(TournamentRulesSelectionDialogAddButtonBounds, "ADD RULES", false, mousePoint, scale: 0.42f);
+    }
+
+    private void DrawTournamentRulesAddPanel(GoAppSession session, Point mousePoint)
+    {
+        if (!session.IsTournamentRulesAddPanelOpen)
+        {
+            return;
+        }
+
+        FillRect(new Rectangle(0, 0, VirtualScreen.Width, VirtualScreen.Height), new Color(0, 0, 0, 105));
+        FillRect(new Rectangle(TournamentRulesAddPanelBounds.X + 18, TournamentRulesAddPanelBounds.Y + 20, TournamentRulesAddPanelBounds.Width, TournamentRulesAddPanelBounds.Height), new Color(0, 0, 0, 145));
+        FillRect(TournamentRulesAddPanelBounds, new Color(19, 24, 31, 248));
+        DrawRect(TournamentRulesAddPanelBounds, 2, new Color(116, 145, 146));
+
+        DrawText("ADD TOURNAMENT RULES", new Vector2(TournamentRulesAddPanelBounds.X + 30, TournamentRulesAddPanelBounds.Y + 24), new Color(244, 238, 218), 0.78f);
+        DrawCommandButton(TournamentRulesAddPanelCloseButtonBounds, "BACK", false, mousePoint, scale: 0.42f);
+
+        FillRect(TournamentRulesAddPanelEditorBounds, new Color(15, 20, 26));
+        DrawRect(TournamentRulesAddPanelEditorBounds, 1, new Color(67, 84, 92));
+
+        DrawText("RULE", new Vector2(AddPanelControlX, 250), new Color(180, 195, 195), 0.5f);
+        DrawRuleKindButtons(session.RuleKind, mousePoint);
+        DrawText($"BOARD {session.BoardSize} x {session.BoardSize}", new Vector2(AddPanelControlX, 340), new Color(99, 223, 185), 0.62f);
+        DrawBoardSizeButtons(session.BoardSize, mousePoint, AddPanelBoardSizeButtonY);
+        DrawRulesNumberStrip(AddPanelControlX, 434, "KOMI", FormatKomi(session.Komi), KomiStepButtonBounds(0), "-0.5", KomiStepButtonBounds(1), "+0.5", mousePoint);
+        DrawRulesNumberStrip(AddPanelControlX, 498, "TIME", FormatMainTime(session.MainTime), MainTimeStepButtonBounds(0), "-1m", MainTimeStepButtonBounds(1), "+1m", mousePoint);
+        DrawRulesNumberStrip(AddPanelControlX, 562, "MOVES", FormatMoveLimit(session.MoveLimit), MoveLimitStepButtonBounds(0), "-10", MoveLimitStepButtonBounds(1), "+10", mousePoint);
+        DrawPathPropertyRow(TournamentRulesAddPanelFileRowBounds, "FILE", string.IsNullOrWhiteSpace(session.CurrentTournamentRules.FilePath) ? "-" : Path.GetFileName(session.CurrentTournamentRules.FilePath));
+        DrawCommandButton(SaveTournamentRulesButtonBounds, SaveTournamentRulesLabel(session), false, mousePoint);
     }
 
     private void DrawTournamentRulesSelectionListItem(Rectangle bounds, GoAppSession session, int index, Point mousePoint)
@@ -684,17 +715,19 @@ public sealed class GoScreenRenderer
         DrawLabeledBrowseSelector(GtpEngineSelectorBounds(y) with { Value = engineName }, mousePoint);
     }
 
-    private const int SetupBoardSizeButtonY = 476;
+    private const int AddPanelControlX = 626;
 
-    private const int BlackPlayerKindButtonY = 734;
+    private const int AddPanelBoardSizeButtonY = 378;
+
+    private const int BlackPlayerKindButtonY = 704;
 
     private const int WhitePlayerKindButtonY = 824;
 
-    private const int BlackEngineButtonY = 784;
+    private const int BlackEngineButtonY = 754;
 
     private const int WhiteEngineButtonY = 874;
 
-    private static Rectangle BoardSizeButtonBounds(int index, int y) => new(1144 + index * 224, y, 188, 62);
+    private static Rectangle BoardSizeButtonBounds(int index, int y) => new(AddPanelControlX + index * 224, y, 188, 62);
 
     private static LabeledBrowseSelector TournamentRulesSelector => new(new Rectangle(1144, 198, 668, 56), "RULES", "");
 
@@ -706,6 +739,8 @@ public sealed class GoScreenRenderer
 
     private static Rectangle TournamentRulesSelectionDialogCloseButtonBounds => new(1518, 156, 132, 48);
 
+    private static Rectangle TournamentRulesSelectionDialogAddButtonBounds => new(1368, 854, 282, 52);
+
     private static Rectangle TournamentRulesSelectionDialogPreviousPageButtonBounds => new(270, 854, 150, 52);
 
     private static Rectangle TournamentRulesSelectionDialogNextPageButtonBounds => new(770, 854, 150, 52);
@@ -715,6 +750,14 @@ public sealed class GoScreenRenderer
 
     private static Rectangle TournamentRulesSelectionDialogPropertyRowBounds(int index) =>
         new(TournamentRulesSelectionDialogPropertyBounds.X + 18, TournamentRulesSelectionDialogPropertyBounds.Y + 22 + index * 70, TournamentRulesSelectionDialogPropertyBounds.Width - 36, 52);
+
+    private static Rectangle TournamentRulesAddPanelBounds => new(430, 126, 1060, 820);
+
+    private static Rectangle TournamentRulesAddPanelEditorBounds => new(520, 228, 880, 590);
+
+    private static Rectangle TournamentRulesAddPanelCloseButtonBounds => new(1318, 156, 132, 48);
+
+    private static Rectangle TournamentRulesAddPanelFileRowBounds => new(AddPanelControlX, 648, 668, 56);
 
     private static Rectangle GtpEngineSelectionDialogBounds => new(230, 126, 1460, 820);
 
@@ -753,13 +796,13 @@ public sealed class GoScreenRenderer
     private static Rectangle PathTooltipCopyButtonBoundsFromPopup(Rectangle popupBounds) =>
         new(popupBounds.Right - 124, popupBounds.Y + 56, 100, 34);
 
-    private static Rectangle RuleKindButtonBounds(int index) => new(1144 + index * 224, 382, 188, 50);
+    private static Rectangle RuleKindButtonBounds(int index) => new(AddPanelControlX + index * 224, 284, 188, 50);
 
-    private static Rectangle KomiStepButtonBounds(int index) => new(1588 + index * 112, 540, 92, 40);
+    private static Rectangle KomiStepButtonBounds(int index) => new(AddPanelControlX + 444 + index * 112, 442, 92, 40);
 
-    private static Rectangle MainTimeStepButtonBounds(int index) => new(1588 + index * 112, 604, 92, 40);
+    private static Rectangle MainTimeStepButtonBounds(int index) => new(AddPanelControlX + 444 + index * 112, 506, 92, 40);
 
-    private static Rectangle MoveLimitStepButtonBounds(int index) => new(1588 + index * 112, 668, 92, 40);
+    private static Rectangle MoveLimitStepButtonBounds(int index) => new(AddPanelControlX + 444 + index * 112, 570, 92, 40);
 
     private static Rectangle PlayerKindButtonBounds(int index, int y) => new(1536 + index * 140, y, 132, 52);
 
@@ -767,7 +810,7 @@ public sealed class GoScreenRenderer
 
     private static Rectangle StartPlayingButtonBounds => new(1492, 920, 320, 56);
 
-    private static Rectangle SaveTournamentRulesButtonBounds => new(1144, 920, 320, 56);
+    private static Rectangle SaveTournamentRulesButtonBounds => new(974, 740, 320, 56);
 
     private static Rectangle ReturnToSetupButtonBounds => new(1318, 910, 320, 56);
 

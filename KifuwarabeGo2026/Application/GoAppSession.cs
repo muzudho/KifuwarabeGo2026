@@ -40,6 +40,8 @@ public sealed class GoAppSession
 
     public bool IsTournamentRulesSelectionDialogOpen { get; private set; }
 
+    public bool IsTournamentRulesAddPanelOpen { get; private set; }
+
     public int TournamentRulesSelectionPageIndex { get; private set; }
 
     public string TournamentRulesSaveMessage { get; private set; } = "";
@@ -190,9 +192,16 @@ public sealed class GoAppSession
         TournamentRulesSaveMessage = "";
     }
 
+    public void AddAndSelectTournamentRules(TournamentRules rules)
+    {
+        _tournamentRules.Add(rules.Clone());
+        SelectTournamentRules(_tournamentRules.Count - 1);
+    }
+
     public void OpenTournamentRulesSelectionDialog()
     {
         IsGtpEngineSelectionDialogOpen = false;
+        IsTournamentRulesAddPanelOpen = false;
         IsTournamentRulesSelectionDialogOpen = true;
         TournamentRulesSelectionPageIndex = SelectedTournamentRulesIndex / TournamentRulesSelectionPageSize;
     }
@@ -200,6 +209,19 @@ public sealed class GoAppSession
     public void CloseTournamentRulesSelectionDialog()
     {
         IsTournamentRulesSelectionDialogOpen = false;
+    }
+
+    public void OpenTournamentRulesAddPanel()
+    {
+        IsGtpEngineSelectionDialogOpen = false;
+        IsTournamentRulesSelectionDialogOpen = false;
+        IsTournamentRulesAddPanelOpen = true;
+    }
+
+    public void CloseTournamentRulesAddPanel()
+    {
+        IsTournamentRulesAddPanelOpen = false;
+        OpenTournamentRulesSelectionDialog();
     }
 
     public void MoveTournamentRulesSelectionPage(int step)
@@ -304,6 +326,7 @@ public sealed class GoAppSession
         }
 
         IsTournamentRulesSelectionDialogOpen = false;
+        IsTournamentRulesAddPanelOpen = false;
         IsGtpEngineSelectionDialogOpen = true;
         GtpEngineSelectionTargetStone = stone;
         var selectedIndex = stone == GoStone.Black ? SelectedBlackGtpEngineIndex : SelectedWhiteGtpEngineIndex;
