@@ -424,7 +424,7 @@ public sealed class GoScreenRenderer
         DrawInfoStrip(1144, 646, "BLACK", PlayerKindLabel(session.BlackPlayerKind));
         DrawPlayerKindButtons(session.BlackPlayerKind, mousePoint, BlackPlayerKindButtonY);
         DrawSetupEngineButtons(session, GoStone.Black, mousePoint, BlackEngineButtonY);
-        DrawInfoStrip(1144, 766, "WHITE", PlayerKindLabel(session.WhitePlayerKind));
+        DrawInfoStrip(1144, 780, "WHITE", PlayerKindLabel(session.WhitePlayerKind));
         DrawPlayerKindButtons(session.WhitePlayerKind, mousePoint, WhitePlayerKindButtonY);
         DrawSetupEngineButtons(session, GoStone.White, mousePoint, WhiteEngineButtonY);
         DrawCommandButton(StartPlayingButtonBounds, "START", false, mousePoint);
@@ -954,8 +954,27 @@ public sealed class GoScreenRenderer
 
     private void DrawPlayerKindButtons(GoPlayerKind selectedKind, Point mousePoint, int y)
     {
-        DrawCommandButton(PlayerKindButtonBounds(0, y), "HUMAN", selectedKind == GoPlayerKind.Human, mousePoint);
-        DrawCommandButton(PlayerKindButtonBounds(1, y), "COMPUTER", selectedKind == GoPlayerKind.Computer, mousePoint);
+        var humanBounds = PlayerKindButtonBounds(0, y);
+        var computerBounds = PlayerKindButtonBounds(1, y);
+        var bounds = PlayerKindSegmentBounds(y);
+
+        FillRect(new Rectangle(bounds.X + 4, bounds.Y + 5, bounds.Width, bounds.Height), new Color(0, 0, 0, 90));
+        FillRect(bounds, new Color(33, 43, 52));
+        DrawSegmentedPlayerKindButton(humanBounds, "HUMAN", selectedKind == GoPlayerKind.Human, humanBounds.Contains(mousePoint));
+        DrawSegmentedPlayerKindButton(computerBounds, "COMPUTER", selectedKind == GoPlayerKind.Computer, computerBounds.Contains(mousePoint));
+        DrawRect(bounds, 2, new Color(126, 150, 164));
+    }
+
+    private void DrawSegmentedPlayerKindButton(Rectangle bounds, string label, bool selected, bool hovered)
+    {
+        var fill = selected ? new Color(31, 151, 112) : hovered ? new Color(44, 59, 70) : new Color(33, 43, 52);
+        var textColor = selected ? Color.White : new Color(202, 213, 211);
+        FillRect(bounds, fill);
+
+        var measured = _font.MeasureString(label);
+        var fittedScale = MathF.Min(0.52f, MathF.Min((bounds.Width - 20) / Math.Max(1f, measured.X), (bounds.Height - 10) / Math.Max(1f, measured.Y)));
+        var size = measured * fittedScale;
+        DrawText(label, new Vector2(bounds.Center.X - size.X / 2, bounds.Center.Y - size.Y / 2), textColor, fittedScale);
     }
 
     private void DrawSetupEngineButtons(GoAppSession session, GoStone stone, Point mousePoint, int y)
@@ -977,13 +996,13 @@ public sealed class GoScreenRenderer
 
     private const int AddPanelBoardSizeButtonY = 452;
 
-    private const int BlackPlayerKindButtonY = 704;
+    private const int BlackPlayerKindButtonY = 660;
 
-    private const int WhitePlayerKindButtonY = 824;
+    private const int WhitePlayerKindButtonY = 794;
 
-    private const int BlackEngineButtonY = 754;
+    private const int BlackEngineButtonY = 724;
 
-    private const int WhiteEngineButtonY = 874;
+    private const int WhiteEngineButtonY = 856;
 
     private static Rectangle BoardSizeButtonBounds(int index, int y) => new(AddPanelControlX + index * 224, y, 188, 62);
 
@@ -1145,7 +1164,9 @@ public sealed class GoScreenRenderer
 
     private static Rectangle MoveLimitStepButtonBounds(int index) => new(AddPanelControlX + 444 + index * 112, 644, 92, 40);
 
-    private static Rectangle PlayerKindButtonBounds(int index, int y) => new(1536 + index * 140, y, 132, 52);
+    private static Rectangle PlayerKindButtonBounds(int index, int y) => new(1536 + index * 132, y, 132, 52);
+
+    private static Rectangle PlayerKindSegmentBounds(int y) => new(1536, y, 264, 52);
 
     private static LabeledBrowseSelector GtpEngineSelectorBounds(int y) => new(new Rectangle(1144, y - 4, 668, 44), "ENGINE", "");
 
