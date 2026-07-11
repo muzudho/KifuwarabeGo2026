@@ -11,6 +11,8 @@ public sealed class TextBoxController
     private readonly int _maxLength;
     private double _leftKeyRepeatCountdown = CaretKeyRepeatInitialDelaySeconds;
     private double _rightKeyRepeatCountdown = CaretKeyRepeatInitialDelaySeconds;
+    private double _backKeyRepeatCountdown = CaretKeyRepeatInitialDelaySeconds;
+    private double _deleteKeyRepeatCountdown = CaretKeyRepeatInitialDelaySeconds;
 
     public TextBoxController(int maxLength)
     {
@@ -90,13 +92,13 @@ public sealed class TextBoxController
             CaretIndex = Text.Length;
         }
 
-        if (IsNewKeyPress(keyboard, previousKeyboard, Keys.Back) && CaretIndex > 0)
+        if (ShouldHandleRepeatedKey(keyboard, previousKeyboard, Keys.Back, ref _backKeyRepeatCountdown, gameTime) && CaretIndex > 0)
         {
             Text = Text.Remove(CaretIndex - 1, 1);
             CaretIndex--;
         }
 
-        if (IsNewKeyPress(keyboard, previousKeyboard, Keys.Delete) && CaretIndex < Text.Length)
+        if (ShouldHandleRepeatedKey(keyboard, previousKeyboard, Keys.Delete, ref _deleteKeyRepeatCountdown, gameTime) && CaretIndex < Text.Length)
         {
             Text = Text.Remove(CaretIndex, 1);
         }
@@ -145,6 +147,8 @@ public sealed class TextBoxController
     {
         _leftKeyRepeatCountdown = CaretKeyRepeatInitialDelaySeconds;
         _rightKeyRepeatCountdown = CaretKeyRepeatInitialDelaySeconds;
+        _backKeyRepeatCountdown = CaretKeyRepeatInitialDelaySeconds;
+        _deleteKeyRepeatCountdown = CaretKeyRepeatInitialDelaySeconds;
     }
 }
 

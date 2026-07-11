@@ -19,6 +19,18 @@
     {
       "DisplayName": "New tournament 20260711-213348",
       "FilePath": "muzudho-test-20260711-213348.json"
+    },
+    {
+      "DisplayName": "New tournament 20260711-214143",
+      "FilePath": "muzudho-test-20260711-214143.json"
+    },
+    {
+      "DisplayName": "New tournament 20260711-214211",
+      "FilePath": "tournament-rules-custom-20260711-214211.json"
+    },
+    {
+      "DisplayName": "New tournament 20260711-214226",
+      "FilePath": "tournament-rules-custom-20260711-214226.json"
     }
   ]
 }
