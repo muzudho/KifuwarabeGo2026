@@ -398,6 +398,7 @@ public sealed class GoScreenRenderer
     private void DrawGameOverSidePanel(GoAppSession session, Point mousePoint)
     {
         DrawText("GAME OVER", new Vector2(1144, 132), new Color(255, 230, 160), 0.9f);
+        DrawText(FormatGameEndMoveCount(session.PlayedMoveCount), new Vector2(1144, 196), new Color(99, 223, 185), 0.58f);
 
         var result = string.IsNullOrWhiteSpace(session.GameOverReason) ? "GAME OVER" : session.GameOverReason;
         var winnerLabel = session.Winner is { } winner
@@ -838,6 +839,8 @@ public sealed class GoScreenRenderer
         var text = $"{session.NextMoveNumber}手目を思考中";
         return session.MoveLimit <= 0 ? text : $"{text} / {session.MoveLimit}";
     }
+
+    private static string FormatGameEndMoveCount(int playedMoveCount) => $"{playedMoveCount}手で終局";
 
     private static string FormatKomi(decimal komi) => komi.ToString("0.0");
 

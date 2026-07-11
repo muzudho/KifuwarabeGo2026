@@ -535,7 +535,7 @@ public sealed class GoAppSession
         if (MoveLimit > 0 && PlayedMoveCount >= MoveLimit)
         {
             KoPoint = null;
-            GameOverReason = $"MOVE LIMIT {MoveLimit}";
+            DecidePureGoResult();
             ChangeMode(GoAppModeKind.GameOver);
             return;
         }
