@@ -579,8 +579,7 @@ public sealed class GoScreenRenderer
         var active = session.IsTournamentRulesDisplayNameEditing;
         var displayName = active ? session.TournamentRulesDisplayNameDraft : session.TournamentDisplayName;
 
-        FillRect(bounds, active ? new Color(31, 45, 49) : hovered ? new Color(34, 42, 50) : new Color(24, 31, 37));
-        DrawRect(bounds, 2, active ? new Color(147, 244, 200) : new Color(70, 85, 94));
+        DrawDataRowFrame(bounds, active, hovered);
         DrawUiLabel(UiLabel.InCompactRow("DISPLAY", bounds));
 
         var textBounds = TournamentRulesAddPanelDisplayNameTextBounds;
@@ -600,8 +599,7 @@ public sealed class GoScreenRenderer
     {
         var bounds = TournamentRulesAddPanelFileRowBounds;
         var filePath = string.IsNullOrWhiteSpace(session.CurrentTournamentRules.FilePath) ? "-" : session.CurrentTournamentRules.FilePath;
-        FillRect(bounds, new Color(24, 31, 37));
-        DrawRect(bounds, 1, new Color(70, 85, 94));
+        DrawDataRowFrame(bounds);
         DrawUiLabel(UiLabel.InCompactRow("FILE", bounds));
         DrawFittedText(filePath, new Rectangle(bounds.X + 152, bounds.Y + 7, bounds.Width - 282, 42), Color.White, 0.38f);
         DrawCommandButton(TournamentRulesAddPanelFileBrowseButtonBounds, "REF", false, mousePoint, scale: 0.34f);
@@ -768,8 +766,7 @@ public sealed class GoScreenRenderer
         DrawGtpEngineEditField(session, GtpEngineProfileEditField.Arguments, "ARGS", mousePoint);
 
         var logBounds = GtpEngineEditPanelLogRowBounds;
-        FillRect(logBounds, new Color(24, 31, 37));
-        DrawRect(logBounds, 1, new Color(70, 85, 94));
+        DrawDataRowFrame(logBounds);
         DrawUiLabel(UiLabel.InCompactRow("GTP LOG", logBounds));
         DrawCommandButton(GtpEngineEditPanelLogButtonBounds, session.GtpEngineEditDraft.EnableGtpLog ? "ON" : "OFF", session.GtpEngineEditDraft.EnableGtpLog, mousePoint, scale: 0.42f);
 
@@ -787,8 +784,7 @@ public sealed class GoScreenRenderer
         var active = session.ActiveGtpEngineEditField == field;
         var hovered = bounds.Contains(mousePoint);
         var text = session.GetGtpEngineEditFieldText(field);
-        FillRect(bounds, active ? new Color(31, 45, 49) : hovered ? new Color(34, 42, 50) : new Color(24, 31, 37));
-        DrawRect(bounds, 2, active ? new Color(147, 244, 200) : new Color(70, 85, 94));
+        DrawDataRowFrame(bounds, active, hovered);
         DrawUiLabel(UiLabel.InCompactRow(label, bounds));
 
         var textBounds = GtpEngineEditPanelFieldTextBounds(field);
@@ -873,8 +869,7 @@ public sealed class GoScreenRenderer
     private void DrawGtpEnginePropertyRow(int y, string label, string value)
     {
         var bounds = new Rectangle(GtpEngineSelectionDialogPropertyBounds.X + 18, y, GtpEngineSelectionDialogPropertyBounds.Width - 36, 52);
-        FillRect(bounds, new Color(24, 31, 37));
-        DrawRect(bounds, 1, new Color(70, 85, 94));
+        DrawDataRowFrame(bounds);
         DrawUiLabel(UiLabel.InCompactRow(label, bounds));
         DrawFittedText(value, new Rectangle(bounds.X + 152, bounds.Y + 7, bounds.Width - 168, 38), Color.White, 0.46f);
     }
@@ -882,16 +877,14 @@ public sealed class GoScreenRenderer
     private void DrawPropertyRow(int y, string label, string value)
     {
         var bounds = new Rectangle(TournamentRulesSelectionDialogPropertyBounds.X + 18, y, TournamentRulesSelectionDialogPropertyBounds.Width - 36, 52);
-        FillRect(bounds, new Color(24, 31, 37));
-        DrawRect(bounds, 1, new Color(70, 85, 94));
+        DrawDataRowFrame(bounds);
         DrawUiLabel(UiLabel.InCompactRow(label, bounds));
         DrawFittedText(value, new Rectangle(bounds.X + 152, bounds.Y + 7, bounds.Width - 168, 38), Color.White, 0.46f);
     }
 
     private void DrawPathPropertyRow(Rectangle bounds, string label, string value)
     {
-        FillRect(bounds, new Color(24, 31, 37));
-        DrawRect(bounds, 1, new Color(70, 85, 94));
+        DrawDataRowFrame(bounds);
         DrawUiLabel(UiLabel.InCompactRow(label, bounds));
         DrawFittedText(value, new Rectangle(bounds.X + 152, bounds.Y + 7, bounds.Width - 168, 38), Color.White, 0.46f);
     }
@@ -937,8 +930,7 @@ public sealed class GoScreenRenderer
     private void DrawRulesNumberStrip(int x, int y, string label, string value, Rectangle minusBounds, string minusLabel, Rectangle plusBounds, string plusLabel, Point mousePoint)
     {
         var bounds = new Rectangle(x, y, 668, 56);
-        FillRect(bounds, new Color(24, 31, 37));
-        DrawRect(bounds, 1, new Color(70, 85, 94));
+        DrawDataRowFrame(bounds);
         DrawUiLabel(UiLabel.InRow(label, bounds));
         DrawText(value, new Vector2(bounds.X + 176, bounds.Y + 13), Color.White, 0.52f);
         DrawCommandButton(minusBounds, minusLabel, false, mousePoint, scale: 0.42f);
@@ -1254,9 +1246,9 @@ public sealed class GoScreenRenderer
     private void DrawCommandButton(Rectangle bounds, string label, bool selected, Point mousePoint, bool enabled = true, float scale = 0.62f)
     {
         var hovered = enabled && bounds.Contains(mousePoint);
-        var fill = !enabled ? new Color(28, 31, 36) : selected ? new Color(31, 151, 112) : hovered ? new Color(58, 82, 94) : new Color(36, 48, 58);
-        var border = !enabled ? new Color(58, 65, 70) : selected ? new Color(151, 255, 215) : hovered ? new Color(178, 219, 226) : new Color(126, 150, 164);
-        FillRect(new Rectangle(bounds.X + 4, bounds.Y + 5, bounds.Width, bounds.Height), new Color(0, 0, 0, enabled ? 95 : 55));
+        var fill = !enabled ? new Color(24, 27, 31) : selected ? new Color(31, 151, 112) : hovered ? new Color(58, 82, 94) : new Color(36, 48, 58);
+        var border = !enabled ? new Color(43, 50, 56) : selected ? new Color(151, 255, 215) : hovered ? new Color(178, 219, 226) : new Color(126, 150, 164);
+        FillRect(new Rectangle(bounds.X + 4, bounds.Y + 5, bounds.Width, bounds.Height), new Color(0, 0, 0, enabled ? 95 : 28));
         FillRect(bounds, fill);
         DrawRect(bounds, 2, border);
         if (enabled)
@@ -1264,7 +1256,7 @@ public sealed class GoScreenRenderer
             DrawRect(new Rectangle(bounds.X + 2, bounds.Y + 2, bounds.Width - 4, bounds.Height - 4), 1, selected ? new Color(215, 255, 238, 95) : new Color(255, 255, 255, hovered ? 70 : 36));
         }
 
-        var textColor = enabled ? Color.White : new Color(130, 138, 142);
+        var textColor = enabled ? Color.White : new Color(91, 100, 106);
         var measured = _font.MeasureString(label);
         var fittedScale = MathF.Min(scale, MathF.Min((bounds.Width - 20) / Math.Max(1f, measured.X), (bounds.Height - 10) / Math.Max(1f, measured.Y)));
         var size = measured * fittedScale;
@@ -1283,19 +1275,31 @@ public sealed class GoScreenRenderer
 
     private void DrawLabeledBrowseSelector(LabeledBrowseSelector selector, Point mousePoint)
     {
-        FillRect(selector.Bounds, new Color(24, 31, 37));
-        DrawRect(selector.Bounds, 1, new Color(70, 85, 94));
+        DrawDataRowFrame(selector.Bounds);
 
         DrawFittedText(selector.Label, selector.LabelBounds, new Color(158, 178, 178), 0.36f);
         DrawFittedText(selector.Value, selector.ValueBounds, Color.White, 0.52f);
         DrawCommandButton(selector.BrowseButtonBounds, "REF", false, mousePoint, scale: 0.44f);
     }
 
+    private void DrawDataRowFrame(Rectangle bounds, bool active = false, bool hovered = false)
+    {
+        var fill = active ? new Color(28, 41, 45) : hovered ? new Color(28, 36, 43) : new Color(21, 28, 34);
+        var line = active ? new Color(104, 191, 165) : hovered ? new Color(58, 77, 85) : new Color(43, 56, 63);
+        FillRect(bounds, fill);
+        FillRect(new Rectangle(bounds.X, bounds.Y, bounds.Width, 1), line);
+        FillRect(new Rectangle(bounds.X, bounds.Bottom - 1, bounds.Width, 1), line);
+        if (active)
+        {
+            FillRect(new Rectangle(bounds.X, bounds.Y, 3, bounds.Height), new Color(99, 223, 185));
+        }
+    }
+
     private void DrawInfoStrip(int x, int y, string label, string value)
     {
-        FillRect(new Rectangle(x, y, 668, 72), new Color(30, 36, 43));
-        DrawRect(new Rectangle(x, y, 668, 72), 1, new Color(70, 85, 94));
-        DrawUiLabel(UiLabel.InRow(label, new Rectangle(x, y, 668, 72)));
+        var bounds = new Rectangle(x, y, 668, 72);
+        DrawDataRowFrame(bounds);
+        DrawUiLabel(UiLabel.InRow(label, bounds));
         DrawText(value, new Vector2(x + 184, y + 20), Color.White, 0.62f);
     }
 
