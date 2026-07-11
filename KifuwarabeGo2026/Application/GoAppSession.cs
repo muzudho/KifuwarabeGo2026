@@ -97,6 +97,18 @@ public sealed class GoAppSession
 
     public string GtpEngineDeleteConfirmationName { get; private set; } = "";
 
+    public bool IsGtpEngineEditPanelOpen { get; private set; }
+
+    public GtpEngineProfileEditField? ActiveGtpEngineEditField { get; private set; }
+
+    public int GtpEngineEditCaretIndex { get; private set; }
+
+    public string GtpEngineEditWarning { get; private set; } = "";
+
+    public string GtpEngineEditSaveMessage { get; private set; } = "";
+
+    public GtpEngineProfile GtpEngineEditDraft { get; private set; } = new();
+
     public int GtpEngineSelectionPageIndex { get; private set; }
 
     public GtpEngineProfile BlackGtpEngineProfile => GetGtpEngineProfile(GoStone.Black);
@@ -221,6 +233,7 @@ public sealed class GoAppSession
     public void OpenTournamentRulesSelectionDialog()
     {
         IsGtpEngineSelectionDialogOpen = false;
+        IsGtpEngineEditPanelOpen = false;
         IsTournamentRulesAddPanelOpen = false;
         IsTournamentRulesSelectionDialogOpen = true;
         TournamentRulesSelectionPageIndex = SelectedTournamentRulesIndex / TournamentRulesSelectionPageSize;
@@ -234,6 +247,7 @@ public sealed class GoAppSession
     public void OpenTournamentRulesAddPanel(bool editExisting)
     {
         IsGtpEngineSelectionDialogOpen = false;
+        IsGtpEngineEditPanelOpen = false;
         IsTournamentRulesSelectionDialogOpen = false;
         IsTournamentRulesAddPanelOpen = true;
         IsTournamentRulesEditPanelMode = editExisting;
@@ -435,6 +449,7 @@ public sealed class GoAppSession
         IsTournamentRulesSelectionDialogOpen = false;
         IsTournamentRulesAddPanelOpen = false;
         IsTournamentRulesDeleteConfirmationOpen = false;
+        IsGtpEngineEditPanelOpen = false;
         IsGtpEngineSelectionDialogOpen = true;
         IsGtpEngineDeleteConfirmationOpen = false;
         GtpEngineSelectionTargetStone = stone;
@@ -446,6 +461,36 @@ public sealed class GoAppSession
     {
         IsGtpEngineSelectionDialogOpen = false;
         CloseGtpEngineDeleteConfirmation();
+    }
+
+    public void OpenGtpEngineEditPanel()
+    {
+        var index = SelectedGtpEngineIndex;
+        if (index < 0 || index >= _gtpEngineProfiles.Count)
+        {
+            return;
+        }
+
+        IsTournamentRulesSelectionDialogOpen = false;
+        IsTournamentRulesAddPanelOpen = false;
+        IsTournamentRulesDeleteConfirmationOpen = false;
+        IsGtpEngineSelectionDialogOpen = false;
+        IsGtpEngineEditPanelOpen = true;
+        CloseGtpEngineDeleteConfirmation();
+        GtpEngineEditDraft = _gtpEngineProfiles[index].Clone();
+        ActiveGtpEngineEditField = null;
+        GtpEngineEditCaretIndex = 0;
+        GtpEngineEditWarning = "";
+        GtpEngineEditSaveMessage = "";
+    }
+
+    public void CloseGtpEngineEditPanel()
+    {
+        IsGtpEngineEditPanelOpen = false;
+        ActiveGtpEngineEditField = null;
+        GtpEngineEditWarning = "";
+        GtpEngineEditSaveMessage = "";
+        OpenGtpEngineSelectionDialog(GtpEngineSelectionTargetStone);
     }
 
     public void MoveGtpEngineSelectionPage(int step)
@@ -471,6 +516,69 @@ public sealed class GoAppSession
         }
 
         _gtpEngineProfiles[index] = profile.Clone();
+    }
+
+    public void SetGtpEngineEditField(GtpEngineProfileEditField field, string text, int caretIndex)
+    {
+        switch (field)
+        {
+            case GtpEngineProfileEditField.DisplayName:
+                GtpEngineEditDraft.DisplayName = text;
+                break;
+            case GtpEngineProfileEditField.ExecutablePath:
+                GtpEngineEditDraft.ExecutablePath = text;
+                break;
+            case GtpEngineProfileEditField.WorkingDirectory:
+                GtpEngineEditDraft.WorkingDirectory = text;
+                break;
+            case GtpEngineProfileEditField.Arguments:
+                GtpEngineEditDraft.Arguments = text;
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(field), field, "GTP engine edit field is out of range.");
+        }
+
+        ActiveGtpEngineEditField = field;
+        GtpEngineEditCaretIndex = Math.Clamp(caretIndex, 0, text.Length);
+        GtpEngineEditSaveMessage = "UNSAVED";
+    }
+
+    public void BeginGtpEngineEditField(GtpEngineProfileEditField field, int caretIndex)
+    {
+        ActiveGtpEngineEditField = field;
+        GtpEngineEditCaretIndex = Math.Clamp(caretIndex, 0, GetGtpEngineEditFieldText(field).Length);
+        GtpEngineEditWarning = "";
+    }
+
+    public void EndGtpEngineEditField()
+    {
+        ActiveGtpEngineEditField = null;
+    }
+
+    public void SetGtpEngineEditWarning(string warning)
+    {
+        GtpEngineEditWarning = warning;
+    }
+
+    public void SetGtpEngineExecutablePathDraft(string executablePath)
+    {
+        GtpEngineEditDraft.ExecutablePath = executablePath;
+        GtpEngineEditDraft.WorkingDirectory = Path.GetDirectoryName(executablePath) ?? GtpEngineEditDraft.WorkingDirectory;
+        GtpEngineEditSaveMessage = "UNSAVED";
+    }
+
+    public void ToggleGtpEngineEditLog()
+    {
+        GtpEngineEditDraft.EnableGtpLog = !GtpEngineEditDraft.EnableGtpLog;
+        GtpEngineEditSaveMessage = "UNSAVED";
+    }
+
+    public void SaveGtpEngineEditDraft(GtpEngineProfile profile)
+    {
+        ReplaceSelectedGtpEngine(profile);
+        GtpEngineEditDraft = _gtpEngineProfiles[SelectedGtpEngineIndex].Clone();
+        GtpEngineEditSaveMessage = "SAVED";
+        GtpEngineEditWarning = "";
     }
 
     public void OpenGtpEngineDeleteConfirmation()
@@ -508,6 +616,15 @@ public sealed class GoAppSession
             0,
             Math.Max(0, (int)Math.Ceiling(_gtpEngineProfiles.Count / (double)GtpEngineSelectionPageSize) - 1));
     }
+
+    public string GetGtpEngineEditFieldText(GtpEngineProfileEditField field) => field switch
+    {
+        GtpEngineProfileEditField.DisplayName => GtpEngineEditDraft.DisplayName,
+        GtpEngineProfileEditField.ExecutablePath => GtpEngineEditDraft.ExecutablePath,
+        GtpEngineProfileEditField.WorkingDirectory => GtpEngineEditDraft.WorkingDirectory,
+        GtpEngineProfileEditField.Arguments => GtpEngineEditDraft.Arguments,
+        _ => throw new ArgumentOutOfRangeException(nameof(field), field, "GTP engine edit field is out of range."),
+    };
 
     public GtpEngineProfile GetGtpEngineProfile(GoStone stone)
     {

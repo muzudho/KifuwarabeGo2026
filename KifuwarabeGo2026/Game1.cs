@@ -24,6 +24,8 @@ public class Game1 : Game
     private SoundEffect? _placeStoneSound;
     private SoundEffectInstance? _placeStoneSoundInstance;
     private MouseState _previousMouse;
+    private KeyboardState _previousGtpEngineKeyboard;
+    private readonly TextBoxController _gtpEngineEditTextBox = new(520);
 
     public Game1()
     {
@@ -66,6 +68,7 @@ public class Game1 : Game
 
         if (_session.CurrentMode.Kind != GoAppModeKind.Playing)
         {
+            UpdateGtpEngineEditPanelByKeyboard(keyboard, gameTime);
             _tournamentRulesSetting.UpdateByKeyboard(keyboard, gameTime);
         }
         UpdateMouseInput();
@@ -88,14 +91,16 @@ public class Game1 : Game
         {
             var point = VirtualScreen.ToVirtualPoint(GraphicsDevice.Viewport, mouse.Position);
             var isSetupMode = _session.CurrentMode.Kind != GoAppModeKind.Playing && _session.CurrentMode.Kind != GoAppModeKind.GameOver;
-            var handledByGtpEngineSelectionDialog = isSetupMode && TryHandleGtpEngineSelectionDialogClick(point);
+            var handledByGtpEngineEditPanel = isSetupMode && TryHandleGtpEngineEditPanelClick(point);
+            var handledByGtpEngineSelectionDialog = !handledByGtpEngineEditPanel && isSetupMode && TryHandleGtpEngineSelectionDialogClick(point);
             Func<Point, string, int>? getDisplayNameCaretIndex = _renderer is null
                 ? null
                 : _renderer.GetTournamentRulesAddPanelDisplayNameCaretIndex;
-            var handledByTournamentRulesSetting = !handledByGtpEngineSelectionDialog &&
+            var handledByTournamentRulesSetting = !handledByGtpEngineEditPanel &&
+                !handledByGtpEngineSelectionDialog &&
                 isSetupMode &&
                 _tournamentRulesSetting.TryHandleMouseClick(point, getDisplayNameCaretIndex);
-            if (handledByGtpEngineSelectionDialog || handledByTournamentRulesSetting)
+            if (handledByGtpEngineEditPanel || handledByGtpEngineSelectionDialog || handledByTournamentRulesSetting)
             {
                 _previousMouse = mouse;
                 return;
@@ -141,6 +146,11 @@ public class Game1 : Game
 
     private void OnTextInput(object? sender, TextInputEventArgs e)
     {
+        if (TryInputGtpEngineEditCharacter(e.Character))
+        {
+            return;
+        }
+
         _tournamentRulesSetting.TryInputCharacter(e.Character);
     }
 
@@ -206,7 +216,7 @@ public class Game1 : Game
 
         if (GoScreenRenderer.GetGtpEngineSelectionDialogEditButtonHit(point))
         {
-            EditSelectedGtpEngine();
+            _session.OpenGtpEngineEditPanel();
             return true;
         }
 
@@ -255,15 +265,150 @@ public class Game1 : Game
         return true;
     }
 
-    private void EditSelectedGtpEngine()
+    private bool TryHandleGtpEngineEditPanelClick(Point point)
     {
-        var selectedIndex = _session.SelectedGtpEngineIndex;
-        if (selectedIndex < 0 || selectedIndex >= _session.GtpEngineProfiles.Count)
+        if (!_session.IsGtpEngineEditPanelOpen)
+        {
+            return false;
+        }
+
+        if (GoScreenRenderer.GetGtpEngineEditPanelCloseButtonHit(point))
+        {
+            EndGtpEngineEditField();
+            _gtpEngineEditTextBox.Clear();
+            _session.CloseGtpEngineEditPanel();
+            return true;
+        }
+
+        if (GoScreenRenderer.GetGtpEngineEditPanelFileBrowseButtonHit(point))
+        {
+            BrowseGtpEngineExecutablePath();
+            return true;
+        }
+
+        if (GoScreenRenderer.GetGtpEngineEditPanelLogButtonHit(point))
+        {
+            EndGtpEngineEditField();
+            _session.ToggleGtpEngineEditLog();
+            return true;
+        }
+
+        if (GoScreenRenderer.GetGtpEngineEditPanelSaveButtonHit(point))
+        {
+            SaveGtpEngineEditDraft();
+            return true;
+        }
+
+        if (GoScreenRenderer.GetGtpEngineEditPanelFieldHit(point) is { } field)
+        {
+            BeginOrMoveGtpEngineEditField(point, field);
+            return true;
+        }
+
+        return true;
+    }
+
+    private void UpdateGtpEngineEditPanelByKeyboard(KeyboardState keyboard, GameTime gameTime)
+    {
+        if (!_session.IsGtpEngineEditPanelOpen)
+        {
+            _previousGtpEngineKeyboard = keyboard;
+            return;
+        }
+
+        if (_session.ActiveGtpEngineEditField is { } field)
+        {
+            switch (_gtpEngineEditTextBox.HandleKeyboard(keyboard, _previousGtpEngineKeyboard, gameTime))
+            {
+                case TextBoxKeyboardAction.Commit:
+                    EndGtpEngineEditField();
+                    break;
+                case TextBoxKeyboardAction.Cancel:
+                    CancelGtpEngineEditField(field);
+                    break;
+                default:
+                    SyncGtpEngineEditField(field);
+                    break;
+            }
+
+            _previousGtpEngineKeyboard = keyboard;
+            return;
+        }
+
+        if (IsNewGtpEngineKeyPress(keyboard, Keys.F5))
+        {
+            SaveGtpEngineEditDraft();
+        }
+
+        _previousGtpEngineKeyboard = keyboard;
+    }
+
+    private bool TryInputGtpEngineEditCharacter(char character)
+    {
+        if (!_session.IsGtpEngineEditPanelOpen || _session.ActiveGtpEngineEditField is not { } field)
+        {
+            return false;
+        }
+
+        if (!_gtpEngineEditTextBox.TryInputCharacter(character))
+        {
+            _session.SetGtpEngineEditWarning("Text is too long.");
+            return true;
+        }
+
+        SyncGtpEngineEditField(field);
+        UpdateGtpEngineEditWarning();
+        return true;
+    }
+
+    private void BeginOrMoveGtpEngineEditField(Point point, GtpEngineProfileEditField field)
+    {
+        var text = _session.ActiveGtpEngineEditField == field
+            ? _gtpEngineEditTextBox.Text
+            : _session.GetGtpEngineEditFieldText(field);
+        var caretIndex = _renderer?.GetGtpEngineEditPanelCaretIndex(point, field, text) ?? text.Length;
+
+        if (_session.ActiveGtpEngineEditField == field)
+        {
+            _gtpEngineEditTextBox.SetCaretIndex(caretIndex);
+            SyncGtpEngineEditField(field);
+            return;
+        }
+
+        _gtpEngineEditTextBox.Begin(text, caretIndex);
+        SyncGtpEngineEditField(field);
+        _session.BeginGtpEngineEditField(field, _gtpEngineEditTextBox.CaretIndex);
+        UpdateGtpEngineEditWarning();
+    }
+
+    private void SyncGtpEngineEditField(GtpEngineProfileEditField field)
+    {
+        _session.SetGtpEngineEditField(field, _gtpEngineEditTextBox.Text, _gtpEngineEditTextBox.CaretIndex);
+    }
+
+    private void EndGtpEngineEditField()
+    {
+        if (_session.ActiveGtpEngineEditField is not { })
         {
             return;
         }
 
-        var source = _session.GtpEngineProfiles[selectedIndex];
+        _session.EndGtpEngineEditField();
+        _gtpEngineEditTextBox.Clear();
+    }
+
+    private void CancelGtpEngineEditField(GtpEngineProfileEditField field)
+    {
+        _gtpEngineEditTextBox.Begin(_session.GetGtpEngineEditFieldText(field));
+        _session.EndGtpEngineEditField();
+        _gtpEngineEditTextBox.Clear();
+        _session.SetGtpEngineEditWarning("");
+    }
+
+    private void BrowseGtpEngineExecutablePath()
+    {
+        EndGtpEngineEditField();
+        var source = _session.GtpEngineEditDraft;
         using var dialog = new System.Windows.Forms.OpenFileDialog
         {
             CheckFileExists = true,
@@ -278,16 +423,66 @@ public class Game1 : Game
             return;
         }
 
-        var profile = source.Clone();
-        profile.ExecutablePath = dialog.FileName;
-        profile.WorkingDirectory = Path.GetDirectoryName(dialog.FileName) ?? profile.WorkingDirectory;
-        if (string.IsNullOrWhiteSpace(profile.DisplayName) || profile.DisplayName == "Unnamed GTP Engine")
+        _session.SetGtpEngineExecutablePathDraft(dialog.FileName);
+    }
+
+    private void SaveGtpEngineEditDraft()
+    {
+        EndGtpEngineEditField();
+        if (!ValidateGtpEngineEditDraft(out var profile, out var warning))
         {
-            profile.DisplayName = Path.GetFileNameWithoutExtension(dialog.FileName);
+            _session.SetGtpEngineEditWarning(warning);
+            return;
         }
 
-        _session.ReplaceSelectedGtpEngine(profile);
+        _session.SaveGtpEngineEditDraft(profile);
         _gtpEngineCatalog.Save(_session.GtpEngineProfiles);
+    }
+
+    private bool ValidateGtpEngineEditDraft(out GtpEngineProfile profile, out string warning)
+    {
+        profile = _session.GtpEngineEditDraft.Clone();
+        profile.DisplayName = profile.DisplayName.Trim();
+        profile.ExecutablePath = profile.ExecutablePath.Trim();
+        profile.WorkingDirectory = profile.WorkingDirectory.Trim();
+        profile.Arguments = profile.Arguments.Trim();
+
+        if (string.IsNullOrWhiteSpace(profile.DisplayName))
+        {
+            warning = "Display name is required.";
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(profile.ExecutablePath))
+        {
+            warning = "Executable path is required.";
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(profile.WorkingDirectory))
+        {
+            profile.WorkingDirectory = Path.GetDirectoryName(profile.ExecutablePath) ?? "";
+        }
+
+        warning = "";
+        return true;
+    }
+
+    private void UpdateGtpEngineEditWarning()
+    {
+        if (string.IsNullOrWhiteSpace(_session.GtpEngineEditDraft.DisplayName))
+        {
+            _session.SetGtpEngineEditWarning("Display name is required.");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_session.GtpEngineEditDraft.ExecutablePath))
+        {
+            _session.SetGtpEngineEditWarning("Executable path is required.");
+            return;
+        }
+
+        _session.SetGtpEngineEditWarning("");
     }
 
     private static string GetInitialGtpEngineDirectory(GtpEngineProfile profile)
@@ -308,6 +503,9 @@ public class Game1 : Game
 
         return AppContext.BaseDirectory;
     }
+
+    private bool IsNewGtpEngineKeyPress(KeyboardState keyboard, Keys key) =>
+        keyboard.IsKeyDown(key) && _previousGtpEngineKeyboard.IsKeyUp(key);
 
     protected override void Dispose(bool disposing)
     {

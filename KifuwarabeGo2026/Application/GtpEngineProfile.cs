@@ -30,3 +30,11 @@ public sealed class GtpEngineProfile
         LogPrefix = LogPrefix,
     };
 }
+
+public enum GtpEngineProfileEditField
+{
+    DisplayName,
+    ExecutablePath,
+    WorkingDirectory,
+    Arguments,
+}
