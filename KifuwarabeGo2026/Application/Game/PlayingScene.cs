@@ -354,7 +354,7 @@ public sealed class PlayingScene : IDisposable
             return;
         }
 
-        _gtpEngines[stone] = new GtpEngineClient(CreateDefaultEngineSettings(stone), TimeSpan.FromSeconds(10));
+        _gtpEngines[stone] = new GtpEngineClient(CreateEngineSettings(stone), TimeSpan.FromSeconds(10));
     }
 
     private GtpEngineClient? GetEngine(GoStone stone) =>
@@ -423,27 +423,16 @@ public sealed class PlayingScene : IDisposable
 
     private static string FormatColor(GoStone stone) => stone == GoStone.Black ? "black" : "white";
 
-    private static GtpEngineSettings CreateDefaultEngineSettings(GoStone stone)
+    private GtpEngineSettings CreateEngineSettings(GoStone stone)
     {
-        var baseDirectory = AppContext.BaseDirectory;
-        var configuration = new DirectoryInfo(baseDirectory).Parent?.Name ?? "Debug";
-        var repositoryRoot = Path.GetFullPath(Path.Combine(baseDirectory, "..", "..", "..", ".."));
-        var executableName = OperatingSystem.IsWindows() ? "KifuwarabeGo2026.Engine.exe" : "KifuwarabeGo2026.Engine";
-        var engineDirectory = Path.Combine(repositoryRoot, "KifuwarabeGo2026.Engine", "bin", configuration, "net8.0");
-        var engineExecutable = Path.Combine(engineDirectory, executableName);
+        var profile = _session.GetGtpEngineProfile(stone);
         var logPrefix = stone == GoStone.Black ? "[black-engine]" : "[white-engine]";
-        if (File.Exists(engineExecutable))
-        {
-            return new GtpEngineSettings("Kifuwarabe Random GTP", engineExecutable, engineDirectory, "", EnableGtpLog: true, logPrefix);
-        }
-
-        var engineProject = Path.Combine(repositoryRoot, "KifuwarabeGo2026.Engine", "KifuwarabeGo2026.Engine.csproj");
         return new GtpEngineSettings(
-            "Kifuwarabe Random GTP",
-            "dotnet",
-            repositoryRoot,
-            $"run --project \"{engineProject}\"",
-            EnableGtpLog: true,
+            profile.DisplayName,
+            profile.ExecutablePath,
+            profile.WorkingDirectory,
+            profile.Arguments,
+            profile.EnableGtpLog,
             logPrefix);
     }
 

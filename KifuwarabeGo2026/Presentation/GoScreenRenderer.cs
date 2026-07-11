@@ -123,6 +123,10 @@ public sealed class GoScreenRenderer
 
     public static GoPlayerKind? GetWhitePlayerKindButtonHit(Point point) => GetPlayerKindButtonHit(point, WhitePlayerKindButtonY);
 
+    public static int? GetBlackGtpEngineButtonHit(Point point, int engineCount) => GetGtpEngineButtonHit(point, engineCount, BlackEngineButtonY);
+
+    public static int? GetWhiteGtpEngineButtonHit(Point point, int engineCount) => GetGtpEngineButtonHit(point, engineCount, WhiteEngineButtonY);
+
     public static bool GetPassButtonHit(Point point) => PassButtonBounds.Contains(point);
 
     public static bool GetResignButtonHit(Point point) => ResignButtonBounds.Contains(point);
@@ -245,10 +249,10 @@ public sealed class GoScreenRenderer
 
         DrawInfoStrip(1144, 700, "BLACK", PlayerKindLabel(session.BlackPlayerKind), new Color(26, 27, 30), Color.White);
         DrawPlayerKindButtons(session.BlackPlayerKind, mousePoint, BlackPlayerKindButtonY);
-        DrawSetupEngineName(session.BlackPlayerKind, BlackPlayerKindButtonY + 64);
+        DrawSetupEngineButtons(session, GoStone.Black, mousePoint, BlackEngineButtonY);
         DrawInfoStrip(1144, 798, "WHITE", PlayerKindLabel(session.WhitePlayerKind), new Color(236, 229, 211), new Color(24, 24, 24));
         DrawPlayerKindButtons(session.WhitePlayerKind, mousePoint, WhitePlayerKindButtonY);
-        DrawSetupEngineName(session.WhitePlayerKind, WhitePlayerKindButtonY + 64);
+        DrawSetupEngineButtons(session, GoStone.White, mousePoint, WhiteEngineButtonY);
         DrawCommandButton(SaveTournamentRulesButtonBounds, SaveTournamentRulesLabel(session), false, mousePoint);
         DrawCommandButton(StartPlayingButtonBounds, "START", false, mousePoint);
     }
@@ -370,15 +374,21 @@ public sealed class GoScreenRenderer
         DrawCommandButton(PlayerKindButtonBounds(1, y), "COMPUTER", selectedKind == GoPlayerKind.Computer, mousePoint);
     }
 
-    private void DrawSetupEngineName(GoPlayerKind playerKind, int y)
+    private void DrawSetupEngineButtons(GoAppSession session, GoStone stone, Point mousePoint, int y)
     {
+        var playerKind = stone == GoStone.Black ? session.BlackPlayerKind : session.WhitePlayerKind;
         if (playerKind != GoPlayerKind.Computer)
         {
             return;
         }
 
         DrawText("ENGINE", new Vector2(1164, y), new Color(180, 195, 195), 0.32f);
-        DrawText(DefaultEngineName, new Vector2(1288, y), new Color(99, 223, 185), 0.32f);
+        var selectedIndex = stone == GoStone.Black ? session.SelectedBlackGtpEngineIndex : session.SelectedWhiteGtpEngineIndex;
+        var count = Math.Min(session.GtpEngineProfiles.Count, MaxGtpEngineButtons);
+        for (var i = 0; i < count; i++)
+        {
+            DrawCommandButton(GtpEngineButtonBounds(i, y), session.GtpEngineProfiles[i].DisplayName, i == selectedIndex, mousePoint, scale: 0.26f);
+        }
     }
 
     private const int SetupBoardSizeButtonY = 476;
@@ -387,9 +397,13 @@ public sealed class GoScreenRenderer
 
     private const int WhitePlayerKindButtonY = 808;
 
+    private const int BlackEngineButtonY = 774;
+
+    private const int WhiteEngineButtonY = 872;
+
     private const int MaxTournamentRulesButtons = 3;
 
-    private const string DefaultEngineName = "Kifuwarabe Random GTP";
+    private const int MaxGtpEngineButtons = 3;
 
     private static Rectangle BoardSizeButtonBounds(int index, int y) => new(1144 + index * 224, y, 188, 62);
 
@@ -402,6 +416,8 @@ public sealed class GoScreenRenderer
     private static Rectangle MainTimeStepButtonBounds(int index) => new(1588 + index * 112, 632, 92, 40);
 
     private static Rectangle PlayerKindButtonBounds(int index, int y) => new(1536 + index * 140, y, 132, 52);
+
+    private static Rectangle GtpEngineButtonBounds(int index, int y) => new(1288 + index * 176, y - 4, 164, 34);
 
     private static Rectangle StartPlayingButtonBounds => new(1492, 920, 320, 56);
 
@@ -423,6 +439,19 @@ public sealed class GoScreenRenderer
         }
 
         return PlayerKindButtonBounds(1, y).Contains(point) ? GoPlayerKind.Computer : null;
+    }
+
+    private static int? GetGtpEngineButtonHit(Point point, int engineCount, int y)
+    {
+        for (var i = 0; i < Math.Min(engineCount, MaxGtpEngineButtons); i++)
+        {
+            if (GtpEngineButtonBounds(i, y).Contains(point))
+            {
+                return i;
+            }
+        }
+
+        return null;
     }
 
     private static string PlayerKindLabel(GoPlayerKind playerKind) => playerKind == GoPlayerKind.Human ? "Human" : "Computer";

@@ -16,6 +16,7 @@ public class Game1 : Game
     private readonly GraphicsDeviceManager _graphics;
     private readonly GoAppSession _session = new();
     private readonly TournamentRulesCatalog _tournamentRulesCatalog;
+    private readonly GtpEngineCatalog _gtpEngineCatalog;
     private readonly TournamentRulesSetting _tournamentRulesSetting;
     private readonly PlayingScene _playingScene;
     private GoScreenRenderer? _renderer;
@@ -26,7 +27,9 @@ public class Game1 : Game
     public Game1()
     {
         _tournamentRulesCatalog = TournamentRulesCatalog.LoadFromDefaultLocation();
+        _gtpEngineCatalog = GtpEngineCatalog.LoadFromDefaultLocation();
         _session.SetTournamentRules(_tournamentRulesCatalog.Rules);
+        _session.SetGtpEngineProfiles(_gtpEngineCatalog.Profiles);
         _tournamentRulesSetting = new TournamentRulesSetting(_session, _tournamentRulesCatalog);
         _playingScene = new PlayingScene(_session, PlayPlaceStoneSound);
 
@@ -96,9 +99,17 @@ public class Game1 : Game
             {
                 _session.SetPlayerKind(GoStone.Black, blackPlayerKind);
             }
+            else if (isSetupMode && GoScreenRenderer.GetBlackGtpEngineButtonHit(point, _session.GtpEngineProfiles.Count) is { } blackGtpEngineIndex)
+            {
+                _session.SelectGtpEngine(GoStone.Black, blackGtpEngineIndex);
+            }
             else if (isSetupMode && GoScreenRenderer.GetWhitePlayerKindButtonHit(point) is { } whitePlayerKind)
             {
                 _session.SetPlayerKind(GoStone.White, whitePlayerKind);
+            }
+            else if (isSetupMode && GoScreenRenderer.GetWhiteGtpEngineButtonHit(point, _session.GtpEngineProfiles.Count) is { } whiteGtpEngineIndex)
+            {
+                _session.SelectGtpEngine(GoStone.White, whiteGtpEngineIndex);
             }
             else
             {

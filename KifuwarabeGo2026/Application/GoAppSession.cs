@@ -10,6 +10,7 @@ public sealed class GoAppSession
     private GoBoard _board;
     private readonly HashSet<ulong> _positionHashes = new();
     private readonly List<TournamentRules> _tournamentRules = new();
+    private readonly List<GtpEngineProfile> _gtpEngineProfiles = new();
     private TournamentRules _currentTournamentRules = new();
 
     private readonly Dictionary<GoAppModeKind, GoAppMode> _modes = new()
@@ -25,6 +26,7 @@ public sealed class GoAppSession
     {
         CurrentMode = _modes[GoAppModeKind.Resting];
         _board = new GoBoard(BoardSize);
+        _gtpEngineProfiles.Add(new GtpEngineProfile());
         ResetPositionHistory();
     }
 
@@ -53,6 +55,16 @@ public sealed class GoAppSession
     public GoPlayerKind BlackPlayerKind { get; private set; } = GoPlayerKind.Human;
 
     public GoPlayerKind WhitePlayerKind { get; private set; } = GoPlayerKind.Computer;
+
+    public IReadOnlyList<GtpEngineProfile> GtpEngineProfiles => _gtpEngineProfiles;
+
+    public int SelectedBlackGtpEngineIndex { get; private set; }
+
+    public int SelectedWhiteGtpEngineIndex { get; private set; }
+
+    public GtpEngineProfile BlackGtpEngineProfile => GetGtpEngineProfile(GoStone.Black);
+
+    public GtpEngineProfile WhiteGtpEngineProfile => GetGtpEngineProfile(GoStone.White);
 
     public int BlackAgehama { get; private set; }
 
@@ -207,6 +219,53 @@ public sealed class GoAppSession
         }
 
         throw new ArgumentOutOfRangeException(nameof(stone), stone, "Player kind can be set only for black or white.");
+    }
+
+    public void SetGtpEngineProfiles(IEnumerable<GtpEngineProfile> profiles)
+    {
+        _gtpEngineProfiles.Clear();
+        _gtpEngineProfiles.AddRange(profiles.Select(profile => profile.Clone()));
+        if (_gtpEngineProfiles.Count == 0)
+        {
+            _gtpEngineProfiles.Add(new GtpEngineProfile());
+        }
+
+        SelectedBlackGtpEngineIndex = 0;
+        SelectedWhiteGtpEngineIndex = 0;
+    }
+
+    public void SelectGtpEngine(GoStone stone, int index)
+    {
+        if (index < 0 || index >= _gtpEngineProfiles.Count)
+        {
+            throw new ArgumentOutOfRangeException(nameof(index), index, "GTP engine index is out of range.");
+        }
+
+        if (stone == GoStone.Black)
+        {
+            SelectedBlackGtpEngineIndex = index;
+            return;
+        }
+
+        if (stone == GoStone.White)
+        {
+            SelectedWhiteGtpEngineIndex = index;
+            return;
+        }
+
+        throw new ArgumentOutOfRangeException(nameof(stone), stone, "GTP engine can be selected only for black or white.");
+    }
+
+    public GtpEngineProfile GetGtpEngineProfile(GoStone stone)
+    {
+        var index = stone switch
+        {
+            GoStone.Black => SelectedBlackGtpEngineIndex,
+            GoStone.White => SelectedWhiteGtpEngineIndex,
+            _ => throw new ArgumentOutOfRangeException(nameof(stone), stone, "GTP engine can be read only for black or white."),
+        };
+
+        return _gtpEngineProfiles[Math.Clamp(index, 0, _gtpEngineProfiles.Count - 1)].Clone();
     }
 
     public GoPlayerKind GetPlayerKind(GoStone stone) => stone switch
