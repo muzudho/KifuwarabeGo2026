@@ -581,8 +581,7 @@ public sealed class GoScreenRenderer
 
         FillRect(bounds, active ? new Color(31, 45, 49) : hovered ? new Color(34, 42, 50) : new Color(24, 31, 37));
         DrawRect(bounds, 2, active ? new Color(147, 244, 200) : new Color(70, 85, 94));
-        FillRect(new Rectangle(bounds.X + 12, bounds.Y + 10, 118, 36), new Color(39, 68, 65));
-        DrawFittedText("DISPLAY", new Rectangle(bounds.X + 24, bounds.Y + 12, 94, 28), Color.White, 0.34f);
+        DrawUiLabel(UiLabel.InCompactRow("DISPLAY", bounds));
 
         var textBounds = TournamentRulesAddPanelDisplayNameTextBounds;
         DrawFittedText(displayName, textBounds, Color.White, 0.46f);
@@ -603,8 +602,7 @@ public sealed class GoScreenRenderer
         var filePath = string.IsNullOrWhiteSpace(session.CurrentTournamentRules.FilePath) ? "-" : session.CurrentTournamentRules.FilePath;
         FillRect(bounds, new Color(24, 31, 37));
         DrawRect(bounds, 1, new Color(70, 85, 94));
-        FillRect(new Rectangle(bounds.X + 12, bounds.Y + 10, 118, 36), new Color(39, 68, 65));
-        DrawFittedText("FILE", new Rectangle(bounds.X + 24, bounds.Y + 12, 94, 28), Color.White, 0.34f);
+        DrawUiLabel(UiLabel.InCompactRow("FILE", bounds));
         DrawFittedText(filePath, new Rectangle(bounds.X + 152, bounds.Y + 7, bounds.Width - 282, 42), Color.White, 0.38f);
         DrawCommandButton(TournamentRulesAddPanelFileBrowseButtonBounds, "REF", false, mousePoint, scale: 0.34f);
     }
@@ -772,8 +770,7 @@ public sealed class GoScreenRenderer
         var logBounds = GtpEngineEditPanelLogRowBounds;
         FillRect(logBounds, new Color(24, 31, 37));
         DrawRect(logBounds, 1, new Color(70, 85, 94));
-        FillRect(new Rectangle(logBounds.X + 12, logBounds.Y + 10, 118, 36), new Color(39, 68, 65));
-        DrawFittedText("GTP LOG", new Rectangle(logBounds.X + 24, logBounds.Y + 12, 94, 28), Color.White, 0.34f);
+        DrawUiLabel(UiLabel.InCompactRow("GTP LOG", logBounds));
         DrawCommandButton(GtpEngineEditPanelLogButtonBounds, session.GtpEngineEditDraft.EnableGtpLog ? "ON" : "OFF", session.GtpEngineEditDraft.EnableGtpLog, mousePoint, scale: 0.42f);
 
         if (!string.IsNullOrWhiteSpace(session.GtpEngineEditWarning))
@@ -792,8 +789,7 @@ public sealed class GoScreenRenderer
         var text = session.GetGtpEngineEditFieldText(field);
         FillRect(bounds, active ? new Color(31, 45, 49) : hovered ? new Color(34, 42, 50) : new Color(24, 31, 37));
         DrawRect(bounds, 2, active ? new Color(147, 244, 200) : new Color(70, 85, 94));
-        FillRect(new Rectangle(bounds.X + 12, bounds.Y + 10, 118, 36), new Color(39, 68, 65));
-        DrawFittedText(label, new Rectangle(bounds.X + 24, bounds.Y + 12, 94, 28), Color.White, 0.34f);
+        DrawUiLabel(UiLabel.InCompactRow(label, bounds));
 
         var textBounds = GtpEngineEditPanelFieldTextBounds(field);
         DrawFittedText(string.IsNullOrEmpty(text) ? "-" : text, textBounds, Color.White, 0.42f);
@@ -879,8 +875,7 @@ public sealed class GoScreenRenderer
         var bounds = new Rectangle(GtpEngineSelectionDialogPropertyBounds.X + 18, y, GtpEngineSelectionDialogPropertyBounds.Width - 36, 52);
         FillRect(bounds, new Color(24, 31, 37));
         DrawRect(bounds, 1, new Color(70, 85, 94));
-        FillRect(new Rectangle(bounds.X + 12, bounds.Y + 10, 118, 32), new Color(39, 68, 65));
-        DrawFittedText(label, new Rectangle(bounds.X + 24, bounds.Y + 10, 94, 32), Color.White, 0.34f);
+        DrawUiLabel(UiLabel.InCompactRow(label, bounds));
         DrawFittedText(value, new Rectangle(bounds.X + 152, bounds.Y + 7, bounds.Width - 168, 38), Color.White, 0.46f);
     }
 
@@ -889,8 +884,7 @@ public sealed class GoScreenRenderer
         var bounds = new Rectangle(TournamentRulesSelectionDialogPropertyBounds.X + 18, y, TournamentRulesSelectionDialogPropertyBounds.Width - 36, 52);
         FillRect(bounds, new Color(24, 31, 37));
         DrawRect(bounds, 1, new Color(70, 85, 94));
-        FillRect(new Rectangle(bounds.X + 12, bounds.Y + 10, 118, 32), new Color(39, 68, 65));
-        DrawFittedText(label, new Rectangle(bounds.X + 24, bounds.Y + 10, 94, 32), Color.White, 0.34f);
+        DrawUiLabel(UiLabel.InCompactRow(label, bounds));
         DrawFittedText(value, new Rectangle(bounds.X + 152, bounds.Y + 7, bounds.Width - 168, 38), Color.White, 0.46f);
     }
 
@@ -898,8 +892,7 @@ public sealed class GoScreenRenderer
     {
         FillRect(bounds, new Color(24, 31, 37));
         DrawRect(bounds, 1, new Color(70, 85, 94));
-        FillRect(new Rectangle(bounds.X + 12, bounds.Y + 10, 118, 32), new Color(39, 68, 65));
-        DrawFittedText(label, new Rectangle(bounds.X + 24, bounds.Y + 10, 94, 32), Color.White, 0.34f);
+        DrawUiLabel(UiLabel.InCompactRow(label, bounds));
         DrawFittedText(value, new Rectangle(bounds.X + 152, bounds.Y + 7, bounds.Width - 168, 38), Color.White, 0.46f);
     }
 
@@ -946,7 +939,7 @@ public sealed class GoScreenRenderer
         var bounds = new Rectangle(x, y, 668, 56);
         FillRect(bounds, new Color(24, 31, 37));
         DrawRect(bounds, 1, new Color(70, 85, 94));
-        DrawText(label, new Vector2(bounds.X + 20, bounds.Y + 16), new Color(180, 195, 195), 0.42f);
+        DrawUiLabel(UiLabel.InRow(label, bounds));
         DrawText(value, new Vector2(bounds.X + 176, bounds.Y + 13), Color.White, 0.52f);
         DrawCommandButton(minusBounds, minusLabel, false, mousePoint, scale: 0.42f);
         DrawCommandButton(plusBounds, plusLabel, false, mousePoint, scale: 0.42f);
@@ -1302,7 +1295,7 @@ public sealed class GoScreenRenderer
     {
         FillRect(new Rectangle(x, y, 668, 72), new Color(30, 36, 43));
         DrawRect(new Rectangle(x, y, 668, 72), 1, new Color(70, 85, 94));
-        DrawFittedText(label, new Rectangle(x + 18, y + 17, 132, 38), new Color(158, 178, 178), 0.40f);
+        DrawUiLabel(UiLabel.InRow(label, new Rectangle(x, y, 668, 72)));
         DrawText(value, new Vector2(x + 184, y + 20), Color.White, 0.62f);
     }
 
@@ -1551,6 +1544,8 @@ public sealed class GoScreenRenderer
         _spriteBatch.DrawString(_font, text, position + new Vector2(2, 2), new Color(0, 0, 0, 125), 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
         _spriteBatch.DrawString(_font, text, position, color, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
     }
+
+    private void DrawUiLabel(UiLabel label) => DrawFittedText(label.Text, label.Bounds, UiLabel.TextColor, label.Scale);
 
     private void DrawFittedText(string text, Rectangle bounds, Color color, float scale)
     {
