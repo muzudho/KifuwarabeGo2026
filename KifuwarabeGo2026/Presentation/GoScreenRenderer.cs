@@ -80,6 +80,9 @@ public sealed class GoScreenRenderer
     public static bool GetTournamentRulesAddPanelCloseButtonHit(Point point) =>
         TournamentRulesAddPanelCloseButtonBounds.Contains(point);
 
+    public static bool GetTournamentRulesAddPanelFileNameBoxHit(Point point) =>
+        TournamentRulesAddPanelFileRowBounds.Contains(point);
+
     public static bool GetTournamentRulesSelectionDialogPreviousPageButtonHit(Point point) =>
         TournamentRulesSelectionDialogPreviousPageButtonBounds.Contains(point);
 
@@ -491,8 +494,46 @@ public sealed class GoScreenRenderer
         DrawRulesNumberStrip(AddPanelControlX, 434, "KOMI", FormatKomi(session.Komi), KomiStepButtonBounds(0), "-0.5", KomiStepButtonBounds(1), "+0.5", mousePoint);
         DrawRulesNumberStrip(AddPanelControlX, 498, "TIME", FormatMainTime(session.MainTime), MainTimeStepButtonBounds(0), "-1m", MainTimeStepButtonBounds(1), "+1m", mousePoint);
         DrawRulesNumberStrip(AddPanelControlX, 562, "MOVES", FormatMoveLimit(session.MoveLimit), MoveLimitStepButtonBounds(0), "-10", MoveLimitStepButtonBounds(1), "+10", mousePoint);
-        DrawPathPropertyRow(TournamentRulesAddPanelFileRowBounds, "FILE", string.IsNullOrWhiteSpace(session.CurrentTournamentRules.FilePath) ? "-" : Path.GetFileName(session.CurrentTournamentRules.FilePath));
+        DrawFileNameTextBox(session, mousePoint);
         DrawCommandButton(SaveTournamentRulesButtonBounds, SaveTournamentRulesLabel(session), false, mousePoint);
+    }
+
+    private void DrawFileNameTextBox(GoAppSession session, Point mousePoint)
+    {
+        var bounds = TournamentRulesAddPanelFileRowBounds;
+        var hovered = bounds.Contains(mousePoint);
+        var active = session.IsTournamentRulesFileNameEditing;
+        var fileName = active
+            ? session.TournamentRulesFileNameDraft
+            : string.IsNullOrWhiteSpace(session.CurrentTournamentRules.FilePath) ? "-" : Path.GetFileName(session.CurrentTournamentRules.FilePath);
+
+        FillRect(bounds, active ? new Color(31, 45, 49) : hovered ? new Color(34, 42, 50) : new Color(24, 31, 37));
+        DrawRect(bounds, 2, active ? new Color(147, 244, 200) : new Color(70, 85, 94));
+        FillRect(new Rectangle(bounds.X + 12, bounds.Y + 10, 118, 36), new Color(39, 68, 65));
+        DrawFittedText("FILE", new Rectangle(bounds.X + 24, bounds.Y + 12, 94, 28), Color.White, 0.34f);
+
+        var textBounds = new Rectangle(bounds.X + 152, bounds.Y + 7, bounds.Width - 168, 42);
+        DrawFittedText(fileName, textBounds, Color.White, 0.46f);
+        if (active)
+        {
+            DrawTextBoxCaret(fileName, session.TournamentRulesFileNameCaretIndex, textBounds);
+        }
+
+        if (!string.IsNullOrWhiteSpace(session.TournamentRulesFileNameWarning))
+        {
+            DrawFittedText(session.TournamentRulesFileNameWarning, new Rectangle(bounds.X, bounds.Bottom + 8, bounds.Width, 28), new Color(255, 183, 146), 0.34f);
+        }
+    }
+
+    private void DrawTextBoxCaret(string text, int caretIndex, Rectangle textBounds)
+    {
+        var clampedCaretIndex = Math.Clamp(caretIndex, 0, text.Length);
+        var prefix = text[..clampedCaretIndex];
+        var textScale = 0.46f;
+        var measuredText = _font.MeasureString(text);
+        var fittedScale = MathF.Min(textScale, MathF.Min(textBounds.Width / Math.Max(1f, measuredText.X), textBounds.Height / Math.Max(1f, measuredText.Y)));
+        var x = textBounds.X + MathF.Min(textBounds.Width - 2, _font.MeasureString(prefix).X * fittedScale);
+        DrawLine(new Vector2(x, textBounds.Y + 5), new Vector2(x, textBounds.Bottom - 5), 2, new Color(147, 244, 200));
     }
 
     private void DrawTournamentRulesSelectionListItem(Rectangle bounds, GoAppSession session, int index, Point mousePoint)

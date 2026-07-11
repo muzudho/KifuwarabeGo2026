@@ -10,9 +10,13 @@ using System;
 /// </summary>
 public sealed class TournamentRulesSetting
 {
+    private const int MaxFileNameLength = 255;
+
     private readonly GoAppSession _session;
     private readonly TournamentRulesCatalog _catalog;
     private readonly Action _browseTournamentRules;
+    private readonly TextBoxController _fileNameTextBox = new(MaxFileNameLength);
+    private KeyboardState _previousKeyboard;
 
     public TournamentRulesSetting(GoAppSession session, TournamentRulesCatalog catalog, Action browseTournamentRules)
     {
@@ -21,19 +25,47 @@ public sealed class TournamentRulesSetting
         _browseTournamentRules = browseTournamentRules;
     }
 
-    public void UpdateByKeyboard(KeyboardState keyboard)
+    public void UpdateByKeyboard(KeyboardState keyboard, GameTime gameTime)
     {
         if (!_session.IsTournamentRulesAddPanelOpen)
         {
+            _previousKeyboard = keyboard;
+            return;
+        }
+
+        if (_session.IsTournamentRulesFileNameEditing)
+        {
+            HandleFileNameKeyboard(keyboard, gameTime);
+            _previousKeyboard = keyboard;
             return;
         }
 
         UpdateBoardSizeByKeyboard(keyboard);
 
-        if (keyboard.IsKeyDown(Keys.F5))
+        if (IsNewKeyPress(keyboard, Keys.F5))
         {
             SaveCurrentTournamentRules();
         }
+
+        _previousKeyboard = keyboard;
+    }
+
+    public bool TryInputCharacter(char character)
+    {
+        if (!_session.IsTournamentRulesAddPanelOpen || !_session.IsTournamentRulesFileNameEditing)
+        {
+            return false;
+        }
+
+        if (!_fileNameTextBox.TryInputCharacter(character))
+        {
+            _session.SetTournamentRulesFileNameWarning("File name is too long.");
+            return true;
+        }
+
+        SyncFileNameDraft();
+        UpdateFileNameWarning();
+        return true;
     }
 
     public bool TryHandleMouseClick(Point point)
@@ -61,7 +93,14 @@ public sealed class TournamentRulesSetting
     {
         if (GoScreenRenderer.GetTournamentRulesAddPanelCloseButtonHit(point))
         {
+            CancelFileNameEdit();
             _session.CloseTournamentRulesAddPanel();
+            return true;
+        }
+
+        if (GoScreenRenderer.GetTournamentRulesAddPanelFileNameBoxHit(point))
+        {
+            BeginFileNameEdit();
             return true;
         }
 
@@ -150,7 +189,94 @@ public sealed class TournamentRulesSetting
         var rules = _catalog.CreateNew(_session.CurrentTournamentRules);
         _session.AddAndSelectTournamentRules(rules);
         _session.OpenTournamentRulesAddPanel();
+        BeginFileNameEdit();
         _session.MarkTournamentRulesSaved();
+    }
+
+    private void BeginFileNameEdit()
+    {
+        var fileName = string.IsNullOrWhiteSpace(_session.CurrentTournamentRules.FilePath)
+            ? ""
+            : System.IO.Path.GetFileName(_session.CurrentTournamentRules.FilePath);
+        _fileNameTextBox.Begin(fileName);
+        SyncFileNameDraft();
+        _session.BeginTournamentRulesFileNameEdit();
+        _session.SetTournamentRulesFileNameDraft(_fileNameTextBox.Text, _fileNameTextBox.CaretIndex);
+        UpdateFileNameWarning();
+    }
+
+    private void HandleFileNameKeyboard(KeyboardState keyboard, GameTime gameTime)
+    {
+        switch (_fileNameTextBox.HandleKeyboard(keyboard, _previousKeyboard, gameTime))
+        {
+            case TextBoxKeyboardAction.Commit:
+                CommitFileNameEdit();
+                break;
+            case TextBoxKeyboardAction.Cancel:
+                CancelFileNameEdit();
+                break;
+            default:
+                SyncFileNameDraft();
+                UpdateFileNameWarning();
+                break;
+        }
+    }
+
+    private void CommitFileNameEdit()
+    {
+        if (!TryApplyFileName())
+        {
+            return;
+        }
+
+        _session.EndTournamentRulesFileNameEdit();
+        _fileNameTextBox.Clear();
+    }
+
+    private void CancelFileNameEdit()
+    {
+        if (!_session.IsTournamentRulesFileNameEditing)
+        {
+            return;
+        }
+
+        _session.EndTournamentRulesFileNameEdit();
+        _fileNameTextBox.Clear();
+    }
+
+    private bool TryApplyFileName()
+    {
+        var rules = _session.CurrentTournamentRules;
+        if (!_catalog.TryValidateFileName(rules, _fileNameTextBox.Text, out _, out var warning))
+        {
+            _session.SetTournamentRulesFileNameWarning(warning);
+            return false;
+        }
+
+        try
+        {
+            var savedRules = _catalog.SaveAsFileName(rules, _fileNameTextBox.Text);
+            _session.ReplaceCurrentTournamentRules(savedRules);
+            _session.SetTournamentRulesFileNameDraft(System.IO.Path.GetFileName(savedRules.FilePath), System.IO.Path.GetFileName(savedRules.FilePath).Length);
+            _session.MarkTournamentRulesSaved();
+            return true;
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or System.IO.IOException or UnauthorizedAccessException or NotSupportedException)
+        {
+            _session.SetTournamentRulesFileNameWarning("File name could not be saved.");
+            return false;
+        }
+    }
+
+    private void UpdateFileNameWarning()
+    {
+        _catalog.TryValidateFileName(_session.CurrentTournamentRules, _fileNameTextBox.Text, out _, out var warning);
+        _session.SetTournamentRulesFileNameWarning(warning);
+    }
+
+    private void SyncFileNameDraft()
+    {
+        _session.SetTournamentRulesFileNameDraft(_fileNameTextBox.Text, _fileNameTextBox.CaretIndex);
     }
 
     private void UpdateBoardSizeByKeyboard(KeyboardState keyboard)
@@ -171,7 +297,15 @@ public sealed class TournamentRulesSetting
 
     private void SaveCurrentTournamentRules()
     {
+        if (_session.IsTournamentRulesFileNameEditing && !TryApplyFileName())
+        {
+            return;
+        }
+
         _catalog.Save(_session.CurrentTournamentRules);
         _session.MarkTournamentRulesSaved();
     }
+
+    private bool IsNewKeyPress(KeyboardState keyboard, Keys key) =>
+        keyboard.IsKeyDown(key) && _previousKeyboard.IsKeyUp(key);
 }

@@ -3,6 +3,7 @@ namespace KifuwarabeGo2026.Application;
 using KifuwarabeGo2026.Domain;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 public sealed class GoAppSession
@@ -45,6 +46,14 @@ public sealed class GoAppSession
     public int TournamentRulesSelectionPageIndex { get; private set; }
 
     public string TournamentRulesSaveMessage { get; private set; } = "";
+
+    public string TournamentRulesFileNameDraft { get; private set; } = "";
+
+    public bool IsTournamentRulesFileNameEditing { get; private set; }
+
+    public int TournamentRulesFileNameCaretIndex { get; private set; }
+
+    public string TournamentRulesFileNameWarning { get; private set; } = "";
 
     public string TournamentDisplayName => _currentTournamentRules.DisplayName;
 
@@ -264,6 +273,42 @@ public sealed class GoAppSession
         }
 
         TournamentRulesSaveMessage = "SAVED";
+    }
+
+    public void ReplaceCurrentTournamentRules(TournamentRules rules)
+    {
+        ApplyTournamentRules(rules);
+        if (SelectedTournamentRulesIndex >= 0 && SelectedTournamentRulesIndex < _tournamentRules.Count)
+        {
+            _tournamentRules[SelectedTournamentRulesIndex] = _currentTournamentRules.Clone();
+        }
+    }
+
+    public void SetTournamentRulesFileNameDraft(string fileName, int caretIndex)
+    {
+        TournamentRulesFileNameDraft = fileName;
+        TournamentRulesFileNameCaretIndex = Math.Clamp(caretIndex, 0, fileName.Length);
+    }
+
+    public void BeginTournamentRulesFileNameEdit()
+    {
+        TournamentRulesFileNameDraft = string.IsNullOrWhiteSpace(_currentTournamentRules.FilePath)
+            ? ""
+            : Path.GetFileName(_currentTournamentRules.FilePath);
+        TournamentRulesFileNameCaretIndex = TournamentRulesFileNameDraft.Length;
+        IsTournamentRulesFileNameEditing = true;
+        TournamentRulesFileNameWarning = "";
+    }
+
+    public void EndTournamentRulesFileNameEdit()
+    {
+        IsTournamentRulesFileNameEditing = false;
+        TournamentRulesFileNameWarning = "";
+    }
+
+    public void SetTournamentRulesFileNameWarning(string warning)
+    {
+        TournamentRulesFileNameWarning = warning;
     }
 
     public void SetPlayerKind(GoStone stone, GoPlayerKind playerKind)

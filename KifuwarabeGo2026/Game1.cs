@@ -42,6 +42,7 @@ public class Game1 : Game
         IsMouseVisible = true;
         Window.Title = "Kifuwarabe Go 2026";
         Window.AllowUserResizing = true;
+        Window.TextInput += OnTextInput;
     }
 
     protected override void LoadContent()
@@ -64,7 +65,7 @@ public class Game1 : Game
 
         if (_session.CurrentMode.Kind != GoAppModeKind.Playing)
         {
-            _tournamentRulesSetting.UpdateByKeyboard(keyboard);
+            _tournamentRulesSetting.UpdateByKeyboard(keyboard, gameTime);
         }
         UpdateMouseInput();
 
@@ -132,6 +133,11 @@ public class Game1 : Game
         _session.OpenTournamentRulesSelectionDialog();
     }
 
+    private void OnTextInput(object? sender, TextInputEventArgs e)
+    {
+        _tournamentRulesSetting.TryInputCharacter(e.Character);
+    }
+
     private void OpenGtpEngineSelectionDialog(GoStone stone)
     {
         _session.OpenGtpEngineSelectionDialog(stone);
@@ -181,6 +187,7 @@ public class Game1 : Game
     {
         if (disposing)
         {
+            Window.TextInput -= OnTextInput;
             _playingScene.Dispose();
             _placeStoneSoundInstance?.Dispose();
             _placeStoneSound?.Dispose();

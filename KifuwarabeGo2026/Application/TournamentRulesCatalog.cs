@@ -87,6 +87,107 @@ public sealed class TournamentRulesCatalog
         File.WriteAllText(rules.FilePath, JsonSerializer.Serialize(Normalize(rules.Clone()), JsonOptions));
     }
 
+    public TournamentRules SaveAsFileName(TournamentRules rules, string fileName)
+    {
+        if (!TryValidateFileName(rules, fileName, out var targetPath, out var warning))
+        {
+            throw new InvalidOperationException(warning);
+        }
+
+        var savedRules = rules.Clone();
+        var oldPath = savedRules.FilePath;
+        if (!string.Equals(Path.GetFullPath(oldPath), Path.GetFullPath(targetPath), StringComparison.OrdinalIgnoreCase))
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(targetPath) ?? AppContext.BaseDirectory);
+            File.WriteAllText(targetPath, JsonSerializer.Serialize(Normalize(savedRules.Clone()), JsonOptions));
+            if (File.Exists(oldPath))
+            {
+                File.Delete(oldPath);
+            }
+
+            savedRules.FilePath = targetPath;
+            UpdateListEntry(oldPath, savedRules);
+            return savedRules;
+        }
+
+        savedRules.FilePath = targetPath;
+        Save(savedRules);
+        UpdateListEntry(oldPath, savedRules);
+        return savedRules;
+    }
+
+    public bool TryValidateFileName(TournamentRules rules, string fileName, out string targetPath, out string warning)
+    {
+        targetPath = "";
+        if (string.IsNullOrWhiteSpace(rules.FilePath))
+        {
+            warning = "Rules file path is missing.";
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(fileName))
+        {
+            warning = "File name is required.";
+            return false;
+        }
+
+        if (!fileName.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
+        {
+            fileName += ".json";
+        }
+
+        if (fileName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
+        {
+            warning = "File name contains invalid characters.";
+            return false;
+        }
+
+        if (fileName.EndsWith(' ') || fileName.EndsWith('.'))
+        {
+            warning = "File name cannot end with a space or dot.";
+            return false;
+        }
+
+        if (IsReservedWindowsFileName(fileName))
+        {
+            warning = "File name is reserved by Windows.";
+            return false;
+        }
+
+        var directory = Path.GetDirectoryName(rules.FilePath);
+        if (string.IsNullOrWhiteSpace(directory))
+        {
+            warning = "Rules directory is missing.";
+            return false;
+        }
+
+        try
+        {
+            targetPath = Path.GetFullPath(Path.Combine(directory, fileName));
+        }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            warning = "File path is invalid.";
+            return false;
+        }
+
+        if (targetPath.Length >= 260)
+        {
+            warning = "File path is too long.";
+            return false;
+        }
+
+        var currentFullPath = Path.GetFullPath(rules.FilePath);
+        if (File.Exists(targetPath) && !string.Equals(targetPath, currentFullPath, StringComparison.OrdinalIgnoreCase))
+        {
+            warning = "File already exists.";
+            return false;
+        }
+
+        warning = "";
+        return true;
+    }
+
     public TournamentRules CreateNew(TournamentRules source)
     {
         var listDirectory = Path.GetDirectoryName(ListPath) ?? AppContext.BaseDirectory;
@@ -111,6 +212,33 @@ public sealed class TournamentRulesCatalog
             DisplayName = rules.DisplayName,
             FilePath = Path.GetRelativePath(listDirectory, rules.FilePath),
         });
+
+        File.WriteAllText(ListPath, JsonSerializer.Serialize(list, JsonOptions));
+    }
+
+    private void UpdateListEntry(string oldPath, TournamentRules rules)
+    {
+        var listDirectory = Path.GetDirectoryName(ListPath) ?? AppContext.BaseDirectory;
+        var list = File.Exists(ListPath)
+            ? JsonSerializer.Deserialize<TournamentRulesList>(File.ReadAllText(ListPath), JsonOptions) ?? new TournamentRulesList()
+            : new TournamentRulesList();
+        var oldRelativePath = Path.GetRelativePath(listDirectory, oldPath);
+        var newRelativePath = Path.GetRelativePath(listDirectory, rules.FilePath);
+        var entry = list.TournamentRules.FirstOrDefault(entry =>
+            string.Equals(entry.FilePath, oldRelativePath, StringComparison.OrdinalIgnoreCase));
+        if (entry is null)
+        {
+            list.TournamentRules.Add(new TournamentRulesListEntry
+            {
+                DisplayName = rules.DisplayName,
+                FilePath = newRelativePath,
+            });
+        }
+        else
+        {
+            entry.DisplayName = rules.DisplayName;
+            entry.FilePath = newRelativePath;
+        }
 
         File.WriteAllText(ListPath, JsonSerializer.Serialize(list, JsonOptions));
     }
@@ -154,6 +282,25 @@ public sealed class TournamentRulesCatalog
 
         return path;
     }
+
+    private static bool IsReservedWindowsFileName(string fileName)
+    {
+        var stem = Path.GetFileNameWithoutExtension(fileName).TrimEnd(' ', '.');
+        if (string.IsNullOrEmpty(stem))
+        {
+            return false;
+        }
+
+        var upper = stem.ToUpperInvariant();
+        return upper is "CON" or "PRN" or "AUX" or "NUL"
+            || IsReservedWindowsDeviceName(upper, "COM")
+            || IsReservedWindowsDeviceName(upper, "LPT");
+    }
+
+    private static bool IsReservedWindowsDeviceName(string stem, string prefix) =>
+        stem.Length == 4 &&
+        stem.StartsWith(prefix, StringComparison.Ordinal) &&
+        stem[3] is >= '1' and <= '9';
 
     private sealed class TournamentRulesList
     {
