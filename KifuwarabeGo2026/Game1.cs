@@ -187,6 +187,11 @@ public class Game1 : Game
             return false;
         }
 
+        if (_session.IsGtpEngineDeleteConfirmationOpen)
+        {
+            return TryHandleGtpEngineDeleteConfirmationClick(point);
+        }
+
         if (GoScreenRenderer.TryGetGtpEngineSelectionDialogPathCopyText(point, _session, out var path))
         {
             SystemClipboard.SetText(path);
@@ -196,6 +201,18 @@ public class Game1 : Game
         if (GoScreenRenderer.GetGtpEngineSelectionDialogCloseButtonHit(point))
         {
             _session.CloseGtpEngineSelectionDialog();
+            return true;
+        }
+
+        if (GoScreenRenderer.GetGtpEngineSelectionDialogEditButtonHit(point))
+        {
+            EditSelectedGtpEngine();
+            return true;
+        }
+
+        if (GoScreenRenderer.GetGtpEngineSelectionDialogDeleteButtonHit(point, _session.CanDeleteSelectedGtpEngine))
+        {
+            _session.OpenGtpEngineDeleteConfirmation();
             return true;
         }
 
@@ -218,6 +235,78 @@ public class Game1 : Game
         }
 
         return true;
+    }
+
+    private bool TryHandleGtpEngineDeleteConfirmationClick(Point point)
+    {
+        if (GoScreenRenderer.GetGtpEngineDeleteConfirmationCancelButtonHit(point))
+        {
+            _session.CloseGtpEngineDeleteConfirmation();
+            return true;
+        }
+
+        if (GoScreenRenderer.GetGtpEngineDeleteConfirmationConfirmButtonHit(point))
+        {
+            _session.RemoveSelectedGtpEngine();
+            _gtpEngineCatalog.Save(_session.GtpEngineProfiles);
+            return true;
+        }
+
+        return true;
+    }
+
+    private void EditSelectedGtpEngine()
+    {
+        var selectedIndex = _session.SelectedGtpEngineIndex;
+        if (selectedIndex < 0 || selectedIndex >= _session.GtpEngineProfiles.Count)
+        {
+            return;
+        }
+
+        var source = _session.GtpEngineProfiles[selectedIndex];
+        using var dialog = new System.Windows.Forms.OpenFileDialog
+        {
+            CheckFileExists = true,
+            Filter = "Executable files (*.exe)|*.exe|All files (*.*)|*.*",
+            FileName = Path.GetFileName(source.ExecutablePath),
+            InitialDirectory = GetInitialGtpEngineDirectory(source),
+            Title = "Select GTP engine executable",
+        };
+
+        if (dialog.ShowDialog() != System.Windows.Forms.DialogResult.OK)
+        {
+            return;
+        }
+
+        var profile = source.Clone();
+        profile.ExecutablePath = dialog.FileName;
+        profile.WorkingDirectory = Path.GetDirectoryName(dialog.FileName) ?? profile.WorkingDirectory;
+        if (string.IsNullOrWhiteSpace(profile.DisplayName) || profile.DisplayName == "Unnamed GTP Engine")
+        {
+            profile.DisplayName = Path.GetFileNameWithoutExtension(dialog.FileName);
+        }
+
+        _session.ReplaceSelectedGtpEngine(profile);
+        _gtpEngineCatalog.Save(_session.GtpEngineProfiles);
+    }
+
+    private static string GetInitialGtpEngineDirectory(GtpEngineProfile profile)
+    {
+        if (!string.IsNullOrWhiteSpace(profile.ExecutablePath))
+        {
+            var directory = Path.GetDirectoryName(profile.ExecutablePath);
+            if (!string.IsNullOrWhiteSpace(directory) && Directory.Exists(directory))
+            {
+                return directory;
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(profile.WorkingDirectory) && Directory.Exists(profile.WorkingDirectory))
+        {
+            return profile.WorkingDirectory;
+        }
+
+        return AppContext.BaseDirectory;
     }
 
     protected override void Dispose(bool disposing)

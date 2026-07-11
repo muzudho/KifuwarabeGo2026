@@ -144,6 +144,18 @@ public sealed class GoScreenRenderer
     public static bool GetGtpEngineSelectionDialogCloseButtonHit(Point point) =>
         GtpEngineSelectionDialogCloseButtonBounds.Contains(point);
 
+    public static bool GetGtpEngineSelectionDialogEditButtonHit(Point point) =>
+        GtpEngineSelectionDialogEditButtonBounds.Contains(point);
+
+    public static bool GetGtpEngineSelectionDialogDeleteButtonHit(Point point, bool enabled) =>
+        enabled && GtpEngineSelectionDialogDeleteButtonBounds.Contains(point);
+
+    public static bool GetGtpEngineDeleteConfirmationConfirmButtonHit(Point point) =>
+        GtpEngineDeleteConfirmationConfirmButtonBounds.Contains(point);
+
+    public static bool GetGtpEngineDeleteConfirmationCancelButtonHit(Point point) =>
+        GtpEngineDeleteConfirmationCancelButtonBounds.Contains(point);
+
     public static bool GetGtpEngineSelectionDialogPreviousPageButtonHit(Point point) =>
         GtpEngineSelectionDialogPreviousPageButtonBounds.Contains(point);
 
@@ -688,6 +700,28 @@ public sealed class GoScreenRenderer
         DrawCommandButton(GtpEngineSelectionDialogPreviousPageButtonBounds, "PREV", false, mousePoint, enabled: session.GtpEngineSelectionPageIndex > 0, scale: 0.42f);
         DrawText($"PAGE {session.GtpEngineSelectionPageIndex + 1} / {pageCount}", new Vector2(GtpEngineSelectionDialogBounds.X + 350, GtpEngineSelectionDialogBounds.Bottom - 62), new Color(227, 224, 210), 0.48f);
         DrawCommandButton(GtpEngineSelectionDialogNextPageButtonBounds, "NEXT", false, mousePoint, enabled: session.GtpEngineSelectionPageIndex < pageCount - 1, scale: 0.42f);
+        DrawCommandButton(GtpEngineSelectionDialogEditButtonBounds, "EDIT", false, mousePoint, enabled: session.GtpEngineProfiles.Count > 0, scale: 0.42f);
+        DrawCommandButton(GtpEngineSelectionDialogDeleteButtonBounds, "DELETE", false, mousePoint, enabled: session.CanDeleteSelectedGtpEngine, scale: 0.42f);
+        DrawGtpEngineDeleteConfirmation(session, mousePoint);
+    }
+
+    private void DrawGtpEngineDeleteConfirmation(GoAppSession session, Point mousePoint)
+    {
+        if (!session.IsGtpEngineDeleteConfirmationOpen)
+        {
+            return;
+        }
+
+        FillRect(new Rectangle(0, 0, VirtualScreen.Width, VirtualScreen.Height), new Color(0, 0, 0, 95));
+        FillRect(new Rectangle(GtpEngineDeleteConfirmationBounds.X + 12, GtpEngineDeleteConfirmationBounds.Y + 14, GtpEngineDeleteConfirmationBounds.Width, GtpEngineDeleteConfirmationBounds.Height), new Color(0, 0, 0, 150));
+        FillRect(GtpEngineDeleteConfirmationBounds, new Color(24, 29, 36, 252));
+        DrawRect(GtpEngineDeleteConfirmationBounds, 2, new Color(255, 183, 146));
+
+        DrawText("DELETE GTP ENGINE", new Vector2(GtpEngineDeleteConfirmationBounds.X + 28, GtpEngineDeleteConfirmationBounds.Y + 24), new Color(255, 230, 160), 0.62f);
+        DrawFittedText($"{session.GtpEngineDeleteConfirmationName} will be removed from the list.", new Rectangle(GtpEngineDeleteConfirmationBounds.X + 28, GtpEngineDeleteConfirmationBounds.Y + 92, GtpEngineDeleteConfirmationBounds.Width - 56, 42), Color.White, 0.5f);
+        DrawText("DELETE?", new Vector2(GtpEngineDeleteConfirmationBounds.X + 28, GtpEngineDeleteConfirmationBounds.Y + 150), new Color(180, 195, 195), 0.46f);
+        DrawCommandButton(GtpEngineDeleteConfirmationCancelButtonBounds, "CANCEL", false, mousePoint, scale: 0.42f);
+        DrawCommandButton(GtpEngineDeleteConfirmationConfirmButtonBounds, "DELETE", false, mousePoint, scale: 0.42f);
     }
 
     private void DrawGtpEngineSelectionListItem(Rectangle bounds, GoAppSession session, int index, Point mousePoint)
@@ -905,6 +939,16 @@ public sealed class GoScreenRenderer
     private static Rectangle GtpEngineSelectionDialogPreviousPageButtonBounds => new(270, 854, 150, 52);
 
     private static Rectangle GtpEngineSelectionDialogNextPageButtonBounds => new(770, 854, 150, 52);
+
+    private static Rectangle GtpEngineSelectionDialogEditButtonBounds => new(1138, 854, 150, 52);
+
+    private static Rectangle GtpEngineSelectionDialogDeleteButtonBounds => new(1308, 854, 150, 52);
+
+    private static Rectangle GtpEngineDeleteConfirmationBounds => new(654, 358, 612, 260);
+
+    private static Rectangle GtpEngineDeleteConfirmationCancelButtonBounds => new(GtpEngineDeleteConfirmationBounds.X + 298, GtpEngineDeleteConfirmationBounds.Bottom - 76, 130, 48);
+
+    private static Rectangle GtpEngineDeleteConfirmationConfirmButtonBounds => new(GtpEngineDeleteConfirmationBounds.X + 448, GtpEngineDeleteConfirmationBounds.Bottom - 76, 130, 48);
 
     private static Rectangle GtpEngineSelectionDialogListItemBounds(int index) =>
         new(GtpEngineSelectionDialogListBounds.X + 16, GtpEngineSelectionDialogListBounds.Y + 16 + index * 88, GtpEngineSelectionDialogListBounds.Width - 32, 72);

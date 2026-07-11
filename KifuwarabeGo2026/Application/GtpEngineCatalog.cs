@@ -14,6 +14,7 @@ public sealed class GtpEngineCatalog
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNameCaseInsensitive = true,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         WriteIndented = true,
     };
 
@@ -58,6 +59,20 @@ public sealed class GtpEngineCatalog
         return new GtpEngineCatalog(listPath, normalizedProfiles);
     }
 
+    public void Save(IEnumerable<GtpEngineProfile> profiles)
+    {
+        var listDirectory = Path.GetDirectoryName(ListPath) ?? AppContext.BaseDirectory;
+        Directory.CreateDirectory(listDirectory);
+        var list = new GtpEngineProfileList
+        {
+            GtpEngines = profiles
+                .Select(profile => ToListEntry(Normalize(profile, listDirectory), listDirectory))
+                .ToList(),
+        };
+
+        File.WriteAllText(ListPath, JsonSerializer.Serialize(list, JsonOptions));
+    }
+
     private static GtpEngineProfile Normalize(GtpEngineProfile profile, string baseDirectory)
     {
         var normalized = profile.Clone();
@@ -84,6 +99,31 @@ public sealed class GtpEngineCatalog
     private static bool HasDirectoryPart(string path) =>
         path.Contains(Path.DirectorySeparatorChar) ||
         path.Contains(Path.AltDirectorySeparatorChar);
+
+    private static GtpEngineProfile ToListEntry(GtpEngineProfile profile, string listDirectory)
+    {
+        var entry = profile.Clone();
+        entry.ExecutablePath = ToStoredPath(entry.ExecutablePath, listDirectory);
+        entry.WorkingDirectory = ToStoredPath(entry.WorkingDirectory, listDirectory);
+        return entry;
+    }
+
+    private static string ToStoredPath(string path, string listDirectory)
+    {
+        if (string.IsNullOrWhiteSpace(path) || !HasDirectoryPart(path))
+        {
+            return path;
+        }
+
+        try
+        {
+            return Path.GetRelativePath(listDirectory, Path.GetFullPath(path));
+        }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            return path;
+        }
+    }
 
     private static GtpEngineProfile CreateDefaultProfile()
     {

@@ -93,6 +93,10 @@ public sealed class GoAppSession
 
     public GoStone GtpEngineSelectionTargetStone { get; private set; } = GoStone.Black;
 
+    public bool IsGtpEngineDeleteConfirmationOpen { get; private set; }
+
+    public string GtpEngineDeleteConfirmationName { get; private set; } = "";
+
     public int GtpEngineSelectionPageIndex { get; private set; }
 
     public GtpEngineProfile BlackGtpEngineProfile => GetGtpEngineProfile(GoStone.Black);
@@ -432,6 +436,7 @@ public sealed class GoAppSession
         IsTournamentRulesAddPanelOpen = false;
         IsTournamentRulesDeleteConfirmationOpen = false;
         IsGtpEngineSelectionDialogOpen = true;
+        IsGtpEngineDeleteConfirmationOpen = false;
         GtpEngineSelectionTargetStone = stone;
         var selectedIndex = stone == GoStone.Black ? SelectedBlackGtpEngineIndex : SelectedWhiteGtpEngineIndex;
         GtpEngineSelectionPageIndex = selectedIndex / GtpEngineSelectionPageSize;
@@ -440,12 +445,68 @@ public sealed class GoAppSession
     public void CloseGtpEngineSelectionDialog()
     {
         IsGtpEngineSelectionDialogOpen = false;
+        CloseGtpEngineDeleteConfirmation();
     }
 
     public void MoveGtpEngineSelectionPage(int step)
     {
         var pageCount = Math.Max(1, (int)Math.Ceiling(_gtpEngineProfiles.Count / (double)GtpEngineSelectionPageSize));
         GtpEngineSelectionPageIndex = Math.Clamp(GtpEngineSelectionPageIndex + step, 0, pageCount - 1);
+    }
+
+    public bool CanDeleteSelectedGtpEngine =>
+        _gtpEngineProfiles.Count > 1 &&
+        SelectedGtpEngineIndex >= 0 &&
+        SelectedGtpEngineIndex < _gtpEngineProfiles.Count;
+
+    public int SelectedGtpEngineIndex =>
+        GtpEngineSelectionTargetStone == GoStone.Black ? SelectedBlackGtpEngineIndex : SelectedWhiteGtpEngineIndex;
+
+    public void ReplaceSelectedGtpEngine(GtpEngineProfile profile)
+    {
+        var index = SelectedGtpEngineIndex;
+        if (index < 0 || index >= _gtpEngineProfiles.Count)
+        {
+            return;
+        }
+
+        _gtpEngineProfiles[index] = profile.Clone();
+    }
+
+    public void OpenGtpEngineDeleteConfirmation()
+    {
+        if (!CanDeleteSelectedGtpEngine)
+        {
+            return;
+        }
+
+        GtpEngineDeleteConfirmationName = _gtpEngineProfiles[SelectedGtpEngineIndex].DisplayName;
+        IsGtpEngineDeleteConfirmationOpen = true;
+    }
+
+    public void CloseGtpEngineDeleteConfirmation()
+    {
+        IsGtpEngineDeleteConfirmationOpen = false;
+        GtpEngineDeleteConfirmationName = "";
+    }
+
+    public void RemoveSelectedGtpEngine()
+    {
+        if (!CanDeleteSelectedGtpEngine)
+        {
+            return;
+        }
+
+        var removedIndex = SelectedGtpEngineIndex;
+        var nextIndex = Math.Clamp(removedIndex, 0, _gtpEngineProfiles.Count - 2);
+        _gtpEngineProfiles.RemoveAt(removedIndex);
+        SelectedBlackGtpEngineIndex = AdjustGtpEngineSelectionAfterDelete(SelectedBlackGtpEngineIndex, removedIndex, nextIndex);
+        SelectedWhiteGtpEngineIndex = AdjustGtpEngineSelectionAfterDelete(SelectedWhiteGtpEngineIndex, removedIndex, nextIndex);
+        CloseGtpEngineDeleteConfirmation();
+        GtpEngineSelectionPageIndex = Math.Clamp(
+            nextIndex / GtpEngineSelectionPageSize,
+            0,
+            Math.Max(0, (int)Math.Ceiling(_gtpEngineProfiles.Count / (double)GtpEngineSelectionPageSize) - 1));
     }
 
     public GtpEngineProfile GetGtpEngineProfile(GoStone stone)
@@ -692,4 +753,14 @@ public sealed class GoAppSession
     private static GoStone OppositeOf(GoStone stone) => stone == GoStone.Black ? GoStone.White : GoStone.Black;
 
     private static string StoneName(GoStone stone) => stone == GoStone.Black ? "BLACK" : "WHITE";
+
+    private static int AdjustGtpEngineSelectionAfterDelete(int selectedIndex, int removedIndex, int fallbackIndex)
+    {
+        if (selectedIndex == removedIndex)
+        {
+            return fallbackIndex;
+        }
+
+        return selectedIndex > removedIndex ? selectedIndex - 1 : selectedIndex;
+    }
 }
