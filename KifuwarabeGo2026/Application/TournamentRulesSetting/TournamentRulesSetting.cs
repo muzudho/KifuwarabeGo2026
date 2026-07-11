@@ -3,6 +3,7 @@ namespace KifuwarabeGo2026.Application.TournamentRulesSetting;
 using KifuwarabeGo2026.Presentation;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
+using System;
 
 /// <summary>
 /// ［大会ルール設定］画面の処理
@@ -11,11 +12,13 @@ public sealed class TournamentRulesSetting
 {
     private readonly GoAppSession _session;
     private readonly TournamentRulesCatalog _catalog;
+    private readonly Action _browseTournamentRules;
 
-    public TournamentRulesSetting(GoAppSession session, TournamentRulesCatalog catalog)
+    public TournamentRulesSetting(GoAppSession session, TournamentRulesCatalog catalog, Action browseTournamentRules)
     {
         _session = session;
         _catalog = catalog;
+        _browseTournamentRules = browseTournamentRules;
     }
 
     public void UpdateByKeyboard(KeyboardState keyboard)
@@ -30,9 +33,9 @@ public sealed class TournamentRulesSetting
 
     public bool TryHandleMouseClick(Point point)
     {
-        if (GoScreenRenderer.GetTournamentRulesButtonHit(point, _session.TournamentRulesList.Count) is { } tournamentRulesIndex)
+        if (GoScreenRenderer.GetTournamentRulesBrowseButtonHit(point))
         {
-            _session.SelectTournamentRules(tournamentRulesIndex);
+            _browseTournamentRules();
             return true;
         }
 

@@ -64,18 +64,8 @@ public sealed class GoScreenRenderer
         return BoardSizeButtonBounds(2, y).Contains(point) ? 19 : null;
     }
 
-    public static int? GetTournamentRulesButtonHit(Point point, int tournamentRulesCount)
-    {
-        for (var i = 0; i < Math.Min(tournamentRulesCount, MaxTournamentRulesButtons); i++)
-        {
-            if (TournamentRulesButtonBounds(i).Contains(point))
-            {
-                return i;
-            }
-        }
-
-        return null;
-    }
+    public static bool GetTournamentRulesBrowseButtonHit(Point point) =>
+        TournamentRulesSelector.ContainsBrowseButton(point);
 
     public static GoRuleKind? GetRuleKindButtonHit(Point point)
     {
@@ -123,9 +113,11 @@ public sealed class GoScreenRenderer
 
     public static GoPlayerKind? GetWhitePlayerKindButtonHit(Point point) => GetPlayerKindButtonHit(point, WhitePlayerKindButtonY);
 
-    public static int? GetBlackGtpEngineButtonHit(Point point, int engineCount) => GetGtpEngineButtonHit(point, engineCount, BlackEngineButtonY);
+    public static bool GetBlackGtpEngineBrowseButtonHit(Point point) =>
+        GtpEngineSelectorBounds(BlackEngineButtonY).ContainsBrowseButton(point);
 
-    public static int? GetWhiteGtpEngineButtonHit(Point point, int engineCount) => GetGtpEngineButtonHit(point, engineCount, WhiteEngineButtonY);
+    public static bool GetWhiteGtpEngineBrowseButtonHit(Point point) =>
+        GtpEngineSelectorBounds(WhiteEngineButtonY).ContainsBrowseButton(point);
 
     public static bool GetPassButtonHit(Point point) => PassButtonBounds.Contains(point);
 
@@ -237,7 +229,7 @@ public sealed class GoScreenRenderer
         DrawText("KIFUWARABE GO 2026", new Vector2(1142, 104), new Color(244, 238, 218), 1.0f);
         DrawText($"MODE {session.CurrentMode.DisplayName}", new Vector2(1540, 112), new Color(227, 224, 210), 0.5f);
         DrawText("TOURNAMENT", new Vector2(1144, 166), new Color(180, 195, 195), 0.5f);
-        DrawTournamentRulesButtons(session, mousePoint);
+        DrawLabeledBrowseSelector(TournamentRulesSelector with { Value = session.TournamentDisplayName }, mousePoint);
 
         DrawText("RULE", new Vector2(1144, 348), new Color(180, 195, 195), 0.5f);
         DrawRuleKindButtons(session.RuleKind, mousePoint);
@@ -340,16 +332,6 @@ public sealed class GoScreenRenderer
         }
     }
 
-    private void DrawTournamentRulesButtons(GoAppSession session, Point mousePoint)
-    {
-        var count = Math.Min(session.TournamentRulesList.Count, MaxTournamentRulesButtons);
-        for (var i = 0; i < count; i++)
-        {
-            var rules = session.TournamentRulesList[i];
-            DrawCommandButton(TournamentRulesButtonBounds(i), rules.DisplayName, i == session.SelectedTournamentRulesIndex, mousePoint, scale: 0.44f);
-        }
-    }
-
     private void DrawRuleKindButtons(GoRuleKind selectedKind, Point mousePoint)
     {
         DrawCommandButton(RuleKindButtonBounds(0), "JAPANESE", selectedKind == GoRuleKind.Japanese, mousePoint, scale: 0.44f);
@@ -382,13 +364,11 @@ public sealed class GoScreenRenderer
             return;
         }
 
-        DrawText("ENGINE", new Vector2(1164, y), new Color(180, 195, 195), 0.32f);
         var selectedIndex = stone == GoStone.Black ? session.SelectedBlackGtpEngineIndex : session.SelectedWhiteGtpEngineIndex;
-        var count = Math.Min(session.GtpEngineProfiles.Count, MaxGtpEngineButtons);
-        for (var i = 0; i < count; i++)
-        {
-            DrawCommandButton(GtpEngineButtonBounds(i, y), session.GtpEngineProfiles[i].DisplayName, i == selectedIndex, mousePoint, scale: 0.26f);
-        }
+        var engineName = selectedIndex >= 0 && selectedIndex < session.GtpEngineProfiles.Count
+            ? session.GtpEngineProfiles[selectedIndex].DisplayName
+            : "No engine";
+        DrawLabeledBrowseSelector(GtpEngineSelectorBounds(y) with { Value = engineName }, mousePoint);
     }
 
     private const int SetupBoardSizeButtonY = 476;
@@ -401,13 +381,9 @@ public sealed class GoScreenRenderer
 
     private const int WhiteEngineButtonY = 872;
 
-    private const int MaxTournamentRulesButtons = 3;
-
-    private const int MaxGtpEngineButtons = 3;
-
     private static Rectangle BoardSizeButtonBounds(int index, int y) => new(1144 + index * 224, y, 188, 62);
 
-    private static Rectangle TournamentRulesButtonBounds(int index) => new(1144, 198 + index * 48, 668, 40);
+    private static LabeledBrowseSelector TournamentRulesSelector => new(new Rectangle(1144, 198, 668, 56), "RULES", "");
 
     private static Rectangle RuleKindButtonBounds(int index) => new(1144 + index * 224, 382, 188, 50);
 
@@ -417,7 +393,7 @@ public sealed class GoScreenRenderer
 
     private static Rectangle PlayerKindButtonBounds(int index, int y) => new(1536 + index * 140, y, 132, 52);
 
-    private static Rectangle GtpEngineButtonBounds(int index, int y) => new(1288 + index * 176, y - 4, 164, 34);
+    private static LabeledBrowseSelector GtpEngineSelectorBounds(int y) => new(new Rectangle(1144, y - 4, 668, 44), "ENGINE", "");
 
     private static Rectangle StartPlayingButtonBounds => new(1492, 920, 320, 56);
 
@@ -439,19 +415,6 @@ public sealed class GoScreenRenderer
         }
 
         return PlayerKindButtonBounds(1, y).Contains(point) ? GoPlayerKind.Computer : null;
-    }
-
-    private static int? GetGtpEngineButtonHit(Point point, int engineCount, int y)
-    {
-        for (var i = 0; i < Math.Min(engineCount, MaxGtpEngineButtons); i++)
-        {
-            if (GtpEngineButtonBounds(i, y).Contains(point))
-            {
-                return i;
-            }
-        }
-
-        return null;
     }
 
     private static string PlayerKindLabel(GoPlayerKind playerKind) => playerKind == GoPlayerKind.Human ? "Human" : "Computer";
@@ -517,6 +480,18 @@ public sealed class GoScreenRenderer
         var fittedScale = MathF.Min(scale, MathF.Min((bounds.Width - 20) / Math.Max(1f, measured.X), (bounds.Height - 10) / Math.Max(1f, measured.Y)));
         var size = measured * fittedScale;
         DrawText(label, new Vector2(bounds.Center.X - size.X / 2, bounds.Center.Y - size.Y / 2), textColor, fittedScale);
+    }
+
+    private void DrawLabeledBrowseSelector(LabeledBrowseSelector selector, Point mousePoint)
+    {
+        FillRect(selector.Bounds, new Color(24, 31, 37));
+        DrawRect(selector.Bounds, 1, new Color(70, 85, 94));
+
+        FillRect(selector.LabelBounds, new Color(39, 68, 65));
+        DrawRect(selector.LabelBounds, 1, new Color(120, 130, 126));
+        DrawFittedText(selector.Label, new Rectangle(selector.LabelBounds.X + 12, selector.LabelBounds.Y + 4, selector.LabelBounds.Width - 24, selector.LabelBounds.Height - 8), Color.White, 0.42f);
+        DrawFittedText(selector.Value, selector.ValueBounds, Color.White, 0.52f);
+        DrawCommandButton(selector.BrowseButtonBounds, "REF", false, mousePoint, scale: 0.44f);
     }
 
     private void DrawInfoStrip(int x, int y, string label, string value, Color chipColor, Color chipTextColor)

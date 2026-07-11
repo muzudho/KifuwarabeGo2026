@@ -30,7 +30,7 @@ public class Game1 : Game
         _gtpEngineCatalog = GtpEngineCatalog.LoadFromDefaultLocation();
         _session.SetTournamentRules(_tournamentRulesCatalog.Rules);
         _session.SetGtpEngineProfiles(_gtpEngineCatalog.Profiles);
-        _tournamentRulesSetting = new TournamentRulesSetting(_session, _tournamentRulesCatalog);
+        _tournamentRulesSetting = new TournamentRulesSetting(_session, _tournamentRulesCatalog, OpenTournamentRulesSelectionDialog);
         _playingScene = new PlayingScene(_session, PlayPlaceStoneSound);
 
         _graphics = new GraphicsDeviceManager(this);
@@ -99,17 +99,17 @@ public class Game1 : Game
             {
                 _session.SetPlayerKind(GoStone.Black, blackPlayerKind);
             }
-            else if (isSetupMode && GoScreenRenderer.GetBlackGtpEngineButtonHit(point, _session.GtpEngineProfiles.Count) is { } blackGtpEngineIndex)
+            else if (isSetupMode && GoScreenRenderer.GetBlackGtpEngineBrowseButtonHit(point))
             {
-                _session.SelectGtpEngine(GoStone.Black, blackGtpEngineIndex);
+                OpenGtpEngineSelectionDialog(GoStone.Black);
             }
             else if (isSetupMode && GoScreenRenderer.GetWhitePlayerKindButtonHit(point) is { } whitePlayerKind)
             {
                 _session.SetPlayerKind(GoStone.White, whitePlayerKind);
             }
-            else if (isSetupMode && GoScreenRenderer.GetWhiteGtpEngineButtonHit(point, _session.GtpEngineProfiles.Count) is { } whiteGtpEngineIndex)
+            else if (isSetupMode && GoScreenRenderer.GetWhiteGtpEngineBrowseButtonHit(point))
             {
-                _session.SelectGtpEngine(GoStone.White, whiteGtpEngineIndex);
+                OpenGtpEngineSelectionDialog(GoStone.White);
             }
             else
             {
@@ -118,6 +118,19 @@ public class Game1 : Game
         }
 
         _previousMouse = mouse;
+    }
+
+    private void OpenTournamentRulesSelectionDialog()
+    {
+        var nextIndex = (_session.SelectedTournamentRulesIndex + 1) % Math.Max(1, _session.TournamentRulesList.Count);
+        _session.SelectTournamentRules(nextIndex);
+    }
+
+    private void OpenGtpEngineSelectionDialog(GoStone stone)
+    {
+        var currentIndex = stone == GoStone.Black ? _session.SelectedBlackGtpEngineIndex : _session.SelectedWhiteGtpEngineIndex;
+        var nextIndex = (currentIndex + 1) % Math.Max(1, _session.GtpEngineProfiles.Count);
+        _session.SelectGtpEngine(stone, nextIndex);
     }
 
     protected override void Dispose(bool disposing)
