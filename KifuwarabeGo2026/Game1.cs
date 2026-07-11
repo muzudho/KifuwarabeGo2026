@@ -226,6 +226,12 @@ public class Game1 : Game
             return true;
         }
 
+        if (GoScreenRenderer.GetGtpEngineSelectionDialogDuplicateButtonHit(point))
+        {
+            _session.OpenGtpEngineDuplicatePanel();
+            return true;
+        }
+
         if (GoScreenRenderer.GetGtpEngineSelectionDialogDeleteButtonHit(point, _session.CanDeleteSelectedGtpEngine))
         {
             _session.OpenGtpEngineDeleteConfirmation();

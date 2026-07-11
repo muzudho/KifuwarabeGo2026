@@ -20,6 +20,13 @@
       "workingDirectory": "..\\..\\bin\\Debug\\net8.0-windows",
       "arguments": "",
       "enableGtpLog": true
+    },
+    {
+      "displayName": "muzudho-test Copy",
+      "executablePath": "..\\..\\bin\\Debug\\net8.0-windows\\KifuwarabeGo2026.exe",
+      "workingDirectory": "..\\..\\bin\\Debug\\net8.0-windows",
+      "arguments": "",
+      "enableGtpLog": true
     }
   ]
 }

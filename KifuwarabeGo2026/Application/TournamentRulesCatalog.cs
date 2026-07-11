@@ -215,9 +215,28 @@ public sealed class TournamentRulesCatalog
         var rules = Normalize(source.Clone());
         rules.DisplayName = CreateNewDisplayName();
         rules.FilePath = CreateUniqueRulesPath(listDirectory);
-        Save(rules);
+        WriteRulesFile(rules);
         AppendListEntry(rules);
         return rules;
+    }
+
+    public TournamentRules Duplicate(TournamentRules source)
+    {
+        var listDirectory = Path.GetDirectoryName(ListPath) ?? AppContext.BaseDirectory;
+        Directory.CreateDirectory(listDirectory);
+
+        var rules = Normalize(source.Clone());
+        rules.DisplayName = CreateDuplicateDisplayName(rules.DisplayName);
+        rules.FilePath = CreateUniqueRulesPath(listDirectory);
+        WriteRulesFile(rules);
+        AppendListEntry(rules);
+        return rules;
+    }
+
+    private static void WriteRulesFile(TournamentRules rules)
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(rules.FilePath) ?? AppContext.BaseDirectory);
+        File.WriteAllText(rules.FilePath, JsonSerializer.Serialize(Normalize(rules.Clone()), JsonOptions));
     }
 
     private void AppendListEntry(TournamentRules rules)
@@ -305,6 +324,12 @@ public sealed class TournamentRulesCatalog
     };
 
     private static string CreateNewDisplayName() => $"New tournament {DateTime.Now:yyyyMMdd-HHmmss}";
+
+    private static string CreateDuplicateDisplayName(string displayName)
+    {
+        var sourceName = string.IsNullOrWhiteSpace(displayName) ? "Unnamed tournament" : displayName.Trim();
+        return $"{sourceName} Copy";
+    }
 
     private static string CreateUniqueRulesPath(string directory)
     {

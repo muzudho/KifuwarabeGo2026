@@ -507,6 +507,31 @@ public sealed class GoAppSession
         GtpEngineEditSaveMessage = "";
     }
 
+    public void OpenGtpEngineDuplicatePanel()
+    {
+        var index = SelectedGtpEngineIndex;
+        if (index < 0 || index >= _gtpEngineProfiles.Count)
+        {
+            return;
+        }
+
+        IsTournamentRulesSelectionDialogOpen = false;
+        IsTournamentRulesAddPanelOpen = false;
+        IsTournamentRulesDeleteConfirmationOpen = false;
+        IsGtpEngineSelectionDialogOpen = false;
+        IsGtpEngineEditPanelOpen = true;
+        IsGtpEngineAddPanelMode = true;
+        CloseGtpEngineDeleteConfirmation();
+        GtpEngineEditDraft = _gtpEngineProfiles[index].Clone();
+        GtpEngineEditDraft.DisplayName = string.IsNullOrWhiteSpace(GtpEngineEditDraft.DisplayName)
+            ? "Unnamed GTP Engine Copy"
+            : $"{GtpEngineEditDraft.DisplayName.Trim()} Copy";
+        ActiveGtpEngineEditField = null;
+        GtpEngineEditCaretIndex = 0;
+        GtpEngineEditWarning = "";
+        GtpEngineEditSaveMessage = "";
+    }
+
     public void CloseGtpEngineEditPanel()
     {
         IsGtpEngineEditPanelOpen = false;

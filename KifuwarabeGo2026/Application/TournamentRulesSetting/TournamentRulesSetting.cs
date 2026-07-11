@@ -186,6 +186,12 @@ public sealed class TournamentRulesSetting
             return true;
         }
 
+        if (GoScreenRenderer.GetTournamentRulesSelectionDialogDuplicateButtonHit(point))
+        {
+            DuplicateSelectedTournamentRules();
+            return true;
+        }
+
         if (GoScreenRenderer.GetTournamentRulesSelectionDialogDeleteButtonHit(point, _session.CanDeleteSelectedTournamentRules))
         {
             _session.OpenTournamentRulesDeleteConfirmation();
@@ -248,6 +254,20 @@ public sealed class TournamentRulesSetting
 
         _session.SelectTournamentRules(_session.SelectedTournamentRulesIndex);
         _session.OpenTournamentRulesAddPanel(editExisting: true);
+    }
+
+    private void DuplicateSelectedTournamentRules()
+    {
+        if (_session.SelectedTournamentRulesIndex < 0 || _session.SelectedTournamentRulesIndex >= _session.TournamentRulesList.Count)
+        {
+            return;
+        }
+
+        var rules = _catalog.Duplicate(_session.TournamentRulesList[_session.SelectedTournamentRulesIndex]);
+        _session.AddAndSelectTournamentRules(rules);
+        _session.OpenTournamentRulesAddPanel(editExisting: false);
+        BeginDisplayNameEdit();
+        _session.MarkTournamentRulesSaved();
     }
 
     private void DeleteSelectedTournamentRules()

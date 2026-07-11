@@ -81,6 +81,9 @@ public sealed class GoScreenRenderer
     public static bool GetTournamentRulesSelectionDialogEditButtonHit(Point point) =>
         TournamentRulesSelectionDialogEditButtonBounds.Contains(point);
 
+    public static bool GetTournamentRulesSelectionDialogDuplicateButtonHit(Point point) =>
+        TournamentRulesSelectionDialogDuplicateButtonBounds.Contains(point);
+
     public static bool GetTournamentRulesSelectionDialogDeleteButtonHit(Point point, bool enabled) =>
         enabled && TournamentRulesSelectionDialogDeleteButtonBounds.Contains(point);
 
@@ -153,6 +156,9 @@ public sealed class GoScreenRenderer
 
     public static bool GetGtpEngineSelectionDialogEditButtonHit(Point point) =>
         GtpEngineSelectionDialogEditButtonBounds.Contains(point);
+
+    public static bool GetGtpEngineSelectionDialogDuplicateButtonHit(Point point) =>
+        GtpEngineSelectionDialogDuplicateButtonBounds.Contains(point);
 
     public static bool GetGtpEngineSelectionDialogDeleteButtonHit(Point point, bool enabled) =>
         enabled && GtpEngineSelectionDialogDeleteButtonBounds.Contains(point);
@@ -531,8 +537,9 @@ public sealed class GoScreenRenderer
         DrawCommandButton(TournamentRulesSelectionDialogPreviousPageButtonBounds, "PREV", false, mousePoint, enabled: session.TournamentRulesSelectionPageIndex > 0, scale: 0.42f);
         DrawText($"PAGE {session.TournamentRulesSelectionPageIndex + 1} / {pageCount}", new Vector2(TournamentRulesSelectionDialogBounds.X + 350, TournamentRulesSelectionDialogBounds.Bottom - 62), new Color(227, 224, 210), 0.48f);
         DrawCommandButton(TournamentRulesSelectionDialogNextPageButtonBounds, "NEXT", false, mousePoint, enabled: session.TournamentRulesSelectionPageIndex < pageCount - 1, scale: 0.42f);
-        DrawCommandButton(TournamentRulesSelectionDialogAddButtonBounds, "ADD RULES", false, mousePoint, scale: 0.42f);
+        DrawCommandButton(TournamentRulesSelectionDialogAddButtonBounds, "ADD", false, mousePoint, scale: 0.42f);
         DrawCommandButton(TournamentRulesSelectionDialogEditButtonBounds, "EDIT", false, mousePoint, enabled: session.TournamentRulesList.Count > 0, scale: 0.42f);
+        DrawCommandButton(TournamentRulesSelectionDialogDuplicateButtonBounds, "DUPLICATE", false, mousePoint, enabled: session.TournamentRulesList.Count > 0, scale: 0.34f);
         DrawCommandButton(TournamentRulesSelectionDialogDeleteButtonBounds, "DELETE", false, mousePoint, enabled: session.CanDeleteSelectedTournamentRules, scale: 0.42f);
         DrawTournamentRulesDeleteConfirmation(session, mousePoint);
     }
@@ -736,6 +743,7 @@ public sealed class GoScreenRenderer
         DrawCommandButton(GtpEngineSelectionDialogNextPageButtonBounds, "NEXT", false, mousePoint, enabled: session.GtpEngineSelectionPageIndex < pageCount - 1, scale: 0.42f);
         DrawCommandButton(GtpEngineSelectionDialogAddButtonBounds, "ADD", false, mousePoint, scale: 0.42f);
         DrawCommandButton(GtpEngineSelectionDialogEditButtonBounds, "EDIT", false, mousePoint, enabled: session.GtpEngineProfiles.Count > 0, scale: 0.42f);
+        DrawCommandButton(GtpEngineSelectionDialogDuplicateButtonBounds, "DUPLICATE", false, mousePoint, enabled: session.GtpEngineProfiles.Count > 0, scale: 0.32f);
         DrawCommandButton(GtpEngineSelectionDialogDeleteButtonBounds, "DELETE", false, mousePoint, enabled: session.CanDeleteSelectedGtpEngine, scale: 0.42f);
         DrawGtpEngineDeleteConfirmation(session, mousePoint);
     }
@@ -991,11 +999,13 @@ public sealed class GoScreenRenderer
 
     private static Rectangle TournamentRulesSelectionDialogCloseButtonBounds => new(1518, 156, 132, 48);
 
-    private static Rectangle TournamentRulesSelectionDialogAddButtonBounds => new(1038, 854, 190, 52);
+    private static Rectangle TournamentRulesSelectionDialogAddButtonBounds => new(958, 854, 150, 52);
 
-    private static Rectangle TournamentRulesSelectionDialogEditButtonBounds => new(1248, 854, 190, 52);
+    private static Rectangle TournamentRulesSelectionDialogEditButtonBounds => new(1128, 854, 150, 52);
 
-    private static Rectangle TournamentRulesSelectionDialogDeleteButtonBounds => new(1458, 854, 192, 52);
+    private static Rectangle TournamentRulesSelectionDialogDuplicateButtonBounds => new(1298, 854, 150, 52);
+
+    private static Rectangle TournamentRulesSelectionDialogDeleteButtonBounds => new(1468, 854, 150, 52);
 
     private static Rectangle TournamentRulesSelectionDialogPreviousPageButtonBounds => new(270, 854, 150, 52);
 
@@ -1042,11 +1052,13 @@ public sealed class GoScreenRenderer
 
     private static Rectangle GtpEngineSelectionDialogNextPageButtonBounds => new(770, 854, 150, 52);
 
-    private static Rectangle GtpEngineSelectionDialogAddButtonBounds => new(968, 854, 150, 52);
+    private static Rectangle GtpEngineSelectionDialogAddButtonBounds => new(898, 854, 140, 52);
 
-    private static Rectangle GtpEngineSelectionDialogEditButtonBounds => new(1138, 854, 150, 52);
+    private static Rectangle GtpEngineSelectionDialogEditButtonBounds => new(1058, 854, 140, 52);
 
-    private static Rectangle GtpEngineSelectionDialogDeleteButtonBounds => new(1308, 854, 150, 52);
+    private static Rectangle GtpEngineSelectionDialogDuplicateButtonBounds => new(1218, 854, 140, 52);
+
+    private static Rectangle GtpEngineSelectionDialogDeleteButtonBounds => new(1378, 854, 140, 52);
 
     private static Rectangle GtpEngineDeleteConfirmationBounds => new(654, 358, 612, 260);
 
