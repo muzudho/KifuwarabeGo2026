@@ -286,6 +286,12 @@ public class Game1 : Game
             return true;
         }
 
+        if (GoScreenRenderer.GetGtpEngineEditPanelWorkingDirectoryBrowseButtonHit(point))
+        {
+            BrowseGtpEngineWorkingDirectory();
+            return true;
+        }
+
         if (GoScreenRenderer.GetGtpEngineEditPanelLogButtonHit(point))
         {
             EndGtpEngineEditField();
@@ -424,6 +430,24 @@ public class Game1 : Game
         }
 
         _session.SetGtpEngineExecutablePathDraft(dialog.FileName);
+    }
+
+    private void BrowseGtpEngineWorkingDirectory()
+    {
+        EndGtpEngineEditField();
+        using var dialog = new System.Windows.Forms.FolderBrowserDialog
+        {
+            Description = "Select GTP engine working directory",
+            SelectedPath = GetInitialGtpEngineDirectory(_session.GtpEngineEditDraft),
+            ShowNewFolderButton = true,
+        };
+
+        if (dialog.ShowDialog() != System.Windows.Forms.DialogResult.OK)
+        {
+            return;
+        }
+
+        _session.SetGtpEngineWorkingDirectoryDraft(dialog.SelectedPath);
     }
 
     private void SaveGtpEngineEditDraft()

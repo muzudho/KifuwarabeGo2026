@@ -567,6 +567,12 @@ public sealed class GoAppSession
         GtpEngineEditSaveMessage = "UNSAVED";
     }
 
+    public void SetGtpEngineWorkingDirectoryDraft(string workingDirectory)
+    {
+        GtpEngineEditDraft.WorkingDirectory = workingDirectory;
+        GtpEngineEditSaveMessage = "UNSAVED";
+    }
+
     public void ToggleGtpEngineEditLog()
     {
         GtpEngineEditDraft.EnableGtpLog = !GtpEngineEditDraft.EnableGtpLog;

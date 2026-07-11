@@ -169,6 +169,9 @@ public sealed class GoScreenRenderer
     public static bool GetGtpEngineEditPanelFileBrowseButtonHit(Point point) =>
         GtpEngineEditPanelFileBrowseButtonBounds.Contains(point);
 
+    public static bool GetGtpEngineEditPanelWorkingDirectoryBrowseButtonHit(Point point) =>
+        GtpEngineEditPanelWorkingDirectoryBrowseButtonBounds.Contains(point);
+
     public static bool GetGtpEngineEditPanelLogButtonHit(Point point) =>
         GtpEngineEditPanelLogButtonBounds.Contains(point);
 
@@ -794,6 +797,11 @@ public sealed class GoScreenRenderer
         {
             DrawCommandButton(GtpEngineEditPanelFileBrowseButtonBounds, "REF", false, mousePoint, scale: 0.34f);
         }
+
+        if (field == GtpEngineProfileEditField.WorkingDirectory)
+        {
+            DrawCommandButton(GtpEngineEditPanelWorkingDirectoryBrowseButtonBounds, "REF", false, mousePoint, scale: 0.34f);
+        }
     }
 
     private void DrawGtpEngineDeleteConfirmation(GoAppSession session, Point mousePoint)
@@ -1055,6 +1063,12 @@ public sealed class GoScreenRenderer
         96,
         40);
 
+    private static Rectangle GtpEngineEditPanelWorkingDirectoryBrowseButtonBounds => new(
+        GtpEngineEditPanelFieldRowBounds(GtpEngineProfileEditField.WorkingDirectory).Right - 112,
+        GtpEngineEditPanelFieldRowBounds(GtpEngineProfileEditField.WorkingDirectory).Y + 8,
+        96,
+        40);
+
     private static Rectangle GtpEngineEditPanelLogRowBounds => new(AddPanelControlX, 596, 668, 56);
 
     private static Rectangle GtpEngineEditPanelLogButtonBounds => new(GtpEngineEditPanelLogRowBounds.X + 152, GtpEngineEditPanelLogRowBounds.Y + 8, 120, 40);
@@ -1079,7 +1093,7 @@ public sealed class GoScreenRenderer
     private static Rectangle GtpEngineEditPanelFieldTextBounds(GtpEngineProfileEditField field)
     {
         var bounds = GtpEngineEditPanelFieldRowBounds(field);
-        var rightPadding = field == GtpEngineProfileEditField.ExecutablePath ? 282 : 168;
+        var rightPadding = field is GtpEngineProfileEditField.ExecutablePath or GtpEngineProfileEditField.WorkingDirectory ? 282 : 168;
         return new Rectangle(bounds.X + 152, bounds.Y + 7, bounds.Width - rightPadding, 42);
     }
 
