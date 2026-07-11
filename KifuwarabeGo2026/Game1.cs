@@ -24,6 +24,7 @@ public class Game1 : Game
     private SoundEffect? _placeStoneSound;
     private SoundEffectInstance? _placeStoneSoundInstance;
     private MouseState _previousMouse;
+    private KeyboardState _previousKeyboard;
     private KeyboardState _previousGtpEngineKeyboard;
     private readonly TextBoxController _gtpEngineEditTextBox = new(520);
 
@@ -65,6 +66,7 @@ public class Game1 : Game
 
         _playingScene.Update();
         _session.AddCurrentTurnElapsedTime(gameTime.ElapsedGameTime);
+        UpdateGlobalKeyboardInput(keyboard);
 
         if (_session.CurrentMode.Kind != GoAppModeKind.Playing)
         {
@@ -75,6 +77,20 @@ public class Game1 : Game
 
         base.Update(gameTime);
     }
+
+    private void UpdateGlobalKeyboardInput(KeyboardState keyboard)
+    {
+        if (CanHandleGlobalRenParseToggle() && keyboard.IsKeyDown(Keys.R) && _previousKeyboard.IsKeyUp(Keys.R))
+        {
+            _session.ToggleRenParseDisplay();
+        }
+
+        _previousKeyboard = keyboard;
+    }
+
+    private bool CanHandleGlobalRenParseToggle() =>
+        _session.ActiveGtpEngineEditField is null &&
+        !_session.IsTournamentRulesDisplayNameEditing;
 
     protected override void Draw(GameTime gameTime)
     {

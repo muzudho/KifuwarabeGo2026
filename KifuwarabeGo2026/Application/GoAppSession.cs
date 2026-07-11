@@ -13,6 +13,9 @@ public sealed class GoAppSession
     private readonly List<TournamentRules> _tournamentRules = new();
     private readonly List<GtpEngineProfile> _gtpEngineProfiles = new();
     private TournamentRules _currentTournamentRules = new();
+    private GoRenParseResult? _cachedRenParseResult;
+    private int _cachedRenParseBoardSize;
+    private ulong _cachedRenParseHash;
 
     private readonly Dictionary<GoAppModeKind, GoAppMode> _modes = new()
     {
@@ -78,6 +81,8 @@ public sealed class GoAppSession
     public int PlayedMoveCount { get; private set; }
 
     public int NextMoveNumber => PlayedMoveCount + 1;
+
+    public bool IsRenParseDisplayEnabled { get; private set; }
 
     public GoPlayerKind BlackPlayerKind { get; private set; } = GoPlayerKind.Human;
 
@@ -155,6 +160,26 @@ public sealed class GoAppSession
     public void ChangeMode(GoAppModeKind modeKind)
     {
         CurrentMode = _modes[modeKind];
+    }
+
+    public void ToggleRenParseDisplay()
+    {
+        IsRenParseDisplayEnabled = !IsRenParseDisplayEnabled;
+    }
+
+    public GoRenParseResult ParseRens()
+    {
+        if (_cachedRenParseResult is not null &&
+            _cachedRenParseBoardSize == BoardSize &&
+            _cachedRenParseHash == _board.CurrentHash)
+        {
+            return _cachedRenParseResult;
+        }
+
+        _cachedRenParseResult = _board.ParseRens();
+        _cachedRenParseBoardSize = BoardSize;
+        _cachedRenParseHash = _board.CurrentHash;
+        return _cachedRenParseResult;
     }
 
     public void StartPlaying()

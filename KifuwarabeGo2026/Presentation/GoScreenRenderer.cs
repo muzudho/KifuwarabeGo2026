@@ -381,6 +381,7 @@ public sealed class GoScreenRenderer
         }
 
         DrawPlacedStones(session, start, cell);
+        DrawRenParseOverlay(session, start, cell);
         DrawSuperKoMarks(session, start, cell);
         DrawKoMark(session, start, cell);
         DrawHoverStone(session, mousePoint, cell);
@@ -1419,6 +1420,73 @@ public sealed class GoScreenRenderer
         }
     }
 
+    private void DrawRenParseOverlay(GoAppSession session, Vector2 start, float cell)
+    {
+        if (!session.IsRenParseDisplayEnabled)
+        {
+            return;
+        }
+
+        var renParse = session.ParseRens();
+        DrawRenBoundaries(renParse, start, cell);
+        DrawRenNumbers(renParse, start, cell);
+    }
+
+    private void DrawRenBoundaries(GoRenParseResult renParse, Vector2 start, float cell)
+    {
+        var size = renParse.Size;
+        var halfCell = cell * 0.5f;
+        var thickness = Math.Max(5, (int)MathF.Round(cell * 0.08f));
+        var color = new Color(255, 238, 0, 238);
+
+        for (var y = 0; y < size; y++)
+        {
+            for (var x = 0; x < size; x++)
+            {
+                var renNumber = renParse.GetRenNumber(x, y);
+                var center = BoardPoint(start, cell, x, y);
+                var left = center.X - halfCell;
+                var top = center.Y - halfCell;
+                var right = center.X + halfCell;
+                var bottom = center.Y + halfCell;
+
+                if (x == 0 || renParse.GetRenNumber(x - 1, y) != renNumber)
+                {
+                    FillRect(CreateVerticalLineRect(left, top, bottom, thickness), color);
+                }
+
+                if (y == 0 || renParse.GetRenNumber(x, y - 1) != renNumber)
+                {
+                    FillRect(CreateHorizontalLineRect(left, right, top, thickness), color);
+                }
+
+                if (x == size - 1)
+                {
+                    FillRect(CreateVerticalLineRect(right, top, bottom, thickness), color);
+                }
+
+                if (y == size - 1)
+                {
+                    FillRect(CreateHorizontalLineRect(left, right, bottom, thickness), color);
+                }
+            }
+        }
+    }
+
+    private void DrawRenNumbers(GoRenParseResult renParse, Vector2 start, float cell)
+    {
+        var scale = MathHelper.Clamp(cell / 72f, 0.28f, 0.88f);
+        for (var y = 0; y < renParse.Size; y++)
+        {
+            for (var x = 0; x < renParse.Size; x++)
+            {
+                var label = renParse.GetRenNumber(x, y).ToString();
+                var center = BoardPoint(start, cell, x, y);
+                DrawCenteredText(label, center, new Color(0, 177, 238), scale);
+            }
+        }
+    }
+
     private void DrawHoverStone(GoAppSession session, Point mousePoint, float cell)
     {
         if (session.CurrentMode.Kind != GoAppModeKind.Playing ||
@@ -1543,10 +1611,22 @@ public sealed class GoScreenRenderer
         FillRect(new Rectangle(rect.Right - thickness, rect.Y, thickness, rect.Height), color);
     }
 
+    private static Rectangle CreateVerticalLineRect(float x, float top, float bottom, int thickness) =>
+        new((int)MathF.Round(x - thickness / 2f), (int)MathF.Round(top), thickness, (int)MathF.Round(bottom - top));
+
+    private static Rectangle CreateHorizontalLineRect(float left, float right, float y, int thickness) =>
+        new((int)MathF.Round(left), (int)MathF.Round(y - thickness / 2f), (int)MathF.Round(right - left), thickness);
+
     private void DrawText(string text, Vector2 position, Color color, float scale)
     {
         _spriteBatch.DrawString(_font, text, position + new Vector2(2, 2), new Color(0, 0, 0, 125), 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
         _spriteBatch.DrawString(_font, text, position, color, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+    }
+
+    private void DrawCenteredText(string text, Vector2 center, Color color, float scale)
+    {
+        var size = _font.MeasureString(text) * scale;
+        DrawText(text, new Vector2(center.X - size.X / 2, center.Y - size.Y / 2), color, scale);
     }
 
     private void DrawUiLabel(UiLabel label) => DrawFittedText(label.Text, label.Bounds, UiLabel.TextColor, label.Scale);

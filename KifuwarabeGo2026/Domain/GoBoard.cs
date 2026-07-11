@@ -74,6 +74,28 @@ public sealed class GoBoard
         return count;
     }
 
+    public GoRenParseResult ParseRens()
+    {
+        var renNumbers = new int[Size, Size];
+        var renNumber = 0;
+
+        for (var y = 0; y < Size; y++)
+        {
+            for (var x = 0; x < Size; x++)
+            {
+                if (renNumbers[x, y] != 0)
+                {
+                    continue;
+                }
+
+                renNumber++;
+                MarkRen(x, y, renNumber, renNumbers);
+            }
+        }
+
+        return new GoRenParseResult(renNumbers, renNumber);
+    }
+
     public bool TryPlaceStone(int x, int y, GoStone stone, GoPoint? forbiddenKoPoint, out int capturedStones, out GoPoint? koPoint)
     {
         capturedStones = 0;
@@ -159,6 +181,29 @@ public sealed class GoBoard
         }
 
         return ren;
+    }
+
+    private void MarkRen(int x, int y, int renNumber, int[,] renNumbers)
+    {
+        var color = _stones[x, y];
+        var queue = new Queue<(int X, int Y)>();
+        renNumbers[x, y] = renNumber;
+        queue.Enqueue((x, y));
+
+        while (queue.Count > 0)
+        {
+            var point = queue.Dequeue();
+            foreach (var neighbor in EnumerateNeighbors(point.X, point.Y))
+            {
+                if (renNumbers[neighbor.X, neighbor.Y] != 0 || _stones[neighbor.X, neighbor.Y] != color)
+                {
+                    continue;
+                }
+
+                renNumbers[neighbor.X, neighbor.Y] = renNumber;
+                queue.Enqueue(neighbor);
+            }
+        }
     }
 
     private bool HasLiberty(List<(int X, int Y)> ren)
