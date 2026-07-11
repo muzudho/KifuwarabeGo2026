@@ -85,11 +85,12 @@ public sealed class TournamentRulesCatalog
 
         Directory.CreateDirectory(Path.GetDirectoryName(rules.FilePath) ?? AppContext.BaseDirectory);
         File.WriteAllText(rules.FilePath, JsonSerializer.Serialize(Normalize(rules.Clone()), JsonOptions));
+        UpdateListEntry(rules.FilePath, Normalize(rules.Clone()));
     }
 
-    public TournamentRules SaveAsFileName(TournamentRules rules, string fileName)
+    public TournamentRules SaveAsFilePath(TournamentRules rules, string filePath)
     {
-        if (!TryValidateFileName(rules, fileName, out var targetPath, out var warning))
+        if (!TryValidateFilePath(rules, filePath, out var targetPath, out var warning))
         {
             throw new InvalidOperationException(warning);
         }
@@ -116,7 +117,7 @@ public sealed class TournamentRulesCatalog
         return savedRules;
     }
 
-    public bool TryValidateFileName(TournamentRules rules, string fileName, out string targetPath, out string warning)
+    public bool TryValidateFilePath(TournamentRules rules, string filePath, out string targetPath, out string warning)
     {
         targetPath = "";
         if (string.IsNullOrWhiteSpace(rules.FilePath))
@@ -125,15 +126,17 @@ public sealed class TournamentRulesCatalog
             return false;
         }
 
-        if (string.IsNullOrWhiteSpace(fileName))
+        if (string.IsNullOrWhiteSpace(filePath))
         {
-            warning = "File name is required.";
+            warning = "File path is required.";
             return false;
         }
 
+        var fileName = Path.GetFileName(filePath);
         if (!fileName.EndsWith(".json", StringComparison.OrdinalIgnoreCase))
         {
-            fileName += ".json";
+            filePath += ".json";
+            fileName = Path.GetFileName(filePath);
         }
 
         if (fileName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
@@ -154,16 +157,16 @@ public sealed class TournamentRulesCatalog
             return false;
         }
 
-        var directory = Path.GetDirectoryName(rules.FilePath);
+        var directory = Path.GetDirectoryName(filePath);
         if (string.IsNullOrWhiteSpace(directory))
         {
-            warning = "Rules directory is missing.";
+            warning = "Rules directory is required.";
             return false;
         }
 
         try
         {
-            targetPath = Path.GetFullPath(Path.Combine(directory, fileName));
+            targetPath = Path.GetFullPath(filePath);
         }
         catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
         {

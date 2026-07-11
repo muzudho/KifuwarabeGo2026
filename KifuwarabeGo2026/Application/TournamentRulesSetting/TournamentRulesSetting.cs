@@ -10,19 +10,25 @@ using System;
 /// </summary>
 public sealed class TournamentRulesSetting
 {
-    private const int MaxFileNameLength = 255;
+    private const int MaxDisplayNameLength = 80;
 
     private readonly GoAppSession _session;
     private readonly TournamentRulesCatalog _catalog;
     private readonly Action _browseTournamentRules;
-    private readonly TextBoxController _fileNameTextBox = new(MaxFileNameLength);
+    private readonly Func<TournamentRules, string?> _browseTournamentRulesFilePath;
+    private readonly TextBoxController _displayNameTextBox = new(MaxDisplayNameLength);
     private KeyboardState _previousKeyboard;
 
-    public TournamentRulesSetting(GoAppSession session, TournamentRulesCatalog catalog, Action browseTournamentRules)
+    public TournamentRulesSetting(
+        GoAppSession session,
+        TournamentRulesCatalog catalog,
+        Action browseTournamentRules,
+        Func<TournamentRules, string?> browseTournamentRulesFilePath)
     {
         _session = session;
         _catalog = catalog;
         _browseTournamentRules = browseTournamentRules;
+        _browseTournamentRulesFilePath = browseTournamentRulesFilePath;
     }
 
     public void UpdateByKeyboard(KeyboardState keyboard, GameTime gameTime)
@@ -33,9 +39,9 @@ public sealed class TournamentRulesSetting
             return;
         }
 
-        if (_session.IsTournamentRulesFileNameEditing)
+        if (_session.IsTournamentRulesDisplayNameEditing)
         {
-            HandleFileNameKeyboard(keyboard, gameTime);
+            HandleDisplayNameKeyboard(keyboard, gameTime);
             _previousKeyboard = keyboard;
             return;
         }
@@ -52,19 +58,19 @@ public sealed class TournamentRulesSetting
 
     public bool TryInputCharacter(char character)
     {
-        if (!_session.IsTournamentRulesAddPanelOpen || !_session.IsTournamentRulesFileNameEditing)
+        if (!_session.IsTournamentRulesAddPanelOpen || !_session.IsTournamentRulesDisplayNameEditing)
         {
             return false;
         }
 
-        if (!_fileNameTextBox.TryInputCharacter(character))
+        if (!_displayNameTextBox.TryInputCharacter(character))
         {
-            _session.SetTournamentRulesFileNameWarning("File name is too long.");
+            _session.SetTournamentRulesDisplayNameWarning("Display name is too long.");
             return true;
         }
 
-        SyncFileNameDraft();
-        UpdateFileNameWarning();
+        SyncDisplayNameDraft();
+        UpdateDisplayNameWarning();
         return true;
     }
 
@@ -93,14 +99,20 @@ public sealed class TournamentRulesSetting
     {
         if (GoScreenRenderer.GetTournamentRulesAddPanelCloseButtonHit(point))
         {
-            CancelFileNameEdit();
+            CancelDisplayNameEdit();
             _session.CloseTournamentRulesAddPanel();
             return true;
         }
 
-        if (GoScreenRenderer.GetTournamentRulesAddPanelFileNameBoxHit(point))
+        if (GoScreenRenderer.GetTournamentRulesAddPanelDisplayNameBoxHit(point))
         {
-            BeginFileNameEdit();
+            BeginDisplayNameEdit();
+            return true;
+        }
+
+        if (GoScreenRenderer.GetTournamentRulesAddPanelFileBrowseButtonHit(point))
+        {
+            BrowseFilePath();
             return true;
         }
 
@@ -189,94 +201,110 @@ public sealed class TournamentRulesSetting
         var rules = _catalog.CreateNew(_session.CurrentTournamentRules);
         _session.AddAndSelectTournamentRules(rules);
         _session.OpenTournamentRulesAddPanel();
-        BeginFileNameEdit();
+        BeginDisplayNameEdit();
         _session.MarkTournamentRulesSaved();
     }
 
-    private void BeginFileNameEdit()
+    private void BeginDisplayNameEdit()
     {
-        var fileName = string.IsNullOrWhiteSpace(_session.CurrentTournamentRules.FilePath)
-            ? ""
-            : System.IO.Path.GetFileName(_session.CurrentTournamentRules.FilePath);
-        _fileNameTextBox.Begin(fileName);
-        SyncFileNameDraft();
-        _session.BeginTournamentRulesFileNameEdit();
-        _session.SetTournamentRulesFileNameDraft(_fileNameTextBox.Text, _fileNameTextBox.CaretIndex);
-        UpdateFileNameWarning();
+        _displayNameTextBox.Begin(_session.TournamentDisplayName);
+        SyncDisplayNameDraft();
+        _session.BeginTournamentRulesDisplayNameEdit();
+        _session.SetTournamentRulesDisplayNameDraft(_displayNameTextBox.Text, _displayNameTextBox.CaretIndex);
+        UpdateDisplayNameWarning();
     }
 
-    private void HandleFileNameKeyboard(KeyboardState keyboard, GameTime gameTime)
+    private void HandleDisplayNameKeyboard(KeyboardState keyboard, GameTime gameTime)
     {
-        switch (_fileNameTextBox.HandleKeyboard(keyboard, _previousKeyboard, gameTime))
+        switch (_displayNameTextBox.HandleKeyboard(keyboard, _previousKeyboard, gameTime))
         {
             case TextBoxKeyboardAction.Commit:
-                CommitFileNameEdit();
+                CommitDisplayNameEdit();
                 break;
             case TextBoxKeyboardAction.Cancel:
-                CancelFileNameEdit();
+                CancelDisplayNameEdit();
                 break;
             default:
-                SyncFileNameDraft();
-                UpdateFileNameWarning();
+                SyncDisplayNameDraft();
+                UpdateDisplayNameWarning();
                 break;
         }
     }
 
-    private void CommitFileNameEdit()
+    private void CommitDisplayNameEdit()
     {
-        if (!TryApplyFileName())
+        if (!TryApplyDisplayName())
         {
             return;
         }
 
-        _session.EndTournamentRulesFileNameEdit();
-        _fileNameTextBox.Clear();
+        _session.EndTournamentRulesDisplayNameEdit();
+        _displayNameTextBox.Clear();
     }
 
-    private void CancelFileNameEdit()
+    private void CancelDisplayNameEdit()
     {
-        if (!_session.IsTournamentRulesFileNameEditing)
+        if (!_session.IsTournamentRulesDisplayNameEditing)
         {
             return;
         }
 
-        _session.EndTournamentRulesFileNameEdit();
-        _fileNameTextBox.Clear();
+        _session.EndTournamentRulesDisplayNameEdit();
+        _displayNameTextBox.Clear();
     }
 
-    private bool TryApplyFileName()
+    private bool TryApplyDisplayName()
     {
-        var rules = _session.CurrentTournamentRules;
-        if (!_catalog.TryValidateFileName(rules, _fileNameTextBox.Text, out _, out var warning))
+        if (string.IsNullOrWhiteSpace(_displayNameTextBox.Text))
         {
-            _session.SetTournamentRulesFileNameWarning(warning);
+            _session.SetTournamentRulesDisplayNameWarning("Display name is required.");
             return false;
+        }
+
+        _session.ChangeTournamentDisplayName(_displayNameTextBox.Text);
+        _session.SetTournamentRulesDisplayNameDraft(_session.TournamentDisplayName, _session.TournamentDisplayName.Length);
+        return true;
+    }
+
+    private void UpdateDisplayNameWarning()
+    {
+        _session.SetTournamentRulesDisplayNameWarning(string.IsNullOrWhiteSpace(_displayNameTextBox.Text) ? "Display name is required." : "");
+    }
+
+    private void SyncDisplayNameDraft()
+    {
+        _session.SetTournamentRulesDisplayNameDraft(_displayNameTextBox.Text, _displayNameTextBox.CaretIndex);
+    }
+
+    private void BrowseFilePath()
+    {
+        if (_session.IsTournamentRulesDisplayNameEditing)
+        {
+            if (!TryApplyDisplayName())
+            {
+                return;
+            }
+
+            _session.EndTournamentRulesDisplayNameEdit();
+            _displayNameTextBox.Clear();
+        }
+
+        var targetPath = _browseTournamentRulesFilePath(_session.CurrentTournamentRules);
+        if (string.IsNullOrWhiteSpace(targetPath))
+        {
+            return;
         }
 
         try
         {
-            var savedRules = _catalog.SaveAsFileName(rules, _fileNameTextBox.Text);
+            var savedRules = _catalog.SaveAsFilePath(_session.CurrentTournamentRules, targetPath);
             _session.ReplaceCurrentTournamentRules(savedRules);
-            _session.SetTournamentRulesFileNameDraft(System.IO.Path.GetFileName(savedRules.FilePath), System.IO.Path.GetFileName(savedRules.FilePath).Length);
             _session.MarkTournamentRulesSaved();
-            return true;
         }
         catch (Exception ex) when (ex is InvalidOperationException or System.IO.IOException or UnauthorizedAccessException or NotSupportedException)
         {
-            _session.SetTournamentRulesFileNameWarning("File name could not be saved.");
-            return false;
+            _session.SetTournamentRulesDisplayNameWarning("File path could not be saved.");
         }
-    }
-
-    private void UpdateFileNameWarning()
-    {
-        _catalog.TryValidateFileName(_session.CurrentTournamentRules, _fileNameTextBox.Text, out _, out var warning);
-        _session.SetTournamentRulesFileNameWarning(warning);
-    }
-
-    private void SyncFileNameDraft()
-    {
-        _session.SetTournamentRulesFileNameDraft(_fileNameTextBox.Text, _fileNameTextBox.CaretIndex);
     }
 
     private void UpdateBoardSizeByKeyboard(KeyboardState keyboard)
@@ -297,7 +325,7 @@ public sealed class TournamentRulesSetting
 
     private void SaveCurrentTournamentRules()
     {
-        if (_session.IsTournamentRulesFileNameEditing && !TryApplyFileName())
+        if (_session.IsTournamentRulesDisplayNameEditing && !TryApplyDisplayName())
         {
             return;
         }

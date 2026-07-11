@@ -47,13 +47,13 @@ public sealed class GoAppSession
 
     public string TournamentRulesSaveMessage { get; private set; } = "";
 
-    public string TournamentRulesFileNameDraft { get; private set; } = "";
+    public string TournamentRulesDisplayNameDraft { get; private set; } = "";
 
-    public bool IsTournamentRulesFileNameEditing { get; private set; }
+    public bool IsTournamentRulesDisplayNameEditing { get; private set; }
 
-    public int TournamentRulesFileNameCaretIndex { get; private set; }
+    public int TournamentRulesDisplayNameCaretIndex { get; private set; }
 
-    public string TournamentRulesFileNameWarning { get; private set; } = "";
+    public string TournamentRulesDisplayNameWarning { get; private set; } = "";
 
     public string TournamentDisplayName => _currentTournamentRules.DisplayName;
 
@@ -265,6 +265,14 @@ public sealed class GoAppSession
         TournamentRulesSaveMessage = "UNSAVED";
     }
 
+    public void ChangeTournamentDisplayName(string displayName)
+    {
+        _currentTournamentRules.DisplayName = string.IsNullOrWhiteSpace(displayName)
+            ? "Unnamed tournament"
+            : displayName.Trim();
+        TournamentRulesSaveMessage = "UNSAVED";
+    }
+
     public void MarkTournamentRulesSaved()
     {
         if (SelectedTournamentRulesIndex >= 0 && SelectedTournamentRulesIndex < _tournamentRules.Count)
@@ -284,31 +292,29 @@ public sealed class GoAppSession
         }
     }
 
-    public void SetTournamentRulesFileNameDraft(string fileName, int caretIndex)
+    public void SetTournamentRulesDisplayNameDraft(string displayName, int caretIndex)
     {
-        TournamentRulesFileNameDraft = fileName;
-        TournamentRulesFileNameCaretIndex = Math.Clamp(caretIndex, 0, fileName.Length);
+        TournamentRulesDisplayNameDraft = displayName;
+        TournamentRulesDisplayNameCaretIndex = Math.Clamp(caretIndex, 0, displayName.Length);
     }
 
-    public void BeginTournamentRulesFileNameEdit()
+    public void BeginTournamentRulesDisplayNameEdit()
     {
-        TournamentRulesFileNameDraft = string.IsNullOrWhiteSpace(_currentTournamentRules.FilePath)
-            ? ""
-            : Path.GetFileName(_currentTournamentRules.FilePath);
-        TournamentRulesFileNameCaretIndex = TournamentRulesFileNameDraft.Length;
-        IsTournamentRulesFileNameEditing = true;
-        TournamentRulesFileNameWarning = "";
+        TournamentRulesDisplayNameDraft = _currentTournamentRules.DisplayName;
+        TournamentRulesDisplayNameCaretIndex = TournamentRulesDisplayNameDraft.Length;
+        IsTournamentRulesDisplayNameEditing = true;
+        TournamentRulesDisplayNameWarning = "";
     }
 
-    public void EndTournamentRulesFileNameEdit()
+    public void EndTournamentRulesDisplayNameEdit()
     {
-        IsTournamentRulesFileNameEditing = false;
-        TournamentRulesFileNameWarning = "";
+        IsTournamentRulesDisplayNameEditing = false;
+        TournamentRulesDisplayNameWarning = "";
     }
 
-    public void SetTournamentRulesFileNameWarning(string warning)
+    public void SetTournamentRulesDisplayNameWarning(string warning)
     {
-        TournamentRulesFileNameWarning = warning;
+        TournamentRulesDisplayNameWarning = warning;
     }
 
     public void SetPlayerKind(GoStone stone, GoPlayerKind playerKind)
