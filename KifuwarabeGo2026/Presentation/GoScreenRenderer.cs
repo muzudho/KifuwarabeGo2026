@@ -416,15 +416,15 @@ public sealed class GoScreenRenderer
         DrawLabeledBrowseSelector(TournamentRulesSelector with { Value = session.TournamentDisplayName }, mousePoint);
 
         DrawText("CURRENT RULES", new Vector2(1144, 294), new Color(180, 195, 195), 0.5f);
-        DrawInfoStrip(1144, 334, "RULE", session.RuleKind.ToString(), new Color(39, 68, 65), Color.White);
-        DrawInfoStrip(1144, 406, "BOARD", $"{session.BoardSize} x {session.BoardSize}", new Color(39, 68, 65), Color.White);
-        DrawInfoStrip(1144, 478, "KOMI", FormatKomi(session.Komi), new Color(39, 68, 65), Color.White);
-        DrawInfoStrip(1144, 550, "MOVES", FormatMoveLimit(session.MoveLimit), new Color(39, 68, 65), Color.White);
+        DrawInfoStrip(1144, 334, "RULE", session.RuleKind.ToString());
+        DrawInfoStrip(1144, 406, "BOARD", $"{session.BoardSize} x {session.BoardSize}");
+        DrawInfoStrip(1144, 478, "KOMI", FormatKomi(session.Komi));
+        DrawInfoStrip(1144, 550, "MOVES", FormatMoveLimit(session.MoveLimit));
 
-        DrawInfoStrip(1144, 646, "BLACK", PlayerKindLabel(session.BlackPlayerKind), new Color(26, 27, 30), Color.White);
+        DrawInfoStrip(1144, 646, "BLACK", PlayerKindLabel(session.BlackPlayerKind));
         DrawPlayerKindButtons(session.BlackPlayerKind, mousePoint, BlackPlayerKindButtonY);
         DrawSetupEngineButtons(session, GoStone.Black, mousePoint, BlackEngineButtonY);
-        DrawInfoStrip(1144, 766, "WHITE", PlayerKindLabel(session.WhitePlayerKind), new Color(236, 229, 211), new Color(24, 24, 24));
+        DrawInfoStrip(1144, 766, "WHITE", PlayerKindLabel(session.WhitePlayerKind));
         DrawPlayerKindButtons(session.WhitePlayerKind, mousePoint, WhitePlayerKindButtonY);
         DrawSetupEngineButtons(session, GoStone.White, mousePoint, WhiteEngineButtonY);
         DrawCommandButton(StartPlayingButtonBounds, "START", false, mousePoint);
@@ -435,14 +435,12 @@ public sealed class GoScreenRenderer
         DrawText("TURN", new Vector2(1144, 132), new Color(180, 195, 195), 0.62f);
 
         var turnLabel = session.CurrentTurn == GoStone.Black ? "BLACK" : "WHITE";
-        var turnChip = session.CurrentTurn == GoStone.Black ? new Color(26, 27, 30) : new Color(236, 229, 211);
-        var turnText = session.CurrentTurn == GoStone.Black ? Color.White : new Color(24, 24, 24);
-        DrawInfoStrip(1144, 180, "TURN", turnLabel, turnChip, turnText);
-        DrawInfoStrip(1144, 244, "NEXT", GetMoveThinkingText(session), new Color(31, 42, 48), new Color(99, 223, 185));
+        DrawInfoStrip(1144, 180, "TURN", turnLabel);
+        DrawInfoStrip(1144, 244, "NEXT", GetMoveThinkingText(session));
 
         DrawText("PLAYERS", new Vector2(1144, 300), new Color(180, 195, 195), 0.62f);
-        DrawInfoStrip(1144, 348, "BLACK", PlayerKindLabel(session.BlackPlayerKind), new Color(26, 27, 30), Color.White);
-        DrawInfoStrip(1144, 446, "WHITE", PlayerKindLabel(session.WhitePlayerKind), new Color(236, 229, 211), new Color(24, 24, 24));
+        DrawInfoStrip(1144, 348, "BLACK", PlayerKindLabel(session.BlackPlayerKind));
+        DrawInfoStrip(1144, 446, "WHITE", PlayerKindLabel(session.WhitePlayerKind));
 
         DrawText("TIME", new Vector2(1144, 544), new Color(180, 195, 195), 0.62f);
         DrawTimeStrip(session, 592);
@@ -1242,10 +1240,15 @@ public sealed class GoScreenRenderer
     private void DrawCommandButton(Rectangle bounds, string label, bool selected, Point mousePoint, bool enabled = true, float scale = 0.62f)
     {
         var hovered = enabled && bounds.Contains(mousePoint);
-        var fill = !enabled ? new Color(28, 31, 36) : selected ? new Color(39, 125, 97) : hovered ? new Color(56, 67, 77) : new Color(32, 38, 47);
-        var border = !enabled ? new Color(58, 65, 70) : selected ? new Color(147, 244, 200) : new Color(103, 119, 130);
+        var fill = !enabled ? new Color(28, 31, 36) : selected ? new Color(31, 151, 112) : hovered ? new Color(58, 82, 94) : new Color(36, 48, 58);
+        var border = !enabled ? new Color(58, 65, 70) : selected ? new Color(151, 255, 215) : hovered ? new Color(178, 219, 226) : new Color(126, 150, 164);
+        FillRect(new Rectangle(bounds.X + 4, bounds.Y + 5, bounds.Width, bounds.Height), new Color(0, 0, 0, enabled ? 95 : 55));
         FillRect(bounds, fill);
         DrawRect(bounds, 2, border);
+        if (enabled)
+        {
+            DrawRect(new Rectangle(bounds.X + 2, bounds.Y + 2, bounds.Width - 4, bounds.Height - 4), 1, selected ? new Color(215, 255, 238, 95) : new Color(255, 255, 255, hovered ? 70 : 36));
+        }
 
         var textColor = enabled ? Color.White : new Color(130, 138, 142);
         var measured = _font.MeasureString(label);
@@ -1269,20 +1272,16 @@ public sealed class GoScreenRenderer
         FillRect(selector.Bounds, new Color(24, 31, 37));
         DrawRect(selector.Bounds, 1, new Color(70, 85, 94));
 
-        FillRect(selector.LabelBounds, new Color(39, 68, 65));
-        DrawRect(selector.LabelBounds, 1, new Color(120, 130, 126));
-        DrawFittedText(selector.Label, new Rectangle(selector.LabelBounds.X + 12, selector.LabelBounds.Y + 4, selector.LabelBounds.Width - 24, selector.LabelBounds.Height - 8), Color.White, 0.42f);
+        DrawFittedText(selector.Label, selector.LabelBounds, new Color(158, 178, 178), 0.36f);
         DrawFittedText(selector.Value, selector.ValueBounds, Color.White, 0.52f);
         DrawCommandButton(selector.BrowseButtonBounds, "REF", false, mousePoint, scale: 0.44f);
     }
 
-    private void DrawInfoStrip(int x, int y, string label, string value, Color chipColor, Color chipTextColor)
+    private void DrawInfoStrip(int x, int y, string label, string value)
     {
         FillRect(new Rectangle(x, y, 668, 72), new Color(30, 36, 43));
         DrawRect(new Rectangle(x, y, 668, 72), 1, new Color(70, 85, 94));
-        FillRect(new Rectangle(x + 18, y + 16, 132, 40), chipColor);
-        DrawRect(new Rectangle(x + 18, y + 16, 132, 40), 1, new Color(120, 130, 126));
-        DrawText(label, new Vector2(x + 38, y + 25), chipTextColor, 0.46f);
+        DrawFittedText(label, new Rectangle(x + 18, y + 17, 132, 38), new Color(158, 178, 178), 0.40f);
         DrawText(value, new Vector2(x + 184, y + 20), Color.White, 0.62f);
     }
 
