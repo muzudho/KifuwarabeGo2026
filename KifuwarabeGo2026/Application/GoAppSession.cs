@@ -66,6 +66,12 @@ public sealed class GoAppSession
 
     public int SelectedWhiteGtpEngineIndex { get; private set; }
 
+    public bool IsGtpEngineSelectionDialogOpen { get; private set; }
+
+    public GoStone GtpEngineSelectionTargetStone { get; private set; } = GoStone.Black;
+
+    public int GtpEngineSelectionPageIndex { get; private set; }
+
     public GtpEngineProfile BlackGtpEngineProfile => GetGtpEngineProfile(GoStone.Black);
 
     public GtpEngineProfile WhiteGtpEngineProfile => GetGtpEngineProfile(GoStone.White);
@@ -180,6 +186,7 @@ public sealed class GoAppSession
 
     public void OpenTournamentRulesSelectionDialog()
     {
+        IsGtpEngineSelectionDialogOpen = false;
         IsTournamentRulesSelectionDialogOpen = true;
         TournamentRulesSelectionPageIndex = SelectedTournamentRulesIndex / TournamentRulesSelectionPageSize;
     }
@@ -275,6 +282,31 @@ public sealed class GoAppSession
         }
 
         throw new ArgumentOutOfRangeException(nameof(stone), stone, "GTP engine can be selected only for black or white.");
+    }
+
+    public void OpenGtpEngineSelectionDialog(GoStone stone)
+    {
+        if (stone is not (GoStone.Black or GoStone.White))
+        {
+            throw new ArgumentOutOfRangeException(nameof(stone), stone, "GTP engine can be selected only for black or white.");
+        }
+
+        IsTournamentRulesSelectionDialogOpen = false;
+        IsGtpEngineSelectionDialogOpen = true;
+        GtpEngineSelectionTargetStone = stone;
+        var selectedIndex = stone == GoStone.Black ? SelectedBlackGtpEngineIndex : SelectedWhiteGtpEngineIndex;
+        GtpEngineSelectionPageIndex = selectedIndex / GtpEngineSelectionPageSize;
+    }
+
+    public void CloseGtpEngineSelectionDialog()
+    {
+        IsGtpEngineSelectionDialogOpen = false;
+    }
+
+    public void MoveGtpEngineSelectionPage(int step)
+    {
+        var pageCount = Math.Max(1, (int)Math.Ceiling(_gtpEngineProfiles.Count / (double)GtpEngineSelectionPageSize));
+        GtpEngineSelectionPageIndex = Math.Clamp(GtpEngineSelectionPageIndex + step, 0, pageCount - 1);
     }
 
     public GtpEngineProfile GetGtpEngineProfile(GoStone stone)
@@ -476,6 +508,8 @@ public sealed class GoAppSession
     }
 
     public const int TournamentRulesSelectionPageSize = 6;
+
+    public const int GtpEngineSelectionPageSize = 6;
 
     private void PassTurn()
     {

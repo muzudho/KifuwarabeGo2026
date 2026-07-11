@@ -86,8 +86,15 @@ public class Game1 : Game
         {
             var point = VirtualScreen.ToVirtualPoint(GraphicsDevice.Viewport, mouse.Position);
             var isSetupMode = _session.CurrentMode.Kind != GoAppModeKind.Playing && _session.CurrentMode.Kind != GoAppModeKind.GameOver;
-            var handledByTournamentRulesSetting = isSetupMode && _tournamentRulesSetting.TryHandleMouseClick(point);
-            if (!handledByTournamentRulesSetting && _session.CurrentMode.Kind == GoAppModeKind.GameOver && GoScreenRenderer.GetReturnToSetupButtonHit(point))
+            var handledByGtpEngineSelectionDialog = isSetupMode && TryHandleGtpEngineSelectionDialogClick(point);
+            var handledByTournamentRulesSetting = !handledByGtpEngineSelectionDialog && isSetupMode && _tournamentRulesSetting.TryHandleMouseClick(point);
+            if (handledByGtpEngineSelectionDialog || handledByTournamentRulesSetting)
+            {
+                _previousMouse = mouse;
+                return;
+            }
+
+            if (_session.CurrentMode.Kind == GoAppModeKind.GameOver && GoScreenRenderer.GetReturnToSetupButtonHit(point))
             {
                 _session.ReturnToSetup();
             }
@@ -127,9 +134,41 @@ public class Game1 : Game
 
     private void OpenGtpEngineSelectionDialog(GoStone stone)
     {
-        var currentIndex = stone == GoStone.Black ? _session.SelectedBlackGtpEngineIndex : _session.SelectedWhiteGtpEngineIndex;
-        var nextIndex = (currentIndex + 1) % Math.Max(1, _session.GtpEngineProfiles.Count);
-        _session.SelectGtpEngine(stone, nextIndex);
+        _session.OpenGtpEngineSelectionDialog(stone);
+    }
+
+    private bool TryHandleGtpEngineSelectionDialogClick(Point point)
+    {
+        if (!_session.IsGtpEngineSelectionDialogOpen)
+        {
+            return false;
+        }
+
+        if (GoScreenRenderer.GetGtpEngineSelectionDialogCloseButtonHit(point))
+        {
+            _session.CloseGtpEngineSelectionDialog();
+            return true;
+        }
+
+        if (GoScreenRenderer.GetGtpEngineSelectionDialogPreviousPageButtonHit(point))
+        {
+            _session.MoveGtpEngineSelectionPage(-1);
+            return true;
+        }
+
+        if (GoScreenRenderer.GetGtpEngineSelectionDialogNextPageButtonHit(point))
+        {
+            _session.MoveGtpEngineSelectionPage(1);
+            return true;
+        }
+
+        if (GoScreenRenderer.GetGtpEngineSelectionDialogListItemHit(point, _session) is { } index)
+        {
+            _session.SelectGtpEngine(_session.GtpEngineSelectionTargetStone, index);
+            return true;
+        }
+
+        return true;
     }
 
     protected override void Dispose(bool disposing)

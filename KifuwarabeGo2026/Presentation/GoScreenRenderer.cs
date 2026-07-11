@@ -41,6 +41,7 @@ public sealed class GoScreenRenderer
         DrawBoard(session, mousePoint);
         DrawSidePanel(session, mousePoint);
         DrawTournamentRulesSelectionDialog(session, mousePoint);
+        DrawGtpEngineSelectionDialog(session, mousePoint);
 
         _spriteBatch.End();
     }
@@ -89,6 +90,31 @@ public sealed class GoScreenRenderer
 
             var index = session.TournamentRulesSelectionPageIndex * GoAppSession.TournamentRulesSelectionPageSize + i;
             return index < session.TournamentRulesList.Count ? index : null;
+        }
+
+        return null;
+    }
+
+    public static bool GetGtpEngineSelectionDialogCloseButtonHit(Point point) =>
+        GtpEngineSelectionDialogCloseButtonBounds.Contains(point);
+
+    public static bool GetGtpEngineSelectionDialogPreviousPageButtonHit(Point point) =>
+        GtpEngineSelectionDialogPreviousPageButtonBounds.Contains(point);
+
+    public static bool GetGtpEngineSelectionDialogNextPageButtonHit(Point point) =>
+        GtpEngineSelectionDialogNextPageButtonBounds.Contains(point);
+
+    public static int? GetGtpEngineSelectionDialogListItemHit(Point point, GoAppSession session)
+    {
+        for (var i = 0; i < GoAppSession.GtpEngineSelectionPageSize; i++)
+        {
+            if (!GtpEngineSelectionDialogListItemBounds(i).Contains(point))
+            {
+                continue;
+            }
+
+            var index = session.GtpEngineSelectionPageIndex * GoAppSession.GtpEngineSelectionPageSize + i;
+            return index < session.GtpEngineProfiles.Count ? index : null;
         }
 
         return null;
@@ -416,6 +442,92 @@ public sealed class GoScreenRenderer
         DrawPropertyRow(y + 350, "FILE", string.IsNullOrWhiteSpace(rules.FilePath) ? "-" : Path.GetFileName(rules.FilePath));
     }
 
+    private void DrawGtpEngineSelectionDialog(GoAppSession session, Point mousePoint)
+    {
+        if (!session.IsGtpEngineSelectionDialogOpen)
+        {
+            return;
+        }
+
+        FillRect(new Rectangle(0, 0, VirtualScreen.Width, VirtualScreen.Height), new Color(0, 0, 0, 105));
+        FillRect(new Rectangle(GtpEngineSelectionDialogBounds.X + 18, GtpEngineSelectionDialogBounds.Y + 20, GtpEngineSelectionDialogBounds.Width, GtpEngineSelectionDialogBounds.Height), new Color(0, 0, 0, 145));
+        FillRect(GtpEngineSelectionDialogBounds, new Color(19, 24, 31, 248));
+        DrawRect(GtpEngineSelectionDialogBounds, 2, new Color(116, 145, 146));
+
+        var target = session.GtpEngineSelectionTargetStone == GoStone.Black ? "BLACK" : "WHITE";
+        DrawText($"GTP ENGINE SELECT  {target}", new Vector2(GtpEngineSelectionDialogBounds.X + 30, GtpEngineSelectionDialogBounds.Y + 24), new Color(244, 238, 218), 0.78f);
+        DrawCommandButton(GtpEngineSelectionDialogCloseButtonBounds, "CLOSE", false, mousePoint, scale: 0.42f);
+
+        DrawText("LIST", new Vector2(GtpEngineSelectionDialogListBounds.X, GtpEngineSelectionDialogListBounds.Y - 34), new Color(180, 195, 195), 0.46f);
+        DrawText("PROPERTIES", new Vector2(GtpEngineSelectionDialogPropertyBounds.X, GtpEngineSelectionDialogPropertyBounds.Y - 34), new Color(180, 195, 195), 0.46f);
+
+        FillRect(GtpEngineSelectionDialogListBounds, new Color(15, 20, 26));
+        DrawRect(GtpEngineSelectionDialogListBounds, 1, new Color(67, 84, 92));
+
+        var startIndex = session.GtpEngineSelectionPageIndex * GoAppSession.GtpEngineSelectionPageSize;
+        for (var i = 0; i < GoAppSession.GtpEngineSelectionPageSize; i++)
+        {
+            var index = startIndex + i;
+            if (index >= session.GtpEngineProfiles.Count)
+            {
+                break;
+            }
+
+            DrawGtpEngineSelectionListItem(GtpEngineSelectionDialogListItemBounds(i), session, index, mousePoint);
+        }
+
+        DrawGtpEngineSelectionProperties(session);
+
+        var pageCount = Math.Max(1, (int)Math.Ceiling(session.GtpEngineProfiles.Count / (double)GoAppSession.GtpEngineSelectionPageSize));
+        DrawCommandButton(GtpEngineSelectionDialogPreviousPageButtonBounds, "PREV", false, mousePoint, enabled: session.GtpEngineSelectionPageIndex > 0, scale: 0.42f);
+        DrawText($"PAGE {session.GtpEngineSelectionPageIndex + 1} / {pageCount}", new Vector2(GtpEngineSelectionDialogBounds.X + 350, GtpEngineSelectionDialogBounds.Bottom - 62), new Color(227, 224, 210), 0.48f);
+        DrawCommandButton(GtpEngineSelectionDialogNextPageButtonBounds, "NEXT", false, mousePoint, enabled: session.GtpEngineSelectionPageIndex < pageCount - 1, scale: 0.42f);
+    }
+
+    private void DrawGtpEngineSelectionListItem(Rectangle bounds, GoAppSession session, int index, Point mousePoint)
+    {
+        var profile = session.GtpEngineProfiles[index];
+        var selectedIndex = session.GtpEngineSelectionTargetStone == GoStone.Black ? session.SelectedBlackGtpEngineIndex : session.SelectedWhiteGtpEngineIndex;
+        var selected = index == selectedIndex;
+        var hovered = bounds.Contains(mousePoint);
+        FillRect(bounds, selected ? new Color(38, 103, 86) : hovered ? new Color(43, 52, 62) : new Color(24, 31, 37));
+        DrawRect(bounds, 1, selected ? new Color(147, 244, 200) : new Color(70, 85, 94));
+        DrawText($"{index + 1:00}", new Vector2(bounds.X + 14, bounds.Y + 16), selected ? new Color(177, 255, 215) : new Color(180, 195, 195), 0.4f);
+        DrawFittedText(profile.DisplayName, new Rectangle(bounds.X + 62, bounds.Y + 6, bounds.Width - 82, 32), Color.White, 0.5f);
+        DrawFittedText(string.IsNullOrWhiteSpace(profile.ExecutablePath) ? "-" : profile.ExecutablePath, new Rectangle(bounds.X + 62, bounds.Y + 40, bounds.Width - 82, 24), new Color(204, 211, 206), 0.34f);
+    }
+
+    private void DrawGtpEngineSelectionProperties(GoAppSession session)
+    {
+        FillRect(GtpEngineSelectionDialogPropertyBounds, new Color(15, 20, 26));
+        DrawRect(GtpEngineSelectionDialogPropertyBounds, 1, new Color(67, 84, 92));
+
+        var selectedIndex = session.GtpEngineSelectionTargetStone == GoStone.Black ? session.SelectedBlackGtpEngineIndex : session.SelectedWhiteGtpEngineIndex;
+        if (selectedIndex < 0 || selectedIndex >= session.GtpEngineProfiles.Count)
+        {
+            DrawText("NO ENGINE", new Vector2(GtpEngineSelectionDialogPropertyBounds.X + 24, GtpEngineSelectionDialogPropertyBounds.Y + 24), Color.White, 0.5f);
+            return;
+        }
+
+        var profile = session.GtpEngineProfiles[selectedIndex];
+        var y = GtpEngineSelectionDialogPropertyBounds.Y + 22;
+        DrawGtpEnginePropertyRow(y, "NAME", profile.DisplayName);
+        DrawGtpEnginePropertyRow(y + 70, "EXE", string.IsNullOrWhiteSpace(profile.ExecutablePath) ? "-" : profile.ExecutablePath);
+        DrawGtpEnginePropertyRow(y + 140, "WORKDIR", string.IsNullOrWhiteSpace(profile.WorkingDirectory) ? "-" : profile.WorkingDirectory);
+        DrawGtpEnginePropertyRow(y + 210, "ARGS", string.IsNullOrWhiteSpace(profile.Arguments) ? "-" : profile.Arguments);
+        DrawGtpEnginePropertyRow(y + 280, "GTP LOG", profile.EnableGtpLog ? "ON" : "OFF");
+    }
+
+    private void DrawGtpEnginePropertyRow(int y, string label, string value)
+    {
+        var bounds = new Rectangle(GtpEngineSelectionDialogPropertyBounds.X + 18, y, GtpEngineSelectionDialogPropertyBounds.Width - 36, 52);
+        FillRect(bounds, new Color(24, 31, 37));
+        DrawRect(bounds, 1, new Color(70, 85, 94));
+        FillRect(new Rectangle(bounds.X + 12, bounds.Y + 10, 118, 32), new Color(39, 68, 65));
+        DrawFittedText(label, new Rectangle(bounds.X + 24, bounds.Y + 10, 94, 32), Color.White, 0.34f);
+        DrawFittedText(value, new Rectangle(bounds.X + 152, bounds.Y + 7, bounds.Width - 168, 38), Color.White, 0.46f);
+    }
+
     private void DrawPropertyRow(int y, string label, string value)
     {
         var bounds = new Rectangle(TournamentRulesSelectionDialogPropertyBounds.X + 18, y, TournamentRulesSelectionDialogPropertyBounds.Width - 36, 52);
@@ -510,6 +622,21 @@ public sealed class GoScreenRenderer
 
     private static Rectangle TournamentRulesSelectionDialogListItemBounds(int index) =>
         new(TournamentRulesSelectionDialogListBounds.X + 16, TournamentRulesSelectionDialogListBounds.Y + 16 + index * 88, TournamentRulesSelectionDialogListBounds.Width - 32, 72);
+
+    private static Rectangle GtpEngineSelectionDialogBounds => new(230, 126, 1460, 820);
+
+    private static Rectangle GtpEngineSelectionDialogListBounds => new(270, 242, 650, 560);
+
+    private static Rectangle GtpEngineSelectionDialogPropertyBounds => new(950, 242, 700, 560);
+
+    private static Rectangle GtpEngineSelectionDialogCloseButtonBounds => new(1518, 156, 132, 48);
+
+    private static Rectangle GtpEngineSelectionDialogPreviousPageButtonBounds => new(270, 854, 150, 52);
+
+    private static Rectangle GtpEngineSelectionDialogNextPageButtonBounds => new(770, 854, 150, 52);
+
+    private static Rectangle GtpEngineSelectionDialogListItemBounds(int index) =>
+        new(GtpEngineSelectionDialogListBounds.X + 16, GtpEngineSelectionDialogListBounds.Y + 16 + index * 88, GtpEngineSelectionDialogListBounds.Width - 32, 72);
 
     private static Rectangle RuleKindButtonBounds(int index) => new(1144 + index * 224, 382, 188, 50);
 
