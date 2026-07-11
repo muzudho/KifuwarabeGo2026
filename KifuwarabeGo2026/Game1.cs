@@ -1,6 +1,7 @@
 namespace KifuwarabeGo2026;
 
 using KifuwarabeGo2026.Application;
+using KifuwarabeGo2026.Application.TournamentRulesSetting;
 using KifuwarabeGo2026.Domain;
 using KifuwarabeGo2026.Gtp;
 using KifuwarabeGo2026.Presentation;
@@ -21,6 +22,7 @@ public class Game1 : Game
     private readonly GraphicsDeviceManager _graphics;
     private readonly GoAppSession _session = new();
     private readonly TournamentRulesCatalog _tournamentRulesCatalog;
+    private readonly TournamentRulesSetting _tournamentRulesSetting;
     private CancellationTokenSource _engineCancellation = new();
     private GoScreenRenderer? _renderer;
     private SoundEffect? _placeStoneSound;
@@ -35,6 +37,7 @@ public class Game1 : Game
     {
         _tournamentRulesCatalog = TournamentRulesCatalog.LoadFromDefaultLocation();
         _session.SetTournamentRules(_tournamentRulesCatalog.Rules);
+        _tournamentRulesSetting = new TournamentRulesSetting(_session, _tournamentRulesCatalog);
 
         _graphics = new GraphicsDeviceManager(this);
         _graphics.PreferredBackBufferWidth = VirtualScreen.Width;
@@ -68,8 +71,7 @@ public class Game1 : Game
 
         if (_session.CurrentMode.Kind != GoAppModeKind.Playing)
         {
-            UpdateBoardSizeByKeyboard(keyboard);
-            UpdateTournamentRulesByKeyboard(keyboard);
+            _tournamentRulesSetting.UpdateByKeyboard(keyboard);
         }
         UpdateMouseInput();
 
@@ -84,30 +86,6 @@ public class Game1 : Game
         base.Draw(gameTime);
     }
 
-    private void UpdateBoardSizeByKeyboard(KeyboardState keyboard)
-    {
-        if (keyboard.IsKeyDown(Keys.D1) || keyboard.IsKeyDown(Keys.NumPad1))
-        {
-            _session.ChangeBoardSize(9);
-        }
-        else if (keyboard.IsKeyDown(Keys.D2) || keyboard.IsKeyDown(Keys.NumPad2))
-        {
-            _session.ChangeBoardSize(13);
-        }
-        else if (keyboard.IsKeyDown(Keys.D3) || keyboard.IsKeyDown(Keys.NumPad3))
-        {
-            _session.ChangeBoardSize(19);
-        }
-    }
-
-    private void UpdateTournamentRulesByKeyboard(KeyboardState keyboard)
-    {
-        if (keyboard.IsKeyDown(Keys.F5))
-        {
-            SaveCurrentTournamentRules();
-        }
-    }
-
     private void UpdateMouseInput()
     {
         var mouse = Mouse.GetState();
@@ -115,31 +93,8 @@ public class Game1 : Game
         {
             var point = VirtualScreen.ToVirtualPoint(GraphicsDevice.Viewport, mouse.Position);
             var isSetupMode = _session.CurrentMode.Kind != GoAppModeKind.Playing && _session.CurrentMode.Kind != GoAppModeKind.GameOver;
-            if (isSetupMode && GoScreenRenderer.GetTournamentRulesButtonHit(point, _session.TournamentRulesList.Count) is { } tournamentRulesIndex)
-            {
-                _session.SelectTournamentRules(tournamentRulesIndex);
-            }
-            else if (isSetupMode && GoScreenRenderer.GetRuleKindButtonHit(point) is { } ruleKind)
-            {
-                _session.ChangeRuleKind(ruleKind);
-            }
-            else if (isSetupMode && GoScreenRenderer.GetBoardSizeButtonHit(point, _session.CurrentMode.Kind) is { } boardSize)
-            {
-                _session.ChangeBoardSize(boardSize);
-            }
-            else if (isSetupMode && GoScreenRenderer.GetKomiStepButtonHit(point) is { } komiStep)
-            {
-                _session.ChangeKomi(komiStep);
-            }
-            else if (isSetupMode && GoScreenRenderer.GetMainTimeStepButtonHit(point) is { } mainTimeStep)
-            {
-                _session.ChangeMainTime(mainTimeStep);
-            }
-            else if (isSetupMode && GoScreenRenderer.GetSaveTournamentRulesButtonHit(point))
-            {
-                SaveCurrentTournamentRules();
-            }
-            else if (_session.CurrentMode.Kind == GoAppModeKind.GameOver && GoScreenRenderer.GetReturnToSetupButtonHit(point))
+            var handledByTournamentRulesSetting = isSetupMode && _tournamentRulesSetting.TryHandleMouseClick(point);
+            if (!handledByTournamentRulesSetting && _session.CurrentMode.Kind == GoAppModeKind.GameOver && GoScreenRenderer.GetReturnToSetupButtonHit(point))
             {
                 _session.ReturnToSetup();
             }
@@ -247,12 +202,6 @@ public class Game1 : Game
 
             return EngineCommandResult.EngineReady();
         });
-    }
-
-    private void SaveCurrentTournamentRules()
-    {
-        _tournamentRulesCatalog.Save(_session.CurrentTournamentRules);
-        _session.MarkTournamentRulesSaved();
     }
 
     private void SyncHumanMoveIfNeeded(GoStone stone, GoPoint point)

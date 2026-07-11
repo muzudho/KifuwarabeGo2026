@@ -1,0 +1,93 @@
+namespace KifuwarabeGo2026.Application.TournamentRulesSetting;
+
+using KifuwarabeGo2026.Presentation;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Input;
+
+/// <summary>
+/// ［大会ルール設定］画面の処理
+/// </summary>
+public sealed class TournamentRulesSetting
+{
+    private readonly GoAppSession _session;
+    private readonly TournamentRulesCatalog _catalog;
+
+    public TournamentRulesSetting(GoAppSession session, TournamentRulesCatalog catalog)
+    {
+        _session = session;
+        _catalog = catalog;
+    }
+
+    public void UpdateByKeyboard(KeyboardState keyboard)
+    {
+        UpdateBoardSizeByKeyboard(keyboard);
+
+        if (keyboard.IsKeyDown(Keys.F5))
+        {
+            SaveCurrentTournamentRules();
+        }
+    }
+
+    public bool TryHandleMouseClick(Point point)
+    {
+        if (GoScreenRenderer.GetTournamentRulesButtonHit(point, _session.TournamentRulesList.Count) is { } tournamentRulesIndex)
+        {
+            _session.SelectTournamentRules(tournamentRulesIndex);
+            return true;
+        }
+
+        if (GoScreenRenderer.GetRuleKindButtonHit(point) is { } ruleKind)
+        {
+            _session.ChangeRuleKind(ruleKind);
+            return true;
+        }
+
+        if (GoScreenRenderer.GetBoardSizeButtonHit(point, _session.CurrentMode.Kind) is { } boardSize)
+        {
+            _session.ChangeBoardSize(boardSize);
+            return true;
+        }
+
+        if (GoScreenRenderer.GetKomiStepButtonHit(point) is { } komiStep)
+        {
+            _session.ChangeKomi(komiStep);
+            return true;
+        }
+
+        if (GoScreenRenderer.GetMainTimeStepButtonHit(point) is { } mainTimeStep)
+        {
+            _session.ChangeMainTime(mainTimeStep);
+            return true;
+        }
+
+        if (GoScreenRenderer.GetSaveTournamentRulesButtonHit(point))
+        {
+            SaveCurrentTournamentRules();
+            return true;
+        }
+
+        return false;
+    }
+
+    private void UpdateBoardSizeByKeyboard(KeyboardState keyboard)
+    {
+        if (keyboard.IsKeyDown(Keys.D1) || keyboard.IsKeyDown(Keys.NumPad1))
+        {
+            _session.ChangeBoardSize(9);
+        }
+        else if (keyboard.IsKeyDown(Keys.D2) || keyboard.IsKeyDown(Keys.NumPad2))
+        {
+            _session.ChangeBoardSize(13);
+        }
+        else if (keyboard.IsKeyDown(Keys.D3) || keyboard.IsKeyDown(Keys.NumPad3))
+        {
+            _session.ChangeBoardSize(19);
+        }
+    }
+
+    private void SaveCurrentTournamentRules()
+    {
+        _catalog.Save(_session.CurrentTournamentRules);
+        _session.MarkTournamentRulesSaved();
+    }
+}
