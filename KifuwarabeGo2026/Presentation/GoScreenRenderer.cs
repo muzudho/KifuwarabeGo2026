@@ -104,7 +104,7 @@ public sealed class GoScreenRenderer
         }
 
         var path = session.TournamentRulesList[session.SelectedTournamentRulesIndex].FilePath;
-        if (string.IsNullOrWhiteSpace(path) || !PathTooltipCopyButtonBounds(TournamentRulesSelectionDialogPropertyRowBounds(5)).Contains(point))
+        if (string.IsNullOrWhiteSpace(path) || !PathTooltipCopyButtonBounds(TournamentRulesSelectionDialogPropertyRowBounds(6)).Contains(point))
         {
             return false;
         }
@@ -196,6 +196,16 @@ public sealed class GoScreenRenderer
         }
 
         return MainTimeStepButtonBounds(1).Contains(point) ? TimeSpan.FromMinutes(1) : null;
+    }
+
+    public static int? GetMoveLimitStepButtonHit(Point point)
+    {
+        if (MoveLimitStepButtonBounds(0).Contains(point))
+        {
+            return -10;
+        }
+
+        return MoveLimitStepButtonBounds(1).Contains(point) ? 10 : null;
     }
 
     public static bool GetSaveTournamentRulesButtonHit(Point point) => SaveTournamentRulesButtonBounds.Contains(point);
@@ -332,13 +342,14 @@ public sealed class GoScreenRenderer
         DrawText($"BOARD {boardSize} x {boardSize}", new Vector2(1144, 438), new Color(99, 223, 185), 0.62f);
         DrawBoardSizeButtons(boardSize, mousePoint, SetupBoardSizeButtonY);
 
-        DrawRulesNumberStrip(1144, 552, "KOMI", FormatKomi(session.Komi), KomiStepButtonBounds(0), "-0.5", KomiStepButtonBounds(1), "+0.5", mousePoint);
-        DrawRulesNumberStrip(1144, 624, "TIME", FormatMainTime(session.MainTime), MainTimeStepButtonBounds(0), "-1m", MainTimeStepButtonBounds(1), "+1m", mousePoint);
+        DrawRulesNumberStrip(1144, 532, "KOMI", FormatKomi(session.Komi), KomiStepButtonBounds(0), "-0.5", KomiStepButtonBounds(1), "+0.5", mousePoint);
+        DrawRulesNumberStrip(1144, 596, "TIME", FormatMainTime(session.MainTime), MainTimeStepButtonBounds(0), "-1m", MainTimeStepButtonBounds(1), "+1m", mousePoint);
+        DrawRulesNumberStrip(1144, 660, "MOVES", FormatMoveLimit(session.MoveLimit), MoveLimitStepButtonBounds(0), "-10", MoveLimitStepButtonBounds(1), "+10", mousePoint);
 
-        DrawInfoStrip(1144, 700, "BLACK", PlayerKindLabel(session.BlackPlayerKind), new Color(26, 27, 30), Color.White);
+        DrawInfoStrip(1144, 724, "BLACK", PlayerKindLabel(session.BlackPlayerKind), new Color(26, 27, 30), Color.White);
         DrawPlayerKindButtons(session.BlackPlayerKind, mousePoint, BlackPlayerKindButtonY);
         DrawSetupEngineButtons(session, GoStone.Black, mousePoint, BlackEngineButtonY);
-        DrawInfoStrip(1144, 798, "WHITE", PlayerKindLabel(session.WhitePlayerKind), new Color(236, 229, 211), new Color(24, 24, 24));
+        DrawInfoStrip(1144, 814, "WHITE", PlayerKindLabel(session.WhitePlayerKind), new Color(236, 229, 211), new Color(24, 24, 24));
         DrawPlayerKindButtons(session.WhitePlayerKind, mousePoint, WhitePlayerKindButtonY);
         DrawSetupEngineButtons(session, GoStone.White, mousePoint, WhiteEngineButtonY);
         DrawCommandButton(SaveTournamentRulesButtonBounds, SaveTournamentRulesLabel(session), false, mousePoint);
@@ -353,6 +364,7 @@ public sealed class GoScreenRenderer
         var turnChip = session.CurrentTurn == GoStone.Black ? new Color(26, 27, 30) : new Color(236, 229, 211);
         var turnText = session.CurrentTurn == GoStone.Black ? Color.White : new Color(24, 24, 24);
         DrawInfoStrip(1144, 180, "TURN", turnLabel, turnChip, turnText);
+        DrawInfoStrip(1144, 244, "NEXT", GetMoveThinkingText(session), new Color(31, 42, 48), new Color(99, 223, 185));
 
         DrawText("PLAYERS", new Vector2(1144, 300), new Color(180, 195, 195), 0.62f);
         DrawInfoStrip(1144, 348, "BLACK", PlayerKindLabel(session.BlackPlayerKind), new Color(26, 27, 30), Color.White);
@@ -482,8 +494,9 @@ public sealed class GoScreenRenderer
         DrawPropertyRow(y + 140, "BOARD", $"{rules.BoardSize} x {rules.BoardSize}");
         DrawPropertyRow(y + 210, "KOMI", FormatKomi(rules.Komi));
         DrawPropertyRow(y + 280, "TIME", FormatMainTime(rules.MainTime));
+        DrawPropertyRow(y + 350, "MOVES", FormatMoveLimit(rules.MoveLimit));
         var filePath = string.IsNullOrWhiteSpace(rules.FilePath) ? "-" : rules.FilePath;
-        var fileRowBounds = TournamentRulesSelectionDialogPropertyRowBounds(5);
+        var fileRowBounds = TournamentRulesSelectionDialogPropertyRowBounds(6);
         DrawPathPropertyRow(fileRowBounds, "FILE", string.IsNullOrWhiteSpace(rules.FilePath) ? "-" : Path.GetFileName(rules.FilePath));
         DrawPathTooltipIfHovered(fileRowBounds, filePath, mousePoint);
     }
@@ -673,13 +686,13 @@ public sealed class GoScreenRenderer
 
     private const int SetupBoardSizeButtonY = 476;
 
-    private const int BlackPlayerKindButtonY = 710;
+    private const int BlackPlayerKindButtonY = 734;
 
-    private const int WhitePlayerKindButtonY = 808;
+    private const int WhitePlayerKindButtonY = 824;
 
-    private const int BlackEngineButtonY = 774;
+    private const int BlackEngineButtonY = 784;
 
-    private const int WhiteEngineButtonY = 872;
+    private const int WhiteEngineButtonY = 874;
 
     private static Rectangle BoardSizeButtonBounds(int index, int y) => new(1144 + index * 224, y, 188, 62);
 
@@ -742,9 +755,11 @@ public sealed class GoScreenRenderer
 
     private static Rectangle RuleKindButtonBounds(int index) => new(1144 + index * 224, 382, 188, 50);
 
-    private static Rectangle KomiStepButtonBounds(int index) => new(1588 + index * 112, 560, 92, 40);
+    private static Rectangle KomiStepButtonBounds(int index) => new(1588 + index * 112, 540, 92, 40);
 
-    private static Rectangle MainTimeStepButtonBounds(int index) => new(1588 + index * 112, 632, 92, 40);
+    private static Rectangle MainTimeStepButtonBounds(int index) => new(1588 + index * 112, 604, 92, 40);
+
+    private static Rectangle MoveLimitStepButtonBounds(int index) => new(1588 + index * 112, 668, 92, 40);
 
     private static Rectangle PlayerKindButtonBounds(int index, int y) => new(1536 + index * 140, y, 132, 52);
 
@@ -814,6 +829,15 @@ public sealed class GoScreenRenderer
 
     private static string FormatMainTime(TimeSpan mainTime) =>
         mainTime == TimeSpan.Zero ? "NO LIMIT" : FormatElapsedTime(mainTime);
+
+    private static string FormatMoveLimit(int moveLimit) =>
+        moveLimit <= 0 ? "NO LIMIT" : moveLimit.ToString();
+
+    private static string GetMoveThinkingText(GoAppSession session)
+    {
+        var text = $"{session.NextMoveNumber}手目を思考中";
+        return session.MoveLimit <= 0 ? text : $"{text} / {session.MoveLimit}";
+    }
 
     private static string FormatKomi(decimal komi) => komi.ToString("0.0");
 

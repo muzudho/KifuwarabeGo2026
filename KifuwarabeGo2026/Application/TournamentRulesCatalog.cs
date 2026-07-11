@@ -96,6 +96,7 @@ public sealed class TournamentRulesCatalog
         var totalSeconds = Math.Max(0, rules.MainTimeMinutes * 60 + rules.MainTimeSeconds);
         rules.MainTimeMinutes = totalSeconds / 60;
         rules.MainTimeSeconds = totalSeconds % 60;
+        rules.MoveLimit = Math.Clamp(rules.MoveLimit, 0, 9999);
         return rules;
     }
 
@@ -107,6 +108,7 @@ public sealed class TournamentRulesCatalog
         Komi = 6.5m,
         MainTimeMinutes = 0,
         MainTimeSeconds = 0,
+        MoveLimit = 400,
     };
 
     private sealed class TournamentRulesList

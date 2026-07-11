@@ -68,6 +68,12 @@ public sealed class TournamentRulesSetting
             return true;
         }
 
+        if (GoScreenRenderer.GetMoveLimitStepButtonHit(point) is { } moveLimitStep)
+        {
+            _session.ChangeMoveLimit(moveLimitStep);
+            return true;
+        }
+
         if (GoScreenRenderer.GetSaveTournamentRulesButtonHit(point))
         {
             SaveCurrentTournamentRules();

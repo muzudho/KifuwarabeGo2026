@@ -17,6 +17,8 @@ public sealed class TournamentRules
 
     public int MainTimeSeconds { get; set; } = 0;
 
+    public int MoveLimit { get; set; } = 400;
+
     [JsonIgnore]
     public string FilePath { get; set; } = "";
 
@@ -31,6 +33,7 @@ public sealed class TournamentRules
         Komi = Komi,
         MainTimeMinutes = MainTimeMinutes,
         MainTimeSeconds = MainTimeSeconds,
+        MoveLimit = MoveLimit,
         FilePath = FilePath,
     };
 }

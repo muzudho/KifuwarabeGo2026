@@ -25,12 +25,28 @@
         <End>&#23616;</End>
       </CharacterRegion>
       <CharacterRegion>
+        <Start>&#24605;</Start>
+        <End>&#24605;</End>
+      </CharacterRegion>
+      <CharacterRegion>
+        <Start>&#25163;</Start>
+        <End>&#25163;</End>
+      </CharacterRegion>
+      <CharacterRegion>
         <Start>&#20633;</Start>
         <End>&#20633;</End>
       </CharacterRegion>
       <CharacterRegion>
         <Start>&#28310;</Start>
         <End>&#28310;</End>
+      </CharacterRegion>
+      <CharacterRegion>
+        <Start>&#30446;</Start>
+        <End>&#30446;</End>
+      </CharacterRegion>
+      <CharacterRegion>
+        <Start>&#32771;</Start>
+        <End>&#32771;</End>
       </CharacterRegion>
       <CharacterRegion>
         <Start>&#12434;</Start>

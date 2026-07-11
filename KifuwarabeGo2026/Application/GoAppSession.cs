@@ -52,9 +52,15 @@ public sealed class GoAppSession
 
     public TimeSpan MainTime => _currentTournamentRules.MainTime;
 
+    public int MoveLimit => _currentTournamentRules.MoveLimit;
+
     public TournamentRules CurrentTournamentRules => _currentTournamentRules.Clone();
 
     public GoStone CurrentTurn { get; private set; } = GoStone.Black;
+
+    public int PlayedMoveCount { get; private set; }
+
+    public int NextMoveNumber => PlayedMoveCount + 1;
 
     public GoPlayerKind BlackPlayerKind { get; private set; } = GoPlayerKind.Human;
 
@@ -219,6 +225,12 @@ public sealed class GoAppSession
         var totalSeconds = Math.Max(0, (int)(_currentTournamentRules.MainTime + step).TotalSeconds);
         _currentTournamentRules.MainTimeMinutes = totalSeconds / 60;
         _currentTournamentRules.MainTimeSeconds = totalSeconds % 60;
+        TournamentRulesSaveMessage = "UNSAVED";
+    }
+
+    public void ChangeMoveLimit(int step)
+    {
+        _currentTournamentRules.MoveLimit = Math.Clamp(_currentTournamentRules.MoveLimit + step, 0, 9999);
         TournamentRulesSaveMessage = "UNSAVED";
     }
 
@@ -444,7 +456,7 @@ public sealed class GoAppSession
         _positionHashes.Add(_board.CurrentHash);
         KoPoint = nextKoPoint;
         ConsecutivePasses = 0;
-        PassTurn();
+        CompleteMoveAndPassTurn();
         return true;
     }
 
@@ -457,7 +469,12 @@ public sealed class GoAppSession
 
         KoPoint = null;
         ConsecutivePasses++;
-        PassTurn();
+        CompleteMoveAndPassTurn();
+        if (CurrentMode.Kind == GoAppModeKind.GameOver)
+        {
+            return true;
+        }
+
         if (ConsecutivePasses >= 2)
         {
             DecidePureGoResult();
@@ -493,6 +510,7 @@ public sealed class GoAppSession
         WhiteElapsedTime = TimeSpan.Zero;
         KoPoint = null;
         ConsecutivePasses = 0;
+        PlayedMoveCount = 0;
         Winner = null;
         GameOverReason = "";
         IsEngineReady = true;
@@ -510,6 +528,20 @@ public sealed class GoAppSession
     public const int TournamentRulesSelectionPageSize = 6;
 
     public const int GtpEngineSelectionPageSize = 6;
+
+    private void CompleteMoveAndPassTurn()
+    {
+        PlayedMoveCount++;
+        if (MoveLimit > 0 && PlayedMoveCount >= MoveLimit)
+        {
+            KoPoint = null;
+            GameOverReason = $"MOVE LIMIT {MoveLimit}";
+            ChangeMode(GoAppModeKind.GameOver);
+            return;
+        }
+
+        PassTurn();
+    }
 
     private void PassTurn()
     {

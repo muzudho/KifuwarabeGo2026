@@ -1,5 +1,8 @@
 namespace KifuwarabeGo2026.Engine;
 
+/// <summary>
+/// コンピュータ囲碁の思考エンジンの本体だぜ（＾～＾）
+/// </summary>
 internal static class Program
 {
     public static void Main()
@@ -22,17 +25,11 @@ internal sealed class GtpEngine
         while ((line = input.ReadLine()) is not null)
         {
             var commandLine = line.Trim().TrimStart('\uFEFF');
-            if (commandLine.Length == 0)
-            {
-                continue;
-            }
+            if (commandLine.Length == 0) continue;
 
             var quit = Execute(commandLine, out var response, out var error);
             WriteResponse(output, response, error);
-            if (quit)
-            {
-                return;
-            }
+            if (quit) return;
         }
     }
 

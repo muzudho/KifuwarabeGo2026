@@ -4,5 +4,6 @@
   "boardSize": 13,
   "komi": 6.5,
   "mainTimeMinutes": 20,
-  "mainTimeSeconds": 0
+  "mainTimeSeconds": 0,
+  "moveLimit": 400
 }
