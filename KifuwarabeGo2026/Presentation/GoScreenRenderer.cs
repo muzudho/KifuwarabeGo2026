@@ -95,6 +95,24 @@ public sealed class GoScreenRenderer
         return null;
     }
 
+    public static bool TryGetTournamentRulesSelectionDialogPathCopyText(Point point, GoAppSession session, out string text)
+    {
+        text = "";
+        if (session.SelectedTournamentRulesIndex < 0 || session.SelectedTournamentRulesIndex >= session.TournamentRulesList.Count)
+        {
+            return false;
+        }
+
+        var path = session.TournamentRulesList[session.SelectedTournamentRulesIndex].FilePath;
+        if (string.IsNullOrWhiteSpace(path) || !PathTooltipCopyButtonBounds(TournamentRulesSelectionDialogPropertyRowBounds(5)).Contains(point))
+        {
+            return false;
+        }
+
+        text = path;
+        return true;
+    }
+
     public static bool GetGtpEngineSelectionDialogCloseButtonHit(Point point) =>
         GtpEngineSelectionDialogCloseButtonBounds.Contains(point);
 
@@ -118,6 +136,31 @@ public sealed class GoScreenRenderer
         }
 
         return null;
+    }
+
+    public static bool TryGetGtpEngineSelectionDialogPathCopyText(Point point, GoAppSession session, out string text)
+    {
+        text = "";
+        var selectedIndex = session.GtpEngineSelectionTargetStone == GoStone.Black ? session.SelectedBlackGtpEngineIndex : session.SelectedWhiteGtpEngineIndex;
+        if (selectedIndex < 0 || selectedIndex >= session.GtpEngineProfiles.Count)
+        {
+            return false;
+        }
+
+        var profile = session.GtpEngineProfiles[selectedIndex];
+        if (!string.IsNullOrWhiteSpace(profile.ExecutablePath) && PathTooltipCopyButtonBounds(GtpEngineSelectionDialogPropertyRowBounds(1)).Contains(point))
+        {
+            text = profile.ExecutablePath;
+            return true;
+        }
+
+        if (!string.IsNullOrWhiteSpace(profile.WorkingDirectory) && PathTooltipCopyButtonBounds(GtpEngineSelectionDialogPropertyRowBounds(2)).Contains(point))
+        {
+            text = profile.WorkingDirectory;
+            return true;
+        }
+
+        return false;
     }
 
     public static GoRuleKind? GetRuleKindButtonHit(Point point)
@@ -401,7 +444,7 @@ public sealed class GoScreenRenderer
             DrawTournamentRulesSelectionListItem(TournamentRulesSelectionDialogListItemBounds(i), session, index, mousePoint);
         }
 
-        DrawTournamentRulesSelectionProperties(session);
+        DrawTournamentRulesSelectionProperties(session, mousePoint);
 
         var pageCount = Math.Max(1, (int)Math.Ceiling(session.TournamentRulesList.Count / (double)GoAppSession.TournamentRulesSelectionPageSize));
         DrawCommandButton(TournamentRulesSelectionDialogPreviousPageButtonBounds, "PREV", false, mousePoint, enabled: session.TournamentRulesSelectionPageIndex > 0, scale: 0.42f);
@@ -421,7 +464,7 @@ public sealed class GoScreenRenderer
         DrawText($"{rules.Rule}  {rules.BoardSize}x{rules.BoardSize}  KOMI {FormatKomi(rules.Komi)}", new Vector2(bounds.X + 62, bounds.Y + 42), new Color(204, 211, 206), 0.34f);
     }
 
-    private void DrawTournamentRulesSelectionProperties(GoAppSession session)
+    private void DrawTournamentRulesSelectionProperties(GoAppSession session, Point mousePoint)
     {
         FillRect(TournamentRulesSelectionDialogPropertyBounds, new Color(15, 20, 26));
         DrawRect(TournamentRulesSelectionDialogPropertyBounds, 1, new Color(67, 84, 92));
@@ -439,7 +482,10 @@ public sealed class GoScreenRenderer
         DrawPropertyRow(y + 140, "BOARD", $"{rules.BoardSize} x {rules.BoardSize}");
         DrawPropertyRow(y + 210, "KOMI", FormatKomi(rules.Komi));
         DrawPropertyRow(y + 280, "TIME", FormatMainTime(rules.MainTime));
-        DrawPropertyRow(y + 350, "FILE", string.IsNullOrWhiteSpace(rules.FilePath) ? "-" : Path.GetFileName(rules.FilePath));
+        var filePath = string.IsNullOrWhiteSpace(rules.FilePath) ? "-" : rules.FilePath;
+        var fileRowBounds = TournamentRulesSelectionDialogPropertyRowBounds(5);
+        DrawPathPropertyRow(fileRowBounds, "FILE", string.IsNullOrWhiteSpace(rules.FilePath) ? "-" : Path.GetFileName(rules.FilePath));
+        DrawPathTooltipIfHovered(fileRowBounds, filePath, mousePoint);
     }
 
     private void DrawGtpEngineSelectionDialog(GoAppSession session, Point mousePoint)
@@ -476,7 +522,7 @@ public sealed class GoScreenRenderer
             DrawGtpEngineSelectionListItem(GtpEngineSelectionDialogListItemBounds(i), session, index, mousePoint);
         }
 
-        DrawGtpEngineSelectionProperties(session);
+        DrawGtpEngineSelectionProperties(session, mousePoint);
 
         var pageCount = Math.Max(1, (int)Math.Ceiling(session.GtpEngineProfiles.Count / (double)GoAppSession.GtpEngineSelectionPageSize));
         DrawCommandButton(GtpEngineSelectionDialogPreviousPageButtonBounds, "PREV", false, mousePoint, enabled: session.GtpEngineSelectionPageIndex > 0, scale: 0.42f);
@@ -497,7 +543,7 @@ public sealed class GoScreenRenderer
         DrawFittedText(string.IsNullOrWhiteSpace(profile.ExecutablePath) ? "-" : profile.ExecutablePath, new Rectangle(bounds.X + 62, bounds.Y + 40, bounds.Width - 82, 24), new Color(204, 211, 206), 0.34f);
     }
 
-    private void DrawGtpEngineSelectionProperties(GoAppSession session)
+    private void DrawGtpEngineSelectionProperties(GoAppSession session, Point mousePoint)
     {
         FillRect(GtpEngineSelectionDialogPropertyBounds, new Color(15, 20, 26));
         DrawRect(GtpEngineSelectionDialogPropertyBounds, 1, new Color(67, 84, 92));
@@ -512,10 +558,18 @@ public sealed class GoScreenRenderer
         var profile = session.GtpEngineProfiles[selectedIndex];
         var y = GtpEngineSelectionDialogPropertyBounds.Y + 22;
         DrawGtpEnginePropertyRow(y, "NAME", profile.DisplayName);
-        DrawGtpEnginePropertyRow(y + 70, "EXE", string.IsNullOrWhiteSpace(profile.ExecutablePath) ? "-" : profile.ExecutablePath);
-        DrawGtpEnginePropertyRow(y + 140, "WORKDIR", string.IsNullOrWhiteSpace(profile.WorkingDirectory) ? "-" : profile.WorkingDirectory);
+        var executablePath = string.IsNullOrWhiteSpace(profile.ExecutablePath) ? "-" : profile.ExecutablePath;
+        var workingDirectory = string.IsNullOrWhiteSpace(profile.WorkingDirectory) ? "-" : profile.WorkingDirectory;
+        var executablePathRowBounds = GtpEngineSelectionDialogPropertyRowBounds(1);
+        var workingDirectoryRowBounds = GtpEngineSelectionDialogPropertyRowBounds(2);
+
+        DrawPathPropertyRow(executablePathRowBounds, "EXE", executablePath);
+        DrawPathPropertyRow(workingDirectoryRowBounds, "WORKDIR", workingDirectory);
         DrawGtpEnginePropertyRow(y + 210, "ARGS", string.IsNullOrWhiteSpace(profile.Arguments) ? "-" : profile.Arguments);
         DrawGtpEnginePropertyRow(y + 280, "GTP LOG", profile.EnableGtpLog ? "ON" : "OFF");
+
+        DrawPathTooltipIfHovered(executablePathRowBounds, executablePath, mousePoint);
+        DrawPathTooltipIfHovered(workingDirectoryRowBounds, workingDirectory, mousePoint);
     }
 
     private void DrawGtpEnginePropertyRow(int y, string label, string value)
@@ -536,6 +590,29 @@ public sealed class GoScreenRenderer
         FillRect(new Rectangle(bounds.X + 12, bounds.Y + 10, 118, 32), new Color(39, 68, 65));
         DrawFittedText(label, new Rectangle(bounds.X + 24, bounds.Y + 10, 94, 32), Color.White, 0.34f);
         DrawFittedText(value, new Rectangle(bounds.X + 152, bounds.Y + 7, bounds.Width - 168, 38), Color.White, 0.46f);
+    }
+
+    private void DrawPathPropertyRow(Rectangle bounds, string label, string value)
+    {
+        FillRect(bounds, new Color(24, 31, 37));
+        DrawRect(bounds, 1, new Color(70, 85, 94));
+        FillRect(new Rectangle(bounds.X + 12, bounds.Y + 10, 118, 32), new Color(39, 68, 65));
+        DrawFittedText(label, new Rectangle(bounds.X + 24, bounds.Y + 10, 94, 32), Color.White, 0.34f);
+        DrawFittedText(value, new Rectangle(bounds.X + 152, bounds.Y + 7, bounds.Width - 168, 38), Color.White, 0.46f);
+    }
+
+    private void DrawPathTooltipIfHovered(Rectangle rowBounds, string fullPath, Point mousePoint)
+    {
+        if (string.IsNullOrWhiteSpace(fullPath) || fullPath == "-")
+        {
+            return;
+        }
+
+        var popupBounds = PathTooltipBounds(rowBounds);
+        if (rowBounds.Contains(mousePoint) || popupBounds.Contains(mousePoint))
+        {
+            DrawPathTooltip(popupBounds, fullPath, mousePoint);
+        }
     }
 
     private void DrawBoardSizeButtons(int boardSize, Point mousePoint, int y)
@@ -623,6 +700,9 @@ public sealed class GoScreenRenderer
     private static Rectangle TournamentRulesSelectionDialogListItemBounds(int index) =>
         new(TournamentRulesSelectionDialogListBounds.X + 16, TournamentRulesSelectionDialogListBounds.Y + 16 + index * 88, TournamentRulesSelectionDialogListBounds.Width - 32, 72);
 
+    private static Rectangle TournamentRulesSelectionDialogPropertyRowBounds(int index) =>
+        new(TournamentRulesSelectionDialogPropertyBounds.X + 18, TournamentRulesSelectionDialogPropertyBounds.Y + 22 + index * 70, TournamentRulesSelectionDialogPropertyBounds.Width - 36, 52);
+
     private static Rectangle GtpEngineSelectionDialogBounds => new(230, 126, 1460, 820);
 
     private static Rectangle GtpEngineSelectionDialogListBounds => new(270, 242, 650, 560);
@@ -637,6 +717,28 @@ public sealed class GoScreenRenderer
 
     private static Rectangle GtpEngineSelectionDialogListItemBounds(int index) =>
         new(GtpEngineSelectionDialogListBounds.X + 16, GtpEngineSelectionDialogListBounds.Y + 16 + index * 88, GtpEngineSelectionDialogListBounds.Width - 32, 72);
+
+    private static Rectangle GtpEngineSelectionDialogPropertyRowBounds(int index) =>
+        new(GtpEngineSelectionDialogPropertyBounds.X + 18, GtpEngineSelectionDialogPropertyBounds.Y + 22 + index * 70, GtpEngineSelectionDialogPropertyBounds.Width - 36, 52);
+
+    private static Rectangle PathTooltipBounds(Rectangle rowBounds)
+    {
+        var y = rowBounds.Y - 102;
+        if (y < 140)
+        {
+            y = rowBounds.Bottom - 2;
+        }
+
+        return new Rectangle(rowBounds.X, y, rowBounds.Width, 104);
+    }
+
+    private static Rectangle PathTooltipCopyButtonBounds(Rectangle rowBounds)
+    {
+        return PathTooltipCopyButtonBoundsFromPopup(PathTooltipBounds(rowBounds));
+    }
+
+    private static Rectangle PathTooltipCopyButtonBoundsFromPopup(Rectangle popupBounds) =>
+        new(popupBounds.Right - 124, popupBounds.Y + 56, 100, 34);
 
     private static Rectangle RuleKindButtonBounds(int index) => new(1144 + index * 224, 382, 188, 50);
 
@@ -733,6 +835,16 @@ public sealed class GoScreenRenderer
         var fittedScale = MathF.Min(scale, MathF.Min((bounds.Width - 20) / Math.Max(1f, measured.X), (bounds.Height - 10) / Math.Max(1f, measured.Y)));
         var size = measured * fittedScale;
         DrawText(label, new Vector2(bounds.Center.X - size.X / 2, bounds.Center.Y - size.Y / 2), textColor, fittedScale);
+    }
+
+    private void DrawPathTooltip(Rectangle bounds, string fullPath, Point mousePoint)
+    {
+        FillRect(new Rectangle(bounds.X + 8, bounds.Y + 10, bounds.Width, bounds.Height), new Color(0, 0, 0, 150));
+        FillRect(bounds, new Color(30, 36, 43, 252));
+        DrawRect(bounds, 2, new Color(147, 244, 200));
+        DrawText("FULL PATH", new Vector2(bounds.X + 18, bounds.Y + 12), new Color(180, 195, 195), 0.34f);
+        DrawFittedText(fullPath, new Rectangle(bounds.X + 18, bounds.Y + 38, bounds.Width - 150, 44), Color.White, 0.42f);
+        DrawCommandButton(PathTooltipCopyButtonBoundsFromPopup(bounds), "COPY", false, mousePoint, scale: 0.34f);
     }
 
     private void DrawLabeledBrowseSelector(LabeledBrowseSelector selector, Point mousePoint)

@@ -79,6 +79,12 @@ public sealed class TournamentRulesSetting
 
     private bool TryHandleTournamentRulesSelectionDialogClick(Point point)
     {
+        if (GoScreenRenderer.TryGetTournamentRulesSelectionDialogPathCopyText(point, _session, out var path))
+        {
+            SystemClipboard.SetText(path);
+            return true;
+        }
+
         if (GoScreenRenderer.GetTournamentRulesSelectionDialogCloseButtonHit(point))
         {
             _session.CloseTournamentRulesSelectionDialog();

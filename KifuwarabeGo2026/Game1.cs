@@ -144,6 +144,12 @@ public class Game1 : Game
             return false;
         }
 
+        if (GoScreenRenderer.TryGetGtpEngineSelectionDialogPathCopyText(point, _session, out var path))
+        {
+            SystemClipboard.SetText(path);
+            return true;
+        }
+
         if (GoScreenRenderer.GetGtpEngineSelectionDialogCloseButtonHit(point))
         {
             _session.CloseGtpEngineSelectionDialog();
