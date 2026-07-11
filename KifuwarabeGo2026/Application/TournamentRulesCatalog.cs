@@ -117,6 +117,22 @@ public sealed class TournamentRulesCatalog
         return savedRules;
     }
 
+    public void Delete(TournamentRules rules)
+    {
+        if (string.IsNullOrWhiteSpace(rules.FilePath))
+        {
+            return;
+        }
+
+        var fullPath = Path.GetFullPath(rules.FilePath);
+        if (File.Exists(fullPath))
+        {
+            File.Delete(fullPath);
+        }
+
+        RemoveListEntry(fullPath);
+    }
+
     public bool TryValidateFilePath(TournamentRules rules, string filePath, out string targetPath, out string warning)
     {
         targetPath = "";
@@ -242,6 +258,24 @@ public sealed class TournamentRulesCatalog
             entry.DisplayName = rules.DisplayName;
             entry.FilePath = newRelativePath;
         }
+
+        File.WriteAllText(ListPath, JsonSerializer.Serialize(list, JsonOptions));
+    }
+
+    private void RemoveListEntry(string oldPath)
+    {
+        if (string.IsNullOrWhiteSpace(oldPath))
+        {
+            return;
+        }
+
+        var listDirectory = Path.GetDirectoryName(ListPath) ?? AppContext.BaseDirectory;
+        var list = File.Exists(ListPath)
+            ? JsonSerializer.Deserialize<TournamentRulesList>(File.ReadAllText(ListPath), JsonOptions) ?? new TournamentRulesList()
+            : new TournamentRulesList();
+        var oldRelativePath = Path.GetRelativePath(listDirectory, oldPath);
+        list.TournamentRules.RemoveAll(entry =>
+            string.Equals(entry.FilePath, oldRelativePath, StringComparison.OrdinalIgnoreCase));
 
         File.WriteAllText(ListPath, JsonSerializer.Serialize(list, JsonOptions));
     }

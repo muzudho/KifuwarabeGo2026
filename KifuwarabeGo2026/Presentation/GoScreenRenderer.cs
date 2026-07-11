@@ -77,6 +77,18 @@ public sealed class GoScreenRenderer
     public static bool GetTournamentRulesSelectionDialogAddButtonHit(Point point) =>
         TournamentRulesSelectionDialogAddButtonBounds.Contains(point);
 
+    public static bool GetTournamentRulesSelectionDialogEditButtonHit(Point point) =>
+        TournamentRulesSelectionDialogEditButtonBounds.Contains(point);
+
+    public static bool GetTournamentRulesSelectionDialogDeleteButtonHit(Point point, bool enabled) =>
+        enabled && TournamentRulesSelectionDialogDeleteButtonBounds.Contains(point);
+
+    public static bool GetTournamentRulesDeleteConfirmationConfirmButtonHit(Point point) =>
+        TournamentRulesDeleteConfirmationConfirmButtonBounds.Contains(point);
+
+    public static bool GetTournamentRulesDeleteConfirmationCancelButtonHit(Point point) =>
+        TournamentRulesDeleteConfirmationCancelButtonBounds.Contains(point);
+
     public static bool GetTournamentRulesAddPanelCloseButtonHit(Point point) =>
         TournamentRulesAddPanelCloseButtonBounds.Contains(point);
 
@@ -473,6 +485,9 @@ public sealed class GoScreenRenderer
         DrawText($"PAGE {session.TournamentRulesSelectionPageIndex + 1} / {pageCount}", new Vector2(TournamentRulesSelectionDialogBounds.X + 350, TournamentRulesSelectionDialogBounds.Bottom - 62), new Color(227, 224, 210), 0.48f);
         DrawCommandButton(TournamentRulesSelectionDialogNextPageButtonBounds, "NEXT", false, mousePoint, enabled: session.TournamentRulesSelectionPageIndex < pageCount - 1, scale: 0.42f);
         DrawCommandButton(TournamentRulesSelectionDialogAddButtonBounds, "ADD RULES", false, mousePoint, scale: 0.42f);
+        DrawCommandButton(TournamentRulesSelectionDialogEditButtonBounds, "EDIT", false, mousePoint, enabled: session.TournamentRulesList.Count > 0, scale: 0.42f);
+        DrawCommandButton(TournamentRulesSelectionDialogDeleteButtonBounds, "DELETE", false, mousePoint, enabled: session.CanDeleteSelectedTournamentRules, scale: 0.42f);
+        DrawTournamentRulesDeleteConfirmation(session, mousePoint);
     }
 
     private void DrawTournamentRulesAddPanel(GoAppSession session, Point mousePoint)
@@ -487,7 +502,7 @@ public sealed class GoScreenRenderer
         FillRect(TournamentRulesAddPanelBounds, new Color(19, 24, 31, 248));
         DrawRect(TournamentRulesAddPanelBounds, 2, new Color(116, 145, 146));
 
-        DrawText("ADD TOURNAMENT RULES", new Vector2(TournamentRulesAddPanelBounds.X + 30, TournamentRulesAddPanelBounds.Y + 24), new Color(244, 238, 218), 0.78f);
+        DrawText(session.IsTournamentRulesEditPanelMode ? "EDIT TOURNAMENT RULES" : "ADD TOURNAMENT RULES", new Vector2(TournamentRulesAddPanelBounds.X + 30, TournamentRulesAddPanelBounds.Y + 24), new Color(244, 238, 218), 0.78f);
         DrawCommandButton(TournamentRulesAddPanelCloseButtonBounds, "BACK", false, mousePoint, scale: 0.42f);
 
         FillRect(TournamentRulesAddPanelEditorBounds, new Color(15, 20, 26));
@@ -612,6 +627,25 @@ public sealed class GoScreenRenderer
         var fileRowBounds = TournamentRulesSelectionDialogPropertyRowBounds(6);
         DrawPathPropertyRow(fileRowBounds, "FILE", string.IsNullOrWhiteSpace(rules.FilePath) ? "-" : Path.GetFileName(rules.FilePath));
         DrawPathTooltipIfHovered(fileRowBounds, filePath, mousePoint);
+    }
+
+    private void DrawTournamentRulesDeleteConfirmation(GoAppSession session, Point mousePoint)
+    {
+        if (!session.IsTournamentRulesDeleteConfirmationOpen)
+        {
+            return;
+        }
+
+        FillRect(new Rectangle(0, 0, VirtualScreen.Width, VirtualScreen.Height), new Color(0, 0, 0, 95));
+        FillRect(new Rectangle(TournamentRulesDeleteConfirmationBounds.X + 12, TournamentRulesDeleteConfirmationBounds.Y + 14, TournamentRulesDeleteConfirmationBounds.Width, TournamentRulesDeleteConfirmationBounds.Height), new Color(0, 0, 0, 150));
+        FillRect(TournamentRulesDeleteConfirmationBounds, new Color(24, 29, 36, 252));
+        DrawRect(TournamentRulesDeleteConfirmationBounds, 2, new Color(255, 183, 146));
+
+        DrawText("DELETE RULES FILE", new Vector2(TournamentRulesDeleteConfirmationBounds.X + 28, TournamentRulesDeleteConfirmationBounds.Y + 24), new Color(255, 230, 160), 0.62f);
+        DrawFittedText($"{session.TournamentRulesDeleteConfirmationFileName} file will be deleted.", new Rectangle(TournamentRulesDeleteConfirmationBounds.X + 28, TournamentRulesDeleteConfirmationBounds.Y + 92, TournamentRulesDeleteConfirmationBounds.Width - 56, 42), Color.White, 0.5f);
+        DrawText("DELETE?", new Vector2(TournamentRulesDeleteConfirmationBounds.X + 28, TournamentRulesDeleteConfirmationBounds.Y + 150), new Color(180, 195, 195), 0.46f);
+        DrawCommandButton(TournamentRulesDeleteConfirmationCancelButtonBounds, "CANCEL", false, mousePoint, scale: 0.42f);
+        DrawCommandButton(TournamentRulesDeleteConfirmationConfirmButtonBounds, "DELETE", false, mousePoint, scale: 0.42f);
     }
 
     private void DrawGtpEngineSelectionDialog(GoAppSession session, Point mousePoint)
@@ -821,7 +855,11 @@ public sealed class GoScreenRenderer
 
     private static Rectangle TournamentRulesSelectionDialogCloseButtonBounds => new(1518, 156, 132, 48);
 
-    private static Rectangle TournamentRulesSelectionDialogAddButtonBounds => new(1368, 854, 282, 52);
+    private static Rectangle TournamentRulesSelectionDialogAddButtonBounds => new(1038, 854, 190, 52);
+
+    private static Rectangle TournamentRulesSelectionDialogEditButtonBounds => new(1248, 854, 190, 52);
+
+    private static Rectangle TournamentRulesSelectionDialogDeleteButtonBounds => new(1458, 854, 192, 52);
 
     private static Rectangle TournamentRulesSelectionDialogPreviousPageButtonBounds => new(270, 854, 150, 52);
 
@@ -832,6 +870,14 @@ public sealed class GoScreenRenderer
 
     private static Rectangle TournamentRulesSelectionDialogPropertyRowBounds(int index) =>
         new(TournamentRulesSelectionDialogPropertyBounds.X + 18, TournamentRulesSelectionDialogPropertyBounds.Y + 22 + index * 70, TournamentRulesSelectionDialogPropertyBounds.Width - 36, 52);
+
+    private static Rectangle TournamentRulesDeleteConfirmationBounds => new(640, 390, 640, 260);
+
+    private static Rectangle TournamentRulesDeleteConfirmationCancelButtonBounds =>
+        new(TournamentRulesDeleteConfirmationBounds.X + 300, TournamentRulesDeleteConfirmationBounds.Bottom - 76, 140, 48);
+
+    private static Rectangle TournamentRulesDeleteConfirmationConfirmButtonBounds =>
+        new(TournamentRulesDeleteConfirmationBounds.X + 464, TournamentRulesDeleteConfirmationBounds.Bottom - 76, 140, 48);
 
     private static Rectangle TournamentRulesAddPanelBounds => new(430, 126, 1060, 820);
 

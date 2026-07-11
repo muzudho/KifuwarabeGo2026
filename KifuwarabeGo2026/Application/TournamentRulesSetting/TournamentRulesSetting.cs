@@ -157,6 +157,11 @@ public sealed class TournamentRulesSetting
 
     private bool TryHandleTournamentRulesSelectionDialogClick(Point point)
     {
+        if (_session.IsTournamentRulesDeleteConfirmationOpen)
+        {
+            return TryHandleTournamentRulesDeleteConfirmationClick(point);
+        }
+
         if (GoScreenRenderer.TryGetTournamentRulesSelectionDialogPathCopyText(point, _session, out var path))
         {
             SystemClipboard.SetText(path);
@@ -172,6 +177,18 @@ public sealed class TournamentRulesSetting
         if (GoScreenRenderer.GetTournamentRulesSelectionDialogAddButtonHit(point))
         {
             CreateNewTournamentRules();
+            return true;
+        }
+
+        if (GoScreenRenderer.GetTournamentRulesSelectionDialogEditButtonHit(point))
+        {
+            EditSelectedTournamentRules();
+            return true;
+        }
+
+        if (GoScreenRenderer.GetTournamentRulesSelectionDialogDeleteButtonHit(point, _session.CanDeleteSelectedTournamentRules))
+        {
+            _session.OpenTournamentRulesDeleteConfirmation();
             return true;
         }
 
@@ -196,13 +213,61 @@ public sealed class TournamentRulesSetting
         return true;
     }
 
+    private bool TryHandleTournamentRulesDeleteConfirmationClick(Point point)
+    {
+        if (GoScreenRenderer.GetTournamentRulesDeleteConfirmationCancelButtonHit(point))
+        {
+            _session.CloseTournamentRulesDeleteConfirmation();
+            return true;
+        }
+
+        if (GoScreenRenderer.GetTournamentRulesDeleteConfirmationConfirmButtonHit(point))
+        {
+            DeleteSelectedTournamentRules();
+            return true;
+        }
+
+        return true;
+    }
+
     private void CreateNewTournamentRules()
     {
         var rules = _catalog.CreateNew(_session.CurrentTournamentRules);
         _session.AddAndSelectTournamentRules(rules);
-        _session.OpenTournamentRulesAddPanel();
+        _session.OpenTournamentRulesAddPanel(editExisting: false);
         BeginDisplayNameEdit();
         _session.MarkTournamentRulesSaved();
+    }
+
+    private void EditSelectedTournamentRules()
+    {
+        if (_session.SelectedTournamentRulesIndex < 0 || _session.SelectedTournamentRulesIndex >= _session.TournamentRulesList.Count)
+        {
+            return;
+        }
+
+        _session.SelectTournamentRules(_session.SelectedTournamentRulesIndex);
+        _session.OpenTournamentRulesAddPanel(editExisting: true);
+    }
+
+    private void DeleteSelectedTournamentRules()
+    {
+        if (!_session.CanDeleteSelectedTournamentRules)
+        {
+            _session.CloseTournamentRulesDeleteConfirmation();
+            return;
+        }
+
+        try
+        {
+            _catalog.Delete(_session.TournamentRulesList[_session.SelectedTournamentRulesIndex]);
+            _session.RemoveSelectedTournamentRules();
+        }
+        catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException or NotSupportedException)
+        {
+            _session.CloseTournamentRulesDeleteConfirmation();
+            _session.SetTournamentRulesDisplayNameWarning("Rules file could not be deleted.");
+        }
     }
 
     private void BeginDisplayNameEdit()

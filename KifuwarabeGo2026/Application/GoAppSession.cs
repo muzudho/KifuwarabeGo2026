@@ -43,6 +43,12 @@ public sealed class GoAppSession
 
     public bool IsTournamentRulesAddPanelOpen { get; private set; }
 
+    public bool IsTournamentRulesEditPanelMode { get; private set; }
+
+    public bool IsTournamentRulesDeleteConfirmationOpen { get; private set; }
+
+    public string TournamentRulesDeleteConfirmationFileName { get; private set; } = "";
+
     public int TournamentRulesSelectionPageIndex { get; private set; }
 
     public string TournamentRulesSaveMessage { get; private set; } = "";
@@ -199,6 +205,7 @@ public sealed class GoAppSession
         SelectedTournamentRulesIndex = index;
         ApplyTournamentRules(_tournamentRules[index]);
         TournamentRulesSaveMessage = "";
+        IsTournamentRulesDeleteConfirmationOpen = false;
     }
 
     public void AddAndSelectTournamentRules(TournamentRules rules)
@@ -220,17 +227,62 @@ public sealed class GoAppSession
         IsTournamentRulesSelectionDialogOpen = false;
     }
 
-    public void OpenTournamentRulesAddPanel()
+    public void OpenTournamentRulesAddPanel(bool editExisting)
     {
         IsGtpEngineSelectionDialogOpen = false;
         IsTournamentRulesSelectionDialogOpen = false;
         IsTournamentRulesAddPanelOpen = true;
+        IsTournamentRulesEditPanelMode = editExisting;
+        IsTournamentRulesDeleteConfirmationOpen = false;
     }
 
     public void CloseTournamentRulesAddPanel()
     {
         IsTournamentRulesAddPanelOpen = false;
+        IsTournamentRulesEditPanelMode = false;
         OpenTournamentRulesSelectionDialog();
+    }
+
+    public bool CanDeleteSelectedTournamentRules =>
+        _tournamentRules.Count > 1 &&
+        SelectedTournamentRulesIndex >= 0 &&
+        SelectedTournamentRulesIndex < _tournamentRules.Count;
+
+    public void OpenTournamentRulesDeleteConfirmation()
+    {
+        if (!CanDeleteSelectedTournamentRules)
+        {
+            return;
+        }
+
+        var path = _tournamentRules[SelectedTournamentRulesIndex].FilePath;
+        TournamentRulesDeleteConfirmationFileName = string.IsNullOrWhiteSpace(path)
+            ? _tournamentRules[SelectedTournamentRulesIndex].DisplayName
+            : Path.GetFileName(path);
+        IsTournamentRulesDeleteConfirmationOpen = true;
+    }
+
+    public void CloseTournamentRulesDeleteConfirmation()
+    {
+        IsTournamentRulesDeleteConfirmationOpen = false;
+        TournamentRulesDeleteConfirmationFileName = "";
+    }
+
+    public void RemoveSelectedTournamentRules()
+    {
+        if (!CanDeleteSelectedTournamentRules)
+        {
+            return;
+        }
+
+        var nextIndex = Math.Clamp(SelectedTournamentRulesIndex, 0, _tournamentRules.Count - 2);
+        _tournamentRules.RemoveAt(SelectedTournamentRulesIndex);
+        CloseTournamentRulesDeleteConfirmation();
+        SelectTournamentRules(nextIndex);
+        TournamentRulesSelectionPageIndex = Math.Clamp(
+            nextIndex / TournamentRulesSelectionPageSize,
+            0,
+            Math.Max(0, (int)Math.Ceiling(_tournamentRules.Count / (double)TournamentRulesSelectionPageSize) - 1));
     }
 
     public void MoveTournamentRulesSelectionPage(int step)
@@ -378,6 +430,7 @@ public sealed class GoAppSession
 
         IsTournamentRulesSelectionDialogOpen = false;
         IsTournamentRulesAddPanelOpen = false;
+        IsTournamentRulesDeleteConfirmationOpen = false;
         IsGtpEngineSelectionDialogOpen = true;
         GtpEngineSelectionTargetStone = stone;
         var selectedIndex = stone == GoStone.Black ? SelectedBlackGtpEngineIndex : SelectedWhiteGtpEngineIndex;

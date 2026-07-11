@@ -2,7 +2,7 @@
   "DisplayName": "CGF Open 2026 9-ro",
   "Rule": "pureGo",
   "BoardSize": 9,
-  "Komi": 7.0,
+  "Komi": 0.0,
   "MainTimeMinutes": 10,
   "MainTimeSeconds": 0,
   "MoveLimit": 400
