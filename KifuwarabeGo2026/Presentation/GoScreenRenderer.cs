@@ -580,7 +580,7 @@ public sealed class GoScreenRenderer
         DrawFittedText(displayName, textBounds, Color.White, 0.46f);
         if (active)
         {
-            DrawTextBoxCaret(displayName, session.TournamentRulesDisplayNameCaretIndex, textBounds);
+            DrawTextBoxCaret(displayName, session.TournamentRulesDisplayNameCaretIndex, textBounds, 0.46f);
         }
 
         if (!string.IsNullOrWhiteSpace(session.TournamentRulesDisplayNameWarning))
@@ -601,11 +601,10 @@ public sealed class GoScreenRenderer
         DrawCommandButton(TournamentRulesAddPanelFileBrowseButtonBounds, "REF", false, mousePoint, scale: 0.34f);
     }
 
-    private void DrawTextBoxCaret(string text, int caretIndex, Rectangle textBounds)
+    private void DrawTextBoxCaret(string text, int caretIndex, Rectangle textBounds, float textScale)
     {
         var clampedCaretIndex = Math.Clamp(caretIndex, 0, text.Length);
         var prefix = text[..clampedCaretIndex];
-        var textScale = 0.46f;
         var measuredText = _font.MeasureString(text);
         var fittedScale = MathF.Min(textScale, MathF.Min(textBounds.Width / Math.Max(1f, measuredText.X), textBounds.Height / Math.Max(1f, measuredText.Y)));
         var x = textBounds.X + MathF.Min(textBounds.Width - 2, _font.MeasureString(prefix).X * fittedScale);
@@ -790,7 +789,7 @@ public sealed class GoScreenRenderer
         DrawFittedText(string.IsNullOrEmpty(text) ? "-" : text, textBounds, Color.White, 0.42f);
         if (active)
         {
-            DrawTextBoxCaret(text, session.GtpEngineEditCaretIndex, textBounds);
+            DrawTextBoxCaret(text, session.GtpEngineEditCaretIndex, textBounds, 0.42f);
         }
 
         if (field == GtpEngineProfileEditField.ExecutablePath)
