@@ -49,6 +49,34 @@ public sealed class GoScreenRenderer
         _spriteBatch.End();
     }
 
+    public void DrawUseSelection(Point mousePosition)
+    {
+        var mousePoint = VirtualScreen.ToVirtualPoint(_graphicsDevice.Viewport, mousePosition);
+
+        _spriteBatch.Begin(
+            samplerState: SamplerState.LinearClamp,
+            transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));
+
+        DrawBackground();
+        DrawUseSelectionPanel(mousePoint);
+
+        _spriteBatch.End();
+    }
+
+    public void DrawCgosClientTop(Point mousePosition)
+    {
+        var mousePoint = VirtualScreen.ToVirtualPoint(_graphicsDevice.Viewport, mousePosition);
+
+        _spriteBatch.Begin(
+            samplerState: SamplerState.LinearClamp,
+            transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));
+
+        DrawBackground();
+        DrawCgosClientTopPanel(mousePoint);
+
+        _spriteBatch.End();
+    }
+
     public static int? GetBoardSizeButtonHit(Point point, GoAppModeKind modeKind)
     {
         if (modeKind == GoAppModeKind.GameOver)
@@ -292,6 +320,12 @@ public sealed class GoScreenRenderer
 
     public static bool GetSaveTournamentRulesButtonHit(Point point) => SaveTournamentRulesButtonBounds.Contains(point);
 
+    public static bool GetLocalUseButtonHit(Point point) => LocalUseButtonBounds.Contains(point);
+
+    public static bool GetCgosUseButtonHit(Point point) => CgosUseButtonBounds.Contains(point);
+
+    public static bool GetCgosBackButtonHit(Point point) => CgosBackButtonBounds.Contains(point);
+
     public static bool GetImportSgfButtonHit(Point point) => ImportSgfButtonBounds.Contains(point);
 
     public static bool GetStartReviewingButtonHit(Point point, bool enabled) =>
@@ -472,6 +506,126 @@ public sealed class GoScreenRenderer
         }
 
         DrawSetupSidePanel(session, mousePoint);
+    }
+
+    private void DrawUseSelectionPanel(Point mousePoint)
+    {
+        var panel = new Rectangle(420, 172, 1080, 736);
+        FillRect(new Rectangle(panel.X + 18, panel.Y + 20, panel.Width, panel.Height), new Color(0, 0, 0, 130));
+        FillRect(panel, new Color(21, 25, 32, 242));
+        DrawRect(panel, 2, new Color(82, 111, 114));
+
+        DrawText("KIFUWARABE GO 2026", new Vector2(panel.X + 58, panel.Y + 58), new Color(244, 238, 218), 1.05f);
+        DrawText("SELECT USE", new Vector2(panel.X + 62, panel.Y + 142), new Color(180, 195, 195), 0.54f);
+
+        DrawUseChoice(LocalUseButtonBounds, "Local (推奨)", "PLAY / REVIEW", cgosClient: false, mousePoint);
+        DrawUseChoice(CgosUseButtonBounds, "Connect To CGOS", "WATCH / CONNECT", cgosClient: true, mousePoint);
+    }
+
+    private void DrawUseChoice(Rectangle bounds, string title, string caption, bool cgosClient, Point mousePoint)
+    {
+        var hovered = bounds.Contains(mousePoint);
+        FillRect(new Rectangle(bounds.X + 8, bounds.Y + 10, bounds.Width, bounds.Height), new Color(0, 0, 0, 95));
+        FillRect(bounds, hovered ? new Color(36, 50, 58) : new Color(24, 31, 37));
+        DrawRect(bounds, 2, hovered ? new Color(178, 219, 226) : new Color(88, 102, 112));
+        FillRect(new Rectangle(bounds.X, bounds.Y, 6, bounds.Height), hovered ? new Color(99, 223, 185) : new Color(58, 78, 86));
+        DrawText(title, new Vector2(bounds.X + 42, bounds.Y + 34), Color.White, 0.66f);
+
+        var iconBounds = new Rectangle(bounds.X + 50, bounds.Y + 106, 300, 150);
+        if (cgosClient)
+        {
+            DrawCgosConnectedBox(iconBounds);
+        }
+        else
+        {
+            DrawLocalClosedBox(iconBounds);
+        }
+
+        DrawFittedText(caption, new Rectangle(bounds.X + 42, bounds.Y + 254, bounds.Width - 84, 44), new Color(204, 241, 226), 0.52f);
+    }
+
+    private void DrawLocalClosedBox(Rectangle bounds)
+    {
+        FillRect(new Rectangle(bounds.X + 8, bounds.Y + 10, bounds.Width, bounds.Height), new Color(0, 0, 0, 70));
+        FillRect(bounds, new Color(17, 24, 29));
+        DrawRect(bounds, 4, new Color(126, 150, 164));
+        DrawMiniBoardGrid(new Rectangle(bounds.X + 22, bounds.Y + 20, bounds.Width - 44, bounds.Height - 40), new Color(88, 102, 112, 85));
+
+        var left = new Vector2(bounds.X + 94, bounds.Y + 76);
+        var right = new Vector2(bounds.X + 206, bounds.Y + 76);
+        DrawLine(left, right, 5, new Color(99, 223, 185));
+        DrawIconStone(left, 24, black: true);
+        DrawIconStone(right, 24, black: false);
+    }
+
+    private void DrawCgosConnectedBox(Rectangle bounds)
+    {
+        FillRect(new Rectangle(bounds.X + 8, bounds.Y + 10, bounds.Width, bounds.Height), new Color(0, 0, 0, 70));
+        FillRect(bounds, new Color(17, 24, 29));
+        DrawCgosBoxFrame(bounds);
+        DrawMiniBoardGrid(new Rectangle(bounds.X + 22, bounds.Y + 44, bounds.Width - 44, bounds.Height - 64), new Color(88, 102, 112, 85));
+
+        var localStone = new Vector2(bounds.X + 150, bounds.Y + 92);
+        var exit = new Vector2(bounds.X + 150, bounds.Y);
+        var server = new Vector2(bounds.X + 252, bounds.Y - 18);
+
+        DrawLine(localStone, exit, 5, new Color(99, 223, 185));
+        DrawLine(exit, server, 5, new Color(99, 223, 185));
+        DrawIconStone(localStone, 24, black: true);
+        DrawIconStone(server, 18, black: false);
+    }
+
+    private void DrawCgosBoxFrame(Rectangle bounds)
+    {
+        var color = new Color(126, 150, 164);
+        var gapLeft = bounds.X + 136;
+        var gapRight = bounds.X + 164;
+        FillRect(new Rectangle(bounds.X, bounds.Y, gapLeft - bounds.X, 4), color);
+        FillRect(new Rectangle(gapRight, bounds.Y, bounds.Right - gapRight, 4), color);
+        FillRect(new Rectangle(bounds.X, bounds.Bottom - 4, bounds.Width, 4), color);
+        FillRect(new Rectangle(bounds.X, bounds.Y, 4, bounds.Height), color);
+        FillRect(new Rectangle(bounds.Right - 4, bounds.Y, 4, bounds.Height), color);
+    }
+
+    private void DrawIconStone(Vector2 center, float radius, bool black)
+    {
+        DrawCircle(center, radius + 5, black ? new Color(178, 219, 226) : new Color(72, 80, 84));
+        DrawStone(center, radius, black);
+        if (black)
+        {
+            DrawCircle(new Vector2(center.X - radius * 0.28f, center.Y - radius * 0.32f), radius * 0.22f, new Color(255, 255, 255, 42));
+        }
+    }
+
+    private void DrawMiniBoardGrid(Rectangle bounds, Color color)
+    {
+        for (var i = 0; i < 7; i++)
+        {
+            var x = bounds.X + i * bounds.Width / 6f;
+            DrawLine(new Vector2(x, bounds.Y), new Vector2(x, bounds.Bottom), 1, color);
+            var y = bounds.Y + i * bounds.Height / 6f;
+            DrawLine(new Vector2(bounds.X, y), new Vector2(bounds.Right, y), 1, color);
+        }
+    }
+
+    private void DrawCgosClientTopPanel(Point mousePoint)
+    {
+        var panel = new Rectangle(420, 172, 1080, 736);
+        FillRect(new Rectangle(panel.X + 18, panel.Y + 20, panel.Width, panel.Height), new Color(0, 0, 0, 130));
+        FillRect(panel, new Color(21, 25, 32, 242));
+        DrawRect(panel, 2, new Color(82, 111, 114));
+
+        DrawText("CGOS CLIENT", new Vector2(panel.X + 58, panel.Y + 58), new Color(255, 230, 160), 1.0f);
+        DrawText("CONNECTION", new Vector2(panel.X + 62, panel.Y + 142), new Color(180, 195, 195), 0.54f);
+        DrawInfoStrip(panel.X + 62, panel.Y + 204, "HOST", "uec-go.com:6809");
+        DrawInfoStrip(panel.X + 62, panel.Y + 292, "STATUS", "GUI NOT CONNECTED");
+        DrawInfoStrip(panel.X + 62, panel.Y + 380, "ROLE", "CGOS client area");
+        DrawFittedText(
+            "The CGOS communication program is currently separated as a console client. This screen is the new GUI entry point for CGOS-specific controls.",
+            new Rectangle(panel.X + 62, panel.Y + 500, panel.Width - 124, 84),
+            new Color(204, 211, 206),
+            0.42f);
+        DrawCommandButton(CgosBackButtonBounds, "BACK", false, mousePoint, scale: 0.56f);
     }
 
     private void DrawSetupSidePanel(GoAppSession session, Point mousePoint)
@@ -1276,6 +1430,12 @@ public sealed class GoScreenRenderer
     private static Rectangle StartBoardEditingButtonBounds => new(1486, 920, 154, 56);
 
     private static Rectangle SaveTournamentRulesButtonBounds => new(974, 798, 320, 56);
+
+    private static Rectangle LocalUseButtonBounds => new(508, 404, 438, 300);
+
+    private static Rectangle CgosUseButtonBounds => new(974, 404, 438, 300);
+
+    private static Rectangle CgosBackButtonBounds => new(1146, 800, 292, 64);
 
     private static Rectangle ReturnToSetupButtonBounds => new(1318, 910, 320, 56);
 

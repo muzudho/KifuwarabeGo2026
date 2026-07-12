@@ -375,12 +375,14 @@ internal sealed class CgosClient
         }
     }
 
+    /// <summary>
+    /// ログアウト。CGOS へ "quit" コマンドを送る。
+    /// </summary>
+    /// <param name="writer">CGOS への接続ストリームライター</param>
+    /// <returns></returns>
     private async Task LogoutAsync(StreamWriter? writer)
     {
-        if (writer is null)
-        {
-            return;
-        }
+        if (writer is null) return;
 
         try
         {

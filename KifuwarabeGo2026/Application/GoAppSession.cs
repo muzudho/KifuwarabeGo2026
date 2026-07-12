@@ -40,6 +40,8 @@ public sealed class GoAppSession
 
     public GoAppMode CurrentMode { get; private set; }
 
+    public GoAppUseKind? UseKind { get; private set; }
+
     public int BoardSize { get; private set; } = 19;
 
     public IReadOnlyList<TournamentRules> TournamentRulesList => _tournamentRules;
@@ -180,6 +182,16 @@ public sealed class GoAppSession
     public void ChangeMode(GoAppModeKind modeKind)
     {
         CurrentMode = _modes[modeKind];
+    }
+
+    public void SelectUseKind(GoAppUseKind useKind)
+    {
+        UseKind = useKind;
+    }
+
+    public void ReturnToUseSelection()
+    {
+        UseKind = null;
     }
 
     public void ToggleRenParseDisplay()

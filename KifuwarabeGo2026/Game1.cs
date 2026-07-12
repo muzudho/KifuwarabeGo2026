@@ -66,6 +66,13 @@ public class Game1 : Game
             Exit();
         }
 
+        if (_session.UseKind is not GoAppUseKind.LocalGame)
+        {
+            UpdateMouseInput();
+            base.Update(gameTime);
+            return;
+        }
+
         _playingScene.Update();
         _session.AddCurrentTurnElapsedTime(gameTime.ElapsedGameTime);
         UpdateGlobalKeyboardInput(keyboard);
@@ -165,7 +172,18 @@ public class Game1 : Game
     protected override void Draw(GameTime gameTime)
     {
         GraphicsDevice.Clear(new Color(11, 13, 18));
-        _renderer?.Draw(_session, Mouse.GetState().Position);
+        if (_session.UseKind is null)
+        {
+            _renderer?.DrawUseSelection(Mouse.GetState().Position);
+        }
+        else if (_session.UseKind == GoAppUseKind.CgosClient)
+        {
+            _renderer?.DrawCgosClientTop(Mouse.GetState().Position);
+        }
+        else
+        {
+            _renderer?.Draw(_session, Mouse.GetState().Position);
+        }
 
         base.Draw(gameTime);
     }
@@ -176,6 +194,32 @@ public class Game1 : Game
         if (_previousMouse.LeftButton == ButtonState.Released && mouse.LeftButton == ButtonState.Pressed)
         {
             var point = VirtualScreen.ToVirtualPoint(GraphicsDevice.Viewport, mouse.Position);
+            if (_session.UseKind is null)
+            {
+                if (GoScreenRenderer.GetLocalUseButtonHit(point))
+                {
+                    _session.SelectUseKind(GoAppUseKind.LocalGame);
+                }
+                else if (GoScreenRenderer.GetCgosUseButtonHit(point))
+                {
+                    _session.SelectUseKind(GoAppUseKind.CgosClient);
+                }
+
+                _previousMouse = mouse;
+                return;
+            }
+
+            if (_session.UseKind == GoAppUseKind.CgosClient)
+            {
+                if (GoScreenRenderer.GetCgosBackButtonHit(point))
+                {
+                    _session.ReturnToUseSelection();
+                }
+
+                _previousMouse = mouse;
+                return;
+            }
+
             var isSetupMode = _session.CurrentMode.Kind == GoAppModeKind.Resting;
             var isBoardEditing = _session.CurrentMode.Kind == GoAppModeKind.BoardEditing;
             var handledByGtpEngineEditPanel = isSetupMode && !isBoardEditing && TryHandleGtpEngineEditPanelClick(point);
