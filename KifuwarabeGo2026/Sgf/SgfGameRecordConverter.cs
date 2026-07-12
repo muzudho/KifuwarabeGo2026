@@ -34,6 +34,10 @@ public static class SgfGameRecordConverter
         {
             builder.Append(';');
             AppendProperty(builder, move.Stone == GoStone.Black ? "B" : "W", SgfCoordinate.FormatPoint(move.Point, record.BoardSize));
+            if (!string.IsNullOrWhiteSpace(move.Comment))
+            {
+                AppendProperty(builder, "C", move.Comment);
+            }
         }
 
         builder.Append(')');
@@ -147,7 +151,8 @@ public static class SgfGameRecordConverter
             throw new SgfParseException($"Invalid SGF move point {propertyName}[{values[0]}].");
         }
 
-        record.Moves.Add(new GoGameMove(stone, point));
+        var comment = TryGetSingleValue(node, "C", out var nodeComment) ? nodeComment : "";
+        record.Moves.Add(new GoGameMove(stone, point, comment));
         return true;
     }
 

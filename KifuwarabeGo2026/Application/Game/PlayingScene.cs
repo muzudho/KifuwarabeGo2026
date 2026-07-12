@@ -280,7 +280,8 @@ public sealed class PlayingScene : IDisposable
 
         if (GtpCoordinate.IsPass(result.MoveText))
         {
-            if (_session.Pass())
+            var comment = result.PlayedBy is null ? "" : _session.GetOwnEyeForcedPassComment();
+            if (_session.Pass(comment))
             {
                 PlayPlaceStoneSound(0.45f, 0.25f, 0f);
             }

@@ -119,6 +119,25 @@ public sealed class GoBoard
         return BuildRenParseResult(renNumbers, renNumber);
     }
 
+    public bool IsEyeFor(int x, int y, GoStone stone) => IsEyeFor(ParseRens(), x, y, stone);
+
+    public bool IsEyeFor(GoRenParseResult renParse, int x, int y, GoStone stone)
+    {
+        ArgumentNullException.ThrowIfNull(renParse);
+        if (stone == GoStone.Empty || renParse.Size != Size || !IsOnBoard(x, y) || _stones[x, y] != GoStone.Empty)
+        {
+            return false;
+        }
+
+        var ren = renParse.GetRen(renParse.GetRenNumber(x, y));
+        if (!ren.IsEye || ren.EyeOwnerRenNumber is not { } ownerRenNumber)
+        {
+            return false;
+        }
+
+        return renParse.GetRen(ownerRenNumber).Stone == stone;
+    }
+
     public bool TryPlaceStone(int x, int y, GoStone stone, GoPoint? forbiddenKoPoint, out int capturedStones, out GoPoint? koPoint)
     {
         capturedStones = 0;

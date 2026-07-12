@@ -966,7 +966,7 @@ public sealed class GoAppSession
         return true;
     }
 
-    public bool Pass()
+    public bool Pass(string comment = "")
     {
         if (CurrentMode.Kind != GoAppModeKind.Playing)
         {
@@ -975,7 +975,7 @@ public sealed class GoAppSession
 
         KoPoint = null;
         ConsecutivePasses++;
-        CurrentGameRecord.Moves.Add(new GoGameMove(CurrentTurn, null));
+        CurrentGameRecord.Moves.Add(new GoGameMove(CurrentTurn, null, comment));
         CompleteMoveAndPassTurn();
         if (CurrentMode.Kind == GoAppModeKind.GameOver)
         {
@@ -989,6 +989,36 @@ public sealed class GoAppSession
         }
 
         return true;
+    }
+
+    public string GetOwnEyeForcedPassComment()
+    {
+        if (CurrentMode.Kind != GoAppModeKind.Playing)
+        {
+            return "";
+        }
+
+        var renParse = _board.ParseRens();
+        var hasLegalMove = false;
+        for (var y = 0; y < BoardSize; y++)
+        {
+            for (var x = 0; x < BoardSize; x++)
+            {
+                var trialBoard = _board.Clone();
+                if (!trialBoard.TryPlaceStone(x, y, CurrentTurn, KoPoint, out _, out _))
+                {
+                    continue;
+                }
+
+                hasLegalMove = true;
+                if (!_board.IsEyeFor(renParse, x, y, CurrentTurn))
+                {
+                    return "";
+                }
+            }
+        }
+
+        return hasLegalMove ? "自分の目に打つしかなかったのでパスした。" : "";
     }
 
     public bool Resign()

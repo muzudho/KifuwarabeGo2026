@@ -142,13 +142,15 @@ internal sealed class GtpEngine
             return;
         }
 
+        var renParse = _board.ParseRens();
         var legalMoves = new List<GoPoint>();
         for (var y = 0; y < _board.Size; y++)
         {
             for (var x = 0; x < _board.Size; x++)
             {
                 var trial = _board.Clone();
-                if (trial.TryPlaceStone(x, y, color, _koPoint, out _, out _))
+                if (trial.TryPlaceStone(x, y, color, _koPoint, out _, out _) &&
+                    !_board.IsEyeFor(renParse, x, y, color))
                 {
                     legalMoves.Add(new GoPoint(x, y));
                 }
