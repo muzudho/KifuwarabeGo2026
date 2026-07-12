@@ -329,7 +329,18 @@ public sealed class GoScreenRenderer
 
     public static bool GetCgosBackButtonHit(Point point) => CgosBackButtonBounds.Contains(point);
 
+    public static bool GetCgosPreviousPageButtonHit(Point point) => CgosPreviousPageButtonBounds.Contains(point);
+
+    public static bool GetCgosNextPageButtonHit(Point point) => CgosNextPageButtonBounds.Contains(point);
+
+    public static bool GetCgosAddButtonHit(Point point) => CgosAddButtonBounds.Contains(point);
+
     public static bool GetCgosEditButtonHit(Point point) => CgosEditButtonBounds.Contains(point);
+
+    public static bool GetCgosDuplicateButtonHit(Point point) => CgosDuplicateButtonBounds.Contains(point);
+
+    public static bool GetCgosDeleteButtonHit(Point point, bool enabled) =>
+        enabled && CgosDeleteButtonBounds.Contains(point);
 
     public static bool GetCgosConnectionEditPanelCloseButtonHit(Point point) =>
         CgosConnectionEditPanelCloseButtonBounds.Contains(point);
@@ -342,12 +353,15 @@ public sealed class GoScreenRenderer
 
     public static int? GetCgosConnectionProfileHit(Point point, GoAppSession session)
     {
-        for (var i = 0; i < session.CgosConnectionProfiles.Count; i++)
+        var visibleSlot = 0;
+        foreach (var index in session.GetVisibleCgosConnectionProfileIndexes())
         {
-            if (CgosConnectionProfileBounds(i).Contains(point))
+            if (CgosConnectionProfileBounds(visibleSlot).Contains(point))
             {
-                return i;
+                return index;
             }
+
+            visibleSlot++;
         }
 
         return null;
@@ -648,19 +662,21 @@ public sealed class GoScreenRenderer
         DrawText("LIST", new Vector2(CgosConnectionListBounds.X, CgosConnectionListBounds.Y - 34), new Color(180, 195, 195), 0.46f);
         FillRect(CgosConnectionListBounds, new Color(15, 20, 26));
         DrawRect(CgosConnectionListBounds, 1, new Color(67, 84, 92));
-        for (var i = 0; i < session.CgosConnectionProfiles.Count; i++)
+        var visibleSlot = 0;
+        foreach (var index in session.GetVisibleCgosConnectionProfileIndexes())
         {
-            DrawCgosConnectionProfileItem(CgosConnectionProfileBounds(i), session, i, mousePoint);
+            DrawCgosConnectionProfileItem(CgosConnectionProfileBounds(visibleSlot), session, index, mousePoint);
+            visibleSlot++;
         }
 
         DrawText("PROPERTIES", new Vector2(CgosConnectionPropertyBounds.X, CgosConnectionPropertyBounds.Y - 34), new Color(180, 195, 195), 0.46f);
         DrawCgosConnectionProperties(session);
-        DrawCommandButton(CgosPreviousPageButtonBounds, "PREV", false, mousePoint, enabled: false, scale: 0.42f);
-        DrawCommandButton(CgosNextPageButtonBounds, "NEXT", false, mousePoint, enabled: false, scale: 0.42f);
+        DrawCommandButton(CgosPreviousPageButtonBounds, "PREV", false, mousePoint, enabled: session.CanMoveCgosConnectionSelectionPage(-1), scale: 0.42f);
+        DrawCommandButton(CgosNextPageButtonBounds, "NEXT", false, mousePoint, enabled: session.CanMoveCgosConnectionSelectionPage(1), scale: 0.42f);
         DrawCommandButton(CgosAddButtonBounds, "ADD", false, mousePoint, scale: 0.38f);
         DrawCommandButton(CgosEditButtonBounds, "EDIT", false, mousePoint, enabled: session.CgosConnectionProfiles.Count > 0, scale: 0.38f);
         DrawCommandButton(CgosDuplicateButtonBounds, "DUPLICATE", false, mousePoint, enabled: session.CgosConnectionProfiles.Count > 0, scale: 0.25f);
-        DrawCommandButton(CgosDeleteButtonBounds, "DELETE", false, mousePoint, enabled: session.CgosConnectionProfiles.Count > 1, scale: 0.34f);
+        DrawCommandButton(CgosDeleteButtonBounds, "DELETE", false, mousePoint, enabled: session.CanDeleteSelectedCgosConnectionProfile, scale: 0.34f);
         DrawCommandButton(CgosBackButtonBounds, "BACK", false, mousePoint, scale: 0.42f);
         DrawCgosConnectionEditPanel(session, mousePoint);
     }
@@ -677,7 +693,7 @@ public sealed class GoScreenRenderer
         FillRect(CgosConnectionEditPanelBounds, new Color(19, 24, 31, 250));
         DrawRect(CgosConnectionEditPanelBounds, 2, new Color(116, 145, 146));
 
-        DrawText("EDIT CGOS PROFILE", new Vector2(CgosConnectionEditPanelBounds.X + 28, CgosConnectionEditPanelBounds.Y + 24), new Color(244, 238, 218), 0.68f);
+        DrawText(session.IsCgosConnectionAddPanelMode ? "ADD CGOS PROFILE" : "EDIT CGOS PROFILE", new Vector2(CgosConnectionEditPanelBounds.X + 28, CgosConnectionEditPanelBounds.Y + 24), new Color(244, 238, 218), 0.68f);
         DrawCommandButton(CgosConnectionEditPanelCloseButtonBounds, "BACK", false, mousePoint, scale: 0.42f);
 
         FillRect(CgosConnectionEditPanelEditorBounds, new Color(15, 20, 26));

@@ -14,6 +14,7 @@ public sealed class GoAppSession
     private readonly List<TournamentRules> _tournamentRules = new();
     private readonly List<GtpEngineProfile> _gtpEngineProfiles = new();
     private readonly List<CgosConnectionProfile> _cgosConnectionProfiles = new();
+    private CgosConnectionProfile _cgosConnectionEditSource = CreateDefaultCgosConnectionProfile();
     private TournamentRules _currentTournamentRules = new();
     private GoRenParseResult? _cachedRenParseResult;
     private int _cachedRenParseBoardSize;
@@ -51,6 +52,8 @@ public sealed class GoAppSession
 
     public bool IsCgosConnectionEditPanelOpen { get; private set; }
 
+    public bool IsCgosConnectionAddPanelMode { get; private set; }
+
     public bool IsCgosConnectionDisplayNameEditing { get; private set; }
 
     public string CgosConnectionDisplayNameDraft { get; private set; } = "";
@@ -60,6 +63,8 @@ public sealed class GoAppSession
     public string CgosConnectionEditWarning { get; private set; } = "";
 
     public string CgosConnectionEditSaveMessage { get; private set; } = "";
+
+    public int CgosConnectionSelectionPageIndex { get; private set; }
 
     public int BoardSize { get; private set; } = 19;
 
@@ -221,6 +226,7 @@ public sealed class GoAppSession
         }
 
         SelectedCgosConnectionProfileIndex = index;
+        CgosConnectionSelectionPageIndex = index / CgosConnectionSelectionPageSize;
     }
 
     public void SetCgosConnectionProfiles(IEnumerable<CgosConnectionProfile> profiles)
@@ -233,13 +239,47 @@ public sealed class GoAppSession
         }
 
         SelectedCgosConnectionProfileIndex = Math.Clamp(SelectedCgosConnectionProfileIndex, 0, _cgosConnectionProfiles.Count - 1);
+        CgosConnectionSelectionPageIndex = SelectedCgosConnectionProfileIndex / CgosConnectionSelectionPageSize;
     }
 
     public void OpenCgosConnectionEditPanel()
     {
         IsCgosConnectionEditPanelOpen = true;
+        IsCgosConnectionAddPanelMode = false;
         IsCgosConnectionDisplayNameEditing = false;
+        _cgosConnectionEditSource = SelectedCgosConnectionProfile;
         CgosConnectionDisplayNameDraft = SelectedCgosConnectionProfile.DisplayName;
+        CgosConnectionDisplayNameCaretIndex = CgosConnectionDisplayNameDraft.Length;
+        CgosConnectionEditWarning = "";
+        CgosConnectionEditSaveMessage = "";
+    }
+
+    public void OpenCgosConnectionAddPanel()
+    {
+        IsCgosConnectionEditPanelOpen = true;
+        IsCgosConnectionAddPanelMode = true;
+        IsCgosConnectionDisplayNameEditing = false;
+        _cgosConnectionEditSource = CreateDefaultCgosConnectionProfile();
+        CgosConnectionDisplayNameDraft = "New CGOS Connection";
+        CgosConnectionDisplayNameCaretIndex = CgosConnectionDisplayNameDraft.Length;
+        CgosConnectionEditWarning = "";
+        CgosConnectionEditSaveMessage = "";
+    }
+
+    public void OpenCgosConnectionDuplicatePanel()
+    {
+        if (_cgosConnectionProfiles.Count == 0)
+        {
+            return;
+        }
+
+        IsCgosConnectionEditPanelOpen = true;
+        IsCgosConnectionAddPanelMode = true;
+        IsCgosConnectionDisplayNameEditing = false;
+        _cgosConnectionEditSource = SelectedCgosConnectionProfile;
+        CgosConnectionDisplayNameDraft = string.IsNullOrWhiteSpace(_cgosConnectionEditSource.DisplayName)
+            ? "Unnamed CGOS Connection Copy"
+            : $"{_cgosConnectionEditSource.DisplayName.Trim()} Copy";
         CgosConnectionDisplayNameCaretIndex = CgosConnectionDisplayNameDraft.Length;
         CgosConnectionEditWarning = "";
         CgosConnectionEditSaveMessage = "";
@@ -248,6 +288,7 @@ public sealed class GoAppSession
     public void CloseCgosConnectionEditPanel()
     {
         IsCgosConnectionEditPanelOpen = false;
+        IsCgosConnectionAddPanelMode = false;
         IsCgosConnectionDisplayNameEditing = false;
         CgosConnectionEditWarning = "";
         CgosConnectionEditSaveMessage = "";
@@ -279,14 +320,74 @@ public sealed class GoAppSession
 
     public void SaveCgosConnectionDisplayName(string displayName)
     {
-        _cgosConnectionProfiles[SelectedCgosConnectionProfileIndex] = SelectedCgosConnectionProfile with
+        if (IsCgosConnectionAddPanelMode)
         {
-            DisplayName = displayName,
-        };
+            _cgosConnectionProfiles.Add(_cgosConnectionEditSource with
+            {
+                DisplayName = displayName,
+            });
+            SelectedCgosConnectionProfileIndex = _cgosConnectionProfiles.Count - 1;
+            CgosConnectionSelectionPageIndex = SelectedCgosConnectionProfileIndex / CgosConnectionSelectionPageSize;
+            IsCgosConnectionAddPanelMode = false;
+        }
+        else
+        {
+            _cgosConnectionProfiles[SelectedCgosConnectionProfileIndex] = SelectedCgosConnectionProfile with
+            {
+                DisplayName = displayName,
+            };
+        }
+
         CgosConnectionDisplayNameDraft = displayName;
         CgosConnectionDisplayNameCaretIndex = Math.Clamp(CgosConnectionDisplayNameCaretIndex, 0, displayName.Length);
         CgosConnectionEditSaveMessage = "SAVED";
         CgosConnectionEditWarning = "";
+    }
+
+    public void RemoveSelectedCgosConnectionProfile()
+    {
+        if (!CanDeleteSelectedCgosConnectionProfile)
+        {
+            return;
+        }
+
+        var removedIndex = SelectedCgosConnectionProfileIndex;
+        var nextIndex = Math.Clamp(removedIndex, 0, _cgosConnectionProfiles.Count - 2);
+        _cgosConnectionProfiles.RemoveAt(removedIndex);
+        SelectedCgosConnectionProfileIndex = nextIndex;
+        CgosConnectionSelectionPageIndex = Math.Clamp(
+            nextIndex / CgosConnectionSelectionPageSize,
+            0,
+            Math.Max(0, GetCgosConnectionSelectionPageCount() - 1));
+    }
+
+    public void MoveCgosConnectionSelectionPage(int step)
+    {
+        CgosConnectionSelectionPageIndex = Math.Clamp(
+            CgosConnectionSelectionPageIndex + step,
+            0,
+            GetCgosConnectionSelectionPageCount() - 1);
+    }
+
+    public int GetCgosConnectionSelectionPageCount() =>
+        Math.Max(1, (int)Math.Ceiling(_cgosConnectionProfiles.Count / (double)CgosConnectionSelectionPageSize));
+
+    public bool CanDeleteSelectedCgosConnectionProfile =>
+        _cgosConnectionProfiles.Count > 1 &&
+        SelectedCgosConnectionProfileIndex >= 0 &&
+        SelectedCgosConnectionProfileIndex < _cgosConnectionProfiles.Count;
+
+    public bool CanMoveCgosConnectionSelectionPage(int step) =>
+        Math.Clamp(CgosConnectionSelectionPageIndex + step, 0, GetCgosConnectionSelectionPageCount() - 1) != CgosConnectionSelectionPageIndex;
+
+    public IEnumerable<int> GetVisibleCgosConnectionProfileIndexes()
+    {
+        var startIndex = CgosConnectionSelectionPageIndex * CgosConnectionSelectionPageSize;
+        var endIndex = Math.Min(startIndex + CgosConnectionSelectionPageSize, _cgosConnectionProfiles.Count);
+        for (var i = startIndex; i < endIndex; i++)
+        {
+            yield return i;
+        }
     }
 
     public void ToggleRenParseDisplay()
@@ -1394,6 +1495,8 @@ public sealed class GoAppSession
 
     public const int GtpEngineSelectionPageSize = 6;
 
+    public const int CgosConnectionSelectionPageSize = 3;
+
     private void CompleteMoveAndPassTurn()
     {
         PlayedMoveCount++;
@@ -1508,6 +1611,9 @@ public sealed class GoAppSession
     private static GoStone OppositeOf(GoStone stone) => stone == GoStone.Black ? GoStone.White : GoStone.Black;
 
     private static string StoneName(GoStone stone) => stone == GoStone.Black ? "BLACK" : "WHITE";
+
+    private static CgosConnectionProfile CreateDefaultCgosConnectionProfile() =>
+        new("New CGOS Connection", "uec-go.com", 6809, "PRACTICE", "CGOS practice server");
 
     private static int AdjustGtpEngineSelectionAfterDelete(int selectedIndex, int removedIndex, int fallbackIndex)
     {

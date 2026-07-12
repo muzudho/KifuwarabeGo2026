@@ -231,9 +231,30 @@ public class Game1 : Game
                 {
                     _session.ReturnToUseSelection();
                 }
+                else if (GoScreenRenderer.GetCgosAddButtonHit(point))
+                {
+                    _session.OpenCgosConnectionAddPanel();
+                }
                 else if (GoScreenRenderer.GetCgosEditButtonHit(point) && _session.CgosConnectionProfiles.Count > 0)
                 {
                     _session.OpenCgosConnectionEditPanel();
+                }
+                else if (GoScreenRenderer.GetCgosDuplicateButtonHit(point) && _session.CgosConnectionProfiles.Count > 0)
+                {
+                    _session.OpenCgosConnectionDuplicatePanel();
+                }
+                else if (GoScreenRenderer.GetCgosDeleteButtonHit(point, _session.CanDeleteSelectedCgosConnectionProfile))
+                {
+                    _session.RemoveSelectedCgosConnectionProfile();
+                    _cgosConnectionCatalog.Save(_session.CgosConnectionProfiles);
+                }
+                else if (GoScreenRenderer.GetCgosPreviousPageButtonHit(point))
+                {
+                    _session.MoveCgosConnectionSelectionPage(-1);
+                }
+                else if (GoScreenRenderer.GetCgosNextPageButtonHit(point))
+                {
+                    _session.MoveCgosConnectionSelectionPage(1);
                 }
                 else if (GoScreenRenderer.GetCgosConnectionProfileHit(point, _session) is { } connectionProfileIndex)
                 {

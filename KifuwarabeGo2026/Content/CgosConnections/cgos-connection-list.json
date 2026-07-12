@@ -20,6 +20,20 @@
       "port": 6809,
       "role": "FINAL",
       "note": "CGF Open 2026 final connection"
+    },
+    {
+      "displayName": "New CGOS Connection 2",
+      "host": "uec-go.com",
+      "port": 6809,
+      "role": "PRACTICE",
+      "note": "CGOS practice server"
+    },
+    {
+      "displayName": "New CGOS Connection 1 Copy",
+      "host": "uec-go.com",
+      "port": 6809,
+      "role": "PRACTICE",
+      "note": "CGOS practice server"
     }
   ]
 }
