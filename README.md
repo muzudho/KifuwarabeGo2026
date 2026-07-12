@@ -3,6 +3,11 @@
 ［きふわらべ碁２０２６］ は、C# / MonoGame をベースに AIコーディングしたコンピューター囲碁アプリケーションです。  
 9路、13路、19路の対局画面を持ち、別プロセスの GTP エンジンと接続して人間対コンピューター、コンピューター同士の対局を動かせます。  
 
+## リンク
+
+- [リリースページ](https://github.com/muzudho/KifuwarabeGo2026/releases)
+- [開発日誌 2026年7月](./KifuwarabeGo2026/Docs/開発/開発日誌/2026-07.md)
+
 ![スクリーンショットv1.0.0](./RepositoryAssets/Screenshots/スクリーンショット-20260712-171040-v100リリース.png)  
 
 
@@ -53,4 +58,3 @@ dotnet publish KifuwarabeGo2026.Engine\KifuwarabeGo2026.Engine.csproj -c Release
 ## ドキュメント
 
 - [共有ドキュメント](./KifuwarabeGo2026/Docs/README.md)
-- [開発日誌 2026年7月](./KifuwarabeGo2026/Docs/開発/開発日誌/2026-07.md)
