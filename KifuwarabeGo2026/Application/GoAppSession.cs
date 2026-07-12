@@ -181,7 +181,8 @@ public sealed class GoAppSession
         {
             RenParseDisplayMode.Off => RenParseDisplayMode.Overlay,
             RenParseDisplayMode.Overlay => RenParseDisplayMode.Graph,
-            RenParseDisplayMode.Graph => RenParseDisplayMode.Eye,
+            RenParseDisplayMode.Graph => RenParseDisplayMode.GraphStep2,
+            RenParseDisplayMode.GraphStep2 => RenParseDisplayMode.Eye,
             _ => RenParseDisplayMode.Off,
         };
     }

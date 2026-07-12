@@ -402,7 +402,11 @@ public sealed class GoScreenRenderer
             DrawCircle(center, Math.Max(5, cell * 0.1f), new Color(55, 38, 25));
         }
 
-        if (session.RenParseDisplayMode is RenParseDisplayMode.Graph or RenParseDisplayMode.Eye)
+        if (session.RenParseDisplayMode == RenParseDisplayMode.Graph)
+        {
+            DrawRenGraphStep1Overlay(session, start, cell);
+        }
+        else if (session.RenParseDisplayMode is RenParseDisplayMode.GraphStep2 or RenParseDisplayMode.Eye)
         {
             DrawRenGraphOverlay(session, start, cell, session.RenParseDisplayMode == RenParseDisplayMode.Eye);
         }
@@ -1511,6 +1515,14 @@ public sealed class GoScreenRenderer
         DrawRenNumbers(renParse, start, cell);
     }
 
+    private void DrawRenGraphStep1Overlay(GoAppSession session, Vector2 start, float cell)
+    {
+        var renParse = session.ParseRens();
+        DrawRenGraphCells(session, start, cell);
+        DrawRenBoundaries(renParse, start, cell);
+        DrawRenRepresentativeNumbers(renParse, start, cell);
+    }
+
     private void DrawRenGraphOverlay(GoAppSession session, Vector2 start, float cell, bool applyEyeJudgement)
     {
         var renParse = session.ParseRens();
@@ -1524,6 +1536,24 @@ public sealed class GoScreenRenderer
         FillRect(BoardBounds, new Color(56, 145, 129));
         DrawRenGraphEdges(nodes, edges, cell);
         DrawRenGraphNodes(nodes, cell);
+    }
+
+    private void DrawRenGraphCells(GoAppSession session, Vector2 start, float cell)
+    {
+        var halfCell = cell * 0.5f;
+        for (var y = 0; y < session.BoardSize; y++)
+        {
+            for (var x = 0; x < session.BoardSize; x++)
+            {
+                var center = BoardPoint(start, cell, x, y);
+                var rect = new Rectangle(
+                    (int)MathF.Round(center.X - halfCell),
+                    (int)MathF.Round(center.Y - halfCell),
+                    (int)MathF.Ceiling(cell),
+                    (int)MathF.Ceiling(cell));
+                FillRect(rect, RenGraphCellColor(session.GetStone(x, y)));
+            }
+        }
     }
 
     private RenGraphNode[] CreateRenGraphNodes(GoAppSession session, GoRenParseResult renParse, Vector2 start, float cell, out int[] cellCounts)
@@ -1768,6 +1798,13 @@ public sealed class GoScreenRenderer
     }
 
     private static Color RenGraphNodeColor(GoStone stone) => stone switch
+    {
+        GoStone.Black => Color.Black,
+        GoStone.White => new Color(248, 248, 244),
+        _ => new Color(255, 197, 18),
+    };
+
+    private static Color RenGraphCellColor(GoStone stone) => stone switch
     {
         GoStone.Black => Color.Black,
         GoStone.White => new Color(248, 248, 244),
