@@ -629,7 +629,7 @@ public sealed class GoScreenRenderer
         DrawRect(panel, 2, new Color(82, 111, 114));
 
         DrawText("CGOS CLIENT", new Vector2(panel.X + 58, panel.Y + 58), new Color(255, 230, 160), 1.0f);
-        DrawText("CONNECTION PROFILE", new Vector2(panel.X + 62, panel.Y + 142), new Color(180, 195, 195), 0.54f);
+        DrawText("CONNECTION PROFILE", new Vector2(panel.X + 62, panel.Y + 112), new Color(180, 195, 195), 0.54f);
 
         DrawText("LIST", new Vector2(CgosConnectionListBounds.X, CgosConnectionListBounds.Y - 34), new Color(180, 195, 195), 0.46f);
         FillRect(CgosConnectionListBounds, new Color(15, 20, 26));
@@ -641,7 +641,13 @@ public sealed class GoScreenRenderer
 
         DrawText("PROPERTIES", new Vector2(CgosConnectionPropertyBounds.X, CgosConnectionPropertyBounds.Y - 34), new Color(180, 195, 195), 0.46f);
         DrawCgosConnectionProperties(session);
-        DrawCommandButton(CgosBackButtonBounds, "BACK", false, mousePoint, scale: 0.56f);
+        DrawCommandButton(CgosPreviousPageButtonBounds, "PREV", false, mousePoint, enabled: false, scale: 0.42f);
+        DrawCommandButton(CgosNextPageButtonBounds, "NEXT", false, mousePoint, enabled: false, scale: 0.42f);
+        DrawCommandButton(CgosAddButtonBounds, "ADD", false, mousePoint, scale: 0.38f);
+        DrawCommandButton(CgosEditButtonBounds, "EDIT", false, mousePoint, enabled: session.CgosConnectionProfiles.Count > 0, scale: 0.38f);
+        DrawCommandButton(CgosDuplicateButtonBounds, "DUPLICATE", false, mousePoint, enabled: session.CgosConnectionProfiles.Count > 0, scale: 0.25f);
+        DrawCommandButton(CgosDeleteButtonBounds, "DELETE", false, mousePoint, enabled: session.CgosConnectionProfiles.Count > 1, scale: 0.34f);
+        DrawCommandButton(CgosBackButtonBounds, "BACK", false, mousePoint, scale: 0.42f);
     }
 
     private void DrawCgosConnectionProfileItem(Rectangle bounds, GoAppSession session, int index, Point mousePoint)
@@ -1486,11 +1492,23 @@ public sealed class GoScreenRenderer
 
     private static Rectangle CgosUseButtonBounds => new(974, 404, 438, 300);
 
-    private static Rectangle CgosBackButtonBounds => new(1146, 800, 292, 64);
+    private static Rectangle CgosBackButtonBounds => new(1348, 204, 110, 48);
 
-    private static Rectangle CgosConnectionListBounds => new(482, 326, 420, 356);
+    private static Rectangle CgosPreviousPageButtonBounds => new(482, 800, 130, 52);
 
-    private static Rectangle CgosConnectionPropertyBounds => new(936, 326, 500, 426);
+    private static Rectangle CgosNextPageButtonBounds => new(772, 800, 130, 52);
+
+    private static Rectangle CgosAddButtonBounds => new(936, 800, 120, 52);
+
+    private static Rectangle CgosEditButtonBounds => new(1062, 800, 120, 52);
+
+    private static Rectangle CgosDuplicateButtonBounds => new(1188, 800, 120, 52);
+
+    private static Rectangle CgosDeleteButtonBounds => new(1316, 800, 120, 52);
+
+    private static Rectangle CgosConnectionListBounds => new(482, 350, 420, 332);
+
+    private static Rectangle CgosConnectionPropertyBounds => new(936, 350, 500, 426);
 
     private static Rectangle CgosConnectionProfileBounds(int index) =>
         new(CgosConnectionListBounds.X + 16, CgosConnectionListBounds.Y + 16 + index * 104, CgosConnectionListBounds.Width - 32, 86);
