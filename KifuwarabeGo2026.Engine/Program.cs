@@ -50,9 +50,12 @@ internal sealed class GtpEngine
             case "name":
                 response = "Kifuwarabe Random GTP";
                 return false;
+
+            // バージョン番号
             case "version":
-                response = "0.1.0";
+                response = "1.0.0";
                 return false;
+
             case "boardsize":
                 ExecuteBoardSize(tokens, out error);
                 return false;
