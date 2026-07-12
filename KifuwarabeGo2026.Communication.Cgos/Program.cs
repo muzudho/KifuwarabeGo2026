@@ -6,6 +6,9 @@ using System.Net.Sockets;
 using System.Reflection;
 using System.Text;
 
+/// <summary>
+/// CGOS サーバーとの通信を行うプログラムです。
+/// </summary>
 internal static class Program
 {
     public static async Task<int> Main(string[] args)
@@ -75,6 +78,12 @@ internal static class Program
     }
 }
 
+/// <summary>
+/// アカウント
+/// </summary>
+/// <param name="Label"></param>
+/// <param name="UserName"></param>
+/// <param name="Password"></param>
 internal sealed record CgosAccount(string Label, string UserName, string Password);
 
 internal sealed class CgosClientOptions
@@ -215,6 +224,7 @@ internal sealed class CgosClient
 
     public async Task RunAsync(CancellationToken cancellationToken)
     {
+        StreamWriter? writer = null;
         try
         {
             Log($"Connecting to {_options.Host}:{_options.Port} as {_account.UserName}.");
@@ -223,7 +233,8 @@ internal sealed class CgosClient
             await tcp.ConnectAsync(_options.Host, _options.Port, cancellationToken);
             await using var stream = tcp.GetStream();
             using var reader = new StreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: false, leaveOpen: true);
-            await using var writer = new StreamWriter(stream, new UTF8Encoding(false), leaveOpen: true) { NewLine = "\n", AutoFlush = true };
+            await using var cgosWriter = new StreamWriter(stream, new UTF8Encoding(false), leaveOpen: true) { NewLine = "\n", AutoFlush = true };
+            writer = cgosWriter;
 
             while (!cancellationToken.IsCancellationRequested)
             {
@@ -246,11 +257,12 @@ internal sealed class CgosClient
                     throw new InvalidOperationException("CGOS error: " + line);
                 }
 
-                await HandleLineAsync(line, writer, cancellationToken);
+                await HandleLineAsync(line, cgosWriter, cancellationToken);
             }
         }
         finally
         {
+            await LogoutAsync(writer);
             await ShutdownEngineAsync();
         }
     }
@@ -360,6 +372,23 @@ internal sealed class CgosClient
         {
             await _engine.DisposeAsync();
             _engine = null;
+        }
+    }
+
+    private async Task LogoutAsync(StreamWriter? writer)
+    {
+        if (writer is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await SendAsync(writer, "quit");
+        }
+        catch (Exception ex)
+        {
+            Log("Could not send CGOS quit: " + ex.Message);
         }
     }
 

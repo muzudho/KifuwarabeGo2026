@@ -27,6 +27,10 @@ dotnet run --project KifuwarabeGo2026.Communication.Cgos -- --account white
 dotnet run --project KifuwarabeGo2026.Communication.Cgos -- --both
 ```
 
+ログアウト:
+
+接続中の端末で `Ctrl+C` を押してください。クライアントは CGOS へ `quit` を送ってから切断し、起動中の GTP エンジンも終了します。
+
 publish 済みエンジンを使う場合:
 
 ```powershell
