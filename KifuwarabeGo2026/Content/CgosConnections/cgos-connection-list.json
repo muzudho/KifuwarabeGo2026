@@ -1,0 +1,25 @@
+{
+  "cgosConnections": [
+    {
+      "displayName": "Yamashita CGOS Server",
+      "host": "uec-go.com",
+      "port": 6809,
+      "role": "PRACTICE",
+      "note": "CGOS practice server"
+    },
+    {
+      "displayName": "2026\u5E74\u5927\u4F1A\u4E88\u9078",
+      "host": "uec-go.com",
+      "port": 6809,
+      "role": "QUALIFIER",
+      "note": "CGF Open 2026 preliminary connection"
+    },
+    {
+      "displayName": "2026\u5E74\u5927\u4F1A\u672C\u6226",
+      "host": "uec-go.com",
+      "port": 6809,
+      "role": "FINAL",
+      "note": "CGF Open 2026 final connection"
+    }
+  ]
+}

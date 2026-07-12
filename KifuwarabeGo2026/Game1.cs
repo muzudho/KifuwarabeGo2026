@@ -20,6 +20,7 @@ public class Game1 : Game
     private readonly GoAppSession _session = new();
     private readonly TournamentRulesCatalog _tournamentRulesCatalog;
     private readonly GtpEngineCatalog _gtpEngineCatalog;
+    private readonly CgosConnectionCatalog _cgosConnectionCatalog;
     private readonly TournamentRulesSetting _tournamentRulesSetting;
     private readonly PlayingScene _playingScene;
     private GoScreenRenderer? _renderer;
@@ -36,8 +37,10 @@ public class Game1 : Game
     {
         _tournamentRulesCatalog = TournamentRulesCatalog.LoadFromDefaultLocation();
         _gtpEngineCatalog = GtpEngineCatalog.LoadFromDefaultLocation();
+        _cgosConnectionCatalog = CgosConnectionCatalog.LoadFromDefaultLocation();
         _session.SetTournamentRules(_tournamentRulesCatalog.Rules);
         _session.SetGtpEngineProfiles(_gtpEngineCatalog.Profiles);
+        _session.SetCgosConnectionProfiles(_cgosConnectionCatalog.Profiles);
         _tournamentRulesSetting = new TournamentRulesSetting(_session, _tournamentRulesCatalog, OpenTournamentRulesSelectionDialog, BrowseTournamentRulesFilePath);
         _playingScene = new PlayingScene(_session, PlayPlaceStoneSound);
 
@@ -565,6 +568,7 @@ public class Game1 : Game
         }
 
         _session.SaveCgosConnectionDisplayName(displayName);
+        _cgosConnectionCatalog.Save(_session.CgosConnectionProfiles);
     }
 
     private void UpdateCgosConnectionDisplayNameWarning()

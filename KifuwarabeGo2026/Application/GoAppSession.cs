@@ -13,12 +13,7 @@ public sealed class GoAppSession
     private readonly HashSet<ulong> _positionHashes = new();
     private readonly List<TournamentRules> _tournamentRules = new();
     private readonly List<GtpEngineProfile> _gtpEngineProfiles = new();
-    private readonly List<CgosConnectionProfile> _cgosConnectionProfiles =
-    [
-        new("練習", "uec-go.com", 6809, "PRACTICE", "CGOS practice server"),
-        new("2026年大会予選", "uec-go.com", 6809, "QUALIFIER", "CGF Open 2026 preliminary connection"),
-        new("2026年大会本戦", "uec-go.com", 6809, "FINAL", "CGF Open 2026 final connection"),
-    ];
+    private readonly List<CgosConnectionProfile> _cgosConnectionProfiles = new();
     private TournamentRules _currentTournamentRules = new();
     private GoRenParseResult? _cachedRenParseResult;
     private int _cachedRenParseBoardSize;
@@ -226,6 +221,18 @@ public sealed class GoAppSession
         }
 
         SelectedCgosConnectionProfileIndex = index;
+    }
+
+    public void SetCgosConnectionProfiles(IEnumerable<CgosConnectionProfile> profiles)
+    {
+        _cgosConnectionProfiles.Clear();
+        _cgosConnectionProfiles.AddRange(profiles);
+        if (_cgosConnectionProfiles.Count == 0)
+        {
+            _cgosConnectionProfiles.Add(new CgosConnectionProfile("練習", "uec-go.com", 6809, "PRACTICE", "CGOS practice server"));
+        }
+
+        SelectedCgosConnectionProfileIndex = Math.Clamp(SelectedCgosConnectionProfileIndex, 0, _cgosConnectionProfiles.Count - 1);
     }
 
     public void OpenCgosConnectionEditPanel()
