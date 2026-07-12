@@ -178,7 +178,7 @@ public class Game1 : Game
         }
         else if (_session.UseKind == GoAppUseKind.CgosClient)
         {
-            _renderer?.DrawCgosClientTop(Mouse.GetState().Position);
+            _renderer?.DrawCgosClientTop(_session, Mouse.GetState().Position);
         }
         else
         {
@@ -214,6 +214,10 @@ public class Game1 : Game
                 if (GoScreenRenderer.GetCgosBackButtonHit(point))
                 {
                     _session.ReturnToUseSelection();
+                }
+                else if (GoScreenRenderer.GetCgosConnectionProfileHit(point, _session) is { } connectionProfileIndex)
+                {
+                    _session.SelectCgosConnectionProfile(connectionProfileIndex);
                 }
 
                 _previousMouse = mouse;

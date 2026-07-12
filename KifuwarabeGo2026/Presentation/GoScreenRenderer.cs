@@ -63,7 +63,7 @@ public sealed class GoScreenRenderer
         _spriteBatch.End();
     }
 
-    public void DrawCgosClientTop(Point mousePosition)
+    public void DrawCgosClientTop(GoAppSession session, Point mousePosition)
     {
         var mousePoint = VirtualScreen.ToVirtualPoint(_graphicsDevice.Viewport, mousePosition);
 
@@ -72,7 +72,7 @@ public sealed class GoScreenRenderer
             transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));
 
         DrawBackground();
-        DrawCgosClientTopPanel(mousePoint);
+        DrawCgosClientTopPanel(session, mousePoint);
 
         _spriteBatch.End();
     }
@@ -325,6 +325,19 @@ public sealed class GoScreenRenderer
     public static bool GetCgosUseButtonHit(Point point) => CgosUseButtonBounds.Contains(point);
 
     public static bool GetCgosBackButtonHit(Point point) => CgosBackButtonBounds.Contains(point);
+
+    public static int? GetCgosConnectionProfileHit(Point point, GoAppSession session)
+    {
+        for (var i = 0; i < session.CgosConnectionProfiles.Count; i++)
+        {
+            if (CgosConnectionProfileBounds(i).Contains(point))
+            {
+                return i;
+            }
+        }
+
+        return null;
+    }
 
     public static bool GetImportSgfButtonHit(Point point) => ImportSgfButtonBounds.Contains(point);
 
@@ -608,7 +621,7 @@ public sealed class GoScreenRenderer
         }
     }
 
-    private void DrawCgosClientTopPanel(Point mousePoint)
+    private void DrawCgosClientTopPanel(GoAppSession session, Point mousePoint)
     {
         var panel = new Rectangle(420, 172, 1080, 736);
         FillRect(new Rectangle(panel.X + 18, panel.Y + 20, panel.Width, panel.Height), new Color(0, 0, 0, 130));
@@ -616,16 +629,54 @@ public sealed class GoScreenRenderer
         DrawRect(panel, 2, new Color(82, 111, 114));
 
         DrawText("CGOS CLIENT", new Vector2(panel.X + 58, panel.Y + 58), new Color(255, 230, 160), 1.0f);
-        DrawText("CONNECTION", new Vector2(panel.X + 62, panel.Y + 142), new Color(180, 195, 195), 0.54f);
-        DrawInfoStrip(panel.X + 62, panel.Y + 204, "HOST", "uec-go.com:6809");
-        DrawInfoStrip(panel.X + 62, panel.Y + 292, "STATUS", "GUI NOT CONNECTED");
-        DrawInfoStrip(panel.X + 62, panel.Y + 380, "ROLE", "CGOS client area");
-        DrawFittedText(
-            "The CGOS communication program is currently separated as a console client. This screen is the new GUI entry point for CGOS-specific controls.",
-            new Rectangle(panel.X + 62, panel.Y + 500, panel.Width - 124, 84),
-            new Color(204, 211, 206),
-            0.42f);
+        DrawText("CONNECTION PROFILE", new Vector2(panel.X + 62, panel.Y + 142), new Color(180, 195, 195), 0.54f);
+
+        DrawText("LIST", new Vector2(CgosConnectionListBounds.X, CgosConnectionListBounds.Y - 34), new Color(180, 195, 195), 0.46f);
+        FillRect(CgosConnectionListBounds, new Color(15, 20, 26));
+        DrawRect(CgosConnectionListBounds, 1, new Color(67, 84, 92));
+        for (var i = 0; i < session.CgosConnectionProfiles.Count; i++)
+        {
+            DrawCgosConnectionProfileItem(CgosConnectionProfileBounds(i), session, i, mousePoint);
+        }
+
+        DrawText("PROPERTIES", new Vector2(CgosConnectionPropertyBounds.X, CgosConnectionPropertyBounds.Y - 34), new Color(180, 195, 195), 0.46f);
+        DrawCgosConnectionProperties(session);
         DrawCommandButton(CgosBackButtonBounds, "BACK", false, mousePoint, scale: 0.56f);
+    }
+
+    private void DrawCgosConnectionProfileItem(Rectangle bounds, GoAppSession session, int index, Point mousePoint)
+    {
+        var profile = session.CgosConnectionProfiles[index];
+        var selected = index == session.SelectedCgosConnectionProfileIndex;
+        var hovered = bounds.Contains(mousePoint);
+        FillRect(bounds, selected ? new Color(38, 103, 86) : hovered ? new Color(43, 52, 62) : new Color(24, 31, 37));
+        DrawRect(bounds, 1, selected ? new Color(147, 244, 200) : new Color(70, 85, 94));
+        DrawText($"{index + 1:00}", new Vector2(bounds.X + 14, bounds.Y + 18), selected ? new Color(177, 255, 215) : new Color(180, 195, 195), 0.4f);
+        DrawFittedText(profile.DisplayName, new Rectangle(bounds.X + 62, bounds.Y + 8, bounds.Width - 82, 34), Color.White, 0.52f);
+        DrawText($"{profile.Host}:{profile.Port}", new Vector2(bounds.X + 62, bounds.Y + 48), new Color(204, 211, 206), 0.34f);
+    }
+
+    private void DrawCgosConnectionProperties(GoAppSession session)
+    {
+        FillRect(CgosConnectionPropertyBounds, new Color(15, 20, 26));
+        DrawRect(CgosConnectionPropertyBounds, 1, new Color(67, 84, 92));
+
+        var profile = session.SelectedCgosConnectionProfile;
+        var y = CgosConnectionPropertyBounds.Y + 22;
+        DrawCgosConnectionPropertyRow(y, "NAME", profile.DisplayName);
+        DrawCgosConnectionPropertyRow(y + 70, "HOST", profile.Host);
+        DrawCgosConnectionPropertyRow(y + 140, "PORT", profile.Port.ToString());
+        DrawCgosConnectionPropertyRow(y + 210, "ROLE", profile.Role);
+        DrawCgosConnectionPropertyRow(y + 280, "STATUS", "GUI NOT CONNECTED");
+        DrawCgosConnectionPropertyRow(y + 350, "NOTE", profile.Note);
+    }
+
+    private void DrawCgosConnectionPropertyRow(int y, string label, string value)
+    {
+        var bounds = new Rectangle(CgosConnectionPropertyBounds.X + 18, y, CgosConnectionPropertyBounds.Width - 36, 52);
+        DrawDataRowFrame(bounds);
+        DrawUiLabel(UiLabel.InCompactRow(label, bounds));
+        DrawFittedText(value, new Rectangle(bounds.X + 152, bounds.Y + 7, bounds.Width - 168, 38), Color.White, 0.46f);
     }
 
     private void DrawSetupSidePanel(GoAppSession session, Point mousePoint)
@@ -1436,6 +1487,13 @@ public sealed class GoScreenRenderer
     private static Rectangle CgosUseButtonBounds => new(974, 404, 438, 300);
 
     private static Rectangle CgosBackButtonBounds => new(1146, 800, 292, 64);
+
+    private static Rectangle CgosConnectionListBounds => new(482, 326, 420, 356);
+
+    private static Rectangle CgosConnectionPropertyBounds => new(936, 326, 500, 426);
+
+    private static Rectangle CgosConnectionProfileBounds(int index) =>
+        new(CgosConnectionListBounds.X + 16, CgosConnectionListBounds.Y + 16 + index * 104, CgosConnectionListBounds.Width - 32, 86);
 
     private static Rectangle ReturnToSetupButtonBounds => new(1318, 910, 320, 56);
 

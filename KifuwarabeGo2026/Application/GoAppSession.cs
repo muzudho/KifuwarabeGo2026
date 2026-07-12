@@ -13,6 +13,12 @@ public sealed class GoAppSession
     private readonly HashSet<ulong> _positionHashes = new();
     private readonly List<TournamentRules> _tournamentRules = new();
     private readonly List<GtpEngineProfile> _gtpEngineProfiles = new();
+    private readonly List<CgosConnectionProfile> _cgosConnectionProfiles =
+    [
+        new("練習", "uec-go.com", 6809, "PRACTICE", "CGOS practice server"),
+        new("2026年大会予選", "uec-go.com", 6809, "QUALIFIER", "CGF Open 2026 preliminary connection"),
+        new("2026年大会本戦", "uec-go.com", 6809, "FINAL", "CGF Open 2026 final connection"),
+    ];
     private TournamentRules _currentTournamentRules = new();
     private GoRenParseResult? _cachedRenParseResult;
     private int _cachedRenParseBoardSize;
@@ -41,6 +47,12 @@ public sealed class GoAppSession
     public GoAppMode CurrentMode { get; private set; }
 
     public GoAppUseKind? UseKind { get; private set; }
+
+    public IReadOnlyList<CgosConnectionProfile> CgosConnectionProfiles => _cgosConnectionProfiles;
+
+    public int SelectedCgosConnectionProfileIndex { get; private set; }
+
+    public CgosConnectionProfile SelectedCgosConnectionProfile => _cgosConnectionProfiles[SelectedCgosConnectionProfileIndex];
 
     public int BoardSize { get; private set; } = 19;
 
@@ -192,6 +204,16 @@ public sealed class GoAppSession
     public void ReturnToUseSelection()
     {
         UseKind = null;
+    }
+
+    public void SelectCgosConnectionProfile(int index)
+    {
+        if (index < 0 || index >= _cgosConnectionProfiles.Count)
+        {
+            throw new ArgumentOutOfRangeException(nameof(index), index, "CGOS connection profile index is out of range.");
+        }
+
+        SelectedCgosConnectionProfileIndex = index;
     }
 
     public void ToggleRenParseDisplay()
