@@ -216,7 +216,14 @@ public class Game1 : Game
             }
             else if (isSetupMode && GoScreenRenderer.GetImportSgfButtonHit(point))
             {
-                ImportSgf();
+                if (_session.HasReviewGameRecord)
+                {
+                    _session.ClearSgfGameRecord();
+                }
+                else
+                {
+                    ImportSgf();
+                }
             }
             else if (isSetupMode && GoScreenRenderer.GetStartReviewingButtonHit(point, _session.HasReviewGameRecord))
             {

@@ -492,7 +492,7 @@ public sealed class GoScreenRenderer
         DrawInfoStrip(1144, 780, "WHITE", PlayerKindLabel(session.WhitePlayerKind));
         DrawPlayerKindButtons(session.WhitePlayerKind, mousePoint, WhitePlayerKindButtonY);
         DrawSetupEngineButtons(session, GoStone.White, mousePoint, WhiteEngineButtonY);
-        DrawCommandButton(ImportSgfButtonBounds, "SGF INPUT", false, mousePoint);
+        DrawCommandButton(ImportSgfButtonBounds, session.HasReviewGameRecord ? "SGF CLEAR" : "SGF INPUT", false, mousePoint);
         DrawCommandButton(StartReviewingButtonBounds, "KIFU REVIEW", false, mousePoint, enabled: session.HasReviewGameRecord, scale: 0.32f);
         DrawCommandButton(StartBoardEditingButtonBounds, "EDIT BOARD", false, mousePoint, scale: 0.36f);
         DrawCommandButton(StartPlayingButtonBounds, "START", false, mousePoint, scale: 0.48f);

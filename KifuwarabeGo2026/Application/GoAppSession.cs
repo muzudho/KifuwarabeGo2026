@@ -384,6 +384,14 @@ public sealed class GoAppSession
         ChangeMode(GoAppModeKind.Resting);
     }
 
+    public void ClearSgfGameRecord()
+    {
+        _reviewGameRecord = null;
+        ReviewMoveIndex = 0;
+        ClearBoard();
+        ChangeMode(GoAppModeKind.Resting);
+    }
+
     public void ChangeBoardSize(int boardSize)
     {
         if (boardSize is not (9 or 13 or 19))
