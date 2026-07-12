@@ -79,6 +79,8 @@ public sealed class GoAppSession
 
     public GoStone CurrentTurn { get; private set; } = GoStone.Black;
 
+    public GoStone BoardEditingStone { get; private set; } = GoStone.Black;
+
     public int PlayedMoveCount { get; private set; }
 
     public int NextMoveNumber => PlayedMoveCount + 1;
@@ -203,6 +205,56 @@ public sealed class GoAppSession
         BlackElapsedTime = TimeSpan.Zero;
         WhiteElapsedTime = TimeSpan.Zero;
         ChangeMode(GoAppModeKind.Playing);
+    }
+
+    public void StartBoardEditing()
+    {
+        KoPoint = null;
+        ConsecutivePasses = 0;
+        PlayedMoveCount = 0;
+        Winner = null;
+        GameOverReason = "";
+        IsEngineReady = true;
+        IsEngineThinking = false;
+        EngineErrorMessage = "";
+        CurrentGameRecord = CreateGameRecordFromCurrentPosition();
+        ResetPositionHistory();
+        ChangeMode(GoAppModeKind.BoardEditing);
+    }
+
+    public void FinishBoardEditing()
+    {
+        CurrentGameRecord = CreateGameRecordFromCurrentPosition();
+        ResetPositionHistory();
+        ChangeMode(GoAppModeKind.Resting);
+    }
+
+    public void SetBoardEditingStone(GoStone stone)
+    {
+        if (stone is not (GoStone.Empty or GoStone.Black or GoStone.White))
+        {
+            throw new ArgumentOutOfRangeException(nameof(stone), stone, "Board editing stone is out of range.");
+        }
+
+        BoardEditingStone = stone;
+    }
+
+    public bool TryEditBoardStone(int x, int y)
+    {
+        if (CurrentMode.Kind != GoAppModeKind.BoardEditing || !_board.TrySetEditedStone(x, y, BoardEditingStone))
+        {
+            return false;
+        }
+
+        KoPoint = null;
+        ConsecutivePasses = 0;
+        PlayedMoveCount = 0;
+        CurrentTurn = GoStone.Black;
+        BlackAgehama = 0;
+        WhiteAgehama = 0;
+        CurrentGameRecord = CreateGameRecordFromCurrentPosition();
+        ResetPositionHistory();
+        return true;
     }
 
     public void CancelPlaying()

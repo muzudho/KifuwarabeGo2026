@@ -293,6 +293,9 @@ public sealed class GoScreenRenderer
 
     public static bool GetImportSgfButtonHit(Point point) => ImportSgfButtonBounds.Contains(point);
 
+    public static bool GetStartBoardEditingButtonHit(Point point, GoAppModeKind modeKind) =>
+        modeKind != GoAppModeKind.GameOver && StartBoardEditingButtonBounds.Contains(point);
+
     public static bool GetStartPlayingButtonHit(Point point, GoAppModeKind modeKind) =>
         modeKind != GoAppModeKind.GameOver && StartPlayingButtonBounds.Contains(point);
 
@@ -315,6 +318,16 @@ public sealed class GoScreenRenderer
     public static bool GetResignButtonHit(Point point) => ResignButtonBounds.Contains(point);
 
     public static bool GetCancelPlayingButtonHit(Point point) => CancelPlayingButtonBounds.Contains(point);
+
+    public static bool GetBoardEditingBlackButtonHit(Point point) => BoardEditingBlackButtonBounds.Contains(point);
+
+    public static bool GetBoardEditingWhiteButtonHit(Point point) => BoardEditingWhiteButtonBounds.Contains(point);
+
+    public static bool GetBoardEditingEraseButtonHit(Point point) => BoardEditingEraseButtonBounds.Contains(point);
+
+    public static bool GetBoardEditingExportSgfButtonHit(Point point) => BoardEditingExportSgfButtonBounds.Contains(point);
+
+    public static bool GetBoardEditingDoneButtonHit(Point point) => BoardEditingDoneButtonBounds.Contains(point);
 
     public static bool TryGetBoardIntersection(Point point, int boardSize, out Point intersection)
     {
@@ -419,6 +432,12 @@ public sealed class GoScreenRenderer
             return;
         }
 
+        if (session.CurrentMode.Kind == GoAppModeKind.BoardEditing)
+        {
+            DrawBoardEditingSidePanel(session, mousePoint);
+            return;
+        }
+
         DrawSetupSidePanel(session, mousePoint);
     }
 
@@ -441,7 +460,26 @@ public sealed class GoScreenRenderer
         DrawPlayerKindButtons(session.WhitePlayerKind, mousePoint, WhitePlayerKindButtonY);
         DrawSetupEngineButtons(session, GoStone.White, mousePoint, WhiteEngineButtonY);
         DrawCommandButton(ImportSgfButtonBounds, "SGF INPUT", false, mousePoint);
+        DrawCommandButton(StartBoardEditingButtonBounds, "EDIT BOARD", false, mousePoint, scale: 0.48f);
         DrawCommandButton(StartPlayingButtonBounds, "START", false, mousePoint);
+    }
+
+    private void DrawBoardEditingSidePanel(GoAppSession session, Point mousePoint)
+    {
+        DrawText("BOARD EDIT", new Vector2(1144, 132), new Color(255, 230, 160), 0.9f);
+        DrawInfoStrip(1144, 204, "BOARD", $"{session.BoardSize} x {session.BoardSize}");
+        DrawInfoStrip(1144, 276, "BLACK", session.BlackStoneCount.ToString());
+        DrawInfoStrip(1144, 348, "WHITE", session.WhiteStoneCount.ToString());
+
+        DrawText("STONE", new Vector2(1144, 454), new Color(180, 195, 195), 0.56f);
+        DrawCommandButton(BoardEditingBlackButtonBounds, "BLACK", session.BoardEditingStone == GoStone.Black, mousePoint, scale: 0.5f);
+        DrawCommandButton(BoardEditingWhiteButtonBounds, "WHITE", session.BoardEditingStone == GoStone.White, mousePoint, scale: 0.5f);
+        DrawCommandButton(BoardEditingEraseButtonBounds, "ERASE", session.BoardEditingStone == GoStone.Empty, mousePoint, scale: 0.5f);
+
+        DrawText("CURRENT POSITION", new Vector2(1144, 636), new Color(180, 195, 195), 0.52f);
+        DrawStoneCountStrip(session, 676);
+        DrawCommandButton(BoardEditingExportSgfButtonBounds, "SGF OUTPUT", false, mousePoint, scale: 0.52f);
+        DrawCommandButton(BoardEditingDoneButtonBounds, "DONE", false, mousePoint);
     }
 
     private void DrawPlayingSidePanel(GoAppSession session, Point mousePoint)
@@ -1170,9 +1208,11 @@ public sealed class GoScreenRenderer
 
     private static LabeledBrowseSelector GtpEngineSelectorBounds(int y) => new(new Rectangle(1144, y - 4, 668, 44), "ENGINE", "");
 
-    private static Rectangle StartPlayingButtonBounds => new(1492, 920, 320, 56);
+    private static Rectangle StartPlayingButtonBounds => new(1602, 920, 210, 56);
 
-    private static Rectangle ImportSgfButtonBounds => new(1144, 920, 320, 56);
+    private static Rectangle ImportSgfButtonBounds => new(1144, 920, 210, 56);
+
+    private static Rectangle StartBoardEditingButtonBounds => new(1373, 920, 210, 56);
 
     private static Rectangle SaveTournamentRulesButtonBounds => new(974, 798, 320, 56);
 
@@ -1185,6 +1225,16 @@ public sealed class GoScreenRenderer
     private static Rectangle ResignButtonBounds => new(1492, 920, 320, 72);
 
     private static Rectangle CancelPlayingButtonBounds => new(1144, 920, 668, 72);
+
+    private static Rectangle BoardEditingBlackButtonBounds => new(1144, 506, 204, 62);
+
+    private static Rectangle BoardEditingWhiteButtonBounds => new(1376, 506, 204, 62);
+
+    private static Rectangle BoardEditingEraseButtonBounds => new(1608, 506, 204, 62);
+
+    private static Rectangle BoardEditingExportSgfButtonBounds => new(1144, 920, 320, 56);
+
+    private static Rectangle BoardEditingDoneButtonBounds => new(1492, 920, 320, 56);
 
     private static GoPlayerKind? GetPlayerKindButtonHit(Point point, int y)
     {
@@ -1561,6 +1611,12 @@ public sealed class GoScreenRenderer
 
     private void DrawHoverStone(GoAppSession session, Point mousePoint, float cell)
     {
+        if (session.CurrentMode.Kind == GoAppModeKind.BoardEditing)
+        {
+            DrawBoardEditingHoverStone(session, mousePoint, cell);
+            return;
+        }
+
         if (session.CurrentMode.Kind != GoAppModeKind.Playing ||
             !session.CanAcceptHumanMove ||
             !TryGetBoardIntersection(mousePoint, session.BoardSize, out var intersection) ||
@@ -1576,6 +1632,28 @@ public sealed class GoScreenRenderer
         var black = session.CurrentTurn == GoStone.Black;
         DrawCircle(center, cell * 0.55f, black ? new Color(8, 10, 14, 95) : new Color(255, 250, 232, 110));
         DrawCircle(center, cell * 0.36f, black ? new Color(8, 10, 14, 90) : new Color(255, 250, 232, 95));
+    }
+
+    private void DrawBoardEditingHoverStone(GoAppSession session, Point mousePoint, float cell)
+    {
+        if (!TryGetBoardIntersection(mousePoint, session.BoardSize, out var intersection))
+        {
+            return;
+        }
+
+        var layout = GetBoardLayout(session.BoardSize);
+        var center = BoardPoint(layout.Start, layout.Cell, intersection.X, intersection.Y);
+        if (session.BoardEditingStone == GoStone.Empty)
+        {
+            var radius = cell * 0.32f;
+            DrawLine(new Vector2(center.X - radius, center.Y - radius), new Vector2(center.X + radius, center.Y + radius), 6, new Color(180, 42, 42, 205));
+            DrawLine(new Vector2(center.X + radius, center.Y - radius), new Vector2(center.X - radius, center.Y + radius), 6, new Color(180, 42, 42, 205));
+            return;
+        }
+
+        var black = session.BoardEditingStone == GoStone.Black;
+        DrawCircle(center, cell * 0.55f, black ? new Color(8, 10, 14, 105) : new Color(255, 250, 232, 120));
+        DrawCircle(center, cell * 0.36f, black ? new Color(8, 10, 14, 95) : new Color(255, 250, 232, 105));
     }
 
     private void DrawSuperKoMarks(GoAppSession session, Vector2 start, float cell)

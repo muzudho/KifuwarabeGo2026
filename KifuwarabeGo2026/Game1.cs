@@ -109,16 +109,24 @@ public class Game1 : Game
         {
             var point = VirtualScreen.ToVirtualPoint(GraphicsDevice.Viewport, mouse.Position);
             var isSetupMode = _session.CurrentMode.Kind != GoAppModeKind.Playing && _session.CurrentMode.Kind != GoAppModeKind.GameOver;
-            var handledByGtpEngineEditPanel = isSetupMode && TryHandleGtpEngineEditPanelClick(point);
-            var handledByGtpEngineSelectionDialog = !handledByGtpEngineEditPanel && isSetupMode && TryHandleGtpEngineSelectionDialogClick(point);
+            var isBoardEditing = _session.CurrentMode.Kind == GoAppModeKind.BoardEditing;
+            var handledByGtpEngineEditPanel = isSetupMode && !isBoardEditing && TryHandleGtpEngineEditPanelClick(point);
+            var handledByGtpEngineSelectionDialog = !handledByGtpEngineEditPanel && isSetupMode && !isBoardEditing && TryHandleGtpEngineSelectionDialogClick(point);
             Func<Point, string, int>? getDisplayNameCaretIndex = _renderer is null
                 ? null
                 : _renderer.GetTournamentRulesAddPanelDisplayNameCaretIndex;
             var handledByTournamentRulesSetting = !handledByGtpEngineEditPanel &&
                 !handledByGtpEngineSelectionDialog &&
                 isSetupMode &&
+                !isBoardEditing &&
                 _tournamentRulesSetting.TryHandleMouseClick(point, getDisplayNameCaretIndex);
             if (handledByGtpEngineEditPanel || handledByGtpEngineSelectionDialog || handledByTournamentRulesSetting)
+            {
+                _previousMouse = mouse;
+                return;
+            }
+
+            if (isBoardEditing && TryHandleBoardEditingClick(point))
             {
                 _previousMouse = mouse;
                 return;
@@ -135,6 +143,10 @@ public class Game1 : Game
             else if (isSetupMode && GoScreenRenderer.GetImportSgfButtonHit(point))
             {
                 ImportSgf();
+            }
+            else if (isSetupMode && GoScreenRenderer.GetStartBoardEditingButtonHit(point, _session.CurrentMode.Kind))
+            {
+                _session.StartBoardEditing();
             }
             else if (isSetupMode && GoScreenRenderer.GetStartPlayingButtonHit(point, _session.CurrentMode.Kind))
             {
@@ -163,6 +175,56 @@ public class Game1 : Game
         }
 
         _previousMouse = mouse;
+    }
+
+    private bool TryHandleBoardEditingClick(Point point)
+    {
+        if (_session.CurrentMode.Kind != GoAppModeKind.BoardEditing)
+        {
+            return false;
+        }
+
+        if (GoScreenRenderer.GetBoardEditingBlackButtonHit(point))
+        {
+            _session.SetBoardEditingStone(GoStone.Black);
+            return true;
+        }
+
+        if (GoScreenRenderer.GetBoardEditingWhiteButtonHit(point))
+        {
+            _session.SetBoardEditingStone(GoStone.White);
+            return true;
+        }
+
+        if (GoScreenRenderer.GetBoardEditingEraseButtonHit(point))
+        {
+            _session.SetBoardEditingStone(GoStone.Empty);
+            return true;
+        }
+
+        if (GoScreenRenderer.GetBoardEditingExportSgfButtonHit(point))
+        {
+            ExportSgf();
+            return true;
+        }
+
+        if (GoScreenRenderer.GetBoardEditingDoneButtonHit(point))
+        {
+            _session.FinishBoardEditing();
+            return true;
+        }
+
+        if (GoScreenRenderer.TryGetBoardIntersection(point, _session.BoardSize, out var intersection))
+        {
+            if (_session.TryEditBoardStone(intersection.X, intersection.Y))
+            {
+                PlayPlaceStoneSound(_session.BoardEditingStone == GoStone.Empty ? 0.42f : 0.78f);
+            }
+
+            return true;
+        }
+
+        return false;
     }
 
     private void OpenTournamentRulesSelectionDialog()
