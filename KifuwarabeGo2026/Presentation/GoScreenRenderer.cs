@@ -294,6 +294,9 @@ public sealed class GoScreenRenderer
 
     public static bool GetImportSgfButtonHit(Point point) => ImportSgfButtonBounds.Contains(point);
 
+    public static bool GetStartReviewingButtonHit(Point point, bool enabled) =>
+        enabled && StartReviewingButtonBounds.Contains(point);
+
     public static bool GetStartBoardEditingButtonHit(Point point, GoAppModeKind modeKind) =>
         modeKind != GoAppModeKind.GameOver && StartBoardEditingButtonBounds.Contains(point);
 
@@ -333,6 +336,21 @@ public sealed class GoScreenRenderer
     public static bool GetBoardEditingExportSgfButtonHit(Point point) => BoardEditingExportSgfButtonBounds.Contains(point);
 
     public static bool GetBoardEditingDoneButtonHit(Point point) => BoardEditingDoneButtonBounds.Contains(point);
+
+    public static int? GetReviewStepButtonHit(Point point)
+    {
+        for (var i = 0; i < ReviewStepButtonValues.Length; i++)
+        {
+            if (ReviewStepButtonBounds(i).Contains(point))
+            {
+                return ReviewStepButtonValues[i];
+            }
+        }
+
+        return null;
+    }
+
+    public static bool GetReviewDoneButtonHit(Point point) => ReviewDoneButtonBounds.Contains(point);
 
     public static bool TryGetBoardIntersection(Point point, int boardSize, out Point intersection)
     {
@@ -447,6 +465,12 @@ public sealed class GoScreenRenderer
             return;
         }
 
+        if (session.CurrentMode.Kind == GoAppModeKind.Reviewing)
+        {
+            DrawReviewingSidePanel(session, mousePoint);
+            return;
+        }
+
         DrawSetupSidePanel(session, mousePoint);
     }
 
@@ -469,8 +493,9 @@ public sealed class GoScreenRenderer
         DrawPlayerKindButtons(session.WhitePlayerKind, mousePoint, WhitePlayerKindButtonY);
         DrawSetupEngineButtons(session, GoStone.White, mousePoint, WhiteEngineButtonY);
         DrawCommandButton(ImportSgfButtonBounds, "SGF INPUT", false, mousePoint);
-        DrawCommandButton(StartBoardEditingButtonBounds, "EDIT BOARD", false, mousePoint, scale: 0.48f);
-        DrawCommandButton(StartPlayingButtonBounds, "START", false, mousePoint);
+        DrawCommandButton(StartReviewingButtonBounds, "KIFU REVIEW", false, mousePoint, enabled: session.HasReviewGameRecord, scale: 0.32f);
+        DrawCommandButton(StartBoardEditingButtonBounds, "EDIT BOARD", false, mousePoint, scale: 0.36f);
+        DrawCommandButton(StartPlayingButtonBounds, "START", false, mousePoint, scale: 0.48f);
     }
 
     private void DrawBoardEditingSidePanel(GoAppSession session, Point mousePoint)
@@ -491,6 +516,26 @@ public sealed class GoScreenRenderer
         DrawStoneCountStrip(session, 676);
         DrawCommandButton(BoardEditingExportSgfButtonBounds, "SGF OUTPUT", false, mousePoint, scale: 0.52f);
         DrawCommandButton(BoardEditingDoneButtonBounds, "DONE", false, mousePoint);
+    }
+
+    private void DrawReviewingSidePanel(GoAppSession session, Point mousePoint)
+    {
+        DrawText("KIFU REVIEW", new Vector2(1144, 132), new Color(255, 230, 160), 0.9f);
+        DrawInfoStrip(1144, 204, "BOARD", $"{session.BoardSize} x {session.BoardSize}");
+        DrawInfoStrip(1144, 276, "MOVE", $"{session.ReviewMoveIndex} / {session.ReviewMoveCount}");
+        DrawInfoStrip(1144, 348, "TURN", session.CurrentTurn == GoStone.Black ? "BLACK" : "WHITE");
+
+        DrawText("STEP", new Vector2(1144, 454), new Color(180, 195, 195), 0.56f);
+        for (var i = 0; i < ReviewStepButtonValues.Length; i++)
+        {
+            var step = ReviewStepButtonValues[i];
+            var enabled = step < 0 ? session.ReviewMoveIndex > 0 : session.ReviewMoveIndex < session.ReviewMoveCount;
+            DrawCommandButton(ReviewStepButtonBounds(i), step > 0 ? $"+{step}" : step.ToString(), false, mousePoint, enabled, 0.42f);
+        }
+
+        DrawText("CURRENT POSITION", new Vector2(1144, 636), new Color(180, 195, 195), 0.52f);
+        DrawStoneCountStrip(session, 676);
+        DrawCommandButton(ReviewDoneButtonBounds, "USE POSITION", false, mousePoint, scale: 0.52f);
     }
 
     private void DrawPlayingSidePanel(GoAppSession session, Point mousePoint)
@@ -1219,11 +1264,13 @@ public sealed class GoScreenRenderer
 
     private static LabeledBrowseSelector GtpEngineSelectorBounds(int y) => new(new Rectangle(1144, y - 4, 668, 44), "ENGINE", "");
 
-    private static Rectangle StartPlayingButtonBounds => new(1602, 920, 210, 56);
+    private static Rectangle StartPlayingButtonBounds => new(1658, 920, 154, 56);
 
-    private static Rectangle ImportSgfButtonBounds => new(1144, 920, 210, 56);
+    private static Rectangle ImportSgfButtonBounds => new(1144, 920, 154, 56);
 
-    private static Rectangle StartBoardEditingButtonBounds => new(1373, 920, 210, 56);
+    private static Rectangle StartReviewingButtonBounds => new(1315, 920, 154, 56);
+
+    private static Rectangle StartBoardEditingButtonBounds => new(1486, 920, 154, 56);
 
     private static Rectangle SaveTournamentRulesButtonBounds => new(974, 798, 320, 56);
 
@@ -1250,6 +1297,12 @@ public sealed class GoScreenRenderer
     private static Rectangle BoardEditingExportSgfButtonBounds => new(1144, 920, 320, 56);
 
     private static Rectangle BoardEditingDoneButtonBounds => new(1492, 920, 320, 56);
+
+    private static readonly int[] ReviewStepButtonValues = [-50, -10, -1, 1, 10, 50];
+
+    private static Rectangle ReviewStepButtonBounds(int index) => new(1144 + index % 3 * 232, 504 + index / 3 * 64, 160, 46);
+
+    private static Rectangle ReviewDoneButtonBounds => new(1492, 920, 320, 56);
 
     private static GoPlayerKind? GetPlayerKindButtonHit(Point point, int y)
     {

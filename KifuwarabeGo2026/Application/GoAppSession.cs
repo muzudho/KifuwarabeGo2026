@@ -19,6 +19,7 @@ public sealed class GoAppSession
     private ulong _cachedRenParseHash;
     private readonly Stack<BoardEditingChange> _boardEditingUndoHistory = new();
     private readonly Stack<BoardEditingChange> _boardEditingRedoHistory = new();
+    private GoGameRecord? _reviewGameRecord;
 
     private readonly Dictionary<GoAppModeKind, GoAppMode> _modes = new()
     {
@@ -163,6 +164,12 @@ public sealed class GoAppSession
 
     public GoGameRecord CurrentGameRecord { get; private set; } = new();
 
+    public bool HasReviewGameRecord => _reviewGameRecord is not null;
+
+    public int ReviewMoveIndex { get; private set; }
+
+    public int ReviewMoveCount => _reviewGameRecord?.Moves.Count ?? 0;
+
     public bool CanAcceptHumanMove =>
         CurrentMode.Kind == GoAppModeKind.Playing &&
         IsEngineReady &&
@@ -232,6 +239,66 @@ public sealed class GoAppSession
     }
 
     public void FinishBoardEditing()
+    {
+        CurrentGameRecord = CreateGameRecordFromCurrentPosition();
+        ResetPositionHistory();
+        ChangeMode(GoAppModeKind.Resting);
+    }
+
+    public bool StartReviewingGameRecord(GoGameRecord record, out string warning)
+    {
+        ArgumentNullException.ThrowIfNull(record);
+
+        _reviewGameRecord = record.Clone();
+        ReviewMoveIndex = 0;
+        if (!ApplyReviewPosition(record.Moves.Count, out warning))
+        {
+            _reviewGameRecord = null;
+            ReviewMoveIndex = 0;
+            return false;
+        }
+
+        if (!ApplyReviewPosition(0, out warning))
+        {
+            _reviewGameRecord = null;
+            ReviewMoveIndex = 0;
+            return false;
+        }
+
+        ChangeMode(GoAppModeKind.Reviewing);
+        return true;
+    }
+
+    public bool MoveReview(int step, out string warning)
+    {
+        warning = "";
+        if (CurrentMode.Kind != GoAppModeKind.Reviewing || _reviewGameRecord is null)
+        {
+            return false;
+        }
+
+        return ApplyReviewPosition(Math.Clamp(ReviewMoveIndex + step, 0, ReviewMoveCount), out warning);
+    }
+
+    public bool StartReviewingStoredGameRecord(out string warning)
+    {
+        warning = "";
+        if (_reviewGameRecord is null)
+        {
+            warning = "No SGF review record is loaded.";
+            return false;
+        }
+
+        if (!ApplyReviewPosition(Math.Clamp(ReviewMoveIndex, 0, ReviewMoveCount), out warning))
+        {
+            return false;
+        }
+
+        ChangeMode(GoAppModeKind.Reviewing);
+        return true;
+    }
+
+    public void FinishReviewing()
     {
         CurrentGameRecord = CreateGameRecordFromCurrentPosition();
         ResetPositionHistory();
@@ -1090,7 +1157,91 @@ public sealed class GoAppSession
         CurrentGameRecord = CreateGameRecordFromCurrentPosition();
         ResetPositionHistory();
         ClearBoardEditingHistory();
+        _reviewGameRecord = null;
+        ReviewMoveIndex = 0;
         ChangeMode(GoAppModeKind.Resting);
+        warning = "";
+        return true;
+    }
+
+    private bool ApplyReviewPosition(int moveCount, out string warning)
+    {
+        if (_reviewGameRecord is null)
+        {
+            warning = "No SGF game record is loaded.";
+            return false;
+        }
+
+        var record = _reviewGameRecord;
+        var loadedBoard = new GoBoard(record.BoardSize);
+        foreach (var setupStone in record.SetupStones)
+        {
+            if (!loadedBoard.TrySetSetupStone(setupStone.Point.X, setupStone.Point.Y, setupStone.Stone))
+            {
+                warning = $"Invalid SGF setup stone at {setupStone.Point.X + 1},{setupStone.Point.Y + 1}.";
+                return false;
+            }
+        }
+
+        var blackAgehama = 0;
+        var whiteAgehama = 0;
+        var consecutivePasses = 0;
+        GoPoint? replayKoPoint = null;
+        GoPoint? currentKoPoint = null;
+        var clampedMoveCount = Math.Clamp(moveCount, 0, record.Moves.Count);
+        for (var i = 0; i < clampedMoveCount; i++)
+        {
+            var move = record.Moves[i];
+            if (move.Point is not { } point)
+            {
+                replayKoPoint = null;
+                currentKoPoint = null;
+                consecutivePasses++;
+                continue;
+            }
+
+            if (!loadedBoard.TryPlaceStone(point.X, point.Y, move.Stone, replayKoPoint, out var capturedStones, out var nextKoPoint))
+            {
+                warning = $"Illegal SGF move at {point.X + 1},{point.Y + 1}.";
+                return false;
+            }
+
+            if (move.Stone == GoStone.Black)
+            {
+                blackAgehama += capturedStones;
+            }
+            else
+            {
+                whiteAgehama += capturedStones;
+            }
+
+            replayKoPoint = nextKoPoint;
+            currentKoPoint = nextKoPoint;
+            consecutivePasses = 0;
+        }
+
+        BoardSize = record.BoardSize;
+        _currentTournamentRules.BoardSize = BoardSize;
+        _currentTournamentRules.Komi = record.Komi;
+        TournamentRulesSaveMessage = "UNSAVED";
+        _board = loadedBoard;
+        CurrentTurn = GetReviewCurrentTurn(record, clampedMoveCount);
+        BlackAgehama = blackAgehama;
+        WhiteAgehama = whiteAgehama;
+        BlackElapsedTime = TimeSpan.Zero;
+        WhiteElapsedTime = TimeSpan.Zero;
+        KoPoint = currentKoPoint;
+        ConsecutivePasses = consecutivePasses;
+        PlayedMoveCount = clampedMoveCount;
+        ReviewMoveIndex = clampedMoveCount;
+        Winner = null;
+        GameOverReason = "";
+        IsEngineReady = true;
+        IsEngineThinking = false;
+        EngineErrorMessage = "";
+        CurrentGameRecord = CreateReviewGameRecord(record, clampedMoveCount);
+        ResetPositionHistory();
+        ClearBoardEditingHistory();
         warning = "";
         return true;
     }
@@ -1194,6 +1345,41 @@ public sealed class GoAppSession
         }
 
         return record;
+    }
+
+    private static GoGameRecord CreateReviewGameRecord(GoGameRecord source, int moveCount)
+    {
+        var record = new GoGameRecord
+        {
+            GameName = source.GameName,
+            RuleName = source.RuleName,
+            BoardSize = source.BoardSize,
+            Komi = source.Komi,
+        };
+
+        record.SetupStones.AddRange(source.SetupStones);
+        for (var i = 0; i < Math.Clamp(moveCount, 0, source.Moves.Count); i++)
+        {
+            record.Moves.Add(source.Moves[i]);
+        }
+
+        return record;
+    }
+
+    private static GoStone GetReviewCurrentTurn(GoGameRecord record, int moveCount)
+    {
+        if (moveCount < record.Moves.Count)
+        {
+            return record.Moves[moveCount].Stone;
+        }
+
+        if (moveCount > 0)
+        {
+            var lastStone = record.Moves[moveCount - 1].Stone;
+            return lastStone == GoStone.Black ? GoStone.White : GoStone.Black;
+        }
+
+        return GoStone.Black;
     }
 
     private void DecidePureGoResult()

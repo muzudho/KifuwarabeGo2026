@@ -82,6 +82,12 @@ public class Game1 : Game
 
     private void UpdateGlobalKeyboardInput(KeyboardState keyboard)
     {
+        if (_session.CurrentMode.Kind == GoAppModeKind.Reviewing && TryHandleReviewKeyboardInput(keyboard))
+        {
+            _previousKeyboard = keyboard;
+            return;
+        }
+
         if (_session.CurrentMode.Kind == GoAppModeKind.BoardEditing)
         {
             var isControlDown = keyboard.IsKeyDown(Keys.LeftControl) || keyboard.IsKeyDown(Keys.RightControl);
@@ -111,6 +117,47 @@ public class Game1 : Game
     private bool IsNewGlobalKeyPress(KeyboardState keyboard, Keys key) =>
         keyboard.IsKeyDown(key) && _previousKeyboard.IsKeyUp(key);
 
+    private bool TryHandleReviewKeyboardInput(KeyboardState keyboard)
+    {
+        if (IsNewGlobalKeyPress(keyboard, Keys.Left))
+        {
+            MoveReview(-1);
+            return true;
+        }
+
+        if (IsNewGlobalKeyPress(keyboard, Keys.Right))
+        {
+            MoveReview(1);
+            return true;
+        }
+
+        if (IsNewGlobalKeyPress(keyboard, Keys.Down))
+        {
+            MoveReview(-10);
+            return true;
+        }
+
+        if (IsNewGlobalKeyPress(keyboard, Keys.Up))
+        {
+            MoveReview(10);
+            return true;
+        }
+
+        if (IsNewGlobalKeyPress(keyboard, Keys.PageDown))
+        {
+            MoveReview(-50);
+            return true;
+        }
+
+        if (IsNewGlobalKeyPress(keyboard, Keys.PageUp))
+        {
+            MoveReview(50);
+            return true;
+        }
+
+        return false;
+    }
+
     private bool CanHandleGlobalRenParseToggle() =>
         _session.ActiveGtpEngineEditField is null &&
         !_session.IsTournamentRulesDisplayNameEditing;
@@ -129,7 +176,7 @@ public class Game1 : Game
         if (_previousMouse.LeftButton == ButtonState.Released && mouse.LeftButton == ButtonState.Pressed)
         {
             var point = VirtualScreen.ToVirtualPoint(GraphicsDevice.Viewport, mouse.Position);
-            var isSetupMode = _session.CurrentMode.Kind != GoAppModeKind.Playing && _session.CurrentMode.Kind != GoAppModeKind.GameOver;
+            var isSetupMode = _session.CurrentMode.Kind == GoAppModeKind.Resting;
             var isBoardEditing = _session.CurrentMode.Kind == GoAppModeKind.BoardEditing;
             var handledByGtpEngineEditPanel = isSetupMode && !isBoardEditing && TryHandleGtpEngineEditPanelClick(point);
             var handledByGtpEngineSelectionDialog = !handledByGtpEngineEditPanel && isSetupMode && !isBoardEditing && TryHandleGtpEngineSelectionDialogClick(point);
@@ -153,6 +200,12 @@ public class Game1 : Game
                 return;
             }
 
+            if (_session.CurrentMode.Kind == GoAppModeKind.Reviewing && TryHandleReviewClick(point))
+            {
+                _previousMouse = mouse;
+                return;
+            }
+
             if (_session.CurrentMode.Kind == GoAppModeKind.GameOver && GoScreenRenderer.GetReturnToSetupButtonHit(point))
             {
                 _session.ReturnToSetup();
@@ -164,6 +217,10 @@ public class Game1 : Game
             else if (isSetupMode && GoScreenRenderer.GetImportSgfButtonHit(point))
             {
                 ImportSgf();
+            }
+            else if (isSetupMode && GoScreenRenderer.GetStartReviewingButtonHit(point, _session.HasReviewGameRecord))
+            {
+                StartReviewingStoredGameRecord();
             }
             else if (isSetupMode && GoScreenRenderer.GetStartBoardEditingButtonHit(point, _session.CurrentMode.Kind))
             {
@@ -260,6 +317,44 @@ public class Game1 : Game
         return false;
     }
 
+    private bool TryHandleReviewClick(Point point)
+    {
+        if (_session.CurrentMode.Kind != GoAppModeKind.Reviewing)
+        {
+            return false;
+        }
+
+        if (GoScreenRenderer.GetReviewStepButtonHit(point) is { } step)
+        {
+            MoveReview(step);
+            return true;
+        }
+
+        if (GoScreenRenderer.GetReviewDoneButtonHit(point))
+        {
+            _session.FinishReviewing();
+            return true;
+        }
+
+        return true;
+    }
+
+    private void MoveReview(int step)
+    {
+        if (!_session.MoveReview(step, out var warning) && !string.IsNullOrWhiteSpace(warning))
+        {
+            ShowMessage(warning, "SGF review");
+        }
+    }
+
+    private void StartReviewingStoredGameRecord()
+    {
+        if (!_session.StartReviewingStoredGameRecord(out var warning) && !string.IsNullOrWhiteSpace(warning))
+        {
+            ShowMessage(warning, "SGF review");
+        }
+    }
+
     private void OpenTournamentRulesSelectionDialog()
     {
         _session.OpenTournamentRulesSelectionDialog();
@@ -311,7 +406,7 @@ public class Game1 : Game
         try
         {
             var record = SgfGameRecordConverter.FromSgf(File.ReadAllText(dialog.FileName, Encoding.UTF8));
-            if (!_session.LoadGameRecordAsInitialPosition(record, out var warning))
+            if (!_session.StartReviewingGameRecord(record, out var warning))
             {
                 ShowMessage(warning, "SGF input");
                 return;
