@@ -533,8 +533,11 @@ public sealed class GoScreenRenderer
             DrawCommandButton(ReviewStepButtonBounds(i), step > 0 ? $"+{step}" : step.ToString(), false, mousePoint, enabled, 0.42f);
         }
 
-        DrawText("CURRENT POSITION", new Vector2(1144, 636), new Color(180, 195, 195), 0.52f);
-        DrawStoneCountStrip(session, 676);
+        DrawText("Push R key:", new Vector2(1144, 636), new Color(180, 195, 195), 0.46f);
+        DrawReviewRenParseModeStrip(session, mousePoint);
+
+        DrawText("CURRENT POSITION", new Vector2(1144, 760), new Color(180, 195, 195), 0.52f);
+        DrawStoneCountStrip(session, 800);
         DrawCommandButton(ReviewDoneButtonBounds, "USE POSITION", false, mousePoint, scale: 0.52f);
     }
 
@@ -1302,6 +1305,24 @@ public sealed class GoScreenRenderer
 
     private static Rectangle ReviewStepButtonBounds(int index) => new(1144 + index % 3 * 232, 504 + index / 3 * 64, 160, 46);
 
+    private static readonly RenParseDisplayMode[] ReviewRenParseDisplayModes =
+    [
+        RenParseDisplayMode.Overlay,
+        RenParseDisplayMode.Graph,
+        RenParseDisplayMode.GraphStep2,
+        RenParseDisplayMode.Eye,
+    ];
+
+    private static readonly string[] ReviewRenParseDisplayModeLabels =
+    [
+        "Ren Number",
+        "Ren Rect",
+        "Ren Graph",
+        "Eye",
+    ];
+
+    private static Rectangle ReviewRenParseDisplayModeBounds(int index) => new(1144 + index * 166, 684, 150, 46);
+
     private static Rectangle ReviewDoneButtonBounds => new(1492, 920, 320, 56);
 
     private static GoPlayerKind? GetPlayerKindButtonHit(Point point, int y)
@@ -1398,6 +1419,20 @@ public sealed class GoScreenRenderer
         var fittedScale = MathF.Min(scale, MathF.Min((bounds.Width - 20) / Math.Max(1f, measured.X), (bounds.Height - 10) / Math.Max(1f, measured.Y)));
         var size = measured * fittedScale;
         DrawText(label, new Vector2(bounds.Center.X - size.X / 2, bounds.Center.Y - size.Y / 2), textColor, fittedScale);
+    }
+
+    private void DrawReviewRenParseModeStrip(GoAppSession session, Point mousePoint)
+    {
+        for (var i = 0; i < ReviewRenParseDisplayModes.Length; i++)
+        {
+            DrawCommandButton(
+                ReviewRenParseDisplayModeBounds(i),
+                ReviewRenParseDisplayModeLabels[i],
+                session.RenParseDisplayMode == ReviewRenParseDisplayModes[i],
+                mousePoint,
+                enabled: true,
+                scale: 0.28f);
+        }
     }
 
     private void DrawPathTooltip(Rectangle bounds, string fullPath, Point mousePoint)
