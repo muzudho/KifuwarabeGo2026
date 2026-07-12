@@ -29,6 +29,8 @@ public class Game1 : Game
     private KeyboardState _previousKeyboard;
     private KeyboardState _previousGtpEngineKeyboard;
     private readonly TextBoxController _gtpEngineEditTextBox = new(520);
+    private KeyboardState _previousCgosConnectionKeyboard;
+    private readonly TextBoxController _cgosConnectionDisplayNameTextBox = new(80);
 
     public Game1()
     {
@@ -68,6 +70,11 @@ public class Game1 : Game
 
         if (_session.UseKind is not GoAppUseKind.LocalGame)
         {
+            if (_session.UseKind == GoAppUseKind.CgosClient)
+            {
+                UpdateCgosConnectionEditPanelByKeyboard(keyboard, gameTime);
+            }
+
             UpdateMouseInput();
             base.Update(gameTime);
             return;
@@ -211,9 +218,19 @@ public class Game1 : Game
 
             if (_session.UseKind == GoAppUseKind.CgosClient)
             {
+                if (TryHandleCgosConnectionEditPanelClick(point))
+                {
+                    _previousMouse = mouse;
+                    return;
+                }
+
                 if (GoScreenRenderer.GetCgosBackButtonHit(point))
                 {
                     _session.ReturnToUseSelection();
+                }
+                else if (GoScreenRenderer.GetCgosEditButtonHit(point) && _session.CgosConnectionProfiles.Count > 0)
+                {
+                    _session.OpenCgosConnectionEditPanel();
                 }
                 else if (GoScreenRenderer.GetCgosConnectionProfileHit(point, _session) is { } connectionProfileIndex)
                 {
@@ -415,8 +432,156 @@ public class Game1 : Game
         _session.OpenTournamentRulesSelectionDialog();
     }
 
+    private bool TryHandleCgosConnectionEditPanelClick(Point point)
+    {
+        if (!_session.IsCgosConnectionEditPanelOpen)
+        {
+            return false;
+        }
+
+        if (GoScreenRenderer.GetCgosConnectionEditPanelCloseButtonHit(point))
+        {
+            EndCgosConnectionDisplayNameEditing();
+            _cgosConnectionDisplayNameTextBox.Clear();
+            _session.CloseCgosConnectionEditPanel();
+            return true;
+        }
+
+        if (GoScreenRenderer.GetCgosConnectionEditPanelSaveButtonHit(point))
+        {
+            SaveCgosConnectionDisplayName();
+            return true;
+        }
+
+        if (GoScreenRenderer.GetCgosConnectionDisplayNameBoxHit(point))
+        {
+            BeginOrMoveCgosConnectionDisplayNameEditing(point);
+            return true;
+        }
+
+        return true;
+    }
+
+    private void UpdateCgosConnectionEditPanelByKeyboard(KeyboardState keyboard, GameTime gameTime)
+    {
+        if (!_session.IsCgosConnectionEditPanelOpen)
+        {
+            _previousCgosConnectionKeyboard = keyboard;
+            return;
+        }
+
+        if (_session.IsCgosConnectionDisplayNameEditing)
+        {
+            switch (_cgosConnectionDisplayNameTextBox.HandleKeyboard(keyboard, _previousCgosConnectionKeyboard, gameTime))
+            {
+                case TextBoxKeyboardAction.Commit:
+                    EndCgosConnectionDisplayNameEditing();
+                    break;
+                case TextBoxKeyboardAction.Cancel:
+                    _cgosConnectionDisplayNameTextBox.Begin(_session.CgosConnectionDisplayNameDraft);
+                    _session.EndCgosConnectionDisplayNameEditing();
+                    _cgosConnectionDisplayNameTextBox.Clear();
+                    _session.SetCgosConnectionEditWarning("");
+                    break;
+                default:
+                    SyncCgosConnectionDisplayNameDraft();
+                    break;
+            }
+
+            _previousCgosConnectionKeyboard = keyboard;
+            return;
+        }
+
+        if (keyboard.IsKeyDown(Keys.F5) && _previousCgosConnectionKeyboard.IsKeyUp(Keys.F5))
+        {
+            SaveCgosConnectionDisplayName();
+        }
+
+        _previousCgosConnectionKeyboard = keyboard;
+    }
+
+    private bool TryInputCgosConnectionDisplayNameCharacter(char character)
+    {
+        if (!_session.IsCgosConnectionEditPanelOpen || !_session.IsCgosConnectionDisplayNameEditing)
+        {
+            return false;
+        }
+
+        if (!_cgosConnectionDisplayNameTextBox.TryInputCharacter(character))
+        {
+            _session.SetCgosConnectionEditWarning("Text is too long.");
+            return true;
+        }
+
+        SyncCgosConnectionDisplayNameDraft();
+        UpdateCgosConnectionDisplayNameWarning();
+        return true;
+    }
+
+    private void BeginOrMoveCgosConnectionDisplayNameEditing(Point point)
+    {
+        var text = _session.IsCgosConnectionDisplayNameEditing
+            ? _cgosConnectionDisplayNameTextBox.Text
+            : _session.CgosConnectionDisplayNameDraft;
+        var caretIndex = _renderer?.GetCgosConnectionDisplayNameCaretIndex(point, text) ?? text.Length;
+
+        if (_session.IsCgosConnectionDisplayNameEditing)
+        {
+            _cgosConnectionDisplayNameTextBox.SetCaretIndex(caretIndex);
+            SyncCgosConnectionDisplayNameDraft();
+            return;
+        }
+
+        _cgosConnectionDisplayNameTextBox.Begin(text, caretIndex);
+        SyncCgosConnectionDisplayNameDraft();
+        _session.BeginCgosConnectionDisplayNameEditing(_cgosConnectionDisplayNameTextBox.CaretIndex);
+        UpdateCgosConnectionDisplayNameWarning();
+    }
+
+    private void SyncCgosConnectionDisplayNameDraft()
+    {
+        _session.SetCgosConnectionDisplayNameDraft(_cgosConnectionDisplayNameTextBox.Text, _cgosConnectionDisplayNameTextBox.CaretIndex);
+    }
+
+    private void EndCgosConnectionDisplayNameEditing()
+    {
+        if (!_session.IsCgosConnectionDisplayNameEditing)
+        {
+            return;
+        }
+
+        _session.EndCgosConnectionDisplayNameEditing();
+        _cgosConnectionDisplayNameTextBox.Clear();
+    }
+
+    private void SaveCgosConnectionDisplayName()
+    {
+        EndCgosConnectionDisplayNameEditing();
+        var displayName = _session.CgosConnectionDisplayNameDraft.Trim();
+        if (string.IsNullOrWhiteSpace(displayName))
+        {
+            _session.SetCgosConnectionEditWarning("Display name is required.");
+            return;
+        }
+
+        _session.SaveCgosConnectionDisplayName(displayName);
+    }
+
+    private void UpdateCgosConnectionDisplayNameWarning()
+    {
+        _session.SetCgosConnectionEditWarning(
+            string.IsNullOrWhiteSpace(_session.CgosConnectionDisplayNameDraft)
+                ? "Display name is required."
+                : "");
+    }
+
     private void OnTextInput(object? sender, TextInputEventArgs e)
     {
+        if (TryInputCgosConnectionDisplayNameCharacter(e.Character))
+        {
+            return;
+        }
+
         if (TryInputGtpEngineEditCharacter(e.Character))
         {
             return;

@@ -54,6 +54,18 @@ public sealed class GoAppSession
 
     public CgosConnectionProfile SelectedCgosConnectionProfile => _cgosConnectionProfiles[SelectedCgosConnectionProfileIndex];
 
+    public bool IsCgosConnectionEditPanelOpen { get; private set; }
+
+    public bool IsCgosConnectionDisplayNameEditing { get; private set; }
+
+    public string CgosConnectionDisplayNameDraft { get; private set; } = "";
+
+    public int CgosConnectionDisplayNameCaretIndex { get; private set; }
+
+    public string CgosConnectionEditWarning { get; private set; } = "";
+
+    public string CgosConnectionEditSaveMessage { get; private set; } = "";
+
     public int BoardSize { get; private set; } = 19;
 
     public IReadOnlyList<TournamentRules> TournamentRulesList => _tournamentRules;
@@ -214,6 +226,60 @@ public sealed class GoAppSession
         }
 
         SelectedCgosConnectionProfileIndex = index;
+    }
+
+    public void OpenCgosConnectionEditPanel()
+    {
+        IsCgosConnectionEditPanelOpen = true;
+        IsCgosConnectionDisplayNameEditing = false;
+        CgosConnectionDisplayNameDraft = SelectedCgosConnectionProfile.DisplayName;
+        CgosConnectionDisplayNameCaretIndex = CgosConnectionDisplayNameDraft.Length;
+        CgosConnectionEditWarning = "";
+        CgosConnectionEditSaveMessage = "";
+    }
+
+    public void CloseCgosConnectionEditPanel()
+    {
+        IsCgosConnectionEditPanelOpen = false;
+        IsCgosConnectionDisplayNameEditing = false;
+        CgosConnectionEditWarning = "";
+        CgosConnectionEditSaveMessage = "";
+    }
+
+    public void BeginCgosConnectionDisplayNameEditing(int caretIndex)
+    {
+        IsCgosConnectionDisplayNameEditing = true;
+        CgosConnectionDisplayNameCaretIndex = Math.Clamp(caretIndex, 0, CgosConnectionDisplayNameDraft.Length);
+        CgosConnectionEditWarning = "";
+    }
+
+    public void EndCgosConnectionDisplayNameEditing()
+    {
+        IsCgosConnectionDisplayNameEditing = false;
+    }
+
+    public void SetCgosConnectionDisplayNameDraft(string displayName, int caretIndex)
+    {
+        CgosConnectionDisplayNameDraft = displayName;
+        CgosConnectionDisplayNameCaretIndex = Math.Clamp(caretIndex, 0, displayName.Length);
+        CgosConnectionEditSaveMessage = "UNSAVED";
+    }
+
+    public void SetCgosConnectionEditWarning(string warning)
+    {
+        CgosConnectionEditWarning = warning;
+    }
+
+    public void SaveCgosConnectionDisplayName(string displayName)
+    {
+        _cgosConnectionProfiles[SelectedCgosConnectionProfileIndex] = SelectedCgosConnectionProfile with
+        {
+            DisplayName = displayName,
+        };
+        CgosConnectionDisplayNameDraft = displayName;
+        CgosConnectionDisplayNameCaretIndex = Math.Clamp(CgosConnectionDisplayNameCaretIndex, 0, displayName.Length);
+        CgosConnectionEditSaveMessage = "SAVED";
+        CgosConnectionEditWarning = "";
     }
 
     public void ToggleRenParseDisplay()
