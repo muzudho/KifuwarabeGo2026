@@ -54,11 +54,13 @@ public sealed class GoAppSession
 
     public bool IsCgosConnectionAddPanelMode { get; private set; }
 
-    public bool IsCgosConnectionDisplayNameEditing { get; private set; }
+    public CgosConnectionProfileEditField? ActiveCgosConnectionEditField { get; private set; }
 
-    public string CgosConnectionDisplayNameDraft { get; private set; } = "";
+    public int CgosConnectionEditCaretIndex { get; private set; }
 
-    public int CgosConnectionDisplayNameCaretIndex { get; private set; }
+    public CgosConnectionProfile CgosConnectionEditDraft { get; private set; } = CreateDefaultCgosConnectionProfile();
+
+    public string CgosConnectionPortDraft { get; private set; } = "6809";
 
     public string CgosConnectionEditWarning { get; private set; } = "";
 
@@ -246,10 +248,11 @@ public sealed class GoAppSession
     {
         IsCgosConnectionEditPanelOpen = true;
         IsCgosConnectionAddPanelMode = false;
-        IsCgosConnectionDisplayNameEditing = false;
+        ActiveCgosConnectionEditField = null;
         _cgosConnectionEditSource = SelectedCgosConnectionProfile;
-        CgosConnectionDisplayNameDraft = SelectedCgosConnectionProfile.DisplayName;
-        CgosConnectionDisplayNameCaretIndex = CgosConnectionDisplayNameDraft.Length;
+        CgosConnectionEditDraft = SelectedCgosConnectionProfile;
+        CgosConnectionPortDraft = CgosConnectionEditDraft.Port.ToString();
+        CgosConnectionEditCaretIndex = 0;
         CgosConnectionEditWarning = "";
         CgosConnectionEditSaveMessage = "";
     }
@@ -258,10 +261,11 @@ public sealed class GoAppSession
     {
         IsCgosConnectionEditPanelOpen = true;
         IsCgosConnectionAddPanelMode = true;
-        IsCgosConnectionDisplayNameEditing = false;
+        ActiveCgosConnectionEditField = null;
         _cgosConnectionEditSource = CreateDefaultCgosConnectionProfile();
-        CgosConnectionDisplayNameDraft = "New CGOS Connection";
-        CgosConnectionDisplayNameCaretIndex = CgosConnectionDisplayNameDraft.Length;
+        CgosConnectionEditDraft = _cgosConnectionEditSource;
+        CgosConnectionPortDraft = CgosConnectionEditDraft.Port.ToString();
+        CgosConnectionEditCaretIndex = 0;
         CgosConnectionEditWarning = "";
         CgosConnectionEditSaveMessage = "";
     }
@@ -275,12 +279,16 @@ public sealed class GoAppSession
 
         IsCgosConnectionEditPanelOpen = true;
         IsCgosConnectionAddPanelMode = true;
-        IsCgosConnectionDisplayNameEditing = false;
+        ActiveCgosConnectionEditField = null;
         _cgosConnectionEditSource = SelectedCgosConnectionProfile;
-        CgosConnectionDisplayNameDraft = string.IsNullOrWhiteSpace(_cgosConnectionEditSource.DisplayName)
-            ? "Unnamed CGOS Connection Copy"
-            : $"{_cgosConnectionEditSource.DisplayName.Trim()} Copy";
-        CgosConnectionDisplayNameCaretIndex = CgosConnectionDisplayNameDraft.Length;
+        CgosConnectionEditDraft = _cgosConnectionEditSource with
+        {
+            DisplayName = string.IsNullOrWhiteSpace(_cgosConnectionEditSource.DisplayName)
+                ? "Unnamed CGOS Connection Copy"
+                : $"{_cgosConnectionEditSource.DisplayName.Trim()} Copy",
+        };
+        CgosConnectionPortDraft = CgosConnectionEditDraft.Port.ToString();
+        CgosConnectionEditCaretIndex = 0;
         CgosConnectionEditWarning = "";
         CgosConnectionEditSaveMessage = "";
     }
@@ -289,27 +297,41 @@ public sealed class GoAppSession
     {
         IsCgosConnectionEditPanelOpen = false;
         IsCgosConnectionAddPanelMode = false;
-        IsCgosConnectionDisplayNameEditing = false;
+        ActiveCgosConnectionEditField = null;
         CgosConnectionEditWarning = "";
         CgosConnectionEditSaveMessage = "";
     }
 
-    public void BeginCgosConnectionDisplayNameEditing(int caretIndex)
+    public void BeginCgosConnectionEditField(CgosConnectionProfileEditField field, int caretIndex)
     {
-        IsCgosConnectionDisplayNameEditing = true;
-        CgosConnectionDisplayNameCaretIndex = Math.Clamp(caretIndex, 0, CgosConnectionDisplayNameDraft.Length);
+        ActiveCgosConnectionEditField = field;
+        CgosConnectionEditCaretIndex = Math.Clamp(caretIndex, 0, GetCgosConnectionEditFieldText(field).Length);
         CgosConnectionEditWarning = "";
     }
 
-    public void EndCgosConnectionDisplayNameEditing()
+    public void EndCgosConnectionEditField()
     {
-        IsCgosConnectionDisplayNameEditing = false;
+        ActiveCgosConnectionEditField = null;
     }
 
-    public void SetCgosConnectionDisplayNameDraft(string displayName, int caretIndex)
+    public void SetCgosConnectionEditField(CgosConnectionProfileEditField field, string text, int caretIndex)
     {
-        CgosConnectionDisplayNameDraft = displayName;
-        CgosConnectionDisplayNameCaretIndex = Math.Clamp(caretIndex, 0, displayName.Length);
+        CgosConnectionEditDraft = field switch
+        {
+            CgosConnectionProfileEditField.DisplayName => CgosConnectionEditDraft with { DisplayName = text },
+            CgosConnectionProfileEditField.Host => CgosConnectionEditDraft with { Host = text },
+            CgosConnectionProfileEditField.Port => CgosConnectionEditDraft,
+            CgosConnectionProfileEditField.Role => CgosConnectionEditDraft with { Role = text },
+            CgosConnectionProfileEditField.Note => CgosConnectionEditDraft with { Note = text },
+            _ => throw new ArgumentOutOfRangeException(nameof(field), field, "CGOS connection edit field is out of range."),
+        };
+        if (field == CgosConnectionProfileEditField.Port)
+        {
+            CgosConnectionPortDraft = text;
+        }
+
+        ActiveCgosConnectionEditField = field;
+        CgosConnectionEditCaretIndex = Math.Clamp(caretIndex, 0, text.Length);
         CgosConnectionEditSaveMessage = "UNSAVED";
     }
 
@@ -318,28 +340,22 @@ public sealed class GoAppSession
         CgosConnectionEditWarning = warning;
     }
 
-    public void SaveCgosConnectionDisplayName(string displayName)
+    public void SaveCgosConnectionEditDraft(CgosConnectionProfile profile)
     {
         if (IsCgosConnectionAddPanelMode)
         {
-            _cgosConnectionProfiles.Add(_cgosConnectionEditSource with
-            {
-                DisplayName = displayName,
-            });
+            _cgosConnectionProfiles.Add(profile);
             SelectedCgosConnectionProfileIndex = _cgosConnectionProfiles.Count - 1;
             CgosConnectionSelectionPageIndex = SelectedCgosConnectionProfileIndex / CgosConnectionSelectionPageSize;
             IsCgosConnectionAddPanelMode = false;
         }
         else
         {
-            _cgosConnectionProfiles[SelectedCgosConnectionProfileIndex] = SelectedCgosConnectionProfile with
-            {
-                DisplayName = displayName,
-            };
+            _cgosConnectionProfiles[SelectedCgosConnectionProfileIndex] = profile;
         }
 
-        CgosConnectionDisplayNameDraft = displayName;
-        CgosConnectionDisplayNameCaretIndex = Math.Clamp(CgosConnectionDisplayNameCaretIndex, 0, displayName.Length);
+        CgosConnectionEditDraft = _cgosConnectionProfiles[SelectedCgosConnectionProfileIndex];
+        CgosConnectionPortDraft = CgosConnectionEditDraft.Port.ToString();
         CgosConnectionEditSaveMessage = "SAVED";
         CgosConnectionEditWarning = "";
     }
@@ -379,6 +395,16 @@ public sealed class GoAppSession
 
     public bool CanMoveCgosConnectionSelectionPage(int step) =>
         Math.Clamp(CgosConnectionSelectionPageIndex + step, 0, GetCgosConnectionSelectionPageCount() - 1) != CgosConnectionSelectionPageIndex;
+
+    public string GetCgosConnectionEditFieldText(CgosConnectionProfileEditField field) => field switch
+    {
+        CgosConnectionProfileEditField.DisplayName => CgosConnectionEditDraft.DisplayName,
+        CgosConnectionProfileEditField.Host => CgosConnectionEditDraft.Host,
+        CgosConnectionProfileEditField.Port => CgosConnectionPortDraft,
+        CgosConnectionProfileEditField.Role => CgosConnectionEditDraft.Role,
+        CgosConnectionProfileEditField.Note => CgosConnectionEditDraft.Note,
+        _ => throw new ArgumentOutOfRangeException(nameof(field), field, "CGOS connection edit field is out of range."),
+    };
 
     public IEnumerable<int> GetVisibleCgosConnectionProfileIndexes()
     {

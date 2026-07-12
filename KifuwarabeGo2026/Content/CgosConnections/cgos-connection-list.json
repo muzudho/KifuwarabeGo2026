@@ -22,8 +22,8 @@
       "note": "CGF Open 2026 final connection"
     },
     {
-      "displayName": "New CGOS Connection 2",
-      "host": "uec-go.com",
+      "displayName": "Test 2",
+      "host": "warabenture.com",
       "port": 6809,
       "role": "PRACTICE",
       "note": "CGOS practice server"

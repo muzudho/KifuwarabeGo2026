@@ -134,8 +134,8 @@ public sealed class GoScreenRenderer
     public int GetGtpEngineEditPanelCaretIndex(Point point, GtpEngineProfileEditField field, string text) =>
         GetTextBoxCaretIndex(point.X, text, GtpEngineEditPanelFieldTextBounds(field), 0.42f);
 
-    public int GetCgosConnectionDisplayNameCaretIndex(Point point, string text) =>
-        GetTextBoxCaretIndex(point.X, text, CgosConnectionDisplayNameTextBounds, 0.44f);
+    public int GetCgosConnectionEditPanelCaretIndex(Point point, CgosConnectionProfileEditField field, string text) =>
+        GetTextBoxCaretIndex(point.X, text, CgosConnectionEditPanelFieldTextBounds(field), 0.42f);
 
     public static bool GetTournamentRulesAddPanelFileBrowseButtonHit(Point point) =>
         TournamentRulesAddPanelFileBrowseButtonBounds.Contains(point);
@@ -348,8 +348,18 @@ public sealed class GoScreenRenderer
     public static bool GetCgosConnectionEditPanelSaveButtonHit(Point point) =>
         CgosConnectionEditPanelSaveButtonBounds.Contains(point);
 
-    public static bool GetCgosConnectionDisplayNameBoxHit(Point point) =>
-        CgosConnectionDisplayNameRowBounds.Contains(point);
+    public static CgosConnectionProfileEditField? GetCgosConnectionEditPanelFieldHit(Point point)
+    {
+        foreach (var field in CgosConnectionEditFields)
+        {
+            if (CgosConnectionEditPanelFieldRowBounds(field).Contains(point))
+            {
+                return field;
+            }
+        }
+
+        return null;
+    }
 
     public static int? GetCgosConnectionProfileHit(Point point, GoAppSession session)
     {
@@ -699,18 +709,11 @@ public sealed class GoScreenRenderer
         FillRect(CgosConnectionEditPanelEditorBounds, new Color(15, 20, 26));
         DrawRect(CgosConnectionEditPanelEditorBounds, 1, new Color(67, 84, 92));
 
-        var displayNameBounds = CgosConnectionDisplayNameRowBounds;
-        var active = session.IsCgosConnectionDisplayNameEditing;
-        DrawDataRowFrame(displayNameBounds, active, displayNameBounds.Contains(mousePoint));
-        DrawUiLabel(UiLabel.InCompactRow("DISPLAY", displayNameBounds));
-
-        var textBounds = CgosConnectionDisplayNameTextBounds;
-        var displayName = session.CgosConnectionDisplayNameDraft;
-        DrawFittedText(string.IsNullOrEmpty(displayName) ? "-" : displayName, textBounds, Color.White, 0.44f);
-        if (active)
-        {
-            DrawTextBoxCaret(displayName, session.CgosConnectionDisplayNameCaretIndex, textBounds, 0.44f);
-        }
+        DrawCgosConnectionEditField(session, CgosConnectionProfileEditField.DisplayName, "DISPLAY", mousePoint);
+        DrawCgosConnectionEditField(session, CgosConnectionProfileEditField.Host, "HOST", mousePoint);
+        DrawCgosConnectionEditField(session, CgosConnectionProfileEditField.Port, "PORT", mousePoint);
+        DrawCgosConnectionEditField(session, CgosConnectionProfileEditField.Role, "ROLE", mousePoint);
+        DrawCgosConnectionEditField(session, CgosConnectionProfileEditField.Note, "NOTE", mousePoint);
 
         if (!string.IsNullOrWhiteSpace(session.CgosConnectionEditWarning))
         {
@@ -718,6 +721,22 @@ public sealed class GoScreenRenderer
         }
 
         DrawCommandButton(CgosConnectionEditPanelSaveButtonBounds, SaveCgosConnectionLabel(session), false, mousePoint, scale: 0.46f);
+    }
+
+    private void DrawCgosConnectionEditField(GoAppSession session, CgosConnectionProfileEditField field, string label, Point mousePoint)
+    {
+        var bounds = CgosConnectionEditPanelFieldRowBounds(field);
+        var active = session.ActiveCgosConnectionEditField == field;
+        var text = session.GetCgosConnectionEditFieldText(field);
+        DrawDataRowFrame(bounds, active, bounds.Contains(mousePoint));
+        DrawUiLabel(UiLabel.InCompactRow(label, bounds));
+
+        var textBounds = CgosConnectionEditPanelFieldTextBounds(field);
+        DrawFittedText(string.IsNullOrEmpty(text) ? "-" : text, textBounds, Color.White, 0.42f);
+        if (active)
+        {
+            DrawTextBoxCaret(text, session.CgosConnectionEditCaretIndex, textBounds, 0.42f);
+        }
     }
 
     private void DrawCgosConnectionProfileItem(Rectangle bounds, GoAppSession session, int index, Point mousePoint)
@@ -1580,18 +1599,38 @@ public sealed class GoScreenRenderer
 
     private static Rectangle CgosConnectionPropertyBounds => new(936, 350, 500, 426);
 
-    private static Rectangle CgosConnectionEditPanelBounds => new(560, 280, 800, 420);
+    private static Rectangle CgosConnectionEditPanelBounds => new(430, 126, 1060, 820);
 
-    private static Rectangle CgosConnectionEditPanelEditorBounds => new(620, 382, 680, 190);
+    private static Rectangle CgosConnectionEditPanelEditorBounds => new(520, 228, 880, 590);
 
-    private static Rectangle CgosConnectionEditPanelCloseButtonBounds => new(1198, 310, 122, 48);
+    private static Rectangle CgosConnectionEditPanelCloseButtonBounds => new(1318, 156, 132, 48);
 
-    private static Rectangle CgosConnectionEditPanelSaveButtonBounds => new(992, 604, 308, 58);
+    private static Rectangle CgosConnectionEditPanelSaveButtonBounds => new(1080, 840, 320, 58);
 
-    private static Rectangle CgosConnectionDisplayNameRowBounds => new(676, 448, 568, 56);
+    private static readonly CgosConnectionProfileEditField[] CgosConnectionEditFields =
+    {
+        CgosConnectionProfileEditField.DisplayName,
+        CgosConnectionProfileEditField.Host,
+        CgosConnectionProfileEditField.Port,
+        CgosConnectionProfileEditField.Role,
+        CgosConnectionProfileEditField.Note,
+    };
 
-    private static Rectangle CgosConnectionDisplayNameTextBounds =>
-        new(CgosConnectionDisplayNameRowBounds.X + 152, CgosConnectionDisplayNameRowBounds.Y + 7, CgosConnectionDisplayNameRowBounds.Width - 168, 42);
+    private static Rectangle CgosConnectionEditPanelFieldRowBounds(CgosConnectionProfileEditField field) => field switch
+    {
+        CgosConnectionProfileEditField.DisplayName => new Rectangle(AddPanelControlX, 264, 668, 56),
+        CgosConnectionProfileEditField.Host => new Rectangle(AddPanelControlX, 348, 668, 56),
+        CgosConnectionProfileEditField.Port => new Rectangle(AddPanelControlX, 432, 668, 56),
+        CgosConnectionProfileEditField.Role => new Rectangle(AddPanelControlX, 516, 668, 56),
+        CgosConnectionProfileEditField.Note => new Rectangle(AddPanelControlX, 600, 668, 56),
+        _ => Rectangle.Empty,
+    };
+
+    private static Rectangle CgosConnectionEditPanelFieldTextBounds(CgosConnectionProfileEditField field)
+    {
+        var bounds = CgosConnectionEditPanelFieldRowBounds(field);
+        return new Rectangle(bounds.X + 152, bounds.Y + 7, bounds.Width - 168, 42);
+    }
 
     private static Rectangle CgosConnectionProfileBounds(int index) =>
         new(CgosConnectionListBounds.X + 16, CgosConnectionListBounds.Y + 16 + index * 104, CgosConnectionListBounds.Width - 32, 86);

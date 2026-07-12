@@ -6,3 +6,12 @@ public sealed record CgosConnectionProfile(
     int Port,
     string Role,
     string Note);
+
+public enum CgosConnectionProfileEditField
+{
+    DisplayName,
+    Host,
+    Port,
+    Role,
+    Note,
+}
