@@ -5,4 +5,5 @@ public enum RenParseDisplayMode
     Off,
     Overlay,
     Graph,
+    Eye,
 }
