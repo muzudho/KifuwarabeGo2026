@@ -5,12 +5,14 @@ using KifuwarabeGo2026.Application.Game;
 using KifuwarabeGo2026.Application.TournamentRulesSetting;
 using KifuwarabeGo2026.Domain;
 using KifuwarabeGo2026.Presentation;
+using KifuwarabeGo2026.Sgf;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.IO;
+using System.Text;
 
 public class Game1 : Game
 {
@@ -126,6 +128,14 @@ public class Game1 : Game
             {
                 _session.ReturnToSetup();
             }
+            else if (_session.CurrentMode.Kind == GoAppModeKind.GameOver && GoScreenRenderer.GetExportSgfButtonHit(point))
+            {
+                ExportSgf();
+            }
+            else if (isSetupMode && GoScreenRenderer.GetImportSgfButtonHit(point))
+            {
+                ImportSgf();
+            }
             else if (isSetupMode && GoScreenRenderer.GetStartPlayingButtonHit(point, _session.CurrentMode.Kind))
             {
                 _playingScene.StartPlaying();
@@ -185,6 +195,76 @@ public class Game1 : Game
         };
 
         return dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK ? dialog.FileName : null;
+    }
+
+    private void ImportSgf()
+    {
+        using var dialog = new System.Windows.Forms.OpenFileDialog
+        {
+            CheckFileExists = true,
+            DefaultExt = "sgf",
+            Filter = "SGF files (*.sgf)|*.sgf|All files (*.*)|*.*",
+            InitialDirectory = AppContext.BaseDirectory,
+            Title = "Load SGF game record",
+        };
+
+        if (dialog.ShowDialog() != System.Windows.Forms.DialogResult.OK)
+        {
+            return;
+        }
+
+        try
+        {
+            var record = SgfGameRecordConverter.FromSgf(File.ReadAllText(dialog.FileName, Encoding.UTF8));
+            if (!_session.LoadGameRecordAsInitialPosition(record, out var warning))
+            {
+                ShowMessage(warning, "SGF input");
+                return;
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or SgfParseException or ArgumentOutOfRangeException)
+        {
+            ShowMessage(ex.Message, "SGF input");
+        }
+    }
+
+    private void ExportSgf()
+    {
+        using var dialog = new System.Windows.Forms.SaveFileDialog
+        {
+            AddExtension = true,
+            CheckPathExists = true,
+            DefaultExt = "sgf",
+            Filter = "SGF files (*.sgf)|*.sgf|All files (*.*)|*.*",
+            FileName = $"kifuwarabe-go-{DateTime.Now:yyyyMMdd-HHmmss}.sgf",
+            InitialDirectory = AppContext.BaseDirectory,
+            OverwritePrompt = true,
+            Title = "Save SGF game record",
+        };
+
+        if (dialog.ShowDialog() != System.Windows.Forms.DialogResult.OK)
+        {
+            return;
+        }
+
+        try
+        {
+            var sgf = SgfGameRecordConverter.ToSgf(_session.CurrentGameRecord);
+            File.WriteAllText(dialog.FileName, sgf, Encoding.UTF8);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            ShowMessage(ex.Message, "SGF output");
+        }
+    }
+
+    private static void ShowMessage(string message, string caption)
+    {
+        System.Windows.Forms.MessageBox.Show(
+            message,
+            caption,
+            System.Windows.Forms.MessageBoxButtons.OK,
+            System.Windows.Forms.MessageBoxIcon.Warning);
     }
 
     private static string GetInitialTournamentRulesDirectory(TournamentRules rules)

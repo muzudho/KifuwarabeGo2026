@@ -291,10 +291,14 @@ public sealed class GoScreenRenderer
 
     public static bool GetSaveTournamentRulesButtonHit(Point point) => SaveTournamentRulesButtonBounds.Contains(point);
 
+    public static bool GetImportSgfButtonHit(Point point) => ImportSgfButtonBounds.Contains(point);
+
     public static bool GetStartPlayingButtonHit(Point point, GoAppModeKind modeKind) =>
         modeKind != GoAppModeKind.GameOver && StartPlayingButtonBounds.Contains(point);
 
     public static bool GetReturnToSetupButtonHit(Point point) => ReturnToSetupButtonBounds.Contains(point);
+
+    public static bool GetExportSgfButtonHit(Point point) => ExportSgfButtonBounds.Contains(point);
 
     public static GoPlayerKind? GetBlackPlayerKindButtonHit(Point point) => GetPlayerKindButtonHit(point, BlackPlayerKindButtonY);
 
@@ -436,6 +440,7 @@ public sealed class GoScreenRenderer
         DrawInfoStrip(1144, 780, "WHITE", PlayerKindLabel(session.WhitePlayerKind));
         DrawPlayerKindButtons(session.WhitePlayerKind, mousePoint, WhitePlayerKindButtonY);
         DrawSetupEngineButtons(session, GoStone.White, mousePoint, WhiteEngineButtonY);
+        DrawCommandButton(ImportSgfButtonBounds, "SGF INPUT", false, mousePoint);
         DrawCommandButton(StartPlayingButtonBounds, "START", false, mousePoint);
     }
 
@@ -502,6 +507,7 @@ public sealed class GoScreenRenderer
 
         var actionSection = new Rectangle(1144, 854, 668, 126);
         DrawResultSection(actionSection, "ACTION");
+        DrawCommandButton(ExportSgfButtonBounds, "SGF OUTPUT", false, mousePoint, scale: 0.52f);
         DrawCommandButton(ReturnToSetupButtonBounds, "RULE SETUP", false, mousePoint);
     }
 
@@ -1166,9 +1172,13 @@ public sealed class GoScreenRenderer
 
     private static Rectangle StartPlayingButtonBounds => new(1492, 920, 320, 56);
 
+    private static Rectangle ImportSgfButtonBounds => new(1144, 920, 320, 56);
+
     private static Rectangle SaveTournamentRulesButtonBounds => new(974, 798, 320, 56);
 
     private static Rectangle ReturnToSetupButtonBounds => new(1318, 910, 320, 56);
+
+    private static Rectangle ExportSgfButtonBounds => new(1164, 910, 140, 56);
 
     private static Rectangle PassButtonBounds => new(1144, 920, 320, 72);
 

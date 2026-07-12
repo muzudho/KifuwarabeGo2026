@@ -1,5 +1,6 @@
 namespace KifuwarabeGo2026.Application;
 
+using KifuwarabeGo2026.Application.Game;
 using KifuwarabeGo2026.Domain;
 using System;
 using System.Collections.Generic;
@@ -152,6 +153,8 @@ public sealed class GoAppSession
 
     public string EngineLogPath { get; private set; } = "";
 
+    public GoGameRecord CurrentGameRecord { get; private set; } = new();
+
     public bool CanAcceptHumanMove =>
         CurrentMode.Kind == GoAppModeKind.Playing &&
         IsEngineReady &&
@@ -196,6 +199,7 @@ public sealed class GoAppSession
             ClearBoard();
         }
 
+        CurrentGameRecord = CreateGameRecordFromCurrentPosition();
         BlackElapsedTime = TimeSpan.Zero;
         WhiteElapsedTime = TimeSpan.Zero;
         ChangeMode(GoAppModeKind.Playing);
@@ -837,6 +841,7 @@ public sealed class GoAppSession
         }
 
         var placedBy = CurrentTurn;
+        CurrentGameRecord.Moves.Add(new GoGameMove(placedBy, new GoPoint(x, y)));
         if (CurrentTurn == GoStone.Black)
         {
             BlackAgehama += capturedStones;
@@ -872,6 +877,7 @@ public sealed class GoAppSession
 
         KoPoint = null;
         ConsecutivePasses++;
+        CurrentGameRecord.Moves.Add(new GoGameMove(CurrentTurn, null));
         CompleteMoveAndPassTurn();
         if (CurrentMode.Kind == GoAppModeKind.GameOver)
         {
@@ -903,6 +909,63 @@ public sealed class GoAppSession
         return true;
     }
 
+    public bool LoadGameRecordAsInitialPosition(GoGameRecord record, out string warning)
+    {
+        ArgumentNullException.ThrowIfNull(record);
+
+        var loadedBoard = new GoBoard(record.BoardSize);
+        foreach (var setupStone in record.SetupStones)
+        {
+            if (!loadedBoard.TrySetSetupStone(setupStone.Point.X, setupStone.Point.Y, setupStone.Stone))
+            {
+                warning = $"Invalid SGF setup stone at {setupStone.Point.X + 1},{setupStone.Point.Y + 1}.";
+                return false;
+            }
+        }
+
+        GoPoint? replayKoPoint = null;
+        foreach (var move in record.Moves)
+        {
+            if (move.Point is not { } point)
+            {
+                replayKoPoint = null;
+                continue;
+            }
+
+            if (!loadedBoard.TryPlaceStone(point.X, point.Y, move.Stone, replayKoPoint, out _, out var nextKoPoint))
+            {
+                warning = $"Illegal SGF move at {point.X + 1},{point.Y + 1}.";
+                return false;
+            }
+
+            replayKoPoint = nextKoPoint;
+        }
+
+        BoardSize = record.BoardSize;
+        _currentTournamentRules.BoardSize = BoardSize;
+        _currentTournamentRules.Komi = record.Komi;
+        TournamentRulesSaveMessage = "UNSAVED";
+        _board = loadedBoard;
+        CurrentTurn = GoStone.Black;
+        BlackAgehama = 0;
+        WhiteAgehama = 0;
+        BlackElapsedTime = TimeSpan.Zero;
+        WhiteElapsedTime = TimeSpan.Zero;
+        KoPoint = null;
+        ConsecutivePasses = 0;
+        PlayedMoveCount = 0;
+        Winner = null;
+        GameOverReason = "";
+        IsEngineReady = true;
+        IsEngineThinking = false;
+        EngineErrorMessage = "";
+        CurrentGameRecord = CreateGameRecordFromCurrentPosition();
+        ResetPositionHistory();
+        ChangeMode(GoAppModeKind.Resting);
+        warning = "";
+        return true;
+    }
+
     private void ClearBoard()
     {
         _board = new GoBoard(BoardSize);
@@ -917,6 +980,9 @@ public sealed class GoAppSession
         Winner = null;
         GameOverReason = "";
         IsEngineReady = true;
+        IsEngineThinking = false;
+        EngineErrorMessage = "";
+        CurrentGameRecord = CreateGameRecordFromCurrentPosition();
         ResetPositionHistory();
     }
 
@@ -955,6 +1021,31 @@ public sealed class GoAppSession
     {
         _positionHashes.Clear();
         _positionHashes.Add(_board.CurrentHash);
+    }
+
+    private GoGameRecord CreateGameRecordFromCurrentPosition()
+    {
+        var record = new GoGameRecord
+        {
+            GameName = "Kifuwarabe Go 2026",
+            RuleName = RuleKind.ToString(),
+            BoardSize = BoardSize,
+            Komi = Komi,
+        };
+
+        for (var y = 0; y < BoardSize; y++)
+        {
+            for (var x = 0; x < BoardSize; x++)
+            {
+                var stone = _board.GetStone(x, y);
+                if (stone != GoStone.Empty)
+                {
+                    record.SetupStones.Add(new GoGameSetupStone(stone, new GoPoint(x, y)));
+                }
+            }
+        }
+
+        return record;
     }
 
     private void DecidePureGoResult()

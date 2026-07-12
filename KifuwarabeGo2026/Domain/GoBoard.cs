@@ -74,6 +74,17 @@ public sealed class GoBoard
         return count;
     }
 
+    public bool TrySetSetupStone(int x, int y, GoStone stone)
+    {
+        if (stone is not (GoStone.Black or GoStone.White) || !IsOnBoard(x, y) || _stones[x, y] != GoStone.Empty)
+        {
+            return false;
+        }
+
+        SetStone(x, y, stone);
+        return true;
+    }
+
     public GoRenParseResult ParseRens()
     {
         var renNumbers = new int[Size, Size];
