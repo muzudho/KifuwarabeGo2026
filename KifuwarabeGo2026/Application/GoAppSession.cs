@@ -82,7 +82,9 @@ public sealed class GoAppSession
 
     public int NextMoveNumber => PlayedMoveCount + 1;
 
-    public bool IsRenParseDisplayEnabled { get; private set; }
+    public RenParseDisplayMode RenParseDisplayMode { get; private set; }
+
+    public bool IsRenParseDisplayEnabled => RenParseDisplayMode != RenParseDisplayMode.Off;
 
     public GoPlayerKind BlackPlayerKind { get; private set; } = GoPlayerKind.Human;
 
@@ -164,7 +166,12 @@ public sealed class GoAppSession
 
     public void ToggleRenParseDisplay()
     {
-        IsRenParseDisplayEnabled = !IsRenParseDisplayEnabled;
+        RenParseDisplayMode = RenParseDisplayMode switch
+        {
+            RenParseDisplayMode.Off => RenParseDisplayMode.Overlay,
+            RenParseDisplayMode.Overlay => RenParseDisplayMode.Graph,
+            _ => RenParseDisplayMode.Off,
+        };
     }
 
     public GoRenParseResult ParseRens()

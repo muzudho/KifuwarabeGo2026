@@ -380,8 +380,16 @@ public sealed class GoScreenRenderer
             DrawCircle(center, Math.Max(5, cell * 0.1f), new Color(55, 38, 25));
         }
 
-        DrawPlacedStones(session, start, cell);
-        DrawRenParseOverlay(session, start, cell);
+        if (session.RenParseDisplayMode == RenParseDisplayMode.Graph)
+        {
+            DrawRenGraphOverlay(session, start, cell);
+        }
+        else
+        {
+            DrawPlacedStones(session, start, cell);
+            DrawRenParseOverlay(session, start, cell);
+        }
+
         DrawSuperKoMarks(session, start, cell);
         DrawKoMark(session, start, cell);
         DrawHoverStone(session, mousePoint, cell);
@@ -1422,7 +1430,7 @@ public sealed class GoScreenRenderer
 
     private void DrawRenParseOverlay(GoAppSession session, Vector2 start, float cell)
     {
-        if (!session.IsRenParseDisplayEnabled)
+        if (session.RenParseDisplayMode != RenParseDisplayMode.Overlay)
         {
             return;
         }
@@ -1430,6 +1438,32 @@ public sealed class GoScreenRenderer
         var renParse = session.ParseRens();
         DrawRenBoundaries(renParse, start, cell);
         DrawRenNumbers(renParse, start, cell);
+    }
+
+    private void DrawRenGraphOverlay(GoAppSession session, Vector2 start, float cell)
+    {
+        var renParse = session.ParseRens();
+        DrawRenGraphCells(session, start, cell);
+        DrawRenBoundaries(renParse, start, cell);
+        DrawRenRepresentativeNumbers(renParse, start, cell);
+    }
+
+    private void DrawRenGraphCells(GoAppSession session, Vector2 start, float cell)
+    {
+        var halfCell = cell * 0.5f;
+        for (var y = 0; y < session.BoardSize; y++)
+        {
+            for (var x = 0; x < session.BoardSize; x++)
+            {
+                var center = BoardPoint(start, cell, x, y);
+                var rect = new Rectangle(
+                    (int)MathF.Round(center.X - halfCell),
+                    (int)MathF.Round(center.Y - halfCell),
+                    (int)MathF.Ceiling(cell),
+                    (int)MathF.Ceiling(cell));
+                FillRect(rect, RenGraphCellColor(session.GetStone(x, y)));
+            }
+        }
     }
 
     private void DrawRenBoundaries(GoRenParseResult renParse, Vector2 start, float cell)
@@ -1486,6 +1520,34 @@ public sealed class GoScreenRenderer
             }
         }
     }
+
+    private void DrawRenRepresentativeNumbers(GoRenParseResult renParse, Vector2 start, float cell)
+    {
+        var scale = MathHelper.Clamp(cell / 72f, 0.28f, 0.88f);
+        var drawn = new bool[renParse.Count + 1];
+        for (var y = 0; y < renParse.Size; y++)
+        {
+            for (var x = 0; x < renParse.Size; x++)
+            {
+                var renNumber = renParse.GetRenNumber(x, y);
+                if (drawn[renNumber])
+                {
+                    continue;
+                }
+
+                drawn[renNumber] = true;
+                var center = BoardPoint(start, cell, x, y);
+                DrawCenteredText(renNumber.ToString(), center, new Color(0, 177, 238), scale);
+            }
+        }
+    }
+
+    private static Color RenGraphCellColor(GoStone stone) => stone switch
+    {
+        GoStone.Black => Color.Black,
+        GoStone.White => new Color(248, 248, 244),
+        _ => new Color(255, 197, 18),
+    };
 
     private void DrawHoverStone(GoAppSession session, Point mousePoint, float cell)
     {
