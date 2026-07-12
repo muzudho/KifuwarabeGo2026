@@ -325,6 +325,10 @@ public sealed class GoScreenRenderer
 
     public static bool GetBoardEditingEraseButtonHit(Point point) => BoardEditingEraseButtonBounds.Contains(point);
 
+    public static bool GetBoardEditingUndoButtonHit(Point point) => BoardEditingUndoButtonBounds.Contains(point);
+
+    public static bool GetBoardEditingRedoButtonHit(Point point) => BoardEditingRedoButtonBounds.Contains(point);
+
     public static bool GetBoardEditingExportSgfButtonHit(Point point) => BoardEditingExportSgfButtonBounds.Contains(point);
 
     public static bool GetBoardEditingDoneButtonHit(Point point) => BoardEditingDoneButtonBounds.Contains(point);
@@ -475,6 +479,8 @@ public sealed class GoScreenRenderer
         DrawCommandButton(BoardEditingBlackButtonBounds, "BLACK", session.BoardEditingStone == GoStone.Black, mousePoint, scale: 0.5f);
         DrawCommandButton(BoardEditingWhiteButtonBounds, "WHITE", session.BoardEditingStone == GoStone.White, mousePoint, scale: 0.5f);
         DrawCommandButton(BoardEditingEraseButtonBounds, "ERASE", session.BoardEditingStone == GoStone.Empty, mousePoint, scale: 0.5f);
+        DrawCommandButton(BoardEditingUndoButtonBounds, "UNDO", false, mousePoint, enabled: session.CanUndoBoardEditing, scale: 0.5f);
+        DrawCommandButton(BoardEditingRedoButtonBounds, "REDO", false, mousePoint, enabled: session.CanRedoBoardEditing, scale: 0.5f);
 
         DrawText("CURRENT POSITION", new Vector2(1144, 636), new Color(180, 195, 195), 0.52f);
         DrawStoneCountStrip(session, 676);
@@ -1231,6 +1237,10 @@ public sealed class GoScreenRenderer
     private static Rectangle BoardEditingWhiteButtonBounds => new(1376, 506, 204, 62);
 
     private static Rectangle BoardEditingEraseButtonBounds => new(1608, 506, 204, 62);
+
+    private static Rectangle BoardEditingUndoButtonBounds => new(1144, 588, 320, 56);
+
+    private static Rectangle BoardEditingRedoButtonBounds => new(1492, 588, 320, 56);
 
     private static Rectangle BoardEditingExportSgfButtonBounds => new(1144, 920, 320, 56);
 

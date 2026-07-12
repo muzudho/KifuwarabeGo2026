@@ -82,6 +82,24 @@ public class Game1 : Game
 
     private void UpdateGlobalKeyboardInput(KeyboardState keyboard)
     {
+        if (_session.CurrentMode.Kind == GoAppModeKind.BoardEditing)
+        {
+            var isControlDown = keyboard.IsKeyDown(Keys.LeftControl) || keyboard.IsKeyDown(Keys.RightControl);
+            if (isControlDown && IsNewGlobalKeyPress(keyboard, Keys.Z))
+            {
+                _session.UndoBoardEditing();
+                _previousKeyboard = keyboard;
+                return;
+            }
+
+            if (isControlDown && IsNewGlobalKeyPress(keyboard, Keys.Y))
+            {
+                _session.RedoBoardEditing();
+                _previousKeyboard = keyboard;
+                return;
+            }
+        }
+
         if (CanHandleGlobalRenParseToggle() && keyboard.IsKeyDown(Keys.R) && _previousKeyboard.IsKeyUp(Keys.R))
         {
             _session.ToggleRenParseDisplay();
@@ -89,6 +107,9 @@ public class Game1 : Game
 
         _previousKeyboard = keyboard;
     }
+
+    private bool IsNewGlobalKeyPress(KeyboardState keyboard, Keys key) =>
+        keyboard.IsKeyDown(key) && _previousKeyboard.IsKeyUp(key);
 
     private bool CanHandleGlobalRenParseToggle() =>
         _session.ActiveGtpEngineEditField is null &&
@@ -199,6 +220,18 @@ public class Game1 : Game
         if (GoScreenRenderer.GetBoardEditingEraseButtonHit(point))
         {
             _session.SetBoardEditingStone(GoStone.Empty);
+            return true;
+        }
+
+        if (GoScreenRenderer.GetBoardEditingUndoButtonHit(point))
+        {
+            _session.UndoBoardEditing();
+            return true;
+        }
+
+        if (GoScreenRenderer.GetBoardEditingRedoButtonHit(point))
+        {
+            _session.RedoBoardEditing();
             return true;
         }
 

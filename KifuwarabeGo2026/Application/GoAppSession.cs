@@ -17,6 +17,8 @@ public sealed class GoAppSession
     private GoRenParseResult? _cachedRenParseResult;
     private int _cachedRenParseBoardSize;
     private ulong _cachedRenParseHash;
+    private readonly Stack<BoardEditingChange> _boardEditingUndoHistory = new();
+    private readonly Stack<BoardEditingChange> _boardEditingRedoHistory = new();
 
     private readonly Dictionary<GoAppModeKind, GoAppMode> _modes = new()
     {
@@ -80,6 +82,10 @@ public sealed class GoAppSession
     public GoStone CurrentTurn { get; private set; } = GoStone.Black;
 
     public GoStone BoardEditingStone { get; private set; } = GoStone.Black;
+
+    public bool CanUndoBoardEditing => _boardEditingUndoHistory.Count > 0;
+
+    public bool CanRedoBoardEditing => _boardEditingRedoHistory.Count > 0;
 
     public int PlayedMoveCount { get; private set; }
 
@@ -219,6 +225,7 @@ public sealed class GoAppSession
         EngineErrorMessage = "";
         CurrentGameRecord = CreateGameRecordFromCurrentPosition();
         ResetPositionHistory();
+        ClearBoardEditingHistory();
         ChangeMode(GoAppModeKind.BoardEditing);
     }
 
@@ -241,19 +248,56 @@ public sealed class GoAppSession
 
     public bool TryEditBoardStone(int x, int y)
     {
-        if (CurrentMode.Kind != GoAppModeKind.BoardEditing || !_board.TrySetEditedStone(x, y, BoardEditingStone))
+        if (CurrentMode.Kind != GoAppModeKind.BoardEditing)
         {
             return false;
         }
 
-        KoPoint = null;
-        ConsecutivePasses = 0;
-        PlayedMoveCount = 0;
-        CurrentTurn = GoStone.Black;
-        BlackAgehama = 0;
-        WhiteAgehama = 0;
-        CurrentGameRecord = CreateGameRecordFromCurrentPosition();
-        ResetPositionHistory();
+        var oldStone = _board.GetStone(x, y);
+        if (oldStone == BoardEditingStone || !_board.TrySetEditedStone(x, y, BoardEditingStone))
+        {
+            return false;
+        }
+
+        _boardEditingUndoHistory.Push(new BoardEditingChange(x, y, oldStone, BoardEditingStone));
+        _boardEditingRedoHistory.Clear();
+        ResetEditedPositionState();
+        return true;
+    }
+
+    public bool UndoBoardEditing()
+    {
+        if (CurrentMode.Kind != GoAppModeKind.BoardEditing || _boardEditingUndoHistory.Count == 0)
+        {
+            return false;
+        }
+
+        var change = _boardEditingUndoHistory.Pop();
+        if (!_board.TrySetEditedStone(change.X, change.Y, change.OldStone))
+        {
+            return false;
+        }
+
+        _boardEditingRedoHistory.Push(change);
+        ResetEditedPositionState();
+        return true;
+    }
+
+    public bool RedoBoardEditing()
+    {
+        if (CurrentMode.Kind != GoAppModeKind.BoardEditing || _boardEditingRedoHistory.Count == 0)
+        {
+            return false;
+        }
+
+        var change = _boardEditingRedoHistory.Pop();
+        if (!_board.TrySetEditedStone(change.X, change.Y, change.NewStone))
+        {
+            return false;
+        }
+
+        _boardEditingUndoHistory.Push(change);
+        ResetEditedPositionState();
         return true;
     }
 
@@ -1013,6 +1057,7 @@ public sealed class GoAppSession
         EngineErrorMessage = "";
         CurrentGameRecord = CreateGameRecordFromCurrentPosition();
         ResetPositionHistory();
+        ClearBoardEditingHistory();
         ChangeMode(GoAppModeKind.Resting);
         warning = "";
         return true;
@@ -1036,6 +1081,7 @@ public sealed class GoAppSession
         EngineErrorMessage = "";
         CurrentGameRecord = CreateGameRecordFromCurrentPosition();
         ResetPositionHistory();
+        ClearBoardEditingHistory();
     }
 
     private void ApplyTournamentRules(TournamentRules rules)
@@ -1073,6 +1119,24 @@ public sealed class GoAppSession
     {
         _positionHashes.Clear();
         _positionHashes.Add(_board.CurrentHash);
+    }
+
+    private void ResetEditedPositionState()
+    {
+        KoPoint = null;
+        ConsecutivePasses = 0;
+        PlayedMoveCount = 0;
+        CurrentTurn = GoStone.Black;
+        BlackAgehama = 0;
+        WhiteAgehama = 0;
+        CurrentGameRecord = CreateGameRecordFromCurrentPosition();
+        ResetPositionHistory();
+    }
+
+    private void ClearBoardEditingHistory()
+    {
+        _boardEditingUndoHistory.Clear();
+        _boardEditingRedoHistory.Clear();
     }
 
     private GoGameRecord CreateGameRecordFromCurrentPosition()
@@ -1121,4 +1185,6 @@ public sealed class GoAppSession
 
         return selectedIndex > removedIndex ? selectedIndex - 1 : selectedIndex;
     }
+
+    private readonly record struct BoardEditingChange(int X, int Y, GoStone OldStone, GoStone NewStone);
 }
