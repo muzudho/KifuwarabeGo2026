@@ -2027,7 +2027,7 @@ public sealed class GoScreenRenderer
                 ren.Stone,
                 new Vector2(sumX[renNumber] / ren.Points.Count, sumY[renNumber] / ren.Points.Count),
                 !applyEyeJudgement || !ren.IsEye,
-                new List<int>(ren.EyeRenNumbers));
+                applyEyeJudgement ? new List<int>(ren.EyeRenNumbers) : []);
         }
 
         return nodes;
