@@ -2,6 +2,7 @@ namespace KifuwarabeGo2026.Domain;
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 public sealed class GoBoard
 {
@@ -115,7 +116,7 @@ public sealed class GoBoard
             }
         }
 
-        return new GoRenParseResult(renNumbers, renNumber);
+        return BuildRenParseResult(renNumbers, renNumber);
     }
 
     public bool TryPlaceStone(int x, int y, GoStone stone, GoPoint? forbiddenKoPoint, out int capturedStones, out GoPoint? koPoint)
@@ -225,6 +226,120 @@ public sealed class GoBoard
                 renNumbers[neighbor.X, neighbor.Y] = renNumber;
                 queue.Enqueue(neighbor);
             }
+        }
+    }
+
+    private GoRenParseResult BuildRenParseResult(int[,] renNumbers, int renCount)
+    {
+        var stones = new GoStone[renCount + 1];
+        var points = new List<GoPoint>[renCount + 1];
+        var neighbors = new HashSet<int>[renCount + 1];
+        var eyeNumbers = new List<int>[renCount + 1];
+        var eyeOwnerRenNumbers = new int?[renCount + 1];
+        for (var renNumber = 1; renNumber <= renCount; renNumber++)
+        {
+            points[renNumber] = new List<GoPoint>();
+            neighbors[renNumber] = new HashSet<int>();
+            eyeNumbers[renNumber] = new List<int>();
+        }
+
+        for (var y = 0; y < Size; y++)
+        {
+            for (var x = 0; x < Size; x++)
+            {
+                var currentRenNumber = renNumbers[x, y];
+                stones[currentRenNumber] = _stones[x, y];
+                points[currentRenNumber].Add(new GoPoint(x, y));
+            }
+        }
+
+        var edges = CreateRenGraphEdges(renNumbers, neighbors);
+        ApplyEyeJudgement(renCount, stones, points, neighbors, eyeNumbers, eyeOwnerRenNumbers);
+
+        var rens = new List<GoRen>(renCount);
+        for (var currentRenNumber = 1; currentRenNumber <= renCount; currentRenNumber++)
+        {
+            rens.Add(new GoRen(
+                currentRenNumber,
+                stones[currentRenNumber],
+                points[currentRenNumber],
+                neighbors[currentRenNumber].OrderBy(number => number).ToArray(),
+                eyeNumbers[currentRenNumber],
+                eyeOwnerRenNumbers[currentRenNumber]));
+        }
+
+        return new GoRenParseResult(renNumbers, rens, edges);
+    }
+
+    private List<GoRenGraphEdge> CreateRenGraphEdges(int[,] renNumbers, HashSet<int>[] neighbors)
+    {
+        var edges = new List<GoRenGraphEdge>();
+        var seen = new HashSet<GoRenGraphEdge>();
+
+        for (var y = 0; y < Size; y++)
+        {
+            for (var x = 0; x < Size; x++)
+            {
+                var renNumber = renNumbers[x, y];
+                if (x + 1 < Size)
+                {
+                    AddRenGraphEdge(renNumber, renNumbers[x + 1, y], neighbors, seen, edges);
+                }
+
+                if (y + 1 < Size)
+                {
+                    AddRenGraphEdge(renNumber, renNumbers[x, y + 1], neighbors, seen, edges);
+                }
+            }
+        }
+
+        return edges;
+    }
+
+    private static void AddRenGraphEdge(
+        int from,
+        int to,
+        HashSet<int>[] neighbors,
+        HashSet<GoRenGraphEdge> seen,
+        List<GoRenGraphEdge> edges)
+    {
+        if (from == to)
+        {
+            return;
+        }
+
+        neighbors[from].Add(to);
+        neighbors[to].Add(from);
+        var edge = from < to ? new GoRenGraphEdge(from, to) : new GoRenGraphEdge(to, from);
+        if (seen.Add(edge))
+        {
+            edges.Add(edge);
+        }
+    }
+
+    private static void ApplyEyeJudgement(
+        int renCount,
+        GoStone[] stones,
+        List<GoPoint>[] points,
+        HashSet<int>[] neighbors,
+        List<int>[] eyeNumbers,
+        int?[] eyeOwnerRenNumbers)
+    {
+        for (var renNumber = 1; renNumber <= renCount; renNumber++)
+        {
+            if (stones[renNumber] != GoStone.Empty || points[renNumber].Count != 1 || neighbors[renNumber].Count != 1)
+            {
+                continue;
+            }
+
+            var ownerRenNumber = neighbors[renNumber].Single();
+            if (stones[ownerRenNumber] == GoStone.Empty)
+            {
+                continue;
+            }
+
+            eyeOwnerRenNumbers[renNumber] = ownerRenNumber;
+            eyeNumbers[ownerRenNumber].Add(renNumber);
         }
     }
 

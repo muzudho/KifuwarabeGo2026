@@ -7,4 +7,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Compile Include="..\KifuwarabeGo2026\Domain\*.cs" Link="Domain\%(Filename)%(Extension)" />
+  </ItemGroup>
+
 </Project>

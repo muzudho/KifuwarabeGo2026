@@ -1526,15 +1526,10 @@ public sealed class GoScreenRenderer
     private void DrawRenGraphOverlay(GoAppSession session, Vector2 start, float cell, bool applyEyeJudgement)
     {
         var renParse = session.ParseRens();
-        var nodes = CreateRenGraphNodes(session, renParse, start, cell, out var cellCounts);
-        var edges = CreateRenGraphEdges(renParse);
-        if (applyEyeJudgement)
-        {
-            ApplyEyeJudgement(nodes, cellCounts, edges);
-        }
+        var nodes = CreateRenGraphNodes(renParse, start, cell, applyEyeJudgement);
 
         FillRect(BoardBounds, new Color(56, 145, 129));
-        DrawRenGraphEdges(nodes, edges, cell);
+        DrawRenGraphEdges(nodes, renParse.Edges, cell);
         DrawRenGraphNodes(nodes, cell);
     }
 
@@ -1556,12 +1551,10 @@ public sealed class GoScreenRenderer
         }
     }
 
-    private RenGraphNode[] CreateRenGraphNodes(GoAppSession session, GoRenParseResult renParse, Vector2 start, float cell, out int[] cellCounts)
+    private RenGraphNode[] CreateRenGraphNodes(GoRenParseResult renParse, Vector2 start, float cell, bool applyEyeJudgement)
     {
         var sumX = new float[renParse.Count + 1];
         var sumY = new float[renParse.Count + 1];
-        cellCounts = new int[renParse.Count + 1];
-        var stones = new GoStone[renParse.Count + 1];
 
         for (var y = 0; y < renParse.Size; y++)
         {
@@ -1571,65 +1564,25 @@ public sealed class GoScreenRenderer
                 var center = BoardPoint(start, cell, x, y);
                 sumX[renNumber] += center.X;
                 sumY[renNumber] += center.Y;
-                cellCounts[renNumber]++;
-                stones[renNumber] = session.GetStone(x, y);
             }
         }
 
         var nodes = new RenGraphNode[renParse.Count + 1];
         for (var renNumber = 1; renNumber <= renParse.Count; renNumber++)
         {
+            var ren = renParse.GetRen(renNumber);
             nodes[renNumber] = new RenGraphNode(
                 renNumber,
-                stones[renNumber],
-                new Vector2(sumX[renNumber] / cellCounts[renNumber], sumY[renNumber] / cellCounts[renNumber]),
-                true,
-                new List<int>());
+                ren.Stone,
+                new Vector2(sumX[renNumber] / ren.Points.Count, sumY[renNumber] / ren.Points.Count),
+                !applyEyeJudgement || !ren.IsEye,
+                new List<int>(ren.EyeRenNumbers));
         }
 
         return nodes;
     }
 
-    private static List<(int From, int To)> CreateRenGraphEdges(GoRenParseResult renParse)
-    {
-        var edges = new List<(int From, int To)>();
-        var seen = new HashSet<(int From, int To)>();
-
-        for (var y = 0; y < renParse.Size; y++)
-        {
-            for (var x = 0; x < renParse.Size; x++)
-            {
-                var renNumber = renParse.GetRenNumber(x, y);
-                if (x + 1 < renParse.Size)
-                {
-                    AddRenGraphEdge(renNumber, renParse.GetRenNumber(x + 1, y), seen, edges);
-                }
-
-                if (y + 1 < renParse.Size)
-                {
-                    AddRenGraphEdge(renNumber, renParse.GetRenNumber(x, y + 1), seen, edges);
-                }
-            }
-        }
-
-        return edges;
-    }
-
-    private static void AddRenGraphEdge(int from, int to, HashSet<(int From, int To)> seen, List<(int From, int To)> edges)
-    {
-        if (from == to)
-        {
-            return;
-        }
-
-        var edge = from < to ? (from, to) : (to, from);
-        if (seen.Add(edge))
-        {
-            edges.Add(edge);
-        }
-    }
-
-    private void DrawRenGraphEdges(RenGraphNode[] nodes, List<(int From, int To)> edges, float cell)
+    private void DrawRenGraphEdges(RenGraphNode[] nodes, IReadOnlyList<GoRenGraphEdge> edges, float cell)
     {
         var thickness = MathHelper.Clamp(cell * 0.08f, 4f, 8f);
         var color = new Color(70, 70, 220, 230);
@@ -1659,39 +1612,6 @@ public sealed class GoScreenRenderer
             DrawCircle(node.Center, radius, RenGraphNodeColor(node.Stone));
             DrawCenteredText(node.Number.ToString(), node.Center, new Color(0, 177, 238), scale);
             DrawRenGraphEyeMarkers(node, radius, scale);
-        }
-    }
-
-    private void ApplyEyeJudgement(RenGraphNode[] nodes, int[] cellCounts, List<(int From, int To)> edges)
-    {
-        var neighbors = new List<int>[nodes.Length];
-        for (var renNumber = 1; renNumber < nodes.Length; renNumber++)
-        {
-            neighbors[renNumber] = new List<int>();
-        }
-
-        foreach (var edge in edges)
-        {
-            neighbors[edge.From].Add(edge.To);
-            neighbors[edge.To].Add(edge.From);
-        }
-
-        for (var renNumber = 1; renNumber < nodes.Length; renNumber++)
-        {
-            var node = nodes[renNumber];
-            if (node.Stone != GoStone.Empty || cellCounts[renNumber] != 1 || neighbors[renNumber].Count != 1)
-            {
-                continue;
-            }
-
-            var ownerRenNumber = neighbors[renNumber][0];
-            if (nodes[ownerRenNumber].Stone == GoStone.Empty)
-            {
-                continue;
-            }
-
-            nodes[renNumber].IsVisible = false;
-            nodes[ownerRenNumber].EyeNumbers.Add(renNumber);
         }
     }
 
