@@ -1,6 +1,7 @@
 namespace KifuwarabeGo2026.Engine;
 
 using KifuwarabeGo2026.Domain;
+using System.Reflection;
 
 /// <summary>
 /// コンピュータ囲碁の思考エンジンの本体だぜ（＾～＾）
@@ -53,7 +54,7 @@ internal sealed class GtpEngine
 
             // バージョン番号
             case "version":
-                response = "1.0.0";
+                response = GetGtpVersion();
                 return false;
 
             case "boardsize":
@@ -183,6 +184,18 @@ internal sealed class GtpEngine
         output.WriteLine();
         output.WriteLine();
         output.Flush();
+    }
+
+    private static string GetGtpVersion()
+    {
+        var version = Assembly.GetExecutingAssembly().GetName().Version;
+        if (version is null)
+        {
+            return "0.0.0";
+        }
+
+        var fieldCount = version.Build < 0 ? 2 : version.Revision <= 0 ? 3 : 4;
+        return version.ToString(fieldCount);
     }
 
     private static bool TryParseColor(string text, out GoStone stone)
