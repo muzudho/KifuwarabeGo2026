@@ -782,18 +782,21 @@ public sealed class GoScreenRenderer
         var bounds = CgosConnectionOutputBounds;
         FillRect(bounds, new Color(11, 15, 20));
         DrawRect(bounds, 1, new Color(67, 84, 92));
-        DrawText("MESSAGE", new Vector2(bounds.X, bounds.Y - 28), new Color(180, 195, 195), 0.34f);
+        DrawText("MESSAGE", new Vector2(bounds.X, bounds.Y - 28), new Color(180, 195, 195), 0.38f);
 
         var lines = session.CgosConnectionRecentOutput;
         if (lines.Count == 0)
         {
-            DrawFittedText("-", new Rectangle(bounds.X + 16, bounds.Y + 8, bounds.Width - 32, 26), new Color(204, 211, 206), 0.34f);
+            DrawFittedText("-", new Rectangle(bounds.X + 16, bounds.Y + 10, bounds.Width - 32, 26), new Color(204, 211, 206), 0.34f);
             return;
         }
 
-        for (var index = 0; index < lines.Count; index++)
+        var maxVisibleLines = Math.Max(1, (bounds.Height - 20) / 23);
+        var firstVisibleLine = Math.Max(0, lines.Count - maxVisibleLines);
+        for (var index = firstVisibleLine; index < lines.Count; index++)
         {
-            DrawFittedText(lines[index], new Rectangle(bounds.X + 16, bounds.Y + 8 + index * 20, bounds.Width - 32, 18), new Color(204, 211, 206), 0.28f);
+            var visibleIndex = index - firstVisibleLine;
+            DrawFittedText(lines[index], new Rectangle(bounds.X + 16, bounds.Y + 10 + visibleIndex * 23, bounds.Width - 32, 21), new Color(204, 211, 206), 0.31f);
         }
     }
 
@@ -1748,7 +1751,7 @@ public sealed class GoScreenRenderer
 
     private static Rectangle CgosConnectionStartStatusBounds => new(936, 350, 500, 426);
 
-    private static Rectangle CgosConnectionOutputBounds => new(958, 682, 456, 94);
+    private static Rectangle CgosConnectionOutputBounds => new(482, 800, 620, 108);
 
     private static Rectangle CgosConnectionEditPanelBounds => new(430, 126, 1060, 820);
 

@@ -180,7 +180,7 @@ public sealed class CgosConnectionProcess : IDisposable
         lock (_outputLock)
         {
             _recentOutput.Enqueue(line.Trim());
-            while (_recentOutput.Count > 4)
+            while (_recentOutput.Count > 8)
             {
                 _recentOutput.Dequeue();
             }
