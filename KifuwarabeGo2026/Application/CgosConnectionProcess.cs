@@ -58,10 +58,10 @@ public sealed class CgosConnectionProcess : IDisposable
         _status = "STARTING";
 
         var repositoryRoot = FindRepositoryRoot();
-        var projectPath = Path.Combine(repositoryRoot, "KifuwarabeGo2026.Communication.Cgos", "KifuwarabeGo2026.Communication.Cgos.csproj");
-        if (!File.Exists(projectPath))
+        var executablePath = GetCgosCommunicationExecutablePath(repositoryRoot);
+        if (!File.Exists(executablePath))
         {
-            throw new FileNotFoundException("CGOS communication project was not found.", projectPath);
+            throw new FileNotFoundException("CGOS communication executable was not found. Build the solution first.", executablePath);
         }
 
         LogDirectory = Path.Combine(repositoryRoot, "Logs", "Cgos");
@@ -70,7 +70,7 @@ public sealed class CgosConnectionProcess : IDisposable
 
         var startInfo = new ProcessStartInfo
         {
-            FileName = "dotnet",
+            FileName = executablePath,
             WorkingDirectory = repositoryRoot,
             UseShellExecute = false,
             CreateNoWindow = true,
@@ -78,10 +78,6 @@ public sealed class CgosConnectionProcess : IDisposable
             RedirectStandardOutput = true,
             RedirectStandardError = true,
         };
-        startInfo.ArgumentList.Add("run");
-        startInfo.ArgumentList.Add("--project");
-        startInfo.ArgumentList.Add(projectPath);
-        startInfo.ArgumentList.Add("--");
         startInfo.ArgumentList.Add("--host");
         startInfo.ArgumentList.Add(profile.Host);
         startInfo.ArgumentList.Add("--port");
@@ -118,6 +114,7 @@ public sealed class CgosConnectionProcess : IDisposable
         _process.BeginOutputReadLine();
         _process.BeginErrorReadLine();
         AddOutput($"# Started CGOS communication process. pid={_process.Id}");
+        AddOutput("# Communication executable: " + executablePath);
         AddOutput("# Engine command: " + engineCommand);
         _status = "STARTING";
         return _status;
@@ -581,5 +578,21 @@ public sealed class CgosConnectionProcess : IDisposable
         }
 
         return Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
+    }
+
+    private static string GetCgosCommunicationExecutablePath(string repositoryRoot)
+    {
+#if DEBUG
+        const string buildConfiguration = "Debug";
+#else
+        const string buildConfiguration = "Release";
+#endif
+        return Path.Combine(
+            repositoryRoot,
+            "KifuwarabeGo2026.Communication.Cgos",
+            "bin",
+            buildConfiguration,
+            "net8.0",
+            "KifuwarabeGo2026.Communication.Cgos.exe");
     }
 }
