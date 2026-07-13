@@ -257,7 +257,16 @@ internal sealed class CgosClient
             Log($"Connecting to {_options.Host}:{_options.Port} as {_account.UserName}.");
 
             using var tcp = new TcpClient();
-            await tcp.ConnectAsync(_options.Host, _options.Port, cancellationToken);
+            try
+            {
+                await tcp.ConnectAsync(_options.Host, _options.Port, cancellationToken).AsTask().WaitAsync(TimeSpan.FromSeconds(15), cancellationToken);
+            }
+            catch (TimeoutException ex)
+            {
+                Log($"Could not connect to {_options.Host}:{_options.Port} within 15 seconds.");
+                throw new InvalidOperationException($"Could not connect to {_options.Host}:{_options.Port} within 15 seconds.", ex);
+            }
+
             await using var stream = tcp.GetStream();
             using var reader = new StreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: false, leaveOpen: true);
             await using var cgosWriter = new StreamWriter(stream, new UTF8Encoding(false), leaveOpen: true) { NewLine = "\n", AutoFlush = true };

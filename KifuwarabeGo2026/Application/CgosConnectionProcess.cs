@@ -10,7 +10,9 @@ public sealed class CgosConnectionProcess : IDisposable
 {
     private readonly object _outputLock = new();
     private readonly Queue<string> _recentOutput = new();
+    private readonly HashSet<string> _seenLogLines = new(StringComparer.Ordinal);
     private Process? _process;
+    private DateTime _startedAt;
 
     public bool IsRunning => _process is { HasExited: false };
 
@@ -46,6 +48,8 @@ public sealed class CgosConnectionProcess : IDisposable
 
         DisposeProcess();
         ClearOutput();
+        _seenLogLines.Clear();
+        _startedAt = DateTime.Now;
 
         var repositoryRoot = FindRepositoryRoot();
         var projectPath = Path.Combine(repositoryRoot, "KifuwarabeGo2026.Communication.Cgos", "KifuwarabeGo2026.Communication.Cgos.csproj");
@@ -118,7 +122,13 @@ public sealed class CgosConnectionProcess : IDisposable
             return "READY";
         }
 
-        return _process.HasExited ? $"EXITED {_process.ExitCode}" : DeriveRunningStatus(GetRecentOutput());
+        PollCgosLogFiles();
+        if (_process.HasExited)
+        {
+            return _process.ExitCode == 0 ? "EXITED 0" : "ERROR";
+        }
+
+        return DeriveRunningStatus(GetRecentOutput());
     }
 
     public void Stop()
@@ -170,6 +180,47 @@ public sealed class CgosConnectionProcess : IDisposable
         }
     }
 
+    private void PollCgosLogFiles()
+    {
+        if (string.IsNullOrWhiteSpace(LogDirectory) || !Directory.Exists(LogDirectory))
+        {
+            return;
+        }
+
+        foreach (var path in Directory.EnumerateFiles(LogDirectory, "cgos-*.log"))
+        {
+            FileInfo file;
+            try
+            {
+                file = new FileInfo(path);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+            {
+                continue;
+            }
+
+            if (file.LastWriteTime < _startedAt.AddSeconds(-2))
+            {
+                continue;
+            }
+
+            try
+            {
+                foreach (var line in File.ReadLines(path))
+                {
+                    var key = path + "\n" + line;
+                    if (_seenLogLines.Add(key))
+                    {
+                        AddOutput(line);
+                    }
+                }
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+            }
+        }
+    }
+
     private void AddOutput(string? line)
     {
         if (string.IsNullOrWhiteSpace(line))
@@ -193,7 +244,8 @@ public sealed class CgosConnectionProcess : IDisposable
         {
             if (line.Contains("CGOS error", StringComparison.OrdinalIgnoreCase) ||
                 line.Contains("Unhandled exception", StringComparison.OrdinalIgnoreCase) ||
-                line.Contains("Unsupported CGOS command", StringComparison.OrdinalIgnoreCase))
+                line.Contains("Unsupported CGOS command", StringComparison.OrdinalIgnoreCase) ||
+                line.Contains("Could not connect", StringComparison.OrdinalIgnoreCase))
             {
                 return "ERROR";
             }
