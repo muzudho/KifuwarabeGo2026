@@ -339,7 +339,6 @@ internal sealed class CgosClient
                 await SendAsync(writer, "ready");
                 return;
             case "info":
-                Log("# Info: " + string.Join(' ', parameters));
                 return;
             default:
                 throw new InvalidOperationException("Unsupported CGOS command: " + command);

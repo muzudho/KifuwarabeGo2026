@@ -104,7 +104,7 @@ public sealed class CgosConnectionProcess : IDisposable
             EnableRaisingEvents = true,
         };
         _process.OutputDataReceived += (_, e) => AddOutput(e.Data);
-        _process.ErrorDataReceived += (_, e) => AddOutput(e.Data);
+        _process.ErrorDataReceived += (_, e) => AddOutput(e.Data, isError: true);
 
         if (!_process.Start())
         {
@@ -179,9 +179,19 @@ public sealed class CgosConnectionProcess : IDisposable
         var logDirectory = string.IsNullOrWhiteSpace(LogDirectory) ? defaultLogDirectory : LogDirectory;
         Directory.CreateDirectory(logDirectory);
 
-        var targetPath = !string.IsNullOrWhiteSpace(_activeCgosLogPath) && File.Exists(_activeCgosLogPath)
-            ? _activeCgosLogPath
-            : GetLatestCgosLogPath(logDirectory);
+        var targetPath = GetLatestCgosLogPath(logDirectory, GetCurrentRunLogThreshold());
+        if (string.IsNullOrWhiteSpace(targetPath) &&
+            !string.IsNullOrWhiteSpace(_activeCgosLogPath) &&
+            File.Exists(_activeCgosLogPath))
+        {
+            targetPath = _activeCgosLogPath;
+        }
+
+        if (string.IsNullOrWhiteSpace(targetPath))
+        {
+            targetPath = GetLatestCgosLogPath(logDirectory);
+        }
+
         if (string.IsNullOrWhiteSpace(targetPath))
         {
             targetPath = logDirectory;
@@ -252,8 +262,15 @@ public sealed class CgosConnectionProcess : IDisposable
 
     private IReadOnlyList<string> GetCgosLogFilesToPoll()
     {
-        if (!string.IsNullOrWhiteSpace(_activeCgosLogPath) && File.Exists(_activeCgosLogPath))
+        var latestCurrentRunLogPath = GetLatestCgosLogPath(LogDirectory, GetCurrentRunLogThreshold());
+        if (!string.IsNullOrWhiteSpace(latestCurrentRunLogPath))
         {
+            if (!string.Equals(_activeCgosLogPath, latestCurrentRunLogPath, StringComparison.Ordinal))
+            {
+                _activeCgosLogPath = latestCurrentRunLogPath;
+                AddOutput("# Reading CGOS log: " + Path.GetFileName(latestCurrentRunLogPath));
+            }
+
             return [_activeCgosLogPath];
         }
 
@@ -286,7 +303,10 @@ public sealed class CgosConnectionProcess : IDisposable
         return [_activeCgosLogPath];
     }
 
-    private static string GetLatestCgosLogPath(string logDirectory)
+    private DateTime GetCurrentRunLogThreshold() =>
+        _startedAt == default ? DateTime.MinValue : _startedAt.AddSeconds(-10);
+
+    private static string GetLatestCgosLogPath(string logDirectory, DateTime? notBefore = null)
     {
         if (string.IsNullOrWhiteSpace(logDirectory) || !Directory.Exists(logDirectory))
         {
@@ -297,6 +317,7 @@ public sealed class CgosConnectionProcess : IDisposable
         {
             return Directory.EnumerateFiles(logDirectory, "cgos-*.log")
                 .Select(path => new FileInfo(path))
+                .Where(file => notBefore is null || file.LastWriteTime >= notBefore.Value)
                 .OrderByDescending(file => file.LastWriteTime)
                 .FirstOrDefault()
                 ?.FullName ?? "";
@@ -307,7 +328,7 @@ public sealed class CgosConnectionProcess : IDisposable
         }
     }
 
-    private void AddOutput(string? line)
+    private void AddOutput(string? line, bool isError = false)
     {
         if (string.IsNullOrWhiteSpace(line))
         {
@@ -316,7 +337,7 @@ public sealed class CgosConnectionProcess : IDisposable
 
         lock (_outputLock)
         {
-            _recentOutput.Enqueue(FormatDisplayLine(line.Trim()));
+            _recentOutput.Enqueue(FormatDisplayLine(line.Trim(), isError));
             while (_recentOutput.Count > 8)
             {
                 _recentOutput.Dequeue();
@@ -329,6 +350,7 @@ public sealed class CgosConnectionProcess : IDisposable
         foreach (var line in output.Reverse())
         {
             if (line.Contains("CGOS error", StringComparison.OrdinalIgnoreCase) ||
+                line.Contains("[Error]", StringComparison.OrdinalIgnoreCase) ||
                 line.Contains("Unhandled exception", StringComparison.OrdinalIgnoreCase) ||
                 line.Contains("Unsupported CGOS command", StringComparison.OrdinalIgnoreCase) ||
                 line.Contains("Could not connect", StringComparison.OrdinalIgnoreCase))
@@ -400,8 +422,13 @@ public sealed class CgosConnectionProcess : IDisposable
         return "RUNNING";
     }
 
-    private static string FormatDisplayLine(string line)
+    private static string FormatDisplayLine(string line, bool isError)
     {
+        if (isError)
+        {
+            return "# [Error] " + StripDisplayPrefix(line);
+        }
+
         var messageStart = line.IndexOf("] ", StringComparison.Ordinal);
         if (messageStart >= 0 && messageStart + 2 < line.Length)
         {
@@ -425,6 +452,24 @@ public sealed class CgosConnectionProcess : IDisposable
         }
 
         return "# " + line;
+    }
+
+    private static string StripDisplayPrefix(string line)
+    {
+        var trimmed = line.Trim();
+        if (trimmed.StartsWith("# [Error] ", StringComparison.Ordinal))
+        {
+            return trimmed["# [Error] ".Length..];
+        }
+
+        if (trimmed.StartsWith("# ", StringComparison.Ordinal) ||
+            trimmed.StartsWith("< ", StringComparison.Ordinal) ||
+            trimmed.StartsWith("> ", StringComparison.Ordinal))
+        {
+            return trimmed[2..].TrimStart();
+        }
+
+        return trimmed;
     }
 
     private static string CreateEngineCommand(GtpEngineProfile profile)
