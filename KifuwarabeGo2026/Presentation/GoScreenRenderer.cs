@@ -365,6 +365,12 @@ public sealed class GoScreenRenderer
     public static bool GetCgosConnectionOpenLogNotepadButtonHit(Point point) =>
         CgosConnectionOpenLogNotepadButtonBounds.Contains(point);
 
+    public static bool GetCgosConnectionOpenStandardErrorLogCodeButtonHit(Point point) =>
+        CgosConnectionOpenStandardErrorLogCodeButtonBounds.Contains(point);
+
+    public static bool GetCgosConnectionOpenStandardErrorLogNotepadButtonHit(Point point) =>
+        CgosConnectionOpenStandardErrorLogNotepadButtonBounds.Contains(point);
+
     public static bool GetCgosPreviousPageButtonHit(Point point) => CgosPreviousPageButtonBounds.Contains(point);
 
     public static bool GetCgosNextPageButtonHit(Point point) => CgosNextPageButtonBounds.Contains(point);
@@ -757,7 +763,7 @@ public sealed class GoScreenRenderer
         DrawCgosConnectionStartRow(CgosConnectionStartStatusBounds, CgosConnectionStartStatusBounds.Y + 28, "STATE", session.CgosConnectionStatusMessage);
         DrawCgosConnectionAccountRow(session, mousePoint);
         DrawCgosConnectionEngineRow(session, mousePoint);
-        DrawCgosConnectionLogRow(session, mousePoint);
+        DrawCgosConnectionLogRows(session, mousePoint);
         DrawCgosConnectionOutput(session);
 
         DrawCommandButton(CgosConnectionBeginButtonBounds, session.IsCgosConnectionRunning ? "STOP CONNECT" : "START CONNECT", false, mousePoint, scale: 0.46f);
@@ -784,15 +790,23 @@ public sealed class GoScreenRenderer
         DrawCommandButton(CgosConnectionEngineNextButtonBounds, "NEXT", false, mousePoint, enabled: session.CanMoveCgosGtpEngineSelection(1), scale: 0.24f);
     }
 
-    private void DrawCgosConnectionLogRow(GoAppSession session, Point mousePoint)
+    private void DrawCgosConnectionLogRows(GoAppSession session, Point mousePoint)
     {
-        var bounds = new Rectangle(CgosConnectionStartStatusBounds.X + 22, CgosConnectionStartStatusBounds.Y + 256, CgosConnectionStartStatusBounds.Width - 44, 56);
-        DrawDataRowFrame(bounds);
-        DrawUiLabel(UiLabel.InCompactRow("LOG", bounds));
         var logPath = string.IsNullOrWhiteSpace(session.CgosConnectionLogDirectory) ? "Logs/Cgos" : session.CgosConnectionLogDirectory;
+
+        var stdioBounds = new Rectangle(CgosConnectionStartStatusBounds.X + 22, CgosConnectionStartStatusBounds.Y + 256, CgosConnectionStartStatusBounds.Width - 44, 56);
+        DrawDataRowFrame(stdioBounds);
+        DrawUiLabel(UiLabel.InCompactRow("STDIO", stdioBounds));
         DrawFittedText(logPath, CgosConnectionLogPathBounds, Color.White, 0.32f);
         DrawCommandButton(CgosConnectionOpenLogCodeButtonBounds, "CODE", false, mousePoint, scale: 0.24f);
         DrawCommandButton(CgosConnectionOpenLogNotepadButtonBounds, "NOTEPAD", false, mousePoint, scale: 0.2f);
+
+        var stderrBounds = new Rectangle(CgosConnectionStartStatusBounds.X + 22, CgosConnectionStartStatusBounds.Y + 332, CgosConnectionStartStatusBounds.Width - 44, 56);
+        DrawDataRowFrame(stderrBounds);
+        DrawUiLabel(UiLabel.InCompactRow("STDERR", stderrBounds));
+        DrawFittedText(logPath, CgosConnectionStandardErrorLogPathBounds, Color.White, 0.32f);
+        DrawCommandButton(CgosConnectionOpenStandardErrorLogCodeButtonBounds, "CODE", false, mousePoint, scale: 0.24f);
+        DrawCommandButton(CgosConnectionOpenStandardErrorLogNotepadButtonBounds, "NOTEPAD", false, mousePoint, scale: 0.2f);
     }
 
     private void DrawCgosConnectionOutput(GoAppSession session)
@@ -1801,11 +1815,17 @@ public sealed class GoScreenRenderer
 
     private static Rectangle CgosConnectionEngineNextButtonBounds => new(1348, 534, 64, 34);
 
-    private static Rectangle CgosConnectionLogPathBounds => new(1102, 684, 178, 38);
+    private static Rectangle CgosConnectionLogPathBounds => new(1102, 608, 178, 38);
 
-    private static Rectangle CgosConnectionOpenLogCodeButtonBounds => new(1286, 686, 60, 32);
+    private static Rectangle CgosConnectionOpenLogCodeButtonBounds => new(1286, 610, 60, 32);
 
-    private static Rectangle CgosConnectionOpenLogNotepadButtonBounds => new(1352, 686, 72, 32);
+    private static Rectangle CgosConnectionOpenLogNotepadButtonBounds => new(1352, 610, 72, 32);
+
+    private static Rectangle CgosConnectionStandardErrorLogPathBounds => new(1102, 684, 178, 38);
+
+    private static Rectangle CgosConnectionOpenStandardErrorLogCodeButtonBounds => new(1286, 686, 60, 32);
+
+    private static Rectangle CgosConnectionOpenStandardErrorLogNotepadButtonBounds => new(1352, 686, 72, 32);
 
     private static Rectangle CgosPreviousPageButtonBounds => new(482, 800, 130, 52);
 

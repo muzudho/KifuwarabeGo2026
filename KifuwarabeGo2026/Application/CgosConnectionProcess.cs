@@ -174,7 +174,7 @@ public sealed class CgosConnectionProcess : IDisposable
         DisposeProcess();
     }
 
-    public string OpenLog(string app)
+    public string OpenLog(string app, bool openStandardError)
     {
         PollCgosLogFiles();
 
@@ -182,8 +182,12 @@ public sealed class CgosConnectionProcess : IDisposable
         var logDirectory = string.IsNullOrWhiteSpace(LogDirectory) ? defaultLogDirectory : LogDirectory;
         Directory.CreateDirectory(logDirectory);
 
-        var targetPath = GetLatestCgosLogPath(logDirectory, GetCurrentRunLogThreshold());
-        if (string.IsNullOrWhiteSpace(targetPath) &&
+        var targetPath = openStandardError
+            ? GetStandardErrorLogPath(logDirectory)
+            : GetLatestCgosLogPath(logDirectory, GetCurrentRunLogThreshold());
+
+        if (!openStandardError &&
+            string.IsNullOrWhiteSpace(targetPath) &&
             !string.IsNullOrWhiteSpace(_activeCgosLogPath) &&
             File.Exists(_activeCgosLogPath))
         {
@@ -192,7 +196,9 @@ public sealed class CgosConnectionProcess : IDisposable
 
         if (string.IsNullOrWhiteSpace(targetPath))
         {
-            targetPath = GetLatestCgosLogPath(logDirectory);
+            targetPath = openStandardError
+                ? GetLatestStandardErrorLogPath(logDirectory)
+                : GetLatestCgosLogPath(logDirectory);
         }
 
         if (string.IsNullOrWhiteSpace(targetPath))
@@ -213,8 +219,8 @@ public sealed class CgosConnectionProcess : IDisposable
         Process.Start(startInfo);
 
         var openedName = File.Exists(targetPath) ? Path.GetFileName(targetPath) : targetPath;
-        AddOutput($"# Opened CGOS log with {fileName}: {openedName}");
-        return "OPENED LOG";
+        AddOutput($"# Opened {(openStandardError ? "standard error" : "CGOS")} log with {fileName}: {openedName}");
+        return openStandardError ? "OPENED STDERR LOG" : "OPENED LOG";
     }
 
     public void Dispose()
@@ -319,6 +325,38 @@ public sealed class CgosConnectionProcess : IDisposable
         try
         {
             return Directory.EnumerateFiles(logDirectory, "cgos-*.log")
+                .Select(path => new FileInfo(path))
+                .Where(file => notBefore is null || file.LastWriteTime >= notBefore.Value)
+                .OrderByDescending(file => file.LastWriteTime)
+                .FirstOrDefault()
+                ?.FullName ?? "";
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+        {
+            return "";
+        }
+    }
+
+    private string GetStandardErrorLogPath(string logDirectory)
+    {
+        if (!string.IsNullOrWhiteSpace(_standardErrorLogPath) && File.Exists(_standardErrorLogPath))
+        {
+            return _standardErrorLogPath;
+        }
+
+        return GetLatestStandardErrorLogPath(logDirectory, GetCurrentRunLogThreshold());
+    }
+
+    private static string GetLatestStandardErrorLogPath(string logDirectory, DateTime? notBefore = null)
+    {
+        if (string.IsNullOrWhiteSpace(logDirectory) || !Directory.Exists(logDirectory))
+        {
+            return "";
+        }
+
+        try
+        {
+            return Directory.EnumerateFiles(logDirectory, "standard-error-*.log")
                 .Select(path => new FileInfo(path))
                 .Where(file => notBefore is null || file.LastWriteTime >= notBefore.Value)
                 .OrderByDescending(file => file.LastWriteTime)

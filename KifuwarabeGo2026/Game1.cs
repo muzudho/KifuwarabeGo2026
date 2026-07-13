@@ -249,11 +249,19 @@ public class Game1 : Game
                     }
                     else if (GoScreenRenderer.GetCgosConnectionOpenLogCodeButtonHit(point))
                     {
-                        OpenCgosConnectionLog("code");
+                        OpenCgosConnectionLog("code", openStandardError: false);
                     }
                     else if (GoScreenRenderer.GetCgosConnectionOpenLogNotepadButtonHit(point))
                     {
-                        OpenCgosConnectionLog("notepad");
+                        OpenCgosConnectionLog("notepad", openStandardError: false);
+                    }
+                    else if (GoScreenRenderer.GetCgosConnectionOpenStandardErrorLogCodeButtonHit(point))
+                    {
+                        OpenCgosConnectionLog("code", openStandardError: true);
+                    }
+                    else if (GoScreenRenderer.GetCgosConnectionOpenStandardErrorLogNotepadButtonHit(point))
+                    {
+                        OpenCgosConnectionLog("notepad", openStandardError: true);
                     }
                     else if (GoScreenRenderer.GetCgosConnectionBeginButtonHit(point))
                     {
@@ -598,11 +606,11 @@ public class Game1 : Game
         _session.SetCgosConnectionProcessStatus(status, _cgosConnectionProcess.IsRunning, _cgosConnectionProcess.LogDirectory, _cgosConnectionProcess.GetRecentOutput());
     }
 
-    private void OpenCgosConnectionLog(string app)
+    private void OpenCgosConnectionLog(string app, bool openStandardError)
     {
         try
         {
-            var status = _cgosConnectionProcess.OpenLog(app);
+            var status = _cgosConnectionProcess.OpenLog(app, openStandardError);
             _session.SetCgosConnectionProcessStatus(status, _cgosConnectionProcess.IsRunning, _cgosConnectionProcess.LogDirectory, _cgosConnectionProcess.GetRecentOutput());
         }
         catch (Exception ex) when (ex is InvalidOperationException or IOException or System.ComponentModel.Win32Exception)
