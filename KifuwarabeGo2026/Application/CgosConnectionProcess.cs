@@ -118,7 +118,7 @@ public sealed class CgosConnectionProcess : IDisposable
             return "READY";
         }
 
-        return _process.HasExited ? $"EXITED {_process.ExitCode}" : "RUNNING";
+        return _process.HasExited ? $"EXITED {_process.ExitCode}" : DeriveRunningStatus(GetRecentOutput());
     }
 
     public void Stop()
@@ -185,6 +185,74 @@ public sealed class CgosConnectionProcess : IDisposable
                 _recentOutput.Dequeue();
             }
         }
+    }
+
+    private static string DeriveRunningStatus(IReadOnlyList<string> output)
+    {
+        foreach (var line in output.Reverse())
+        {
+            if (line.Contains("CGOS error", StringComparison.OrdinalIgnoreCase) ||
+                line.Contains("Unhandled exception", StringComparison.OrdinalIgnoreCase) ||
+                line.Contains("Unsupported CGOS command", StringComparison.OrdinalIgnoreCase))
+            {
+                return "ERROR";
+            }
+
+            if (line.Contains("CGOS connection closed", StringComparison.OrdinalIgnoreCase))
+            {
+                return "CLOSED";
+            }
+
+            if (line.Contains("Generated ", StringComparison.OrdinalIgnoreCase))
+            {
+                return "GENMOVE DONE";
+            }
+
+            if (line.Contains("< genmove", StringComparison.OrdinalIgnoreCase))
+            {
+                return "GENMOVE";
+            }
+
+            if (line.Contains("< play", StringComparison.OrdinalIgnoreCase))
+            {
+                return "PLAY";
+            }
+
+            if (line.Contains("Setup game", StringComparison.OrdinalIgnoreCase) ||
+                line.Contains("< setup", StringComparison.OrdinalIgnoreCase))
+            {
+                return "SETUP";
+            }
+
+            if (line.Contains("Game over", StringComparison.OrdinalIgnoreCase))
+            {
+                return "GAME OVER";
+            }
+
+            if (line.Contains("< username", StringComparison.OrdinalIgnoreCase) ||
+                line.Contains("< password", StringComparison.OrdinalIgnoreCase) ||
+                line.Contains("> (password)", StringComparison.OrdinalIgnoreCase))
+            {
+                return "LOGIN";
+            }
+
+            if (line.Contains("< protocol", StringComparison.OrdinalIgnoreCase))
+            {
+                return "PROTOCOL";
+            }
+
+            if (line.Contains("Connecting to", StringComparison.OrdinalIgnoreCase))
+            {
+                return "CONNECTING";
+            }
+
+            if (line.Contains("Started CGOS communication process", StringComparison.OrdinalIgnoreCase))
+            {
+                return "STARTING";
+            }
+        }
+
+        return "RUNNING";
     }
 
     private static string CreateEngineCommand(GtpEngineProfile profile)
