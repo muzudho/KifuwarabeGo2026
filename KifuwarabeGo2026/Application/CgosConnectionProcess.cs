@@ -86,8 +86,9 @@ public sealed class CgosConnectionProcess : IDisposable
         }
         startInfo.ArgumentList.Add("--log-directory");
         startInfo.ArgumentList.Add(LogDirectory);
+        var engineCommand = CreateEngineCommand(engineProfile);
         startInfo.ArgumentList.Add("--engine-command");
-        startInfo.ArgumentList.Add(CreateEngineCommand(engineProfile));
+        startInfo.ArgumentList.Add(engineCommand);
 
         _process = new Process
         {
@@ -106,6 +107,7 @@ public sealed class CgosConnectionProcess : IDisposable
         _process.BeginOutputReadLine();
         _process.BeginErrorReadLine();
         AddOutput($"Started CGOS communication process. pid={_process.Id}");
+        AddOutput("Engine command: " + engineCommand);
         return "RUNNING";
     }
 

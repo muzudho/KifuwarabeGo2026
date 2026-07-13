@@ -773,7 +773,7 @@ public sealed class GoScreenRenderer
         DrawDataRowFrame(bounds);
         DrawUiLabel(UiLabel.InCompactRow("ENGINE", bounds));
         DrawCommandButton(CgosConnectionEnginePreviousButtonBounds, "PREV", false, mousePoint, enabled: session.CanMoveCgosGtpEngineSelection(-1), scale: 0.24f);
-        DrawFittedText(session.SelectedCgosGtpEngineProfile.DisplayName, CgosConnectionEngineNameBounds, Color.White, 0.34f);
+        DrawFittedText(FormatCgosEngineSummary(session.SelectedCgosGtpEngineProfile), CgosConnectionEngineNameBounds, Color.White, 0.34f);
         DrawCommandButton(CgosConnectionEngineNextButtonBounds, "NEXT", false, mousePoint, enabled: session.CanMoveCgosGtpEngineSelection(1), scale: 0.24f);
     }
 
@@ -803,6 +803,19 @@ public sealed class GoScreenRenderer
         DrawDataRowFrame(bounds);
         DrawUiLabel(UiLabel.InCompactRow(label, bounds));
         DrawFittedText(value, new Rectangle(bounds.X + 152, bounds.Y + 7, bounds.Width - 168, 38), Color.White, 0.46f);
+    }
+
+    private static string FormatCgosEngineSummary(GtpEngineProfile profile)
+    {
+        var executable = string.IsNullOrWhiteSpace(profile.ExecutablePath)
+            ? "-"
+            : Path.GetFileName(profile.ExecutablePath.Trim());
+        if (string.IsNullOrWhiteSpace(profile.Arguments))
+        {
+            return $"{profile.DisplayName} / {executable}";
+        }
+
+        return $"{profile.DisplayName} / {executable} {profile.Arguments.Trim()}";
     }
 
     private void DrawCgosConnectionEditPanel(GoAppSession session, Point mousePoint)
@@ -1709,11 +1722,11 @@ public sealed class GoScreenRenderer
 
     private static Rectangle CgosConnectionAccountBothButtonBounds => new(1294, 458, 86, 34);
 
-    private static Rectangle CgosConnectionEnginePreviousButtonBounds => new(1110, 534, 72, 34);
+    private static Rectangle CgosConnectionEnginePreviousButtonBounds => new(1098, 534, 64, 34);
 
-    private static Rectangle CgosConnectionEngineNameBounds => new(1190, 532, 142, 38);
+    private static Rectangle CgosConnectionEngineNameBounds => new(1168, 532, 174, 38);
 
-    private static Rectangle CgosConnectionEngineNextButtonBounds => new(1340, 534, 72, 34);
+    private static Rectangle CgosConnectionEngineNextButtonBounds => new(1348, 534, 64, 34);
 
     private static Rectangle CgosPreviousPageButtonBounds => new(482, 800, 130, 52);
 
