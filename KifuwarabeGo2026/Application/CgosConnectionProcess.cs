@@ -37,7 +37,7 @@ public sealed class CgosConnectionProcess : IDisposable
         }
     }
 
-    public string Start(CgosConnectionProfile profile, CgosConnectionAccountKind accountKind)
+    public string Start(CgosConnectionProfile profile, CgosConnectionAccountKind accountKind, GtpEngineProfile engineProfile)
     {
         if (IsRunning)
         {
@@ -86,6 +86,8 @@ public sealed class CgosConnectionProcess : IDisposable
         }
         startInfo.ArgumentList.Add("--log-directory");
         startInfo.ArgumentList.Add(LogDirectory);
+        startInfo.ArgumentList.Add("--engine-command");
+        startInfo.ArgumentList.Add(CreateEngineCommand(engineProfile));
 
         _process = new Process
         {
@@ -181,6 +183,30 @@ public sealed class CgosConnectionProcess : IDisposable
                 _recentOutput.Dequeue();
             }
         }
+    }
+
+    private static string CreateEngineCommand(GtpEngineProfile profile)
+    {
+        var command = QuoteCommandPart(profile.ExecutablePath);
+        if (!string.IsNullOrWhiteSpace(profile.Arguments))
+        {
+            command += " " + profile.Arguments.Trim();
+        }
+
+        return command;
+    }
+
+    private static string QuoteCommandPart(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return "\"\"";
+        }
+
+        var trimmed = text.Trim();
+        return trimmed.Contains(' ') || trimmed.Contains('\t')
+            ? "\"" + trimmed.Replace("\"", "\"\"") + "\""
+            : trimmed;
     }
 
     private static string FindRepositoryRoot()

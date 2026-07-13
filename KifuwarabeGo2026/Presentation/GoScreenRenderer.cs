@@ -353,6 +353,12 @@ public sealed class GoScreenRenderer
         return CgosConnectionAccountBothButtonBounds.Contains(point) ? CgosConnectionAccountKind.Both : null;
     }
 
+    public static bool GetCgosConnectionEnginePreviousButtonHit(Point point) =>
+        CgosConnectionEnginePreviousButtonBounds.Contains(point);
+
+    public static bool GetCgosConnectionEngineNextButtonHit(Point point) =>
+        CgosConnectionEngineNextButtonBounds.Contains(point);
+
     public static bool GetCgosPreviousPageButtonHit(Point point) => CgosPreviousPageButtonBounds.Contains(point);
 
     public static bool GetCgosNextPageButtonHit(Point point) => CgosNextPageButtonBounds.Contains(point);
@@ -744,7 +750,7 @@ public sealed class GoScreenRenderer
         DrawText("STATUS", new Vector2(CgosConnectionStartStatusBounds.X, CgosConnectionStartStatusBounds.Y - 34), new Color(180, 195, 195), 0.46f);
         DrawCgosConnectionStartRow(CgosConnectionStartStatusBounds, CgosConnectionStartStatusBounds.Y + 28, "STATE", session.CgosConnectionStatusMessage);
         DrawCgosConnectionAccountRow(session, mousePoint);
-        DrawCgosConnectionStartRow(CgosConnectionStartStatusBounds, CgosConnectionStartStatusBounds.Y + 180, "ENGINE", "DEFAULT GTP");
+        DrawCgosConnectionEngineRow(session, mousePoint);
         DrawCgosConnectionStartRow(CgosConnectionStartStatusBounds, CgosConnectionStartStatusBounds.Y + 256, "LOG", string.IsNullOrWhiteSpace(session.CgosConnectionLogDirectory) ? "Logs/Cgos" : session.CgosConnectionLogDirectory);
         DrawCgosConnectionOutput(session);
 
@@ -759,6 +765,16 @@ public sealed class GoScreenRenderer
         DrawCommandButton(CgosConnectionAccountBlackButtonBounds, "BLACK", session.CgosConnectionAccountKind == CgosConnectionAccountKind.Black, mousePoint, enabled: !session.IsCgosConnectionRunning, scale: 0.3f);
         DrawCommandButton(CgosConnectionAccountWhiteButtonBounds, "WHITE", session.CgosConnectionAccountKind == CgosConnectionAccountKind.White, mousePoint, enabled: !session.IsCgosConnectionRunning, scale: 0.3f);
         DrawCommandButton(CgosConnectionAccountBothButtonBounds, "BOTH", session.CgosConnectionAccountKind == CgosConnectionAccountKind.Both, mousePoint, enabled: !session.IsCgosConnectionRunning, scale: 0.3f);
+    }
+
+    private void DrawCgosConnectionEngineRow(GoAppSession session, Point mousePoint)
+    {
+        var bounds = new Rectangle(CgosConnectionStartStatusBounds.X + 22, CgosConnectionStartStatusBounds.Y + 180, CgosConnectionStartStatusBounds.Width - 44, 56);
+        DrawDataRowFrame(bounds);
+        DrawUiLabel(UiLabel.InCompactRow("ENGINE", bounds));
+        DrawCommandButton(CgosConnectionEnginePreviousButtonBounds, "PREV", false, mousePoint, enabled: session.CanMoveCgosGtpEngineSelection(-1), scale: 0.24f);
+        DrawFittedText(session.SelectedCgosGtpEngineProfile.DisplayName, CgosConnectionEngineNameBounds, Color.White, 0.34f);
+        DrawCommandButton(CgosConnectionEngineNextButtonBounds, "NEXT", false, mousePoint, enabled: session.CanMoveCgosGtpEngineSelection(1), scale: 0.24f);
     }
 
     private void DrawCgosConnectionOutput(GoAppSession session)
@@ -1692,6 +1708,12 @@ public sealed class GoScreenRenderer
     private static Rectangle CgosConnectionAccountWhiteButtonBounds => new(1202, 458, 86, 34);
 
     private static Rectangle CgosConnectionAccountBothButtonBounds => new(1294, 458, 86, 34);
+
+    private static Rectangle CgosConnectionEnginePreviousButtonBounds => new(1110, 534, 72, 34);
+
+    private static Rectangle CgosConnectionEngineNameBounds => new(1190, 532, 142, 38);
+
+    private static Rectangle CgosConnectionEngineNextButtonBounds => new(1340, 534, 72, 34);
 
     private static Rectangle CgosPreviousPageButtonBounds => new(482, 800, 130, 52);
 

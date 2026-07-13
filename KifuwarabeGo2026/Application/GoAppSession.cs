@@ -56,6 +56,10 @@ public sealed class GoAppSession
 
     public CgosConnectionAccountKind CgosConnectionAccountKind { get; private set; } = CgosConnectionAccountKind.Black;
 
+    public int SelectedCgosGtpEngineIndex { get; private set; }
+
+    public GtpEngineProfile SelectedCgosGtpEngineProfile => _gtpEngineProfiles[SelectedCgosGtpEngineIndex];
+
     public bool IsCgosConnectionRunning { get; private set; }
 
     public int SelectedCgosConnectionProfileIndex { get; private set; }
@@ -288,6 +292,22 @@ public sealed class GoAppSession
         CgosConnectionAccountKind = accountKind;
         CgosConnectionStatusMessage = "READY";
     }
+
+    public void MoveCgosGtpEngineSelection(int step)
+    {
+        if (IsCgosConnectionRunning || _gtpEngineProfiles.Count == 0)
+        {
+            return;
+        }
+
+        SelectedCgosGtpEngineIndex = Math.Clamp(SelectedCgosGtpEngineIndex + step, 0, _gtpEngineProfiles.Count - 1);
+        CgosConnectionStatusMessage = "READY";
+    }
+
+    public bool CanMoveCgosGtpEngineSelection(int step) =>
+        !IsCgosConnectionRunning &&
+        _gtpEngineProfiles.Count > 0 &&
+        Math.Clamp(SelectedCgosGtpEngineIndex + step, 0, _gtpEngineProfiles.Count - 1) != SelectedCgosGtpEngineIndex;
 
     public void SetCgosConnectionProcessStatus(string statusMessage, bool isRunning, string logDirectory, IReadOnlyList<string> recentOutput)
     {
@@ -926,6 +946,7 @@ public sealed class GoAppSession
 
         SelectedBlackGtpEngineIndex = 0;
         SelectedWhiteGtpEngineIndex = 0;
+        SelectedCgosGtpEngineIndex = 0;
     }
 
     public void SelectGtpEngine(GoStone stone, int index)
