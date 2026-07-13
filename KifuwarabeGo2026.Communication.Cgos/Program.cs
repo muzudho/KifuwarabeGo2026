@@ -254,7 +254,7 @@ internal sealed class CgosClient
         StreamWriter? writer = null;
         try
         {
-            Log($"Connecting to {_options.Host}:{_options.Port} as {_account.UserName}.");
+            Log($"# Connecting to {_options.Host}:{_options.Port} as {_account.UserName}.");
 
             using var tcp = new TcpClient();
             try
@@ -263,7 +263,7 @@ internal sealed class CgosClient
             }
             catch (TimeoutException ex)
             {
-                Log($"Could not connect to {_options.Host}:{_options.Port} within 15 seconds.");
+                Log($"# Could not connect to {_options.Host}:{_options.Port} within 15 seconds.");
                 throw new InvalidOperationException($"Could not connect to {_options.Host}:{_options.Port} within 15 seconds.", ex);
             }
 
@@ -277,7 +277,7 @@ internal sealed class CgosClient
                 var line = await reader.ReadLineAsync(cancellationToken);
                 if (line is null)
                 {
-                    Log("CGOS connection closed.");
+                    Log("# CGOS connection closed.");
                     return;
                 }
 
@@ -287,7 +287,7 @@ internal sealed class CgosClient
                     continue;
                 }
 
-                Log("< " + line);
+                Log("> " + line);
                 if (line.StartsWith("Error:", StringComparison.OrdinalIgnoreCase))
                 {
                     throw new InvalidOperationException("CGOS error: " + line);
@@ -334,12 +334,12 @@ internal sealed class CgosClient
                 await SendAsync(writer, move);
                 return;
             case "gameover":
-                Log("Game over: " + string.Join(' ', parameters));
+                Log("# Game over: " + string.Join(' ', parameters));
                 await ShutdownEngineAsync();
                 await SendAsync(writer, "ready");
                 return;
             case "info":
-                Log("Info: " + string.Join(' ', parameters));
+                Log("# Info: " + string.Join(' ', parameters));
                 return;
             default:
                 throw new InvalidOperationException("Unsupported CGOS command: " + command);
@@ -363,7 +363,7 @@ internal sealed class CgosClient
         var programB = StripRank(parameters[5]);
         _engineColor = string.Equals(_account.UserName, programA, StringComparison.OrdinalIgnoreCase) ? "white" : "black";
 
-        Log($"Setup game. board={boardSize}, komi={komi}, localColor={_engineColor}, programA={programA}, programB={programB}");
+        Log($"# Setup game. board={boardSize}, komi={komi}, localColor={_engineColor}, programA={programA}, programB={programB}");
 
         await _engine.CommandAsync("boardsize " + boardSize, cancellationToken);
         await _engine.CommandAsync("komi " + komi, cancellationToken);
@@ -393,7 +393,7 @@ internal sealed class CgosClient
             throw new InvalidOperationException("GTP engine returned an empty genmove response.");
         }
 
-        Log($"Generated {_engineColor} move: {move}");
+        Log($"# Generated {_engineColor} move: {move}");
         return move.ToLowerInvariant();
     }
 
@@ -426,14 +426,14 @@ internal sealed class CgosClient
         }
         catch (Exception ex)
         {
-            Log("Could not send CGOS quit: " + ex.Message);
+            Log("# Could not send CGOS quit: " + ex.Message);
         }
     }
 
     private async Task SendAsync(StreamWriter writer, string message, bool maskInLog = false)
     {
         await writer.WriteLineAsync(message);
-        Log("> " + (maskInLog ? "(password)" : message));
+        Log("< " + (maskInLog ? "(password)" : message));
     }
 
     private void Log(string message)

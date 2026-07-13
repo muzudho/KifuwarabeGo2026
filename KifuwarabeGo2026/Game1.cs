@@ -247,6 +247,14 @@ public class Game1 : Game
                     {
                         _session.MoveCgosGtpEngineSelection(1);
                     }
+                    else if (GoScreenRenderer.GetCgosConnectionOpenLogCodeButtonHit(point))
+                    {
+                        OpenCgosConnectionLog("code");
+                    }
+                    else if (GoScreenRenderer.GetCgosConnectionOpenLogNotepadButtonHit(point))
+                    {
+                        OpenCgosConnectionLog("notepad");
+                    }
                     else if (GoScreenRenderer.GetCgosConnectionBeginButtonHit(point))
                     {
                         ToggleCgosConnectionProcess();
@@ -588,6 +596,19 @@ public class Game1 : Game
 
         var status = _cgosConnectionProcess.RefreshStatus();
         _session.SetCgosConnectionProcessStatus(status, _cgosConnectionProcess.IsRunning, _cgosConnectionProcess.LogDirectory, _cgosConnectionProcess.GetRecentOutput());
+    }
+
+    private void OpenCgosConnectionLog(string app)
+    {
+        try
+        {
+            var status = _cgosConnectionProcess.OpenLog(app);
+            _session.SetCgosConnectionProcessStatus(status, _cgosConnectionProcess.IsRunning, _cgosConnectionProcess.LogDirectory, _cgosConnectionProcess.GetRecentOutput());
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or IOException or System.ComponentModel.Win32Exception)
+        {
+            _session.SetCgosConnectionProcessStatus("ERROR: " + ex.Message, _cgosConnectionProcess.IsRunning, _cgosConnectionProcess.LogDirectory, _cgosConnectionProcess.GetRecentOutput());
+        }
     }
 
     private bool TryInputCgosConnectionEditCharacter(char character)

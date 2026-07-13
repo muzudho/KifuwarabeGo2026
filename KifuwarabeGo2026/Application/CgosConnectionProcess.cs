@@ -114,8 +114,8 @@ public sealed class CgosConnectionProcess : IDisposable
 
         _process.BeginOutputReadLine();
         _process.BeginErrorReadLine();
-        AddOutput($"Started CGOS communication process. pid={_process.Id}");
-        AddOutput("Engine command: " + engineCommand);
+        AddOutput($"# Started CGOS communication process. pid={_process.Id}");
+        AddOutput("# Engine command: " + engineCommand);
         _status = "STARTING";
         return _status;
     }
@@ -166,9 +166,42 @@ public sealed class CgosConnectionProcess : IDisposable
         }
 
         PollCgosLogFiles();
-        AddOutput("Stop requested.");
+        AddOutput("# Stop requested.");
         _status = "STOPPED";
         DisposeProcess();
+    }
+
+    public string OpenLog(string app)
+    {
+        PollCgosLogFiles();
+
+        var defaultLogDirectory = Path.Combine(FindRepositoryRoot(), "Logs", "Cgos");
+        var logDirectory = string.IsNullOrWhiteSpace(LogDirectory) ? defaultLogDirectory : LogDirectory;
+        Directory.CreateDirectory(logDirectory);
+
+        var targetPath = !string.IsNullOrWhiteSpace(_activeCgosLogPath) && File.Exists(_activeCgosLogPath)
+            ? _activeCgosLogPath
+            : GetLatestCgosLogPath(logDirectory);
+        if (string.IsNullOrWhiteSpace(targetPath))
+        {
+            targetPath = logDirectory;
+        }
+
+        var opensFile = File.Exists(targetPath);
+        var fileName = opensFile
+            ? string.IsNullOrWhiteSpace(app) ? "notepad" : app.Trim()
+            : "explorer";
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = fileName,
+            UseShellExecute = true,
+        };
+        startInfo.ArgumentList.Add(targetPath);
+        Process.Start(startInfo);
+
+        var openedName = File.Exists(targetPath) ? Path.GetFileName(targetPath) : targetPath;
+        AddOutput($"# Opened CGOS log with {fileName}: {openedName}");
+        return "OPENED LOG";
     }
 
     public void Dispose()
@@ -249,8 +282,29 @@ public sealed class CgosConnectionProcess : IDisposable
         }
 
         _activeCgosLogPath = latest.FullName;
-        AddOutput("Reading CGOS log: " + latest.Name);
+        AddOutput("# Reading CGOS log: " + latest.Name);
         return [_activeCgosLogPath];
+    }
+
+    private static string GetLatestCgosLogPath(string logDirectory)
+    {
+        if (string.IsNullOrWhiteSpace(logDirectory) || !Directory.Exists(logDirectory))
+        {
+            return "";
+        }
+
+        try
+        {
+            return Directory.EnumerateFiles(logDirectory, "cgos-*.log")
+                .Select(path => new FileInfo(path))
+                .OrderByDescending(file => file.LastWriteTime)
+                .FirstOrDefault()
+                ?.FullName ?? "";
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+        {
+            return "";
+        }
     }
 
     private void AddOutput(string? line)
@@ -262,7 +316,7 @@ public sealed class CgosConnectionProcess : IDisposable
 
         lock (_outputLock)
         {
-            _recentOutput.Enqueue(line.Trim());
+            _recentOutput.Enqueue(FormatDisplayLine(line.Trim()));
             while (_recentOutput.Count > 8)
             {
                 _recentOutput.Dequeue();
@@ -292,17 +346,20 @@ public sealed class CgosConnectionProcess : IDisposable
                 return "GENMOVE DONE";
             }
 
-            if (line.Contains("< genmove", StringComparison.OrdinalIgnoreCase))
+            if (line.Contains("> genmove", StringComparison.OrdinalIgnoreCase) ||
+                line.Contains("< genmove", StringComparison.OrdinalIgnoreCase))
             {
                 return "GENMOVE";
             }
 
-            if (line.Contains("< play", StringComparison.OrdinalIgnoreCase))
+            if (line.Contains("> play", StringComparison.OrdinalIgnoreCase) ||
+                line.Contains("< play", StringComparison.OrdinalIgnoreCase))
             {
                 return "PLAY";
             }
 
             if (line.Contains("Setup game", StringComparison.OrdinalIgnoreCase) ||
+                line.Contains("> setup", StringComparison.OrdinalIgnoreCase) ||
                 line.Contains("< setup", StringComparison.OrdinalIgnoreCase))
             {
                 return "SETUP";
@@ -313,14 +370,18 @@ public sealed class CgosConnectionProcess : IDisposable
                 return "GAME OVER";
             }
 
-            if (line.Contains("< username", StringComparison.OrdinalIgnoreCase) ||
+            if (line.Contains("> username", StringComparison.OrdinalIgnoreCase) ||
+                line.Contains("> password", StringComparison.OrdinalIgnoreCase) ||
+                line.Contains("< (password)", StringComparison.OrdinalIgnoreCase) ||
+                line.Contains("< username", StringComparison.OrdinalIgnoreCase) ||
                 line.Contains("< password", StringComparison.OrdinalIgnoreCase) ||
                 line.Contains("> (password)", StringComparison.OrdinalIgnoreCase))
             {
                 return "LOGIN";
             }
 
-            if (line.Contains("< protocol", StringComparison.OrdinalIgnoreCase))
+            if (line.Contains("> protocol", StringComparison.OrdinalIgnoreCase) ||
+                line.Contains("< protocol", StringComparison.OrdinalIgnoreCase))
             {
                 return "PROTOCOL";
             }
@@ -337,6 +398,33 @@ public sealed class CgosConnectionProcess : IDisposable
         }
 
         return "RUNNING";
+    }
+
+    private static string FormatDisplayLine(string line)
+    {
+        var messageStart = line.IndexOf("] ", StringComparison.Ordinal);
+        if (messageStart >= 0 && messageStart + 2 < line.Length)
+        {
+            var prefix = line[..(messageStart + 2)];
+            var message = line[(messageStart + 2)..];
+            if (message.StartsWith("# ", StringComparison.Ordinal) ||
+                message.StartsWith("< ", StringComparison.Ordinal) ||
+                message.StartsWith("> ", StringComparison.Ordinal))
+            {
+                return prefix + message;
+            }
+
+            return prefix + "# " + message;
+        }
+
+        if (line.StartsWith("# ", StringComparison.Ordinal) ||
+            line.StartsWith("< ", StringComparison.Ordinal) ||
+            line.StartsWith("> ", StringComparison.Ordinal))
+        {
+            return line;
+        }
+
+        return "# " + line;
     }
 
     private static string CreateEngineCommand(GtpEngineProfile profile)
