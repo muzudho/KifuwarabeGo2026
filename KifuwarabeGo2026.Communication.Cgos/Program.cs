@@ -48,6 +48,7 @@ internal static class Program
             e.Cancel = true;
             cancellation.Cancel();
         };
+        _ = WatchStandardInputAsync(cancellation);
 
         var tasks = accounts
             .Select(account => RunClientAsync(options, account, cancellation))
@@ -61,6 +62,32 @@ internal static class Program
         catch (OperationCanceledException)
         {
             return 130;
+        }
+    }
+
+    private static async Task WatchStandardInputAsync(CancellationTokenSource cancellation)
+    {
+        try
+        {
+            while (!cancellation.IsCancellationRequested)
+            {
+                var line = await Console.In.ReadLineAsync(cancellation.Token);
+                if (line is null)
+                {
+                    return;
+                }
+
+                if (line.Trim().Equals("quit", StringComparison.OrdinalIgnoreCase) ||
+                    line.Trim().Equals("exit", StringComparison.OrdinalIgnoreCase) ||
+                    line.Trim().Equals("cancel", StringComparison.OrdinalIgnoreCase))
+                {
+                    cancellation.Cancel();
+                    return;
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
         }
     }
 

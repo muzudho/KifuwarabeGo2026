@@ -730,9 +730,9 @@ public sealed class GoScreenRenderer
         DrawCgosConnectionStartRow(CgosConnectionStartStatusBounds, CgosConnectionStartStatusBounds.Y + 28, "STATE", session.CgosConnectionStatusMessage);
         DrawCgosConnectionStartRow(CgosConnectionStartStatusBounds, CgosConnectionStartStatusBounds.Y + 104, "ACCOUNT", "BLACK");
         DrawCgosConnectionStartRow(CgosConnectionStartStatusBounds, CgosConnectionStartStatusBounds.Y + 180, "ENGINE", "DEFAULT GTP");
-        DrawCgosConnectionStartRow(CgosConnectionStartStatusBounds, CgosConnectionStartStatusBounds.Y + 256, "LOG", "Logs/Cgos");
+        DrawCgosConnectionStartRow(CgosConnectionStartStatusBounds, CgosConnectionStartStatusBounds.Y + 256, "LOG", string.IsNullOrWhiteSpace(session.CgosConnectionLogDirectory) ? "Logs/Cgos" : session.CgosConnectionLogDirectory);
 
-        DrawCommandButton(CgosConnectionBeginButtonBounds, "START CONNECT", false, mousePoint, scale: 0.46f);
+        DrawCommandButton(CgosConnectionBeginButtonBounds, session.IsCgosConnectionRunning ? "STOP CONNECT" : "START CONNECT", false, mousePoint, scale: 0.46f);
     }
 
     private void DrawCgosConnectionStartRow(Rectangle panelBounds, int y, string label, string value)

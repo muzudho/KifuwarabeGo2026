@@ -50,6 +50,10 @@ public sealed class GoAppSession
 
     public string CgosConnectionStatusMessage { get; private set; } = "READY";
 
+    public string CgosConnectionLogDirectory { get; private set; } = "";
+
+    public bool IsCgosConnectionRunning { get; private set; }
+
     public int SelectedCgosConnectionProfileIndex { get; private set; }
 
     public CgosConnectionProfile SelectedCgosConnectionProfile => _cgosConnectionProfiles[SelectedCgosConnectionProfileIndex];
@@ -224,6 +228,8 @@ public sealed class GoAppSession
         UseKind = null;
         CgosConnectionFlowKind = CgosConnectionFlowKind.ProfileSelection;
         CgosConnectionStatusMessage = "READY";
+        CgosConnectionLogDirectory = "";
+        IsCgosConnectionRunning = false;
         CloseCgosConnectionEditPanel();
     }
 
@@ -265,6 +271,13 @@ public sealed class GoAppSession
         }
 
         CgosConnectionStatusMessage = "CONNECT REQUESTED";
+    }
+
+    public void SetCgosConnectionProcessStatus(string statusMessage, bool isRunning, string logDirectory)
+    {
+        CgosConnectionStatusMessage = statusMessage;
+        IsCgosConnectionRunning = isRunning;
+        CgosConnectionLogDirectory = logDirectory;
     }
 
     public void SetCgosConnectionProfiles(IEnumerable<CgosConnectionProfile> profiles)

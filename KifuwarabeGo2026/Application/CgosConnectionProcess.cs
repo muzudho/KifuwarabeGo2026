@@ -1,0 +1,144 @@
+namespace KifuwarabeGo2026.Application;
+
+using System;
+using System.Diagnostics;
+using System.IO;
+
+public sealed class CgosConnectionProcess : IDisposable
+{
+    private Process? _process;
+
+    public bool IsRunning => _process is { HasExited: false };
+
+    public int? ExitCode => _process is { HasExited: true } process ? process.ExitCode : null;
+
+    public string LogDirectory { get; private set; } = "";
+
+    public string Start(CgosConnectionProfile profile)
+    {
+        if (IsRunning)
+        {
+            return "RUNNING";
+        }
+
+        DisposeProcess();
+
+        var repositoryRoot = FindRepositoryRoot();
+        var projectPath = Path.Combine(repositoryRoot, "KifuwarabeGo2026.Communication.Cgos", "KifuwarabeGo2026.Communication.Cgos.csproj");
+        if (!File.Exists(projectPath))
+        {
+            throw new FileNotFoundException("CGOS communication project was not found.", projectPath);
+        }
+
+        LogDirectory = Path.Combine(repositoryRoot, "Logs", "Cgos");
+        Directory.CreateDirectory(LogDirectory);
+
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = "dotnet",
+            WorkingDirectory = repositoryRoot,
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardInput = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+        };
+        startInfo.ArgumentList.Add("run");
+        startInfo.ArgumentList.Add("--project");
+        startInfo.ArgumentList.Add(projectPath);
+        startInfo.ArgumentList.Add("--");
+        startInfo.ArgumentList.Add("--host");
+        startInfo.ArgumentList.Add(profile.Host);
+        startInfo.ArgumentList.Add("--port");
+        startInfo.ArgumentList.Add(profile.Port.ToString());
+        startInfo.ArgumentList.Add("--account");
+        startInfo.ArgumentList.Add("black");
+        startInfo.ArgumentList.Add("--log-directory");
+        startInfo.ArgumentList.Add(LogDirectory);
+
+        _process = new Process
+        {
+            StartInfo = startInfo,
+            EnableRaisingEvents = true,
+        };
+        _process.OutputDataReceived += (_, _) => { };
+        _process.ErrorDataReceived += (_, _) => { };
+
+        if (!_process.Start())
+        {
+            DisposeProcess();
+            throw new InvalidOperationException("Could not start CGOS communication process.");
+        }
+
+        _process.BeginOutputReadLine();
+        _process.BeginErrorReadLine();
+        return "RUNNING";
+    }
+
+    public string RefreshStatus()
+    {
+        if (_process is null)
+        {
+            return "READY";
+        }
+
+        return _process.HasExited ? $"EXITED {_process.ExitCode}" : "RUNNING";
+    }
+
+    public void Stop()
+    {
+        if (_process is null)
+        {
+            return;
+        }
+
+        if (!_process.HasExited)
+        {
+            try
+            {
+                _process.StandardInput.WriteLine("quit");
+                _process.StandardInput.Flush();
+            }
+            catch (InvalidOperationException)
+            {
+            }
+            catch (IOException)
+            {
+            }
+
+            if (!_process.WaitForExit(3000))
+            {
+                _process.Kill(entireProcessTree: true);
+            }
+        }
+
+        DisposeProcess();
+    }
+
+    public void Dispose()
+    {
+        Stop();
+    }
+
+    private void DisposeProcess()
+    {
+        _process?.Dispose();
+        _process = null;
+    }
+
+    private static string FindRepositoryRoot()
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory is not null)
+        {
+            if (File.Exists(Path.Combine(directory.FullName, "KifuwarabeGo2026.slnx")))
+            {
+                return directory.FullName;
+            }
+
+            directory = directory.Parent;
+        }
+
+        return Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
+    }
+}

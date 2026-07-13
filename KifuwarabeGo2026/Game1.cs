@@ -23,6 +23,7 @@ public class Game1 : Game
     private readonly CgosConnectionCatalog _cgosConnectionCatalog;
     private readonly TournamentRulesSetting _tournamentRulesSetting;
     private readonly PlayingScene _playingScene;
+    private readonly CgosConnectionProcess _cgosConnectionProcess = new();
     private GoScreenRenderer? _renderer;
     private SoundEffect? _placeStoneSound;
     private SoundEffectInstance? _placeStoneSoundInstance;
@@ -75,6 +76,7 @@ public class Game1 : Game
         {
             if (_session.UseKind == GoAppUseKind.CgosClient)
             {
+                UpdateCgosConnectionProcessStatus();
                 UpdateCgosConnectionEditPanelByKeyboard(keyboard, gameTime);
             }
 
@@ -235,7 +237,7 @@ public class Game1 : Game
                     }
                     else if (GoScreenRenderer.GetCgosConnectionBeginButtonHit(point))
                     {
-                        _session.RequestCgosConnectionStart();
+                        ToggleCgosConnectionProcess();
                     }
 
                     _previousMouse = mouse;
@@ -539,6 +541,38 @@ public class Game1 : Game
         }
 
         _previousCgosConnectionKeyboard = keyboard;
+    }
+
+    private void ToggleCgosConnectionProcess()
+    {
+        if (_cgosConnectionProcess.IsRunning)
+        {
+            _cgosConnectionProcess.Stop();
+            _session.SetCgosConnectionProcessStatus("STOPPED", false, _cgosConnectionProcess.LogDirectory);
+            return;
+        }
+
+        _session.RequestCgosConnectionStart();
+        try
+        {
+            var status = _cgosConnectionProcess.Start(_session.SelectedCgosConnectionProfile);
+            _session.SetCgosConnectionProcessStatus(status, _cgosConnectionProcess.IsRunning, _cgosConnectionProcess.LogDirectory);
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or IOException or System.ComponentModel.Win32Exception)
+        {
+            _session.SetCgosConnectionProcessStatus("ERROR: " + ex.Message, false, _cgosConnectionProcess.LogDirectory);
+        }
+    }
+
+    private void UpdateCgosConnectionProcessStatus()
+    {
+        if (_session.CgosConnectionFlowKind != CgosConnectionFlowKind.ConnectionStart)
+        {
+            return;
+        }
+
+        var status = _cgosConnectionProcess.RefreshStatus();
+        _session.SetCgosConnectionProcessStatus(status, _cgosConnectionProcess.IsRunning, _cgosConnectionProcess.LogDirectory);
     }
 
     private bool TryInputCgosConnectionEditCharacter(char character)
@@ -1151,6 +1185,7 @@ public class Game1 : Game
         if (disposing)
         {
             Window.TextInput -= OnTextInput;
+            _cgosConnectionProcess.Dispose();
             _playingScene.Dispose();
             _placeStoneSoundInstance?.Dispose();
             _placeStoneSound?.Dispose();
