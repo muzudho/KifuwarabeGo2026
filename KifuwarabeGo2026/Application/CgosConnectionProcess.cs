@@ -13,6 +13,8 @@ public sealed class CgosConnectionProcess : IDisposable
     private readonly HashSet<string> _seenLogLines = new(StringComparer.Ordinal);
     private Process? _process;
     private DateTime _startedAt;
+    private string _activeCgosLogPath = "";
+    private string _status = "READY";
 
     public bool IsRunning => _process is { HasExited: false };
 
@@ -49,7 +51,9 @@ public sealed class CgosConnectionProcess : IDisposable
         DisposeProcess();
         ClearOutput();
         _seenLogLines.Clear();
+        _activeCgosLogPath = "";
         _startedAt = DateTime.Now;
+        _status = "STARTING";
 
         var repositoryRoot = FindRepositoryRoot();
         var projectPath = Path.Combine(repositoryRoot, "KifuwarabeGo2026.Communication.Cgos", "KifuwarabeGo2026.Communication.Cgos.csproj");
@@ -112,23 +116,26 @@ public sealed class CgosConnectionProcess : IDisposable
         _process.BeginErrorReadLine();
         AddOutput($"Started CGOS communication process. pid={_process.Id}");
         AddOutput("Engine command: " + engineCommand);
-        return "RUNNING";
+        _status = "STARTING";
+        return _status;
     }
 
     public string RefreshStatus()
     {
         if (_process is null)
         {
-            return "READY";
+            return _status;
         }
 
         PollCgosLogFiles();
         if (_process.HasExited)
         {
-            return _process.ExitCode == 0 ? "EXITED 0" : "ERROR";
+            _status = _process.ExitCode == 0 ? "EXITED 0" : "ERROR";
+            return _status;
         }
 
-        return DeriveRunningStatus(GetRecentOutput());
+        _status = DeriveRunningStatus(GetRecentOutput());
+        return _status;
     }
 
     public void Stop()
@@ -158,6 +165,9 @@ public sealed class CgosConnectionProcess : IDisposable
             }
         }
 
+        PollCgosLogFiles();
+        AddOutput("Stop requested.");
+        _status = "STOPPED";
         DisposeProcess();
     }
 
@@ -187,23 +197,9 @@ public sealed class CgosConnectionProcess : IDisposable
             return;
         }
 
-        foreach (var path in Directory.EnumerateFiles(LogDirectory, "cgos-*.log"))
+        var paths = GetCgosLogFilesToPoll();
+        foreach (var path in paths)
         {
-            FileInfo file;
-            try
-            {
-                file = new FileInfo(path);
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
-            {
-                continue;
-            }
-
-            if (file.LastWriteTime < _startedAt.AddSeconds(-2))
-            {
-                continue;
-            }
-
             try
             {
                 foreach (var line in File.ReadLines(path))
@@ -219,6 +215,42 @@ public sealed class CgosConnectionProcess : IDisposable
             {
             }
         }
+    }
+
+    private IReadOnlyList<string> GetCgosLogFilesToPoll()
+    {
+        if (!string.IsNullOrWhiteSpace(_activeCgosLogPath) && File.Exists(_activeCgosLogPath))
+        {
+            return [_activeCgosLogPath];
+        }
+
+        var candidates = new List<FileInfo>();
+        foreach (var path in Directory.EnumerateFiles(LogDirectory, "cgos-*.log"))
+        {
+            try
+            {
+                var file = new FileInfo(path);
+                if (file.LastWriteTime >= _startedAt.AddSeconds(-10))
+                {
+                    candidates.Add(file);
+                }
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+            {
+            }
+        }
+
+        var latest = candidates
+            .OrderByDescending(file => file.LastWriteTime)
+            .FirstOrDefault();
+        if (latest is null)
+        {
+            return [];
+        }
+
+        _activeCgosLogPath = latest.FullName;
+        AddOutput("Reading CGOS log: " + latest.Name);
+        return [_activeCgosLogPath];
     }
 
     private void AddOutput(string? line)
