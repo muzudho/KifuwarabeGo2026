@@ -11,15 +11,13 @@ public sealed class CgosConnectionProcess : IDisposable
     private readonly object _outputLock = new();
     private readonly Queue<string> _recentOutput = new();
     private readonly HashSet<string> _seenLogLines = new(StringComparer.Ordinal);
-    private Process? _process;
+    private readonly List<Process> _processes = new();
     private DateTime _startedAt;
-    private string _activeCgosLogPath = "";
+    private readonly HashSet<string> _activeCgosLogPaths = new(StringComparer.Ordinal);
     private string _standardErrorLogPath = "";
     private string _status = "READY";
 
-    public bool IsRunning => _process is { HasExited: false };
-
-    public int? ExitCode => _process is { HasExited: true } process ? process.ExitCode : null;
+    public bool IsRunning => _processes.Any(process => !process.HasExited);
 
     public string LogDirectory { get; private set; } = "";
 
@@ -42,17 +40,22 @@ public sealed class CgosConnectionProcess : IDisposable
         }
     }
 
-    public string Start(CgosConnectionProfile profile, CgosConnectionAccountKind accountKind, GtpEngineProfile engineProfile)
+    public string Start(CgosConnectionProfile profile, GtpEngineProfile? blackEngineProfile, GtpEngineProfile? whiteEngineProfile)
     {
         if (IsRunning)
         {
             return "RUNNING";
         }
 
+        if (blackEngineProfile is null && whiteEngineProfile is null)
+        {
+            throw new InvalidOperationException("Select at least one CGOS engine.");
+        }
+
         DisposeProcess();
         ClearOutput();
         _seenLogLines.Clear();
-        _activeCgosLogPath = "";
+        _activeCgosLogPaths.Clear();
         _standardErrorLogPath = "";
         _startedAt = DateTime.Now;
         _status = "STARTING";
@@ -68,6 +71,30 @@ public sealed class CgosConnectionProcess : IDisposable
         Directory.CreateDirectory(LogDirectory);
         _standardErrorLogPath = Path.Combine(LogDirectory, $"standard-error-{_startedAt:yyyyMMdd-HHmmss}.log");
 
+        try
+        {
+            if (blackEngineProfile is not null)
+            {
+                StartProcess(profile, "black", blackEngineProfile, repositoryRoot, executablePath);
+            }
+
+            if (whiteEngineProfile is not null)
+            {
+                StartProcess(profile, "white", whiteEngineProfile, repositoryRoot, executablePath);
+            }
+        }
+        catch
+        {
+            Stop();
+            throw;
+        }
+
+        _status = "STARTING";
+        return _status;
+    }
+
+    private void StartProcess(CgosConnectionProfile profile, string account, GtpEngineProfile engineProfile, string repositoryRoot, string executablePath)
+    {
         var startInfo = new ProcessStartInfo
         {
             FileName = executablePath,
@@ -82,55 +109,48 @@ public sealed class CgosConnectionProcess : IDisposable
         startInfo.ArgumentList.Add(profile.Host);
         startInfo.ArgumentList.Add("--port");
         startInfo.ArgumentList.Add(profile.Port.ToString());
-        if (accountKind == CgosConnectionAccountKind.Both)
-        {
-            startInfo.ArgumentList.Add("--both");
-        }
-        else
-        {
-            startInfo.ArgumentList.Add("--account");
-            startInfo.ArgumentList.Add(accountKind == CgosConnectionAccountKind.White ? "white" : "black");
-        }
+        startInfo.ArgumentList.Add("--account");
+        startInfo.ArgumentList.Add(account);
         startInfo.ArgumentList.Add("--log-directory");
         startInfo.ArgumentList.Add(LogDirectory);
         var engineCommand = CreateEngineCommand(engineProfile);
         startInfo.ArgumentList.Add("--engine-command");
         startInfo.ArgumentList.Add(engineCommand);
 
-        _process = new Process
+        var process = new Process
         {
             StartInfo = startInfo,
             EnableRaisingEvents = true,
         };
-        _process.OutputDataReceived += (_, e) => AddOutput(e.Data);
-        _process.ErrorDataReceived += (_, e) => AddOutput(e.Data, isError: true);
+        process.OutputDataReceived += (_, e) => AddOutput(e.Data);
+        process.ErrorDataReceived += (_, e) => AddOutput(e.Data, isError: true);
 
-        if (!_process.Start())
+        if (!process.Start())
         {
+            process.Dispose();
             DisposeProcess();
             throw new InvalidOperationException("Could not start CGOS communication process.");
         }
 
-        _process.BeginOutputReadLine();
-        _process.BeginErrorReadLine();
-        AddOutput($"# Started CGOS communication process. pid={_process.Id}");
+        _processes.Add(process);
+        process.BeginOutputReadLine();
+        process.BeginErrorReadLine();
+        AddOutput($"# Started CGOS {account} communication process. pid={process.Id}");
         AddOutput("# Communication executable: " + executablePath);
         AddOutput("# Engine command: " + engineCommand);
-        _status = "STARTING";
-        return _status;
     }
 
     public string RefreshStatus()
     {
-        if (_process is null)
+        if (_processes.Count == 0)
         {
             return _status;
         }
 
         PollCgosLogFiles();
-        if (_process.HasExited)
+        if (_processes.All(process => process.HasExited))
         {
-            _status = _process.ExitCode == 0 ? "EXITED 0" : "ERROR";
+            _status = _processes.All(process => process.ExitCode == 0) ? "EXITED 0" : "ERROR";
             return _status;
         }
 
@@ -140,17 +160,22 @@ public sealed class CgosConnectionProcess : IDisposable
 
     public void Stop()
     {
-        if (_process is null)
+        if (_processes.Count == 0)
         {
             return;
         }
 
-        if (!_process.HasExited)
+        foreach (var process in _processes)
         {
+            if (process.HasExited)
+            {
+                continue;
+            }
+
             try
             {
-                _process.StandardInput.WriteLine("quit");
-                _process.StandardInput.Flush();
+                process.StandardInput.WriteLine("quit");
+                process.StandardInput.Flush();
             }
             catch (InvalidOperationException)
             {
@@ -159,9 +184,9 @@ public sealed class CgosConnectionProcess : IDisposable
             {
             }
 
-            if (!_process.WaitForExit(3000))
+            if (!process.WaitForExit(3000))
             {
-                _process.Kill(entireProcessTree: true);
+                process.Kill(entireProcessTree: true);
             }
         }
 
@@ -185,10 +210,12 @@ public sealed class CgosConnectionProcess : IDisposable
 
         if (!openStandardError &&
             string.IsNullOrWhiteSpace(targetPath) &&
-            !string.IsNullOrWhiteSpace(_activeCgosLogPath) &&
-            File.Exists(_activeCgosLogPath))
+            _activeCgosLogPaths.Count > 0)
         {
-            targetPath = _activeCgosLogPath;
+            targetPath = _activeCgosLogPaths
+                .Where(File.Exists)
+                .OrderByDescending(File.GetLastWriteTime)
+                .FirstOrDefault() ?? "";
         }
 
         if (string.IsNullOrWhiteSpace(targetPath))
@@ -227,8 +254,12 @@ public sealed class CgosConnectionProcess : IDisposable
 
     private void DisposeProcess()
     {
-        _process?.Dispose();
-        _process = null;
+        foreach (var process in _processes)
+        {
+            process.Dispose();
+        }
+
+        _processes.Clear();
     }
 
     private void ClearOutput()
@@ -268,16 +299,18 @@ public sealed class CgosConnectionProcess : IDisposable
 
     private IReadOnlyList<string> GetCgosLogFilesToPoll()
     {
-        var latestCurrentRunLogPath = GetLatestCgosLogPath(LogDirectory, GetCurrentRunLogThreshold());
-        if (!string.IsNullOrWhiteSpace(latestCurrentRunLogPath))
+        var currentRunLogPaths = GetCgosLogPaths(LogDirectory, GetCurrentRunLogThreshold());
+        if (currentRunLogPaths.Count > 0)
         {
-            if (!string.Equals(_activeCgosLogPath, latestCurrentRunLogPath, StringComparison.Ordinal))
+            foreach (var path in currentRunLogPaths)
             {
-                _activeCgosLogPath = latestCurrentRunLogPath;
-                AddOutput("# Reading CGOS log: " + Path.GetFileName(latestCurrentRunLogPath));
+                if (_activeCgosLogPaths.Add(path))
+                {
+                    AddOutput("# Reading CGOS log: " + Path.GetFileName(path));
+                }
             }
 
-            return [_activeCgosLogPath];
+            return currentRunLogPaths;
         }
 
         var candidates = new List<FileInfo>();
@@ -304,9 +337,9 @@ public sealed class CgosConnectionProcess : IDisposable
             return [];
         }
 
-        _activeCgosLogPath = latest.FullName;
+        _activeCgosLogPaths.Add(latest.FullName);
         AddOutput("# Reading CGOS log: " + latest.Name);
-        return [_activeCgosLogPath];
+        return [latest.FullName];
     }
 
     private DateTime GetCurrentRunLogThreshold() =>
@@ -314,9 +347,14 @@ public sealed class CgosConnectionProcess : IDisposable
 
     private static string GetLatestCgosLogPath(string logDirectory, DateTime? notBefore = null)
     {
+        return GetCgosLogPaths(logDirectory, notBefore).FirstOrDefault() ?? "";
+    }
+
+    private static IReadOnlyList<string> GetCgosLogPaths(string logDirectory, DateTime? notBefore = null)
+    {
         if (string.IsNullOrWhiteSpace(logDirectory) || !Directory.Exists(logDirectory))
         {
-            return "";
+            return [];
         }
 
         try
@@ -325,12 +363,13 @@ public sealed class CgosConnectionProcess : IDisposable
                 .Select(path => new FileInfo(path))
                 .Where(file => notBefore is null || file.LastWriteTime >= notBefore.Value)
                 .OrderByDescending(file => file.LastWriteTime)
-                .FirstOrDefault()
-                ?.FullName ?? "";
+                .Take(4)
+                .Select(file => file.FullName)
+                .ToArray();
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
         {
-            return "";
+            return [];
         }
     }
 

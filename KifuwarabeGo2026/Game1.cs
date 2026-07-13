@@ -235,17 +235,17 @@ public class Game1 : Game
                     {
                         _session.ReturnToCgosConnectionProfiles();
                     }
-                    else if (GoScreenRenderer.GetCgosConnectionAccountButtonHit(point) is { } accountKind)
+                    else if (GoScreenRenderer.GetCgosConnectionEnginePreviousButtonHit(point) is { } previousEngineStone)
                     {
-                        _session.SelectCgosConnectionAccountKind(accountKind);
+                        _session.MoveCgosGtpEngineSelection(previousEngineStone, -1);
                     }
-                    else if (GoScreenRenderer.GetCgosConnectionEnginePreviousButtonHit(point))
+                    else if (GoScreenRenderer.GetCgosConnectionEngineNextButtonHit(point) is { } nextEngineStone)
                     {
-                        _session.MoveCgosGtpEngineSelection(-1);
+                        _session.MoveCgosGtpEngineSelection(nextEngineStone, 1);
                     }
-                    else if (GoScreenRenderer.GetCgosConnectionEngineNextButtonHit(point))
+                    else if (GoScreenRenderer.GetCgosConnectionEngineClearButtonHit(point) is { } clearEngineStone)
                     {
-                        _session.MoveCgosGtpEngineSelection(1);
+                        _session.ClearCgosGtpEngineSelection(clearEngineStone);
                     }
                     else if (GoScreenRenderer.GetCgosConnectionOpenLogCodeButtonHit(point))
                     {
@@ -263,7 +263,7 @@ public class Game1 : Game
                     {
                         OpenCgosConnectionLog("notepad", openStandardError: true);
                     }
-                    else if (GoScreenRenderer.GetCgosConnectionBeginButtonHit(point))
+                    else if (GoScreenRenderer.GetCgosConnectionBeginButtonHit(point, _session.IsCgosConnectionRunning || _session.HasSelectedCgosGtpEngine))
                     {
                         ToggleCgosConnectionProcess();
                     }
@@ -585,8 +585,8 @@ public class Game1 : Game
         {
             var status = _cgosConnectionProcess.Start(
                 _session.SelectedCgosConnectionProfile,
-                _session.CgosConnectionAccountKind,
-                _session.SelectedCgosGtpEngineProfile);
+                _session.SelectedCgosBlackGtpEngineProfile,
+                _session.SelectedCgosWhiteGtpEngineProfile);
             _session.SetCgosConnectionProcessStatus(status, _cgosConnectionProcess.IsRunning, _cgosConnectionProcess.LogDirectory, _cgosConnectionProcess.GetRecentOutput());
         }
         catch (Exception ex) when (ex is InvalidOperationException or IOException or System.ComponentModel.Win32Exception)

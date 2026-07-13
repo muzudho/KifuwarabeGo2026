@@ -54,11 +54,15 @@ public sealed class GoAppSession
 
     public IReadOnlyList<string> CgosConnectionRecentOutput { get; private set; } = Array.Empty<string>();
 
-    public CgosConnectionAccountKind CgosConnectionAccountKind { get; private set; } = CgosConnectionAccountKind.Black;
+    public int? SelectedCgosBlackGtpEngineIndex { get; private set; } = 0;
 
-    public int SelectedCgosGtpEngineIndex { get; private set; }
+    public int? SelectedCgosWhiteGtpEngineIndex { get; private set; }
 
-    public GtpEngineProfile SelectedCgosGtpEngineProfile => _gtpEngineProfiles[SelectedCgosGtpEngineIndex];
+    public GtpEngineProfile? SelectedCgosBlackGtpEngineProfile => GetCgosGtpEngineProfile(SelectedCgosBlackGtpEngineIndex);
+
+    public GtpEngineProfile? SelectedCgosWhiteGtpEngineProfile => GetCgosGtpEngineProfile(SelectedCgosWhiteGtpEngineIndex);
+
+    public bool HasSelectedCgosGtpEngine => SelectedCgosBlackGtpEngineProfile is not null || SelectedCgosWhiteGtpEngineProfile is not null;
 
     public bool IsCgosConnectionRunning { get; private set; }
 
@@ -282,32 +286,45 @@ public sealed class GoAppSession
         CgosConnectionStatusMessage = "CONNECT REQUESTED";
     }
 
-    public void SelectCgosConnectionAccountKind(CgosConnectionAccountKind accountKind)
-    {
-        if (IsCgosConnectionRunning)
-        {
-            return;
-        }
-
-        CgosConnectionAccountKind = accountKind;
-        CgosConnectionStatusMessage = "READY";
-    }
-
-    public void MoveCgosGtpEngineSelection(int step)
+    public void MoveCgosGtpEngineSelection(GoStone stone, int step)
     {
         if (IsCgosConnectionRunning || _gtpEngineProfiles.Count == 0)
         {
             return;
         }
 
-        SelectedCgosGtpEngineIndex = Math.Clamp(SelectedCgosGtpEngineIndex + step, 0, _gtpEngineProfiles.Count - 1);
+        var selectedIndex = GetSelectedCgosGtpEngineIndex(stone);
+        var baseIndex = selectedIndex ?? (step < 0 ? _gtpEngineProfiles.Count : -1);
+        SetSelectedCgosGtpEngineIndex(stone, Math.Clamp(baseIndex + step, 0, _gtpEngineProfiles.Count - 1));
         CgosConnectionStatusMessage = "READY";
     }
 
-    public bool CanMoveCgosGtpEngineSelection(int step) =>
+    public bool CanMoveCgosGtpEngineSelection(GoStone stone, int step)
+    {
+        if (IsCgosConnectionRunning || _gtpEngineProfiles.Count == 0)
+        {
+            return false;
+        }
+
+        var selectedIndex = GetSelectedCgosGtpEngineIndex(stone);
+        var baseIndex = selectedIndex ?? (step < 0 ? _gtpEngineProfiles.Count : -1);
+        return Math.Clamp(baseIndex + step, 0, _gtpEngineProfiles.Count - 1) != selectedIndex;
+    }
+
+    public void ClearCgosGtpEngineSelection(GoStone stone)
+    {
+        if (IsCgosConnectionRunning)
+        {
+            return;
+        }
+
+        SetSelectedCgosGtpEngineIndex(stone, null);
+        CgosConnectionStatusMessage = HasSelectedCgosGtpEngine ? "READY" : "SELECT ENGINE";
+    }
+
+    public bool CanClearCgosGtpEngineSelection(GoStone stone) =>
         !IsCgosConnectionRunning &&
-        _gtpEngineProfiles.Count > 0 &&
-        Math.Clamp(SelectedCgosGtpEngineIndex + step, 0, _gtpEngineProfiles.Count - 1) != SelectedCgosGtpEngineIndex;
+        GetSelectedCgosGtpEngineIndex(stone) is not null;
 
     public void SetCgosConnectionProcessStatus(string statusMessage, bool isRunning, string logDirectory, IReadOnlyList<string> recentOutput)
     {
@@ -946,7 +963,38 @@ public sealed class GoAppSession
 
         SelectedBlackGtpEngineIndex = 0;
         SelectedWhiteGtpEngineIndex = 0;
-        SelectedCgosGtpEngineIndex = 0;
+        SelectedCgosBlackGtpEngineIndex = 0;
+        SelectedCgosWhiteGtpEngineIndex = null;
+    }
+
+    private GtpEngineProfile? GetCgosGtpEngineProfile(int? index) =>
+        index is { } selectedIndex && selectedIndex >= 0 && selectedIndex < _gtpEngineProfiles.Count
+            ? _gtpEngineProfiles[selectedIndex]
+            : null;
+
+    private int? GetSelectedCgosGtpEngineIndex(GoStone stone) =>
+        stone switch
+        {
+            GoStone.Black => SelectedCgosBlackGtpEngineIndex,
+            GoStone.White => SelectedCgosWhiteGtpEngineIndex,
+            _ => throw new ArgumentOutOfRangeException(nameof(stone), stone, "CGOS GTP engine can be selected only for black or white."),
+        };
+
+    private void SetSelectedCgosGtpEngineIndex(GoStone stone, int? index)
+    {
+        if (stone == GoStone.Black)
+        {
+            SelectedCgosBlackGtpEngineIndex = index;
+            return;
+        }
+
+        if (stone == GoStone.White)
+        {
+            SelectedCgosWhiteGtpEngineIndex = index;
+            return;
+        }
+
+        throw new ArgumentOutOfRangeException(nameof(stone), stone, "CGOS GTP engine can be selected only for black or white.");
     }
 
     public void SelectGtpEngine(GoStone stone, int index)
