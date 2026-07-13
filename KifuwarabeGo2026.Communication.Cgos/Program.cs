@@ -497,7 +497,7 @@ internal sealed class GtpEngineProcess : IAsyncDisposable
         {
             if (!string.IsNullOrWhiteSpace(e.Data))
             {
-                Log("! " + e.Data);
+                Log("# [StandardError] " + e.Data);
             }
         };
 

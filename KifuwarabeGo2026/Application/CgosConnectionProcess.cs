@@ -14,6 +14,7 @@ public sealed class CgosConnectionProcess : IDisposable
     private Process? _process;
     private DateTime _startedAt;
     private string _activeCgosLogPath = "";
+    private string _standardErrorLogPath = "";
     private string _status = "READY";
 
     public bool IsRunning => _process is { HasExited: false };
@@ -52,6 +53,7 @@ public sealed class CgosConnectionProcess : IDisposable
         ClearOutput();
         _seenLogLines.Clear();
         _activeCgosLogPath = "";
+        _standardErrorLogPath = "";
         _startedAt = DateTime.Now;
         _status = "STARTING";
 
@@ -64,6 +66,7 @@ public sealed class CgosConnectionProcess : IDisposable
 
         LogDirectory = Path.Combine(repositoryRoot, "Logs", "Cgos");
         Directory.CreateDirectory(LogDirectory);
+        _standardErrorLogPath = Path.Combine(LogDirectory, $"standard-error-{_startedAt:yyyyMMdd-HHmmss}.log");
 
         var startInfo = new ProcessStartInfo
         {
@@ -335,13 +338,37 @@ public sealed class CgosConnectionProcess : IDisposable
             return;
         }
 
+        var displayLine = FormatDisplayLine(line.Trim(), isError);
         lock (_outputLock)
         {
-            _recentOutput.Enqueue(FormatDisplayLine(line.Trim(), isError));
+            if (isError)
+            {
+                AppendStandardErrorLog(displayLine);
+            }
+
+            _recentOutput.Enqueue(displayLine);
             while (_recentOutput.Count > 8)
             {
                 _recentOutput.Dequeue();
             }
+        }
+    }
+
+    private void AppendStandardErrorLog(string displayLine)
+    {
+        if (string.IsNullOrWhiteSpace(_standardErrorLogPath))
+        {
+            return;
+        }
+
+        try
+        {
+            File.AppendAllText(
+                _standardErrorLogPath,
+                $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} {displayLine}{Environment.NewLine}");
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
         }
     }
 
@@ -350,6 +377,7 @@ public sealed class CgosConnectionProcess : IDisposable
         foreach (var line in output.Reverse())
         {
             if (line.Contains("CGOS error", StringComparison.OrdinalIgnoreCase) ||
+                line.Contains("[StandardError]", StringComparison.OrdinalIgnoreCase) ||
                 line.Contains("[Error]", StringComparison.OrdinalIgnoreCase) ||
                 line.Contains("Unhandled exception", StringComparison.OrdinalIgnoreCase) ||
                 line.Contains("Unsupported CGOS command", StringComparison.OrdinalIgnoreCase) ||
@@ -426,7 +454,7 @@ public sealed class CgosConnectionProcess : IDisposable
     {
         if (isError)
         {
-            return "# [Error] " + StripDisplayPrefix(line);
+            return "# [StandardError] " + StripDisplayPrefix(line);
         }
 
         var messageStart = line.IndexOf("] ", StringComparison.Ordinal);
@@ -457,6 +485,11 @@ public sealed class CgosConnectionProcess : IDisposable
     private static string StripDisplayPrefix(string line)
     {
         var trimmed = line.Trim();
+        if (trimmed.StartsWith("# [StandardError] ", StringComparison.Ordinal))
+        {
+            return trimmed["# [StandardError] ".Length..];
+        }
+
         if (trimmed.StartsWith("# [Error] ", StringComparison.Ordinal))
         {
             return trimmed["# [Error] ".Length..];
