@@ -755,6 +755,7 @@ public sealed class GoScreenRenderer
         DrawCgosConnectionOutput(session);
 
         DrawCommandButton(CgosConnectionBeginButtonBounds, session.IsCgosConnectionRunning ? "STOP CONNECT" : "START CONNECT", false, mousePoint, scale: 0.46f);
+        DrawCgosConnectionTooltips(session, mousePoint);
     }
 
     private void DrawCgosConnectionAccountRow(GoAppSession session, Point mousePoint)
@@ -773,7 +774,7 @@ public sealed class GoScreenRenderer
         DrawDataRowFrame(bounds);
         DrawUiLabel(UiLabel.InCompactRow("ENGINE", bounds));
         DrawCommandButton(CgosConnectionEnginePreviousButtonBounds, "PREV", false, mousePoint, enabled: session.CanMoveCgosGtpEngineSelection(-1), scale: 0.24f);
-        DrawFittedText(FormatCgosEngineSummary(session.SelectedCgosGtpEngineProfile), CgosConnectionEngineNameBounds, Color.White, 0.34f);
+        DrawFittedText(session.SelectedCgosGtpEngineProfile.DisplayName, CgosConnectionEngineNameBounds, Color.White, 0.42f);
         DrawCommandButton(CgosConnectionEngineNextButtonBounds, "NEXT", false, mousePoint, enabled: session.CanMoveCgosGtpEngineSelection(1), scale: 0.24f);
     }
 
@@ -796,7 +797,24 @@ public sealed class GoScreenRenderer
         for (var index = firstVisibleLine; index < lines.Count; index++)
         {
             var visibleIndex = index - firstVisibleLine;
-            DrawFittedText(lines[index], new Rectangle(bounds.X + 16, bounds.Y + 10 + visibleIndex * 23, bounds.Width - 32, 21), new Color(204, 211, 206), 0.31f);
+            DrawFittedText(ShortenForCgosMessageRow(lines[index]), CgosConnectionOutputLineBounds(visibleIndex), new Color(204, 211, 206), 0.31f);
+        }
+    }
+
+    private void DrawCgosConnectionTooltips(GoAppSession session, Point mousePoint)
+    {
+        if (CgosConnectionEngineNameBounds.Contains(mousePoint))
+        {
+            DrawCgosTextTooltip(
+                CgosConnectionEngineTooltipBounds,
+                "ENGINE COMMAND",
+                FormatCgosEngineCommand(session.SelectedCgosGtpEngineProfile));
+            return;
+        }
+
+        if (TryGetHoveredCgosMessageLine(session, mousePoint, out var message))
+        {
+            DrawCgosTextTooltip(CgosConnectionMessageTooltipBounds, "MESSAGE", message);
         }
     }
 
@@ -808,17 +826,52 @@ public sealed class GoScreenRenderer
         DrawFittedText(value, new Rectangle(bounds.X + 152, bounds.Y + 7, bounds.Width - 168, 38), Color.White, 0.46f);
     }
 
-    private static string FormatCgosEngineSummary(GtpEngineProfile profile)
+    private static bool TryGetHoveredCgosMessageLine(GoAppSession session, Point mousePoint, out string message)
+    {
+        var lines = session.CgosConnectionRecentOutput;
+        var maxVisibleLines = Math.Max(1, (CgosConnectionOutputBounds.Height - 20) / 23);
+        var firstVisibleLine = Math.Max(0, lines.Count - maxVisibleLines);
+        for (var index = firstVisibleLine; index < lines.Count; index++)
+        {
+            var visibleIndex = index - firstVisibleLine;
+            if (CgosConnectionOutputLineBounds(visibleIndex).Contains(mousePoint))
+            {
+                message = lines[index];
+                return true;
+            }
+        }
+
+        message = "";
+        return false;
+    }
+
+    private void DrawCgosTextTooltip(Rectangle bounds, string title, string text)
+    {
+        FillRect(new Rectangle(bounds.X + 8, bounds.Y + 10, bounds.Width, bounds.Height), new Color(0, 0, 0, 150));
+        FillRect(bounds, new Color(30, 36, 43, 252));
+        DrawRect(bounds, 2, new Color(147, 244, 200));
+        DrawText(title, new Vector2(bounds.X + 18, bounds.Y + 12), new Color(180, 195, 195), 0.34f);
+        DrawFittedText(text, new Rectangle(bounds.X + 18, bounds.Y + 42, bounds.Width - 36, bounds.Height - 54), Color.White, 0.42f);
+    }
+
+    private static string ShortenForCgosMessageRow(string text)
+    {
+        const int maxLength = 92;
+        var trimmed = text.Trim();
+        return trimmed.Length <= maxLength ? trimmed : trimmed[..(maxLength - 3)] + "...";
+    }
+
+    private static string FormatCgosEngineCommand(GtpEngineProfile profile)
     {
         var executable = string.IsNullOrWhiteSpace(profile.ExecutablePath)
             ? "-"
-            : Path.GetFileName(profile.ExecutablePath.Trim());
+            : profile.ExecutablePath.Trim();
         if (string.IsNullOrWhiteSpace(profile.Arguments))
         {
-            return $"{profile.DisplayName} / {executable}";
+            return executable;
         }
 
-        return $"{profile.DisplayName} / {executable} {profile.Arguments.Trim()}";
+        return $"{executable} {profile.Arguments.Trim()}";
     }
 
     private void DrawCgosConnectionEditPanel(GoAppSession session, Point mousePoint)
@@ -1752,6 +1805,13 @@ public sealed class GoScreenRenderer
     private static Rectangle CgosConnectionStartStatusBounds => new(936, 350, 500, 426);
 
     private static Rectangle CgosConnectionOutputBounds => new(482, 800, 620, 108);
+
+    private static Rectangle CgosConnectionOutputLineBounds(int index) =>
+        new(CgosConnectionOutputBounds.X + 16, CgosConnectionOutputBounds.Y + 10 + index * 23, CgosConnectionOutputBounds.Width - 32, 21);
+
+    private static Rectangle CgosConnectionEngineTooltipBounds => new(500, 594, 1040, 100);
+
+    private static Rectangle CgosConnectionMessageTooltipBounds => new(500, 674, 1040, 106);
 
     private static Rectangle CgosConnectionEditPanelBounds => new(430, 126, 1060, 820);
 
