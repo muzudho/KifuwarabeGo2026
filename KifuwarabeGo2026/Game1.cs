@@ -227,9 +227,28 @@ public class Game1 : Game
                     return;
                 }
 
+                if (_session.CgosConnectionFlowKind == CgosConnectionFlowKind.ConnectionStart)
+                {
+                    if (GoScreenRenderer.GetCgosConnectionStartBackButtonHit(point))
+                    {
+                        _session.ReturnToCgosConnectionProfiles();
+                    }
+                    else if (GoScreenRenderer.GetCgosConnectionBeginButtonHit(point))
+                    {
+                        _session.RequestCgosConnectionStart();
+                    }
+
+                    _previousMouse = mouse;
+                    return;
+                }
+
                 if (GoScreenRenderer.GetCgosBackButtonHit(point))
                 {
                     _session.ReturnToUseSelection();
+                }
+                else if (GoScreenRenderer.GetCgosConnectButtonHit(point, _session.CgosConnectionProfiles.Count > 0))
+                {
+                    _session.OpenCgosConnectionStartScreen();
                 }
                 else if (GoScreenRenderer.GetCgosAddButtonHit(point))
                 {

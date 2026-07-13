@@ -46,6 +46,10 @@ public sealed class GoAppSession
 
     public IReadOnlyList<CgosConnectionProfile> CgosConnectionProfiles => _cgosConnectionProfiles;
 
+    public CgosConnectionFlowKind CgosConnectionFlowKind { get; private set; }
+
+    public string CgosConnectionStatusMessage { get; private set; } = "READY";
+
     public int SelectedCgosConnectionProfileIndex { get; private set; }
 
     public CgosConnectionProfile SelectedCgosConnectionProfile => _cgosConnectionProfiles[SelectedCgosConnectionProfileIndex];
@@ -218,6 +222,9 @@ public sealed class GoAppSession
     public void ReturnToUseSelection()
     {
         UseKind = null;
+        CgosConnectionFlowKind = CgosConnectionFlowKind.ProfileSelection;
+        CgosConnectionStatusMessage = "READY";
+        CloseCgosConnectionEditPanel();
     }
 
     public void SelectCgosConnectionProfile(int index)
@@ -229,6 +236,35 @@ public sealed class GoAppSession
 
         SelectedCgosConnectionProfileIndex = index;
         CgosConnectionSelectionPageIndex = index / CgosConnectionSelectionPageSize;
+        CgosConnectionStatusMessage = "READY";
+    }
+
+    public void OpenCgosConnectionStartScreen()
+    {
+        if (_cgosConnectionProfiles.Count == 0)
+        {
+            return;
+        }
+
+        CloseCgosConnectionEditPanel();
+        CgosConnectionFlowKind = CgosConnectionFlowKind.ConnectionStart;
+        CgosConnectionStatusMessage = "READY";
+    }
+
+    public void ReturnToCgosConnectionProfiles()
+    {
+        CgosConnectionFlowKind = CgosConnectionFlowKind.ProfileSelection;
+        CgosConnectionStatusMessage = "READY";
+    }
+
+    public void RequestCgosConnectionStart()
+    {
+        if (CgosConnectionFlowKind != CgosConnectionFlowKind.ConnectionStart)
+        {
+            return;
+        }
+
+        CgosConnectionStatusMessage = "CONNECT REQUESTED";
     }
 
     public void SetCgosConnectionProfiles(IEnumerable<CgosConnectionProfile> profiles)

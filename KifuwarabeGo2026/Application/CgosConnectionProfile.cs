@@ -15,3 +15,9 @@ public enum CgosConnectionProfileEditField
     Role,
     Note,
 }
+
+public enum CgosConnectionFlowKind
+{
+    ProfileSelection,
+    ConnectionStart,
+}
