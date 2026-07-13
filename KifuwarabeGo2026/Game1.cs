@@ -548,7 +548,7 @@ public class Game1 : Game
         if (_cgosConnectionProcess.IsRunning)
         {
             _cgosConnectionProcess.Stop();
-            _session.SetCgosConnectionProcessStatus("STOPPED", false, _cgosConnectionProcess.LogDirectory);
+            _session.SetCgosConnectionProcessStatus("STOPPED", false, _cgosConnectionProcess.LogDirectory, _cgosConnectionProcess.GetRecentOutput());
             return;
         }
 
@@ -556,11 +556,11 @@ public class Game1 : Game
         try
         {
             var status = _cgosConnectionProcess.Start(_session.SelectedCgosConnectionProfile);
-            _session.SetCgosConnectionProcessStatus(status, _cgosConnectionProcess.IsRunning, _cgosConnectionProcess.LogDirectory);
+            _session.SetCgosConnectionProcessStatus(status, _cgosConnectionProcess.IsRunning, _cgosConnectionProcess.LogDirectory, _cgosConnectionProcess.GetRecentOutput());
         }
         catch (Exception ex) when (ex is InvalidOperationException or IOException or System.ComponentModel.Win32Exception)
         {
-            _session.SetCgosConnectionProcessStatus("ERROR: " + ex.Message, false, _cgosConnectionProcess.LogDirectory);
+            _session.SetCgosConnectionProcessStatus("ERROR: " + ex.Message, false, _cgosConnectionProcess.LogDirectory, _cgosConnectionProcess.GetRecentOutput());
         }
     }
 
@@ -572,7 +572,7 @@ public class Game1 : Game
         }
 
         var status = _cgosConnectionProcess.RefreshStatus();
-        _session.SetCgosConnectionProcessStatus(status, _cgosConnectionProcess.IsRunning, _cgosConnectionProcess.LogDirectory);
+        _session.SetCgosConnectionProcessStatus(status, _cgosConnectionProcess.IsRunning, _cgosConnectionProcess.LogDirectory, _cgosConnectionProcess.GetRecentOutput());
     }
 
     private bool TryInputCgosConnectionEditCharacter(char character)

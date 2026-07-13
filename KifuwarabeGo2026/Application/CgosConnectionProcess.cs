@@ -1,11 +1,15 @@
 namespace KifuwarabeGo2026.Application;
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 
 public sealed class CgosConnectionProcess : IDisposable
 {
+    private readonly object _outputLock = new();
+    private readonly Queue<string> _recentOutput = new();
     private Process? _process;
 
     public bool IsRunning => _process is { HasExited: false };
@@ -13,6 +17,25 @@ public sealed class CgosConnectionProcess : IDisposable
     public int? ExitCode => _process is { HasExited: true } process ? process.ExitCode : null;
 
     public string LogDirectory { get; private set; } = "";
+
+    public string LatestOutput
+    {
+        get
+        {
+            lock (_outputLock)
+            {
+                return _recentOutput.LastOrDefault() ?? "";
+            }
+        }
+    }
+
+    public IReadOnlyList<string> GetRecentOutput()
+    {
+        lock (_outputLock)
+        {
+            return _recentOutput.ToArray();
+        }
+    }
 
     public string Start(CgosConnectionProfile profile)
     {
@@ -22,6 +45,7 @@ public sealed class CgosConnectionProcess : IDisposable
         }
 
         DisposeProcess();
+        ClearOutput();
 
         var repositoryRoot = FindRepositoryRoot();
         var projectPath = Path.Combine(repositoryRoot, "KifuwarabeGo2026.Communication.Cgos", "KifuwarabeGo2026.Communication.Cgos.csproj");
@@ -61,8 +85,8 @@ public sealed class CgosConnectionProcess : IDisposable
             StartInfo = startInfo,
             EnableRaisingEvents = true,
         };
-        _process.OutputDataReceived += (_, _) => { };
-        _process.ErrorDataReceived += (_, _) => { };
+        _process.OutputDataReceived += (_, e) => AddOutput(e.Data);
+        _process.ErrorDataReceived += (_, e) => AddOutput(e.Data);
 
         if (!_process.Start())
         {
@@ -72,6 +96,7 @@ public sealed class CgosConnectionProcess : IDisposable
 
         _process.BeginOutputReadLine();
         _process.BeginErrorReadLine();
+        AddOutput($"Started CGOS communication process. pid={_process.Id}");
         return "RUNNING";
     }
 
@@ -124,6 +149,31 @@ public sealed class CgosConnectionProcess : IDisposable
     {
         _process?.Dispose();
         _process = null;
+    }
+
+    private void ClearOutput()
+    {
+        lock (_outputLock)
+        {
+            _recentOutput.Clear();
+        }
+    }
+
+    private void AddOutput(string? line)
+    {
+        if (string.IsNullOrWhiteSpace(line))
+        {
+            return;
+        }
+
+        lock (_outputLock)
+        {
+            _recentOutput.Enqueue(line.Trim());
+            while (_recentOutput.Count > 4)
+            {
+                _recentOutput.Dequeue();
+            }
+        }
     }
 
     private static string FindRepositoryRoot()
