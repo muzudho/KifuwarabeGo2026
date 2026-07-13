@@ -37,7 +37,7 @@ public sealed class CgosConnectionProcess : IDisposable
         }
     }
 
-    public string Start(CgosConnectionProfile profile)
+    public string Start(CgosConnectionProfile profile, CgosConnectionAccountKind accountKind)
     {
         if (IsRunning)
         {
@@ -75,8 +75,15 @@ public sealed class CgosConnectionProcess : IDisposable
         startInfo.ArgumentList.Add(profile.Host);
         startInfo.ArgumentList.Add("--port");
         startInfo.ArgumentList.Add(profile.Port.ToString());
-        startInfo.ArgumentList.Add("--account");
-        startInfo.ArgumentList.Add("black");
+        if (accountKind == CgosConnectionAccountKind.Both)
+        {
+            startInfo.ArgumentList.Add("--both");
+        }
+        else
+        {
+            startInfo.ArgumentList.Add("--account");
+            startInfo.ArgumentList.Add(accountKind == CgosConnectionAccountKind.White ? "white" : "black");
+        }
         startInfo.ArgumentList.Add("--log-directory");
         startInfo.ArgumentList.Add(LogDirectory);
 

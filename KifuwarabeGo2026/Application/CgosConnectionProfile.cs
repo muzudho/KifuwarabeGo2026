@@ -21,3 +21,10 @@ public enum CgosConnectionFlowKind
     ProfileSelection,
     ConnectionStart,
 }
+
+public enum CgosConnectionAccountKind
+{
+    Black,
+    White,
+    Both,
+}

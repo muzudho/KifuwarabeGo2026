@@ -235,6 +235,10 @@ public class Game1 : Game
                     {
                         _session.ReturnToCgosConnectionProfiles();
                     }
+                    else if (GoScreenRenderer.GetCgosConnectionAccountButtonHit(point) is { } accountKind)
+                    {
+                        _session.SelectCgosConnectionAccountKind(accountKind);
+                    }
                     else if (GoScreenRenderer.GetCgosConnectionBeginButtonHit(point))
                     {
                         ToggleCgosConnectionProcess();
@@ -555,7 +559,7 @@ public class Game1 : Game
         _session.RequestCgosConnectionStart();
         try
         {
-            var status = _cgosConnectionProcess.Start(_session.SelectedCgosConnectionProfile);
+            var status = _cgosConnectionProcess.Start(_session.SelectedCgosConnectionProfile, _session.CgosConnectionAccountKind);
             _session.SetCgosConnectionProcessStatus(status, _cgosConnectionProcess.IsRunning, _cgosConnectionProcess.LogDirectory, _cgosConnectionProcess.GetRecentOutput());
         }
         catch (Exception ex) when (ex is InvalidOperationException or IOException or System.ComponentModel.Win32Exception)

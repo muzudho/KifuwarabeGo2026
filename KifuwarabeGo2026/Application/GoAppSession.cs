@@ -54,6 +54,8 @@ public sealed class GoAppSession
 
     public IReadOnlyList<string> CgosConnectionRecentOutput { get; private set; } = Array.Empty<string>();
 
+    public CgosConnectionAccountKind CgosConnectionAccountKind { get; private set; } = CgosConnectionAccountKind.Black;
+
     public bool IsCgosConnectionRunning { get; private set; }
 
     public int SelectedCgosConnectionProfileIndex { get; private set; }
@@ -274,6 +276,17 @@ public sealed class GoAppSession
         }
 
         CgosConnectionStatusMessage = "CONNECT REQUESTED";
+    }
+
+    public void SelectCgosConnectionAccountKind(CgosConnectionAccountKind accountKind)
+    {
+        if (IsCgosConnectionRunning)
+        {
+            return;
+        }
+
+        CgosConnectionAccountKind = accountKind;
+        CgosConnectionStatusMessage = "READY";
     }
 
     public void SetCgosConnectionProcessStatus(string statusMessage, bool isRunning, string logDirectory, IReadOnlyList<string> recentOutput)
