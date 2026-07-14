@@ -8,18 +8,25 @@ using System.Linq;
 
 public sealed class CgosConnectionProcess : IDisposable
 {
+    private readonly string _logFolderName;
     private readonly object _outputLock = new();
     private readonly Queue<string> _recentOutput = new();
     private readonly HashSet<string> _seenLogLines = new(StringComparer.Ordinal);
     private readonly List<Process> _processes = new();
     private DateTime _startedAt;
     private readonly HashSet<string> _activeCgosLogPaths = new(StringComparer.Ordinal);
+    private string _guiLogPath = "";
     private string _standardErrorLogPath = "";
     private string _status = "READY";
 
     public bool IsRunning => _processes.Any(process => !process.HasExited);
 
     public string LogDirectory { get; private set; } = "";
+
+    public CgosConnectionProcess(string logFolderName = "")
+    {
+        _logFolderName = logFolderName.Trim();
+    }
 
     public string LatestOutput
     {
@@ -56,6 +63,7 @@ public sealed class CgosConnectionProcess : IDisposable
         ClearOutput();
         _seenLogLines.Clear();
         _activeCgosLogPaths.Clear();
+        _guiLogPath = "";
         _standardErrorLogPath = "";
         _startedAt = DateTime.Now;
         _status = "STARTING";
@@ -74,6 +82,7 @@ public sealed class CgosConnectionProcess : IDisposable
                 : "Players";
         LogDirectory = Path.Combine(repositoryRoot, "Logs", "Cgos", runLabel);
         Directory.CreateDirectory(LogDirectory);
+        _guiLogPath = Path.Combine(LogDirectory, $"gui-{runLabel.ToLowerInvariant()}-{_startedAt:yyyyMMdd-HHmmss}.log");
         _standardErrorLogPath = Path.Combine(LogDirectory, $"standard-error-{runLabel.ToLowerInvariant()}-{_startedAt:yyyyMMdd-HHmmss}.log");
 
         try
@@ -109,6 +118,7 @@ public sealed class CgosConnectionProcess : IDisposable
         ClearOutput();
         _seenLogLines.Clear();
         _activeCgosLogPaths.Clear();
+        _guiLogPath = "";
         _standardErrorLogPath = "";
         _startedAt = DateTime.Now;
         _status = "ADMIN STARTING";
@@ -122,6 +132,7 @@ public sealed class CgosConnectionProcess : IDisposable
 
         LogDirectory = Path.Combine(repositoryRoot, "Logs", "Cgos", "Admin");
         Directory.CreateDirectory(LogDirectory);
+        _guiLogPath = Path.Combine(LogDirectory, $"gui-admin-{_startedAt:yyyyMMdd-HHmmss}.log");
         _standardErrorLogPath = Path.Combine(LogDirectory, $"standard-error-admin-{_startedAt:yyyyMMdd-HHmmss}.log");
 
         var startInfo = new ProcessStartInfo
@@ -290,8 +301,13 @@ public sealed class CgosConnectionProcess : IDisposable
     {
         PollCgosLogFiles();
 
-        var defaultLogDirectory = Path.Combine(FindRepositoryRoot(), "Logs", "Cgos");
-        var logDirectory = string.IsNullOrWhiteSpace(LogDirectory) ? defaultLogDirectory : LogDirectory;
+        var defaultLogDirectory = GetDefaultLogDirectory();
+        if (string.IsNullOrWhiteSpace(LogDirectory))
+        {
+            LogDirectory = defaultLogDirectory;
+        }
+
+        var logDirectory = LogDirectory;
         Directory.CreateDirectory(logDirectory);
 
         var targetPath = openStandardError
@@ -317,7 +333,9 @@ public sealed class CgosConnectionProcess : IDisposable
 
         if (string.IsNullOrWhiteSpace(targetPath))
         {
-            targetPath = logDirectory;
+            targetPath = !openStandardError && !string.IsNullOrWhiteSpace(_guiLogPath)
+                ? EnsureGuiLogFile()
+                : logDirectory;
         }
 
         var opensFile = File.Exists(targetPath);
@@ -510,11 +528,43 @@ public sealed class CgosConnectionProcess : IDisposable
                 AppendStandardErrorLog(displayLine);
             }
 
+            AppendGuiLog(displayLine);
             _recentOutput.Enqueue(displayLine);
             while (_recentOutput.Count > 8)
             {
                 _recentOutput.Dequeue();
             }
+        }
+    }
+
+    private string EnsureGuiLogFile()
+    {
+        if (string.IsNullOrWhiteSpace(_guiLogPath))
+        {
+            Directory.CreateDirectory(LogDirectory);
+            var label = string.IsNullOrWhiteSpace(_logFolderName) ? "cgos" : _logFolderName.ToLowerInvariant();
+            _guiLogPath = Path.Combine(LogDirectory, $"gui-{label}-{DateTime.Now:yyyyMMdd-HHmmss}.log");
+        }
+
+        AppendGuiLog("# Log file opened before a CGOS communication log was available.");
+        return _guiLogPath;
+    }
+
+    private void AppendGuiLog(string displayLine)
+    {
+        if (string.IsNullOrWhiteSpace(_guiLogPath))
+        {
+            return;
+        }
+
+        try
+        {
+            File.AppendAllText(
+                _guiLogPath,
+                $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} {displayLine}{Environment.NewLine}");
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
         }
     }
 
@@ -719,6 +769,14 @@ public sealed class CgosConnectionProcess : IDisposable
         }
 
         return Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
+    }
+
+    private string GetDefaultLogDirectory()
+    {
+        var baseDirectory = Path.Combine(FindRepositoryRoot(), "Logs", "Cgos");
+        return string.IsNullOrWhiteSpace(_logFolderName)
+            ? baseDirectory
+            : Path.Combine(baseDirectory, _logFolderName);
     }
 
     private static string GetCgosCommunicationExecutablePath(string repositoryRoot)

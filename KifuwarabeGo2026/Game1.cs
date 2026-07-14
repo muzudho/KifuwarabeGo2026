@@ -23,9 +23,9 @@ public class Game1 : Game
     private readonly CgosConnectionCatalog _cgosConnectionCatalog;
     private readonly TournamentRulesSetting _tournamentRulesSetting;
     private readonly PlayingScene _playingScene;
-    private readonly CgosConnectionProcess _cgosBlackConnectionProcess = new();
-    private readonly CgosConnectionProcess _cgosWhiteConnectionProcess = new();
-    private readonly CgosConnectionProcess _cgosAdminProcess = new();
+    private readonly CgosConnectionProcess _cgosBlackConnectionProcess = new("BlackPlayer");
+    private readonly CgosConnectionProcess _cgosWhiteConnectionProcess = new("WhitePlayer");
+    private readonly CgosConnectionProcess _cgosAdminProcess = new("Admin");
     private GoScreenRenderer? _renderer;
     private SoundEffect? _placeStoneSound;
     private SoundEffectInstance? _placeStoneSoundInstance;

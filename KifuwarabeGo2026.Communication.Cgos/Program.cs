@@ -284,7 +284,17 @@ internal sealed class CgosAdminClient
             var inputTask = RelayAdminInputAsync(cgosWriter, cancellationToken);
             while (!cancellationToken.IsCancellationRequested)
             {
-                var line = await reader.ReadLineAsync(cancellationToken);
+                string? line;
+                try
+                {
+                    line = await reader.ReadLineAsync(cancellationToken);
+                }
+                catch (IOException ex)
+                {
+                    Log("# CGOS connection read failed: " + ex.Message);
+                    return;
+                }
+
                 if (line is null)
                 {
                     Log("# CGOS connection closed.");
@@ -438,7 +448,17 @@ internal sealed class CgosClient
 
             while (!cancellationToken.IsCancellationRequested)
             {
-                var line = await reader.ReadLineAsync(cancellationToken);
+                string? line;
+                try
+                {
+                    line = await reader.ReadLineAsync(cancellationToken);
+                }
+                catch (IOException ex)
+                {
+                    Log("# CGOS connection read failed: " + ex.Message);
+                    return;
+                }
+
                 if (line is null)
                 {
                     Log("# CGOS connection closed.");
