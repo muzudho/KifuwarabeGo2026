@@ -80,7 +80,7 @@ public sealed class GoAppSession
 
     public int? SelectedCgosBlackGtpEngineIndex { get; private set; } = 0;
 
-    public int? SelectedCgosWhiteGtpEngineIndex { get; private set; }
+    public int? SelectedCgosWhiteGtpEngineIndex { get; private set; } = 0;
 
     public GtpEngineProfile? SelectedCgosBlackGtpEngineProfile => GetCgosGtpEngineProfile(SelectedCgosBlackGtpEngineIndex);
 
@@ -1026,7 +1026,7 @@ public sealed class GoAppSession
         SelectedBlackGtpEngineIndex = 0;
         SelectedWhiteGtpEngineIndex = 0;
         SelectedCgosBlackGtpEngineIndex = 0;
-        SelectedCgosWhiteGtpEngineIndex = null;
+        SelectedCgosWhiteGtpEngineIndex = 0;
     }
 
     private GtpEngineProfile? GetCgosGtpEngineProfile(int? index) =>

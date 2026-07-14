@@ -67,9 +67,14 @@ public sealed class CgosConnectionProcess : IDisposable
             throw new FileNotFoundException("CGOS communication executable was not found. Build the solution first.", executablePath);
         }
 
-        LogDirectory = Path.Combine(repositoryRoot, "Logs", "Cgos");
+        var runLabel = blackEngineProfile is not null && whiteEngineProfile is null
+            ? "BlackPlayer"
+            : whiteEngineProfile is not null && blackEngineProfile is null
+                ? "WhitePlayer"
+                : "Players";
+        LogDirectory = Path.Combine(repositoryRoot, "Logs", "Cgos", runLabel);
         Directory.CreateDirectory(LogDirectory);
-        _standardErrorLogPath = Path.Combine(LogDirectory, $"standard-error-{_startedAt:yyyyMMdd-HHmmss}.log");
+        _standardErrorLogPath = Path.Combine(LogDirectory, $"standard-error-{runLabel.ToLowerInvariant()}-{_startedAt:yyyyMMdd-HHmmss}.log");
 
         try
         {
@@ -115,7 +120,7 @@ public sealed class CgosConnectionProcess : IDisposable
             throw new FileNotFoundException("CGOS communication executable was not found. Build the solution first.", executablePath);
         }
 
-        LogDirectory = Path.Combine(repositoryRoot, "Logs", "Cgos");
+        LogDirectory = Path.Combine(repositoryRoot, "Logs", "Cgos", "Admin");
         Directory.CreateDirectory(LogDirectory);
         _standardErrorLogPath = Path.Combine(LogDirectory, $"standard-error-admin-{_startedAt:yyyyMMdd-HHmmss}.log");
 
