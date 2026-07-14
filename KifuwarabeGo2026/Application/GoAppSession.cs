@@ -54,6 +54,14 @@ public sealed class GoAppSession
 
     public IReadOnlyList<string> CgosConnectionRecentOutput { get; private set; } = Array.Empty<string>();
 
+    public string CgosAdminStatusMessage { get; private set; } = "ADMIN READY";
+
+    public string CgosAdminLogDirectory { get; private set; } = "";
+
+    public IReadOnlyList<string> CgosAdminRecentOutput { get; private set; } = Array.Empty<string>();
+
+    public bool IsCgosAdminRunning { get; private set; }
+
     public int? SelectedCgosBlackGtpEngineIndex { get; private set; } = 0;
 
     public int? SelectedCgosWhiteGtpEngineIndex { get; private set; }
@@ -243,6 +251,10 @@ public sealed class GoAppSession
         CgosConnectionLogDirectory = "";
         CgosConnectionRecentOutput = Array.Empty<string>();
         IsCgosConnectionRunning = false;
+        CgosAdminStatusMessage = "ADMIN READY";
+        CgosAdminLogDirectory = "";
+        CgosAdminRecentOutput = Array.Empty<string>();
+        IsCgosAdminRunning = false;
         CloseCgosConnectionEditPanel();
     }
 
@@ -332,6 +344,14 @@ public sealed class GoAppSession
         IsCgosConnectionRunning = isRunning;
         CgosConnectionLogDirectory = logDirectory;
         CgosConnectionRecentOutput = recentOutput;
+    }
+
+    public void SetCgosAdminProcessStatus(string statusMessage, bool isRunning, string logDirectory, IReadOnlyList<string> recentOutput)
+    {
+        CgosAdminStatusMessage = statusMessage;
+        IsCgosAdminRunning = isRunning;
+        CgosAdminLogDirectory = logDirectory;
+        CgosAdminRecentOutput = recentOutput;
     }
 
     public void SetCgosConnectionProfiles(IEnumerable<CgosConnectionProfile> profiles)

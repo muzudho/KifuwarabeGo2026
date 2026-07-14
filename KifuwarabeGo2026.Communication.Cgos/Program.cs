@@ -35,6 +35,19 @@ internal static class Program
 
         Directory.CreateDirectory(options.LogDirectory);
 
+        using var cancellation = new CancellationTokenSource();
+        Console.CancelKeyPress += (_, e) =>
+        {
+            e.Cancel = true;
+            cancellation.Cancel();
+        };
+
+        if (options.AdminMode)
+        {
+            await new CgosAdminClient(options).RunAsync(cancellation.Token);
+            return 0;
+        }
+
         var accounts = options.Accounts.ToArray();
         if (accounts.Length == 0)
         {
@@ -42,12 +55,6 @@ internal static class Program
             return 2;
         }
 
-        using var cancellation = new CancellationTokenSource();
-        Console.CancelKeyPress += (_, e) =>
-        {
-            e.Cancel = true;
-            cancellation.Cancel();
-        };
         _ = WatchStandardInputAsync(cancellation);
 
         var tasks = accounts
@@ -133,6 +140,8 @@ internal sealed class CgosClientOptions
 
     public bool ShowHelp { get; private set; }
 
+    public bool AdminMode { get; private set; }
+
     public IReadOnlyList<CgosAccount> Accounts => _accounts;
 
     public static CgosClientOptions Parse(string[] args)
@@ -166,6 +175,9 @@ internal sealed class CgosClientOptions
                     break;
                 case "--log-directory":
                     options.LogDirectory = ReadValue(args, ref index, arg);
+                    break;
+                case "--admin":
+                    options.AdminMode = true;
                     break;
                 case "--account":
                     selectedAccounts.Add(ReadValue(args, ref index, arg));
@@ -206,6 +218,7 @@ internal sealed class CgosClientOptions
         writer.WriteLine("  --port PORT                CGOS port. Default: 6809");
         writer.WriteLine("  --engine-command COMMAND   GTP engine command line.");
         writer.WriteLine("  --log-directory DIR        Log directory. Default: Logs\\Cgos");
+        writer.WriteLine("  --admin                    Login without a GTP engine and relay admin commands from stdin.");
         writer.WriteLine("  -h, --help                 Show help.");
     }
 
@@ -228,6 +241,157 @@ internal sealed class CgosClientOptions
             "white" or "w" => new CgosAccount("white", "KifuwarabeW", "KifuwarabeW"),
             _ => throw new ArgumentException("--account must be black or white."),
         };
+    }
+}
+
+internal sealed class CgosAdminClient
+{
+    private readonly CgosClientOptions _options;
+    private readonly CgosAccount _account;
+    private readonly object _logLock = new();
+    private readonly string _logPath;
+
+    public CgosAdminClient(CgosClientOptions options)
+    {
+        _options = options;
+        _account = options.Accounts.FirstOrDefault() ?? new CgosAccount("admin", "KifuwarabeB", "KifuwarabeB");
+        _logPath = Path.Combine(options.LogDirectory, $"cgos-admin-{DateTime.Now:yyyyMMdd-HHmmss}.log");
+    }
+
+    public async Task RunAsync(CancellationToken cancellationToken)
+    {
+        StreamWriter? writer = null;
+        try
+        {
+            Log($"# Connecting to {_options.Host}:{_options.Port} as {_account.UserName} for admin.");
+
+            using var tcp = new TcpClient();
+            try
+            {
+                await tcp.ConnectAsync(_options.Host, _options.Port, cancellationToken).AsTask().WaitAsync(TimeSpan.FromSeconds(15), cancellationToken);
+            }
+            catch (TimeoutException ex)
+            {
+                Log($"# Could not connect to {_options.Host}:{_options.Port} within 15 seconds.");
+                throw new InvalidOperationException($"Could not connect to {_options.Host}:{_options.Port} within 15 seconds.", ex);
+            }
+
+            await using var stream = tcp.GetStream();
+            using var reader = new StreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: false, leaveOpen: true);
+            await using var cgosWriter = new StreamWriter(stream, new UTF8Encoding(false), leaveOpen: true) { NewLine = "\n", AutoFlush = true };
+            writer = cgosWriter;
+
+            var inputTask = RelayAdminInputAsync(cgosWriter, cancellationToken);
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                var line = await reader.ReadLineAsync(cancellationToken);
+                if (line is null)
+                {
+                    Log("# CGOS connection closed.");
+                    return;
+                }
+
+                line = line.Trim();
+                if (line.Length == 0)
+                {
+                    continue;
+                }
+
+                Log("> " + line);
+                if (line.StartsWith("Error:", StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new InvalidOperationException("CGOS error: " + line);
+                }
+
+                await HandleServerLineAsync(line, cgosWriter);
+            }
+
+            await inputTask;
+        }
+        finally
+        {
+            if (writer is not null)
+            {
+                try
+                {
+                    await SendAsync(writer, "quit");
+                }
+                catch (Exception ex)
+                {
+                    Log("# Could not send CGOS quit: " + ex.Message);
+                }
+            }
+        }
+    }
+
+    private async Task HandleServerLineAsync(string line, StreamWriter writer)
+    {
+        var parts = line.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var command = parts[0].ToLowerInvariant();
+        switch (command)
+        {
+            case "protocol":
+                await SendAsync(writer, CgosClient.GetClientId(parts.Length == 2 && parts[1].Contains("genmove_analyze", StringComparison.OrdinalIgnoreCase)));
+                return;
+            case "username":
+                await SendAsync(writer, _account.UserName);
+                return;
+            case "password":
+                await SendAsync(writer, _account.Password, maskInLog: true);
+                Log("# Admin command input is ready.");
+                return;
+        }
+    }
+
+    private async Task RelayAdminInputAsync(StreamWriter writer, CancellationToken cancellationToken)
+    {
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            var line = await Console.In.ReadLineAsync(cancellationToken);
+            if (line is null)
+            {
+                return;
+            }
+
+            line = line.Trim();
+            if (line.Length == 0)
+            {
+                continue;
+            }
+
+            if (line.Equals("quit", StringComparison.OrdinalIgnoreCase) ||
+                line.Equals("exit", StringComparison.OrdinalIgnoreCase) ||
+                line.Equals("cancel", StringComparison.OrdinalIgnoreCase))
+            {
+                await SendAsync(writer, "quit");
+                return;
+            }
+
+            if (!line.Equals("who", StringComparison.OrdinalIgnoreCase) &&
+                !line.Equals("match", StringComparison.OrdinalIgnoreCase))
+            {
+                Log("# Unsupported admin command ignored: " + line);
+                continue;
+            }
+
+            await SendAsync(writer, line.ToLowerInvariant());
+        }
+    }
+
+    private async Task SendAsync(StreamWriter writer, string message, bool maskInLog = false)
+    {
+        await writer.WriteLineAsync(message);
+        Log("< " + (maskInLog ? "(password)" : message));
+    }
+
+    private void Log(string message)
+    {
+        var line = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} [admin] {message}";
+        Console.WriteLine(line);
+        lock (_logLock)
+        {
+            File.AppendAllText(_logPath, line + Environment.NewLine, Encoding.UTF8);
+        }
     }
 }
 
@@ -445,7 +609,7 @@ internal sealed class CgosClient
         }
     }
 
-    private static string GetClientId(bool serverSupportsAnalyze)
+    public static string GetClientId(bool serverSupportsAnalyze)
     {
         var version = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "0.0.0";
         return $"{ClientIdPrefix} {version}";

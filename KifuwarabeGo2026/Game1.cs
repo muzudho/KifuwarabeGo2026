@@ -24,6 +24,7 @@ public class Game1 : Game
     private readonly TournamentRulesSetting _tournamentRulesSetting;
     private readonly PlayingScene _playingScene;
     private readonly CgosConnectionProcess _cgosConnectionProcess = new();
+    private readonly CgosConnectionProcess _cgosAdminProcess = new();
     private GoScreenRenderer? _renderer;
     private SoundEffect? _placeStoneSound;
     private SoundEffectInstance? _placeStoneSoundInstance;
@@ -77,6 +78,7 @@ public class Game1 : Game
             if (_session.UseKind == GoAppUseKind.CgosClient)
             {
                 UpdateCgosConnectionProcessStatus();
+                UpdateCgosAdminProcessStatus();
                 UpdateCgosConnectionEditPanelByKeyboard(keyboard, gameTime);
             }
 
@@ -279,6 +281,22 @@ public class Game1 : Game
                 else if (GoScreenRenderer.GetCgosConnectButtonHit(point, _session.CgosConnectionProfiles.Count > 0))
                 {
                     _session.OpenCgosConnectionStartScreen();
+                }
+                else if (GoScreenRenderer.GetCgosAdminButtonHit(point, _session.CgosConnectionProfiles.Count > 0))
+                {
+                    ToggleCgosAdminProcess();
+                }
+                else if (GoScreenRenderer.GetCgosAdminWhoButtonHit(point, _session.IsCgosAdminRunning))
+                {
+                    SendCgosAdminCommand("who");
+                }
+                else if (GoScreenRenderer.GetCgosAdminMatchButtonHit(point, _session.IsCgosAdminRunning))
+                {
+                    SendCgosAdminCommand("match");
+                }
+                else if (GoScreenRenderer.GetCgosAdminCodeButtonHit(point))
+                {
+                    OpenCgosAdminLog();
                 }
                 else if (GoScreenRenderer.GetCgosAddButtonHit(point))
                 {
@@ -616,6 +634,58 @@ public class Game1 : Game
         catch (Exception ex) when (ex is InvalidOperationException or IOException or System.ComponentModel.Win32Exception)
         {
             _session.SetCgosConnectionProcessStatus("ERROR: " + ex.Message, _cgosConnectionProcess.IsRunning, _cgosConnectionProcess.LogDirectory, _cgosConnectionProcess.GetRecentOutput());
+        }
+    }
+
+    private void ToggleCgosAdminProcess()
+    {
+        if (_cgosAdminProcess.IsRunning)
+        {
+            _cgosAdminProcess.Stop();
+            _session.SetCgosAdminProcessStatus("ADMIN STOPPED", false, _cgosAdminProcess.LogDirectory, _cgosAdminProcess.GetRecentOutput());
+            return;
+        }
+
+        try
+        {
+            var status = _cgosAdminProcess.StartAdmin(_session.SelectedCgosConnectionProfile);
+            _session.SetCgosAdminProcessStatus(status, _cgosAdminProcess.IsRunning, _cgosAdminProcess.LogDirectory, _cgosAdminProcess.GetRecentOutput());
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or IOException or System.ComponentModel.Win32Exception)
+        {
+            _session.SetCgosAdminProcessStatus("ERROR: " + ex.Message, false, _cgosAdminProcess.LogDirectory, _cgosAdminProcess.GetRecentOutput());
+        }
+    }
+
+    private void UpdateCgosAdminProcessStatus()
+    {
+        var status = _cgosAdminProcess.RefreshStatus();
+        _session.SetCgosAdminProcessStatus(status, _cgosAdminProcess.IsRunning, _cgosAdminProcess.LogDirectory, _cgosAdminProcess.GetRecentOutput());
+    }
+
+    private void SendCgosAdminCommand(string command)
+    {
+        try
+        {
+            var status = _cgosAdminProcess.SendCommand(command);
+            _session.SetCgosAdminProcessStatus(status, _cgosAdminProcess.IsRunning, _cgosAdminProcess.LogDirectory, _cgosAdminProcess.GetRecentOutput());
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or IOException or System.ComponentModel.Win32Exception)
+        {
+            _session.SetCgosAdminProcessStatus("ERROR: " + ex.Message, _cgosAdminProcess.IsRunning, _cgosAdminProcess.LogDirectory, _cgosAdminProcess.GetRecentOutput());
+        }
+    }
+
+    private void OpenCgosAdminLog()
+    {
+        try
+        {
+            var status = _cgosAdminProcess.OpenLog("code", openStandardError: false);
+            _session.SetCgosAdminProcessStatus(status, _cgosAdminProcess.IsRunning, _cgosAdminProcess.LogDirectory, _cgosAdminProcess.GetRecentOutput());
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or IOException or System.ComponentModel.Win32Exception)
+        {
+            _session.SetCgosAdminProcessStatus("ERROR: " + ex.Message, _cgosAdminProcess.IsRunning, _cgosAdminProcess.LogDirectory, _cgosAdminProcess.GetRecentOutput());
         }
     }
 
@@ -1230,6 +1300,7 @@ public class Game1 : Game
         {
             Window.TextInput -= OnTextInput;
             _cgosConnectionProcess.Dispose();
+            _cgosAdminProcess.Dispose();
             _playingScene.Dispose();
             _placeStoneSoundInstance?.Dispose();
             _placeStoneSound?.Dispose();

@@ -332,6 +332,18 @@ public sealed class GoScreenRenderer
     public static bool GetCgosConnectButtonHit(Point point, bool enabled) =>
         enabled && CgosConnectButtonBounds.Contains(point);
 
+    public static bool GetCgosAdminButtonHit(Point point, bool enabled) =>
+        enabled && CgosAdminButtonBounds.Contains(point);
+
+    public static bool GetCgosAdminWhoButtonHit(Point point, bool enabled) =>
+        enabled && CgosAdminWhoButtonBounds.Contains(point);
+
+    public static bool GetCgosAdminMatchButtonHit(Point point, bool enabled) =>
+        enabled && CgosAdminMatchButtonBounds.Contains(point);
+
+    public static bool GetCgosAdminCodeButtonHit(Point point) =>
+        CgosAdminCodeButtonBounds.Contains(point);
+
     public static bool GetCgosConnectionStartBackButtonHit(Point point) =>
         CgosConnectionStartBackButtonBounds.Contains(point);
 
@@ -745,9 +757,30 @@ public sealed class GoScreenRenderer
         DrawCommandButton(CgosEditButtonBounds, "EDIT", false, mousePoint, enabled: session.CgosConnectionProfiles.Count > 0, scale: 0.38f);
         DrawCommandButton(CgosDuplicateButtonBounds, "DUPLICATE", false, mousePoint, enabled: session.CgosConnectionProfiles.Count > 0, scale: 0.25f);
         DrawCommandButton(CgosDeleteButtonBounds, "DELETE", false, mousePoint, enabled: session.CanDeleteSelectedCgosConnectionProfile, scale: 0.34f);
-        DrawCommandButton(CgosConnectButtonBounds, "CONNECT", false, mousePoint, enabled: session.CgosConnectionProfiles.Count > 0, scale: 0.42f);
+        DrawCommandButton(CgosConnectButtonBounds, "CONNECT", false, mousePoint, enabled: session.CgosConnectionProfiles.Count > 0, scale: 0.32f);
+        DrawCommandButton(CgosAdminButtonBounds, session.IsCgosAdminRunning ? "STOP ADMIN" : "ADMIN", false, mousePoint, enabled: session.CgosConnectionProfiles.Count > 0, scale: 0.32f);
+        DrawCommandButton(CgosAdminWhoButtonBounds, "WHO", false, mousePoint, enabled: session.IsCgosAdminRunning, scale: 0.28f);
+        DrawCommandButton(CgosAdminMatchButtonBounds, "MATCH", false, mousePoint, enabled: session.IsCgosAdminRunning, scale: 0.24f);
+        DrawCommandButton(CgosAdminCodeButtonBounds, "CODE", false, mousePoint, scale: 0.24f);
         DrawCommandButton(CgosBackButtonBounds, "BACK", false, mousePoint, scale: 0.42f);
+        DrawCgosAdminStatus(session);
         DrawCgosConnectionEditPanel(session, mousePoint);
+    }
+
+    private void DrawCgosAdminStatus(GoAppSession session)
+    {
+        FillRect(CgosAdminStatusBounds, new Color(15, 20, 26));
+        DrawRect(CgosAdminStatusBounds, 1, new Color(67, 84, 92));
+        DrawUiLabel(UiLabel.InCompactRow("ADMIN", CgosAdminStatusBounds));
+        DrawFittedText(session.CgosAdminStatusMessage, new Rectangle(CgosAdminStatusBounds.X + 152, CgosAdminStatusBounds.Y + 7, CgosAdminStatusBounds.Width - 168, 38), Color.White, 0.38f);
+
+        var lines = session.CgosAdminRecentOutput;
+        if (lines.Count == 0)
+        {
+            return;
+        }
+
+        DrawFittedText(ShortenForCgosMessageRow(lines[^1]), new Rectangle(CgosAdminStatusBounds.X + 16, CgosAdminStatusBounds.Y + 48, CgosAdminStatusBounds.Width - 32, 24), new Color(204, 211, 206), 0.28f);
     }
 
     private void DrawCgosConnectionStartPanel(GoAppSession session, Point mousePoint)
@@ -1813,7 +1846,15 @@ public sealed class GoScreenRenderer
 
     private static Rectangle CgosBackButtonBounds => new(1348, 204, 110, 48);
 
-    private static Rectangle CgosConnectButtonBounds => new(1224, 278, 212, 54);
+    private static Rectangle CgosAdminButtonBounds => new(936, 278, 130, 54);
+
+    private static Rectangle CgosAdminWhoButtonBounds => new(1076, 278, 72, 54);
+
+    private static Rectangle CgosAdminMatchButtonBounds => new(1158, 278, 92, 54);
+
+    private static Rectangle CgosAdminCodeButtonBounds => new(1260, 278, 72, 54);
+
+    private static Rectangle CgosConnectButtonBounds => new(1340, 278, 96, 54);
 
     private static Rectangle CgosConnectionStartBackButtonBounds => new(1348, 204, 110, 48);
 
@@ -1866,6 +1907,8 @@ public sealed class GoScreenRenderer
     private static Rectangle CgosConnectionListBounds => new(482, 350, 420, 332);
 
     private static Rectangle CgosConnectionPropertyBounds => new(936, 350, 500, 426);
+
+    private static Rectangle CgosAdminStatusBounds => new(482, 704, 420, 72);
 
     private static Rectangle CgosConnectionStartTargetBounds => new(482, 350, 420, 426);
 

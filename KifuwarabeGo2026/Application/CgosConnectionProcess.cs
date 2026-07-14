@@ -93,6 +93,91 @@ public sealed class CgosConnectionProcess : IDisposable
         return _status;
     }
 
+    public string StartAdmin(CgosConnectionProfile profile)
+    {
+        if (IsRunning)
+        {
+            return "RUNNING";
+        }
+
+        DisposeProcess();
+        ClearOutput();
+        _seenLogLines.Clear();
+        _activeCgosLogPaths.Clear();
+        _standardErrorLogPath = "";
+        _startedAt = DateTime.Now;
+        _status = "ADMIN STARTING";
+
+        var repositoryRoot = FindRepositoryRoot();
+        var executablePath = GetCgosCommunicationExecutablePath(repositoryRoot);
+        if (!File.Exists(executablePath))
+        {
+            throw new FileNotFoundException("CGOS communication executable was not found. Build the solution first.", executablePath);
+        }
+
+        LogDirectory = Path.Combine(repositoryRoot, "Logs", "Cgos");
+        Directory.CreateDirectory(LogDirectory);
+        _standardErrorLogPath = Path.Combine(LogDirectory, $"standard-error-admin-{_startedAt:yyyyMMdd-HHmmss}.log");
+
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = executablePath,
+            WorkingDirectory = repositoryRoot,
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardInput = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+        };
+        startInfo.ArgumentList.Add("--host");
+        startInfo.ArgumentList.Add(profile.Host);
+        startInfo.ArgumentList.Add("--port");
+        startInfo.ArgumentList.Add(profile.Port.ToString());
+        startInfo.ArgumentList.Add("--admin");
+        startInfo.ArgumentList.Add("--log-directory");
+        startInfo.ArgumentList.Add(LogDirectory);
+
+        var process = new Process
+        {
+            StartInfo = startInfo,
+            EnableRaisingEvents = true,
+        };
+        process.OutputDataReceived += (_, e) => AddOutput(e.Data);
+        process.ErrorDataReceived += (_, e) => AddOutput(e.Data, isError: true);
+
+        if (!process.Start())
+        {
+            process.Dispose();
+            throw new InvalidOperationException("Could not start CGOS admin process.");
+        }
+
+        _processes.Add(process);
+        process.BeginOutputReadLine();
+        process.BeginErrorReadLine();
+        AddOutput($"# Started CGOS admin process. pid={process.Id}");
+        AddOutput("# Communication executable: " + executablePath);
+        return _status;
+    }
+
+    public string SendCommand(string command)
+    {
+        if (!IsRunning)
+        {
+            return "ADMIN STOPPED";
+        }
+
+        var process = _processes.FirstOrDefault(process => !process.HasExited);
+        if (process is null)
+        {
+            return "ADMIN STOPPED";
+        }
+
+        process.StandardInput.WriteLine(command);
+        process.StandardInput.Flush();
+        AddOutput("# Sent admin command: " + command);
+        return "SENT " + command.ToUpperInvariant();
+    }
+
     private void StartProcess(CgosConnectionProfile profile, string account, GtpEngineProfile engineProfile, string repositoryRoot, string executablePath)
     {
         var startInfo = new ProcessStartInfo
@@ -502,6 +587,18 @@ public sealed class CgosConnectionProcess : IDisposable
                 line.Contains("> (password)", StringComparison.OrdinalIgnoreCase))
             {
                 return "LOGIN";
+            }
+
+            if (line.Contains("Admin command input is ready", StringComparison.OrdinalIgnoreCase))
+            {
+                return "ADMIN READY";
+            }
+
+            if (line.Contains("Sent admin command", StringComparison.OrdinalIgnoreCase) ||
+                line.Contains("< who", StringComparison.OrdinalIgnoreCase) ||
+                line.Contains("< match", StringComparison.OrdinalIgnoreCase))
+            {
+                return "ADMIN COMMAND";
             }
 
             if (line.Contains("> protocol", StringComparison.OrdinalIgnoreCase) ||
