@@ -266,6 +266,10 @@ public class Game1 : Game
                     {
                         OpenCgosAdminLog();
                     }
+                    else if (GoScreenRenderer.GetCgosAdminTailButtonHit(point))
+                    {
+                        TailCgosAdminLog();
+                    }
                     else if (GoScreenRenderer.GetCgosBlackConnectionButtonHit(point, _session.IsCgosBlackConnectionRunning || _session.SelectedCgosBlackGtpEngineProfile is not null))
                     {
                         ToggleCgosPlayerConnectionProcess(GoStone.Black);
@@ -278,9 +282,17 @@ public class Game1 : Game
                     {
                         OpenCgosPlayerConnectionLog(GoStone.Black);
                     }
+                    else if (GoScreenRenderer.GetCgosBlackTailButtonHit(point))
+                    {
+                        TailCgosPlayerConnectionLog(GoStone.Black);
+                    }
                     else if (GoScreenRenderer.GetCgosWhiteCodeButtonHit(point))
                     {
                         OpenCgosPlayerConnectionLog(GoStone.White);
+                    }
+                    else if (GoScreenRenderer.GetCgosWhiteTailButtonHit(point))
+                    {
+                        TailCgosPlayerConnectionLog(GoStone.White);
                     }
 
                     _previousMouse = mouse;
@@ -638,6 +650,20 @@ public class Game1 : Game
         }
     }
 
+    private void TailCgosPlayerConnectionLog(GoStone stone)
+    {
+        var process = stone == GoStone.Black ? _cgosBlackConnectionProcess : _cgosWhiteConnectionProcess;
+        try
+        {
+            var status = process.TailLogWithPowerShell(openStandardError: false);
+            SetCgosPlayerConnectionProcessStatus(stone, status, process.IsRunning, process);
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or IOException or System.ComponentModel.Win32Exception)
+        {
+            SetCgosPlayerConnectionProcessStatus(stone, "ERROR: " + ex.Message, process.IsRunning, process);
+        }
+    }
+
     private void SetCgosPlayerConnectionProcessStatus(GoStone stone, string status, bool isRunning, CgosConnectionProcess process)
     {
         if (stone == GoStone.Black)
@@ -693,6 +719,19 @@ public class Game1 : Game
         try
         {
             var status = _cgosAdminProcess.OpenLog("code", openStandardError: false);
+            _session.SetCgosAdminProcessStatus(status, _cgosAdminProcess.IsRunning, _cgosAdminProcess.LogDirectory, _cgosAdminProcess.GetRecentOutput());
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or IOException or System.ComponentModel.Win32Exception)
+        {
+            _session.SetCgosAdminProcessStatus("ERROR: " + ex.Message, _cgosAdminProcess.IsRunning, _cgosAdminProcess.LogDirectory, _cgosAdminProcess.GetRecentOutput());
+        }
+    }
+
+    private void TailCgosAdminLog()
+    {
+        try
+        {
+            var status = _cgosAdminProcess.TailLogWithPowerShell(openStandardError: false);
             _session.SetCgosAdminProcessStatus(status, _cgosAdminProcess.IsRunning, _cgosAdminProcess.LogDirectory, _cgosAdminProcess.GetRecentOutput());
         }
         catch (Exception ex) when (ex is InvalidOperationException or IOException or System.ComponentModel.Win32Exception)

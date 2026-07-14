@@ -344,6 +344,9 @@ public sealed class GoScreenRenderer
     public static bool GetCgosAdminCodeButtonHit(Point point) =>
         CgosAdminCodeButtonBounds.Contains(point);
 
+    public static bool GetCgosAdminTailButtonHit(Point point) =>
+        CgosAdminTailButtonBounds.Contains(point);
+
     public static bool GetCgosBlackConnectionButtonHit(Point point, bool enabled) =>
         enabled && CgosBlackConnectionButtonBounds.Contains(point);
 
@@ -353,8 +356,14 @@ public sealed class GoScreenRenderer
     public static bool GetCgosBlackCodeButtonHit(Point point) =>
         CgosBlackCodeButtonBounds.Contains(point);
 
+    public static bool GetCgosBlackTailButtonHit(Point point) =>
+        CgosBlackTailButtonBounds.Contains(point);
+
     public static bool GetCgosWhiteCodeButtonHit(Point point) =>
         CgosWhiteCodeButtonBounds.Contains(point);
+
+    public static bool GetCgosWhiteTailButtonHit(Point point) =>
+        CgosWhiteTailButtonBounds.Contains(point);
 
     public static bool GetCgosConnectionStartBackButtonHit(Point point) =>
         CgosConnectionStartBackButtonBounds.Contains(point);
@@ -790,6 +799,7 @@ public sealed class GoScreenRenderer
             CgosAdminButtonBounds,
             session.IsCgosAdminRunning ? "STOP" : "START",
             true,
+            CgosAdminTailButtonBounds,
             CgosAdminCodeButtonBounds,
             mousePoint);
         DrawCommandButton(CgosAdminWhoButtonBounds, "WHO", false, mousePoint, enabled: session.IsCgosAdminRunning, scale: 0.28f);
@@ -804,6 +814,7 @@ public sealed class GoScreenRenderer
             CgosBlackConnectionButtonBounds,
             session.IsCgosBlackConnectionRunning ? "STOP" : "START",
             session.IsCgosBlackConnectionRunning || session.SelectedCgosBlackGtpEngineProfile is not null,
+            CgosBlackTailButtonBounds,
             CgosBlackCodeButtonBounds,
             mousePoint);
         DrawCgosEnginePickerInPanel(
@@ -824,6 +835,7 @@ public sealed class GoScreenRenderer
             CgosWhiteConnectionButtonBounds,
             session.IsCgosWhiteConnectionRunning ? "STOP" : "START",
             session.IsCgosWhiteConnectionRunning || session.SelectedCgosWhiteGtpEngineProfile is not null,
+            CgosWhiteTailButtonBounds,
             CgosWhiteCodeButtonBounds,
             mousePoint);
         DrawCgosEnginePickerInPanel(
@@ -856,6 +868,7 @@ public sealed class GoScreenRenderer
         Rectangle startButtonBounds,
         string startLabel,
         bool startEnabled,
+        Rectangle tailButtonBounds,
         Rectangle codeButtonBounds,
         Point mousePoint)
     {
@@ -886,6 +899,7 @@ public sealed class GoScreenRenderer
         }
 
         DrawCommandButton(startButtonBounds, startLabel, false, mousePoint, enabled: startEnabled, scale: 0.36f);
+        DrawCommandButton(tailButtonBounds, "TAIL", false, mousePoint, scale: 0.26f);
         DrawCommandButton(codeButtonBounds, "CODE", false, mousePoint, scale: 0.3f);
     }
 
@@ -1945,15 +1959,21 @@ public sealed class GoScreenRenderer
 
     private static Rectangle CgosAdminMatchButtonBounds => new(CgosAdminProcessPanelBounds.X + 214, CgosAdminProcessPanelBounds.Bottom - 126, 82, 40);
 
+    private static Rectangle CgosAdminTailButtonBounds => new(CgosAdminProcessPanelBounds.X + 136, CgosAdminProcessPanelBounds.Bottom - 70, 68, 48);
+
     private static Rectangle CgosAdminCodeButtonBounds => new(CgosAdminProcessPanelBounds.Right - 90, CgosAdminProcessPanelBounds.Bottom - 70, 72, 48);
 
     private static Rectangle CgosConnectionStartBackButtonBounds => new(1348, 204, 110, 48);
 
-    private static Rectangle CgosBlackConnectionButtonBounds => new(CgosBlackProcessPanelBounds.X + 18, CgosBlackProcessPanelBounds.Bottom - 70, 150, 48);
+    private static Rectangle CgosBlackConnectionButtonBounds => new(CgosBlackProcessPanelBounds.X + 18, CgosBlackProcessPanelBounds.Bottom - 70, 120, 48);
+
+    private static Rectangle CgosBlackTailButtonBounds => new(CgosBlackProcessPanelBounds.X + 146, CgosBlackProcessPanelBounds.Bottom - 70, 58, 48);
 
     private static Rectangle CgosBlackCodeButtonBounds => new(CgosBlackProcessPanelBounds.Right - 90, CgosBlackProcessPanelBounds.Bottom - 70, 72, 48);
 
-    private static Rectangle CgosWhiteConnectionButtonBounds => new(CgosWhiteProcessPanelBounds.X + 18, CgosWhiteProcessPanelBounds.Bottom - 70, 150, 48);
+    private static Rectangle CgosWhiteConnectionButtonBounds => new(CgosWhiteProcessPanelBounds.X + 18, CgosWhiteProcessPanelBounds.Bottom - 70, 120, 48);
+
+    private static Rectangle CgosWhiteTailButtonBounds => new(CgosWhiteProcessPanelBounds.X + 146, CgosWhiteProcessPanelBounds.Bottom - 70, 58, 48);
 
     private static Rectangle CgosWhiteCodeButtonBounds => new(CgosWhiteProcessPanelBounds.Right - 90, CgosWhiteProcessPanelBounds.Bottom - 70, 72, 48);
 

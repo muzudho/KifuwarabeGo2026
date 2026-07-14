@@ -299,44 +299,7 @@ public sealed class CgosConnectionProcess : IDisposable
 
     public string OpenLog(string app, bool openStandardError)
     {
-        PollCgosLogFiles();
-
-        var defaultLogDirectory = GetDefaultLogDirectory();
-        if (string.IsNullOrWhiteSpace(LogDirectory))
-        {
-            LogDirectory = defaultLogDirectory;
-        }
-
-        var logDirectory = LogDirectory;
-        Directory.CreateDirectory(logDirectory);
-
-        var targetPath = openStandardError
-            ? GetStandardErrorLogPath(logDirectory)
-            : GetLatestCgosLogPath(logDirectory, GetCurrentRunLogThreshold());
-
-        if (!openStandardError &&
-            string.IsNullOrWhiteSpace(targetPath) &&
-            _activeCgosLogPaths.Count > 0)
-        {
-            targetPath = _activeCgosLogPaths
-                .Where(File.Exists)
-                .OrderByDescending(File.GetLastWriteTime)
-                .FirstOrDefault() ?? "";
-        }
-
-        if (string.IsNullOrWhiteSpace(targetPath))
-        {
-            targetPath = openStandardError
-                ? GetLatestStandardErrorLogPath(logDirectory)
-                : GetLatestCgosLogPath(logDirectory);
-        }
-
-        if (string.IsNullOrWhiteSpace(targetPath))
-        {
-            targetPath = !openStandardError && !string.IsNullOrWhiteSpace(_guiLogPath)
-                ? EnsureGuiLogFile()
-                : logDirectory;
-        }
+        var targetPath = GetLogTargetPath(openStandardError, allowGuiFallback: !openStandardError);
 
         var opensFile = File.Exists(targetPath);
         var fileName = opensFile
@@ -353,6 +316,33 @@ public sealed class CgosConnectionProcess : IDisposable
         var openedName = File.Exists(targetPath) ? Path.GetFileName(targetPath) : targetPath;
         AddOutput($"# Opened {(openStandardError ? "standard error" : "CGOS")} log with {fileName}: {openedName}");
         return openStandardError ? "OPENED STDERR LOG" : "OPENED LOG";
+    }
+
+    public string TailLogWithPowerShell(bool openStandardError)
+    {
+        var targetPath = GetLogTargetPath(openStandardError, allowGuiFallback: true);
+        if (!File.Exists(targetPath))
+        {
+            targetPath = EnsureGuiLogFile();
+        }
+
+        var escapedPath = targetPath.Replace("'", "''", StringComparison.Ordinal);
+        var command = $"$Host.UI.RawUI.WindowTitle = 'CGOS log tail'; Get-Content -LiteralPath '{escapedPath}' -Wait";
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = "powershell",
+            UseShellExecute = true,
+        };
+        startInfo.ArgumentList.Add("-NoExit");
+        startInfo.ArgumentList.Add("-NoProfile");
+        startInfo.ArgumentList.Add("-ExecutionPolicy");
+        startInfo.ArgumentList.Add("Bypass");
+        startInfo.ArgumentList.Add("-Command");
+        startInfo.ArgumentList.Add(command);
+        Process.Start(startInfo);
+
+        AddOutput("# Tailing CGOS log with PowerShell: " + Path.GetFileName(targetPath));
+        return openStandardError ? "TAIL STDERR LOG" : "TAIL LOG";
     }
 
     public void Dispose()
@@ -548,6 +538,46 @@ public sealed class CgosConnectionProcess : IDisposable
 
         AppendGuiLog("# Log file opened before a CGOS communication log was available.");
         return _guiLogPath;
+    }
+
+    private string GetLogTargetPath(bool openStandardError, bool allowGuiFallback)
+    {
+        PollCgosLogFiles();
+
+        if (string.IsNullOrWhiteSpace(LogDirectory))
+        {
+            LogDirectory = GetDefaultLogDirectory();
+        }
+
+        Directory.CreateDirectory(LogDirectory);
+
+        var targetPath = openStandardError
+            ? GetStandardErrorLogPath(LogDirectory)
+            : GetLatestCgosLogPath(LogDirectory, GetCurrentRunLogThreshold());
+
+        if (!openStandardError &&
+            string.IsNullOrWhiteSpace(targetPath) &&
+            _activeCgosLogPaths.Count > 0)
+        {
+            targetPath = _activeCgosLogPaths
+                .Where(File.Exists)
+                .OrderByDescending(File.GetLastWriteTime)
+                .FirstOrDefault() ?? "";
+        }
+
+        if (string.IsNullOrWhiteSpace(targetPath))
+        {
+            targetPath = openStandardError
+                ? GetLatestStandardErrorLogPath(LogDirectory)
+                : GetLatestCgosLogPath(LogDirectory);
+        }
+
+        if (string.IsNullOrWhiteSpace(targetPath) && allowGuiFallback)
+        {
+            targetPath = EnsureGuiLogFile();
+        }
+
+        return string.IsNullOrWhiteSpace(targetPath) ? LogDirectory : targetPath;
     }
 
     private void AppendGuiLog(string displayLine)
