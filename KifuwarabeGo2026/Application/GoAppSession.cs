@@ -54,6 +54,22 @@ public sealed class GoAppSession
 
     public IReadOnlyList<string> CgosConnectionRecentOutput { get; private set; } = Array.Empty<string>();
 
+    public string CgosBlackConnectionStatusMessage { get; private set; } = "READY";
+
+    public string CgosBlackConnectionLogDirectory { get; private set; } = "";
+
+    public IReadOnlyList<string> CgosBlackConnectionRecentOutput { get; private set; } = Array.Empty<string>();
+
+    public bool IsCgosBlackConnectionRunning { get; private set; }
+
+    public string CgosWhiteConnectionStatusMessage { get; private set; } = "READY";
+
+    public string CgosWhiteConnectionLogDirectory { get; private set; } = "";
+
+    public IReadOnlyList<string> CgosWhiteConnectionRecentOutput { get; private set; } = Array.Empty<string>();
+
+    public bool IsCgosWhiteConnectionRunning { get; private set; }
+
     public string CgosAdminStatusMessage { get; private set; } = "ADMIN READY";
 
     public string CgosAdminLogDirectory { get; private set; } = "";
@@ -71,6 +87,8 @@ public sealed class GoAppSession
     public GtpEngineProfile? SelectedCgosWhiteGtpEngineProfile => GetCgosGtpEngineProfile(SelectedCgosWhiteGtpEngineIndex);
 
     public bool HasSelectedCgosGtpEngine => SelectedCgosBlackGtpEngineProfile is not null || SelectedCgosWhiteGtpEngineProfile is not null;
+
+    public bool IsAnyCgosProcessRunning => IsCgosConnectionRunning || IsCgosBlackConnectionRunning || IsCgosWhiteConnectionRunning || IsCgosAdminRunning;
 
     public bool IsCgosConnectionRunning { get; private set; }
 
@@ -251,6 +269,14 @@ public sealed class GoAppSession
         CgosConnectionLogDirectory = "";
         CgosConnectionRecentOutput = Array.Empty<string>();
         IsCgosConnectionRunning = false;
+        CgosBlackConnectionStatusMessage = "READY";
+        CgosBlackConnectionLogDirectory = "";
+        CgosBlackConnectionRecentOutput = Array.Empty<string>();
+        IsCgosBlackConnectionRunning = false;
+        CgosWhiteConnectionStatusMessage = "READY";
+        CgosWhiteConnectionLogDirectory = "";
+        CgosWhiteConnectionRecentOutput = Array.Empty<string>();
+        IsCgosWhiteConnectionRunning = false;
         CgosAdminStatusMessage = "ADMIN READY";
         CgosAdminLogDirectory = "";
         CgosAdminRecentOutput = Array.Empty<string>();
@@ -300,7 +326,7 @@ public sealed class GoAppSession
 
     public void MoveCgosGtpEngineSelection(GoStone stone, int step)
     {
-        if (IsCgosConnectionRunning || _gtpEngineProfiles.Count == 0)
+        if (IsAnyCgosProcessRunning || _gtpEngineProfiles.Count == 0)
         {
             return;
         }
@@ -313,7 +339,7 @@ public sealed class GoAppSession
 
     public bool CanMoveCgosGtpEngineSelection(GoStone stone, int step)
     {
-        if (IsCgosConnectionRunning || _gtpEngineProfiles.Count == 0)
+        if (IsAnyCgosProcessRunning || _gtpEngineProfiles.Count == 0)
         {
             return false;
         }
@@ -325,7 +351,7 @@ public sealed class GoAppSession
 
     public void ClearCgosGtpEngineSelection(GoStone stone)
     {
-        if (IsCgosConnectionRunning)
+        if (IsAnyCgosProcessRunning)
         {
             return;
         }
@@ -335,7 +361,7 @@ public sealed class GoAppSession
     }
 
     public bool CanClearCgosGtpEngineSelection(GoStone stone) =>
-        !IsCgosConnectionRunning &&
+        !IsAnyCgosProcessRunning &&
         GetSelectedCgosGtpEngineIndex(stone) is not null;
 
     public void SetCgosConnectionProcessStatus(string statusMessage, bool isRunning, string logDirectory, IReadOnlyList<string> recentOutput)
@@ -344,6 +370,22 @@ public sealed class GoAppSession
         IsCgosConnectionRunning = isRunning;
         CgosConnectionLogDirectory = logDirectory;
         CgosConnectionRecentOutput = recentOutput;
+    }
+
+    public void SetCgosBlackConnectionProcessStatus(string statusMessage, bool isRunning, string logDirectory, IReadOnlyList<string> recentOutput)
+    {
+        CgosBlackConnectionStatusMessage = statusMessage;
+        IsCgosBlackConnectionRunning = isRunning;
+        CgosBlackConnectionLogDirectory = logDirectory;
+        CgosBlackConnectionRecentOutput = recentOutput;
+    }
+
+    public void SetCgosWhiteConnectionProcessStatus(string statusMessage, bool isRunning, string logDirectory, IReadOnlyList<string> recentOutput)
+    {
+        CgosWhiteConnectionStatusMessage = statusMessage;
+        IsCgosWhiteConnectionRunning = isRunning;
+        CgosWhiteConnectionLogDirectory = logDirectory;
+        CgosWhiteConnectionRecentOutput = recentOutput;
     }
 
     public void SetCgosAdminProcessStatus(string statusMessage, bool isRunning, string logDirectory, IReadOnlyList<string> recentOutput)

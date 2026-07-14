@@ -329,8 +329,8 @@ public sealed class GoScreenRenderer
 
     public static bool GetCgosBackButtonHit(Point point) => CgosBackButtonBounds.Contains(point);
 
-    public static bool GetCgosConnectButtonHit(Point point, bool enabled) =>
-        enabled && CgosConnectButtonBounds.Contains(point);
+    public static bool GetCgosUseSelectedProfileButtonHit(Point point, bool enabled) =>
+        enabled && CgosUseSelectedProfileButtonBounds.Contains(point);
 
     public static bool GetCgosAdminButtonHit(Point point, bool enabled) =>
         enabled && CgosAdminButtonBounds.Contains(point);
@@ -343,6 +343,18 @@ public sealed class GoScreenRenderer
 
     public static bool GetCgosAdminCodeButtonHit(Point point) =>
         CgosAdminCodeButtonBounds.Contains(point);
+
+    public static bool GetCgosBlackConnectionButtonHit(Point point, bool enabled) =>
+        enabled && CgosBlackConnectionButtonBounds.Contains(point);
+
+    public static bool GetCgosWhiteConnectionButtonHit(Point point, bool enabled) =>
+        enabled && CgosWhiteConnectionButtonBounds.Contains(point);
+
+    public static bool GetCgosBlackCodeButtonHit(Point point) =>
+        CgosBlackCodeButtonBounds.Contains(point);
+
+    public static bool GetCgosWhiteCodeButtonHit(Point point) =>
+        CgosWhiteCodeButtonBounds.Contains(point);
 
     public static bool GetCgosConnectionStartBackButtonHit(Point point) =>
         CgosConnectionStartBackButtonBounds.Contains(point);
@@ -757,59 +769,138 @@ public sealed class GoScreenRenderer
         DrawCommandButton(CgosEditButtonBounds, "EDIT", false, mousePoint, enabled: session.CgosConnectionProfiles.Count > 0, scale: 0.38f);
         DrawCommandButton(CgosDuplicateButtonBounds, "DUPLICATE", false, mousePoint, enabled: session.CgosConnectionProfiles.Count > 0, scale: 0.25f);
         DrawCommandButton(CgosDeleteButtonBounds, "DELETE", false, mousePoint, enabled: session.CanDeleteSelectedCgosConnectionProfile, scale: 0.34f);
-        DrawCommandButton(CgosConnectButtonBounds, "CONNECT", false, mousePoint, enabled: session.CgosConnectionProfiles.Count > 0, scale: 0.32f);
-        DrawCommandButton(CgosAdminButtonBounds, session.IsCgosAdminRunning ? "STOP ADMIN" : "ADMIN", false, mousePoint, enabled: session.CgosConnectionProfiles.Count > 0, scale: 0.32f);
-        DrawCommandButton(CgosAdminWhoButtonBounds, "WHO", false, mousePoint, enabled: session.IsCgosAdminRunning, scale: 0.28f);
-        DrawCommandButton(CgosAdminMatchButtonBounds, "MATCH", false, mousePoint, enabled: session.IsCgosAdminRunning, scale: 0.24f);
-        DrawCommandButton(CgosAdminCodeButtonBounds, "CODE", false, mousePoint, scale: 0.24f);
+        DrawCommandButton(CgosUseSelectedProfileButtonBounds, "USE", false, mousePoint, enabled: session.CgosConnectionProfiles.Count > 0, scale: 0.42f);
         DrawCommandButton(CgosBackButtonBounds, "BACK", false, mousePoint, scale: 0.42f);
-        DrawCgosAdminStatus(session);
         DrawCgosConnectionEditPanel(session, mousePoint);
-    }
-
-    private void DrawCgosAdminStatus(GoAppSession session)
-    {
-        FillRect(CgosAdminStatusBounds, new Color(15, 20, 26));
-        DrawRect(CgosAdminStatusBounds, 1, new Color(67, 84, 92));
-        DrawUiLabel(UiLabel.InCompactRow("ADMIN", CgosAdminStatusBounds));
-        DrawFittedText(session.CgosAdminStatusMessage, new Rectangle(CgosAdminStatusBounds.X + 152, CgosAdminStatusBounds.Y + 7, CgosAdminStatusBounds.Width - 168, 38), Color.White, 0.38f);
-
-        var lines = session.CgosAdminRecentOutput;
-        if (lines.Count == 0)
-        {
-            return;
-        }
-
-        DrawFittedText(ShortenForCgosMessageRow(lines[^1]), new Rectangle(CgosAdminStatusBounds.X + 16, CgosAdminStatusBounds.Y + 48, CgosAdminStatusBounds.Width - 32, 24), new Color(204, 211, 206), 0.28f);
     }
 
     private void DrawCgosConnectionStartPanel(GoAppSession session, Point mousePoint)
     {
         var profile = session.SelectedCgosConnectionProfile;
-        DrawText("CONNECT", new Vector2(482, 284), new Color(180, 195, 195), 0.54f);
+        DrawText("USE CONNECTION", new Vector2(482, 260), new Color(180, 195, 195), 0.54f);
         DrawCommandButton(CgosConnectionStartBackButtonBounds, "BACK", false, mousePoint, scale: 0.42f);
 
-        FillRect(CgosConnectionStartTargetBounds, new Color(15, 20, 26));
-        DrawRect(CgosConnectionStartTargetBounds, 1, new Color(67, 84, 92));
-        DrawText("TARGET", new Vector2(CgosConnectionStartTargetBounds.X, CgosConnectionStartTargetBounds.Y - 34), new Color(180, 195, 195), 0.46f);
+        DrawCgosSelectedProfileBar(profile);
+        DrawCgosProcessPanel(
+            CgosAdminProcessPanelBounds,
+            "ADMIN CONNECTION",
+            session.CgosAdminStatusMessage,
+            session.CgosAdminRecentOutput,
+            null,
+            CgosAdminButtonBounds,
+            session.IsCgosAdminRunning ? "STOP" : "START",
+            true,
+            CgosAdminCodeButtonBounds,
+            mousePoint);
+        DrawCommandButton(CgosAdminWhoButtonBounds, "WHO", false, mousePoint, enabled: session.IsCgosAdminRunning, scale: 0.28f);
+        DrawCommandButton(CgosAdminMatchButtonBounds, "MATCH", false, mousePoint, enabled: session.IsCgosAdminRunning, scale: 0.24f);
 
-        var y = CgosConnectionStartTargetBounds.Y + 28;
-        DrawCgosConnectionStartRow(CgosConnectionStartTargetBounds, y, "NAME", profile.DisplayName);
-        DrawCgosConnectionStartRow(CgosConnectionStartTargetBounds, y + 76, "HOST", profile.Host);
-        DrawCgosConnectionStartRow(CgosConnectionStartTargetBounds, y + 152, "PORT", profile.Port.ToString());
-        DrawCgosConnectionStartRow(CgosConnectionStartTargetBounds, y + 228, "ROLE", profile.Role);
+        DrawCgosProcessPanel(
+            CgosBlackProcessPanelBounds,
+            "BLACK PLAYER",
+            session.CgosBlackConnectionStatusMessage,
+            session.CgosBlackConnectionRecentOutput,
+            session.SelectedCgosBlackGtpEngineProfile?.DisplayName,
+            CgosBlackConnectionButtonBounds,
+            session.IsCgosBlackConnectionRunning ? "STOP" : "START",
+            session.IsCgosBlackConnectionRunning || session.SelectedCgosBlackGtpEngineProfile is not null,
+            CgosBlackCodeButtonBounds,
+            mousePoint);
+        DrawCgosEnginePickerInPanel(
+            CgosConnectionBlackEnginePreviousButtonBounds,
+            CgosConnectionBlackEngineNextButtonBounds,
+            CgosConnectionBlackEngineClearButtonBounds,
+            session.CanMoveCgosGtpEngineSelection(GoStone.Black, -1),
+            session.CanMoveCgosGtpEngineSelection(GoStone.Black, 1),
+            session.CanClearCgosGtpEngineSelection(GoStone.Black),
+            mousePoint);
 
-        FillRect(CgosConnectionStartStatusBounds, new Color(15, 20, 26));
-        DrawRect(CgosConnectionStartStatusBounds, 1, new Color(67, 84, 92));
-        DrawText("STATUS", new Vector2(CgosConnectionStartStatusBounds.X, CgosConnectionStartStatusBounds.Y - 34), new Color(180, 195, 195), 0.46f);
-        DrawCgosConnectionStartRow(CgosConnectionStartStatusBounds, CgosConnectionStartStatusBounds.Y + 28, "STATE", session.CgosConnectionStatusMessage);
-        DrawCgosConnectionEngineRow(session, mousePoint, GoStone.Black);
-        DrawCgosConnectionEngineRow(session, mousePoint, GoStone.White);
-        DrawCgosConnectionLogRows(session, mousePoint);
-        DrawCgosConnectionOutput(session);
+        DrawCgosProcessPanel(
+            CgosWhiteProcessPanelBounds,
+            "WHITE PLAYER",
+            session.CgosWhiteConnectionStatusMessage,
+            session.CgosWhiteConnectionRecentOutput,
+            session.SelectedCgosWhiteGtpEngineProfile?.DisplayName,
+            CgosWhiteConnectionButtonBounds,
+            session.IsCgosWhiteConnectionRunning ? "STOP" : "START",
+            session.IsCgosWhiteConnectionRunning || session.SelectedCgosWhiteGtpEngineProfile is not null,
+            CgosWhiteCodeButtonBounds,
+            mousePoint);
+        DrawCgosEnginePickerInPanel(
+            CgosConnectionWhiteEnginePreviousButtonBounds,
+            CgosConnectionWhiteEngineNextButtonBounds,
+            CgosConnectionWhiteEngineClearButtonBounds,
+            session.CanMoveCgosGtpEngineSelection(GoStone.White, -1),
+            session.CanMoveCgosGtpEngineSelection(GoStone.White, 1),
+            session.CanClearCgosGtpEngineSelection(GoStone.White),
+            mousePoint);
 
-        DrawCommandButton(CgosConnectionBeginButtonBounds, session.IsCgosConnectionRunning ? "STOP CONNECT" : "START CONNECT", false, mousePoint, enabled: session.IsCgosConnectionRunning || session.HasSelectedCgosGtpEngine, scale: 0.46f);
         DrawCgosConnectionTooltips(session, mousePoint);
+    }
+
+    private void DrawCgosSelectedProfileBar(CgosConnectionProfile profile)
+    {
+        FillRect(CgosSelectedProfileBarBounds, new Color(15, 20, 26));
+        DrawRect(CgosSelectedProfileBarBounds, 1, new Color(67, 84, 92));
+        DrawUiLabel(UiLabel.InCompactRow("TARGET", CgosSelectedProfileBarBounds));
+        var text = $"{profile.DisplayName} / {profile.Host}:{profile.Port} / {profile.Role}";
+        DrawFittedText(text, new Rectangle(CgosSelectedProfileBarBounds.X + 152, CgosSelectedProfileBarBounds.Y + 7, CgosSelectedProfileBarBounds.Width - 168, 38), Color.White, 0.42f);
+    }
+
+    private void DrawCgosProcessPanel(
+        Rectangle bounds,
+        string title,
+        string status,
+        IReadOnlyList<string> output,
+        string? engineName,
+        Rectangle startButtonBounds,
+        string startLabel,
+        bool startEnabled,
+        Rectangle codeButtonBounds,
+        Point mousePoint)
+    {
+        FillRect(bounds, new Color(15, 20, 26));
+        DrawRect(bounds, 1, new Color(67, 84, 92));
+        DrawText(title, new Vector2(bounds.X + 18, bounds.Y + 18), new Color(255, 230, 160), 0.42f);
+
+        var stateRow = new Rectangle(bounds.X + 16, bounds.Y + 62, bounds.Width - 32, 48);
+        DrawDataRowFrame(stateRow);
+        DrawUiLabel(UiLabel.InCompactRow("STATE", stateRow));
+        DrawFittedText(status, new Rectangle(stateRow.X + 132, stateRow.Y + 7, stateRow.Width - 148, 34), Color.White, 0.34f);
+
+        if (engineName is not null)
+        {
+            var engineRow = new Rectangle(bounds.X + 16, bounds.Y + 128, bounds.Width - 32, 48);
+            DrawDataRowFrame(engineRow);
+            DrawUiLabel(UiLabel.InCompactRow("ENGINE", engineRow));
+            DrawFittedText(engineName, new Rectangle(engineRow.X + 132, engineRow.Y + 7, engineRow.Width - 148, 34), Color.White, 0.32f);
+        }
+
+        var outputBounds = new Rectangle(bounds.X + 16, bounds.Y + 210, bounds.Width - 32, 118);
+        FillRect(outputBounds, new Color(11, 15, 20));
+        DrawRect(outputBounds, 1, new Color(67, 84, 92));
+        DrawFittedText(output.Count == 0 ? "-" : ShortenForCgosMessageRow(output[^1]), new Rectangle(outputBounds.X + 12, outputBounds.Y + 10, outputBounds.Width - 24, 28), new Color(204, 211, 206), 0.28f);
+        if (output.Count > 1)
+        {
+            DrawFittedText(ShortenForCgosMessageRow(output[^2]), new Rectangle(outputBounds.X + 12, outputBounds.Y + 44, outputBounds.Width - 24, 28), new Color(204, 211, 206), 0.25f);
+        }
+
+        DrawCommandButton(startButtonBounds, startLabel, false, mousePoint, enabled: startEnabled, scale: 0.36f);
+        DrawCommandButton(codeButtonBounds, "CODE", false, mousePoint, scale: 0.3f);
+    }
+
+    private void DrawCgosEnginePickerInPanel(
+        Rectangle previousButtonBounds,
+        Rectangle nextButtonBounds,
+        Rectangle clearButtonBounds,
+        bool canPrevious,
+        bool canNext,
+        bool canClear,
+        Point mousePoint)
+    {
+        DrawCommandButton(previousButtonBounds, "PREV", false, mousePoint, enabled: canPrevious, scale: 0.24f);
+        DrawCommandButton(nextButtonBounds, "NEXT", false, mousePoint, enabled: canNext, scale: 0.24f);
+        DrawCommandButton(clearButtonBounds, "CLEAR", false, mousePoint, enabled: canClear, scale: 0.19f);
     }
 
     private void DrawCgosConnectionEngineRow(GoAppSession session, Point mousePoint, GoStone stone)
@@ -1846,17 +1937,25 @@ public sealed class GoScreenRenderer
 
     private static Rectangle CgosBackButtonBounds => new(1348, 204, 110, 48);
 
-    private static Rectangle CgosAdminButtonBounds => new(936, 278, 130, 54);
+    private static Rectangle CgosUseSelectedProfileButtonBounds => new(1224, 278, 212, 54);
 
-    private static Rectangle CgosAdminWhoButtonBounds => new(1076, 278, 72, 54);
+    private static Rectangle CgosAdminButtonBounds => new(CgosAdminProcessPanelBounds.X + 18, CgosAdminProcessPanelBounds.Bottom - 70, 108, 48);
 
-    private static Rectangle CgosAdminMatchButtonBounds => new(1158, 278, 92, 54);
+    private static Rectangle CgosAdminWhoButtonBounds => new(CgosAdminProcessPanelBounds.X + 136, CgosAdminProcessPanelBounds.Bottom - 70, 68, 48);
 
-    private static Rectangle CgosAdminCodeButtonBounds => new(1260, 278, 72, 54);
+    private static Rectangle CgosAdminMatchButtonBounds => new(CgosAdminProcessPanelBounds.X + 214, CgosAdminProcessPanelBounds.Bottom - 70, 82, 48);
 
-    private static Rectangle CgosConnectButtonBounds => new(1340, 278, 96, 54);
+    private static Rectangle CgosAdminCodeButtonBounds => new(CgosAdminProcessPanelBounds.X + 306, CgosAdminProcessPanelBounds.Bottom - 70, 72, 48);
 
     private static Rectangle CgosConnectionStartBackButtonBounds => new(1348, 204, 110, 48);
+
+    private static Rectangle CgosBlackConnectionButtonBounds => new(CgosBlackProcessPanelBounds.X + 18, CgosBlackProcessPanelBounds.Bottom - 70, 150, 48);
+
+    private static Rectangle CgosBlackCodeButtonBounds => new(CgosBlackProcessPanelBounds.Right - 90, CgosBlackProcessPanelBounds.Bottom - 70, 72, 48);
+
+    private static Rectangle CgosWhiteConnectionButtonBounds => new(CgosWhiteProcessPanelBounds.X + 18, CgosWhiteProcessPanelBounds.Bottom - 70, 150, 48);
+
+    private static Rectangle CgosWhiteCodeButtonBounds => new(CgosWhiteProcessPanelBounds.Right - 90, CgosWhiteProcessPanelBounds.Bottom - 70, 72, 48);
 
     private static Rectangle CgosConnectionBeginButtonBounds => new(1134, 800, 302, 58);
 
@@ -1864,21 +1963,21 @@ public sealed class GoScreenRenderer
 
     private static Rectangle CgosConnectionWhiteEngineRowBounds => new(CgosConnectionStartStatusBounds.X + 22, CgosConnectionStartStatusBounds.Y + 180, CgosConnectionStartStatusBounds.Width - 44, 56);
 
-    private static Rectangle CgosConnectionBlackEnginePreviousButtonBounds => new(1088, 458, 58, 34);
+    private static Rectangle CgosConnectionBlackEnginePreviousButtonBounds => new(CgosBlackProcessPanelBounds.X + 18, CgosBlackProcessPanelBounds.Y + 184, 58, 34);
 
-    private static Rectangle CgosConnectionBlackEngineNameBounds => new(1152, 456, 128, 38);
+    private static Rectangle CgosConnectionBlackEngineNameBounds => new(CgosBlackProcessPanelBounds.X + 148, CgosBlackProcessPanelBounds.Y + 135, 124, 34);
 
-    private static Rectangle CgosConnectionBlackEngineNextButtonBounds => new(1286, 458, 58, 34);
+    private static Rectangle CgosConnectionBlackEngineNextButtonBounds => new(CgosBlackProcessPanelBounds.X + 84, CgosBlackProcessPanelBounds.Y + 184, 58, 34);
 
-    private static Rectangle CgosConnectionBlackEngineClearButtonBounds => new(1350, 458, 74, 34);
+    private static Rectangle CgosConnectionBlackEngineClearButtonBounds => new(CgosBlackProcessPanelBounds.X + 150, CgosBlackProcessPanelBounds.Y + 184, 74, 34);
 
-    private static Rectangle CgosConnectionWhiteEnginePreviousButtonBounds => new(1088, 534, 58, 34);
+    private static Rectangle CgosConnectionWhiteEnginePreviousButtonBounds => new(CgosWhiteProcessPanelBounds.X + 18, CgosWhiteProcessPanelBounds.Y + 184, 58, 34);
 
-    private static Rectangle CgosConnectionWhiteEngineNameBounds => new(1152, 532, 128, 38);
+    private static Rectangle CgosConnectionWhiteEngineNameBounds => new(CgosWhiteProcessPanelBounds.X + 148, CgosWhiteProcessPanelBounds.Y + 135, 124, 34);
 
-    private static Rectangle CgosConnectionWhiteEngineNextButtonBounds => new(1286, 534, 58, 34);
+    private static Rectangle CgosConnectionWhiteEngineNextButtonBounds => new(CgosWhiteProcessPanelBounds.X + 84, CgosWhiteProcessPanelBounds.Y + 184, 58, 34);
 
-    private static Rectangle CgosConnectionWhiteEngineClearButtonBounds => new(1350, 534, 74, 34);
+    private static Rectangle CgosConnectionWhiteEngineClearButtonBounds => new(CgosWhiteProcessPanelBounds.X + 150, CgosWhiteProcessPanelBounds.Y + 184, 74, 34);
 
     private static Rectangle CgosConnectionLogPathBounds => new(1102, 608, 178, 38);
 
@@ -1908,7 +2007,13 @@ public sealed class GoScreenRenderer
 
     private static Rectangle CgosConnectionPropertyBounds => new(936, 350, 500, 426);
 
-    private static Rectangle CgosAdminStatusBounds => new(482, 704, 420, 72);
+    private static Rectangle CgosSelectedProfileBarBounds => new(482, 318, 954, 56);
+
+    private static Rectangle CgosAdminProcessPanelBounds => new(482, 412, 302, 356);
+
+    private static Rectangle CgosBlackProcessPanelBounds => new(808, 412, 302, 356);
+
+    private static Rectangle CgosWhiteProcessPanelBounds => new(1134, 412, 302, 356);
 
     private static Rectangle CgosConnectionStartTargetBounds => new(482, 350, 420, 426);
 
