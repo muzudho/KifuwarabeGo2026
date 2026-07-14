@@ -246,6 +246,8 @@ internal sealed class CgosClientOptions
 
 internal sealed class CgosAdminClient
 {
+    private static readonly TimeSpan FirstServerLineTimeout = TimeSpan.FromSeconds(15);
+
     private readonly CgosClientOptions _options;
     private readonly CgosAccount _account;
     private readonly object _logLock = new();
@@ -276,18 +278,33 @@ internal sealed class CgosAdminClient
                 throw new InvalidOperationException($"Could not connect to {_options.Host}:{_options.Port} within 15 seconds.", ex);
             }
 
+            Log($"# Connected to {_options.Host}:{_options.Port}.");
+
             await using var stream = tcp.GetStream();
             using var reader = new StreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: false, leaveOpen: true);
             await using var cgosWriter = new StreamWriter(stream, new UTF8Encoding(false), leaveOpen: true) { NewLine = "\n", AutoFlush = true };
             writer = cgosWriter;
 
             var inputTask = RelayAdminInputAsync(cgosWriter, cancellationToken);
+            var receivedAnyLine = false;
             while (!cancellationToken.IsCancellationRequested)
             {
                 string? line;
                 try
                 {
-                    line = await reader.ReadLineAsync(cancellationToken);
+                    var readTask = reader.ReadLineAsync(cancellationToken).AsTask();
+                    line = receivedAnyLine
+                        ? await readTask
+                        : await readTask.WaitAsync(FirstServerLineTimeout, cancellationToken);
+                }
+                catch (TimeoutException)
+                {
+                    Log($"# CGOS did not send the first protocol line within {FirstServerLineTimeout.TotalSeconds:0} seconds after TCP connect.");
+                    return;
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    return;
                 }
                 catch (IOException ex)
                 {
@@ -302,6 +319,7 @@ internal sealed class CgosAdminClient
                 }
 
                 line = line.Trim();
+                receivedAnyLine = true;
                 if (line.Length == 0)
                 {
                     continue;
@@ -408,6 +426,7 @@ internal sealed class CgosAdminClient
 internal sealed class CgosClient
 {
     private const string ClientIdPrefix = "e1 KifuwarabeGo2026.Cgos";
+    private static readonly TimeSpan FirstServerLineTimeout = TimeSpan.FromSeconds(15);
 
     private readonly CgosClientOptions _options;
     private readonly CgosAccount _account;
@@ -441,17 +460,32 @@ internal sealed class CgosClient
                 throw new InvalidOperationException($"Could not connect to {_options.Host}:{_options.Port} within 15 seconds.", ex);
             }
 
+            Log($"# Connected to {_options.Host}:{_options.Port}.");
+
             await using var stream = tcp.GetStream();
             using var reader = new StreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: false, leaveOpen: true);
             await using var cgosWriter = new StreamWriter(stream, new UTF8Encoding(false), leaveOpen: true) { NewLine = "\n", AutoFlush = true };
             writer = cgosWriter;
 
+            var receivedAnyLine = false;
             while (!cancellationToken.IsCancellationRequested)
             {
                 string? line;
                 try
                 {
-                    line = await reader.ReadLineAsync(cancellationToken);
+                    var readTask = reader.ReadLineAsync(cancellationToken).AsTask();
+                    line = receivedAnyLine
+                        ? await readTask
+                        : await readTask.WaitAsync(FirstServerLineTimeout, cancellationToken);
+                }
+                catch (TimeoutException)
+                {
+                    Log($"# CGOS did not send the first protocol line within {FirstServerLineTimeout.TotalSeconds:0} seconds after TCP connect.");
+                    return;
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    return;
                 }
                 catch (IOException ex)
                 {
@@ -466,6 +500,7 @@ internal sealed class CgosClient
                 }
 
                 line = line.Trim();
+                receivedAnyLine = true;
                 if (line.Length == 0)
                 {
                     continue;
