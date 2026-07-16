@@ -803,6 +803,7 @@ public sealed class GoScreenRenderer
             true,
             CgosAdminTailButtonBounds,
             CgosAdminCodeButtonBounds,
+            !session.IsCgosAdminRunning,
             mousePoint);
         DrawCommandButton(CgosAdminWhoButtonBounds, "WHO", false, mousePoint, enabled: session.IsCgosAdminRunning, scale: 0.28f);
         DrawCommandButton(CgosAdminMatchButtonBounds, "MATCH", false, mousePoint, enabled: session.IsCgosAdminRunning, scale: 0.24f);
@@ -818,6 +819,7 @@ public sealed class GoScreenRenderer
             session.IsCgosBlackConnectionRunning || session.SelectedCgosBlackGtpEngineProfile is not null,
             CgosBlackTailButtonBounds,
             CgosBlackCodeButtonBounds,
+            !session.IsCgosBlackConnectionRunning,
             mousePoint);
         DrawCgosEnginePickerInPanel(
             CgosConnectionBlackEnginePreviousButtonBounds,
@@ -839,6 +841,7 @@ public sealed class GoScreenRenderer
             session.IsCgosWhiteConnectionRunning || session.SelectedCgosWhiteGtpEngineProfile is not null,
             CgosWhiteTailButtonBounds,
             CgosWhiteCodeButtonBounds,
+            !session.IsCgosWhiteConnectionRunning,
             mousePoint);
         DrawCgosEnginePickerInPanel(
             CgosConnectionWhiteEnginePreviousButtonBounds,
@@ -872,6 +875,7 @@ public sealed class GoScreenRenderer
         bool startEnabled,
         Rectangle tailButtonBounds,
         Rectangle codeButtonBounds,
+        bool codeEnabled,
         Point mousePoint)
     {
         FillRect(bounds, new Color(15, 20, 26));
@@ -902,7 +906,7 @@ public sealed class GoScreenRenderer
 
         DrawCommandButton(startButtonBounds, startLabel, false, mousePoint, enabled: startEnabled, scale: 0.36f);
         DrawCommandButton(tailButtonBounds, "TAIL", false, mousePoint, scale: 0.26f);
-        DrawCommandButton(codeButtonBounds, "CODE", false, mousePoint, scale: 0.3f);
+        DrawCommandButton(codeButtonBounds, "CODE", false, mousePoint, enabled: codeEnabled, scale: 0.3f);
     }
 
     private void DrawCgosEnginePickerInPanel(

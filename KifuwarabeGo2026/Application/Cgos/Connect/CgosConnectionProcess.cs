@@ -12,10 +12,8 @@ public sealed class CgosConnectionProcess : IDisposable
     private readonly string _logFolderName;
     private readonly object _outputLock = new();
     private readonly Queue<string> _recentOutput = new();
-    private readonly HashSet<string> _seenLogLines = new(StringComparer.Ordinal);
     private readonly List<Process> _processes = new();
     private DateTime _startedAt;
-    private readonly HashSet<string> _activeCgosLogPaths = new(StringComparer.Ordinal);
     private string _guiLogPath = "";
     private string _standardErrorLogPath = "";
     private string _status = "READY";
@@ -62,8 +60,6 @@ public sealed class CgosConnectionProcess : IDisposable
 
         DisposeProcess();
         ClearOutput();
-        _seenLogLines.Clear();
-        _activeCgosLogPaths.Clear();
         _guiLogPath = "";
         _standardErrorLogPath = "";
         _startedAt = DateTime.Now;
@@ -117,8 +113,6 @@ public sealed class CgosConnectionProcess : IDisposable
 
         DisposeProcess();
         ClearOutput();
-        _seenLogLines.Clear();
-        _activeCgosLogPaths.Clear();
         _guiLogPath = "";
         _standardErrorLogPath = "";
         _startedAt = DateTime.Now;
@@ -249,7 +243,6 @@ public sealed class CgosConnectionProcess : IDisposable
             return _status;
         }
 
-        PollCgosLogFiles();
         if (_processes.All(process => process.HasExited))
         {
             _status = _processes.All(process => process.ExitCode == 0) ? "EXITED 0" : "ERROR";
@@ -292,7 +285,6 @@ public sealed class CgosConnectionProcess : IDisposable
             }
         }
 
-        PollCgosLogFiles();
         AddOutput("# Stop requested.");
         _status = "STOPPED";
         DisposeProcess();
@@ -300,6 +292,12 @@ public sealed class CgosConnectionProcess : IDisposable
 
     public string OpenLog(string app, bool openStandardError)
     {
+        if (IsRunning)
+        {
+            AddOutput("# Current log is active. Use TAIL while communication is running.");
+            return "LOG ACTIVE - USE TAIL";
+        }
+
         var targetPath = GetLogTargetPath(openStandardError, allowGuiFallback: !openStandardError);
 
         var opensFile = File.Exists(targetPath);
@@ -369,87 +367,12 @@ public sealed class CgosConnectionProcess : IDisposable
         }
     }
 
-    private void PollCgosLogFiles()
+    private static string GetLatestCgosLogPath(string logDirectory)
     {
-        if (string.IsNullOrWhiteSpace(LogDirectory) || !Directory.Exists(LogDirectory))
-        {
-            return;
-        }
-
-        var paths = GetCgosLogFilesToPoll();
-        foreach (var path in paths)
-        {
-            try
-            {
-                foreach (var line in File.ReadLines(path))
-                {
-                    var key = path + "\n" + line;
-                    if (_seenLogLines.Add(key))
-                    {
-                        AddOutput(line);
-                    }
-                }
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-            {
-            }
-        }
+        return GetCgosLogPaths(logDirectory).FirstOrDefault() ?? "";
     }
 
-    private IReadOnlyList<string> GetCgosLogFilesToPoll()
-    {
-        var currentRunLogPaths = GetCgosLogPaths(LogDirectory, GetCurrentRunLogThreshold());
-        if (currentRunLogPaths.Count > 0)
-        {
-            foreach (var path in currentRunLogPaths)
-            {
-                if (_activeCgosLogPaths.Add(path))
-                {
-                    AddOutput("# Reading CGOS log: " + Path.GetFileName(path));
-                }
-            }
-
-            return currentRunLogPaths;
-        }
-
-        var candidates = new List<FileInfo>();
-        foreach (var path in Directory.EnumerateFiles(LogDirectory, "cgos-*.log"))
-        {
-            try
-            {
-                var file = new FileInfo(path);
-                if (file.LastWriteTime >= _startedAt.AddSeconds(-10))
-                {
-                    candidates.Add(file);
-                }
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
-            {
-            }
-        }
-
-        var latest = candidates
-            .OrderByDescending(file => file.LastWriteTime)
-            .FirstOrDefault();
-        if (latest is null)
-        {
-            return [];
-        }
-
-        _activeCgosLogPaths.Add(latest.FullName);
-        AddOutput("# Reading CGOS log: " + latest.Name);
-        return [latest.FullName];
-    }
-
-    private DateTime GetCurrentRunLogThreshold() =>
-        _startedAt == default ? DateTime.MinValue : _startedAt.AddSeconds(-10);
-
-    private static string GetLatestCgosLogPath(string logDirectory, DateTime? notBefore = null)
-    {
-        return GetCgosLogPaths(logDirectory, notBefore).FirstOrDefault() ?? "";
-    }
-
-    private static IReadOnlyList<string> GetCgosLogPaths(string logDirectory, DateTime? notBefore = null)
+    private static IReadOnlyList<string> GetCgosLogPaths(string logDirectory)
     {
         if (string.IsNullOrWhiteSpace(logDirectory) || !Directory.Exists(logDirectory))
         {
@@ -460,7 +383,6 @@ public sealed class CgosConnectionProcess : IDisposable
         {
             return Directory.EnumerateFiles(logDirectory, "cgos-*.log")
                 .Select(path => new FileInfo(path))
-                .Where(file => notBefore is null || file.LastWriteTime >= notBefore.Value)
                 .OrderByDescending(file => file.LastWriteTime)
                 .Take(4)
                 .Select(file => file.FullName)
@@ -479,10 +401,10 @@ public sealed class CgosConnectionProcess : IDisposable
             return _standardErrorLogPath;
         }
 
-        return GetLatestStandardErrorLogPath(logDirectory, GetCurrentRunLogThreshold());
+        return GetLatestStandardErrorLogPath(logDirectory);
     }
 
-    private static string GetLatestStandardErrorLogPath(string logDirectory, DateTime? notBefore = null)
+    private static string GetLatestStandardErrorLogPath(string logDirectory)
     {
         if (string.IsNullOrWhiteSpace(logDirectory) || !Directory.Exists(logDirectory))
         {
@@ -493,7 +415,6 @@ public sealed class CgosConnectionProcess : IDisposable
         {
             return Directory.EnumerateFiles(logDirectory, "standard-error-*.log")
                 .Select(path => new FileInfo(path))
-                .Where(file => notBefore is null || file.LastWriteTime >= notBefore.Value)
                 .OrderByDescending(file => file.LastWriteTime)
                 .FirstOrDefault()
                 ?.FullName ?? "";
@@ -543,8 +464,6 @@ public sealed class CgosConnectionProcess : IDisposable
 
     private string GetLogTargetPath(bool openStandardError, bool allowGuiFallback)
     {
-        PollCgosLogFiles();
-
         if (string.IsNullOrWhiteSpace(LogDirectory))
         {
             LogDirectory = GetDefaultLogDirectory();
@@ -554,17 +473,7 @@ public sealed class CgosConnectionProcess : IDisposable
 
         var targetPath = openStandardError
             ? GetStandardErrorLogPath(LogDirectory)
-            : GetLatestCgosLogPath(LogDirectory, GetCurrentRunLogThreshold());
-
-        if (!openStandardError &&
-            string.IsNullOrWhiteSpace(targetPath) &&
-            _activeCgosLogPaths.Count > 0)
-        {
-            targetPath = _activeCgosLogPaths
-                .Where(File.Exists)
-                .OrderByDescending(File.GetLastWriteTime)
-                .FirstOrDefault() ?? "";
-        }
+            : GetLatestCgosLogPath(LogDirectory);
 
         if (string.IsNullOrWhiteSpace(targetPath))
         {

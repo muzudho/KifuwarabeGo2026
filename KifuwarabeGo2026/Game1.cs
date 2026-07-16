@@ -285,7 +285,7 @@ public class Game1 : Game
                     {
                         SendCgosAdminCommand("match");
                     }
-                    else if (GoScreenRenderer.GetCgosAdminCodeButtonHit(point))
+                    else if (GoScreenRenderer.GetCgosAdminCodeButtonHit(point) && !_session.IsCgosAdminRunning)
                     {
                         OpenCgosAdminLog();
                     }
@@ -301,7 +301,7 @@ public class Game1 : Game
                     {
                         ToggleCgosPlayerConnectionProcess(GoStone.White);
                     }
-                    else if (GoScreenRenderer.GetCgosBlackCodeButtonHit(point))
+                    else if (GoScreenRenderer.GetCgosBlackCodeButtonHit(point) && !_session.IsCgosBlackConnectionRunning)
                     {
                         OpenCgosPlayerConnectionLog(GoStone.Black);
                     }
@@ -309,7 +309,7 @@ public class Game1 : Game
                     {
                         TailCgosPlayerConnectionLog(GoStone.Black);
                     }
-                    else if (GoScreenRenderer.GetCgosWhiteCodeButtonHit(point))
+                    else if (GoScreenRenderer.GetCgosWhiteCodeButtonHit(point) && !_session.IsCgosWhiteConnectionRunning)
                     {
                         OpenCgosPlayerConnectionLog(GoStone.White);
                     }
