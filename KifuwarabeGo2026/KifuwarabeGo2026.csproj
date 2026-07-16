@@ -37,6 +37,16 @@
     <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.*" />
     <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.*" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Application\Cgos\ConnectionTarget\" />
+    <Folder Include="Application\Cgos\Connect\" />
+    <Folder Include="Application\Cgos\" />
+    <Folder Include="Application\Local\Resting\" />
+    <Folder Include="Presentation\Cgos\CgosConnectionTarget\" />
+    <Folder Include="Presentation\Cgos\CgosConnect\" />
+    <Folder Include="Presentation\Cgos\" />
+    <Folder Include="Presentation\Local\Resting\" />
+  </ItemGroup>
   <Target Name="RestoreDotnetTools" BeforeTargets="CollectPackageReferences">
     <Message Text="Restoring dotnet tools (this might take a while depending on your internet speed and should only happen upon building your project for the first time, or after upgrading MonoGame, or clearing your nuget cache)" Importance="High" />
     <Exec Command="dotnet tool restore" />
