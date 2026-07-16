@@ -1,14 +1,16 @@
 namespace KifuwarabeGo2026;
 
 using KifuwarabeGo2026.Application;
-using KifuwarabeGo2026.Application.Game;
-using KifuwarabeGo2026.Application.TournamentRulesSetting;
+using KifuwarabeGo2026.Application.Cgos.Connect;
+using KifuwarabeGo2026.Application.Cgos.ConnectionTarget;
+using KifuwarabeGo2026.Application.Local.Playing;
+using KifuwarabeGo2026.Application.Local.Resting.TournamentRule;
 using KifuwarabeGo2026.Domain;
 using KifuwarabeGo2026.Presentation;
-using KifuwarabeGo2026.Presentation.CgosConnect;
-using KifuwarabeGo2026.Presentation.CgosConnectionTarget;
-using KifuwarabeGo2026.Presentation.LocalResting;
-using KifuwarabeGo2026.Presentation.LocalResting.TournamentRule;
+using KifuwarabeGo2026.Presentation.Cgos.Connect;
+using KifuwarabeGo2026.Presentation.Cgos.ConnectionTarget;
+using KifuwarabeGo2026.Presentation.Local.Resting;
+using KifuwarabeGo2026.Presentation.Local.Resting.TournamentRule;
 using KifuwarabeGo2026.Presentation.Title;
 using KifuwarabeGo2026.Sgf;
 using Microsoft.Xna.Framework;

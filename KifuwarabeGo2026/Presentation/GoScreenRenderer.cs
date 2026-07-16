@@ -1,7 +1,9 @@
 namespace KifuwarabeGo2026.Presentation;
 
 using KifuwarabeGo2026.Application;
+using KifuwarabeGo2026.Application.Cgos.ConnectionTarget;
 using KifuwarabeGo2026.Domain;
+using KifuwarabeGo2026.Presentation.Local.Resting.TournamentRule;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;

@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Presentation.LocalResting;
+namespace KifuwarabeGo2026.Presentation.Local.Resting;
 
 using KifuwarabeGo2026.Application;
 using KifuwarabeGo2026.Presentation;

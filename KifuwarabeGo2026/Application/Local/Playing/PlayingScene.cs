@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Application.Game;
+namespace KifuwarabeGo2026.Application.Local.Playing;
 
 using KifuwarabeGo2026.Domain;
 using KifuwarabeGo2026.Gtp;

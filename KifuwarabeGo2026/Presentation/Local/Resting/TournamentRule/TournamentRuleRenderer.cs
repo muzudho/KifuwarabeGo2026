@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Presentation.LocalResting.TournamentRule;
+namespace KifuwarabeGo2026.Presentation.Local.Resting.TournamentRule;
 
 using KifuwarabeGo2026.Presentation;
 using Microsoft.Xna.Framework;

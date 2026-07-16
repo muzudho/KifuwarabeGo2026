@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Application.Game;
+namespace KifuwarabeGo2026.Application.Local.Playing;
 
 using System;
 using System.Collections.Generic;
