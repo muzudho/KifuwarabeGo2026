@@ -247,16 +247,18 @@ internal sealed class CgosClientOptions
 internal sealed class CgosAdminClient
 {
     private static readonly TimeSpan FirstServerLineTimeout = TimeSpan.FromSeconds(15);
+    private static readonly TimeSpan TcpConnectTimeout = TimeSpan.FromSeconds(15);
 
     private readonly CgosClientOptions _options;
     private readonly CgosAccount _account;
     private readonly object _logLock = new();
     private readonly string _logPath;
+    private bool _quitSent;
 
     public CgosAdminClient(CgosClientOptions options)
     {
         _options = options;
-        _account = options.Accounts.FirstOrDefault() ?? new CgosAccount("admin", "KifuwarabeB", "KifuwarabeB");
+        _account = new CgosAccount("admin", "admin", "admin");
         _logPath = Path.Combine(options.LogDirectory, $"cgos-admin-{DateTime.Now:yyyyMMdd-HHmmss}.log");
     }
 
@@ -270,12 +272,21 @@ internal sealed class CgosAdminClient
             using var tcp = new TcpClient();
             try
             {
-                await tcp.ConnectAsync(_options.Host, _options.Port, cancellationToken).AsTask().WaitAsync(TimeSpan.FromSeconds(15), cancellationToken);
+                Log($"# TCP connect timeout is {TcpConnectTimeout.TotalSeconds:0} seconds.");
+                var stopwatch = Stopwatch.StartNew();
+                await tcp.ConnectAsync(_options.Host, _options.Port, cancellationToken).AsTask().WaitAsync(TcpConnectTimeout, cancellationToken);
+                stopwatch.Stop();
+                Log($"# TCP connect completed in {stopwatch.Elapsed.TotalSeconds:0.000} seconds.");
             }
             catch (TimeoutException ex)
             {
-                Log($"# Could not connect to {_options.Host}:{_options.Port} within 15 seconds.");
-                throw new InvalidOperationException($"Could not connect to {_options.Host}:{_options.Port} within 15 seconds.", ex);
+                Log($"# TCP connect timed out after {TcpConnectTimeout.TotalSeconds:0} seconds: {_options.Host}:{_options.Port}.");
+                throw new InvalidOperationException($"Could not connect to {_options.Host}:{_options.Port} within {TcpConnectTimeout.TotalSeconds:0} seconds.", ex);
+            }
+            catch (SocketException ex)
+            {
+                Log($"# TCP connect failed: {ex.SocketErrorCode} {ex.Message}");
+                throw;
             }
 
             Log($"# Connected to {_options.Host}:{_options.Port}.");
@@ -349,7 +360,7 @@ internal sealed class CgosAdminClient
             {
                 try
                 {
-                    await SendAsync(writer, "quit");
+                    await SendQuitAsync(writer);
                 }
                 catch (Exception ex)
                 {
@@ -398,7 +409,7 @@ internal sealed class CgosAdminClient
                 line.Equals("exit", StringComparison.OrdinalIgnoreCase) ||
                 line.Equals("cancel", StringComparison.OrdinalIgnoreCase))
             {
-                await SendAsync(writer, "quit");
+                await SendQuitAsync(writer);
                 return;
             }
 
@@ -419,6 +430,17 @@ internal sealed class CgosAdminClient
         Log("< " + (maskInLog ? "(password)" : message));
     }
 
+    private async Task SendQuitAsync(StreamWriter writer)
+    {
+        if (_quitSent)
+        {
+            return;
+        }
+
+        await SendAsync(writer, "quit");
+        _quitSent = true;
+    }
+
     private void Log(string message)
     {
         var line = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} [admin] {message}";
@@ -434,6 +456,7 @@ internal sealed class CgosClient
 {
     private const string ClientIdPrefix = "e1 KifuwarabeGo2026.Cgos";
     private static readonly TimeSpan FirstServerLineTimeout = TimeSpan.FromSeconds(15);
+    private static readonly TimeSpan TcpConnectTimeout = TimeSpan.FromSeconds(15);
 
     private readonly CgosClientOptions _options;
     private readonly CgosAccount _account;
@@ -459,12 +482,21 @@ internal sealed class CgosClient
             using var tcp = new TcpClient();
             try
             {
-                await tcp.ConnectAsync(_options.Host, _options.Port, cancellationToken).AsTask().WaitAsync(TimeSpan.FromSeconds(15), cancellationToken);
+                Log($"# TCP connect timeout is {TcpConnectTimeout.TotalSeconds:0} seconds.");
+                var stopwatch = Stopwatch.StartNew();
+                await tcp.ConnectAsync(_options.Host, _options.Port, cancellationToken).AsTask().WaitAsync(TcpConnectTimeout, cancellationToken);
+                stopwatch.Stop();
+                Log($"# TCP connect completed in {stopwatch.Elapsed.TotalSeconds:0.000} seconds.");
             }
             catch (TimeoutException ex)
             {
-                Log($"# Could not connect to {_options.Host}:{_options.Port} within 15 seconds.");
-                throw new InvalidOperationException($"Could not connect to {_options.Host}:{_options.Port} within 15 seconds.", ex);
+                Log($"# TCP connect timed out after {TcpConnectTimeout.TotalSeconds:0} seconds: {_options.Host}:{_options.Port}.");
+                throw new InvalidOperationException($"Could not connect to {_options.Host}:{_options.Port} within {TcpConnectTimeout.TotalSeconds:0} seconds.", ex);
+            }
+            catch (SocketException ex)
+            {
+                Log($"# TCP connect failed: {ex.SocketErrorCode} {ex.Message}");
+                throw;
             }
 
             Log($"# Connected to {_options.Host}:{_options.Port}.");

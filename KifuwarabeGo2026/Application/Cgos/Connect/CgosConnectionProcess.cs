@@ -535,7 +535,9 @@ public sealed class CgosConnectionProcess : IDisposable
                 line.Contains("[Error]", StringComparison.OrdinalIgnoreCase) ||
                 line.Contains("Unhandled exception", StringComparison.OrdinalIgnoreCase) ||
                 line.Contains("Unsupported CGOS command", StringComparison.OrdinalIgnoreCase) ||
-                line.Contains("Could not connect", StringComparison.OrdinalIgnoreCase))
+                line.Contains("Could not connect", StringComparison.OrdinalIgnoreCase) ||
+                line.Contains("TCP connect timed out", StringComparison.OrdinalIgnoreCase) ||
+                line.Contains("TCP connect failed", StringComparison.OrdinalIgnoreCase))
             {
                 return "ERROR";
             }
