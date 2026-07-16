@@ -285,7 +285,7 @@ internal sealed class CgosAdminClient
             await using var cgosWriter = new StreamWriter(stream, new UTF8Encoding(false), leaveOpen: true) { NewLine = "\n", AutoFlush = true };
             writer = cgosWriter;
 
-            var inputTask = RelayAdminInputAsync(cgosWriter, cancellationToken);
+            Task? inputTask = null;
             var receivedAnyLine = false;
             while (!cancellationToken.IsCancellationRequested)
             {
@@ -332,9 +332,16 @@ internal sealed class CgosAdminClient
                 }
 
                 await HandleServerLineAsync(line, cgosWriter);
+                if (inputTask is null && line.StartsWith("password", StringComparison.OrdinalIgnoreCase))
+                {
+                    inputTask = RelayAdminInputAsync(cgosWriter, cancellationToken);
+                }
             }
 
-            await inputTask;
+            if (inputTask is not null)
+            {
+                await inputTask;
+            }
         }
         finally
         {
@@ -381,7 +388,7 @@ internal sealed class CgosAdminClient
                 return;
             }
 
-            line = line.Trim();
+            line = line.Trim().TrimStart('\uFEFF');
             if (line.Length == 0)
             {
                 continue;
