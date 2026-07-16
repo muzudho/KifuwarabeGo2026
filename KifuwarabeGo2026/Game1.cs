@@ -5,6 +5,11 @@ using KifuwarabeGo2026.Application.Game;
 using KifuwarabeGo2026.Application.TournamentRulesSetting;
 using KifuwarabeGo2026.Domain;
 using KifuwarabeGo2026.Presentation;
+using KifuwarabeGo2026.Presentation.CgosConnect;
+using KifuwarabeGo2026.Presentation.CgosConnectionTarget;
+using KifuwarabeGo2026.Presentation.LocalResting;
+using KifuwarabeGo2026.Presentation.LocalResting.TournamentRule;
+using KifuwarabeGo2026.Presentation.Title;
 using KifuwarabeGo2026.Sgf;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
@@ -189,15 +194,31 @@ public class Game1 : Game
         GraphicsDevice.Clear(new Color(11, 13, 18));
         if (_session.UseKind is null)
         {
-            _renderer?.DrawUseSelection(Mouse.GetState().Position);
+            if (_renderer is not null)
+            {
+                TitleRenderer.Draw(_renderer, Mouse.GetState().Position);
+            }
         }
         else if (_session.UseKind == GoAppUseKind.CgosClient)
         {
-            _renderer?.DrawCgosClientTop(_session, Mouse.GetState().Position);
+            if (_renderer is not null)
+            {
+                if (_session.CgosConnectionFlowKind == CgosConnectionFlowKind.ConnectionStart)
+                {
+                    CgosConnectRenderer.Draw(_renderer, _session, Mouse.GetState().Position);
+                }
+                else
+                {
+                    CgosConnectionTargetRenderer.Draw(_renderer, _session, Mouse.GetState().Position);
+                }
+            }
         }
         else
         {
-            _renderer?.Draw(_session, Mouse.GetState().Position);
+            if (_renderer is not null)
+            {
+                LocalRestingRenderer.Draw(_renderer, _session, Mouse.GetState().Position);
+            }
         }
 
         base.Draw(gameTime);
@@ -211,11 +232,11 @@ public class Game1 : Game
             var point = VirtualScreen.ToVirtualPoint(GraphicsDevice.Viewport, mouse.Position);
             if (_session.UseKind is null)
             {
-                if (GoScreenRenderer.GetLocalUseButtonHit(point))
+                if (TitleRenderer.IsLocalGameButtonHit(point))
                 {
                     _session.SelectUseKind(GoAppUseKind.LocalGame);
                 }
-                else if (GoScreenRenderer.GetCgosUseButtonHit(point))
+                else if (TitleRenderer.IsCgosClientButtonHit(point))
                 {
                     _session.SelectUseKind(GoAppUseKind.CgosClient);
                 }
@@ -347,7 +368,7 @@ public class Game1 : Game
             var handledByGtpEngineSelectionDialog = !handledByGtpEngineEditPanel && isSetupMode && !isBoardEditing && TryHandleGtpEngineSelectionDialogClick(point);
             Func<Point, string, int>? getDisplayNameCaretIndex = _renderer is null
                 ? null
-                : _renderer.GetTournamentRulesAddPanelDisplayNameCaretIndex;
+                : (caretPoint, text) => TournamentRuleRenderer.GetDisplayNameCaretIndex(_renderer, caretPoint, text);
             var handledByTournamentRulesSetting = !handledByGtpEngineEditPanel &&
                 !handledByGtpEngineSelectionDialog &&
                 isSetupMode &&
