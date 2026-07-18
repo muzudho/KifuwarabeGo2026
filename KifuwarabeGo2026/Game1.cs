@@ -7,6 +7,7 @@ using KifuwarabeGo2026.Application.Cgos.Watching;
 using KifuwarabeGo2026.Application.Local.Playing;
 using KifuwarabeGo2026.Application.Local.Resting.TournamentRule;
 using KifuwarabeGo2026.Domain;
+using KifuwarabeGo2026.Infrastructure.FileSystem;
 using KifuwarabeGo2026.Presentation;
 using KifuwarabeGo2026.Presentation.Cgos.Connect;
 using KifuwarabeGo2026.Presentation.Cgos.ConnectionTarget;
@@ -280,7 +281,7 @@ public class Game1 : Game
                     {
                         ExportSgf(
                             _cgosGameObservation.CreateGameRecord(),
-                            CreateCgosSgfFileName(_session.SelectedCgosConnectionProfile, _cgosGameObservation));
+                            CgosSgfFileNameBuilder.Create(_session.SelectedCgosConnectionProfile, _cgosGameObservation));
                     }
                     else if (GoScreenRenderer.GetCgosWatchingBackButtonHit(point))
                     {
@@ -1092,77 +1093,6 @@ public class Game1 : Game
         {
             ShowMessage(ex.Message, "SGF output");
         }
-    }
-
-    /// <summary>
-    /// CGOS 対局の内容から Windows で安全な SGF ファイル名を作成します。
-    /// </summary>
-    private static string CreateCgosSgfFileName(CgosConnectionProfile profile, CgosGameObservation observation)
-    {
-        const int maxBaseNameLength = 176;
-        var dateTime = observation.StartedAt.ToString("yyyyMMdd-HHmmss");
-        var black = SanitizeFileNamePart(observation.BlackPlayerName, "BLACK");
-        var white = SanitizeFileNamePart(observation.WhitePlayerName, "WHITE");
-        var eventName = SanitizeFileNamePart(profile.Event, "EVENT");
-        var role = SanitizeFileNamePart(profile.Role, "ROLE");
-        var baseName = $"{eventName}_{role}_{black}_{white}_{dateTime}";
-        if (baseName.Length > maxBaseNameLength)
-            baseName = $"{black}_{white}_{dateTime}";
-
-        if (baseName.Length > maxBaseNameLength)
-        {
-            black = black[..Math.Min(70, black.Length)];
-            white = white[..Math.Min(70, white.Length)];
-            baseName = $"{black}_{white}_{dateTime}";
-        }
-
-        return baseName + ".sgf";
-    }
-
-    /// <summary>
-    /// ファイル名に使用できない文字を構成要素から除去します。
-    /// </summary>
-    private static string SanitizeFileNamePart(string text, string fallback)
-    {
-        var invalidCharacters = Path.GetInvalidFileNameChars();
-        var builder = new StringBuilder(text.Length);
-        foreach (var token in text.Split(' ', StringSplitOptions.RemoveEmptyEntries))
-        {
-            var normalizedToken = NormalizeUppercaseFileNameToken(token);
-            foreach (var character in normalizedToken)
-            {
-                if (character >= ' ' && Array.IndexOf(invalidCharacters, character) < 0)
-                    builder.Append(character);
-            }
-        }
-
-        var sanitized = builder.ToString().Trim(' ', '.');
-        return string.IsNullOrWhiteSpace(sanitized) ? fallback : sanitized;
-    }
-
-    /// <summary>
-    /// すべて大文字の英単語を、先頭だけ大文字の表記へ変換します。
-    /// </summary>
-    private static string NormalizeUppercaseFileNameToken(string token)
-    {
-        var containsLetter = false;
-        foreach (var character in token)
-        {
-            if (!char.IsAsciiLetter(character)) continue;
-            containsLetter = true;
-            if (char.IsLower(character)) return token;
-        }
-
-        if (!containsLetter) return token;
-        var characters = token.ToLowerInvariant().ToCharArray();
-        for (var index = 0; index < characters.Length; index++)
-        {
-            if (!char.IsAsciiLetter(characters[index])) continue;
-            characters[index] = char.ToUpperInvariant(characters[index]);
-            break;
-        }
-
-        return new string(characters);
     }
 
     private static void ShowMessage(string message, string caption)
