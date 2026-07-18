@@ -76,10 +76,19 @@ public sealed partial class GoScreenRenderer
         DrawInfoStrip(1144, 188, "GAME", observation.GameId.ToString());
         DrawInfoStrip(1144, 252, "BOARD", $"{observation.BoardSize} x {observation.BoardSize}");
         DrawInfoStrip(1144, 316, "KOMI", observation.Komi.ToString("0.0"));
-        DrawInfoStrip(1144, 404, "WHITE", observation.WhitePlayerName);
-        DrawInfoStrip(1144, 468, "BLACK", observation.BlackPlayerName);
-        DrawInfoStrip(1144, 556, "MOVES", observation.MoveCount.ToString());
-        DrawInfoStrip(1144, 620, "TURN", observation.CurrentTurn == GoStone.Black ? "BLACK" : "WHITE");
+        DrawBothPlayersComponent(
+            1144,
+            392,
+            668,
+            observation.BlackPlayerName,
+            observation.WhitePlayerName,
+            observation.BlackElapsedTime,
+            observation.WhiteElapsedTime,
+            observation.MainTime,
+            observation.BlackAgehama,
+            observation.WhiteAgehama,
+            observation.CurrentTurn);
+        DrawInfoStrip(1144, 596, "MOVES", observation.MoveCount.ToString());
 
         if (observation.IsFinished)
         {

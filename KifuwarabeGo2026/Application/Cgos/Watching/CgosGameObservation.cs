@@ -27,6 +27,13 @@ public sealed class CgosGameObservation
     public int MoveCount { get; private set; }
     public string Result { get; private set; } = "";
     public DateTime StartedAt { get; private set; }
+    public TimeSpan MainTime { get; private set; }
+    public TimeSpan BlackRemainingTime { get; private set; }
+    public TimeSpan WhiteRemainingTime { get; private set; }
+    public TimeSpan BlackElapsedTime => MainTime - BlackRemainingTime;
+    public TimeSpan WhiteElapsedTime => MainTime - WhiteRemainingTime;
+    public int BlackAgehama { get; private set; }
+    public int WhiteAgehama { get; private set; }
 
     public GoStone GetStone(int x, int y) => _board.GetStone(x, y);
 
@@ -67,7 +74,7 @@ public sealed class CgosGameObservation
 
         var generated = displayLine[(marker + 14)..].Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         if (generated.Length >= 3 && generated[1].Equals("move:", StringComparison.OrdinalIgnoreCase))
-            return ApplyMove(ParseStone(generated[0]), generated[2]);
+            return ApplyMove(ParseStone(generated[0]), generated[2], null);
 
         return false;
     }
@@ -83,7 +90,7 @@ public sealed class CgosGameObservation
         }
         else if (parts[0].Equals("play", StringComparison.OrdinalIgnoreCase) && parts.Length >= 3)
         {
-            return ApplyMove(ParseStone(parts[1]), parts[2]);
+            return ApplyMove(ParseStone(parts[1]), parts[2], parts.Length >= 4 ? parts[3] : null);
         }
         else if (parts[0].Equals("gameover", StringComparison.OrdinalIgnoreCase))
         {
@@ -115,6 +122,12 @@ public sealed class CgosGameObservation
         BlackPlayerName = StripRank(parts[6]);
         CurrentTurn = GoStone.Black;
         MoveCount = 0;
+        var mainTimeMilliseconds = long.TryParse(parts[4], out var parsedMainTime) ? Math.Max(0, parsedMainTime) : 0;
+        MainTime = TimeSpan.FromMilliseconds(mainTimeMilliseconds);
+        BlackRemainingTime = MainTime;
+        WhiteRemainingTime = MainTime;
+        BlackAgehama = 0;
+        WhiteAgehama = 0;
         _moves.Clear();
         Result = "";
         IsFinished = false;
@@ -123,7 +136,7 @@ public sealed class CgosGameObservation
 
         for (var index = 7; index + 1 < parts.Length; index += 2)
         {
-            ApplyMove(CurrentTurn, parts[index]);
+            ApplyMove(CurrentTurn, parts[index], parts[index + 1]);
         }
     }
 
@@ -133,7 +146,7 @@ public sealed class CgosGameObservation
     /// <param name="stone"></param>
     /// <param name="vertex"></param>
     /// <returns></returns>
-    private bool ApplyMove(GoStone stone, string vertex)
+    private bool ApplyMove(GoStone stone, string vertex, string? remainingTimeMilliseconds)
     {
         if (!IsStarted || IsFinished || stone == GoStone.Empty || stone != CurrentTurn) return false;
 
@@ -141,11 +154,15 @@ public sealed class CgosGameObservation
         if (!GtpCoordinate.IsPass(vertex))
         {
             if (!GtpCoordinate.TryParseVertex(vertex, BoardSize, out var point) ||
-                !_board.TryPlaceStone(point.X, point.Y, stone, _koPoint, out _, out var nextKoPoint))
+                !_board.TryPlaceStone(point.X, point.Y, stone, _koPoint, out var capturedStones, out var nextKoPoint))
                 return false;
 
             _koPoint = nextKoPoint;
             movePoint = point;
+            if (stone == GoStone.Black)
+                BlackAgehama += capturedStones;
+            else
+                WhiteAgehama += capturedStones;
         }
         else
         {
@@ -153,6 +170,14 @@ public sealed class CgosGameObservation
         }
 
         _moves.Add(new GoGameMove(stone, movePoint));
+        if (long.TryParse(remainingTimeMilliseconds, out var remainingMilliseconds))
+        {
+            var remaining = TimeSpan.FromMilliseconds(Math.Clamp(remainingMilliseconds, 0, (long)MainTime.TotalMilliseconds));
+            if (stone == GoStone.Black)
+                BlackRemainingTime = remaining;
+            else
+                WhiteRemainingTime = remaining;
+        }
         MoveCount++;
         CurrentTurn = stone == GoStone.Black ? GoStone.White : GoStone.Black;
         return movePoint is not null;

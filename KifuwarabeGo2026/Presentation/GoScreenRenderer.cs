@@ -272,17 +272,21 @@ public sealed partial class GoScreenRenderer
         DrawInfoStrip(1144, 244, "NEXT", GetMoveThinkingText(session));
 
         DrawText("PLAYERS", new Vector2(1144, 300), new Color(180, 195, 195), 0.62f);
-        DrawPlayerIdentityStrip(1144, 348, session.GetLocalPlayerName(GoStone.Black), black: true, session.CurrentTurn == GoStone.Black);
-        DrawPlayerIdentityStrip(1144, 446, session.GetLocalPlayerName(GoStone.White), black: false, session.CurrentTurn == GoStone.White);
+        DrawBothPlayersComponent(
+            1144,
+            348,
+            668,
+            session.GetLocalPlayerName(GoStone.Black),
+            session.GetLocalPlayerName(GoStone.White),
+            session.BlackElapsedTime,
+            session.WhiteElapsedTime,
+            session.MainTime,
+            session.BlackAgehama,
+            session.WhiteAgehama,
+            session.CurrentTurn);
 
-        DrawText("TIME", new Vector2(1144, 544), new Color(180, 195, 195), 0.62f);
-        DrawTimeStrip(session, 592);
-
-        DrawText("AGEHAMA", new Vector2(1144, 688), new Color(180, 195, 195), 0.52f);
-        DrawAgehamaStrip(session, 728);
-
-        DrawText("PURE GO SCORE", new Vector2(1144, 792), new Color(180, 195, 195), 0.52f);
-        DrawStoneCountStrip(session, 826);
+        DrawText("PURE GO SCORE", new Vector2(1144, 570), new Color(180, 195, 195), 0.52f);
+        DrawStoneCountStrip(session, 610);
 
         if (HasComputerPlayer(session))
         {
@@ -510,15 +514,6 @@ public sealed partial class GoScreenRenderer
         if (active) DrawTextBoxCaret(text, session.HumanPlayerNameCaretIndex, HumanPlayerNameTextBounds(y), 0.42f);
     }
 
-    private void DrawPlayerIdentityStrip(int x, int y, string playerName, bool black, bool active)
-    {
-        var bounds = new Rectangle(x, y, 668, 56);
-        DrawDataRowFrame(bounds, active);
-        DrawStone(new Vector2(bounds.X + 32, bounds.Center.Y), 17, black);
-        DrawFittedText(playerName, new Rectangle(bounds.X + 64, bounds.Y + 7, bounds.Width - 82, 40), Color.White, 0.5f);
-        if (active) FillRect(new Rectangle(bounds.X + 62, bounds.Bottom - 5, bounds.Width - 80, 2), new Color(99, 223, 185));
-    }
-
     private const int AddPanelControlX = 626;
 
     private const int AddPanelBoardSizeButtonY = 452;
@@ -731,27 +726,6 @@ public sealed partial class GoScreenRenderer
         DrawText("AGEHAMA", new Vector2(bounds.X + 20, bounds.Y + 16), new Color(180, 195, 195), 0.46f);
         DrawText($"BLACK {session.BlackAgehama}", new Vector2(bounds.X + 220, bounds.Y + 14), Color.White, 0.5f);
         DrawText($"WHITE {session.WhiteAgehama}", new Vector2(bounds.X + 430, bounds.Y + 14), Color.White, 0.5f);
-    }
-
-    private void DrawTimeStrip(GoAppSession session, int y)
-    {
-        var bounds = new Rectangle(1144, y, 668, 74);
-        FillRect(bounds, new Color(24, 31, 37));
-        DrawRect(bounds, 1, new Color(70, 85, 94));
-
-        var blackActive = session.CurrentMode.Kind == GoAppModeKind.Playing && session.CurrentTurn == GoStone.Black;
-        var whiteActive = session.CurrentMode.Kind == GoAppModeKind.Playing && session.CurrentTurn == GoStone.White;
-        DrawPlayerTime(new Rectangle(bounds.X + 18, bounds.Y + 14, 300, 46), "BLACK", session.BlackElapsedTime, blackActive, blackStone: true);
-        DrawPlayerTime(new Rectangle(bounds.X + 350, bounds.Y + 14, 300, 46), "WHITE", session.WhiteElapsedTime, whiteActive, blackStone: false);
-    }
-
-    private void DrawPlayerTime(Rectangle bounds, string label, TimeSpan elapsed, bool active, bool blackStone)
-    {
-        FillRect(bounds, active ? new Color(39, 68, 65) : new Color(30, 36, 43));
-        DrawRect(bounds, 1, active ? new Color(99, 223, 185) : new Color(70, 85, 94));
-        DrawCircle(new Vector2(bounds.X + 24, bounds.Center.Y), 9, blackStone ? new Color(10, 12, 16) : new Color(230, 224, 207));
-        DrawText(label, new Vector2(bounds.X + 46, bounds.Y + 14), new Color(180, 195, 195), 0.38f);
-        DrawText(FormatElapsedTime(elapsed), new Vector2(bounds.X + 154, bounds.Y + 10), Color.White, 0.56f);
     }
 
     private void DrawStoneCountStrip(GoAppSession session, int y)
