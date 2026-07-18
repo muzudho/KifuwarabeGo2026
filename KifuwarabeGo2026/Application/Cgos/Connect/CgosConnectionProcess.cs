@@ -67,11 +67,6 @@ public sealed class CgosConnectionProcess : IDisposable
 
         var repositoryRoot = FindRepositoryRoot();
         var executablePath = GetCgosCommunicationExecutablePath(repositoryRoot);
-        if (!File.Exists(executablePath))
-        {
-            throw new FileNotFoundException("CGOS communication executable was not found. Build the solution first.", executablePath);
-        }
-
         var runLabel = blackEngineProfile is not null && whiteEngineProfile is null
             ? "BlackPlayer"
             : whiteEngineProfile is not null && blackEngineProfile is null
@@ -81,6 +76,7 @@ public sealed class CgosConnectionProcess : IDisposable
         Directory.CreateDirectory(LogDirectory);
         _guiLogPath = Path.Combine(LogDirectory, $"gui-{runLabel.ToLowerInvariant()}-{_startedAt:yyyyMMdd-HHmmss}.log");
         _standardErrorLogPath = Path.Combine(LogDirectory, $"standard-error-{runLabel.ToLowerInvariant()}-{_startedAt:yyyyMMdd-HHmmss}.log");
+        ValidateCgosCommunicationExecutable(executablePath);
 
         try
         {
@@ -120,15 +116,12 @@ public sealed class CgosConnectionProcess : IDisposable
 
         var repositoryRoot = FindRepositoryRoot();
         var executablePath = GetCgosCommunicationExecutablePath(repositoryRoot);
-        if (!File.Exists(executablePath))
-        {
-            throw new FileNotFoundException("CGOS communication executable was not found. Build the solution first.", executablePath);
-        }
 
         LogDirectory = Path.Combine(repositoryRoot, "Logs", "Cgos", "Admin");
         Directory.CreateDirectory(LogDirectory);
         _guiLogPath = Path.Combine(LogDirectory, $"gui-admin-{_startedAt:yyyyMMdd-HHmmss}.log");
         _standardErrorLogPath = Path.Combine(LogDirectory, $"standard-error-admin-{_startedAt:yyyyMMdd-HHmmss}.log");
+        ValidateCgosCommunicationExecutable(executablePath);
 
         var startInfo = new ProcessStartInfo
         {
@@ -695,6 +688,38 @@ public sealed class CgosConnectionProcess : IDisposable
         return trimmed.Contains(' ') || trimmed.Contains('\t')
             ? "\"" + trimmed.Replace("\"", "\"\"") + "\""
             : trimmed;
+    }
+
+    private void ValidateCgosCommunicationExecutable(string executablePath)
+    {
+        var directory = Path.GetDirectoryName(executablePath) ?? "";
+        var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(executablePath);
+        var requiredPaths = new[]
+        {
+            executablePath,
+            Path.Combine(directory, fileNameWithoutExtension + ".dll"),
+            Path.Combine(directory, fileNameWithoutExtension + ".deps.json"),
+            Path.Combine(directory, fileNameWithoutExtension + ".runtimeconfig.json"),
+        };
+
+        var missingPaths = requiredPaths
+            .Where(path => !File.Exists(path))
+            .ToArray();
+        if (missingPaths.Length == 0)
+        {
+            return;
+        }
+
+        AddOutput("# CGOS communication executable is incomplete.");
+        foreach (var missingPath in missingPaths)
+        {
+            AddOutput("# Missing CGOS communication runtime file: " + missingPath);
+        }
+
+        throw new FileNotFoundException(
+            "CGOS communication executable is incomplete. Build KifuwarabeGo2026.Communication.Cgos first. Missing: " +
+            string.Join(", ", missingPaths.Select(Path.GetFileName)),
+            missingPaths[0]);
     }
 
     private static string FindRepositoryRoot()
