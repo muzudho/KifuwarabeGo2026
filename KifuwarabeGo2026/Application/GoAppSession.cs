@@ -209,6 +209,8 @@ public sealed class GoAppSession
 
     public bool IsGtpEngineSelectionDialogOpen { get; private set; }
 
+    public bool IsGtpEngineSelectionForCgos { get; private set; }
+
     public GoStone GtpEngineSelectionTargetStone { get; private set; } = GoStone.Black;
 
     public bool IsGtpEngineDeleteConfirmationOpen { get; private set; }
@@ -376,45 +378,6 @@ public sealed class GoAppSession
 
         CgosConnectionStatusMessage = "CONNECT REQUESTED";
     }
-
-    public void MoveCgosGtpEngineSelection(GoStone stone, int step)
-    {
-        if (IsCgosPlayerConnectionRunning(stone) || _gtpEngineProfiles.Count == 0) return;
-
-        var selectedIndex = GetSelectedCgosGtpEngineIndex(stone);
-        var baseIndex = selectedIndex ?? (step < 0 ? _gtpEngineProfiles.Count : -1);
-        SetSelectedCgosGtpEngineIndex(stone, Math.Clamp(baseIndex + step, 0, _gtpEngineProfiles.Count - 1));
-        CgosConnectionStatusMessage = "READY";
-    }
-
-    public bool CanMoveCgosGtpEngineSelection(GoStone stone, int step)
-    {
-        if (IsCgosPlayerConnectionRunning(stone) || _gtpEngineProfiles.Count == 0) return false;
-
-        var selectedIndex = GetSelectedCgosGtpEngineIndex(stone);
-        var baseIndex = selectedIndex ?? (step < 0 ? _gtpEngineProfiles.Count : -1);
-        return Math.Clamp(baseIndex + step, 0, _gtpEngineProfiles.Count - 1) != selectedIndex;
-    }
-
-    public void ClearCgosGtpEngineSelection(GoStone stone)
-    {
-        if (IsCgosPlayerConnectionRunning(stone)) return;
-
-        SetSelectedCgosGtpEngineIndex(stone, null);
-        CgosConnectionStatusMessage = HasSelectedCgosGtpEngine ? "READY" : "SELECT ENGINE";
-    }
-
-    public bool CanClearCgosGtpEngineSelection(GoStone stone) =>
-        !IsCgosPlayerConnectionRunning(stone) &&
-        GetSelectedCgosGtpEngineIndex(stone) is not null;
-
-    /// <summary>
-    /// 指定したプレイヤーの CGOS 接続処理が動作中か判定します。
-    /// </summary>
-    private bool IsCgosPlayerConnectionRunning(GoStone stone) =>
-        stone == GoStone.Black
-            ? IsCgosBlackConnectionRunning
-            : IsCgosWhiteConnectionRunning;
 
     public void SetCgosConnectionProcessStatus(string statusMessage, bool isRunning, string logDirectory, IReadOnlyList<string> recentOutput)
     {
@@ -1219,6 +1182,12 @@ public sealed class GoAppSession
             throw new ArgumentOutOfRangeException(nameof(index), index, "GTP engine index is out of range.");
         }
 
+        if (IsGtpEngineSelectionForCgos)
+        {
+            SetSelectedCgosGtpEngineIndex(stone, index);
+            return;
+        }
+
         if (stone == GoStone.Black)
         {
             SelectedBlackGtpEngineIndex = index;
@@ -1236,6 +1205,21 @@ public sealed class GoAppSession
 
     public void OpenGtpEngineSelectionDialog(GoStone stone)
     {
+        IsGtpEngineSelectionForCgos = false;
+        OpenGtpEngineSelectionDialogCore(stone);
+    }
+
+    /// <summary>
+    /// CGOSプレイヤー用の共通GTPエンジン選択ダイアログを開きます。
+    /// </summary>
+    public void OpenCgosGtpEngineSelectionDialog(GoStone stone)
+    {
+        IsGtpEngineSelectionForCgos = true;
+        OpenGtpEngineSelectionDialogCore(stone);
+    }
+
+    private void OpenGtpEngineSelectionDialogCore(GoStone stone)
+    {
         if (stone is not (GoStone.Black or GoStone.White))
         {
             throw new ArgumentOutOfRangeException(nameof(stone), stone, "GTP engine can be selected only for black or white.");
@@ -1249,8 +1233,8 @@ public sealed class GoAppSession
         IsGtpEngineSelectionDialogOpen = true;
         IsGtpEngineDeleteConfirmationOpen = false;
         GtpEngineSelectionTargetStone = stone;
-        var selectedIndex = stone == GoStone.Black ? SelectedBlackGtpEngineIndex : SelectedWhiteGtpEngineIndex;
-        GtpEngineSelectionPageIndex = selectedIndex / GtpEngineSelectionPageSize;
+        var selectedIndex = SelectedGtpEngineIndex;
+        GtpEngineSelectionPageIndex = Math.Max(0, selectedIndex) / GtpEngineSelectionPageSize;
     }
 
     public void CloseGtpEngineSelectionDialog()
@@ -1334,7 +1318,10 @@ public sealed class GoAppSession
         ActiveGtpEngineEditField = null;
         GtpEngineEditWarning = "";
         GtpEngineEditSaveMessage = "";
-        OpenGtpEngineSelectionDialog(GtpEngineSelectionTargetStone);
+        if (IsGtpEngineSelectionForCgos)
+            OpenCgosGtpEngineSelectionDialog(GtpEngineSelectionTargetStone);
+        else
+            OpenGtpEngineSelectionDialog(GtpEngineSelectionTargetStone);
     }
 
     public void MoveGtpEngineSelectionPage(int step)
@@ -1348,8 +1335,9 @@ public sealed class GoAppSession
         SelectedGtpEngineIndex >= 0 &&
         SelectedGtpEngineIndex < _gtpEngineProfiles.Count;
 
-    public int SelectedGtpEngineIndex =>
-        GtpEngineSelectionTargetStone == GoStone.Black ? SelectedBlackGtpEngineIndex : SelectedWhiteGtpEngineIndex;
+    public int SelectedGtpEngineIndex => IsGtpEngineSelectionForCgos
+        ? GetSelectedCgosGtpEngineIndex(GtpEngineSelectionTargetStone) ?? -1
+        : GtpEngineSelectionTargetStone == GoStone.Black ? SelectedBlackGtpEngineIndex : SelectedWhiteGtpEngineIndex;
 
     public void ReplaceSelectedGtpEngine(GtpEngineProfile profile)
     {

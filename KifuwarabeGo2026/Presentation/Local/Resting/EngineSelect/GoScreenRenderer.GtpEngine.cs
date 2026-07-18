@@ -125,7 +125,7 @@ public sealed partial class GoScreenRenderer
     public static bool TryGetGtpEngineSelectionDialogPathCopyText(Point point, GoAppSession session, out string text)
     {
         text = "";
-        var selectedIndex = session.GtpEngineSelectionTargetStone == GoStone.Black ? session.SelectedBlackGtpEngineIndex : session.SelectedWhiteGtpEngineIndex;
+        var selectedIndex = session.SelectedGtpEngineIndex;
         if (selectedIndex < 0 || selectedIndex >= session.GtpEngineProfiles.Count)
         {
             return false;
@@ -168,7 +168,9 @@ public sealed partial class GoScreenRenderer
         FillRect(GtpEngineSelectionDialogBounds, new Color(19, 24, 31, 248));
         DrawRect(GtpEngineSelectionDialogBounds, 2, new Color(116, 145, 146));
 
-        var target = session.GtpEngineSelectionTargetStone == GoStone.Black ? "BLACK" : "WHITE";
+        var target = session.IsGtpEngineSelectionForCgos
+            ? session.GtpEngineSelectionTargetStone == GoStone.Black ? "CGOS PLAYER 1" : "CGOS PLAYER 2"
+            : session.GtpEngineSelectionTargetStone == GoStone.Black ? "BLACK" : "WHITE";
         DrawText($"GTP ENGINE SELECT  {target}", new Vector2(GtpEngineSelectionDialogBounds.X + 30, GtpEngineSelectionDialogBounds.Y + 24), new Color(244, 238, 218), 0.78f);
         DrawCommandButton(GtpEngineSelectionDialogCloseButtonBounds, "CLOSE", false, mousePoint, scale: 0.42f);
 
@@ -321,7 +323,7 @@ public sealed partial class GoScreenRenderer
     private void DrawGtpEngineSelectionListItem(Rectangle bounds, GoAppSession session, int index, Point mousePoint)
     {
         var profile = session.GtpEngineProfiles[index];
-        var selectedIndex = session.GtpEngineSelectionTargetStone == GoStone.Black ? session.SelectedBlackGtpEngineIndex : session.SelectedWhiteGtpEngineIndex;
+        var selectedIndex = session.SelectedGtpEngineIndex;
         var selected = index == selectedIndex;
         var hovered = bounds.Contains(mousePoint);
         FillRect(bounds, selected ? new Color(38, 103, 86) : hovered ? new Color(43, 52, 62) : new Color(24, 31, 37));
@@ -337,7 +339,7 @@ public sealed partial class GoScreenRenderer
         FillRect(GtpEngineSelectionDialogPropertyBounds, new Color(15, 20, 26));
         DrawRect(GtpEngineSelectionDialogPropertyBounds, 1, new Color(67, 84, 92));
 
-        var selectedIndex = session.GtpEngineSelectionTargetStone == GoStone.Black ? session.SelectedBlackGtpEngineIndex : session.SelectedWhiteGtpEngineIndex;
+        var selectedIndex = session.SelectedGtpEngineIndex;
         if (selectedIndex < 0 || selectedIndex >= session.GtpEngineProfiles.Count)
         {
             DrawText("NO ENGINE", new Vector2(GtpEngineSelectionDialogPropertyBounds.X + 24, GtpEngineSelectionDialogPropertyBounds.Y + 24), Color.White, 0.5f);
@@ -501,7 +503,7 @@ public sealed partial class GoScreenRenderer
         new(GtpEngineSelectionDialogPropertyBounds.X + 18, GtpEngineSelectionDialogPropertyBounds.Y + 22 + index * 70, GtpEngineSelectionDialogPropertyBounds.Width - 36, 52);
 
 
-    private static LabeledBrowseSelector GtpEngineSelectorBounds(int y) => new(new Rectangle(1144, y - 4, 668, 44), "ENGINE", "");
+    private static LabeledBrowseSelector GtpEngineSelectorBounds(int y) => new(new Rectangle(1144, y - 4, 668, 44), "ENGINE", "", "SELECT");
 
 
     private static string SaveGtpEngineLabel(GoAppSession session) =>

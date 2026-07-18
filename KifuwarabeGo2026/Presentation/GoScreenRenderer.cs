@@ -648,7 +648,7 @@ public sealed partial class GoScreenRenderer
 
         DrawFittedText(selector.Label, selector.LabelBounds, new Color(158, 178, 178), 0.36f);
         DrawFittedText(selector.Value, selector.ValueBounds, Color.White, 0.52f);
-        DrawCommandButton(selector.BrowseButtonBounds, "REF", false, mousePoint, scale: 0.44f);
+        DrawCommandButton(selector.BrowseButtonBounds, selector.ButtonLabel, false, mousePoint, enabled: selector.Enabled, scale: 0.34f);
     }
 
     private void DrawDataRowFrame(Rectangle bounds, bool active = false, bool hovered = false)

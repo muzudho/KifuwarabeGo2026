@@ -275,6 +275,12 @@ public class Game1 : Game
             // ［CGOS　＞　観戦画面］マウス入力
             if (_session.UseKind == GoAppUseKind.CgosClient)
             {
+                if (TryHandleGtpEngineEditPanelClick(point) || TryHandleGtpEngineSelectionDialogClick(point))
+                {
+                    _previousMouse = mouse;
+                    return;
+                }
+
                 if (_session.CgosConnectionFlowKind == CgosConnectionFlowKind.Result)
                 {
                     if (GoScreenRenderer.GetCgosWatchingExportSgfButtonHit(point))
@@ -311,17 +317,9 @@ public class Game1 : Game
                         if (_session.IsAnyCgosProcessRunning) DisconnectAllCgosProcesses();
                         _session.ReturnToCgosConnectionProfiles();
                     }
-                    else if (GoScreenRenderer.GetCgosConnectionEnginePreviousButtonHit(point) is { } previousEngineStone)
+                    else if (GoScreenRenderer.GetCgosConnectionEngineSelectButtonHit(point, _session) is { } engineStone)
                     {
-                        _session.MoveCgosGtpEngineSelection(previousEngineStone, -1);
-                    }
-                    else if (GoScreenRenderer.GetCgosConnectionEngineNextButtonHit(point) is { } nextEngineStone)
-                    {
-                        _session.MoveCgosGtpEngineSelection(nextEngineStone, 1);
-                    }
-                    else if (GoScreenRenderer.GetCgosConnectionEngineClearButtonHit(point) is { } clearEngineStone)
-                    {
-                        _session.ClearCgosGtpEngineSelection(clearEngineStone);
+                        _session.OpenCgosGtpEngineSelectionDialog(engineStone);
                     }
                     else if (GoScreenRenderer.GetCgosAdminButtonHit(point, _session.CgosConnectionProfiles.Count > 0))
                     {
