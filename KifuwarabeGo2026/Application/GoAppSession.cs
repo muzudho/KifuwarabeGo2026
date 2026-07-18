@@ -368,10 +368,7 @@ public sealed class GoAppSession
 
     public void MoveCgosGtpEngineSelection(GoStone stone, int step)
     {
-        if (IsAnyCgosProcessRunning || _gtpEngineProfiles.Count == 0)
-        {
-            return;
-        }
+        if (IsCgosPlayerConnectionRunning(stone) || _gtpEngineProfiles.Count == 0) return;
 
         var selectedIndex = GetSelectedCgosGtpEngineIndex(stone);
         var baseIndex = selectedIndex ?? (step < 0 ? _gtpEngineProfiles.Count : -1);
@@ -381,10 +378,7 @@ public sealed class GoAppSession
 
     public bool CanMoveCgosGtpEngineSelection(GoStone stone, int step)
     {
-        if (IsAnyCgosProcessRunning || _gtpEngineProfiles.Count == 0)
-        {
-            return false;
-        }
+        if (IsCgosPlayerConnectionRunning(stone) || _gtpEngineProfiles.Count == 0) return false;
 
         var selectedIndex = GetSelectedCgosGtpEngineIndex(stone);
         var baseIndex = selectedIndex ?? (step < 0 ? _gtpEngineProfiles.Count : -1);
@@ -393,7 +387,7 @@ public sealed class GoAppSession
 
     public void ClearCgosGtpEngineSelection(GoStone stone)
     {
-        if (IsAnyCgosProcessRunning)
+        if (IsCgosPlayerConnectionRunning(stone))
         {
             return;
         }
@@ -403,8 +397,16 @@ public sealed class GoAppSession
     }
 
     public bool CanClearCgosGtpEngineSelection(GoStone stone) =>
-        !IsAnyCgosProcessRunning &&
+        !IsCgosPlayerConnectionRunning(stone) &&
         GetSelectedCgosGtpEngineIndex(stone) is not null;
+
+    /// <summary>
+    /// 指定したプレイヤーの CGOS 接続処理が動作中か判定します。
+    /// </summary>
+    private bool IsCgosPlayerConnectionRunning(GoStone stone) =>
+        stone == GoStone.Black
+            ? IsCgosBlackConnectionRunning
+            : IsCgosWhiteConnectionRunning;
 
     public void SetCgosConnectionProcessStatus(string statusMessage, bool isRunning, string logDirectory, IReadOnlyList<string> recentOutput)
     {
