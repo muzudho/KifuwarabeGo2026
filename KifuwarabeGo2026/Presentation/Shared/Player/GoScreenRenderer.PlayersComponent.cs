@@ -1,5 +1,6 @@
 namespace KifuwarabeGo2026.Presentation;
 
+using KifuwarabeGo2026.Application;
 using Microsoft.Xna.Framework;
 using System;
 
@@ -8,6 +9,19 @@ using System;
 /// </summary>
 public sealed partial class GoScreenRenderer
 {
+    public static bool GetEngineErrorLogHit(Point point, GoAppSession session)
+    {
+        if (session.CurrentMode.Kind != GoAppModeKind.Playing || session.EngineErrorStone is not { } errorStone)
+        {
+            return false;
+        }
+
+        var playerBounds = errorStone == Domain.GoStone.Black
+            ? new Rectangle(1144, 348, 668, 88)
+            : new Rectangle(1144, 444, 668, 88);
+        return PlayerEngineErrorBounds(playerBounds).Contains(point);
+    }
+
     /// <summary>
     /// 黒番と白番の名前、時間、アゲハマを共通レイアウトで描画します。
     /// </summary>
@@ -51,7 +65,10 @@ public sealed partial class GoScreenRenderer
         DrawFittedText($"USED {elapsedText} / LIMIT {mainTimeText}    AGEHAMA {agehama}", statusBounds, new Color(204, 211, 206), 0.34f);
         if (engineError)
         {
-            DrawFittedText("ENGINE ERROR", new Rectangle(bounds.Right - 190, bounds.Y + 48, 172, 30), new Color(255, 96, 96), 0.34f);
+            DrawFittedText("ENGINE ERROR", PlayerEngineErrorBounds(bounds), new Color(255, 96, 96), 0.34f);
         }
     }
+
+    private static Rectangle PlayerEngineErrorBounds(Rectangle playerBounds) =>
+        new(playerBounds.Right - 190, playerBounds.Y + 48, 172, 30);
 }

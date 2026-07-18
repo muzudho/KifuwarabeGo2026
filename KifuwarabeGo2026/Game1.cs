@@ -21,6 +21,7 @@ using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 
@@ -257,9 +258,13 @@ public class Game1 : Game
     private void UpdateMouseInput()
     {
         var mouse = Mouse.GetState();
+        var point = VirtualScreen.ToVirtualPoint(GraphicsDevice.Viewport, mouse.Position);
+        var engineErrorLogHovered = _session.UseKind == GoAppUseKind.LocalGame &&
+            GoScreenRenderer.GetEngineErrorLogHit(point, _session);
+        Mouse.SetCursor(engineErrorLogHovered ? MouseCursor.Hand : MouseCursor.Arrow);
+
         if (_previousMouse.LeftButton == ButtonState.Released && mouse.LeftButton == ButtonState.Pressed)
         {
-            var point = VirtualScreen.ToVirtualPoint(GraphicsDevice.Viewport, mouse.Position);
             if (_session.UseKind is null)
             {
                 if (TitleRenderer.IsLocalGameButtonHit(point))
@@ -525,6 +530,10 @@ public class Game1 : Game
             {
                 BeginHumanPlayerNameEdit(point, playerNameStone);
             }
+            else if (GoScreenRenderer.GetEngineErrorLogHit(point, _session))
+            {
+                OpenEngineLog();
+            }
             else
             {
                 _playingScene.TryHandleMouseClick(point);
@@ -532,6 +541,38 @@ public class Game1 : Game
         }
 
         _previousMouse = mouse;
+    }
+
+    private void OpenEngineLog()
+    {
+        var logPath = Path.GetFullPath(_session.EngineLogPath);
+        if (!File.Exists(logPath))
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(logPath)!);
+            File.WriteAllText(
+                logPath,
+                $"# ENGINE ERROR {DateTimeOffset.Now:O}{Environment.NewLine}{_session.EngineErrorMessage}{Environment.NewLine}",
+                new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        }
+
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = logPath,
+                UseShellExecute = true,
+            });
+        }
+        catch
+        {
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = "notepad",
+                UseShellExecute = true,
+            };
+            startInfo.ArgumentList.Add(logPath);
+            Process.Start(startInfo);
+        }
     }
 
     private bool TryHandleBoardEditingClick(Point point)
