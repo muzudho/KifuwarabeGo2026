@@ -44,6 +44,8 @@ public class Game1 : Game
     private KeyboardState _previousKeyboard;
     private KeyboardState _previousGtpEngineKeyboard;
     private readonly TextBoxController _gtpEngineEditTextBox = new(520);
+    private readonly TextBoxController _humanPlayerNameTextBox = new(80);
+    private KeyboardState _previousHumanPlayerNameKeyboard;
     private KeyboardState _previousCgosConnectionKeyboard;
     private readonly TextBoxController _cgosConnectionEditTextBox = new(240);
 
@@ -107,6 +109,7 @@ public class Game1 : Game
         _playingScene.Update();
         _session.AddCurrentTurnElapsedTime(gameTime.ElapsedGameTime);
         UpdateGlobalKeyboardInput(keyboard);
+        UpdateHumanPlayerNameTextBox(keyboard, gameTime);
 
         if (_session.CurrentMode.Kind != GoAppModeKind.Playing)
         {
@@ -434,6 +437,9 @@ public class Game1 : Game
 
             var isSetupMode = _session.CurrentMode.Kind == GoAppModeKind.Resting;
             var isBoardEditing = _session.CurrentMode.Kind == GoAppModeKind.BoardEditing;
+            var humanPlayerNameHit = isSetupMode ? GoScreenRenderer.GetHumanPlayerNameTextBoxHit(point, _session) : null;
+            if (_session.ActiveHumanPlayerNameStone is not null && humanPlayerNameHit is null)
+                EndHumanPlayerNameEdit(commit: true);
             var handledByGtpEngineEditPanel = isSetupMode && !isBoardEditing && TryHandleGtpEngineEditPanelClick(point);
             var handledByGtpEngineSelectionDialog = !handledByGtpEngineEditPanel && isSetupMode && !isBoardEditing && TryHandleGtpEngineSelectionDialogClick(point);
             Func<Point, string, int>? getDisplayNameCaretIndex = _renderer is null
@@ -499,19 +505,25 @@ public class Game1 : Game
             }
             else if (isSetupMode && GoScreenRenderer.GetBlackPlayerKindButtonHit(point) is { } blackPlayerKind)
             {
+                EndHumanPlayerNameEdit(commit: true);
                 _session.SetPlayerKind(GoStone.Black, blackPlayerKind);
             }
-            else if (isSetupMode && GoScreenRenderer.GetBlackGtpEngineBrowseButtonHit(point))
+            else if (isSetupMode && _session.BlackPlayerKind == GoPlayerKind.Computer && GoScreenRenderer.GetBlackGtpEngineBrowseButtonHit(point))
             {
                 OpenGtpEngineSelectionDialog(GoStone.Black);
             }
             else if (isSetupMode && GoScreenRenderer.GetWhitePlayerKindButtonHit(point) is { } whitePlayerKind)
             {
+                EndHumanPlayerNameEdit(commit: true);
                 _session.SetPlayerKind(GoStone.White, whitePlayerKind);
             }
-            else if (isSetupMode && GoScreenRenderer.GetWhiteGtpEngineBrowseButtonHit(point))
+            else if (isSetupMode && _session.WhitePlayerKind == GoPlayerKind.Computer && GoScreenRenderer.GetWhiteGtpEngineBrowseButtonHit(point))
             {
                 OpenGtpEngineSelectionDialog(GoStone.White);
+            }
+            else if (humanPlayerNameHit is { } playerNameStone)
+            {
+                BeginHumanPlayerNameEdit(point, playerNameStone);
             }
             else
             {
@@ -1020,6 +1032,8 @@ public class Game1 : Game
 
     private void OnTextInput(object? sender, TextInputEventArgs e)
     {
+        if (TryInputHumanPlayerNameCharacter(e.Character)) return;
+
         if (TryInputCgosConnectionEditCharacter(e.Character))
         {
             return;
@@ -1031,6 +1045,56 @@ public class Game1 : Game
         }
 
         _tournamentRulesSetting.TryInputCharacter(e.Character);
+    }
+
+    private void BeginHumanPlayerNameEdit(Point point, GoStone stone)
+    {
+        var text = _session.ActiveHumanPlayerNameStone == stone
+            ? _humanPlayerNameTextBox.Text
+            : _session.GetHumanPlayerName(stone);
+        var caretIndex = _renderer?.GetHumanPlayerNameCaretIndex(point, stone, text) ?? text.Length;
+        if (_session.ActiveHumanPlayerNameStone == stone)
+        {
+            _humanPlayerNameTextBox.SetCaretIndex(caretIndex);
+            _session.SetHumanPlayerNameDraft(text, caretIndex);
+            return;
+        }
+
+        _humanPlayerNameTextBox.Begin(text, caretIndex);
+        _session.BeginHumanPlayerNameEdit(stone, caretIndex);
+    }
+
+    private void UpdateHumanPlayerNameTextBox(KeyboardState keyboard, GameTime gameTime)
+    {
+        if (_session.ActiveHumanPlayerNameStone is null)
+        {
+            _previousHumanPlayerNameKeyboard = keyboard;
+            return;
+        }
+
+        var action = _humanPlayerNameTextBox.HandleKeyboard(keyboard, _previousHumanPlayerNameKeyboard, gameTime);
+        _session.SetHumanPlayerNameDraft(_humanPlayerNameTextBox.Text, _humanPlayerNameTextBox.CaretIndex);
+        if (action == TextBoxKeyboardAction.Commit) EndHumanPlayerNameEdit(commit: true);
+        if (action == TextBoxKeyboardAction.Cancel) EndHumanPlayerNameEdit(commit: false);
+        _previousHumanPlayerNameKeyboard = keyboard;
+    }
+
+    private bool TryInputHumanPlayerNameCharacter(char character)
+    {
+        if (_session.ActiveHumanPlayerNameStone is null) return false;
+        if (!_humanPlayerNameTextBox.TryInputCharacter(character)) return true;
+        _session.SetHumanPlayerNameDraft(_humanPlayerNameTextBox.Text, _humanPlayerNameTextBox.CaretIndex);
+        return true;
+    }
+
+    private void EndHumanPlayerNameEdit(bool commit)
+    {
+        if (_session.ActiveHumanPlayerNameStone is null) return;
+        if (commit)
+            _session.CommitHumanPlayerNameEdit();
+        else
+            _session.CancelHumanPlayerNameEdit();
+        _humanPlayerNameTextBox.Clear();
     }
 
     private string? BrowseTournamentRulesFilePath(TournamentRules rules)

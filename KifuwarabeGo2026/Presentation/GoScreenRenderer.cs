@@ -145,6 +145,15 @@ public sealed partial class GoScreenRenderer
     public static GoPlayerKind? GetBlackPlayerKindButtonHit(Point point) => GetPlayerKindButtonHit(point, BlackPlayerKindButtonY);
 
     public static GoPlayerKind? GetWhitePlayerKindButtonHit(Point point) => GetPlayerKindButtonHit(point, WhitePlayerKindButtonY);
+
+    public static GoStone? GetHumanPlayerNameTextBoxHit(Point point, GoAppSession session)
+    {
+        if (session.BlackPlayerKind == GoPlayerKind.Human && HumanPlayerNameRowBounds(BlackEngineButtonY).Contains(point)) return GoStone.Black;
+        return session.WhitePlayerKind == GoPlayerKind.Human && HumanPlayerNameRowBounds(WhiteEngineButtonY).Contains(point) ? GoStone.White : null;
+    }
+
+    public int GetHumanPlayerNameCaretIndex(Point point, GoStone stone, string text) =>
+        GetTextBoxCaretIndex(point.X, text, HumanPlayerNameTextBounds(stone == GoStone.Black ? BlackEngineButtonY : WhiteEngineButtonY), 0.42f);
     public static bool GetPassButtonHit(Point point) => PassButtonBounds.Contains(point);
 
     public static bool GetResignButtonHit(Point point) => ResignButtonBounds.Contains(point);
@@ -246,10 +255,10 @@ public sealed partial class GoScreenRenderer
 
         DrawInfoStrip(1144, 646, "BLACK", PlayerKindLabel(session.BlackPlayerKind));
         DrawPlayerKindButtons(session.BlackPlayerKind, mousePoint, BlackPlayerKindButtonY);
-        DrawSetupEngineButtons(session, GoStone.Black, mousePoint, BlackEngineButtonY);
+        DrawSetupPlayerSelector(session, GoStone.Black, mousePoint, BlackEngineButtonY);
         DrawInfoStrip(1144, 780, "WHITE", PlayerKindLabel(session.WhitePlayerKind));
         DrawPlayerKindButtons(session.WhitePlayerKind, mousePoint, WhitePlayerKindButtonY);
-        DrawSetupEngineButtons(session, GoStone.White, mousePoint, WhiteEngineButtonY);
+        DrawSetupPlayerSelector(session, GoStone.White, mousePoint, WhiteEngineButtonY);
         DrawCommandButton(ImportSgfButtonBounds, session.HasReviewGameRecord ? "SGF CLEAR" : "SGF INPUT", false, mousePoint);
         DrawCommandButton(StartReviewingButtonBounds, "KIFU REVIEW", false, mousePoint, enabled: session.HasReviewGameRecord, scale: 0.32f);
         DrawCommandButton(StartBoardEditingButtonBounds, "EDIT BOARD", false, mousePoint, scale: 0.36f);
@@ -259,13 +268,12 @@ public sealed partial class GoScreenRenderer
     {
         DrawText("TURN", new Vector2(1144, 132), new Color(180, 195, 195), 0.62f);
 
-        var turnLabel = session.CurrentTurn == GoStone.Black ? "BLACK" : "WHITE";
-        DrawInfoStrip(1144, 180, "TURN", turnLabel);
+        DrawInfoStrip(1144, 180, "TURN", session.GetLocalPlayerName(session.CurrentTurn));
         DrawInfoStrip(1144, 244, "NEXT", GetMoveThinkingText(session));
 
         DrawText("PLAYERS", new Vector2(1144, 300), new Color(180, 195, 195), 0.62f);
-        DrawInfoStrip(1144, 348, "BLACK", PlayerKindLabel(session.BlackPlayerKind));
-        DrawInfoStrip(1144, 446, "WHITE", PlayerKindLabel(session.WhitePlayerKind));
+        DrawPlayerIdentityStrip(1144, 348, session.GetLocalPlayerName(GoStone.Black), black: true, session.CurrentTurn == GoStone.Black);
+        DrawPlayerIdentityStrip(1144, 446, session.GetLocalPlayerName(GoStone.White), black: false, session.CurrentTurn == GoStone.White);
 
         DrawText("TIME", new Vector2(1144, 544), new Color(180, 195, 195), 0.62f);
         DrawTimeStrip(session, 592);
@@ -475,11 +483,12 @@ public sealed partial class GoScreenRenderer
         DrawText(label, new Vector2(bounds.Center.X - size.X / 2, bounds.Center.Y - size.Y / 2), textColor, fittedScale);
     }
 
-    private void DrawSetupEngineButtons(GoAppSession session, GoStone stone, Point mousePoint, int y)
+    private void DrawSetupPlayerSelector(GoAppSession session, GoStone stone, Point mousePoint, int y)
     {
         var playerKind = stone == GoStone.Black ? session.BlackPlayerKind : session.WhitePlayerKind;
-        if (playerKind != GoPlayerKind.Computer)
+        if (playerKind == GoPlayerKind.Human)
         {
+            DrawHumanPlayerNameTextBox(session, stone, mousePoint, y);
             return;
         }
 
@@ -488,6 +497,26 @@ public sealed partial class GoScreenRenderer
             ? session.GtpEngineProfiles[selectedIndex].DisplayName
             : "No engine";
         DrawLabeledBrowseSelector(GtpEngineSelectorBounds(y) with { Value = engineName }, mousePoint);
+    }
+
+    private void DrawHumanPlayerNameTextBox(GoAppSession session, GoStone stone, Point mousePoint, int y)
+    {
+        var bounds = HumanPlayerNameRowBounds(y);
+        var active = session.ActiveHumanPlayerNameStone == stone;
+        var text = active ? session.HumanPlayerNameDraft : session.GetHumanPlayerName(stone);
+        DrawDataRowFrame(bounds, active, bounds.Contains(mousePoint));
+        DrawFittedText("PLAYER NAME", new Rectangle(bounds.X + 14, bounds.Y + 10, 136, bounds.Height - 20), new Color(158, 178, 178), 0.32f);
+        DrawFittedText(text, HumanPlayerNameTextBounds(y), Color.White, 0.42f);
+        if (active) DrawTextBoxCaret(text, session.HumanPlayerNameCaretIndex, HumanPlayerNameTextBounds(y), 0.42f);
+    }
+
+    private void DrawPlayerIdentityStrip(int x, int y, string playerName, bool black, bool active)
+    {
+        var bounds = new Rectangle(x, y, 668, 56);
+        DrawDataRowFrame(bounds, active);
+        DrawStone(new Vector2(bounds.X + 32, bounds.Center.Y), 17, black);
+        DrawFittedText(playerName, new Rectangle(bounds.X + 64, bounds.Y + 7, bounds.Width - 82, 40), Color.White, 0.5f);
+        if (active) FillRect(new Rectangle(bounds.X + 62, bounds.Bottom - 5, bounds.Width - 80, 2), new Color(99, 223, 185));
     }
 
     private const int AddPanelControlX = 626;
@@ -533,6 +562,10 @@ public sealed partial class GoScreenRenderer
     private static Rectangle PlayerKindButtonBounds(int index, int y) => new(1536 + index * 132, y, 132, 52);
 
     private static Rectangle PlayerKindSegmentBounds(int y) => new(1536, y, 264, 52);
+
+    private static Rectangle HumanPlayerNameRowBounds(int y) => new(1144, y - 4, 668, 44);
+
+    private static Rectangle HumanPlayerNameTextBounds(int y) => new(1308, y + 2, 488, 32);
     private static Rectangle StartPlayingButtonBounds => new(1658, 920, 154, 56);
 
     private static Rectangle ImportSgfButtonBounds => new(1144, 920, 154, 56);

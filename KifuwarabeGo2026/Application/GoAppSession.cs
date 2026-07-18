@@ -201,6 +201,16 @@ public sealed class GoAppSession
 
     public GoPlayerKind WhitePlayerKind { get; private set; } = GoPlayerKind.Computer;
 
+    public string BlackHumanPlayerName { get; private set; } = "Black Player";
+
+    public string WhiteHumanPlayerName { get; private set; } = "White Player";
+
+    public GoStone? ActiveHumanPlayerNameStone { get; private set; }
+
+    public string HumanPlayerNameDraft { get; private set; } = "";
+
+    public int HumanPlayerNameCaretIndex { get; private set; }
+
     public IReadOnlyList<GtpEngineProfile> GtpEngineProfiles => _gtpEngineProfiles;
 
     public int SelectedBlackGtpEngineIndex { get; private set; }
@@ -1130,6 +1140,59 @@ public sealed class GoAppSession
         throw new ArgumentOutOfRangeException(nameof(stone), stone, "Player kind can be set only for black or white.");
     }
 
+    /// <summary>
+    /// 人間プレイヤー名の編集を開始します。
+    /// </summary>
+    public void BeginHumanPlayerNameEdit(GoStone stone, int caretIndex)
+    {
+        ActiveHumanPlayerNameStone = stone;
+        HumanPlayerNameDraft = GetHumanPlayerName(stone);
+        HumanPlayerNameCaretIndex = Math.Clamp(caretIndex, 0, HumanPlayerNameDraft.Length);
+    }
+
+    public void SetHumanPlayerNameDraft(string name, int caretIndex)
+    {
+        HumanPlayerNameDraft = name;
+        HumanPlayerNameCaretIndex = Math.Clamp(caretIndex, 0, name.Length);
+    }
+
+    public void CommitHumanPlayerNameEdit()
+    {
+        if (ActiveHumanPlayerNameStone is not { } stone) return;
+
+        var name = HumanPlayerNameDraft.Trim();
+        if (string.IsNullOrWhiteSpace(name)) name = stone == GoStone.Black ? "Black Player" : "White Player";
+        if (stone == GoStone.Black)
+            BlackHumanPlayerName = name;
+        else
+            WhiteHumanPlayerName = name;
+        CancelHumanPlayerNameEdit();
+    }
+
+    public void CancelHumanPlayerNameEdit()
+    {
+        ActiveHumanPlayerNameStone = null;
+        HumanPlayerNameDraft = "";
+        HumanPlayerNameCaretIndex = 0;
+    }
+
+    public string GetHumanPlayerName(GoStone stone) => stone == GoStone.Black
+        ? BlackHumanPlayerName
+        : WhiteHumanPlayerName;
+
+    /// <summary>
+    /// 対局画面と棋譜へ表示する対局者名を取得します。
+    /// </summary>
+    public string GetLocalPlayerName(GoStone stone)
+    {
+        if (GetPlayerKind(stone) == GoPlayerKind.Human) return GetHumanPlayerName(stone);
+
+        var index = stone == GoStone.Black ? SelectedBlackGtpEngineIndex : SelectedWhiteGtpEngineIndex;
+        return index >= 0 && index < _gtpEngineProfiles.Count
+            ? _gtpEngineProfiles[index].DisplayName
+            : "No engine";
+    }
+
     public void SetGtpEngineProfiles(IEnumerable<GtpEngineProfile> profiles)
     {
         _gtpEngineProfiles.Clear();
@@ -1961,6 +2024,8 @@ public sealed class GoAppSession
         {
             GameName = "Kifuwarabe Go 2026",
             RuleName = RuleKind.ToString(),
+            BlackPlayerName = GetLocalPlayerName(GoStone.Black),
+            WhitePlayerName = GetLocalPlayerName(GoStone.White),
             BoardSize = BoardSize,
             Komi = Komi,
         };
