@@ -41,6 +41,7 @@
     <Folder Include="Application\Cgos\Shared\" />
     <Folder Include="Application\Local\Resting\EngineSelect\" />
     <Folder Include="Application\Shared\" />
+    <Folder Include="Docs\企画\" />
     <Folder Include="Presentation\Cgos\Shared\" />
     <Folder Include="Presentation\Local\Resting\EngineSelect\" />
     <Folder Include="Presentation\Shared\Board\Analisys\" />
