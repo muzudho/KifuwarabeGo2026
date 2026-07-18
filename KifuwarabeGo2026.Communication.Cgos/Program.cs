@@ -477,14 +477,20 @@ internal sealed class CgosAdminClient
     public async Task RunAsync(CancellationToken cancellationToken)
     {
         var session = new CgosConnectionSession(_options, _account, Log, " for admin");
+        var adminInputStarted = false;
         await session.RunAsync(
-            (_, _) => Task.CompletedTask,
-            token =>
+            (line, token) =>
             {
-                Log("# Admin command input is ready.");
-                _ = RelayAdminInputAsync(session, token);
+                if (!adminInputStarted && line.Equals("ok", StringComparison.OrdinalIgnoreCase))
+                {
+                    adminInputStarted = true;
+                    Log("# Admin login accepted. Command input is ready.");
+                    _ = RelayAdminInputAsync(session, token);
+                }
+
                 return Task.CompletedTask;
             },
+            passwordSentAsync: null,
             cancellationToken);
     }
 
