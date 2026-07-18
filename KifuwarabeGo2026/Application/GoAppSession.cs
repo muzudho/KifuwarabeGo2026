@@ -25,6 +25,8 @@ public sealed class GoAppSession
     private readonly Stack<BoardEditingChange> _boardEditingUndoHistory = new();
     private readonly Stack<BoardEditingChange> _boardEditingRedoHistory = new();
     private GoGameRecord? _reviewGameRecord;
+    private DateTime? _cgosBlackConnectionStartedAt;
+    private DateTime? _cgosWhiteConnectionStartedAt;
 
     private readonly Dictionary<GoAppModeKind, GoAppMode> _modes = new()
     {
@@ -65,6 +67,9 @@ public sealed class GoAppSession
 
     public bool IsCgosBlackConnectionRunning { get; private set; }
 
+    public string CgosBlackConnectionElapsedDisplay =>
+        FormatCgosConnectionElapsedDisplay(_cgosBlackConnectionStartedAt, IsCgosBlackConnectionRunning);
+
     public string CgosWhiteConnectionStatusMessage { get; private set; } = "READY";
 
     public string CgosWhiteConnectionLogDirectory { get; private set; } = "";
@@ -72,6 +77,9 @@ public sealed class GoAppSession
     public IReadOnlyList<string> CgosWhiteConnectionRecentOutput { get; private set; } = Array.Empty<string>();
 
     public bool IsCgosWhiteConnectionRunning { get; private set; }
+
+    public string CgosWhiteConnectionElapsedDisplay =>
+        FormatCgosConnectionElapsedDisplay(_cgosWhiteConnectionStartedAt, IsCgosWhiteConnectionRunning);
 
     public string CgosAdminStatusMessage { get; private set; } = "ADMIN READY";
 
@@ -377,6 +385,11 @@ public sealed class GoAppSession
 
     public void SetCgosBlackConnectionProcessStatus(string statusMessage, bool isRunning, string logDirectory, IReadOnlyList<string> recentOutput)
     {
+        if (isRunning && !IsCgosBlackConnectionRunning)
+        {
+            _cgosBlackConnectionStartedAt = DateTime.Now;
+        }
+
         CgosBlackConnectionStatusMessage = statusMessage;
         IsCgosBlackConnectionRunning = isRunning;
         CgosBlackConnectionLogDirectory = logDirectory;
@@ -385,10 +398,26 @@ public sealed class GoAppSession
 
     public void SetCgosWhiteConnectionProcessStatus(string statusMessage, bool isRunning, string logDirectory, IReadOnlyList<string> recentOutput)
     {
+        if (isRunning && !IsCgosWhiteConnectionRunning)
+        {
+            _cgosWhiteConnectionStartedAt = DateTime.Now;
+        }
+
         CgosWhiteConnectionStatusMessage = statusMessage;
         IsCgosWhiteConnectionRunning = isRunning;
         CgosWhiteConnectionLogDirectory = logDirectory;
         CgosWhiteConnectionRecentOutput = recentOutput;
+    }
+
+    private static string FormatCgosConnectionElapsedDisplay(DateTime? startedAt, bool isRunning)
+    {
+        if (!isRunning || startedAt is null)
+        {
+            return "";
+        }
+
+        var elapsedSeconds = Math.Max(0, (int)(DateTime.Now - startedAt.Value).TotalSeconds);
+        return $"WAIT {elapsedSeconds / 60:00}:{elapsedSeconds % 60:00} / 15s";
     }
 
     public void SetCgosAdminProcessStatus(string statusMessage, bool isRunning, string logDirectory, IReadOnlyList<string> recentOutput)

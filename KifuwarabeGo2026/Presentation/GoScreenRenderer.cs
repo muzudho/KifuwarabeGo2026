@@ -798,6 +798,7 @@ public sealed class GoScreenRenderer
             session.CgosAdminStatusMessage,
             session.CgosAdminRecentOutput,
             null,
+            null,
             CgosAdminButtonBounds,
             session.IsCgosAdminRunning ? "STOP" : "START",
             true,
@@ -814,6 +815,7 @@ public sealed class GoScreenRenderer
             session.CgosBlackConnectionStatusMessage,
             session.CgosBlackConnectionRecentOutput,
             session.SelectedCgosBlackGtpEngineProfile?.DisplayName,
+            session.CgosBlackConnectionElapsedDisplay,
             CgosBlackConnectionButtonBounds,
             session.IsCgosBlackConnectionRunning ? "STOP" : "START",
             session.IsCgosBlackConnectionRunning || session.SelectedCgosBlackGtpEngineProfile is not null,
@@ -836,6 +838,7 @@ public sealed class GoScreenRenderer
             session.CgosWhiteConnectionStatusMessage,
             session.CgosWhiteConnectionRecentOutput,
             session.SelectedCgosWhiteGtpEngineProfile?.DisplayName,
+            session.CgosWhiteConnectionElapsedDisplay,
             CgosWhiteConnectionButtonBounds,
             session.IsCgosWhiteConnectionRunning ? "STOP" : "START",
             session.IsCgosWhiteConnectionRunning || session.SelectedCgosWhiteGtpEngineProfile is not null,
@@ -870,6 +873,7 @@ public sealed class GoScreenRenderer
         string status,
         IReadOnlyList<string> output,
         string? engineName,
+        string? elapsedDisplay,
         Rectangle startButtonBounds,
         string startLabel,
         bool startEnabled,
@@ -881,6 +885,10 @@ public sealed class GoScreenRenderer
         FillRect(bounds, new Color(15, 20, 26));
         DrawRect(bounds, 1, new Color(67, 84, 92));
         DrawText(title, new Vector2(bounds.X + 18, bounds.Y + 18), new Color(255, 230, 160), 0.42f);
+        if (!string.IsNullOrEmpty(elapsedDisplay))
+        {
+            DrawFittedText(elapsedDisplay, new Rectangle(bounds.X + 158, bounds.Y + 14, bounds.Width - 174, 32), new Color(146, 220, 255), 0.27f);
+        }
 
         var stateRow = new Rectangle(bounds.X + 16, bounds.Y + 62, bounds.Width - 32, 48);
         DrawDataRowFrame(stateRow);
