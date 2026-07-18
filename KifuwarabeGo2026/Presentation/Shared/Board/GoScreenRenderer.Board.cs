@@ -29,7 +29,11 @@ public sealed partial class GoScreenRenderer
         return closeEnough;
     }
 
-
+    /// <summary>
+    /// ［盤］描画
+    /// </summary>
+    /// <param name="session"></param>
+    /// <param name="mousePoint"></param>
     private void DrawBoard(GoAppSession session, Point mousePoint)
     {
         var boardSize = session.BoardSize;
@@ -85,7 +89,12 @@ public sealed partial class GoScreenRenderer
         DrawBoardFrameHighlights(boardOuter);
     }
 
-
+    /// <summary>
+    /// ［置いている石］描画
+    /// </summary>
+    /// <param name="session"></param>
+    /// <param name="start"></param>
+    /// <param name="cell"></param>
     private void DrawPlacedStones(GoAppSession session, Vector2 start, float cell)
     {
         for (var y = 0; y < session.BoardSize; y++)
@@ -101,7 +110,14 @@ public sealed partial class GoScreenRenderer
         }
     }
 
-
+    /// <summary>
+    /// ［連］のグラフノード作成
+    /// </summary>
+    /// <param name="renParse"></param>
+    /// <param name="start"></param>
+    /// <param name="cell"></param>
+    /// <param name="applyEyeJudgement"></param>
+    /// <returns></returns>
     private RenGraphNode[] CreateRenGraphNodes(GoRenParseResult renParse, Vector2 start, float cell, bool applyEyeJudgement)
     {
         var sumX = new float[renParse.Count + 1];
@@ -133,7 +149,12 @@ public sealed partial class GoScreenRenderer
         return nodes;
     }
 
-
+    /// <summary>
+    /// ［浮いている石］描画
+    /// </summary>
+    /// <param name="session"></param>
+    /// <param name="mousePoint"></param>
+    /// <param name="cell"></param>
     private void DrawHoverStone(GoAppSession session, Point mousePoint, float cell)
     {
         if (session.CurrentMode.Kind == GoAppModeKind.BoardEditing)
@@ -159,6 +180,12 @@ public sealed partial class GoScreenRenderer
         DrawCircle(center, cell * 0.36f, black ? new Color(8, 10, 14, 90) : new Color(255, 250, 232, 95));
     }
 
+    /// <summary>
+    /// ［スーパーコウ印］描画
+    /// </summary>
+    /// <param name="session"></param>
+    /// <param name="start"></param>
+    /// <param name="cell"></param>
     private void DrawSuperKoMarks(GoAppSession session, Vector2 start, float cell)
     {
         foreach (var point in session.EnumerateSuperKoPoints())
@@ -176,6 +203,12 @@ public sealed partial class GoScreenRenderer
         }
     }
 
+    /// <summary>
+    /// ［コウ印］描画
+    /// </summary>
+    /// <param name="session"></param>
+    /// <param name="start"></param>
+    /// <param name="cell"></param>
 
     private void DrawKoMark(GoAppSession session, Vector2 start, float cell)
     {
@@ -195,6 +228,14 @@ public sealed partial class GoScreenRenderer
         DrawText(label, new Vector2(center.X - size.X / 2, center.Y - size.Y / 2), Color.White, 0.34f);
     }
 
+    /// <summary>
+    /// ［盤上の点］
+    /// </summary>
+    /// <param name="start"></param>
+    /// <param name="cell"></param>
+    /// <param name="x"></param>
+    /// <param name="y"></param>
+    /// <returns></returns>
 
     private static Vector2 BoardPoint(Vector2 start, float cell, int x, int y) => new(start.X + cell * x, start.Y + cell * y);
 
@@ -204,6 +245,11 @@ public sealed partial class GoScreenRenderer
 
     private static readonly Rectangle BoardBounds = new(88, 84, 912, 912);
 
+    /// <summary>
+    /// ［盤面のレイアウト］取得
+    /// </summary>
+    /// <param name="boardSize"></param>
+    /// <returns></returns>
 
     private static (Vector2 Start, float Cell) GetBoardLayout(int boardSize)
     {
@@ -213,7 +259,11 @@ public sealed partial class GoScreenRenderer
         return (start, cell);
     }
 
-
+    /// <summary>
+    /// ［盤上の星］取得
+    /// </summary>
+    /// <param name="boardSize"></param>
+    /// <returns></returns>
     private static Point[] GetStarPoints(int boardSize)
     {
         return boardSize switch
@@ -224,6 +274,10 @@ public sealed partial class GoScreenRenderer
         };
     }
 
+    /// <summary>
+    /// ［盤の枠のハイライト］描画
+    /// </summary>
+    /// <param name="boardOuter"></param>
 
     private void DrawBoardFrameHighlights(Rectangle boardOuter)
     {
@@ -233,7 +287,12 @@ public sealed partial class GoScreenRenderer
         FillRect(new Rectangle(boardOuter.X, boardOuter.Bottom - 7, boardOuter.Width, 7), new Color(31, 20, 15, 120));
     }
 
-
+    /// <summary>
+    /// ［石］描画
+    /// </summary>
+    /// <param name="center"></param>
+    /// <param name="radius"></param>
+    /// <param name="black"></param>
     private void DrawStone(Vector2 center, float radius, bool black)
     {
         var size = (int)(radius * 2);
@@ -242,6 +301,12 @@ public sealed partial class GoScreenRenderer
         _spriteBatch.Draw(black ? _stoneDark : _stoneLight, destination, Color.White);
     }
 
+    /// <summary>
+    /// ［石テクスチャー］作成
+    /// </summary>
+    /// <param name="size"></param>
+    /// <param name="lightStone"></param>
+    /// <returns></returns>
 
     private Texture2D CreateStoneTexture(int size, bool lightStone)
     {
@@ -270,6 +335,12 @@ public sealed partial class GoScreenRenderer
         });
     }
 
+    /// <summary>
+    /// ［連パース・オーバレイ］描画
+    /// </summary>
+    /// <param name="session"></param>
+    /// <param name="start"></param>
+    /// <param name="cell"></param>
     private void DrawRenParseOverlay(GoAppSession session, Vector2 start, float cell)
     {
         if (session.RenParseDisplayMode != RenParseDisplayMode.Overlay)
@@ -282,7 +353,12 @@ public sealed partial class GoScreenRenderer
         DrawRenNumbers(renParse, start, cell);
     }
 
-
+    /// <summary>
+    /// ［連グラフ・ステップ１・オーバレイ］描画
+    /// </summary>
+    /// <param name="session"></param>
+    /// <param name="start"></param>
+    /// <param name="cell"></param>
     private void DrawRenGraphStep1Overlay(GoAppSession session, Vector2 start, float cell)
     {
         var renParse = session.ParseRens();
@@ -291,6 +367,13 @@ public sealed partial class GoScreenRenderer
         DrawRenRepresentativeNumbers(renParse, start, cell);
     }
 
+    /// <summary>
+    /// ［連グラフ・オーバレイ］描画
+    /// </summary>
+    /// <param name="session"></param>
+    /// <param name="start"></param>
+    /// <param name="cell"></param>
+    /// <param name="applyEyeJudgement"></param>
 
     private void DrawRenGraphOverlay(GoAppSession session, Vector2 start, float cell, bool applyEyeJudgement)
     {
@@ -302,7 +385,12 @@ public sealed partial class GoScreenRenderer
         DrawRenGraphNodes(nodes, cell);
     }
 
-
+    /// <summary>
+    /// ［連グラフ・セル］描画
+    /// </summary>
+    /// <param name="session"></param>
+    /// <param name="start"></param>
+    /// <param name="cell"></param>
     private void DrawRenGraphCells(GoAppSession session, Vector2 start, float cell)
     {
         var halfCell = cell * 0.5f;
@@ -321,6 +409,12 @@ public sealed partial class GoScreenRenderer
         }
     }
 
+    /// <summary>
+    /// ［連グラフ・エッジ］描画
+    /// </summary>
+    /// <param name="nodes"></param>
+    /// <param name="edges"></param>
+    /// <param name="cell"></param>
     private void DrawRenGraphEdges(RenGraphNode[] nodes, IReadOnlyList<GoRenGraphEdge> edges, float cell)
     {
         var thickness = MathHelper.Clamp(cell * 0.08f, 4f, 8f);
@@ -336,7 +430,11 @@ public sealed partial class GoScreenRenderer
         }
     }
 
-
+    /// <summary>
+    /// ［連グラフ・ノード］描画
+    /// </summary>
+    /// <param name="nodes"></param>
+    /// <param name="cell"></param>
     private void DrawRenGraphNodes(RenGraphNode[] nodes, float cell)
     {
         var radius = MathHelper.Clamp(cell * 0.45f, 22f, 46f);
@@ -355,7 +453,12 @@ public sealed partial class GoScreenRenderer
         }
     }
 
-
+    /// <summary>
+    /// ［連グラフ・目マーカー］描画
+    /// </summary>
+    /// <param name="node"></param>
+    /// <param name="radius"></param>
+    /// <param name="scale"></param>
     private void DrawRenGraphEyeMarkers(RenGraphNode node, float radius, float scale)
     {
         if (node.EyeNumbers.Count == 0)
@@ -382,7 +485,12 @@ public sealed partial class GoScreenRenderer
         }
     }
 
-
+    /// <summary>
+    /// ［連境界］描画
+    /// </summary>
+    /// <param name="renParse"></param>
+    /// <param name="start"></param>
+    /// <param name="cell"></param>
     private void DrawRenBoundaries(GoRenParseResult renParse, Vector2 start, float cell)
     {
         var size = renParse.Size;
@@ -424,7 +532,12 @@ public sealed partial class GoScreenRenderer
         }
     }
 
-
+    /// <summary>
+    /// ［連番号］描画
+    /// </summary>
+    /// <param name="renParse"></param>
+    /// <param name="start"></param>
+    /// <param name="cell"></param>
     private void DrawRenNumbers(GoRenParseResult renParse, Vector2 start, float cell)
     {
         var scale = MathHelper.Clamp(cell / 72f, 0.28f, 0.88f);
@@ -439,7 +552,12 @@ public sealed partial class GoScreenRenderer
         }
     }
 
-
+    /// <summary>
+    /// ［連代表番号］描画
+    /// </summary>
+    /// <param name="renParse"></param>
+    /// <param name="start"></param>
+    /// <param name="cell"></param>
     private void DrawRenRepresentativeNumbers(GoRenParseResult renParse, Vector2 start, float cell)
     {
         var scale = MathHelper.Clamp(cell / 72f, 0.28f, 0.88f);
@@ -461,7 +579,11 @@ public sealed partial class GoScreenRenderer
         }
     }
 
-
+    /// <summary>
+    /// ［連グラフ・ノード色］
+    /// </summary>
+    /// <param name="stone"></param>
+    /// <returns></returns>
     private static Color RenGraphNodeColor(GoStone stone) => stone switch
     {
         GoStone.Black => Color.Black,
@@ -469,7 +591,11 @@ public sealed partial class GoScreenRenderer
         _ => new Color(255, 197, 18),
     };
 
-
+    /// <summary>
+    /// ［連グラフ・セル色］
+    /// </summary>
+    /// <param name="stone"></param>
+    /// <returns></returns>
     private static Color RenGraphCellColor(GoStone stone) => stone switch
     {
         GoStone.Black => Color.Black,
@@ -477,7 +603,9 @@ public sealed partial class GoScreenRenderer
         _ => new Color(255, 197, 18),
     };
 
-
+    /// <summary>
+    /// ［連グラフノード］
+    /// </summary>
     private sealed class RenGraphNode
     {
         public RenGraphNode(int number, GoStone stone, Vector2 center, bool isVisible, List<int> eyeNumbers)
