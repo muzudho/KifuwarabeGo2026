@@ -59,7 +59,18 @@ internal static class Program
                 return 2;
             }
 
-            _ = WatchStandardInputAsync(cancellation);
+            _ = CgosStandardInputRelay.Start(
+                (line, _) =>
+                {
+                    if (CgosStandardInputRelay.IsExitCommand(line))
+                    {
+                        cancellation.Cancel();
+                    }
+
+                    return Task.CompletedTask;
+                },
+                ex => Console.Error.WriteLine("# CGOS input watcher failed: " + ex.Message),
+                cancellation.Token);
 
             var tasks = accounts
                 .Select(account => RunClientAsync(options, account, cancellation))
@@ -136,32 +147,6 @@ internal static class Program
         }
     }
 
-    private static async Task WatchStandardInputAsync(CancellationTokenSource cancellation)
-    {
-        try
-        {
-            while (!cancellation.IsCancellationRequested)
-            {
-                var line = await Console.In.ReadLineAsync(cancellation.Token);
-                if (line is null)
-                {
-                    return;
-                }
-
-                if (line.Trim().Equals("quit", StringComparison.OrdinalIgnoreCase) ||
-                    line.Trim().Equals("exit", StringComparison.OrdinalIgnoreCase) ||
-                    line.Trim().Equals("cancel", StringComparison.OrdinalIgnoreCase))
-                {
-                    cancellation.Cancel();
-                    return;
-                }
-            }
-        }
-        catch (OperationCanceledException)
-        {
-        }
-    }
-
     private static async Task RunClientAsync(CgosClientOptions options, CgosAccount account, CancellationTokenSource cancellation)
     {
         try
@@ -174,6 +159,48 @@ internal static class Program
             throw;
         }
     }
+}
+
+internal static class CgosStandardInputRelay
+{
+    public static Task Start(
+        Func<string, CancellationToken, Task> handleLineAsync,
+        Action<Exception> logError,
+        CancellationToken cancellationToken) =>
+        Task.Run(async () =>
+        {
+            try
+            {
+                while (!cancellationToken.IsCancellationRequested)
+                {
+                    var line = await Console.In.ReadLineAsync(cancellationToken);
+                    if (line is null)
+                    {
+                        return;
+                    }
+
+                    line = line.Trim().TrimStart('\uFEFF');
+                    if (line.Length == 0)
+                    {
+                        continue;
+                    }
+
+                    await handleLineAsync(line, cancellationToken);
+                }
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+            }
+            catch (Exception ex)
+            {
+                logError(ex);
+            }
+        }, CancellationToken.None);
+
+    public static bool IsExitCommand(string line) =>
+        line.Equals("quit", StringComparison.OrdinalIgnoreCase) ||
+        line.Equals("exit", StringComparison.OrdinalIgnoreCase) ||
+        line.Equals("cancel", StringComparison.OrdinalIgnoreCase);
 }
 
 /// <summary>
@@ -579,9 +606,10 @@ internal sealed class CgosAdminClient
                 {
                     adminInputStarted = true;
                     Log("# Admin login accepted. Command input is ready.");
-                    _ = Task.Run(
-                        () => RelayAdminInputSafelyAsync(session, token),
-                        CancellationToken.None);
+                    _ = CgosStandardInputRelay.Start(
+                        (command, relayToken) => RelayAdminCommandAsync(session, command, relayToken),
+                        ex => Log("# Admin input relay failed: " + ex.Message),
+                        token);
                 }
 
                 return Task.CompletedTask;
@@ -590,54 +618,25 @@ internal sealed class CgosAdminClient
             cancellationToken);
     }
 
-    private async Task RelayAdminInputSafelyAsync(CgosConnectionSession session, CancellationToken cancellationToken)
+    private async Task RelayAdminCommandAsync(
+        CgosConnectionSession session,
+        string command,
+        CancellationToken cancellationToken)
     {
-        try
+        if (CgosStandardInputRelay.IsExitCommand(command))
         {
-            await RelayAdminInputAsync(session, cancellationToken);
+            await session.SendQuitAsync();
+            return;
         }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+
+        if (!command.Equals("who", StringComparison.OrdinalIgnoreCase) &&
+            !command.Equals("match", StringComparison.OrdinalIgnoreCase))
         {
+            Log("# Unsupported admin command ignored: " + command);
+            return;
         }
-        catch (Exception ex)
-        {
-            Log("# Admin input relay failed: " + ex.Message);
-        }
-    }
 
-    private async Task RelayAdminInputAsync(CgosConnectionSession session, CancellationToken cancellationToken)
-    {
-        while (!cancellationToken.IsCancellationRequested)
-        {
-            var line = await Console.In.ReadLineAsync(cancellationToken);
-            if (line is null)
-            {
-                return;
-            }
-
-            line = line.Trim().TrimStart('\uFEFF');
-            if (line.Length == 0)
-            {
-                continue;
-            }
-
-            if (line.Equals("quit", StringComparison.OrdinalIgnoreCase) ||
-                line.Equals("exit", StringComparison.OrdinalIgnoreCase) ||
-                line.Equals("cancel", StringComparison.OrdinalIgnoreCase))
-            {
-                await session.SendQuitAsync();
-                return;
-            }
-
-            if (!line.Equals("who", StringComparison.OrdinalIgnoreCase) &&
-                !line.Equals("match", StringComparison.OrdinalIgnoreCase))
-            {
-                Log("# Unsupported admin command ignored: " + line);
-                continue;
-            }
-
-            await session.SendAsync(line.ToLowerInvariant());
-        }
+        await session.SendAsync(command.ToLowerInvariant());
     }
 
     private void Log(string message)
