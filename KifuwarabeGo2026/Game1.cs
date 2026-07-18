@@ -8,6 +8,7 @@ using KifuwarabeGo2026.Application.Local.Playing;
 using KifuwarabeGo2026.Application.Local.Resting.TournamentRule;
 using KifuwarabeGo2026.Domain;
 using KifuwarabeGo2026.Infrastructure.FileSystem;
+using KifuwarabeGo2026.Infrastructure.Logging;
 using KifuwarabeGo2026.Presentation;
 using KifuwarabeGo2026.Presentation.Cgos.Connect;
 using KifuwarabeGo2026.Presentation.Cgos.ConnectionTarget;
@@ -545,15 +546,7 @@ public class Game1 : Game
 
     private void OpenEngineLog()
     {
-        var logPath = Path.GetFullPath(_session.EngineLogPath);
-        if (!File.Exists(logPath))
-        {
-            Directory.CreateDirectory(Path.GetDirectoryName(logPath)!);
-            File.WriteAllText(
-                logPath,
-                $"# ENGINE ERROR {DateTimeOffset.Now:O}{Environment.NewLine}{_session.EngineErrorMessage}{Environment.NewLine}",
-                new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
-        }
+        var logPath = ApplicationErrorLog.FilePath;
 
         try
         {

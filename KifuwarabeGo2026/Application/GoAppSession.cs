@@ -287,8 +287,6 @@ public sealed class GoAppSession
 
     public GoStone? EngineErrorStone => string.IsNullOrWhiteSpace(EngineErrorMessage) ? null : _engineErrorStone;
 
-    public string EngineLogPath { get; private set; } = "";
-
     public GoGameRecord CurrentGameRecord { get; private set; } = new();
 
     public bool HasReviewGameRecord => _reviewGameRecord is not null;
@@ -1660,11 +1658,6 @@ public sealed class GoAppSession
     public void SetEngineReady(bool isReady)
     {
         IsEngineReady = isReady;
-    }
-
-    public void SetEngineLogPath(string path)
-    {
-        EngineLogPath = path;
     }
 
     public void ClearEngineError()

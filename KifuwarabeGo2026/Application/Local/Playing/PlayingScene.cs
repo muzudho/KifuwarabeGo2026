@@ -2,12 +2,12 @@ namespace KifuwarabeGo2026.Application.Local.Playing;
 
 using KifuwarabeGo2026.Domain;
 using KifuwarabeGo2026.Gtp;
+using KifuwarabeGo2026.Infrastructure.Logging;
 using KifuwarabeGo2026.Presentation;
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -126,7 +126,6 @@ public sealed class PlayingScene : IDisposable
         }
 
         _session.SetEngineReady(false);
-        _session.SetEngineLogPath(GetDefaultGtpLogPath());
         EnsureGtpEngineForComputerPlayer(GoStone.Black);
         EnsureGtpEngineForComputerPlayer(GoStone.White);
 
@@ -144,7 +143,7 @@ public sealed class PlayingScene : IDisposable
                 }
                 catch (Exception ex)
                 {
-                    throw new EngineCommandException(engine.Stone, ex);
+                    throw CreateEngineCommandException(engine.Stone, ex);
                 }
             }
 
@@ -202,7 +201,7 @@ public sealed class PlayingScene : IDisposable
         var engine = GetEngine(currentTurn);
         if (engine is null)
         {
-            _session.SetEngineError($"{FormatColor(currentTurn)} GTP engine is not ready.", currentTurn);
+            SetEngineError($"{FormatColor(currentTurn)} GTP engine is not ready.", currentTurn);
             return;
         }
 
@@ -243,7 +242,7 @@ public sealed class PlayingScene : IDisposable
                 var errorStone = ex is EngineCommandException engineException
                     ? engineException.Stone
                     : _session.CurrentTurn;
-                return new EngineCommandCompletion(EngineCommandResult.Failure(ex.Message, errorStone), generation);
+                return new EngineCommandCompletion(EngineCommandResult.Failure(ex, errorStone), generation);
             }
         });
     }
@@ -265,9 +264,9 @@ public sealed class PlayingScene : IDisposable
 
         var result = completion.Result;
         _session.SetEngineThinking(false);
-        if (result.ErrorMessage is not null)
+        if (result.Error is not null)
         {
-            _session.SetEngineError(result.ErrorMessage, result.ErrorStone ?? _session.CurrentTurn);
+            SetEngineError(result.Error.Message, result.ErrorStone ?? _session.CurrentTurn, result.Error);
             return;
         }
 
@@ -303,13 +302,13 @@ public sealed class PlayingScene : IDisposable
 
         if (!GtpCoordinate.TryParseVertex(result.MoveText, _session.BoardSize, out var point))
         {
-            _session.SetEngineError($"Invalid GTP vertex: {result.MoveText}", result.PlayedBy ?? _session.CurrentTurn);
+            SetEngineError($"Invalid GTP vertex: {result.MoveText}", result.PlayedBy ?? _session.CurrentTurn);
             return;
         }
 
         if (!_session.TryPlaceStone(point.X, point.Y))
         {
-            _session.SetEngineError($"Illegal GTP move: {result.MoveText}", result.PlayedBy ?? _session.CurrentTurn);
+            SetEngineError($"Illegal GTP move: {result.MoveText}", result.PlayedBy ?? _session.CurrentTurn);
             return;
         }
 
@@ -394,7 +393,7 @@ public sealed class PlayingScene : IDisposable
             }
             catch (Exception ex)
             {
-                throw new EngineCommandException(engine.Stone, ex);
+                throw new EngineCommandException(engine.Stone, ex.Message, ex);
             }
         }
     }
@@ -441,6 +440,26 @@ public sealed class PlayingScene : IDisposable
 
     private static string FormatColor(GoStone stone) => stone == GoStone.Black ? "black" : "white";
 
+    private EngineCommandException CreateEngineCommandException(GoStone stone, Exception exception)
+    {
+        var profile = _session.GetGtpEngineProfile(stone);
+        var message = $"{FormatColor(stone)} engine '{profile.DisplayName}' failed. Executable: {profile.ExecutablePath}";
+        return new EngineCommandException(stone, message, exception);
+    }
+
+    private void SetEngineError(string message, GoStone stone, Exception? exception = null)
+    {
+        var profile = _session.GetGtpEngineProfile(stone);
+        ApplicationErrorLog.Write(
+            "GTP ENGINE ERROR",
+            $"Stone: {FormatColor(stone)}{Environment.NewLine}" +
+            $"Engine: {profile.DisplayName}{Environment.NewLine}" +
+            $"Executable: {profile.ExecutablePath}{Environment.NewLine}" +
+            $"Message: {message}",
+            exception);
+        _session.SetEngineError(message, stone);
+    }
+
     private GtpEngineSettings CreateEngineSettings(GoStone stone)
     {
         var profile = _session.GetGtpEngineProfile(stone);
@@ -455,11 +474,9 @@ public sealed class PlayingScene : IDisposable
             profile.GuiOptions);
     }
 
-    private static string GetDefaultGtpLogPath() => Path.Combine(AppContext.BaseDirectory, "logs", "gtp.log");
-
     private sealed record EngineCommandCompletion(EngineCommandResult Result, int Generation);
 
-    private sealed record EngineCommandResult(string? MoveText, GoStone? PlayedBy, string? ErrorMessage, GoStone? ErrorStone = null, bool MakesEngineReady = false, bool ClosesEngine = false)
+    private sealed record EngineCommandResult(string? MoveText, GoStone? PlayedBy, Exception? Error, GoStone? ErrorStone = null, bool MakesEngineReady = false, bool ClosesEngine = false)
     {
         public static EngineCommandResult Success(bool closesEngine = false) => new(null, null, null, ClosesEngine: closesEngine);
 
@@ -467,13 +484,13 @@ public sealed class PlayingScene : IDisposable
 
         public static EngineCommandResult EngineMove(string moveText, GoStone playedBy) => new(moveText, playedBy, null);
 
-        public static EngineCommandResult Failure(string errorMessage, GoStone errorStone) => new(null, null, errorMessage, errorStone);
+        public static EngineCommandResult Failure(Exception error, GoStone errorStone) => new(null, null, error, errorStone);
     }
 
     private sealed record EngineEntry(GoStone Stone, GtpEngineClient Client);
 
-    private sealed class EngineCommandException(GoStone stone, Exception innerException)
-        : Exception(innerException.Message, innerException)
+    private sealed class EngineCommandException(GoStone stone, string message, Exception innerException)
+        : Exception(message, innerException)
     {
         public GoStone Stone { get; } = stone;
     }
