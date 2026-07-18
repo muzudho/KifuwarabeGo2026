@@ -83,16 +83,17 @@ public sealed class CgosConnectionCatalog
             DisplayName = displayName,
             Host = host,
             Port = Math.Clamp(profile.Port, 1, 65535),
+            Event = profile.Event?.Trim() ?? "",
             Role = role,
-            Note = profile.Note.Trim(),
+            Note = profile.Note?.Trim() ?? "",
         };
     }
 
     private static IReadOnlyList<CgosConnectionProfile> CreateDefaultProfiles() =>
     [
-        new("練習", "uec-go.com", 6809, "PRACTICE", "CGOS practice server"),
-        new("2026年大会予選", "uec-go.com", 6809, "QUALIFIER", "CGF Open 2026 preliminary connection"),
-        new("2026年大会本戦", "uec-go.com", 6809, "FINAL", "CGF Open 2026 final connection"),
+        new("練習", "uec-go.com", 6809, "PRACTICE", "CGOS practice server") { Event = "PRACTICE" },
+        new("2026年大会予選", "uec-go.com", 6809, "QUALIFIER", "CGF Open 2026 preliminary connection") { Event = "CGF Open 2026" },
+        new("2026年大会本戦", "uec-go.com", 6809, "FINAL", "CGF Open 2026 final connection") { Event = "CGF Open 2026" },
     ];
 
     private sealed class CgosConnectionProfileList

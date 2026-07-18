@@ -278,7 +278,9 @@ public class Game1 : Game
                 {
                     if (GoScreenRenderer.GetCgosWatchingExportSgfButtonHit(point))
                     {
-                        ExportSgf(_cgosGameObservation.CreateGameRecord(), $"cgos-{_cgosGameObservation.GameId}-{DateTime.Now:yyyyMMdd-HHmmss}.sgf");
+                        ExportSgf(
+                            _cgosGameObservation.CreateGameRecord(),
+                            CreateCgosSgfFileName(_session.SelectedCgosConnectionProfile, _cgosGameObservation));
                     }
                     else if (GoScreenRenderer.GetCgosWatchingBackButtonHit(point))
                     {
@@ -942,6 +944,7 @@ public class Game1 : Game
         {
             DisplayName = draft.DisplayName.Trim(),
             Host = draft.Host.Trim(),
+            Event = draft.Event.Trim(),
             Role = draft.Role.Trim(),
             Note = draft.Note.Trim(),
         };
@@ -1089,6 +1092,48 @@ public class Game1 : Game
         {
             ShowMessage(ex.Message, "SGF output");
         }
+    }
+
+    /// <summary>
+    /// CGOS 対局の内容から Windows で安全な SGF ファイル名を作成します。
+    /// </summary>
+    private static string CreateCgosSgfFileName(CgosConnectionProfile profile, CgosGameObservation observation)
+    {
+        const int maxBaseNameLength = 176;
+        var dateTime = observation.StartedAt.ToString("yyyyMMdd-HHmmss");
+        var black = SanitizeFileNamePart(observation.BlackPlayerName, "BLACK");
+        var white = SanitizeFileNamePart(observation.WhitePlayerName, "WHITE");
+        var eventName = SanitizeFileNamePart(profile.Event, "EVENT");
+        var role = SanitizeFileNamePart(profile.Role, "ROLE");
+        var baseName = $"{eventName}_{role}_{black}_{white}_{dateTime}";
+        if (baseName.Length > maxBaseNameLength)
+            baseName = $"{black}_{white}_{dateTime}";
+
+        if (baseName.Length > maxBaseNameLength)
+        {
+            black = black[..Math.Min(70, black.Length)];
+            white = white[..Math.Min(70, white.Length)];
+            baseName = $"{black}_{white}_{dateTime}";
+        }
+
+        return baseName + ".sgf";
+    }
+
+    /// <summary>
+    /// ファイル名に使用できない文字を構成要素から除去します。
+    /// </summary>
+    private static string SanitizeFileNamePart(string text, string fallback)
+    {
+        var invalidCharacters = Path.GetInvalidFileNameChars();
+        var builder = new StringBuilder(text.Length);
+        foreach (var character in text.Trim())
+        {
+            if (character >= ' ' && Array.IndexOf(invalidCharacters, character) < 0)
+                builder.Append(character);
+        }
+
+        var sanitized = builder.ToString().Trim(' ', '.');
+        return string.IsNullOrWhiteSpace(sanitized) ? fallback : sanitized;
     }
 
     private static void ShowMessage(string message, string caption)

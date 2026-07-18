@@ -26,6 +26,7 @@ public sealed class CgosGameObservation
     public GoStone CurrentTurn { get; private set; } = GoStone.Black;
     public int MoveCount { get; private set; }
     public string Result { get; private set; } = "";
+    public DateTime StartedAt { get; private set; }
 
     public GoStone GetStone(int x, int y) => _board.GetStone(x, y);
 
@@ -116,6 +117,7 @@ public sealed class CgosGameObservation
         Result = "";
         IsFinished = false;
         IsStarted = true;
+        StartedAt = DateTime.Now;
 
         for (var index = 7; index + 1 < parts.Length; index += 2)
         {

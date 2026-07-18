@@ -596,6 +596,7 @@ public sealed class GoAppSession
             CgosConnectionProfileEditField.DisplayName => CgosConnectionEditDraft with { DisplayName = text },
             CgosConnectionProfileEditField.Host => CgosConnectionEditDraft with { Host = text },
             CgosConnectionProfileEditField.Port => CgosConnectionEditDraft,
+            CgosConnectionProfileEditField.Event => CgosConnectionEditDraft with { Event = text },
             CgosConnectionProfileEditField.Role => CgosConnectionEditDraft with { Role = text },
             CgosConnectionProfileEditField.Note => CgosConnectionEditDraft with { Note = text },
             _ => throw new ArgumentOutOfRangeException(nameof(field), field, "CGOS connection edit field is out of range."),
@@ -676,6 +677,7 @@ public sealed class GoAppSession
         CgosConnectionProfileEditField.DisplayName => CgosConnectionEditDraft.DisplayName,
         CgosConnectionProfileEditField.Host => CgosConnectionEditDraft.Host,
         CgosConnectionProfileEditField.Port => CgosConnectionPortDraft,
+        CgosConnectionProfileEditField.Event => CgosConnectionEditDraft.Event,
         CgosConnectionProfileEditField.Role => CgosConnectionEditDraft.Role,
         CgosConnectionProfileEditField.Note => CgosConnectionEditDraft.Note,
         _ => throw new ArgumentOutOfRangeException(nameof(field), field, "CGOS connection edit field is out of range."),
@@ -1946,7 +1948,7 @@ public sealed class GoAppSession
     private static string StoneName(GoStone stone) => stone == GoStone.Black ? "BLACK" : "WHITE";
 
     private static CgosConnectionProfile CreateDefaultCgosConnectionProfile() =>
-        new("New CGOS Connection", "uec-go.com", 6809, "PRACTICE", "CGOS practice server");
+        new("New CGOS Connection", "uec-go.com", 6809, "PRACTICE", "CGOS practice server") { Event = "PRACTICE" };
 
     private static int AdjustGtpEngineSelectionAfterDelete(int selectedIndex, int removedIndex, int fallbackIndex)
     {

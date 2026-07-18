@@ -5,13 +5,20 @@ public sealed record CgosConnectionProfile(
     string Host,
     int Port,
     string Role,
-    string Note);
+    string Note)
+{
+    /// <summary>
+    /// 接続先で開催される大会などのイベント名です。
+    /// </summary>
+    public string Event { get; init; } = "";
+}
 
 public enum CgosConnectionProfileEditField
 {
     DisplayName,
     Host,
     Port,
+    Event,
     Role,
     Note,
 }

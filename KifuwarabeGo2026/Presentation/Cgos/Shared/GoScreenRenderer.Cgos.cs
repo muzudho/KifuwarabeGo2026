@@ -436,7 +436,7 @@ public sealed partial class GoScreenRenderer
         FillRect(CgosSelectedProfileBarBounds, new Color(15, 20, 26));
         DrawRect(CgosSelectedProfileBarBounds, 1, new Color(67, 84, 92));
         DrawUiLabel(UiLabel.InCompactRow("TARGET", CgosSelectedProfileBarBounds));
-        var text = $"{profile.DisplayName} / {profile.Host}:{profile.Port} / {profile.Role}";
+        var text = $"{profile.DisplayName} / {profile.Host}:{profile.Port} / {profile.Event} / {profile.Role}";
         DrawFittedText(text, new Rectangle(CgosSelectedProfileBarBounds.X + 152, CgosSelectedProfileBarBounds.Y + 7, CgosSelectedProfileBarBounds.Width - 168, 38), Color.White, 0.42f);
     }
 
@@ -705,6 +705,7 @@ public sealed partial class GoScreenRenderer
         DrawCgosConnectionEditField(session, CgosConnectionProfileEditField.DisplayName, "DISPLAY", mousePoint);
         DrawCgosConnectionEditField(session, CgosConnectionProfileEditField.Host, "HOST", mousePoint);
         DrawCgosConnectionEditField(session, CgosConnectionProfileEditField.Port, "PORT", mousePoint);
+        DrawCgosConnectionEditField(session, CgosConnectionProfileEditField.Event, "EVENT", mousePoint);
         DrawCgosConnectionEditField(session, CgosConnectionProfileEditField.Role, "ROLE", mousePoint);
         DrawCgosConnectionEditField(session, CgosConnectionProfileEditField.Note, "NOTE", mousePoint);
 
@@ -757,8 +758,8 @@ public sealed partial class GoScreenRenderer
         DrawCgosConnectionPropertyRow(y, "NAME", profile.DisplayName);
         DrawCgosConnectionPropertyRow(y + 70, "HOST", profile.Host);
         DrawCgosConnectionPropertyRow(y + 140, "PORT", profile.Port.ToString());
-        DrawCgosConnectionPropertyRow(y + 210, "ROLE", profile.Role);
-        DrawCgosConnectionPropertyRow(y + 280, "STATUS", "GUI NOT CONNECTED");
+        DrawCgosConnectionPropertyRow(y + 210, "EVENT", profile.Event);
+        DrawCgosConnectionPropertyRow(y + 280, "ROLE", profile.Role);
         DrawCgosConnectionPropertyRow(y + 350, "NOTE", profile.Note);
     }
 
@@ -961,6 +962,7 @@ public sealed partial class GoScreenRenderer
         CgosConnectionProfileEditField.DisplayName,
         CgosConnectionProfileEditField.Host,
         CgosConnectionProfileEditField.Port,
+        CgosConnectionProfileEditField.Event,
         CgosConnectionProfileEditField.Role,
         CgosConnectionProfileEditField.Note,
     };
@@ -968,10 +970,11 @@ public sealed partial class GoScreenRenderer
 
     private static Rectangle CgosConnectionEditPanelFieldRowBounds(CgosConnectionProfileEditField field) => field switch
     {
-        CgosConnectionProfileEditField.DisplayName => new Rectangle(AddPanelControlX, 264, 668, 56),
-        CgosConnectionProfileEditField.Host => new Rectangle(AddPanelControlX, 348, 668, 56),
-        CgosConnectionProfileEditField.Port => new Rectangle(AddPanelControlX, 432, 668, 56),
-        CgosConnectionProfileEditField.Role => new Rectangle(AddPanelControlX, 516, 668, 56),
+        CgosConnectionProfileEditField.DisplayName => new Rectangle(AddPanelControlX, 250, 668, 56),
+        CgosConnectionProfileEditField.Host => new Rectangle(AddPanelControlX, 320, 668, 56),
+        CgosConnectionProfileEditField.Port => new Rectangle(AddPanelControlX, 390, 668, 56),
+        CgosConnectionProfileEditField.Event => new Rectangle(AddPanelControlX, 460, 668, 56),
+        CgosConnectionProfileEditField.Role => new Rectangle(AddPanelControlX, 530, 668, 56),
         CgosConnectionProfileEditField.Note => new Rectangle(AddPanelControlX, 600, 668, 56),
         _ => Rectangle.Empty,
     };
