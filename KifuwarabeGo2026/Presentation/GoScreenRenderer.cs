@@ -823,7 +823,7 @@ public sealed class GoScreenRenderer
 
         DrawCgosProcessPanel(
             CgosBlackProcessPanelBounds,
-            "BLACK PLAYER",
+            "PLAYER 1",
             session.CgosBlackConnectionStatusMessage,
             session.CgosBlackConnectionRecentOutput,
             session.SelectedCgosBlackGtpEngineProfile?.DisplayName,
@@ -846,7 +846,7 @@ public sealed class GoScreenRenderer
 
         DrawCgosProcessPanel(
             CgosWhiteProcessPanelBounds,
-            "WHITE PLAYER",
+            "PLAYER 2",
             session.CgosWhiteConnectionStatusMessage,
             session.CgosWhiteConnectionRecentOutput,
             session.SelectedCgosWhiteGtpEngineProfile?.DisplayName,
