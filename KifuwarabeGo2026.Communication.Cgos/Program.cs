@@ -2,6 +2,7 @@ namespace KifuwarabeGo2026.Communication.Cgos;
 
 using System.Diagnostics;
 using System.Globalization;
+using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Text;
@@ -244,59 +245,108 @@ internal sealed class CgosClientOptions
     }
 }
 
-internal sealed class CgosAdminClient
+internal static class CgosTcpConnector
+{
+    public static async Task<TcpClient> ConnectAsync(
+        string host,
+        int port,
+        TimeSpan timeout,
+        Action<string> log,
+        CancellationToken cancellationToken)
+    {
+        log($"# TCP connect timeout is {timeout.TotalSeconds:0} seconds.");
+        var stopwatch = Stopwatch.StartNew();
+
+        IPAddress[] addresses;
+        try
+        {
+            addresses = await Task.Run(() => Dns.GetHostAddresses(host), cancellationToken).WaitAsync(timeout, cancellationToken);
+        }
+        catch (TimeoutException ex)
+        {
+            log($"# DNS lookup timed out after {timeout.TotalSeconds:0} seconds: {host}.");
+            throw new InvalidOperationException($"Could not resolve {host} within {timeout.TotalSeconds:0} seconds.", ex);
+        }
+
+        if (addresses.Length == 0)
+        {
+            throw new InvalidOperationException($"Could not resolve {host}.");
+        }
+
+        log("# Resolved " + host + " to " + string.Join(", ", addresses.Select(address => address.ToString())) + ".");
+
+        Exception? lastException = null;
+        foreach (var address in addresses)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var endpoint = new IPEndPoint(address, port);
+            var tcp = new TcpClient(address.AddressFamily);
+            try
+            {
+                await Task.Run(() => tcp.Connect(endpoint), cancellationToken).WaitAsync(timeout, cancellationToken);
+                stopwatch.Stop();
+                log($"# TCP connect completed in {stopwatch.Elapsed.TotalSeconds:0.000} seconds: {endpoint}.");
+                return tcp;
+            }
+            catch (TimeoutException ex)
+            {
+                lastException = ex;
+                break;
+            }
+            catch (SocketException ex)
+            {
+                tcp.Dispose();
+                lastException = ex;
+                log($"# TCP connect failed: {endpoint} {ex.SocketErrorCode} {ex.Message}");
+            }
+            catch
+            {
+                tcp.Dispose();
+                throw;
+            }
+        }
+
+        throw new InvalidOperationException($"Could not connect to {host}:{port} within {timeout.TotalSeconds:0} seconds.", lastException);
+    }
+}
+
+internal sealed class CgosConnectionSession
 {
     private static readonly TimeSpan FirstServerLineTimeout = TimeSpan.FromSeconds(15);
     private static readonly TimeSpan TcpConnectTimeout = TimeSpan.FromSeconds(15);
 
     private readonly CgosClientOptions _options;
     private readonly CgosAccount _account;
-    private readonly object _logLock = new();
-    private readonly string _logPath;
+    private readonly Action<string> _log;
+    private readonly string _connectionPurpose;
+    private StreamWriter? _writer;
     private bool _quitSent;
 
-    public CgosAdminClient(CgosClientOptions options)
+    public CgosConnectionSession(CgosClientOptions options, CgosAccount account, Action<string> log, string connectionPurpose = "")
     {
         _options = options;
-        _account = new CgosAccount("admin", "admin", "admin");
-        _logPath = Path.Combine(options.LogDirectory, $"cgos-admin-{DateTime.Now:yyyyMMdd-HHmmss}.log");
+        _account = account;
+        _log = log;
+        _connectionPurpose = connectionPurpose;
     }
 
-    public async Task RunAsync(CancellationToken cancellationToken)
+    public async Task RunAsync(
+        Func<string, CancellationToken, Task> handleServerLineAsync,
+        Func<CancellationToken, Task>? passwordSentAsync,
+        CancellationToken cancellationToken)
     {
-        StreamWriter? writer = null;
         try
         {
-            Log($"# Connecting to {_options.Host}:{_options.Port} as {_account.UserName} for admin.");
+            _log($"# Connecting to {_options.Host}:{_options.Port} as {_account.UserName}{_connectionPurpose}.");
 
-            using var tcp = new TcpClient();
-            try
-            {
-                Log($"# TCP connect timeout is {TcpConnectTimeout.TotalSeconds:0} seconds.");
-                var stopwatch = Stopwatch.StartNew();
-                await tcp.ConnectAsync(_options.Host, _options.Port, cancellationToken).AsTask().WaitAsync(TcpConnectTimeout, cancellationToken);
-                stopwatch.Stop();
-                Log($"# TCP connect completed in {stopwatch.Elapsed.TotalSeconds:0.000} seconds.");
-            }
-            catch (TimeoutException ex)
-            {
-                Log($"# TCP connect timed out after {TcpConnectTimeout.TotalSeconds:0} seconds: {_options.Host}:{_options.Port}.");
-                throw new InvalidOperationException($"Could not connect to {_options.Host}:{_options.Port} within {TcpConnectTimeout.TotalSeconds:0} seconds.", ex);
-            }
-            catch (SocketException ex)
-            {
-                Log($"# TCP connect failed: {ex.SocketErrorCode} {ex.Message}");
-                throw;
-            }
-
-            Log($"# Connected to {_options.Host}:{_options.Port}.");
+            using var tcp = await CgosTcpConnector.ConnectAsync(_options.Host, _options.Port, TcpConnectTimeout, _log, cancellationToken);
+            _log($"# Connected to {_options.Host}:{_options.Port}.");
 
             await using var stream = tcp.GetStream();
             using var reader = new StreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: false, leaveOpen: true);
-            await using var cgosWriter = new StreamWriter(stream, new UTF8Encoding(false), leaveOpen: true) { NewLine = "\n", AutoFlush = true };
-            writer = cgosWriter;
+            await using var writer = new StreamWriter(stream, new UTF8Encoding(false), leaveOpen: true) { NewLine = "\n", AutoFlush = true };
+            _writer = writer;
 
-            Task? inputTask = null;
             var receivedAnyLine = false;
             while (!cancellationToken.IsCancellationRequested)
             {
@@ -310,7 +360,7 @@ internal sealed class CgosAdminClient
                 }
                 catch (TimeoutException)
                 {
-                    Log($"# CGOS did not send the first protocol line within {FirstServerLineTimeout.TotalSeconds:0} seconds after TCP connect.");
+                    _log($"# CGOS did not send the first protocol line within {FirstServerLineTimeout.TotalSeconds:0} seconds after TCP connect.");
                     return;
                 }
                 catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -319,13 +369,13 @@ internal sealed class CgosAdminClient
                 }
                 catch (IOException ex)
                 {
-                    Log("# CGOS connection read failed: " + ex.Message);
+                    _log("# CGOS connection read failed: " + ex.Message);
                     return;
                 }
 
                 if (line is null)
                 {
-                    Log("# CGOS connection closed.");
+                    _log("# CGOS connection closed.");
                     return;
                 }
 
@@ -336,60 +386,110 @@ internal sealed class CgosAdminClient
                     continue;
                 }
 
-                Log("> " + line);
+                _log("> " + line);
                 if (line.StartsWith("Error:", StringComparison.OrdinalIgnoreCase))
                 {
                     throw new InvalidOperationException("CGOS error: " + line);
                 }
 
-                await HandleServerLineAsync(line, cgosWriter);
-                if (inputTask is null && line.StartsWith("password", StringComparison.OrdinalIgnoreCase))
+                if (await HandleLoginLineAsync(line, cancellationToken, passwordSentAsync))
                 {
-                    inputTask = RelayAdminInputAsync(cgosWriter, cancellationToken);
+                    continue;
                 }
-            }
 
-            if (inputTask is not null)
-            {
-                await inputTask;
+                await handleServerLineAsync(line, cancellationToken);
             }
         }
         finally
         {
-            if (writer is not null)
+            try
             {
-                try
-                {
-                    await SendQuitAsync(writer);
-                }
-                catch (Exception ex)
-                {
-                    Log("# Could not send CGOS quit: " + ex.Message);
-                }
+                await SendQuitAsync();
             }
+            catch (Exception ex)
+            {
+                _log("# Could not send CGOS quit: " + ex.Message);
+            }
+
+            _writer = null;
         }
     }
 
-    private async Task HandleServerLineAsync(string line, StreamWriter writer)
+    public async Task SendAsync(string message, bool maskInLog = false)
+    {
+        var writer = _writer ?? throw new InvalidOperationException("CGOS is not connected.");
+        await writer.WriteLineAsync(message);
+        _log("< " + (maskInLog ? "(password)" : message));
+    }
+
+    public async Task SendQuitAsync()
+    {
+        if (_writer is null || _quitSent)
+        {
+            return;
+        }
+
+        await SendAsync("quit");
+        _quitSent = true;
+    }
+
+    private async Task<bool> HandleLoginLineAsync(
+        string line,
+        CancellationToken cancellationToken,
+        Func<CancellationToken, Task>? passwordSentAsync)
     {
         var parts = line.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        var command = parts[0].ToLowerInvariant();
-        switch (command)
+        switch (parts[0].ToLowerInvariant())
         {
             case "protocol":
-                await SendAsync(writer, CgosClient.GetClientId(parts.Length == 2 && parts[1].Contains("genmove_analyze", StringComparison.OrdinalIgnoreCase)));
-                return;
+                await SendAsync(CgosClient.GetClientId(parts.Length == 2 && parts[1].Contains("genmove_analyze", StringComparison.OrdinalIgnoreCase)));
+                return true;
             case "username":
-                await SendAsync(writer, _account.UserName);
-                return;
+                await SendAsync(_account.UserName);
+                return true;
             case "password":
-                await SendAsync(writer, _account.Password, maskInLog: true);
-                Log("# Admin command input is ready.");
-                return;
+                await SendAsync(_account.Password, maskInLog: true);
+                if (passwordSentAsync is not null)
+                {
+                    await passwordSentAsync(cancellationToken);
+                }
+
+                return true;
+            default:
+                return false;
         }
     }
+}
 
-    private async Task RelayAdminInputAsync(StreamWriter writer, CancellationToken cancellationToken)
+internal sealed class CgosAdminClient
+{
+    private readonly CgosClientOptions _options;
+    private readonly CgosAccount _account;
+    private readonly object _logLock = new();
+    private readonly string _logPath;
+
+    public CgosAdminClient(CgosClientOptions options)
+    {
+        _options = options;
+        _account = new CgosAccount("admin", "admin", "admin");
+        _logPath = Path.Combine(options.LogDirectory, $"cgos-admin-{DateTime.Now:yyyyMMdd-HHmmss}.log");
+    }
+
+    public async Task RunAsync(CancellationToken cancellationToken)
+    {
+        var session = new CgosConnectionSession(_options, _account, Log, " for admin");
+        await session.RunAsync(
+            (_, _) => Task.CompletedTask,
+            token =>
+            {
+                Log("# Admin command input is ready.");
+                _ = RelayAdminInputAsync(session, token);
+                return Task.CompletedTask;
+            },
+            cancellationToken);
+    }
+
+    private async Task RelayAdminInputAsync(CgosConnectionSession session, CancellationToken cancellationToken)
     {
         while (!cancellationToken.IsCancellationRequested)
         {
@@ -409,7 +509,7 @@ internal sealed class CgosAdminClient
                 line.Equals("exit", StringComparison.OrdinalIgnoreCase) ||
                 line.Equals("cancel", StringComparison.OrdinalIgnoreCase))
             {
-                await SendQuitAsync(writer);
+                await session.SendQuitAsync();
                 return;
             }
 
@@ -420,25 +520,8 @@ internal sealed class CgosAdminClient
                 continue;
             }
 
-            await SendAsync(writer, line.ToLowerInvariant());
+            await session.SendAsync(line.ToLowerInvariant());
         }
-    }
-
-    private async Task SendAsync(StreamWriter writer, string message, bool maskInLog = false)
-    {
-        await writer.WriteLineAsync(message);
-        Log("< " + (maskInLog ? "(password)" : message));
-    }
-
-    private async Task SendQuitAsync(StreamWriter writer)
-    {
-        if (_quitSent)
-        {
-            return;
-        }
-
-        await SendAsync(writer, "quit");
-        _quitSent = true;
     }
 
     private void Log(string message)
@@ -455,8 +538,6 @@ internal sealed class CgosAdminClient
 internal sealed class CgosClient
 {
     private const string ClientIdPrefix = "e1 KifuwarabeGo2026.Cgos";
-    private static readonly TimeSpan FirstServerLineTimeout = TimeSpan.FromSeconds(15);
-    private static readonly TimeSpan TcpConnectTimeout = TimeSpan.FromSeconds(15);
 
     private readonly CgosClientOptions _options;
     private readonly CgosAccount _account;
@@ -474,94 +555,21 @@ internal sealed class CgosClient
 
     public async Task RunAsync(CancellationToken cancellationToken)
     {
-        StreamWriter? writer = null;
+        var session = new CgosConnectionSession(_options, _account, Log);
         try
         {
-            Log($"# Connecting to {_options.Host}:{_options.Port} as {_account.UserName}.");
-
-            using var tcp = new TcpClient();
-            try
-            {
-                Log($"# TCP connect timeout is {TcpConnectTimeout.TotalSeconds:0} seconds.");
-                var stopwatch = Stopwatch.StartNew();
-                await tcp.ConnectAsync(_options.Host, _options.Port, cancellationToken).AsTask().WaitAsync(TcpConnectTimeout, cancellationToken);
-                stopwatch.Stop();
-                Log($"# TCP connect completed in {stopwatch.Elapsed.TotalSeconds:0.000} seconds.");
-            }
-            catch (TimeoutException ex)
-            {
-                Log($"# TCP connect timed out after {TcpConnectTimeout.TotalSeconds:0} seconds: {_options.Host}:{_options.Port}.");
-                throw new InvalidOperationException($"Could not connect to {_options.Host}:{_options.Port} within {TcpConnectTimeout.TotalSeconds:0} seconds.", ex);
-            }
-            catch (SocketException ex)
-            {
-                Log($"# TCP connect failed: {ex.SocketErrorCode} {ex.Message}");
-                throw;
-            }
-
-            Log($"# Connected to {_options.Host}:{_options.Port}.");
-
-            await using var stream = tcp.GetStream();
-            using var reader = new StreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: false, leaveOpen: true);
-            await using var cgosWriter = new StreamWriter(stream, new UTF8Encoding(false), leaveOpen: true) { NewLine = "\n", AutoFlush = true };
-            writer = cgosWriter;
-
-            var receivedAnyLine = false;
-            while (!cancellationToken.IsCancellationRequested)
-            {
-                string? line;
-                try
-                {
-                    var readTask = reader.ReadLineAsync(cancellationToken).AsTask();
-                    line = receivedAnyLine
-                        ? await readTask
-                        : await readTask.WaitAsync(FirstServerLineTimeout, cancellationToken);
-                }
-                catch (TimeoutException)
-                {
-                    Log($"# CGOS did not send the first protocol line within {FirstServerLineTimeout.TotalSeconds:0} seconds after TCP connect.");
-                    return;
-                }
-                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-                {
-                    return;
-                }
-                catch (IOException ex)
-                {
-                    Log("# CGOS connection read failed: " + ex.Message);
-                    return;
-                }
-
-                if (line is null)
-                {
-                    Log("# CGOS connection closed.");
-                    return;
-                }
-
-                line = line.Trim();
-                receivedAnyLine = true;
-                if (line.Length == 0)
-                {
-                    continue;
-                }
-
-                Log("> " + line);
-                if (line.StartsWith("Error:", StringComparison.OrdinalIgnoreCase))
-                {
-                    throw new InvalidOperationException("CGOS error: " + line);
-                }
-
-                await HandleLineAsync(line, cgosWriter, cancellationToken);
-            }
+            await session.RunAsync(
+                (line, token) => HandleLineAsync(line, session, token),
+                passwordSentAsync: null,
+                cancellationToken);
         }
         finally
         {
-            await LogoutAsync(writer);
             await ShutdownEngineAsync();
         }
     }
 
-    private async Task HandleLineAsync(string line, StreamWriter writer, CancellationToken cancellationToken)
+    private async Task HandleLineAsync(string line, CgosConnectionSession session, CancellationToken cancellationToken)
     {
         var parts = line.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         var command = parts[0].ToLowerInvariant();
@@ -571,16 +579,6 @@ internal sealed class CgosClient
 
         switch (command)
         {
-            case "protocol":
-                var response = GetClientId(parameters.Contains("genmove_analyze", StringComparer.OrdinalIgnoreCase));
-                await SendAsync(writer, response);
-                return;
-            case "username":
-                await SendAsync(writer, _account.UserName);
-                return;
-            case "password":
-                await SendAsync(writer, _account.Password, maskInLog: true);
-                return;
             case "setup":
                 await HandleSetupAsync(parameters, cancellationToken);
                 return;
@@ -589,12 +587,12 @@ internal sealed class CgosClient
                 return;
             case "genmove":
                 var move = await HandleGenMoveAsync(parameters, cancellationToken);
-                await SendAsync(writer, move);
+                await session.SendAsync(move);
                 return;
             case "gameover":
                 Log("# Game over: " + string.Join(' ', parameters));
                 await ShutdownEngineAsync();
-                await SendAsync(writer, "ready");
+                await session.SendAsync("ready");
                 return;
             case "info":
                 return;
@@ -666,31 +664,6 @@ internal sealed class CgosClient
             await _engine.DisposeAsync();
             _engine = null;
         }
-    }
-
-    /// <summary>
-    /// ログアウト。CGOS へ "quit" コマンドを送る。
-    /// </summary>
-    /// <param name="writer">CGOS への接続ストリームライター</param>
-    /// <returns></returns>
-    private async Task LogoutAsync(StreamWriter? writer)
-    {
-        if (writer is null) return;
-
-        try
-        {
-            await SendAsync(writer, "quit");
-        }
-        catch (Exception ex)
-        {
-            Log("# Could not send CGOS quit: " + ex.Message);
-        }
-    }
-
-    private async Task SendAsync(StreamWriter writer, string message, bool maskInLog = false)
-    {
-        await writer.WriteLineAsync(message);
-        Log("< " + (maskInLog ? "(password)" : message));
     }
 
     private void Log(string message)
