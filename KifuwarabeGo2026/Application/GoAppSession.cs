@@ -387,10 +387,7 @@ public sealed class GoAppSession
 
     public void ClearCgosGtpEngineSelection(GoStone stone)
     {
-        if (IsCgosPlayerConnectionRunning(stone))
-        {
-            return;
-        }
+        if (IsCgosPlayerConnectionRunning(stone)) return;
 
         SetSelectedCgosGtpEngineIndex(stone, null);
         CgosConnectionStatusMessage = HasSelectedCgosGtpEngine ? "READY" : "SELECT ENGINE";
