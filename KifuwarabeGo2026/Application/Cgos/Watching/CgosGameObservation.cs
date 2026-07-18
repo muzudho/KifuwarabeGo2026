@@ -2,7 +2,9 @@ namespace KifuwarabeGo2026.Application.Cgos.Watching;
 
 using KifuwarabeGo2026.Domain;
 using KifuwarabeGo2026.Gtp;
+using KifuwarabeGo2026.Application.Local.Playing;
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 
 /// <summary>
@@ -12,6 +14,7 @@ public sealed class CgosGameObservation
 {
     private GoBoard _board = new(9);
     private GoPoint? _koPoint;
+    private readonly List<GoGameMove> _moves = [];
 
     public bool IsStarted { get; private set; }
     public bool IsFinished { get; private set; }
@@ -32,37 +35,44 @@ public sealed class CgosGameObservation
     public GoRenParseResult ParseRens() => _board.ParseRens();
 
     /// <summary>
+    /// 現在の CGOS 対局を SGF 出力用の棋譜へ変換します。
+    /// </summary>
+    public GoGameRecord CreateGameRecord()
+    {
+        var record = new GoGameRecord
+        {
+            GameName = $"CGOS {GameId}: {BlackPlayerName} vs {WhitePlayerName} {Result}".Trim(),
+            RuleName = "CGOS",
+            BoardSize = BoardSize,
+            Komi = Komi,
+        };
+        record.Moves.AddRange(_moves);
+        return record;
+    }
+
+    /// <summary>
     /// 通信プロセスの表示行を観戦状態へ反映します。
     /// </summary>
-    public void ProcessLogLine(string displayLine)
+    public bool ProcessLogLine(string displayLine)
     {
         var marker = displayLine.IndexOf("] > ", StringComparison.Ordinal);
         if (marker >= 0)
-        {
-            ProcessServerCommand(displayLine[(marker + 4)..]);
-            return;
-        }
+            return ProcessServerCommand(displayLine[(marker + 4)..]);
 
         marker = displayLine.IndexOf("] # Generated ", StringComparison.Ordinal);
-        if (marker < 0)
-        {
-            return;
-        }
+        if (marker < 0) return false;
 
         var generated = displayLine[(marker + 14)..].Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         if (generated.Length >= 3 && generated[1].Equals("move:", StringComparison.OrdinalIgnoreCase))
-        {
-            ApplyMove(ParseStone(generated[0]), generated[2]);
-        }
+            return ApplyMove(ParseStone(generated[0]), generated[2]);
+
+        return false;
     }
 
-    private void ProcessServerCommand(string commandLine)
+    private bool ProcessServerCommand(string commandLine)
     {
         var parts = commandLine.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        if (parts.Length == 0)
-        {
-            return;
-        }
+        if (parts.Length == 0) return false;
 
         if (parts[0].Equals("setup", StringComparison.OrdinalIgnoreCase))
         {
@@ -70,13 +80,15 @@ public sealed class CgosGameObservation
         }
         else if (parts[0].Equals("play", StringComparison.OrdinalIgnoreCase) && parts.Length >= 3)
         {
-            ApplyMove(ParseStone(parts[1]), parts[2]);
+            return ApplyMove(ParseStone(parts[1]), parts[2]);
         }
         else if (parts[0].Equals("gameover", StringComparison.OrdinalIgnoreCase))
         {
             IsFinished = true;
             Result = parts.Length > 1 ? string.Join(' ', parts[1..]) : "GAME OVER";
         }
+
+        return false;
     }
 
     private void ProcessSetup(string[] parts)
@@ -100,6 +112,7 @@ public sealed class CgosGameObservation
         BlackPlayerName = StripRank(parts[6]);
         CurrentTurn = GoStone.Black;
         MoveCount = 0;
+        _moves.Clear();
         Result = "";
         IsFinished = false;
         IsStarted = true;
@@ -110,30 +123,35 @@ public sealed class CgosGameObservation
         }
     }
 
-    private void ApplyMove(GoStone stone, string vertex)
+    /// <summary>
+    /// 着手を適用します。
+    /// </summary>
+    /// <param name="stone"></param>
+    /// <param name="vertex"></param>
+    /// <returns></returns>
+    private bool ApplyMove(GoStone stone, string vertex)
     {
-        if (!IsStarted || IsFinished || stone == GoStone.Empty || stone != CurrentTurn)
-        {
-            return;
-        }
+        if (!IsStarted || IsFinished || stone == GoStone.Empty || stone != CurrentTurn) return false;
 
+        GoPoint? movePoint = null;
         if (!GtpCoordinate.IsPass(vertex))
         {
             if (!GtpCoordinate.TryParseVertex(vertex, BoardSize, out var point) ||
                 !_board.TryPlaceStone(point.X, point.Y, stone, _koPoint, out _, out var nextKoPoint))
-            {
-                return;
-            }
+                return false;
 
             _koPoint = nextKoPoint;
+            movePoint = point;
         }
         else
         {
             _koPoint = null;
         }
 
+        _moves.Add(new GoGameMove(stone, movePoint));
         MoveCount++;
         CurrentTurn = stone == GoStone.Black ? GoStone.White : GoStone.Black;
+        return movePoint is not null;
     }
 
     private static GoStone ParseStone(string text) => text.ToLowerInvariant() switch

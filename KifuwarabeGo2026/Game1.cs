@@ -271,11 +271,16 @@ public class Game1 : Game
                 return;
             }
 
+            // ［CGOS　＞　観戦画面］マウス入力
             if (_session.UseKind == GoAppUseKind.CgosClient)
             {
                 if (_session.CgosConnectionFlowKind == CgosConnectionFlowKind.Result)
                 {
-                    if (GoScreenRenderer.GetCgosWatchingBackButtonHit(point))
+                    if (GoScreenRenderer.GetCgosWatchingExportSgfButtonHit(point))
+                    {
+                        ExportSgf(_cgosGameObservation.CreateGameRecord(), $"cgos-{_cgosGameObservation.GameId}-{DateTime.Now:yyyyMMdd-HHmmss}.sgf");
+                    }
+                    else if (GoScreenRenderer.GetCgosWatchingBackButtonHit(point))
                     {
                         _session.ReturnToCgosConnectionScreen();
                     }
@@ -793,12 +798,12 @@ public class Game1 : Game
 
         foreach (var line in _cgosBlackConnectionProcess.DrainOutput())
         {
-            _cgosGameObservation.ProcessLogLine(line);
+            if (_cgosGameObservation.ProcessLogLine(line)) PlayPlaceStoneSound();
         }
 
         foreach (var line in _cgosWhiteConnectionProcess.DrainOutput())
         {
-            _cgosGameObservation.ProcessLogLine(line);
+            if (_cgosGameObservation.ProcessLogLine(line)) PlayPlaceStoneSound();
         }
 
         if (_cgosGameObservation.IsStarted && _cgosGameObservation.GameId != previousGameId)
@@ -1050,7 +1055,13 @@ public class Game1 : Game
         }
     }
 
-    private void ExportSgf()
+    private void ExportSgf() =>
+        ExportSgf(_session.CurrentGameRecord, $"kifuwarabe-go-{DateTime.Now:yyyyMMdd-HHmmss}.sgf");
+
+    /// <summary>
+    /// 指定された棋譜を Local と共通の保存フローで SGF 出力します。
+    /// </summary>
+    private void ExportSgf(GoGameRecord record, string fileName)
     {
         using var dialog = new System.Windows.Forms.SaveFileDialog
         {
@@ -1058,7 +1069,7 @@ public class Game1 : Game
             CheckPathExists = true,
             DefaultExt = "sgf",
             Filter = "SGF files (*.sgf)|*.sgf|All files (*.*)|*.*",
-            FileName = $"kifuwarabe-go-{DateTime.Now:yyyyMMdd-HHmmss}.sgf",
+            FileName = fileName,
             InitialDirectory = AppContext.BaseDirectory,
             OverwritePrompt = true,
             Title = "Save SGF game record",
@@ -1071,7 +1082,7 @@ public class Game1 : Game
 
         try
         {
-            var sgf = SgfGameRecordConverter.ToSgf(_session.CurrentGameRecord);
+            var sgf = SgfGameRecordConverter.ToSgf(record);
             File.WriteAllText(dialog.FileName, sgf, Encoding.UTF8);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)

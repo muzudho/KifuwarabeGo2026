@@ -60,6 +60,11 @@ public sealed partial class GoScreenRenderer
 
     public static bool GetCgosWatchingBackButtonHit(Point point) => CgosWatchingBackButtonBounds.Contains(point);
 
+    /// <summary>
+    /// ［SGF OUTPUT］ボタンが押されたか判定します。
+    /// </summary>
+    public static bool GetCgosWatchingExportSgfButtonHit(Point point) => CgosWatchingExportSgfButtonBounds.Contains(point);
+
     private void DrawCgosWatchingSidePanel(CgosGameObservation observation, Point mousePoint)
     {
         var panel = new Rectangle(1102, 78, 760, 924);
@@ -80,6 +85,7 @@ public sealed partial class GoScreenRenderer
         {
             DrawText("RESULT", new Vector2(1144, 716), new Color(180, 195, 195), 0.5f);
             DrawFittedText(observation.Result, new Rectangle(1144, 764, 668, 64), new Color(99, 223, 185), 0.56f);
+            DrawCommandButton(CgosWatchingExportSgfButtonBounds, "SGF OUTPUT", false, mousePoint, scale: 0.4f);
             DrawCommandButton(CgosWatchingBackButtonBounds, "BACK TO CONNECTION", false, mousePoint, scale: 0.36f);
         }
         else
@@ -89,4 +95,9 @@ public sealed partial class GoScreenRenderer
     }
 
     private static Rectangle CgosWatchingBackButtonBounds => new(1290, 900, 376, 64);
+
+    /// <summary>
+    /// ［SGF OUTPUT］ボタンの描画範囲
+    /// </summary>
+    private static Rectangle CgosWatchingExportSgfButtonBounds => new(1290, 830, 376, 56);
 }
