@@ -42,33 +42,79 @@ internal static class Program
             cancellation.Cancel();
         };
 
-        if (options.AdminMode)
-        {
-            await new CgosAdminClient(options).RunAsync(cancellation.Token);
-            return 0;
-        }
-
-        var accounts = options.Accounts.ToArray();
-        if (accounts.Length == 0)
-        {
-            Console.Error.WriteLine("No CGOS account selected.");
-            return 2;
-        }
-
-        _ = WatchStandardInputAsync(cancellation);
-
-        var tasks = accounts
-            .Select(account => RunClientAsync(options, account, cancellation))
-            .ToArray();
+        var parentWatcher = WatchParentProcessAsync(options, cancellation);
 
         try
         {
+            if (options.AdminMode)
+            {
+                await new CgosAdminClient(options).RunAsync(cancellation.Token);
+                return cancellation.IsCancellationRequested ? 130 : 0;
+            }
+
+            var accounts = options.Accounts.ToArray();
+            if (accounts.Length == 0)
+            {
+                Console.Error.WriteLine("No CGOS account selected.");
+                return 2;
+            }
+
+            _ = WatchStandardInputAsync(cancellation);
+
+            var tasks = accounts
+                .Select(account => RunClientAsync(options, account, cancellation))
+                .ToArray();
+
             await Task.WhenAll(tasks);
             return 0;
         }
         catch (OperationCanceledException)
         {
             return 130;
+        }
+        finally
+        {
+            cancellation.Cancel();
+            await parentWatcher;
+        }
+    }
+
+    private static async Task WatchParentProcessAsync(CgosClientOptions options, CancellationTokenSource cancellation)
+    {
+        if (options.ParentProcessId is null || options.ParentProcessStartTimeUtcTicks is null)
+        {
+            return;
+        }
+
+        try
+        {
+            using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
+            while (IsExpectedParentProcessRunning(options.ParentProcessId.Value, options.ParentProcessStartTimeUtcTicks.Value) &&
+                   await timer.WaitForNextTickAsync(cancellation.Token))
+            {
+            }
+
+            if (!cancellation.IsCancellationRequested)
+            {
+                Console.Error.WriteLine("# Parent GUI process exited. Stopping CGOS communication process.");
+                cancellation.Cancel();
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+    }
+
+    private static bool IsExpectedParentProcessRunning(int processId, long startTimeUtcTicks)
+    {
+        try
+        {
+            using var process = Process.GetProcessById(processId);
+            return !process.HasExited && process.StartTime.ToUniversalTime().Ticks == startTimeUtcTicks;
+        }
+        catch (Exception ex) when (ex is ArgumentException or InvalidOperationException or System.ComponentModel.Win32Exception)
+        {
+            return false;
         }
     }
 
@@ -142,6 +188,10 @@ internal sealed class CgosClientOptions
 
     public bool AdminMode { get; private set; }
 
+    public int? ParentProcessId { get; private set; }
+
+    public long? ParentProcessStartTimeUtcTicks { get; private set; }
+
     public IReadOnlyList<CgosAccount> Accounts => _accounts;
 
     public static CgosClientOptions Parse(string[] args)
@@ -179,6 +229,24 @@ internal sealed class CgosClientOptions
                 case "--admin":
                     options.AdminMode = true;
                     break;
+                case "--parent-process-id":
+                    var parentProcessIdText = ReadValue(args, ref index, arg);
+                    if (!int.TryParse(parentProcessIdText, NumberStyles.None, CultureInfo.InvariantCulture, out var parentProcessId) || parentProcessId < 1)
+                    {
+                        throw new ArgumentException("--parent-process-id must be a positive integer.");
+                    }
+
+                    options.ParentProcessId = parentProcessId;
+                    break;
+                case "--parent-process-start-time":
+                    var parentStartTimeText = ReadValue(args, ref index, arg);
+                    if (!long.TryParse(parentStartTimeText, NumberStyles.None, CultureInfo.InvariantCulture, out var parentStartTime) || parentStartTime < 1)
+                    {
+                        throw new ArgumentException("--parent-process-start-time must be a positive UTC ticks value.");
+                    }
+
+                    options.ParentProcessStartTimeUtcTicks = parentStartTime;
+                    break;
                 case "--account":
                     selectedAccounts.Add(ReadValue(args, ref index, arg));
                     break;
@@ -189,6 +257,11 @@ internal sealed class CgosClientOptions
                 default:
                     throw new ArgumentException($"Unknown option: {arg}");
             }
+        }
+
+        if (options.ParentProcessId.HasValue != options.ParentProcessStartTimeUtcTicks.HasValue)
+        {
+            throw new ArgumentException("--parent-process-id and --parent-process-start-time must be specified together.");
         }
 
         if (selectedAccounts.Count == 0)
@@ -219,6 +292,9 @@ internal sealed class CgosClientOptions
         writer.WriteLine("  --engine-command COMMAND   GTP engine command line.");
         writer.WriteLine("  --log-directory DIR        Log directory. Default: Logs\\Cgos");
         writer.WriteLine("  --admin                    Login without a GTP engine and relay admin commands from stdin.");
+        writer.WriteLine("  --parent-process-id PID    Exit when the parent GUI process exits.");
+        writer.WriteLine("  --parent-process-start-time TICKS");
+        writer.WriteLine("                             Parent process UTC start time ticks (required with PID).");
         writer.WriteLine("  -h, --help                 Show help.");
     }
 
@@ -485,13 +561,30 @@ internal sealed class CgosAdminClient
                 {
                     adminInputStarted = true;
                     Log("# Admin login accepted. Command input is ready.");
-                    _ = RelayAdminInputAsync(session, token);
+                    _ = Task.Run(
+                        () => RelayAdminInputSafelyAsync(session, token),
+                        CancellationToken.None);
                 }
 
                 return Task.CompletedTask;
             },
             passwordSentAsync: null,
             cancellationToken);
+    }
+
+    private async Task RelayAdminInputSafelyAsync(CgosConnectionSession session, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await RelayAdminInputAsync(session, cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+        }
+        catch (Exception ex)
+        {
+            Log("# Admin input relay failed: " + ex.Message);
+        }
     }
 
     private async Task RelayAdminInputAsync(CgosConnectionSession session, CancellationToken cancellationToken)

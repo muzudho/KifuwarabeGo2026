@@ -140,6 +140,7 @@ public sealed class CgosConnectionProcess : IDisposable
         startInfo.ArgumentList.Add("--admin");
         startInfo.ArgumentList.Add("--log-directory");
         startInfo.ArgumentList.Add(LogDirectory);
+        AddParentProcessArguments(startInfo);
 
         var process = new Process
         {
@@ -205,6 +206,7 @@ public sealed class CgosConnectionProcess : IDisposable
         var engineCommand = CreateEngineCommand(engineProfile);
         startInfo.ArgumentList.Add("--engine-command");
         startInfo.ArgumentList.Add(engineCommand);
+        AddParentProcessArguments(startInfo);
 
         var process = new Process
         {
@@ -776,5 +778,14 @@ public sealed class CgosConnectionProcess : IDisposable
             buildConfiguration,
             "net8.0",
             "KifuwarabeGo2026.Communication.Cgos.exe");
+    }
+
+    private static void AddParentProcessArguments(ProcessStartInfo startInfo)
+    {
+        using var currentProcess = Process.GetCurrentProcess();
+        startInfo.ArgumentList.Add("--parent-process-id");
+        startInfo.ArgumentList.Add(currentProcess.Id.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        startInfo.ArgumentList.Add("--parent-process-start-time");
+        startInfo.ArgumentList.Add(currentProcess.StartTime.ToUniversalTime().Ticks.ToString(System.Globalization.CultureInfo.InvariantCulture));
     }
 }
