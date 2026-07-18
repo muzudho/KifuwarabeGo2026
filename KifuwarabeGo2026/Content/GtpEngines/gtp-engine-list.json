@@ -25,14 +25,30 @@
       "executablePath": "..\\..\\bin\\Debug\\net8.0-windows\\KifuwarabeGo2026.exe",
       "workingDirectory": "..\\..\\bin\\Debug\\net8.0-windows",
       "arguments": "",
-      "enableGtpLog": true
+      "enableGtpLog": true,
+      "guiOptions": {
+        "RandomMove": "ChebyshevDistanceFromStar"
+      }
     },
     {
       "displayName": "muzudho-test Copy",
       "executablePath": "..\\..\\bin\\Debug\\net8.0-windows\\KifuwarabeGo2026.exe",
       "workingDirectory": "..\\..\\bin\\Debug\\net8.0-windows",
       "arguments": "",
-      "enableGtpLog": true
+      "enableGtpLog": true,
+      "guiOptions": {
+        "RandomMove": "ChebyshevDistanceFromStar"
+      }
+    },
+    {
+      "displayName": "Kifuwarabe Normal Random GTP",
+      "executablePath": "..\\..\\..\\KifuwarabeGo2026.Engine\\bin\\Debug\\net8.0\\KifuwarabeGo2026.Engine.exe",
+      "workingDirectory": "..\\..\\..\\KifuwarabeGo2026.Engine\\bin\\Debug\\net8.0",
+      "arguments": "",
+      "enableGtpLog": true,
+      "guiOptions": {
+        "RandomMove": "Normal"
+      }
     }
   ]
 }

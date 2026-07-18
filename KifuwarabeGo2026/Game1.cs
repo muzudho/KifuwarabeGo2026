@@ -1241,6 +1241,29 @@ public class Game1 : Game
             return false;
         }
 
+        if (_session.IsGtpEngineGuiOptionsDialogOpen)
+        {
+            if (GoScreenRenderer.GetGtpEngineGuiOptionsDialogCancelButtonHit(point))
+            {
+                _session.CancelGtpEngineGuiOptionsDialog();
+                return true;
+            }
+
+            if (GoScreenRenderer.GetGtpEngineGuiOptionsDialogOkButtonHit(point))
+            {
+                _session.CommitGtpEngineGuiOptionsDialog();
+                return true;
+            }
+
+            if (GoScreenRenderer.GetGtpEngineGuiOptionsDialogRandomMoveStepButtonHit(point) is { } step)
+            {
+                _session.MoveGtpEngineRandomMoveSelection(step);
+                return true;
+            }
+
+            return true;
+        }
+
         if (GoScreenRenderer.GetGtpEngineEditPanelCloseButtonHit(point))
         {
             EndGtpEngineEditField();
@@ -1268,10 +1291,10 @@ public class Game1 : Game
             return true;
         }
 
-        if (GoScreenRenderer.GetGtpEngineEditPanelRandomMoveStepButtonHit(point) is { } randomMoveStep)
+        if (GoScreenRenderer.GetGtpEngineEditPanelGuiOptionsButtonHit(point))
         {
             EndGtpEngineEditField();
-            _session.MoveGtpEngineRandomMoveSelection(randomMoveStep);
+            _session.OpenGtpEngineGuiOptionsDialog();
             return true;
         }
 
@@ -1293,6 +1316,12 @@ public class Game1 : Game
     private void UpdateGtpEngineEditPanelByKeyboard(KeyboardState keyboard, GameTime gameTime)
     {
         if (!_session.IsGtpEngineEditPanelOpen)
+        {
+            _previousGtpEngineKeyboard = keyboard;
+            return;
+        }
+
+        if (_session.IsGtpEngineGuiOptionsDialogOpen)
         {
             _previousGtpEngineKeyboard = keyboard;
             return;
