@@ -334,7 +334,7 @@ public sealed partial class GoScreenRenderer
     private void DrawCgosConnectionStartPanel(GoAppSession session, Point mousePoint)
     {
         var profile = session.SelectedCgosConnectionProfile;
-        DrawText("USE CONNECTION", new Vector2(482, 260), new Color(180, 195, 195), 0.54f);
+        DrawText("USE CONNECTION", new Vector2(482, 300), new Color(180, 195, 195), 0.54f);
         DrawCommandButton(
             CgosConnectionStartBackButtonBounds,
             session.IsAnyCgosProcessRunning ? "DISCONNECT ALL & BACK" : "BACK",
@@ -751,7 +751,7 @@ public sealed partial class GoScreenRenderer
     private static Rectangle CgosAdminCodeButtonBounds => new(CgosAdminProcessPanelBounds.Right - 90, CgosAdminProcessPanelBounds.Bottom - 70, 72, 48);
 
 
-    private static Rectangle CgosConnectionStartBackButtonBounds => new(1134, 204, 324, 48);
+    private static Rectangle CgosConnectionStartBackButtonBounds => new(1134, 244, 324, 48);
 
 
     private static Rectangle CgosBlackConnectionButtonBounds => new(CgosBlackProcessPanelBounds.X + 18, CgosBlackProcessPanelBounds.Bottom - 70, 120, 48);
@@ -817,16 +817,16 @@ public sealed partial class GoScreenRenderer
     private static Rectangle CgosConnectionPropertyBounds => new(936, 350, 500, 426);
 
 
-    private static Rectangle CgosSelectedProfileBarBounds => new(482, 318, 954, 56);
+    private static Rectangle CgosSelectedProfileBarBounds => new(482, 358, 954, 56);
 
 
-    private static Rectangle CgosAdminProcessPanelBounds => new(482, 412, 302, 356);
+    private static Rectangle CgosAdminProcessPanelBounds => new(482, 452, 302, 356);
 
 
-    private static Rectangle CgosBlackProcessPanelBounds => new(808, 412, 302, 356);
+    private static Rectangle CgosBlackProcessPanelBounds => new(808, 452, 302, 356);
 
 
-    private static Rectangle CgosWhiteProcessPanelBounds => new(1134, 412, 302, 356);
+    private static Rectangle CgosWhiteProcessPanelBounds => new(1134, 452, 302, 356);
 
 
     private static LabeledBrowseSelector CgosBlackEngineSelector => new(
