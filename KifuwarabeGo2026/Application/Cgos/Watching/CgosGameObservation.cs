@@ -44,6 +44,8 @@ public sealed class CgosGameObservation
         {
             GameName = $"CGOS {GameId}: {BlackPlayerName} vs {WhitePlayerName} {Result}".Trim(),
             RuleName = "CGOS",
+            BlackPlayerName = BlackPlayerName,
+            WhitePlayerName = WhitePlayerName,
             BoardSize = BoardSize,
             Komi = Komi,
         };

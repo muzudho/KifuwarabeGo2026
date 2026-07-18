@@ -270,6 +270,12 @@ public sealed class GoAppSession
 
     public int ReviewMoveCount => _reviewGameRecord?.Moves.Count ?? 0;
 
+    public string ReviewBlackPlayerName =>
+        string.IsNullOrWhiteSpace(_reviewGameRecord?.BlackPlayerName) ? "BLACK" : _reviewGameRecord.BlackPlayerName;
+
+    public string ReviewWhitePlayerName =>
+        string.IsNullOrWhiteSpace(_reviewGameRecord?.WhitePlayerName) ? "WHITE" : _reviewGameRecord.WhitePlayerName;
+
     public bool CanAcceptHumanMove =>
         CurrentMode.Kind == GoAppModeKind.Playing &&
         IsEngineReady &&
@@ -1906,6 +1912,8 @@ public sealed class GoAppSession
         {
             GameName = source.GameName,
             RuleName = source.RuleName,
+            BlackPlayerName = source.BlackPlayerName,
+            WhitePlayerName = source.WhitePlayerName,
             BoardSize = source.BoardSize,
             Komi = source.Komi,
         };

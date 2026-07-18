@@ -11,6 +11,10 @@ public sealed class GoGameRecord
 
     public string RuleName { get; set; } = "";
 
+    public string BlackPlayerName { get; set; } = "";
+
+    public string WhitePlayerName { get; set; } = "";
+
     public int BoardSize
     {
         get => _boardSize;
@@ -37,6 +41,8 @@ public sealed class GoGameRecord
         {
             GameName = GameName,
             RuleName = RuleName,
+            BlackPlayerName = BlackPlayerName,
+            WhitePlayerName = WhitePlayerName,
             BoardSize = BoardSize,
             Komi = Komi,
         };

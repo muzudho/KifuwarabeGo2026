@@ -27,6 +27,16 @@ public static class SgfGameRecordConverter
             AppendProperty(builder, "GN", record.GameName);
         }
 
+        if (!string.IsNullOrWhiteSpace(record.BlackPlayerName))
+        {
+            AppendProperty(builder, "PB", record.BlackPlayerName);
+        }
+
+        if (!string.IsNullOrWhiteSpace(record.WhitePlayerName))
+        {
+            AppendProperty(builder, "PW", record.WhitePlayerName);
+        }
+
         AppendSetupStones(builder, record.SetupStones, GoStone.Black, "AB", record.BoardSize);
         AppendSetupStones(builder, record.SetupStones, GoStone.White, "AW", record.BoardSize);
 
@@ -113,6 +123,16 @@ public static class SgfGameRecordConverter
         if (TryGetSingleValue(root, "GN", out var gameName))
         {
             record.GameName = gameName;
+        }
+
+        if (TryGetSingleValue(root, "PB", out var blackPlayerName))
+        {
+            record.BlackPlayerName = blackPlayerName;
+        }
+
+        if (TryGetSingleValue(root, "PW", out var whitePlayerName))
+        {
+            record.WhitePlayerName = whitePlayerName;
         }
     }
 

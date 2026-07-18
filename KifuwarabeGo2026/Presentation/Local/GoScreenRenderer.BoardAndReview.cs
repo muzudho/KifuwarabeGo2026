@@ -82,9 +82,10 @@ public sealed partial class GoScreenRenderer
         DrawText("KIFU REVIEW", new Vector2(1144, 132), new Color(255, 230, 160), 0.9f);
         DrawInfoStrip(1144, 204, "BOARD", $"{session.BoardSize} x {session.BoardSize}");
         DrawInfoStrip(1144, 276, "MOVE", $"{session.ReviewMoveIndex} / {session.ReviewMoveCount}");
-        DrawInfoStrip(1144, 348, "TURN", session.CurrentTurn == GoStone.Black ? "BLACK" : "WHITE");
+        DrawReviewPlayerStrip(1144, 356, "BLACK", session.ReviewBlackPlayerName, session.CurrentTurn == GoStone.Black);
+        DrawReviewPlayerStrip(1144, 418, "WHITE", session.ReviewWhitePlayerName, session.CurrentTurn == GoStone.White);
 
-        DrawText("STEP", new Vector2(1144, 454), new Color(180, 195, 195), 0.56f);
+        DrawText("STEP", new Vector2(1144, 494), new Color(180, 195, 195), 0.56f);
         for (var i = 0; i < ReviewStepButtonValues.Length; i++)
         {
             var step = ReviewStepButtonValues[i];
@@ -92,12 +93,27 @@ public sealed partial class GoScreenRenderer
             DrawCommandButton(ReviewStepButtonBounds(i), step > 0 ? $"+{step}" : step.ToString(), false, mousePoint, enabled, 0.42f);
         }
 
-        DrawText("Push R key:", new Vector2(1144, 636), new Color(180, 195, 195), 0.46f);
+        DrawText("Push R key:", new Vector2(1144, 680), new Color(180, 195, 195), 0.46f);
         DrawReviewRenParseModeStrip(session, mousePoint);
 
-        DrawText("CURRENT POSITION", new Vector2(1144, 760), new Color(180, 195, 195), 0.52f);
-        DrawStoneCountStrip(session, 800);
+        DrawText("CURRENT POSITION", new Vector2(1144, 798), new Color(180, 195, 195), 0.52f);
+        DrawStoneCountStrip(session, 838);
         DrawCommandButton(ReviewDoneButtonBounds, "USE POSITION", false, mousePoint, scale: 0.52f);
+    }
+
+
+    /// <summary>
+    /// 棋譜の対局者名を描画し、現在手番の名前へアンダーラインを付けます。
+    /// </summary>
+    private void DrawReviewPlayerStrip(int x, int y, string colorLabel, string playerName, bool isCurrentTurn)
+    {
+        var bounds = new Rectangle(x, y, 668, 56);
+        DrawDataRowFrame(bounds);
+        DrawUiLabel(UiLabel.InCompactRow(colorLabel, bounds));
+        var nameBounds = new Rectangle(x + 184, y + 6, 464, 40);
+        DrawFittedText(playerName, nameBounds, Color.White, 0.54f);
+        if (isCurrentTurn)
+            DrawLine(new Vector2(nameBounds.X, bounds.Bottom - 7), new Vector2(nameBounds.Right, bounds.Bottom - 7), 4, new Color(99, 223, 185));
     }
 
 
@@ -131,7 +147,7 @@ public sealed partial class GoScreenRenderer
     private static readonly int[] ReviewStepButtonValues = [-50, -10, -1, 1, 10, 50];
 
 
-    private static Rectangle ReviewStepButtonBounds(int index) => new(1144 + index % 3 * 232, 504 + index / 3 * 64, 160, 46);
+    private static Rectangle ReviewStepButtonBounds(int index) => new(1144 + index % 3 * 232, 538 + index / 3 * 64, 160, 46);
 
 
     private static readonly RenParseDisplayMode[] ReviewRenParseDisplayModes =
@@ -152,7 +168,7 @@ public sealed partial class GoScreenRenderer
     ];
 
 
-    private static Rectangle ReviewRenParseDisplayModeBounds(int index) => new(1144 + index * 166, 684, 150, 46);
+    private static Rectangle ReviewRenParseDisplayModeBounds(int index) => new(1144 + index * 166, 728, 150, 46);
 
 
     private static Rectangle ReviewDoneButtonBounds => new(1492, 920, 320, 56);
