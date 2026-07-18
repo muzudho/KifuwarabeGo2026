@@ -25,6 +25,7 @@ public sealed class GoAppSession
     private readonly Stack<BoardEditingChange> _boardEditingUndoHistory = new();
     private readonly Stack<BoardEditingChange> _boardEditingRedoHistory = new();
     private GoGameRecord? _reviewGameRecord;
+    private GoGameRecord? _beforeReviewGameRecord;
     private DateTime? _cgosBlackConnectionStartedAt;
     private DateTime? _cgosWhiteConnectionStartedAt;
 
@@ -766,10 +767,12 @@ public sealed class GoAppSession
     {
         ArgumentNullException.ThrowIfNull(record);
 
+        _beforeReviewGameRecord = CurrentGameRecord.Clone();
         _reviewGameRecord = record.Clone();
         ReviewMoveIndex = 0;
         if (!ApplyReviewPosition(record.Moves.Count, out warning))
         {
+            _beforeReviewGameRecord = null;
             _reviewGameRecord = null;
             ReviewMoveIndex = 0;
             return false;
@@ -777,6 +780,7 @@ public sealed class GoAppSession
 
         if (!ApplyReviewPosition(0, out warning))
         {
+            _beforeReviewGameRecord = null;
             _reviewGameRecord = null;
             ReviewMoveIndex = 0;
             return false;
@@ -806,8 +810,10 @@ public sealed class GoAppSession
             return false;
         }
 
+        _beforeReviewGameRecord = CurrentGameRecord.Clone();
         if (!ApplyReviewPosition(Math.Clamp(ReviewMoveIndex, 0, ReviewMoveCount), out warning))
         {
+            _beforeReviewGameRecord = null;
             return false;
         }
 
@@ -817,9 +823,34 @@ public sealed class GoAppSession
 
     public void FinishReviewing()
     {
+        _beforeReviewGameRecord = null;
         CurrentGameRecord = CreateGameRecordFromCurrentPosition();
         ResetPositionHistory();
         ChangeMode(GoAppModeKind.Resting);
+    }
+
+    /// <summary>
+    /// レビュー位置を採用せず、レビュー開始前の休憩画面へ戻ります。
+    /// </summary>
+    public void ReturnFromReviewingToResting()
+    {
+        if (CurrentMode.Kind != GoAppModeKind.Reviewing || _reviewGameRecord is null) return;
+
+        var reviewRecord = _reviewGameRecord.Clone();
+        var reviewMoveIndex = ReviewMoveIndex;
+        if (_beforeReviewGameRecord is { } beforeReviewRecord &&
+            LoadGameRecordAsInitialPosition(beforeReviewRecord, out _))
+        {
+            CurrentGameRecord = beforeReviewRecord.Clone();
+        }
+        else
+        {
+            ChangeMode(GoAppModeKind.Resting);
+        }
+
+        _reviewGameRecord = reviewRecord;
+        ReviewMoveIndex = reviewMoveIndex;
+        _beforeReviewGameRecord = null;
     }
 
     public void SetBoardEditingStone(GoStone stone)

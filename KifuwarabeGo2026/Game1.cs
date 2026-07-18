@@ -600,6 +600,12 @@ public class Game1 : Game
             return true;
         }
 
+        if (GoScreenRenderer.GetReviewBackToRestButtonHit(point))
+        {
+            _session.ReturnFromReviewingToResting();
+            return true;
+        }
+
         return true;
     }
 

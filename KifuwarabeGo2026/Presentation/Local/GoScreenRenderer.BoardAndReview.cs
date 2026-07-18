@@ -56,6 +56,9 @@ public sealed partial class GoScreenRenderer
     public static bool GetReviewDoneButtonHit(Point point) => ReviewDoneButtonBounds.Contains(point);
 
 
+    public static bool GetReviewBackToRestButtonHit(Point point) => ReviewBackToRestButtonBounds.Contains(point);
+
+
     private void DrawBoardEditingSidePanel(GoAppSession session, Point mousePoint)
     {
         DrawText("BOARD EDIT", new Vector2(1144, 132), new Color(255, 230, 160), 0.9f);
@@ -98,6 +101,7 @@ public sealed partial class GoScreenRenderer
 
         DrawText("CURRENT POSITION", new Vector2(1144, 798), new Color(180, 195, 195), 0.52f);
         DrawStoneCountStrip(session, 838);
+        DrawCommandButton(ReviewBackToRestButtonBounds, "BACK TO REST", false, mousePoint, scale: 0.44f);
         DrawCommandButton(ReviewDoneButtonBounds, "USE POSITION", false, mousePoint, scale: 0.52f);
     }
 
@@ -172,6 +176,9 @@ public sealed partial class GoScreenRenderer
 
 
     private static Rectangle ReviewDoneButtonBounds => new(1492, 920, 320, 56);
+
+
+    private static Rectangle ReviewBackToRestButtonBounds => new(1144, 920, 320, 56);
 
 
     private void DrawReviewRenParseModeStrip(GoAppSession session, Point mousePoint)
