@@ -16,8 +16,12 @@ public sealed partial class GoScreenRenderer
         GetTextBoxCaretIndex(point.X, text, GtpEngineEditPanelFieldTextBounds(field), 0.42f);
 
 
-    public static bool GetGtpEngineSelectionDialogCloseButtonHit(Point point) =>
-        GtpEngineSelectionDialogCloseButtonBounds.Contains(point);
+    public static bool GetGtpEngineSelectionDialogOkButtonHit(Point point) =>
+        GtpEngineSelectionDialogOkButtonBounds.Contains(point);
+
+
+    public static bool GetGtpEngineSelectionDialogCancelButtonHit(Point point) =>
+        GtpEngineSelectionDialogCancelButtonBounds.Contains(point);
 
 
     public static bool GetGtpEngineSelectionDialogAddButtonHit(Point point) =>
@@ -125,7 +129,7 @@ public sealed partial class GoScreenRenderer
     public static bool TryGetGtpEngineSelectionDialogPathCopyText(Point point, GoAppSession session, out string text)
     {
         text = "";
-        var selectedIndex = session.SelectedGtpEngineIndex;
+        var selectedIndex = session.GtpEngineDialogSelectionIndex;
         if (selectedIndex < 0 || selectedIndex >= session.GtpEngineProfiles.Count)
         {
             return false;
@@ -172,7 +176,8 @@ public sealed partial class GoScreenRenderer
             ? session.GtpEngineSelectionTargetStone == GoStone.Black ? "CGOS PLAYER 1" : "CGOS PLAYER 2"
             : session.GtpEngineSelectionTargetStone == GoStone.Black ? "BLACK" : "WHITE";
         DrawText($"GTP ENGINE SELECT  {target}", new Vector2(GtpEngineSelectionDialogBounds.X + 30, GtpEngineSelectionDialogBounds.Y + 24), new Color(244, 238, 218), 0.78f);
-        DrawCommandButton(GtpEngineSelectionDialogCloseButtonBounds, "CLOSE", false, mousePoint, scale: 0.42f);
+        DrawCommandButton(GtpEngineSelectionDialogCancelButtonBounds, "CANCEL", false, mousePoint, scale: 0.34f);
+        DrawCommandButton(GtpEngineSelectionDialogOkButtonBounds, "OK", false, mousePoint, scale: 0.42f);
 
         DrawText("LIST", new Vector2(GtpEngineSelectionDialogListBounds.X, GtpEngineSelectionDialogListBounds.Y - 34), new Color(180, 195, 195), 0.46f);
         DrawText("PROPERTIES", new Vector2(GtpEngineSelectionDialogPropertyBounds.X, GtpEngineSelectionDialogPropertyBounds.Y - 34), new Color(180, 195, 195), 0.46f);
@@ -323,7 +328,7 @@ public sealed partial class GoScreenRenderer
     private void DrawGtpEngineSelectionListItem(Rectangle bounds, GoAppSession session, int index, Point mousePoint)
     {
         var profile = session.GtpEngineProfiles[index];
-        var selectedIndex = session.SelectedGtpEngineIndex;
+        var selectedIndex = session.GtpEngineDialogSelectionIndex;
         var selected = index == selectedIndex;
         var hovered = bounds.Contains(mousePoint);
         FillRect(bounds, selected ? new Color(38, 103, 86) : hovered ? new Color(43, 52, 62) : new Color(24, 31, 37));
@@ -339,7 +344,7 @@ public sealed partial class GoScreenRenderer
         FillRect(GtpEngineSelectionDialogPropertyBounds, new Color(15, 20, 26));
         DrawRect(GtpEngineSelectionDialogPropertyBounds, 1, new Color(67, 84, 92));
 
-        var selectedIndex = session.SelectedGtpEngineIndex;
+        var selectedIndex = session.GtpEngineDialogSelectionIndex;
         if (selectedIndex < 0 || selectedIndex >= session.GtpEngineProfiles.Count)
         {
             DrawText("NO ENGINE", new Vector2(GtpEngineSelectionDialogPropertyBounds.X + 24, GtpEngineSelectionDialogPropertyBounds.Y + 24), Color.White, 0.5f);
@@ -382,7 +387,10 @@ public sealed partial class GoScreenRenderer
     private static Rectangle GtpEngineSelectionDialogPropertyBounds => new(950, 242, 700, 560);
 
 
-    private static Rectangle GtpEngineSelectionDialogCloseButtonBounds => new(1518, 156, 132, 48);
+    private static Rectangle GtpEngineSelectionDialogCancelButtonBounds => new(1368, 156, 132, 48);
+
+
+    private static Rectangle GtpEngineSelectionDialogOkButtonBounds => new(1518, 156, 132, 48);
 
 
     private static Rectangle GtpEngineSelectionDialogPreviousPageButtonBounds => new(270, 854, 150, 52);

@@ -16,8 +16,12 @@ public sealed partial class GoScreenRenderer
         TournamentRulesSelector.ContainsBrowseButton(point);
 
 
-    public static bool GetTournamentRulesSelectionDialogCloseButtonHit(Point point) =>
-        TournamentRulesSelectionDialogCloseButtonBounds.Contains(point);
+    public static bool GetTournamentRulesSelectionDialogOkButtonHit(Point point) =>
+        TournamentRulesSelectionDialogOkButtonBounds.Contains(point);
+
+
+    public static bool GetTournamentRulesSelectionDialogCancelButtonHit(Point point) =>
+        TournamentRulesSelectionDialogCancelButtonBounds.Contains(point);
 
 
     public static bool GetTournamentRulesSelectionDialogAddButtonHit(Point point) =>
@@ -87,12 +91,12 @@ public sealed partial class GoScreenRenderer
     public static bool TryGetTournamentRulesSelectionDialogPathCopyText(Point point, GoAppSession session, out string text)
     {
         text = "";
-        if (session.SelectedTournamentRulesIndex < 0 || session.SelectedTournamentRulesIndex >= session.TournamentRulesList.Count)
+        if (session.TournamentRulesDialogSelectionIndex < 0 || session.TournamentRulesDialogSelectionIndex >= session.TournamentRulesList.Count)
         {
             return false;
         }
 
-        var path = session.TournamentRulesList[session.SelectedTournamentRulesIndex].FilePath;
+        var path = session.TournamentRulesList[session.TournamentRulesDialogSelectionIndex].FilePath;
         if (string.IsNullOrWhiteSpace(path) || !PathTooltipCopyButtonBounds(TournamentRulesSelectionDialogPropertyRowBounds(6)).Contains(point))
         {
             return false;
@@ -119,7 +123,8 @@ public sealed partial class GoScreenRenderer
         DrawRect(TournamentRulesSelectionDialogBounds, 2, new Color(116, 145, 146));
 
         DrawText("TOURNAMENT RULES", new Vector2(TournamentRulesSelectionDialogBounds.X + 30, TournamentRulesSelectionDialogBounds.Y + 24), new Color(244, 238, 218), 0.78f);
-        DrawCommandButton(TournamentRulesSelectionDialogCloseButtonBounds, "CLOSE", false, mousePoint, scale: 0.42f);
+        DrawCommandButton(TournamentRulesSelectionDialogCancelButtonBounds, "CANCEL", false, mousePoint, scale: 0.34f);
+        DrawCommandButton(TournamentRulesSelectionDialogOkButtonBounds, "OK", false, mousePoint, scale: 0.42f);
 
         DrawText("LIST", new Vector2(TournamentRulesSelectionDialogListBounds.X, TournamentRulesSelectionDialogListBounds.Y - 34), new Color(180, 195, 195), 0.46f);
         DrawText("PROPERTIES", new Vector2(TournamentRulesSelectionDialogPropertyBounds.X, TournamentRulesSelectionDialogPropertyBounds.Y - 34), new Color(180, 195, 195), 0.46f);
@@ -187,7 +192,7 @@ public sealed partial class GoScreenRenderer
     private void DrawTournamentRulesSelectionListItem(Rectangle bounds, GoAppSession session, int index, Point mousePoint)
     {
         var rules = session.TournamentRulesList[index];
-        var selected = index == session.SelectedTournamentRulesIndex;
+        var selected = index == session.TournamentRulesDialogSelectionIndex;
         var hovered = bounds.Contains(mousePoint);
         FillRect(bounds, selected ? new Color(38, 103, 86) : hovered ? new Color(43, 52, 62) : new Color(24, 31, 37));
         DrawRect(bounds, 1, selected ? new Color(147, 244, 200) : new Color(70, 85, 94));
@@ -202,13 +207,13 @@ public sealed partial class GoScreenRenderer
         FillRect(TournamentRulesSelectionDialogPropertyBounds, new Color(15, 20, 26));
         DrawRect(TournamentRulesSelectionDialogPropertyBounds, 1, new Color(67, 84, 92));
 
-        if (session.SelectedTournamentRulesIndex < 0 || session.SelectedTournamentRulesIndex >= session.TournamentRulesList.Count)
+        if (session.TournamentRulesDialogSelectionIndex < 0 || session.TournamentRulesDialogSelectionIndex >= session.TournamentRulesList.Count)
         {
             DrawText("NO RULES", new Vector2(TournamentRulesSelectionDialogPropertyBounds.X + 24, TournamentRulesSelectionDialogPropertyBounds.Y + 24), Color.White, 0.5f);
             return;
         }
 
-        var rules = session.TournamentRulesList[session.SelectedTournamentRulesIndex];
+        var rules = session.TournamentRulesList[session.TournamentRulesDialogSelectionIndex];
         var y = TournamentRulesSelectionDialogPropertyBounds.Y + 22;
         DrawPropertyRow(y, "NAME", rules.DisplayName);
         DrawPropertyRow(y + 70, "RULE", rules.Rule.ToString());
@@ -255,7 +260,10 @@ public sealed partial class GoScreenRenderer
     private static Rectangle TournamentRulesSelectionDialogPropertyBounds => new(950, 242, 700, 560);
 
 
-    private static Rectangle TournamentRulesSelectionDialogCloseButtonBounds => new(1518, 156, 132, 48);
+    private static Rectangle TournamentRulesSelectionDialogCancelButtonBounds => new(1368, 156, 132, 48);
+
+
+    private static Rectangle TournamentRulesSelectionDialogOkButtonBounds => new(1518, 156, 132, 48);
 
 
     private static Rectangle TournamentRulesSelectionDialogAddButtonBounds => new(958, 854, 150, 52);
@@ -325,4 +333,3 @@ public sealed partial class GoScreenRenderer
             ? "SAVE RULES"
             : $"SAVE RULES {session.TournamentRulesSaveMessage}";
 }
-

@@ -149,6 +149,8 @@ public sealed class GoAppSession
 
     public bool IsTournamentRulesSelectionDialogOpen { get; private set; }
 
+    public int TournamentRulesDialogSelectionIndex { get; private set; }
+
     public bool IsTournamentRulesAddPanelOpen { get; private set; }
 
     public bool IsTournamentRulesEditPanelMode { get; private set; }
@@ -220,6 +222,10 @@ public sealed class GoAppSession
     public bool IsGtpEngineSelectionDialogOpen { get; private set; }
 
     public bool IsGtpEngineSelectionForCgos { get; private set; }
+
+    public int GtpEngineDialogSelectionIndex { get; private set; }
+
+    private int GtpEngineEditProfileIndex { get; set; } = -1;
 
     public GoStone GtpEngineSelectionTargetStone { get; private set; } = GoStone.Black;
 
@@ -972,11 +978,26 @@ public sealed class GoAppSession
         IsGtpEngineEditPanelOpen = false;
         IsTournamentRulesAddPanelOpen = false;
         IsTournamentRulesSelectionDialogOpen = true;
-        TournamentRulesSelectionPageIndex = SelectedTournamentRulesIndex / TournamentRulesSelectionPageSize;
+        TournamentRulesDialogSelectionIndex = SelectedTournamentRulesIndex;
+        TournamentRulesSelectionPageIndex = TournamentRulesDialogSelectionIndex / TournamentRulesSelectionPageSize;
     }
 
-    public void CloseTournamentRulesSelectionDialog()
+    public void SelectTournamentRulesDialogItem(int index)
     {
+        if (index < 0 || index >= _tournamentRules.Count)
+            throw new ArgumentOutOfRangeException(nameof(index), index, "Tournament rules index is out of range.");
+        TournamentRulesDialogSelectionIndex = index;
+    }
+
+    public void CommitTournamentRulesSelectionDialog()
+    {
+        SelectTournamentRules(TournamentRulesDialogSelectionIndex);
+        IsTournamentRulesSelectionDialogOpen = false;
+    }
+
+    public void CancelTournamentRulesSelectionDialog()
+    {
+        TournamentRulesDialogSelectionIndex = SelectedTournamentRulesIndex;
         IsTournamentRulesSelectionDialogOpen = false;
     }
 
@@ -999,8 +1020,8 @@ public sealed class GoAppSession
 
     public bool CanDeleteSelectedTournamentRules =>
         _tournamentRules.Count > 1 &&
-        SelectedTournamentRulesIndex >= 0 &&
-        SelectedTournamentRulesIndex < _tournamentRules.Count;
+        TournamentRulesDialogSelectionIndex >= 0 &&
+        TournamentRulesDialogSelectionIndex < _tournamentRules.Count;
 
     public void OpenTournamentRulesDeleteConfirmation()
     {
@@ -1009,9 +1030,9 @@ public sealed class GoAppSession
             return;
         }
 
-        var path = _tournamentRules[SelectedTournamentRulesIndex].FilePath;
+        var path = _tournamentRules[TournamentRulesDialogSelectionIndex].FilePath;
         TournamentRulesDeleteConfirmationFileName = string.IsNullOrWhiteSpace(path)
-            ? _tournamentRules[SelectedTournamentRulesIndex].DisplayName
+            ? _tournamentRules[TournamentRulesDialogSelectionIndex].DisplayName
             : Path.GetFileName(path);
         IsTournamentRulesDeleteConfirmationOpen = true;
     }
@@ -1297,10 +1318,25 @@ public sealed class GoAppSession
         IsGtpEngineDeleteConfirmationOpen = false;
         GtpEngineSelectionTargetStone = stone;
         var selectedIndex = SelectedGtpEngineIndex;
+        GtpEngineDialogSelectionIndex = selectedIndex;
         GtpEngineSelectionPageIndex = Math.Max(0, selectedIndex) / GtpEngineSelectionPageSize;
     }
 
-    public void CloseGtpEngineSelectionDialog()
+    public void SelectGtpEngineDialogItem(int index)
+    {
+        if (index < 0 || index >= _gtpEngineProfiles.Count)
+            throw new ArgumentOutOfRangeException(nameof(index), index, "GTP engine index is out of range.");
+        GtpEngineDialogSelectionIndex = index;
+    }
+
+    public void CommitGtpEngineSelectionDialog()
+    {
+        SelectGtpEngine(GtpEngineSelectionTargetStone, GtpEngineDialogSelectionIndex);
+        IsGtpEngineSelectionDialogOpen = false;
+        CloseGtpEngineDeleteConfirmation();
+    }
+
+    public void CancelGtpEngineSelectionDialog()
     {
         IsGtpEngineSelectionDialogOpen = false;
         CloseGtpEngineDeleteConfirmation();
@@ -1308,7 +1344,7 @@ public sealed class GoAppSession
 
     public void OpenGtpEngineEditPanel()
     {
-        var index = SelectedGtpEngineIndex;
+        var index = GtpEngineDialogSelectionIndex;
         if (index < 0 || index >= _gtpEngineProfiles.Count)
         {
             return;
@@ -1320,6 +1356,7 @@ public sealed class GoAppSession
         IsGtpEngineSelectionDialogOpen = false;
         IsGtpEngineEditPanelOpen = true;
         IsGtpEngineAddPanelMode = false;
+        GtpEngineEditProfileIndex = index;
         CloseGtpEngineDeleteConfirmation();
         GtpEngineEditDraft = _gtpEngineProfiles[index].Clone();
         ActiveGtpEngineEditField = null;
@@ -1349,7 +1386,7 @@ public sealed class GoAppSession
 
     public void OpenGtpEngineDuplicatePanel()
     {
-        var index = SelectedGtpEngineIndex;
+        var index = GtpEngineDialogSelectionIndex;
         if (index < 0 || index >= _gtpEngineProfiles.Count)
         {
             return;
@@ -1361,6 +1398,7 @@ public sealed class GoAppSession
         IsGtpEngineSelectionDialogOpen = false;
         IsGtpEngineEditPanelOpen = true;
         IsGtpEngineAddPanelMode = true;
+        GtpEngineEditProfileIndex = index;
         CloseGtpEngineDeleteConfirmation();
         GtpEngineEditDraft = _gtpEngineProfiles[index].Clone();
         GtpEngineEditDraft.DisplayName = string.IsNullOrWhiteSpace(GtpEngineEditDraft.DisplayName)
@@ -1374,6 +1412,7 @@ public sealed class GoAppSession
 
     public void CloseGtpEngineEditPanel()
     {
+        var dialogSelectionIndex = GtpEngineEditProfileIndex;
         IsGtpEngineGuiOptionsDialogOpen = false;
         GtpEngineGuiOptionsDialogDraft.Clear();
         IsGtpEngineEditPanelOpen = false;
@@ -1385,6 +1424,8 @@ public sealed class GoAppSession
             OpenCgosGtpEngineSelectionDialog(GtpEngineSelectionTargetStone);
         else
             OpenGtpEngineSelectionDialog(GtpEngineSelectionTargetStone);
+        if (dialogSelectionIndex >= 0 && dialogSelectionIndex < _gtpEngineProfiles.Count)
+            GtpEngineDialogSelectionIndex = dialogSelectionIndex;
     }
 
     public void MoveGtpEngineSelectionPage(int step)
@@ -1395,8 +1436,8 @@ public sealed class GoAppSession
 
     public bool CanDeleteSelectedGtpEngine =>
         _gtpEngineProfiles.Count > 1 &&
-        SelectedGtpEngineIndex >= 0 &&
-        SelectedGtpEngineIndex < _gtpEngineProfiles.Count;
+        GtpEngineDialogSelectionIndex >= 0 &&
+        GtpEngineDialogSelectionIndex < _gtpEngineProfiles.Count;
 
     public int SelectedGtpEngineIndex => IsGtpEngineSelectionForCgos
         ? GetSelectedCgosGtpEngineIndex(GtpEngineSelectionTargetStone) ?? -1
@@ -1404,7 +1445,7 @@ public sealed class GoAppSession
 
     public void ReplaceSelectedGtpEngine(GtpEngineProfile profile)
     {
-        var index = SelectedGtpEngineIndex;
+        var index = GtpEngineEditProfileIndex;
         if (index < 0 || index >= _gtpEngineProfiles.Count)
         {
             return;
@@ -1528,7 +1569,7 @@ public sealed class GoAppSession
         if (IsGtpEngineAddPanelMode)
         {
             _gtpEngineProfiles.Add(profile.Clone());
-            SelectGtpEngine(GtpEngineSelectionTargetStone, _gtpEngineProfiles.Count - 1);
+            GtpEngineEditProfileIndex = _gtpEngineProfiles.Count - 1;
             GtpEngineSelectionPageIndex = (_gtpEngineProfiles.Count - 1) / GtpEngineSelectionPageSize;
             IsGtpEngineAddPanelMode = false;
         }
@@ -1537,7 +1578,7 @@ public sealed class GoAppSession
             ReplaceSelectedGtpEngine(profile);
         }
 
-        GtpEngineEditDraft = _gtpEngineProfiles[SelectedGtpEngineIndex].Clone();
+        GtpEngineEditDraft = _gtpEngineProfiles[GtpEngineEditProfileIndex].Clone();
         GtpEngineEditSaveMessage = "SAVED";
         GtpEngineEditWarning = "";
     }
@@ -1549,7 +1590,7 @@ public sealed class GoAppSession
             return;
         }
 
-        GtpEngineDeleteConfirmationName = _gtpEngineProfiles[SelectedGtpEngineIndex].DisplayName;
+        GtpEngineDeleteConfirmationName = _gtpEngineProfiles[GtpEngineDialogSelectionIndex].DisplayName;
         IsGtpEngineDeleteConfirmationOpen = true;
     }
 
@@ -1566,11 +1607,12 @@ public sealed class GoAppSession
             return;
         }
 
-        var removedIndex = SelectedGtpEngineIndex;
+        var removedIndex = GtpEngineDialogSelectionIndex;
         var nextIndex = Math.Clamp(removedIndex, 0, _gtpEngineProfiles.Count - 2);
         _gtpEngineProfiles.RemoveAt(removedIndex);
         SelectedBlackGtpEngineIndex = AdjustGtpEngineSelectionAfterDelete(SelectedBlackGtpEngineIndex, removedIndex, nextIndex);
         SelectedWhiteGtpEngineIndex = AdjustGtpEngineSelectionAfterDelete(SelectedWhiteGtpEngineIndex, removedIndex, nextIndex);
+        GtpEngineDialogSelectionIndex = nextIndex;
         CloseGtpEngineDeleteConfirmation();
         GtpEngineSelectionPageIndex = Math.Clamp(
             nextIndex / GtpEngineSelectionPageSize,

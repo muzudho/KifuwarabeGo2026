@@ -1227,9 +1227,15 @@ public class Game1 : Game
             return true;
         }
 
-        if (GoScreenRenderer.GetGtpEngineSelectionDialogCloseButtonHit(point))
+        if (GoScreenRenderer.GetGtpEngineSelectionDialogCancelButtonHit(point))
         {
-            _session.CloseGtpEngineSelectionDialog();
+            _session.CancelGtpEngineSelectionDialog();
+            return true;
+        }
+
+        if (GoScreenRenderer.GetGtpEngineSelectionDialogOkButtonHit(point))
+        {
+            _session.CommitGtpEngineSelectionDialog();
             return true;
         }
 
@@ -1271,7 +1277,7 @@ public class Game1 : Game
 
         if (GoScreenRenderer.GetGtpEngineSelectionDialogListItemHit(point, _session) is { } index)
         {
-            _session.SelectGtpEngine(_session.GtpEngineSelectionTargetStone, index);
+            _session.SelectGtpEngineDialogItem(index);
             return true;
         }
 

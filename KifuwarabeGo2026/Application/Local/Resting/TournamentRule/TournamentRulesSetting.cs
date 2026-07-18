@@ -168,9 +168,15 @@ public sealed class TournamentRulesSetting
             return true;
         }
 
-        if (GoScreenRenderer.GetTournamentRulesSelectionDialogCloseButtonHit(point))
+        if (GoScreenRenderer.GetTournamentRulesSelectionDialogCancelButtonHit(point))
         {
-            _session.CloseTournamentRulesSelectionDialog();
+            _session.CancelTournamentRulesSelectionDialog();
+            return true;
+        }
+
+        if (GoScreenRenderer.GetTournamentRulesSelectionDialogOkButtonHit(point))
+        {
+            _session.CommitTournamentRulesSelectionDialog();
             return true;
         }
 
@@ -212,7 +218,7 @@ public sealed class TournamentRulesSetting
 
         if (GoScreenRenderer.GetTournamentRulesSelectionDialogListItemHit(point, _session) is { } index)
         {
-            _session.SelectTournamentRules(index);
+            _session.SelectTournamentRulesDialogItem(index);
             return true;
         }
 
@@ -247,23 +253,23 @@ public sealed class TournamentRulesSetting
 
     private void EditSelectedTournamentRules()
     {
-        if (_session.SelectedTournamentRulesIndex < 0 || _session.SelectedTournamentRulesIndex >= _session.TournamentRulesList.Count)
+        if (_session.TournamentRulesDialogSelectionIndex < 0 || _session.TournamentRulesDialogSelectionIndex >= _session.TournamentRulesList.Count)
         {
             return;
         }
 
-        _session.SelectTournamentRules(_session.SelectedTournamentRulesIndex);
+        _session.SelectTournamentRules(_session.TournamentRulesDialogSelectionIndex);
         _session.OpenTournamentRulesAddPanel(editExisting: true);
     }
 
     private void DuplicateSelectedTournamentRules()
     {
-        if (_session.SelectedTournamentRulesIndex < 0 || _session.SelectedTournamentRulesIndex >= _session.TournamentRulesList.Count)
+        if (_session.TournamentRulesDialogSelectionIndex < 0 || _session.TournamentRulesDialogSelectionIndex >= _session.TournamentRulesList.Count)
         {
             return;
         }
 
-        var rules = _catalog.Duplicate(_session.TournamentRulesList[_session.SelectedTournamentRulesIndex]);
+        var rules = _catalog.Duplicate(_session.TournamentRulesList[_session.TournamentRulesDialogSelectionIndex]);
         _session.AddAndSelectTournamentRules(rules);
         _session.OpenTournamentRulesAddPanel(editExisting: false);
         BeginDisplayNameEdit();
@@ -280,6 +286,7 @@ public sealed class TournamentRulesSetting
 
         try
         {
+            _session.SelectTournamentRules(_session.TournamentRulesDialogSelectionIndex);
             _catalog.Delete(_session.TournamentRulesList[_session.SelectedTournamentRulesIndex]);
             _session.RemoveSelectedTournamentRules();
         }
