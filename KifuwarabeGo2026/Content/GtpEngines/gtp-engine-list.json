@@ -5,14 +5,20 @@
       "executablePath": "..\\..\\..\\KifuwarabeGo2026.Engine\\bin\\Debug\\net8.0\\KifuwarabeGo2026.Engine.exe",
       "workingDirectory": "..\\..\\..\\KifuwarabeGo2026.Engine\\bin\\Debug\\net8.0",
       "arguments": "",
-      "enableGtpLog": true
+      "enableGtpLog": true,
+      "guiOptions": {
+        "RandomMove": "ChebyshevDistanceFromStar"
+      }
     },
     {
       "displayName": "Kifuwarabe dotnet run",
       "executablePath": "dotnet",
       "workingDirectory": "..\\..\\..",
       "arguments": "run --project \u0022KifuwarabeGo2026.Engine/KifuwarabeGo2026.Engine.csproj\u0022",
-      "enableGtpLog": true
+      "enableGtpLog": true,
+      "guiOptions": {
+        "RandomMove": "ChebyshevDistanceFromStar"
+      }
     },
     {
       "displayName": "muzudho-test",

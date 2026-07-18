@@ -216,6 +216,7 @@ internal sealed class CgosClientOptions
     private const string DefaultEngineCommand = "dotnet run --project KifuwarabeGo2026.Engine\\KifuwarabeGo2026.Engine.csproj";
 
     private readonly List<CgosAccount> _accounts = new();
+    private readonly Dictionary<string, string> _engineOptions = new(StringComparer.Ordinal);
 
     private CgosClientOptions()
     {
@@ -238,6 +239,8 @@ internal sealed class CgosClientOptions
     public long? ParentProcessStartTimeUtcTicks { get; private set; }
 
     public IReadOnlyList<CgosAccount> Accounts => _accounts;
+
+    public IReadOnlyDictionary<string, string> EngineOptions => _engineOptions;
 
     public static CgosClientOptions Parse(string[] args)
     {
@@ -267,6 +270,13 @@ internal sealed class CgosClientOptions
                     break;
                 case "--engine-command":
                     options.EngineCommand = ReadValue(args, ref index, arg);
+                    break;
+                case "--engine-option":
+                    var engineOption = ReadValue(args, ref index, arg);
+                    var separator = engineOption.IndexOf('=');
+                    if (separator < 1)
+                        throw new ArgumentException("--engine-option must use ID=VALUE format.");
+                    options._engineOptions[engineOption[..separator]] = engineOption[(separator + 1)..];
                     break;
                 case "--log-directory":
                     options.LogDirectory = ReadValue(args, ref index, arg);
@@ -335,6 +345,7 @@ internal sealed class CgosClientOptions
         writer.WriteLine("  --host HOST                CGOS host. Default: uec-go.com");
         writer.WriteLine("  --port PORT                CGOS port. Default: 6809");
         writer.WriteLine("  --engine-command COMMAND   GTP engine command line.");
+        writer.WriteLine("  --engine-option ID=VALUE   GUI option sent to a supporting GTP engine.");
         writer.WriteLine("  --log-directory DIR        Log directory. Default: Logs\\Cgos");
         writer.WriteLine("  --admin                    Login without a GTP engine and relay admin commands from stdin.");
         writer.WriteLine("  --parent-process-id PID    Exit when the parent GUI process exits.");
@@ -730,6 +741,7 @@ internal sealed class CgosClient
         await ShutdownEngineAsync();
         _engine = new GtpEngineProcess(_options.EngineCommand, _options.LogDirectory, _account.Label);
         await _engine.StartAsync(cancellationToken);
+        await ApplyEngineOptionsAsync(_engine, cancellationToken);
 
         var boardSize = parameters[1];
         var komi = parameters[2];
@@ -769,6 +781,40 @@ internal sealed class CgosClient
 
         Log($"# Generated {_engineColor} move: {move}");
         return move.ToLowerInvariant();
+    }
+
+    /// <summary>
+    /// 対応するGTPエンジンへGUIオプションを送信します。
+    /// </summary>
+    private async Task ApplyEngineOptionsAsync(GtpEngineProcess engine, CancellationToken cancellationToken)
+    {
+        if (_options.EngineOptions.Count == 0) return;
+
+        IReadOnlyList<string> known;
+        try
+        {
+            known = await engine.CommandAsync("known_command gui_options", cancellationToken);
+        }
+        catch (InvalidOperationException)
+        {
+            return;
+        }
+
+        if (!known.Any(value => value.Equals("true", StringComparison.OrdinalIgnoreCase))) return;
+
+        var optionsJson = await engine.CommandAsync("gui_options", cancellationToken);
+        using var document = System.Text.Json.JsonDocument.Parse(string.Join('\n', optionsJson));
+        if (!document.RootElement.TryGetProperty("version", out var version) || version.GetInt32() != 1)
+            throw new InvalidOperationException("Unsupported gui_options version.");
+        if (!document.RootElement.TryGetProperty("options", out var definitions)) return;
+
+        foreach (var option in _options.EngineOptions)
+        {
+            var isDeclared = definitions.EnumerateArray().Any(definition =>
+                definition.TryGetProperty("id", out var id) && id.GetString() == option.Key);
+            if (!isDeclared) continue;
+            await engine.CommandAsync($"gui_setoption {option.Key} {option.Value}", cancellationToken);
+        }
     }
 
     private GtpEngineProcess RequireEngine()

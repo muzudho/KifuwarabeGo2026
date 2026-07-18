@@ -1,5 +1,6 @@
 namespace KifuwarabeGo2026.Application;
 
+using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
 /// <summary>
@@ -17,6 +18,11 @@ public sealed class GtpEngineProfile
 
     public bool EnableGtpLog { get; set; } = true;
 
+    public Dictionary<string, string> GuiOptions { get; set; } = new()
+    {
+        [GtpEngineGuiOptions.RandomMoveId] = GtpEngineGuiOptions.ChebyshevDistanceFromStarRandomMove,
+    };
+
     [JsonIgnore]
     public string LogPrefix { get; set; } = "";
 
@@ -27,8 +33,12 @@ public sealed class GtpEngineProfile
         WorkingDirectory = WorkingDirectory,
         Arguments = Arguments,
         EnableGtpLog = EnableGtpLog,
+        GuiOptions = new Dictionary<string, string>(GuiOptions ?? []),
         LogPrefix = LogPrefix,
     };
+
+    public string GetGuiOption(string id, string fallback) =>
+        GuiOptions.TryGetValue(id, out var value) ? value : fallback;
 }
 
 public enum GtpEngineProfileEditField

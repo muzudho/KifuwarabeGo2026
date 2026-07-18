@@ -434,7 +434,8 @@ public sealed class PlayingScene : IDisposable
             profile.WorkingDirectory,
             profile.Arguments,
             profile.EnableGtpLog,
-            logPrefix);
+            logPrefix,
+            profile.GuiOptions);
     }
 
     private static string GetDefaultGtpLogPath() => Path.Combine(AppContext.BaseDirectory, "logs", "gtp.log");

@@ -1268,6 +1268,13 @@ public class Game1 : Game
             return true;
         }
 
+        if (GoScreenRenderer.GetGtpEngineEditPanelRandomMoveStepButtonHit(point) is { } randomMoveStep)
+        {
+            EndGtpEngineEditField();
+            _session.MoveGtpEngineRandomMoveSelection(randomMoveStep);
+            return true;
+        }
+
         if (GoScreenRenderer.GetGtpEngineEditPanelSaveButtonHit(point))
         {
             SaveGtpEngineEditDraft();

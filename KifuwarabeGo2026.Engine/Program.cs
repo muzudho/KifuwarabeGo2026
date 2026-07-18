@@ -2,6 +2,7 @@ namespace KifuwarabeGo2026.Engine;
 
 using KifuwarabeGo2026.Domain;
 using System.Reflection;
+using System.Text.Json;
 
 /// <summary>
 /// コンピュータ囲碁の思考エンジンの本体だぜ（＾～＾）
@@ -17,10 +18,16 @@ internal static class Program
 
 internal sealed class GtpEngine
 {
+    private static readonly string[] Commands =
+    [
+        "protocol_version", "name", "version", "known_command", "list_commands", "boardsize", "clear_board",
+        "komi", "play", "genmove", "gui_options", "gui_getoption", "gui_setoption", "quit",
+    ];
     private readonly Random _random = new();
     private GoBoard _board = new(19);
     private GoPoint? _koPoint;
     private decimal _komi = 6.5m;
+    private RandomMoveKind _randomMove = RandomMoveKind.ChebyshevDistanceFromStar;
 
     public void Run(TextReader input, TextWriter output)
     {
@@ -55,6 +62,22 @@ internal sealed class GtpEngine
             // バージョン番号
             case "version":
                 response = GetGtpVersion();
+                return false;
+
+            case "known_command":
+                ExecuteKnownCommand(tokens, out response, out error);
+                return false;
+            case "list_commands":
+                response = string.Join('\n', Commands);
+                return false;
+            case "gui_options":
+                response = CreateGuiOptionsJson();
+                return false;
+            case "gui_getoption":
+                ExecuteGuiGetOption(tokens, out response, out error);
+                return false;
+            case "gui_setoption":
+                ExecuteGuiSetOption(tokens, out error);
                 return false;
 
             case "boardsize":
@@ -168,9 +191,84 @@ internal sealed class GtpEngine
             return;
         }
 
-        var move = StarRegionRandomMoveSelector.Select(legalMoves, _board.Size, _random);
+        var move = _randomMove == RandomMoveKind.Normal
+            ? legalMoves[_random.Next(legalMoves.Count)]
+            : StarRegionRandomMoveSelector.Select(legalMoves, _board.Size, _random);
         _board.TryPlaceStone(move.X, move.Y, color, _koPoint, out _, out _koPoint);
         response = FormatVertex(move, _board.Size);
+    }
+
+    /// <summary>
+    /// GTPコマンドへの対応状況を返します。
+    /// </summary>
+    private static void ExecuteKnownCommand(string[] tokens, out string response, out string? error)
+    {
+        response = "";
+        error = null;
+        if (tokens.Length != 2)
+        {
+            error = "usage: known_command command_name";
+            return;
+        }
+
+        response = Commands.Contains(tokens[1], StringComparer.OrdinalIgnoreCase) ? "true" : "false";
+    }
+
+    /// <summary>
+    /// GUIが設定画面を構築するためのオプション定義を返します。
+    /// </summary>
+    private string CreateGuiOptionsJson() => JsonSerializer.Serialize(new
+    {
+        version = 1,
+        options = new[]
+        {
+            new
+            {
+                id = "RandomMove",
+                label = "RandomMove",
+                type = "combo",
+                @default = "ChebyshevDistanceFromStar",
+                value = _randomMove.ToString(),
+                vars = new[] { "Normal", "ChebyshevDistanceFromStar" },
+            },
+        },
+    });
+
+    /// <summary>
+    /// GUIオプションの現在値を返します。
+    /// </summary>
+    private void ExecuteGuiGetOption(string[] tokens, out string response, out string? error)
+    {
+        response = "";
+        error = null;
+        if (tokens.Length != 2 || !tokens[1].Equals("RandomMove", StringComparison.OrdinalIgnoreCase))
+        {
+            error = "unknown option: " + (tokens.Length > 1 ? tokens[1] : "");
+            return;
+        }
+
+        response = _randomMove.ToString();
+    }
+
+    /// <summary>
+    /// GUIから送られたオプション値を設定します。
+    /// </summary>
+    private void ExecuteGuiSetOption(string[] tokens, out string? error)
+    {
+        error = null;
+        if (tokens.Length != 3 || !tokens[1].Equals("RandomMove", StringComparison.OrdinalIgnoreCase))
+        {
+            error = "usage: gui_setoption RandomMove Normal|ChebyshevDistanceFromStar";
+            return;
+        }
+
+        if (!Enum.TryParse(tokens[2], ignoreCase: true, out RandomMoveKind randomMove))
+        {
+            error = "option RandomMove must be Normal or ChebyshevDistanceFromStar";
+            return;
+        }
+
+        _randomMove = randomMove;
     }
 
     private static void WriteResponse(TextWriter output, string response, string? error)
@@ -258,4 +356,10 @@ internal sealed class GtpEngine
     }
 
     private static bool IsPass(string text) => text.Equals("pass", StringComparison.OrdinalIgnoreCase);
+
+    private enum RandomMoveKind
+    {
+        Normal,
+        ChebyshevDistanceFromStar,
+    }
 }

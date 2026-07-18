@@ -240,6 +240,11 @@ public sealed class CgosConnectionProcess : IDisposable
         var engineCommand = CreateEngineCommand(engineProfile);
         startInfo.ArgumentList.Add("--engine-command");
         startInfo.ArgumentList.Add(engineCommand);
+        foreach (var option in engineProfile.GuiOptions)
+        {
+            startInfo.ArgumentList.Add("--engine-option");
+            startInfo.ArgumentList.Add($"{option.Key}={option.Value}");
+        }
         AddParentProcessArguments(startInfo);
 
         var process = new Process

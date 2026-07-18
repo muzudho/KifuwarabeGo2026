@@ -1417,6 +1417,26 @@ public sealed class GoAppSession
         GtpEngineEditSaveMessage = "UNSAVED";
     }
 
+    /// <summary>
+    /// 編集中の［RandomMove］コンボを前後へ切り替えます。
+    /// </summary>
+    public void MoveGtpEngineRandomMoveSelection(int step)
+    {
+        var values = GtpEngineGuiOptions.RandomMoveValues;
+        var current = GtpEngineEditDraft.GetGuiOption(
+            GtpEngineGuiOptions.RandomMoveId,
+            GtpEngineGuiOptions.ChebyshevDistanceFromStarRandomMove);
+        var index = Array.IndexOf(values, current);
+        if (index < 0) index = 0;
+        index = (index + step % values.Length + values.Length) % values.Length;
+        GtpEngineEditDraft.GuiOptions[GtpEngineGuiOptions.RandomMoveId] = values[index];
+        GtpEngineEditSaveMessage = "UNSAVED";
+    }
+
+    public string GtpEngineRandomMoveDraft => GtpEngineEditDraft.GetGuiOption(
+        GtpEngineGuiOptions.RandomMoveId,
+        GtpEngineGuiOptions.ChebyshevDistanceFromStarRandomMove);
+
     public void SaveGtpEngineEditDraft(GtpEngineProfile profile)
     {
         if (IsGtpEngineAddPanelMode)

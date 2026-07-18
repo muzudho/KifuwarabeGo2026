@@ -83,6 +83,9 @@ public sealed class GtpEngineCatalog
         normalized.WorkingDirectory = string.IsNullOrWhiteSpace(normalized.WorkingDirectory)
             ? Path.GetDirectoryName(normalized.ExecutablePath) ?? baseDirectory
             : ResolvePath(normalized.WorkingDirectory, baseDirectory);
+        normalized.GuiOptions ??= [];
+        if (!normalized.GuiOptions.ContainsKey(GtpEngineGuiOptions.RandomMoveId))
+            normalized.GuiOptions[GtpEngineGuiOptions.RandomMoveId] = GtpEngineGuiOptions.ChebyshevDistanceFromStarRandomMove;
         return normalized;
     }
 

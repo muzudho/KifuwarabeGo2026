@@ -64,6 +64,13 @@ public sealed partial class GoScreenRenderer
         GtpEngineEditPanelLogButtonBounds.Contains(point);
 
 
+    public static int? GetGtpEngineEditPanelRandomMoveStepButtonHit(Point point)
+    {
+        if (GtpEngineEditPanelRandomMovePreviousButtonBounds.Contains(point)) return -1;
+        return GtpEngineEditPanelRandomMoveNextButtonBounds.Contains(point) ? 1 : null;
+    }
+
+
     public static GtpEngineProfileEditField? GetGtpEngineEditPanelFieldHit(Point point)
     {
         foreach (var field in GtpEngineEditFields)
@@ -207,6 +214,13 @@ public sealed partial class GoScreenRenderer
         DrawGtpEngineEditField(session, GtpEngineProfileEditField.ExecutablePath, "EXE", mousePoint);
         DrawGtpEngineEditField(session, GtpEngineProfileEditField.WorkingDirectory, "WORKDIR", mousePoint);
         DrawGtpEngineEditField(session, GtpEngineProfileEditField.Arguments, "ARGS", mousePoint);
+
+        var randomMoveBounds = GtpEngineEditPanelRandomMoveRowBounds;
+        DrawDataRowFrame(randomMoveBounds);
+        DrawUiLabel(UiLabel.InCompactRow("RandomMove", randomMoveBounds));
+        DrawFittedText(session.GtpEngineRandomMoveDraft, GtpEngineEditPanelRandomMoveValueBounds, Color.White, 0.35f);
+        DrawCommandButton(GtpEngineEditPanelRandomMovePreviousButtonBounds, "PREV", false, mousePoint, scale: 0.24f);
+        DrawCommandButton(GtpEngineEditPanelRandomMoveNextButtonBounds, "NEXT", false, mousePoint, scale: 0.24f);
 
         var logBounds = GtpEngineEditPanelLogRowBounds;
         DrawDataRowFrame(logBounds);
@@ -388,7 +402,19 @@ public sealed partial class GoScreenRenderer
         40);
 
 
-    private static Rectangle GtpEngineEditPanelLogRowBounds => new(AddPanelControlX, 596, 668, 56);
+    private static Rectangle GtpEngineEditPanelRandomMoveRowBounds => new(AddPanelControlX, 590, 668, 56);
+
+
+    private static Rectangle GtpEngineEditPanelRandomMoveValueBounds => new(AddPanelControlX + 152, 597, 300, 42);
+
+
+    private static Rectangle GtpEngineEditPanelRandomMovePreviousButtonBounds => new(AddPanelControlX + 472, 598, 84, 40);
+
+
+    private static Rectangle GtpEngineEditPanelRandomMoveNextButtonBounds => new(AddPanelControlX + 568, 598, 84, 40);
+
+
+    private static Rectangle GtpEngineEditPanelLogRowBounds => new(AddPanelControlX, 660, 668, 56);
 
 
     private static Rectangle GtpEngineEditPanelLogButtonBounds => new(GtpEngineEditPanelLogRowBounds.X + 152, GtpEngineEditPanelLogRowBounds.Y + 8, 120, 40);
@@ -437,4 +463,3 @@ public sealed partial class GoScreenRenderer
             ? "SAVE ENGINE"
             : $"SAVE ENGINE {session.GtpEngineEditSaveMessage}";
 }
-

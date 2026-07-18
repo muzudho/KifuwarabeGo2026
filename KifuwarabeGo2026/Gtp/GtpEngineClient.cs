@@ -1,8 +1,10 @@
 namespace KifuwarabeGo2026.Gtp;
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -56,6 +58,8 @@ public sealed class GtpEngineClient : IAsyncDisposable
             };
             await _logWriter.WriteLineAsync(FormatLogLine($"# start {_settings.Name} {DateTimeOffset.Now:O}")).WaitAsync(_commandTimeout, cancellationToken);
         }
+
+        await ApplyGuiOptionsAsync(cancellationToken);
     }
 
     public async Task<GtpResponse> SendCommandAsync(string command, CancellationToken cancellationToken = default)
@@ -119,7 +123,7 @@ public sealed class GtpEngineClient : IAsyncDisposable
 
     private async Task<GtpResponse> ReadResponseAsync(StreamReader reader, CancellationToken cancellationToken)
     {
-        string? firstLine = null;
+        var lines = new List<string>();
         while (true)
         {
             var line = await reader.ReadLineAsync(cancellationToken).AsTask().WaitAsync(_commandTimeout, cancellationToken);
@@ -128,31 +132,50 @@ public sealed class GtpEngineClient : IAsyncDisposable
                 throw new EndOfStreamException("GTP engine closed stdout.");
             }
 
-            if (line.Length == 0 && firstLine is null)
-            {
-                continue;
-            }
-
-            if (line.Length == 0)
-            {
-                break;
-            }
-
-            firstLine ??= line;
+            if (line.Length == 0 && lines.Count == 0) continue;
+            if (line.Length == 0) break;
+            lines.Add(line);
         }
 
-        if (firstLine is null)
-        {
-            throw new InvalidOperationException("GTP engine returned an empty response.");
-        }
+        if (lines.Count == 0) throw new InvalidOperationException("GTP engine returned an empty response.");
 
+        var firstLine = lines[0];
         var success = firstLine.StartsWith("=", StringComparison.Ordinal);
         if (!success && !firstLine.StartsWith("?", StringComparison.Ordinal))
         {
             throw new InvalidOperationException($"Invalid GTP response: {firstLine}");
         }
 
-        return new GtpResponse(success, firstLine[1..].Trim());
+        var payloadLines = new List<string> { firstLine[1..].Trim() };
+        payloadLines.AddRange(lines.Skip(1));
+        return new GtpResponse(success, string.Join('\n', payloadLines).Trim());
+    }
+
+    /// <summary>
+    /// 対応エンジンへ、プロファイルに保存されたGUIオプションを送信します。
+    /// </summary>
+    private async Task ApplyGuiOptionsAsync(CancellationToken cancellationToken)
+    {
+        if (_settings.GuiOptions is null || _settings.GuiOptions.Count == 0) return;
+
+        var knownCommand = await SendCommandAsync("known_command gui_options", cancellationToken);
+        if (!knownCommand.IsSuccess || !knownCommand.Payload.Equals("true", StringComparison.OrdinalIgnoreCase)) return;
+
+        var optionsResponse = await SendCommandAsync("gui_options", cancellationToken);
+        optionsResponse.ThrowIfError("gui_options");
+        var document = GtpGuiOptionsDocument.Parse(optionsResponse.Payload);
+        if (document.Version != 1) throw new InvalidOperationException($"Unsupported gui_options version: {document.Version}");
+
+        foreach (var savedOption in _settings.GuiOptions)
+        {
+            var definition = document.Options.FirstOrDefault(option => option.Id.Equals(savedOption.Key, StringComparison.Ordinal));
+            if (definition is null) continue;
+            if (definition.Type.Equals("combo", StringComparison.OrdinalIgnoreCase) &&
+                !definition.Vars.Contains(savedOption.Value, StringComparer.Ordinal))
+                continue;
+
+            await SendCommandExpectSuccessAsync($"gui_setoption {savedOption.Key} {savedOption.Value}", cancellationToken);
+        }
     }
 
     private async Task LogAsync(string line, CancellationToken cancellationToken)
