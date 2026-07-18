@@ -5,7 +5,7 @@ using KifuwarabeGo2026.Domain;
 using Microsoft.Xna.Framework;
 
 /// <summary>
-/// ［休憩画面］
+/// ［盤編集画面］［棋譜レビュー画面］共通
 /// </summary>
 public sealed partial class GoScreenRenderer
 {
