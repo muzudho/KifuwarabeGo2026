@@ -348,9 +348,9 @@ public sealed class GoScreenRenderer
 
     public static bool GetCgosAdminBlackPlayerNextButtonHit(Point point) => CgosAdminBlackPlayerNextButtonBounds.Contains(point);
 
-    public static bool GetCgosAdminBlackMatchButtonHit(Point point, bool enabled) => enabled && CgosAdminBlackMatchButtonBounds.Contains(point);
+    public static bool GetCgosAdminMatchButtonHit(Point point, bool enabled) => enabled && CgosAdminMatchButtonBounds.Contains(point);
 
-    public static bool GetCgosAdminWhiteMatchButtonHit(Point point, bool enabled) => enabled && CgosAdminWhiteMatchButtonBounds.Contains(point);
+    public static bool GetCgosAdminSwapButtonHit(Point point, bool enabled) => enabled && CgosAdminSwapButtonBounds.Contains(point);
 
     public static bool GetCgosAdminCodeButtonHit(Point point) =>
         CgosAdminCodeButtonBounds.Contains(point);
@@ -818,8 +818,8 @@ public sealed class GoScreenRenderer
         DrawCommandButton(CgosAdminWhoButtonBounds, "WHO", false, mousePoint, enabled: session.IsCgosAdminRunning, scale: 0.28f);
         DrawCgosAdminPlayerSelector(CgosAdminWhitePlayerRowBounds, "WHITE", session.CgosAdminWhitePlayerName, CgosAdminWhitePlayerPreviousButtonBounds, CgosAdminWhitePlayerNextButtonBounds, mousePoint);
         DrawCgosAdminPlayerSelector(CgosAdminBlackPlayerRowBounds, "BLACK", session.CgosAdminBlackPlayerName, CgosAdminBlackPlayerPreviousButtonBounds, CgosAdminBlackPlayerNextButtonBounds, mousePoint);
-        DrawCommandButton(CgosAdminBlackMatchButtonBounds, "BLACK", false, mousePoint, enabled: session.CanSendCgosAdminMatch, scale: 0.22f);
-        DrawCommandButton(CgosAdminWhiteMatchButtonBounds, "WHITE", false, mousePoint, enabled: session.CanSendCgosAdminMatch, scale: 0.22f);
+        DrawCommandButton(CgosAdminMatchButtonBounds, "MATCH", false, mousePoint, enabled: session.CanSendCgosAdminMatch, scale: 0.22f);
+        DrawCommandButton(CgosAdminSwapButtonBounds, "SWAP", false, mousePoint, enabled: session.CanSendCgosAdminMatch, scale: 0.22f);
 
         DrawCgosProcessPanel(
             CgosBlackProcessPanelBounds,
@@ -1993,9 +1993,9 @@ public sealed class GoScreenRenderer
 
     private static Rectangle CgosAdminWhoButtonBounds => new(CgosAdminProcessPanelBounds.X + 18, CgosAdminProcessPanelBounds.Bottom - 126, 68, 40);
 
-    private static Rectangle CgosAdminBlackMatchButtonBounds => new(CgosAdminProcessPanelBounds.X + 96, CgosAdminProcessPanelBounds.Bottom - 126, 82, 40);
+    private static Rectangle CgosAdminMatchButtonBounds => new(CgosAdminProcessPanelBounds.X + 96, CgosAdminProcessPanelBounds.Bottom - 126, 82, 40);
 
-    private static Rectangle CgosAdminWhiteMatchButtonBounds => new(CgosAdminProcessPanelBounds.X + 188, CgosAdminProcessPanelBounds.Bottom - 126, 82, 40);
+    private static Rectangle CgosAdminSwapButtonBounds => new(CgosAdminProcessPanelBounds.X + 188, CgosAdminProcessPanelBounds.Bottom - 126, 82, 40);
 
     private static Rectangle CgosAdminWhitePlayerRowBounds => new(CgosAdminProcessPanelBounds.X + 16, CgosAdminProcessPanelBounds.Y + 116, CgosAdminProcessPanelBounds.Width - 32, 38);
 

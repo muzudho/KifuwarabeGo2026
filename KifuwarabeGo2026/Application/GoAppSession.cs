@@ -463,6 +463,9 @@ public sealed class GoAppSession
     public void MoveCgosAdminBlackPlayerSelection(int step) =>
         CgosAdminBlackPlayerIndex = MoveCgosAdminWaitingPlayerIndex(CgosAdminBlackPlayerIndex, step);
 
+    public void SwapCgosAdminPlayers() =>
+        (CgosAdminWhitePlayerIndex, CgosAdminBlackPlayerIndex) = (CgosAdminBlackPlayerIndex, CgosAdminWhitePlayerIndex);
+
     private string GetCgosAdminWaitingPlayer(int index) =>
         index >= 0 && index < CgosAdminWaitingPlayers.Count ? CgosAdminWaitingPlayers[index] : "-";
 

@@ -297,13 +297,13 @@ public class Game1 : Game
                     {
                         _session.MoveCgosAdminBlackPlayerSelection(1);
                     }
-                    else if (GoScreenRenderer.GetCgosAdminBlackMatchButtonHit(point, _session.CanSendCgosAdminMatch))
+                    else if (GoScreenRenderer.GetCgosAdminMatchButtonHit(point, _session.CanSendCgosAdminMatch))
                     {
-                        SendSelectedCgosAdminMatch(swapColors: false);
+                        SendSelectedCgosAdminMatch();
                     }
-                    else if (GoScreenRenderer.GetCgosAdminWhiteMatchButtonHit(point, _session.CanSendCgosAdminMatch))
+                    else if (GoScreenRenderer.GetCgosAdminSwapButtonHit(point, _session.CanSendCgosAdminMatch))
                     {
-                        SendSelectedCgosAdminMatch(swapColors: true);
+                        _session.SwapCgosAdminPlayers();
                     }
                     else if (GoScreenRenderer.GetCgosAdminCodeButtonHit(point))
                     {
@@ -745,11 +745,9 @@ public class Game1 : Game
         _session.SetCgosAdminWaitingPlayers(_cgosAdminProcess.GetAdminWaitingPlayers());
     }
 
-    private void SendSelectedCgosAdminMatch(bool swapColors)
+    private void SendSelectedCgosAdminMatch()
     {
-        var white = swapColors ? _session.CgosAdminBlackPlayerName : _session.CgosAdminWhitePlayerName;
-        var black = swapColors ? _session.CgosAdminWhitePlayerName : _session.CgosAdminBlackPlayerName;
-        SendCgosAdminCommand($"match {white} {black}");
+        SendCgosAdminCommand($"match {_session.CgosAdminWhitePlayerName} {_session.CgosAdminBlackPlayerName}");
     }
 
     private void SendCgosAdminCommand(string command)
