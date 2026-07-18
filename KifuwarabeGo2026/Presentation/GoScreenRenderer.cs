@@ -282,7 +282,8 @@ public sealed partial class GoScreenRenderer
             session.BlackAgehama,
             session.WhiteAgehama,
             session.CurrentTurn,
-            session.EngineErrorStone);
+            session.EngineErrorStone,
+            mousePoint);
 
         DrawText("PURE GO SCORE", new Vector2(1144, 570), new Color(180, 195, 195), 0.52f);
         DrawStoneCountStrip(session, 610);

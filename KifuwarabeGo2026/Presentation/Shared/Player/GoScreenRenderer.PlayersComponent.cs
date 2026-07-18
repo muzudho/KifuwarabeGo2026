@@ -37,10 +37,11 @@ public sealed partial class GoScreenRenderer
         int blackAgehama,
         int whiteAgehama,
         Domain.GoStone currentTurn,
-        Domain.GoStone? engineErrorStone = null)
+        Domain.GoStone? engineErrorStone = null,
+        Point? mousePoint = null)
     {
-        DrawPlayerComponent(new Rectangle(x, y, width, 88), blackName, blackElapsed, mainTime, blackAgehama, black: true, currentTurn == Domain.GoStone.Black, engineErrorStone == Domain.GoStone.Black);
-        DrawPlayerComponent(new Rectangle(x, y + 96, width, 88), whiteName, whiteElapsed, mainTime, whiteAgehama, black: false, currentTurn == Domain.GoStone.White, engineErrorStone == Domain.GoStone.White);
+        DrawPlayerComponent(new Rectangle(x, y, width, 88), blackName, blackElapsed, mainTime, blackAgehama, black: true, currentTurn == Domain.GoStone.Black, engineErrorStone == Domain.GoStone.Black, mousePoint);
+        DrawPlayerComponent(new Rectangle(x, y + 96, width, 88), whiteName, whiteElapsed, mainTime, whiteAgehama, black: false, currentTurn == Domain.GoStone.White, engineErrorStone == Domain.GoStone.White, mousePoint);
     }
 
     private void DrawPlayerComponent(
@@ -51,7 +52,8 @@ public sealed partial class GoScreenRenderer
         int agehama,
         bool black,
         bool active,
-        bool engineError)
+        bool engineError,
+        Point? mousePoint)
     {
         DrawDataRowFrame(bounds);
         if (active) FillRect(new Rectangle(bounds.X, bounds.Y + 2, 6, bounds.Height - 4), new Color(99, 223, 185));
@@ -65,7 +67,11 @@ public sealed partial class GoScreenRenderer
         DrawFittedText($"USED {elapsedText} / LIMIT {mainTimeText}    AGEHAMA {agehama}", statusBounds, new Color(204, 211, 206), 0.34f);
         if (engineError)
         {
-            DrawFittedText("ENGINE ERROR", PlayerEngineErrorBounds(bounds), new Color(255, 96, 96), 0.34f);
+            var errorLogBounds = PlayerEngineErrorBounds(bounds);
+            var hovered = mousePoint is { } point && errorLogBounds.Contains(point);
+            FillRect(errorLogBounds, hovered ? new Color(104, 34, 38, 220) : new Color(57, 29, 34, 210));
+            DrawRect(errorLogBounds, 1, new Color(255, 96, 96));
+            DrawFittedText("ERROR LOG", new Rectangle(errorLogBounds.X + 10, errorLogBounds.Y + 4, errorLogBounds.Width - 20, errorLogBounds.Height - 8), new Color(255, 126, 126), 0.34f);
         }
     }
 
