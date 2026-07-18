@@ -285,12 +285,6 @@ public sealed class CgosConnectionProcess : IDisposable
 
     public string OpenLog(string app, bool openStandardError)
     {
-        if (IsRunning)
-        {
-            AddOutput("# Current log is active. Use TAIL while communication is running.");
-            return "LOG ACTIVE - USE TAIL";
-        }
-
         var targetPath = GetLogTargetPath(openStandardError, allowGuiFallback: !openStandardError);
 
         var opensFile = File.Exists(targetPath);
@@ -466,7 +460,7 @@ public sealed class CgosConnectionProcess : IDisposable
 
         var targetPath = openStandardError
             ? GetStandardErrorLogPath(LogDirectory)
-            : GetLatestCgosLogPath(LogDirectory);
+            : GetCurrentRunCgosLogPath(LogDirectory);
 
         if (string.IsNullOrWhiteSpace(targetPath))
         {
@@ -481,6 +475,28 @@ public sealed class CgosConnectionProcess : IDisposable
         }
 
         return string.IsNullOrWhiteSpace(targetPath) ? LogDirectory : targetPath;
+    }
+
+    private string GetCurrentRunCgosLogPath(string logDirectory)
+    {
+        if (string.IsNullOrWhiteSpace(logDirectory) || !Directory.Exists(logDirectory))
+        {
+            return "";
+        }
+
+        try
+        {
+            return Directory.EnumerateFiles(logDirectory, "cgos-*.log")
+                .Select(path => new FileInfo(path))
+                .Where(file => _startedAt == default || file.LastWriteTime >= _startedAt.AddSeconds(-1))
+                .OrderByDescending(file => file.LastWriteTime)
+                .FirstOrDefault()
+                ?.FullName ?? "";
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+        {
+            return "";
+        }
     }
 
     private void AppendGuiLog(string displayLine)
