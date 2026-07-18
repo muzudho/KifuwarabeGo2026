@@ -27,6 +27,11 @@ public sealed class CgosGameObservation
     public GoStone GetStone(int x, int y) => _board.GetStone(x, y);
 
     /// <summary>
+    /// 現在の観戦盤面を連解析します。
+    /// </summary>
+    public GoRenParseResult ParseRens() => _board.ParseRens();
+
+    /// <summary>
     /// 通信プロセスの表示行を観戦状態へ反映します。
     /// </summary>
     public void ProcessLogLine(string displayLine)

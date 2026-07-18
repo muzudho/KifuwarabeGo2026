@@ -91,6 +91,10 @@ public class Game1 : Game
                 UpdateCgosConnectionProcessStatus();
                 UpdateCgosAdminProcessStatus();
                 UpdateCgosGameObservation();
+
+                // ［CGOS　＞　観戦画面］キーボード入力
+                UpdateCgosWatchingKeyboardInput(keyboard);
+
                 UpdateCgosConnectionEditPanelByKeyboard(keyboard, gameTime);
             }
 
@@ -143,6 +147,18 @@ public class Game1 : Game
         {
             _session.ToggleRenParseDisplay();
         }
+
+        _previousKeyboard = keyboard;
+    }
+
+    /// <summary>
+    /// CGOS 観戦・結果画面で、通信を伴わないローカル表示操作を処理します。
+    /// </summary>
+    private void UpdateCgosWatchingKeyboardInput(KeyboardState keyboard)
+    {
+        var canToggle = _session.CgosConnectionFlowKind is CgosConnectionFlowKind.Watching or CgosConnectionFlowKind.Result;
+        if (canToggle && keyboard.IsKeyDown(Keys.R) && _previousKeyboard.IsKeyUp(Keys.R))
+            _session.ToggleRenParseDisplay();
 
         _previousKeyboard = keyboard;
     }
@@ -211,7 +227,7 @@ public class Game1 : Game
             {
                 if (_session.CgosConnectionFlowKind is CgosConnectionFlowKind.Watching or CgosConnectionFlowKind.Result)
                 {
-                    CgosWatchingRenderer.Draw(_renderer, _cgosGameObservation, Mouse.GetState().Position);
+                    CgosWatchingRenderer.Draw(_renderer, _session, _cgosGameObservation, Mouse.GetState().Position);
                 }
                 else if (_session.CgosConnectionFlowKind == CgosConnectionFlowKind.ConnectionStart)
                 {

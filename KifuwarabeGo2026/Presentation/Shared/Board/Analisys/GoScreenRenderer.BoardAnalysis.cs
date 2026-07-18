@@ -11,6 +11,44 @@ using System.Collections.Generic;
 /// </summary>
 public sealed partial class GoScreenRenderer
 {
+    /// <summary>
+    /// 盤面の供給元に依存せず、指定された連解析表示を描画します。
+    /// </summary>
+    private void DrawBoardRenAnalysis(
+        RenParseDisplayMode displayMode,
+        int boardSize,
+        Func<int, int, GoStone> getStone,
+        Func<GoRenParseResult> parseRens,
+        Action drawPlacedStones,
+        Vector2 start,
+        float cell)
+    {
+        if (displayMode == RenParseDisplayMode.Graph)
+        {
+            var renParse = parseRens();
+            DrawRenGraphCells(boardSize, getStone, start, cell);
+            DrawRenBoundaries(renParse, start, cell);
+            DrawRenRepresentativeNumbers(renParse, start, cell);
+            return;
+        }
+
+        if (displayMode is RenParseDisplayMode.GraphStep2 or RenParseDisplayMode.Eye)
+        {
+            var renParse = parseRens();
+            var nodes = CreateRenGraphNodes(renParse, start, cell, displayMode == RenParseDisplayMode.Eye);
+            FillRect(BoardBounds, new Color(56, 145, 129));
+            DrawRenGraphEdges(nodes, renParse.Edges, cell);
+            DrawRenGraphNodes(nodes, cell);
+            return;
+        }
+
+        drawPlacedStones();
+        if (displayMode != RenParseDisplayMode.Overlay) return;
+
+        var overlayRenParse = parseRens();
+        DrawRenBoundaries(overlayRenParse, start, cell);
+        DrawRenNumbers(overlayRenParse, start, cell);
+    }
 
     /// <summary>
     /// ［連］のグラフノード作成
@@ -113,10 +151,18 @@ public sealed partial class GoScreenRenderer
     /// <param name="cell"></param>
     private void DrawRenGraphCells(GoAppSession session, Vector2 start, float cell)
     {
+        DrawRenGraphCells(session.BoardSize, session.GetStone, start, cell);
+    }
+
+    /// <summary>
+    /// 盤面の供給元に依存せず［連グラフ・セル］を描画します。
+    /// </summary>
+    private void DrawRenGraphCells(int boardSize, Func<int, int, GoStone> getStone, Vector2 start, float cell)
+    {
         var halfCell = cell * 0.5f;
-        for (var y = 0; y < session.BoardSize; y++)
+        for (var y = 0; y < boardSize; y++)
         {
-            for (var x = 0; x < session.BoardSize; x++)
+            for (var x = 0; x < boardSize; x++)
             {
                 var center = BoardPoint(start, cell, x, y);
                 var rect = new Rectangle(
@@ -124,7 +170,7 @@ public sealed partial class GoScreenRenderer
                     (int)MathF.Round(center.Y - halfCell),
                     (int)MathF.Ceiling(cell),
                     (int)MathF.Ceiling(cell));
-                FillRect(rect, RenGraphCellColor(session.GetStone(x, y)));
+                FillRect(rect, RenGraphCellColor(getStone(x, y)));
             }
         }
     }

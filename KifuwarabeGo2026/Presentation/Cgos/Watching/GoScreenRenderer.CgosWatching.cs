@@ -1,5 +1,6 @@
 namespace KifuwarabeGo2026.Presentation;
 
+using KifuwarabeGo2026.Application;
 using KifuwarabeGo2026.Application.Cgos.Watching;
 using KifuwarabeGo2026.Domain;
 using Microsoft.Xna.Framework;
@@ -10,7 +11,13 @@ using Microsoft.Xna.Framework.Graphics;
 /// </summary>
 public sealed partial class GoScreenRenderer
 {
-    public void DrawCgosWatching(CgosGameObservation observation, Point mousePosition)
+    /// <summary>
+    /// CGOS 対局の観戦・結果画面を描画します。
+    /// </summary>
+    /// <param name="session"></param>
+    /// <param name="observation"></param>
+    /// <param name="mousePosition"></param>
+    public void DrawCgosWatching(GoAppSession session, CgosGameObservation observation, Point mousePosition)
     {
         var mousePoint = VirtualScreen.ToVirtualPoint(_graphicsDevice.Viewport, mousePosition);
         _spriteBatch.Begin(
@@ -19,6 +26,25 @@ public sealed partial class GoScreenRenderer
 
         DrawBackground();
         var surface = DrawBoardSurface(observation.BoardSize);
+        DrawBoardRenAnalysis(
+            session.RenParseDisplayMode,
+            observation.BoardSize,
+            observation.GetStone,
+            observation.ParseRens,
+            () => DrawCgosWatchingStones(observation, surface.Start, surface.Cell),
+            surface.Start,
+            surface.Cell);
+
+        DrawBoardFrameHighlights(surface.Outer);
+        DrawCgosWatchingSidePanel(observation, mousePoint);
+        _spriteBatch.End();
+    }
+
+    /// <summary>
+    /// CGOS 観戦盤面の石を描画します。
+    /// </summary>
+    private void DrawCgosWatchingStones(CgosGameObservation observation, Vector2 start, float cell)
+    {
         for (var y = 0; y < observation.BoardSize; y++)
         {
             for (var x = 0; x < observation.BoardSize; x++)
@@ -26,14 +52,10 @@ public sealed partial class GoScreenRenderer
                 var stone = observation.GetStone(x, y);
                 if (stone != GoStone.Empty)
                 {
-                    DrawStone(BoardPoint(surface.Start, surface.Cell, x, y), surface.Cell * 0.44f, stone == GoStone.Black);
+                    DrawStone(BoardPoint(start, cell, x, y), cell * 0.44f, stone == GoStone.Black);
                 }
             }
         }
-
-        DrawBoardFrameHighlights(surface.Outer);
-        DrawCgosWatchingSidePanel(observation, mousePoint);
-        _spriteBatch.End();
     }
 
     public static bool GetCgosWatchingBackButtonHit(Point point) => CgosWatchingBackButtonBounds.Contains(point);

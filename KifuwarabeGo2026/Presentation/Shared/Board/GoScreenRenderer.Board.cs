@@ -39,19 +39,15 @@ public sealed partial class GoScreenRenderer
         var start = surface.Start;
         var cell = surface.Cell;
 
-        if (session.RenParseDisplayMode == RenParseDisplayMode.Graph)
-        {
-            DrawRenGraphStep1Overlay(session, start, cell);
-        }
-        else if (session.RenParseDisplayMode is RenParseDisplayMode.GraphStep2 or RenParseDisplayMode.Eye)
-        {
-            DrawRenGraphOverlay(session, start, cell, session.RenParseDisplayMode == RenParseDisplayMode.Eye);
-        }
-        else
-        {
-            DrawPlacedStones(session, start, cell);
-            DrawRenParseOverlay(session, start, cell);
-        }
+        // ［連解析］描画
+        DrawBoardRenAnalysis(
+            session.RenParseDisplayMode,
+            session.BoardSize,
+            session.GetStone,
+            session.ParseRens,
+            () => DrawPlacedStones(session, start, cell),
+            start,
+            cell);
 
         DrawSuperKoMarks(session, start, cell);
         DrawKoMark(session, start, cell);
