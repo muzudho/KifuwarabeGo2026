@@ -140,6 +140,8 @@ public sealed partial class GoScreenRenderer
 
     public static bool GetExportSgfButtonHit(Point point) => ExportSgfButtonBounds.Contains(point);
 
+    public static bool GetSetupBackToTitleButtonHit(Point point) => SetupBackToTitleButtonBounds.Contains(point);
+
     public static GoPlayerKind? GetBlackPlayerKindButtonHit(Point point) => GetPlayerKindButtonHit(point, BlackPlayerKindButtonY);
 
     public static GoPlayerKind? GetWhitePlayerKindButtonHit(Point point) => GetPlayerKindButtonHit(point, WhitePlayerKindButtonY);
@@ -232,6 +234,7 @@ public sealed partial class GoScreenRenderer
     private void DrawSetupSidePanel(GoAppSession session, Point mousePoint)
     {
         DrawText("KIFUWARABE GO 2026", new Vector2(1142, 104), new Color(244, 238, 218), 1.0f);
+        DrawCommandButton(SetupBackToTitleButtonBounds, "BACK TO TITLE", false, mousePoint, scale: 0.32f);
         DrawText("TOURNAMENT", new Vector2(1144, 166), new Color(180, 195, 195), 0.5f);
         DrawLabeledBrowseSelector(TournamentRulesSelector with { Value = session.TournamentDisplayName }, mousePoint);
 
@@ -533,6 +536,8 @@ public sealed partial class GoScreenRenderer
     private static Rectangle StartPlayingButtonBounds => new(1658, 920, 154, 56);
 
     private static Rectangle ImportSgfButtonBounds => new(1144, 920, 154, 56);
+
+    private static Rectangle SetupBackToTitleButtonBounds => new(1642, 104, 170, 52);
     private static Rectangle LocalUseButtonBounds => new(508, 404, 438, 300);
     private static Rectangle ReturnToSetupButtonBounds => new(1318, 910, 320, 56);
 

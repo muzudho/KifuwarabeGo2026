@@ -308,6 +308,7 @@ public class Game1 : Game
                 {
                     if (GoScreenRenderer.GetCgosConnectionStartBackButtonHit(point))
                     {
+                        if (_session.IsAnyCgosProcessRunning) DisconnectAllCgosProcesses();
                         _session.ReturnToCgosConnectionProfiles();
                     }
                     else if (GoScreenRenderer.GetCgosConnectionEnginePreviousButtonHit(point) is { } previousEngineStone)
@@ -463,7 +464,11 @@ public class Game1 : Game
                 return;
             }
 
-            if (_session.CurrentMode.Kind == GoAppModeKind.GameOver && GoScreenRenderer.GetReturnToSetupButtonHit(point))
+            if (isSetupMode && GoScreenRenderer.GetSetupBackToTitleButtonHit(point))
+            {
+                _session.ReturnToUseSelection();
+            }
+            else if (_session.CurrentMode.Kind == GoAppModeKind.GameOver && GoScreenRenderer.GetReturnToSetupButtonHit(point))
             {
                 _session.ReturnToSetup();
             }
@@ -791,6 +796,19 @@ public class Game1 : Game
         {
             _session.SetCgosAdminProcessStatus("ERROR: " + ex.Message, false, _cgosAdminProcess.LogDirectory, _cgosAdminProcess.GetRecentOutput());
         }
+    }
+
+    /// <summary>
+    /// CGOS の Admin・プレイヤー1・プレイヤー2をすべて切断します。
+    /// </summary>
+    private void DisconnectAllCgosProcesses()
+    {
+        _cgosAdminProcess.Stop();
+        _cgosBlackConnectionProcess.Stop();
+        _cgosWhiteConnectionProcess.Stop();
+        _session.SetCgosAdminProcessStatus("ADMIN STOPPED", false, _cgosAdminProcess.LogDirectory, _cgosAdminProcess.GetRecentOutput());
+        _session.SetCgosBlackConnectionProcessStatus("STOPPED", false, _cgosBlackConnectionProcess.LogDirectory, _cgosBlackConnectionProcess.GetRecentOutput());
+        _session.SetCgosWhiteConnectionProcessStatus("STOPPED", false, _cgosWhiteConnectionProcess.LogDirectory, _cgosWhiteConnectionProcess.GetRecentOutput());
     }
 
     private void UpdateCgosAdminProcessStatus()

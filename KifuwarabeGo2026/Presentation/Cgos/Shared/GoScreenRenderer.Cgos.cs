@@ -358,7 +358,12 @@ public sealed partial class GoScreenRenderer
     {
         var profile = session.SelectedCgosConnectionProfile;
         DrawText("USE CONNECTION", new Vector2(482, 260), new Color(180, 195, 195), 0.54f);
-        DrawCommandButton(CgosConnectionStartBackButtonBounds, "BACK", false, mousePoint, scale: 0.42f);
+        DrawCommandButton(
+            CgosConnectionStartBackButtonBounds,
+            session.IsAnyCgosProcessRunning ? "DISCONNECT ALL & BACK" : "BACK",
+            false,
+            mousePoint,
+            scale: session.IsAnyCgosProcessRunning ? 0.25f : 0.42f);
 
         DrawCgosSelectedProfileBar(profile);
         DrawCgosProcessPanel(
@@ -818,7 +823,7 @@ public sealed partial class GoScreenRenderer
     private static Rectangle CgosAdminCodeButtonBounds => new(CgosAdminProcessPanelBounds.Right - 90, CgosAdminProcessPanelBounds.Bottom - 70, 72, 48);
 
 
-    private static Rectangle CgosConnectionStartBackButtonBounds => new(1348, 204, 110, 48);
+    private static Rectangle CgosConnectionStartBackButtonBounds => new(1134, 204, 324, 48);
 
 
     private static Rectangle CgosBlackConnectionButtonBounds => new(CgosBlackProcessPanelBounds.X + 18, CgosBlackProcessPanelBounds.Bottom - 70, 120, 48);
