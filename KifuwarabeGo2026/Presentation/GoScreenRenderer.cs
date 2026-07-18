@@ -242,16 +242,17 @@ public sealed partial class GoScreenRenderer
     }
     private void DrawSetupSidePanel(GoAppSession session, Point mousePoint)
     {
-        DrawText("KIFUWARABE GO 2026", new Vector2(1142, 104), new Color(244, 238, 218), 1.0f);
         DrawCommandButton(SetupBackToTitleButtonBounds, "BACK TO TITLE", false, mousePoint, scale: 0.32f);
-        DrawText("TOURNAMENT", new Vector2(1144, 166), new Color(180, 195, 195), 0.5f);
-        DrawLabeledBrowseSelector(TournamentRulesSelector with { Value = session.TournamentDisplayName }, mousePoint);
+        DrawText("CURRENT TOURNAMENT", new Vector2(1144, 112), new Color(180, 195, 195), 0.38f);
+        DrawFittedText(session.TournamentDisplayName, new Rectangle(1144, 138, 470, 30), Color.White, 0.42f);
+        DrawCommandButton(TournamentRulesSelectButtonBounds, "TOURNAMENT SELECT", false, mousePoint, scale: 0.32f);
+        DrawCommandButton(ImportSgfButtonBounds, session.HasReviewGameRecord ? "SGF CLEAR" : "SGF INPUT", false, mousePoint, scale: 0.42f);
 
-        DrawText("CURRENT RULES", new Vector2(1144, 294), new Color(180, 195, 195), 0.5f);
-        DrawInfoStrip(1144, 334, "RULE", session.RuleKind.ToString());
-        DrawInfoStrip(1144, 406, "BOARD", $"{session.BoardSize} x {session.BoardSize}");
-        DrawInfoStrip(1144, 478, "KOMI", FormatKomi(session.Komi));
-        DrawInfoStrip(1144, 550, "MOVES", FormatMoveLimit(session.MoveLimit));
+        DrawText("CURRENT RULES", new Vector2(1144, 260), new Color(180, 195, 195), 0.5f);
+        DrawInfoStrip(1144, 300, "RULE", session.RuleKind.ToString());
+        DrawInfoStrip(1144, 372, "BOARD", $"{session.BoardSize} x {session.BoardSize}");
+        DrawInfoStrip(1144, 444, "KOMI", FormatKomi(session.Komi));
+        DrawInfoStrip(1144, 516, "MOVES", FormatMoveLimit(session.MoveLimit));
 
         DrawInfoStrip(1144, 646, "BLACK", PlayerKindLabel(session.BlackPlayerKind));
         DrawPlayerKindButtons(session.BlackPlayerKind, mousePoint, BlackPlayerKindButtonY);
@@ -259,7 +260,6 @@ public sealed partial class GoScreenRenderer
         DrawInfoStrip(1144, 780, "WHITE", PlayerKindLabel(session.WhitePlayerKind));
         DrawPlayerKindButtons(session.WhitePlayerKind, mousePoint, WhitePlayerKindButtonY);
         DrawSetupPlayerSelector(session, GoStone.White, mousePoint, WhiteEngineButtonY);
-        DrawCommandButton(ImportSgfButtonBounds, session.HasReviewGameRecord ? "SGF CLEAR" : "SGF INPUT", false, mousePoint);
         DrawCommandButton(StartReviewingButtonBounds, "KIFU REVIEW", false, mousePoint, enabled: session.HasReviewGameRecord, scale: 0.32f);
         DrawCommandButton(StartBoardEditingButtonBounds, "EDIT BOARD", false, mousePoint, scale: 0.36f);
         DrawCommandButton(StartPlayingButtonBounds, "START", false, mousePoint, scale: 0.48f);
@@ -563,7 +563,7 @@ public sealed partial class GoScreenRenderer
     private static Rectangle HumanPlayerNameTextBounds(int y) => new(1308, y + 2, 488, 32);
     private static Rectangle StartPlayingButtonBounds => new(1658, 920, 154, 56);
 
-    private static Rectangle ImportSgfButtonBounds => new(1144, 920, 154, 56);
+    private static Rectangle ImportSgfButtonBounds => new(1492, 184, 320, 56);
 
     private static Rectangle SetupBackToTitleButtonBounds => new(1642, 104, 170, 52);
     private static Rectangle LocalUseButtonBounds => new(508, 404, 438, 300);

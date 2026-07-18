@@ -13,7 +13,7 @@ public sealed partial class GoScreenRenderer
 {
 
     public static bool GetTournamentRulesBrowseButtonHit(Point point) =>
-        TournamentRulesSelector.ContainsBrowseButton(point);
+        TournamentRulesSelectButtonBounds.Contains(point);
 
 
     public static bool GetTournamentRulesSelectionDialogOkButtonHit(Point point) =>
@@ -248,7 +248,7 @@ public sealed partial class GoScreenRenderer
     }
 
 
-    private static LabeledBrowseSelector TournamentRulesSelector => new(new Rectangle(1144, 198, 668, 56), "RULES", "");
+    private static Rectangle TournamentRulesSelectButtonBounds => new(1144, 184, 320, 56);
 
 
     private static Rectangle TournamentRulesSelectionDialogBounds => new(230, 126, 1460, 820);
