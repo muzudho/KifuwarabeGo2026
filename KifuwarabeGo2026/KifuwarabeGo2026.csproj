@@ -43,8 +43,7 @@
     <Folder Include="Application\Shared\" />
     <Folder Include="Presentation\Cgos\Shared\" />
     <Folder Include="Presentation\Local\Resting\EngineSelect\" />
-    <Folder Include="Presentation\Shared\" />
-    <Folder Include="Presentation\Shared\Board\" />
+    <Folder Include="Presentation\Shared\Board\Analisys\" />
   </ItemGroup>
   <Target Name="RestoreDotnetTools" BeforeTargets="CollectPackageReferences">
     <Message Text="Restoring dotnet tools (this might take a while depending on your internet speed and should only happen upon building your project for the first time, or after upgrading MonoGame, or clearing your nuget cache)" Importance="High" />

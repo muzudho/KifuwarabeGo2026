@@ -7,11 +7,15 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 
+/// <summary>
+/// ［ＣＧＯＳへの接続画面］の処理
+/// </summary>
 public sealed class CgosConnectionProcess : IDisposable
 {
     private readonly string _logFolderName;
     private readonly object _outputLock = new();
     private readonly Queue<string> _recentOutput = new();
+    private readonly Queue<string> _pendingOutput = new();
     private readonly List<string> _adminWaitingPlayers = new();
     private readonly List<Process> _processes = new();
     private DateTime _startedAt;
@@ -44,6 +48,19 @@ public sealed class CgosConnectionProcess : IDisposable
         lock (_outputLock)
         {
             return _recentOutput.ToArray();
+        }
+    }
+
+    /// <summary>
+    /// GUI がまだ処理していない通信出力を取り出します。
+    /// </summary>
+    public IReadOnlyList<string> DrainOutput()
+    {
+        lock (_outputLock)
+        {
+            var output = _pendingOutput.ToArray();
+            _pendingOutput.Clear();
+            return output;
         }
     }
 
@@ -365,11 +382,15 @@ public sealed class CgosConnectionProcess : IDisposable
         _processes.Clear();
     }
 
+    /// <summary>
+    /// 出力のクリアー
+    /// </summary>
     private void ClearOutput()
     {
         lock (_outputLock)
         {
             _recentOutput.Clear();
+            _pendingOutput.Clear();
             _adminWaitingPlayers.Clear();
         }
     }
@@ -432,6 +453,11 @@ public sealed class CgosConnectionProcess : IDisposable
         }
     }
 
+    /// <summary>
+    /// 出力の追加
+    /// </summary>
+    /// <param name="line"></param>
+    /// <param name="isError"></param>
     private void AddOutput(string? line, bool isError = false)
     {
         if (string.IsNullOrWhiteSpace(line))
@@ -450,6 +476,7 @@ public sealed class CgosConnectionProcess : IDisposable
 
             AppendGuiLog(displayLine);
             _recentOutput.Enqueue(displayLine);
+            _pendingOutput.Enqueue(displayLine);
             while (_recentOutput.Count > 8)
             {
                 _recentOutput.Dequeue();

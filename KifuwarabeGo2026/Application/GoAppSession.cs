@@ -335,6 +335,21 @@ public sealed class GoAppSession
         CgosConnectionStatusMessage = "READY";
     }
 
+    /// <summary>
+    /// CGOS 対局の観戦画面を開きます。
+    /// </summary>
+    public void OpenCgosWatchingScreen() => CgosConnectionFlowKind = CgosConnectionFlowKind.Watching;
+
+    /// <summary>
+    /// CGOS 対局の結果画面を開きます。
+    /// </summary>
+    public void OpenCgosResultScreen() => CgosConnectionFlowKind = CgosConnectionFlowKind.Result;
+
+    /// <summary>
+    /// CGOS 接続画面へ戻ります。
+    /// </summary>
+    public void ReturnToCgosConnectionScreen() => CgosConnectionFlowKind = CgosConnectionFlowKind.ConnectionStart;
+
     public void ReturnToCgosConnectionProfiles()
     {
         CgosConnectionFlowKind = CgosConnectionFlowKind.ProfileSelection;

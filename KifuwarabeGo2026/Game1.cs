@@ -3,12 +3,14 @@ namespace KifuwarabeGo2026;
 using KifuwarabeGo2026.Application;
 using KifuwarabeGo2026.Application.Cgos.Connect;
 using KifuwarabeGo2026.Application.Cgos.ConnectionTarget;
+using KifuwarabeGo2026.Application.Cgos.Watching;
 using KifuwarabeGo2026.Application.Local.Playing;
 using KifuwarabeGo2026.Application.Local.Resting.TournamentRule;
 using KifuwarabeGo2026.Domain;
 using KifuwarabeGo2026.Presentation;
 using KifuwarabeGo2026.Presentation.Cgos.Connect;
 using KifuwarabeGo2026.Presentation.Cgos.ConnectionTarget;
+using KifuwarabeGo2026.Presentation.Cgos.Watching;
 using KifuwarabeGo2026.Presentation.Local.Resting;
 using KifuwarabeGo2026.Presentation.Local.Resting.TournamentRule;
 using KifuwarabeGo2026.Presentation.Title;
@@ -33,6 +35,7 @@ public class Game1 : Game
     private readonly CgosConnectionProcess _cgosBlackConnectionProcess = new("BlackPlayer");
     private readonly CgosConnectionProcess _cgosWhiteConnectionProcess = new("WhitePlayer");
     private readonly CgosConnectionProcess _cgosAdminProcess = new("Admin");
+    private readonly CgosGameObservation _cgosGameObservation = new();
     private GoScreenRenderer? _renderer;
     private SoundEffect? _placeStoneSound;
     private SoundEffectInstance? _placeStoneSoundInstance;
@@ -87,6 +90,7 @@ public class Game1 : Game
             {
                 UpdateCgosConnectionProcessStatus();
                 UpdateCgosAdminProcessStatus();
+                UpdateCgosGameObservation();
                 UpdateCgosConnectionEditPanelByKeyboard(keyboard, gameTime);
             }
 
@@ -205,7 +209,11 @@ public class Game1 : Game
         {
             if (_renderer is not null)
             {
-                if (_session.CgosConnectionFlowKind == CgosConnectionFlowKind.ConnectionStart)
+                if (_session.CgosConnectionFlowKind is CgosConnectionFlowKind.Watching or CgosConnectionFlowKind.Result)
+                {
+                    CgosWatchingRenderer.Draw(_renderer, _cgosGameObservation, Mouse.GetState().Position);
+                }
+                else if (_session.CgosConnectionFlowKind == CgosConnectionFlowKind.ConnectionStart)
                 {
                     CgosConnectRenderer.Draw(_renderer, _session, Mouse.GetState().Position);
                 }
@@ -249,6 +257,23 @@ public class Game1 : Game
 
             if (_session.UseKind == GoAppUseKind.CgosClient)
             {
+                if (_session.CgosConnectionFlowKind == CgosConnectionFlowKind.Result)
+                {
+                    if (GoScreenRenderer.GetCgosWatchingBackButtonHit(point))
+                    {
+                        _session.ReturnToCgosConnectionScreen();
+                    }
+
+                    _previousMouse = mouse;
+                    return;
+                }
+
+                if (_session.CgosConnectionFlowKind == CgosConnectionFlowKind.Watching)
+                {
+                    _previousMouse = mouse;
+                    return;
+                }
+
                 if (TryHandleCgosConnectionEditPanelClick(point))
                 {
                     _previousMouse = mouse;
@@ -743,6 +768,32 @@ public class Game1 : Game
         var status = _cgosAdminProcess.RefreshStatus();
         _session.SetCgosAdminProcessStatus(status, _cgosAdminProcess.IsRunning, _cgosAdminProcess.LogDirectory, _cgosAdminProcess.GetRecentOutput());
         _session.SetCgosAdminWaitingPlayers(_cgosAdminProcess.GetAdminWaitingPlayers());
+    }
+
+    private void UpdateCgosGameObservation()
+    {
+        var previousGameId = _cgosGameObservation.GameId;
+        var wasFinished = _cgosGameObservation.IsFinished;
+
+        foreach (var line in _cgosBlackConnectionProcess.DrainOutput())
+        {
+            _cgosGameObservation.ProcessLogLine(line);
+        }
+
+        foreach (var line in _cgosWhiteConnectionProcess.DrainOutput())
+        {
+            _cgosGameObservation.ProcessLogLine(line);
+        }
+
+        if (_cgosGameObservation.IsStarted && _cgosGameObservation.GameId != previousGameId)
+        {
+            _session.OpenCgosWatchingScreen();
+        }
+
+        if (!wasFinished && _cgosGameObservation.IsFinished)
+        {
+            _session.OpenCgosResultScreen();
+        }
     }
 
     private void SendSelectedCgosAdminMatch()
