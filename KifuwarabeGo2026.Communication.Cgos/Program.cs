@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Net;
 using System.Net.Sockets;
-using System.Reflection;
 using System.Text;
 
 /// <summary>
@@ -537,7 +536,7 @@ internal sealed class CgosAdminClient
 
 internal sealed class CgosClient
 {
-    private const string ClientIdPrefix = "e1 KifuwarabeGo2026.Cgos";
+    private const string ClientId = "e1";
 
     private readonly CgosClientOptions _options;
     private readonly CgosAccount _account;
@@ -678,8 +677,7 @@ internal sealed class CgosClient
 
     public static string GetClientId(bool serverSupportsAnalyze)
     {
-        var version = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "0.0.0";
-        return $"{ClientIdPrefix} {version}";
+        return ClientId;
     }
 
     private static string StripRank(string programName)
