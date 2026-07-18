@@ -330,11 +330,11 @@ public class Game1 : Game
                     {
                         _session.SwapCgosAdminPlayers();
                     }
-                    else if (GoScreenRenderer.GetCgosAdminCodeButtonHit(point))
+                    else if (GoScreenRenderer.GetCgosAdminCodeButtonHit(point, !string.IsNullOrWhiteSpace(_session.CgosAdminLogDirectory)))
                     {
                         OpenCgosAdminLog();
                     }
-                    else if (GoScreenRenderer.GetCgosAdminTailButtonHit(point))
+                    else if (GoScreenRenderer.GetCgosAdminTailButtonHit(point, !string.IsNullOrWhiteSpace(_session.CgosAdminLogDirectory)))
                     {
                         TailCgosAdminLog();
                     }
@@ -346,19 +346,19 @@ public class Game1 : Game
                     {
                         ToggleCgosPlayerConnectionProcess(GoStone.White);
                     }
-                    else if (GoScreenRenderer.GetCgosBlackCodeButtonHit(point))
+                    else if (GoScreenRenderer.GetCgosPlayer1CodeButtonHit(point, !string.IsNullOrWhiteSpace(_session.CgosBlackConnectionLogDirectory)))
                     {
                         OpenCgosPlayerConnectionLog(GoStone.Black);
                     }
-                    else if (GoScreenRenderer.GetCgosBlackTailButtonHit(point))
+                    else if (GoScreenRenderer.GetCgosPlayer1TailButtonHit(point, !string.IsNullOrWhiteSpace(_session.CgosBlackConnectionLogDirectory)))
                     {
                         TailCgosPlayerConnectionLog(GoStone.Black);
                     }
-                    else if (GoScreenRenderer.GetCgosWhiteCodeButtonHit(point))
+                    else if (GoScreenRenderer.GetCgosPlayer2CodeButtonHit(point, !string.IsNullOrWhiteSpace(_session.CgosWhiteConnectionLogDirectory)))
                     {
                         OpenCgosPlayerConnectionLog(GoStone.White);
                     }
-                    else if (GoScreenRenderer.GetCgosWhiteTailButtonHit(point))
+                    else if (GoScreenRenderer.GetCgosPlayer2TailButtonHit(point, !string.IsNullOrWhiteSpace(_session.CgosWhiteConnectionLogDirectory)))
                     {
                         TailCgosPlayerConnectionLog(GoStone.White);
                     }

@@ -66,13 +66,23 @@ public sealed partial class GoScreenRenderer
 
     public static bool GetCgosAdminSwapButtonHit(Point point, bool enabled) => enabled && CgosAdminSwapButtonBounds.Contains(point);
 
+    /// <summary>
+    /// ［Admin ＞ CODE］ボタンの活性化状態
+    /// </summary>
+    /// <param name="point"></param>
+    /// <param name="enabled"></param>
+    /// <returns></returns>
+    public static bool GetCgosAdminCodeButtonHit(Point point, bool enabled) =>
+        enabled && CgosAdminCodeButtonBounds.Contains(point);
 
-    public static bool GetCgosAdminCodeButtonHit(Point point) =>
-        CgosAdminCodeButtonBounds.Contains(point);
-
-
-    public static bool GetCgosAdminTailButtonHit(Point point) =>
-        CgosAdminTailButtonBounds.Contains(point);
+    /// <summary>
+    /// ［Admin ＞ TAIL］ボタンの活性化状態
+    /// </summary>
+    /// <param name="point"></param>
+    /// <param name="enabled"></param>
+    /// <returns></returns>
+    public static bool GetCgosAdminTailButtonHit(Point point, bool enabled) =>
+        enabled && CgosAdminTailButtonBounds.Contains(point);
 
 
     public static bool GetCgosBlackConnectionButtonHit(Point point, bool enabled) =>
@@ -82,21 +92,41 @@ public sealed partial class GoScreenRenderer
     public static bool GetCgosWhiteConnectionButtonHit(Point point, bool enabled) =>
         enabled && CgosWhiteConnectionButtonBounds.Contains(point);
 
+    /// <summary>
+    /// ［プレイヤー１　＞　CODE］ボタンの活性化状態
+    /// </summary>
+    /// <param name="point"></param>
+    /// <param name="enabled"></param>
+    /// <returns></returns>
+    public static bool GetCgosPlayer1CodeButtonHit(Point point, bool enabled) =>
+        enabled && CgosPlayer1CodeButtonBounds.Contains(point);
 
-    public static bool GetCgosBlackCodeButtonHit(Point point) =>
-        CgosBlackCodeButtonBounds.Contains(point);
+    /// <summary>
+    /// ［プレイヤー１　＞　TAIL］ボタンの活性化状態
+    /// </summary>
+    /// <param name="point"></param>
+    /// <param name="enabled"></param>
+    /// <returns></returns>
+    public static bool GetCgosPlayer1TailButtonHit(Point point, bool enabled) =>
+        enabled && CgosBlackTailButtonBounds.Contains(point);
 
+    /// <summary>
+    /// ［プレイヤー２　＞　CODE］ボタンの活性化状態
+    /// </summary>
+    /// <param name="point"></param>
+    /// <param name="enabled"></param>
+    /// <returns></returns>
+    public static bool GetCgosPlayer2CodeButtonHit(Point point, bool enabled) =>
+        enabled && CgosWhiteCodeButtonBounds.Contains(point);
 
-    public static bool GetCgosBlackTailButtonHit(Point point) =>
-        CgosBlackTailButtonBounds.Contains(point);
-
-
-    public static bool GetCgosWhiteCodeButtonHit(Point point) =>
-        CgosWhiteCodeButtonBounds.Contains(point);
-
-
-    public static bool GetCgosWhiteTailButtonHit(Point point) =>
-        CgosWhiteTailButtonBounds.Contains(point);
+    /// <summary>
+    /// ［プレイヤー２　＞　TAIL］ボタンの活性化状態
+    /// </summary>
+    /// <param name="point"></param>
+    /// <param name="enabled"></param>
+    /// <returns></returns>
+    public static bool GetCgosPlayer2TailButtonHit(Point point, bool enabled) =>
+        enabled && CgosWhiteTailButtonBounds.Contains(point);
 
 
     public static bool GetCgosConnectionStartBackButtonHit(Point point) =>
@@ -343,7 +373,7 @@ public sealed partial class GoScreenRenderer
             true,
             CgosAdminTailButtonBounds,
             CgosAdminCodeButtonBounds,
-            true,
+            !string.IsNullOrWhiteSpace(session.CgosAdminLogDirectory),
             mousePoint);
         DrawCommandButton(CgosAdminWhoButtonBounds, "WHO", false, mousePoint, enabled: session.IsCgosAdminRunning, scale: 0.28f);
         DrawCgosAdminPlayerSelector(CgosAdminWhitePlayerRowBounds, "WHITE", session.CgosAdminWhitePlayerName, CgosAdminWhitePlayerPreviousButtonBounds, CgosAdminWhitePlayerNextButtonBounds, mousePoint);
@@ -362,8 +392,8 @@ public sealed partial class GoScreenRenderer
             session.IsCgosBlackConnectionRunning ? "STOP" : "START",
             session.IsCgosBlackConnectionRunning || session.SelectedCgosBlackGtpEngineProfile is not null,
             CgosBlackTailButtonBounds,
-            CgosBlackCodeButtonBounds,
-            true,
+            CgosPlayer1CodeButtonBounds,
+            !string.IsNullOrWhiteSpace(session.CgosBlackConnectionLogDirectory),
             mousePoint);
         DrawCgosEnginePickerInPanel(
             CgosConnectionBlackEnginePreviousButtonBounds,
@@ -386,7 +416,7 @@ public sealed partial class GoScreenRenderer
             session.IsCgosWhiteConnectionRunning || session.SelectedCgosWhiteGtpEngineProfile is not null,
             CgosWhiteTailButtonBounds,
             CgosWhiteCodeButtonBounds,
-            true,
+            !string.IsNullOrWhiteSpace(session.CgosWhiteConnectionLogDirectory),
             mousePoint);
         DrawCgosEnginePickerInPanel(
             CgosConnectionWhiteEnginePreviousButtonBounds,
@@ -421,7 +451,22 @@ public sealed partial class GoScreenRenderer
         DrawCommandButton(nextBounds, ">", false, mousePoint, enabled: true, scale: 0.22f);
     }
 
-
+    /// <summary>
+    /// ［CGOSプロセス・パネル］の描画
+    /// </summary>
+    /// <param name="bounds"></param>
+    /// <param name="title"></param>
+    /// <param name="status"></param>
+    /// <param name="output"></param>
+    /// <param name="engineName"></param>
+    /// <param name="elapsedDisplay"></param>
+    /// <param name="startButtonBounds"></param>
+    /// <param name="startLabel"></param>
+    /// <param name="startEnabled"></param>
+    /// <param name="tailButtonBounds"></param>
+    /// <param name="codeButtonBounds"></param>
+    /// <param name="logToolsEnabled"></param>
+    /// <param name="mousePoint"></param>
     private void DrawCgosProcessPanel(
         Rectangle bounds,
         string title,
@@ -434,7 +479,7 @@ public sealed partial class GoScreenRenderer
         bool startEnabled,
         Rectangle tailButtonBounds,
         Rectangle codeButtonBounds,
-        bool codeEnabled,
+        bool logToolsEnabled,
         Point mousePoint)
     {
         FillRect(bounds, new Color(15, 20, 26));
@@ -468,8 +513,8 @@ public sealed partial class GoScreenRenderer
         }
 
         DrawCommandButton(startButtonBounds, startLabel, false, mousePoint, enabled: startEnabled, scale: 0.36f);
-        DrawCommandButton(tailButtonBounds, "TAIL", false, mousePoint, scale: 0.26f);
-        DrawCommandButton(codeButtonBounds, "CODE", false, mousePoint, enabled: codeEnabled, scale: 0.3f);
+        DrawCommandButton(tailButtonBounds, "TAIL", false, mousePoint, enabled: logToolsEnabled, scale: 0.26f);
+        DrawCommandButton(codeButtonBounds, "CODE", false, mousePoint, enabled: logToolsEnabled, scale: 0.3f);
     }
 
 
@@ -781,7 +826,7 @@ public sealed partial class GoScreenRenderer
     private static Rectangle CgosBlackTailButtonBounds => new(CgosBlackProcessPanelBounds.X + 146, CgosBlackProcessPanelBounds.Bottom - 70, 58, 48);
 
 
-    private static Rectangle CgosBlackCodeButtonBounds => new(CgosBlackProcessPanelBounds.Right - 90, CgosBlackProcessPanelBounds.Bottom - 70, 72, 48);
+    private static Rectangle CgosPlayer1CodeButtonBounds => new(CgosBlackProcessPanelBounds.Right - 90, CgosBlackProcessPanelBounds.Bottom - 70, 72, 48);
 
 
     private static Rectangle CgosWhiteConnectionButtonBounds => new(CgosWhiteProcessPanelBounds.X + 18, CgosWhiteProcessPanelBounds.Bottom - 70, 120, 48);
