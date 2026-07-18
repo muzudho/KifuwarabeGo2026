@@ -49,7 +49,7 @@ internal sealed class GtpEngine
                 response = "2";
                 return false;
             case "name":
-                response = "Kifuwarabe Random GTP";
+                response = "Kifuwarabe Star Random GTP";
                 return false;
 
             // バージョン番号
@@ -168,7 +168,7 @@ internal sealed class GtpEngine
             return;
         }
 
-        var move = legalMoves[_random.Next(legalMoves.Count)];
+        var move = StarRegionRandomMoveSelector.Select(legalMoves, _board.Size, _random);
         _board.TryPlaceStone(move.X, move.Y, color, _koPoint, out _, out _koPoint);
         response = FormatVertex(move, _board.Size);
     }

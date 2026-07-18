@@ -137,7 +137,7 @@ public sealed class GtpEngineCatalog
         {
             return new GtpEngineProfile
             {
-                DisplayName = "Kifuwarabe Random GTP",
+                DisplayName = "Kifuwarabe Star Random GTP",
                 ExecutablePath = engineExecutable,
                 WorkingDirectory = engineDirectory,
                 Arguments = "",
@@ -148,7 +148,7 @@ public sealed class GtpEngineCatalog
         var engineProject = Path.Combine(repositoryRoot, "KifuwarabeGo2026.Engine", "KifuwarabeGo2026.Engine.csproj");
         return new GtpEngineProfile
         {
-            DisplayName = "Kifuwarabe Random GTP",
+            DisplayName = "Kifuwarabe Star Random GTP",
             ExecutablePath = "dotnet",
             WorkingDirectory = repositoryRoot,
             Arguments = $"run --project \"{engineProject}\"",

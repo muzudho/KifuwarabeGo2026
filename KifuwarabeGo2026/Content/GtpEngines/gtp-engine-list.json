@@ -1,7 +1,7 @@
 {
   "gtpEngines": [
     {
-      "displayName": "Kifuwarabe Random GTP",
+      "displayName": "Kifuwarabe Star Random GTP",
       "executablePath": "..\\..\\..\\KifuwarabeGo2026.Engine\\bin\\Debug\\net8.0\\KifuwarabeGo2026.Engine.exe",
       "workingDirectory": "..\\..\\..\\KifuwarabeGo2026.Engine\\bin\\Debug\\net8.0",
       "arguments": "",

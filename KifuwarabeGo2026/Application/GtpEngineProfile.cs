@@ -7,7 +7,7 @@ using System.Text.Json.Serialization;
 /// </summary>
 public sealed class GtpEngineProfile
 {
-    public string DisplayName { get; set; } = "Kifuwarabe Random GTP";
+    public string DisplayName { get; set; } = "Kifuwarabe Star Random GTP";
 
     public string ExecutablePath { get; set; } = "";
 
