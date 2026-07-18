@@ -37,7 +37,8 @@ public sealed partial class GoScreenRenderer
         bool black,
         bool active)
     {
-        DrawDataRowFrame(bounds, active);
+        DrawDataRowFrame(bounds);
+        if (active) FillRect(new Rectangle(bounds.X, bounds.Y + 2, 6, bounds.Height - 4), new Color(99, 223, 185));
         var nameBounds = new Rectangle(bounds.X + 62, bounds.Y + 5, bounds.Width - 78, 34);
         var statusBounds = new Rectangle(bounds.X + 18, bounds.Y + 48, bounds.Width - 36, 30);
         DrawStone(new Vector2(bounds.X + 31, bounds.Y + 23), 16, black);
@@ -46,9 +47,5 @@ public sealed partial class GoScreenRenderer
         var elapsedText = elapsed is { } used ? FormatElapsedTime(used) : "--:--";
         var mainTimeText = mainTime is { } limit ? FormatElapsedTime(limit) : "--:--";
         DrawFittedText($"USED {elapsedText} / LIMIT {mainTimeText}    AGEHAMA {agehama}", statusBounds, new Color(204, 211, 206), 0.34f);
-        if (!active) return;
-
-        FillRect(new Rectangle(nameBounds.X, nameBounds.Bottom - 2, nameBounds.Width, 2), new Color(99, 223, 185));
-        FillRect(new Rectangle(statusBounds.X, statusBounds.Bottom - 1, statusBounds.Width, 2), new Color(99, 223, 185));
     }
 }
