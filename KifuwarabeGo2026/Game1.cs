@@ -1126,14 +1126,43 @@ public class Game1 : Game
     {
         var invalidCharacters = Path.GetInvalidFileNameChars();
         var builder = new StringBuilder(text.Length);
-        foreach (var character in text.Trim())
+        foreach (var token in text.Split(' ', StringSplitOptions.RemoveEmptyEntries))
         {
-            if (character >= ' ' && Array.IndexOf(invalidCharacters, character) < 0)
-                builder.Append(character);
+            var normalizedToken = NormalizeUppercaseFileNameToken(token);
+            foreach (var character in normalizedToken)
+            {
+                if (character >= ' ' && Array.IndexOf(invalidCharacters, character) < 0)
+                    builder.Append(character);
+            }
         }
 
         var sanitized = builder.ToString().Trim(' ', '.');
         return string.IsNullOrWhiteSpace(sanitized) ? fallback : sanitized;
+    }
+
+    /// <summary>
+    /// すべて大文字の英単語を、先頭だけ大文字の表記へ変換します。
+    /// </summary>
+    private static string NormalizeUppercaseFileNameToken(string token)
+    {
+        var containsLetter = false;
+        foreach (var character in token)
+        {
+            if (!char.IsAsciiLetter(character)) continue;
+            containsLetter = true;
+            if (char.IsLower(character)) return token;
+        }
+
+        if (!containsLetter) return token;
+        var characters = token.ToLowerInvariant().ToCharArray();
+        for (var index = 0; index < characters.Length; index++)
+        {
+            if (!char.IsAsciiLetter(characters[index])) continue;
+            characters[index] = char.ToUpperInvariant(characters[index]);
+            break;
+        }
+
+        return new string(characters);
     }
 
     private static void ShowMessage(string message, string caption)
