@@ -49,6 +49,16 @@
       "guiOptions": {
         "RandomMove": "Normal"
       }
+    },
+    {
+      "displayName": "For Error Test",
+      "executablePath": "C:\\Users\\muzud\\Downloads\\KifuwarabeGo2026.Engine-v1.1.0-win-x64\\KifuwarabeGo2026.Engine2222.exe",
+      "workingDirectory": "C:\\Users\\muzud\\Downloads\\KifuwarabeGo2026.Engine-v1.1.0-win-x64",
+      "arguments": "",
+      "enableGtpLog": true,
+      "guiOptions": {
+        "RandomMove": "ChebyshevDistanceFromStar"
+      }
     }
   ]
 }

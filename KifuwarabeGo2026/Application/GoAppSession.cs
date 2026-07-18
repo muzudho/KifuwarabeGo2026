@@ -283,6 +283,10 @@ public sealed class GoAppSession
 
     public string EngineErrorMessage { get; private set; } = "";
 
+    private GoStone? _engineErrorStone;
+
+    public GoStone? EngineErrorStone => string.IsNullOrWhiteSpace(EngineErrorMessage) ? null : _engineErrorStone;
+
     public string EngineLogPath { get; private set; } = "";
 
     public GoGameRecord CurrentGameRecord { get; private set; } = new();
@@ -1666,11 +1670,13 @@ public sealed class GoAppSession
     public void ClearEngineError()
     {
         EngineErrorMessage = "";
+        _engineErrorStone = null;
     }
 
-    public void SetEngineError(string message)
+    public void SetEngineError(string message, GoStone stone)
     {
         EngineErrorMessage = message;
+        _engineErrorStone = stone;
         IsEngineThinking = false;
     }
 

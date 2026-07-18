@@ -254,11 +254,9 @@ public sealed partial class GoScreenRenderer
         DrawInfoStrip(1144, 444, "KOMI", FormatKomi(session.Komi));
         DrawInfoStrip(1144, 516, "MOVES", FormatMoveLimit(session.MoveLimit));
 
-        DrawInfoStrip(1144, 646, "BLACK", PlayerKindLabel(session.BlackPlayerKind));
-        DrawPlayerKindButtons(session.BlackPlayerKind, mousePoint, BlackPlayerKindButtonY);
+        DrawSetupPlayerKindRow(GoStone.Black, session.BlackPlayerKind, mousePoint, BlackPlayerKindButtonY);
         DrawSetupPlayerSelector(session, GoStone.Black, mousePoint, BlackEngineButtonY);
-        DrawInfoStrip(1144, 780, "WHITE", PlayerKindLabel(session.WhitePlayerKind));
-        DrawPlayerKindButtons(session.WhitePlayerKind, mousePoint, WhitePlayerKindButtonY);
+        DrawSetupPlayerKindRow(GoStone.White, session.WhitePlayerKind, mousePoint, WhitePlayerKindButtonY);
         DrawSetupPlayerSelector(session, GoStone.White, mousePoint, WhiteEngineButtonY);
         DrawCommandButton(StartReviewingButtonBounds, "KIFU REVIEW", false, mousePoint, enabled: session.HasReviewGameRecord, scale: 0.32f);
         DrawCommandButton(StartBoardEditingButtonBounds, "EDIT BOARD", false, mousePoint, scale: 0.36f);
@@ -283,16 +281,11 @@ public sealed partial class GoScreenRenderer
             session.MainTime,
             session.BlackAgehama,
             session.WhiteAgehama,
-            session.CurrentTurn);
+            session.CurrentTurn,
+            session.EngineErrorStone);
 
         DrawText("PURE GO SCORE", new Vector2(1144, 570), new Color(180, 195, 195), 0.52f);
         DrawStoneCountStrip(session, 610);
-
-        if (HasComputerPlayer(session))
-        {
-            DrawText("ENGINE", new Vector2(1488, 544), new Color(180, 195, 195), 0.46f);
-            DrawText(GetEngineStatusText(session), new Vector2(1632, 544), GetEngineStatusColor(session), 0.46f);
-        }
 
         if (session.CanAcceptHumanMove)
         {
@@ -462,8 +455,12 @@ public sealed partial class GoScreenRenderer
         DrawCommandButton(plusBounds, plusLabel, false, mousePoint, scale: 0.42f);
     }
 
-    private void DrawPlayerKindButtons(GoPlayerKind selectedKind, Point mousePoint, int y)
+    private void DrawSetupPlayerKindRow(GoStone stone, GoPlayerKind selectedKind, Point mousePoint, int y)
     {
+        var rowBounds = new Rectangle(1144, y - 14, 668, 72);
+        DrawDataRowFrame(rowBounds);
+        DrawIconStone(new Vector2(rowBounds.X + 36, rowBounds.Center.Y), 18, stone == GoStone.Black);
+
         var humanBounds = PlayerKindButtonBounds(0, y);
         var computerBounds = PlayerKindButtonBounds(1, y);
         var bounds = PlayerKindSegmentBounds(y);
@@ -509,7 +506,7 @@ public sealed partial class GoScreenRenderer
         var active = session.ActiveHumanPlayerNameStone == stone;
         var text = active ? session.HumanPlayerNameDraft : session.GetHumanPlayerName(stone);
         DrawDataRowFrame(bounds, active, bounds.Contains(mousePoint));
-        DrawFittedText("PLAYER NAME", new Rectangle(bounds.X + 14, bounds.Y + 10, 136, bounds.Height - 20), new Color(158, 178, 178), 0.32f);
+        DrawFittedText("NAME", new Rectangle(bounds.X + 14, bounds.Y + 10, 136, bounds.Height - 20), new Color(158, 178, 178), 0.32f);
         DrawFittedText(text, HumanPlayerNameTextBounds(y), Color.White, 0.42f);
         if (active) DrawTextBoxCaret(text, session.HumanPlayerNameCaretIndex, HumanPlayerNameTextBounds(y), 0.42f);
     }
@@ -554,9 +551,9 @@ public sealed partial class GoScreenRenderer
 
     private static Rectangle MoveLimitStepButtonBounds(int index) => new(AddPanelControlX + 444 + index * 112, 644, 92, 40);
 
-    private static Rectangle PlayerKindButtonBounds(int index, int y) => new(1536 + index * 132, y, 132, 52);
+    private static Rectangle PlayerKindButtonBounds(int index, int y) => new(1220 + index * 290, y, 290, 52);
 
-    private static Rectangle PlayerKindSegmentBounds(int y) => new(1536, y, 264, 52);
+    private static Rectangle PlayerKindSegmentBounds(int y) => new(1220, y, 580, 52);
 
     private static Rectangle HumanPlayerNameRowBounds(int y) => new(1144, y - 4, 668, 44);
 
@@ -587,36 +584,6 @@ public sealed partial class GoScreenRenderer
     }
 
     private static string PlayerKindLabel(GoPlayerKind playerKind) => playerKind == GoPlayerKind.Human ? "Human" : "Computer";
-
-    private static bool HasComputerPlayer(GoAppSession session) =>
-        session.BlackPlayerKind == GoPlayerKind.Computer || session.WhitePlayerKind == GoPlayerKind.Computer;
-
-    private static string GetEngineStatusText(GoAppSession session)
-    {
-        if (!string.IsNullOrWhiteSpace(session.EngineErrorMessage))
-        {
-            return "ERROR";
-        }
-
-        if (!session.IsEngineReady)
-        {
-            return "STARTING";
-        }
-
-        return session.IsEngineThinking ? "THINKING" : "READY";
-    }
-
-    private static Color GetEngineStatusColor(GoAppSession session)
-    {
-        if (!string.IsNullOrWhiteSpace(session.EngineErrorMessage))
-        {
-            return new Color(255, 183, 146);
-        }
-
-        return session.IsEngineThinking || !session.IsEngineReady
-            ? new Color(255, 230, 160)
-            : new Color(99, 223, 185);
-    }
 
     private static string FormatElapsedTime(TimeSpan elapsed)
     {

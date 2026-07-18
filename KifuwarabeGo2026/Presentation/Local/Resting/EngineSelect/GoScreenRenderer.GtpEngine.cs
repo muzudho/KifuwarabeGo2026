@@ -511,7 +511,7 @@ public sealed partial class GoScreenRenderer
         new(GtpEngineSelectionDialogPropertyBounds.X + 18, GtpEngineSelectionDialogPropertyBounds.Y + 22 + index * 70, GtpEngineSelectionDialogPropertyBounds.Width - 36, 52);
 
 
-    private static LabeledBrowseSelector GtpEngineSelectorBounds(int y) => new(new Rectangle(1144, y - 4, 668, 44), "ENGINE", "", "SELECT");
+    private static LabeledBrowseSelector GtpEngineSelectorBounds(int y) => new(new Rectangle(1144, y - 4, 668, 44), "NAME", "", "SELECT");
 
 
     private static string SaveGtpEngineLabel(GoAppSession session) =>

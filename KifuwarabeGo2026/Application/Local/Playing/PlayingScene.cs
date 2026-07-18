@@ -135,10 +135,17 @@ public sealed class PlayingScene : IDisposable
         {
             foreach (var engine in enginesToStart)
             {
-                await engine.Client.StartAsync(cancellationToken);
-                await engine.Client.SendCommandExpectSuccessAsync($"boardsize {_session.BoardSize}", cancellationToken);
-                await engine.Client.SendCommandExpectSuccessAsync($"komi {_session.Komi.ToString(CultureInfo.InvariantCulture)}", cancellationToken);
-                await engine.Client.SendCommandExpectSuccessAsync("clear_board", cancellationToken);
+                try
+                {
+                    await engine.Client.StartAsync(cancellationToken);
+                    await engine.Client.SendCommandExpectSuccessAsync($"boardsize {_session.BoardSize}", cancellationToken);
+                    await engine.Client.SendCommandExpectSuccessAsync($"komi {_session.Komi.ToString(CultureInfo.InvariantCulture)}", cancellationToken);
+                    await engine.Client.SendCommandExpectSuccessAsync("clear_board", cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    throw new EngineCommandException(engine.Stone, ex);
+                }
             }
 
             return EngineCommandResult.EngineReady();
@@ -195,7 +202,7 @@ public sealed class PlayingScene : IDisposable
         var engine = GetEngine(currentTurn);
         if (engine is null)
         {
-            _session.SetEngineError($"{FormatColor(currentTurn)} GTP engine is not ready.");
+            _session.SetEngineError($"{FormatColor(currentTurn)} GTP engine is not ready.", currentTurn);
             return;
         }
 
@@ -233,7 +240,10 @@ public sealed class PlayingScene : IDisposable
             }
             catch (Exception ex)
             {
-                return new EngineCommandCompletion(EngineCommandResult.Failure(ex.Message), generation);
+                var errorStone = ex is EngineCommandException engineException
+                    ? engineException.Stone
+                    : _session.CurrentTurn;
+                return new EngineCommandCompletion(EngineCommandResult.Failure(ex.Message, errorStone), generation);
             }
         });
     }
@@ -257,7 +267,7 @@ public sealed class PlayingScene : IDisposable
         _session.SetEngineThinking(false);
         if (result.ErrorMessage is not null)
         {
-            _session.SetEngineError(result.ErrorMessage);
+            _session.SetEngineError(result.ErrorMessage, result.ErrorStone ?? _session.CurrentTurn);
             return;
         }
 
@@ -293,13 +303,13 @@ public sealed class PlayingScene : IDisposable
 
         if (!GtpCoordinate.TryParseVertex(result.MoveText, _session.BoardSize, out var point))
         {
-            _session.SetEngineError($"Invalid GTP vertex: {result.MoveText}");
+            _session.SetEngineError($"Invalid GTP vertex: {result.MoveText}", result.PlayedBy ?? _session.CurrentTurn);
             return;
         }
 
         if (!_session.TryPlaceStone(point.X, point.Y))
         {
-            _session.SetEngineError($"Illegal GTP move: {result.MoveText}");
+            _session.SetEngineError($"Illegal GTP move: {result.MoveText}", result.PlayedBy ?? _session.CurrentTurn);
             return;
         }
 
@@ -378,7 +388,14 @@ public sealed class PlayingScene : IDisposable
     {
         foreach (var engine in engines)
         {
-            await engine.Client.SendCommandExpectSuccessAsync($"play {color} {vertex}", cancellationToken);
+            try
+            {
+                await engine.Client.SendCommandExpectSuccessAsync($"play {color} {vertex}", cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                throw new EngineCommandException(engine.Stone, ex);
+            }
         }
     }
 
@@ -442,7 +459,7 @@ public sealed class PlayingScene : IDisposable
 
     private sealed record EngineCommandCompletion(EngineCommandResult Result, int Generation);
 
-    private sealed record EngineCommandResult(string? MoveText, GoStone? PlayedBy, string? ErrorMessage, bool MakesEngineReady = false, bool ClosesEngine = false)
+    private sealed record EngineCommandResult(string? MoveText, GoStone? PlayedBy, string? ErrorMessage, GoStone? ErrorStone = null, bool MakesEngineReady = false, bool ClosesEngine = false)
     {
         public static EngineCommandResult Success(bool closesEngine = false) => new(null, null, null, ClosesEngine: closesEngine);
 
@@ -450,8 +467,14 @@ public sealed class PlayingScene : IDisposable
 
         public static EngineCommandResult EngineMove(string moveText, GoStone playedBy) => new(moveText, playedBy, null);
 
-        public static EngineCommandResult Failure(string errorMessage) => new(null, null, errorMessage);
+        public static EngineCommandResult Failure(string errorMessage, GoStone errorStone) => new(null, null, errorMessage, errorStone);
     }
 
     private sealed record EngineEntry(GoStone Stone, GtpEngineClient Client);
+
+    private sealed class EngineCommandException(GoStone stone, Exception innerException)
+        : Exception(innerException.Message, innerException)
+    {
+        public GoStone Stone { get; } = stone;
+    }
 }

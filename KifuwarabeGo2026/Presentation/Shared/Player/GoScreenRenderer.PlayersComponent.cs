@@ -22,10 +22,11 @@ public sealed partial class GoScreenRenderer
         TimeSpan? mainTime,
         int blackAgehama,
         int whiteAgehama,
-        Domain.GoStone currentTurn)
+        Domain.GoStone currentTurn,
+        Domain.GoStone? engineErrorStone = null)
     {
-        DrawPlayerComponent(new Rectangle(x, y, width, 88), blackName, blackElapsed, mainTime, blackAgehama, black: true, currentTurn == Domain.GoStone.Black);
-        DrawPlayerComponent(new Rectangle(x, y + 96, width, 88), whiteName, whiteElapsed, mainTime, whiteAgehama, black: false, currentTurn == Domain.GoStone.White);
+        DrawPlayerComponent(new Rectangle(x, y, width, 88), blackName, blackElapsed, mainTime, blackAgehama, black: true, currentTurn == Domain.GoStone.Black, engineErrorStone == Domain.GoStone.Black);
+        DrawPlayerComponent(new Rectangle(x, y + 96, width, 88), whiteName, whiteElapsed, mainTime, whiteAgehama, black: false, currentTurn == Domain.GoStone.White, engineErrorStone == Domain.GoStone.White);
     }
 
     private void DrawPlayerComponent(
@@ -35,7 +36,8 @@ public sealed partial class GoScreenRenderer
         TimeSpan? mainTime,
         int agehama,
         bool black,
-        bool active)
+        bool active,
+        bool engineError)
     {
         DrawDataRowFrame(bounds);
         if (active) FillRect(new Rectangle(bounds.X, bounds.Y + 2, 6, bounds.Height - 4), new Color(99, 223, 185));
@@ -47,5 +49,9 @@ public sealed partial class GoScreenRenderer
         var elapsedText = elapsed is { } used ? FormatElapsedTime(used) : "--:--";
         var mainTimeText = mainTime is { } limit ? FormatElapsedTime(limit) : "--:--";
         DrawFittedText($"USED {elapsedText} / LIMIT {mainTimeText}    AGEHAMA {agehama}", statusBounds, new Color(204, 211, 206), 0.34f);
+        if (engineError)
+        {
+            DrawFittedText("ENGINE ERROR", new Rectangle(bounds.Right - 190, bounds.Y + 48, 172, 30), new Color(255, 96, 96), 0.34f);
+        }
     }
 }
