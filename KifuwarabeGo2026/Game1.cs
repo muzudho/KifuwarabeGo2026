@@ -281,9 +281,29 @@ public class Game1 : Game
                     {
                         SendCgosAdminCommand("who");
                     }
-                    else if (GoScreenRenderer.GetCgosAdminMatchButtonHit(point, _session.IsCgosAdminRunning))
+                    else if (GoScreenRenderer.GetCgosAdminWhitePlayerPreviousButtonHit(point))
                     {
-                        SendCgosAdminCommand("match");
+                        _session.MoveCgosAdminWhitePlayerSelection(-1);
+                    }
+                    else if (GoScreenRenderer.GetCgosAdminWhitePlayerNextButtonHit(point))
+                    {
+                        _session.MoveCgosAdminWhitePlayerSelection(1);
+                    }
+                    else if (GoScreenRenderer.GetCgosAdminBlackPlayerPreviousButtonHit(point))
+                    {
+                        _session.MoveCgosAdminBlackPlayerSelection(-1);
+                    }
+                    else if (GoScreenRenderer.GetCgosAdminBlackPlayerNextButtonHit(point))
+                    {
+                        _session.MoveCgosAdminBlackPlayerSelection(1);
+                    }
+                    else if (GoScreenRenderer.GetCgosAdminBlackMatchButtonHit(point, _session.CanSendCgosAdminMatch))
+                    {
+                        SendSelectedCgosAdminMatch(swapColors: false);
+                    }
+                    else if (GoScreenRenderer.GetCgosAdminWhiteMatchButtonHit(point, _session.CanSendCgosAdminMatch))
+                    {
+                        SendSelectedCgosAdminMatch(swapColors: true);
                     }
                     else if (GoScreenRenderer.GetCgosAdminCodeButtonHit(point))
                     {
@@ -722,6 +742,14 @@ public class Game1 : Game
     {
         var status = _cgosAdminProcess.RefreshStatus();
         _session.SetCgosAdminProcessStatus(status, _cgosAdminProcess.IsRunning, _cgosAdminProcess.LogDirectory, _cgosAdminProcess.GetRecentOutput());
+        _session.SetCgosAdminWaitingPlayers(_cgosAdminProcess.GetAdminWaitingPlayers());
+    }
+
+    private void SendSelectedCgosAdminMatch(bool swapColors)
+    {
+        var white = swapColors ? _session.CgosAdminBlackPlayerName : _session.CgosAdminWhitePlayerName;
+        var black = swapColors ? _session.CgosAdminWhitePlayerName : _session.CgosAdminBlackPlayerName;
+        SendCgosAdminCommand($"match {white} {black}");
     }
 
     private void SendCgosAdminCommand(string command)

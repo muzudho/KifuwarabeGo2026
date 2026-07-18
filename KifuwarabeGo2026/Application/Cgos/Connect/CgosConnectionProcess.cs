@@ -12,6 +12,7 @@ public sealed class CgosConnectionProcess : IDisposable
     private readonly string _logFolderName;
     private readonly object _outputLock = new();
     private readonly Queue<string> _recentOutput = new();
+    private readonly List<string> _adminWaitingPlayers = new();
     private readonly List<Process> _processes = new();
     private DateTime _startedAt;
     private string _guiLogPath = "";
@@ -43,6 +44,14 @@ public sealed class CgosConnectionProcess : IDisposable
         lock (_outputLock)
         {
             return _recentOutput.ToArray();
+        }
+    }
+
+    public IReadOnlyList<string> GetAdminWaitingPlayers()
+    {
+        lock (_outputLock)
+        {
+            return _adminWaitingPlayers.ToArray();
         }
     }
 
@@ -175,6 +184,14 @@ public sealed class CgosConnectionProcess : IDisposable
         if (process is null)
         {
             return "ADMIN STOPPED";
+        }
+
+        if (command.Trim().Equals("who", StringComparison.OrdinalIgnoreCase))
+        {
+            lock (_outputLock)
+            {
+                _adminWaitingPlayers.Clear();
+            }
         }
 
         process.StandardInput.WriteLine(command);
@@ -353,6 +370,7 @@ public sealed class CgosConnectionProcess : IDisposable
         lock (_outputLock)
         {
             _recentOutput.Clear();
+            _adminWaitingPlayers.Clear();
         }
     }
 
@@ -424,6 +442,7 @@ public sealed class CgosConnectionProcess : IDisposable
         var displayLine = FormatDisplayLine(line.Trim(), isError);
         lock (_outputLock)
         {
+            TryAddAdminWaitingPlayer(displayLine);
             if (isError)
             {
                 AppendStandardErrorLog(displayLine);
@@ -435,6 +454,27 @@ public sealed class CgosConnectionProcess : IDisposable
             {
                 _recentOutput.Dequeue();
             }
+        }
+    }
+
+    private void TryAddAdminWaitingPlayer(string displayLine)
+    {
+        var messageStart = displayLine.IndexOf("] > ", StringComparison.Ordinal);
+        if (messageStart < 0)
+        {
+            return;
+        }
+
+        var parts = displayLine[(messageStart + 4)..]
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (parts.Length < 2 || !parts[1].Equals("waiting", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        if (!_adminWaitingPlayers.Contains(parts[0], StringComparer.OrdinalIgnoreCase))
+        {
+            _adminWaitingPlayers.Add(parts[0]);
         }
     }
 

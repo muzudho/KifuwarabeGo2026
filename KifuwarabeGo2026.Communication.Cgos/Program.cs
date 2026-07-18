@@ -630,13 +630,17 @@ internal sealed class CgosAdminClient
         }
 
         if (!command.Equals("who", StringComparison.OrdinalIgnoreCase) &&
-            !command.Equals("match", StringComparison.OrdinalIgnoreCase))
+            !command.Equals("match", StringComparison.OrdinalIgnoreCase) &&
+            !command.StartsWith("match ", StringComparison.OrdinalIgnoreCase))
         {
             Log("# Unsupported admin command ignored: " + command);
             return;
         }
 
-        await session.SendAsync(command.ToLowerInvariant());
+        await session.SendAsync(
+            command.StartsWith("match ", StringComparison.OrdinalIgnoreCase)
+                ? "match " + command[6..]
+                : command.ToLowerInvariant());
     }
 
     private void Log(string message)

@@ -340,8 +340,17 @@ public sealed class GoScreenRenderer
     public static bool GetCgosAdminWhoButtonHit(Point point, bool enabled) =>
         enabled && CgosAdminWhoButtonBounds.Contains(point);
 
-    public static bool GetCgosAdminMatchButtonHit(Point point, bool enabled) =>
-        enabled && CgosAdminMatchButtonBounds.Contains(point);
+    public static bool GetCgosAdminWhitePlayerPreviousButtonHit(Point point) => CgosAdminWhitePlayerPreviousButtonBounds.Contains(point);
+
+    public static bool GetCgosAdminWhitePlayerNextButtonHit(Point point) => CgosAdminWhitePlayerNextButtonBounds.Contains(point);
+
+    public static bool GetCgosAdminBlackPlayerPreviousButtonHit(Point point) => CgosAdminBlackPlayerPreviousButtonBounds.Contains(point);
+
+    public static bool GetCgosAdminBlackPlayerNextButtonHit(Point point) => CgosAdminBlackPlayerNextButtonBounds.Contains(point);
+
+    public static bool GetCgosAdminBlackMatchButtonHit(Point point, bool enabled) => enabled && CgosAdminBlackMatchButtonBounds.Contains(point);
+
+    public static bool GetCgosAdminWhiteMatchButtonHit(Point point, bool enabled) => enabled && CgosAdminWhiteMatchButtonBounds.Contains(point);
 
     public static bool GetCgosAdminCodeButtonHit(Point point) =>
         CgosAdminCodeButtonBounds.Contains(point);
@@ -807,7 +816,10 @@ public sealed class GoScreenRenderer
             true,
             mousePoint);
         DrawCommandButton(CgosAdminWhoButtonBounds, "WHO", false, mousePoint, enabled: session.IsCgosAdminRunning, scale: 0.28f);
-        DrawCommandButton(CgosAdminMatchButtonBounds, "MATCH", false, mousePoint, enabled: session.IsCgosAdminRunning, scale: 0.24f);
+        DrawCgosAdminPlayerSelector(CgosAdminWhitePlayerRowBounds, "WHITE", session.CgosAdminWhitePlayerName, CgosAdminWhitePlayerPreviousButtonBounds, CgosAdminWhitePlayerNextButtonBounds, mousePoint);
+        DrawCgosAdminPlayerSelector(CgosAdminBlackPlayerRowBounds, "BLACK", session.CgosAdminBlackPlayerName, CgosAdminBlackPlayerPreviousButtonBounds, CgosAdminBlackPlayerNextButtonBounds, mousePoint);
+        DrawCommandButton(CgosAdminBlackMatchButtonBounds, "BLACK", false, mousePoint, enabled: session.CanSendCgosAdminMatch, scale: 0.22f);
+        DrawCommandButton(CgosAdminWhiteMatchButtonBounds, "WHITE", false, mousePoint, enabled: session.CanSendCgosAdminMatch, scale: 0.22f);
 
         DrawCgosProcessPanel(
             CgosBlackProcessPanelBounds,
@@ -865,6 +877,16 @@ public sealed class GoScreenRenderer
         DrawUiLabel(UiLabel.InCompactRow("TARGET", CgosSelectedProfileBarBounds));
         var text = $"{profile.DisplayName} / {profile.Host}:{profile.Port} / {profile.Role}";
         DrawFittedText(text, new Rectangle(CgosSelectedProfileBarBounds.X + 152, CgosSelectedProfileBarBounds.Y + 7, CgosSelectedProfileBarBounds.Width - 168, 38), Color.White, 0.42f);
+    }
+
+    private void DrawCgosAdminPlayerSelector(Rectangle bounds, string label, string playerName, Rectangle previousBounds, Rectangle nextBounds, Point mousePoint)
+    {
+        FillRect(bounds, new Color(11, 15, 20));
+        DrawRect(bounds, 1, new Color(67, 84, 92));
+        DrawText(label, new Vector2(bounds.X + 6, bounds.Y + 9), new Color(180, 195, 195), 0.22f);
+        DrawFittedText(playerName, new Rectangle(bounds.X + 62, bounds.Y + 5, bounds.Width - 126, bounds.Height - 10), Color.White, 0.25f);
+        DrawCommandButton(previousBounds, "<", false, mousePoint, enabled: true, scale: 0.22f);
+        DrawCommandButton(nextBounds, ">", false, mousePoint, enabled: true, scale: 0.22f);
     }
 
     private void DrawCgosProcessPanel(
@@ -1969,9 +1991,23 @@ public sealed class GoScreenRenderer
 
     private static Rectangle CgosAdminButtonBounds => new(CgosAdminProcessPanelBounds.X + 18, CgosAdminProcessPanelBounds.Bottom - 70, 108, 48);
 
-    private static Rectangle CgosAdminWhoButtonBounds => new(CgosAdminProcessPanelBounds.X + 136, CgosAdminProcessPanelBounds.Bottom - 126, 68, 40);
+    private static Rectangle CgosAdminWhoButtonBounds => new(CgosAdminProcessPanelBounds.X + 18, CgosAdminProcessPanelBounds.Bottom - 126, 68, 40);
 
-    private static Rectangle CgosAdminMatchButtonBounds => new(CgosAdminProcessPanelBounds.X + 214, CgosAdminProcessPanelBounds.Bottom - 126, 82, 40);
+    private static Rectangle CgosAdminBlackMatchButtonBounds => new(CgosAdminProcessPanelBounds.X + 96, CgosAdminProcessPanelBounds.Bottom - 126, 82, 40);
+
+    private static Rectangle CgosAdminWhiteMatchButtonBounds => new(CgosAdminProcessPanelBounds.X + 188, CgosAdminProcessPanelBounds.Bottom - 126, 82, 40);
+
+    private static Rectangle CgosAdminWhitePlayerRowBounds => new(CgosAdminProcessPanelBounds.X + 16, CgosAdminProcessPanelBounds.Y + 116, CgosAdminProcessPanelBounds.Width - 32, 38);
+
+    private static Rectangle CgosAdminBlackPlayerRowBounds => new(CgosAdminProcessPanelBounds.X + 16, CgosAdminProcessPanelBounds.Y + 160, CgosAdminProcessPanelBounds.Width - 32, 38);
+
+    private static Rectangle CgosAdminWhitePlayerPreviousButtonBounds => new(CgosAdminWhitePlayerRowBounds.Right - 62, CgosAdminWhitePlayerRowBounds.Y + 3, 27, 32);
+
+    private static Rectangle CgosAdminWhitePlayerNextButtonBounds => new(CgosAdminWhitePlayerRowBounds.Right - 31, CgosAdminWhitePlayerRowBounds.Y + 3, 27, 32);
+
+    private static Rectangle CgosAdminBlackPlayerPreviousButtonBounds => new(CgosAdminBlackPlayerRowBounds.Right - 62, CgosAdminBlackPlayerRowBounds.Y + 3, 27, 32);
+
+    private static Rectangle CgosAdminBlackPlayerNextButtonBounds => new(CgosAdminBlackPlayerRowBounds.Right - 31, CgosAdminBlackPlayerRowBounds.Y + 3, 27, 32);
 
     private static Rectangle CgosAdminTailButtonBounds => new(CgosAdminProcessPanelBounds.X + 136, CgosAdminProcessPanelBounds.Bottom - 70, 68, 48);
 

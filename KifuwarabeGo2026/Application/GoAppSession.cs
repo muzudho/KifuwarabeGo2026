@@ -89,6 +89,21 @@ public sealed class GoAppSession
 
     public bool IsCgosAdminRunning { get; private set; }
 
+    public IReadOnlyList<string> CgosAdminWaitingPlayers { get; private set; } = Array.Empty<string>();
+
+    public int CgosAdminWhitePlayerIndex { get; private set; }
+
+    public int CgosAdminBlackPlayerIndex { get; private set; } = 1;
+
+    public string CgosAdminWhitePlayerName => GetCgosAdminWaitingPlayer(CgosAdminWhitePlayerIndex);
+
+    public string CgosAdminBlackPlayerName => GetCgosAdminWaitingPlayer(CgosAdminBlackPlayerIndex);
+
+    public bool CanSendCgosAdminMatch =>
+        IsCgosAdminRunning &&
+        CgosAdminWaitingPlayers.Count >= 2 &&
+        !CgosAdminWhitePlayerName.Equals(CgosAdminBlackPlayerName, StringComparison.OrdinalIgnoreCase);
+
     public int? SelectedCgosBlackGtpEngineIndex { get; private set; } = 0;
 
     public int? SelectedCgosWhiteGtpEngineIndex { get; private set; } = 0;
@@ -291,6 +306,7 @@ public sealed class GoAppSession
         CgosAdminStatusMessage = "ADMIN READY";
         CgosAdminLogDirectory = "";
         CgosAdminRecentOutput = Array.Empty<string>();
+        CgosAdminWaitingPlayers = Array.Empty<string>();
         IsCgosAdminRunning = false;
         CloseCgosConnectionEditPanel();
     }
@@ -426,6 +442,51 @@ public sealed class GoAppSession
         IsCgosAdminRunning = isRunning;
         CgosAdminLogDirectory = logDirectory;
         CgosAdminRecentOutput = recentOutput;
+    }
+
+    public void SetCgosAdminWaitingPlayers(IReadOnlyList<string> players)
+    {
+        var previousWhite = CgosAdminWhitePlayerName;
+        var previousBlack = CgosAdminBlackPlayerName;
+        CgosAdminWaitingPlayers = players;
+        CgosAdminWhitePlayerIndex = FindCgosAdminWaitingPlayerIndex(previousWhite, 0);
+        CgosAdminBlackPlayerIndex = FindCgosAdminWaitingPlayerIndex(previousBlack, Math.Min(1, players.Count - 1));
+        if (players.Count > 1 && CgosAdminBlackPlayerIndex == CgosAdminWhitePlayerIndex)
+        {
+            CgosAdminBlackPlayerIndex = (CgosAdminWhitePlayerIndex + 1) % players.Count;
+        }
+    }
+
+    public void MoveCgosAdminWhitePlayerSelection(int step) =>
+        CgosAdminWhitePlayerIndex = MoveCgosAdminWaitingPlayerIndex(CgosAdminWhitePlayerIndex, step);
+
+    public void MoveCgosAdminBlackPlayerSelection(int step) =>
+        CgosAdminBlackPlayerIndex = MoveCgosAdminWaitingPlayerIndex(CgosAdminBlackPlayerIndex, step);
+
+    private string GetCgosAdminWaitingPlayer(int index) =>
+        index >= 0 && index < CgosAdminWaitingPlayers.Count ? CgosAdminWaitingPlayers[index] : "-";
+
+    private int FindCgosAdminWaitingPlayerIndex(string name, int fallbackIndex)
+    {
+        for (var index = 0; index < CgosAdminWaitingPlayers.Count; index++)
+        {
+            if (CgosAdminWaitingPlayers[index].Equals(name, StringComparison.OrdinalIgnoreCase))
+            {
+                return index;
+            }
+        }
+
+        return CgosAdminWaitingPlayers.Count == 0 ? 0 : Math.Clamp(fallbackIndex, 0, CgosAdminWaitingPlayers.Count - 1);
+    }
+
+    private int MoveCgosAdminWaitingPlayerIndex(int index, int step)
+    {
+        if (CgosAdminWaitingPlayers.Count == 0)
+        {
+            return 0;
+        }
+
+        return (index + step % CgosAdminWaitingPlayers.Count + CgosAdminWaitingPlayers.Count) % CgosAdminWaitingPlayers.Count;
     }
 
     public void SetCgosConnectionProfiles(IEnumerable<CgosConnectionProfile> profiles)
