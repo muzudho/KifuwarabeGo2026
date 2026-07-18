@@ -96,11 +96,29 @@ internal static class Program
 
             if (!cancellation.IsCancellationRequested)
             {
-                Console.Error.WriteLine("# Parent GUI process exited. Stopping CGOS communication process.");
+                const string message = "# Parent GUI process exited. Stopping CGOS communication process.";
+                Console.Error.WriteLine(message);
+                AppendProcessLifecycleLog(options.LogDirectory, message);
                 cancellation.Cancel();
             }
         }
         catch (OperationCanceledException)
+        {
+        }
+    }
+
+    private static void AppendProcessLifecycleLog(string logDirectory, string message)
+    {
+        try
+        {
+            Directory.CreateDirectory(logDirectory);
+            var logPath = Path.Combine(logDirectory, $"process-lifecycle-{DateTime.Now:yyyyMMdd}.log");
+            File.AppendAllText(
+                logPath,
+                $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} {message}{Environment.NewLine}",
+                Encoding.UTF8);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
         }
     }
