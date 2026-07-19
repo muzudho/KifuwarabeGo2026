@@ -1467,7 +1467,7 @@ public sealed class GoAppSession
                 GtpEngineEditDraft.ExecutablePath = text;
                 break;
             case GtpEngineProfileEditField.WorkingDirectory:
-                GtpEngineEditDraft.WorkingDirectory = text;
+                GtpEngineEditDraft.WorkingDirectory = WorkingDirectoryModel.FromString(text);
                 break;
             case GtpEngineProfileEditField.Arguments:
                 GtpEngineEditDraft.Arguments = text;
@@ -1501,11 +1501,12 @@ public sealed class GoAppSession
     public void SetGtpEngineExecutablePathDraft(string executablePath)
     {
         GtpEngineEditDraft.ExecutablePath = executablePath;
-        GtpEngineEditDraft.WorkingDirectory = Path.GetDirectoryName(executablePath) ?? GtpEngineEditDraft.WorkingDirectory;
+        var executeDirectoryName = Path.GetDirectoryName(executablePath);
+        GtpEngineEditDraft.WorkingDirectory = executeDirectoryName is null ? GtpEngineEditDraft.WorkingDirectory : WorkingDirectoryModel.FromString(executeDirectoryName);
         GtpEngineEditSaveMessage = "UNSAVED";
     }
 
-    public void SetGtpEngineWorkingDirectoryDraft(string workingDirectory)
+    public void SetGtpEngineWorkingDirectoryDraft(WorkingDirectoryModel workingDirectory)
     {
         GtpEngineEditDraft.WorkingDirectory = workingDirectory;
         GtpEngineEditSaveMessage = "UNSAVED";
@@ -1626,7 +1627,7 @@ public sealed class GoAppSession
     {
         GtpEngineProfileEditField.DisplayName => GtpEngineEditDraft.DisplayName,
         GtpEngineProfileEditField.ExecutablePath => GtpEngineEditDraft.ExecutablePath,
-        GtpEngineProfileEditField.WorkingDirectory => GtpEngineEditDraft.WorkingDirectory,
+        GtpEngineProfileEditField.WorkingDirectory => GtpEngineEditDraft.WorkingDirectory.Value,
         GtpEngineProfileEditField.Arguments => GtpEngineEditDraft.Arguments,
         _ => throw new ArgumentOutOfRangeException(nameof(field), field, "GTP engine edit field is out of range."),
     };

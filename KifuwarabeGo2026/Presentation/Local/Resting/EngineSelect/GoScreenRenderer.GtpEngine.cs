@@ -136,15 +136,18 @@ public sealed partial class GoScreenRenderer
         }
 
         var profile = session.GtpEngineProfiles[selectedIndex];
+
+        // 実行ファイルのパスのコピー
         if (!string.IsNullOrWhiteSpace(profile.ExecutablePath) && PathTooltipCopyButtonBounds(GtpEngineSelectionDialogPropertyRowBounds(1)).Contains(point))
         {
             text = profile.ExecutablePath;
             return true;
         }
 
-        if (!string.IsNullOrWhiteSpace(profile.WorkingDirectory) && PathTooltipCopyButtonBounds(GtpEngineSelectionDialogPropertyRowBounds(2)).Contains(point))
+        // 作業用ディレクトリのコピー
+        if (!profile.WorkingDirectory.IsEmpty && PathTooltipCopyButtonBounds(GtpEngineSelectionDialogPropertyRowBounds(2)).Contains(point))
         {
-            text = profile.WorkingDirectory;
+            text = profile.WorkingDirectory.Value;
             return true;
         }
 
@@ -355,17 +358,20 @@ public sealed partial class GoScreenRenderer
         var y = GtpEngineSelectionDialogPropertyBounds.Y + 22;
         DrawGtpEnginePropertyRow(y, "NAME", profile.DisplayName);
         var executablePath = string.IsNullOrWhiteSpace(profile.ExecutablePath) ? "-" : profile.ExecutablePath;
-        var workingDirectory = string.IsNullOrWhiteSpace(profile.WorkingDirectory) ? "-" : profile.WorkingDirectory;
+
+        // ［作業用ディレクトリー］が無ければハイフン表示
+        var displayWorkingDirectory = profile.WorkingDirectory.DisplayValue;
+
         var executablePathRowBounds = GtpEngineSelectionDialogPropertyRowBounds(1);
         var workingDirectoryRowBounds = GtpEngineSelectionDialogPropertyRowBounds(2);
 
         DrawPathPropertyRow(executablePathRowBounds, "EXE", executablePath);
-        DrawPathPropertyRow(workingDirectoryRowBounds, "WORKDIR", workingDirectory);
+        DrawPathPropertyRow(workingDirectoryRowBounds, "WORKDIR", displayWorkingDirectory);
         DrawGtpEnginePropertyRow(y + 210, "ARGS", string.IsNullOrWhiteSpace(profile.Arguments) ? "-" : profile.Arguments);
         DrawGtpEnginePropertyRow(y + 280, "GTP LOG", profile.EnableGtpLog ? "ON" : "OFF");
 
         DrawPathTooltipIfHovered(executablePathRowBounds, executablePath, mousePoint);
-        DrawPathTooltipIfHovered(workingDirectoryRowBounds, workingDirectory, mousePoint);
+        DrawPathTooltipIfHovered(workingDirectoryRowBounds, displayWorkingDirectory, mousePoint);
     }
 
 

@@ -3,7 +3,7 @@
 /// <summary>
 /// 不変文字列モデル
 /// </summary>
-internal abstract class ImmutableStringModel
+public abstract class ImmutableStringModel
 {
     // ========================================
     // 生成

@@ -1,5 +1,6 @@
 namespace KifuwarabeGo2026.Application;
 
+using KifuwarabeGo2026.Domain;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -80,9 +81,9 @@ public sealed class GtpEngineCatalog
             ? "Unnamed GTP Engine"
             : normalized.DisplayName.Trim();
         normalized.ExecutablePath = ResolvePath(normalized.ExecutablePath, baseDirectory);
-        normalized.WorkingDirectory = string.IsNullOrWhiteSpace(normalized.WorkingDirectory)
-            ? Path.GetDirectoryName(normalized.ExecutablePath) ?? baseDirectory
-            : ResolvePath(normalized.WorkingDirectory, baseDirectory);
+        normalized.WorkingDirectory = normalized.WorkingDirectory.IsEmpty
+            ? WorkingDirectoryModel.FromString(Path.GetDirectoryName(normalized.ExecutablePath) ?? baseDirectory)
+            : WorkingDirectoryModel.FromString(ResolvePath(normalized.WorkingDirectory.Value, baseDirectory));
         normalized.GuiOptions ??= [];
         if (!normalized.GuiOptions.ContainsKey(GtpEngineGuiOptions.RandomMoveId))
             normalized.GuiOptions[GtpEngineGuiOptions.RandomMoveId] = GtpEngineGuiOptions.ChebyshevDistanceFromStarRandomMove;
@@ -107,7 +108,7 @@ public sealed class GtpEngineCatalog
     {
         var entry = profile.Clone();
         entry.ExecutablePath = ToStoredPath(entry.ExecutablePath, listDirectory);
-        entry.WorkingDirectory = ToStoredPath(entry.WorkingDirectory, listDirectory);
+        entry.WorkingDirectory = WorkingDirectoryModel.FromString(ToStoredPath(entry.WorkingDirectory.Value, listDirectory));
         return entry;
     }
 
@@ -142,7 +143,7 @@ public sealed class GtpEngineCatalog
             {
                 DisplayName = "Kifuwarabe Star Random GTP",
                 ExecutablePath = engineExecutable,
-                WorkingDirectory = engineDirectory,
+                WorkingDirectory = WorkingDirectoryModel.FromString(engineDirectory),
                 Arguments = "",
                 EnableGtpLog = true,
             };
@@ -153,7 +154,7 @@ public sealed class GtpEngineCatalog
         {
             DisplayName = "Kifuwarabe Star Random GTP",
             ExecutablePath = "dotnet",
-            WorkingDirectory = repositoryRoot,
+            WorkingDirectory = WorkingDirectoryModel.FromString(repositoryRoot),
             Arguments = $"run --project \"{engineProject}\"",
             EnableGtpLog = true,
         };

@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-internal class WorkingDirectoryModel
+public class WorkingDirectoryModel
     : ImmutableStringModel
 {
     // ========================================
@@ -23,7 +23,7 @@ internal class WorkingDirectoryModel
 
     internal static WorkingDirectoryModel FromString(string value)
     {
-        if (string.IsNullOrEmpty(value)) return Empty;
+        if (string.IsNullOrWhiteSpace(value)) return Empty;
         return new WorkingDirectoryModel(value);
     }
 
@@ -41,4 +41,19 @@ internal class WorkingDirectoryModel
     }
 
     #endregion
+
+
+    // ========================================
+    // ドメインデータメンバー
+    // ========================================
+
+
+    /// <summary>
+    ///     <pre>
+    ///         表示時文字列
+    ///         
+    ///             - 未指定ならハイフン表示
+    ///     </pre>
+    /// </summary>
+    internal string DisplayValue => IsEmpty ? "-" : Value;
 }

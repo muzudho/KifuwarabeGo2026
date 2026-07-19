@@ -33,7 +33,7 @@ public sealed class GtpEngineClient : IAsyncDisposable
         {
             FileName = _settings.ExecutablePath,
             Arguments = _settings.Arguments,
-            WorkingDirectory = _settings.WorkingDirectory,
+            WorkingDirectory = _settings.WorkingDirectory.Value,
             RedirectStandardInput = true,
             RedirectStandardOutput = true,
             UseShellExecute = false,

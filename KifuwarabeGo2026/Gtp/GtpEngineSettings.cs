@@ -1,11 +1,12 @@
 namespace KifuwarabeGo2026.Gtp;
 
+using KifuwarabeGo2026.Domain;
 using System.Collections.Generic;
 
 public sealed record GtpEngineSettings(
     string Name,
     string ExecutablePath,
-    string WorkingDirectory,
+    WorkingDirectoryModel WorkingDirectory,
     string Arguments,
     bool EnableGtpLog,
     string LogPrefix = "",

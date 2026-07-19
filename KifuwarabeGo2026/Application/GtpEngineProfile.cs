@@ -1,5 +1,6 @@
 namespace KifuwarabeGo2026.Application;
 
+using KifuwarabeGo2026.Domain;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
@@ -12,7 +13,10 @@ public sealed class GtpEngineProfile
 
     public string ExecutablePath { get; set; } = "";
 
-    public string WorkingDirectory { get; set; } = "";
+    /// <summary>
+    /// 作業ディレクトリー
+    /// </summary>
+    public WorkingDirectoryModel WorkingDirectory { get; set; } = WorkingDirectoryModel.Empty;
 
     public string Arguments { get; set; } = "";
 

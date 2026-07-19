@@ -1554,7 +1554,7 @@ public class Game1 : Game
             return;
         }
 
-        _session.SetGtpEngineWorkingDirectoryDraft(dialog.SelectedPath);
+        _session.SetGtpEngineWorkingDirectoryDraft(WorkingDirectoryModel.FromString(dialog.SelectedPath));
     }
 
     private void SaveGtpEngineEditDraft()
@@ -1575,7 +1575,7 @@ public class Game1 : Game
         profile = _session.GtpEngineEditDraft.Clone();
         profile.DisplayName = profile.DisplayName.Trim();
         profile.ExecutablePath = profile.ExecutablePath.Trim();
-        profile.WorkingDirectory = profile.WorkingDirectory.Trim();
+        profile.WorkingDirectory = WorkingDirectoryModel.FromString(profile.WorkingDirectory.Value.Trim());
         profile.Arguments = profile.Arguments.Trim();
 
         if (string.IsNullOrWhiteSpace(profile.DisplayName))
@@ -1590,9 +1590,9 @@ public class Game1 : Game
             return false;
         }
 
-        if (string.IsNullOrWhiteSpace(profile.WorkingDirectory))
+        if (profile.WorkingDirectory.IsEmpty)
         {
-            profile.WorkingDirectory = Path.GetDirectoryName(profile.ExecutablePath) ?? "";
+            profile.WorkingDirectory = WorkingDirectoryModel.FromString(Path.GetDirectoryName(profile.ExecutablePath) ?? string.Empty);
         }
 
         warning = "";
@@ -1618,6 +1618,7 @@ public class Game1 : Game
 
     private static string GetInitialGtpEngineDirectory(GtpEngineProfile profile)
     {
+        // 実行ファイルの親ディレクトリー
         if (!string.IsNullOrWhiteSpace(profile.ExecutablePath))
         {
             var directory = Path.GetDirectoryName(profile.ExecutablePath);
@@ -1627,9 +1628,10 @@ public class Game1 : Game
             }
         }
 
-        if (!string.IsNullOrWhiteSpace(profile.WorkingDirectory) && Directory.Exists(profile.WorkingDirectory))
+        // 作業ディレクトリー
+        if (!profile.WorkingDirectory.IsEmpty && Directory.Exists(profile.WorkingDirectory.Value))
         {
-            return profile.WorkingDirectory;
+            return profile.WorkingDirectory.Value;
         }
 
         return AppContext.BaseDirectory;
