@@ -61,22 +61,26 @@ public sealed partial class GoScreenRenderer
 
     private void DrawBoardEditingSidePanel(GoAppSession session, Point mousePoint)
     {
-        DrawText("BOARD EDIT", new Vector2(1144, 132), new Color(255, 230, 160), 0.9f);
-        DrawInfoStrip(1144, 204, "BOARD", $"{session.BoardSize} x {session.BoardSize}");
-        DrawInfoStrip(1144, 276, "BLACK", session.BlackStoneCount.ToString());
-        DrawInfoStrip(1144, 348, "WHITE", session.WhiteStoneCount.ToString());
+        DrawText("BOARD EDIT", new Vector2(1144, 136), new Color(255, 230, 160), 0.72f);
+        DrawCommandButton(BoardEditingExportSgfButtonBounds, "SGF OUTPUT", false, mousePoint, scale: 0.32f);
+        DrawCommandButton(BoardEditingDoneButtonBounds, "DONE", false, mousePoint, scale: 0.4f);
 
-        DrawSectionTitle("STONE", 1144, 454, new Color(76, 91, 126));
+        DrawVerticalResultSection(new Rectangle(1144, 204, 668, 76), "BOARD", new Color(66, 104, 116));
+        DrawResultRow(new Rectangle(1164, 208, 628, 60), "SIZE", $"{session.BoardSize} x {session.BoardSize}", new Color(62, 112, 105), Color.White);
+
+        DrawVerticalResultSection(new Rectangle(1144, 292, 668, 260), "EDIT", new Color(76, 91, 126));
+        DrawResultLabel(new Rectangle(1164, 296, 628, 40), "STONE", new Color(76, 91, 126));
         DrawCommandButton(BoardEditingBlackButtonBounds, "BLACK", session.BoardEditingStone == GoStone.Black, mousePoint, scale: 0.5f);
         DrawCommandButton(BoardEditingWhiteButtonBounds, "WHITE", session.BoardEditingStone == GoStone.White, mousePoint, scale: 0.5f);
         DrawCommandButton(BoardEditingEraseButtonBounds, "ERASE", session.BoardEditingStone == GoStone.Empty, mousePoint, scale: 0.5f);
+
+        DrawResultLabel(new Rectangle(1164, 414, 628, 40), "HISTORY", new Color(76, 91, 126));
         DrawCommandButton(BoardEditingUndoButtonBounds, "UNDO", false, mousePoint, enabled: session.CanUndoBoardEditing, scale: 0.5f);
         DrawCommandButton(BoardEditingRedoButtonBounds, "REDO", false, mousePoint, enabled: session.CanRedoBoardEditing, scale: 0.5f);
 
-        DrawSectionTitle("CURRENT POSITION", 1144, 636, new Color(62, 112, 105));
-        DrawStoneCountStrip(session, 676);
-        DrawCommandButton(BoardEditingExportSgfButtonBounds, "SGF OUTPUT", false, mousePoint, scale: 0.52f);
-        DrawCommandButton(BoardEditingDoneButtonBounds, "DONE", false, mousePoint);
+        DrawVerticalResultSection(new Rectangle(1144, 564, 668, 220), "POSITION", new Color(62, 112, 105));
+        DrawStoneCountStrip(session, 584, showLeader: false, minimal: true);
+        DrawCurrentStoneResultRow(new Rectangle(1164, 690, 628, 64), session);
     }
 
 
@@ -130,25 +134,25 @@ public sealed partial class GoScreenRenderer
     private static Rectangle StartBoardEditingButtonBounds => new(1486, 920, 154, 56);
 
 
-    private static Rectangle BoardEditingBlackButtonBounds => new(1144, 506, 204, 62);
+    private static Rectangle BoardEditingBlackButtonBounds => new(GameOverValueX, 340, 140, 56);
 
 
-    private static Rectangle BoardEditingWhiteButtonBounds => new(1376, 506, 204, 62);
+    private static Rectangle BoardEditingWhiteButtonBounds => new(GameOverValueX + 156, 340, 140, 56);
 
 
-    private static Rectangle BoardEditingEraseButtonBounds => new(1608, 506, 204, 62);
+    private static Rectangle BoardEditingEraseButtonBounds => new(GameOverValueX + 312, 340, 140, 56);
 
 
-    private static Rectangle BoardEditingUndoButtonBounds => new(1144, 588, 320, 56);
+    private static Rectangle BoardEditingUndoButtonBounds => new(GameOverValueX, 458, 220, 56);
 
 
-    private static Rectangle BoardEditingRedoButtonBounds => new(1492, 588, 320, 56);
+    private static Rectangle BoardEditingRedoButtonBounds => new(GameOverValueX + 244, 458, 220, 56);
 
 
-    private static Rectangle BoardEditingExportSgfButtonBounds => new(1144, 920, 320, 56);
+    private static Rectangle BoardEditingExportSgfButtonBounds => new(1480, 120, 156, 52);
 
 
-    private static Rectangle BoardEditingDoneButtonBounds => new(1492, 920, 320, 56);
+    private static Rectangle BoardEditingDoneButtonBounds => new(1648, 120, 164, 52);
 
 
     private static readonly int[] ReviewStepButtonValues = [-50, -10, -1, 1, 10, 50];
