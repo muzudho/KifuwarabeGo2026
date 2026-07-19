@@ -13,6 +13,9 @@ using System;
 /// </summary>
 public sealed partial class GoScreenRenderer
 {
+    private const int GameOverValueX = 1328;
+    private const int GameOverSecondValueX = 1560;
+
     private readonly GraphicsDevice _graphicsDevice;
     private readonly SpriteBatch _spriteBatch;
     private readonly SpriteFont _font;
@@ -261,15 +264,12 @@ public sealed partial class GoScreenRenderer
     }
     private void DrawPlayingSidePanel(GoAppSession session, Point mousePoint)
     {
-        DrawText("TURN", new Vector2(1144, 132), new Color(180, 195, 195), 0.62f);
+        DrawInfoStrip(1144, 132, "NEXT", GetMoveThinkingText(session));
 
-        DrawInfoStrip(1144, 180, "TURN", session.GetLocalPlayerName(session.CurrentTurn));
-        DrawInfoStrip(1144, 244, "NEXT", GetMoveThinkingText(session));
-
-        DrawText("PLAYERS", new Vector2(1144, 300), new Color(180, 195, 195), 0.62f);
+        DrawText("PLAYERS", new Vector2(1144, 204), new Color(180, 195, 195), 0.62f);
         DrawBothPlayersComponent(
             1144,
-            348,
+            252,
             668,
             session.GetLocalPlayerName(GoStone.Black),
             session.GetLocalPlayerName(GoStone.White),
@@ -282,8 +282,8 @@ public sealed partial class GoScreenRenderer
             session.EngineErrorStone,
             mousePoint);
 
-        DrawText("PURE GO SCORE", new Vector2(1144, 570), new Color(180, 195, 195), 0.52f);
-        DrawStoneCountStrip(session, 610);
+        DrawText("PURE GO SCORE", new Vector2(1144, 474), new Color(180, 195, 195), 0.52f);
+        DrawStoneCountStrip(session, 514);
 
         if (session.CanAcceptHumanMove)
         {
@@ -300,27 +300,22 @@ public sealed partial class GoScreenRenderer
         DrawText("GAME OVER", new Vector2(1144, 132), new Color(255, 230, 160), 0.9f);
         DrawText(FormatGameEndMoveCount(session.PlayedMoveCount), new Vector2(1144, 196), new Color(99, 223, 185), 0.58f);
 
-        var result = string.IsNullOrWhiteSpace(session.GameOverReason) ? "GAME OVER" : session.GameOverReason;
-        var winnerLabel = session.Winner is { } winner
-            ? winner == GoStone.Black ? "BLACK WINS" : "WHITE WINS"
-            : "NO WINNER";
+        var tournamentSection = new Rectangle(1144, 236, 668, 110);
+        DrawVerticalResultSection(tournamentSection, "TOURNAMENT", new Color(62, 112, 105));
+        DrawResultRow(new Rectangle(1164, 257, 628, 68), "RULES", session.TournamentDisplayName, new Color(39, 68, 65), Color.White);
 
-        var resultSection = new Rectangle(1144, 236, 668, 176);
-        DrawResultSection(resultSection, "RESULT");
-        DrawResultRow(new Rectangle(1164, 290, 628, 44), "END", result, new Color(80, 48, 38), Color.White);
-        DrawResultRow(new Rectangle(1164, 346, 628, 44), "WINNER", winnerLabel, new Color(39, 68, 65), new Color(99, 223, 185));
+        var factsSection = new Rectangle(1144, 358, 668, 110);
+        DrawVerticalResultSection(factsSection, "FACTS", new Color(66, 104, 116));
+        DrawAgehamaStrip(session, 385, minimal: true);
 
-        var scoreSection = new Rectangle(1144, 436, 668, 236);
-        DrawResultSection(scoreSection, "SCORE");
-        DrawStoneCountStrip(session, 494);
-        DrawAgehamaStrip(session, 604);
-
-        var tournamentSection = new Rectangle(1144, 696, 668, 134);
-        DrawResultSection(tournamentSection, "TOURNAMENT");
-        DrawResultRow(new Rectangle(1164, 750, 628, 56), "RULES", session.TournamentDisplayName, new Color(39, 68, 65), Color.White);
+        var calculationSection = new Rectangle(1144, 480, 668, 350);
+        DrawVerticalResultSection(calculationSection, "CALCULATION", new Color(76, 91, 126));
+        DrawResultRow(new Rectangle(1164, 500, 628, 56), "METHOD", FormatRuleKind(session.RuleKind), new Color(39, 68, 65), Color.White);
+        DrawStoneCountStrip(session, 568, showLeader: false, minimal: true);
+        DrawCalculationResultRow(new Rectangle(1164, 674, 628, 64), session);
 
         var actionSection = new Rectangle(1144, 854, 668, 126);
-        DrawResultSection(actionSection, "ACTION");
+        DrawVerticalResultSection(actionSection, "ACTION", new Color(91, 82, 105));
         DrawCommandButton(ExportSgfButtonBounds, "SGF OUTPUT", false, mousePoint, scale: 0.52f);
         DrawCommandButton(ReturnToSetupButtonBounds, "RULE SETUP", false, mousePoint);
     }
@@ -605,6 +600,23 @@ public sealed partial class GoScreenRenderer
 
     private static string FormatGameEndMoveCount(int playedMoveCount) => $"{playedMoveCount}手で終局";
 
+    private static string FormatRuleKind(GoRuleKind ruleKind) => ruleKind switch
+    {
+        GoRuleKind.PureGo => "PURE GO",
+        GoRuleKind.Japanese => "JAPANESE",
+        GoRuleKind.Chinese => "CHINESE",
+        _ => ruleKind.ToString().ToUpperInvariant(),
+    };
+
+    private static string FormatCalculationResult(GoAppSession session)
+    {
+        const string pureGoPrefix = "PURE GO ";
+        var result = string.IsNullOrWhiteSpace(session.GameOverReason) ? "GAME OVER" : session.GameOverReason;
+        return result.StartsWith(pureGoPrefix, StringComparison.Ordinal)
+            ? result[pureGoPrefix.Length..]
+            : result;
+    }
+
     private static string FormatKomi(decimal komi) => komi.ToString("0.0");
     private void DrawCommandButton(Rectangle bounds, string label, bool selected, Point mousePoint, bool enabled = true, float scale = 0.62f)
     {
@@ -665,35 +677,88 @@ public sealed partial class GoScreenRenderer
         DrawText(value, new Vector2(x + 184, y + 20), Color.White, 0.62f);
     }
 
-    private void DrawResultSection(Rectangle bounds, string title)
+    private void DrawVerticalResultSection(Rectangle bounds, string title, Color accentColor)
     {
-        FillRect(bounds, new Color(17, 22, 29, 215));
-        DrawRect(bounds, 1, new Color(58, 78, 86));
-        DrawText(title, new Vector2(bounds.X + 18, bounds.Y + 14), new Color(180, 195, 195), 0.5f);
-        DrawLine(new Vector2(bounds.X + 18, bounds.Y + 48), new Vector2(bounds.Right - 18, bounds.Y + 48), 1, new Color(64, 82, 90));
+        DrawLine(new Vector2(bounds.X, bounds.Y), new Vector2(bounds.Right, bounds.Y), 1, new Color(58, 78, 86));
+        DrawLine(new Vector2(bounds.X, bounds.Bottom), new Vector2(bounds.Right, bounds.Bottom), 1, new Color(58, 78, 86));
+
+        var labelBounds = new Rectangle(bounds.X - 46, bounds.Y, 38, bounds.Height);
+        FillRect(labelBounds, new Color(accentColor, 150));
+        DrawRect(labelBounds, 1, new Color(accentColor, 230));
+
+        const float scale = 0.38f;
+        var textSize = _font.MeasureString(title);
+        var center = new Vector2(labelBounds.Center.X, labelBounds.Center.Y);
+        var origin = textSize / 2f;
+        _spriteBatch.DrawString(_font, title, center + new Vector2(2, 2), new Color(0, 0, 0, 125), -MathHelper.PiOver2, origin, scale, SpriteEffects.None, 0f);
+        _spriteBatch.DrawString(_font, title, center, new Color(205, 218, 218), -MathHelper.PiOver2, origin, scale, SpriteEffects.None, 0f);
     }
 
     private void DrawResultRow(Rectangle bounds, string label, string value, Color chipColor, Color valueColor)
     {
-        FillRect(bounds, new Color(24, 31, 37));
-        DrawRect(bounds, 1, new Color(70, 85, 94));
-        FillRect(new Rectangle(bounds.X + 14, bounds.Y + 10, 126, bounds.Height - 20), chipColor);
-        DrawRect(new Rectangle(bounds.X + 14, bounds.Y + 10, 126, bounds.Height - 20), 1, new Color(120, 130, 126));
-        DrawText(label, new Vector2(bounds.X + 32, bounds.Y + 14), Color.White, 0.38f);
-        DrawFittedText(value, new Rectangle(bounds.X + 164, bounds.Y + 6, bounds.Width - 182, bounds.Height - 12), valueColor, 0.58f);
+        DrawResultLabel(bounds, label, chipColor);
+        DrawFittedText(value, new Rectangle(GameOverValueX, bounds.Y + 6, bounds.Right - GameOverValueX - 18, bounds.Height - 12), valueColor, 0.58f);
     }
 
-    private void DrawAgehamaStrip(GoAppSession session, int y = 540)
+    private void DrawResultLabel(Rectangle bounds, string label, Color accentColor)
+    {
+        FillRect(new Rectangle(bounds.X + 14, bounds.Y + 12, 3, bounds.Height - 24), accentColor);
+        DrawText(label, new Vector2(bounds.X + 30, bounds.Y + 14), new Color(180, 195, 195), 0.38f);
+    }
+
+    private void DrawCalculationResultRow(Rectangle bounds, GoAppSession session)
+    {
+        DrawResultLabel(bounds, "RESULT", new Color(80, 48, 38));
+
+        var result = FormatCalculationResult(session);
+        var black = result.StartsWith("BLACK ", StringComparison.Ordinal);
+        var white = result.StartsWith("WHITE ", StringComparison.Ordinal);
+        if (black || white)
+        {
+            DrawStoneValue(GameOverValueX, bounds.Center.Y, result[6..], black, new Color(99, 223, 185));
+            return;
+        }
+
+        DrawFittedText(result, new Rectangle(GameOverValueX, bounds.Y + 6, bounds.Right - GameOverValueX - 18, bounds.Height - 12), new Color(99, 223, 185), 0.58f);
+    }
+
+    private void DrawStoneValue(int x, int centerY, string value, bool black, Color valueColor)
+    {
+        DrawIconStone(new Vector2(x + 18, centerY), 16, black);
+        DrawText(value, new Vector2(x + 44, centerY - 14), valueColor, 0.5f);
+    }
+
+    private void DrawAgehamaStrip(GoAppSession session, int y = 540, bool minimal = false)
     {
         var bounds = new Rectangle(1144, y, 668, 56);
-        FillRect(bounds, new Color(24, 31, 37));
-        DrawRect(bounds, 1, new Color(70, 85, 94));
-        DrawText("AGEHAMA", new Vector2(bounds.X + 20, bounds.Y + 16), new Color(180, 195, 195), 0.46f);
-        DrawText($"BLACK {session.BlackAgehama}", new Vector2(bounds.X + 220, bounds.Y + 14), Color.White, 0.5f);
-        DrawText($"WHITE {session.WhiteAgehama}", new Vector2(bounds.X + 430, bounds.Y + 14), Color.White, 0.5f);
+        if (!minimal)
+        {
+            FillRect(bounds, new Color(24, 31, 37));
+            DrawRect(bounds, 1, new Color(70, 85, 94));
+        }
+        if (minimal)
+        {
+            DrawResultLabel(new Rectangle(bounds.X + 20, bounds.Y, bounds.Width - 40, bounds.Height), "AGEHAMA", new Color(66, 104, 116));
+        }
+        else
+        {
+            DrawText("AGEHAMA", new Vector2(bounds.X + 20, bounds.Y + 16), new Color(180, 195, 195), 0.46f);
+        }
+        var firstValueX = minimal ? GameOverValueX : bounds.X + 220;
+        var secondValueX = minimal ? GameOverSecondValueX : bounds.X + 430;
+        if (minimal)
+        {
+            DrawStoneValue(firstValueX, bounds.Center.Y, session.BlackAgehama.ToString(), black: true, valueColor: Color.White);
+            DrawStoneValue(secondValueX, bounds.Center.Y, session.WhiteAgehama.ToString(), black: false, valueColor: Color.White);
+        }
+        else
+        {
+            DrawText($"BLACK {session.BlackAgehama}", new Vector2(firstValueX, bounds.Y + 14), Color.White, 0.5f);
+            DrawText($"WHITE {session.WhiteAgehama}", new Vector2(secondValueX, bounds.Y + 14), Color.White, 0.5f);
+        }
     }
 
-    private void DrawStoneCountStrip(GoAppSession session, int y)
+    private void DrawStoneCountStrip(GoAppSession session, int y, bool showLeader = true, bool minimal = false)
     {
         var bounds = new Rectangle(1144, y, 668, 82);
         var blackStones = session.BlackStoneCount;
@@ -701,14 +766,39 @@ public sealed partial class GoScreenRenderer
         var total = blackStones + whiteStones;
         var leader = blackStones == whiteStones ? "EVEN" : blackStones > whiteStones ? $"BLACK +{blackStones - whiteStones}" : $"WHITE +{whiteStones - blackStones}";
 
-        FillRect(bounds, new Color(24, 31, 37));
-        DrawRect(bounds, 1, new Color(70, 85, 94));
-        DrawText("STONES", new Vector2(bounds.X + 20, bounds.Y + 15), new Color(180, 195, 195), 0.46f);
-        DrawText($"BLACK {blackStones}", new Vector2(bounds.X + 150, bounds.Y + 13), Color.White, 0.5f);
-        DrawText($"WHITE {whiteStones}", new Vector2(bounds.X + 334, bounds.Y + 13), Color.White, 0.5f);
-        DrawText(leader, new Vector2(bounds.X + 518, bounds.Y + 13), new Color(99, 223, 185), 0.5f);
+        if (!minimal)
+        {
+            FillRect(bounds, new Color(24, 31, 37));
+            DrawRect(bounds, 1, new Color(70, 85, 94));
+        }
+        if (minimal)
+        {
+            DrawResultLabel(new Rectangle(bounds.X + 20, bounds.Y, bounds.Width - 40, 56), "STONES", new Color(76, 91, 126));
+        }
+        else
+        {
+            DrawText("STONES", new Vector2(bounds.X + 20, bounds.Y + 15), new Color(180, 195, 195), 0.46f);
+        }
+        var firstValueX = minimal ? GameOverValueX : bounds.X + 150;
+        var secondValueX = minimal ? GameOverSecondValueX : bounds.X + 334;
+        if (minimal)
+        {
+            DrawStoneValue(firstValueX, bounds.Y + 28, blackStones.ToString(), black: true, valueColor: Color.White);
+            DrawStoneValue(secondValueX, bounds.Y + 28, whiteStones.ToString(), black: false, valueColor: Color.White);
+        }
+        else
+        {
+            DrawText($"BLACK {blackStones}", new Vector2(firstValueX, bounds.Y + 13), Color.White, 0.5f);
+            DrawText($"WHITE {whiteStones}", new Vector2(secondValueX, bounds.Y + 13), Color.White, 0.5f);
+        }
+        if (showLeader)
+        {
+            DrawText(leader, new Vector2(bounds.X + 518, bounds.Y + 13), new Color(99, 223, 185), 0.5f);
+        }
 
-        var bar = new Rectangle(bounds.X + 20, bounds.Y + 52, bounds.Width - 40, 14);
+        var bar = minimal
+            ? new Rectangle(GameOverValueX, bounds.Y + 52, bounds.Right - GameOverValueX - 20, 14)
+            : new Rectangle(bounds.X + 20, bounds.Y + 52, bounds.Width - 40, 14);
         FillRect(bar, new Color(14, 18, 23));
         if (total > 0)
         {
