@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Domain;
+namespace KifuwarabeGo2026.Gui.Domain;
 
 public enum GoStone
 {

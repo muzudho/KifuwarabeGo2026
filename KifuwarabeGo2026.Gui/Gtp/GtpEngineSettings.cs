@@ -1,6 +1,6 @@
 namespace KifuwarabeGo2026.Gtp;
 
-using KifuwarabeGo2026.Domain;
+using KifuwarabeGo2026.Gui.Domain;
 using System.Collections.Generic;
 
 public sealed record GtpEngineSettings(

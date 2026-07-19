@@ -1,6 +1,7 @@
 namespace KifuwarabeGo2026.Presentation;
 
 using KifuwarabeGo2026.Gui.Application;
+using KifuwarabeGo2026.Gui.Domain;
 using Microsoft.Xna.Framework;
 using System;
 
@@ -16,7 +17,7 @@ public sealed partial class GoScreenRenderer
             return false;
         }
 
-        var playerBounds = errorStone == Domain.GoStone.Black
+        var playerBounds = errorStone == GoStone.Black
             ? new Rectangle(1144, 348, 668, 88)
             : new Rectangle(1144, 444, 668, 88);
         return PlayerEngineErrorBounds(playerBounds).Contains(point);
@@ -36,12 +37,12 @@ public sealed partial class GoScreenRenderer
         TimeSpan? mainTime,
         int blackAgehama,
         int whiteAgehama,
-        Domain.GoStone currentTurn,
-        Domain.GoStone? engineErrorStone = null,
+        GoStone currentTurn,
+        GoStone? engineErrorStone = null,
         Point? mousePoint = null)
     {
-        DrawPlayerComponent(new Rectangle(x, y, width, 88), blackName, blackElapsed, mainTime, blackAgehama, black: true, currentTurn == Domain.GoStone.Black, engineErrorStone == Domain.GoStone.Black, mousePoint);
-        DrawPlayerComponent(new Rectangle(x, y + 96, width, 88), whiteName, whiteElapsed, mainTime, whiteAgehama, black: false, currentTurn == Domain.GoStone.White, engineErrorStone == Domain.GoStone.White, mousePoint);
+        DrawPlayerComponent(new Rectangle(x, y, width, 88), blackName, blackElapsed, mainTime, blackAgehama, black: true, currentTurn == GoStone.Black, engineErrorStone == GoStone.Black, mousePoint);
+        DrawPlayerComponent(new Rectangle(x, y + 96, width, 88), whiteName, whiteElapsed, mainTime, whiteAgehama, black: false, currentTurn == GoStone.White, engineErrorStone == GoStone.White, mousePoint);
     }
 
     private void DrawPlayerComponent(
