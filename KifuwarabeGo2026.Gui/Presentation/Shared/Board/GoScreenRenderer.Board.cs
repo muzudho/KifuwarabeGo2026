@@ -76,7 +76,8 @@ public sealed partial class GoScreenRenderer
         var layout = GetBoardLayout(boardSize);
         var start = layout.Start;
         var cell = layout.Cell;
-        var end = new Vector2(BoardBounds.Right - BoardMargin, BoardBounds.Bottom - BoardMargin);
+        var boardMargin = GetBoardMargin(boardSize);
+        var end = new Vector2(BoardBounds.Right - boardMargin, BoardBounds.Bottom - boardMargin);
 
         for (var i = 0; i < boardSize; i++)
         {
@@ -92,7 +93,50 @@ public sealed partial class GoScreenRenderer
             DrawCircle(center, Math.Max(5, cell * 0.1f), new Color(55, 38, 25));
         }
 
+        DrawBoardCoordinates(boardSize, start, cell, boardOuter);
+
         return (start, cell, boardOuter);
+    }
+
+    /// <summary>
+    /// 左上を A1 とし、I を飛ばした国際式の盤座標を四辺へ描画します。
+    /// </summary>
+    private void DrawBoardCoordinates(int boardSize, Vector2 start, float cell, Rectangle boardOuter)
+    {
+        var scale = boardSize >= 19 ? 0.34f : boardSize >= 13 ? 0.38f : 0.42f;
+        var topY = boardOuter.Y + 40f;
+        var leftX = boardOuter.X + 40f;
+
+        for (var index = 0; index < boardSize; index++)
+        {
+            var column = GetBoardColumnLabel(index);
+            var x = start.X + cell * index;
+            DrawBoardCoordinateText(column, new Vector2(x, topY), scale);
+
+            var row = (index + 1).ToString();
+            var y = start.Y + cell * index;
+            DrawBoardCoordinateText(row, new Vector2(leftX, y), scale);
+        }
+    }
+
+    private void DrawBoardCoordinateText(string text, Vector2 center, float scale)
+    {
+        var size = _boardCoordinateFont.MeasureString(text) * scale;
+        var position = center - size / 2f;
+        var shadow = Color.FromNonPremultiplied(13, 54, 44, 45);
+        var body = Color.FromNonPremultiplied(55, 150, 119, 82);
+        var highlight = Color.FromNonPremultiplied(147, 244, 200, 30);
+        _spriteBatch.DrawString(_boardCoordinateFont, text, position + new Vector2(0, 1), shadow, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+        _spriteBatch.DrawString(_boardCoordinateFont, text, position, body, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+        _spriteBatch.DrawString(_boardCoordinateFont, text, position - new Vector2(0, 1), highlight, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+    }
+
+    private static string GetBoardColumnLabel(int zeroBasedColumn)
+    {
+        const string columns = "ABCDEFGHJKLMNOPQRSTUVWXYZ";
+        return zeroBasedColumn >= 0 && zeroBasedColumn < columns.Length
+            ? columns[zeroBasedColumn].ToString()
+            : "?";
     }
 
     /// <summary>
@@ -207,9 +251,6 @@ public sealed partial class GoScreenRenderer
     private static Vector2 BoardPoint(Vector2 start, float cell, int x, int y) => new(start.X + cell * x, start.Y + cell * y);
 
 
-    private const float BoardMargin = 38f;
-
-
     private static readonly Rectangle BoardBounds = new(88, 84, 912, 912);
 
     /// <summary>
@@ -220,11 +261,19 @@ public sealed partial class GoScreenRenderer
 
     private static (Vector2 Start, float Cell) GetBoardLayout(int boardSize)
     {
-        var playable = BoardBounds.Width - BoardMargin * 2;
+        var boardMargin = GetBoardMargin(boardSize);
+        var playable = BoardBounds.Width - boardMargin * 2;
         var cell = playable / (boardSize - 1);
-        var start = new Vector2(BoardBounds.X + BoardMargin, BoardBounds.Y + BoardMargin);
+        var start = new Vector2(BoardBounds.X + boardMargin, BoardBounds.Y + boardMargin);
         return (start, cell);
     }
+
+    private static float GetBoardMargin(int boardSize) => boardSize switch
+    {
+        <= 9 => 82f,
+        <= 13 => 68f,
+        _ => 50f,
+    };
 
     /// <summary>
     /// ［盤上の星］取得

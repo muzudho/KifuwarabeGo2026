@@ -20,6 +20,7 @@ public sealed partial class GoScreenRenderer
     private readonly GraphicsDevice _graphicsDevice;
     private readonly SpriteBatch _spriteBatch;
     private readonly SpriteFont _font;
+    private readonly SpriteFont _boardCoordinateFont;
     private readonly Texture2D _pixel;
     private readonly Texture2D _softCircle;
     private readonly Texture2D _stoneLight;
@@ -30,6 +31,7 @@ public sealed partial class GoScreenRenderer
         _graphicsDevice = graphicsDevice;
         _spriteBatch = new SpriteBatch(graphicsDevice);
         _font = content.Load<SpriteFont>("Fonts/Ui");
+        _boardCoordinateFont = content.Load<SpriteFont>("Fonts/BoardCoordinate");
         _pixel = CreateTexture(1, 1, (_, _) => Color.White);
         _softCircle = CreateCircleTexture(128, new Color(255, 255, 255, 255), softEdge: true);
         _stoneLight = CreateStoneTexture(128, lightStone: true);
