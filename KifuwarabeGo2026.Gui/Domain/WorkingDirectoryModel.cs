@@ -1,4 +1,4 @@
-﻿namespace KifuwarabeGo2026.Gui.Domain;
+namespace KifuwarabeGo2026.Gui.Domain;
 
 using System;
 using System.Collections.Generic;

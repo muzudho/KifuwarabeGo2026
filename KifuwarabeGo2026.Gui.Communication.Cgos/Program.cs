@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Communication.Cgos;
+namespace KifuwarabeGo2026.Gui.Communication.Cgos;
 
 using System.Diagnostics;
 using System.Globalization;
@@ -337,7 +337,7 @@ internal sealed class CgosClientOptions
         writer.WriteLine("CGOS communication client for Kifuwarabe Go 2026");
         writer.WriteLine();
         writer.WriteLine("Usage:");
-        writer.WriteLine("  dotnet run --project KifuwarabeGo2026.Communication.Cgos -- [options]");
+        writer.WriteLine("  dotnet run --project KifuwarabeGo2026.Gui.Communication.Cgos -- [options]");
         writer.WriteLine();
         writer.WriteLine("Options:");
         writer.WriteLine("  --account black|white      Login account. Default: black");

@@ -1,4 +1,4 @@
-﻿namespace KifuwarabeGo2026.Gui.Domain;
+namespace KifuwarabeGo2026.Gui.Domain;
 
 /// <summary>
 /// 不変文字列モデル

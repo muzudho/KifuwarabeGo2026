@@ -1,6 +1,6 @@
 namespace KifuwarabeGo2026.Gui.Sgf;
 
-using KifuwarabeGo2026.Gui.Domain;
+using KifuwarabeGo2026.Shared.Domain;
 using System;
 
 public static class SgfCoordinate

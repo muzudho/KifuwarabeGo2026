@@ -46,14 +46,14 @@ GTP エンジン単体を確認する場合:
 CGOS 練習サーバーへ接続する場合:
 
 ```powershell
-dotnet run --project KifuwarabeGo2026.Communication.Cgos -- --account black
-dotnet run --project KifuwarabeGo2026.Communication.Cgos -- --account white
+dotnet run --project KifuwarabeGo2026.Gui.Communication.Cgos -- --account black
+dotnet run --project KifuwarabeGo2026.Gui.Communication.Cgos -- --account white
 ```
 
 黒番・白番の両方を同じ端末から接続する場合:
 
 ```powershell
-dotnet run --project KifuwarabeGo2026.Communication.Cgos -- --both
+dotnet run --project KifuwarabeGo2026.Gui.Communication.Cgos -- --both
 ```
 
 
@@ -62,14 +62,14 @@ dotnet run --project KifuwarabeGo2026.Communication.Cgos -- --both
 ```powershell
 dotnet publish KifuwarabeGo2026\KifuwarabeGo2026.csproj -c Release -r win-x64 --self-contained false
 dotnet publish KifuwarabeGo2026.Engine\KifuwarabeGo2026.Engine.csproj -c Release -r win-x64 --self-contained false
-dotnet publish KifuwarabeGo2026.Communication.Cgos\KifuwarabeGo2026.Communication.Cgos.csproj -c Release -r win-x64 --self-contained false
+dotnet publish KifuwarabeGo2026.Gui.Communication.Cgos\KifuwarabeGo2026.Gui.Communication.Cgos.csproj -c Release -r win-x64 --self-contained false
 ```
 
 出力先:
 
 - `KifuwarabeGo2026\bin\Release\net8.0-windows\win-x64\publish`
 - `KifuwarabeGo2026.Engine\bin\Release\net8.0\win-x64\publish`
-- `KifuwarabeGo2026.Communication.Cgos\bin\Release\net8.0\win-x64\publish`
+- `KifuwarabeGo2026.Gui.Communication.Cgos\bin\Release\net8.0\win-x64\publish`
 
 
 ## ドキュメント

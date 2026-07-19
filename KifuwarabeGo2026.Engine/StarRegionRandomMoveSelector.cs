@@ -1,6 +1,6 @@
 namespace KifuwarabeGo2026.Engine;
 
-using KifuwarabeGo2026.Gui.Domain;
+using KifuwarabeGo2026.Shared.Domain;
 
 /// <summary>
 /// 星を基準に盤面を A・B・C の領域へ分け、領域と着手点を順番に抽選します。

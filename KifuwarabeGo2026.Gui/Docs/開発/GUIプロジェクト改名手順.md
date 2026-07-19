@@ -8,7 +8,7 @@ GUI プロジェクトを次のように改名します。
 - プロジェクトファイル: `KifuwarabeGo2026.csproj` → `KifuwarabeGo2026.Gui.csproj`
 - 出力ファイル: `KifuwarabeGo2026.exe` → `KifuwarabeGo2026.Gui.exe`
 
-`KifuwarabeGo2026.Engine` と `KifuwarabeGo2026.Communication.Cgos` は改名しません。C# の名前空間も今回は `KifuwarabeGo2026` のままとします。名前空間まで一緒に変えると変更範囲が大きくなり、プロジェクト名を分かりやすくする目的とは別の作業になるためです。
+`KifuwarabeGo2026.Engine` と `KifuwarabeGo2026.Gui.Communication.Cgos` は改名しません。C# の名前空間も今回は `KifuwarabeGo2026` のままとします。名前空間まで一緒に変えると変更範囲が大きくなり、プロジェクト名を分かりやすくする目的とは別の作業になるためです。
 
 ## この手順の進め方
 

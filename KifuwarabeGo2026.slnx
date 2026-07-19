@@ -1,5 +1,6 @@
 <Solution>
-  <Project Path="KifuwarabeGo2026.Communication.Cgos/KifuwarabeGo2026.Communication.Cgos.csproj" />
+  <Project Path="KifuwarabeGo2026.Gui.Communication.Cgos/KifuwarabeGo2026.Gui.Communication.Cgos.csproj" />
   <Project Path="KifuwarabeGo2026.Engine/KifuwarabeGo2026.Engine.csproj" />
   <Project Path="KifuwarabeGo2026.Gui/KifuwarabeGo2026.Gui.csproj" />
+  <Project Path="KifuwarabeGo2026.Shared/KifuwarabeGo2026.Shared.csproj" />
 </Solution>

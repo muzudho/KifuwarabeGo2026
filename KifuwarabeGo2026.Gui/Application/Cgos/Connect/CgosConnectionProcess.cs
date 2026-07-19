@@ -807,7 +807,7 @@ public sealed class CgosConnectionProcess : IDisposable
         }
 
         throw new FileNotFoundException(
-            "CGOS communication executable is incomplete. Build KifuwarabeGo2026.Communication.Cgos first. Missing: " +
+            "CGOS communication executable is incomplete. Build KifuwarabeGo2026.Gui.Communication.Cgos first. Missing: " +
             string.Join(", ", missingPaths.Select(Path.GetFileName)),
             missingPaths[0]);
     }
@@ -845,11 +845,11 @@ public sealed class CgosConnectionProcess : IDisposable
 #endif
         return Path.Combine(
             repositoryRoot,
-            "KifuwarabeGo2026.Communication.Cgos",
+            "KifuwarabeGo2026.Gui.Communication.Cgos",
             "bin",
             buildConfiguration,
             "net8.0",
-            "KifuwarabeGo2026.Communication.Cgos.exe");
+            "KifuwarabeGo2026.Gui.Communication.Cgos.exe");
     }
 
     private static void AddParentProcessArguments(ProcessStartInfo startInfo)
