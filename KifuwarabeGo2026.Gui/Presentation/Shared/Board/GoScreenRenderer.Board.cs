@@ -111,24 +111,35 @@ public sealed partial class GoScreenRenderer
         {
             var column = GetBoardColumnLabel(index);
             var x = start.X + cell * index;
-            DrawBoardCoordinateText(column, new Vector2(x, topY), scale);
+            DrawBoardCoordinateText(column, new Vector2(x, topY), scale, red: false);
 
             var row = (index + 1).ToString();
             var y = start.Y + cell * index;
-            DrawBoardCoordinateText(row, new Vector2(leftX, y), scale);
+            DrawBoardCoordinateText(row, new Vector2(leftX, y), scale, red: true);
         }
     }
 
-    private void DrawBoardCoordinateText(string text, Vector2 center, float scale)
+    private void DrawBoardCoordinateText(string text, Vector2 center, float scale, bool red)
     {
         var size = _boardCoordinateFont.MeasureString(text) * scale;
         var position = center - size / 2f;
-        var shadow = Color.FromNonPremultiplied(13, 54, 44, 45);
-        var body = Color.FromNonPremultiplied(55, 150, 119, 82);
-        var highlight = Color.FromNonPremultiplied(147, 244, 200, 30);
-        _spriteBatch.DrawString(_boardCoordinateFont, text, position + new Vector2(0, 1), shadow, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+        var farShadow = Color.FromNonPremultiplied(0, 0, 0, 18);
+        var nearShadow = Color.FromNonPremultiplied(0, 0, 0, 34);
+        var innerEdge = red
+            ? Color.FromNonPremultiplied(92, 30, 28, 42)
+            : Color.FromNonPremultiplied(13, 75, 61, 42);
+        var body = red
+            ? Color.FromNonPremultiplied(154, 65, 57, 84)
+            : Color.FromNonPremultiplied(55, 150, 119, 82);
+        var highlight = red
+            ? Color.FromNonPremultiplied(255, 183, 146, 34)
+            : Color.FromNonPremultiplied(147, 244, 200, 32);
+
+        _spriteBatch.DrawString(_boardCoordinateFont, text, position + new Vector2(5, 6), farShadow, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+        _spriteBatch.DrawString(_boardCoordinateFont, text, position + new Vector2(3, 4), nearShadow, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+        _spriteBatch.DrawString(_boardCoordinateFont, text, position + new Vector2(1, 1), innerEdge, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
         _spriteBatch.DrawString(_boardCoordinateFont, text, position, body, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
-        _spriteBatch.DrawString(_boardCoordinateFont, text, position - new Vector2(0, 1), highlight, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+        _spriteBatch.DrawString(_boardCoordinateFont, text, position - new Vector2(1, 1), highlight, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
     }
 
     private static string GetBoardColumnLabel(int zeroBasedColumn)
