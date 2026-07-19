@@ -16,6 +16,9 @@ internal static class Program
     }
 }
 
+/// <summary>
+/// ［ＧＴＰエンジン］
+/// </summary>
 internal sealed class GtpEngine
 {
     private static readonly string[] Commands =

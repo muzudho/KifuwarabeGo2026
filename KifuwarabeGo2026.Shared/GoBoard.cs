@@ -4,6 +4,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
+/// <summary>
+/// ［囲碁盤］
+/// </summary>
 public sealed class GoBoard
 {
     private readonly GoStone[,] _stones;
