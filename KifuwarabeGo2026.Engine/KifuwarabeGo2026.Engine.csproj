@@ -8,7 +8,15 @@
     <Version>1.1.0</Version>
     <AssemblyVersion>1.1.0.0</AssemblyVersion>
     <FileVersion>1.1.0.0</FileVersion>
+    <ApplicationIcon>EngineIcon.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="EngineIcon.ico" />
+    <EmbeddedResource Include="EngineIcon.ico">
+      <LogicalName>EngineIcon.ico</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
 
   <ItemGroup>
     <Compile Include="..\KifuwarabeGo2026\Domain\*.cs" Link="Domain\%(Filename)%(Extension)" />
