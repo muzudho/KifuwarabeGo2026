@@ -1,6 +1,6 @@
-namespace KifuwarabeGo2026.Presentation.Title;
+namespace KifuwarabeGo2026.Gui.Presentation.Title;
 
-using KifuwarabeGo2026.Presentation;
+using KifuwarabeGo2026.Gui.Presentation;
 using Microsoft.Xna.Framework;
 
 public static class TitleRenderer

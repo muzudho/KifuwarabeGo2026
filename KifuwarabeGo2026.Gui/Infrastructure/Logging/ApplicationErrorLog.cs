@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Infrastructure.Logging;
+namespace KifuwarabeGo2026.Gui.Infrastructure.Logging;
 
 using System;
 using System.IO;

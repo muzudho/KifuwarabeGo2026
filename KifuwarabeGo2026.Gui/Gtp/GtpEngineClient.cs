@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Gtp;
+namespace KifuwarabeGo2026.Gui.Gtp;
 
 using System;
 using System.Collections.Generic;

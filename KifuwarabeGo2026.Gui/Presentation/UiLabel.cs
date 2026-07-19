@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Presentation;
+namespace KifuwarabeGo2026.Gui.Presentation;
 
 using Microsoft.Xna.Framework;
 

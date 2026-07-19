@@ -1,6 +1,6 @@
 namespace KifuwarabeGo2026.Gui;
 
-using KifuwarabeGo2026.Infrastructure.Logging;
+using KifuwarabeGo2026.Gui.Infrastructure.Logging;
 using System;
 
 internal static class Program

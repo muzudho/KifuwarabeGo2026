@@ -1,6 +1,6 @@
-namespace KifuwarabeGo2026.Presentation.Local.Resting.TournamentRule;
+namespace KifuwarabeGo2026.Gui.Presentation.Local.Resting.TournamentRule;
 
-using KifuwarabeGo2026.Presentation;
+using KifuwarabeGo2026.Gui.Presentation;
 using Microsoft.Xna.Framework;
 
 public static class TournamentRuleRenderer

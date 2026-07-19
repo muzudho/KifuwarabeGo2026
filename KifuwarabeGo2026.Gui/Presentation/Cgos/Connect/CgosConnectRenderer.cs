@@ -1,7 +1,7 @@
-namespace KifuwarabeGo2026.Presentation.Cgos.Connect;
+namespace KifuwarabeGo2026.Gui.Presentation.Cgos.Connect;
 
 using KifuwarabeGo2026.Gui.Application;
-using KifuwarabeGo2026.Presentation;
+using KifuwarabeGo2026.Gui.Presentation;
 using Microsoft.Xna.Framework;
 
 public static class CgosConnectRenderer

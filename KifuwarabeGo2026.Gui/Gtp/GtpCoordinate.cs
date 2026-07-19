@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Gtp;
+namespace KifuwarabeGo2026.Gui.Gtp;
 
 using KifuwarabeGo2026.Gui.Domain;
 using System;

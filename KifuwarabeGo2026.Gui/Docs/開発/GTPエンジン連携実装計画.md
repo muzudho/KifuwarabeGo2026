@@ -22,11 +22,11 @@ GUI と囲碁思考エンジンを別プロセスに分け、GUI から GTP (Go 
 
 ```text
 KifuwarabeGo2026                 GUI / MonoGame
-KifuwarabeGo2026.Gtp             GTP通信・座標変換・プロセス管理
+KifuwarabeGo2026.Gui.Gtp             GTP通信・座標変換・プロセス管理
 KifuwarabeGo2026.Engine          別プロセスの思考エンジン
 ```
 
-最初は `KifuwarabeGo2026.Gtp` を別プロジェクトにせず GUI プロジェクト内のフォルダーで始めてもよい。ただし、責務は最初から分けておく。
+最初は `KifuwarabeGo2026.Gui.Gtp` を別プロジェクトにせず GUI プロジェクト内のフォルダーで始めてもよい。ただし、責務は最初から分けておく。
 
 ## 現在の実装状況
 

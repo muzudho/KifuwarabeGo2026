@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Sgf;
+namespace KifuwarabeGo2026.Gui.Sgf;
 
 using KifuwarabeGo2026.Gui.Domain;
 using System;
