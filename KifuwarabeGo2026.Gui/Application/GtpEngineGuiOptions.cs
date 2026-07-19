@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Application;
+namespace KifuwarabeGo2026.Gui.Application;
 
 /// <summary>
 /// GUIからGTPエンジンへ送るオプションの既知値です。

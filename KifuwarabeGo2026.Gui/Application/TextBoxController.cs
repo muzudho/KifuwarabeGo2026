@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Application;
+namespace KifuwarabeGo2026.Gui.Application;
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;

@@ -1,6 +1,6 @@
-namespace KifuwarabeGo2026.Application.Local.Resting.TournamentRule;
+namespace KifuwarabeGo2026.Gui.Application.Local.Resting.TournamentRule;
 
-using KifuwarabeGo2026.Application;
+using KifuwarabeGo2026.Gui.Application;
 
 using System;
 using System.Text.Json.Serialization;

@@ -1,7 +1,7 @@
 namespace KifuwarabeGo2026.Presentation.Cgos.Watching;
 
-using KifuwarabeGo2026.Application;
-using KifuwarabeGo2026.Application.Cgos.Watching;
+using KifuwarabeGo2026.Gui.Application;
+using KifuwarabeGo2026.Gui.Application.Cgos.Watching;
 using KifuwarabeGo2026.Presentation;
 using Microsoft.Xna.Framework;
 

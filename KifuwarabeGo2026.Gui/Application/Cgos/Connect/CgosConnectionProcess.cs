@@ -1,6 +1,6 @@
-namespace KifuwarabeGo2026.Application.Cgos.Connect;
+namespace KifuwarabeGo2026.Gui.Application.Cgos.Connect;
 
-using KifuwarabeGo2026.Application.Cgos.ConnectionTarget;
+using KifuwarabeGo2026.Gui.Application.Cgos.ConnectionTarget;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;

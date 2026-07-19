@@ -1,6 +1,6 @@
 namespace KifuwarabeGo2026.Presentation;
 
-using KifuwarabeGo2026.Application;
+using KifuwarabeGo2026.Gui.Application;
 using Microsoft.Xna.Framework;
 using System;
 

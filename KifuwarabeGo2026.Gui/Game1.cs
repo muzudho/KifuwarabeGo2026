@@ -1,11 +1,11 @@
 namespace KifuwarabeGo2026.Gui;
 
-using KifuwarabeGo2026.Application;
-using KifuwarabeGo2026.Application.Cgos.Connect;
-using KifuwarabeGo2026.Application.Cgos.ConnectionTarget;
-using KifuwarabeGo2026.Application.Cgos.Watching;
-using KifuwarabeGo2026.Application.Local.Playing;
-using KifuwarabeGo2026.Application.Local.Resting.TournamentRule;
+using KifuwarabeGo2026.Gui.Application;
+using KifuwarabeGo2026.Gui.Application.Cgos.Connect;
+using KifuwarabeGo2026.Gui.Application.Cgos.ConnectionTarget;
+using KifuwarabeGo2026.Gui.Application.Cgos.Watching;
+using KifuwarabeGo2026.Gui.Application.Local.Playing;
+using KifuwarabeGo2026.Gui.Application.Local.Resting.TournamentRule;
 using KifuwarabeGo2026.Domain;
 using KifuwarabeGo2026.Infrastructure.FileSystem;
 using KifuwarabeGo2026.Infrastructure.Logging;

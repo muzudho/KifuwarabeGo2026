@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Application.Local.Resting;
+namespace KifuwarabeGo2026.Gui.Application.Local.Resting;
 
 public sealed class RestingMode : GoAppMode
 {
