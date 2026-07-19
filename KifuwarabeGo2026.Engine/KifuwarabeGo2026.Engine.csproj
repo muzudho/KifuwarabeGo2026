@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="..\KifuwarabeGo2026\Domain\*.cs" Link="Domain\%(Filename)%(Extension)" />
+    <Compile Include="..\KifuwarabeGo2026.Gui\Domain\*.cs" Link="Domain\%(Filename)%(Extension)" />
   </ItemGroup>
 
 </Project>
