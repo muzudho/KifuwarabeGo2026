@@ -2,8 +2,8 @@
   "gtpEngines": [
     {
       "displayName": "Kifuwarabe Star Random GTP",
-      "executablePath": "..\\..\\..\\KifuwarabeGo2026.Engine\\bin\\Debug\\net8.0\\KifuwarabeGo2026.Engine.exe",
-      "workingDirectory": "..\\..\\..\\KifuwarabeGo2026.Engine\\bin\\Debug\\net8.0",
+      "executablePath": "..\\..\\..\\KifuwarabeGo2026.Engine\\bin\\Release\\net8.0\\win-x64\\KifuwarabeGo2026.Engine.exe",
+      "workingDirectory": "..\\..\\..\\KifuwarabeGo2026.Engine\\bin\\Release\\net8.0\\win-x64",
       "arguments": "",
       "enableGtpLog": true,
       "guiOptions": {
