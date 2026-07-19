@@ -145,9 +145,9 @@ public sealed partial class GoScreenRenderer
         }
 
         // 作業用ディレクトリのコピー
-        if (!profile.WorkingDirectory.IsEmpty && PathTooltipCopyButtonBounds(GtpEngineSelectionDialogPropertyRowBounds(2)).Contains(point))
+        if (!profile.WorkingDirectoryModel.IsEmpty && PathTooltipCopyButtonBounds(GtpEngineSelectionDialogPropertyRowBounds(2)).Contains(point))
         {
-            text = profile.WorkingDirectory.Value;
+            text = profile.WorkingDirectoryModel.Value;
             return true;
         }
 
@@ -360,7 +360,7 @@ public sealed partial class GoScreenRenderer
         var executablePath = string.IsNullOrWhiteSpace(profile.ExecutablePath) ? "-" : profile.ExecutablePath;
 
         // ［作業用ディレクトリー］が無ければハイフン表示
-        var displayWorkingDirectory = profile.WorkingDirectory.DisplayValue;
+        var displayWorkingDirectory = profile.WorkingDirectoryModel.DisplayValue;
 
         var executablePathRowBounds = GtpEngineSelectionDialogPropertyRowBounds(1);
         var workingDirectoryRowBounds = GtpEngineSelectionDialogPropertyRowBounds(2);

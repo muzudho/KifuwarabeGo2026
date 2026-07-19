@@ -16,7 +16,14 @@ public sealed class GtpEngineProfile
     /// <summary>
     /// 作業ディレクトリー
     /// </summary>
-    public WorkingDirectoryModel WorkingDirectory { get; set; } = WorkingDirectoryModel.Empty;
+    [JsonIgnore]
+    public WorkingDirectoryModel WorkingDirectoryModel { get; set; } = WorkingDirectoryModel.Empty;
+    [JsonPropertyName("workingDirectory")]
+    public string WorkingDirectoryStr
+    {
+        get => WorkingDirectoryModel.Value;
+        set => WorkingDirectoryModel = WorkingDirectoryModel.FromString(value);
+    }
 
     public string Arguments { get; set; } = "";
 
@@ -34,7 +41,7 @@ public sealed class GtpEngineProfile
     {
         DisplayName = DisplayName,
         ExecutablePath = ExecutablePath,
-        WorkingDirectory = WorkingDirectory,
+        WorkingDirectoryModel = WorkingDirectoryModel,
         Arguments = Arguments,
         EnableGtpLog = EnableGtpLog,
         GuiOptions = new Dictionary<string, string>(GuiOptions ?? []),

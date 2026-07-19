@@ -81,9 +81,9 @@ public sealed class GtpEngineCatalog
             ? "Unnamed GTP Engine"
             : normalized.DisplayName.Trim();
         normalized.ExecutablePath = ResolvePath(normalized.ExecutablePath, baseDirectory);
-        normalized.WorkingDirectory = normalized.WorkingDirectory.IsEmpty
+        normalized.WorkingDirectoryModel = normalized.WorkingDirectoryModel.IsEmpty
             ? WorkingDirectoryModel.FromString(Path.GetDirectoryName(normalized.ExecutablePath) ?? baseDirectory)
-            : WorkingDirectoryModel.FromString(ResolvePath(normalized.WorkingDirectory.Value, baseDirectory));
+            : WorkingDirectoryModel.FromString(ResolvePath(normalized.WorkingDirectoryModel.Value, baseDirectory));
         normalized.GuiOptions ??= [];
         if (!normalized.GuiOptions.ContainsKey(GtpEngineGuiOptions.RandomMoveId))
             normalized.GuiOptions[GtpEngineGuiOptions.RandomMoveId] = GtpEngineGuiOptions.ChebyshevDistanceFromStarRandomMove;
@@ -108,7 +108,7 @@ public sealed class GtpEngineCatalog
     {
         var entry = profile.Clone();
         entry.ExecutablePath = ToStoredPath(entry.ExecutablePath, listDirectory);
-        entry.WorkingDirectory = WorkingDirectoryModel.FromString(ToStoredPath(entry.WorkingDirectory.Value, listDirectory));
+        entry.WorkingDirectoryModel = WorkingDirectoryModel.FromString(ToStoredPath(entry.WorkingDirectoryModel.Value, listDirectory));
         return entry;
     }
 
@@ -143,7 +143,7 @@ public sealed class GtpEngineCatalog
             {
                 DisplayName = "Kifuwarabe Star Random GTP",
                 ExecutablePath = engineExecutable,
-                WorkingDirectory = WorkingDirectoryModel.FromString(engineDirectory),
+                WorkingDirectoryModel = WorkingDirectoryModel.FromString(engineDirectory),
                 Arguments = "",
                 EnableGtpLog = true,
             };
@@ -154,7 +154,7 @@ public sealed class GtpEngineCatalog
         {
             DisplayName = "Kifuwarabe Star Random GTP",
             ExecutablePath = "dotnet",
-            WorkingDirectory = WorkingDirectoryModel.FromString(repositoryRoot),
+            WorkingDirectoryModel = WorkingDirectoryModel.FromString(repositoryRoot),
             Arguments = $"run --project \"{engineProject}\"",
             EnableGtpLog = true,
         };

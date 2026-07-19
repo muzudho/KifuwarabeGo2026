@@ -467,7 +467,7 @@ public sealed class PlayingScene : IDisposable
         return new GtpEngineSettings(
             profile.DisplayName,
             profile.ExecutablePath,
-            profile.WorkingDirectory,
+            profile.WorkingDirectoryModel,
             profile.Arguments,
             profile.EnableGtpLog,
             logPrefix,

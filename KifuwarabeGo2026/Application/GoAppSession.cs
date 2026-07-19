@@ -1467,7 +1467,7 @@ public sealed class GoAppSession
                 GtpEngineEditDraft.ExecutablePath = text;
                 break;
             case GtpEngineProfileEditField.WorkingDirectory:
-                GtpEngineEditDraft.WorkingDirectory = WorkingDirectoryModel.FromString(text);
+                GtpEngineEditDraft.WorkingDirectoryModel = WorkingDirectoryModel.FromString(text);
                 break;
             case GtpEngineProfileEditField.Arguments:
                 GtpEngineEditDraft.Arguments = text;
@@ -1502,13 +1502,13 @@ public sealed class GoAppSession
     {
         GtpEngineEditDraft.ExecutablePath = executablePath;
         var executeDirectoryName = Path.GetDirectoryName(executablePath);
-        GtpEngineEditDraft.WorkingDirectory = executeDirectoryName is null ? GtpEngineEditDraft.WorkingDirectory : WorkingDirectoryModel.FromString(executeDirectoryName);
+        GtpEngineEditDraft.WorkingDirectoryModel = executeDirectoryName is null ? GtpEngineEditDraft.WorkingDirectoryModel : WorkingDirectoryModel.FromString(executeDirectoryName);
         GtpEngineEditSaveMessage = "UNSAVED";
     }
 
     public void SetGtpEngineWorkingDirectoryDraft(WorkingDirectoryModel workingDirectory)
     {
-        GtpEngineEditDraft.WorkingDirectory = workingDirectory;
+        GtpEngineEditDraft.WorkingDirectoryModel = workingDirectory;
         GtpEngineEditSaveMessage = "UNSAVED";
     }
 
@@ -1627,7 +1627,7 @@ public sealed class GoAppSession
     {
         GtpEngineProfileEditField.DisplayName => GtpEngineEditDraft.DisplayName,
         GtpEngineProfileEditField.ExecutablePath => GtpEngineEditDraft.ExecutablePath,
-        GtpEngineProfileEditField.WorkingDirectory => GtpEngineEditDraft.WorkingDirectory.Value,
+        GtpEngineProfileEditField.WorkingDirectory => GtpEngineEditDraft.WorkingDirectoryModel.Value,
         GtpEngineProfileEditField.Arguments => GtpEngineEditDraft.Arguments,
         _ => throw new ArgumentOutOfRangeException(nameof(field), field, "GTP engine edit field is out of range."),
     };

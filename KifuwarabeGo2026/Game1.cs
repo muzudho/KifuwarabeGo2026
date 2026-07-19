@@ -1575,7 +1575,7 @@ public class Game1 : Game
         profile = _session.GtpEngineEditDraft.Clone();
         profile.DisplayName = profile.DisplayName.Trim();
         profile.ExecutablePath = profile.ExecutablePath.Trim();
-        profile.WorkingDirectory = WorkingDirectoryModel.FromString(profile.WorkingDirectory.Value.Trim());
+        profile.WorkingDirectoryModel = WorkingDirectoryModel.FromString(profile.WorkingDirectoryModel.Value.Trim());
         profile.Arguments = profile.Arguments.Trim();
 
         if (string.IsNullOrWhiteSpace(profile.DisplayName))
@@ -1590,9 +1590,9 @@ public class Game1 : Game
             return false;
         }
 
-        if (profile.WorkingDirectory.IsEmpty)
+        if (profile.WorkingDirectoryModel.IsEmpty)
         {
-            profile.WorkingDirectory = WorkingDirectoryModel.FromString(Path.GetDirectoryName(profile.ExecutablePath) ?? string.Empty);
+            profile.WorkingDirectoryModel = WorkingDirectoryModel.FromString(Path.GetDirectoryName(profile.ExecutablePath) ?? string.Empty);
         }
 
         warning = "";
@@ -1629,9 +1629,9 @@ public class Game1 : Game
         }
 
         // 作業ディレクトリー
-        if (!profile.WorkingDirectory.IsEmpty && Directory.Exists(profile.WorkingDirectory.Value))
+        if (!profile.WorkingDirectoryModel.IsEmpty && Directory.Exists(profile.WorkingDirectoryModel.Value))
         {
-            return profile.WorkingDirectory.Value;
+            return profile.WorkingDirectoryModel.Value;
         }
 
         return AppContext.BaseDirectory;
