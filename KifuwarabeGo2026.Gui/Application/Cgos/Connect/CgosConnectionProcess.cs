@@ -838,6 +838,16 @@ public sealed class CgosConnectionProcess : IDisposable
 
     private static string GetCgosCommunicationExecutablePath(string repositoryRoot)
     {
+        var bundledExecutablePath = Path.Combine(
+            AppContext.BaseDirectory,
+            "Tools",
+            "Cgos",
+            "KifuwarabeGo2026.Gui.Communication.Cgos.exe");
+        if (File.Exists(bundledExecutablePath))
+        {
+            return bundledExecutablePath;
+        }
+
 #if DEBUG
         const string buildConfiguration = "Debug";
 #else
