@@ -104,8 +104,8 @@ public sealed partial class GoScreenRenderer
     private void DrawBoardCoordinates(int boardSize, Vector2 start, float cell, Rectangle boardOuter)
     {
         var scale = boardSize >= 19 ? 0.34f : boardSize >= 13 ? 0.38f : 0.42f;
-        var topY = boardOuter.Y + 40f;
-        var leftX = boardOuter.X + 40f;
+        var topY = boardOuter.Y + 60f;
+        var leftX = boardOuter.X + 50f;
 
         for (var index = 0; index < boardSize; index++)
         {
@@ -126,14 +126,14 @@ public sealed partial class GoScreenRenderer
         var farShadow = Color.FromNonPremultiplied(0, 0, 0, 18);
         var nearShadow = Color.FromNonPremultiplied(0, 0, 0, 34);
         var innerEdge = red
-            ? Color.FromNonPremultiplied(92, 30, 28, 42)
-            : Color.FromNonPremultiplied(13, 75, 61, 42);
+            ? Color.FromNonPremultiplied(62, 33, 49, 42)
+            : Color.FromNonPremultiplied(24, 65, 61, 42);
         var body = red
-            ? Color.FromNonPremultiplied(154, 65, 57, 84)
-            : Color.FromNonPremultiplied(55, 150, 119, 82);
+            ? Color.FromNonPremultiplied(112, 67, 91, 84)
+            : Color.FromNonPremultiplied(62, 112, 105, 82);
         var highlight = red
-            ? Color.FromNonPremultiplied(255, 183, 146, 34)
-            : Color.FromNonPremultiplied(147, 244, 200, 32);
+            ? Color.FromNonPremultiplied(211, 151, 181, 34)
+            : Color.FromNonPremultiplied(147, 201, 190, 32);
 
         _spriteBatch.DrawString(_boardCoordinateFont, text, position + new Vector2(5, 6), farShadow, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
         _spriteBatch.DrawString(_boardCoordinateFont, text, position + new Vector2(3, 4), nearShadow, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
