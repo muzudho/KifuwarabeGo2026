@@ -92,7 +92,7 @@ public sealed partial class GoScreenRenderer
 
         if (observation.IsFinished)
         {
-            DrawText("RESULT", new Vector2(1144, 716), new Color(180, 195, 195), 0.5f);
+            DrawSectionTitle("RESULT", 1144, 716, new Color(80, 48, 38));
             DrawFittedText(observation.Result, new Rectangle(1144, 764, 668, 64), new Color(99, 223, 185), 0.56f);
             DrawCommandButton(CgosWatchingExportSgfButtonBounds, "SGF OUTPUT", false, mousePoint, scale: 0.4f);
             DrawCommandButton(CgosWatchingBackButtonBounds, "BACK TO CONNECTION", false, mousePoint, scale: 0.36f);

@@ -66,14 +66,14 @@ public sealed partial class GoScreenRenderer
         DrawInfoStrip(1144, 276, "BLACK", session.BlackStoneCount.ToString());
         DrawInfoStrip(1144, 348, "WHITE", session.WhiteStoneCount.ToString());
 
-        DrawText("STONE", new Vector2(1144, 454), new Color(180, 195, 195), 0.56f);
+        DrawSectionTitle("STONE", 1144, 454, new Color(76, 91, 126));
         DrawCommandButton(BoardEditingBlackButtonBounds, "BLACK", session.BoardEditingStone == GoStone.Black, mousePoint, scale: 0.5f);
         DrawCommandButton(BoardEditingWhiteButtonBounds, "WHITE", session.BoardEditingStone == GoStone.White, mousePoint, scale: 0.5f);
         DrawCommandButton(BoardEditingEraseButtonBounds, "ERASE", session.BoardEditingStone == GoStone.Empty, mousePoint, scale: 0.5f);
         DrawCommandButton(BoardEditingUndoButtonBounds, "UNDO", false, mousePoint, enabled: session.CanUndoBoardEditing, scale: 0.5f);
         DrawCommandButton(BoardEditingRedoButtonBounds, "REDO", false, mousePoint, enabled: session.CanRedoBoardEditing, scale: 0.5f);
 
-        DrawText("CURRENT POSITION", new Vector2(1144, 636), new Color(180, 195, 195), 0.52f);
+        DrawSectionTitle("CURRENT POSITION", 1144, 636, new Color(62, 112, 105));
         DrawStoneCountStrip(session, 676);
         DrawCommandButton(BoardEditingExportSgfButtonBounds, "SGF OUTPUT", false, mousePoint, scale: 0.52f);
         DrawCommandButton(BoardEditingDoneButtonBounds, "DONE", false, mousePoint);
@@ -98,7 +98,7 @@ public sealed partial class GoScreenRenderer
             session.WhiteAgehama,
             session.CurrentTurn);
 
-        DrawText("STEP", new Vector2(1144, 548), new Color(180, 195, 195), 0.56f);
+        DrawSectionTitle("STEP", 1144, 548, new Color(76, 91, 126));
         for (var i = 0; i < ReviewStepButtonValues.Length; i++)
         {
             var step = ReviewStepButtonValues[i];
@@ -109,7 +109,7 @@ public sealed partial class GoScreenRenderer
         DrawText("Push R key:", new Vector2(1144, 700), new Color(180, 195, 195), 0.46f);
         DrawReviewRenParseModeStrip(session, mousePoint);
 
-        DrawText("CURRENT POSITION", new Vector2(1144, 808), new Color(180, 195, 195), 0.52f);
+        DrawSectionTitle("CURRENT POSITION", 1144, 808, new Color(62, 112, 105));
         DrawStoneCountStrip(session, 842);
         DrawCommandButton(ReviewBackToRestButtonBounds, "BACK TO REST", false, mousePoint, scale: 0.44f);
         DrawCommandButton(ReviewDoneButtonBounds, "USE POSITION", false, mousePoint, scale: 0.52f);

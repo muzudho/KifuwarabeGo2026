@@ -15,6 +15,7 @@ public sealed partial class GoScreenRenderer
 {
     private const int GameOverValueX = 1328;
     private const int GameOverSecondValueX = 1560;
+    private const int PlayingPlayersY = 140;
 
     private readonly GraphicsDevice _graphicsDevice;
     private readonly SpriteBatch _spriteBatch;
@@ -243,33 +244,35 @@ public sealed partial class GoScreenRenderer
     private void DrawSetupSidePanel(GoAppSession session, Point mousePoint)
     {
         DrawCommandButton(SetupBackToTitleButtonBounds, "BACK TO TITLE", false, mousePoint, scale: 0.32f);
-        DrawText("CURRENT TOURNAMENT", new Vector2(1144, 112), new Color(180, 195, 195), 0.38f);
-        DrawFittedText(session.TournamentDisplayName, new Rectangle(1144, 138, 470, 30), Color.White, 0.42f);
+
+        DrawVerticalResultSection(new Rectangle(1144, 184, 668, 176), "TOURNAMENT", new Color(62, 112, 105));
         DrawCommandButton(TournamentRulesSelectButtonBounds, "TOURNAMENT SELECT", false, mousePoint, scale: 0.32f);
         DrawCommandButton(ImportSgfButtonBounds, session.HasReviewGameRecord ? "SGF CLEAR" : "SGF INPUT", false, mousePoint, scale: 0.42f);
+        DrawResultRow(new Rectangle(1164, 292, 628, 56), "RULES", session.TournamentDisplayName, new Color(39, 68, 65), Color.White);
 
-        DrawText("CURRENT RULES", new Vector2(1144, 260), new Color(180, 195, 195), 0.5f);
-        DrawInfoStrip(1144, 300, "RULE", session.RuleKind.ToString());
-        DrawInfoStrip(1144, 372, "BOARD", $"{session.BoardSize} x {session.BoardSize}");
-        DrawInfoStrip(1144, 444, "KOMI", FormatKomi(session.Komi));
-        DrawInfoStrip(1144, 516, "MOVES", FormatMoveLimit(session.MoveLimit));
+        DrawVerticalResultSection(new Rectangle(1144, 376, 668, 304), "RULES", new Color(66, 104, 116));
+        DrawInfoStrip(1144, 384, "RULE", session.RuleKind.ToString());
+        DrawInfoStrip(1144, 456, "BOARD", $"{session.BoardSize} x {session.BoardSize}");
+        DrawInfoStrip(1144, 528, "KOMI", FormatKomi(session.Komi));
+        DrawInfoStrip(1144, 600, "MOVES", FormatMoveLimit(session.MoveLimit));
 
+        DrawVerticalResultSection(new Rectangle(1144, 696, 668, 216), "PLAYERS", new Color(76, 91, 126));
         DrawSetupPlayerKindRow(GoStone.Black, session.BlackPlayerKind, mousePoint, BlackPlayerKindButtonY);
         DrawSetupPlayerSelector(session, GoStone.Black, mousePoint, BlackEngineButtonY);
         DrawSetupPlayerKindRow(GoStone.White, session.WhitePlayerKind, mousePoint, WhitePlayerKindButtonY);
         DrawSetupPlayerSelector(session, GoStone.White, mousePoint, WhiteEngineButtonY);
+
+        DrawVerticalResultSection(new Rectangle(1144, 916, 668, 76), "ACTION", new Color(91, 82, 105));
         DrawCommandButton(StartReviewingButtonBounds, "KIFU REVIEW", false, mousePoint, enabled: session.HasReviewGameRecord, scale: 0.32f);
         DrawCommandButton(StartBoardEditingButtonBounds, "EDIT BOARD", false, mousePoint, scale: 0.36f);
         DrawCommandButton(StartPlayingButtonBounds, "START", false, mousePoint, scale: 0.48f);
     }
     private void DrawPlayingSidePanel(GoAppSession session, Point mousePoint)
     {
-        DrawInfoStrip(1144, 132, "NEXT", GetMoveThinkingText(session));
-
-        DrawText("PLAYERS", new Vector2(1144, 204), new Color(180, 195, 195), 0.62f);
+        DrawVerticalResultSection(new Rectangle(1144, 132, 668, 200), "PLAYERS", new Color(76, 91, 126));
         DrawBothPlayersComponent(
             1144,
-            252,
+            PlayingPlayersY,
             668,
             session.GetLocalPlayerName(GoStone.Black),
             session.GetLocalPlayerName(GoStone.White),
@@ -280,10 +283,18 @@ public sealed partial class GoScreenRenderer
             session.WhiteAgehama,
             session.CurrentTurn,
             session.EngineErrorStone,
-            mousePoint);
+            mousePoint,
+            minimal: true);
 
-        DrawText("PURE GO SCORE", new Vector2(1144, 474), new Color(180, 195, 195), 0.52f);
-        DrawStoneCountStrip(session, 514);
+        DrawVerticalResultSection(new Rectangle(1144, 344, 668, 110), "FACTS", new Color(66, 104, 116));
+        DrawInfoStrip(1144, 363, "NEXT", GetMoveThinkingText(session));
+
+        DrawVerticalResultSection(new Rectangle(1144, 466, 668, 364), "CALCULATION", new Color(76, 91, 126));
+        DrawResultRow(new Rectangle(1164, 486, 628, 56), "METHOD", FormatRuleKind(session.RuleKind), new Color(39, 68, 65), Color.White);
+        DrawStoneCountStrip(session, 554, showLeader: false, minimal: true);
+        DrawCurrentStoneResultRow(new Rectangle(1164, 660, 628, 64), session);
+
+        DrawVerticalResultSection(new Rectangle(1144, 916, 668, 76), "ACTION", new Color(91, 82, 105));
 
         if (session.CanAcceptHumanMove)
         {
@@ -451,7 +462,6 @@ public sealed partial class GoScreenRenderer
     private void DrawSetupPlayerKindRow(GoStone stone, GoPlayerKind selectedKind, Point mousePoint, int y)
     {
         var rowBounds = new Rectangle(1144, y - 14, 668, 72);
-        DrawDataRowFrame(rowBounds);
         DrawIconStone(new Vector2(rowBounds.X + 36, rowBounds.Center.Y), 18, stone == GoStone.Black);
 
         var humanBounds = PlayerKindButtonBounds(0, y);
@@ -498,8 +508,7 @@ public sealed partial class GoScreenRenderer
         var bounds = HumanPlayerNameRowBounds(y);
         var active = session.ActiveHumanPlayerNameStone == stone;
         var text = active ? session.HumanPlayerNameDraft : session.GetHumanPlayerName(stone);
-        DrawDataRowFrame(bounds, active, bounds.Contains(mousePoint));
-        DrawFittedText("NAME", new Rectangle(bounds.X + 14, bounds.Y + 10, 136, bounds.Height - 20), new Color(158, 178, 178), 0.32f);
+        DrawResultLabel(new Rectangle(bounds.X + 20, bounds.Y - 6, bounds.Width - 40, bounds.Height + 12), "NAME", new Color(76, 91, 126));
         DrawFittedText(text, HumanPlayerNameTextBounds(y), Color.White, 0.42f);
         if (active) DrawTextBoxCaret(text, session.HumanPlayerNameCaretIndex, HumanPlayerNameTextBounds(y), 0.42f);
     }
@@ -508,13 +517,13 @@ public sealed partial class GoScreenRenderer
 
     private const int AddPanelBoardSizeButtonY = 452;
 
-    private const int BlackPlayerKindButtonY = 660;
+    private const int BlackPlayerKindButtonY = 710;
 
-    private const int WhitePlayerKindButtonY = 794;
+    private const int WhitePlayerKindButtonY = 814;
 
-    private const int BlackEngineButtonY = 724;
+    private const int BlackEngineButtonY = 768;
 
-    private const int WhiteEngineButtonY = 856;
+    private const int WhiteEngineButtonY = 872;
 
     private static Rectangle BoardSizeButtonBounds(int index, int y) => new(AddPanelControlX + index * 224, y, 188, 62);
     private static Rectangle PathTooltipBounds(Rectangle rowBounds)
@@ -544,13 +553,13 @@ public sealed partial class GoScreenRenderer
 
     private static Rectangle MoveLimitStepButtonBounds(int index) => new(AddPanelControlX + 444 + index * 112, 644, 92, 40);
 
-    private static Rectangle PlayerKindButtonBounds(int index, int y) => new(1220 + index * 290, y, 290, 52);
+    private static Rectangle PlayerKindButtonBounds(int index, int y) => new(GameOverValueX + index * 236, y, 236, 52);
 
-    private static Rectangle PlayerKindSegmentBounds(int y) => new(1220, y, 580, 52);
+    private static Rectangle PlayerKindSegmentBounds(int y) => new(GameOverValueX, y, 472, 52);
 
     private static Rectangle HumanPlayerNameRowBounds(int y) => new(1144, y - 4, 668, 44);
 
-    private static Rectangle HumanPlayerNameTextBounds(int y) => new(1308, y + 2, 488, 32);
+    private static Rectangle HumanPlayerNameTextBounds(int y) => new(GameOverValueX, y + 2, 468, 32);
     private static Rectangle StartPlayingButtonBounds => new(1658, 920, 154, 56);
 
     private static Rectangle ImportSgfButtonBounds => new(1492, 184, 320, 56);
@@ -649,6 +658,14 @@ public sealed partial class GoScreenRenderer
 
     private void DrawLabeledBrowseSelector(LabeledBrowseSelector selector, Point mousePoint)
     {
+        if (selector.Bounds.X == 1144 && selector.Bounds.Width == 668)
+        {
+            DrawResultLabel(new Rectangle(selector.Bounds.X + 20, selector.Bounds.Y - 6, selector.Bounds.Width - 40, selector.Bounds.Height + 12), selector.Label, new Color(76, 91, 126));
+            DrawFittedText(selector.Value, new Rectangle(GameOverValueX, selector.Bounds.Y + 6, selector.BrowseButtonBounds.X - GameOverValueX - 12, selector.Bounds.Height - 12), Color.White, 0.42f);
+            DrawCommandButton(selector.BrowseButtonBounds, selector.ButtonLabel, false, mousePoint, enabled: selector.Enabled, scale: 0.34f);
+            return;
+        }
+
         DrawDataRowFrame(selector.Bounds);
 
         DrawFittedText(selector.Label, selector.LabelBounds, new Color(158, 178, 178), 0.36f);
@@ -672,9 +689,15 @@ public sealed partial class GoScreenRenderer
     private void DrawInfoStrip(int x, int y, string label, string value)
     {
         var bounds = new Rectangle(x, y, 668, 72);
-        DrawDataRowFrame(bounds);
-        DrawUiLabel(UiLabel.InRow(label, bounds));
-        DrawText(value, new Vector2(x + 184, y + 20), Color.White, 0.62f);
+        DrawResultLabel(new Rectangle(x + 20, y, bounds.Width - 40, bounds.Height), label, new Color(62, 112, 105));
+        DrawFittedText(value, new Rectangle(GameOverValueX, y + 12, bounds.Right - GameOverValueX - 20, bounds.Height - 24), Color.White, 0.58f);
+    }
+
+    private void DrawSectionTitle(string title, int x, int y, Color accentColor)
+    {
+        FillRect(new Rectangle(x, y + 2, 3, 30), accentColor);
+        DrawText(title, new Vector2(x + 16, y), new Color(180, 195, 195), 0.5f);
+        DrawLine(new Vector2(x, y + 40), new Vector2(x + 668, y + 40), 1, new Color(58, 78, 86));
     }
 
     private void DrawVerticalResultSection(Rectangle bounds, string title, Color accentColor)
@@ -720,6 +743,20 @@ public sealed partial class GoScreenRenderer
         }
 
         DrawFittedText(result, new Rectangle(GameOverValueX, bounds.Y + 6, bounds.Right - GameOverValueX - 18, bounds.Height - 12), new Color(99, 223, 185), 0.58f);
+    }
+
+    private void DrawCurrentStoneResultRow(Rectangle bounds, GoAppSession session)
+    {
+        DrawResultLabel(bounds, "RESULT", new Color(80, 48, 38));
+
+        var difference = session.BlackStoneCount - session.WhiteStoneCount;
+        if (difference == 0)
+        {
+            DrawText("EVEN", new Vector2(GameOverValueX, bounds.Center.Y - 14), new Color(99, 223, 185), 0.5f);
+            return;
+        }
+
+        DrawStoneValue(GameOverValueX, bounds.Center.Y, $"+{Math.Abs(difference)}", difference > 0, new Color(99, 223, 185));
     }
 
     private void DrawStoneValue(int x, int centerY, string value, bool black, Color valueColor)

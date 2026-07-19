@@ -18,8 +18,8 @@ public sealed partial class GoScreenRenderer
         }
 
         var playerBounds = errorStone == GoStone.Black
-            ? new Rectangle(1144, 348, 668, 88)
-            : new Rectangle(1144, 444, 668, 88);
+            ? new Rectangle(1144, PlayingPlayersY, 668, 88)
+            : new Rectangle(1144, PlayingPlayersY + 96, 668, 88);
         return PlayerEngineErrorBounds(playerBounds).Contains(point);
     }
 
@@ -39,10 +39,11 @@ public sealed partial class GoScreenRenderer
         int whiteAgehama,
         GoStone currentTurn,
         GoStone? engineErrorStone = null,
-        Point? mousePoint = null)
+        Point? mousePoint = null,
+        bool minimal = false)
     {
-        DrawPlayerComponent(new Rectangle(x, y, width, 88), blackName, blackElapsed, mainTime, blackAgehama, black: true, currentTurn == GoStone.Black, engineErrorStone == GoStone.Black, mousePoint);
-        DrawPlayerComponent(new Rectangle(x, y + 96, width, 88), whiteName, whiteElapsed, mainTime, whiteAgehama, black: false, currentTurn == GoStone.White, engineErrorStone == GoStone.White, mousePoint);
+        DrawPlayerComponent(new Rectangle(x, y, width, 88), blackName, blackElapsed, mainTime, blackAgehama, black: true, currentTurn == GoStone.Black, engineErrorStone == GoStone.Black, mousePoint, minimal);
+        DrawPlayerComponent(new Rectangle(x, y + 96, width, 88), whiteName, whiteElapsed, mainTime, whiteAgehama, black: false, currentTurn == GoStone.White, engineErrorStone == GoStone.White, mousePoint, minimal);
     }
 
     private void DrawPlayerComponent(
@@ -54,13 +55,18 @@ public sealed partial class GoScreenRenderer
         bool black,
         bool active,
         bool engineError,
-        Point? mousePoint)
+        Point? mousePoint,
+        bool minimal)
     {
-        DrawDataRowFrame(bounds);
-        if (active) FillRect(new Rectangle(bounds.X, bounds.Y + 2, 6, bounds.Height - 4), new Color(99, 223, 185));
-        var nameBounds = new Rectangle(bounds.X + 62, bounds.Y + 5, bounds.Width - 78, 34);
-        var statusBounds = new Rectangle(bounds.X + 18, bounds.Y + 48, bounds.Width - 36, 30);
-        DrawStone(new Vector2(bounds.X + 31, bounds.Y + 23), 16, black);
+        if (!minimal) DrawDataRowFrame(bounds);
+        var activeX = minimal ? bounds.X + 34 : bounds.X;
+        if (active) FillRect(new Rectangle(activeX, bounds.Y + 2, 4, bounds.Height - 4), new Color(99, 223, 185));
+        var valueX = minimal ? GameOverValueX : bounds.X + 62;
+        var nameBounds = new Rectangle(valueX + (minimal ? 44 : 0), bounds.Y + 5, bounds.Right - valueX - 60, 34);
+        var statusX = valueX + (minimal ? 44 : -44);
+        var statusBounds = new Rectangle(statusX, bounds.Y + 48, bounds.Right - statusX - 18, 30);
+        if (minimal) DrawIconStone(new Vector2(valueX + 18, bounds.Y + 23), 16, black);
+        else DrawStone(new Vector2(bounds.X + 31, bounds.Y + 23), 16, black);
         DrawFittedText(playerName, nameBounds, Color.White, 0.5f);
 
         var elapsedText = elapsed is { } used ? FormatElapsedTime(used) : "--:--";
