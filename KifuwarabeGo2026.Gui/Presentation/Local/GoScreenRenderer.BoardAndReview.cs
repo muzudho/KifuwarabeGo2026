@@ -82,12 +82,18 @@ public sealed partial class GoScreenRenderer
 
     private void DrawReviewingSidePanel(GoAppSession session, Point mousePoint)
     {
-        DrawText("KIFU REVIEW", new Vector2(1144, 132), new Color(255, 230, 160), 0.9f);
-        DrawInfoStrip(1144, 204, "BOARD", $"{session.BoardSize} x {session.BoardSize}");
-        DrawInfoStrip(1144, 276, "MOVE", $"{session.ReviewMoveIndex} / {session.ReviewMoveCount}");
+        DrawText("KIFU REVIEW", new Vector2(1144, 136), new Color(255, 230, 160), 0.72f);
+        DrawCommandButton(ReviewBackToRestButtonBounds, "BACK TO HOME", false, mousePoint, scale: 0.32f);
+        DrawCommandButton(ReviewDoneButtonBounds, "USE POSITION", false, mousePoint, scale: 0.34f);
+
+        DrawVerticalResultSection(new Rectangle(1144, 204, 668, 120), "RECORD", new Color(66, 104, 116));
+        DrawResultRow(new Rectangle(1164, 208, 628, 52), "BOARD", $"{session.BoardSize} x {session.BoardSize}", new Color(62, 112, 105), Color.White);
+        DrawResultRow(new Rectangle(1164, 264, 628, 52), "MOVE", $"{session.ReviewMoveIndex} / {session.ReviewMoveCount}", new Color(62, 112, 105), Color.White);
+
+        DrawVerticalResultSection(new Rectangle(1144, 336, 668, 200), "PLAYERS", new Color(76, 91, 126));
         DrawBothPlayersComponent(
             1144,
-            340,
+            344,
             668,
             session.ReviewBlackPlayerName,
             session.ReviewWhitePlayerName,
@@ -96,9 +102,11 @@ public sealed partial class GoScreenRenderer
             null,
             session.BlackAgehama,
             session.WhiteAgehama,
-            session.CurrentTurn);
+            session.CurrentTurn,
+            minimal: true);
 
-        DrawSectionTitle("STEP", 1144, 548, new Color(76, 91, 126));
+        DrawVerticalResultSection(new Rectangle(1144, 548, 668, 244), "REVIEW", new Color(76, 91, 126));
+        DrawResultLabel(new Rectangle(1164, 544, 628, 36), "STEP", new Color(76, 91, 126));
         for (var i = 0; i < ReviewStepButtonValues.Length; i++)
         {
             var step = ReviewStepButtonValues[i];
@@ -106,13 +114,12 @@ public sealed partial class GoScreenRenderer
             DrawCommandButton(ReviewStepButtonBounds(i), step > 0 ? $"+{step}" : step.ToString(), false, mousePoint, enabled, 0.42f);
         }
 
-        DrawText("Push R key:", new Vector2(1144, 700), new Color(180, 195, 195), 0.46f);
-        DrawReviewRenParseModeStrip(session, mousePoint);
+        DrawResultRow(new Rectangle(1164, 692, 628, 52), "DISPLAY", FormatRenParseDisplayMode(session.RenParseDisplayMode), new Color(76, 91, 126), Color.White);
+        DrawFittedText("PRESS [R] TO CHANGE DISPLAY", new Rectangle(GameOverValueX, 752, 464, 30), new Color(147, 201, 190), 0.34f);
 
-        DrawSectionTitle("CURRENT POSITION", 1144, 808, new Color(62, 112, 105));
-        DrawStoneCountStrip(session, 842);
-        DrawCommandButton(ReviewBackToRestButtonBounds, "BACK TO REST", false, mousePoint, scale: 0.44f);
-        DrawCommandButton(ReviewDoneButtonBounds, "USE POSITION", false, mousePoint, scale: 0.52f);
+        DrawVerticalResultSection(new Rectangle(1144, 804, 668, 100), "CALCULATION", new Color(76, 91, 126));
+        DrawStoneCountStrip(session, 812, showLeader: true, minimal: true);
+
     }
 
 
@@ -147,49 +154,24 @@ public sealed partial class GoScreenRenderer
     private static readonly int[] ReviewStepButtonValues = [-50, -10, -1, 1, 10, 50];
 
 
-    private static Rectangle ReviewStepButtonBounds(int index) => new(1144 + index % 3 * 232, 584 + index / 3 * 58, 160, 44);
+    private static Rectangle ReviewStepButtonBounds(int index) => new(GameOverValueX + index % 3 * 156, 584 + index / 3 * 58, 140, 44);
 
 
-    private static readonly RenParseDisplayMode[] ReviewRenParseDisplayModes =
-    [
-        RenParseDisplayMode.Overlay,
-        RenParseDisplayMode.Graph,
-        RenParseDisplayMode.GraphStep2,
-        RenParseDisplayMode.Eye,
-    ];
+    private static Rectangle ReviewDoneButtonBounds => new(1648, 120, 164, 52);
 
 
-    private static readonly string[] ReviewRenParseDisplayModeLabels =
-    [
-        "Ren Number",
-        "Ren Rect",
-        "Ren Graph",
-        "Eye",
-    ];
+    private static Rectangle ReviewBackToRestButtonBounds => new(1480, 120, 156, 52);
 
 
-    private static Rectangle ReviewRenParseDisplayModeBounds(int index) => new(1144 + index * 166, 742, 150, 46);
-
-
-    private static Rectangle ReviewDoneButtonBounds => new(1492, 920, 320, 56);
-
-
-    private static Rectangle ReviewBackToRestButtonBounds => new(1144, 920, 320, 56);
-
-
-    private void DrawReviewRenParseModeStrip(GoAppSession session, Point mousePoint)
+    private static string FormatRenParseDisplayMode(RenParseDisplayMode mode) => mode switch
     {
-        for (var i = 0; i < ReviewRenParseDisplayModes.Length; i++)
-        {
-            DrawCommandButton(
-                ReviewRenParseDisplayModeBounds(i),
-                ReviewRenParseDisplayModeLabels[i],
-                session.RenParseDisplayMode == ReviewRenParseDisplayModes[i],
-                mousePoint,
-                enabled: true,
-                scale: 0.28f);
-        }
-    }
+        RenParseDisplayMode.Off => "OFF",
+        RenParseDisplayMode.Overlay => "REN NUMBER",
+        RenParseDisplayMode.Graph => "REN RECT",
+        RenParseDisplayMode.GraphStep2 => "REN GRAPH",
+        RenParseDisplayMode.Eye => "EYE",
+        _ => mode.ToString().ToUpperInvariant(),
+    };
 
 
     private void DrawBoardEditingHoverStone(GoAppSession session, Point mousePoint, float cell)

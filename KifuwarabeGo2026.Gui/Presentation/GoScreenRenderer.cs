@@ -725,7 +725,8 @@ public sealed partial class GoScreenRenderer
 
     private void DrawResultLabel(Rectangle bounds, string label, Color accentColor)
     {
-        FillRect(new Rectangle(bounds.X + 14, bounds.Y + 12, 3, bounds.Height - 24), accentColor);
+        const int accentHeight = 28;
+        FillRect(new Rectangle(bounds.X + 14, bounds.Center.Y - accentHeight / 2, 3, accentHeight), accentColor);
         DrawText(label, new Vector2(bounds.X + 30, bounds.Y + 14), new Color(180, 195, 195), 0.38f);
     }
 
