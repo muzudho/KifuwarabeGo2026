@@ -1,15 +1,12 @@
 namespace KifuwarabeGo2026.Gui.Presentation;
 
 using KifuwarabeGo2026.Gui.Application;
-using KifuwarabeGo2026.Gui.Application.Cgos.ConnectionTarget;
 using KifuwarabeGo2026.Gui.Domain;
 using KifuwarabeGo2026.Gui.Presentation.Local.Resting.TournamentRule;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using System;
-using System.Collections.Generic;
-using System.IO;
 
 /// <summary>
 /// ［画面描画］の共通処理

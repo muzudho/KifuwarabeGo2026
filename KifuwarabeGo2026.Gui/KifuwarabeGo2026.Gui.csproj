@@ -47,6 +47,7 @@
     <Folder Include="Application\Shared\" />
     <Folder Include="Docs\企画\" />
     <Folder Include="Presentation\Cgos\Shared\" />
+    <Folder Include="Presentation\LocalResting\TournamentRule\" />
     <Folder Include="Presentation\Local\Resting\EngineSelect\" />
     <Folder Include="Presentation\Shared\Board\Analisys\" />
     <Folder Include="Infrastructure\" />

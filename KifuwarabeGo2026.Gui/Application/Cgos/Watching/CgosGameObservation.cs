@@ -1,8 +1,8 @@
 namespace KifuwarabeGo2026.Gui.Application.Cgos.Watching;
 
+using KifuwarabeGo2026.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.Gui.Domain;
 using KifuwarabeGo2026.Gui.Gtp;
-using KifuwarabeGo2026.Gui.Application.Local.Playing;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
