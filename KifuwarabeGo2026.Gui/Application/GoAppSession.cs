@@ -1706,6 +1706,30 @@ public sealed class GoAppSession
             ? value
             : value[..GtpEngineGuiOptions.MaximumTextLength];
 
+    public void ToggleGtpEngineButtonOption(GtpEngineGuiOptionSpec option)
+    {
+        var queued = bool.TryParse(GetGtpEngineGuiOptionDraft(option), out var value) && value;
+        GtpEngineGuiOptionsDialogDraft[option.Id] = (!queued).ToString().ToLowerInvariant();
+    }
+
+    /// <summary>次回対局用button予約を、使用したエンジンプロファイルから取り除きます。</summary>
+    public bool ConsumeQueuedGtpEngineButtonsForComputerPlayers()
+    {
+        var consumed = false;
+        foreach (var stone in new[] { GoStone.Black, GoStone.White })
+        {
+            if (GetPlayerKind(stone) != GoPlayerKind.Computer) continue;
+            var profile = GetGtpEngineProfile(stone);
+            foreach (var option in GtpEngineGuiOptions.Specs.Where(option => option.Type == "button"))
+            {
+                consumed |= bool.TryParse(profile.GuiOptions.GetValueOrDefault(option.Id), out var queued) && queued;
+                profile.GuiOptions[option.Id] = "false";
+            }
+        }
+
+        return consumed;
+    }
+
     public void SaveGtpEngineEditDraft(GtpEngineProfile profile)
     {
         if (IsGtpEngineAddPanelMode)

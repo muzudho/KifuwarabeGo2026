@@ -20,16 +20,18 @@ public sealed class PlayingScene : IDisposable
 {
     private readonly GoAppSession _session;
     private readonly Action<float, float, float> _playPlaceStoneSound;
+    private readonly Action _saveGtpEngineProfiles;
     private readonly Dictionary<GoStone, GtpEngineClient> _gtpEngines = new();
     private readonly Queue<Func<CancellationToken, Task<EngineCommandResult>>> _engineCommandQueue = new();
     private CancellationTokenSource _engineCancellation = new();
     private Task<EngineCommandCompletion>? _pendingEngineCommand;
     private int _engineCommandGeneration;
 
-    public PlayingScene(GoAppSession session, Action<float, float, float> playPlaceStoneSound)
+    public PlayingScene(GoAppSession session, Action<float, float, float> playPlaceStoneSound, Action saveGtpEngineProfiles)
     {
         _session = session;
         _playPlaceStoneSound = playPlaceStoneSound;
+        _saveGtpEngineProfiles = saveGtpEngineProfiles;
     }
 
     public void Update()
@@ -131,6 +133,8 @@ public sealed class PlayingScene : IDisposable
         EnsureGtpEngineForComputerPlayer(GoStone.White);
 
         var enginesToStart = GetEngineSnapshot();
+        if (_session.ConsumeQueuedGtpEngineButtonsForComputerPlayers())
+            _saveGtpEngineProfiles();
         BeginEngineCommand(async cancellationToken =>
         {
             foreach (var engine in enginesToStart)
@@ -472,7 +476,7 @@ public sealed class PlayingScene : IDisposable
             profile.Arguments,
             profile.EnableGtpLog,
             logPrefix,
-            profile.GuiOptions);
+            new Dictionary<string, string>(profile.GuiOptions));
     }
 
     private sealed record EngineCommandCompletion(EngineCommandResult Result, int Generation);

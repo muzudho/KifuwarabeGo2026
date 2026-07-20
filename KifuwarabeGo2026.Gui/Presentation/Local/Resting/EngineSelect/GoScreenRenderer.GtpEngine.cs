@@ -93,7 +93,7 @@ public sealed partial class GoScreenRenderer
             var index = start + slot;
             if (index >= GtpEngineGuiOptions.Specs.Length) break;
             var option = GtpEngineGuiOptions.Specs[index];
-            if (GtpEngineGuiOptionDefaultButtonBounds(slot).Contains(point)) return (index, 3);
+            if (option.Type != "button" && GtpEngineGuiOptionDefaultButtonBounds(slot).Contains(point)) return (index, 3);
             var primaryBounds = option.Type == "spin" ? GtpEngineGuiOptionPrimaryButtonBounds(slot) : GtpEngineGuiOptionWideButtonBounds(slot);
             if (primaryBounds.Contains(point)) return (index, 0);
             if (GtpEngineGuiOptionSecondaryButtonBounds(slot).Contains(point)) return (index, 1);
@@ -345,11 +345,17 @@ public sealed partial class GoScreenRenderer
         DrawDataRowFrame(row);
         DrawUiLabel(UiLabel.InCompactRow(option.Label, row));
         var valueBounds = option.Type == "spin" ? GtpEngineGuiOptionSpinValueBounds(slot) : GtpEngineGuiOptionValueBounds(slot);
-        var rowValue = option.Type is "string" or "filename" ? AbbreviateOptionValue(value, 28) : value;
+        var rowValue = option.Type switch
+        {
+            "button" => "Runs before next game",
+            "string" or "filename" => AbbreviateOptionValue(value, 28),
+            _ => value,
+        };
         DrawDynamicOptionText(string.IsNullOrEmpty(rowValue) ? "<empty>" : rowValue, valueBounds, Color.White, 0.34f);
         if (option.Type == "spin" && option.Min is { } min && option.Max is { } max)
             DrawFittedText($"{min} .. {max}", GtpEngineGuiOptionRangeBounds(slot), new Color(118, 139, 143), 0.24f);
-        DrawCommandButton(GtpEngineGuiOptionDefaultButtonBounds(slot), "DEFAULT", false, mousePoint, scale: 0.3f);
+        if (option.Type != "button")
+            DrawCommandButton(GtpEngineGuiOptionDefaultButtonBounds(slot), "DEFAULT", false, mousePoint, scale: 0.3f);
         switch (option.Type)
         {
             case "check":
@@ -367,6 +373,10 @@ public sealed partial class GoScreenRenderer
                 break;
             case "filename":
                 DrawCommandButton(GtpEngineGuiOptionWideButtonBounds(slot), "REF", false, mousePoint, scale: 0.3f);
+                break;
+            case "button":
+                var queued = bool.TryParse(value, out var isQueued) && isQueued;
+                DrawCommandButton(GtpEngineGuiOptionWideButtonBounds(slot), queued ? "QUEUED" : "EXECUTE", queued, mousePoint, scale: queued ? 0.27f : 0.25f);
                 break;
         }
     }

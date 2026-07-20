@@ -244,6 +244,7 @@ internal sealed class GtpEngine
             new { id = "RandomSeed", label = "RandomSeed", type = "spin", @default = "0", value = _randomSeed.ToString(), min = (int?)0, max = int.MaxValue, vars = Array.Empty<string>() },
             new { id = "EngineTag", label = "EngineTag", type = "string", @default = "", value = _engineTag, min = (int?)null, max = (int?)null, vars = Array.Empty<string>() },
             new { id = "DebugLogFile", label = "DebugLogFile", type = "filename", @default = "", value = _debugLogFile, min = (int?)null, max = (int?)null, vars = Array.Empty<string>() },
+            new { id = "ClearCache", label = "ClearCache", type = "button", @default = "", value = "", min = (int?)null, max = (int?)null, vars = Array.Empty<string>() },
         },
     });
 
@@ -305,6 +306,11 @@ internal sealed class GtpEngine
         }
         if (tokens[1].Equals("EngineTag", StringComparison.OrdinalIgnoreCase)) { _engineTag = value; return; }
         if (tokens[1].Equals("DebugLogFile", StringComparison.OrdinalIgnoreCase)) { _debugLogFile = value; return; }
+        if (tokens[1].Equals("ClearCache", StringComparison.OrdinalIgnoreCase))
+        {
+            if (tokens.Length != 2) error = "option ClearCache does not take a value";
+            return;
+        }
         error = "unknown option: " + tokens[1];
     }
 

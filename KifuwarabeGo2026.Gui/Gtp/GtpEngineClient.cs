@@ -170,6 +170,12 @@ public sealed class GtpEngineClient : IAsyncDisposable
         {
             var definition = document.Options.FirstOrDefault(option => option.Id.Equals(savedOption.Key, StringComparison.Ordinal));
             if (definition is null) continue;
+            if (definition.Type.Equals("button", StringComparison.OrdinalIgnoreCase))
+            {
+                if (bool.TryParse(savedOption.Value, out var queued) && queued)
+                    await SendCommandExpectSuccessAsync($"gui_setoption {savedOption.Key}", cancellationToken);
+                continue;
+            }
             if (definition.Type.Equals("combo", StringComparison.OrdinalIgnoreCase) &&
                 !definition.Vars.Contains(savedOption.Value, StringComparer.Ordinal))
                 continue;

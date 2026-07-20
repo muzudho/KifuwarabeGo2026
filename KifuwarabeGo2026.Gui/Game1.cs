@@ -62,7 +62,10 @@ public class Game1 : Game
         _session.SetGtpEngineProfiles(_gtpEngineCatalog.Profiles);
         _session.SetCgosConnectionProfiles(_cgosConnectionCatalog.Profiles);
         _tournamentRulesSetting = new TournamentRulesSetting(_session, _tournamentRulesCatalog, OpenTournamentRulesSelectionDialog, BrowseTournamentRulesFilePath);
-        _playingScene = new PlayingScene(_session, PlayPlaceStoneSound);
+        _playingScene = new PlayingScene(
+            _session,
+            PlayPlaceStoneSound,
+            () => _gtpEngineCatalog.Save(_session.GtpEngineProfiles));
 
         _graphics = new GraphicsDeviceManager(this);
         _graphics.PreferredBackBufferWidth = VirtualScreen.Width;
@@ -1476,6 +1479,9 @@ public class Game1 : Game
                         break;
                     case "filename":
                         BrowseGtpEngineFilenameOption(option);
+                        break;
+                    case "button":
+                        _session.ToggleGtpEngineButtonOption(option);
                         break;
                 }
                 return true;
