@@ -675,6 +675,7 @@ internal sealed class CgosAdminClient
 
 internal sealed class CgosClient
 {
+    private readonly HashSet<string> _consumedButtonOptions = new(StringComparer.Ordinal);
     private const string ClientId = "e1";
 
     private readonly CgosClientOptions _options;
@@ -856,9 +857,24 @@ internal sealed class CgosClient
 
         foreach (var option in _options.EngineOptions)
         {
-            var isDeclared = definitions.EnumerateArray().Any(definition =>
-                definition.TryGetProperty("id", out var id) && id.GetString() == option.Key);
-            if (!isDeclared) continue;
+            var definition = definitions.EnumerateArray().FirstOrDefault(candidate =>
+                candidate.TryGetProperty("id", out var id) && id.GetString() == option.Key);
+            if (definition.ValueKind == System.Text.Json.JsonValueKind.Undefined) continue;
+
+            var type = definition.TryGetProperty("type", out var typeProperty)
+                ? typeProperty.GetString()
+                : null;
+            if (type?.Equals("button", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                if (bool.TryParse(option.Value, out var queued) &&
+                    queued &&
+                    _consumedButtonOptions.Add(option.Key))
+                {
+                    await engine.CommandAsync($"gui_setoption {option.Key}", cancellationToken);
+                }
+                continue;
+            }
+
             await engine.CommandAsync($"gui_setoption {option.Key} {option.Value}", cancellationToken);
         }
     }
