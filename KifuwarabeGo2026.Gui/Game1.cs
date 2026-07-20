@@ -26,6 +26,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using System.Threading.Tasks;
 
 public class Game1 : Game
 {
@@ -351,7 +352,7 @@ public class Game1 : Game
                 {
                     if (GoScreenRenderer.GetCgosConnectionStartBackButtonHit(point))
                     {
-                        if (_session.IsAnyCgosProcessRunning) DisconnectAllCgosProcesses();
+                        if (_session.IsAnyCgosProcessRunning) _ = DisconnectAllCgosProcessesAsync();
                         _session.ReturnToCgosConnectionProfiles();
                     }
                     else if (GoScreenRenderer.GetCgosConnectionEngineSelectButtonHit(point, _session) is { } engineStone)
@@ -770,8 +771,8 @@ public class Game1 : Game
         var process = stone == GoStone.Black ? _cgosBlackConnectionProcess : _cgosWhiteConnectionProcess;
         if (process.IsRunning)
         {
-            process.Stop();
-            SetCgosPlayerConnectionProcessStatus(stone, "STOPPED", false, process);
+            _ = StopCgosPlayerConnectionProcessAsync(stone, process);
+            SetCgosPlayerConnectionProcessStatus(stone, "STOPPING", true, process);
             return;
         }
 
@@ -846,8 +847,8 @@ public class Game1 : Game
     {
         if (_cgosAdminProcess.IsRunning)
         {
-            _cgosAdminProcess.Stop();
-            _session.SetCgosAdminProcessStatus("ADMIN STOPPED", false, _cgosAdminProcess.LogDirectory, _cgosAdminProcess.GetRecentOutput());
+            _ = StopCgosAdminProcessAsync();
+            _session.SetCgosAdminProcessStatus("ADMIN STOPPING", true, _cgosAdminProcess.LogDirectory, _cgosAdminProcess.GetRecentOutput());
             return;
         }
 
@@ -865,11 +866,38 @@ public class Game1 : Game
     /// <summary>
     /// CGOS の Admin・プレイヤー1・プレイヤー2をすべて切断します。
     /// </summary>
-    private void DisconnectAllCgosProcesses()
+    private async Task StopCgosPlayerConnectionProcessAsync(GoStone stone, CgosConnectionProcess process)
     {
-        _cgosAdminProcess.Stop();
-        _cgosBlackConnectionProcess.Stop();
-        _cgosWhiteConnectionProcess.Stop();
+        try
+        {
+            await process.StopAsync();
+            SetCgosPlayerConnectionProcessStatus(stone, "STOPPED", false, process);
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or IOException or System.ComponentModel.Win32Exception)
+        {
+            SetCgosPlayerConnectionProcessStatus(stone, "ERROR: " + ex.Message, process.IsRunning, process);
+        }
+    }
+
+    private async Task StopCgosAdminProcessAsync()
+    {
+        try
+        {
+            await _cgosAdminProcess.StopAsync();
+            _session.SetCgosAdminProcessStatus("ADMIN STOPPED", false, _cgosAdminProcess.LogDirectory, _cgosAdminProcess.GetRecentOutput());
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or IOException or System.ComponentModel.Win32Exception)
+        {
+            _session.SetCgosAdminProcessStatus("ERROR: " + ex.Message, _cgosAdminProcess.IsRunning, _cgosAdminProcess.LogDirectory, _cgosAdminProcess.GetRecentOutput());
+        }
+    }
+
+    private async Task DisconnectAllCgosProcessesAsync()
+    {
+        await Task.WhenAll(
+            _cgosAdminProcess.StopAsync(),
+            _cgosBlackConnectionProcess.StopAsync(),
+            _cgosWhiteConnectionProcess.StopAsync());
         _session.SetCgosAdminProcessStatus("ADMIN STOPPED", false, _cgosAdminProcess.LogDirectory, _cgosAdminProcess.GetRecentOutput());
         _session.SetCgosBlackConnectionProcessStatus("STOPPED", false, _cgosBlackConnectionProcess.LogDirectory, _cgosBlackConnectionProcess.GetRecentOutput());
         _session.SetCgosWhiteConnectionProcessStatus("STOPPED", false, _cgosWhiteConnectionProcess.LogDirectory, _cgosWhiteConnectionProcess.GetRecentOutput());

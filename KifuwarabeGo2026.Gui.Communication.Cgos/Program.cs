@@ -535,13 +535,16 @@ internal sealed class CgosConnectionSession
         }
         finally
         {
-            try
+            if (!cancellationToken.IsCancellationRequested)
             {
-                await SendQuitAsync();
-            }
-            catch (Exception ex)
-            {
-                _log("# Could not send CGOS quit: " + ex.Message);
+                try
+                {
+                    await SendQuitAsync();
+                }
+                catch (Exception ex)
+                {
+                    _log("# Could not send CGOS quit: " + ex.Message);
+                }
             }
 
             _writer = null;

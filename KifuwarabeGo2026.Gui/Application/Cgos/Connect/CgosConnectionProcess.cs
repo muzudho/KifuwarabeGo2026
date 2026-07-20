@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 /// <summary>
 /// ［ＣＧＯＳへの接続画面］の処理
@@ -24,8 +25,11 @@ public sealed class CgosConnectionProcess : IDisposable
     private string _status = "READY";
     private int _gtpResponseWaitCount;
     private DateTime? _gtpResponseWaitStartedAt;
+    private bool _isStopping;
 
-    public bool IsRunning => _processes.Any(process => !process.HasExited);
+    public bool IsRunning => _isStopping || _processes.Any(process => !process.HasExited);
+
+    public bool IsStopping => _isStopping;
 
     public string LogDirectory { get; private set; } = "";
 
@@ -137,7 +141,7 @@ public sealed class CgosConnectionProcess : IDisposable
         }
         catch
         {
-            Stop();
+            StopImmediately();
             throw;
         }
 
@@ -306,39 +310,96 @@ public sealed class CgosConnectionProcess : IDisposable
         return _status;
     }
 
-    public void Stop()
+    public async Task StopAsync()
     {
-        if (_processes.Count == 0)
+        if (_isStopping || _processes.Count == 0)
         {
             return;
         }
 
-        foreach (var process in _processes)
+        _isStopping = true;
+        _status = "STOPPING";
+        AddOutput("# Stop requested.");
+        var processes = _processes.ToArray();
+        try
         {
-            if (process.HasExited)
+            foreach (var process in processes)
             {
-                continue;
+                RequestStop(process);
             }
 
+            await Task.WhenAll(processes.Select(WaitForExitOrKillAsync));
+            DisposeProcess();
+            _status = "STOPPED";
+        }
+        finally
+        {
+            _isStopping = false;
+        }
+    }
+
+    private static void RequestStop(Process process)
+    {
+        if (process.HasExited)
+        {
+            return;
+        }
+
+        try
+        {
+            process.StandardInput.WriteLine("quit");
+            process.StandardInput.Flush();
+        }
+        catch (InvalidOperationException)
+        {
+        }
+        catch (IOException)
+        {
+        }
+    }
+
+    private static async Task WaitForExitOrKillAsync(Process process)
+    {
+        if (process.HasExited)
+        {
+            return;
+        }
+
+        try
+        {
+            await process.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(3));
+        }
+        catch (TimeoutException)
+        {
             try
             {
-                process.StandardInput.WriteLine("quit");
-                process.StandardInput.Flush();
+                if (!process.HasExited)
+                {
+                    process.Kill(entireProcessTree: true);
+                }
             }
             catch (InvalidOperationException)
             {
             }
-            catch (IOException)
-            {
-            }
+        }
+    }
 
-            if (!process.WaitForExit(3000))
+    private void StopImmediately()
+    {
+        foreach (var process in _processes)
+        {
+            try
             {
-                process.Kill(entireProcessTree: true);
+                if (!process.HasExited)
+                {
+                    process.Kill(entireProcessTree: true);
+                }
+            }
+            catch (InvalidOperationException)
+            {
             }
         }
 
-        AddOutput("# Stop requested.");
         _status = "STOPPED";
         DisposeProcess();
     }
@@ -393,7 +454,7 @@ public sealed class CgosConnectionProcess : IDisposable
 
     public void Dispose()
     {
-        Stop();
+        StopImmediately();
     }
 
     private void DisposeProcess()
