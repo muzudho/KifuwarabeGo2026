@@ -4,13 +4,18 @@ using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Shared.Domain;
 using KifuwarabeGo2026.Gui.Presentation.Local.Resting.TournamentRule;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 
 /// <summary>
 /// ［エンジン選択画面］
 /// </summary>
 public sealed partial class GoScreenRenderer
 {
+    private readonly Dictionary<string, Texture2D> _dynamicOptionTextTextures = [];
 
     public int GetGtpEngineEditPanelCaretIndex(Point point, GtpEngineProfileEditField field, string text) =>
         GetTextBoxCaretIndex(point.X, text, GtpEngineEditPanelFieldTextBounds(field), 0.42f);
@@ -88,6 +93,7 @@ public sealed partial class GoScreenRenderer
             var index = start + slot;
             if (index >= GtpEngineGuiOptions.Specs.Length) break;
             var option = GtpEngineGuiOptions.Specs[index];
+            if (GtpEngineGuiOptionDefaultButtonBounds(slot).Contains(point)) return (index, 3);
             var primaryBounds = option.Type == "spin" ? GtpEngineGuiOptionPrimaryButtonBounds(slot) : GtpEngineGuiOptionWideButtonBounds(slot);
             if (primaryBounds.Contains(point)) return (index, 0);
             if (GtpEngineGuiOptionSecondaryButtonBounds(slot).Contains(point)) return (index, 1);
@@ -336,7 +342,11 @@ public sealed partial class GoScreenRenderer
         var value = session.GetGtpEngineGuiOptionDraft(option);
         DrawDataRowFrame(row);
         DrawUiLabel(UiLabel.InCompactRow(option.Label, row));
-        DrawFittedText(string.IsNullOrEmpty(value) ? "<empty>" : value, GtpEngineGuiOptionValueBounds(slot), Color.White, 0.34f);
+        var displayValue = option.Type == "spin" && option.Min is { } min && option.Max is { } max
+            ? $"{value}  [{min} .. {max}]"
+            : string.IsNullOrEmpty(value) ? "<empty>" : value;
+        DrawDynamicOptionText(displayValue, GtpEngineGuiOptionValueBounds(slot), Color.White, 0.34f);
+        DrawCommandButton(GtpEngineGuiOptionDefaultButtonBounds(slot), "DEFAULT", false, mousePoint, scale: 0.2f);
         switch (option.Type)
         {
             case "check":
@@ -356,6 +366,36 @@ public sealed partial class GoScreenRenderer
                 DrawCommandButton(GtpEngineGuiOptionWideButtonBounds(slot), "REF", false, mousePoint, scale: 0.3f);
                 break;
         }
+    }
+
+    private void DrawDynamicOptionText(string text, Rectangle bounds, Color color, float scale)
+    {
+        if (text.All(character => _font.Characters.Contains(character)))
+        {
+            DrawFittedText(text, bounds, color, scale);
+            return;
+        }
+
+        if (!_dynamicOptionTextTextures.TryGetValue(text, out var texture))
+        {
+            using var font = new System.Drawing.Font("Meiryo", 28, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Pixel);
+            var measured = System.Windows.Forms.TextRenderer.MeasureText(text, font, new System.Drawing.Size(int.MaxValue, int.MaxValue), System.Windows.Forms.TextFormatFlags.NoPadding);
+            using var bitmap = new System.Drawing.Bitmap(Math.Max(1, measured.Width), Math.Max(1, measured.Height), System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+            using (var graphics = System.Drawing.Graphics.FromImage(bitmap))
+            {
+                graphics.Clear(System.Drawing.Color.Transparent);
+                System.Windows.Forms.TextRenderer.DrawText(graphics, text, font, new System.Drawing.Point(0, 0), System.Drawing.Color.White, System.Windows.Forms.TextFormatFlags.NoPadding);
+            }
+            using var stream = new MemoryStream();
+            bitmap.Save(stream, System.Drawing.Imaging.ImageFormat.Png);
+            stream.Position = 0;
+            texture = Texture2D.FromStream(_graphicsDevice, stream);
+            _dynamicOptionTextTextures[text] = texture;
+        }
+
+        var targetHeight = MathF.Min(bounds.Height, _font.LineSpacing * scale);
+        var fittedScale = MathF.Min(bounds.Width / (float)texture.Width, targetHeight / texture.Height);
+        _spriteBatch.Draw(texture, new Rectangle(bounds.X, bounds.Y + (bounds.Height - (int)(texture.Height * fittedScale)) / 2, (int)(texture.Width * fittedScale), (int)(texture.Height * fittedScale)), color);
     }
 
     private void DrawGtpEngineRandomMoveSelectionDialog(GoAppSession session, Point mousePoint)
@@ -587,7 +627,8 @@ public sealed partial class GoScreenRenderer
 
 
     private static Rectangle GtpEngineGuiOptionRowBounds(int slot) => new(GtpEngineGuiOptionsDialogBounds.X + 56, GtpEngineGuiOptionsDialogBounds.Y + 150 + slot * 68, GtpEngineGuiOptionsDialogBounds.Width - 112, 60);
-    private static Rectangle GtpEngineGuiOptionValueBounds(int slot) => new(GtpEngineGuiOptionRowBounds(slot).X + 166, GtpEngineGuiOptionRowBounds(slot).Y + 8, 300, 44);
+    private static Rectangle GtpEngineGuiOptionValueBounds(int slot) => new(GtpEngineGuiOptionRowBounds(slot).X + 166, GtpEngineGuiOptionRowBounds(slot).Y + 8, 252, 44);
+    private static Rectangle GtpEngineGuiOptionDefaultButtonBounds(int slot) => new(GtpEngineGuiOptionRowBounds(slot).Right - 220, GtpEngineGuiOptionRowBounds(slot).Y + 10, 82, 40);
     private static Rectangle GtpEngineGuiOptionPrimaryButtonBounds(int slot) => new(GtpEngineGuiOptionRowBounds(slot).Right - 126, GtpEngineGuiOptionRowBounds(slot).Y + 10, 54, 40);
     private static Rectangle GtpEngineGuiOptionSecondaryButtonBounds(int slot) => new(GtpEngineGuiOptionRowBounds(slot).Right - 66, GtpEngineGuiOptionRowBounds(slot).Y + 10, 54, 40);
     private static Rectangle GtpEngineGuiOptionWideButtonBounds(int slot) => new(GtpEngineGuiOptionRowBounds(slot).Right - 126, GtpEngineGuiOptionRowBounds(slot).Y + 10, 114, 40);

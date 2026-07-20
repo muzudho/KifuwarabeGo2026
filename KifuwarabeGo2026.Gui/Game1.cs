@@ -1452,6 +1452,11 @@ public class Game1 : Game
             if (GoScreenRenderer.GetGtpEngineGuiOptionControlHit(point, _session) is { } optionHit)
             {
                 var option = GtpEngineGuiOptions.Specs[optionHit.Index];
+                if (optionHit.Action == 3)
+                {
+                    _session.SetGtpEngineGuiOptionDraft(option, option.DefaultValue);
+                    return true;
+                }
                 switch (option.Type)
                 {
                     case "check":
