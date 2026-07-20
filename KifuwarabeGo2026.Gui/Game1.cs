@@ -285,6 +285,33 @@ public class Game1 : Game
             // ［CGOS　＞　観戦画面］マウス入力
             if (_session.UseKind == GoAppUseKind.CgosClient)
             {
+                if (_session.IsCgosAdminPlayerSelectionDialogOpen)
+                {
+                    if (GoScreenRenderer.GetCgosAdminPlayerDialogCancelButtonHit(point))
+                    {
+                        _session.CancelCgosAdminPlayerSelectionDialog();
+                    }
+                    else if (GoScreenRenderer.GetCgosAdminPlayerDialogSelectButtonHit(point))
+                    {
+                        _session.CommitCgosAdminPlayerSelectionDialog();
+                    }
+                    else if (GoScreenRenderer.GetCgosAdminPlayerDialogPreviousPageButtonHit(point))
+                    {
+                        _session.MoveCgosAdminPlayerSelectionPage(-1);
+                    }
+                    else if (GoScreenRenderer.GetCgosAdminPlayerDialogNextPageButtonHit(point))
+                    {
+                        _session.MoveCgosAdminPlayerSelectionPage(1);
+                    }
+                    else if (GoScreenRenderer.GetCgosAdminPlayerDialogItemHit(point, _session) is { } playerIndex)
+                    {
+                        _session.SelectCgosAdminPlayerDialogItem(playerIndex);
+                    }
+
+                    _previousMouse = mouse;
+                    return;
+                }
+
                 if (TryHandleGtpEngineEditPanelClick(point) || TryHandleGtpEngineSelectionDialogClick(point))
                 {
                     _previousMouse = mouse;
@@ -339,21 +366,13 @@ public class Game1 : Game
                     {
                         SendCgosAdminCommand("who");
                     }
-                    else if (GoScreenRenderer.GetCgosAdminWhitePlayerPreviousButtonHit(point))
+                    else if (GoScreenRenderer.GetCgosAdminWhitePlayerSelectButtonHit(point))
                     {
-                        _session.MoveCgosAdminWhitePlayerSelection(-1);
+                        _session.OpenCgosAdminPlayerSelectionDialog(GoStone.White);
                     }
-                    else if (GoScreenRenderer.GetCgosAdminWhitePlayerNextButtonHit(point))
+                    else if (GoScreenRenderer.GetCgosAdminBlackPlayerSelectButtonHit(point))
                     {
-                        _session.MoveCgosAdminWhitePlayerSelection(1);
-                    }
-                    else if (GoScreenRenderer.GetCgosAdminBlackPlayerPreviousButtonHit(point))
-                    {
-                        _session.MoveCgosAdminBlackPlayerSelection(-1);
-                    }
-                    else if (GoScreenRenderer.GetCgosAdminBlackPlayerNextButtonHit(point))
-                    {
-                        _session.MoveCgosAdminBlackPlayerSelection(1);
+                        _session.OpenCgosAdminPlayerSelectionDialog(GoStone.Black);
                     }
                     else if (GoScreenRenderer.GetCgosAdminMatchButtonHit(point, _session.CanSendCgosAdminMatch))
                     {
@@ -778,10 +797,10 @@ public class Game1 : Game
         }
 
         var blackStatus = _cgosBlackConnectionProcess.RefreshStatus();
-        _session.SetCgosBlackConnectionProcessStatus(blackStatus, _cgosBlackConnectionProcess.IsRunning, _cgosBlackConnectionProcess.LogDirectory, _cgosBlackConnectionProcess.GetRecentOutput());
+        _session.SetCgosBlackConnectionProcessStatus(blackStatus, _cgosBlackConnectionProcess.IsRunning, _cgosBlackConnectionProcess.LogDirectory, _cgosBlackConnectionProcess.GetRecentOutput(), _cgosBlackConnectionProcess.GtpResponseWaitDisplay);
 
         var whiteStatus = _cgosWhiteConnectionProcess.RefreshStatus();
-        _session.SetCgosWhiteConnectionProcessStatus(whiteStatus, _cgosWhiteConnectionProcess.IsRunning, _cgosWhiteConnectionProcess.LogDirectory, _cgosWhiteConnectionProcess.GetRecentOutput());
+        _session.SetCgosWhiteConnectionProcessStatus(whiteStatus, _cgosWhiteConnectionProcess.IsRunning, _cgosWhiteConnectionProcess.LogDirectory, _cgosWhiteConnectionProcess.GetRecentOutput(), _cgosWhiteConnectionProcess.GtpResponseWaitDisplay);
     }
 
     private void OpenCgosPlayerConnectionLog(GoStone stone)

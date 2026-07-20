@@ -22,10 +22,29 @@ public sealed class CgosConnectionProcess : IDisposable
     private string _guiLogPath = "";
     private string _standardErrorLogPath = "";
     private string _status = "READY";
+    private int _gtpResponseWaitCount;
+    private DateTime? _gtpResponseWaitStartedAt;
 
     public bool IsRunning => _processes.Any(process => !process.HasExited);
 
     public string LogDirectory { get; private set; } = "";
+
+    public string GtpResponseWaitDisplay
+    {
+        get
+        {
+            lock (_outputLock)
+            {
+                if (_gtpResponseWaitStartedAt is null)
+                {
+                    return "";
+                }
+
+                var elapsedSeconds = Math.Max(0, (int)(DateTime.Now - _gtpResponseWaitStartedAt.Value).TotalSeconds);
+                return $"GTP WAIT #{_gtpResponseWaitCount:00} {elapsedSeconds / 60:00}:{elapsedSeconds % 60:00}";
+            }
+        }
+    }
 
     public CgosConnectionProcess(string logFolderName = "")
     {
@@ -397,6 +416,8 @@ public sealed class CgosConnectionProcess : IDisposable
             _recentOutput.Clear();
             _pendingOutput.Clear();
             _adminWaitingPlayers.Clear();
+            _gtpResponseWaitCount = 0;
+            _gtpResponseWaitStartedAt = null;
         }
     }
 
@@ -473,6 +494,7 @@ public sealed class CgosConnectionProcess : IDisposable
         var displayLine = FormatDisplayLine(line.Trim(), isError);
         lock (_outputLock)
         {
+            UpdateGtpResponseWait(displayLine);
             TryAddAdminWaitingPlayer(displayLine);
             if (isError)
             {
@@ -486,6 +508,21 @@ public sealed class CgosConnectionProcess : IDisposable
             {
                 _recentOutput.Dequeue();
             }
+        }
+    }
+
+    private void UpdateGtpResponseWait(string displayLine)
+    {
+        if (displayLine.Contains("GTP response wait started:", StringComparison.OrdinalIgnoreCase))
+        {
+            _gtpResponseWaitCount++;
+            _gtpResponseWaitStartedAt = DateTime.Now;
+            return;
+        }
+
+        if (displayLine.Contains("GTP response wait completed", StringComparison.OrdinalIgnoreCase))
+        {
+            _gtpResponseWaitStartedAt = null;
         }
     }
 
@@ -633,6 +670,11 @@ public sealed class CgosConnectionProcess : IDisposable
             if (line.Contains("Generated ", StringComparison.OrdinalIgnoreCase))
             {
                 return "GENMOVE DONE";
+            }
+
+            if (line.Contains("GTP response wait started:", StringComparison.OrdinalIgnoreCase))
+            {
+                return "GTP WAIT";
             }
 
             if (line.Contains("> genmove", StringComparison.OrdinalIgnoreCase) ||

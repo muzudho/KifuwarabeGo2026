@@ -414,9 +414,10 @@ internal static class CgosTcpConnector
             var tcp = new TcpClient(address.AddressFamily);
             try
             {
+                log($"# TCP connect starting: {endpoint}.");
                 await Task.Run(() => tcp.Connect(endpoint), cancellationToken).WaitAsync(timeout, cancellationToken);
                 stopwatch.Stop();
-                log($"# TCP connect completed in {stopwatch.Elapsed.TotalSeconds:0.000} seconds: {endpoint}.");
+                log($"# TCP connection completed in {stopwatch.Elapsed.TotalSeconds:0.000} seconds: {endpoint}.");
                 return tcp;
             }
             catch (TimeoutException ex)
@@ -469,9 +470,10 @@ internal sealed class CgosConnectionSession
         try
         {
             _log($"# Connecting to {_options.Host}:{_options.Port} as {_account.UserName}{_connectionPurpose}.");
+            _log("# TCP connection preparation started.");
 
             using var tcp = await CgosTcpConnector.ConnectAsync(_options.Host, _options.Port, TcpConnectTimeout, _log, cancellationToken);
-            _log($"# Connected to {_options.Host}:{_options.Port}.");
+            _log($"# CGOS TCP connection completed: {_options.Host}:{_options.Port}.");
 
             await using var stream = tcp.GetStream();
             using var reader = new StreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: false, leaveOpen: true);
@@ -739,7 +741,7 @@ internal sealed class CgosClient
         }
 
         await ShutdownEngineAsync();
-        _engine = new GtpEngineProcess(_options.EngineCommand, _options.LogDirectory, _account.Label);
+        _engine = new GtpEngineProcess(_options.EngineCommand, _options.LogDirectory, _account.Label, Log);
         await _engine.StartAsync(cancellationToken);
         await ApplyEngineOptionsAsync(_engine, cancellationToken);
 
@@ -857,14 +859,16 @@ internal sealed class GtpEngineProcess : IAsyncDisposable
 {
     private readonly string _commandLine;
     private readonly string _logPath;
+    private readonly Action<string> _progressLog;
     private Process? _process;
     private StreamWriter? _input;
     private StreamReader? _output;
 
-    public GtpEngineProcess(string commandLine, string logDirectory, string accountLabel)
+    public GtpEngineProcess(string commandLine, string logDirectory, string accountLabel, Action<string> progressLog)
     {
         _commandLine = commandLine;
         _logPath = Path.Combine(logDirectory, $"gtp-{accountLabel}-{DateTime.Now:yyyyMMdd-HHmmss}.log");
+        _progressLog = progressLog;
     }
 
     public Task StartAsync(CancellationToken cancellationToken)
@@ -935,38 +939,48 @@ internal sealed class GtpEngineProcess : IAsyncDisposable
 
         var response = new List<string>();
         string? error = null;
-        while (true)
+        var stopwatch = Stopwatch.StartNew();
+        _progressLog("# GTP response wait started: " + command);
+        try
         {
-            var line = await _output.ReadLineAsync(cancellationToken);
-            if (line is null)
+            while (true)
             {
-                throw new EndOfStreamException("GTP engine closed stdout.");
-            }
+                var line = await _output.ReadLineAsync(cancellationToken);
+                if (line is null)
+                {
+                    throw new EndOfStreamException("GTP engine closed stdout.");
+                }
 
-            Log("< " + line);
-            if (line.Length == 0)
-            {
-                break;
-            }
+                Log("< " + line);
+                if (line.Length == 0)
+                {
+                    break;
+                }
 
-            if (line[0] == '=')
-            {
-                line = line[1..].Trim();
-            }
-            else if (line[0] == '?')
-            {
-                error = line[1..].Trim();
-                line = "";
-            }
-            else
-            {
-                line = line.Trim();
-            }
+                if (line[0] == '=')
+                {
+                    line = line[1..].Trim();
+                }
+                else if (line[0] == '?')
+                {
+                    error = line[1..].Trim();
+                    line = "";
+                }
+                else
+                {
+                    line = line.Trim();
+                }
 
-            if (line.Length > 0)
-            {
-                response.Add(line);
+                if (line.Length > 0)
+                {
+                    response.Add(line);
+                }
             }
+        }
+        finally
+        {
+            stopwatch.Stop();
+            _progressLog($"# GTP response wait completed in {stopwatch.Elapsed.TotalSeconds:0.000} seconds: {command}");
         }
 
         if (error is not null)

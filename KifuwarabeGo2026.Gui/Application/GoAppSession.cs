@@ -72,6 +72,8 @@ public sealed class GoAppSession
     public string CgosBlackConnectionElapsedDisplay =>
         FormatCgosConnectionElapsedDisplay(_cgosBlackConnectionStartedAt, IsCgosBlackConnectionRunning);
 
+    public string CgosBlackGtpResponseWaitDisplay { get; private set; } = "";
+
     public string CgosWhiteConnectionStatusMessage { get; private set; } = "READY";
 
     public string CgosWhiteConnectionLogDirectory { get; private set; } = "";
@@ -82,6 +84,8 @@ public sealed class GoAppSession
 
     public string CgosWhiteConnectionElapsedDisplay =>
         FormatCgosConnectionElapsedDisplay(_cgosWhiteConnectionStartedAt, IsCgosWhiteConnectionRunning);
+
+    public string CgosWhiteGtpResponseWaitDisplay { get; private set; } = "";
 
     public string CgosAdminStatusMessage { get; private set; } = "ADMIN READY";
 
@@ -100,6 +104,14 @@ public sealed class GoAppSession
     public string CgosAdminWhitePlayerName => GetCgosAdminWaitingPlayer(CgosAdminWhitePlayerIndex);
 
     public string CgosAdminBlackPlayerName => GetCgosAdminWaitingPlayer(CgosAdminBlackPlayerIndex);
+
+    public bool IsCgosAdminPlayerSelectionDialogOpen { get; private set; }
+
+    public GoStone CgosAdminPlayerSelectionTarget { get; private set; } = GoStone.White;
+
+    public int CgosAdminPlayerDialogSelectionIndex { get; private set; }
+
+    public int CgosAdminPlayerSelectionPageIndex { get; private set; }
 
     public bool CanSendCgosAdminMatch =>
         IsCgosAdminRunning &&
@@ -406,7 +418,7 @@ public sealed class GoAppSession
         CgosConnectionRecentOutput = recentOutput;
     }
 
-    public void SetCgosBlackConnectionProcessStatus(string statusMessage, bool isRunning, string logDirectory, IReadOnlyList<string> recentOutput)
+    public void SetCgosBlackConnectionProcessStatus(string statusMessage, bool isRunning, string logDirectory, IReadOnlyList<string> recentOutput, string gtpResponseWaitDisplay = "")
     {
         if (isRunning && !IsCgosBlackConnectionRunning)
         {
@@ -417,9 +429,10 @@ public sealed class GoAppSession
         IsCgosBlackConnectionRunning = isRunning;
         CgosBlackConnectionLogDirectory = logDirectory;
         CgosBlackConnectionRecentOutput = recentOutput;
+        CgosBlackGtpResponseWaitDisplay = gtpResponseWaitDisplay;
     }
 
-    public void SetCgosWhiteConnectionProcessStatus(string statusMessage, bool isRunning, string logDirectory, IReadOnlyList<string> recentOutput)
+    public void SetCgosWhiteConnectionProcessStatus(string statusMessage, bool isRunning, string logDirectory, IReadOnlyList<string> recentOutput, string gtpResponseWaitDisplay = "")
     {
         if (isRunning && !IsCgosWhiteConnectionRunning)
         {
@@ -430,6 +443,7 @@ public sealed class GoAppSession
         IsCgosWhiteConnectionRunning = isRunning;
         CgosWhiteConnectionLogDirectory = logDirectory;
         CgosWhiteConnectionRecentOutput = recentOutput;
+        CgosWhiteGtpResponseWaitDisplay = gtpResponseWaitDisplay;
     }
 
     private static string FormatCgosConnectionElapsedDisplay(DateTime? startedAt, bool isRunning)
@@ -440,7 +454,7 @@ public sealed class GoAppSession
         }
 
         var elapsedSeconds = Math.Max(0, (int)(DateTime.Now - startedAt.Value).TotalSeconds);
-        return $"WAIT {elapsedSeconds / 60:00}:{elapsedSeconds % 60:00} / 15s";
+        return $"RUN {elapsedSeconds / 60:00}:{elapsedSeconds % 60:00}";
     }
 
     public void SetCgosAdminProcessStatus(string statusMessage, bool isRunning, string logDirectory, IReadOnlyList<string> recentOutput)
@@ -462,6 +476,14 @@ public sealed class GoAppSession
         {
             CgosAdminBlackPlayerIndex = (CgosAdminWhitePlayerIndex + 1) % players.Count;
         }
+
+        CgosAdminPlayerDialogSelectionIndex = players.Count == 0
+            ? 0
+            : Math.Clamp(CgosAdminPlayerDialogSelectionIndex, 0, players.Count - 1);
+        CgosAdminPlayerSelectionPageIndex = Math.Clamp(
+            CgosAdminPlayerSelectionPageIndex,
+            0,
+            GetCgosAdminPlayerSelectionPageCount() - 1);
     }
 
     public void MoveCgosAdminWhitePlayerSelection(int step) =>
@@ -469,6 +491,53 @@ public sealed class GoAppSession
 
     public void MoveCgosAdminBlackPlayerSelection(int step) =>
         CgosAdminBlackPlayerIndex = MoveCgosAdminWaitingPlayerIndex(CgosAdminBlackPlayerIndex, step);
+
+    public void OpenCgosAdminPlayerSelectionDialog(GoStone target)
+    {
+        CgosAdminPlayerSelectionTarget = target;
+        CgosAdminPlayerDialogSelectionIndex = target == GoStone.White
+            ? CgosAdminWhitePlayerIndex
+            : CgosAdminBlackPlayerIndex;
+        CgosAdminPlayerSelectionPageIndex = CgosAdminPlayerDialogSelectionIndex / CgosAdminPlayerSelectionPageSize;
+        IsCgosAdminPlayerSelectionDialogOpen = true;
+    }
+
+    public void SelectCgosAdminPlayerDialogItem(int index)
+    {
+        if (index >= 0 && index < CgosAdminWaitingPlayers.Count)
+        {
+            CgosAdminPlayerDialogSelectionIndex = index;
+        }
+    }
+
+    public void CommitCgosAdminPlayerSelectionDialog()
+    {
+        if (CgosAdminPlayerDialogSelectionIndex >= 0 && CgosAdminPlayerDialogSelectionIndex < CgosAdminWaitingPlayers.Count)
+        {
+            if (CgosAdminPlayerSelectionTarget == GoStone.White)
+            {
+                CgosAdminWhitePlayerIndex = CgosAdminPlayerDialogSelectionIndex;
+            }
+            else
+            {
+                CgosAdminBlackPlayerIndex = CgosAdminPlayerDialogSelectionIndex;
+            }
+        }
+
+        IsCgosAdminPlayerSelectionDialogOpen = false;
+    }
+
+    public void CancelCgosAdminPlayerSelectionDialog() =>
+        IsCgosAdminPlayerSelectionDialogOpen = false;
+
+    public int GetCgosAdminPlayerSelectionPageCount() =>
+        Math.Max(1, (int)Math.Ceiling(CgosAdminWaitingPlayers.Count / (double)CgosAdminPlayerSelectionPageSize));
+
+    public void MoveCgosAdminPlayerSelectionPage(int step) =>
+        CgosAdminPlayerSelectionPageIndex = Math.Clamp(
+            CgosAdminPlayerSelectionPageIndex + step,
+            0,
+            GetCgosAdminPlayerSelectionPageCount() - 1);
 
     public void SwapCgosAdminPlayers() =>
         (CgosAdminWhitePlayerIndex, CgosAdminBlackPlayerIndex) = (CgosAdminBlackPlayerIndex, CgosAdminWhitePlayerIndex);
@@ -2017,6 +2086,8 @@ public sealed class GoAppSession
     public const int GtpEngineSelectionPageSize = 6;
 
     public const int CgosConnectionSelectionPageSize = 5;
+
+    public const int CgosAdminPlayerSelectionPageSize = 6;
 
     private void CompleteMoveAndPassTurn()
     {

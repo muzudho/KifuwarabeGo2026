@@ -24,6 +24,7 @@ public sealed partial class GoScreenRenderer
         DrawCgosClientTopPanel(session, mousePoint);
         DrawGtpEngineSelectionDialog(session, mousePoint);
         DrawGtpEngineEditPanel(session, mousePoint);
+        DrawCgosAdminPlayerSelectionDialog(session, mousePoint);
 
         _spriteBatch.End();
     }
@@ -51,16 +52,35 @@ public sealed partial class GoScreenRenderer
         enabled && CgosAdminWhoButtonBounds.Contains(point);
 
 
-    public static bool GetCgosAdminWhitePlayerPreviousButtonHit(Point point) => CgosAdminWhitePlayerPreviousButtonBounds.Contains(point);
+    public static bool GetCgosAdminWhitePlayerSelectButtonHit(Point point) => CgosAdminWhitePlayerSelectButtonBounds.Contains(point);
 
 
-    public static bool GetCgosAdminWhitePlayerNextButtonHit(Point point) => CgosAdminWhitePlayerNextButtonBounds.Contains(point);
+    public static bool GetCgosAdminBlackPlayerSelectButtonHit(Point point) => CgosAdminBlackPlayerSelectButtonBounds.Contains(point);
 
 
-    public static bool GetCgosAdminBlackPlayerPreviousButtonHit(Point point) => CgosAdminBlackPlayerPreviousButtonBounds.Contains(point);
+    public static bool GetCgosAdminPlayerDialogCancelButtonHit(Point point) => CgosAdminPlayerDialogCancelButtonBounds.Contains(point);
 
 
-    public static bool GetCgosAdminBlackPlayerNextButtonHit(Point point) => CgosAdminBlackPlayerNextButtonBounds.Contains(point);
+    public static bool GetCgosAdminPlayerDialogSelectButtonHit(Point point) => CgosAdminPlayerDialogSelectButtonBounds.Contains(point);
+
+
+    public static bool GetCgosAdminPlayerDialogPreviousPageButtonHit(Point point) => CgosAdminPlayerDialogPreviousPageButtonBounds.Contains(point);
+
+
+    public static bool GetCgosAdminPlayerDialogNextPageButtonHit(Point point) => CgosAdminPlayerDialogNextPageButtonBounds.Contains(point);
+
+
+    public static int? GetCgosAdminPlayerDialogItemHit(Point point, GoAppSession session)
+    {
+        for (var slot = 0; slot < GoAppSession.CgosAdminPlayerSelectionPageSize; slot++)
+        {
+            if (!CgosAdminPlayerDialogItemBounds(slot).Contains(point)) continue;
+            var index = session.CgosAdminPlayerSelectionPageIndex * GoAppSession.CgosAdminPlayerSelectionPageSize + slot;
+            return index < session.CgosAdminWaitingPlayers.Count ? index : null;
+        }
+
+        return null;
+    }
 
 
     public static bool GetCgosAdminMatchButtonHit(Point point, bool enabled) => enabled && CgosAdminMatchButtonBounds.Contains(point);
@@ -360,8 +380,8 @@ public sealed partial class GoScreenRenderer
             !string.IsNullOrWhiteSpace(session.CgosAdminLogDirectory),
             mousePoint);
         DrawCommandButton(CgosAdminWhoButtonBounds, "WHO", false, mousePoint, enabled: session.IsCgosAdminRunning, scale: 0.28f);
-        DrawCgosAdminPlayerSelector(CgosAdminWhitePlayerRowBounds, "WHITE", session.CgosAdminWhitePlayerName, CgosAdminWhitePlayerPreviousButtonBounds, CgosAdminWhitePlayerNextButtonBounds, mousePoint);
-        DrawCgosAdminPlayerSelector(CgosAdminBlackPlayerRowBounds, "BLACK", session.CgosAdminBlackPlayerName, CgosAdminBlackPlayerPreviousButtonBounds, CgosAdminBlackPlayerNextButtonBounds, mousePoint);
+        DrawCgosAdminPlayerSelector(CgosAdminWhitePlayerRowBounds, "WHITE", session.CgosAdminWhitePlayerName, CgosAdminWhitePlayerSelectButtonBounds, mousePoint);
+        DrawCgosAdminPlayerSelector(CgosAdminBlackPlayerRowBounds, "BLACK", session.CgosAdminBlackPlayerName, CgosAdminBlackPlayerSelectButtonBounds, mousePoint);
         DrawCommandButton(CgosAdminMatchButtonBounds, "MATCH", false, mousePoint, enabled: session.CanSendCgosAdminMatch, scale: 0.22f);
         DrawCommandButton(CgosAdminSwapButtonBounds, "SWAP", false, mousePoint, enabled: session.CanSendCgosAdminMatch, scale: 0.22f);
 
@@ -372,7 +392,9 @@ public sealed partial class GoScreenRenderer
             session.CgosBlackConnectionRecentOutput,
             session.SelectedCgosBlackGtpEngineProfile?.DisplayName,
             CgosBlackEngineSelector with { Enabled = !session.IsCgosBlackConnectionRunning },
-            session.CgosBlackConnectionElapsedDisplay,
+            string.IsNullOrWhiteSpace(session.CgosBlackGtpResponseWaitDisplay)
+                ? session.CgosBlackConnectionElapsedDisplay
+                : session.CgosBlackGtpResponseWaitDisplay,
             CgosBlackConnectionButtonBounds,
             session.IsCgosBlackConnectionRunning ? "STOP" : "START",
             session.IsCgosBlackConnectionRunning || session.SelectedCgosBlackGtpEngineProfile is not null,
@@ -388,7 +410,9 @@ public sealed partial class GoScreenRenderer
             session.CgosWhiteConnectionRecentOutput,
             session.SelectedCgosWhiteGtpEngineProfile?.DisplayName,
             CgosWhiteEngineSelector with { Enabled = !session.IsCgosWhiteConnectionRunning },
-            session.CgosWhiteConnectionElapsedDisplay,
+            string.IsNullOrWhiteSpace(session.CgosWhiteGtpResponseWaitDisplay)
+                ? session.CgosWhiteConnectionElapsedDisplay
+                : session.CgosWhiteGtpResponseWaitDisplay,
             CgosWhiteConnectionButtonBounds,
             session.IsCgosWhiteConnectionRunning ? "STOP" : "START",
             session.IsCgosWhiteConnectionRunning || session.SelectedCgosWhiteGtpEngineProfile is not null,
@@ -411,14 +435,57 @@ public sealed partial class GoScreenRenderer
     }
 
 
-    private void DrawCgosAdminPlayerSelector(Rectangle bounds, string label, string playerName, Rectangle previousBounds, Rectangle nextBounds, Point mousePoint)
+    private void DrawCgosAdminPlayerSelector(Rectangle bounds, string label, string playerName, Rectangle selectBounds, Point mousePoint)
     {
         FillRect(bounds, new Color(11, 15, 20));
         DrawRect(bounds, 1, new Color(67, 84, 92));
         DrawText(label, new Vector2(bounds.X + 6, bounds.Y + 9), new Color(180, 195, 195), 0.22f);
-        DrawFittedText(playerName, new Rectangle(bounds.X + 62, bounds.Y + 5, bounds.Width - 126, bounds.Height - 10), Color.White, 0.25f);
-        DrawCommandButton(previousBounds, "<", false, mousePoint, enabled: true, scale: 0.22f);
-        DrawCommandButton(nextBounds, ">", false, mousePoint, enabled: true, scale: 0.22f);
+        DrawFittedText(playerName, new Rectangle(bounds.X + 62, bounds.Y + 5, bounds.Width - 154, bounds.Height - 10), Color.White, 0.25f);
+        DrawCommandButton(selectBounds, "SELECT", false, mousePoint, scale: 0.2f);
+    }
+
+
+    private void DrawCgosAdminPlayerSelectionDialog(GoAppSession session, Point mousePoint)
+    {
+        if (!session.IsCgosAdminPlayerSelectionDialogOpen) return;
+
+        FillRect(new Rectangle(0, 0, VirtualScreen.Width, VirtualScreen.Height), new Color(0, 0, 0, 105));
+        FillRect(new Rectangle(CgosAdminPlayerDialogBounds.X + 18, CgosAdminPlayerDialogBounds.Y + 20, CgosAdminPlayerDialogBounds.Width, CgosAdminPlayerDialogBounds.Height), new Color(0, 0, 0, 145));
+        FillRect(CgosAdminPlayerDialogBounds, new Color(19, 24, 31, 248));
+        DrawRect(CgosAdminPlayerDialogBounds, 2, new Color(116, 145, 146));
+
+        var target = session.CgosAdminPlayerSelectionTarget == GoStone.White ? "WHITE" : "BLACK";
+        DrawText($"PARTICIPANT SELECT  {target}", new Vector2(CgosAdminPlayerDialogBounds.X + 30, CgosAdminPlayerDialogBounds.Y + 24), new Color(244, 238, 218), 0.72f);
+        DrawCommandButton(CgosAdminPlayerDialogCancelButtonBounds, "CANCEL", false, mousePoint, scale: 0.34f);
+        DrawCommandButton(CgosAdminPlayerDialogSelectButtonBounds, "SELECT", false, mousePoint, enabled: session.CgosAdminWaitingPlayers.Count > 0, scale: 0.34f);
+
+        DrawText("PARTICIPANTS", new Vector2(CgosAdminPlayerDialogListBounds.X, CgosAdminPlayerDialogListBounds.Y - 34), new Color(180, 195, 195), 0.46f);
+        FillRect(CgosAdminPlayerDialogListBounds, new Color(15, 20, 26));
+        DrawRect(CgosAdminPlayerDialogListBounds, 1, new Color(67, 84, 92));
+
+        if (session.CgosAdminWaitingPlayers.Count == 0)
+        {
+            DrawText("NO PARTICIPANTS - RUN WHO", new Vector2(CgosAdminPlayerDialogListBounds.X + 24, CgosAdminPlayerDialogListBounds.Y + 24), new Color(180, 195, 195), 0.46f);
+        }
+
+        var startIndex = session.CgosAdminPlayerSelectionPageIndex * GoAppSession.CgosAdminPlayerSelectionPageSize;
+        for (var slot = 0; slot < GoAppSession.CgosAdminPlayerSelectionPageSize; slot++)
+        {
+            var index = startIndex + slot;
+            if (index >= session.CgosAdminWaitingPlayers.Count) break;
+            var bounds = CgosAdminPlayerDialogItemBounds(slot);
+            var selected = index == session.CgosAdminPlayerDialogSelectionIndex;
+            var hovered = bounds.Contains(mousePoint);
+            FillRect(bounds, selected ? new Color(38, 103, 86) : hovered ? new Color(43, 52, 62) : new Color(24, 31, 37));
+            DrawRect(bounds, 1, selected ? new Color(147, 244, 200) : new Color(70, 85, 94));
+            DrawText($"{index + 1:00}", new Vector2(bounds.X + 16, bounds.Y + 14), selected ? new Color(177, 255, 215) : new Color(180, 195, 195), 0.38f);
+            DrawFittedText(session.CgosAdminWaitingPlayers[index], new Rectangle(bounds.X + 70, bounds.Y + 8, bounds.Width - 90, 38), Color.White, 0.48f);
+        }
+
+        var pageCount = session.GetCgosAdminPlayerSelectionPageCount();
+        DrawText($"PAGE {session.CgosAdminPlayerSelectionPageIndex + 1} / {pageCount}", new Vector2(910, 825), new Color(227, 224, 210), 0.42f);
+        DrawCommandButton(CgosAdminPlayerDialogPreviousPageButtonBounds, "PREV", false, mousePoint, enabled: session.CgosAdminPlayerSelectionPageIndex > 0, scale: 0.42f);
+        DrawCommandButton(CgosAdminPlayerDialogNextPageButtonBounds, "NEXT", false, mousePoint, enabled: session.CgosAdminPlayerSelectionPageIndex < pageCount - 1, scale: 0.42f);
     }
 
     /// <summary>
@@ -734,16 +801,32 @@ public sealed partial class GoScreenRenderer
     private static Rectangle CgosAdminBlackPlayerRowBounds => new(CgosAdminProcessPanelBounds.X + 16, CgosAdminProcessPanelBounds.Y + 160, CgosAdminProcessPanelBounds.Width - 32, 38);
 
 
-    private static Rectangle CgosAdminWhitePlayerPreviousButtonBounds => new(CgosAdminWhitePlayerRowBounds.Right - 62, CgosAdminWhitePlayerRowBounds.Y + 3, 27, 32);
+    private static Rectangle CgosAdminWhitePlayerSelectButtonBounds => new(CgosAdminWhitePlayerRowBounds.Right - 84, CgosAdminWhitePlayerRowBounds.Y + 3, 80, 32);
 
 
-    private static Rectangle CgosAdminWhitePlayerNextButtonBounds => new(CgosAdminWhitePlayerRowBounds.Right - 31, CgosAdminWhitePlayerRowBounds.Y + 3, 27, 32);
+    private static Rectangle CgosAdminBlackPlayerSelectButtonBounds => new(CgosAdminBlackPlayerRowBounds.Right - 84, CgosAdminBlackPlayerRowBounds.Y + 3, 80, 32);
 
 
-    private static Rectangle CgosAdminBlackPlayerPreviousButtonBounds => new(CgosAdminBlackPlayerRowBounds.Right - 62, CgosAdminBlackPlayerRowBounds.Y + 3, 27, 32);
+    private static Rectangle CgosAdminPlayerDialogBounds => new(510, 170, 900, 740);
 
 
-    private static Rectangle CgosAdminBlackPlayerNextButtonBounds => new(CgosAdminBlackPlayerRowBounds.Right - 31, CgosAdminBlackPlayerRowBounds.Y + 3, 27, 32);
+    private static Rectangle CgosAdminPlayerDialogListBounds => new(550, 280, 820, 480);
+
+
+    private static Rectangle CgosAdminPlayerDialogCancelButtonBounds => new(1108, 200, 120, 48);
+
+
+    private static Rectangle CgosAdminPlayerDialogSelectButtonBounds => new(1240, 200, 130, 48);
+
+
+    private static Rectangle CgosAdminPlayerDialogPreviousPageButtonBounds => new(1050, 810, 100, 44);
+
+
+    private static Rectangle CgosAdminPlayerDialogNextPageButtonBounds => new(1160, 810, 100, 44);
+
+
+    private static Rectangle CgosAdminPlayerDialogItemBounds(int slot) =>
+        new(CgosAdminPlayerDialogListBounds.X + 16, CgosAdminPlayerDialogListBounds.Y + 16 + slot * 72, CgosAdminPlayerDialogListBounds.Width - 32, 56);
 
 
     private static Rectangle CgosAdminTailButtonBounds => new(CgosAdminProcessPanelBounds.X + 136, CgosAdminProcessPanelBounds.Bottom - 70, 68, 48);
