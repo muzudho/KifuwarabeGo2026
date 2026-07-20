@@ -14,6 +14,7 @@ public sealed record GtpEngineGuiOptionSpec(
 /// <summary>GUIが編集できる既知のGTPエンジンオプションです。</summary>
 public static class GtpEngineGuiOptions
 {
+    public const int MaximumTextLength = 10_000;
     public const string AvoidEyesId = "AvoidEyes";
     public const string RandomSeedId = "RandomSeed";
     public const string RandomMoveId = "RandomMove";

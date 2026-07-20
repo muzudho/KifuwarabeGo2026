@@ -1671,7 +1671,7 @@ public class Game1 : Game
             StartPosition = System.Windows.Forms.FormStartPosition.CenterParent,
             Text = option.Label,
         };
-        using var textBox = new System.Windows.Forms.TextBox { Left = 20, Top = 20, Width = 580, Text = current };
+        using var textBox = new System.Windows.Forms.TextBox { Left = 20, Top = 20, Width = 580, Text = current, MaxLength = GtpEngineGuiOptions.MaximumTextLength };
         using var cancelButton = new System.Windows.Forms.Button { Left = 20, Top = 78, Width = 110, Height = 42, Text = "CANCEL", DialogResult = System.Windows.Forms.DialogResult.Cancel };
         using var okButton = new System.Windows.Forms.Button { Left = 150, Top = 78, Width = 110, Height = 42, Text = "OK", DialogResult = System.Windows.Forms.DialogResult.OK };
         dialog.AcceptButton = okButton;
@@ -1725,7 +1725,12 @@ public class Game1 : Game
             Title = $"Select {option.Label}",
         };
         if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-            _session.SetGtpEngineGuiOptionDraft(option, dialog.FileName);
+        {
+            if (dialog.FileName.Length > GtpEngineGuiOptions.MaximumTextLength)
+                ShowMessage($"The file path exceeds {GtpEngineGuiOptions.MaximumTextLength} characters.", "GTP engine option");
+            else
+                _session.SetGtpEngineGuiOptionDraft(option, dialog.FileName);
+        }
     }
 
     private void BrowseGtpEngineWorkingDirectory()

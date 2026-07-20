@@ -314,6 +314,7 @@ public sealed partial class GoScreenRenderer
 
         DrawText("GUI OPTIONS", new Vector2(GtpEngineGuiOptionsDialogBounds.X + 30, GtpEngineGuiOptionsDialogBounds.Y + 24), new Color(244, 238, 218), 0.72f);
         DrawText("Settings are sent when the engine starts.", new Vector2(GtpEngineGuiOptionsDialogBounds.X + 32, GtpEngineGuiOptionsDialogBounds.Y + 82), new Color(180, 195, 195), 0.4f);
+        DrawText("Text values (max 10000 characters)", new Vector2(GtpEngineGuiOptionsDialogBounds.X + 32, GtpEngineGuiOptionsDialogBounds.Y + 116), new Color(118, 139, 143), 0.3f);
 
         var startIndex = session.GtpEngineGuiOptionsPageIndex * GoAppSession.GtpEngineGuiOptionsPageSize;
         for (var slot = 0; slot < GoAppSession.GtpEngineGuiOptionsPageSize; slot++)
@@ -333,6 +334,7 @@ public sealed partial class GoScreenRenderer
 
         DrawCommandButton(GtpEngineGuiOptionsDialogCancelButtonBounds, "CANCEL", false, mousePoint, scale: 0.4f);
         DrawCommandButton(GtpEngineGuiOptionsDialogOkButtonBounds, "OK", false, mousePoint, scale: 0.42f);
+        DrawGtpEngineGuiOptionValueTooltip(session, mousePoint);
         DrawGtpEngineRandomMoveSelectionDialog(session, mousePoint);
     }
 
@@ -343,7 +345,8 @@ public sealed partial class GoScreenRenderer
         DrawDataRowFrame(row);
         DrawUiLabel(UiLabel.InCompactRow(option.Label, row));
         var valueBounds = option.Type == "spin" ? GtpEngineGuiOptionSpinValueBounds(slot) : GtpEngineGuiOptionValueBounds(slot);
-        DrawDynamicOptionText(string.IsNullOrEmpty(value) ? "<empty>" : value, valueBounds, Color.White, 0.34f);
+        var rowValue = option.Type is "string" or "filename" ? AbbreviateOptionValue(value, 28) : value;
+        DrawDynamicOptionText(string.IsNullOrEmpty(rowValue) ? "<empty>" : rowValue, valueBounds, Color.White, 0.34f);
         if (option.Type == "spin" && option.Min is { } min && option.Max is { } max)
             DrawFittedText($"{min} .. {max}", GtpEngineGuiOptionRangeBounds(slot), new Color(118, 139, 143), 0.24f);
         DrawCommandButton(GtpEngineGuiOptionDefaultButtonBounds(slot), "DEFAULT", false, mousePoint, scale: 0.3f);
@@ -367,6 +370,30 @@ public sealed partial class GoScreenRenderer
                 break;
         }
     }
+
+    private void DrawGtpEngineGuiOptionValueTooltip(GoAppSession session, Point mousePoint)
+    {
+        var startIndex = session.GtpEngineGuiOptionsPageIndex * GoAppSession.GtpEngineGuiOptionsPageSize;
+        for (var slot = 0; slot < GoAppSession.GtpEngineGuiOptionsPageSize; slot++)
+        {
+            var index = startIndex + slot;
+            if (index >= GtpEngineGuiOptions.Specs.Length) break;
+            var option = GtpEngineGuiOptions.Specs[index];
+            if (option.Type is not ("string" or "filename") || !GtpEngineGuiOptionValueBounds(slot).Contains(mousePoint)) continue;
+            var value = session.GetGtpEngineGuiOptionDraft(option);
+            if (value.Length <= 28) continue;
+
+            FillRect(new Rectangle(GtpEngineGuiOptionTooltipBounds.X + 8, GtpEngineGuiOptionTooltipBounds.Y + 10, GtpEngineGuiOptionTooltipBounds.Width, GtpEngineGuiOptionTooltipBounds.Height), new Color(0, 0, 0, 150));
+            FillRect(GtpEngineGuiOptionTooltipBounds, new Color(30, 36, 43, 252));
+            DrawRect(GtpEngineGuiOptionTooltipBounds, 2, new Color(147, 244, 200));
+            DrawText(option.Label, new Vector2(GtpEngineGuiOptionTooltipBounds.X + 18, GtpEngineGuiOptionTooltipBounds.Y + 12), new Color(180, 195, 195), 0.32f);
+            DrawDynamicOptionText(string.IsNullOrEmpty(value) ? "<empty>" : AbbreviateOptionValue(value, 100), new Rectangle(GtpEngineGuiOptionTooltipBounds.X + 18, GtpEngineGuiOptionTooltipBounds.Y + 42, GtpEngineGuiOptionTooltipBounds.Width - 36, 42), Color.White, 0.38f);
+            return;
+        }
+    }
+
+    private static string AbbreviateOptionValue(string value, int maximumCharacters) =>
+        value.Length <= maximumCharacters ? value : value[..Math.Max(0, maximumCharacters - 3)] + "...";
 
     private void DrawDynamicOptionText(string text, Rectangle bounds, Color color, float scale)
     {
@@ -630,6 +657,7 @@ public sealed partial class GoScreenRenderer
     private static Rectangle GtpEngineGuiOptionValueBounds(int slot) => new(GtpEngineGuiOptionRowBounds(slot).X + 166, GtpEngineGuiOptionRowBounds(slot).Y + 8, 252, 44);
     private static Rectangle GtpEngineGuiOptionSpinValueBounds(int slot) => new(GtpEngineGuiOptionRowBounds(slot).X + 166, GtpEngineGuiOptionRowBounds(slot).Y + 8, 112, 44);
     private static Rectangle GtpEngineGuiOptionRangeBounds(int slot) => new(GtpEngineGuiOptionRowBounds(slot).X + 294, GtpEngineGuiOptionRowBounds(slot).Y + 12, 126, 36);
+    private static Rectangle GtpEngineGuiOptionTooltipBounds => new(GtpEngineGuiOptionsDialogBounds.X + 40, GtpEngineGuiOptionsDialogBounds.Y + 520, GtpEngineGuiOptionsDialogBounds.Width - 80, 100);
     private static Rectangle GtpEngineGuiOptionDefaultButtonBounds(int slot) => new(GtpEngineGuiOptionRowBounds(slot).Right - 94, GtpEngineGuiOptionRowBounds(slot).Y + 10, 82, 40);
     private static Rectangle GtpEngineGuiOptionPrimaryButtonBounds(int slot) => new(GtpEngineGuiOptionRowBounds(slot).Right - 220, GtpEngineGuiOptionRowBounds(slot).Y + 10, 54, 40);
     private static Rectangle GtpEngineGuiOptionSecondaryButtonBounds(int slot) => new(GtpEngineGuiOptionRowBounds(slot).Right - 160, GtpEngineGuiOptionRowBounds(slot).Y + 10, 54, 40);

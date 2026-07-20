@@ -1702,7 +1702,9 @@ public sealed class GoAppSession
     }
 
     public void SetGtpEngineGuiOptionDraft(GtpEngineGuiOptionSpec option, string value) =>
-        GtpEngineGuiOptionsDialogDraft[option.Id] = value;
+        GtpEngineGuiOptionsDialogDraft[option.Id] = value.Length <= GtpEngineGuiOptions.MaximumTextLength
+            ? value
+            : value[..GtpEngineGuiOptions.MaximumTextLength];
 
     public void SaveGtpEngineEditDraft(GtpEngineProfile profile)
     {
