@@ -454,6 +454,8 @@ internal sealed class CgosConnectionSession
     private StreamWriter? _writer;
     private bool _quitSent;
 
+    public bool ServerSupportsAnalyze { get; private set; }
+
     public CgosConnectionSession(CgosClientOptions options, CgosAccount account, Action<string> log, string connectionPurpose = "")
     {
         _options = options;
@@ -578,7 +580,8 @@ internal sealed class CgosConnectionSession
         switch (parts[0].ToLowerInvariant())
         {
             case "protocol":
-                await SendAsync(CgosClient.GetClientId(parts.Length == 2 && parts[1].Contains("genmove_analyze", StringComparison.OrdinalIgnoreCase)));
+                ServerSupportsAnalyze = parts.Length == 2 && parts[1].Contains("genmove_analyze", StringComparison.OrdinalIgnoreCase);
+                await SendAsync(CgosClient.GetClientId(ServerSupportsAnalyze));
                 return true;
             case "username":
                 await SendAsync(_account.UserName);
@@ -680,6 +683,7 @@ internal sealed class CgosClient
     private readonly string _logPath;
     private GtpEngineProcess? _engine;
     private string _engineColor = "black";
+    private bool _engineSupportsCgosAnalyze;
 
     public CgosClient(CgosClientOptions options, CgosAccount account)
     {
@@ -721,7 +725,7 @@ internal sealed class CgosClient
                 await RequireEngine().PlayAsync(parameters, cancellationToken);
                 return;
             case "genmove":
-                var move = await HandleGenMoveAsync(parameters, cancellationToken);
+                var move = await HandleGenMoveAsync(parameters, session.ServerSupportsAnalyze, cancellationToken);
                 await session.SendAsync(move);
                 return;
             case "gameover":
@@ -747,6 +751,7 @@ internal sealed class CgosClient
         _engine = new GtpEngineProcess(_options.EngineCommand, _options.LogDirectory, _account.Label, Log);
         await _engine.StartAsync(cancellationToken);
         await ApplyEngineOptionsAsync(_engine, cancellationToken);
+        _engineSupportsCgosAnalyze = await SupportsCommandAsync(_engine, "cgos-genmove_analyze", cancellationToken);
 
         var boardSize = parameters[1];
         var komi = parameters[2];
@@ -768,7 +773,7 @@ internal sealed class CgosClient
         }
     }
 
-    private async Task<string> HandleGenMoveAsync(string[] parameters, CancellationToken cancellationToken)
+    private async Task<string> HandleGenMoveAsync(string[] parameters, bool serverSupportsAnalyze, CancellationToken cancellationToken)
     {
         if (parameters.Length != 2)
         {
@@ -777,7 +782,11 @@ internal sealed class CgosClient
 
         var engine = RequireEngine();
         var color = parameters[0];
-        var response = await engine.CommandAsync("genmove " + color, cancellationToken);
+        var useAnalyze = serverSupportsAnalyze && _engineSupportsCgosAnalyze;
+        var response = await engine.CommandAsync((useAnalyze ? "cgos-genmove_analyze " : "genmove ") + color, cancellationToken);
+        if (useAnalyze)
+            return ParseAnalyzeResponse(response);
+
         var move = response.FirstOrDefault();
         if (string.IsNullOrWhiteSpace(move))
         {
@@ -786,6 +795,38 @@ internal sealed class CgosClient
 
         Log($"# Generated {_engineColor} move: {move}");
         return move.ToLowerInvariant();
+    }
+
+    private string ParseAnalyzeResponse(IReadOnlyList<string> response)
+    {
+        var json = response.FirstOrDefault(line => line.StartsWith('{'));
+        var play = response.FirstOrDefault(line => line.StartsWith("play ", StringComparison.OrdinalIgnoreCase));
+        if (json is null || play is null)
+            throw new InvalidOperationException("GTP engine returned an invalid cgos-genmove_analyze response.");
+
+        using var document = System.Text.Json.JsonDocument.Parse(json);
+        if (document.RootElement.ValueKind != System.Text.Json.JsonValueKind.Object)
+            throw new InvalidOperationException("GTP engine returned non-object analysis JSON.");
+
+        var move = play[5..].Trim();
+        if (move.Length == 0)
+            throw new InvalidOperationException("GTP engine returned an empty analyzed move.");
+
+        Log($"# Generated {_engineColor} analyzed move: {move}");
+        return $"{move.ToLowerInvariant()} {json}";
+    }
+
+    private static async Task<bool> SupportsCommandAsync(GtpEngineProcess engine, string command, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var commands = await engine.CommandAsync("list_commands", cancellationToken);
+            return commands.Any(value => value.Equals(command, StringComparison.OrdinalIgnoreCase));
+        }
+        catch (InvalidOperationException)
+        {
+            return false;
+        }
     }
 
     /// <summary>
@@ -834,6 +875,7 @@ internal sealed class CgosClient
             await _engine.DisposeAsync();
             _engine = null;
         }
+        _engineSupportsCgosAnalyze = false;
     }
 
     private void Log(string message)
@@ -848,7 +890,7 @@ internal sealed class CgosClient
 
     public static string GetClientId(bool serverSupportsAnalyze)
     {
-        return ClientId;
+        return serverSupportsAnalyze ? ClientId + " genmove_analyze" : ClientId;
     }
 
     private static string StripRank(string programName)

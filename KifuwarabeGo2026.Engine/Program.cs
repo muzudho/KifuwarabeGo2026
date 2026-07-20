@@ -24,7 +24,7 @@ internal sealed class GtpEngine
     private static readonly string[] Commands =
     [
         "protocol_version", "name", "version", "known_command", "list_commands", "boardsize", "clear_board",
-        "komi", "play", "genmove", "gui_options", "gui_getoption", "gui_setoption", "quit",
+        "komi", "play", "genmove", "cgos-genmove_analyze", "gui_options", "gui_getoption", "gui_setoption", "quit",
     ];
     private Random _random = new(0);
     private GoBoard _board = new(19);
@@ -102,6 +102,9 @@ internal sealed class GtpEngine
                 return false;
             case "genmove":
                 ExecuteGenMove(tokens, out response, out error);
+                return false;
+            case "cgos-genmove_analyze":
+                ExecuteCgosGenMoveAnalyze(tokens, out response, out error);
                 return false;
             case "quit":
                 return true;
@@ -204,6 +207,55 @@ internal sealed class GtpEngine
         _board.TryPlaceStone(move.X, move.Y, color, _koPoint, out _, out _koPoint);
         response = FormatVertex(move, _board.Size);
     }
+
+    /// <summary>CGOSへ着手、簡易評価値、1手の読み筋を返します。</summary>
+    private void ExecuteCgosGenMoveAnalyze(string[] tokens, out string response, out string? error)
+    {
+        ExecuteGenMove(tokens, out var move, out error);
+        if (error is not null)
+        {
+            response = "";
+            return;
+        }
+
+        _ = TryParseColor(tokens[1], out var color);
+        var reply = FindPreviewMove(Opponent(color));
+        var blackLead = _board.CountStones(GoStone.Black) - _board.CountStones(GoStone.White) - (double)_komi;
+        var perspectiveLead = color == GoStone.Black ? blackLead : -blackLead;
+        var winrate = 1.0 / (1.0 + Math.Exp(-perspectiveLead / 5.0));
+        var json = JsonSerializer.Serialize(new
+        {
+            moves = new[]
+            {
+                new
+                {
+                    move,
+                    winrate = Math.Round(winrate, 3),
+                    pv = reply is null ? "" : FormatVertex(reply.Value, _board.Size),
+                },
+            },
+        });
+        response = $"\n{json}\nplay {move}";
+    }
+
+    private GoPoint? FindPreviewMove(GoStone color)
+    {
+        var renParse = _board.ParseRens();
+        for (var y = 0; y < _board.Size; y++)
+        {
+            for (var x = 0; x < _board.Size; x++)
+            {
+                var trial = _board.Clone();
+                if (trial.TryPlaceStone(x, y, color, _koPoint, out _, out _) &&
+                    (!_avoidEyes || !_board.IsEyeFor(renParse, x, y, color)))
+                    return new GoPoint(x, y);
+            }
+        }
+
+        return null;
+    }
+
+    private static GoStone Opponent(GoStone color) => color == GoStone.Black ? GoStone.White : GoStone.Black;
 
     /// <summary>
     /// GTPコマンドへの対応状況を返します。
