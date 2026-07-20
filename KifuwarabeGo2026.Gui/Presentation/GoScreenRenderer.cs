@@ -292,7 +292,7 @@ public sealed partial class GoScreenRenderer
         DrawInfoStrip(1144, 363, "NEXT", GetMoveThinkingText(session));
 
         DrawVerticalResultSection(new Rectangle(1144, 466, 668, 364), "CALCULATION", new Color(76, 91, 126));
-        DrawResultRow(new Rectangle(1164, 486, 628, 56), "METHOD", FormatRuleKind(session.RuleKind), new Color(39, 68, 65), Color.White);
+        DrawCalculationMethodRow(new Rectangle(1164, 486, 628, 56), session);
         DrawStoneCountStrip(session, 554, showLeader: false, minimal: true);
         DrawCurrentStoneResultRow(new Rectangle(1164, 660, 628, 64), session);
 
@@ -323,7 +323,7 @@ public sealed partial class GoScreenRenderer
 
         var calculationSection = new Rectangle(1144, 480, 668, 350);
         DrawVerticalResultSection(calculationSection, "CALCULATION", new Color(76, 91, 126));
-        DrawResultRow(new Rectangle(1164, 500, 628, 56), "METHOD", FormatRuleKind(session.RuleKind), new Color(39, 68, 65), Color.White);
+        DrawCalculationMethodRow(new Rectangle(1164, 500, 628, 56), session);
         DrawStoneCountStrip(session, 568, showLeader: false, minimal: true);
         DrawCalculationResultRow(new Rectangle(1164, 674, 628, 64), session);
 
@@ -722,6 +722,20 @@ public sealed partial class GoScreenRenderer
     {
         DrawResultLabel(bounds, label, chipColor);
         DrawFittedText(value, new Rectangle(GameOverValueX, bounds.Y + 6, bounds.Right - GameOverValueX - 18, bounds.Height - 12), valueColor, 0.58f);
+    }
+
+    private void DrawCalculationMethodRow(Rectangle bounds, GoAppSession session)
+    {
+        if (session.RuleKind == GoRuleKind.PureGo)
+        {
+            DrawResultRow(bounds, "METHOD", "PURE GO", new Color(39, 68, 65), Color.White);
+            return;
+        }
+
+        DrawResultLabel(bounds, "METHOD", new Color(39, 68, 65));
+        var valueWidth = bounds.Right - GameOverValueX - 18;
+        DrawFittedText("PURE GO", new Rectangle(GameOverValueX, bounds.Y + 1, valueWidth, 32), Color.White, 0.48f);
+        DrawFittedText($"RULES: {FormatRuleKind(session.RuleKind)}", new Rectangle(GameOverValueX, bounds.Y + 34, valueWidth, 18), new Color(118, 139, 143), 0.24f);
     }
 
     private void DrawResultLabel(Rectangle bounds, string label, Color accentColor)
