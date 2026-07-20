@@ -121,12 +121,13 @@ public sealed partial class GoScreenRenderer
         {
             var step = ReviewStepButtonValues[i];
             var enabled = step < 0 ? session.ReviewMoveIndex > 0 : session.ReviewMoveIndex < session.ReviewMoveCount;
-            DrawCommandButton(ReviewStepButtonBounds(i), step > 0 ? $"+{step}" : step.ToString(), false, mousePoint, enabled, 0.42f);
+            DrawCommandButton(ReviewStepButtonBounds(i), step > 0 ? $"+{step}" : step.ToString(), false, mousePoint, enabled, 0.34f);
         }
+        DrawFittedText("KEYS  LEFT/RIGHT: -/+1   DOWN/UP: -/+10   PGDN/PGUP: -/+50", new Rectangle(1268, 790, 524, 24), new Color(147, 201, 190), 0.25f);
 
-        DrawResultRow(new Rectangle(1164, 848, 628, 52), "MOVE", $"{session.ReviewMoveIndex} / {session.ReviewMoveCount}", new Color(76, 91, 126), Color.White);
-        DrawResultRow(new Rectangle(1164, 904, 628, 52), "DISPLAY", FormatRenParseDisplayMode(session.RenParseDisplayMode), new Color(76, 91, 126), Color.White);
-        DrawFittedText("PRESS [R] TO CHANGE DISPLAY", new Rectangle(GameOverValueX, 958, 464, 28), new Color(147, 201, 190), 0.34f);
+        DrawResultRow(new Rectangle(1164, 824, 628, 52), "MOVE", $"{session.ReviewMoveIndex} / {session.ReviewMoveCount}", new Color(76, 91, 126), Color.White);
+        DrawResultRow(new Rectangle(1164, 880, 628, 52), "DISPLAY", FormatRenParseDisplayMode(session.RenParseDisplayMode), new Color(76, 91, 126), Color.White);
+        DrawFittedText("PRESS [R] TO CHANGE DISPLAY", new Rectangle(GameOverValueX, 934, 464, 28), new Color(147, 201, 190), 0.34f);
 
     }
 
@@ -162,7 +163,7 @@ public sealed partial class GoScreenRenderer
     private static readonly int[] ReviewStepButtonValues = [-50, -10, -1, 1, 10, 50];
 
 
-    private static Rectangle ReviewStepButtonBounds(int index) => new(GameOverValueX + index % 3 * 156, 740 + index / 3 * 58, 140, 44);
+    private static Rectangle ReviewStepButtonBounds(int index) => new(1268 + index * 87, 740, 78, 44);
 
 
     private static Rectangle ReviewDoneButtonBounds => new(1648, 120, 164, 52);
