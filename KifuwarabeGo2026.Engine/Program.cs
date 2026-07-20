@@ -231,7 +231,9 @@ internal sealed class GtpEngine
                 {
                     move,
                     winrate = Math.Round(winrate, 3),
+                    score = Math.Round(perspectiveLead, 1),
                     pv = reply is null ? "" : FormatVertex(reply.Value, _board.Size),
+                    visits = 1,
                 },
             },
         });
