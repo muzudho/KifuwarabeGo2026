@@ -705,7 +705,6 @@ public sealed partial class GoScreenRenderer
     private void DrawVerticalResultSection(Rectangle bounds, string title, Color accentColor)
     {
         DrawLine(new Vector2(bounds.X, bounds.Y), new Vector2(bounds.Right, bounds.Y), 1, new Color(58, 78, 86));
-        DrawLine(new Vector2(bounds.X, bounds.Bottom), new Vector2(bounds.Right, bounds.Bottom), 1, new Color(58, 78, 86));
 
         var labelBounds = new Rectangle(bounds.X - 46, bounds.Y, 38, bounds.Height);
         FillRect(labelBounds, new Color(accentColor, 150));
