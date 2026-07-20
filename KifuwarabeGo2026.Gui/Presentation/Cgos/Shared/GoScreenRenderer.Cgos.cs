@@ -310,9 +310,7 @@ public sealed partial class GoScreenRenderer
 
     private void DrawCgosClientTopPanel(GoAppSession session, Point mousePoint)
     {
-        var panel = session.CgosConnectionFlowKind == CgosConnectionFlowKind.ConnectionStart
-            ? new Rectangle(420, 172, 1080, 736)
-            : new Rectangle(230, 126, 1460, 820);
+        var panel = new Rectangle(230, 126, 1460, 820);
         FillRect(new Rectangle(panel.X + 18, panel.Y + 20, panel.Width, panel.Height), new Color(0, 0, 0, 130));
         FillRect(panel, new Color(21, 25, 32, 242));
         DrawRect(panel, 2, new Color(82, 111, 114));
@@ -354,7 +352,7 @@ public sealed partial class GoScreenRenderer
     private void DrawCgosConnectionStartPanel(GoAppSession session, Point mousePoint)
     {
         var profile = session.SelectedCgosConnectionProfile;
-        DrawText("USE CONNECTION", new Vector2(482, 300), new Color(180, 195, 195), 0.54f);
+        DrawText("USE CONNECTION", new Vector2(288, 300), new Color(180, 195, 195), 0.54f);
         DrawCommandButton(
             CgosConnectionStartBackButtonBounds,
             session.IsAnyCgosProcessRunning ? "DISCONNECT ALL & BACK" : "BACK",
@@ -768,25 +766,25 @@ public sealed partial class GoScreenRenderer
     private static Rectangle CgosAdminButtonBounds => new(CgosAdminProcessPanelBounds.X + 16, CgosAdminProcessPanelBounds.Y + 184, CgosAdminProcessPanelBounds.Width - 32, 48);
 
 
-    private static Rectangle CgosAdminWhoButtonBounds => new(CgosAdminProcessPanelBounds.X + 16, CgosAdminProcessPanelBounds.Y + 296, CgosAdminProcessPanelBounds.Width - 32, 38);
+    private static Rectangle CgosAdminWhoButtonBounds => new(CgosAdminProcessPanelBounds.X + 16, CgosAdminProcessPanelBounds.Y + 292, CgosAdminProcessPanelBounds.Width - 32, 36);
 
 
-    private static Rectangle CgosAdminMatchButtonBounds => new(CgosAdminProcessPanelBounds.X + 158, CgosAdminProcessPanelBounds.Y + 430, 128, 32);
+    private static Rectangle CgosAdminMatchButtonBounds => new(CgosAdminProcessPanelBounds.X + 224, CgosAdminProcessPanelBounds.Y + 418, 198, 28);
 
 
-    private static Rectangle CgosAdminSwapButtonBounds => new(CgosAdminProcessPanelBounds.X + 16, CgosAdminProcessPanelBounds.Y + 430, 128, 32);
+    private static Rectangle CgosAdminSwapButtonBounds => new(CgosAdminProcessPanelBounds.X + 16, CgosAdminProcessPanelBounds.Y + 418, 198, 28);
 
 
-    private static Rectangle CgosAdminWhitePlayerRowBounds => new(CgosAdminProcessPanelBounds.X + 16, CgosAdminProcessPanelBounds.Y + 340, CgosAdminProcessPanelBounds.Width - 32, 38);
+    private static Rectangle CgosAdminWhitePlayerRowBounds => new(CgosAdminProcessPanelBounds.X + 16, CgosAdminProcessPanelBounds.Y + 334, CgosAdminProcessPanelBounds.Width - 32, 36);
 
 
-    private static Rectangle CgosAdminBlackPlayerRowBounds => new(CgosAdminProcessPanelBounds.X + 16, CgosAdminProcessPanelBounds.Y + 384, CgosAdminProcessPanelBounds.Width - 32, 38);
+    private static Rectangle CgosAdminBlackPlayerRowBounds => new(CgosAdminProcessPanelBounds.X + 16, CgosAdminProcessPanelBounds.Y + 376, CgosAdminProcessPanelBounds.Width - 32, 36);
 
 
-    private static Rectangle CgosAdminWhitePlayerSelectButtonBounds => new(CgosAdminWhitePlayerRowBounds.Right - 84, CgosAdminWhitePlayerRowBounds.Y + 3, 80, 32);
+    private static Rectangle CgosAdminWhitePlayerSelectButtonBounds => new(CgosAdminWhitePlayerRowBounds.Right - 104, CgosAdminWhitePlayerRowBounds.Y + 3, 100, 32);
 
 
-    private static Rectangle CgosAdminBlackPlayerSelectButtonBounds => new(CgosAdminBlackPlayerRowBounds.Right - 84, CgosAdminBlackPlayerRowBounds.Y + 3, 80, 32);
+    private static Rectangle CgosAdminBlackPlayerSelectButtonBounds => new(CgosAdminBlackPlayerRowBounds.Right - 104, CgosAdminBlackPlayerRowBounds.Y + 3, 100, 32);
 
 
     private static Rectangle CgosAdminPlayerDialogBounds => new(510, 170, 900, 740);
@@ -811,31 +809,31 @@ public sealed partial class GoScreenRenderer
         new(CgosAdminPlayerDialogListBounds.X + 16, CgosAdminPlayerDialogListBounds.Y + 16 + slot * 72, CgosAdminPlayerDialogListBounds.Width - 32, 56);
 
 
-    private static Rectangle CgosAdminTailButtonBounds => new(CgosAdminProcessPanelBounds.X + 112, CgosAdminProcessPanelBounds.Y + 242, 74, 44);
+    private static Rectangle CgosAdminTailButtonBounds => new(CgosAdminProcessPanelBounds.X + 160, CgosAdminProcessPanelBounds.Y + 242, 120, 44);
 
 
-    private static Rectangle CgosAdminCodeButtonBounds => new(CgosAdminProcessPanelBounds.X + 194, CgosAdminProcessPanelBounds.Y + 242, 74, 44);
+    private static Rectangle CgosAdminCodeButtonBounds => new(CgosAdminProcessPanelBounds.X + 294, CgosAdminProcessPanelBounds.Y + 242, 120, 44);
 
 
-    private static Rectangle CgosConnectionStartBackButtonBounds => new(1134, 244, 324, 48);
+    private static Rectangle CgosConnectionStartBackButtonBounds => new(1308, 244, 324, 48);
 
 
     private static Rectangle CgosBlackConnectionButtonBounds => new(CgosBlackProcessPanelBounds.X + 16, CgosBlackProcessPanelBounds.Y + 184, CgosBlackProcessPanelBounds.Width - 32, 48);
 
 
-    private static Rectangle CgosBlackTailButtonBounds => new(CgosBlackProcessPanelBounds.X + 112, CgosBlackProcessPanelBounds.Y + 242, 74, 44);
+    private static Rectangle CgosBlackTailButtonBounds => new(CgosBlackProcessPanelBounds.X + 160, CgosBlackProcessPanelBounds.Y + 242, 120, 44);
 
 
-    private static Rectangle CgosPlayer1CodeButtonBounds => new(CgosBlackProcessPanelBounds.X + 194, CgosBlackProcessPanelBounds.Y + 242, 74, 44);
+    private static Rectangle CgosPlayer1CodeButtonBounds => new(CgosBlackProcessPanelBounds.X + 294, CgosBlackProcessPanelBounds.Y + 242, 120, 44);
 
 
     private static Rectangle CgosWhiteConnectionButtonBounds => new(CgosWhiteProcessPanelBounds.X + 16, CgosWhiteProcessPanelBounds.Y + 184, CgosWhiteProcessPanelBounds.Width - 32, 48);
 
 
-    private static Rectangle CgosWhiteTailButtonBounds => new(CgosWhiteProcessPanelBounds.X + 112, CgosWhiteProcessPanelBounds.Y + 242, 74, 44);
+    private static Rectangle CgosWhiteTailButtonBounds => new(CgosWhiteProcessPanelBounds.X + 160, CgosWhiteProcessPanelBounds.Y + 242, 120, 44);
 
 
-    private static Rectangle CgosWhiteCodeButtonBounds => new(CgosWhiteProcessPanelBounds.X + 194, CgosWhiteProcessPanelBounds.Y + 242, 74, 44);
+    private static Rectangle CgosWhiteCodeButtonBounds => new(CgosWhiteProcessPanelBounds.X + 294, CgosWhiteProcessPanelBounds.Y + 242, 120, 44);
 
 
     private static Rectangle CgosConnectionBeginButtonBounds => new(1134, 800, 302, 58);
@@ -883,16 +881,16 @@ public sealed partial class GoScreenRenderer
     private static Rectangle CgosConnectionPropertyBounds => new(950, 270, 700, 532);
 
 
-    private static Rectangle CgosSelectedProfileBarBounds => new(482, 358, 954, 56);
+    private static Rectangle CgosSelectedProfileBarBounds => new(288, 358, 1344, 56);
 
 
-    private static Rectangle CgosAdminProcessPanelBounds => new(482, 452, 302, 464);
+    private static Rectangle CgosAdminProcessPanelBounds => new(288, 452, 428, 448);
 
 
-    private static Rectangle CgosBlackProcessPanelBounds => new(808, 452, 302, 464);
+    private static Rectangle CgosBlackProcessPanelBounds => new(746, 452, 428, 448);
 
 
-    private static Rectangle CgosWhiteProcessPanelBounds => new(1134, 452, 302, 464);
+    private static Rectangle CgosWhiteProcessPanelBounds => new(1204, 452, 428, 448);
 
 
     private static LabeledBrowseSelector CgosBlackEngineSelector => new(
