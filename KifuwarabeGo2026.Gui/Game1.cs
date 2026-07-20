@@ -99,8 +99,11 @@ public class Game1 : Game
                 UpdateCgosAdminProcessStatus();
                 UpdateCgosGameObservation();
 
-                // ［CGOS　＞　観戦画面］キーボード入力
-                UpdateCgosWatchingKeyboardInput(keyboard);
+                if (_session.CurrentMode.Kind == GoAppModeKind.Reviewing)
+                    UpdateGlobalKeyboardInput(keyboard);
+                else
+                    // ［CGOS　＞　観戦画面］キーボード入力
+                    UpdateCgosWatchingKeyboardInput(keyboard);
 
                 UpdateCgosConnectionEditPanelByKeyboard(keyboard, gameTime);
             }
@@ -233,7 +236,11 @@ public class Game1 : Game
         {
             if (_renderer is not null)
             {
-                if (_session.CgosConnectionFlowKind is CgosConnectionFlowKind.Watching or CgosConnectionFlowKind.Result)
+                if (_session.CurrentMode.Kind == GoAppModeKind.Reviewing)
+                {
+                    LocalRestingRenderer.Draw(_renderer, _session, Mouse.GetState().Position);
+                }
+                else if (_session.CgosConnectionFlowKind is CgosConnectionFlowKind.Watching or CgosConnectionFlowKind.Result)
                 {
                     CgosWatchingRenderer.Draw(_renderer, _session, _cgosGameObservation, Mouse.GetState().Position);
                 }
@@ -286,6 +293,12 @@ public class Game1 : Game
             // ［CGOS　＞　観戦画面］マウス入力
             if (_session.UseKind == GoAppUseKind.CgosClient)
             {
+                if (_session.CurrentMode.Kind == GoAppModeKind.Reviewing && TryHandleReviewClick(point))
+                {
+                    _previousMouse = mouse;
+                    return;
+                }
+
                 if (_session.IsCgosAdminPlayerSelectionDialogOpen)
                 {
                     if (GoScreenRenderer.GetCgosAdminPlayerDialogCancelButtonHit(point))
@@ -321,7 +334,11 @@ public class Game1 : Game
 
                 if (_session.CgosConnectionFlowKind == CgosConnectionFlowKind.Result)
                 {
-                    if (GoScreenRenderer.GetCgosWatchingExportSgfButtonHit(point))
+                    if (GoScreenRenderer.GetCgosWatchingReviewButtonHit(point))
+                    {
+                        StartReviewingGameRecord(_cgosGameObservation.CreateGameRecord(), "CGOS review");
+                    }
+                    else if (GoScreenRenderer.GetCgosWatchingExportSgfButtonHit(point))
                     {
                         ExportSgf(
                             _cgosGameObservation.CreateGameRecord(),
@@ -692,6 +709,17 @@ public class Game1 : Game
         if (!_session.StartReviewingStoredGameRecord(out var warning) && !string.IsNullOrWhiteSpace(warning))
         {
             ShowMessage(warning, "SGF review");
+        }
+    }
+
+    /// <summary>
+    /// 指定された棋譜を共通の棋譜レビューフローで開きます。
+    /// </summary>
+    private void StartReviewingGameRecord(GoGameRecord record, string messageTitle)
+    {
+        if (!_session.StartReviewingGameRecord(record, out var warning) && !string.IsNullOrWhiteSpace(warning))
+        {
+            ShowMessage(warning, messageTitle);
         }
     }
 
@@ -1215,11 +1243,7 @@ public class Game1 : Game
         try
         {
             var record = SgfGameRecordConverter.FromSgf(File.ReadAllText(dialog.FileName, Encoding.UTF8));
-            if (!_session.StartReviewingGameRecord(record, out var warning))
-            {
-                ShowMessage(warning, "SGF input");
-                return;
-            }
+            StartReviewingGameRecord(record, "SGF input");
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or SgfParseException or ArgumentOutOfRangeException)
         {
