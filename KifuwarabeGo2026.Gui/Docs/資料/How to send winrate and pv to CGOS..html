@@ -1,0 +1,98 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<!-- saved from url=(0040)http://www.yss-aya.com/cgos/winrate.html -->
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta http-equiv="Content-Style-Type" content="text/css">
+<title>How to send winrate and pv to CGOS.</title>
+</head>
+
+<body leftmargin="30" rightmargin="30" bgcolor="#ECECEA" text="#001000">
+<p>
+
+<h2 align="CENTER">
+<i>How to send winrate and pv to CGOS.</i>
+</h2>
+<p>
+
+<h3></h3>
+To send winrate and pv to CGOS, you need to use new zakki's python client.<br>
+Also, you have to use "cgos-genmove_analyze" instead of "genmove".<br>
+<br>
+However, KataGo and LeelaZero do not need "cgos-genmove_analyze" implementation.<br>
+New client uses "cgos-genmove_analyze", "kata-genmove_analyze"(KataGo) or "lz-genmove_analyze"(LeelaZero) instead of "genmove" if it is available.<br>
+KataGo and LeelaZero have these commands.<br>
+<br>
+Other programs use "cgos-genmove_analyze" to send winrate instead of "genmove".<br>
+<br>
+In first example, move is "O15", winrate is 0.135.<br>
+And write "play O15" and send two newlines(\n).<br>
+You can send more information. In next example, winrate, score pv and ownership are sent.
+<hr>
+<pre>
+cgos-genmove_analyze w
+=
+{"moves":[{"move":"O15","winrate":0.135}]}
+play O15
+
+
+cgos-genmove_analyze b
+=
+{"moves":[{"move":"P17","winrate":0.508,"score":-2.6,"pv":"O18 N17 D3"}],"ownership":"y35678961tmifdgkpwxr6575+9+zrkgglgkk1xsB78ge+8xndbPkNeb1yNBBBBBC++pfULKV99rxEBGLSXXU+paO++8+rusDDFGljrU+iNn+88+5kmDDDED99ppVep99++99gDDDFEB908fIk9+E++SdDDDDEB972ocGF+E9HSWCCBCABB9988rHEE9HHYCCCCCDBB9rvcDRMHI5sCCCDDFHIIwhdTkiI756CCCDEGKQdecYVKxl775DBCDFIMQVYXTEZQ3243CCCDEJPRDTPMHCWoy4d+AAAAAQffjBBBB222CX+++++RDgh++U++BCCCE+9++97++5898+87CDDD+9998888778889kQDCC"}
+play P17
+
+cgos-genmove_analyze w
+=
+{"winrate":0.71,"score":+11.4,"visits":258}
+play M4
+</pre>
+<hr>
+It is also possible to send multiple moves winrate and score.<br>
+Please see the details.<br>
+<p>
+<b>GTP tournament game expansion</b><br>
+<a href="https://github.com/zakki/cgos/wiki/GTP-tournament-game-expansion">
+https://github.com/zakki/cgos/wiki/GTP-tournament-game-expansion</a><br>
+<p>
+<hr>
+<h3>How to Run KataGo with winrate on Windows11</h3>
+
+Install Python.<br>
+&nbsp; &nbsp; Python Releases for Windows<br>
+&nbsp; &nbsp; <a href="https://www.python.org/downloads/windows/">https://www.python.org/downloads/windows/</a><br>
+<br>
+Run python-3.11.3-amd64.exe, check "Add Python.exe to PATH", click "Install now".<br>
+<br>
+Download zakki's CGOS python client<br>
+&nbsp; &nbsp; <a href="https://github.com/zakki/cgos/archive/refs/heads/genmove_analyze.zip">https://github.com/zakki/cgos/archive/refs/heads/genmove_analyze.zip</a><br>
+<br>
+Unzip genmove_analyze.zip<br>
+&nbsp; &nbsp; right click on start button. "Explorer". select "Download" folder. right-click "genmove_analyze.zip". "extract all".<br>
+<br>
+Edit cgos-genmove-analyze\client-python\simple.cfg (You should change ServerUser and ServerPassword.)<br>
+&nbsp; &nbsp; CommandLine = C:\Go\Lizzie\katago\katago gtp -model C:\Go\Lizzie\katanetwork.gz -config C:\Go\Lizzie\katago-gtp10.cfg<br>
+&nbsp; &nbsp; ServerHost = yss-aya.com<br>
+&nbsp; &nbsp; ServerPort = 6819<br>
+&nbsp; &nbsp; ServerUser = kata_test1234<br>
+&nbsp; &nbsp; ServerPassword = password<br>
+<br>
+&nbsp; &nbsp; <i>This example uses Lizzie's KataGo.</i><br>
+&nbsp; &nbsp; <a href="https://github.com/featurecat/lizzie/releases/tag/0.7.4">https://github.com/featurecat/lizzie/releases/tag/0.7.4</a><br>
+<br>
+Run command-prompt<br>
+&nbsp; &nbsp; "Start" - "All Apps" - "Windows Tool" - "Command Prompt"<br>
+<br>
+In command-prompt,<br>
+&nbsp; &nbsp; c:\Users\yourname&gt; cd Downloads\cgos-genmove-analyze\cgos-genmove-analyze\client-python<br>
+<br>
+Run client<br>
+&nbsp; &nbsp; &gt; python src\cgosclient.py simple.cfg<br>
+<p>
+
+<hr>
+<b>New CGOS python server with python client</b><br>
+<a href="https://github.com/zakki/cgos">https://github.com/zakki/cgos</a><br>
+<p>
+All implementation of new CGOS python server, client and WGo with graph are made by zakki-san. Thank you!
+</body>
+</html>

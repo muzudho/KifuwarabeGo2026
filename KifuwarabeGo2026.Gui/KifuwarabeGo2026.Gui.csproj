@@ -65,11 +65,7 @@
       <CgosCommunicationPublishDir>$(PublishDir)Tools\Cgos\</CgosCommunicationPublishDir>
     </PropertyGroup>
     <Message Text="Publishing CGOS communication component to $(CgosCommunicationPublishDir)" Importance="High" />
-    <Exec
-      Condition="'$(RuntimeIdentifier)' == ''"
-      Command="dotnet publish &quot;$(CgosCommunicationProject)&quot; --configuration $(Configuration) --framework net8.0 --self-contained $(SelfContained) --output &quot;$(CgosCommunicationPublishDir)&quot;" />
-    <Exec
-      Condition="'$(RuntimeIdentifier)' != ''"
-      Command="dotnet publish &quot;$(CgosCommunicationProject)&quot; --configuration $(Configuration) --framework net8.0 --runtime $(RuntimeIdentifier) --self-contained $(SelfContained) --output &quot;$(CgosCommunicationPublishDir)&quot;" />
+    <Exec Condition="'$(RuntimeIdentifier)' == ''" Command="dotnet publish &quot;$(CgosCommunicationProject)&quot; --configuration $(Configuration) --framework net8.0 --self-contained $(SelfContained) --output &quot;$(CgosCommunicationPublishDir)&quot;" />
+    <Exec Condition="'$(RuntimeIdentifier)' != ''" Command="dotnet publish &quot;$(CgosCommunicationProject)&quot; --configuration $(Configuration) --framework net8.0 --runtime $(RuntimeIdentifier) --self-contained $(SelfContained) --output &quot;$(CgosCommunicationPublishDir)&quot;" />
   </Target>
 </Project>
