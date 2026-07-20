@@ -180,7 +180,7 @@ public sealed partial class GoScreenRenderer
             : session.GtpEngineSelectionTargetStone == GoStone.Black ? "BLACK" : "WHITE";
         DrawText($"GTP ENGINE SELECT  {target}", new Vector2(GtpEngineSelectionDialogBounds.X + 30, GtpEngineSelectionDialogBounds.Y + 24), new Color(244, 238, 218), 0.78f);
         DrawCommandButton(GtpEngineSelectionDialogCancelButtonBounds, "CANCEL", false, mousePoint, scale: 0.34f);
-        DrawCommandButton(GtpEngineSelectionDialogOkButtonBounds, "OK", false, mousePoint, scale: 0.42f);
+        DrawCommandButton(GtpEngineSelectionDialogOkButtonBounds, "SELECT", false, mousePoint, scale: 0.34f);
 
         DrawText("LIST", new Vector2(GtpEngineSelectionDialogListBounds.X, GtpEngineSelectionDialogListBounds.Y - 34), new Color(180, 195, 195), 0.46f);
         DrawText("PROPERTIES", new Vector2(GtpEngineSelectionDialogPropertyBounds.X, GtpEngineSelectionDialogPropertyBounds.Y - 34), new Color(180, 195, 195), 0.46f);

@@ -123,7 +123,7 @@ public sealed partial class GoScreenRenderer
 
         DrawText("TOURNAMENT RULES", new Vector2(TournamentRulesSelectionDialogBounds.X + 30, TournamentRulesSelectionDialogBounds.Y + 24), new Color(244, 238, 218), 0.78f);
         DrawCommandButton(TournamentRulesSelectionDialogCancelButtonBounds, "CANCEL", false, mousePoint, scale: 0.34f);
-        DrawCommandButton(TournamentRulesSelectionDialogOkButtonBounds, "OK", false, mousePoint, scale: 0.42f);
+        DrawCommandButton(TournamentRulesSelectionDialogOkButtonBounds, "SELECT", false, mousePoint, scale: 0.34f);
 
         DrawText("LIST", new Vector2(TournamentRulesSelectionDialogListBounds.X, TournamentRulesSelectionDialogListBounds.Y - 34), new Color(180, 195, 195), 0.46f);
         DrawText("PROPERTIES", new Vector2(TournamentRulesSelectionDialogPropertyBounds.X, TournamentRulesSelectionDialogPropertyBounds.Y - 34), new Color(180, 195, 195), 0.46f);
