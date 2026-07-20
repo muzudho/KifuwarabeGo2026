@@ -88,7 +88,10 @@ public sealed partial class GoScreenRenderer
     {
         DrawText("KIFU REVIEW", new Vector2(1144, 136), new Color(255, 230, 160), 0.72f);
         DrawCommandButton(ReviewBackToRestButtonBounds, "BACK TO HOME", false, mousePoint, scale: 0.32f);
-        DrawCommandButton(ReviewDoneButtonBounds, "USE POSITION", false, mousePoint, scale: 0.34f);
+        if (session.UseKind == GoAppUseKind.LocalGame)
+        {
+            DrawCommandButton(ReviewDoneButtonBounds, "USE POSITION", false, mousePoint, scale: 0.34f);
+        }
 
         DrawVerticalResultSection(new Rectangle(1144, 204, 668, 120), "RECORD", new Color(66, 104, 116));
         DrawResultRow(new Rectangle(1164, 208, 628, 52), "BOARD", $"{session.BoardSize} x {session.BoardSize}", new Color(62, 112, 105), Color.White);

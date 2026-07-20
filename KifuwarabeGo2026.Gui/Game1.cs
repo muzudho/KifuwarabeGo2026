@@ -681,7 +681,7 @@ public class Game1 : Game
             return true;
         }
 
-        if (GoScreenRenderer.GetReviewDoneButtonHit(point))
+        if (_session.UseKind == GoAppUseKind.LocalGame && GoScreenRenderer.GetReviewDoneButtonHit(point))
         {
             _session.FinishReviewing();
             return true;
