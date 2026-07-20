@@ -14,4 +14,8 @@ public static class GtpEngineGuiOptions
         NormalRandomMove,
         ChebyshevDistanceFromStarRandomMove,
     ];
+
+    public static readonly string[] KnownOptionIds = [RandomMoveId];
+
+    public static int KnownOptionCount => KnownOptionIds.Length;
 }

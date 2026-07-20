@@ -1419,13 +1419,21 @@ public class Game1 : Game
         {
             if (_session.IsGtpEngineRandomMoveSelectionDialogOpen)
             {
-                if (GoScreenRenderer.GetGtpEngineRandomMoveSelectionDialogCancelButtonHit(point))
+                if (GoScreenRenderer.GetGtpEngineRandomMoveSelectionDialogPagerStep(point) is { } comboPageStep)
+                    _session.MoveGtpEngineRandomMoveSelectionPage(comboPageStep);
+                else if (GoScreenRenderer.GetGtpEngineRandomMoveSelectionDialogCancelButtonHit(point))
                     _session.CancelGtpEngineRandomMoveSelectionDialog();
                 else if (GoScreenRenderer.GetGtpEngineRandomMoveSelectionDialogSelectButtonHit(point))
                     _session.CommitGtpEngineRandomMoveSelectionDialog();
-                else if (GoScreenRenderer.GetGtpEngineRandomMoveSelectionDialogItemHit(point) is { } itemIndex)
+                else if (GoScreenRenderer.GetGtpEngineRandomMoveSelectionDialogItemHit(point, _session) is { } itemIndex)
                     _session.SelectGtpEngineRandomMoveItem(itemIndex);
 
+                return true;
+            }
+
+            if (GoScreenRenderer.GetGtpEngineGuiOptionsDialogPagerStep(point) is { } optionPageStep)
+            {
+                _session.MoveGtpEngineGuiOptionsPage(optionPageStep);
                 return true;
             }
 

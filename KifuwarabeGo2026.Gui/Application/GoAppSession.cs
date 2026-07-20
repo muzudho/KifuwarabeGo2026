@@ -268,6 +268,14 @@ public sealed class GoAppSession
 
     public int GtpEngineRandomMoveSelectionIndex { get; private set; }
 
+    public int GtpEngineGuiOptionsPageIndex { get; private set; }
+
+    public int GtpEngineRandomMoveSelectionPageIndex { get; private set; }
+
+    public const int GtpEngineGuiOptionsPageSize = 4;
+
+    public const int GtpEngineComboSelectionPageSize = 4;
+
     public int GtpEngineSelectionPageIndex { get; private set; }
 
     public GtpEngineProfile BlackGtpEngineProfile => GetGtpEngineProfile(GoStone.Black);
@@ -1600,6 +1608,7 @@ public sealed class GoAppSession
     {
         GtpEngineGuiOptionsDialogDraft = new Dictionary<string, string>(GtpEngineEditDraft.GuiOptions);
         IsGtpEngineRandomMoveSelectionDialogOpen = false;
+        GtpEngineGuiOptionsPageIndex = 0;
         IsGtpEngineGuiOptionsDialogOpen = true;
         ActiveGtpEngineEditField = null;
     }
@@ -1636,6 +1645,7 @@ public sealed class GoAppSession
             GtpEngineGuiOptions.RandomMoveId,
             GtpEngineGuiOptions.ChebyshevDistanceFromStarRandomMove);
         GtpEngineRandomMoveSelectionIndex = Math.Max(0, Array.IndexOf(values, current));
+        GtpEngineRandomMoveSelectionPageIndex = GtpEngineRandomMoveSelectionIndex / GtpEngineComboSelectionPageSize;
         IsGtpEngineRandomMoveSelectionDialogOpen = true;
     }
 
@@ -1644,6 +1654,21 @@ public sealed class GoAppSession
         if (index >= 0 && index < GtpEngineGuiOptions.RandomMoveValues.Length)
             GtpEngineRandomMoveSelectionIndex = index;
     }
+
+    public int GetGtpEngineGuiOptionsPageCount() =>
+        Math.Max(1, (GtpEngineGuiOptions.KnownOptionCount + GtpEngineGuiOptionsPageSize - 1) / GtpEngineGuiOptionsPageSize);
+
+    public void MoveGtpEngineGuiOptionsPage(int step) =>
+        GtpEngineGuiOptionsPageIndex = Math.Clamp(GtpEngineGuiOptionsPageIndex + step, 0, GetGtpEngineGuiOptionsPageCount() - 1);
+
+    public int GetGtpEngineRandomMoveSelectionPageCount() =>
+        Math.Max(1, (GtpEngineGuiOptions.RandomMoveValues.Length + GtpEngineComboSelectionPageSize - 1) / GtpEngineComboSelectionPageSize);
+
+    public void MoveGtpEngineRandomMoveSelectionPage(int step) =>
+        GtpEngineRandomMoveSelectionPageIndex = Math.Clamp(
+            GtpEngineRandomMoveSelectionPageIndex + step,
+            0,
+            GetGtpEngineRandomMoveSelectionPageCount() - 1);
 
     public void CancelGtpEngineRandomMoveSelectionDialog() =>
         IsGtpEngineRandomMoveSelectionDialogOpen = false;
