@@ -84,7 +84,7 @@ public sealed partial class GoScreenRenderer
             DrawCommandButton(CgosWatchingBackButtonBounds, "BACK TO CONNECTION", false, mousePoint, scale: 0.3f);
         }
 
-        DrawVerticalResultSection(new Rectangle(1144, 204, 668, 172), "RECORD", new Color(66, 104, 116));
+        DrawVerticalResultSection(new Rectangle(1144, 204, 668, 172), "RULES", new Color(66, 104, 116));
         DrawResultRow(new Rectangle(1164, 208, 628, 52), "GAME", observation.GameId.ToString(), new Color(62, 112, 105), Color.White);
         DrawResultRow(new Rectangle(1164, 264, 628, 52), "BOARD", $"{observation.BoardSize} x {observation.BoardSize}", new Color(62, 112, 105), Color.White);
         DrawResultRow(new Rectangle(1164, 320, 628, 52), "KOMI", observation.Komi.ToString("0.0"), new Color(62, 112, 105), Color.White);

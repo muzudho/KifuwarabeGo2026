@@ -93,7 +93,7 @@ public sealed partial class GoScreenRenderer
             DrawCommandButton(ReviewDoneButtonBounds, "USE POSITION", false, mousePoint, scale: 0.34f);
         }
 
-        DrawVerticalResultSection(new Rectangle(1144, 204, 668, 120), "RULE", new Color(66, 104, 116));
+        DrawVerticalResultSection(new Rectangle(1144, 204, 668, 120), "RULES", new Color(66, 104, 116));
         DrawResultRow(new Rectangle(1164, 208, 628, 52), "BOARD", $"{session.BoardSize} x {session.BoardSize}", new Color(62, 112, 105), Color.White);
         DrawResultRow(new Rectangle(1164, 264, 628, 52), "KOMI", FormatKomi(session.Komi), new Color(62, 112, 105), Color.White);
 
