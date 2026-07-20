@@ -128,7 +128,7 @@ public sealed partial class GoScreenRenderer
             var enabled = step < 0 ? session.ReviewMoveIndex > 0 : session.ReviewMoveIndex < session.ReviewMoveCount;
             DrawCommandButton(ReviewStepButtonBounds(i), step > 0 ? $"+{step}" : step.ToString(), false, mousePoint, enabled, 0.34f);
         }
-        DrawFittedText("KEYS  LEFT/RIGHT: -/+1   DOWN/UP: -/+10   PGDN/PGUP: -/+50", new Rectangle(1268, 950, 524, 24), new Color(147, 201, 190), 0.25f);
+        DrawFittedText("KEYS  LEFT/RIGHT: -/+1   DOWN/UP: -/+10   PGDN/PGUP: -/+50   R: REN ANALYSIS", new Rectangle(1268, 950, 524, 24), new Color(147, 201, 190), 0.25f);
 
         DrawMoveAnalysisTooltip(session.ReviewCurrentMove, ReviewAnalysisSectionBounds, mousePoint, ReviewAnalysisTooltipBounds);
 
