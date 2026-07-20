@@ -2016,7 +2016,7 @@ public sealed class GoAppSession
 
     public const int GtpEngineSelectionPageSize = 6;
 
-    public const int CgosConnectionSelectionPageSize = 3;
+    public const int CgosConnectionSelectionPageSize = 5;
 
     private void CompleteMoveAndPassTurn()
     {

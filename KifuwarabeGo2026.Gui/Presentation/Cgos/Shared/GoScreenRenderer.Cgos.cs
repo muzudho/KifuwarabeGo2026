@@ -291,20 +291,21 @@ public sealed partial class GoScreenRenderer
 
     private void DrawCgosClientTopPanel(GoAppSession session, Point mousePoint)
     {
-        var panel = new Rectangle(420, 172, 1080, 736);
+        var panel = session.CgosConnectionFlowKind == CgosConnectionFlowKind.ConnectionStart
+            ? new Rectangle(420, 172, 1080, 736)
+            : new Rectangle(230, 126, 1460, 820);
         FillRect(new Rectangle(panel.X + 18, panel.Y + 20, panel.Width, panel.Height), new Color(0, 0, 0, 130));
         FillRect(panel, new Color(21, 25, 32, 242));
         DrawRect(panel, 2, new Color(82, 111, 114));
 
-        DrawText("CGOS CLIENT", new Vector2(panel.X + 58, panel.Y + 58), new Color(255, 230, 160), 1.0f);
-
         if (session.CgosConnectionFlowKind == CgosConnectionFlowKind.ConnectionStart)
         {
+            DrawText("CGOS CLIENT", new Vector2(panel.X + 58, panel.Y + 58), new Color(255, 230, 160), 1.0f);
             DrawCgosConnectionStartPanel(session, mousePoint);
             return;
         }
 
-        DrawText("CONNECTION PROFILE", new Vector2(panel.X + 62, panel.Y + 112), new Color(180, 195, 195), 0.54f);
+        DrawText("CGOS CONNECTION SELECT", new Vector2(panel.X + 30, panel.Y + 24), new Color(244, 238, 218), 0.78f);
 
         DrawText("LIST", new Vector2(CgosConnectionListBounds.X, CgosConnectionListBounds.Y - 34), new Color(180, 195, 195), 0.46f);
         FillRect(CgosConnectionListBounds, new Color(15, 20, 26));
@@ -318,14 +319,15 @@ public sealed partial class GoScreenRenderer
 
         DrawText("PROPERTIES", new Vector2(CgosConnectionPropertyBounds.X, CgosConnectionPropertyBounds.Y - 34), new Color(180, 195, 195), 0.46f);
         DrawCgosConnectionProperties(session);
+        DrawText($"PAGE {session.CgosConnectionSelectionPageIndex + 1} / {session.GetCgosConnectionSelectionPageCount()}", new Vector2(600, 817), new Color(227, 224, 210), 0.42f);
         DrawCommandButton(CgosPreviousPageButtonBounds, "PREV", false, mousePoint, enabled: session.CanMoveCgosConnectionSelectionPage(-1), scale: 0.42f);
         DrawCommandButton(CgosNextPageButtonBounds, "NEXT", false, mousePoint, enabled: session.CanMoveCgosConnectionSelectionPage(1), scale: 0.42f);
         DrawCommandButton(CgosAddButtonBounds, "ADD", false, mousePoint, scale: 0.38f);
         DrawCommandButton(CgosEditButtonBounds, "EDIT", false, mousePoint, enabled: session.CgosConnectionProfiles.Count > 0, scale: 0.38f);
         DrawCommandButton(CgosDuplicateButtonBounds, "DUPLICATE", false, mousePoint, enabled: session.CgosConnectionProfiles.Count > 0, scale: 0.25f);
         DrawCommandButton(CgosDeleteButtonBounds, "DELETE", false, mousePoint, enabled: session.CanDeleteSelectedCgosConnectionProfile, scale: 0.34f);
-        DrawCommandButton(CgosUseSelectedProfileButtonBounds, "USE", false, mousePoint, enabled: session.CgosConnectionProfiles.Count > 0, scale: 0.42f);
-        DrawCommandButton(CgosBackButtonBounds, "BACK", false, mousePoint, scale: 0.42f);
+        DrawCommandButton(CgosUseSelectedProfileButtonBounds, "SELECT", false, mousePoint, enabled: session.CgosConnectionProfiles.Count > 0, scale: 0.34f);
+        DrawCommandButton(CgosBackButtonBounds, "CANCEL", false, mousePoint, scale: 0.34f);
         DrawCgosConnectionEditPanel(session, mousePoint);
     }
 
@@ -708,10 +710,10 @@ public sealed partial class GoScreenRenderer
     private static Rectangle CgosUseButtonBounds => new(974, 404, 438, 300);
 
 
-    private static Rectangle CgosBackButtonBounds => new(1348, 204, 110, 48);
+    private static Rectangle CgosBackButtonBounds => new(1368, 156, 132, 48);
 
 
-    private static Rectangle CgosUseSelectedProfileButtonBounds => new(1224, 278, 212, 54);
+    private static Rectangle CgosUseSelectedProfileButtonBounds => new(1518, 156, 132, 48);
 
 
     private static Rectangle CgosAdminButtonBounds => new(CgosAdminProcessPanelBounds.X + 18, CgosAdminProcessPanelBounds.Bottom - 70, 108, 48);
@@ -792,28 +794,28 @@ public sealed partial class GoScreenRenderer
     private static Rectangle CgosConnectionOpenStandardErrorLogNotepadButtonBounds => new(1352, 686, 72, 32);
 
 
-    private static Rectangle CgosPreviousPageButtonBounds => new(482, 800, 130, 52);
+    private static Rectangle CgosPreviousPageButtonBounds => new(730, 816, 90, 44);
 
 
-    private static Rectangle CgosNextPageButtonBounds => new(772, 800, 130, 52);
+    private static Rectangle CgosNextPageButtonBounds => new(830, 816, 90, 44);
 
 
-    private static Rectangle CgosAddButtonBounds => new(936, 800, 120, 52);
+    private static Rectangle CgosAddButtonBounds => new(270, 874, 100, 44);
 
 
-    private static Rectangle CgosEditButtonBounds => new(1062, 800, 120, 52);
+    private static Rectangle CgosEditButtonBounds => new(380, 874, 100, 44);
 
 
-    private static Rectangle CgosDuplicateButtonBounds => new(1188, 800, 120, 52);
+    private static Rectangle CgosDuplicateButtonBounds => new(490, 874, 120, 44);
 
 
-    private static Rectangle CgosDeleteButtonBounds => new(1316, 800, 120, 52);
+    private static Rectangle CgosDeleteButtonBounds => new(620, 874, 100, 44);
 
 
-    private static Rectangle CgosConnectionListBounds => new(482, 350, 420, 332);
+    private static Rectangle CgosConnectionListBounds => new(270, 242, 650, 560);
 
 
-    private static Rectangle CgosConnectionPropertyBounds => new(936, 350, 500, 426);
+    private static Rectangle CgosConnectionPropertyBounds => new(950, 270, 700, 532);
 
 
     private static Rectangle CgosSelectedProfileBarBounds => new(482, 358, 954, 56);

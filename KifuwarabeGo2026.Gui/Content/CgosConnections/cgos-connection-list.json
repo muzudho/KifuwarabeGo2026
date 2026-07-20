@@ -39,6 +39,14 @@
       "role": "PRACTICE",
       "note": "CGOS practice server",
       "event": ""
+    },
+    {
+      "displayName": "New CGOS Connection 1 Copy Copy",
+      "host": "uec-go.com",
+      "port": 6809,
+      "role": "PRACTICE",
+      "note": "CGOS practice server",
+      "event": ""
     }
   ]
 }
