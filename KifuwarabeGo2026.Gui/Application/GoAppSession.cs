@@ -320,6 +320,11 @@ public sealed class GoAppSession
 
     public int ReviewMoveCount => _reviewGameRecord?.Moves.Count ?? 0;
 
+    public GoGameMove? ReviewCurrentMove =>
+        _reviewGameRecord is not null && ReviewMoveIndex > 0 && ReviewMoveIndex <= _reviewGameRecord.Moves.Count
+            ? _reviewGameRecord.Moves[ReviewMoveIndex - 1]
+            : null;
+
     public string ReviewBlackPlayerName =>
         string.IsNullOrWhiteSpace(_reviewGameRecord?.BlackPlayerName) ? "BLACK" : _reviewGameRecord.BlackPlayerName;
 

@@ -115,19 +115,22 @@ public sealed partial class GoScreenRenderer
         DrawVerticalResultSection(new Rectangle(1144, 548, 668, 132), "CALCULATION", new Color(76, 91, 126));
         DrawStoneCountStrip(session, 560, showLeader: true, minimal: true);
 
-        DrawVerticalResultSection(new Rectangle(1144, 692, 668, 300), "REVIEW", new Color(76, 91, 126));
-        DrawResultLabel(new Rectangle(1164, 700, 628, 36), "STEP", new Color(76, 91, 126));
+        DrawMoveAnalysisSection(session.ReviewCurrentMove, ReviewAnalysisSectionBounds);
+
+        DrawVerticalResultSection(new Rectangle(1144, 850, 668, 142), "REVIEW", new Color(76, 91, 126));
+        DrawResultLabel(
+            new Rectangle(1164, 858, 628, 36),
+            $"STEP {session.ReviewMoveIndex} / {session.ReviewMoveCount}   DISPLAY {FormatRenParseDisplayMode(session.RenParseDisplayMode)}",
+            new Color(76, 91, 126));
         for (var i = 0; i < ReviewStepButtonValues.Length; i++)
         {
             var step = ReviewStepButtonValues[i];
             var enabled = step < 0 ? session.ReviewMoveIndex > 0 : session.ReviewMoveIndex < session.ReviewMoveCount;
             DrawCommandButton(ReviewStepButtonBounds(i), step > 0 ? $"+{step}" : step.ToString(), false, mousePoint, enabled, 0.34f);
         }
-        DrawFittedText("KEYS  LEFT/RIGHT: -/+1   DOWN/UP: -/+10   PGDN/PGUP: -/+50", new Rectangle(1268, 790, 524, 24), new Color(147, 201, 190), 0.25f);
+        DrawFittedText("KEYS  LEFT/RIGHT: -/+1   DOWN/UP: -/+10   PGDN/PGUP: -/+50", new Rectangle(1268, 950, 524, 24), new Color(147, 201, 190), 0.25f);
 
-        DrawResultRow(new Rectangle(1164, 824, 628, 52), "MOVE", $"{session.ReviewMoveIndex} / {session.ReviewMoveCount}", new Color(76, 91, 126), Color.White);
-        DrawResultRow(new Rectangle(1164, 880, 628, 52), "DISPLAY", FormatRenParseDisplayMode(session.RenParseDisplayMode), new Color(76, 91, 126), Color.White);
-        DrawFittedText("PRESS [R] TO CHANGE DISPLAY", new Rectangle(GameOverValueX, 934, 464, 28), new Color(147, 201, 190), 0.34f);
+        DrawMoveAnalysisTooltip(session.ReviewCurrentMove, ReviewAnalysisSectionBounds, mousePoint, ReviewAnalysisTooltipBounds);
 
     }
 
@@ -163,7 +166,13 @@ public sealed partial class GoScreenRenderer
     private static readonly int[] ReviewStepButtonValues = [-50, -10, -1, 1, 10, 50];
 
 
-    private static Rectangle ReviewStepButtonBounds(int index) => new(1268 + index * 87, 740, 78, 44);
+    private static Rectangle ReviewStepButtonBounds(int index) => new(1268 + index * 87, 898, 78, 44);
+
+
+    private static Rectangle ReviewAnalysisSectionBounds => new(1144, 692, 668, 146);
+
+
+    private static Rectangle ReviewAnalysisTooltipBounds => new(1164, 734, 628, 104);
 
 
     private static Rectangle ReviewDoneButtonBounds => new(1648, 120, 164, 52);

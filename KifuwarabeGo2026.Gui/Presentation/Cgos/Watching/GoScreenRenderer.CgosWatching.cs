@@ -7,7 +7,6 @@ using KifuwarabeGo2026.Shared.Domain;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
-using System.Globalization;
 
 /// <summary>
 /// CGOS 対局の観戦・結果画面を描画します。
@@ -109,7 +108,8 @@ public sealed partial class GoScreenRenderer
         DrawVerticalResultSection(new Rectangle(1144, 600, 668, 66), "FACTS", new Color(66, 104, 116));
         DrawResultRow(new Rectangle(1164, 606, 628, 52), "MOVES", observation.MoveCount.ToString(), new Color(66, 104, 116), Color.White);
 
-        DrawCgosAnalysisSection(observation, mousePoint);
+        GoGameMove? latestMove = observation.Moves.Count == 0 ? null : observation.Moves[^1];
+        DrawMoveAnalysisSection(latestMove, CgosAnalysisSectionBounds);
 
         if (observation.IsFinished)
         {
@@ -126,41 +126,8 @@ public sealed partial class GoScreenRenderer
             DrawResultRow(new Rectangle(1164, 846, 628, 56), "STATE", "WATCHING LIVE GAME", new Color(62, 112, 105), new Color(99, 223, 185));
         }
 
-        DrawCgosAnalysisTooltip(observation, mousePoint);
-    }
+        DrawMoveAnalysisTooltip(latestMove, CgosAnalysisSectionBounds, mousePoint, CgosAnalysisTooltipBounds);
 
-    private void DrawCgosAnalysisSection(CgosGameObservation observation, Point mousePoint)
-    {
-        DrawVerticalResultSection(new Rectangle(1144, 678, 668, 146), "ANALYSIS", new Color(76, 91, 126));
-        var latestMove = observation.Moves.Count == 0 ? (GoGameMove?)null : observation.Moves[^1];
-        var analysis = latestMove?.Analysis;
-        var winrate = analysis?.Winrate is { } rate
-            ? $"{(latestMove!.Value.Stone == GoStone.Black ? "BLACK" : "WHITE")} {rate:P1}"
-            : "-";
-        DrawResultRow(new Rectangle(1164, 686, 628, 52), "WINRATE", winrate, new Color(76, 91, 126), Color.White);
-
-        DrawResultLabel(new Rectangle(1164, 742, 628, 52), "PV", new Color(76, 91, 126));
-        var pv = analysis?.PrincipalVariation ?? "";
-        DrawFittedText(pv.Length == 0 ? "-" : AbbreviateOptionValue(pv, 44), CgosAnalysisPvValueBounds, Color.White, 0.42f);
-
-        if (analysis is not null)
-        {
-            var score = analysis.Score is { } scoreValue ? scoreValue.ToString("+0.0;-0.0;0.0", CultureInfo.InvariantCulture) : "-";
-            var visits = analysis.Visits?.ToString(CultureInfo.InvariantCulture) ?? "-";
-            DrawFittedText($"SCORE {score}   VISITS {visits}", new Rectangle(GameOverValueX, 798, 464, 20), new Color(118, 139, 143), 0.25f);
-        }
-    }
-
-    private void DrawCgosAnalysisTooltip(CgosGameObservation observation, Point mousePoint)
-    {
-        if (!CgosAnalysisPvValueBounds.Contains(mousePoint) || observation.LatestAnalysis?.PrincipalVariation is not { Length: > 44 } pv)
-            return;
-
-        FillRect(new Rectangle(CgosAnalysisTooltipBounds.X + 8, CgosAnalysisTooltipBounds.Y + 10, CgosAnalysisTooltipBounds.Width, CgosAnalysisTooltipBounds.Height), new Color(0, 0, 0, 150));
-        FillRect(CgosAnalysisTooltipBounds, new Color(30, 36, 43, 252));
-        DrawRect(CgosAnalysisTooltipBounds, 2, new Color(147, 244, 200));
-        DrawText("PRINCIPAL VARIATION", new Vector2(CgosAnalysisTooltipBounds.X + 18, CgosAnalysisTooltipBounds.Y + 12), new Color(180, 195, 195), 0.3f);
-        DrawFittedText(AbbreviateOptionValue(pv, 120), new Rectangle(CgosAnalysisTooltipBounds.X + 18, CgosAnalysisTooltipBounds.Y + 46, CgosAnalysisTooltipBounds.Width - 36, 42), Color.White, 0.36f);
     }
 
     /// <summary>
@@ -193,7 +160,7 @@ public sealed partial class GoScreenRenderer
     /// </summary>
     private static Rectangle CgosWatchingReviewButtonBounds => new(1164, 920, 306, 52);
 
-    private static Rectangle CgosAnalysisPvValueBounds => new(GameOverValueX, 748, 464, 40);
+    private static Rectangle CgosAnalysisSectionBounds => new(1144, 678, 668, 146);
 
     private static Rectangle CgosAnalysisTooltipBounds => new(1164, 812, 628, 104);
 }
