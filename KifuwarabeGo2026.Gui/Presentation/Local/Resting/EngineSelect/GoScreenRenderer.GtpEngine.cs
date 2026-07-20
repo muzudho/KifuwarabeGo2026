@@ -91,6 +91,7 @@ public sealed partial class GoScreenRenderer
             var primaryBounds = option.Type == "spin" ? GtpEngineGuiOptionPrimaryButtonBounds(slot) : GtpEngineGuiOptionWideButtonBounds(slot);
             if (primaryBounds.Contains(point)) return (index, 0);
             if (GtpEngineGuiOptionSecondaryButtonBounds(slot).Contains(point)) return (index, 1);
+            if (option.Type == "spin" && GtpEngineGuiOptionValueBounds(slot).Contains(point)) return (index, 2);
         }
         return null;
     }

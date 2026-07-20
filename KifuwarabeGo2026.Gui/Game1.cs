@@ -1458,7 +1458,10 @@ public class Game1 : Game
                         _session.ToggleGtpEngineCheckOption(option);
                         break;
                     case "spin":
-                        _session.StepGtpEngineSpinOption(option, optionHit.Action == 0 ? -1 : 1);
+                        if (optionHit.Action == 2)
+                            EditGtpEngineSpinOption(option);
+                        else
+                            _session.StepGtpEngineSpinOption(option, optionHit.Action == 0 ? -1 : 1);
                         break;
                     case "combo":
                         _session.OpenGtpEngineRandomMoveSelectionDialog();
@@ -1664,14 +1667,47 @@ public class Game1 : Game
             Text = option.Label,
         };
         using var textBox = new System.Windows.Forms.TextBox { Left = 20, Top = 20, Width = 580, Text = current };
-        using var cancelButton = new System.Windows.Forms.Button { Left = 360, Top = 78, Width = 110, Height = 42, Text = "CANCEL", DialogResult = System.Windows.Forms.DialogResult.Cancel };
-        using var okButton = new System.Windows.Forms.Button { Left = 490, Top = 78, Width = 110, Height = 42, Text = "OK", DialogResult = System.Windows.Forms.DialogResult.OK };
+        using var cancelButton = new System.Windows.Forms.Button { Left = 20, Top = 78, Width = 110, Height = 42, Text = "CANCEL", DialogResult = System.Windows.Forms.DialogResult.Cancel };
+        using var okButton = new System.Windows.Forms.Button { Left = 150, Top = 78, Width = 110, Height = 42, Text = "OK", DialogResult = System.Windows.Forms.DialogResult.OK };
         dialog.AcceptButton = okButton;
         dialog.CancelButton = cancelButton;
         dialog.Controls.AddRange([textBox, cancelButton, okButton]);
         textBox.SelectAll();
         if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
             _session.SetGtpEngineGuiOptionDraft(option, textBox.Text);
+    }
+
+    private void EditGtpEngineSpinOption(GtpEngineGuiOptionSpec option)
+    {
+        _ = int.TryParse(_session.GetGtpEngineGuiOptionDraft(option), out var current);
+        using var dialog = new System.Windows.Forms.Form
+        {
+            ClientSize = new System.Drawing.Size(620, 150),
+            FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog,
+            MaximizeBox = false,
+            MinimizeBox = false,
+            StartPosition = System.Windows.Forms.FormStartPosition.CenterParent,
+            Text = option.Label,
+        };
+        using var numberBox = new System.Windows.Forms.NumericUpDown
+        {
+            Left = 20,
+            Top = 20,
+            Width = 580,
+            DecimalPlaces = 0,
+            Minimum = option.Min ?? int.MinValue,
+            Maximum = option.Max ?? int.MaxValue,
+            Value = Math.Clamp(current, option.Min ?? int.MinValue, option.Max ?? int.MaxValue),
+            ThousandsSeparator = false,
+        };
+        using var cancelButton = new System.Windows.Forms.Button { Left = 20, Top = 78, Width = 110, Height = 42, Text = "CANCEL", DialogResult = System.Windows.Forms.DialogResult.Cancel };
+        using var okButton = new System.Windows.Forms.Button { Left = 150, Top = 78, Width = 110, Height = 42, Text = "OK", DialogResult = System.Windows.Forms.DialogResult.OK };
+        dialog.AcceptButton = okButton;
+        dialog.CancelButton = cancelButton;
+        dialog.Controls.AddRange([numberBox, cancelButton, okButton]);
+        numberBox.Select(0, numberBox.Text.Length);
+        if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            _session.SetGtpEngineGuiOptionDraft(option, decimal.ToInt32(numberBox.Value).ToString());
     }
 
     private void BrowseGtpEngineFilenameOption(GtpEngineGuiOptionSpec option)
