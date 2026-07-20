@@ -1,11 +1,15 @@
 namespace KifuwarabeGo2026.Gui.Sgf;
 
 using KifuwarabeGo2026.Gui.Application.Local.Playing;
+using KifuwarabeGo2026.Gui.Application.Cgos.Watching;
+using KifuwarabeGo2026.Gui.Gtp;
 using KifuwarabeGo2026.Shared.Domain;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Text;
+using System.Text.Json;
 
 public static class SgfGameRecordConverter
 {
@@ -15,6 +19,10 @@ public static class SgfGameRecordConverter
 
         var builder = new StringBuilder();
         builder.Append("(;FF[4]GM[1]CA[UTF-8]AP[KifuwarabeGo2026]");
+        if (record.Moves.Exists(move => move.Analysis is not null))
+        {
+            AppendProperty(builder, "KFAV", "1");
+        }
         AppendProperty(builder, "SZ", record.BoardSize.ToString(CultureInfo.InvariantCulture));
         AppendProperty(builder, "KM", record.Komi.ToString(CultureInfo.InvariantCulture));
         if (!string.IsNullOrWhiteSpace(record.RuleName))
@@ -48,6 +56,10 @@ public static class SgfGameRecordConverter
             {
                 AppendProperty(builder, "C", move.Comment);
             }
+            if (move.Analysis is not null)
+            {
+                AppendProperty(builder, "KFA", SerializeAnalysis(move, record.BoardSize));
+            }
         }
 
         builder.Append(')');
@@ -66,6 +78,7 @@ public static class SgfGameRecordConverter
 
         var record = new GoGameRecord();
         ApplyRootProperties(record, nodes[0]);
+        var readKifuwarabeAnalysis = !TryGetSingleValue(nodes[0], "KFAV", out var analysisVersion) || analysisVersion == "1";
 
         var sawMove = false;
         foreach (var node in nodes)
@@ -81,8 +94,8 @@ public static class SgfGameRecordConverter
                 ApplySetupStones(record, node, "AW", GoStone.White);
             }
 
-            sawMove |= AppendMoveIfPresent(record, node, "B", GoStone.Black);
-            sawMove |= AppendMoveIfPresent(record, node, "W", GoStone.White);
+            sawMove |= AppendMoveIfPresent(record, node, "B", GoStone.Black, readKifuwarabeAnalysis);
+            sawMove |= AppendMoveIfPresent(record, node, "W", GoStone.White, readKifuwarabeAnalysis);
         }
 
         return record;
@@ -154,7 +167,12 @@ public static class SgfGameRecordConverter
         }
     }
 
-    private static bool AppendMoveIfPresent(GoGameRecord record, Dictionary<string, List<string>> node, string propertyName, GoStone stone)
+    private static bool AppendMoveIfPresent(
+        GoGameRecord record,
+        Dictionary<string, List<string>> node,
+        string propertyName,
+        GoStone stone,
+        bool readKifuwarabeAnalysis)
     {
         if (!node.TryGetValue(propertyName, out var values))
         {
@@ -172,8 +190,35 @@ public static class SgfGameRecordConverter
         }
 
         var comment = TryGetSingleValue(node, "C", out var nodeComment) ? nodeComment : "";
-        record.Moves.Add(new GoGameMove(stone, point, comment));
+        var playedVertex = point is { } playedPoint ? GtpCoordinate.FormatVertex(playedPoint, record.BoardSize) : "pass";
+        var analysis = readKifuwarabeAnalysis && TryGetSingleValue(node, "KFA", out var analysisJson)
+            ? CgosMoveAnalysisParser.Parse(analysisJson, playedVertex)
+            : null;
+        record.Moves.Add(new GoGameMove(stone, point, comment, analysis));
         return true;
+    }
+
+    /// <summary>zakki CGOS analysis JSON と同じキーで、着手に対応する解析を保存します。</summary>
+    private static string SerializeAnalysis(GoGameMove move, int boardSize)
+    {
+        var analysis = move.Analysis ?? throw new InvalidOperationException("Move analysis is required.");
+        var playedVertex = move.Point is { } point ? GtpCoordinate.FormatVertex(point, boardSize) : "pass";
+        using var stream = new MemoryStream();
+        using (var writer = new Utf8JsonWriter(stream))
+        {
+            writer.WriteStartObject();
+            writer.WriteStartArray("moves");
+            writer.WriteStartObject();
+            writer.WriteString("move", playedVertex);
+            if (analysis.Winrate is { } winrate) writer.WriteNumber("winrate", winrate);
+            if (analysis.Score is { } score) writer.WriteNumber("score", score);
+            if (!string.IsNullOrWhiteSpace(analysis.PrincipalVariation)) writer.WriteString("pv", analysis.PrincipalVariation);
+            if (analysis.Visits is { } visits) writer.WriteNumber("visits", visits);
+            writer.WriteEndObject();
+            writer.WriteEndArray();
+            writer.WriteEndObject();
+        }
+        return Encoding.UTF8.GetString(stream.ToArray());
     }
 
     private static bool TryGetSingleValue(Dictionary<string, List<string>> node, string propertyName, out string value)

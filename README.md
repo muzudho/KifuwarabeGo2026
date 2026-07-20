@@ -75,4 +75,5 @@ GUI の publish 時には、CGOS 通信コンポーネントも `Tools\Cgos` 以
 
 ## ドキュメント
 
-- [共有ドキュメント](./KifuwarabeGo2026/Docs/README.md)
+- [共有ドキュメント](./KifuwarabeGo2026.Gui/Docs/README.md)
+- [きふわらべ式SGF形式仕様](./KifuwarabeGo2026.Gui/Docs/設計/きふわらべ式SGF形式仕様.md)
