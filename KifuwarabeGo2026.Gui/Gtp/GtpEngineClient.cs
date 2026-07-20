@@ -173,6 +173,11 @@ public sealed class GtpEngineClient : IAsyncDisposable
             if (definition.Type.Equals("combo", StringComparison.OrdinalIgnoreCase) &&
                 !definition.Vars.Contains(savedOption.Value, StringComparer.Ordinal))
                 continue;
+            if (definition.Type.Equals("check", StringComparison.OrdinalIgnoreCase) &&
+                !bool.TryParse(savedOption.Value, out _)) continue;
+            if (definition.Type.Equals("spin", StringComparison.OrdinalIgnoreCase) &&
+                (!int.TryParse(savedOption.Value, out var number) ||
+                 number < (definition.Min ?? int.MinValue) || number > (definition.Max ?? int.MaxValue))) continue;
 
             await SendCommandExpectSuccessAsync($"gui_setoption {savedOption.Key} {savedOption.Value}", cancellationToken);
         }

@@ -1449,9 +1449,27 @@ public class Game1 : Game
                 return true;
             }
 
-            if (GoScreenRenderer.GetGtpEngineGuiOptionsDialogRandomMoveSelectButtonHit(point))
+            if (GoScreenRenderer.GetGtpEngineGuiOptionControlHit(point, _session) is { } optionHit)
             {
-                _session.OpenGtpEngineRandomMoveSelectionDialog();
+                var option = GtpEngineGuiOptions.Specs[optionHit.Index];
+                switch (option.Type)
+                {
+                    case "check":
+                        _session.ToggleGtpEngineCheckOption(option);
+                        break;
+                    case "spin":
+                        _session.StepGtpEngineSpinOption(option, optionHit.Action == 0 ? -1 : 1);
+                        break;
+                    case "combo":
+                        _session.OpenGtpEngineRandomMoveSelectionDialog();
+                        break;
+                    case "string":
+                        EditGtpEngineStringOption(option);
+                        break;
+                    case "filename":
+                        BrowseGtpEngineFilenameOption(option);
+                        break;
+                }
                 return true;
             }
 
@@ -1629,6 +1647,44 @@ public class Game1 : Game
         }
 
         _session.SetGtpEngineExecutablePathDraft(dialog.FileName);
+    }
+
+    private void EditGtpEngineStringOption(GtpEngineGuiOptionSpec option)
+    {
+        var current = _session.GetGtpEngineGuiOptionDraft(option);
+        using var dialog = new System.Windows.Forms.Form
+        {
+            AcceptButton = null,
+            CancelButton = null,
+            ClientSize = new System.Drawing.Size(620, 150),
+            FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog,
+            MaximizeBox = false,
+            MinimizeBox = false,
+            StartPosition = System.Windows.Forms.FormStartPosition.CenterParent,
+            Text = option.Label,
+        };
+        using var textBox = new System.Windows.Forms.TextBox { Left = 20, Top = 20, Width = 580, Text = current };
+        using var cancelButton = new System.Windows.Forms.Button { Left = 360, Top = 78, Width = 110, Height = 42, Text = "CANCEL", DialogResult = System.Windows.Forms.DialogResult.Cancel };
+        using var okButton = new System.Windows.Forms.Button { Left = 490, Top = 78, Width = 110, Height = 42, Text = "OK", DialogResult = System.Windows.Forms.DialogResult.OK };
+        dialog.AcceptButton = okButton;
+        dialog.CancelButton = cancelButton;
+        dialog.Controls.AddRange([textBox, cancelButton, okButton]);
+        textBox.SelectAll();
+        if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            _session.SetGtpEngineGuiOptionDraft(option, textBox.Text);
+    }
+
+    private void BrowseGtpEngineFilenameOption(GtpEngineGuiOptionSpec option)
+    {
+        using var dialog = new System.Windows.Forms.OpenFileDialog
+        {
+            CheckFileExists = false,
+            FileName = Path.GetFileName(_session.GetGtpEngineGuiOptionDraft(option)),
+            Filter = "All files (*.*)|*.*",
+            Title = $"Select {option.Label}",
+        };
+        if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            _session.SetGtpEngineGuiOptionDraft(option, dialog.FileName);
     }
 
     private void BrowseGtpEngineWorkingDirectory()

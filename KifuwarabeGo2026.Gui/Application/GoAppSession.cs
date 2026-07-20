@@ -1607,6 +1607,8 @@ public sealed class GoAppSession
     public void OpenGtpEngineGuiOptionsDialog()
     {
         GtpEngineGuiOptionsDialogDraft = new Dictionary<string, string>(GtpEngineEditDraft.GuiOptions);
+        foreach (var option in GtpEngineGuiOptions.Specs)
+            GtpEngineGuiOptionsDialogDraft.TryAdd(option.Id, option.DefaultValue);
         IsGtpEngineRandomMoveSelectionDialogOpen = false;
         GtpEngineGuiOptionsPageIndex = 0;
         IsGtpEngineGuiOptionsDialogOpen = true;
@@ -1683,6 +1685,24 @@ public sealed class GoAppSession
     public string GtpEngineRandomMoveDraft => GtpEngineGuiOptionsDialogDraft.GetValueOrDefault(
         GtpEngineGuiOptions.RandomMoveId,
         GtpEngineGuiOptions.ChebyshevDistanceFromStarRandomMove);
+
+    public string GetGtpEngineGuiOptionDraft(GtpEngineGuiOptionSpec option) =>
+        GtpEngineGuiOptionsDialogDraft.GetValueOrDefault(option.Id, option.DefaultValue);
+
+    public void ToggleGtpEngineCheckOption(GtpEngineGuiOptionSpec option)
+    {
+        var current = bool.TryParse(GetGtpEngineGuiOptionDraft(option), out var value) && value;
+        GtpEngineGuiOptionsDialogDraft[option.Id] = (!current).ToString().ToLowerInvariant();
+    }
+
+    public void StepGtpEngineSpinOption(GtpEngineGuiOptionSpec option, int step)
+    {
+        _ = int.TryParse(GetGtpEngineGuiOptionDraft(option), out var current);
+        GtpEngineGuiOptionsDialogDraft[option.Id] = Math.Clamp((long)current + step, option.Min ?? int.MinValue, option.Max ?? int.MaxValue).ToString();
+    }
+
+    public void SetGtpEngineGuiOptionDraft(GtpEngineGuiOptionSpec option, string value) =>
+        GtpEngineGuiOptionsDialogDraft[option.Id] = value;
 
     public void SaveGtpEngineEditDraft(GtpEngineProfile profile)
     {

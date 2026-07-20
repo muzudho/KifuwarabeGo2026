@@ -80,8 +80,20 @@ public sealed partial class GoScreenRenderer
         GtpEngineGuiOptionsDialogCancelButtonBounds.Contains(point);
 
 
-    public static bool GetGtpEngineGuiOptionsDialogRandomMoveSelectButtonHit(Point point) =>
-        GtpEngineGuiOptionsDialogRandomMoveSelectButtonBounds.Contains(point);
+    public static (int Index, int Action)? GetGtpEngineGuiOptionControlHit(Point point, GoAppSession session)
+    {
+        var start = session.GtpEngineGuiOptionsPageIndex * GoAppSession.GtpEngineGuiOptionsPageSize;
+        for (var slot = 0; slot < GoAppSession.GtpEngineGuiOptionsPageSize; slot++)
+        {
+            var index = start + slot;
+            if (index >= GtpEngineGuiOptions.Specs.Length) break;
+            var option = GtpEngineGuiOptions.Specs[index];
+            var primaryBounds = option.Type == "spin" ? GtpEngineGuiOptionPrimaryButtonBounds(slot) : GtpEngineGuiOptionWideButtonBounds(slot);
+            if (primaryBounds.Contains(point)) return (index, 0);
+            if (GtpEngineGuiOptionSecondaryButtonBounds(slot).Contains(point)) return (index, 1);
+        }
+        return null;
+    }
 
     public static bool GetGtpEngineRandomMoveSelectionDialogCancelButtonHit(Point point) =>
         GtpEngineRandomMoveSelectionDialogCancelButtonBounds.Contains(point);
@@ -296,12 +308,12 @@ public sealed partial class GoScreenRenderer
         DrawText("GUI OPTIONS", new Vector2(GtpEngineGuiOptionsDialogBounds.X + 30, GtpEngineGuiOptionsDialogBounds.Y + 24), new Color(244, 238, 218), 0.72f);
         DrawText("Settings are sent when the engine starts.", new Vector2(GtpEngineGuiOptionsDialogBounds.X + 32, GtpEngineGuiOptionsDialogBounds.Y + 82), new Color(180, 195, 195), 0.4f);
 
-        if (session.GtpEngineGuiOptionsPageIndex == 0)
+        var startIndex = session.GtpEngineGuiOptionsPageIndex * GoAppSession.GtpEngineGuiOptionsPageSize;
+        for (var slot = 0; slot < GoAppSession.GtpEngineGuiOptionsPageSize; slot++)
         {
-            DrawDataRowFrame(GtpEngineGuiOptionsDialogRandomMoveRowBounds);
-            DrawUiLabel(UiLabel.InCompactRow("RandomMove", GtpEngineGuiOptionsDialogRandomMoveRowBounds));
-            DrawFittedText(session.GtpEngineRandomMoveDraft, GtpEngineGuiOptionsDialogRandomMoveValueBounds, Color.White, 0.38f);
-            DrawCommandButton(GtpEngineGuiOptionsDialogRandomMoveSelectButtonBounds, "SELECT", false, mousePoint, scale: 0.3f);
+            var index = startIndex + slot;
+            if (index >= GtpEngineGuiOptions.Specs.Length) break;
+            DrawGtpEngineGuiOptionRow(session, GtpEngineGuiOptions.Specs[index], slot, mousePoint);
         }
 
         DrawPager(
@@ -315,6 +327,34 @@ public sealed partial class GoScreenRenderer
         DrawCommandButton(GtpEngineGuiOptionsDialogCancelButtonBounds, "CANCEL", false, mousePoint, scale: 0.4f);
         DrawCommandButton(GtpEngineGuiOptionsDialogOkButtonBounds, "OK", false, mousePoint, scale: 0.42f);
         DrawGtpEngineRandomMoveSelectionDialog(session, mousePoint);
+    }
+
+    private void DrawGtpEngineGuiOptionRow(GoAppSession session, GtpEngineGuiOptionSpec option, int slot, Point mousePoint)
+    {
+        var row = GtpEngineGuiOptionRowBounds(slot);
+        var value = session.GetGtpEngineGuiOptionDraft(option);
+        DrawDataRowFrame(row);
+        DrawUiLabel(UiLabel.InCompactRow(option.Label, row));
+        DrawFittedText(string.IsNullOrEmpty(value) ? "<empty>" : value, GtpEngineGuiOptionValueBounds(slot), Color.White, 0.34f);
+        switch (option.Type)
+        {
+            case "check":
+                DrawCommandButton(GtpEngineGuiOptionWideButtonBounds(slot), bool.TryParse(value, out var enabled) && enabled ? "ON" : "OFF", enabled, mousePoint, scale: 0.34f);
+                break;
+            case "spin":
+                DrawCommandButton(GtpEngineGuiOptionPrimaryButtonBounds(slot), "-", false, mousePoint, scale: 0.42f);
+                DrawCommandButton(GtpEngineGuiOptionSecondaryButtonBounds(slot), "+", false, mousePoint, scale: 0.42f);
+                break;
+            case "combo":
+                DrawCommandButton(GtpEngineGuiOptionWideButtonBounds(slot), "SELECT", false, mousePoint, scale: 0.28f);
+                break;
+            case "string":
+                DrawCommandButton(GtpEngineGuiOptionWideButtonBounds(slot), "EDIT", false, mousePoint, scale: 0.3f);
+                break;
+            case "filename":
+                DrawCommandButton(GtpEngineGuiOptionWideButtonBounds(slot), "REF", false, mousePoint, scale: 0.3f);
+                break;
+        }
     }
 
     private void DrawGtpEngineRandomMoveSelectionDialog(GoAppSession session, Point mousePoint)
@@ -542,22 +582,20 @@ public sealed partial class GoScreenRenderer
     private static Rectangle GtpEngineEditPanelLogButtonBounds => new(GtpEngineEditPanelLogRowBounds.X + 152, GtpEngineEditPanelLogRowBounds.Y + 8, 120, 40);
 
 
-    private static Rectangle GtpEngineGuiOptionsDialogBounds => new(570, 282, 780, 500);
+    private static Rectangle GtpEngineGuiOptionsDialogBounds => new(570, 180, 780, 700);
 
 
-    private static Rectangle GtpEngineGuiOptionsDialogRandomMoveRowBounds => new(GtpEngineGuiOptionsDialogBounds.X + 56, GtpEngineGuiOptionsDialogBounds.Y + 150, GtpEngineGuiOptionsDialogBounds.Width - 112, 60);
+    private static Rectangle GtpEngineGuiOptionRowBounds(int slot) => new(GtpEngineGuiOptionsDialogBounds.X + 56, GtpEngineGuiOptionsDialogBounds.Y + 150 + slot * 68, GtpEngineGuiOptionsDialogBounds.Width - 112, 60);
+    private static Rectangle GtpEngineGuiOptionValueBounds(int slot) => new(GtpEngineGuiOptionRowBounds(slot).X + 166, GtpEngineGuiOptionRowBounds(slot).Y + 8, 300, 44);
+    private static Rectangle GtpEngineGuiOptionPrimaryButtonBounds(int slot) => new(GtpEngineGuiOptionRowBounds(slot).Right - 126, GtpEngineGuiOptionRowBounds(slot).Y + 10, 54, 40);
+    private static Rectangle GtpEngineGuiOptionSecondaryButtonBounds(int slot) => new(GtpEngineGuiOptionRowBounds(slot).Right - 66, GtpEngineGuiOptionRowBounds(slot).Y + 10, 54, 40);
+    private static Rectangle GtpEngineGuiOptionWideButtonBounds(int slot) => new(GtpEngineGuiOptionRowBounds(slot).Right - 126, GtpEngineGuiOptionRowBounds(slot).Y + 10, 114, 40);
 
+    private static Rectangle GtpEngineGuiOptionsPreviousPageButtonBounds => new(GtpEngineGuiOptionsDialogBounds.X + 410, GtpEngineGuiOptionsDialogBounds.Y + 450, 100, 44);
 
-    private static Rectangle GtpEngineGuiOptionsDialogRandomMoveValueBounds => new(GtpEngineGuiOptionsDialogRandomMoveRowBounds.X + 166, GtpEngineGuiOptionsDialogRandomMoveRowBounds.Y + 8, 286, 44);
+    private static Rectangle GtpEngineGuiOptionsPageLabelBounds => new(GtpEngineGuiOptionsDialogBounds.X + 218, GtpEngineGuiOptionsDialogBounds.Y + 456, 180, 32);
 
-
-    private static Rectangle GtpEngineGuiOptionsDialogRandomMoveSelectButtonBounds => new(GtpEngineGuiOptionsDialogRandomMoveRowBounds.Right - 126, GtpEngineGuiOptionsDialogRandomMoveRowBounds.Y + 10, 114, 40);
-
-    private static Rectangle GtpEngineGuiOptionsPreviousPageButtonBounds => new(GtpEngineGuiOptionsDialogBounds.X + 410, GtpEngineGuiOptionsDialogBounds.Y + 250, 100, 44);
-
-    private static Rectangle GtpEngineGuiOptionsPageLabelBounds => new(GtpEngineGuiOptionsDialogBounds.X + 218, GtpEngineGuiOptionsDialogBounds.Y + 256, 180, 32);
-
-    private static Rectangle GtpEngineGuiOptionsNextPageButtonBounds => new(GtpEngineGuiOptionsDialogBounds.X + 520, GtpEngineGuiOptionsDialogBounds.Y + 250, 100, 44);
+    private static Rectangle GtpEngineGuiOptionsNextPageButtonBounds => new(GtpEngineGuiOptionsDialogBounds.X + 520, GtpEngineGuiOptionsDialogBounds.Y + 450, 100, 44);
 
 
     private static Rectangle GtpEngineGuiOptionsDialogCancelButtonBounds => new(GtpEngineGuiOptionsDialogBounds.Right - 330, GtpEngineGuiOptionsDialogBounds.Y + 20, 140, 52);

@@ -86,8 +86,8 @@ public sealed class GtpEngineCatalog
             ? WorkingDirectoryModel.FromString(Path.GetDirectoryName(normalized.ExecutablePath) ?? baseDirectory)
             : WorkingDirectoryModel.FromString(ResolvePath(normalized.WorkingDirectoryModel.Value, baseDirectory));
         normalized.GuiOptions ??= [];
-        if (!normalized.GuiOptions.ContainsKey(GtpEngineGuiOptions.RandomMoveId))
-            normalized.GuiOptions[GtpEngineGuiOptions.RandomMoveId] = GtpEngineGuiOptions.ChebyshevDistanceFromStarRandomMove;
+        foreach (var option in GtpEngineGuiOptions.Specs)
+            normalized.GuiOptions.TryAdd(option.Id, option.DefaultValue);
         return normalized;
     }
 

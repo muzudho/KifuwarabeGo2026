@@ -35,5 +35,9 @@ public sealed class GtpGuiOptionDefinition
 
     public string Value { get; set; } = "";
 
+    public int? Min { get; set; }
+
+    public int? Max { get; set; }
+
     public List<string> Vars { get; set; } = [];
 }

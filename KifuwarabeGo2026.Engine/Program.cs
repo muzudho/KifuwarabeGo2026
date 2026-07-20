@@ -26,11 +26,15 @@ internal sealed class GtpEngine
         "protocol_version", "name", "version", "known_command", "list_commands", "boardsize", "clear_board",
         "komi", "play", "genmove", "gui_options", "gui_getoption", "gui_setoption", "quit",
     ];
-    private readonly Random _random = new();
+    private Random _random = new(0);
     private GoBoard _board = new(19);
     private GoPoint? _koPoint;
     private decimal _komi = 6.5m;
     private RandomMoveKind _randomMove = RandomMoveKind.ChebyshevDistanceFromStar;
+    private bool _avoidEyes = true;
+    private int _randomSeed;
+    private string _engineTag = "";
+    private string _debugLogFile = "";
 
     public void Run(TextReader input, TextWriter output)
     {
@@ -180,7 +184,7 @@ internal sealed class GtpEngine
             {
                 var trial = _board.Clone();
                 if (trial.TryPlaceStone(x, y, color, _koPoint, out _, out _) &&
-                    !_board.IsEyeFor(renParse, x, y, color))
+                    (!_avoidEyes || !_board.IsEyeFor(renParse, x, y, color)))
                 {
                     legalMoves.Add(new GoPoint(x, y));
                 }
@@ -223,7 +227,7 @@ internal sealed class GtpEngine
     private string CreateGuiOptionsJson() => JsonSerializer.Serialize(new
     {
         version = 1,
-        options = new[]
+        options = new object[]
         {
             new
             {
@@ -232,8 +236,14 @@ internal sealed class GtpEngine
                 type = "combo",
                 @default = "ChebyshevDistanceFromStar",
                 value = _randomMove.ToString(),
+                min = (int?)null,
+                max = (int?)null,
                 vars = new[] { "Normal", "ChebyshevDistanceFromStar" },
             },
+            new { id = "AvoidEyes", label = "AvoidEyes", type = "check", @default = "true", value = _avoidEyes.ToString().ToLowerInvariant(), min = (int?)null, max = (int?)null, vars = Array.Empty<string>() },
+            new { id = "RandomSeed", label = "RandomSeed", type = "spin", @default = "0", value = _randomSeed.ToString(), min = (int?)0, max = int.MaxValue, vars = Array.Empty<string>() },
+            new { id = "EngineTag", label = "EngineTag", type = "string", @default = "", value = _engineTag, min = (int?)null, max = (int?)null, vars = Array.Empty<string>() },
+            new { id = "DebugLogFile", label = "DebugLogFile", type = "filename", @default = "", value = _debugLogFile, min = (int?)null, max = (int?)null, vars = Array.Empty<string>() },
         },
     });
 
@@ -244,13 +254,23 @@ internal sealed class GtpEngine
     {
         response = "";
         error = null;
-        if (tokens.Length != 2 || !tokens[1].Equals("RandomMove", StringComparison.OrdinalIgnoreCase))
+        if (tokens.Length != 2)
         {
             error = "unknown option: " + (tokens.Length > 1 ? tokens[1] : "");
             return;
         }
 
-        response = _randomMove.ToString();
+        response = tokens[1].ToLowerInvariant() switch
+        {
+            "randommove" => _randomMove.ToString(),
+            "avoideyes" => _avoidEyes.ToString().ToLowerInvariant(),
+            "randomseed" => _randomSeed.ToString(),
+            "enginetag" => _engineTag,
+            "debuglogfile" => _debugLogFile,
+            _ => "",
+        };
+        if (response.Length == 0 && !tokens[1].Equals("EngineTag", StringComparison.OrdinalIgnoreCase) && !tokens[1].Equals("DebugLogFile", StringComparison.OrdinalIgnoreCase))
+            error = "unknown option: " + tokens[1];
     }
 
     /// <summary>
@@ -259,19 +279,33 @@ internal sealed class GtpEngine
     private void ExecuteGuiSetOption(string[] tokens, out string? error)
     {
         error = null;
-        if (tokens.Length != 3 || !tokens[1].Equals("RandomMove", StringComparison.OrdinalIgnoreCase))
+        if (tokens.Length < 2)
         {
             error = "usage: gui_setoption RandomMove Normal|ChebyshevDistanceFromStar";
             return;
         }
 
-        if (!Enum.TryParse(tokens[2], ignoreCase: true, out RandomMoveKind randomMove))
+        var value = tokens.Length >= 3 ? string.Join(' ', tokens[2..]) : "";
+        if (tokens[1].Equals("RandomMove", StringComparison.OrdinalIgnoreCase))
         {
-            error = "option RandomMove must be Normal or ChebyshevDistanceFromStar";
+            if (!Enum.TryParse(value, true, out RandomMoveKind randomMove)) error = "option RandomMove must be Normal or ChebyshevDistanceFromStar";
+            else _randomMove = randomMove;
             return;
         }
-
-        _randomMove = randomMove;
+        if (tokens[1].Equals("AvoidEyes", StringComparison.OrdinalIgnoreCase))
+        {
+            if (!bool.TryParse(value, out _avoidEyes)) error = "option AvoidEyes must be true or false";
+            return;
+        }
+        if (tokens[1].Equals("RandomSeed", StringComparison.OrdinalIgnoreCase))
+        {
+            if (!int.TryParse(value, out var seed) || seed < 0) error = "option RandomSeed must be a non-negative integer";
+            else { _randomSeed = seed; _random = new Random(seed); }
+            return;
+        }
+        if (tokens[1].Equals("EngineTag", StringComparison.OrdinalIgnoreCase)) { _engineTag = value; return; }
+        if (tokens[1].Equals("DebugLogFile", StringComparison.OrdinalIgnoreCase)) { _debugLogFile = value; return; }
+        error = "unknown option: " + tokens[1];
     }
 
     private static void WriteResponse(TextWriter output, string response, string? error)
