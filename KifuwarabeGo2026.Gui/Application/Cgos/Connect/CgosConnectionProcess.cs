@@ -329,7 +329,11 @@ public sealed class CgosConnectionProcess : IDisposable
             }
 
             await Task.WhenAll(processes.Select(WaitForExitOrKillAsync));
-            DisposeProcess();
+
+            // ここで Process.Dispose() すると、MonoGame の Update が同時に RefreshStatus() から
+            // HasExited / ExitCode を参照した場合、Windows の無効なハンドル (0xc0000008) で
+            // GUI 全体がネイティブクラッシュすることがある。終了済み Process は一覧に保持し、
+            // 次回 Start/StartAdmin またはアプリ終了時の Dispose() で安全に回収する。
             _status = "STOPPED";
         }
         finally
