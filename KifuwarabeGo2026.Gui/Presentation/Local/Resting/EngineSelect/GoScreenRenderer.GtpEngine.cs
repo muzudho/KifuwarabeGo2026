@@ -80,10 +80,20 @@ public sealed partial class GoScreenRenderer
         GtpEngineGuiOptionsDialogCancelButtonBounds.Contains(point);
 
 
-    public static int? GetGtpEngineGuiOptionsDialogRandomMoveStepButtonHit(Point point)
+    public static bool GetGtpEngineGuiOptionsDialogRandomMoveSelectButtonHit(Point point) =>
+        GtpEngineGuiOptionsDialogRandomMoveSelectButtonBounds.Contains(point);
+
+    public static bool GetGtpEngineRandomMoveSelectionDialogCancelButtonHit(Point point) =>
+        GtpEngineRandomMoveSelectionDialogCancelButtonBounds.Contains(point);
+
+    public static bool GetGtpEngineRandomMoveSelectionDialogSelectButtonHit(Point point) =>
+        GtpEngineRandomMoveSelectionDialogSelectButtonBounds.Contains(point);
+
+    public static int? GetGtpEngineRandomMoveSelectionDialogItemHit(Point point)
     {
-        if (GtpEngineGuiOptionsDialogRandomMovePreviousButtonBounds.Contains(point)) return -1;
-        return GtpEngineGuiOptionsDialogRandomMoveNextButtonBounds.Contains(point) ? 1 : null;
+        for (var index = 0; index < GtpEngineGuiOptions.RandomMoveValues.Length; index++)
+            if (GtpEngineRandomMoveSelectionDialogItemBounds(index).Contains(point)) return index;
+        return null;
     }
 
 
@@ -272,11 +282,35 @@ public sealed partial class GoScreenRenderer
         DrawDataRowFrame(GtpEngineGuiOptionsDialogRandomMoveRowBounds);
         DrawUiLabel(UiLabel.InCompactRow("RandomMove", GtpEngineGuiOptionsDialogRandomMoveRowBounds));
         DrawFittedText(session.GtpEngineRandomMoveDraft, GtpEngineGuiOptionsDialogRandomMoveValueBounds, Color.White, 0.38f);
-        DrawCommandButton(GtpEngineGuiOptionsDialogRandomMovePreviousButtonBounds, "PREV", false, mousePoint, scale: 0.27f);
-        DrawCommandButton(GtpEngineGuiOptionsDialogRandomMoveNextButtonBounds, "NEXT", false, mousePoint, scale: 0.27f);
+        DrawCommandButton(GtpEngineGuiOptionsDialogRandomMoveSelectButtonBounds, "SELECT", false, mousePoint, scale: 0.3f);
 
         DrawCommandButton(GtpEngineGuiOptionsDialogCancelButtonBounds, "CANCEL", false, mousePoint, scale: 0.4f);
         DrawCommandButton(GtpEngineGuiOptionsDialogOkButtonBounds, "OK", false, mousePoint, scale: 0.42f);
+        DrawGtpEngineRandomMoveSelectionDialog(session, mousePoint);
+    }
+
+    private void DrawGtpEngineRandomMoveSelectionDialog(GoAppSession session, Point mousePoint)
+    {
+        if (!session.IsGtpEngineRandomMoveSelectionDialogOpen) return;
+
+        FillRect(new Rectangle(0, 0, VirtualScreen.Width, VirtualScreen.Height), new Color(0, 0, 0, 105));
+        FillRect(new Rectangle(GtpEngineRandomMoveSelectionDialogBounds.X + 14, GtpEngineRandomMoveSelectionDialogBounds.Y + 16, GtpEngineRandomMoveSelectionDialogBounds.Width, GtpEngineRandomMoveSelectionDialogBounds.Height), new Color(0, 0, 0, 150));
+        FillRect(GtpEngineRandomMoveSelectionDialogBounds, new Color(24, 29, 36, 252));
+        DrawRect(GtpEngineRandomMoveSelectionDialogBounds, 2, new Color(116, 145, 146));
+        DrawText("SELECT RANDOM MOVE", new Vector2(GtpEngineRandomMoveSelectionDialogBounds.X + 30, GtpEngineRandomMoveSelectionDialogBounds.Y + 24), new Color(244, 238, 218), 0.68f);
+
+        for (var index = 0; index < GtpEngineGuiOptions.RandomMoveValues.Length; index++)
+        {
+            var bounds = GtpEngineRandomMoveSelectionDialogItemBounds(index);
+            var selected = index == session.GtpEngineRandomMoveSelectionIndex;
+            var hovered = bounds.Contains(mousePoint);
+            FillRect(bounds, selected ? new Color(38, 103, 86) : hovered ? new Color(43, 52, 62) : new Color(15, 20, 26));
+            DrawRect(bounds, 1, selected ? new Color(147, 244, 200) : new Color(67, 84, 92));
+            DrawFittedText(GtpEngineGuiOptions.RandomMoveValues[index], new Rectangle(bounds.X + 24, bounds.Y + 8, bounds.Width - 48, bounds.Height - 16), Color.White, 0.46f);
+        }
+
+        DrawCommandButton(GtpEngineRandomMoveSelectionDialogCancelButtonBounds, "CANCEL", false, mousePoint, scale: 0.38f);
+        DrawCommandButton(GtpEngineRandomMoveSelectionDialogSelectButtonBounds, "SELECT", false, mousePoint, scale: 0.36f);
     }
 
 
@@ -470,16 +504,22 @@ public sealed partial class GoScreenRenderer
     private static Rectangle GtpEngineGuiOptionsDialogRandomMoveValueBounds => new(GtpEngineGuiOptionsDialogRandomMoveRowBounds.X + 166, GtpEngineGuiOptionsDialogRandomMoveRowBounds.Y + 8, 286, 44);
 
 
-    private static Rectangle GtpEngineGuiOptionsDialogRandomMovePreviousButtonBounds => new(GtpEngineGuiOptionsDialogRandomMoveRowBounds.Right - 190, GtpEngineGuiOptionsDialogRandomMoveRowBounds.Y + 10, 82, 40);
-
-
-    private static Rectangle GtpEngineGuiOptionsDialogRandomMoveNextButtonBounds => new(GtpEngineGuiOptionsDialogRandomMoveRowBounds.Right - 94, GtpEngineGuiOptionsDialogRandomMoveRowBounds.Y + 10, 82, 40);
+    private static Rectangle GtpEngineGuiOptionsDialogRandomMoveSelectButtonBounds => new(GtpEngineGuiOptionsDialogRandomMoveRowBounds.Right - 126, GtpEngineGuiOptionsDialogRandomMoveRowBounds.Y + 10, 114, 40);
 
 
     private static Rectangle GtpEngineGuiOptionsDialogCancelButtonBounds => new(GtpEngineGuiOptionsDialogBounds.Right - 330, GtpEngineGuiOptionsDialogBounds.Bottom - 82, 140, 52);
 
 
     private static Rectangle GtpEngineGuiOptionsDialogOkButtonBounds => new(GtpEngineGuiOptionsDialogBounds.Right - 170, GtpEngineGuiOptionsDialogBounds.Bottom - 82, 140, 52);
+
+    private static Rectangle GtpEngineRandomMoveSelectionDialogBounds => new(610, 238, 700, 588);
+
+    private static Rectangle GtpEngineRandomMoveSelectionDialogItemBounds(int index) =>
+        new(GtpEngineRandomMoveSelectionDialogBounds.X + 48, GtpEngineRandomMoveSelectionDialogBounds.Y + 112 + index * 76, GtpEngineRandomMoveSelectionDialogBounds.Width - 96, 60);
+
+    private static Rectangle GtpEngineRandomMoveSelectionDialogCancelButtonBounds => new(GtpEngineRandomMoveSelectionDialogBounds.Right - 330, GtpEngineRandomMoveSelectionDialogBounds.Bottom - 82, 140, 52);
+
+    private static Rectangle GtpEngineRandomMoveSelectionDialogSelectButtonBounds => new(GtpEngineRandomMoveSelectionDialogBounds.Right - 170, GtpEngineRandomMoveSelectionDialogBounds.Bottom - 82, 140, 52);
 
 
     private static readonly GtpEngineProfileEditField[] GtpEngineEditFields =

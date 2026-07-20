@@ -1417,6 +1417,18 @@ public class Game1 : Game
 
         if (_session.IsGtpEngineGuiOptionsDialogOpen)
         {
+            if (_session.IsGtpEngineRandomMoveSelectionDialogOpen)
+            {
+                if (GoScreenRenderer.GetGtpEngineRandomMoveSelectionDialogCancelButtonHit(point))
+                    _session.CancelGtpEngineRandomMoveSelectionDialog();
+                else if (GoScreenRenderer.GetGtpEngineRandomMoveSelectionDialogSelectButtonHit(point))
+                    _session.CommitGtpEngineRandomMoveSelectionDialog();
+                else if (GoScreenRenderer.GetGtpEngineRandomMoveSelectionDialogItemHit(point) is { } itemIndex)
+                    _session.SelectGtpEngineRandomMoveItem(itemIndex);
+
+                return true;
+            }
+
             if (GoScreenRenderer.GetGtpEngineGuiOptionsDialogCancelButtonHit(point))
             {
                 _session.CancelGtpEngineGuiOptionsDialog();
@@ -1429,9 +1441,9 @@ public class Game1 : Game
                 return true;
             }
 
-            if (GoScreenRenderer.GetGtpEngineGuiOptionsDialogRandomMoveStepButtonHit(point) is { } step)
+            if (GoScreenRenderer.GetGtpEngineGuiOptionsDialogRandomMoveSelectButtonHit(point))
             {
-                _session.MoveGtpEngineRandomMoveSelection(step);
+                _session.OpenGtpEngineRandomMoveSelectionDialog();
                 return true;
             }
 

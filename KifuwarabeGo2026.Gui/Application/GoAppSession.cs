@@ -264,6 +264,10 @@ public sealed class GoAppSession
 
     public Dictionary<string, string> GtpEngineGuiOptionsDialogDraft { get; private set; } = [];
 
+    public bool IsGtpEngineRandomMoveSelectionDialogOpen { get; private set; }
+
+    public int GtpEngineRandomMoveSelectionIndex { get; private set; }
+
     public int GtpEngineSelectionPageIndex { get; private set; }
 
     public GtpEngineProfile BlackGtpEngineProfile => GetGtpEngineProfile(GoStone.Black);
@@ -1485,6 +1489,7 @@ public sealed class GoAppSession
     public void CloseGtpEngineEditPanel()
     {
         var dialogSelectionIndex = GtpEngineEditProfileIndex;
+        IsGtpEngineRandomMoveSelectionDialogOpen = false;
         IsGtpEngineGuiOptionsDialogOpen = false;
         GtpEngineGuiOptionsDialogDraft.Clear();
         IsGtpEngineEditPanelOpen = false;
@@ -1594,6 +1599,7 @@ public sealed class GoAppSession
     public void OpenGtpEngineGuiOptionsDialog()
     {
         GtpEngineGuiOptionsDialogDraft = new Dictionary<string, string>(GtpEngineEditDraft.GuiOptions);
+        IsGtpEngineRandomMoveSelectionDialogOpen = false;
         IsGtpEngineGuiOptionsDialogOpen = true;
         ActiveGtpEngineEditField = null;
     }
@@ -1603,6 +1609,7 @@ public sealed class GoAppSession
     /// </summary>
     public void CancelGtpEngineGuiOptionsDialog()
     {
+        IsGtpEngineRandomMoveSelectionDialogOpen = false;
         IsGtpEngineGuiOptionsDialogOpen = false;
         GtpEngineGuiOptionsDialogDraft.Clear();
     }
@@ -1613,24 +1620,39 @@ public sealed class GoAppSession
     public void CommitGtpEngineGuiOptionsDialog()
     {
         GtpEngineEditDraft.GuiOptions = new Dictionary<string, string>(GtpEngineGuiOptionsDialogDraft);
+        IsGtpEngineRandomMoveSelectionDialogOpen = false;
         IsGtpEngineGuiOptionsDialogOpen = false;
         GtpEngineGuiOptionsDialogDraft.Clear();
         GtpEngineEditSaveMessage = "UNSAVED";
     }
 
     /// <summary>
-    /// GUIオプションダイアログの［RandomMove］コンボを前後へ切り替えます。
+    /// ［RandomMove］の項目選択ダイアログを開きます。
     /// </summary>
-    public void MoveGtpEngineRandomMoveSelection(int step)
+    public void OpenGtpEngineRandomMoveSelectionDialog()
     {
         var values = GtpEngineGuiOptions.RandomMoveValues;
         var current = GtpEngineGuiOptionsDialogDraft.GetValueOrDefault(
             GtpEngineGuiOptions.RandomMoveId,
             GtpEngineGuiOptions.ChebyshevDistanceFromStarRandomMove);
-        var index = Array.IndexOf(values, current);
-        if (index < 0) index = 0;
-        index = (index + step % values.Length + values.Length) % values.Length;
-        GtpEngineGuiOptionsDialogDraft[GtpEngineGuiOptions.RandomMoveId] = values[index];
+        GtpEngineRandomMoveSelectionIndex = Math.Max(0, Array.IndexOf(values, current));
+        IsGtpEngineRandomMoveSelectionDialogOpen = true;
+    }
+
+    public void SelectGtpEngineRandomMoveItem(int index)
+    {
+        if (index >= 0 && index < GtpEngineGuiOptions.RandomMoveValues.Length)
+            GtpEngineRandomMoveSelectionIndex = index;
+    }
+
+    public void CancelGtpEngineRandomMoveSelectionDialog() =>
+        IsGtpEngineRandomMoveSelectionDialogOpen = false;
+
+    public void CommitGtpEngineRandomMoveSelectionDialog()
+    {
+        GtpEngineGuiOptionsDialogDraft[GtpEngineGuiOptions.RandomMoveId] =
+            GtpEngineGuiOptions.RandomMoveValues[GtpEngineRandomMoveSelectionIndex];
+        IsGtpEngineRandomMoveSelectionDialogOpen = false;
     }
 
     public string GtpEngineRandomMoveDraft => GtpEngineGuiOptionsDialogDraft.GetValueOrDefault(
