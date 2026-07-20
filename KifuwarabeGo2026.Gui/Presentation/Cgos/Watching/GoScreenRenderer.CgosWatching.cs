@@ -2,10 +2,12 @@ namespace KifuwarabeGo2026.Gui.Presentation;
 
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Application.Cgos.Watching;
+using KifuwarabeGo2026.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.Shared.Domain;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
+using System.Globalization;
 
 /// <summary>
 /// CGOS 対局の観戦・結果画面を描画します。
@@ -104,23 +106,61 @@ public sealed partial class GoScreenRenderer
             observation.CurrentTurn,
             minimal: true);
 
-        DrawVerticalResultSection(new Rectangle(1144, 600, 668, 100), "FACTS", new Color(66, 104, 116));
-        DrawResultRow(new Rectangle(1164, 620, 628, 56), "MOVES", observation.MoveCount.ToString(), new Color(66, 104, 116), Color.White);
+        DrawVerticalResultSection(new Rectangle(1144, 600, 668, 66), "FACTS", new Color(66, 104, 116));
+        DrawResultRow(new Rectangle(1164, 606, 628, 52), "MOVES", observation.MoveCount.ToString(), new Color(66, 104, 116), Color.White);
+
+        DrawCgosAnalysisSection(observation, mousePoint);
 
         if (observation.IsFinished)
         {
-            DrawVerticalResultSection(new Rectangle(1144, 712, 668, 110), "RESULT", new Color(80, 48, 38));
-            DrawCgosResultRow(new Rectangle(1164, 732, 628, 64), observation.Result);
+            DrawVerticalResultSection(new Rectangle(1144, 836, 668, 64), "RESULT", new Color(80, 48, 38));
+            DrawCgosResultRow(new Rectangle(1164, 842, 628, 52), observation.Result);
 
-            DrawVerticalResultSection(new Rectangle(1144, 834, 668, 146), "ACTION", new Color(91, 82, 105));
+            DrawVerticalResultSection(new Rectangle(1144, 912, 668, 68), "ACTION", new Color(91, 82, 105));
             DrawCommandButton(CgosWatchingReviewButtonBounds, "KIFU REVIEW", false, mousePoint, scale: 0.36f);
             DrawCommandButton(CgosWatchingExportSgfButtonBounds, "SGF OUTPUT", false, mousePoint, scale: 0.4f);
         }
         else
         {
-            DrawVerticalResultSection(new Rectangle(1144, 712, 668, 110), "STATUS", new Color(62, 112, 105));
-            DrawResultRow(new Rectangle(1164, 732, 628, 64), "STATE", "WATCHING LIVE GAME", new Color(62, 112, 105), new Color(99, 223, 185));
+            DrawVerticalResultSection(new Rectangle(1144, 836, 668, 86), "STATUS", new Color(62, 112, 105));
+            DrawResultRow(new Rectangle(1164, 846, 628, 56), "STATE", "WATCHING LIVE GAME", new Color(62, 112, 105), new Color(99, 223, 185));
         }
+
+        DrawCgosAnalysisTooltip(observation, mousePoint);
+    }
+
+    private void DrawCgosAnalysisSection(CgosGameObservation observation, Point mousePoint)
+    {
+        DrawVerticalResultSection(new Rectangle(1144, 678, 668, 146), "ANALYSIS", new Color(76, 91, 126));
+        var latestMove = observation.Moves.Count == 0 ? (GoGameMove?)null : observation.Moves[^1];
+        var analysis = latestMove?.Analysis;
+        var winrate = analysis?.Winrate is { } rate
+            ? $"{(latestMove!.Value.Stone == GoStone.Black ? "BLACK" : "WHITE")} {rate:P1}"
+            : "-";
+        DrawResultRow(new Rectangle(1164, 686, 628, 52), "WINRATE", winrate, new Color(76, 91, 126), Color.White);
+
+        DrawResultLabel(new Rectangle(1164, 742, 628, 52), "PV", new Color(76, 91, 126));
+        var pv = analysis?.PrincipalVariation ?? "";
+        DrawFittedText(pv.Length == 0 ? "-" : AbbreviateOptionValue(pv, 44), CgosAnalysisPvValueBounds, Color.White, 0.42f);
+
+        if (analysis is not null)
+        {
+            var score = analysis.Score is { } scoreValue ? scoreValue.ToString("+0.0;-0.0;0.0", CultureInfo.InvariantCulture) : "-";
+            var visits = analysis.Visits?.ToString(CultureInfo.InvariantCulture) ?? "-";
+            DrawFittedText($"SCORE {score}   VISITS {visits}", new Rectangle(GameOverValueX, 798, 464, 20), new Color(118, 139, 143), 0.25f);
+        }
+    }
+
+    private void DrawCgosAnalysisTooltip(CgosGameObservation observation, Point mousePoint)
+    {
+        if (!CgosAnalysisPvValueBounds.Contains(mousePoint) || observation.LatestAnalysis?.PrincipalVariation is not { Length: > 44 } pv)
+            return;
+
+        FillRect(new Rectangle(CgosAnalysisTooltipBounds.X + 8, CgosAnalysisTooltipBounds.Y + 10, CgosAnalysisTooltipBounds.Width, CgosAnalysisTooltipBounds.Height), new Color(0, 0, 0, 150));
+        FillRect(CgosAnalysisTooltipBounds, new Color(30, 36, 43, 252));
+        DrawRect(CgosAnalysisTooltipBounds, 2, new Color(147, 244, 200));
+        DrawText("PRINCIPAL VARIATION", new Vector2(CgosAnalysisTooltipBounds.X + 18, CgosAnalysisTooltipBounds.Y + 12), new Color(180, 195, 195), 0.3f);
+        DrawFittedText(AbbreviateOptionValue(pv, 120), new Rectangle(CgosAnalysisTooltipBounds.X + 18, CgosAnalysisTooltipBounds.Y + 46, CgosAnalysisTooltipBounds.Width - 36, 42), Color.White, 0.36f);
     }
 
     /// <summary>
@@ -146,10 +186,14 @@ public sealed partial class GoScreenRenderer
     /// <summary>
     /// ［SGF OUTPUT］ボタンの描画範囲
     /// </summary>
-    private static Rectangle CgosWatchingExportSgfButtonBounds => new(1486, 874, 306, 72);
+    private static Rectangle CgosWatchingExportSgfButtonBounds => new(1486, 920, 306, 52);
 
     /// <summary>
     /// ［KIFU REVIEW］ボタンの描画範囲
     /// </summary>
-    private static Rectangle CgosWatchingReviewButtonBounds => new(1164, 874, 306, 72);
+    private static Rectangle CgosWatchingReviewButtonBounds => new(1164, 920, 306, 52);
+
+    private static Rectangle CgosAnalysisPvValueBounds => new(GameOverValueX, 748, 464, 40);
+
+    private static Rectangle CgosAnalysisTooltipBounds => new(1164, 812, 628, 104);
 }
