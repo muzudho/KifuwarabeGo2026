@@ -93,9 +93,9 @@ public sealed partial class GoScreenRenderer
             DrawCommandButton(ReviewDoneButtonBounds, "USE POSITION", false, mousePoint, scale: 0.34f);
         }
 
-        DrawVerticalResultSection(new Rectangle(1144, 204, 668, 120), "RECORD", new Color(66, 104, 116));
+        DrawVerticalResultSection(new Rectangle(1144, 204, 668, 120), "RULE", new Color(66, 104, 116));
         DrawResultRow(new Rectangle(1164, 208, 628, 52), "BOARD", $"{session.BoardSize} x {session.BoardSize}", new Color(62, 112, 105), Color.White);
-        DrawResultRow(new Rectangle(1164, 264, 628, 52), "MOVE", $"{session.ReviewMoveIndex} / {session.ReviewMoveCount}", new Color(62, 112, 105), Color.White);
+        DrawResultRow(new Rectangle(1164, 264, 628, 52), "KOMI", FormatKomi(session.Komi), new Color(62, 112, 105), Color.White);
 
         DrawVerticalResultSection(new Rectangle(1144, 336, 668, 200), "PLAYERS", new Color(76, 91, 126));
         DrawBothPlayersComponent(
@@ -112,8 +112,11 @@ public sealed partial class GoScreenRenderer
             session.CurrentTurn,
             minimal: true);
 
-        DrawVerticalResultSection(new Rectangle(1144, 548, 668, 244), "REVIEW", new Color(76, 91, 126));
-        DrawResultLabel(new Rectangle(1164, 544, 628, 36), "STEP", new Color(76, 91, 126));
+        DrawVerticalResultSection(new Rectangle(1144, 548, 668, 132), "CALCULATION", new Color(76, 91, 126));
+        DrawStoneCountStrip(session, 560, showLeader: true, minimal: true);
+
+        DrawVerticalResultSection(new Rectangle(1144, 692, 668, 300), "REVIEW", new Color(76, 91, 126));
+        DrawResultLabel(new Rectangle(1164, 700, 628, 36), "STEP", new Color(76, 91, 126));
         for (var i = 0; i < ReviewStepButtonValues.Length; i++)
         {
             var step = ReviewStepButtonValues[i];
@@ -121,11 +124,9 @@ public sealed partial class GoScreenRenderer
             DrawCommandButton(ReviewStepButtonBounds(i), step > 0 ? $"+{step}" : step.ToString(), false, mousePoint, enabled, 0.42f);
         }
 
-        DrawResultRow(new Rectangle(1164, 692, 628, 52), "DISPLAY", FormatRenParseDisplayMode(session.RenParseDisplayMode), new Color(76, 91, 126), Color.White);
-        DrawFittedText("PRESS [R] TO CHANGE DISPLAY", new Rectangle(GameOverValueX, 752, 464, 30), new Color(147, 201, 190), 0.34f);
-
-        DrawVerticalResultSection(new Rectangle(1144, 804, 668, 100), "CALCULATION", new Color(76, 91, 126));
-        DrawStoneCountStrip(session, 812, showLeader: true, minimal: true);
+        DrawResultRow(new Rectangle(1164, 848, 628, 52), "MOVE", $"{session.ReviewMoveIndex} / {session.ReviewMoveCount}", new Color(76, 91, 126), Color.White);
+        DrawResultRow(new Rectangle(1164, 904, 628, 52), "DISPLAY", FormatRenParseDisplayMode(session.RenParseDisplayMode), new Color(76, 91, 126), Color.White);
+        DrawFittedText("PRESS [R] TO CHANGE DISPLAY", new Rectangle(GameOverValueX, 958, 464, 28), new Color(147, 201, 190), 0.34f);
 
     }
 
@@ -161,7 +162,7 @@ public sealed partial class GoScreenRenderer
     private static readonly int[] ReviewStepButtonValues = [-50, -10, -1, 1, 10, 50];
 
 
-    private static Rectangle ReviewStepButtonBounds(int index) => new(GameOverValueX + index % 3 * 156, 584 + index / 3 * 58, 140, 44);
+    private static Rectangle ReviewStepButtonBounds(int index) => new(GameOverValueX + index % 3 * 156, 740 + index / 3 * 58, 140, 44);
 
 
     private static Rectangle ReviewDoneButtonBounds => new(1648, 120, 164, 52);
