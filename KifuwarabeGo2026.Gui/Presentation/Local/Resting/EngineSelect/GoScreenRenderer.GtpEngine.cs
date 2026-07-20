@@ -342,11 +342,11 @@ public sealed partial class GoScreenRenderer
         var value = session.GetGtpEngineGuiOptionDraft(option);
         DrawDataRowFrame(row);
         DrawUiLabel(UiLabel.InCompactRow(option.Label, row));
-        var displayValue = option.Type == "spin" && option.Min is { } min && option.Max is { } max
-            ? $"{value}  [{min} .. {max}]"
-            : string.IsNullOrEmpty(value) ? "<empty>" : value;
-        DrawDynamicOptionText(displayValue, GtpEngineGuiOptionValueBounds(slot), Color.White, 0.34f);
-        DrawCommandButton(GtpEngineGuiOptionDefaultButtonBounds(slot), "DEFAULT", false, mousePoint, scale: 0.2f);
+        var valueBounds = option.Type == "spin" ? GtpEngineGuiOptionSpinValueBounds(slot) : GtpEngineGuiOptionValueBounds(slot);
+        DrawDynamicOptionText(string.IsNullOrEmpty(value) ? "<empty>" : value, valueBounds, Color.White, 0.34f);
+        if (option.Type == "spin" && option.Min is { } min && option.Max is { } max)
+            DrawFittedText($"{min} .. {max}", GtpEngineGuiOptionRangeBounds(slot), new Color(118, 139, 143), 0.24f);
+        DrawCommandButton(GtpEngineGuiOptionDefaultButtonBounds(slot), "DEFAULT", false, mousePoint, scale: 0.3f);
         switch (option.Type)
         {
             case "check":
@@ -628,10 +628,12 @@ public sealed partial class GoScreenRenderer
 
     private static Rectangle GtpEngineGuiOptionRowBounds(int slot) => new(GtpEngineGuiOptionsDialogBounds.X + 56, GtpEngineGuiOptionsDialogBounds.Y + 150 + slot * 68, GtpEngineGuiOptionsDialogBounds.Width - 112, 60);
     private static Rectangle GtpEngineGuiOptionValueBounds(int slot) => new(GtpEngineGuiOptionRowBounds(slot).X + 166, GtpEngineGuiOptionRowBounds(slot).Y + 8, 252, 44);
-    private static Rectangle GtpEngineGuiOptionDefaultButtonBounds(int slot) => new(GtpEngineGuiOptionRowBounds(slot).Right - 220, GtpEngineGuiOptionRowBounds(slot).Y + 10, 82, 40);
-    private static Rectangle GtpEngineGuiOptionPrimaryButtonBounds(int slot) => new(GtpEngineGuiOptionRowBounds(slot).Right - 126, GtpEngineGuiOptionRowBounds(slot).Y + 10, 54, 40);
-    private static Rectangle GtpEngineGuiOptionSecondaryButtonBounds(int slot) => new(GtpEngineGuiOptionRowBounds(slot).Right - 66, GtpEngineGuiOptionRowBounds(slot).Y + 10, 54, 40);
-    private static Rectangle GtpEngineGuiOptionWideButtonBounds(int slot) => new(GtpEngineGuiOptionRowBounds(slot).Right - 126, GtpEngineGuiOptionRowBounds(slot).Y + 10, 114, 40);
+    private static Rectangle GtpEngineGuiOptionSpinValueBounds(int slot) => new(GtpEngineGuiOptionRowBounds(slot).X + 166, GtpEngineGuiOptionRowBounds(slot).Y + 8, 112, 44);
+    private static Rectangle GtpEngineGuiOptionRangeBounds(int slot) => new(GtpEngineGuiOptionRowBounds(slot).X + 294, GtpEngineGuiOptionRowBounds(slot).Y + 12, 126, 36);
+    private static Rectangle GtpEngineGuiOptionDefaultButtonBounds(int slot) => new(GtpEngineGuiOptionRowBounds(slot).Right - 94, GtpEngineGuiOptionRowBounds(slot).Y + 10, 82, 40);
+    private static Rectangle GtpEngineGuiOptionPrimaryButtonBounds(int slot) => new(GtpEngineGuiOptionRowBounds(slot).Right - 220, GtpEngineGuiOptionRowBounds(slot).Y + 10, 54, 40);
+    private static Rectangle GtpEngineGuiOptionSecondaryButtonBounds(int slot) => new(GtpEngineGuiOptionRowBounds(slot).Right - 160, GtpEngineGuiOptionRowBounds(slot).Y + 10, 54, 40);
+    private static Rectangle GtpEngineGuiOptionWideButtonBounds(int slot) => new(GtpEngineGuiOptionRowBounds(slot).Right - 220, GtpEngineGuiOptionRowBounds(slot).Y + 10, 114, 40);
 
     private static Rectangle GtpEngineGuiOptionsPreviousPageButtonBounds => new(GtpEngineGuiOptionsDialogBounds.X + 410, GtpEngineGuiOptionsDialogBounds.Y + 450, 100, 44);
 
