@@ -812,7 +812,7 @@ internal sealed class CgosClient
         if (move.Length == 0)
             throw new InvalidOperationException("GTP engine returned an empty analyzed move.");
 
-        Log($"# Generated {_engineColor} analyzed move: {move}");
+        Log($"# Generated {_engineColor} move: {move} {json}");
         return $"{move.ToLowerInvariant()} {json}";
     }
 

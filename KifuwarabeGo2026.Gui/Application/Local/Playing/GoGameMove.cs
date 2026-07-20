@@ -5,7 +5,7 @@ using System;
 
 public readonly record struct GoGameMove
 {
-    public GoGameMove(GoStone stone, GoPoint? point, string comment = "")
+    public GoGameMove(GoStone stone, GoPoint? point, string comment = "", GoMoveAnalysis? analysis = null)
     {
         if (stone is not (GoStone.Black or GoStone.White))
         {
@@ -15,6 +15,7 @@ public readonly record struct GoGameMove
         Stone = stone;
         Point = point;
         Comment = comment ?? "";
+        Analysis = analysis;
     }
 
     public GoStone Stone { get; }
@@ -22,6 +23,8 @@ public readonly record struct GoGameMove
     public GoPoint? Point { get; }
 
     public string Comment { get; }
+
+    public GoMoveAnalysis? Analysis { get; }
 
     public bool IsPass => Point is null;
 }

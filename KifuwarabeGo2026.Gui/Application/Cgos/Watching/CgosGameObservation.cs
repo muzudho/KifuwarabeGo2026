@@ -34,6 +34,8 @@ public sealed class CgosGameObservation
     public TimeSpan WhiteElapsedTime => MainTime - WhiteRemainingTime;
     public int BlackAgehama { get; private set; }
     public int WhiteAgehama { get; private set; }
+    public IReadOnlyList<GoGameMove> Moves => _moves;
+    public GoMoveAnalysis? LatestAnalysis => _moves.Count == 0 ? null : _moves[^1].Analysis;
 
     public GoStone GetStone(int x, int y) => _board.GetStone(x, y);
 
@@ -72,9 +74,9 @@ public sealed class CgosGameObservation
         marker = displayLine.IndexOf("] # Generated ", StringComparison.Ordinal);
         if (marker < 0) return false;
 
-        var generated = displayLine[(marker + 14)..].Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var generated = displayLine[(marker + 14)..].Split(' ', 4, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         if (generated.Length >= 3 && generated[1].Equals("move:", StringComparison.OrdinalIgnoreCase))
-            return ApplyMove(ParseStone(generated[0]), generated[2], null);
+            return ApplyMove(ParseStone(generated[0]), generated[2], null, generated.Length >= 4 ? generated[3] : null);
 
         return false;
     }
@@ -90,7 +92,12 @@ public sealed class CgosGameObservation
         }
         else if (parts[0].Equals("play", StringComparison.OrdinalIgnoreCase) && parts.Length >= 3)
         {
-            return ApplyMove(ParseStone(parts[1]), parts[2], parts.Length >= 4 ? parts[3] : null);
+            var playParts = commandLine.Split(' ', 5, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            return ApplyMove(
+                ParseStone(playParts[1]),
+                playParts[2],
+                playParts.Length >= 4 ? playParts[3] : null,
+                playParts.Length >= 5 ? playParts[4] : null);
         }
         else if (parts[0].Equals("gameover", StringComparison.OrdinalIgnoreCase))
         {
@@ -136,7 +143,7 @@ public sealed class CgosGameObservation
 
         for (var index = 7; index + 1 < parts.Length; index += 2)
         {
-            ApplyMove(CurrentTurn, parts[index], parts[index + 1]);
+            ApplyMove(CurrentTurn, parts[index], parts[index + 1], null);
         }
     }
 
@@ -146,7 +153,7 @@ public sealed class CgosGameObservation
     /// <param name="stone"></param>
     /// <param name="vertex"></param>
     /// <returns></returns>
-    private bool ApplyMove(GoStone stone, string vertex, string? remainingTimeMilliseconds)
+    private bool ApplyMove(GoStone stone, string vertex, string? remainingTimeMilliseconds, string? analysisJson)
     {
         if (!IsStarted || IsFinished || stone == GoStone.Empty || stone != CurrentTurn) return false;
 
@@ -169,7 +176,8 @@ public sealed class CgosGameObservation
             _koPoint = null;
         }
 
-        _moves.Add(new GoGameMove(stone, movePoint));
+        var analysis = CgosMoveAnalysisParser.Parse(analysisJson, vertex);
+        _moves.Add(new GoGameMove(stone, movePoint, analysis: analysis));
         if (long.TryParse(remainingTimeMilliseconds, out var remainingMilliseconds))
         {
             var remaining = TimeSpan.FromMilliseconds(Math.Clamp(remainingMilliseconds, 0, (long)MainTime.TotalMilliseconds));
