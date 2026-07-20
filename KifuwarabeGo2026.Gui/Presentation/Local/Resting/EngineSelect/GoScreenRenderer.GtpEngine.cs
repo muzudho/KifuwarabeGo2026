@@ -204,7 +204,7 @@ public sealed partial class GoScreenRenderer
 
         var pageCount = Math.Max(1, (int)Math.Ceiling(session.GtpEngineProfiles.Count / (double)GoAppSession.GtpEngineSelectionPageSize));
         DrawCommandButton(GtpEngineSelectionDialogPreviousPageButtonBounds, "PREV", false, mousePoint, enabled: session.GtpEngineSelectionPageIndex > 0, scale: 0.42f);
-        DrawText($"PAGE {session.GtpEngineSelectionPageIndex + 1} / {pageCount}", new Vector2(GtpEngineSelectionDialogBounds.X + 350, GtpEngineSelectionDialogBounds.Bottom - 62), new Color(227, 224, 210), 0.48f);
+        DrawText($"PAGE {session.GtpEngineSelectionPageIndex + 1} / {pageCount}", new Vector2(600, 817), new Color(227, 224, 210), 0.42f);
         DrawCommandButton(GtpEngineSelectionDialogNextPageButtonBounds, "NEXT", false, mousePoint, enabled: session.GtpEngineSelectionPageIndex < pageCount - 1, scale: 0.42f);
         DrawCommandButton(GtpEngineSelectionDialogAddButtonBounds, "ADD", false, mousePoint, scale: 0.42f);
         DrawCommandButton(GtpEngineSelectionDialogEditButtonBounds, "EDIT", false, mousePoint, enabled: session.GtpEngineProfiles.Count > 0, scale: 0.42f);
@@ -390,7 +390,7 @@ public sealed partial class GoScreenRenderer
     private static Rectangle GtpEngineSelectionDialogListBounds => new(270, 242, 650, 560);
 
 
-    private static Rectangle GtpEngineSelectionDialogPropertyBounds => new(950, 242, 700, 560);
+    private static Rectangle GtpEngineSelectionDialogPropertyBounds => new(950, 270, 700, 532);
 
 
     private static Rectangle GtpEngineSelectionDialogCancelButtonBounds => new(1368, 156, 132, 48);
@@ -399,22 +399,22 @@ public sealed partial class GoScreenRenderer
     private static Rectangle GtpEngineSelectionDialogOkButtonBounds => new(1518, 156, 132, 48);
 
 
-    private static Rectangle GtpEngineSelectionDialogPreviousPageButtonBounds => new(270, 854, 150, 52);
+    private static Rectangle GtpEngineSelectionDialogPreviousPageButtonBounds => new(730, 816, 90, 44);
 
 
-    private static Rectangle GtpEngineSelectionDialogNextPageButtonBounds => new(770, 854, 150, 52);
+    private static Rectangle GtpEngineSelectionDialogNextPageButtonBounds => new(830, 816, 90, 44);
 
 
-    private static Rectangle GtpEngineSelectionDialogAddButtonBounds => new(898, 854, 140, 52);
+    private static Rectangle GtpEngineSelectionDialogAddButtonBounds => new(270, 874, 100, 44);
 
 
-    private static Rectangle GtpEngineSelectionDialogEditButtonBounds => new(1058, 854, 140, 52);
+    private static Rectangle GtpEngineSelectionDialogEditButtonBounds => new(380, 874, 100, 44);
 
 
-    private static Rectangle GtpEngineSelectionDialogDuplicateButtonBounds => new(1218, 854, 140, 52);
+    private static Rectangle GtpEngineSelectionDialogDuplicateButtonBounds => new(490, 874, 120, 44);
 
 
-    private static Rectangle GtpEngineSelectionDialogDeleteButtonBounds => new(1378, 854, 140, 52);
+    private static Rectangle GtpEngineSelectionDialogDeleteButtonBounds => new(620, 874, 100, 44);
 
 
     private static Rectangle GtpEngineDeleteConfirmationBounds => new(654, 358, 612, 260);

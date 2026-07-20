@@ -1,0 +1,9 @@
+{
+  "DisplayName": "New tournament 20260720-122317",
+  "Rule": "pureGo",
+  "BoardSize": 9,
+  "Komi": 0.0,
+  "MainTimeMinutes": 10,
+  "MainTimeSeconds": 0,
+  "MoveLimit": 400
+}

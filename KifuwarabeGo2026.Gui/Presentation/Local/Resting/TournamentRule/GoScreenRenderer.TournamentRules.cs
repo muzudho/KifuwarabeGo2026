@@ -147,7 +147,7 @@ public sealed partial class GoScreenRenderer
 
         var pageCount = Math.Max(1, (int)Math.Ceiling(session.TournamentRulesList.Count / (double)GoAppSession.TournamentRulesSelectionPageSize));
         DrawCommandButton(TournamentRulesSelectionDialogPreviousPageButtonBounds, "PREV", false, mousePoint, enabled: session.TournamentRulesSelectionPageIndex > 0, scale: 0.42f);
-        DrawText($"PAGE {session.TournamentRulesSelectionPageIndex + 1} / {pageCount}", new Vector2(TournamentRulesSelectionDialogBounds.X + 350, TournamentRulesSelectionDialogBounds.Bottom - 62), new Color(227, 224, 210), 0.48f);
+        DrawText($"PAGE {session.TournamentRulesSelectionPageIndex + 1} / {pageCount}", new Vector2(600, 817), new Color(227, 224, 210), 0.42f);
         DrawCommandButton(TournamentRulesSelectionDialogNextPageButtonBounds, "NEXT", false, mousePoint, enabled: session.TournamentRulesSelectionPageIndex < pageCount - 1, scale: 0.42f);
         DrawCommandButton(TournamentRulesSelectionDialogAddButtonBounds, "ADD", false, mousePoint, scale: 0.42f);
         DrawCommandButton(TournamentRulesSelectionDialogEditButtonBounds, "EDIT", false, mousePoint, enabled: session.TournamentRulesList.Count > 0, scale: 0.42f);
@@ -256,7 +256,7 @@ public sealed partial class GoScreenRenderer
     private static Rectangle TournamentRulesSelectionDialogListBounds => new(270, 242, 650, 560);
 
 
-    private static Rectangle TournamentRulesSelectionDialogPropertyBounds => new(950, 242, 700, 560);
+    private static Rectangle TournamentRulesSelectionDialogPropertyBounds => new(950, 270, 700, 532);
 
 
     private static Rectangle TournamentRulesSelectionDialogCancelButtonBounds => new(1368, 156, 132, 48);
@@ -265,22 +265,22 @@ public sealed partial class GoScreenRenderer
     private static Rectangle TournamentRulesSelectionDialogOkButtonBounds => new(1518, 156, 132, 48);
 
 
-    private static Rectangle TournamentRulesSelectionDialogAddButtonBounds => new(958, 854, 150, 52);
+    private static Rectangle TournamentRulesSelectionDialogAddButtonBounds => new(270, 874, 100, 44);
 
 
-    private static Rectangle TournamentRulesSelectionDialogEditButtonBounds => new(1128, 854, 150, 52);
+    private static Rectangle TournamentRulesSelectionDialogEditButtonBounds => new(380, 874, 100, 44);
 
 
-    private static Rectangle TournamentRulesSelectionDialogDuplicateButtonBounds => new(1298, 854, 150, 52);
+    private static Rectangle TournamentRulesSelectionDialogDuplicateButtonBounds => new(490, 874, 120, 44);
 
 
-    private static Rectangle TournamentRulesSelectionDialogDeleteButtonBounds => new(1468, 854, 150, 52);
+    private static Rectangle TournamentRulesSelectionDialogDeleteButtonBounds => new(620, 874, 100, 44);
 
 
-    private static Rectangle TournamentRulesSelectionDialogPreviousPageButtonBounds => new(270, 854, 150, 52);
+    private static Rectangle TournamentRulesSelectionDialogPreviousPageButtonBounds => new(730, 816, 90, 44);
 
 
-    private static Rectangle TournamentRulesSelectionDialogNextPageButtonBounds => new(770, 854, 150, 52);
+    private static Rectangle TournamentRulesSelectionDialogNextPageButtonBounds => new(830, 816, 90, 44);
 
 
     private static Rectangle TournamentRulesSelectionDialogListItemBounds(int index) =>
