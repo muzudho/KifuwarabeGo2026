@@ -314,6 +314,9 @@ public sealed class GoAppSession
 
     public GoGameRecord CurrentGameRecord { get; private set; } = new();
 
+    public GoGameMove? LatestGameMove =>
+        CurrentGameRecord.Moves.Count == 0 ? null : CurrentGameRecord.Moves[^1];
+
     public bool HasReviewGameRecord => _reviewGameRecord is not null;
 
     public int ReviewMoveIndex { get; private set; }
@@ -1902,7 +1905,7 @@ public sealed class GoAppSession
     /// <param name="x"></param>
     /// <param name="y"></param>
     /// <returns></returns>
-    public bool TryPlaceStone(int x, int y)
+    public bool TryPlaceStone(int x, int y, GoMoveAnalysis? analysis = null)
     {
         if (CurrentMode.Kind != GoAppModeKind.Playing || !_board.TryPlaceStone(x, y, CurrentTurn, KoPoint, out var capturedStones, out var nextKoPoint))
         {
@@ -1910,7 +1913,7 @@ public sealed class GoAppSession
         }
 
         var placedBy = CurrentTurn;
-        CurrentGameRecord.Moves.Add(new GoGameMove(placedBy, new GoPoint(x, y)));
+        CurrentGameRecord.Moves.Add(new GoGameMove(placedBy, new GoPoint(x, y), analysis: analysis));
         if (CurrentTurn == GoStone.Black)
         {
             BlackAgehama += capturedStones;
@@ -1937,7 +1940,7 @@ public sealed class GoAppSession
         return true;
     }
 
-    public bool Pass(string comment = "")
+    public bool Pass(string comment = "", GoMoveAnalysis? analysis = null)
     {
         if (CurrentMode.Kind != GoAppModeKind.Playing)
         {
@@ -1946,7 +1949,7 @@ public sealed class GoAppSession
 
         KoPoint = null;
         ConsecutivePasses++;
-        CurrentGameRecord.Moves.Add(new GoGameMove(CurrentTurn, null, comment));
+        CurrentGameRecord.Moves.Add(new GoGameMove(CurrentTurn, null, comment, analysis));
         CompleteMoveAndPassTurn();
         if (CurrentMode.Kind == GoAppModeKind.GameOver)
         {

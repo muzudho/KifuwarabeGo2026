@@ -1,5 +1,6 @@
 namespace KifuwarabeGo2026.Gui.Application.Local.Playing;
 
+using KifuwarabeGo2026.Gui.Application.Cgos.Watching;
 using KifuwarabeGo2026.Gui.Domain;
 using KifuwarabeGo2026.Shared.Domain;
 using KifuwarabeGo2026.Gui.Gtp;
@@ -22,6 +23,7 @@ public sealed class PlayingScene : IDisposable
     private readonly Action<float, float, float> _playPlaceStoneSound;
     private readonly Action _saveGtpEngineProfiles;
     private readonly Dictionary<GoStone, GtpEngineClient> _gtpEngines = new();
+    private readonly HashSet<GoStone> _analysisEngines = new();
     private readonly Queue<Func<CancellationToken, Task<EngineCommandResult>>> _engineCommandQueue = new();
     private CancellationTokenSource _engineCancellation = new();
     private Task<EngineCommandCompletion>? _pendingEngineCommand;
@@ -142,6 +144,11 @@ public sealed class PlayingScene : IDisposable
                 try
                 {
                     await engine.Client.StartAsync(cancellationToken);
+                    var knownAnalyze = await engine.Client.SendCommandAsync("known_command cgos-genmove_analyze", cancellationToken);
+                    if (knownAnalyze.IsSuccess && knownAnalyze.Payload.Equals("true", StringComparison.OrdinalIgnoreCase))
+                    {
+                        _analysisEngines.Add(engine.Stone);
+                    }
                     await engine.Client.SendCommandExpectSuccessAsync($"boardsize {_session.BoardSize}", cancellationToken);
                     await engine.Client.SendCommandExpectSuccessAsync($"komi {_session.Komi.ToString(CultureInfo.InvariantCulture)}", cancellationToken);
                     await engine.Client.SendCommandExpectSuccessAsync("clear_board", cancellationToken);
@@ -213,9 +220,16 @@ public sealed class PlayingScene : IDisposable
         var color = FormatColor(currentTurn);
         BeginEngineCommand(async cancellationToken =>
         {
-            var response = await engine.SendCommandAsync($"genmove {color}", cancellationToken);
-            response.ThrowIfError($"genmove {color}");
-            return EngineCommandResult.EngineMove(response.Payload, currentTurn);
+            if (_analysisEngines.Contains(currentTurn))
+            {
+                var analyzeResponse = await engine.SendCommandAsync($"cgos-genmove_analyze {color}", cancellationToken);
+                analyzeResponse.ThrowIfError($"cgos-genmove_analyze {color}");
+                return ParseAnalyzedMoveResponse(analyzeResponse.Payload, currentTurn);
+            }
+
+            var moveResponse = await engine.SendCommandAsync($"genmove {color}", cancellationToken);
+            moveResponse.ThrowIfError($"genmove {color}");
+            return EngineCommandResult.EngineMove(moveResponse.Payload, currentTurn);
         });
     }
 
@@ -295,7 +309,7 @@ public sealed class PlayingScene : IDisposable
         if (GtpCoordinate.IsPass(result.MoveText))
         {
             var comment = result.PlayedBy is null ? "" : _session.GetOwnEyeForcedPassComment();
-            if (_session.Pass(comment))
+            if (_session.Pass(comment, result.Analysis))
             {
                 PlayPlaceStoneSound(0.45f, 0.25f, 0f);
             }
@@ -311,7 +325,7 @@ public sealed class PlayingScene : IDisposable
             return;
         }
 
-        if (!_session.TryPlaceStone(point.X, point.Y))
+        if (!_session.TryPlaceStone(point.X, point.Y, result.Analysis))
         {
             SetEngineError($"Illegal GTP move: {result.MoveText}", result.PlayedBy ?? _session.CurrentTurn);
             return;
@@ -427,6 +441,7 @@ public sealed class PlayingScene : IDisposable
 
         var engines = GetEngineSnapshot();
         _gtpEngines.Clear();
+        _analysisEngines.Clear();
         foreach (var engine in engines)
         {
             _ = Task.Run(async () =>
@@ -444,6 +459,20 @@ public sealed class PlayingScene : IDisposable
     }
 
     private static string FormatColor(GoStone stone) => stone == GoStone.Black ? "black" : "white";
+
+    private static EngineCommandResult ParseAnalyzedMoveResponse(string payload, GoStone playedBy)
+    {
+        var lines = payload.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var playLine = lines.LastOrDefault(line => line.StartsWith("play ", StringComparison.OrdinalIgnoreCase));
+        if (playLine is null || playLine[5..].Trim() is not { Length: > 0 } vertex)
+        {
+            throw new InvalidOperationException("cgos-genmove_analyze response has no play command.");
+        }
+
+        var json = lines.FirstOrDefault(line => line.StartsWith('{'));
+        var analysis = CgosMoveAnalysisParser.Parse(json, vertex);
+        return EngineCommandResult.EngineMove(vertex, playedBy, analysis);
+    }
 
     private EngineCommandException CreateEngineCommandException(GoStone stone, Exception exception)
     {
@@ -481,13 +510,21 @@ public sealed class PlayingScene : IDisposable
 
     private sealed record EngineCommandCompletion(EngineCommandResult Result, int Generation);
 
-    private sealed record EngineCommandResult(string? MoveText, GoStone? PlayedBy, Exception? Error, GoStone? ErrorStone = null, bool MakesEngineReady = false, bool ClosesEngine = false)
+    private sealed record EngineCommandResult(
+        string? MoveText,
+        GoStone? PlayedBy,
+        Exception? Error,
+        GoStone? ErrorStone = null,
+        bool MakesEngineReady = false,
+        bool ClosesEngine = false,
+        GoMoveAnalysis? Analysis = null)
     {
         public static EngineCommandResult Success(bool closesEngine = false) => new(null, null, null, ClosesEngine: closesEngine);
 
         public static EngineCommandResult EngineReady() => new(null, null, null, MakesEngineReady: true);
 
-        public static EngineCommandResult EngineMove(string moveText, GoStone playedBy) => new(moveText, playedBy, null);
+        public static EngineCommandResult EngineMove(string moveText, GoStone playedBy, GoMoveAnalysis? analysis = null) =>
+            new(moveText, playedBy, null, Analysis: analysis);
 
         public static EngineCommandResult Failure(Exception error, GoStone errorStone) => new(null, null, error, errorStone);
     }
