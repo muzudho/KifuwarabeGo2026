@@ -377,70 +377,74 @@ public class Game1 : Game
                     {
                         BeginOrMoveCgosCredentialEdit(point, credential.Stone, credential.Field);
                     }
-                    else if (GoScreenRenderer.GetCgosConnectionStartBackButtonHit(point))
+                    else
                     {
-                        if (_session.IsAnyCgosProcessRunning) _ = DisconnectAllCgosProcessesAsync();
-                        _session.ReturnToCgosConnectionProfiles();
-                    }
-                    else if (GoScreenRenderer.GetCgosConnectionEngineSelectButtonHit(point, _session) is { } engineStone)
-                    {
-                        _session.OpenCgosGtpEngineSelectionDialog(engineStone);
-                    }
-                    else if (GoScreenRenderer.GetCgosAdminButtonHit(point, _session.CgosConnectionProfiles.Count > 0))
-                    {
-                        ToggleCgosAdminProcess();
-                    }
-                    else if (GoScreenRenderer.GetCgosAdminWhoButtonHit(point, _session.IsCgosAdminRunning))
-                    {
-                        SendCgosAdminCommand("who");
-                    }
-                    else if (GoScreenRenderer.GetCgosAdminWhitePlayerSelectButtonHit(point))
-                    {
-                        _session.OpenCgosAdminPlayerSelectionDialog(GoStone.White);
-                    }
-                    else if (GoScreenRenderer.GetCgosAdminBlackPlayerSelectButtonHit(point))
-                    {
-                        _session.OpenCgosAdminPlayerSelectionDialog(GoStone.Black);
-                    }
-                    else if (GoScreenRenderer.GetCgosAdminMatchButtonHit(point, _session.CanSendCgosAdminMatch))
-                    {
-                        SendSelectedCgosAdminMatch();
-                    }
-                    else if (GoScreenRenderer.GetCgosAdminSwapButtonHit(point, _session.CanSendCgosAdminMatch))
-                    {
-                        _session.SwapCgosAdminPlayers();
-                    }
-                    else if (GoScreenRenderer.GetCgosAdminCodeButtonHit(point, !string.IsNullOrWhiteSpace(_session.CgosAdminLogDirectory)))
-                    {
-                        OpenCgosAdminLog();
-                    }
-                    else if (GoScreenRenderer.GetCgosAdminTailButtonHit(point, !string.IsNullOrWhiteSpace(_session.CgosAdminLogDirectory)))
-                    {
-                        TailCgosAdminLog();
-                    }
-                    else if (GoScreenRenderer.GetCgosBlackConnectionButtonHit(point, _session.IsCgosBlackConnectionRunning || _session.SelectedCgosBlackGtpEngineProfile is not null))
-                    {
-                        ToggleCgosPlayerConnectionProcess(GoStone.Black);
-                    }
-                    else if (GoScreenRenderer.GetCgosWhiteConnectionButtonHit(point, _session.IsCgosWhiteConnectionRunning || _session.SelectedCgosWhiteGtpEngineProfile is not null))
-                    {
-                        ToggleCgosPlayerConnectionProcess(GoStone.White);
-                    }
-                    else if (GoScreenRenderer.GetCgosPlayer1CodeButtonHit(point, !string.IsNullOrWhiteSpace(_session.CgosBlackConnectionLogDirectory)))
-                    {
-                        OpenCgosPlayerConnectionLog(GoStone.Black);
-                    }
-                    else if (GoScreenRenderer.GetCgosPlayer1TailButtonHit(point, !string.IsNullOrWhiteSpace(_session.CgosBlackConnectionLogDirectory)))
-                    {
-                        TailCgosPlayerConnectionLog(GoStone.Black);
-                    }
-                    else if (GoScreenRenderer.GetCgosPlayer2CodeButtonHit(point, !string.IsNullOrWhiteSpace(_session.CgosWhiteConnectionLogDirectory)))
-                    {
-                        OpenCgosPlayerConnectionLog(GoStone.White);
-                    }
-                    else if (GoScreenRenderer.GetCgosPlayer2TailButtonHit(point, !string.IsNullOrWhiteSpace(_session.CgosWhiteConnectionLogDirectory)))
-                    {
-                        TailCgosPlayerConnectionLog(GoStone.White);
+                        EndCgosCredentialEdit();
+                        if (GoScreenRenderer.GetCgosConnectionStartBackButtonHit(point))
+                        {
+                            if (_session.IsAnyCgosProcessRunning) _ = DisconnectAllCgosProcessesAsync();
+                            _session.ReturnToCgosConnectionProfiles();
+                        }
+                        else if (GoScreenRenderer.GetCgosConnectionEngineSelectButtonHit(point, _session) is { } engineStone)
+                        {
+                            _session.OpenCgosGtpEngineSelectionDialog(engineStone);
+                        }
+                        else if (GoScreenRenderer.GetCgosAdminButtonHit(point, _session.CgosConnectionProfiles.Count > 0))
+                        {
+                            ToggleCgosAdminProcess();
+                        }
+                        else if (GoScreenRenderer.GetCgosAdminWhoButtonHit(point, _session.IsCgosAdminRunning))
+                        {
+                            SendCgosAdminCommand("who");
+                        }
+                        else if (GoScreenRenderer.GetCgosAdminWhitePlayerSelectButtonHit(point))
+                        {
+                            _session.OpenCgosAdminPlayerSelectionDialog(GoStone.White);
+                        }
+                        else if (GoScreenRenderer.GetCgosAdminBlackPlayerSelectButtonHit(point))
+                        {
+                            _session.OpenCgosAdminPlayerSelectionDialog(GoStone.Black);
+                        }
+                        else if (GoScreenRenderer.GetCgosAdminMatchButtonHit(point, _session.CanSendCgosAdminMatch))
+                        {
+                            SendSelectedCgosAdminMatch();
+                        }
+                        else if (GoScreenRenderer.GetCgosAdminSwapButtonHit(point, _session.CanSendCgosAdminMatch))
+                        {
+                            _session.SwapCgosAdminPlayers();
+                        }
+                        else if (GoScreenRenderer.GetCgosAdminCodeButtonHit(point, !string.IsNullOrWhiteSpace(_session.CgosAdminLogDirectory)))
+                        {
+                            OpenCgosAdminLog();
+                        }
+                        else if (GoScreenRenderer.GetCgosAdminTailButtonHit(point, !string.IsNullOrWhiteSpace(_session.CgosAdminLogDirectory)))
+                        {
+                            TailCgosAdminLog();
+                        }
+                        else if (GoScreenRenderer.GetCgosBlackConnectionButtonHit(point, _session.IsCgosBlackConnectionRunning || _session.SelectedCgosBlackGtpEngineProfile is not null))
+                        {
+                            ToggleCgosPlayerConnectionProcess(GoStone.Black);
+                        }
+                        else if (GoScreenRenderer.GetCgosWhiteConnectionButtonHit(point, _session.IsCgosWhiteConnectionRunning || _session.SelectedCgosWhiteGtpEngineProfile is not null))
+                        {
+                            ToggleCgosPlayerConnectionProcess(GoStone.White);
+                        }
+                        else if (GoScreenRenderer.GetCgosPlayer1CodeButtonHit(point, !string.IsNullOrWhiteSpace(_session.CgosBlackConnectionLogDirectory)))
+                        {
+                            OpenCgosPlayerConnectionLog(GoStone.Black);
+                        }
+                        else if (GoScreenRenderer.GetCgosPlayer1TailButtonHit(point, !string.IsNullOrWhiteSpace(_session.CgosBlackConnectionLogDirectory)))
+                        {
+                            TailCgosPlayerConnectionLog(GoStone.Black);
+                        }
+                        else if (GoScreenRenderer.GetCgosPlayer2CodeButtonHit(point, !string.IsNullOrWhiteSpace(_session.CgosWhiteConnectionLogDirectory)))
+                        {
+                            OpenCgosPlayerConnectionLog(GoStone.White);
+                        }
+                        else if (GoScreenRenderer.GetCgosPlayer2TailButtonHit(point, !string.IsNullOrWhiteSpace(_session.CgosWhiteConnectionLogDirectory)))
+                        {
+                            TailCgosPlayerConnectionLog(GoStone.White);
+                        }
                     }
 
                     _previousMouse = mouse;
@@ -1173,11 +1177,20 @@ public class Game1 : Game
 
     private bool TryInputCgosCredentialCharacter(char character)
     {
+        if (_session.CgosConnectionFlowKind != CgosConnectionFlowKind.ConnectionStart ||
+            _session.IsGtpEngineSelectionDialogOpen ||
+            _session.IsGtpEngineEditPanelOpen) return false;
         if (_session.ActiveCgosCredentialStone is not { } stone ||
             _session.ActiveCgosCredentialField is not { } field) return false;
         if (_cgosCredentialTextBox.TryInputCharacter(character))
             _session.SetCgosCredential(stone, field, _cgosCredentialTextBox.Text, _cgosCredentialTextBox.CaretIndex);
         return true;
+    }
+
+    private void EndCgosCredentialEdit()
+    {
+        _session.EndCgosCredentialEdit();
+        _cgosCredentialTextBox.Clear();
     }
 
     private void BeginOrMoveCgosCredentialEdit(Point point, GoStone stone, CgosPlayerCredentialField field)
@@ -1206,8 +1219,7 @@ public class Game1 : Game
         {
             case TextBoxKeyboardAction.Commit:
             case TextBoxKeyboardAction.Cancel:
-                _session.EndCgosCredentialEdit();
-                _cgosCredentialTextBox.Clear();
+                EndCgosCredentialEdit();
                 break;
             default:
                 _session.SetCgosCredential(stone, field, _cgosCredentialTextBox.Text, _cgosCredentialTextBox.CaretIndex);

@@ -386,7 +386,6 @@ public sealed partial class GoScreenRenderer
             CgosAdminCodeButtonBounds,
             !string.IsNullOrWhiteSpace(session.CgosAdminLogDirectory),
             mousePoint);
-        DrawCgosCredentialFields(session, GoStone.Black, mousePoint);
         DrawCommandButton(CgosAdminWhoButtonBounds, "WHO", false, mousePoint, enabled: session.IsCgosAdminRunning, scale: 0.28f);
         DrawCgosAdminPlayerSelector(CgosAdminWhitePlayerRowBounds, "WHITE", session.CgosAdminWhitePlayerName, CgosAdminWhitePlayerSelectButtonBounds, mousePoint);
         DrawCgosAdminPlayerSelector(CgosAdminBlackPlayerRowBounds, "BLACK", session.CgosAdminBlackPlayerName, CgosAdminBlackPlayerSelectButtonBounds, mousePoint);
@@ -409,7 +408,7 @@ public sealed partial class GoScreenRenderer
             CgosPlayer1CodeButtonBounds,
             !string.IsNullOrWhiteSpace(session.CgosBlackConnectionLogDirectory),
             mousePoint);
-        DrawCgosCredentialFields(session, GoStone.White, mousePoint);
+        DrawCgosCredentialFields(session, GoStone.Black, mousePoint);
 
         DrawCgosProcessPanel(
             CgosWhiteProcessPanelBounds,
@@ -427,6 +426,7 @@ public sealed partial class GoScreenRenderer
             CgosWhiteCodeButtonBounds,
             !string.IsNullOrWhiteSpace(session.CgosWhiteConnectionLogDirectory),
             mousePoint);
+        DrawCgosCredentialFields(session, GoStone.White, mousePoint);
 
         DrawCgosConnectionTooltips(session, mousePoint);
     }
@@ -458,7 +458,7 @@ public sealed partial class GoScreenRenderer
             var bounds = CgosCredentialRowBounds(stone, field);
             var active = session.ActiveCgosCredentialStone == stone && session.ActiveCgosCredentialField == field;
             DrawDataRowFrame(bounds, active, bounds.Contains(mousePoint));
-            DrawUiLabel(UiLabel.InCompactRow(field == CgosPlayerCredentialField.LoginName ? "LOGIN" : "PASS", bounds));
+            DrawUiLabel(UiLabel.InCompactRow(field == CgosPlayerCredentialField.LoginName ? "LOGIN" : "PASSWORD", bounds));
             var text = session.GetCgosCredential(stone, field);
             DrawFittedText(string.IsNullOrEmpty(text) ? "-" : text, CgosCredentialTextBounds(stone, field), Color.White, 0.32f);
             if (active) DrawTextBoxCaret(text, session.CgosCredentialCaretIndex, CgosCredentialTextBounds(stone, field), 0.32f);
