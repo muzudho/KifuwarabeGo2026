@@ -1,7 +1,7 @@
 {
   "gtpEngines": [
     {
-      "displayName": "Kifuwarabe Star Random GTP",
+      "displayName": "Kifuwarabe GTP - CGF Open 2026",
       "defaultCgosLoginName": "kifuwarabe",
       "defaultCgosPlainTextPassword": "kifuwarabePass",
       "executablePath": "..\\..\\..\\KifuwarabeGo2026.Engine\\bin\\Release\\net8.0\\win-x64\\KifuwarabeGo2026.Engine.exe",

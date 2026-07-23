@@ -112,6 +112,7 @@ public class Game1 : Game
 
                 UpdateCgosConnectionEditPanelByKeyboard(keyboard, gameTime);
                 UpdateCgosCredentialByKeyboard(keyboard, gameTime);
+                UpdateGtpEngineEditPanelByKeyboard(keyboard, gameTime);
             }
 
             UpdateMouseInput();
@@ -1158,6 +1159,12 @@ public class Game1 : Game
 
     private void OnTextInput(object? sender, TextInputEventArgs e)
     {
+        // モーダル表示中の入力欄を、背後の画面に残った編集状態より優先します。
+        if (_session.IsGtpEngineEditPanelOpen && TryInputGtpEngineEditCharacter(e.Character))
+        {
+            return;
+        }
+
         if (TryInputHumanPlayerNameCharacter(e.Character)) return;
 
         if (TryInputCgosCredentialCharacter(e.Character)) return;

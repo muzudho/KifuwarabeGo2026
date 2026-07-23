@@ -111,11 +111,11 @@ public sealed partial class GoScreenRenderer
         {
             var column = GetBoardColumnLabel(index);
             var x = start.X + cell * index;
-            DrawBoardCoordinateText(column, new Vector2(x, bottomY), scale, red: false);
+            DrawBoardCoordinateText(column, new Vector2(x, bottomY), scale, red: true);
 
             var row = (boardSize - index).ToString();
             var y = start.Y + cell * index;
-            DrawBoardCoordinateText(row, new Vector2(leftX, y), scale, red: true);
+            DrawBoardCoordinateText(row, new Vector2(leftX, y), scale, red: false);
         }
     }
 
