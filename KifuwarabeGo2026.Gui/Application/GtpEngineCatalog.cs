@@ -81,6 +81,8 @@ public sealed class GtpEngineCatalog
         normalized.DisplayName = string.IsNullOrWhiteSpace(normalized.DisplayName)
             ? "Unnamed GTP Engine"
             : normalized.DisplayName.Trim();
+        normalized.DefaultCgosLoginName = normalized.DefaultCgosLoginName?.Trim() ?? "";
+        normalized.DefaultCgosPlainTextPassword ??= "";
         normalized.ExecutablePath = ResolvePath(normalized.ExecutablePath, baseDirectory);
         normalized.WorkingDirectoryModel = normalized.WorkingDirectoryModel.IsEmpty
             ? WorkingDirectoryModel.FromString(Path.GetDirectoryName(normalized.ExecutablePath) ?? baseDirectory)

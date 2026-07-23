@@ -95,7 +95,12 @@ public sealed class CgosConnectionProcess : IDisposable
         }
     }
 
-    public string Start(CgosConnectionProfile profile, GtpEngineProfile? blackEngineProfile, GtpEngineProfile? whiteEngineProfile)
+    public string Start(
+        CgosConnectionProfile profile,
+        GtpEngineProfile? blackEngineProfile,
+        GtpEngineProfile? whiteEngineProfile,
+        string loginName = "",
+        string password = "")
     {
         if (IsRunning)
         {
@@ -131,12 +136,12 @@ public sealed class CgosConnectionProcess : IDisposable
         {
             if (blackEngineProfile is not null)
             {
-                StartProcess(profile, "black", blackEngineProfile, repositoryRoot, executablePath);
+                StartProcess(profile, "black", blackEngineProfile, loginName, password, repositoryRoot, executablePath);
             }
 
             if (whiteEngineProfile is not null)
             {
-                StartProcess(profile, "white", whiteEngineProfile, repositoryRoot, executablePath);
+                StartProcess(profile, "white", whiteEngineProfile, loginName, password, repositoryRoot, executablePath);
             }
         }
         catch
@@ -240,7 +245,7 @@ public sealed class CgosConnectionProcess : IDisposable
         return "SENT " + command.ToUpperInvariant();
     }
 
-    private void StartProcess(CgosConnectionProfile profile, string account, GtpEngineProfile engineProfile, string repositoryRoot, string executablePath)
+    private void StartProcess(CgosConnectionProfile profile, string account, GtpEngineProfile engineProfile, string loginName, string password, string repositoryRoot, string executablePath)
     {
         var startInfo = new ProcessStartInfo
         {
@@ -258,6 +263,16 @@ public sealed class CgosConnectionProcess : IDisposable
         startInfo.ArgumentList.Add(profile.Port.ToString());
         startInfo.ArgumentList.Add("--account");
         startInfo.ArgumentList.Add(account);
+        if (!string.IsNullOrEmpty(loginName))
+        {
+            startInfo.ArgumentList.Add("--login-name");
+            startInfo.ArgumentList.Add(loginName);
+        }
+        if (!string.IsNullOrEmpty(password))
+        {
+            startInfo.ArgumentList.Add("--password");
+            startInfo.ArgumentList.Add(password);
+        }
         startInfo.ArgumentList.Add("--log-directory");
         startInfo.ArgumentList.Add(LogDirectory);
         var engineCommand = CreateEngineCommand(engineProfile);

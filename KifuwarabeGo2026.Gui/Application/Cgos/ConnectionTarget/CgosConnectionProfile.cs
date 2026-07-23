@@ -23,6 +23,12 @@ public enum CgosConnectionProfileEditField
     Note,
 }
 
+public enum CgosPlayerCredentialField
+{
+    LoginName,
+    Password,
+}
+
 /// <summary>
 /// ＣＧＯＳへの接続画面のフローの種類
 /// </summary>

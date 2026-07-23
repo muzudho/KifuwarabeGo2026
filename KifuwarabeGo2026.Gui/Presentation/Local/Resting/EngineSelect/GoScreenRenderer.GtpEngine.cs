@@ -279,6 +279,8 @@ public sealed partial class GoScreenRenderer
         DrawRect(GtpEngineEditPanelEditorBounds, 1, new Color(67, 84, 92));
 
         DrawGtpEngineEditField(session, GtpEngineProfileEditField.DisplayName, "DISPLAY", mousePoint);
+        DrawGtpEngineEditField(session, GtpEngineProfileEditField.DefaultCgosLoginName, "CGOS LOGIN", mousePoint);
+        DrawGtpEngineEditField(session, GtpEngineProfileEditField.DefaultCgosPlainTextPassword, "CGOS PASS", mousePoint);
         DrawGtpEngineEditField(session, GtpEngineProfileEditField.ExecutablePath, "EXE", mousePoint);
         DrawGtpEngineEditField(session, GtpEngineProfileEditField.WorkingDirectory, "WORKDIR", mousePoint);
         DrawGtpEngineEditField(session, GtpEngineProfileEditField.Arguments, "ARGS", mousePoint);
@@ -704,6 +706,8 @@ public sealed partial class GoScreenRenderer
     private static readonly GtpEngineProfileEditField[] GtpEngineEditFields =
     {
         GtpEngineProfileEditField.DisplayName,
+        GtpEngineProfileEditField.DefaultCgosLoginName,
+        GtpEngineProfileEditField.DefaultCgosPlainTextPassword,
         GtpEngineProfileEditField.ExecutablePath,
         GtpEngineProfileEditField.WorkingDirectory,
         GtpEngineProfileEditField.Arguments,
@@ -712,10 +716,12 @@ public sealed partial class GoScreenRenderer
 
     private static Rectangle GtpEngineEditPanelFieldRowBounds(GtpEngineProfileEditField field) => field switch
     {
-        GtpEngineProfileEditField.DisplayName => new Rectangle(AddPanelControlX, 264, 668, 56),
-        GtpEngineProfileEditField.ExecutablePath => new Rectangle(AddPanelControlX, 348, 668, 56),
-        GtpEngineProfileEditField.WorkingDirectory => new Rectangle(AddPanelControlX, 432, 668, 56),
-        GtpEngineProfileEditField.Arguments => new Rectangle(AddPanelControlX, 516, 668, 56),
+        GtpEngineProfileEditField.DisplayName => new Rectangle(AddPanelControlX, 248, 668, 48),
+        GtpEngineProfileEditField.DefaultCgosLoginName => new Rectangle(AddPanelControlX, 304, 668, 48),
+        GtpEngineProfileEditField.DefaultCgosPlainTextPassword => new Rectangle(AddPanelControlX, 360, 668, 48),
+        GtpEngineProfileEditField.ExecutablePath => new Rectangle(AddPanelControlX, 416, 668, 48),
+        GtpEngineProfileEditField.WorkingDirectory => new Rectangle(AddPanelControlX, 472, 668, 48),
+        GtpEngineProfileEditField.Arguments => new Rectangle(AddPanelControlX, 528, 668, 48),
         _ => Rectangle.Empty,
     };
 

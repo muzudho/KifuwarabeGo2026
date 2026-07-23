@@ -126,6 +126,14 @@ public sealed class GoAppSession
 
     public GtpEngineProfile? SelectedCgosWhiteGtpEngineProfile => GetCgosGtpEngineProfile(SelectedCgosWhiteGtpEngineIndex);
 
+    public string CgosBlackLoginName { get; private set; } = "";
+    public string CgosBlackPassword { get; private set; } = "";
+    public string CgosWhiteLoginName { get; private set; } = "";
+    public string CgosWhitePassword { get; private set; } = "";
+    public GoStone? ActiveCgosCredentialStone { get; private set; }
+    public CgosPlayerCredentialField? ActiveCgosCredentialField { get; private set; }
+    public int CgosCredentialCaretIndex { get; private set; }
+
     public bool HasSelectedCgosGtpEngine => SelectedCgosBlackGtpEngineProfile is not null || SelectedCgosWhiteGtpEngineProfile is not null;
 
     public bool IsAnyCgosProcessRunning => IsCgosConnectionRunning || IsCgosBlackConnectionRunning || IsCgosWhiteConnectionRunning || IsCgosAdminRunning;
@@ -1319,6 +1327,8 @@ public sealed class GoAppSession
         SelectedWhiteGtpEngineIndex = 0;
         SelectedCgosBlackGtpEngineIndex = 0;
         SelectedCgosWhiteGtpEngineIndex = 0;
+        SetCgosPlayerCredentials(GoStone.Black, _gtpEngineProfiles[0].DefaultCgosLoginName, _gtpEngineProfiles[0].DefaultCgosPlainTextPassword);
+        SetCgosPlayerCredentials(GoStone.White, _gtpEngineProfiles[0].DefaultCgosLoginName, _gtpEngineProfiles[0].DefaultCgosPlainTextPassword);
     }
 
     private GtpEngineProfile? GetCgosGtpEngineProfile(int? index) =>
@@ -1361,6 +1371,10 @@ public sealed class GoAppSession
         if (IsGtpEngineSelectionForCgos)
         {
             SetSelectedCgosGtpEngineIndex(stone, index);
+            SetCgosPlayerCredentials(
+                stone,
+                _gtpEngineProfiles[index].DefaultCgosLoginName,
+                _gtpEngineProfiles[index].DefaultCgosPlainTextPassword);
             return;
         }
 
@@ -1553,6 +1567,12 @@ public sealed class GoAppSession
         {
             case GtpEngineProfileEditField.DisplayName:
                 GtpEngineEditDraft.DisplayName = text;
+                break;
+            case GtpEngineProfileEditField.DefaultCgosLoginName:
+                GtpEngineEditDraft.DefaultCgosLoginName = text;
+                break;
+            case GtpEngineProfileEditField.DefaultCgosPlainTextPassword:
+                GtpEngineEditDraft.DefaultCgosPlainTextPassword = text;
                 break;
             case GtpEngineProfileEditField.ExecutablePath:
                 GtpEngineEditDraft.ExecutablePath = text;
@@ -1797,11 +1817,64 @@ public sealed class GoAppSession
     public string GetGtpEngineEditFieldText(GtpEngineProfileEditField field) => field switch
     {
         GtpEngineProfileEditField.DisplayName => GtpEngineEditDraft.DisplayName,
+        GtpEngineProfileEditField.DefaultCgosLoginName => GtpEngineEditDraft.DefaultCgosLoginName,
+        GtpEngineProfileEditField.DefaultCgosPlainTextPassword => GtpEngineEditDraft.DefaultCgosPlainTextPassword,
         GtpEngineProfileEditField.ExecutablePath => GtpEngineEditDraft.ExecutablePath,
         GtpEngineProfileEditField.WorkingDirectory => GtpEngineEditDraft.WorkingDirectoryModel.Value,
         GtpEngineProfileEditField.Arguments => GtpEngineEditDraft.Arguments,
         _ => throw new ArgumentOutOfRangeException(nameof(field), field, "GTP engine edit field is out of range."),
     };
+
+    public void SetCgosPlayerCredentials(GoStone stone, string loginName, string password)
+    {
+        if (stone == GoStone.Black)
+        {
+            CgosBlackLoginName = loginName;
+            CgosBlackPassword = password;
+            return;
+        }
+
+        if (stone == GoStone.White)
+        {
+            CgosWhiteLoginName = loginName;
+            CgosWhitePassword = password;
+            return;
+        }
+
+        throw new ArgumentOutOfRangeException(nameof(stone), stone, "CGOS credentials can be set only for black or white.");
+    }
+
+    public string GetCgosCredential(GoStone stone, CgosPlayerCredentialField field) =>
+        (stone, field) switch
+        {
+            (GoStone.Black, CgosPlayerCredentialField.LoginName) => CgosBlackLoginName,
+            (GoStone.Black, CgosPlayerCredentialField.Password) => CgosBlackPassword,
+            (GoStone.White, CgosPlayerCredentialField.LoginName) => CgosWhiteLoginName,
+            (GoStone.White, CgosPlayerCredentialField.Password) => CgosWhitePassword,
+            _ => throw new ArgumentOutOfRangeException(nameof(stone), stone, "CGOS credentials can be read only for black or white."),
+        };
+
+    public void BeginCgosCredentialEdit(GoStone stone, CgosPlayerCredentialField field, int caretIndex)
+    {
+        ActiveCgosCredentialStone = stone;
+        ActiveCgosCredentialField = field;
+        CgosCredentialCaretIndex = Math.Clamp(caretIndex, 0, GetCgosCredential(stone, field).Length);
+    }
+
+    public void SetCgosCredential(GoStone stone, CgosPlayerCredentialField field, string text, int caretIndex)
+    {
+        var login = field == CgosPlayerCredentialField.LoginName ? text : GetCgosCredential(stone, CgosPlayerCredentialField.LoginName);
+        var password = field == CgosPlayerCredentialField.Password ? text : GetCgosCredential(stone, CgosPlayerCredentialField.Password);
+        SetCgosPlayerCredentials(stone, login, password);
+        CgosCredentialCaretIndex = Math.Clamp(caretIndex, 0, text.Length);
+    }
+
+    public void EndCgosCredentialEdit()
+    {
+        ActiveCgosCredentialStone = null;
+        ActiveCgosCredentialField = null;
+        CgosCredentialCaretIndex = 0;
+    }
 
     public GtpEngineProfile GetGtpEngineProfile(GoStone stone)
     {

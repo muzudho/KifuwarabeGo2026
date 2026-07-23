@@ -52,6 +52,8 @@ public class Game1 : Game
     private KeyboardState _previousHumanPlayerNameKeyboard;
     private KeyboardState _previousCgosConnectionKeyboard;
     private readonly TextBoxController _cgosConnectionEditTextBox = new(240);
+    private KeyboardState _previousCgosCredentialKeyboard;
+    private readonly TextBoxController _cgosCredentialTextBox = new(240);
 
     public Game1()
     {
@@ -109,6 +111,7 @@ public class Game1 : Game
                     UpdateCgosWatchingKeyboardInput(keyboard);
 
                 UpdateCgosConnectionEditPanelByKeyboard(keyboard, gameTime);
+                UpdateCgosCredentialByKeyboard(keyboard, gameTime);
             }
 
             UpdateMouseInput();
@@ -370,7 +373,11 @@ public class Game1 : Game
 
                 if (_session.CgosConnectionFlowKind == CgosConnectionFlowKind.ConnectionStart)
                 {
-                    if (GoScreenRenderer.GetCgosConnectionStartBackButtonHit(point))
+                    if (GoScreenRenderer.GetCgosCredentialFieldHit(point) is { } credential)
+                    {
+                        BeginOrMoveCgosCredentialEdit(point, credential.Stone, credential.Field);
+                    }
+                    else if (GoScreenRenderer.GetCgosConnectionStartBackButtonHit(point))
                     {
                         if (_session.IsAnyCgosProcessRunning) _ = DisconnectAllCgosProcessesAsync();
                         _session.ReturnToCgosConnectionProfiles();
@@ -812,7 +819,9 @@ public class Game1 : Game
             var status = process.Start(
                 _session.SelectedCgosConnectionProfile,
                 stone == GoStone.Black ? _session.SelectedCgosBlackGtpEngineProfile : null,
-                stone == GoStone.White ? _session.SelectedCgosWhiteGtpEngineProfile : null);
+                stone == GoStone.White ? _session.SelectedCgosWhiteGtpEngineProfile : null,
+                _session.GetCgosCredential(stone, CgosPlayerCredentialField.LoginName),
+                _session.GetCgosCredential(stone, CgosPlayerCredentialField.Password));
             SetCgosPlayerConnectionProcessStatus(stone, status, process.IsRunning, process);
         }
         catch (Exception ex) when (ex is InvalidOperationException or IOException or System.ComponentModel.Win32Exception)
@@ -1147,6 +1156,8 @@ public class Game1 : Game
     {
         if (TryInputHumanPlayerNameCharacter(e.Character)) return;
 
+        if (TryInputCgosCredentialCharacter(e.Character)) return;
+
         if (TryInputCgosConnectionEditCharacter(e.Character))
         {
             return;
@@ -1158,6 +1169,51 @@ public class Game1 : Game
         }
 
         _tournamentRulesSetting.TryInputCharacter(e.Character);
+    }
+
+    private bool TryInputCgosCredentialCharacter(char character)
+    {
+        if (_session.ActiveCgosCredentialStone is not { } stone ||
+            _session.ActiveCgosCredentialField is not { } field) return false;
+        if (_cgosCredentialTextBox.TryInputCharacter(character))
+            _session.SetCgosCredential(stone, field, _cgosCredentialTextBox.Text, _cgosCredentialTextBox.CaretIndex);
+        return true;
+    }
+
+    private void BeginOrMoveCgosCredentialEdit(Point point, GoStone stone, CgosPlayerCredentialField field)
+    {
+        var text = _session.ActiveCgosCredentialStone == stone && _session.ActiveCgosCredentialField == field
+            ? _cgosCredentialTextBox.Text
+            : _session.GetCgosCredential(stone, field);
+        var caret = _renderer?.GetCgosCredentialCaretIndex(point, stone, field, text) ?? text.Length;
+        if (_session.ActiveCgosCredentialStone != stone || _session.ActiveCgosCredentialField != field)
+            _cgosCredentialTextBox.Begin(text, caret);
+        else
+            _cgosCredentialTextBox.SetCaretIndex(caret);
+        _session.BeginCgosCredentialEdit(stone, field, _cgosCredentialTextBox.CaretIndex);
+    }
+
+    private void UpdateCgosCredentialByKeyboard(KeyboardState keyboard, GameTime gameTime)
+    {
+        if (_session.ActiveCgosCredentialStone is not { } stone ||
+            _session.ActiveCgosCredentialField is not { } field)
+        {
+            _previousCgosCredentialKeyboard = keyboard;
+            return;
+        }
+
+        switch (_cgosCredentialTextBox.HandleKeyboard(keyboard, _previousCgosCredentialKeyboard, gameTime))
+        {
+            case TextBoxKeyboardAction.Commit:
+            case TextBoxKeyboardAction.Cancel:
+                _session.EndCgosCredentialEdit();
+                _cgosCredentialTextBox.Clear();
+                break;
+            default:
+                _session.SetCgosCredential(stone, field, _cgosCredentialTextBox.Text, _cgosCredentialTextBox.CaretIndex);
+                break;
+        }
+        _previousCgosCredentialKeyboard = keyboard;
     }
 
     private void BeginHumanPlayerNameEdit(Point point, GoStone stone)

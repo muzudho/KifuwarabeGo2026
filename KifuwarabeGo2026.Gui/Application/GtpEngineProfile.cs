@@ -12,6 +12,12 @@ public sealed class GtpEngineProfile
 {
     public string DisplayName { get; set; } = "Kifuwarabe Star Random GTP";
 
+    /// <summary>CGOS 接続画面へ初期表示するログイン名です。</summary>
+    public string DefaultCgosLoginName { get; set; } = "";
+
+    /// <summary>CGOS 接続画面へ初期表示する平文パスワードです。</summary>
+    public string DefaultCgosPlainTextPassword { get; set; } = "";
+
     public string ExecutablePath { get; set; } = "";
 
     /// <summary>
@@ -41,6 +47,8 @@ public sealed class GtpEngineProfile
     public GtpEngineProfile Clone() => new()
     {
         DisplayName = DisplayName,
+        DefaultCgosLoginName = DefaultCgosLoginName,
+        DefaultCgosPlainTextPassword = DefaultCgosPlainTextPassword,
         ExecutablePath = ExecutablePath,
         WorkingDirectoryModel = WorkingDirectoryModel,
         Arguments = Arguments,
@@ -56,6 +64,8 @@ public sealed class GtpEngineProfile
 public enum GtpEngineProfileEditField
 {
     DisplayName,
+    DefaultCgosLoginName,
+    DefaultCgosPlainTextPassword,
     ExecutablePath,
     WorkingDirectory,
     Arguments,

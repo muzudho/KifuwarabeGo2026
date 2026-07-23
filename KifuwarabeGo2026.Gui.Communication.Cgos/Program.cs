@@ -246,6 +246,8 @@ internal sealed class CgosClientOptions
     {
         var options = new CgosClientOptions();
         var selectedAccounts = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        string? loginName = null;
+        string? password = null;
 
         for (var index = 0; index < args.Length; index++)
         {
@@ -305,6 +307,12 @@ internal sealed class CgosClientOptions
                 case "--account":
                     selectedAccounts.Add(ReadValue(args, ref index, arg));
                     break;
+                case "--login-name":
+                    loginName = ReadValue(args, ref index, arg);
+                    break;
+                case "--password":
+                    password = ReadValue(args, ref index, arg);
+                    break;
                 case "--both":
                     selectedAccounts.Add("black");
                     selectedAccounts.Add("white");
@@ -326,7 +334,7 @@ internal sealed class CgosClientOptions
 
         foreach (var account in selectedAccounts)
         {
-            options._accounts.Add(CreateAccount(account));
+            options._accounts.Add(CreateAccount(account, loginName, password));
         }
 
         return options;
@@ -341,6 +349,8 @@ internal sealed class CgosClientOptions
         writer.WriteLine();
         writer.WriteLine("Options:");
         writer.WriteLine("  --account black|white      Login account. Default: black");
+        writer.WriteLine("  --login-name NAME          CGOS login name (overrides the account default).");
+        writer.WriteLine("  --password PASSWORD        CGOS plain-text password (overrides the account default).");
         writer.WriteLine("  --both                     Login with both KifuwarabeB and KifuwarabeW.");
         writer.WriteLine("  --host HOST                CGOS host. Default: uec-go.com");
         writer.WriteLine("  --port PORT                CGOS port. Default: 6809");
@@ -365,13 +375,18 @@ internal sealed class CgosClientOptions
         return args[index];
     }
 
-    private static CgosAccount CreateAccount(string account)
+    private static CgosAccount CreateAccount(string account, string? loginName, string? password)
     {
-        return account.ToLowerInvariant() switch
+        var defaults = account.ToLowerInvariant() switch
         {
             "black" or "b" => new CgosAccount("black", "KifuwarabeB", "KifuwarabeB"),
             "white" or "w" => new CgosAccount("white", "KifuwarabeW", "KifuwarabeW"),
             _ => throw new ArgumentException("--account must be black or white."),
+        };
+        return defaults with
+        {
+            UserName = loginName ?? defaults.UserName,
+            Password = password ?? defaults.Password,
         };
     }
 }

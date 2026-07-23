@@ -32,6 +32,17 @@ public sealed partial class GoScreenRenderer
     public int GetCgosConnectionEditPanelCaretIndex(Point point, CgosConnectionProfileEditField field, string text) =>
         GetTextBoxCaretIndex(point.X, text, CgosConnectionEditPanelFieldTextBounds(field), 0.42f);
 
+    public int GetCgosCredentialCaretIndex(Point point, GoStone stone, CgosPlayerCredentialField field, string text) =>
+        GetTextBoxCaretIndex(point.X, text, CgosCredentialTextBounds(stone, field), 0.32f);
+
+    public static (GoStone Stone, CgosPlayerCredentialField Field)? GetCgosCredentialFieldHit(Point point)
+    {
+        foreach (var stone in new[] { GoStone.Black, GoStone.White })
+        foreach (var field in new[] { CgosPlayerCredentialField.LoginName, CgosPlayerCredentialField.Password })
+            if (CgosCredentialRowBounds(stone, field).Contains(point)) return (stone, field);
+        return null;
+    }
+
 
     public static bool GetCgosUseButtonHit(Point point) => CgosUseButtonBounds.Contains(point);
 
@@ -375,6 +386,7 @@ public sealed partial class GoScreenRenderer
             CgosAdminCodeButtonBounds,
             !string.IsNullOrWhiteSpace(session.CgosAdminLogDirectory),
             mousePoint);
+        DrawCgosCredentialFields(session, GoStone.Black, mousePoint);
         DrawCommandButton(CgosAdminWhoButtonBounds, "WHO", false, mousePoint, enabled: session.IsCgosAdminRunning, scale: 0.28f);
         DrawCgosAdminPlayerSelector(CgosAdminWhitePlayerRowBounds, "WHITE", session.CgosAdminWhitePlayerName, CgosAdminWhitePlayerSelectButtonBounds, mousePoint);
         DrawCgosAdminPlayerSelector(CgosAdminBlackPlayerRowBounds, "BLACK", session.CgosAdminBlackPlayerName, CgosAdminBlackPlayerSelectButtonBounds, mousePoint);
@@ -397,6 +409,7 @@ public sealed partial class GoScreenRenderer
             CgosPlayer1CodeButtonBounds,
             !string.IsNullOrWhiteSpace(session.CgosBlackConnectionLogDirectory),
             mousePoint);
+        DrawCgosCredentialFields(session, GoStone.White, mousePoint);
 
         DrawCgosProcessPanel(
             CgosWhiteProcessPanelBounds,
@@ -436,6 +449,20 @@ public sealed partial class GoScreenRenderer
         DrawText(label, new Vector2(bounds.X + 6, bounds.Y + 9), new Color(180, 195, 195), 0.22f);
         DrawFittedText(playerName, new Rectangle(bounds.X + 62, bounds.Y + 5, bounds.Width - 154, bounds.Height - 10), Color.White, 0.25f);
         DrawCommandButton(selectBounds, "SELECT", false, mousePoint, scale: 0.2f);
+    }
+
+    private void DrawCgosCredentialFields(GoAppSession session, GoStone stone, Point mousePoint)
+    {
+        foreach (var field in new[] { CgosPlayerCredentialField.LoginName, CgosPlayerCredentialField.Password })
+        {
+            var bounds = CgosCredentialRowBounds(stone, field);
+            var active = session.ActiveCgosCredentialStone == stone && session.ActiveCgosCredentialField == field;
+            DrawDataRowFrame(bounds, active, bounds.Contains(mousePoint));
+            DrawUiLabel(UiLabel.InCompactRow(field == CgosPlayerCredentialField.LoginName ? "LOGIN" : "PASS", bounds));
+            var text = session.GetCgosCredential(stone, field);
+            DrawFittedText(string.IsNullOrEmpty(text) ? "-" : text, CgosCredentialTextBounds(stone, field), Color.White, 0.32f);
+            if (active) DrawTextBoxCaret(text, session.CgosCredentialCaretIndex, CgosCredentialTextBounds(stone, field), 0.32f);
+        }
     }
 
 
@@ -818,22 +845,22 @@ public sealed partial class GoScreenRenderer
     private static Rectangle CgosConnectionStartBackButtonBounds => new(1308, 244, 324, 48);
 
 
-    private static Rectangle CgosBlackConnectionButtonBounds => new(CgosBlackProcessPanelBounds.X + 16, CgosBlackProcessPanelBounds.Y + 184, CgosBlackProcessPanelBounds.Width - 32, 48);
+    private static Rectangle CgosBlackConnectionButtonBounds => new(CgosBlackProcessPanelBounds.X + 16, CgosBlackProcessPanelBounds.Y + 284, CgosBlackProcessPanelBounds.Width - 32, 48);
 
 
-    private static Rectangle CgosBlackTailButtonBounds => new(CgosBlackProcessPanelBounds.X + 160, CgosBlackProcessPanelBounds.Y + 242, 120, 44);
+    private static Rectangle CgosBlackTailButtonBounds => new(CgosBlackProcessPanelBounds.X + 160, CgosBlackProcessPanelBounds.Y + 342, 120, 44);
 
 
-    private static Rectangle CgosPlayer1CodeButtonBounds => new(CgosBlackProcessPanelBounds.X + 294, CgosBlackProcessPanelBounds.Y + 242, 120, 44);
+    private static Rectangle CgosPlayer1CodeButtonBounds => new(CgosBlackProcessPanelBounds.X + 294, CgosBlackProcessPanelBounds.Y + 342, 120, 44);
 
 
-    private static Rectangle CgosWhiteConnectionButtonBounds => new(CgosWhiteProcessPanelBounds.X + 16, CgosWhiteProcessPanelBounds.Y + 184, CgosWhiteProcessPanelBounds.Width - 32, 48);
+    private static Rectangle CgosWhiteConnectionButtonBounds => new(CgosWhiteProcessPanelBounds.X + 16, CgosWhiteProcessPanelBounds.Y + 284, CgosWhiteProcessPanelBounds.Width - 32, 48);
 
 
-    private static Rectangle CgosWhiteTailButtonBounds => new(CgosWhiteProcessPanelBounds.X + 160, CgosWhiteProcessPanelBounds.Y + 242, 120, 44);
+    private static Rectangle CgosWhiteTailButtonBounds => new(CgosWhiteProcessPanelBounds.X + 160, CgosWhiteProcessPanelBounds.Y + 342, 120, 44);
 
 
-    private static Rectangle CgosWhiteCodeButtonBounds => new(CgosWhiteProcessPanelBounds.X + 294, CgosWhiteProcessPanelBounds.Y + 242, 120, 44);
+    private static Rectangle CgosWhiteCodeButtonBounds => new(CgosWhiteProcessPanelBounds.X + 294, CgosWhiteProcessPanelBounds.Y + 342, 120, 44);
 
 
     private static Rectangle CgosConnectionBeginButtonBounds => new(1134, 800, 302, 58);
@@ -894,7 +921,7 @@ public sealed partial class GoScreenRenderer
 
 
     private static LabeledBrowseSelector CgosBlackEngineSelector => new(
-        new Rectangle(CgosBlackProcessPanelBounds.X + 16, CgosBlackProcessPanelBounds.Y + 128, CgosBlackProcessPanelBounds.Width - 32, 48),
+        new Rectangle(CgosBlackProcessPanelBounds.X + 16, CgosBlackProcessPanelBounds.Y + 228, CgosBlackProcessPanelBounds.Width - 32, 48),
         "ENGINE",
         "",
         "SELECT",
@@ -903,12 +930,24 @@ public sealed partial class GoScreenRenderer
 
 
     private static LabeledBrowseSelector CgosWhiteEngineSelector => new(
-        new Rectangle(CgosWhiteProcessPanelBounds.X + 16, CgosWhiteProcessPanelBounds.Y + 128, CgosWhiteProcessPanelBounds.Width - 32, 48),
+        new Rectangle(CgosWhiteProcessPanelBounds.X + 16, CgosWhiteProcessPanelBounds.Y + 228, CgosWhiteProcessPanelBounds.Width - 32, 48),
         "ENGINE",
         "",
         "SELECT",
         58,
         88);
+
+    private static Rectangle CgosCredentialRowBounds(GoStone stone, CgosPlayerCredentialField field)
+    {
+        var panel = stone == GoStone.Black ? CgosBlackProcessPanelBounds : CgosWhiteProcessPanelBounds;
+        return new Rectangle(panel.X + 16, panel.Y + (field == CgosPlayerCredentialField.LoginName ? 120 : 172), panel.Width - 32, 44);
+    }
+
+    private static Rectangle CgosCredentialTextBounds(GoStone stone, CgosPlayerCredentialField field)
+    {
+        var row = CgosCredentialRowBounds(stone, field);
+        return new Rectangle(row.X + 132, row.Y + 6, row.Width - 148, 32);
+    }
 
 
     private static Rectangle CgosConnectionStartTargetBounds => new(482, 350, 420, 426);
