@@ -99,21 +99,21 @@ public sealed partial class GoScreenRenderer
     }
 
     /// <summary>
-    /// 左上を A1 とし、I を飛ばした国際式の盤座標を四辺へ描画します。
+    /// 左下を A1 とし、I を飛ばした国際式の盤座標を下辺と左辺へ描画します。
     /// </summary>
     private void DrawBoardCoordinates(int boardSize, Vector2 start, float cell, Rectangle boardOuter)
     {
         var scale = boardSize >= 19 ? 0.34f : boardSize >= 13 ? 0.38f : 0.42f;
-        var topY = boardOuter.Y + 60f;
+        var bottomY = boardOuter.Bottom - 60f;
         var leftX = boardOuter.X + 50f;
 
         for (var index = 0; index < boardSize; index++)
         {
             var column = GetBoardColumnLabel(index);
             var x = start.X + cell * index;
-            DrawBoardCoordinateText(column, new Vector2(x, topY), scale, red: false);
+            DrawBoardCoordinateText(column, new Vector2(x, bottomY), scale, red: false);
 
-            var row = (index + 1).ToString();
+            var row = (boardSize - index).ToString();
             var y = start.Y + cell * index;
             DrawBoardCoordinateText(row, new Vector2(leftX, y), scale, red: true);
         }

@@ -921,7 +921,7 @@ public sealed partial class GoScreenRenderer
 
 
     private static LabeledBrowseSelector CgosBlackEngineSelector => new(
-        new Rectangle(CgosBlackProcessPanelBounds.X + 16, CgosBlackProcessPanelBounds.Y + 228, CgosBlackProcessPanelBounds.Width - 32, 48),
+        new Rectangle(CgosBlackProcessPanelBounds.X + 16, CgosBlackProcessPanelBounds.Y + 120, CgosBlackProcessPanelBounds.Width - 32, 48),
         "ENGINE",
         "",
         "SELECT",
@@ -930,7 +930,7 @@ public sealed partial class GoScreenRenderer
 
 
     private static LabeledBrowseSelector CgosWhiteEngineSelector => new(
-        new Rectangle(CgosWhiteProcessPanelBounds.X + 16, CgosWhiteProcessPanelBounds.Y + 228, CgosWhiteProcessPanelBounds.Width - 32, 48),
+        new Rectangle(CgosWhiteProcessPanelBounds.X + 16, CgosWhiteProcessPanelBounds.Y + 120, CgosWhiteProcessPanelBounds.Width - 32, 48),
         "ENGINE",
         "",
         "SELECT",
@@ -940,7 +940,7 @@ public sealed partial class GoScreenRenderer
     private static Rectangle CgosCredentialRowBounds(GoStone stone, CgosPlayerCredentialField field)
     {
         var panel = stone == GoStone.Black ? CgosBlackProcessPanelBounds : CgosWhiteProcessPanelBounds;
-        return new Rectangle(panel.X + 16, panel.Y + (field == CgosPlayerCredentialField.LoginName ? 120 : 172), panel.Width - 32, 44);
+        return new Rectangle(panel.X + 16, panel.Y + (field == CgosPlayerCredentialField.LoginName ? 176 : 228), panel.Width - 32, 44);
     }
 
     private static Rectangle CgosCredentialTextBounds(GoStone stone, CgosPlayerCredentialField field)
