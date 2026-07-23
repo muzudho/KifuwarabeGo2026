@@ -104,7 +104,7 @@ public sealed partial class GoScreenRenderer
     private void DrawBoardCoordinates(int boardSize, Vector2 start, float cell, Rectangle boardOuter)
     {
         var scale = boardSize >= 19 ? 0.34f : boardSize >= 13 ? 0.38f : 0.42f;
-        var bottomY = boardOuter.Bottom - 60f;
+        var bottomY = boardOuter.Bottom - 40f;
         var leftX = boardOuter.X + 50f;
 
         for (var index = 0; index < boardSize; index++)
