@@ -145,6 +145,10 @@ public sealed class GoAppSession
     public MoveInformationDisplayMode MoveInformationDisplayMode { get; private set; } =
         MoveInformationDisplayMode.Trend;
 
+    public int CommentPageIndex { get; private set; }
+
+    public int CommentPageCount { get; private set; } = 1;
+
     public int SelectedCgosConnectionProfileIndex { get; private set; }
 
     public CgosConnectionProfile SelectedCgosConnectionProfile => _cgosConnectionProfiles[SelectedCgosConnectionProfileIndex];
@@ -342,6 +346,9 @@ public sealed class GoAppSession
 
     public int ReviewMoveCount => _reviewGameRecord?.Moves.Count ?? 0;
 
+    public IReadOnlyList<GoGameMove> ReviewMoves =>
+        _reviewGameRecord is null ? Array.Empty<GoGameMove>() : _reviewGameRecord.Moves;
+
     public GoGameMove? ReviewCurrentMove =>
         _reviewGameRecord is not null && ReviewMoveIndex > 0 && ReviewMoveIndex <= _reviewGameRecord.Moves.Count
             ? _reviewGameRecord.Moves[ReviewMoveIndex - 1]
@@ -373,6 +380,22 @@ public sealed class GoAppSession
     public void SetMoveInformationDisplayMode(MoveInformationDisplayMode mode)
     {
         MoveInformationDisplayMode = mode;
+        CommentPageIndex = 0;
+        CommentPageCount = 1;
+    }
+
+    public void ChangeCommentPage(int step)
+    {
+        CommentPageIndex = Math.Clamp(
+            CommentPageIndex + step,
+            0,
+            Math.Max(0, CommentPageCount - 1));
+    }
+
+    public void UpdateCommentPageCount(int pageCount)
+    {
+        CommentPageCount = Math.Max(1, pageCount);
+        CommentPageIndex = Math.Clamp(CommentPageIndex, 0, CommentPageCount - 1);
     }
 
     public void SelectUseKind(GoAppUseKind useKind)
@@ -902,7 +925,13 @@ public sealed class GoAppSession
             return false;
         }
 
-        return ApplyReviewPosition(Math.Clamp(ReviewMoveIndex + step, 0, ReviewMoveCount), out warning);
+        var moved = ApplyReviewPosition(Math.Clamp(ReviewMoveIndex + step, 0, ReviewMoveCount), out warning);
+        if (moved)
+        {
+            CommentPageIndex = 0;
+            CommentPageCount = 1;
+        }
+        return moved;
     }
 
     public bool StartReviewingStoredGameRecord(out string warning)
@@ -2449,6 +2478,11 @@ public sealed class GoAppSession
             RuleName = source.RuleName,
             BlackPlayerName = source.BlackPlayerName,
             WhitePlayerName = source.WhitePlayerName,
+            BlackRank = source.BlackRank,
+            WhiteRank = source.WhiteRank,
+            PlayedDate = source.PlayedDate,
+            Result = source.Result,
+            Place = source.Place,
             BoardSize = source.BoardSize,
             Komi = source.Komi,
             TimeLimit = source.TimeLimit,

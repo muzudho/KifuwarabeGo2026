@@ -14,6 +14,7 @@ public sealed partial class GoScreenRenderer
     private static readonly Rectangle CgosTrendChartBounds = new(1144, 498, 668, 342);
     private static readonly Rectangle LocalTrendChartBounds = new(1144, 466, 668, 424);
     private static readonly Rectangle LocalGameOverTrendChartBounds = new(1144, 376, 668, 466);
+    private static readonly Rectangle ReviewTrendChartBounds = new(1144, 548, 668, 290);
 
     public static MoveTrendDisplayMode? GetCgosTrendDisplayModeButtonHit(Point point)
     {
@@ -29,6 +30,9 @@ public sealed partial class GoScreenRenderer
     public static MoveInformationDisplayMode? GetLocalGameOverMoveInformationDisplayModeButtonHit(Point point) =>
         GetMoveInformationDisplayModeButtonHit(point, LocalGameOverTrendChartBounds);
 
+    public static MoveInformationDisplayMode? GetReviewMoveInformationDisplayModeButtonHit(Point point) =>
+        GetMoveInformationDisplayModeButtonHit(point, ReviewTrendChartBounds);
+
     public static MoveTrendDisplayMode? GetLocalTrendDisplayModeButtonHit(Point point)
     {
         return GetMoveTrendDisplayModeButtonHit(point, LocalTrendChartBounds);
@@ -38,6 +42,9 @@ public sealed partial class GoScreenRenderer
     {
         return GetMoveTrendDisplayModeButtonHit(point, LocalGameOverTrendChartBounds);
     }
+
+    public static MoveTrendDisplayMode? GetReviewTrendDisplayModeButtonHit(Point point) =>
+        GetMoveTrendDisplayModeButtonHit(point, ReviewTrendChartBounds);
 
     private static MoveTrendDisplayMode? GetMoveTrendDisplayModeButtonHit(Point point, Rectangle chartBounds)
     {
@@ -56,11 +63,20 @@ public sealed partial class GoScreenRenderer
     private void DrawLocalGameOverTrendChart(GoAppSession session, Point mousePoint) =>
         DrawMoveTrendChart(session, session.CurrentGameRecord.Moves, LocalGameOverTrendChartBounds, mousePoint);
 
+    private void DrawReviewTrendChart(GoAppSession session, Point mousePoint) =>
+        DrawMoveTrendChart(
+            session,
+            session.ReviewMoves,
+            ReviewTrendChartBounds,
+            mousePoint,
+            session.ReviewMoveIndex);
+
     private void DrawMoveTrendChart(
         GoAppSession session,
         IReadOnlyList<GoGameMove> moves,
         Rectangle bounds,
-        Point mousePoint)
+        Point mousePoint,
+        int? currentMoveNumber = null)
     {
         FillRect(bounds, new Color(25, 48, 57, 246));
         DrawRect(bounds, 2, new Color(72, 115, 121));
@@ -68,7 +84,7 @@ public sealed partial class GoScreenRenderer
 
         if (session.MoveInformationDisplayMode == MoveInformationDisplayMode.Comment)
         {
-            DrawMoveCommentContent(moves, bounds);
+            DrawMoveCommentContent(moves, bounds, session, mousePoint, currentMoveNumber);
             return;
         }
 
@@ -116,7 +132,7 @@ public sealed partial class GoScreenRenderer
         DrawCgosAdvantageLabel(new Rectangle(plot.X + 12, plot.Bottom - 38, 254, 30), black: false);
         DrawCgosTrendMoveTicks(maximumMove, plot);
         DrawCommentMoveMarkers(moves, maximumMove, plot);
-        DrawCgosCurrentTrendPoint(points, maximumMove, plot);
+        DrawCgosCurrentTrendPoint(points, maximumMove, plot, currentMoveNumber);
     }
 
     private static MoveInformationDisplayMode? GetMoveInformationDisplayModeButtonHit(Point point, Rectangle bounds)
@@ -245,10 +261,20 @@ public sealed partial class GoScreenRenderer
         DrawFittedText("MOVE", new Rectangle(plot.Center.X - 36, plot.Bottom + 23, 72, 20), new Color(76, 222, 213), 0.23f);
     }
 
-    private void DrawCgosCurrentTrendPoint(IReadOnlyList<MoveTrendPoint> points, int maximumMove, Rectangle plot)
+    private void DrawCgosCurrentTrendPoint(
+        IReadOnlyList<MoveTrendPoint> points,
+        int maximumMove,
+        Rectangle plot,
+        int? currentMoveNumber)
     {
         if (points.Count == 0) return;
-        var point = points[^1];
+        MoveTrendPoint? selectedPoint = null;
+        foreach (var candidate in points)
+        {
+            if (currentMoveNumber is not null && candidate.MoveNumber > currentMoveNumber.Value) break;
+            selectedPoint = candidate;
+        }
+        if (selectedPoint is not { } point) return;
         var x = (int)CgosTrendX(point.MoveNumber, maximumMove, plot);
         DrawLine(new Vector2(x, plot.Top), new Vector2(x, plot.Bottom), 2, new Color(54, 229, 218, 190));
 

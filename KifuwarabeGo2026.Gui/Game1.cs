@@ -441,6 +441,15 @@ public class Game1 : Game
                 }
 
                 if (_session.CgosConnectionFlowKind is CgosConnectionFlowKind.Watching or CgosConnectionFlowKind.Result &&
+                    _session.MoveInformationDisplayMode == MoveInformationDisplayMode.Comment &&
+                    GoScreenRenderer.GetCgosCommentPageStepButtonHit(point) is { } cgosCommentPageStep)
+                {
+                    _session.ChangeCommentPage(cgosCommentPageStep);
+                    _previousMouse = mouse;
+                    return;
+                }
+
+                if (_session.CgosConnectionFlowKind is CgosConnectionFlowKind.Watching or CgosConnectionFlowKind.Result &&
                     GoScreenRenderer.GetCgosMoveInformationDisplayModeButtonHit(point) is { } cgosInformationMode)
                 {
                     _session.SetMoveInformationDisplayMode(cgosInformationMode);
@@ -646,6 +655,20 @@ public class Game1 : Game
                 return;
             }
 
+            int? localCommentPageStep = _session.CurrentMode.Kind switch
+            {
+                GoAppModeKind.Playing => GoScreenRenderer.GetLocalCommentPageStepButtonHit(point),
+                GoAppModeKind.GameOver => GoScreenRenderer.GetLocalGameOverCommentPageStepButtonHit(point),
+                _ => null,
+            };
+            if (_session.MoveInformationDisplayMode == MoveInformationDisplayMode.Comment &&
+                localCommentPageStep is { } selectedLocalCommentPageStep)
+            {
+                _session.ChangeCommentPage(selectedLocalCommentPageStep);
+                _previousMouse = mouse;
+                return;
+            }
+
             MoveInformationDisplayMode? localInformationMode = _session.CurrentMode.Kind switch
             {
                 GoAppModeKind.Playing => GoScreenRenderer.GetLocalMoveInformationDisplayModeButtonHit(point),
@@ -845,12 +868,22 @@ public class Game1 : Game
             return true;
         }
 
-        if (GoScreenRenderer.GetReviewCommentToggleButtonHit(point))
+        if (_session.MoveInformationDisplayMode == MoveInformationDisplayMode.Comment &&
+            GoScreenRenderer.GetReviewCommentPageStepButtonHit(point) is { } reviewCommentPageStep)
         {
-            var showComment = _session.MoveInformationDisplayMode != MoveInformationDisplayMode.Comment &&
-                !string.IsNullOrWhiteSpace(_session.ReviewCurrentMove?.Comment);
-            _session.SetMoveInformationDisplayMode(
-                showComment ? MoveInformationDisplayMode.Comment : MoveInformationDisplayMode.Trend);
+            _session.ChangeCommentPage(reviewCommentPageStep);
+            return true;
+        }
+
+        if (GoScreenRenderer.GetReviewMoveInformationDisplayModeButtonHit(point) is { } reviewInformationMode)
+        {
+            _session.SetMoveInformationDisplayMode(reviewInformationMode);
+            return true;
+        }
+
+        if (GoScreenRenderer.GetReviewTrendDisplayModeButtonHit(point) is { } reviewTrendMode)
+        {
+            _session.SetMoveTrendDisplayMode(reviewTrendMode);
             return true;
         }
 

@@ -15,6 +15,16 @@ public sealed class GoGameRecord
 
     public string WhitePlayerName { get; set; } = "";
 
+    public string BlackRank { get; set; } = "";
+
+    public string WhiteRank { get; set; } = "";
+
+    public string PlayedDate { get; set; } = "";
+
+    public string Result { get; set; } = "";
+
+    public string Place { get; set; } = "";
+
     public int BoardSize
     {
         get => _boardSize;
@@ -46,6 +56,11 @@ public sealed class GoGameRecord
             RuleName = RuleName,
             BlackPlayerName = BlackPlayerName,
             WhitePlayerName = WhitePlayerName,
+            BlackRank = BlackRank,
+            WhiteRank = WhiteRank,
+            PlayedDate = PlayedDate,
+            Result = Result,
+            Place = Place,
             BoardSize = BoardSize,
             Komi = Komi,
             TimeLimit = TimeLimit,

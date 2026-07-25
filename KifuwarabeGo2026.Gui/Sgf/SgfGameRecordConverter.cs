@@ -67,6 +67,26 @@ public static class SgfGameRecordConverter
         {
             AppendProperty(builder, "PW", record.WhitePlayerName);
         }
+        if (!string.IsNullOrWhiteSpace(record.BlackRank))
+        {
+            AppendProperty(builder, "BR", record.BlackRank);
+        }
+        if (!string.IsNullOrWhiteSpace(record.WhiteRank))
+        {
+            AppendProperty(builder, "WR", record.WhiteRank);
+        }
+        if (!string.IsNullOrWhiteSpace(record.PlayedDate))
+        {
+            AppendProperty(builder, "DT", record.PlayedDate);
+        }
+        if (!string.IsNullOrWhiteSpace(record.Place))
+        {
+            AppendProperty(builder, "PC", record.Place);
+        }
+        if (!string.IsNullOrWhiteSpace(record.Result))
+        {
+            AppendProperty(builder, "RE", record.Result);
+        }
 
         AppendSetupStones(builder, record.SetupStones, GoStone.Black, "AB", record.BoardSize);
         AppendSetupStones(builder, record.SetupStones, GoStone.White, "AW", record.BoardSize);
@@ -196,6 +216,31 @@ public static class SgfGameRecordConverter
         if (TryGetSingleValue(root, "PW", out var whitePlayerName))
         {
             record.WhitePlayerName = whitePlayerName;
+        }
+
+        if (TryGetSingleValue(root, "BR", out var blackRank))
+        {
+            record.BlackRank = blackRank;
+        }
+
+        if (TryGetSingleValue(root, "WR", out var whiteRank))
+        {
+            record.WhiteRank = whiteRank;
+        }
+
+        if (TryGetSingleValue(root, "DT", out var playedDate))
+        {
+            record.PlayedDate = playedDate;
+        }
+
+        if (TryGetSingleValue(root, "PC", out var place))
+        {
+            record.Place = place;
+        }
+
+        if (TryGetSingleValue(root, "RE", out var result))
+        {
+            record.Result = result;
         }
     }
 
