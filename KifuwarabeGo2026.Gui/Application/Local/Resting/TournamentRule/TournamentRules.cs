@@ -42,3 +42,9 @@ public sealed class TournamentRules
         FilePath = FilePath,
     };
 }
+
+public enum TournamentRulesNumericField
+{
+    MainTime,
+    MoveLimit,
+}

@@ -1,6 +1,7 @@
 namespace KifuwarabeGo2026.Gui.Presentation;
 
 using KifuwarabeGo2026.Gui.Application;
+using KifuwarabeGo2026.Gui.Application.Local.Resting.TournamentRule;
 using Microsoft.Xna.Framework;
 using System;
 using System.IO;
@@ -178,8 +179,8 @@ public sealed partial class GoScreenRenderer
         DrawText($"BOARD {session.BoardSize} x {session.BoardSize}", new Vector2(AddPanelControlX, 414), new Color(99, 223, 185), 0.62f);
         DrawBoardSizeButtons(session.BoardSize, mousePoint, AddPanelBoardSizeButtonY);
         DrawRulesNumberStrip(AddPanelControlX, 508, "KOMI", FormatKomi(session.Komi), KomiStepButtonBounds(0), "-0.5", KomiStepButtonBounds(1), "+0.5", mousePoint);
-        DrawRulesNumberStrip(AddPanelControlX, 572, "TIME", FormatMainTime(session.MainTime), MainTimeStepButtonBounds(0), "-1m", MainTimeStepButtonBounds(1), "+1m", mousePoint);
-        DrawRulesNumberStrip(AddPanelControlX, 636, "MOVES", FormatMoveLimit(session.MoveLimit), MoveLimitStepButtonBounds(0), "-10", MoveLimitStepButtonBounds(1), "+10", mousePoint);
+        DrawEditableRulesNumberStrip(session, 572, "TIME", TournamentRulesNumericField.MainTime, $"{(int)session.MainTime.TotalHours}:{session.MainTime.Minutes:00}:{session.MainTime.Seconds:00}", TournamentRulesMainTimeTextBounds, ["-1m", "-1s", "+1s", "+1m"], MainTimeStepButtonBounds, mousePoint);
+        DrawEditableRulesNumberStrip(session, 636, "MOVES", TournamentRulesNumericField.MoveLimit, session.MoveLimit.ToString(), TournamentRulesMoveLimitTextBounds, ["-10", "-1", "+1", "+10"], MoveLimitStepButtonBounds, mousePoint);
         DrawFilePathSelector(session, mousePoint);
         DrawCommandButton(SaveTournamentRulesButtonBounds, SaveTournamentRulesLabel(session), false, mousePoint);
     }

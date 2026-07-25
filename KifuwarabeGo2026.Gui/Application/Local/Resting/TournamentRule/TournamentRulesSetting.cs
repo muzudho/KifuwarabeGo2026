@@ -16,6 +16,8 @@ public sealed class TournamentRulesSetting
     private readonly TournamentRulesCatalog _catalog;
     private readonly Action _browseTournamentRules;
     private readonly TextBoxController _displayNameTextBox = new(MaxDisplayNameLength);
+    private readonly TextBoxController _mainTimeTextBox = new(8);
+    private readonly TextBoxController _moveLimitTextBox = new(4);
     private KeyboardState _previousKeyboard;
 
     public TournamentRulesSetting(
@@ -43,6 +45,13 @@ public sealed class TournamentRulesSetting
             return;
         }
 
+        if (_session.ActiveTournamentRulesNumericField is { } numericField)
+        {
+            HandleNumericKeyboard(numericField, keyboard, gameTime);
+            _previousKeyboard = keyboard;
+            return;
+        }
+
         UpdateBoardSizeByKeyboard(keyboard);
 
         if (IsNewKeyPress(keyboard, Keys.F5))
@@ -58,7 +67,30 @@ public sealed class TournamentRulesSetting
 
     public bool TryInputCharacter(char character)
     {
-        if (!_session.IsTournamentRulesAddPanelOpen || !_session.IsTournamentRulesDisplayNameEditing)
+        if (!_session.IsTournamentRulesAddPanelOpen)
+        {
+            return false;
+        }
+
+        if (_session.ActiveTournamentRulesNumericField is { } numericField)
+        {
+            if (numericField == TournamentRulesNumericField.MainTime && character != ':' && !char.IsAsciiDigit(character))
+            {
+                return true;
+            }
+
+            if (numericField == TournamentRulesNumericField.MoveLimit && !char.IsAsciiDigit(character))
+            {
+                return true;
+            }
+
+            var controller = GetNumericController(numericField);
+            controller.TryInputCharacter(character);
+            SyncNumericDraft(numericField);
+            return true;
+        }
+
+        if (!_session.IsTournamentRulesDisplayNameEditing)
         {
             return false;
         }
@@ -99,6 +131,7 @@ public sealed class TournamentRulesSetting
     {
         if (GoScreenRenderer.GetTournamentRulesAddPanelCloseButtonHit(point))
         {
+            CommitNumericEdit();
             CancelDisplayNameEdit();
             _session.CloseTournamentRulesAddPanel();
             return true;
@@ -106,12 +139,26 @@ public sealed class TournamentRulesSetting
 
         if (GoScreenRenderer.GetTournamentRulesAddPanelDisplayNameBoxHit(point))
         {
+            CommitNumericEdit();
             MoveOrBeginDisplayNameEdit(point, getDisplayNameCaretIndex);
+            return true;
+        }
+
+        if (GoScreenRenderer.GetTournamentRulesMainTimeTextBoxHit(point))
+        {
+            BeginNumericEdit(TournamentRulesNumericField.MainTime);
+            return true;
+        }
+
+        if (GoScreenRenderer.GetTournamentRulesMoveLimitTextBoxHit(point))
+        {
+            BeginNumericEdit(TournamentRulesNumericField.MoveLimit);
             return true;
         }
 
         if (GoScreenRenderer.GetRuleKindButtonHit(point) is { } ruleKind)
         {
+            CommitNumericEdit();
             _session.ChangeRuleKind(ruleKind);
             return true;
         }
@@ -130,12 +177,14 @@ public sealed class TournamentRulesSetting
 
         if (GoScreenRenderer.GetMainTimeStepButtonHit(point) is { } mainTimeStep)
         {
+            CommitNumericEdit();
             _session.ChangeMainTime(mainTimeStep);
             return true;
         }
 
         if (GoScreenRenderer.GetMoveLimitStepButtonHit(point) is { } moveLimitStep)
         {
+            CommitNumericEdit();
             _session.ChangeMoveLimit(moveLimitStep);
             return true;
         }
@@ -402,6 +451,11 @@ public sealed class TournamentRulesSetting
 
     private void SaveCurrentTournamentRules()
     {
+        if (!CommitNumericEdit())
+        {
+            return;
+        }
+
         if (_session.IsTournamentRulesDisplayNameEditing && !TryApplyDisplayName())
         {
             return;
@@ -409,6 +463,114 @@ public sealed class TournamentRulesSetting
 
         _catalog.Save(_session.CurrentTournamentRules);
         _session.MarkTournamentRulesSaved();
+    }
+
+    private void BeginNumericEdit(TournamentRulesNumericField field)
+    {
+        CommitNumericEdit();
+        CancelDisplayNameEdit();
+        var controller = GetNumericController(field);
+        var text = field == TournamentRulesNumericField.MainTime
+            ? FormatEditableMainTime(_session.MainTime)
+            : _session.MoveLimit.ToString();
+        controller.Begin(text);
+        _session.BeginTournamentRulesNumericEdit(field, controller.Text, controller.CaretIndex);
+        _session.SetTournamentRulesDisplayNameWarning("");
+    }
+
+    private void HandleNumericKeyboard(TournamentRulesNumericField field, KeyboardState keyboard, GameTime gameTime)
+    {
+        var controller = GetNumericController(field);
+        switch (controller.HandleKeyboard(keyboard, _previousKeyboard, gameTime))
+        {
+            case TextBoxKeyboardAction.Commit:
+                CommitNumericEdit();
+                break;
+            case TextBoxKeyboardAction.Cancel:
+                controller.Clear();
+                _session.EndTournamentRulesNumericEdit();
+                _session.SetTournamentRulesDisplayNameWarning("");
+                break;
+            default:
+                SyncNumericDraft(field);
+                break;
+        }
+    }
+
+    private bool CommitNumericEdit()
+    {
+        if (_session.ActiveTournamentRulesNumericField is not { } field)
+        {
+            return true;
+        }
+
+        var controller = GetNumericController(field);
+        var valid = field switch
+        {
+            TournamentRulesNumericField.MainTime => TryParseMainTime(controller.Text, out var seconds)
+                && ApplyMainTime(seconds),
+            TournamentRulesNumericField.MoveLimit => int.TryParse(controller.Text, out var moves)
+                && moves is >= 0 and <= 9999
+                && ApplyMoveLimit(moves),
+            _ => false,
+        };
+
+        if (!valid)
+        {
+            _session.SetTournamentRulesDisplayNameWarning(
+                field == TournamentRulesNumericField.MainTime
+                    ? "Time must be h:mm:ss (maximum 99:59:59)."
+                    : "Moves must be 0-9999.");
+            return false;
+        }
+
+        controller.Clear();
+        _session.EndTournamentRulesNumericEdit();
+        _session.SetTournamentRulesDisplayNameWarning("");
+        return true;
+    }
+
+    private bool ApplyMainTime(int totalSeconds)
+    {
+        _session.SetMainTime(totalSeconds);
+        return true;
+    }
+
+    private bool ApplyMoveLimit(int moveLimit)
+    {
+        _session.SetMoveLimit(moveLimit);
+        return true;
+    }
+
+    private void SyncNumericDraft(TournamentRulesNumericField field)
+    {
+        var controller = GetNumericController(field);
+        _session.SetTournamentRulesNumericDraft(controller.Text, controller.CaretIndex);
+    }
+
+    private TextBoxController GetNumericController(TournamentRulesNumericField field) =>
+        field == TournamentRulesNumericField.MainTime ? _mainTimeTextBox : _moveLimitTextBox;
+
+    private static string FormatEditableMainTime(TimeSpan time) =>
+        $"{(int)time.TotalHours}:{time.Minutes:00}:{time.Seconds:00}";
+
+    private static bool TryParseMainTime(string text, out int totalSeconds)
+    {
+        totalSeconds = 0;
+        var parts = text.Trim().Split(':');
+        if (parts.Length != 3 ||
+            !int.TryParse(parts[0], out var hours) ||
+            !int.TryParse(parts[1], out var minutes) ||
+            !int.TryParse(parts[2], out var seconds) ||
+            hours is < 0 or > 99 ||
+            minutes is < 0 or > 59 ||
+            seconds is < 0 or > 59)
+        {
+            return false;
+        }
+
+        totalSeconds = hours * 3600 + minutes * 60 + seconds;
+        return true;
     }
 
     private bool IsNewKeyPress(KeyboardState keyboard, Keys key) =>

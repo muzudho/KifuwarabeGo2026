@@ -1,6 +1,7 @@
 namespace KifuwarabeGo2026.Gui.Presentation;
 
 using KifuwarabeGo2026.Gui.Application;
+using KifuwarabeGo2026.Gui.Application.Local.Resting.TournamentRule;
 using KifuwarabeGo2026.Shared.Domain;
 using KifuwarabeGo2026.Gui.Presentation.Local.Resting.TournamentRule;
 using Microsoft.Xna.Framework;
@@ -117,23 +118,37 @@ public sealed partial class GoScreenRenderer
 
     public static TimeSpan? GetMainTimeStepButtonHit(Point point)
     {
-        if (MainTimeStepButtonBounds(0).Contains(point))
+        var steps = new[] { -60, -1, 1, 60 };
+        for (var index = 0; index < steps.Length; index++)
         {
-            return TimeSpan.FromMinutes(-1);
+            if (MainTimeStepButtonBounds(index).Contains(point))
+            {
+                return TimeSpan.FromSeconds(steps[index]);
+            }
         }
 
-        return MainTimeStepButtonBounds(1).Contains(point) ? TimeSpan.FromMinutes(1) : null;
+        return null;
     }
 
     public static int? GetMoveLimitStepButtonHit(Point point)
     {
-        if (MoveLimitStepButtonBounds(0).Contains(point))
+        var steps = new[] { -10, -1, 1, 10 };
+        for (var index = 0; index < steps.Length; index++)
         {
-            return -10;
+            if (MoveLimitStepButtonBounds(index).Contains(point))
+            {
+                return steps[index];
+            }
         }
 
-        return MoveLimitStepButtonBounds(1).Contains(point) ? 10 : null;
+        return null;
     }
+
+    public static bool GetTournamentRulesMainTimeTextBoxHit(Point point) =>
+        TournamentRulesMainTimeTextBounds.Contains(point);
+
+    public static bool GetTournamentRulesMoveLimitTextBoxHit(Point point) =>
+        TournamentRulesMoveLimitTextBounds.Contains(point);
     public static bool GetLocalUseButtonHit(Point point) => LocalUseButtonBounds.Contains(point);
     public static bool GetImportSgfButtonHit(Point point) => ImportSgfButtonBounds.Contains(point);
     public static bool GetStartPlayingButtonHit(Point point, GoAppModeKind modeKind) =>
@@ -457,6 +472,36 @@ public sealed partial class GoScreenRenderer
         DrawCommandButton(plusBounds, plusLabel, false, mousePoint, scale: 0.42f);
     }
 
+    private void DrawEditableRulesNumberStrip(
+        GoAppSession session,
+        int y,
+        string label,
+        TournamentRulesNumericField field,
+        string value,
+        Rectangle textBounds,
+        string[] stepLabels,
+        Func<int, Rectangle> stepBounds,
+        Point mousePoint)
+    {
+        var bounds = new Rectangle(AddPanelControlX, y, 668, 56);
+        var active = session.ActiveTournamentRulesNumericField == field;
+        var text = active ? session.TournamentRulesNumericDraft : value;
+        DrawDataRowFrame(bounds);
+        DrawUiLabel(UiLabel.InCompactRow(label, bounds));
+        FillRect(textBounds, active ? new Color(35, 63, 59) : new Color(24, 31, 37));
+        DrawRect(textBounds, active ? 2 : 1, active ? new Color(147, 244, 200) : new Color(82, 111, 114));
+        DrawFittedText(text, new Rectangle(textBounds.X + 8, textBounds.Y + 4, textBounds.Width - 16, textBounds.Height - 8), Color.White, 0.42f);
+        if (active)
+        {
+            DrawTextBoxCaret(text, session.TournamentRulesNumericCaretIndex, new Rectangle(textBounds.X + 8, textBounds.Y + 4, textBounds.Width - 16, textBounds.Height - 8), 0.42f);
+        }
+
+        for (var index = 0; index < stepLabels.Length; index++)
+        {
+            DrawCommandButton(stepBounds(index), stepLabels[index], false, mousePoint, scale: 0.32f);
+        }
+    }
+
     private void DrawSetupPlayerKindRow(GoStone stone, GoPlayerKind selectedKind, Point mousePoint, int y)
     {
         var rowBounds = new Rectangle(1144, y - 14, 668, 72);
@@ -547,9 +592,13 @@ public sealed partial class GoScreenRenderer
 
     private static Rectangle KomiStepButtonBounds(int index) => new(AddPanelControlX + 444 + index * 112, 516, 92, 40);
 
-    private static Rectangle MainTimeStepButtonBounds(int index) => new(AddPanelControlX + 444 + index * 112, 580, 92, 40);
+    private static Rectangle TournamentRulesMainTimeTextBounds => new(AddPanelControlX + 132, 580, 176, 40);
 
-    private static Rectangle MoveLimitStepButtonBounds(int index) => new(AddPanelControlX + 444 + index * 112, 644, 92, 40);
+    private static Rectangle TournamentRulesMoveLimitTextBounds => new(AddPanelControlX + 132, 644, 176, 40);
+
+    private static Rectangle MainTimeStepButtonBounds(int index) => new(AddPanelControlX + 324 + index * 84, 580, 72, 40);
+
+    private static Rectangle MoveLimitStepButtonBounds(int index) => new(AddPanelControlX + 324 + index * 84, 644, 72, 40);
 
     private static Rectangle PlayerKindButtonBounds(int index, int y) => new(GameOverValueX + index * 236, y, 236, 52);
 

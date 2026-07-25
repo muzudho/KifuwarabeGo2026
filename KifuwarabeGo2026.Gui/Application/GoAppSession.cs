@@ -194,6 +194,12 @@ public sealed class GoAppSession
 
     public string TournamentRulesDisplayNameWarning { get; private set; } = "";
 
+    public TournamentRulesNumericField? ActiveTournamentRulesNumericField { get; private set; }
+
+    public string TournamentRulesNumericDraft { get; private set; } = "";
+
+    public int TournamentRulesNumericCaretIndex { get; private set; }
+
     public string TournamentDisplayName => _currentTournamentRules.DisplayName;
 
     public GoRuleKind RuleKind => _currentTournamentRules.Rule;
@@ -1186,6 +1192,12 @@ public sealed class GoAppSession
     public void ChangeMainTime(TimeSpan step)
     {
         var totalSeconds = Math.Max(0, (int)(_currentTournamentRules.MainTime + step).TotalSeconds);
+        SetMainTime(totalSeconds);
+    }
+
+    public void SetMainTime(int totalSeconds)
+    {
+        totalSeconds = Math.Clamp(totalSeconds, 0, 359999);
         _currentTournamentRules.MainTimeMinutes = totalSeconds / 60;
         _currentTournamentRules.MainTimeSeconds = totalSeconds % 60;
         TournamentRulesSaveMessage = "UNSAVED";
@@ -1193,8 +1205,32 @@ public sealed class GoAppSession
 
     public void ChangeMoveLimit(int step)
     {
-        _currentTournamentRules.MoveLimit = Math.Clamp(_currentTournamentRules.MoveLimit + step, 0, 9999);
+        SetMoveLimit(_currentTournamentRules.MoveLimit + step);
+    }
+
+    public void SetMoveLimit(int moveLimit)
+    {
+        _currentTournamentRules.MoveLimit = Math.Clamp(moveLimit, 0, 9999);
         TournamentRulesSaveMessage = "UNSAVED";
+    }
+
+    public void BeginTournamentRulesNumericEdit(TournamentRulesNumericField field, string draft, int caretIndex)
+    {
+        ActiveTournamentRulesNumericField = field;
+        SetTournamentRulesNumericDraft(draft, caretIndex);
+    }
+
+    public void SetTournamentRulesNumericDraft(string draft, int caretIndex)
+    {
+        TournamentRulesNumericDraft = draft;
+        TournamentRulesNumericCaretIndex = Math.Clamp(caretIndex, 0, draft.Length);
+    }
+
+    public void EndTournamentRulesNumericEdit()
+    {
+        ActiveTournamentRulesNumericField = null;
+        TournamentRulesNumericDraft = "";
+        TournamentRulesNumericCaretIndex = 0;
     }
 
     public void ChangeTournamentDisplayName(string displayName)

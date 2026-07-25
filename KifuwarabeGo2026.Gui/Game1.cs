@@ -296,7 +296,7 @@ public class Game1 : Game
             if (_renderer is not null)
             {
                 if (_isApplicationSettingsOpen)
-                    _renderer.DrawApplicationSettings(Mouse.GetState().Position, ApplicationSettings.Current.LogRootDirectory, _guiLogFiles, _selectedGuiLogIndex, _applicationSettingsMessage);
+                    _renderer.DrawApplicationSettings(Mouse.GetState().Position, ApplicationSettings.Current.LogRootDirectory, ApplicationSettings.FilePath, _gtpEngineCatalog.ListPath, _guiLogFiles, _selectedGuiLogIndex, _applicationSettingsMessage);
                 else
                     TitleRenderer.Draw(_renderer, Mouse.GetState().Position);
             }
@@ -2170,6 +2170,18 @@ public class Game1 : Game
             return;
         }
 
+        if (GoScreenRenderer.GetSettingsOpenApplicationSettingsFolderButtonHit(point))
+        {
+            OpenSettingsFolder(ApplicationSettings.FilePath, "application settings");
+            return;
+        }
+
+        if (GoScreenRenderer.GetSettingsOpenEngineSettingsFolderButtonHit(point))
+        {
+            OpenSettingsFolder(_gtpEngineCatalog.ListPath, "engine settings");
+            return;
+        }
+
         if (GoScreenRenderer.GetSettingsLogItemHit(point, _guiLogFiles.Count) is { } index)
         {
             _selectedGuiLogIndex = index;
@@ -2202,6 +2214,34 @@ public class Game1 : Game
                     ApplicationErrorLog.Write("OPEN GUI LOG", "Could not open the selected GUI log.", fallbackEx);
                 }
             }
+        }
+    }
+
+    private void OpenSettingsFolder(string filePath, string description)
+    {
+        try
+        {
+            var directory = Path.GetDirectoryName(filePath);
+            if (string.IsNullOrWhiteSpace(directory))
+            {
+                throw new InvalidOperationException("Settings folder is unavailable.");
+            }
+
+            Directory.CreateDirectory(directory);
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = "explorer.exe",
+                UseShellExecute = true,
+            };
+            startInfo.ArgumentList.Add("/select,");
+            startInfo.ArgumentList.Add(filePath);
+            Process.Start(startInfo);
+            _applicationSettingsMessage = $"OPENED {description.ToUpperInvariant()} FOLDER";
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException or System.ComponentModel.Win32Exception)
+        {
+            _applicationSettingsMessage = "ERROR: " + ex.Message;
+            ApplicationErrorLog.Write("OPEN SETTINGS FOLDER", $"Could not open the {description} folder.", ex);
         }
     }
 
