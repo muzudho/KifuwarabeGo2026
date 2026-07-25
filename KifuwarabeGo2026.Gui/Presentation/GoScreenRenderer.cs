@@ -310,6 +310,7 @@ public sealed partial class GoScreenRenderer
     {
         DrawText("GAME OVER", new Vector2(1144, 132), new Color(255, 230, 160), 0.9f);
         DrawText(FormatGameEndMoveCount(session.PlayedMoveCount), new Vector2(1144, 196), new Color(99, 223, 185), 0.58f);
+        DrawCommandButton(ReturnToSetupButtonBounds, "BACK TO SETUP", false, mousePoint, scale: 0.34f);
 
         var resultSection = new Rectangle(1144, 236, 668, 128);
         DrawVerticalResultSection(resultSection, "RESULT", new Color(80, 48, 38));
@@ -321,7 +322,6 @@ public sealed partial class GoScreenRenderer
         var actionSection = new Rectangle(1144, 854, 668, 126);
         DrawVerticalResultSection(actionSection, "ACTION", new Color(91, 82, 105));
         DrawCommandButton(ExportSgfButtonBounds, "SGF OUTPUT", false, mousePoint, scale: 0.52f);
-        DrawCommandButton(ReturnToSetupButtonBounds, "RULE SETUP", false, mousePoint);
     }
     private void DrawDisplayNameTextBox(GoAppSession session, Point mousePoint)
     {
@@ -559,7 +559,7 @@ public sealed partial class GoScreenRenderer
 
     private static Rectangle SetupBackToTitleButtonBounds => new(1642, 104, 170, 52);
     private static Rectangle LocalUseButtonBounds => new(508, 404, 438, 300);
-    private static Rectangle ReturnToSetupButtonBounds => new(1318, 910, 320, 56);
+    private static Rectangle ReturnToSetupButtonBounds => new(1492, 132, 320, 56);
 
     private static Rectangle ExportSgfButtonBounds => new(1164, 910, 140, 56);
 
