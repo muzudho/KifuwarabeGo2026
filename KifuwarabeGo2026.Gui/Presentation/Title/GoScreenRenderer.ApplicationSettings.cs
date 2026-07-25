@@ -8,10 +8,10 @@ using System.IO;
 public sealed partial class GoScreenRenderer
 {
     private static Rectangle SettingsButtonBounds => new(1780, 972, 70, 62);
-    private static Rectangle SettingsBackButtonBounds => new(448, 820, 220, 58);
-    private static Rectangle SettingsBrowseButtonBounds => new(1290, 292, 170, 58);
+    private static Rectangle SettingsBackButtonBounds => new(1328, 178, 132, 48);
+    private static Rectangle SettingsBrowseButtonBounds => new(1290, 312, 170, 58);
     private static Rectangle SettingsEditButtonBounds => new(1240, 820, 220, 58);
-    private static Rectangle SettingsLogItemBounds(int index) => new(470, 452 + index * 44, 970, 40);
+    private static Rectangle SettingsLogItemBounds(int index) => new(470, 470 + index * 44, 970, 40);
 
     public static bool GetSettingsButtonHit(Point point) => SettingsButtonBounds.Contains(point);
     public static bool GetSettingsBackButtonHit(Point point) => SettingsBackButtonBounds.Contains(point);
@@ -36,13 +36,14 @@ public sealed partial class GoScreenRenderer
         FillRect(panel, new Color(21, 25, 32, 246));
         DrawRect(panel, 2, new Color(82, 111, 114));
         DrawText("APPLICATION SETTINGS", new Vector2(468, 196), new Color(244, 238, 218), 0.82f);
-        DrawText("LOG ROOT FOLDER", new Vector2(470, 276), new Color(180, 195, 195), 0.42f);
-        DrawDataRowFrame(new Rectangle(470, 292, 800, 58));
-        DrawFittedText(logRoot, new Rectangle(490, 302, 760, 38), Color.White, 0.40f);
+        DrawCommandButton(SettingsBackButtonBounds, "BACK", false, mousePoint, scale: 0.32f);
+        DrawText("LOG ROOT FOLDER", new Vector2(470, 252), new Color(180, 195, 195), 0.42f);
+        DrawDataRowFrame(new Rectangle(470, 312, 800, 58));
+        DrawFittedText(logRoot, new Rectangle(490, 322, 760, 38), Color.White, 0.40f);
         DrawCommandButton(SettingsBrowseButtonBounds, "BROWSE", false, mousePoint, scale: 0.34f);
-        DrawFittedText("GUI   " + Path.Combine(logRoot, "Gui"), new Rectangle(470, 356, 970, 28), new Color(180, 195, 195), 0.32f);
-        DrawFittedText("CGOS  " + Path.Combine(logRoot, "Cgos"), new Rectangle(470, 384, 970, 28), new Color(180, 195, 195), 0.32f);
-        DrawText("RECENT GUI LOGS", new Vector2(470, 416), new Color(180, 195, 195), 0.38f);
+        DrawFittedText("GUI   " + Path.Combine(logRoot, "Gui"), new Rectangle(470, 378, 970, 26), new Color(180, 195, 195), 0.32f);
+        DrawFittedText("CGOS  " + Path.Combine(logRoot, "Cgos"), new Rectangle(470, 404, 970, 26), new Color(180, 195, 195), 0.32f);
+        DrawText("RECENT GUI LOGS", new Vector2(470, 436), new Color(180, 195, 195), 0.38f);
         for (var index = 0; index < logFiles.Count; index++)
         {
             var bounds = SettingsLogItemBounds(index);
@@ -52,8 +53,7 @@ public sealed partial class GoScreenRenderer
             DrawFittedText(Path.GetFileName(logFiles[index]), new Rectangle(bounds.X + 16, bounds.Y + 5, bounds.Width - 32, 28), Color.White, 0.34f);
         }
         if (!string.IsNullOrWhiteSpace(message))
-            DrawFittedText(message, new Rectangle(470, 774, 720, 28), new Color(255, 205, 140), 0.32f);
-        DrawCommandButton(SettingsBackButtonBounds, "BACK", false, mousePoint, scale: 0.40f);
+            DrawFittedText(message, new Rectangle(470, 792, 720, 20), new Color(255, 205, 140), 0.28f);
         DrawCommandButton(SettingsEditButtonBounds, "EDIT IN CODE", false, mousePoint, enabled: selectedIndex >= 0, scale: 0.34f);
         _spriteBatch.End();
     }
