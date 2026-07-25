@@ -5,7 +5,13 @@ using System;
 
 public readonly record struct GoGameMove
 {
-    public GoGameMove(GoStone stone, GoPoint? point, string comment = "", GoMoveAnalysis? analysis = null)
+    public GoGameMove(
+        GoStone stone,
+        GoPoint? point,
+        string comment = "",
+        GoMoveAnalysis? analysis = null,
+        string? commonAnalysisJson = null,
+        string? legacyKifuwarabeAnalysisJson = null)
     {
         if (stone is not (GoStone.Black or GoStone.White))
         {
@@ -16,6 +22,8 @@ public readonly record struct GoGameMove
         Point = point;
         Comment = comment ?? "";
         Analysis = analysis;
+        CommonAnalysisJson = commonAnalysisJson;
+        LegacyKifuwarabeAnalysisJson = legacyKifuwarabeAnalysisJson;
     }
 
     public GoStone Stone { get; }
@@ -25,6 +33,18 @@ public readonly record struct GoGameMove
     public string Comment { get; }
 
     public GoMoveAnalysis? Analysis { get; }
+
+    /// <summary>
+    /// Original CC JSON read from SGF. It is retained verbatim so richer analysis
+    /// fields that this application does not understand survive a load/save cycle.
+    /// </summary>
+    public string? CommonAnalysisJson { get; }
+
+    /// <summary>
+    /// Unreadable legacy KFA JSON retained as a last-resort lossless fallback.
+    /// Readable KFA data is migrated to CC when the record is saved.
+    /// </summary>
+    public string? LegacyKifuwarabeAnalysisJson { get; }
 
     public bool IsPass => Point is null;
 }

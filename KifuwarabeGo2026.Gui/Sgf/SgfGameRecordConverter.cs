@@ -69,9 +69,17 @@ public static class SgfGameRecordConverter
             {
                 AppendProperty(builder, "C", move.Comment);
             }
-            if (move.Analysis is not null)
+            if (move.CommonAnalysisJson is not null)
+            {
+                AppendProperty(builder, "CC", move.CommonAnalysisJson);
+            }
+            else if (move.Analysis is not null)
             {
                 AppendProperty(builder, "CC", SerializeAnalysis(move, record.BoardSize));
+            }
+            else if (move.LegacyKifuwarabeAnalysisJson is not null)
+            {
+                AppendProperty(builder, "KFA", move.LegacyKifuwarabeAnalysisJson);
             }
         }
 
@@ -207,9 +215,12 @@ public static class SgfGameRecordConverter
         var comment = TryGetSingleValue(node, "C", out var nodeComment) ? nodeComment : "";
         var playedVertex = point is { } playedPoint ? GtpCoordinate.FormatVertex(playedPoint, record.BoardSize) : "pass";
         GoMoveAnalysis? analysis = null;
-        if (TryGetSingleValue(node, "CC", out var commonAnalysisJson))
+        string? commonAnalysisJson = null;
+        string? legacyKifuwarabeAnalysisJson = null;
+        if (TryGetSingleValue(node, "CC", out var commonJson))
         {
-            analysis = CgosMoveAnalysisParser.Parse(commonAnalysisJson, playedVertex);
+            analysis = CgosMoveAnalysisParser.Parse(commonJson, playedVertex);
+            commonAnalysisJson = commonJson;
         }
 
         if (analysis is null &&
@@ -217,8 +228,18 @@ public static class SgfGameRecordConverter
             TryGetSingleValue(node, "KFA", out var legacyAnalysisJson))
         {
             analysis = CgosMoveAnalysisParser.Parse(legacyAnalysisJson, playedVertex);
+            if (analysis is null)
+            {
+                legacyKifuwarabeAnalysisJson = legacyAnalysisJson;
+            }
         }
-        record.Moves.Add(new GoGameMove(stone, point, comment, analysis));
+        record.Moves.Add(new GoGameMove(
+            stone,
+            point,
+            comment,
+            analysis,
+            commonAnalysisJson,
+            legacyKifuwarabeAnalysisJson));
         return true;
     }
 
