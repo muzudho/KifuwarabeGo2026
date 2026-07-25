@@ -57,6 +57,7 @@ public sealed class CgosGameObservation
             WhitePlayerName = WhitePlayerName,
             BoardSize = BoardSize,
             Komi = Komi,
+            TimeLimit = MainTime,
         };
         record.Moves.AddRange(_moves);
         return record;

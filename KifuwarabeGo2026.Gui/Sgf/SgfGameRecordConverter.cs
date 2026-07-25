@@ -33,6 +33,13 @@ public static class SgfGameRecordConverter
         }
         AppendProperty(builder, "SZ", record.BoardSize.ToString(CultureInfo.InvariantCulture));
         AppendProperty(builder, "KM", record.Komi.ToString(CultureInfo.InvariantCulture));
+        if (record.TimeLimit > TimeSpan.Zero)
+        {
+            AppendProperty(
+                builder,
+                "TM",
+                record.TimeLimit.TotalSeconds.ToString("0.###", CultureInfo.InvariantCulture));
+        }
 
         var hasGameInformation =
             !string.IsNullOrWhiteSpace(record.GameName) ||
@@ -149,6 +156,23 @@ public static class SgfGameRecordConverter
             }
 
             record.Komi = komi;
+        }
+
+        if (TryGetSingleValue(root, "TM", out var timeLimitText))
+        {
+            if (!double.TryParse(
+                    timeLimitText,
+                    NumberStyles.Float,
+                    CultureInfo.InvariantCulture,
+                    out var timeLimitSeconds) ||
+                !double.IsFinite(timeLimitSeconds) ||
+                timeLimitSeconds < 0 ||
+                timeLimitSeconds > TimeSpan.MaxValue.TotalSeconds)
+            {
+                throw new SgfParseException($"Invalid SGF time limit TM[{timeLimitText}].");
+            }
+
+            record.TimeLimit = TimeSpan.FromSeconds(timeLimitSeconds);
         }
 
         if (TryGetSingleValue(root, "RU", out var ruleName))

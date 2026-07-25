@@ -2397,6 +2397,7 @@ public sealed class GoAppSession
             WhitePlayerName = GetLocalPlayerName(GoStone.White),
             BoardSize = BoardSize,
             Komi = Komi,
+            TimeLimit = MainTime,
         };
 
         for (var y = 0; y < BoardSize; y++)
@@ -2424,6 +2425,7 @@ public sealed class GoAppSession
             WhitePlayerName = source.WhitePlayerName,
             BoardSize = source.BoardSize,
             Komi = source.Komi,
+            TimeLimit = source.TimeLimit,
         };
 
         record.SetupStones.AddRange(source.SetupStones);

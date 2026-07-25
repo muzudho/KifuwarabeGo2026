@@ -31,6 +31,9 @@ public sealed class GoGameRecord
 
     public decimal Komi { get; set; } = 6.5m;
 
+    /// <summary>対局全体の基本持ち時間。SGF では秒単位の TM として保存します。</summary>
+    public TimeSpan TimeLimit { get; set; }
+
     public List<GoGameSetupStone> SetupStones { get; } = new();
 
     public List<GoGameMove> Moves { get; } = new();
@@ -45,6 +48,7 @@ public sealed class GoGameRecord
             WhitePlayerName = WhitePlayerName,
             BoardSize = BoardSize,
             Komi = Komi,
+            TimeLimit = TimeLimit,
         };
 
         clone.SetupStones.AddRange(SetupStones);
