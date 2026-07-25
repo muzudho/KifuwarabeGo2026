@@ -62,6 +62,14 @@ public class Game1 : Game
     private string _applicationSettingsMessage = "";
     private string _lastScreenState = "Title";
     private bool _inputArmed;
+    private CgosMatchNotificationMode _cgosMatchNotificationMode;
+    private DateTimeOffset _cgosMatchNotificationStartedAt;
+    private int _cgosMatchNotificationGameId;
+
+    private const double CgosMatchCountdownSeconds = 10d;
+    private const double CgosMatchFadeSeconds = 1.2d;
+    private const double CgosMatchButtonDelaySeconds = 0.65d;
+    private const double CgosMatchButtonFadeSeconds = 1.1d;
 
     public Game1()
     {
@@ -117,6 +125,7 @@ public class Game1 : Game
                 UpdateCgosConnectionProcessStatus();
                 UpdateCgosAdminProcessStatus();
                 UpdateCgosGameObservation();
+                UpdateCgosMatchNotification();
 
                 if (_session.CurrentMode.Kind == GoAppModeKind.Reviewing)
                     UpdateGlobalKeyboardInput(keyboard);
@@ -149,8 +158,14 @@ public class Game1 : Game
         base.Update(gameTime);
     }
 
-    private void OnGameDeactivated(object? sender, EventArgs e) =>
+    private void OnGameDeactivated(object? sender, EventArgs e)
+    {
         _inputArmed = false;
+        if (_cgosMatchNotificationMode == CgosMatchNotificationMode.Countdown)
+        {
+            DeferCgosMatchNotification("Application became inactive");
+        }
+    }
 
     private void SynchronizeOrArmWindowInput(KeyboardState keyboard, MouseState mouse)
     {
@@ -316,6 +331,25 @@ public class Game1 : Game
             }
         }
 
+        if (_renderer is not null &&
+            _session.UseKind == GoAppUseKind.CgosClient &&
+            _cgosMatchNotificationMode != CgosMatchNotificationMode.None)
+        {
+            var notificationAge = GetCgosMatchNotificationAge();
+            var buttonOpacity = (float)Math.Clamp(
+                (notificationAge.TotalSeconds - CgosMatchButtonDelaySeconds) / CgosMatchButtonFadeSeconds,
+                0d,
+                1d);
+            _renderer.DrawCgosMatchNotification(
+                Mouse.GetState().Position,
+                _cgosMatchNotificationMode == CgosMatchNotificationMode.Deferred,
+                _cgosGameObservation.IsFinished,
+                GetCgosMatchSecondsRemaining(notificationAge),
+                (float)Math.Clamp(notificationAge.TotalSeconds / CgosMatchFadeSeconds, 0d, 1d),
+                buttonOpacity,
+                buttonOpacity >= 1f);
+        }
+
         base.Draw(gameTime);
     }
 
@@ -332,6 +366,12 @@ public class Game1 : Game
         if (_previousMouse.LeftButton == ButtonState.Released && mouse.LeftButton == ButtonState.Pressed)
         {
             GuiOperationLog.User("Mouse click", $"screen={GetCurrentScreenState()} x={point.X} y={point.Y}");
+            if (TryHandleCgosMatchNotificationClick(point))
+            {
+                _previousMouse = mouse;
+                return;
+            }
+
             if (_session.UseKind is null)
             {
                 if (_isApplicationSettingsOpen)
@@ -1036,14 +1076,122 @@ public class Game1 : Game
 
         if (_cgosGameObservation.IsStarted && _cgosGameObservation.GameId != previousGameId)
         {
-            _session.OpenCgosWatchingScreen();
+            BeginCgosMatchNotification();
         }
 
         if (!wasFinished && _cgosGameObservation.IsFinished)
         {
-            _session.OpenCgosResultScreen();
+            if (_cgosMatchNotificationMode == CgosMatchNotificationMode.None)
+                _session.OpenCgosResultScreen();
         }
     }
+
+    private void BeginCgosMatchNotification()
+    {
+        if (_cgosMatchNotificationGameId == _cgosGameObservation.GameId)
+            return;
+
+        _cgosMatchNotificationGameId = _cgosGameObservation.GameId;
+        _cgosMatchNotificationStartedAt = DateTimeOffset.UtcNow;
+        _cgosMatchNotificationMode = ShouldDeferCgosMatchNotification()
+            ? CgosMatchNotificationMode.Deferred
+            : CgosMatchNotificationMode.Countdown;
+        GuiOperationLog.App(
+            "CGOS match notification opened",
+            $"gameId={_cgosGameObservation.GameId} mode={_cgosMatchNotificationMode}");
+    }
+
+    private void UpdateCgosMatchNotification()
+    {
+        if (_cgosMatchNotificationMode == CgosMatchNotificationMode.None)
+            return;
+
+        if (_cgosMatchNotificationMode == CgosMatchNotificationMode.Countdown &&
+            ShouldDeferCgosMatchNotification())
+        {
+            DeferCgosMatchNotification("User is editing, reviewing, or the application is inactive");
+            return;
+        }
+
+        if (_cgosMatchNotificationMode == CgosMatchNotificationMode.Countdown &&
+            GetCgosMatchNotificationAge().TotalSeconds >= CgosMatchCountdownSeconds)
+        {
+            OpenNotifiedCgosMatch("Countdown completed");
+        }
+    }
+
+    private bool TryHandleCgosMatchNotificationClick(Point point)
+    {
+        if (_cgosMatchNotificationMode == CgosMatchNotificationMode.None)
+            return false;
+
+        if (_cgosMatchNotificationMode == CgosMatchNotificationMode.Deferred)
+        {
+            if (!GoScreenRenderer.GetCgosMatchDeferredHit(point))
+                return false;
+
+            OpenNotifiedCgosMatch("Pressed deferred match notification");
+            return true;
+        }
+
+        var buttonsEnabled = GetCgosMatchNotificationAge().TotalSeconds >=
+            CgosMatchButtonDelaySeconds + CgosMatchButtonFadeSeconds;
+        if (GoScreenRenderer.GetCgosMatchWatchNowHit(point, buttonsEnabled))
+        {
+            OpenNotifiedCgosMatch("Pressed WATCH NOW");
+            return true;
+        }
+
+        if (GoScreenRenderer.GetCgosMatchWatchLaterHit(point, buttonsEnabled))
+        {
+            DeferCgosMatchNotification("Pressed WATCH LATER");
+            return true;
+        }
+
+        // The visible banner consumes clicks so controls behind it cannot be activated.
+        return new Rectangle(460, 28, 1000, 116).Contains(point);
+    }
+
+    private void OpenNotifiedCgosMatch(string reason)
+    {
+        GuiOperationLog.User(
+            _cgosGameObservation.IsFinished ? "Opened notified CGOS result" : "Opened notified CGOS match",
+            $"gameId={_cgosGameObservation.GameId} reason={reason}");
+        _cgosMatchNotificationMode = CgosMatchNotificationMode.None;
+        if (_session.CurrentMode.Kind == GoAppModeKind.Reviewing)
+            _session.ReturnFromReviewingToResting();
+        if (_cgosGameObservation.IsFinished)
+            _session.OpenCgosResultScreen();
+        else
+            _session.OpenCgosWatchingScreen();
+    }
+
+    private void DeferCgosMatchNotification(string reason)
+    {
+        if (_cgosMatchNotificationMode == CgosMatchNotificationMode.None)
+            return;
+
+        _cgosMatchNotificationMode = CgosMatchNotificationMode.Deferred;
+        _cgosMatchNotificationStartedAt = DateTimeOffset.UtcNow;
+        GuiOperationLog.User(
+            "Deferred CGOS match notification",
+            $"gameId={_cgosGameObservation.GameId} reason={reason}");
+    }
+
+    private bool ShouldDeferCgosMatchNotification() =>
+        !IsActive ||
+        _session.CurrentMode.Kind == GoAppModeKind.Reviewing ||
+        _session.IsGtpEngineSelectionDialogOpen ||
+        _session.IsGtpEngineEditPanelOpen ||
+        _session.IsCgosConnectionEditPanelOpen ||
+        _session.IsCgosAdminPlayerSelectionDialogOpen ||
+        _session.ActiveCgosCredentialField is not null;
+
+    private TimeSpan GetCgosMatchNotificationAge() =>
+        DateTimeOffset.UtcNow - _cgosMatchNotificationStartedAt;
+
+    private static int GetCgosMatchSecondsRemaining(TimeSpan age) =>
+        Math.Max(0, (int)Math.Ceiling(CgosMatchCountdownSeconds - age.TotalSeconds));
 
     private void SendSelectedCgosAdminMatch()
     {
@@ -2144,4 +2292,11 @@ public class Game1 : Game
 
         return new SoundEffect(buffer, sampleRate, AudioChannels.Mono);
     }
+}
+
+internal enum CgosMatchNotificationMode
+{
+    None,
+    Countdown,
+    Deferred,
 }

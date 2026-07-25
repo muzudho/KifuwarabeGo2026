@@ -9,6 +9,62 @@
     <DefaultCharacter>*</DefaultCharacter>
     <CharacterRegions>
       <CharacterRegion>
+        <Start>&#12353;</Start>
+        <End>&#12438;</End>
+      </CharacterRegion>
+      <CharacterRegion>
+        <Start>&#12290;</Start>
+        <End>&#12290;</End>
+      </CharacterRegion>
+      <CharacterRegion>
+        <Start>&#20102;</Start>
+        <End>&#20102;</End>
+      </CharacterRegion>
+      <CharacterRegion>
+        <Start>&#20184;</Start>
+        <End>&#20184;</End>
+      </CharacterRegion>
+      <CharacterRegion>
+        <Start>&#24460;</Start>
+        <End>&#24460;</End>
+      </CharacterRegion>
+      <CharacterRegion>
+        <Start>&#25126;</Start>
+        <End>&#25126;</End>
+      </CharacterRegion>
+      <CharacterRegion>
+        <Start>&#26524;</Start>
+        <End>&#26524;</End>
+      </CharacterRegion>
+      <CharacterRegion>
+        <Start>&#30011;</Start>
+        <End>&#30011;</End>
+      </CharacterRegion>
+      <CharacterRegion>
+        <Start>&#31186;</Start>
+        <End>&#31186;</End>
+      </CharacterRegion>
+      <CharacterRegion>
+        <Start>&#31227;</Start>
+        <End>&#31227;</End>
+      </CharacterRegion>
+      <CharacterRegion>
+        <Start>&#32080;</Start>
+        <End>&#32080;</End>
+      </CharacterRegion>
+      <CharacterRegion>
+        <Start>&#35251;</Start>
+        <End>&#35251;</End>
+      </CharacterRegion>
+      <CharacterRegion>
+        <Start>&#36983;</Start>
+        <End>&#36983;</End>
+      </CharacterRegion>
+      <CharacterRegion>
+        <Start>&#38754;</Start>
+        <End>&#38754;</End>
+      </CharacterRegion>
+      <CharacterRegion>
         <Start>&#32;</Start>
         <End>&#126;</End>
       </CharacterRegion>
