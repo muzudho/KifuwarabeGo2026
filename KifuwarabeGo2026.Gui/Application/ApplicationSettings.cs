@@ -27,6 +27,8 @@ public sealed class ApplicationSettings
 
     public string LogRootDirectory { get; set; } = GetDefaultLogRootDirectory();
 
+    public string SgfSaveDirectory { get; set; } = "";
+
     public List<TournamentRules> TournamentRules { get; set; } = CreateDefaultTournamentRules();
 
     public List<CgosConnectionProfile> CgosConnections { get; set; } = CreateDefaultCgosConnections();
@@ -51,6 +53,14 @@ public sealed class ApplicationSettings
         WriteCurrent();
     }
 
+    public static void SaveSgfDirectory(string directory)
+    {
+        var fullPath = Path.GetFullPath(directory.Trim());
+        Directory.CreateDirectory(fullPath);
+        Current.SgfSaveDirectory = fullPath;
+        WriteCurrent();
+    }
+
     private static ApplicationSettings Load()
     {
         try
@@ -61,6 +71,7 @@ public sealed class ApplicationSettings
                 if (settings is not null && !string.IsNullOrWhiteSpace(settings.LogRootDirectory))
                 {
                     settings.LogRootDirectory = Path.GetFullPath(settings.LogRootDirectory);
+                    settings.SgfSaveDirectory = NormalizeOptionalDirectory(settings.SgfSaveDirectory);
                     settings.TournamentRules ??= CreateDefaultTournamentRules();
                     settings.CgosConnections ??= CreateDefaultCgosConnections();
                     return settings;
@@ -74,6 +85,7 @@ public sealed class ApplicationSettings
                 if (legacy is not null && !string.IsNullOrWhiteSpace(legacy.LogRootDirectory))
                 {
                     legacy.LogRootDirectory = Path.GetFullPath(legacy.LogRootDirectory);
+                    legacy.SgfSaveDirectory = NormalizeOptionalDirectory(legacy.SgfSaveDirectory);
                     legacy.TournamentRules = CreateDefaultTournamentRules();
                     legacy.CgosConnections = CreateDefaultCgosConnections();
                     TryWrite(legacy);
@@ -144,6 +156,9 @@ public sealed class ApplicationSettings
             Event = "CGF Open 2026",
         },
     ];
+
+    private static string NormalizeOptionalDirectory(string? directory) =>
+        string.IsNullOrWhiteSpace(directory) ? "" : Path.GetFullPath(directory);
 
     private static string GetDefaultLogRootDirectory()
     {

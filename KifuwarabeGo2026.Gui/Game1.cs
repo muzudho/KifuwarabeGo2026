@@ -295,7 +295,7 @@ public class Game1 : Game
             if (_renderer is not null)
             {
                 if (_isApplicationSettingsOpen)
-                    _renderer.DrawApplicationSettings(Mouse.GetState().Position, ApplicationSettings.Current.LogRootDirectory, ApplicationSettings.FilePath, _gtpEngineCatalog.ListPath, _guiLogFiles, _selectedGuiLogIndex, _applicationSettingsMessage);
+                    _renderer.DrawApplicationSettings(Mouse.GetState().Position, ApplicationSettings.Current.LogRootDirectory, ApplicationSettings.Current.SgfSaveDirectory, ApplicationSettings.FilePath, _gtpEngineCatalog.ListPath, _guiLogFiles, _selectedGuiLogIndex, _applicationSettingsMessage);
                 else
                     TitleRenderer.Draw(_renderer, Mouse.GetState().Position);
             }
@@ -1569,10 +1569,13 @@ public class Game1 : Game
             DefaultExt = "sgf",
             Filter = "SGF files (*.sgf)|*.sgf|All files (*.*)|*.*",
             FileName = fileName,
-            InitialDirectory = AppContext.BaseDirectory,
             OverwritePrompt = true,
             Title = "Save SGF game record",
         };
+        if (Directory.Exists(ApplicationSettings.Current.SgfSaveDirectory))
+        {
+            dialog.InitialDirectory = ApplicationSettings.Current.SgfSaveDirectory;
+        }
 
         if (dialog.ShowDialog() != System.Windows.Forms.DialogResult.OK)
         {
@@ -1583,6 +1586,19 @@ public class Game1 : Game
         {
             var sgf = SgfGameRecordConverter.ToSgf(record);
             File.WriteAllText(dialog.FileName, sgf, Encoding.UTF8);
+            var savedDirectory = Path.GetDirectoryName(dialog.FileName);
+            if (!string.IsNullOrWhiteSpace(savedDirectory) &&
+                !string.Equals(savedDirectory, ApplicationSettings.Current.SgfSaveDirectory, StringComparison.OrdinalIgnoreCase))
+            {
+                try
+                {
+                    ApplicationSettings.SaveSgfDirectory(savedDirectory);
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
+                {
+                    ApplicationErrorLog.Write("SGF SETTINGS", "Could not remember the SGF save folder.", ex);
+                }
+            }
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -2169,6 +2185,34 @@ public class Game1 : Game
             return;
         }
 
+        if (GoScreenRenderer.GetSettingsSgfBrowseButtonHit(point))
+        {
+            GuiOperationLog.User("Pressed SGF folder Browse button");
+            using var dialog = new System.Windows.Forms.FolderBrowserDialog
+            {
+                Description = "Select the default folder for SGF game records.",
+                SelectedPath = Directory.Exists(ApplicationSettings.Current.SgfSaveDirectory)
+                    ? ApplicationSettings.Current.SgfSaveDirectory
+                    : Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+                UseDescriptionForTitle = true,
+            };
+            if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                try
+                {
+                    ApplicationSettings.SaveSgfDirectory(dialog.SelectedPath);
+                    _applicationSettingsMessage = "SAVED. SGF files will start in this folder.";
+                    GuiOperationLog.User("Changed SGF save folder", ApplicationSettings.Current.SgfSaveDirectory);
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
+                {
+                    _applicationSettingsMessage = "ERROR: " + ex.Message;
+                    ApplicationErrorLog.Write("SETTINGS", "Could not save the SGF folder.", ex);
+                }
+            }
+            return;
+        }
+
         if (GoScreenRenderer.GetSettingsOpenApplicationSettingsFolderButtonHit(point))
         {
             OpenSettingsFolder(ApplicationSettings.FilePath, "application settings");
@@ -2252,7 +2296,7 @@ public class Game1 : Game
         {
             _guiLogFiles.AddRange(Directory.EnumerateFiles(directory, "*.log", SearchOption.TopDirectoryOnly)
                 .OrderByDescending(File.GetLastWriteTimeUtc)
-                .Take(5));
+                .Take(4));
         }
         _selectedGuiLogIndex = _guiLogFiles.Count > 0 ? 0 : -1;
     }
