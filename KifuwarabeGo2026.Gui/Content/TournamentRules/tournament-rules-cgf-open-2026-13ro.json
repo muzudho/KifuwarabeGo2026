@@ -1,9 +1,0 @@
-{
-  "displayName": "CGF Open 2026 13-ro",
-  "rule": "japanese",
-  "boardSize": 13,
-  "komi": 6.5,
-  "mainTimeMinutes": 20,
-  "mainTimeSeconds": 0,
-  "moveLimit": 400
-}
