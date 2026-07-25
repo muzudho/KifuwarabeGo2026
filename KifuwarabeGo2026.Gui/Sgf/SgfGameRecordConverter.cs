@@ -13,17 +13,19 @@ using System.Text.Json;
 
 public static class SgfGameRecordConverter
 {
+    /// <summary>
+    /// Reads a supported legacy SGF and writes it in the current interoperable form.
+    /// Source files are never overwritten by this conversion.
+    /// </summary>
+    public static string UpgradeToCurrentFormat(string sgf) =>
+        ToSgf(FromSgf(sgf));
+
     public static string ToSgf(GoGameRecord record)
     {
         ArgumentNullException.ThrowIfNull(record);
 
         var builder = new StringBuilder();
         builder.Append("(;GM[1]FF[4]CA[UTF-8]AP[KifuwarabeGo2026]");
-        if (record.Moves.Exists(move => move.Analysis is not null))
-        {
-            AppendProperty(builder, "KFAV", "1");
-        }
-
         builder.Append('\n');
         if (!string.IsNullOrWhiteSpace(record.RuleName))
         {
@@ -69,7 +71,7 @@ public static class SgfGameRecordConverter
             }
             if (move.Analysis is not null)
             {
-                AppendProperty(builder, "KFA", SerializeAnalysis(move, record.BoardSize));
+                AppendProperty(builder, "CC", SerializeAnalysis(move, record.BoardSize));
             }
         }
 
@@ -89,7 +91,9 @@ public static class SgfGameRecordConverter
 
         var record = new GoGameRecord();
         ApplyRootProperties(record, nodes[0]);
-        var readKifuwarabeAnalysis = !TryGetSingleValue(nodes[0], "KFAV", out var analysisVersion) || analysisVersion == "1";
+        var readLegacyKifuwarabeAnalysis =
+            !TryGetSingleValue(nodes[0], "KFAV", out var analysisVersion) ||
+            analysisVersion == "1";
 
         var sawMove = false;
         foreach (var node in nodes)
@@ -105,8 +109,8 @@ public static class SgfGameRecordConverter
                 ApplySetupStones(record, node, "AW", GoStone.White);
             }
 
-            sawMove |= AppendMoveIfPresent(record, node, "B", GoStone.Black, readKifuwarabeAnalysis);
-            sawMove |= AppendMoveIfPresent(record, node, "W", GoStone.White, readKifuwarabeAnalysis);
+            sawMove |= AppendMoveIfPresent(record, node, "B", GoStone.Black, readLegacyKifuwarabeAnalysis);
+            sawMove |= AppendMoveIfPresent(record, node, "W", GoStone.White, readLegacyKifuwarabeAnalysis);
         }
 
         return record;
@@ -183,7 +187,7 @@ public static class SgfGameRecordConverter
         Dictionary<string, List<string>> node,
         string propertyName,
         GoStone stone,
-        bool readKifuwarabeAnalysis)
+        bool readLegacyKifuwarabeAnalysis)
     {
         if (!node.TryGetValue(propertyName, out var values))
         {
@@ -202,9 +206,18 @@ public static class SgfGameRecordConverter
 
         var comment = TryGetSingleValue(node, "C", out var nodeComment) ? nodeComment : "";
         var playedVertex = point is { } playedPoint ? GtpCoordinate.FormatVertex(playedPoint, record.BoardSize) : "pass";
-        var analysis = readKifuwarabeAnalysis && TryGetSingleValue(node, "KFA", out var analysisJson)
-            ? CgosMoveAnalysisParser.Parse(analysisJson, playedVertex)
-            : null;
+        GoMoveAnalysis? analysis = null;
+        if (TryGetSingleValue(node, "CC", out var commonAnalysisJson))
+        {
+            analysis = CgosMoveAnalysisParser.Parse(commonAnalysisJson, playedVertex);
+        }
+
+        if (analysis is null &&
+            readLegacyKifuwarabeAnalysis &&
+            TryGetSingleValue(node, "KFA", out var legacyAnalysisJson))
+        {
+            analysis = CgosMoveAnalysisParser.Parse(legacyAnalysisJson, playedVertex);
+        }
         record.Moves.Add(new GoGameMove(stone, point, comment, analysis));
         return true;
     }
