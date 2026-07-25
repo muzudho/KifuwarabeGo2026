@@ -1,6 +1,7 @@
 namespace KifuwarabeGo2026.Gui.Presentation;
 
 using KifuwarabeGo2026.Gui.Application;
+using KifuwarabeGo2026.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.Shared.Domain;
 using Microsoft.Xna.Framework;
 
@@ -58,6 +59,9 @@ public sealed partial class GoScreenRenderer
 
     public static bool GetReviewBackToRestButtonHit(Point point) => ReviewBackToRestButtonBounds.Contains(point);
 
+    public static bool GetReviewCommentToggleButtonHit(Point point) =>
+        ReviewCommentToggleButtonBounds.Contains(point);
+
 
     private void DrawBoardEditingSidePanel(GoAppSession session, Point mousePoint)
     {
@@ -112,10 +116,34 @@ public sealed partial class GoScreenRenderer
             session.CurrentTurn,
             minimal: true);
 
-        DrawVerticalResultSection(new Rectangle(1144, 548, 668, 132), "CALCULATION", new Color(76, 91, 126));
-        DrawStoneCountStrip(session, 560, showLeader: true, minimal: true);
+        if (session.MoveInformationDisplayMode == MoveInformationDisplayMode.Comment)
+        {
+            var commentBounds = new Rectangle(1144, 548, 668, 290);
+            FillRect(commentBounds, new Color(25, 48, 57, 246));
+            DrawRect(commentBounds, 2, new Color(72, 115, 121));
+            var move = session.ReviewCurrentMove;
+            if (move is { } currentMove && !string.IsNullOrWhiteSpace(currentMove.Comment))
+                DrawMoveCommentContent(currentMove.Comment, session.ReviewMoveIndex, commentBounds);
+            else
+                DrawFittedText("NO COMMENT ON THIS MOVE", new Rectangle(1168, 620, 620, 40), new Color(142, 163, 164), 0.34f);
+        }
+        else
+        {
+            DrawVerticalResultSection(new Rectangle(1144, 548, 668, 132), "CALCULATION", new Color(76, 91, 126));
+            DrawStoneCountStrip(session, 560, showLeader: true, minimal: true);
+            DrawMoveAnalysisSection(session.ReviewCurrentMove, ReviewAnalysisSectionBounds);
+        }
 
-        DrawMoveAnalysisSection(session.ReviewCurrentMove, ReviewAnalysisSectionBounds);
+        var hasCurrentComment = !string.IsNullOrWhiteSpace(session.ReviewCurrentMove?.Comment);
+        DrawCommandButton(
+            ReviewCommentToggleButtonBounds,
+            session.MoveInformationDisplayMode == MoveInformationDisplayMode.Comment
+                ? "ANALYSIS"
+                : hasCurrentComment ? "COMMENT *" : "COMMENT",
+            false,
+            mousePoint,
+            enabled: session.MoveInformationDisplayMode == MoveInformationDisplayMode.Comment || hasCurrentComment,
+            scale: 0.27f);
 
         DrawVerticalResultSection(new Rectangle(1144, 850, 668, 142), "REVIEW", new Color(76, 91, 126));
         DrawResultLabel(
@@ -130,7 +158,8 @@ public sealed partial class GoScreenRenderer
         }
         DrawFittedText("KEYS  LEFT/RIGHT: -/+1   DOWN/UP: -/+10   PGDN/PGUP: -/+50   R: REN ANALYSIS", new Rectangle(1268, 950, 524, 24), new Color(147, 201, 190), 0.25f);
 
-        DrawMoveAnalysisTooltip(session.ReviewCurrentMove, ReviewAnalysisSectionBounds, mousePoint, ReviewAnalysisTooltipBounds);
+        if (session.MoveInformationDisplayMode != MoveInformationDisplayMode.Comment)
+            DrawMoveAnalysisTooltip(session.ReviewCurrentMove, ReviewAnalysisSectionBounds, mousePoint, ReviewAnalysisTooltipBounds);
 
     }
 
@@ -173,6 +202,8 @@ public sealed partial class GoScreenRenderer
 
 
     private static Rectangle ReviewAnalysisTooltipBounds => new(1164, 734, 628, 104);
+
+    private static Rectangle ReviewCommentToggleButtonBounds => new(1618, 552, 178, 38);
 
 
     private static Rectangle ReviewDoneButtonBounds => new(1648, 120, 164, 52);

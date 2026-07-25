@@ -20,6 +20,15 @@ public sealed partial class GoScreenRenderer
         return GetMoveTrendDisplayModeButtonHit(point, CgosTrendChartBounds);
     }
 
+    public static MoveInformationDisplayMode? GetCgosMoveInformationDisplayModeButtonHit(Point point) =>
+        GetMoveInformationDisplayModeButtonHit(point, CgosTrendChartBounds);
+
+    public static MoveInformationDisplayMode? GetLocalMoveInformationDisplayModeButtonHit(Point point) =>
+        GetMoveInformationDisplayModeButtonHit(point, LocalTrendChartBounds);
+
+    public static MoveInformationDisplayMode? GetLocalGameOverMoveInformationDisplayModeButtonHit(Point point) =>
+        GetMoveInformationDisplayModeButtonHit(point, LocalGameOverTrendChartBounds);
+
     public static MoveTrendDisplayMode? GetLocalTrendDisplayModeButtonHit(Point point)
     {
         return GetMoveTrendDisplayModeButtonHit(point, LocalTrendChartBounds);
@@ -55,7 +64,13 @@ public sealed partial class GoScreenRenderer
     {
         FillRect(bounds, new Color(25, 48, 57, 246));
         DrawRect(bounds, 2, new Color(72, 115, 121));
-        DrawText("POSITION TREND", new Vector2(bounds.X + 16, bounds.Y + 12), new Color(82, 225, 216), 0.42f);
+        DrawMoveInformationTabs(session, moves, bounds, mousePoint);
+
+        if (session.MoveInformationDisplayMode == MoveInformationDisplayMode.Comment)
+        {
+            DrawMoveCommentContent(moves, bounds);
+            return;
+        }
 
         DrawCgosTrendModeButton(MoveTrendScoreButtonBounds(bounds), "SCORE", session.MoveTrendDisplayMode == MoveTrendDisplayMode.Score, mousePoint);
         DrawCgosTrendModeButton(MoveTrendBothButtonBounds(bounds), "BOTH", session.MoveTrendDisplayMode == MoveTrendDisplayMode.Both, mousePoint);
@@ -100,7 +115,51 @@ public sealed partial class GoScreenRenderer
         DrawCgosAdvantageLabel(new Rectangle(plot.X + 12, plot.Y + 8, 254, 30), black: true);
         DrawCgosAdvantageLabel(new Rectangle(plot.X + 12, plot.Bottom - 38, 254, 30), black: false);
         DrawCgosTrendMoveTicks(maximumMove, plot);
+        DrawCommentMoveMarkers(moves, maximumMove, plot);
         DrawCgosCurrentTrendPoint(points, maximumMove, plot);
+    }
+
+    private static MoveInformationDisplayMode? GetMoveInformationDisplayModeButtonHit(Point point, Rectangle bounds)
+    {
+        if (MoveInformationTrendButtonBounds(bounds).Contains(point)) return MoveInformationDisplayMode.Trend;
+        if (MoveInformationCommentButtonBounds(bounds).Contains(point)) return MoveInformationDisplayMode.Comment;
+        return null;
+    }
+
+    private void DrawMoveInformationTabs(
+        GoAppSession session,
+        IReadOnlyList<GoGameMove> moves,
+        Rectangle bounds,
+        Point mousePoint)
+    {
+        DrawCgosTrendModeButton(
+            MoveInformationTrendButtonBounds(bounds),
+            "TREND",
+            session.MoveInformationDisplayMode == MoveInformationDisplayMode.Trend,
+            mousePoint);
+        var hasComment = HasMoveComment(moves);
+        DrawCgosTrendModeButton(
+            MoveInformationCommentButtonBounds(bounds),
+            hasComment ? "COMMENT *" : "COMMENT",
+            session.MoveInformationDisplayMode == MoveInformationDisplayMode.Comment,
+            mousePoint);
+    }
+
+    private void DrawCommentMoveMarkers(
+        IReadOnlyList<GoGameMove> moves,
+        int maximumMove,
+        Rectangle plot)
+    {
+        for (var index = 0; index < moves.Count; index++)
+        {
+            if (string.IsNullOrWhiteSpace(moves[index].Comment)) continue;
+            var x = (int)CgosTrendX(index + 1, maximumMove, plot);
+            DrawCenteredText(
+                "*",
+                new Vector2(x, plot.Bottom - 48),
+                new Color(255, 215, 92),
+                0.35f);
+        }
     }
 
     private void DrawCgosTrendModeButton(Rectangle bounds, string label, bool selected, Point mousePoint)
@@ -212,6 +271,12 @@ public sealed partial class GoScreenRenderer
 
     private static Rectangle MoveTrendScoreButtonBounds(Rectangle chartBounds) =>
         new(chartBounds.Right - 360, chartBounds.Y + 12, 104, 36);
+
+    private static Rectangle MoveInformationTrendButtonBounds(Rectangle bounds) =>
+        new(bounds.X + 16, bounds.Y + 12, 104, 36);
+
+    private static Rectangle MoveInformationCommentButtonBounds(Rectangle bounds) =>
+        new(bounds.X + 122, bounds.Y + 12, 142, 36);
 
     private static Rectangle MoveTrendBothButtonBounds(Rectangle chartBounds) =>
         new(chartBounds.Right - 254, chartBounds.Y + 12, 104, 36);

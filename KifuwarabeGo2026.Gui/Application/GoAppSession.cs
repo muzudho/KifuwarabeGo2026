@@ -142,6 +142,9 @@ public sealed class GoAppSession
 
     public MoveTrendDisplayMode MoveTrendDisplayMode { get; private set; } = MoveTrendDisplayMode.Both;
 
+    public MoveInformationDisplayMode MoveInformationDisplayMode { get; private set; } =
+        MoveInformationDisplayMode.Trend;
+
     public int SelectedCgosConnectionProfileIndex { get; private set; }
 
     public CgosConnectionProfile SelectedCgosConnectionProfile => _cgosConnectionProfiles[SelectedCgosConnectionProfileIndex];
@@ -365,6 +368,11 @@ public sealed class GoAppSession
     public void SetMoveTrendDisplayMode(MoveTrendDisplayMode mode)
     {
         MoveTrendDisplayMode = mode;
+    }
+
+    public void SetMoveInformationDisplayMode(MoveInformationDisplayMode mode)
+    {
+        MoveInformationDisplayMode = mode;
     }
 
     public void SelectUseKind(GoAppUseKind useKind)
@@ -2059,7 +2067,12 @@ public sealed class GoAppSession
     /// <param name="x"></param>
     /// <param name="y"></param>
     /// <returns></returns>
-    public bool TryPlaceStone(int x, int y, GoMoveAnalysis? analysis = null)
+    public bool TryPlaceStone(
+        int x,
+        int y,
+        GoMoveAnalysis? analysis = null,
+        string comment = "",
+        string? commonAnalysisJson = null)
     {
         if (CurrentMode.Kind != GoAppModeKind.Playing || !_board.TryPlaceStone(x, y, CurrentTurn, KoPoint, out var capturedStones, out var nextKoPoint))
         {
@@ -2067,7 +2080,12 @@ public sealed class GoAppSession
         }
 
         var placedBy = CurrentTurn;
-        CurrentGameRecord.Moves.Add(new GoGameMove(placedBy, new GoPoint(x, y), analysis: analysis));
+        CurrentGameRecord.Moves.Add(new GoGameMove(
+            placedBy,
+            new GoPoint(x, y),
+            comment,
+            analysis,
+            commonAnalysisJson));
         if (CurrentTurn == GoStone.Black)
         {
             BlackAgehama += capturedStones;
@@ -2094,7 +2112,10 @@ public sealed class GoAppSession
         return true;
     }
 
-    public bool Pass(string comment = "", GoMoveAnalysis? analysis = null)
+    public bool Pass(
+        string comment = "",
+        GoMoveAnalysis? analysis = null,
+        string? commonAnalysisJson = null)
     {
         if (CurrentMode.Kind != GoAppModeKind.Playing)
         {
@@ -2103,7 +2124,12 @@ public sealed class GoAppSession
 
         KoPoint = null;
         ConsecutivePasses++;
-        CurrentGameRecord.Moves.Add(new GoGameMove(CurrentTurn, null, comment, analysis));
+        CurrentGameRecord.Moves.Add(new GoGameMove(
+            CurrentTurn,
+            null,
+            comment,
+            analysis,
+            commonAnalysisJson));
         CompleteMoveAndPassTurn();
         if (CurrentMode.Kind == GoAppModeKind.GameOver)
         {

@@ -35,6 +35,23 @@ internal static class CgosMoveAnalysisParser
         }
     }
 
+    public static string ParseComment(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json)) return "";
+
+        try
+        {
+            using var document = JsonDocument.Parse(json);
+            if (document.RootElement.ValueKind != JsonValueKind.Object) return "";
+            var comment = GetString(document.RootElement, "comment") ?? "";
+            return comment.Length <= 100_000 ? comment : comment[..99_997] + "...";
+        }
+        catch (JsonException)
+        {
+            return "";
+        }
+    }
+
     private static JsonElement? FindPlayedMove(JsonElement root, string playedVertex)
     {
         if (!root.TryGetProperty("moves", out var moves) || moves.ValueKind != JsonValueKind.Array) return null;

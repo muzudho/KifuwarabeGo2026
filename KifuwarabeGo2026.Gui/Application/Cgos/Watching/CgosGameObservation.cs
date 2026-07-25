@@ -178,7 +178,13 @@ public sealed class CgosGameObservation
         }
 
         var analysis = CgosMoveAnalysisParser.Parse(analysisJson, vertex);
-        _moves.Add(new GoGameMove(stone, movePoint, analysis: analysis));
+        var comment = CgosMoveAnalysisParser.ParseComment(analysisJson);
+        _moves.Add(new GoGameMove(
+            stone,
+            movePoint,
+            comment,
+            analysis,
+            commonAnalysisJson: string.IsNullOrWhiteSpace(analysisJson) ? null : analysisJson));
         if (long.TryParse(remainingTimeMilliseconds, out var remainingMilliseconds))
         {
             var remaining = TimeSpan.FromMilliseconds(Math.Clamp(remainingMilliseconds, 0, (long)MainTime.TotalMilliseconds));

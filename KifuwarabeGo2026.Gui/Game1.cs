@@ -441,6 +441,15 @@ public class Game1 : Game
                 }
 
                 if (_session.CgosConnectionFlowKind is CgosConnectionFlowKind.Watching or CgosConnectionFlowKind.Result &&
+                    GoScreenRenderer.GetCgosMoveInformationDisplayModeButtonHit(point) is { } cgosInformationMode)
+                {
+                    _session.SetMoveInformationDisplayMode(cgosInformationMode);
+                    GuiOperationLog.User("Changed CGOS move information display", $"mode={cgosInformationMode}");
+                    _previousMouse = mouse;
+                    return;
+                }
+
+                if (_session.CgosConnectionFlowKind is CgosConnectionFlowKind.Watching or CgosConnectionFlowKind.Result &&
                     GoScreenRenderer.GetCgosTrendDisplayModeButtonHit(point) is { } trendMode)
                 {
                     _session.SetMoveTrendDisplayMode(trendMode);
@@ -637,6 +646,20 @@ public class Game1 : Game
                 return;
             }
 
+            MoveInformationDisplayMode? localInformationMode = _session.CurrentMode.Kind switch
+            {
+                GoAppModeKind.Playing => GoScreenRenderer.GetLocalMoveInformationDisplayModeButtonHit(point),
+                GoAppModeKind.GameOver => GoScreenRenderer.GetLocalGameOverMoveInformationDisplayModeButtonHit(point),
+                _ => null,
+            };
+            if (localInformationMode is { } selectedLocalInformationMode)
+            {
+                _session.SetMoveInformationDisplayMode(selectedLocalInformationMode);
+                GuiOperationLog.User("Changed local move information display", $"mode={selectedLocalInformationMode}");
+                _previousMouse = mouse;
+                return;
+            }
+
             MoveTrendDisplayMode? localTrendMode = _session.CurrentMode.Kind switch
             {
                 GoAppModeKind.Playing => GoScreenRenderer.GetLocalTrendDisplayModeButtonHit(point),
@@ -819,6 +842,15 @@ public class Game1 : Game
         if (GoScreenRenderer.GetReviewStepButtonHit(point) is { } step)
         {
             MoveReview(step);
+            return true;
+        }
+
+        if (GoScreenRenderer.GetReviewCommentToggleButtonHit(point))
+        {
+            var showComment = _session.MoveInformationDisplayMode != MoveInformationDisplayMode.Comment &&
+                !string.IsNullOrWhiteSpace(_session.ReviewCurrentMove?.Comment);
+            _session.SetMoveInformationDisplayMode(
+                showComment ? MoveInformationDisplayMode.Comment : MoveInformationDisplayMode.Trend);
             return true;
         }
 
@@ -1534,7 +1566,7 @@ public class Game1 : Game
             CheckFileExists = true,
             DefaultExt = "sgf",
             Filter = "SGF files (*.sgf)|*.sgf|All files (*.*)|*.*",
-            InitialDirectory = AppContext.BaseDirectory,
+            InitialDirectory = GetInitialSgfDirectory(),
             Title = "Load SGF game record",
         };
 
@@ -1546,6 +1578,7 @@ public class Game1 : Game
         try
         {
             var record = SgfGameRecordConverter.FromSgf(File.ReadAllText(dialog.FileName, Encoding.UTF8));
+            RememberSgfDirectory(dialog.FileName);
             StartReviewingGameRecord(record, "SGF input");
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or SgfParseException or ArgumentOutOfRangeException)
@@ -1572,10 +1605,7 @@ public class Game1 : Game
             OverwritePrompt = true,
             Title = "Save SGF game record",
         };
-        if (Directory.Exists(ApplicationSettings.Current.SgfSaveDirectory))
-        {
-            dialog.InitialDirectory = ApplicationSettings.Current.SgfSaveDirectory;
-        }
+        dialog.InitialDirectory = GetInitialSgfDirectory();
 
         if (dialog.ShowDialog() != System.Windows.Forms.DialogResult.OK)
         {
@@ -1586,23 +1616,35 @@ public class Game1 : Game
         {
             var sgf = SgfGameRecordConverter.ToSgf(record);
             File.WriteAllText(dialog.FileName, sgf, Encoding.UTF8);
-            var savedDirectory = Path.GetDirectoryName(dialog.FileName);
-            if (!string.IsNullOrWhiteSpace(savedDirectory) &&
-                !string.Equals(savedDirectory, ApplicationSettings.Current.SgfSaveDirectory, StringComparison.OrdinalIgnoreCase))
-            {
-                try
-                {
-                    ApplicationSettings.SaveSgfDirectory(savedDirectory);
-                }
-                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
-                {
-                    ApplicationErrorLog.Write("SGF SETTINGS", "Could not remember the SGF save folder.", ex);
-                }
-            }
+            RememberSgfDirectory(dialog.FileName);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             ShowMessage(ex.Message, "SGF output");
+        }
+    }
+
+    private static string GetInitialSgfDirectory() =>
+        Directory.Exists(ApplicationSettings.Current.SgfSaveDirectory)
+            ? ApplicationSettings.Current.SgfSaveDirectory
+            : AppContext.BaseDirectory;
+
+    private static void RememberSgfDirectory(string fileName)
+    {
+        var directory = Path.GetDirectoryName(fileName);
+        if (string.IsNullOrWhiteSpace(directory) ||
+            string.Equals(directory, ApplicationSettings.Current.SgfSaveDirectory, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        try
+        {
+            ApplicationSettings.SaveSgfDirectory(directory);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
+        {
+            ApplicationErrorLog.Write("SGF SETTINGS", "Could not remember the SGF folder.", ex);
         }
     }
 

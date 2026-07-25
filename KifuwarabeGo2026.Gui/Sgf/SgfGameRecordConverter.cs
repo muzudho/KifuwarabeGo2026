@@ -13,6 +13,8 @@ using System.Text.Json;
 
 public static class SgfGameRecordConverter
 {
+    private static readonly string ApplicationPropertyValue = CreateApplicationPropertyValue();
+
     /// <summary>
     /// Reads a supported legacy SGF and writes it in the current interoperable form.
     /// Source files are never overwritten by this conversion.
@@ -25,7 +27,8 @@ public static class SgfGameRecordConverter
         ArgumentNullException.ThrowIfNull(record);
 
         var builder = new StringBuilder();
-        builder.Append("(;GM[1]FF[4]CA[UTF-8]AP[KifuwarabeGo2026]");
+        builder.Append("(;GM[1]FF[4]CA[UTF-8]");
+        AppendProperty(builder, "AP", ApplicationPropertyValue);
         builder.Append('\n');
         if (!string.IsNullOrWhiteSpace(record.RuleName))
         {
@@ -300,6 +303,14 @@ public static class SgfGameRecordConverter
 
         value = values[0];
         return true;
+    }
+
+    private static string CreateApplicationPropertyValue()
+    {
+        var version = typeof(SgfGameRecordConverter).Assembly.GetName().Version;
+        return version is null
+            ? "KifuwarabeGo2026"
+            : $"KifuwarabeGo2026:{version.Major}.{version.Minor}.{version.Build}";
     }
 
     private static void AppendSetupStones(

@@ -308,8 +308,9 @@ public sealed class PlayingScene : IDisposable
 
         if (GtpCoordinate.IsPass(result.MoveText))
         {
-            var comment = result.PlayedBy is null ? "" : _session.GetOwnEyeForcedPassComment();
-            if (_session.Pass(comment, result.Analysis))
+            var forcedPassComment = result.PlayedBy is null ? "" : _session.GetOwnEyeForcedPassComment();
+            var comment = string.IsNullOrWhiteSpace(result.Comment) ? forcedPassComment : result.Comment;
+            if (_session.Pass(comment, result.Analysis, result.CommonAnalysisJson))
             {
                 PlayPlaceStoneSound(0.45f, 0.25f, 0f);
             }
@@ -325,7 +326,12 @@ public sealed class PlayingScene : IDisposable
             return;
         }
 
-        if (!_session.TryPlaceStone(point.X, point.Y, result.Analysis))
+        if (!_session.TryPlaceStone(
+                point.X,
+                point.Y,
+                result.Analysis,
+                result.Comment,
+                result.CommonAnalysisJson))
         {
             SetEngineError($"Illegal GTP move: {result.MoveText}", result.PlayedBy ?? _session.CurrentTurn);
             return;
@@ -471,7 +477,8 @@ public sealed class PlayingScene : IDisposable
 
         var json = lines.FirstOrDefault(line => line.StartsWith('{'));
         var analysis = CgosMoveAnalysisParser.Parse(json, vertex);
-        return EngineCommandResult.EngineMove(vertex, playedBy, analysis);
+        var comment = CgosMoveAnalysisParser.ParseComment(json);
+        return EngineCommandResult.EngineMove(vertex, playedBy, analysis, comment, json);
     }
 
     private EngineCommandException CreateEngineCommandException(GoStone stone, Exception exception)
@@ -517,14 +524,27 @@ public sealed class PlayingScene : IDisposable
         GoStone? ErrorStone = null,
         bool MakesEngineReady = false,
         bool ClosesEngine = false,
-        GoMoveAnalysis? Analysis = null)
+        GoMoveAnalysis? Analysis = null,
+        string Comment = "",
+        string? CommonAnalysisJson = null)
     {
         public static EngineCommandResult Success(bool closesEngine = false) => new(null, null, null, ClosesEngine: closesEngine);
 
         public static EngineCommandResult EngineReady() => new(null, null, null, MakesEngineReady: true);
 
-        public static EngineCommandResult EngineMove(string moveText, GoStone playedBy, GoMoveAnalysis? analysis = null) =>
-            new(moveText, playedBy, null, Analysis: analysis);
+        public static EngineCommandResult EngineMove(
+            string moveText,
+            GoStone playedBy,
+            GoMoveAnalysis? analysis = null,
+            string comment = "",
+            string? commonAnalysisJson = null) =>
+            new(
+                moveText,
+                playedBy,
+                null,
+                Analysis: analysis,
+                Comment: comment,
+                CommonAnalysisJson: commonAnalysisJson);
 
         public static EngineCommandResult Failure(Exception error, GoStone errorStone) => new(null, null, error, errorStone);
     }
