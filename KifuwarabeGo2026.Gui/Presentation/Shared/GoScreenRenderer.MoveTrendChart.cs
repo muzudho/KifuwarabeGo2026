@@ -103,18 +103,24 @@ public sealed partial class GoScreenRenderer
         for (var step = -2; step <= 2; step++)
         {
             var y = centerY - step * plot.Height / 4;
+            var scoreAxisBounds = popup
+                ? new Rectangle(bounds.X + 4, y - 20, 68, 40)
+                : new Rectangle(bounds.X + 8, y - 12, 42, 24);
+            var winRateAxisBounds = popup
+                ? new Rectangle(plot.Right + 4, y - 20, 76, 40)
+                : new Rectangle(plot.Right + 5, y - 12, 47, 24);
             DrawLine(new Vector2(plot.Left, y), new Vector2(plot.Right, y), step == 0 ? 2 : 1,
                 step == 0 ? new Color(211, 226, 219, 165) : new Color(104, 139, 143, 70));
             DrawFittedText(
                 (step * 10).ToString("+0;-0;0", CultureInfo.InvariantCulture),
-                new Rectangle(bounds.X + 8, y - 12, 42, 24),
+                scoreAxisBounds,
                 new Color(205, 217, 214),
-                0.25f);
+                popup ? 0.46f : 0.25f);
             DrawFittedText(
                 step switch { 2 => "+100%", 1 => "+50%", 0 => "EVEN", -1 => "-50%", _ => "-100%" },
-                new Rectangle(plot.Right + 5, y - 12, 47, 24),
+                winRateAxisBounds,
                 new Color(165, 193, 194),
-                0.2f);
+                popup ? 0.4f : 0.2f);
         }
 
         var points = MoveTrendSeriesBuilder.Build(moves);
@@ -131,8 +137,12 @@ public sealed partial class GoScreenRenderer
             DrawCgosScoreBars(points, maximumMove, plot);
         }
 
-        DrawCgosAdvantageLabel(new Rectangle(plot.X + 12, plot.Y + 8, 254, 30), black: true);
-        DrawCgosAdvantageLabel(new Rectangle(plot.X + 12, plot.Bottom - 38, 254, 30), black: false);
+        DrawCgosAdvantageLabel(
+            popup ? new Rectangle(plot.X + 18, plot.Y + 12, 410, 50) : new Rectangle(plot.X + 12, plot.Y + 8, 254, 30),
+            black: true);
+        DrawCgosAdvantageLabel(
+            popup ? new Rectangle(plot.X + 18, plot.Bottom - 62, 410, 50) : new Rectangle(plot.X + 12, plot.Bottom - 38, 254, 30),
+            black: false);
         DrawCgosTrendMoveTicks(maximumMove, plot);
         DrawCommentMoveMarkers(moves, maximumMove, plot);
         DrawCgosCurrentTrendPoint(points, maximumMove, plot, currentMoveNumber);
@@ -248,20 +258,28 @@ public sealed partial class GoScreenRenderer
             black ? "黒有利  BLACK ADVANTAGE" : "白有利  WHITE ADVANTAGE",
             new Rectangle(bounds.X + 32, bounds.Y + 5, bounds.Width - 40, bounds.Height - 10),
             black ? new Color(100, 229, 218) : new Color(247, 231, 184),
-            0.23f);
+            bounds.Height >= 48 ? 0.42f : 0.23f);
     }
 
     private void DrawCgosTrendMoveTicks(int maximumMove, Rectangle plot)
     {
+        var popup = plot.Width > 1000;
         foreach (var move in new[] { 0, 25, 50, 75, 100 })
         {
             if (move > maximumMove) continue;
             var x = (int)CgosTrendX(Math.Max(1, move), maximumMove, plot);
-            DrawFittedText(move.ToString(CultureInfo.InvariantCulture), new Rectangle(x - 20, plot.Bottom + 4, 40, 20),
-                new Color(180, 200, 198), 0.2f);
+            DrawFittedText(
+                move.ToString(CultureInfo.InvariantCulture),
+                popup ? new Rectangle(x - 32, plot.Bottom + 4, 64, 34) : new Rectangle(x - 20, plot.Bottom + 4, 40, 20),
+                new Color(180, 200, 198),
+                popup ? 0.38f : 0.2f);
         }
 
-        DrawFittedText("MOVE", new Rectangle(plot.Center.X - 36, plot.Bottom + 23, 72, 20), new Color(76, 222, 213), 0.23f);
+        DrawFittedText(
+            "MOVE",
+            popup ? new Rectangle(plot.Center.X - 60, plot.Bottom + 34, 120, 38) : new Rectangle(plot.Center.X - 36, plot.Bottom + 23, 72, 20),
+            new Color(76, 222, 213),
+            popup ? 0.42f : 0.23f);
     }
 
     private void DrawCgosCurrentTrendPoint(
@@ -288,11 +306,22 @@ public sealed partial class GoScreenRenderer
         var winrate = point.BlackPerspectiveWinAdvantage is { } advantage
             ? $"BLACK WIN {((advantage + 1.0) / 2.0).ToString("P1", CultureInfo.InvariantCulture)}"
             : "BLACK WIN -";
-        var tooltip = new Rectangle(Math.Clamp(x + 10, plot.Left + 280, plot.Right - 158), plot.Top + 44, 150, 54);
+        var popup = plot.Width > 1000;
+        var tooltip = popup
+            ? new Rectangle(Math.Clamp(x + 16, plot.Left + 440, plot.Right - 300), plot.Top + 76, 284, 94)
+            : new Rectangle(Math.Clamp(x + 10, plot.Left + 280, plot.Right - 158), plot.Top + 44, 150, 54);
         FillRect(tooltip, new Color(16, 26, 31, 242));
         DrawRect(tooltip, 1, new Color(113, 153, 154));
-        DrawFittedText(score, new Rectangle(tooltip.X + 8, tooltip.Y + 5, tooltip.Width - 16, 19), Color.White, 0.2f);
-        DrawFittedText(winrate, new Rectangle(tooltip.X + 8, tooltip.Y + 28, tooltip.Width - 16, 19), new Color(126, 225, 215), 0.2f);
+        DrawFittedText(
+            score,
+            popup ? new Rectangle(tooltip.X + 12, tooltip.Y + 8, tooltip.Width - 24, 34) : new Rectangle(tooltip.X + 8, tooltip.Y + 5, tooltip.Width - 16, 19),
+            Color.White,
+            popup ? 0.38f : 0.2f);
+        DrawFittedText(
+            winrate,
+            popup ? new Rectangle(tooltip.X + 12, tooltip.Y + 50, tooltip.Width - 24, 34) : new Rectangle(tooltip.X + 8, tooltip.Y + 28, tooltip.Width - 16, 19),
+            new Color(126, 225, 215),
+            popup ? 0.38f : 0.2f);
     }
 
     private static float CgosTrendX(int moveNumber, int maximumMove, Rectangle plot) =>

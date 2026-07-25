@@ -87,8 +87,8 @@ public sealed partial class GoScreenRenderer
         DrawCircle(new Vector2(x, ReviewChartPopupSeekBounds.Center.Y), 13, new Color(255, 225, 128));
         DrawCenteredText(
             $"{session.ReviewMoveIndex} / {session.ReviewMoveCount}   CLICK OR DRAG TO SEEK",
-            new Vector2(ReviewChartPopupSeekBounds.Center.X, ReviewChartPopupSeekBounds.Y - 18),
+            new Vector2(ReviewChartPopupSeekBounds.Center.X, ReviewChartPopupSeekBounds.Y - 25),
             new Color(238, 242, 255),
-            0.32f);
+            0.48f);
     }
 }
