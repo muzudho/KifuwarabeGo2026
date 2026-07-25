@@ -149,6 +149,8 @@ public sealed class GoAppSession
 
     public int CommentPageCount { get; private set; } = 1;
 
+    public bool IsReviewChartPopupOpen { get; private set; }
+
     public int SelectedCgosConnectionProfileIndex { get; private set; }
 
     public CgosConnectionProfile SelectedCgosConnectionProfile => _cgosConnectionProfiles[SelectedCgosConnectionProfileIndex];
@@ -370,6 +372,10 @@ public sealed class GoAppSession
     public void ChangeMode(GoAppModeKind modeKind)
     {
         CurrentMode = _modes[modeKind];
+        if (modeKind != GoAppModeKind.Reviewing)
+        {
+            IsReviewChartPopupOpen = false;
+        }
     }
 
     public void SetMoveTrendDisplayMode(MoveTrendDisplayMode mode)
@@ -396,6 +402,19 @@ public sealed class GoAppSession
     {
         CommentPageCount = Math.Max(1, pageCount);
         CommentPageIndex = Math.Clamp(CommentPageIndex, 0, CommentPageCount - 1);
+    }
+
+    public void OpenReviewChartPopup()
+    {
+        if (CurrentMode.Kind == GoAppModeKind.Reviewing)
+        {
+            IsReviewChartPopupOpen = true;
+        }
+    }
+
+    public void CloseReviewChartPopup()
+    {
+        IsReviewChartPopupOpen = false;
     }
 
     public void SelectUseKind(GoAppUseKind useKind)

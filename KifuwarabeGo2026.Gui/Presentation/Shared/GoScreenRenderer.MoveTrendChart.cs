@@ -76,10 +76,11 @@ public sealed partial class GoScreenRenderer
         IReadOnlyList<GoGameMove> moves,
         Rectangle bounds,
         Point mousePoint,
-        int? currentMoveNumber = null)
+        int? currentMoveNumber = null,
+        bool popup = false)
     {
-        FillRect(bounds, new Color(25, 48, 57, 246));
-        DrawRect(bounds, 2, new Color(72, 115, 121));
+        FillRect(bounds, popup ? new Color(42, 55, 92, 190) : new Color(25, 48, 57, 246));
+        DrawRect(bounds, popup ? 4 : 2, popup ? new Color(151, 170, 224) : new Color(72, 115, 121));
         DrawMoveInformationTabs(session, moves, bounds, mousePoint);
 
         if (session.MoveInformationDisplayMode == MoveInformationDisplayMode.Comment)
@@ -92,8 +93,10 @@ public sealed partial class GoScreenRenderer
         DrawCgosTrendModeButton(MoveTrendBothButtonBounds(bounds), "BOTH", session.MoveTrendDisplayMode == MoveTrendDisplayMode.Both, mousePoint);
         DrawCgosTrendModeButton(MoveTrendWinRateButtonBounds(bounds), "WIN RATE", session.MoveTrendDisplayMode == MoveTrendDisplayMode.WinRate, mousePoint);
 
-        var plot = new Rectangle(bounds.X + 52, bounds.Y + 62, bounds.Width - 106, bounds.Height - 106);
-        FillRect(plot, new Color(31, 57, 65));
+        var plot = popup
+            ? new Rectangle(bounds.X + 72, bounds.Y + 92, bounds.Width - 144, bounds.Height - 190)
+            : new Rectangle(bounds.X + 52, bounds.Y + 62, bounds.Width - 106, bounds.Height - 106);
+        FillRect(plot, popup ? new Color(26, 38, 70, 170) : new Color(31, 57, 65));
         DrawRect(plot, 1, new Color(84, 119, 123));
         var centerY = plot.Center.Y;
 
@@ -115,7 +118,7 @@ public sealed partial class GoScreenRenderer
         }
 
         var points = MoveTrendSeriesBuilder.Build(moves);
-        var maximumMove = Math.Max(100, points.Count);
+        var maximumMove = popup ? Math.Max(1, moves.Count) : Math.Max(100, points.Count);
         if (session.MoveTrendDisplayMode is MoveTrendDisplayMode.Both or MoveTrendDisplayMode.WinRate)
         {
             var alpha = session.MoveTrendDisplayMode == MoveTrendDisplayMode.Both ? (byte)68 : (byte)205;
@@ -184,7 +187,7 @@ public sealed partial class GoScreenRenderer
         FillRect(bounds, selected ? new Color(24, 91, 94) : hovered ? new Color(42, 65, 70) : new Color(22, 37, 43));
         DrawRect(bounds, selected ? 2 : 1, selected ? new Color(60, 232, 221) : new Color(76, 104, 108));
         DrawFittedText(label, new Rectangle(bounds.X + 8, bounds.Y + 6, bounds.Width - 16, bounds.Height - 12),
-            selected ? new Color(105, 247, 232) : new Color(211, 216, 210), 0.27f);
+            selected ? new Color(105, 247, 232) : new Color(211, 216, 210), bounds.Height >= 50 ? 0.42f : 0.27f);
     }
 
     private void DrawCgosWinRateSeries(
@@ -296,17 +299,27 @@ public sealed partial class GoScreenRenderer
         plot.Left + (Math.Clamp(moveNumber, 1, maximumMove) - 1f) / Math.Max(1, maximumMove - 1) * plot.Width;
 
     private static Rectangle MoveTrendScoreButtonBounds(Rectangle chartBounds) =>
-        new(chartBounds.Right - 360, chartBounds.Y + 12, 104, 36);
+        chartBounds.Width > 1000
+            ? new(chartBounds.Right - 570, chartBounds.Y + 18, 160, 52)
+            : new(chartBounds.Right - 360, chartBounds.Y + 12, 104, 36);
 
     private static Rectangle MoveInformationTrendButtonBounds(Rectangle bounds) =>
-        new(bounds.X + 16, bounds.Y + 12, 104, 36);
+        bounds.Width > 1000
+            ? new(bounds.X + 24, bounds.Y + 18, 180, 52)
+            : new(bounds.X + 16, bounds.Y + 12, 104, 36);
 
     private static Rectangle MoveInformationCommentButtonBounds(Rectangle bounds) =>
-        new(bounds.X + 122, bounds.Y + 12, 142, 36);
+        bounds.Width > 1000
+            ? new(bounds.X + 212, bounds.Y + 18, 240, 52)
+            : new(bounds.X + 122, bounds.Y + 12, 142, 36);
 
     private static Rectangle MoveTrendBothButtonBounds(Rectangle chartBounds) =>
-        new(chartBounds.Right - 254, chartBounds.Y + 12, 104, 36);
+        chartBounds.Width > 1000
+            ? new(chartBounds.Right - 400, chartBounds.Y + 18, 160, 52)
+            : new(chartBounds.Right - 254, chartBounds.Y + 12, 104, 36);
 
     private static Rectangle MoveTrendWinRateButtonBounds(Rectangle chartBounds) =>
-        new(chartBounds.Right - 148, chartBounds.Y + 12, 132, 36);
+        chartBounds.Width > 1000
+            ? new(chartBounds.Right - 230, chartBounds.Y + 18, 200, 52)
+            : new(chartBounds.Right - 148, chartBounds.Y + 12, 132, 36);
 }

@@ -70,6 +70,7 @@ public class Game1 : Game
     private double _reviewKeyboardNextRepeatAt;
     private int? _reviewMouseRepeatCommand;
     private double _reviewMouseNextRepeatAt;
+    private bool _reviewPopupSeekDragging;
 
     private const double CgosMatchCountdownSeconds = 10d;
     private const double CgosMatchFadeSeconds = 1.2d;
@@ -256,6 +257,13 @@ public class Game1 : Game
 
     private bool TryHandleReviewKeyboardInput(KeyboardState keyboard)
     {
+        if (_session.IsReviewChartPopupOpen && IsNewGlobalKeyPress(keyboard, Keys.Escape))
+        {
+            _session.CloseReviewChartPopup();
+            _reviewPopupSeekDragging = false;
+            return true;
+        }
+
         var command = GetReviewKeyboardCommand(keyboard);
         if (command is null)
         {
@@ -390,6 +398,7 @@ public class Game1 : Game
             GoScreenRenderer.GetEngineErrorLogHit(point, _session);
         Mouse.SetCursor(engineErrorLogHovered ? MouseCursor.Hand : MouseCursor.Arrow);
         UpdateReviewMouseRepeat(mouse, point);
+        UpdateReviewPopupSeekDrag(mouse, point);
 
         if (_previousMouse.LeftButton == ButtonState.Released && mouse.LeftButton == ButtonState.Pressed)
         {
@@ -891,6 +900,12 @@ public class Game1 : Game
             return false;
         }
 
+        if (_session.IsReviewChartPopupOpen)
+        {
+            HandleReviewChartPopupClick(point);
+            return true;
+        }
+
         if (GoScreenRenderer.GetReviewStepButtonHit(point) is { } step)
         {
             ExecuteReviewNavigation(step);
@@ -915,6 +930,12 @@ public class Game1 : Game
         if (GoScreenRenderer.GetReviewTrendDisplayModeButtonHit(point) is { } reviewTrendMode)
         {
             _session.SetMoveTrendDisplayMode(reviewTrendMode);
+            return true;
+        }
+
+        if (GoScreenRenderer.GetReviewChartPopupOpenHit(point))
+        {
+            _session.OpenReviewChartPopup();
             return true;
         }
 
@@ -1225,6 +1246,64 @@ public class Game1 : Game
         if (_inputClockSeconds < _reviewMouseNextRepeatAt) return;
         _reviewMouseNextRepeatAt = _inputClockSeconds + ReviewRepeatIntervalSeconds;
         ExecuteReviewNavigation(command);
+    }
+
+    private void HandleReviewChartPopupClick(Point point)
+    {
+        if (GoScreenRenderer.GetReviewChartPopupCloseHit(point))
+        {
+            _session.CloseReviewChartPopup();
+            _reviewPopupSeekDragging = false;
+            return;
+        }
+
+        if (GoScreenRenderer.GetReviewChartPopupInformationDisplayModeButtonHit(point) is { } informationMode)
+        {
+            _session.SetMoveInformationDisplayMode(informationMode);
+            return;
+        }
+
+        if (_session.MoveInformationDisplayMode == MoveInformationDisplayMode.Comment &&
+            GoScreenRenderer.GetReviewChartPopupCommentPageStepButtonHit(point) is { } commentPageStep)
+        {
+            _session.ChangeCommentPage(commentPageStep);
+            return;
+        }
+
+        if (_session.MoveInformationDisplayMode == MoveInformationDisplayMode.Trend &&
+            GoScreenRenderer.GetReviewChartPopupTrendDisplayModeButtonHit(point) is { } trendMode)
+        {
+            _session.SetMoveTrendDisplayMode(trendMode);
+            return;
+        }
+
+        if (_session.MoveInformationDisplayMode == MoveInformationDisplayMode.Trend &&
+            GoScreenRenderer.GetReviewChartPopupSeekMove(point, _session.ReviewMoveCount) is { } moveIndex)
+        {
+            MoveReview(moveIndex - _session.ReviewMoveIndex);
+            _reviewPopupSeekDragging = true;
+        }
+    }
+
+    private void UpdateReviewPopupSeekDrag(MouseState mouse, Point point)
+    {
+        if (!_session.IsReviewChartPopupOpen || mouse.LeftButton != ButtonState.Pressed)
+        {
+            _reviewPopupSeekDragging = false;
+            return;
+        }
+
+        if (!_reviewPopupSeekDragging ||
+            _session.MoveInformationDisplayMode != MoveInformationDisplayMode.Trend ||
+            GoScreenRenderer.GetReviewChartPopupSeekMove(point, _session.ReviewMoveCount) is not { } moveIndex)
+        {
+            return;
+        }
+
+        if (moveIndex != _session.ReviewMoveIndex)
+        {
+            MoveReview(moveIndex - _session.ReviewMoveIndex);
+        }
     }
 
     private void BeginCgosMatchNotification()

@@ -83,20 +83,22 @@ public sealed partial class GoScreenRenderer
     {
         DrawFittedText(
             $"MOVE {moveNumber} COMMENT",
-            new Rectangle(bounds.X + 24, bounds.Y + 60, bounds.Width - 48, 30),
+            new Rectangle(bounds.X + 24, bounds.Y + (bounds.Width > 1000 ? 82 : 60), bounds.Width - 48, bounds.Width > 1000 ? 46 : 30),
             new Color(255, 215, 92),
-            0.32f);
+            bounds.Width > 1000 ? 0.52f : 0.32f);
+        var top = bounds.Y + (bounds.Width > 1000 ? 136 : 94);
+        var footerHeight = bounds.Width > 1000 ? 92 : 56;
         var pageCount = DrawDynamicCommentText(
             comment,
-            new Rectangle(bounds.X + 24, bounds.Y + 94, bounds.Width - 48, bounds.Height - 150),
+            new Rectangle(bounds.X + 36, top, bounds.Width - 72, bounds.Bottom - top - footerHeight),
             session.CommentPageIndex);
         session.UpdateCommentPageCount(pageCount);
 
         DrawFittedText(
             $"PAGE {session.CommentPageIndex + 1} / {session.CommentPageCount}",
-            new Rectangle(bounds.X + 24, bounds.Bottom - 44, 220, 32),
+            new Rectangle(bounds.X + 36, bounds.Bottom - (bounds.Width > 1000 ? 70 : 44), bounds.Width > 1000 ? 340 : 220, bounds.Width > 1000 ? 50 : 32),
             new Color(174, 198, 198),
-            0.25f);
+            bounds.Width > 1000 ? 0.40f : 0.25f);
         DrawCommandButton(
             CommentPreviousPageButtonBounds(bounds),
             "<",
@@ -119,7 +121,7 @@ public sealed partial class GoScreenRenderer
 
         using var font = new System.Drawing.Font(
             "Meiryo",
-            16f,
+            bounds.Width > 1000 ? 28f : 16f,
             System.Drawing.FontStyle.Regular,
             System.Drawing.GraphicsUnit.Pixel);
         using var measurementBitmap = new System.Drawing.Bitmap(1, 1);
@@ -215,8 +217,12 @@ public sealed partial class GoScreenRenderer
     }
 
     private static Rectangle CommentPreviousPageButtonBounds(Rectangle bounds) =>
-        new(bounds.Right - 170, bounds.Bottom - 46, 70, 36);
+        bounds.Width > 1000
+            ? new(bounds.Right - 330, bounds.Bottom - 76, 140, 56)
+            : new(bounds.Right - 170, bounds.Bottom - 46, 70, 36);
 
     private static Rectangle CommentNextPageButtonBounds(Rectangle bounds) =>
-        new(bounds.Right - 92, bounds.Bottom - 46, 70, 36);
+        bounds.Width > 1000
+            ? new(bounds.Right - 174, bounds.Bottom - 76, 140, 56)
+            : new(bounds.Right - 92, bounds.Bottom - 46, 70, 36);
 }

@@ -54,6 +54,10 @@ public sealed partial class GoScreenRenderer
         DrawTournamentRulesAddPanel(session, mousePoint);
         DrawGtpEngineSelectionDialog(session, mousePoint);
         DrawGtpEngineEditPanel(session, mousePoint);
+        if (session.CurrentMode.Kind == GoAppModeKind.Reviewing && session.IsReviewChartPopupOpen)
+        {
+            DrawReviewChartPopup(session, mousePoint);
+        }
 
         _spriteBatch.End();
     }
