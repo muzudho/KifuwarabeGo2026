@@ -28,9 +28,13 @@ CGOS観戦とローカル対局へ評価値チャートを追加し、不具合�
 
 GUIとEngineの両方を使う場合は、2つともダウンロードしてください。
 
+## SHA-256
+
+- GUI版: `7A38D37CBFBE57AC3FDCCDAB38EF74D35B1A8768A83698BCF42F2C93E3C1BC62`
+- Engine版: `5983DBE39C8A8B18CB0BDAF3E78DD3F6AE9CACAB41AF41BBACD8B2D0A3F067B9`
+
 ## 動作環境
 
 - Windows x64
 - .NET 8 Desktop Runtime
 - フレームワーク依存配置
-
