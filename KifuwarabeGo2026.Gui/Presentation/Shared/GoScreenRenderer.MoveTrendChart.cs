@@ -13,6 +13,7 @@ public sealed partial class GoScreenRenderer
 {
     private static readonly Rectangle CgosTrendChartBounds = new(1144, 498, 668, 342);
     private static readonly Rectangle LocalTrendChartBounds = new(1144, 466, 668, 424);
+    private static readonly Rectangle LocalGameOverTrendChartBounds = new(1144, 376, 668, 466);
 
     public static MoveTrendDisplayMode? GetCgosTrendDisplayModeButtonHit(Point point)
     {
@@ -22,6 +23,11 @@ public sealed partial class GoScreenRenderer
     public static MoveTrendDisplayMode? GetLocalTrendDisplayModeButtonHit(Point point)
     {
         return GetMoveTrendDisplayModeButtonHit(point, LocalTrendChartBounds);
+    }
+
+    public static MoveTrendDisplayMode? GetLocalGameOverTrendDisplayModeButtonHit(Point point)
+    {
+        return GetMoveTrendDisplayModeButtonHit(point, LocalGameOverTrendChartBounds);
     }
 
     private static MoveTrendDisplayMode? GetMoveTrendDisplayModeButtonHit(Point point, Rectangle chartBounds)
@@ -37,6 +43,9 @@ public sealed partial class GoScreenRenderer
 
     private void DrawLocalTrendChart(GoAppSession session, Point mousePoint) =>
         DrawMoveTrendChart(session, session.CurrentGameRecord.Moves, LocalTrendChartBounds, mousePoint);
+
+    private void DrawLocalGameOverTrendChart(GoAppSession session, Point mousePoint) =>
+        DrawMoveTrendChart(session, session.CurrentGameRecord.Moves, LocalGameOverTrendChartBounds, mousePoint);
 
     private void DrawMoveTrendChart(
         GoAppSession session,

@@ -638,11 +638,16 @@ public class Game1 : Game
                 return;
             }
 
-            if (_session.CurrentMode.Kind == GoAppModeKind.Playing &&
-                GoScreenRenderer.GetLocalTrendDisplayModeButtonHit(point) is { } localTrendMode)
+            MoveTrendDisplayMode? localTrendMode = _session.CurrentMode.Kind switch
             {
-                _session.SetMoveTrendDisplayMode(localTrendMode);
-                GuiOperationLog.User("Changed local trend display", $"mode={localTrendMode}");
+                GoAppModeKind.Playing => GoScreenRenderer.GetLocalTrendDisplayModeButtonHit(point),
+                GoAppModeKind.GameOver => GoScreenRenderer.GetLocalGameOverTrendDisplayModeButtonHit(point),
+                _ => null,
+            };
+            if (localTrendMode is { } selectedLocalTrendMode)
+            {
+                _session.SetMoveTrendDisplayMode(selectedLocalTrendMode);
+                GuiOperationLog.User("Changed local trend display", $"mode={selectedLocalTrendMode}");
                 _previousMouse = mouse;
                 return;
             }

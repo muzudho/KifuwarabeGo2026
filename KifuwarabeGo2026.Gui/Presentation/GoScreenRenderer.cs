@@ -311,19 +311,12 @@ public sealed partial class GoScreenRenderer
         DrawText("GAME OVER", new Vector2(1144, 132), new Color(255, 230, 160), 0.9f);
         DrawText(FormatGameEndMoveCount(session.PlayedMoveCount), new Vector2(1144, 196), new Color(99, 223, 185), 0.58f);
 
-        var tournamentSection = new Rectangle(1144, 236, 668, 110);
-        DrawVerticalResultSection(tournamentSection, "TOURNAMENT", new Color(62, 112, 105));
-        DrawResultRow(new Rectangle(1164, 257, 628, 68), "RULES", session.TournamentDisplayName, new Color(39, 68, 65), Color.White);
+        var resultSection = new Rectangle(1144, 236, 668, 128);
+        DrawVerticalResultSection(resultSection, "RESULT", new Color(80, 48, 38));
+        DrawResultRow(new Rectangle(1164, 242, 628, 52), "RULES", session.TournamentDisplayName, new Color(39, 68, 65), Color.White);
+        DrawCalculationResultRow(new Rectangle(1164, 300, 628, 52), session);
 
-        var factsSection = new Rectangle(1144, 358, 668, 110);
-        DrawVerticalResultSection(factsSection, "FACTS", new Color(66, 104, 116));
-        DrawAgehamaStrip(session, 385, minimal: true);
-
-        var calculationSection = new Rectangle(1144, 480, 668, 350);
-        DrawVerticalResultSection(calculationSection, "CALCULATION", new Color(76, 91, 126));
-        DrawCalculationMethodRow(new Rectangle(1164, 500, 628, 56), session);
-        DrawStoneCountStrip(session, 568, showLeader: false, minimal: true);
-        DrawCalculationResultRow(new Rectangle(1164, 674, 628, 64), session);
+        DrawLocalGameOverTrendChart(session, mousePoint);
 
         var actionSection = new Rectangle(1144, 854, 668, 126);
         DrawVerticalResultSection(actionSection, "ACTION", new Color(91, 82, 105));
