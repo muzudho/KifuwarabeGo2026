@@ -9,6 +9,22 @@
     <DefaultCharacter>*</DefaultCharacter>
     <CharacterRegions>
       <CharacterRegion>
+        <Start>&#40658;</Start>
+        <End>&#40658;</End>
+      </CharacterRegion>
+      <CharacterRegion>
+        <Start>&#30333;</Start>
+        <End>&#30333;</End>
+      </CharacterRegion>
+      <CharacterRegion>
+        <Start>&#26377;</Start>
+        <End>&#26377;</End>
+      </CharacterRegion>
+      <CharacterRegion>
+        <Start>&#21033;</Start>
+        <End>&#21033;</End>
+      </CharacterRegion>
+      <CharacterRegion>
         <Start>&#12353;</Start>
         <End>&#12438;</End>
       </CharacterRegion>

@@ -1,6 +1,7 @@
 namespace KifuwarabeGo2026.Gui.Application;
 
 using KifuwarabeGo2026.Gui.Application.Cgos.ConnectionTarget;
+using KifuwarabeGo2026.Gui.Application.Cgos.Watching;
 using KifuwarabeGo2026.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.Gui.Application.Local.Resting;
 using KifuwarabeGo2026.Gui.Application.Local.Resting.TournamentRule;
@@ -139,6 +140,8 @@ public sealed class GoAppSession
     public bool IsAnyCgosProcessRunning => IsCgosConnectionRunning || IsCgosBlackConnectionRunning || IsCgosWhiteConnectionRunning || IsCgosAdminRunning;
 
     public bool IsCgosConnectionRunning { get; private set; }
+
+    public CgosTrendDisplayMode CgosTrendDisplayMode { get; private set; } = CgosTrendDisplayMode.Both;
 
     public int SelectedCgosConnectionProfileIndex { get; private set; }
 
@@ -352,6 +355,11 @@ public sealed class GoAppSession
     public void ChangeMode(GoAppModeKind modeKind)
     {
         CurrentMode = _modes[modeKind];
+    }
+
+    public void SetCgosTrendDisplayMode(CgosTrendDisplayMode mode)
+    {
+        CgosTrendDisplayMode = mode;
     }
 
     public void SelectUseKind(GoAppUseKind useKind)

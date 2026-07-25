@@ -38,7 +38,7 @@ public sealed partial class GoScreenRenderer
             surface.Cell);
 
         DrawBoardFrameHighlights(surface.Outer);
-        DrawCgosWatchingSidePanel(observation, mousePoint);
+        DrawCgosWatchingSidePanel(session, observation, mousePoint);
         _spriteBatch.End();
     }
 
@@ -72,7 +72,7 @@ public sealed partial class GoScreenRenderer
     /// </summary>
     public static bool GetCgosWatchingReviewButtonHit(Point point) => CgosWatchingReviewButtonBounds.Contains(point);
 
-    private void DrawCgosWatchingSidePanel(CgosGameObservation observation, Point mousePoint)
+    private void DrawCgosWatchingSidePanel(GoAppSession session, CgosGameObservation observation, Point mousePoint)
     {
         var panel = new Rectangle(1102, 78, 760, 924);
         FillRect(new Rectangle(panel.X + 16, panel.Y + 18, panel.Width, panel.Height), new Color(0, 0, 0, 120));
@@ -85,15 +85,17 @@ public sealed partial class GoScreenRenderer
             DrawCommandButton(CgosWatchingBackButtonBounds, "BACK TO CONNECTION", false, mousePoint, scale: 0.3f);
         }
 
-        DrawVerticalResultSection(new Rectangle(1144, 204, 668, 172), "RULES", new Color(66, 104, 116));
-        DrawResultRow(new Rectangle(1164, 208, 628, 52), "GAME", observation.GameId.ToString(), new Color(62, 112, 105), Color.White);
-        DrawResultRow(new Rectangle(1164, 264, 628, 52), "BOARD", $"{observation.BoardSize} x {observation.BoardSize}", new Color(62, 112, 105), Color.White);
-        DrawResultRow(new Rectangle(1164, 320, 628, 52), "KOMI", observation.Komi.ToString("0.0"), new Color(62, 112, 105), Color.White);
+        DrawVerticalResultSection(new Rectangle(1144, 204, 668, 58), "GAME INFO", new Color(66, 104, 116));
+        DrawFittedText(
+            $"GAME {observation.GameId}     BOARD {observation.BoardSize} x {observation.BoardSize}     KOMI {observation.Komi:0.0}     MOVES {observation.MoveCount}",
+            new Rectangle(1164, 212, 628, 38),
+            Color.White,
+            0.34f);
 
-        DrawVerticalResultSection(new Rectangle(1144, 388, 668, 200), "PLAYERS", new Color(76, 91, 126));
+        DrawVerticalResultSection(new Rectangle(1144, 276, 668, 200), "PLAYERS", new Color(76, 91, 126));
         DrawBothPlayersComponent(
             1144,
-            396,
+            284,
             668,
             observation.BlackPlayerName,
             observation.WhitePlayerName,
@@ -105,16 +107,12 @@ public sealed partial class GoScreenRenderer
             observation.CurrentTurn,
             minimal: true);
 
-        DrawVerticalResultSection(new Rectangle(1144, 600, 668, 66), "FACTS", new Color(66, 104, 116));
-        DrawResultRow(new Rectangle(1164, 606, 628, 52), "MOVES", observation.MoveCount.ToString(), new Color(66, 104, 116), Color.White);
-
-        GoGameMove? latestMove = observation.Moves.Count == 0 ? null : observation.Moves[^1];
-        DrawMoveAnalysisSection(latestMove, CgosAnalysisSectionBounds);
+        DrawCgosTrendChart(session, observation, mousePoint);
 
         if (observation.IsFinished)
         {
-            DrawVerticalResultSection(new Rectangle(1144, 836, 668, 64), "RESULT", new Color(80, 48, 38));
-            DrawCgosResultRow(new Rectangle(1164, 842, 628, 52), observation.Result);
+            DrawVerticalResultSection(new Rectangle(1144, 852, 668, 48), "RESULT", new Color(80, 48, 38));
+            DrawCgosResultRow(new Rectangle(1164, 852, 628, 42), observation.Result);
 
             DrawVerticalResultSection(new Rectangle(1144, 912, 668, 68), "ACTION", new Color(91, 82, 105));
             DrawCommandButton(CgosWatchingReviewButtonBounds, "KIFU REVIEW", false, mousePoint, scale: 0.36f);
@@ -122,11 +120,9 @@ public sealed partial class GoScreenRenderer
         }
         else
         {
-            DrawVerticalResultSection(new Rectangle(1144, 836, 668, 86), "STATUS", new Color(62, 112, 105));
-            DrawResultRow(new Rectangle(1164, 846, 628, 56), "STATE", "WATCHING LIVE GAME", new Color(62, 112, 105), new Color(99, 223, 185));
+            DrawVerticalResultSection(new Rectangle(1144, 852, 668, 64), "STATUS", new Color(62, 112, 105));
+            DrawResultRow(new Rectangle(1164, 858, 628, 48), "STATE", "WATCHING LIVE GAME", new Color(62, 112, 105), new Color(99, 223, 185));
         }
-
-        DrawMoveAnalysisTooltip(latestMove, CgosAnalysisSectionBounds, mousePoint, CgosAnalysisTooltipBounds);
 
     }
 
@@ -160,7 +156,4 @@ public sealed partial class GoScreenRenderer
     /// </summary>
     private static Rectangle CgosWatchingReviewButtonBounds => new(1164, 920, 306, 52);
 
-    private static Rectangle CgosAnalysisSectionBounds => new(1144, 678, 668, 146);
-
-    private static Rectangle CgosAnalysisTooltipBounds => new(1164, 812, 628, 104);
 }

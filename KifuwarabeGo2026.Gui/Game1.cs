@@ -441,6 +441,15 @@ public class Game1 : Game
                     return;
                 }
 
+                if (_session.CgosConnectionFlowKind is CgosConnectionFlowKind.Watching or CgosConnectionFlowKind.Result &&
+                    GoScreenRenderer.GetCgosTrendDisplayModeButtonHit(point) is { } trendMode)
+                {
+                    _session.SetCgosTrendDisplayMode(trendMode);
+                    GuiOperationLog.User("Changed CGOS trend display", $"mode={trendMode}");
+                    _previousMouse = mouse;
+                    return;
+                }
+
                 if (_session.CgosConnectionFlowKind == CgosConnectionFlowKind.Result)
                 {
                     if (GoScreenRenderer.GetCgosWatchingReviewButtonHit(point))
