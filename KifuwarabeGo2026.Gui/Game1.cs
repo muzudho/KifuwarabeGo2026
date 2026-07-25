@@ -68,8 +68,7 @@ public class Game1 : Game
 
     private const double CgosMatchCountdownSeconds = 10d;
     private const double CgosMatchFadeSeconds = 1.2d;
-    private const double CgosMatchButtonDelaySeconds = 0.65d;
-    private const double CgosMatchButtonFadeSeconds = 1.1d;
+    private const double CgosMatchButtonDelaySeconds = 0.30d;
 
     public Game1()
     {
@@ -336,18 +335,18 @@ public class Game1 : Game
             _cgosMatchNotificationMode != CgosMatchNotificationMode.None)
         {
             var notificationAge = GetCgosMatchNotificationAge();
-            var buttonOpacity = (float)Math.Clamp(
-                (notificationAge.TotalSeconds - CgosMatchButtonDelaySeconds) / CgosMatchButtonFadeSeconds,
-                0d,
-                1d);
+            var notificationOpacity =
+                (float)Math.Clamp(notificationAge.TotalSeconds / CgosMatchFadeSeconds, 0d, 1d);
+            var buttonsEnabled =
+                notificationAge.TotalSeconds >= CgosMatchButtonDelaySeconds;
             _renderer.DrawCgosMatchNotification(
                 Mouse.GetState().Position,
                 _cgosMatchNotificationMode == CgosMatchNotificationMode.Deferred,
                 _cgosGameObservation.IsFinished,
                 GetCgosMatchSecondsRemaining(notificationAge),
-                (float)Math.Clamp(notificationAge.TotalSeconds / CgosMatchFadeSeconds, 0d, 1d),
-                buttonOpacity,
-                buttonOpacity >= 1f);
+                notificationOpacity,
+                notificationOpacity,
+                buttonsEnabled);
         }
 
         base.Draw(gameTime);
@@ -1159,8 +1158,8 @@ public class Game1 : Game
             return true;
         }
 
-        var buttonsEnabled = GetCgosMatchNotificationAge().TotalSeconds >=
-            CgosMatchButtonDelaySeconds + CgosMatchButtonFadeSeconds;
+        var buttonsEnabled =
+            GetCgosMatchNotificationAge().TotalSeconds >= CgosMatchButtonDelaySeconds;
         if (GoScreenRenderer.GetCgosMatchWatchNowHit(point, buttonsEnabled))
         {
             OpenNotifiedCgosMatch("Pressed WATCH NOW");
@@ -1344,7 +1343,7 @@ public class Game1 : Game
             DisplayName = draft.DisplayName.Trim(),
             Host = draft.Host.Trim(),
             Event = draft.Event.Trim(),
-            Role = draft.Role.Trim(),
+            Round = draft.Round.Trim(),
             Note = draft.Note.Trim(),
         };
 
@@ -2253,7 +2252,7 @@ public class Game1 : Game
         {
             _guiLogFiles.AddRange(Directory.EnumerateFiles(directory, "*.log", SearchOption.TopDirectoryOnly)
                 .OrderByDescending(File.GetLastWriteTimeUtc)
-                .Take(7));
+                .Take(5));
         }
         _selectedGuiLogIndex = _guiLogFiles.Count > 0 ? 0 : -1;
     }

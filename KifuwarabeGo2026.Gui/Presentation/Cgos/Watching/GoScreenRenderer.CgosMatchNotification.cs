@@ -51,11 +51,8 @@ public sealed partial class GoScreenRenderer
                 : $"対局が付きました。{secondsRemaining} 秒後に観戦画面へ遷移します";
             DrawFittedText(message, new Rectangle(bounds.X + 30, bounds.Y + 18, 930, 42), Color.White * opacity, 0.48f);
 
-            if (buttonOpacity > 0f)
-            {
-                DrawMatchNotificationButton(CgosMatchWatchNowBounds, finished ? "VIEW RESULT" : "WATCH NOW", mousePoint, buttonOpacity, buttonsEnabled, 0.31f);
-                DrawMatchNotificationButton(CgosMatchWatchLaterBounds, "WATCH LATER", mousePoint, buttonOpacity, buttonsEnabled, 0.28f);
-            }
+            DrawMatchNotificationButton(CgosMatchWatchNowBounds, buttonsEnabled ? finished ? "VIEW RESULT" : "WATCH NOW" : "", mousePoint, buttonOpacity, buttonsEnabled, 0.31f);
+            DrawMatchNotificationButton(CgosMatchWatchLaterBounds, buttonsEnabled ? "WATCH LATER" : "", mousePoint, buttonOpacity, buttonsEnabled, 0.28f);
         }
 
         _spriteBatch.End();

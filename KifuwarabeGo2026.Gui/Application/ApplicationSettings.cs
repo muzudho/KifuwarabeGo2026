@@ -1,5 +1,6 @@
 namespace KifuwarabeGo2026.Gui.Application;
 
+using KifuwarabeGo2026.Gui.Application.Cgos.ConnectionTarget;
 using KifuwarabeGo2026.Gui.Application.Local.Resting.TournamentRule;
 using System;
 using System.Collections.Generic;
@@ -28,6 +29,8 @@ public sealed class ApplicationSettings
 
     public List<TournamentRules> TournamentRules { get; set; } = CreateDefaultTournamentRules();
 
+    public List<CgosConnectionProfile> CgosConnections { get; set; } = CreateDefaultCgosConnections();
+
     public static void Save(string logRootDirectory)
     {
         var fullPath = Path.GetFullPath(logRootDirectory.Trim());
@@ -42,6 +45,12 @@ public sealed class ApplicationSettings
         WriteCurrent();
     }
 
+    public static void SaveCgosConnections(IEnumerable<CgosConnectionProfile> profiles)
+    {
+        Current.CgosConnections = profiles.ToList();
+        WriteCurrent();
+    }
+
     private static ApplicationSettings Load()
     {
         try
@@ -53,6 +62,7 @@ public sealed class ApplicationSettings
                 {
                     settings.LogRootDirectory = Path.GetFullPath(settings.LogRootDirectory);
                     settings.TournamentRules ??= CreateDefaultTournamentRules();
+                    settings.CgosConnections ??= CreateDefaultCgosConnections();
                     return settings;
                 }
             }
@@ -65,6 +75,7 @@ public sealed class ApplicationSettings
                 {
                     legacy.LogRootDirectory = Path.GetFullPath(legacy.LogRootDirectory);
                     legacy.TournamentRules = CreateDefaultTournamentRules();
+                    legacy.CgosConnections = CreateDefaultCgosConnections();
                     TryWrite(legacy);
                     return legacy;
                 }
@@ -123,6 +134,14 @@ public sealed class ApplicationSettings
             MainTimeMinutes = 30,
             MainTimeSeconds = 0,
             MoveLimit = 400,
+        },
+    ];
+
+    private static List<CgosConnectionProfile> CreateDefaultCgosConnections() =>
+    [
+        new("CGF Open 2026", "uec-go.com", 6809, "1day, 2day", "CGOS server")
+        {
+            Event = "CGF Open 2026",
         },
     ];
 

@@ -4,7 +4,7 @@ public sealed record CgosConnectionProfile(
     string DisplayName,
     string Host,
     int Port,
-    string Role,
+    string Round,
     string Note)
 {
     /// <summary>
@@ -19,7 +19,7 @@ public enum CgosConnectionProfileEditField
     Host,
     Port,
     Event,
-    Role,
+    Round,
     Note,
 }
 

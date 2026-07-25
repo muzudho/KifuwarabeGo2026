@@ -700,7 +700,7 @@ public sealed class GoAppSession
             CgosConnectionProfileEditField.Host => CgosConnectionEditDraft with { Host = text },
             CgosConnectionProfileEditField.Port => CgosConnectionEditDraft,
             CgosConnectionProfileEditField.Event => CgosConnectionEditDraft with { Event = text },
-            CgosConnectionProfileEditField.Role => CgosConnectionEditDraft with { Role = text },
+            CgosConnectionProfileEditField.Round => CgosConnectionEditDraft with { Round = text },
             CgosConnectionProfileEditField.Note => CgosConnectionEditDraft with { Note = text },
             _ => throw new ArgumentOutOfRangeException(nameof(field), field, "CGOS connection edit field is out of range."),
         };
@@ -781,7 +781,7 @@ public sealed class GoAppSession
         CgosConnectionProfileEditField.Host => CgosConnectionEditDraft.Host,
         CgosConnectionProfileEditField.Port => CgosConnectionPortDraft,
         CgosConnectionProfileEditField.Event => CgosConnectionEditDraft.Event,
-        CgosConnectionProfileEditField.Role => CgosConnectionEditDraft.Role,
+        CgosConnectionProfileEditField.Round => CgosConnectionEditDraft.Round,
         CgosConnectionProfileEditField.Note => CgosConnectionEditDraft.Note,
         _ => throw new ArgumentOutOfRangeException(nameof(field), field, "CGOS connection edit field is out of range."),
     };

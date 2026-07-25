@@ -1,12 +1,12 @@
 {
   "cgosConnections": [
     {
-      "displayName": "Yamashita CGOS Server",
+      "displayName": "CGF Open 2026",
       "host": "uec-go.com",
       "port": 6809,
-      "role": "Practice",
-      "note": "CGOS practice server",
-      "event": "CGF Open 2026 Practice"
+      "role": "1day, 2day",
+      "note": "CGOS server",
+      "event": "CGF Open 2026"
     },
     {
       "displayName": "2026\u5E74\u5927\u4F1A\u4E88\u9078",

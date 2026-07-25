@@ -21,8 +21,8 @@ public static class CgosSgfFileNameBuilder
         var black = SanitizePart(observation.BlackPlayerName, "BLACK");
         var white = SanitizePart(observation.WhitePlayerName, "WHITE");
         var eventName = SanitizePart(profile.Event, "EVENT");
-        var role = SanitizePart(profile.Role, "ROLE");
-        var baseName = $"{eventName}_{role}_{black}_{white}_{dateTime}";
+        var round = SanitizePart(profile.Round, "ROUND");
+        var baseName = $"{eventName}_{round}_{black}_{white}_{dateTime}";
         if (baseName.Length > maxBaseNameLength)
             baseName = $"{black}_{white}_{dateTime}";
 
