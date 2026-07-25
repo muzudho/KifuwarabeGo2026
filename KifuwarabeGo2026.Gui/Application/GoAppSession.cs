@@ -1327,7 +1327,12 @@ public sealed class GoAppSession
         _gtpEngineProfiles.AddRange(profiles.Select(profile => profile.Clone()));
         if (_gtpEngineProfiles.Count == 0)
         {
-            _gtpEngineProfiles.Add(new GtpEngineProfile());
+            _gtpEngineProfiles.Add(new GtpEngineProfile
+            {
+                DisplayName = "GTP Engine Not Configured",
+                ExecutablePath = "",
+                WorkingDirectoryModel = WorkingDirectoryModel.Empty,
+            });
         }
 
         SelectedBlackGtpEngineIndex = 0;
@@ -1893,6 +1898,41 @@ public sealed class GoAppSession
         };
 
         return _gtpEngineProfiles[Math.Clamp(index, 0, _gtpEngineProfiles.Count - 1)].Clone();
+    }
+
+    public bool CanStartPlaying =>
+        IsPlayerLaunchConfigurationValid(GoStone.Black) &&
+        IsPlayerLaunchConfigurationValid(GoStone.White);
+
+    private bool IsPlayerLaunchConfigurationValid(GoStone stone)
+    {
+        if (GetPlayerKind(stone) == GoPlayerKind.Human)
+        {
+            return true;
+        }
+
+        var profile = GetGtpEngineProfile(stone);
+        if (string.IsNullOrWhiteSpace(profile.ExecutablePath))
+        {
+            return false;
+        }
+
+        if (Path.IsPathFullyQualified(profile.ExecutablePath) && !File.Exists(profile.ExecutablePath))
+        {
+            return false;
+        }
+
+        try
+        {
+            var selectedExecutable = Path.GetFullPath(profile.ExecutablePath);
+            var applicationExecutable = Environment.ProcessPath;
+            return string.IsNullOrWhiteSpace(applicationExecutable) ||
+                   !selectedExecutable.Equals(Path.GetFullPath(applicationExecutable), StringComparison.OrdinalIgnoreCase);
+        }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            return false;
+        }
     }
 
     public GoPlayerKind GetPlayerKind(GoStone stone) => stone switch

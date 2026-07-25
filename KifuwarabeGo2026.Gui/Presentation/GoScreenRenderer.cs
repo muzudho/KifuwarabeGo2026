@@ -267,7 +267,13 @@ public sealed partial class GoScreenRenderer
         DrawVerticalResultSection(new Rectangle(1144, 916, 668, 76), "ACTION", new Color(91, 82, 105));
         DrawCommandButton(StartReviewingButtonBounds, "KIFU REVIEW", false, mousePoint, enabled: session.HasReviewGameRecord, scale: 0.32f);
         DrawCommandButton(StartBoardEditingButtonBounds, "EDIT BOARD", false, mousePoint, scale: 0.36f);
-        DrawCommandButton(StartPlayingButtonBounds, "START", false, mousePoint, scale: 0.48f);
+        DrawCommandButton(
+            StartPlayingButtonBounds,
+            session.CanStartPlaying ? "START" : "ENGINE REQUIRED",
+            false,
+            mousePoint,
+            enabled: session.CanStartPlaying,
+            scale: session.CanStartPlaying ? 0.48f : 0.28f);
     }
     private void DrawPlayingSidePanel(GoAppSession session, Point mousePoint)
     {

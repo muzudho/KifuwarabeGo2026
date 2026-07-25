@@ -1,0 +1,21 @@
+{
+  "gtpEngines": [
+    {
+      "displayName": "Example GTP Engine",
+      "defaultCgosLoginName": "",
+      "defaultCgosPlainTextPassword": "",
+      "executablePath": "C:\\Path\\To\\YourGtpEngine.exe",
+      "workingDirectory": "C:\\Path\\To",
+      "arguments": "",
+      "enableGtpLog": true,
+      "guiOptions": {
+        "RandomMove": "ChebyshevDistanceFromStar",
+        "AvoidEyes": "true",
+        "RandomSeed": "0",
+        "EngineTag": "",
+        "DebugLogFile": "",
+        "ClearCache": "false"
+      }
+    }
+  ]
+}

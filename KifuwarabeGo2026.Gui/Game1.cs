@@ -683,7 +683,9 @@ public class Game1 : Game
             {
                 _session.StartBoardEditing();
             }
-            else if (isSetupMode && GoScreenRenderer.GetStartPlayingButtonHit(point, _session.CurrentMode.Kind))
+            else if (isSetupMode &&
+                     _session.CanStartPlaying &&
+                     GoScreenRenderer.GetStartPlayingButtonHit(point, _session.CurrentMode.Kind))
             {
                 _playingScene.StartPlaying();
             }

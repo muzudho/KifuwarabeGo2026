@@ -32,18 +32,25 @@ public sealed class GtpEngineCatalog
 
     public static GtpEngineCatalog LoadFromDefaultLocation()
     {
-        var sourceDirectory = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "Content", "GtpEngines"));
-        var directory = Directory.Exists(sourceDirectory)
-            ? sourceDirectory
-            : Path.Combine(AppContext.BaseDirectory, "Content", "GtpEngines");
-        return Load(Path.Combine(directory, "gtp-engine-list.json"));
+        var localApplicationData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        var directory = Path.Combine(localApplicationData, "KifuwarabeGo2026", "GtpEngines");
+        var listPath = Path.Combine(directory, "gtp-engine-list.json");
+        if (!File.Exists(listPath))
+        {
+            Directory.CreateDirectory(directory);
+            File.WriteAllText(
+                listPath,
+                JsonSerializer.Serialize(new GtpEngineProfileList(), JsonOptions));
+        }
+
+        return Load(listPath);
     }
 
     public static GtpEngineCatalog Load(string listPath)
     {
         if (!File.Exists(listPath))
         {
-            return new GtpEngineCatalog(listPath, new[] { Normalize(CreateDefaultProfile(), AppContext.BaseDirectory) });
+            return new GtpEngineCatalog(listPath, Array.Empty<GtpEngineProfile>());
         }
 
         var listDirectory = Path.GetDirectoryName(listPath) ?? AppContext.BaseDirectory;
@@ -52,11 +59,6 @@ public sealed class GtpEngineCatalog
             .Where(profile => !string.IsNullOrWhiteSpace(profile.ExecutablePath))
             .Select(profile => Normalize(profile, listDirectory))
             .ToList();
-
-        if (normalizedProfiles.Count == 0)
-        {
-            normalizedProfiles.Add(Normalize(CreateDefaultProfile(), listDirectory));
-        }
 
         return new GtpEngineCatalog(listPath, normalizedProfiles);
     }
@@ -130,37 +132,6 @@ public sealed class GtpEngineCatalog
         {
             return path;
         }
-    }
-
-    private static GtpEngineProfile CreateDefaultProfile()
-    {
-        var baseDirectory = AppContext.BaseDirectory;
-        var configuration = new DirectoryInfo(baseDirectory).Parent?.Name ?? "Debug";
-        var repositoryRoot = Path.GetFullPath(Path.Combine(baseDirectory, "..", "..", "..", ".."));
-        var executableName = OperatingSystem.IsWindows() ? "KifuwarabeGo2026.Engine.exe" : "KifuwarabeGo2026.Engine";
-        var engineDirectory = Path.Combine(repositoryRoot, "KifuwarabeGo2026.Engine", "bin", configuration, "net8.0");
-        var engineExecutable = Path.Combine(engineDirectory, executableName);
-        if (File.Exists(engineExecutable))
-        {
-            return new GtpEngineProfile
-            {
-                DisplayName = "Kifuwarabe Star Random GTP",
-                ExecutablePath = engineExecutable,
-                WorkingDirectoryModel = WorkingDirectoryModel.FromString(engineDirectory),
-                Arguments = "",
-                EnableGtpLog = true,
-            };
-        }
-
-        var engineProject = Path.Combine(repositoryRoot, "KifuwarabeGo2026.Engine", "KifuwarabeGo2026.Engine.csproj");
-        return new GtpEngineProfile
-        {
-            DisplayName = "Kifuwarabe Star Random GTP",
-            ExecutablePath = "dotnet",
-            WorkingDirectoryModel = WorkingDirectoryModel.FromString(repositoryRoot),
-            Arguments = $"run --project \"{engineProject}\"",
-            EnableGtpLog = true,
-        };
     }
 
     private sealed class GtpEngineProfileList
