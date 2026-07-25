@@ -25,6 +25,8 @@ using Microsoft.Xna.Framework.Input;
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
+using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -54,6 +56,11 @@ public class Game1 : Game
     private readonly TextBoxController _cgosConnectionEditTextBox = new(240);
     private KeyboardState _previousCgosCredentialKeyboard;
     private readonly TextBoxController _cgosCredentialTextBox = new(240);
+    private bool _isApplicationSettingsOpen;
+    private readonly List<string> _guiLogFiles = new();
+    private int _selectedGuiLogIndex = -1;
+    private string _applicationSettingsMessage = "";
+    private string _lastScreenState = "Title";
 
     public Game1()
     {
@@ -79,6 +86,7 @@ public class Game1 : Game
         Window.Title = "Kifuwarabe Go 2026";
         Window.AllowUserResizing = true;
         Window.TextInput += OnTextInput;
+        RefreshGuiLogFiles();
     }
 
     protected override void LoadContent()
@@ -91,6 +99,7 @@ public class Game1 : Game
     protected override void Update(GameTime gameTime)
     {
         var keyboard = Keyboard.GetState();
+        LogAutomaticScreenTransition();
         if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
         {
             Exit();
@@ -236,7 +245,10 @@ public class Game1 : Game
         {
             if (_renderer is not null)
             {
-                TitleRenderer.Draw(_renderer, Mouse.GetState().Position);
+                if (_isApplicationSettingsOpen)
+                    _renderer.DrawApplicationSettings(Mouse.GetState().Position, ApplicationSettings.Current.LogRootDirectory, _guiLogFiles, _selectedGuiLogIndex, _applicationSettingsMessage);
+                else
+                    TitleRenderer.Draw(_renderer, Mouse.GetState().Position);
             }
         }
         else if (_session.UseKind == GoAppUseKind.CgosClient)
@@ -282,15 +294,28 @@ public class Game1 : Game
 
         if (_previousMouse.LeftButton == ButtonState.Released && mouse.LeftButton == ButtonState.Pressed)
         {
+            GuiOperationLog.User("Mouse click", $"screen={GetCurrentScreenState()} x={point.X} y={point.Y}");
             if (_session.UseKind is null)
             {
-                if (TitleRenderer.IsLocalGameButtonHit(point))
+                if (_isApplicationSettingsOpen)
                 {
+                    HandleApplicationSettingsClick(point);
+                }
+                else if (TitleRenderer.IsLocalGameButtonHit(point))
+                {
+                    GuiOperationLog.User("Pressed Local button", "Navigate from title to local setup");
                     _session.SelectUseKind(GoAppUseKind.LocalGame);
                 }
                 else if (TitleRenderer.IsCgosClientButtonHit(point))
                 {
+                    GuiOperationLog.User("Pressed CGOS button", "Navigate from title to CGOS connection selection");
                     _session.SelectUseKind(GoAppUseKind.CgosClient);
+                }
+                else if (TitleRenderer.IsSettingsButtonHit(point))
+                {
+                    GuiOperationLog.User("Pressed Settings button");
+                    _isApplicationSettingsOpen = true;
+                    RefreshGuiLogFiles();
                 }
 
                 _previousMouse = mouse;
@@ -1914,6 +1939,114 @@ public class Game1 : Game
 
     private bool IsNewGtpEngineKeyPress(KeyboardState keyboard, Keys key) =>
         keyboard.IsKeyDown(key) && _previousGtpEngineKeyboard.IsKeyUp(key);
+
+    private void HandleApplicationSettingsClick(Point point)
+    {
+        if (GoScreenRenderer.GetSettingsBackButtonHit(point))
+        {
+            GuiOperationLog.User("Pressed settings Back button");
+            _isApplicationSettingsOpen = false;
+            return;
+        }
+
+        if (GoScreenRenderer.GetSettingsBrowseButtonHit(point))
+        {
+            GuiOperationLog.User("Pressed log folder Browse button");
+            using var dialog = new System.Windows.Forms.FolderBrowserDialog
+            {
+                Description = "Select the folder which will contain the Gui and Cgos log folders.",
+                SelectedPath = ApplicationSettings.Current.LogRootDirectory,
+                UseDescriptionForTitle = true,
+            };
+            if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+            {
+                try
+                {
+                    var previous = ApplicationSettings.Current.LogRootDirectory;
+                    ApplicationSettings.Save(dialog.SelectedPath);
+                    GuiOperationLog.User("Changed log folder", $"from={previous} to={ApplicationSettings.Current.LogRootDirectory}");
+                    _applicationSettingsMessage = "SAVED. New log files will use this folder.";
+                    RefreshGuiLogFiles();
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
+                {
+                    _applicationSettingsMessage = "ERROR: " + ex.Message;
+                    ApplicationErrorLog.Write("SETTINGS", "Could not save the log folder.", ex);
+                }
+            }
+            else
+            {
+                GuiOperationLog.User("Cancelled log folder selection");
+            }
+            return;
+        }
+
+        if (GoScreenRenderer.GetSettingsLogItemHit(point, _guiLogFiles.Count) is { } index)
+        {
+            _selectedGuiLogIndex = index;
+            _applicationSettingsMessage = Path.GetFileName(_guiLogFiles[index]);
+            GuiOperationLog.User("Selected GUI log", _applicationSettingsMessage);
+            return;
+        }
+
+        if (GoScreenRenderer.GetSettingsEditButtonHit(point, _selectedGuiLogIndex >= 0))
+        {
+            var path = _guiLogFiles[_selectedGuiLogIndex];
+            GuiOperationLog.User("Pressed Edit in Code button", Path.GetFileName(path));
+            try
+            {
+                var startInfo = new ProcessStartInfo { FileName = "code", UseShellExecute = true };
+                startInfo.ArgumentList.Add(path);
+                Process.Start(startInfo);
+                _applicationSettingsMessage = "OPENED IN CODE";
+            }
+            catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException)
+            {
+                try
+                {
+                    Process.Start(new ProcessStartInfo { FileName = path, UseShellExecute = true });
+                    _applicationSettingsMessage = "CODE NOT FOUND; OPENED WITH DEFAULT APP";
+                }
+                catch (Exception fallbackEx)
+                {
+                    _applicationSettingsMessage = "ERROR: " + fallbackEx.Message;
+                    ApplicationErrorLog.Write("OPEN GUI LOG", "Could not open the selected GUI log.", fallbackEx);
+                }
+            }
+        }
+    }
+
+    private void RefreshGuiLogFiles()
+    {
+        _guiLogFiles.Clear();
+        var directory = Path.Combine(ApplicationSettings.Current.LogRootDirectory, "Gui");
+        if (Directory.Exists(directory))
+        {
+            _guiLogFiles.AddRange(Directory.EnumerateFiles(directory, "*.log", SearchOption.TopDirectoryOnly)
+                .OrderByDescending(File.GetLastWriteTimeUtc)
+                .Take(8));
+        }
+        _selectedGuiLogIndex = _guiLogFiles.Count > 0 ? 0 : -1;
+    }
+
+    private void LogAutomaticScreenTransition()
+    {
+        var current = GetCurrentScreenState();
+        if (current == _lastScreenState)
+            return;
+
+        GuiOperationLog.App("Screen changed", $"from={_lastScreenState} to={current}");
+        _lastScreenState = current;
+    }
+
+    private string GetCurrentScreenState() =>
+        _isApplicationSettingsOpen
+            ? "Application settings"
+            : _session.UseKind is null
+                ? "Title"
+                : _session.UseKind == GoAppUseKind.LocalGame
+                    ? $"Local/{_session.CurrentMode.Kind}"
+                    : $"CGOS/{_session.CgosConnectionFlowKind}/{_session.CurrentMode.Kind}";
 
     protected override void Dispose(bool disposing)
     {

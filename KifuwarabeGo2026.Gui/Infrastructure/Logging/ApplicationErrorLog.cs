@@ -1,5 +1,6 @@
 namespace KifuwarabeGo2026.Gui.Infrastructure.Logging;
 
+using KifuwarabeGo2026.Gui.Application;
 using System;
 using System.IO;
 using System.Text;
@@ -17,7 +18,7 @@ public static class ApplicationErrorLog
     {
         lock (SyncRoot)
         {
-            var directory = Path.Combine(AppContext.BaseDirectory, "logs", "errors");
+            var directory = Path.Combine(ApplicationSettings.Current.LogRootDirectory, "Gui", "Errors");
             Directory.CreateDirectory(directory);
             FilePath = Path.Combine(directory, $"application-error-{startedAt:yyyyMMdd-HHmmss}.log");
             File.WriteAllText(

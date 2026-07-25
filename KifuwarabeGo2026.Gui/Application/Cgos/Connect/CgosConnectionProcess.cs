@@ -126,7 +126,7 @@ public sealed class CgosConnectionProcess : IDisposable
             : whiteEngineProfile is not null && blackEngineProfile is null
                 ? "WhitePlayer"
                 : "Players";
-        LogDirectory = Path.Combine(repositoryRoot, "Logs", "Cgos", runLabel);
+        LogDirectory = Path.Combine(ApplicationSettings.Current.LogRootDirectory, "Cgos", runLabel);
         Directory.CreateDirectory(LogDirectory);
         _guiLogPath = Path.Combine(LogDirectory, $"gui-{runLabel.ToLowerInvariant()}-{_startedAt:yyyyMMdd-HHmmss}.log");
         _standardErrorLogPath = Path.Combine(LogDirectory, $"standard-error-{runLabel.ToLowerInvariant()}-{_startedAt:yyyyMMdd-HHmmss}.log");
@@ -171,7 +171,7 @@ public sealed class CgosConnectionProcess : IDisposable
         var repositoryRoot = FindRepositoryRoot();
         var executablePath = GetCgosCommunicationExecutablePath(repositoryRoot);
 
-        LogDirectory = Path.Combine(repositoryRoot, "Logs", "Cgos", "Admin");
+        LogDirectory = Path.Combine(ApplicationSettings.Current.LogRootDirectory, "Cgos", "Admin");
         Directory.CreateDirectory(LogDirectory);
         _guiLogPath = Path.Combine(LogDirectory, $"gui-admin-{_startedAt:yyyyMMdd-HHmmss}.log");
         _standardErrorLogPath = Path.Combine(LogDirectory, $"standard-error-admin-{_startedAt:yyyyMMdd-HHmmss}.log");
@@ -952,7 +952,7 @@ public sealed class CgosConnectionProcess : IDisposable
 
     private string GetDefaultLogDirectory()
     {
-        var baseDirectory = Path.Combine(FindRepositoryRoot(), "Logs", "Cgos");
+        var baseDirectory = Path.Combine(ApplicationSettings.Current.LogRootDirectory, "Cgos");
         return string.IsNullOrWhiteSpace(_logFolderName)
             ? baseDirectory
             : Path.Combine(baseDirectory, _logFolderName);

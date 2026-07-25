@@ -13,4 +13,7 @@ public static class TitleRenderer
 
     public static bool IsCgosClientButtonHit(Point point) =>
         GoScreenRenderer.GetCgosUseButtonHit(point);
+
+    public static bool IsSettingsButtonHit(Point point) =>
+        GoScreenRenderer.GetSettingsButtonHit(point);
 }

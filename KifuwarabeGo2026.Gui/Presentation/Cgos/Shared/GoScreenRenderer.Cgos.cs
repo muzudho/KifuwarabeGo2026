@@ -262,6 +262,7 @@ public sealed partial class GoScreenRenderer
 
         DrawUseChoice(LocalUseButtonBounds, "Local (推奨)", "PLAY / REVIEW", cgosClient: false, mousePoint);
         DrawUseChoice(CgosUseButtonBounds, "Connect To CGOS", "WATCH / CONNECT", cgosClient: true, mousePoint);
+        DrawSettingsButton(mousePoint);
     }
 
 

@@ -8,7 +8,9 @@ internal static class Program
     [System.STAThread]
     private static void Main()
     {
-        ApplicationErrorLog.Initialize(DateTimeOffset.Now);
+        var startedAt = DateTimeOffset.Now;
+        GuiOperationLog.Initialize(startedAt);
+        ApplicationErrorLog.Initialize(startedAt);
         AppDomain.CurrentDomain.UnhandledException += (_, args) =>
             ApplicationErrorLog.Write("UNHANDLED EXCEPTION", "An unhandled application error occurred.", args.ExceptionObject as Exception);
         System.Threading.Tasks.TaskScheduler.UnobservedTaskException += (_, args) =>
@@ -16,6 +18,7 @@ internal static class Program
 
         try
         {
+            GuiOperationLog.App("Application session started");
             using var game = new Game1();
             game.Run();
         }
@@ -23,6 +26,10 @@ internal static class Program
         {
             ApplicationErrorLog.Write("FATAL ERROR", "The application terminated because of an error.", ex);
             throw;
+        }
+        finally
+        {
+            GuiOperationLog.Close();
         }
     }
 }
