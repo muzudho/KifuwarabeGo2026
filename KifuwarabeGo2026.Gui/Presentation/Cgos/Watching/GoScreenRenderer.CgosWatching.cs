@@ -38,7 +38,14 @@ public sealed partial class GoScreenRenderer
             surface.Cell);
 
         DrawBoardFrameHighlights(surface.Outer);
-        DrawCgosWatchingSidePanel(session, observation, mousePoint);
+        if (!session.IsReviewChartPopupOpen)
+        {
+            DrawCgosWatchingSidePanel(session, observation, mousePoint);
+        }
+        else
+        {
+            DrawCgosLiveChartPopup(session, observation.Moves, mousePoint);
+        }
         _spriteBatch.End();
     }
 

@@ -206,6 +206,15 @@ public class Game1 : Game
     {
         if (!IsActive || !_inputArmed) return;
 
+        if (_session.IsReviewChartPopupOpen &&
+            _session.CurrentMode.Kind != GoAppModeKind.Reviewing &&
+            IsNewGlobalKeyPress(keyboard, Keys.Escape))
+        {
+            _session.CloseReviewChartPopup();
+            _previousKeyboard = keyboard;
+            return;
+        }
+
         if (_session.CurrentMode.Kind == GoAppModeKind.Reviewing && TryHandleReviewKeyboardInput(keyboard))
         {
             _previousKeyboard = keyboard;
@@ -248,6 +257,13 @@ public class Game1 : Game
     private void UpdateCgosWatchingKeyboardInput(KeyboardState keyboard)
     {
         if (!IsActive || !_inputArmed) return;
+
+        if (_session.IsReviewChartPopupOpen && IsNewGlobalKeyPress(keyboard, Keys.Escape))
+        {
+            _session.CloseReviewChartPopup();
+            _previousKeyboard = keyboard;
+            return;
+        }
 
         var canToggle = _session.CgosConnectionFlowKind is CgosConnectionFlowKind.Watching or CgosConnectionFlowKind.Result;
         if (canToggle && keyboard.IsKeyDown(Keys.R) && _previousKeyboard.IsKeyUp(Keys.R))
@@ -442,6 +458,14 @@ public class Game1 : Game
             }
 
             // ［CGOS　＞　観戦画面］マウス入力
+            if (_session.IsReviewChartPopupOpen &&
+                _session.CurrentMode.Kind != GoAppModeKind.Reviewing)
+            {
+                HandleReadOnlyChartPopupClick(point);
+                _previousMouse = mouse;
+                return;
+            }
+
             if (_session.UseKind == GoAppUseKind.CgosClient)
             {
                 if (_session.CurrentMode.Kind == GoAppModeKind.Reviewing && TryHandleReviewClick(point))
@@ -506,6 +530,14 @@ public class Game1 : Game
                 {
                     _session.SetMoveTrendDisplayMode(trendMode);
                     GuiOperationLog.User("Changed CGOS trend display", $"mode={trendMode}");
+                    _previousMouse = mouse;
+                    return;
+                }
+
+                if (_session.CgosConnectionFlowKind is CgosConnectionFlowKind.Watching or CgosConnectionFlowKind.Result &&
+                    GoScreenRenderer.GetCgosLiveChartPopupOpenHit(point))
+                {
+                    _session.OpenCgosLiveChartPopup();
                     _previousMouse = mouse;
                     return;
                 }
@@ -736,6 +768,14 @@ public class Game1 : Game
             {
                 _session.SetMoveTrendDisplayMode(selectedLocalTrendMode);
                 GuiOperationLog.User("Changed local trend display", $"mode={selectedLocalTrendMode}");
+                _previousMouse = mouse;
+                return;
+            }
+
+            if (_session.CanOpenLocalLiveChartPopup &&
+                GoScreenRenderer.GetLocalLiveChartPopupOpenHit(point))
+            {
+                _session.OpenLocalLiveChartPopup();
                 _previousMouse = mouse;
                 return;
             }
@@ -1306,6 +1346,34 @@ public class Game1 : Game
             {
                 _reviewPopupSeekDragging = true;
             }
+        }
+    }
+
+    private void HandleReadOnlyChartPopupClick(Point point)
+    {
+        if (GoScreenRenderer.GetReviewChartPopupCloseHit(point))
+        {
+            _session.CloseReviewChartPopup();
+            return;
+        }
+
+        if (GoScreenRenderer.GetReviewChartPopupInformationDisplayModeButtonHit(point) is { } informationMode)
+        {
+            _session.SetMoveInformationDisplayMode(informationMode);
+            return;
+        }
+
+        if (_session.MoveInformationDisplayMode == MoveInformationDisplayMode.Comment &&
+            GoScreenRenderer.GetReviewChartPopupCommentPageStepButtonHit(point) is { } commentPageStep)
+        {
+            _session.ChangeCommentPage(commentPageStep);
+            return;
+        }
+
+        if (_session.MoveInformationDisplayMode == MoveInformationDisplayMode.Trend &&
+            GoScreenRenderer.GetReviewChartPopupTrendDisplayModeButtonHit(point) is { } trendMode)
+        {
+            _session.SetMoveTrendDisplayMode(trendMode);
         }
     }
 

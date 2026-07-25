@@ -151,6 +151,11 @@ public sealed class GoAppSession
 
     public bool IsReviewChartPopupOpen { get; private set; }
 
+    public bool CanOpenLocalLiveChartPopup =>
+        CurrentMode.Kind == GoAppModeKind.Playing &&
+        BlackPlayerKind == GoPlayerKind.Computer &&
+        WhitePlayerKind == GoPlayerKind.Computer;
+
     public int SelectedCgosConnectionProfileIndex { get; private set; }
 
     public CgosConnectionProfile SelectedCgosConnectionProfile => _cgosConnectionProfiles[SelectedCgosConnectionProfileIndex];
@@ -407,6 +412,23 @@ public sealed class GoAppSession
     public void OpenReviewChartPopup()
     {
         if (CurrentMode.Kind == GoAppModeKind.Reviewing)
+        {
+            IsReviewChartPopupOpen = true;
+        }
+    }
+
+    public void OpenLocalLiveChartPopup()
+    {
+        if (CanOpenLocalLiveChartPopup)
+        {
+            IsReviewChartPopupOpen = true;
+        }
+    }
+
+    public void OpenCgosLiveChartPopup()
+    {
+        if (UseKind == GoAppUseKind.CgosClient &&
+            CgosConnectionFlowKind is CgosConnectionFlowKind.Watching or CgosConnectionFlowKind.Result)
         {
             IsReviewChartPopupOpen = true;
         }
