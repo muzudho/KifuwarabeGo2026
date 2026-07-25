@@ -18,18 +18,29 @@ public static class SgfGameRecordConverter
         ArgumentNullException.ThrowIfNull(record);
 
         var builder = new StringBuilder();
-        builder.Append("(;FF[4]GM[1]CA[UTF-8]AP[KifuwarabeGo2026]");
+        builder.Append("(;GM[1]FF[4]CA[UTF-8]AP[KifuwarabeGo2026]");
         if (record.Moves.Exists(move => move.Analysis is not null))
         {
             AppendProperty(builder, "KFAV", "1");
         }
-        AppendProperty(builder, "SZ", record.BoardSize.ToString(CultureInfo.InvariantCulture));
-        AppendProperty(builder, "KM", record.Komi.ToString(CultureInfo.InvariantCulture));
+
+        builder.Append('\n');
         if (!string.IsNullOrWhiteSpace(record.RuleName))
         {
             AppendProperty(builder, "RU", record.RuleName);
         }
+        AppendProperty(builder, "SZ", record.BoardSize.ToString(CultureInfo.InvariantCulture));
+        AppendProperty(builder, "KM", record.Komi.ToString(CultureInfo.InvariantCulture));
 
+        var hasGameInformation =
+            !string.IsNullOrWhiteSpace(record.GameName) ||
+            !string.IsNullOrWhiteSpace(record.BlackPlayerName) ||
+            !string.IsNullOrWhiteSpace(record.WhitePlayerName) ||
+            record.SetupStones.Count > 0;
+        if (hasGameInformation)
+        {
+            builder.Append('\n');
+        }
         if (!string.IsNullOrWhiteSpace(record.GameName))
         {
             AppendProperty(builder, "GN", record.GameName);
@@ -50,7 +61,7 @@ public static class SgfGameRecordConverter
 
         foreach (var move in record.Moves)
         {
-            builder.Append(';');
+            builder.Append('\n').Append(';');
             AppendProperty(builder, move.Stone == GoStone.Black ? "B" : "W", SgfCoordinate.FormatPoint(move.Point, record.BoardSize));
             if (!string.IsNullOrWhiteSpace(move.Comment))
             {
@@ -62,7 +73,7 @@ public static class SgfGameRecordConverter
             }
         }
 
-        builder.Append(')');
+        builder.Append('\n').Append(')');
         return builder.ToString();
     }
 
