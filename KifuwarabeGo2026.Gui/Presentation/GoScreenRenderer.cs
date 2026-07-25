@@ -357,9 +357,8 @@ public sealed partial class GoScreenRenderer
         var bounds = TournamentRulesAddPanelFileRowBounds;
         var filePath = string.IsNullOrWhiteSpace(session.CurrentTournamentRules.FilePath) ? "-" : session.CurrentTournamentRules.FilePath;
         DrawDataRowFrame(bounds);
-        DrawUiLabel(UiLabel.InCompactRow("FILE", bounds));
-        DrawFittedText(filePath, new Rectangle(bounds.X + 152, bounds.Y + 7, bounds.Width - 282, 42), Color.White, 0.38f);
-        DrawCommandButton(TournamentRulesAddPanelFileBrowseButtonBounds, "REF", false, mousePoint, scale: 0.34f);
+        DrawUiLabel(UiLabel.InCompactRow("SETTINGS", bounds));
+        DrawFittedText(filePath, new Rectangle(bounds.X + 152, bounds.Y + 7, bounds.Width - 170, 42), Color.White, 0.38f);
     }
 
     private void DrawTextBoxCaret(string text, int caretIndex, Rectangle textBounds, float textScale)

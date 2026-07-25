@@ -1137,10 +1137,8 @@ public sealed class GoAppSession
             return;
         }
 
-        var path = _tournamentRules[TournamentRulesDialogSelectionIndex].FilePath;
-        TournamentRulesDeleteConfirmationFileName = string.IsNullOrWhiteSpace(path)
-            ? _tournamentRules[TournamentRulesDialogSelectionIndex].DisplayName
-            : Path.GetFileName(path);
+        TournamentRulesDeleteConfirmationFileName =
+            _tournamentRules[TournamentRulesDialogSelectionIndex].DisplayName;
         IsTournamentRulesDeleteConfirmationOpen = true;
     }
 

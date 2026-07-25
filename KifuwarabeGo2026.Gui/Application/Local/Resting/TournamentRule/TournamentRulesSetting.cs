@@ -15,20 +15,17 @@ public sealed class TournamentRulesSetting
     private readonly GoAppSession _session;
     private readonly TournamentRulesCatalog _catalog;
     private readonly Action _browseTournamentRules;
-    private readonly Func<TournamentRules, string?> _browseTournamentRulesFilePath;
     private readonly TextBoxController _displayNameTextBox = new(MaxDisplayNameLength);
     private KeyboardState _previousKeyboard;
 
     public TournamentRulesSetting(
         GoAppSession session,
         TournamentRulesCatalog catalog,
-        Action browseTournamentRules,
-        Func<TournamentRules, string?> browseTournamentRulesFilePath)
+        Action browseTournamentRules)
     {
         _session = session;
         _catalog = catalog;
         _browseTournamentRules = browseTournamentRules;
-        _browseTournamentRulesFilePath = browseTournamentRulesFilePath;
     }
 
     public void UpdateByKeyboard(KeyboardState keyboard, GameTime gameTime)
@@ -110,12 +107,6 @@ public sealed class TournamentRulesSetting
         if (GoScreenRenderer.GetTournamentRulesAddPanelDisplayNameBoxHit(point))
         {
             MoveOrBeginDisplayNameEdit(point, getDisplayNameCaretIndex);
-            return true;
-        }
-
-        if (GoScreenRenderer.GetTournamentRulesAddPanelFileBrowseButtonHit(point))
-        {
-            BrowseFilePath();
             return true;
         }
 
@@ -391,37 +382,6 @@ public sealed class TournamentRulesSetting
     private void SyncDisplayNameDraft()
     {
         _session.SetTournamentRulesDisplayNameDraft(_displayNameTextBox.Text, _displayNameTextBox.CaretIndex);
-    }
-
-    private void BrowseFilePath()
-    {
-        if (_session.IsTournamentRulesDisplayNameEditing)
-        {
-            if (!TryApplyDisplayName())
-            {
-                return;
-            }
-
-            _session.EndTournamentRulesDisplayNameEdit();
-            _displayNameTextBox.Clear();
-        }
-
-        var targetPath = _browseTournamentRulesFilePath(_session.CurrentTournamentRules);
-        if (string.IsNullOrWhiteSpace(targetPath))
-        {
-            return;
-        }
-
-        try
-        {
-            var savedRules = _catalog.SaveAsFilePath(_session.CurrentTournamentRules, targetPath);
-            _session.ReplaceCurrentTournamentRules(savedRules);
-            _session.MarkTournamentRulesSaved();
-        }
-        catch (Exception ex) when (ex is InvalidOperationException or System.IO.IOException or UnauthorizedAccessException or NotSupportedException)
-        {
-            _session.SetTournamentRulesDisplayNameWarning("File path could not be saved.");
-        }
     }
 
     private void UpdateBoardSizeByKeyboard(KeyboardState keyboard)

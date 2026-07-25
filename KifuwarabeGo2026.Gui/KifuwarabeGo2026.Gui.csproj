@@ -33,7 +33,6 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <None Update="Content\TournamentRules\*.json" CopyToOutputDirectory="PreserveNewest" />
     <None Update="Content\GtpEngines\gtp-engine-list.example.json" CopyToOutputDirectory="PreserveNewest" />
     <None Update="Content\CgosConnections\*.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>

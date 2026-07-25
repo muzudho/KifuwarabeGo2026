@@ -79,7 +79,7 @@ public class Game1 : Game
         _session.SetTournamentRules(_tournamentRulesCatalog.Rules);
         _session.SetGtpEngineProfiles(_gtpEngineCatalog.Profiles);
         _session.SetCgosConnectionProfiles(_cgosConnectionCatalog.Profiles);
-        _tournamentRulesSetting = new TournamentRulesSetting(_session, _tournamentRulesCatalog, OpenTournamentRulesSelectionDialog, BrowseTournamentRulesFilePath);
+        _tournamentRulesSetting = new TournamentRulesSetting(_session, _tournamentRulesCatalog, OpenTournamentRulesSelectionDialog);
         _playingScene = new PlayingScene(
             _session,
             PlayPlaceStoneSound,
@@ -1528,23 +1528,6 @@ public class Game1 : Game
         _humanPlayerNameTextBox.Clear();
     }
 
-    private string? BrowseTournamentRulesFilePath(TournamentRules rules)
-    {
-        using var dialog = new System.Windows.Forms.SaveFileDialog
-        {
-            AddExtension = true,
-            CheckPathExists = true,
-            DefaultExt = "json",
-            Filter = "Tournament rules (*.json)|*.json|All files (*.*)|*.*",
-            FileName = string.IsNullOrWhiteSpace(rules.FilePath) ? "tournament-rules-custom.json" : Path.GetFileName(rules.FilePath),
-            InitialDirectory = GetInitialTournamentRulesDirectory(rules),
-            OverwritePrompt = true,
-            Title = "Save tournament rules",
-        };
-
-        return dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK ? dialog.FileName : null;
-    }
-
     private void ImportSgf()
     {
         using var dialog = new System.Windows.Forms.OpenFileDialog
@@ -1615,20 +1598,6 @@ public class Game1 : Game
             caption,
             System.Windows.Forms.MessageBoxButtons.OK,
             System.Windows.Forms.MessageBoxIcon.Warning);
-    }
-
-    private static string GetInitialTournamentRulesDirectory(TournamentRules rules)
-    {
-        if (!string.IsNullOrWhiteSpace(rules.FilePath))
-        {
-            var directory = Path.GetDirectoryName(rules.FilePath);
-            if (!string.IsNullOrWhiteSpace(directory) && Directory.Exists(directory))
-            {
-                return directory;
-            }
-        }
-
-        return AppContext.BaseDirectory;
     }
 
     private void OpenGtpEngineSelectionDialog(GoStone stone)

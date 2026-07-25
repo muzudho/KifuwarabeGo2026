@@ -7,6 +7,8 @@ using System.Text.Json.Serialization;
 
 public sealed class TournamentRules
 {
+    public string Id { get; set; } = Guid.NewGuid().ToString("N");
+
     public string DisplayName { get; set; } = "Default 19-ro";
 
     public GoRuleKind Rule { get; set; } = GoRuleKind.PureGo;
@@ -29,6 +31,7 @@ public sealed class TournamentRules
 
     public TournamentRules Clone() => new()
     {
+        Id = Id,
         DisplayName = DisplayName,
         Rule = Rule,
         BoardSize = BoardSize,
