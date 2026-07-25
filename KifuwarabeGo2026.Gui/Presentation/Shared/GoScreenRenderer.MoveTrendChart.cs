@@ -2,6 +2,7 @@ namespace KifuwarabeGo2026.Gui.Presentation;
 
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Application.Cgos.Watching;
+using KifuwarabeGo2026.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.Shared.Domain;
 using Microsoft.Xna.Framework;
 using System;
@@ -11,31 +12,47 @@ using System.Globalization;
 public sealed partial class GoScreenRenderer
 {
     private static readonly Rectangle CgosTrendChartBounds = new(1144, 498, 668, 342);
-    private static readonly Rectangle CgosTrendPlotBounds = new(1196, 560, 562, 236);
-    private static readonly Rectangle CgosTrendScoreButtonBounds = new(1452, 510, 104, 36);
-    private static readonly Rectangle CgosTrendBothButtonBounds = new(1558, 510, 104, 36);
-    private static readonly Rectangle CgosTrendWinRateButtonBounds = new(1664, 510, 132, 36);
+    private static readonly Rectangle LocalTrendChartBounds = new(1144, 466, 668, 424);
 
-    public static CgosTrendDisplayMode? GetCgosTrendDisplayModeButtonHit(Point point)
+    public static MoveTrendDisplayMode? GetCgosTrendDisplayModeButtonHit(Point point)
     {
-        if (CgosTrendScoreButtonBounds.Contains(point)) return CgosTrendDisplayMode.Score;
-        if (CgosTrendBothButtonBounds.Contains(point)) return CgosTrendDisplayMode.Both;
-        if (CgosTrendWinRateButtonBounds.Contains(point)) return CgosTrendDisplayMode.WinRate;
+        return GetMoveTrendDisplayModeButtonHit(point, CgosTrendChartBounds);
+    }
+
+    public static MoveTrendDisplayMode? GetLocalTrendDisplayModeButtonHit(Point point)
+    {
+        return GetMoveTrendDisplayModeButtonHit(point, LocalTrendChartBounds);
+    }
+
+    private static MoveTrendDisplayMode? GetMoveTrendDisplayModeButtonHit(Point point, Rectangle chartBounds)
+    {
+        if (MoveTrendScoreButtonBounds(chartBounds).Contains(point)) return MoveTrendDisplayMode.Score;
+        if (MoveTrendBothButtonBounds(chartBounds).Contains(point)) return MoveTrendDisplayMode.Both;
+        if (MoveTrendWinRateButtonBounds(chartBounds).Contains(point)) return MoveTrendDisplayMode.WinRate;
         return null;
     }
 
-    private void DrawCgosTrendChart(GoAppSession session, CgosGameObservation observation, Point mousePoint)
+    private void DrawCgosTrendChart(GoAppSession session, CgosGameObservation observation, Point mousePoint) =>
+        DrawMoveTrendChart(session, observation.Moves, CgosTrendChartBounds, mousePoint);
+
+    private void DrawLocalTrendChart(GoAppSession session, Point mousePoint) =>
+        DrawMoveTrendChart(session, session.CurrentGameRecord.Moves, LocalTrendChartBounds, mousePoint);
+
+    private void DrawMoveTrendChart(
+        GoAppSession session,
+        IReadOnlyList<GoGameMove> moves,
+        Rectangle bounds,
+        Point mousePoint)
     {
-        var bounds = CgosTrendChartBounds;
         FillRect(bounds, new Color(25, 48, 57, 246));
         DrawRect(bounds, 2, new Color(72, 115, 121));
         DrawText("POSITION TREND", new Vector2(bounds.X + 16, bounds.Y + 12), new Color(82, 225, 216), 0.42f);
 
-        DrawCgosTrendModeButton(CgosTrendScoreButtonBounds, "SCORE", session.CgosTrendDisplayMode == CgosTrendDisplayMode.Score, mousePoint);
-        DrawCgosTrendModeButton(CgosTrendBothButtonBounds, "BOTH", session.CgosTrendDisplayMode == CgosTrendDisplayMode.Both, mousePoint);
-        DrawCgosTrendModeButton(CgosTrendWinRateButtonBounds, "WIN RATE", session.CgosTrendDisplayMode == CgosTrendDisplayMode.WinRate, mousePoint);
+        DrawCgosTrendModeButton(MoveTrendScoreButtonBounds(bounds), "SCORE", session.MoveTrendDisplayMode == MoveTrendDisplayMode.Score, mousePoint);
+        DrawCgosTrendModeButton(MoveTrendBothButtonBounds(bounds), "BOTH", session.MoveTrendDisplayMode == MoveTrendDisplayMode.Both, mousePoint);
+        DrawCgosTrendModeButton(MoveTrendWinRateButtonBounds(bounds), "WIN RATE", session.MoveTrendDisplayMode == MoveTrendDisplayMode.WinRate, mousePoint);
 
-        var plot = CgosTrendPlotBounds;
+        var plot = new Rectangle(bounds.X + 52, bounds.Y + 62, bounds.Width - 106, bounds.Height - 106);
         FillRect(plot, new Color(31, 57, 65));
         DrawRect(plot, 1, new Color(84, 119, 123));
         var centerY = plot.Center.Y;
@@ -57,16 +74,16 @@ public sealed partial class GoScreenRenderer
                 0.2f);
         }
 
-        var points = CgosTrendSeriesBuilder.Build(observation.Moves);
+        var points = MoveTrendSeriesBuilder.Build(moves);
         var maximumMove = Math.Max(100, points.Count);
-        if (session.CgosTrendDisplayMode is CgosTrendDisplayMode.Both or CgosTrendDisplayMode.WinRate)
+        if (session.MoveTrendDisplayMode is MoveTrendDisplayMode.Both or MoveTrendDisplayMode.WinRate)
         {
-            var alpha = session.CgosTrendDisplayMode == CgosTrendDisplayMode.Both ? (byte)68 : (byte)205;
+            var alpha = session.MoveTrendDisplayMode == MoveTrendDisplayMode.Both ? (byte)68 : (byte)205;
             DrawCgosWinRateSeries(points, GoStone.Black, maximumMove, plot, new Color((byte)56, (byte)220, (byte)216, alpha));
             DrawCgosWinRateSeries(points, GoStone.White, maximumMove, plot, new Color((byte)248, (byte)239, (byte)215, alpha));
         }
 
-        if (session.CgosTrendDisplayMode is CgosTrendDisplayMode.Both or CgosTrendDisplayMode.Score)
+        if (session.MoveTrendDisplayMode is MoveTrendDisplayMode.Both or MoveTrendDisplayMode.Score)
         {
             DrawCgosScoreBars(points, maximumMove, plot);
         }
@@ -87,7 +104,7 @@ public sealed partial class GoScreenRenderer
     }
 
     private void DrawCgosWinRateSeries(
-        IReadOnlyList<CgosTrendPoint> points,
+        IReadOnlyList<MoveTrendPoint> points,
         GoStone reporter,
         int maximumMove,
         Rectangle plot,
@@ -117,7 +134,7 @@ public sealed partial class GoScreenRenderer
         }
     }
 
-    private void DrawCgosScoreBars(IReadOnlyList<CgosTrendPoint> points, int maximumMove, Rectangle plot)
+    private void DrawCgosScoreBars(IReadOnlyList<MoveTrendPoint> points, int maximumMove, Rectangle plot)
     {
         var barWidth = Math.Clamp(plot.Width / Math.Max(maximumMove, 1), 2, 7);
         foreach (var point in points)
@@ -160,7 +177,7 @@ public sealed partial class GoScreenRenderer
         DrawFittedText("MOVE", new Rectangle(plot.Center.X - 36, plot.Bottom + 23, 72, 20), new Color(76, 222, 213), 0.23f);
     }
 
-    private void DrawCgosCurrentTrendPoint(IReadOnlyList<CgosTrendPoint> points, int maximumMove, Rectangle plot)
+    private void DrawCgosCurrentTrendPoint(IReadOnlyList<MoveTrendPoint> points, int maximumMove, Rectangle plot)
     {
         if (points.Count == 0) return;
         var point = points[^1];
@@ -183,4 +200,13 @@ public sealed partial class GoScreenRenderer
 
     private static float CgosTrendX(int moveNumber, int maximumMove, Rectangle plot) =>
         plot.Left + (Math.Clamp(moveNumber, 1, maximumMove) - 1f) / Math.Max(1, maximumMove - 1) * plot.Width;
+
+    private static Rectangle MoveTrendScoreButtonBounds(Rectangle chartBounds) =>
+        new(chartBounds.Right - 360, chartBounds.Y + 12, 104, 36);
+
+    private static Rectangle MoveTrendBothButtonBounds(Rectangle chartBounds) =>
+        new(chartBounds.Right - 254, chartBounds.Y + 12, 104, 36);
+
+    private static Rectangle MoveTrendWinRateButtonBounds(Rectangle chartBounds) =>
+        new(chartBounds.Right - 148, chartBounds.Y + 12, 132, 36);
 }

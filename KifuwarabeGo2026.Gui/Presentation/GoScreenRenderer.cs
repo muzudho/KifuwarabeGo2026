@@ -291,13 +291,7 @@ public sealed partial class GoScreenRenderer
         DrawVerticalResultSection(new Rectangle(1144, 344, 668, 110), "FACTS", new Color(66, 104, 116));
         DrawInfoStrip(1144, 363, "NEXT", GetMoveThinkingText(session));
 
-        DrawVerticalResultSection(new Rectangle(1144, 466, 668, 266), "CALCULATION", new Color(76, 91, 126));
-        DrawCalculationMethodRow(new Rectangle(1164, 486, 628, 56), session);
-        DrawStoneCountStrip(session, 554, showLeader: false, minimal: true);
-        DrawCurrentStoneResultRow(new Rectangle(1164, 660, 628, 64), session);
-
-        var analysisSection = new Rectangle(1144, 744, 668, 146);
-        DrawMoveAnalysisSection(session.LatestGameMove, analysisSection);
+        DrawLocalTrendChart(session, mousePoint);
 
         DrawVerticalResultSection(new Rectangle(1144, 916, 668, 76), "ACTION", new Color(91, 82, 105));
 
@@ -310,7 +304,6 @@ public sealed partial class GoScreenRenderer
         {
             DrawCommandButton(CancelPlayingButtonBounds, "CANCEL", false, mousePoint);
         }
-        DrawMoveAnalysisTooltip(session.LatestGameMove, analysisSection, mousePoint, new Rectangle(1164, 800, 628, 104));
     }
 
     private void DrawGameOverSidePanel(GoAppSession session, Point mousePoint)

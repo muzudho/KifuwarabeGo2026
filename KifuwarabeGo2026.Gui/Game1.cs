@@ -444,7 +444,7 @@ public class Game1 : Game
                 if (_session.CgosConnectionFlowKind is CgosConnectionFlowKind.Watching or CgosConnectionFlowKind.Result &&
                     GoScreenRenderer.GetCgosTrendDisplayModeButtonHit(point) is { } trendMode)
                 {
-                    _session.SetCgosTrendDisplayMode(trendMode);
+                    _session.SetMoveTrendDisplayMode(trendMode);
                     GuiOperationLog.User("Changed CGOS trend display", $"mode={trendMode}");
                     _previousMouse = mouse;
                     return;
@@ -634,6 +634,15 @@ public class Game1 : Game
 
             if (_session.CurrentMode.Kind == GoAppModeKind.Reviewing && TryHandleReviewClick(point))
             {
+                _previousMouse = mouse;
+                return;
+            }
+
+            if (_session.CurrentMode.Kind == GoAppModeKind.Playing &&
+                GoScreenRenderer.GetLocalTrendDisplayModeButtonHit(point) is { } localTrendMode)
+            {
+                _session.SetMoveTrendDisplayMode(localTrendMode);
+                GuiOperationLog.User("Changed local trend display", $"mode={localTrendMode}");
                 _previousMouse = mouse;
                 return;
             }
