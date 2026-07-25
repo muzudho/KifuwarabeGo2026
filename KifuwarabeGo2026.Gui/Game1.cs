@@ -71,12 +71,16 @@ public class Game1 : Game
     private int? _reviewMouseRepeatCommand;
     private double _reviewMouseNextRepeatAt;
     private bool _reviewPopupSeekDragging;
+    private double _lastReviewPopupSeekClickAt = double.NegativeInfinity;
+    private Point _lastReviewPopupSeekClickPoint;
 
     private const double CgosMatchCountdownSeconds = 10d;
     private const double CgosMatchFadeSeconds = 1.2d;
     private const double CgosMatchButtonDelaySeconds = 0.30d;
     private const double ReviewRepeatInitialDelaySeconds = 0.42d;
     private const double ReviewRepeatIntervalSeconds = 0.075d;
+    private const double ReviewPopupDoubleClickSeconds = 0.36d;
+    private const int ReviewPopupDoubleClickDistance = 18;
 
     public Game1()
     {
@@ -261,6 +265,7 @@ public class Game1 : Game
         {
             _session.CloseReviewChartPopup();
             _reviewPopupSeekDragging = false;
+            _lastReviewPopupSeekClickAt = double.NegativeInfinity;
             return true;
         }
 
@@ -936,6 +941,7 @@ public class Game1 : Game
         if (GoScreenRenderer.GetReviewChartPopupOpenHit(point))
         {
             _session.OpenReviewChartPopup();
+            _lastReviewPopupSeekClickAt = double.NegativeInfinity;
             return true;
         }
 
@@ -1254,6 +1260,7 @@ public class Game1 : Game
         {
             _session.CloseReviewChartPopup();
             _reviewPopupSeekDragging = false;
+            _lastReviewPopupSeekClickAt = double.NegativeInfinity;
             return;
         }
 
@@ -1277,11 +1284,28 @@ public class Game1 : Game
             return;
         }
 
-        if (_session.MoveInformationDisplayMode == MoveInformationDisplayMode.Trend &&
-            GoScreenRenderer.GetReviewChartPopupSeekMove(point, _session.ReviewMoveCount) is { } moveIndex)
+        if (GoScreenRenderer.GetReviewChartPopupSeekMove(point, _session.ReviewMoveCount) is { } moveIndex)
         {
             MoveReview(moveIndex - _session.ReviewMoveIndex);
-            _reviewPopupSeekDragging = true;
+            var deltaX = point.X - _lastReviewPopupSeekClickPoint.X;
+            var deltaY = point.Y - _lastReviewPopupSeekClickPoint.Y;
+            var isDoubleClick =
+                _inputClockSeconds - _lastReviewPopupSeekClickAt <= ReviewPopupDoubleClickSeconds &&
+                deltaX * deltaX + deltaY * deltaY <=
+                    ReviewPopupDoubleClickDistance * ReviewPopupDoubleClickDistance;
+            _lastReviewPopupSeekClickAt = _inputClockSeconds;
+            _lastReviewPopupSeekClickPoint = point;
+
+            if (isDoubleClick)
+            {
+                _session.CloseReviewChartPopup();
+                _reviewPopupSeekDragging = false;
+                _lastReviewPopupSeekClickAt = double.NegativeInfinity;
+            }
+            else
+            {
+                _reviewPopupSeekDragging = true;
+            }
         }
     }
 
@@ -1294,7 +1318,6 @@ public class Game1 : Game
         }
 
         if (!_reviewPopupSeekDragging ||
-            _session.MoveInformationDisplayMode != MoveInformationDisplayMode.Trend ||
             GoScreenRenderer.GetReviewChartPopupSeekMove(point, _session.ReviewMoveCount) is not { } moveIndex)
         {
             return;

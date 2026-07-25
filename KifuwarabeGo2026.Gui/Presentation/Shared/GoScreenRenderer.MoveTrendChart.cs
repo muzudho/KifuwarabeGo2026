@@ -79,7 +79,7 @@ public sealed partial class GoScreenRenderer
         int? currentMoveNumber = null,
         bool popup = false)
     {
-        FillRect(bounds, popup ? new Color(42, 55, 92, 190) : new Color(25, 48, 57, 246));
+        FillRect(bounds, popup ? new Color(42, 55, 92, 108) : new Color(25, 48, 57, 246));
         DrawRect(bounds, popup ? 4 : 2, popup ? new Color(151, 170, 224) : new Color(72, 115, 121));
         DrawMoveInformationTabs(session, moves, bounds, mousePoint);
 
@@ -96,7 +96,7 @@ public sealed partial class GoScreenRenderer
         var plot = popup
             ? new Rectangle(bounds.X + 72, bounds.Y + 92, bounds.Width - 144, bounds.Height - 190)
             : new Rectangle(bounds.X + 52, bounds.Y + 62, bounds.Width - 106, bounds.Height - 106);
-        FillRect(plot, popup ? new Color(26, 38, 70, 170) : new Color(31, 57, 65));
+        FillRect(plot, popup ? new Color(26, 38, 70, 92) : new Color(31, 57, 65));
         DrawRect(plot, 1, new Color(84, 119, 123));
         var centerY = plot.Center.Y;
 

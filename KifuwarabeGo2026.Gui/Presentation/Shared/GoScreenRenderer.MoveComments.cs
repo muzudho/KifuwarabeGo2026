@@ -121,7 +121,7 @@ public sealed partial class GoScreenRenderer
 
         using var font = new System.Drawing.Font(
             "Meiryo",
-            bounds.Width > 1000 ? 28f : 16f,
+            bounds.Width > 1000 ? 36f : 16f,
             System.Drawing.FontStyle.Regular,
             System.Drawing.GraphicsUnit.Pixel);
         using var measurementBitmap = new System.Drawing.Bitmap(1, 1);

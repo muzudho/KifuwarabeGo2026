@@ -10,7 +10,7 @@ public sealed partial class GoScreenRenderer
     private static readonly Rectangle ReviewChartPopupBounds = new(56, 42, 1808, 996);
     private static readonly Rectangle ReviewChartPopupChartBounds = new(100, 115, 1720, 850);
     private static readonly Rectangle ReviewChartPopupCloseButtonBounds = new(1660, 55, 160, 48);
-    private static readonly Rectangle ReviewChartPopupSeekBounds = new(180, 912, 1560, 28);
+    private static readonly Rectangle ReviewChartPopupSeekBounds = new(180, 994, 1560, 28);
     private static readonly Rectangle ReviewChartPopupPlotBounds = new(
         ReviewChartPopupChartBounds.X + 72,
         ReviewChartPopupChartBounds.Y + 92,
@@ -47,8 +47,8 @@ public sealed partial class GoScreenRenderer
 
     private void DrawReviewChartPopup(GoAppSession session, Point mousePoint)
     {
-        FillRect(new Rectangle(0, 0, VirtualScreen.Width, VirtualScreen.Height), new Color(65, 80, 125, 132));
-        FillRect(ReviewChartPopupBounds, new Color(54, 69, 112, 184));
+        FillRect(new Rectangle(0, 0, VirtualScreen.Width, VirtualScreen.Height), new Color(65, 80, 125, 58));
+        FillRect(ReviewChartPopupBounds, new Color(54, 69, 112, 108));
         DrawRect(ReviewChartPopupBounds, 4, new Color(158, 177, 229, 230));
         DrawText("KIFU NAVIGATION", new Vector2(92, 58), new Color(238, 242, 255), 0.62f);
         DrawCommandButton(
@@ -66,10 +66,7 @@ public sealed partial class GoScreenRenderer
             session.ReviewMoveIndex,
             popup: true);
 
-        if (session.MoveInformationDisplayMode == MoveInformationDisplayMode.Trend)
-        {
-            DrawReviewChartPopupSeekBar(session);
-        }
+        DrawReviewChartPopupSeekBar(session);
     }
 
     private void DrawReviewChartPopupSeekBar(GoAppSession session)
