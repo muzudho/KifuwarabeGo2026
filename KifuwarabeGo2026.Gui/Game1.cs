@@ -61,6 +61,7 @@ public class Game1 : Game
     private int _selectedGuiLogIndex = -1;
     private string _applicationSettingsMessage = "";
     private string _lastScreenState = "Title";
+    private bool _inputArmed;
 
     public Game1()
     {
@@ -86,6 +87,7 @@ public class Game1 : Game
         Window.Title = "Kifuwarabe Go 2026";
         Window.AllowUserResizing = true;
         Window.TextInput += OnTextInput;
+        Deactivated += OnGameDeactivated;
         RefreshGuiLogFiles();
     }
 
@@ -99,8 +101,11 @@ public class Game1 : Game
     protected override void Update(GameTime gameTime)
     {
         var keyboard = Keyboard.GetState();
+        var mouse = Mouse.GetState();
+        SynchronizeOrArmWindowInput(keyboard, mouse);
+        var acceptsInput = IsActive && _inputArmed;
         LogAutomaticScreenTransition();
-        if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
+        if (acceptsInput && GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
         {
             Exit();
         }
@@ -134,7 +139,7 @@ public class Game1 : Game
         UpdateGlobalKeyboardInput(keyboard);
         UpdateHumanPlayerNameTextBox(keyboard, gameTime);
 
-        if (_session.CurrentMode.Kind != GoAppModeKind.Playing)
+        if (acceptsInput && _session.CurrentMode.Kind != GoAppModeKind.Playing)
         {
             UpdateGtpEngineEditPanelByKeyboard(keyboard, gameTime);
             _tournamentRulesSetting.UpdateByKeyboard(keyboard, gameTime);
@@ -144,8 +149,36 @@ public class Game1 : Game
         base.Update(gameTime);
     }
 
+    private void OnGameDeactivated(object? sender, EventArgs e) =>
+        _inputArmed = false;
+
+    private void SynchronizeOrArmWindowInput(KeyboardState keyboard, MouseState mouse)
+    {
+        if (!IsActive || !_inputArmed)
+        {
+            _previousMouse = mouse;
+            _previousKeyboard = keyboard;
+            _previousGtpEngineKeyboard = keyboard;
+            _previousHumanPlayerNameKeyboard = keyboard;
+            _previousCgosConnectionKeyboard = keyboard;
+            _previousCgosCredentialKeyboard = keyboard;
+            _tournamentRulesSetting.SynchronizeKeyboardState(keyboard);
+        }
+
+        if (IsActive && !_inputArmed &&
+            keyboard.GetPressedKeyCount() == 0 &&
+            mouse.LeftButton == ButtonState.Released &&
+            mouse.MiddleButton == ButtonState.Released &&
+            mouse.RightButton == ButtonState.Released)
+        {
+            _inputArmed = true;
+        }
+    }
+
     private void UpdateGlobalKeyboardInput(KeyboardState keyboard)
     {
+        if (!IsActive || !_inputArmed) return;
+
         if (_session.CurrentMode.Kind == GoAppModeKind.Reviewing && TryHandleReviewKeyboardInput(keyboard))
         {
             _previousKeyboard = keyboard;
@@ -183,6 +216,8 @@ public class Game1 : Game
     /// </summary>
     private void UpdateCgosWatchingKeyboardInput(KeyboardState keyboard)
     {
+        if (!IsActive || !_inputArmed) return;
+
         var canToggle = _session.CgosConnectionFlowKind is CgosConnectionFlowKind.Watching or CgosConnectionFlowKind.Result;
         if (canToggle && keyboard.IsKeyDown(Keys.R) && _previousKeyboard.IsKeyUp(Keys.R))
             _session.ToggleRenParseDisplay();
@@ -286,6 +321,8 @@ public class Game1 : Game
 
     private void UpdateMouseInput()
     {
+        if (!IsActive || !_inputArmed) return;
+
         var mouse = Mouse.GetState();
         var point = VirtualScreen.ToVirtualPoint(GraphicsDevice.Viewport, mouse.Position);
         var engineErrorLogHovered = _session.UseKind == GoAppUseKind.LocalGame &&
@@ -800,6 +837,8 @@ public class Game1 : Game
 
     private void UpdateCgosConnectionEditPanelByKeyboard(KeyboardState keyboard, GameTime gameTime)
     {
+        if (!IsActive || !_inputArmed) return;
+
         if (!_session.IsCgosConnectionEditPanelOpen)
         {
             _previousCgosConnectionKeyboard = keyboard;
@@ -1184,6 +1223,8 @@ public class Game1 : Game
 
     private void OnTextInput(object? sender, TextInputEventArgs e)
     {
+        if (!IsActive || !_inputArmed) return;
+
         // モーダル表示中の入力欄を、背後の画面に残った編集状態より優先します。
         if (_session.IsGtpEngineEditPanelOpen && TryInputGtpEngineEditCharacter(e.Character))
         {
@@ -1240,6 +1281,8 @@ public class Game1 : Game
 
     private void UpdateCgosCredentialByKeyboard(KeyboardState keyboard, GameTime gameTime)
     {
+        if (!IsActive || !_inputArmed) return;
+
         if (_session.ActiveCgosCredentialStone is not { } stone ||
             _session.ActiveCgosCredentialField is not { } field)
         {
@@ -1279,6 +1322,8 @@ public class Game1 : Game
 
     private void UpdateHumanPlayerNameTextBox(KeyboardState keyboard, GameTime gameTime)
     {
+        if (!IsActive || !_inputArmed) return;
+
         if (_session.ActiveHumanPlayerNameStone is null)
         {
             _previousHumanPlayerNameKeyboard = keyboard;
@@ -1641,6 +1686,8 @@ public class Game1 : Game
 
     private void UpdateGtpEngineEditPanelByKeyboard(KeyboardState keyboard, GameTime gameTime)
     {
+        if (!IsActive || !_inputArmed) return;
+
         if (!_session.IsGtpEngineEditPanelOpen)
         {
             _previousGtpEngineKeyboard = keyboard;
@@ -2053,6 +2100,7 @@ public class Game1 : Game
         if (disposing)
         {
             Window.TextInput -= OnTextInput;
+            Deactivated -= OnGameDeactivated;
             _cgosBlackConnectionProcess.Dispose();
             _cgosWhiteConnectionProcess.Dispose();
             _cgosAdminProcess.Dispose();

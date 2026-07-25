@@ -56,6 +56,9 @@ public sealed class TournamentRulesSetting
         _previousKeyboard = keyboard;
     }
 
+    public void SynchronizeKeyboardState(KeyboardState keyboard) =>
+        _previousKeyboard = keyboard;
+
     public bool TryInputCharacter(char character)
     {
         if (!_session.IsTournamentRulesAddPanelOpen || !_session.IsTournamentRulesDisplayNameEditing)
