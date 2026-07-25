@@ -65,10 +65,17 @@ public class Game1 : Game
     private CgosMatchNotificationMode _cgosMatchNotificationMode;
     private DateTimeOffset _cgosMatchNotificationStartedAt;
     private int _cgosMatchNotificationGameId;
+    private double _inputClockSeconds;
+    private Keys? _reviewRepeatKey;
+    private double _reviewKeyboardNextRepeatAt;
+    private int? _reviewMouseRepeatCommand;
+    private double _reviewMouseNextRepeatAt;
 
     private const double CgosMatchCountdownSeconds = 10d;
     private const double CgosMatchFadeSeconds = 1.2d;
     private const double CgosMatchButtonDelaySeconds = 0.30d;
+    private const double ReviewRepeatInitialDelaySeconds = 0.42d;
+    private const double ReviewRepeatIntervalSeconds = 0.075d;
 
     public Game1()
     {
@@ -107,6 +114,7 @@ public class Game1 : Game
 
     protected override void Update(GameTime gameTime)
     {
+        _inputClockSeconds = gameTime.TotalGameTime.TotalSeconds;
         var keyboard = Keyboard.GetState();
         var mouse = Mouse.GetState();
         SynchronizeOrArmWindowInput(keyboard, mouse);
@@ -198,6 +206,10 @@ public class Game1 : Game
             _previousKeyboard = keyboard;
             return;
         }
+        if (_session.CurrentMode.Kind != GoAppModeKind.Reviewing)
+        {
+            _reviewRepeatKey = null;
+        }
 
         if (_session.CurrentMode.Kind == GoAppModeKind.BoardEditing)
         {
@@ -244,43 +256,59 @@ public class Game1 : Game
 
     private bool TryHandleReviewKeyboardInput(KeyboardState keyboard)
     {
-        if (IsNewGlobalKeyPress(keyboard, Keys.Left))
+        var command = GetReviewKeyboardCommand(keyboard);
+        if (command is null)
         {
-            MoveReview(-1);
+            _reviewRepeatKey = null;
+            return false;
+        }
+
+        var (key, navigation) = command.Value;
+        if (_reviewRepeatKey != key)
+        {
+            _reviewRepeatKey = key;
+            _reviewKeyboardNextRepeatAt = _inputClockSeconds + ReviewRepeatInitialDelaySeconds;
+            ExecuteReviewNavigation(navigation);
             return true;
         }
 
-        if (IsNewGlobalKeyPress(keyboard, Keys.Right))
+        if (_inputClockSeconds >= _reviewKeyboardNextRepeatAt)
         {
-            MoveReview(1);
-            return true;
-        }
-
-        if (IsNewGlobalKeyPress(keyboard, Keys.Down))
-        {
-            MoveReview(-10);
-            return true;
-        }
-
-        if (IsNewGlobalKeyPress(keyboard, Keys.Up))
-        {
-            MoveReview(10);
-            return true;
-        }
-
-        if (IsNewGlobalKeyPress(keyboard, Keys.PageDown))
-        {
-            MoveReview(-50);
-            return true;
-        }
-
-        if (IsNewGlobalKeyPress(keyboard, Keys.PageUp))
-        {
-            MoveReview(50);
+            _reviewKeyboardNextRepeatAt = _inputClockSeconds + ReviewRepeatIntervalSeconds;
+            ExecuteReviewNavigation(navigation);
             return true;
         }
 
         return false;
+    }
+
+    private static (Keys Key, int Navigation)? GetReviewKeyboardCommand(KeyboardState keyboard)
+    {
+        if (keyboard.IsKeyDown(Keys.Home)) return (Keys.Home, int.MinValue);
+        if (keyboard.IsKeyDown(Keys.End)) return (Keys.End, int.MaxValue);
+        if (keyboard.IsKeyDown(Keys.Left)) return (Keys.Left, -1);
+        if (keyboard.IsKeyDown(Keys.Right)) return (Keys.Right, 1);
+        if (keyboard.IsKeyDown(Keys.Down)) return (Keys.Down, -10);
+        if (keyboard.IsKeyDown(Keys.Up)) return (Keys.Up, 10);
+        if (keyboard.IsKeyDown(Keys.PageDown)) return (Keys.PageDown, -50);
+        if (keyboard.IsKeyDown(Keys.PageUp)) return (Keys.PageUp, 50);
+        return null;
+    }
+
+    private void ExecuteReviewNavigation(int navigation)
+    {
+        if (navigation == int.MinValue)
+        {
+            MoveReview(-_session.ReviewMoveIndex);
+        }
+        else if (navigation == int.MaxValue)
+        {
+            MoveReview(_session.ReviewMoveCount - _session.ReviewMoveIndex);
+        }
+        else
+        {
+            MoveReview(navigation);
+        }
     }
 
     private bool CanHandleGlobalRenParseToggle() =>
@@ -361,6 +389,7 @@ public class Game1 : Game
         var engineErrorLogHovered = _session.UseKind == GoAppUseKind.LocalGame &&
             GoScreenRenderer.GetEngineErrorLogHit(point, _session);
         Mouse.SetCursor(engineErrorLogHovered ? MouseCursor.Hand : MouseCursor.Arrow);
+        UpdateReviewMouseRepeat(mouse, point);
 
         if (_previousMouse.LeftButton == ButtonState.Released && mouse.LeftButton == ButtonState.Pressed)
         {
@@ -864,7 +893,9 @@ public class Game1 : Game
 
         if (GoScreenRenderer.GetReviewStepButtonHit(point) is { } step)
         {
-            MoveReview(step);
+            ExecuteReviewNavigation(step);
+            _reviewMouseRepeatCommand = step is int.MinValue or int.MaxValue ? null : step;
+            _reviewMouseNextRepeatAt = _inputClockSeconds + ReviewRepeatInitialDelaySeconds;
             return true;
         }
 
@@ -1173,6 +1204,27 @@ public class Game1 : Game
             if (_cgosMatchNotificationMode == CgosMatchNotificationMode.None)
                 _session.OpenCgosResultScreen();
         }
+    }
+
+    private void UpdateReviewMouseRepeat(MouseState mouse, Point point)
+    {
+        if (_session.CurrentMode.Kind != GoAppModeKind.Reviewing ||
+            mouse.LeftButton != ButtonState.Pressed)
+        {
+            _reviewMouseRepeatCommand = null;
+            return;
+        }
+
+        if (_previousMouse.LeftButton != ButtonState.Pressed ||
+            _reviewMouseRepeatCommand is not { } command ||
+            GoScreenRenderer.GetReviewStepButtonHit(point) != command)
+        {
+            return;
+        }
+
+        if (_inputClockSeconds < _reviewMouseNextRepeatAt) return;
+        _reviewMouseNextRepeatAt = _inputClockSeconds + ReviewRepeatIntervalSeconds;
+        ExecuteReviewNavigation(command);
     }
 
     private void BeginCgosMatchNotification()

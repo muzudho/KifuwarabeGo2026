@@ -122,10 +122,18 @@ public sealed partial class GoScreenRenderer
         for (var i = 0; i < ReviewStepButtonValues.Length; i++)
         {
             var step = ReviewStepButtonValues[i];
-            var enabled = step < 0 ? session.ReviewMoveIndex > 0 : session.ReviewMoveIndex < session.ReviewMoveCount;
-            DrawCommandButton(ReviewStepButtonBounds(i), step > 0 ? $"+{step}" : step.ToString(), false, mousePoint, enabled, 0.34f);
+            var movesBackward = step < 0;
+            var enabled = movesBackward ? session.ReviewMoveIndex > 0 : session.ReviewMoveIndex < session.ReviewMoveCount;
+            var label = step switch
+            {
+                int.MinValue => "|<",
+                int.MaxValue => ">|",
+                > 0 => $"+{step}",
+                _ => step.ToString(),
+            };
+            DrawCommandButton(ReviewStepButtonBounds(i), label, false, mousePoint, enabled, 0.31f);
         }
-        DrawFittedText("KEYS  LEFT/RIGHT: -/+1   DOWN/UP: -/+10   PGDN/PGUP: -/+50   R: REN ANALYSIS", new Rectangle(1268, 950, 524, 24), new Color(147, 201, 190), 0.25f);
+        DrawFittedText("KEYS  HOME/END: FIRST/LAST   ARROWS: -/+1,10   PGDN/PGUP: -/+50", new Rectangle(1168, 950, 624, 24), new Color(147, 201, 190), 0.23f);
 
     }
 
@@ -158,10 +166,11 @@ public sealed partial class GoScreenRenderer
     private static Rectangle BoardEditingDoneButtonBounds => new(1648, 120, 164, 52);
 
 
-    private static readonly int[] ReviewStepButtonValues = [-50, -10, -1, 1, 10, 50];
+    private static readonly int[] ReviewStepButtonValues =
+        [int.MinValue, -50, -10, -1, 1, 10, 50, int.MaxValue];
 
 
-    private static Rectangle ReviewStepButtonBounds(int index) => new(1268 + index * 87, 898, 78, 44);
+    private static Rectangle ReviewStepButtonBounds(int index) => new(1172 + index * 77, 898, 69, 44);
 
 
     private static Rectangle ReviewAnalysisSectionBounds => new(1144, 692, 668, 146);
