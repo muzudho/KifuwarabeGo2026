@@ -11,7 +11,7 @@ public sealed partial class GoScreenRenderer
     private static Rectangle SettingsBackButtonBounds => new(448, 820, 220, 58);
     private static Rectangle SettingsBrowseButtonBounds => new(1290, 292, 170, 58);
     private static Rectangle SettingsEditButtonBounds => new(1240, 820, 220, 58);
-    private static Rectangle SettingsLogItemBounds(int index) => new(470, 430 + index * 48, 970, 42);
+    private static Rectangle SettingsLogItemBounds(int index) => new(470, 452 + index * 44, 970, 40);
 
     public static bool GetSettingsButtonHit(Point point) => SettingsButtonBounds.Contains(point);
     public static bool GetSettingsBackButtonHit(Point point) => SettingsBackButtonBounds.Contains(point);
@@ -36,21 +36,23 @@ public sealed partial class GoScreenRenderer
         FillRect(panel, new Color(21, 25, 32, 246));
         DrawRect(panel, 2, new Color(82, 111, 114));
         DrawText("APPLICATION SETTINGS", new Vector2(468, 196), new Color(244, 238, 218), 0.82f);
-        DrawText("LOG FOLDER", new Vector2(470, 276), new Color(180, 195, 195), 0.42f);
+        DrawText("LOG ROOT FOLDER", new Vector2(470, 276), new Color(180, 195, 195), 0.42f);
         DrawDataRowFrame(new Rectangle(470, 292, 800, 58));
         DrawFittedText(logRoot, new Rectangle(490, 302, 760, 38), Color.White, 0.40f);
         DrawCommandButton(SettingsBrowseButtonBounds, "BROWSE", false, mousePoint, scale: 0.34f);
-        DrawText("RECENT GUI LOGS", new Vector2(470, 382), new Color(180, 195, 195), 0.42f);
+        DrawFittedText("GUI   " + Path.Combine(logRoot, "Gui"), new Rectangle(470, 356, 970, 28), new Color(180, 195, 195), 0.32f);
+        DrawFittedText("CGOS  " + Path.Combine(logRoot, "Cgos"), new Rectangle(470, 384, 970, 28), new Color(180, 195, 195), 0.32f);
+        DrawText("RECENT GUI LOGS", new Vector2(470, 416), new Color(180, 195, 195), 0.38f);
         for (var index = 0; index < logFiles.Count; index++)
         {
             var bounds = SettingsLogItemBounds(index);
             var selected = index == selectedIndex;
             FillRect(bounds, selected ? new Color(46, 77, 72) : bounds.Contains(mousePoint) ? new Color(36, 50, 58) : new Color(24, 31, 37));
             DrawRect(bounds, selected ? 2 : 1, selected ? new Color(99, 223, 185) : new Color(82, 111, 114));
-            DrawFittedText(Path.GetFileName(logFiles[index]), new Rectangle(bounds.X + 16, bounds.Y + 5, bounds.Width - 32, 30), Color.White, 0.36f);
+            DrawFittedText(Path.GetFileName(logFiles[index]), new Rectangle(bounds.X + 16, bounds.Y + 5, bounds.Width - 32, 28), Color.White, 0.34f);
         }
         if (!string.IsNullOrWhiteSpace(message))
-            DrawFittedText(message, new Rectangle(470, 780, 720, 30), new Color(255, 205, 140), 0.34f);
+            DrawFittedText(message, new Rectangle(470, 774, 720, 28), new Color(255, 205, 140), 0.32f);
         DrawCommandButton(SettingsBackButtonBounds, "BACK", false, mousePoint, scale: 0.40f);
         DrawCommandButton(SettingsEditButtonBounds, "EDIT IN CODE", false, mousePoint, enabled: selectedIndex >= 0, scale: 0.34f);
         _spriteBatch.End();

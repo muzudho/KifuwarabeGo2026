@@ -2024,7 +2024,7 @@ public class Game1 : Game
         {
             _guiLogFiles.AddRange(Directory.EnumerateFiles(directory, "*.log", SearchOption.TopDirectoryOnly)
                 .OrderByDescending(File.GetLastWriteTimeUtc)
-                .Take(8));
+                .Take(7));
         }
         _selectedGuiLogIndex = _guiLogFiles.Count > 0 ? 0 : -1;
     }
