@@ -73,6 +73,7 @@ public class Game1 : Game
     private bool _reviewPopupSeekDragging;
     private double _lastReviewPopupSeekClickAt = double.NegativeInfinity;
     private Point _lastReviewPopupSeekClickPoint;
+    private int? _lastReadOnlyChartPopupSeekMoveIndex;
 
     private const double CgosMatchCountdownSeconds = 10d;
     private const double CgosMatchFadeSeconds = 1.2d;
@@ -211,6 +212,7 @@ public class Game1 : Game
             IsNewGlobalKeyPress(keyboard, Keys.Escape))
         {
             _session.CloseReviewChartPopup();
+            ResetReadOnlyChartPopupDoubleClick();
             _previousKeyboard = keyboard;
             return;
         }
@@ -261,6 +263,7 @@ public class Game1 : Game
         if (_session.IsReviewChartPopupOpen && IsNewGlobalKeyPress(keyboard, Keys.Escape))
         {
             _session.CloseReviewChartPopup();
+            ResetReadOnlyChartPopupDoubleClick();
             _previousKeyboard = keyboard;
             return;
         }
@@ -537,6 +540,7 @@ public class Game1 : Game
                 if (_session.CgosConnectionFlowKind is CgosConnectionFlowKind.Watching or CgosConnectionFlowKind.Result &&
                     GoScreenRenderer.GetCgosLiveChartPopupOpenHit(point))
                 {
+                    ResetReadOnlyChartPopupDoubleClick();
                     _session.OpenCgosLiveChartPopup();
                     _previousMouse = mouse;
                     return;
@@ -780,6 +784,7 @@ public class Game1 : Game
             };
             if (_session.CanOpenLocalChartPopup && localChartPopupOpenHit)
             {
+                ResetReadOnlyChartPopupDoubleClick();
                 _session.OpenLocalChartPopup();
                 _previousMouse = mouse;
                 return;
@@ -1360,6 +1365,7 @@ public class Game1 : Game
         {
             _session.CloseReviewChartPopup();
             _reviewPopupSeekDragging = false;
+            ResetReadOnlyChartPopupDoubleClick();
             return;
         }
 
@@ -1372,6 +1378,7 @@ public class Game1 : Game
                 _session.ReturnLocalReplayToLive();
                 _session.CloseReviewChartPopup();
                 _reviewPopupSeekDragging = false;
+                ResetReadOnlyChartPopupDoubleClick();
             }
             else if (_session.UseKind == GoAppUseKind.CgosClient &&
                      _session.CgosConnectionFlowKind == CgosConnectionFlowKind.Watching &&
@@ -1380,6 +1387,7 @@ public class Game1 : Game
                 _cgosGameObservation.ReturnToLive();
                 _session.CloseReviewChartPopup();
                 _reviewPopupSeekDragging = false;
+                ResetReadOnlyChartPopupDoubleClick();
             }
             return;
         }
@@ -1409,7 +1417,6 @@ public class Game1 : Game
             !_cgosGameObservation.IsFinished &&
             GoScreenRenderer.GetReviewChartPopupSeekMove(point, _cgosGameObservation.MoveCount) is { } moveIndex)
         {
-            _cgosGameObservation.SeekReplay(moveIndex);
             HandleReadOnlyChartPopupSeekClick(
                 point,
                 moveIndex,
@@ -1421,7 +1428,6 @@ public class Game1 : Game
             _session.CurrentMode.Kind == GoAppModeKind.Playing &&
             GoScreenRenderer.GetReviewChartPopupSeekMove(point, _session.CurrentGameRecord.Moves.Count) is { } localMoveIndex)
         {
-            _session.SeekLocalReplay(localMoveIndex);
             HandleReadOnlyChartPopupSeekClick(
                 point,
                 localMoveIndex,
@@ -1433,24 +1439,50 @@ public class Game1 : Game
     {
         var deltaX = point.X - _lastReviewPopupSeekClickPoint.X;
         var deltaY = point.Y - _lastReviewPopupSeekClickPoint.Y;
+        var firstMoveIndex = _lastReadOnlyChartPopupSeekMoveIndex;
         var isDoubleClick =
-            moveIndex < moveCount &&
+            firstMoveIndex is { } &&
+            firstMoveIndex.Value < moveCount &&
             _inputClockSeconds - _lastReviewPopupSeekClickAt <= ReviewPopupDoubleClickSeconds &&
             deltaX * deltaX + deltaY * deltaY <=
                 ReviewPopupDoubleClickDistance * ReviewPopupDoubleClickDistance;
-        _lastReviewPopupSeekClickAt = _inputClockSeconds;
-        _lastReviewPopupSeekClickPoint = point;
 
         if (isDoubleClick)
         {
+            SeekReadOnlyChartPopup(firstMoveIndex!.Value);
             _session.CloseReviewChartPopup();
             _reviewPopupSeekDragging = false;
-            _lastReviewPopupSeekClickAt = double.NegativeInfinity;
+            ResetReadOnlyChartPopupDoubleClick();
         }
         else
         {
+            SeekReadOnlyChartPopup(moveIndex);
             _reviewPopupSeekDragging = true;
+            _lastReviewPopupSeekClickAt = _inputClockSeconds;
+            _lastReviewPopupSeekClickPoint = point;
+            _lastReadOnlyChartPopupSeekMoveIndex = moveIndex;
         }
+    }
+
+    private void SeekReadOnlyChartPopup(int moveIndex)
+    {
+        if (_session.UseKind == GoAppUseKind.CgosClient &&
+            _session.CgosConnectionFlowKind == CgosConnectionFlowKind.Watching &&
+            !_cgosGameObservation.IsFinished)
+        {
+            _cgosGameObservation.SeekReplay(moveIndex);
+        }
+        else if (_session.UseKind == GoAppUseKind.LocalGame &&
+                 _session.CurrentMode.Kind == GoAppModeKind.Playing)
+        {
+            _session.SeekLocalReplay(moveIndex);
+        }
+    }
+
+    private void ResetReadOnlyChartPopupDoubleClick()
+    {
+        _lastReviewPopupSeekClickAt = double.NegativeInfinity;
+        _lastReadOnlyChartPopupSeekMoveIndex = null;
     }
 
     private void UpdateReviewPopupSeekDrag(MouseState mouse, Point point)
