@@ -13,8 +13,10 @@ using System.Globalization;
 public sealed class CgosGameObservation
 {
     private GoBoard _board = new(9);
+    private GoBoard? _replayBoard;
     private GoPoint? _koPoint;
     private readonly List<GoGameMove> _moves = [];
+    private int? _replayMoveIndex;
 
     public bool IsStarted { get; private set; }
     public bool IsFinished { get; private set; }
@@ -36,13 +38,39 @@ public sealed class CgosGameObservation
     public int WhiteAgehama { get; private set; }
     public IReadOnlyList<GoGameMove> Moves => _moves;
     public GoMoveAnalysis? LatestAnalysis => _moves.Count == 0 ? null : _moves[^1].Analysis;
+    public bool IsReplayMode => !IsFinished && _replayMoveIndex is not null;
+    public int DisplayMoveIndex => _replayMoveIndex ?? MoveCount;
 
-    public GoStone GetStone(int x, int y) => _board.GetStone(x, y);
+    public GoStone GetStone(int x, int y) => (_replayBoard ?? _board).GetStone(x, y);
 
     /// <summary>
     /// 現在の観戦盤面を連解析します。
     /// </summary>
-    public GoRenParseResult ParseRens() => _board.ParseRens();
+    public GoRenParseResult ParseRens() => (_replayBoard ?? _board).ParseRens();
+
+    public void SeekReplay(int moveIndex)
+    {
+        if (!IsStarted || IsFinished)
+        {
+            return;
+        }
+
+        var clampedMoveIndex = Math.Clamp(moveIndex, 0, _moves.Count);
+        if (clampedMoveIndex == _moves.Count)
+        {
+            ReturnToLive();
+            return;
+        }
+
+        _replayMoveIndex = clampedMoveIndex;
+        _replayBoard = BuildBoardAt(clampedMoveIndex);
+    }
+
+    public void ReturnToLive()
+    {
+        _replayMoveIndex = null;
+        _replayBoard = null;
+    }
 
     /// <summary>
     /// 現在の CGOS 対局を SGF 出力用の棋譜へ変換します。
@@ -104,6 +132,7 @@ public sealed class CgosGameObservation
         {
             IsFinished = true;
             Result = parts.Length > 1 ? string.Join(' ', parts[1..]) : "GAME OVER";
+            ReturnToLive();
         }
 
         return false;
@@ -137,6 +166,7 @@ public sealed class CgosGameObservation
         BlackAgehama = 0;
         WhiteAgehama = 0;
         _moves.Clear();
+        ReturnToLive();
         Result = "";
         IsFinished = false;
         IsStarted = true;
@@ -196,6 +226,34 @@ public sealed class CgosGameObservation
         MoveCount++;
         CurrentTurn = stone == GoStone.Black ? GoStone.White : GoStone.Black;
         return movePoint is not null;
+    }
+
+    private GoBoard BuildBoardAt(int moveIndex)
+    {
+        var board = new GoBoard(BoardSize);
+        GoPoint? koPoint = null;
+        for (var index = 0; index < moveIndex; index++)
+        {
+            var move = _moves[index];
+            if (move.Point is not { } point)
+            {
+                koPoint = null;
+                continue;
+            }
+
+            if (board.TryPlaceStone(
+                    point.X,
+                    point.Y,
+                    move.Stone,
+                    koPoint,
+                    out _,
+                    out var nextKoPoint))
+            {
+                koPoint = nextKoPoint;
+            }
+        }
+
+        return board;
     }
 
     private static GoStone ParseStone(string text) => text.ToLowerInvariant() switch

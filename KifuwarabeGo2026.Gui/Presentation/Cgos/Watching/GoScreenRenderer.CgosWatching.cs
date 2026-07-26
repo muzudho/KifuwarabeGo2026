@@ -38,13 +38,17 @@ public sealed partial class GoScreenRenderer
             surface.Cell);
 
         DrawBoardFrameHighlights(surface.Outer);
+        if (!observation.IsFinished)
+        {
+            DrawBroadcastStatusBadge(observation.IsReplayMode ? "REPLAY" : "LIVE");
+        }
         if (!session.IsReviewChartPopupOpen)
         {
             DrawCgosWatchingSidePanel(session, observation, mousePoint);
         }
         else
         {
-            DrawCgosLiveChartPopup(session, observation.Moves, mousePoint);
+            DrawCgosLiveChartPopup(session, observation, mousePoint);
         }
         _spriteBatch.End();
     }
@@ -128,7 +132,12 @@ public sealed partial class GoScreenRenderer
         else
         {
             DrawVerticalResultSection(new Rectangle(1144, 852, 668, 64), "STATUS", new Color(62, 112, 105));
-            DrawResultRow(new Rectangle(1164, 858, 628, 48), "STATE", "WATCHING LIVE GAME", new Color(62, 112, 105), new Color(99, 223, 185));
+            DrawResultRow(
+                new Rectangle(1164, 858, 628, 48),
+                "STATE",
+                observation.IsReplayMode ? "WATCHING REPLAY" : "WATCHING LIVE GAME",
+                new Color(62, 112, 105),
+                observation.IsReplayMode ? new Color(137, 201, 255) : new Color(99, 223, 185));
         }
 
     }
@@ -162,5 +171,22 @@ public sealed partial class GoScreenRenderer
     /// ［KIFU REVIEW］ボタンの描画範囲
     /// </summary>
     private static Rectangle CgosWatchingReviewButtonBounds => new(1164, 920, 306, 52);
+
+    private void DrawBroadcastStatusBadge(string label)
+    {
+        var replay = label == "REPLAY";
+        var bounds = new Rectangle(842, 72, 164, 54);
+        FillRect(bounds, replay ? new Color(43, 83, 126, 238) : new Color(137, 34, 41, 238));
+        DrawRect(bounds, 2, replay ? new Color(137, 201, 255) : new Color(255, 145, 151));
+        if (!replay)
+        {
+            DrawCircle(new Vector2(bounds.X + 25, bounds.Center.Y), 7, new Color(255, 225, 225));
+        }
+        DrawCenteredText(
+            label,
+            new Vector2(bounds.Center.X + (replay ? 0 : 10), bounds.Center.Y),
+            Color.White,
+            0.48f);
+    }
 
 }

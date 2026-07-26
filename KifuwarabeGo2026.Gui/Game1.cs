@@ -1359,6 +1359,7 @@ public class Game1 : Game
         if (GoScreenRenderer.GetReviewChartPopupCloseHit(point))
         {
             _session.CloseReviewChartPopup();
+            _reviewPopupSeekDragging = false;
             return;
         }
 
@@ -1379,6 +1380,16 @@ public class Game1 : Game
             GoScreenRenderer.GetReviewChartPopupTrendDisplayModeButtonHit(point) is { } trendMode)
         {
             _session.SetMoveTrendDisplayMode(trendMode);
+            return;
+        }
+
+        if (_session.UseKind == GoAppUseKind.CgosClient &&
+            _session.CgosConnectionFlowKind == CgosConnectionFlowKind.Watching &&
+            !_cgosGameObservation.IsFinished &&
+            GoScreenRenderer.GetReviewChartPopupSeekMove(point, _cgosGameObservation.MoveCount) is { } moveIndex)
+        {
+            _cgosGameObservation.SeekReplay(moveIndex);
+            _reviewPopupSeekDragging = true;
         }
     }
 
@@ -1390,15 +1401,27 @@ public class Game1 : Game
             return;
         }
 
-        if (!_reviewPopupSeekDragging ||
-            GoScreenRenderer.GetReviewChartPopupSeekMove(point, _session.ReviewMoveCount) is not { } moveIndex)
+        if (!_reviewPopupSeekDragging)
         {
             return;
         }
 
-        if (moveIndex != _session.ReviewMoveIndex)
+        if (_session.CurrentMode.Kind == GoAppModeKind.Reviewing)
         {
-            MoveReview(moveIndex - _session.ReviewMoveIndex);
+            if (GoScreenRenderer.GetReviewChartPopupSeekMove(point, _session.ReviewMoveCount) is { } reviewMoveIndex &&
+                reviewMoveIndex != _session.ReviewMoveIndex)
+            {
+                MoveReview(reviewMoveIndex - _session.ReviewMoveIndex);
+            }
+            return;
+        }
+
+        if (_session.UseKind == GoAppUseKind.CgosClient &&
+            _session.CgosConnectionFlowKind == CgosConnectionFlowKind.Watching &&
+            !_cgosGameObservation.IsFinished &&
+            GoScreenRenderer.GetReviewChartPopupSeekMove(point, _cgosGameObservation.MoveCount) is { } cgosMoveIndex)
+        {
+            _cgosGameObservation.SeekReplay(cgosMoveIndex);
         }
     }
 

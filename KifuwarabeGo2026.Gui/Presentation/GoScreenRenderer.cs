@@ -49,6 +49,11 @@ public sealed partial class GoScreenRenderer
 
         DrawBackground();
         DrawBoard(session, mousePoint);
+        if (session.CurrentMode.Kind == GoAppModeKind.Playing &&
+            session.CanOpenLocalChartPopup)
+        {
+            DrawBroadcastStatusBadge("LIVE");
+        }
         if (!session.IsReviewChartPopupOpen)
         {
             DrawSidePanel(session, mousePoint);
