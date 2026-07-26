@@ -52,6 +52,13 @@ public sealed partial class GoScreenRenderer
         if (!session.IsReviewChartPopupOpen)
         {
             DrawCgosWatchingSidePanel(session, observation, mousePoint);
+            if (observation.IsReplayMode)
+            {
+                DrawReplayNavigationControls(
+                    observation.DisplayMoveIndex,
+                    observation.MoveCount,
+                    mousePoint);
+            }
         }
         else
         {

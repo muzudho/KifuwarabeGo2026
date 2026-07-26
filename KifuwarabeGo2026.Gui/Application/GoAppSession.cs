@@ -161,6 +161,8 @@ public sealed class GoAppSession
     public bool IsSgfAutoSaveAvailable { get; private set; }
     public bool IsSgfAutoSaveEnabled { get; private set; }
     public string SgfAutoSaveStatus { get; private set; } = "";
+    public bool IsLocalResultSgfSaved { get; private set; }
+    public bool IsCgosResultSgfSaved { get; private set; }
 
     public bool CanOpenLocalChartPopup =>
         CurrentMode.Kind == GoAppModeKind.GameOver ||
@@ -169,7 +171,7 @@ public sealed class GoAppSession
          WhitePlayerKind == GoPlayerKind.Computer);
 
     public bool IsLocalReplayMode =>
-        CurrentMode.Kind == GoAppModeKind.Playing &&
+        CurrentMode.Kind is GoAppModeKind.Playing or GoAppModeKind.GameOver &&
         _localReplayMoveIndex is not null;
 
     public int LocalDisplayMoveIndex =>
@@ -192,6 +194,10 @@ public sealed class GoAppSession
     }
 
     public void SetSgfAutoSaveStatus(string status) => SgfAutoSaveStatus = status;
+
+    public void SetLocalResultSgfSaved(bool saved) => IsLocalResultSgfSaved = saved;
+
+    public void SetCgosResultSgfSaved(bool saved) => IsCgosResultSgfSaved = saved;
 
     public int SelectedCgosConnectionProfileIndex { get; private set; }
 
@@ -504,7 +510,8 @@ public sealed class GoAppSession
 
     public void SeekLocalReplay(int moveIndex)
     {
-        if (CurrentMode.Kind != GoAppModeKind.Playing || !CanOpenLocalChartPopup)
+        if (CurrentMode.Kind is not (GoAppModeKind.Playing or GoAppModeKind.GameOver) ||
+            !CanOpenLocalChartPopup)
         {
             return;
         }
@@ -1004,6 +1011,7 @@ public sealed class GoAppSession
     public void StartPlaying()
     {
         ResetLiveChartAutoUpdate();
+        IsLocalResultSgfSaved = false;
         if (CurrentMode.Kind == GoAppModeKind.GameOver)
         {
             ClearBoard();

@@ -85,6 +85,9 @@ public sealed partial class GoScreenRenderer
         return null;
     }
 
+    public static int? GetReplayStepButtonHit(Point point) =>
+        GetReviewChartPopupStepButtonHit(point);
+
     private void DrawReviewChartPopup(GoAppSession session, Point mousePoint)
     {
         FillRect(new Rectangle(0, 0, VirtualScreen.Width, VirtualScreen.Height), new Color(65, 80, 125, 58));
@@ -122,9 +125,12 @@ public sealed partial class GoScreenRenderer
                 ? "GAME RESULT TREND"
                 : session.IsLocalReplayMode ? "REPLAY GAME TREND" : "LIVE GAME TREND",
             session.LocalDisplayMoveIndex,
-            seekable: session.CurrentMode.Kind == GoAppModeKind.Playing,
+            seekable: true,
             showBackToLive: session.CurrentMode.Kind == GoAppModeKind.Playing,
-            backToLiveEnabled: session.IsLocalReplayMode);
+            backToLiveEnabled: session.IsLocalReplayMode,
+            showUnsavedNotice:
+                session.CurrentMode.Kind == GoAppModeKind.GameOver &&
+                !session.IsLocalResultSgfSaved);
 
     private void DrawCgosLiveChartPopup(
         GoAppSession session,
@@ -136,9 +142,10 @@ public sealed partial class GoScreenRenderer
             mousePoint,
             observation.IsReplayMode ? "CGOS REPLAY TREND" : "CGOS LIVE TREND",
             observation.DisplayMoveIndex,
-            seekable: !observation.IsFinished,
+            seekable: true,
             showBackToLive: !observation.IsFinished,
-            backToLiveEnabled: observation.IsReplayMode);
+            backToLiveEnabled: observation.IsReplayMode,
+            showUnsavedNotice: observation.IsFinished && !session.IsCgosResultSgfSaved);
 
     private void DrawReadOnlyChartPopup(
         GoAppSession session,
@@ -148,7 +155,8 @@ public sealed partial class GoScreenRenderer
         int? selectedMoveIndex = null,
         bool seekable = false,
         bool showBackToLive = false,
-        bool backToLiveEnabled = false)
+        bool backToLiveEnabled = false,
+        bool showUnsavedNotice = false)
     {
         var visibleMoves = new MovePrefixView(
             moves,
@@ -159,6 +167,14 @@ public sealed partial class GoScreenRenderer
         FillRect(ReviewChartPopupBounds, new Color(54, 69, 112, 108));
         DrawRect(ReviewChartPopupBounds, 4, new Color(158, 177, 229, 230));
         DrawText(title, new Vector2(92, 58), new Color(238, 242, 255), 0.62f);
+        if (showUnsavedNotice)
+        {
+            DrawFittedText(
+                "SGF NOT SAVED — SAVE IT FROM THE RESULT SCREEN",
+                new Rectangle(690, 59, 930, 42),
+                new Color(255, 205, 112),
+                0.34f);
+        }
         DrawCommandButton(
             ReviewChartPopupCloseButtonBounds,
             "CLOSE",
@@ -215,6 +231,16 @@ public sealed partial class GoScreenRenderer
             moveCount,
             mousePoint,
             ReviewChartPopupStepButtonBounds);
+    }
+
+    private void DrawReplayNavigationControls(
+        int currentMoveIndex,
+        int moveCount,
+        Point mousePoint)
+    {
+        FillRect(new Rectangle(492, 1018, 928, 56), new Color(17, 24, 48, 215));
+        DrawRect(new Rectangle(492, 1018, 928, 56), 2, new Color(137, 160, 205));
+        DrawReviewChartPopupStepButtons(currentMoveIndex, moveCount, mousePoint);
     }
 
     private static Rectangle ReviewChartPopupStepButtonBounds(int index) =>

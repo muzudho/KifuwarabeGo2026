@@ -38,7 +38,7 @@ public sealed class CgosGameObservation
     public int WhiteAgehama { get; private set; }
     public IReadOnlyList<GoGameMove> Moves => _moves;
     public GoMoveAnalysis? LatestAnalysis => _moves.Count == 0 ? null : _moves[^1].Analysis;
-    public bool IsReplayMode => !IsFinished && _replayMoveIndex is not null;
+    public bool IsReplayMode => _replayMoveIndex is not null;
     public int DisplayMoveIndex => _replayMoveIndex ?? MoveCount;
 
     public GoStone GetStone(int x, int y) => (_replayBoard ?? _board).GetStone(x, y);
@@ -50,7 +50,7 @@ public sealed class CgosGameObservation
 
     public void SeekReplay(int moveIndex)
     {
-        if (!IsStarted || IsFinished)
+        if (!IsStarted)
         {
             return;
         }

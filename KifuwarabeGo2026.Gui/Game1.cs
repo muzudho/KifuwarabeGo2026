@@ -473,6 +473,24 @@ public class Game1 : Game
                 return;
             }
 
+            var isReplayNavigationVisible =
+                (_session.UseKind == GoAppUseKind.LocalGame && _session.IsLocalReplayMode) ||
+                (_session.UseKind == GoAppUseKind.CgosClient && _cgosGameObservation.IsReplayMode);
+            if (isReplayNavigationVisible &&
+                GoScreenRenderer.GetReplayStepButtonHit(point) is { } replayStep &&
+                TryGetReadOnlyChartNavigation(out var replayMoveIndex, out var replayMaximumMoveIndex))
+            {
+                var targetMoveIndex = replayStep switch
+                {
+                    int.MinValue => 0,
+                    int.MaxValue => replayMaximumMoveIndex,
+                    _ => Math.Clamp(replayMoveIndex + replayStep, 0, replayMaximumMoveIndex),
+                };
+                SeekReadOnlyChartPopup(targetMoveIndex);
+                _previousMouse = mouse;
+                return;
+            }
+
             if (_session.UseKind == GoAppUseKind.CgosClient)
             {
                 if (_session.CurrentMode.Kind == GoAppModeKind.Reviewing && TryHandleReviewClick(point))
@@ -1332,6 +1350,7 @@ public class Game1 : Game
         if (_cgosGameObservation.IsStarted && _cgosGameObservation.GameId != previousGameId)
         {
             _session.ResetLiveChartAutoUpdate();
+            _session.SetCgosResultSgfSaved(false);
             BeginCgosMatchNotification();
         }
 
@@ -1528,11 +1547,12 @@ public class Game1 : Game
         }
 
         if (_session.UseKind == GoAppUseKind.CgosClient &&
-            _session.CgosConnectionFlowKind == CgosConnectionFlowKind.Watching &&
-            !_cgosGameObservation.IsFinished &&
+            _session.CgosConnectionFlowKind is CgosConnectionFlowKind.Watching or CgosConnectionFlowKind.Result &&
             GoScreenRenderer.GetReviewChartPopupSeekMove(
                 point,
-                _session.GetLiveChartVisibleMoveCount(_cgosGameObservation.MoveCount)) is { } moveIndex)
+                _cgosGameObservation.IsFinished
+                    ? _cgosGameObservation.MoveCount
+                    : _session.GetLiveChartVisibleMoveCount(_cgosGameObservation.MoveCount)) is { } moveIndex)
         {
             HandleReadOnlyChartPopupSeekClick(
                 point,
@@ -1541,10 +1561,12 @@ public class Game1 : Game
         }
 
         if (_session.UseKind == GoAppUseKind.LocalGame &&
-            _session.CurrentMode.Kind == GoAppModeKind.Playing &&
+            _session.CurrentMode.Kind is GoAppModeKind.Playing or GoAppModeKind.GameOver &&
             GoScreenRenderer.GetReviewChartPopupSeekMove(
                 point,
-                _session.GetLiveChartVisibleMoveCount(_session.CurrentGameRecord.Moves.Count)) is { } localMoveIndex)
+                _session.CurrentMode.Kind == GoAppModeKind.GameOver
+                    ? _session.CurrentGameRecord.Moves.Count
+                    : _session.GetLiveChartVisibleMoveCount(_session.CurrentGameRecord.Moves.Count)) is { } localMoveIndex)
         {
             HandleReadOnlyChartPopupSeekClick(
                 point,
@@ -1584,13 +1606,12 @@ public class Game1 : Game
     private void SeekReadOnlyChartPopup(int moveIndex)
     {
         if (_session.UseKind == GoAppUseKind.CgosClient &&
-            _session.CgosConnectionFlowKind == CgosConnectionFlowKind.Watching &&
-            !_cgosGameObservation.IsFinished)
+            _session.CgosConnectionFlowKind is CgosConnectionFlowKind.Watching or CgosConnectionFlowKind.Result)
         {
             _cgosGameObservation.SeekReplay(moveIndex);
         }
         else if (_session.UseKind == GoAppUseKind.LocalGame &&
-                 _session.CurrentMode.Kind == GoAppModeKind.Playing)
+                 _session.CurrentMode.Kind is GoAppModeKind.Playing or GoAppModeKind.GameOver)
         {
             _session.SeekLocalReplay(moveIndex);
         }
@@ -1606,19 +1627,22 @@ public class Game1 : Game
         out int maximumMoveIndex)
     {
         if (_session.UseKind == GoAppUseKind.CgosClient &&
-            _session.CgosConnectionFlowKind == CgosConnectionFlowKind.Watching &&
-            !_cgosGameObservation.IsFinished)
+            _session.CgosConnectionFlowKind is CgosConnectionFlowKind.Watching or CgosConnectionFlowKind.Result)
         {
             currentMoveIndex = _cgosGameObservation.DisplayMoveIndex;
-            maximumMoveIndex = _session.GetLiveChartVisibleMoveCount(_cgosGameObservation.MoveCount);
+            maximumMoveIndex = _cgosGameObservation.IsFinished
+                ? _cgosGameObservation.MoveCount
+                : _session.GetLiveChartVisibleMoveCount(_cgosGameObservation.MoveCount);
             return true;
         }
 
         if (_session.UseKind == GoAppUseKind.LocalGame &&
-            _session.CurrentMode.Kind == GoAppModeKind.Playing)
+            _session.CurrentMode.Kind is GoAppModeKind.Playing or GoAppModeKind.GameOver)
         {
             currentMoveIndex = _session.LocalDisplayMoveIndex;
-            maximumMoveIndex = _session.GetLiveChartVisibleMoveCount(_session.CurrentGameRecord.Moves.Count);
+            maximumMoveIndex = _session.CurrentMode.Kind == GoAppModeKind.GameOver
+                ? _session.CurrentGameRecord.Moves.Count
+                : _session.GetLiveChartVisibleMoveCount(_session.CurrentGameRecord.Moves.Count);
             return true;
         }
 
@@ -1657,21 +1681,24 @@ public class Game1 : Game
         }
 
         if (_session.UseKind == GoAppUseKind.CgosClient &&
-            _session.CgosConnectionFlowKind == CgosConnectionFlowKind.Watching &&
-            !_cgosGameObservation.IsFinished &&
+            _session.CgosConnectionFlowKind is CgosConnectionFlowKind.Watching or CgosConnectionFlowKind.Result &&
             GoScreenRenderer.GetReviewChartPopupSeekMove(
                 point,
-                _session.GetLiveChartVisibleMoveCount(_cgosGameObservation.MoveCount)) is { } cgosMoveIndex)
+                _cgosGameObservation.IsFinished
+                    ? _cgosGameObservation.MoveCount
+                    : _session.GetLiveChartVisibleMoveCount(_cgosGameObservation.MoveCount)) is { } cgosMoveIndex)
         {
             _cgosGameObservation.SeekReplay(cgosMoveIndex);
             return;
         }
 
         if (_session.UseKind == GoAppUseKind.LocalGame &&
-            _session.CurrentMode.Kind == GoAppModeKind.Playing &&
+            _session.CurrentMode.Kind is GoAppModeKind.Playing or GoAppModeKind.GameOver &&
             GoScreenRenderer.GetReviewChartPopupSeekMove(
                 point,
-                _session.GetLiveChartVisibleMoveCount(_session.CurrentGameRecord.Moves.Count)) is { } localMoveIndex)
+                _session.CurrentMode.Kind == GoAppModeKind.GameOver
+                    ? _session.CurrentGameRecord.Moves.Count
+                    : _session.GetLiveChartVisibleMoveCount(_session.CurrentGameRecord.Moves.Count)) is { } localMoveIndex)
         {
             _session.SeekLocalReplay(localMoveIndex);
         }
@@ -2153,6 +2180,7 @@ public class Game1 : Game
             File.WriteAllText(dialog.FileName, sgf, Encoding.UTF8);
             RememberSgfDirectory(dialog.FileName);
             RefreshSgfAutoSaveState();
+            MarkCurrentResultSgfSaved();
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -2192,9 +2220,12 @@ public class Game1 : Game
         }
 
         _lastAutoSavedLocalGameRecord = _session.CurrentGameRecord;
-        AutoSaveSgf(
+        if (AutoSaveSgf(
             _session.CurrentGameRecord,
-            $"kifuwarabe-go-{DateTime.Now:yyyyMMdd-HHmmss}.sgf");
+            $"kifuwarabe-go-{DateTime.Now:yyyyMMdd-HHmmss}.sgf"))
+        {
+            _session.SetLocalResultSgfSaved(true);
+        }
     }
 
     private void TryAutoSaveCgosGame()
@@ -2207,18 +2238,21 @@ public class Game1 : Game
         }
 
         _lastAutoSavedCgosGameId = _cgosGameObservation.GameId;
-        AutoSaveSgf(
+        if (AutoSaveSgf(
             _cgosGameObservation.CreateGameRecord(),
-            CgosSgfFileNameBuilder.Create(_session.SelectedCgosConnectionProfile, _cgosGameObservation));
+            CgosSgfFileNameBuilder.Create(_session.SelectedCgosConnectionProfile, _cgosGameObservation)))
+        {
+            _session.SetCgosResultSgfSaved(true);
+        }
     }
 
-    private void AutoSaveSgf(GoGameRecord record, string fileName)
+    private bool AutoSaveSgf(GoGameRecord record, string fileName)
     {
         var directory = ApplicationSettings.Current.SgfSaveDirectory;
         if (!Directory.Exists(directory))
         {
             RefreshSgfAutoSaveState();
-            return;
+            return false;
         }
 
         try
@@ -2228,11 +2262,27 @@ public class Game1 : Game
             File.WriteAllText(path, sgf, Encoding.UTF8);
             _session.SetSgfAutoSaveStatus("AUTO SAVED");
             GuiOperationLog.User("Automatically saved SGF", path);
+            return true;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
         {
             _session.SetSgfAutoSaveStatus("SAVE FAILED");
             ApplicationErrorLog.Write("SGF AUTO SAVE", "Could not automatically save the SGF game record.", ex);
+            return false;
+        }
+    }
+
+    private void MarkCurrentResultSgfSaved()
+    {
+        if (_session.UseKind == GoAppUseKind.LocalGame &&
+            _session.CurrentMode.Kind == GoAppModeKind.GameOver)
+        {
+            _session.SetLocalResultSgfSaved(true);
+        }
+        else if (_session.UseKind == GoAppUseKind.CgosClient &&
+                 _session.CgosConnectionFlowKind == CgosConnectionFlowKind.Result)
+        {
+            _session.SetCgosResultSgfSaved(true);
         }
     }
 

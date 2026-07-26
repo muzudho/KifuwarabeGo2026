@@ -59,6 +59,13 @@ public sealed partial class GoScreenRenderer
         if (!session.IsReviewChartPopupOpen)
         {
             DrawSidePanel(session, mousePoint);
+            if (session.IsLocalReplayMode)
+            {
+                DrawReplayNavigationControls(
+                    session.LocalDisplayMoveIndex,
+                    session.CurrentGameRecord.Moves.Count,
+                    mousePoint);
+            }
             DrawTournamentRulesSelectionDialog(session, mousePoint);
             DrawTournamentRulesAddPanel(session, mousePoint);
             DrawGtpEngineSelectionDialog(session, mousePoint);
