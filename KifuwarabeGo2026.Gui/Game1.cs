@@ -44,6 +44,7 @@ public class Game1 : Game
     private readonly CgosConnectionProcess _cgosWhiteConnectionProcess = new("WhitePlayer");
     private readonly CgosConnectionProcess _cgosAdminProcess = new("Admin");
     private readonly CgosGameObservation _cgosGameObservation = new();
+    private GoAppSession? _variationSession;
     private GoScreenRenderer? _renderer;
     private SoundEffect? _placeStoneSound;
     private SoundEffectInstance? _placeStoneSoundInstance;
@@ -145,7 +146,7 @@ public class Game1 : Game
                 UpdateCgosGameObservation();
                 UpdateCgosMatchNotification();
 
-                if (_session.CurrentMode.Kind is GoAppModeKind.Reviewing or GoAppModeKind.VariationEditing)
+                if (_variationSession is not null || _session.CurrentMode.Kind == GoAppModeKind.Reviewing)
                     UpdateGlobalKeyboardInput(keyboard);
                 else
                     // ［CGOS　＞　観戦画面］キーボード入力
@@ -366,6 +367,13 @@ public class Game1 : Game
                     TitleRenderer.Draw(_renderer, Mouse.GetState().Position);
             }
         }
+        else if (_variationSession is not null)
+        {
+            if (_renderer is not null)
+            {
+                LocalRestingRenderer.Draw(_renderer, _variationSession, Mouse.GetState().Position);
+            }
+        }
         else if (_session.UseKind == GoAppUseKind.CgosClient)
         {
             if (_renderer is not null)
@@ -397,6 +405,7 @@ public class Game1 : Game
         }
 
         if (_renderer is not null &&
+            _variationSession is null &&
             _session.UseKind == GoAppUseKind.CgosClient &&
             _cgosMatchNotificationMode != CgosMatchNotificationMode.None)
         {
@@ -427,8 +436,11 @@ public class Game1 : Game
         var engineErrorLogHovered = _session.UseKind == GoAppUseKind.LocalGame &&
             GoScreenRenderer.GetEngineErrorLogHit(point, _session);
         Mouse.SetCursor(engineErrorLogHovered ? MouseCursor.Hand : MouseCursor.Arrow);
-        UpdateReviewMouseRepeat(mouse, point);
-        UpdateReviewPopupSeekDrag(mouse, point);
+        if (_variationSession is null)
+        {
+            UpdateReviewMouseRepeat(mouse, point);
+            UpdateReviewPopupSeekDrag(mouse, point);
+        }
 
         if (_previousMouse.LeftButton == ButtonState.Released && mouse.LeftButton == ButtonState.Pressed)
         {
@@ -471,6 +483,13 @@ public class Game1 : Game
                 _session.CurrentMode.Kind != GoAppModeKind.Reviewing)
             {
                 HandleReadOnlyChartPopupClick(point);
+                _previousMouse = mouse;
+                return;
+            }
+
+            if (_variationSession is not null)
+            {
+                TryHandleVariationEditingClick(point);
                 _previousMouse = mouse;
                 return;
             }
@@ -527,13 +546,6 @@ public class Game1 : Game
                     _ => Math.Clamp(replayMoveIndex + replayStep, 0, replayMaximumMoveIndex),
                 };
                 SeekReadOnlyChartPopup(targetMoveIndex);
-                _previousMouse = mouse;
-                return;
-            }
-
-            if (_session.CurrentMode.Kind == GoAppModeKind.VariationEditing)
-            {
-                TryHandleVariationEditingClick(point);
                 _previousMouse = mouse;
                 return;
             }
@@ -1138,62 +1150,76 @@ public class Game1 : Game
 
     private void StartVariationEditingFromReplay()
     {
+        if (_session.UseKind is not { } useKind)
+            return;
+
         GoGameRecord sourceRecord;
         int sourceMoveIndex;
-        GoAppModeKind returnMode;
         if (_session.UseKind == GoAppUseKind.CgosClient)
         {
             sourceRecord = _cgosGameObservation.CreateGameRecord();
             sourceMoveIndex = _cgosGameObservation.DisplayMoveIndex;
-            returnMode = GoAppModeKind.Resting;
         }
         else
         {
             sourceRecord = _session.CurrentGameRecord.Clone();
             sourceMoveIndex = _session.LocalDisplayMoveIndex;
-            returnMode = _session.CurrentMode.Kind;
         }
 
-        if (!_session.StartVariationEditing(sourceRecord, sourceMoveIndex, returnMode, out var warning) &&
-            !string.IsNullOrWhiteSpace(warning))
+        var variationSession = new GoAppSession();
+        variationSession.SelectUseKind(useKind);
+        if (!variationSession.StartVariationEditing(
+                sourceRecord,
+                sourceMoveIndex,
+                GoAppModeKind.Resting,
+                out var warning))
         {
-            ShowMessage(warning, "Analysis editing");
+            if (!string.IsNullOrWhiteSpace(warning))
+                ShowMessage(warning, "Analysis editing");
+            return;
         }
+
+        _variationSession = variationSession;
     }
 
     private bool TryHandleVariationEditingClick(Point point)
     {
-        if (_session.CurrentMode.Kind != GoAppModeKind.VariationEditing)
+        var variationSession = _variationSession;
+        if (variationSession is null ||
+            variationSession.CurrentMode.Kind != GoAppModeKind.VariationEditing)
             return false;
 
         if (GoScreenRenderer.GetVariationEditingDiscardButtonHit(point))
         {
-            _session.DiscardVariationEditing();
+            _variationSession = null;
             return true;
         }
 
         if (GoScreenRenderer.GetVariationEditingExportSgfButtonHit(point))
         {
-            ExportSgf();
+            ExportSgf(
+                variationSession.CurrentGameRecord,
+                $"kifuwarabe-analysis-{DateTime.Now:yyyyMMdd-HHmmss}.sgf",
+                markCurrentResultSaved: false);
             return true;
         }
 
         if (GoScreenRenderer.GetVariationEditingUndoButtonHit(point))
         {
-            _session.UndoVariation();
+            variationSession.UndoVariation();
             return true;
         }
 
         if (GoScreenRenderer.GetVariationEditingPassButtonHit(point))
         {
-            if (_session.PassVariation())
+            if (variationSession.PassVariation())
                 PlayPlaceStoneSound(0.45f, 0.25f, 0f);
             return true;
         }
 
-        if (GoScreenRenderer.TryGetBoardIntersection(point, _session.BoardSize, out var intersection))
+        if (GoScreenRenderer.TryGetBoardIntersection(point, variationSession.BoardSize, out var intersection))
         {
-            if (_session.TryPlaceVariationStone(intersection.X, intersection.Y))
+            if (variationSession.TryPlaceVariationStone(intersection.X, intersection.Y))
                 PlayPlaceStoneSound();
             return true;
         }
@@ -2274,7 +2300,10 @@ public class Game1 : Game
     /// <summary>
     /// 指定された棋譜を Local と共通の保存フローで SGF 出力します。
     /// </summary>
-    private void ExportSgf(GoGameRecord record, string fileName)
+    private void ExportSgf(
+        GoGameRecord record,
+        string fileName,
+        bool markCurrentResultSaved = true)
     {
         using var dialog = new System.Windows.Forms.SaveFileDialog
         {
@@ -2299,7 +2328,8 @@ public class Game1 : Game
             File.WriteAllText(dialog.FileName, sgf, Encoding.UTF8);
             RememberSgfDirectory(dialog.FileName);
             RefreshSgfAutoSaveState();
-            MarkCurrentResultSgfSaved();
+            if (markCurrentResultSaved)
+                MarkCurrentResultSgfSaved();
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
