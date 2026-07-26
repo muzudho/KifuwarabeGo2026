@@ -500,7 +500,6 @@ public class Game1 : Game
             var isVariationEditVisible =
                 isReplayNavigationVisible ||
                 (_session.UseKind == GoAppUseKind.LocalGame &&
-                 _session.CurrentMode.Kind == GoAppModeKind.Playing &&
                  _session.CanOpenLocalChartPopup) ||
                 (_session.UseKind == GoAppUseKind.CgosClient &&
                  _session.CgosConnectionFlowKind == CgosConnectionFlowKind.Watching &&
