@@ -67,7 +67,8 @@ public sealed partial class GoScreenRenderer
                     mousePoint,
                     showBackToLive: session.CurrentMode.Kind == GoAppModeKind.Playing);
             }
-            else if (session.CanOpenLocalChartPopup)
+            else if (session.CanOpenLocalChartPopup ||
+                     session.CurrentMode.Kind == GoAppModeKind.Reviewing)
             {
                 DrawReplayEditIconButton(mousePoint);
             }

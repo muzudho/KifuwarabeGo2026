@@ -499,6 +499,7 @@ public class Game1 : Game
                 (_session.UseKind == GoAppUseKind.CgosClient && _cgosGameObservation.IsReplayMode);
             var isVariationEditVisible =
                 isReplayNavigationVisible ||
+                _session.CurrentMode.Kind == GoAppModeKind.Reviewing ||
                 (_session.UseKind == GoAppUseKind.LocalGame &&
                  _session.CanOpenLocalChartPopup) ||
                 (_session.UseKind == GoAppUseKind.CgosClient &&
@@ -530,7 +531,7 @@ public class Game1 : Game
             }
             if (isVariationEditVisible && GoScreenRenderer.GetReplayEditButtonHit(point))
             {
-                StartVariationEditingFromReplay();
+                StartVariationEditingFromDisplayedPosition();
                 _previousMouse = mouse;
                 return;
             }
@@ -1147,14 +1148,19 @@ public class Game1 : Game
         return true;
     }
 
-    private void StartVariationEditingFromReplay()
+    private void StartVariationEditingFromDisplayedPosition()
     {
         if (_session.UseKind is not { } useKind)
             return;
 
         GoGameRecord sourceRecord;
         int sourceMoveIndex;
-        if (_session.UseKind == GoAppUseKind.CgosClient)
+        if (_session.CurrentMode.Kind == GoAppModeKind.Reviewing)
+        {
+            sourceRecord = _session.CurrentGameRecord.Clone();
+            sourceMoveIndex = sourceRecord.Moves.Count;
+        }
+        else if (_session.UseKind == GoAppUseKind.CgosClient)
         {
             sourceRecord = _cgosGameObservation.CreateGameRecord();
             sourceMoveIndex = _cgosGameObservation.DisplayMoveIndex;
