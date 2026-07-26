@@ -139,6 +139,7 @@ public sealed class GoAppSession
     public bool HasSelectedCgosGtpEngine => SelectedCgosBlackGtpEngineProfile is not null || SelectedCgosWhiteGtpEngineProfile is not null;
 
     public bool IsAnyCgosProcessRunning => IsCgosConnectionRunning || IsCgosBlackConnectionRunning || IsCgosWhiteConnectionRunning || IsCgosAdminRunning;
+    public bool IsCgosGameInProgress { get; private set; }
 
     public bool IsCgosConnectionRunning { get; private set; }
 
@@ -565,6 +566,11 @@ public sealed class GoAppSession
     /// CGOS 接続画面へ戻ります。
     /// </summary>
     public void ReturnToCgosConnectionScreen() => CgosConnectionFlowKind = CgosConnectionFlowKind.ConnectionStart;
+
+    public void SetCgosGameInProgress(bool inProgress)
+    {
+        IsCgosGameInProgress = inProgress;
+    }
 
     public void ReturnToCgosConnectionProfiles()
     {

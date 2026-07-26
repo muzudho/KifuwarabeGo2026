@@ -546,6 +546,14 @@ public class Game1 : Game
                     return;
                 }
 
+                if (_session.CgosConnectionFlowKind == CgosConnectionFlowKind.Watching &&
+                    GoScreenRenderer.GetCgosWatchingBackButtonHit(point))
+                {
+                    _session.ReturnToCgosConnectionScreen();
+                    _previousMouse = mouse;
+                    return;
+                }
+
                 if (_session.CgosConnectionFlowKind == CgosConnectionFlowKind.Result)
                 {
                     if (GoScreenRenderer.GetCgosWatchingReviewButtonHit(point))
@@ -629,11 +637,29 @@ public class Game1 : Game
                         {
                             TailCgosAdminLog();
                         }
-                        else if (GoScreenRenderer.GetCgosBlackConnectionButtonHit(point, _session.IsCgosBlackConnectionRunning || _session.SelectedCgosBlackGtpEngineProfile is not null))
+                        else if (GoScreenRenderer.GetCgosBlackResignButtonHit(
+                                     point,
+                                     _session.IsCgosGameInProgress && _session.IsCgosBlackConnectionRunning))
+                        {
+                            SendCgosPlayerResign(GoStone.Black);
+                        }
+                        else if (GoScreenRenderer.GetCgosWhiteResignButtonHit(
+                                     point,
+                                     _session.IsCgosGameInProgress && _session.IsCgosWhiteConnectionRunning))
+                        {
+                            SendCgosPlayerResign(GoStone.White);
+                        }
+                        else if (GoScreenRenderer.GetCgosBlackConnectionButtonHit(
+                                     point,
+                                     _session.IsCgosBlackConnectionRunning || _session.SelectedCgosBlackGtpEngineProfile is not null,
+                                     _session.IsCgosGameInProgress))
                         {
                             ToggleCgosPlayerConnectionProcess(GoStone.Black);
                         }
-                        else if (GoScreenRenderer.GetCgosWhiteConnectionButtonHit(point, _session.IsCgosWhiteConnectionRunning || _session.SelectedCgosWhiteGtpEngineProfile is not null))
+                        else if (GoScreenRenderer.GetCgosWhiteConnectionButtonHit(
+                                     point,
+                                     _session.IsCgosWhiteConnectionRunning || _session.SelectedCgosWhiteGtpEngineProfile is not null,
+                                     _session.IsCgosGameInProgress))
                         {
                             ToggleCgosPlayerConnectionProcess(GoStone.White);
                         }
@@ -1271,6 +1297,10 @@ public class Game1 : Game
             if (_cgosGameObservation.ProcessLogLine(line)) PlayPlaceStoneSound();
         }
 
+        _session.SetCgosGameInProgress(
+            _cgosGameObservation.IsStarted &&
+            !_cgosGameObservation.IsFinished);
+
         if (_cgosGameObservation.IsStarted && _cgosGameObservation.GameId != previousGameId)
         {
             _session.ResetLiveChartAutoUpdate();
@@ -1281,6 +1311,21 @@ public class Game1 : Game
         {
             if (_cgosMatchNotificationMode == CgosMatchNotificationMode.None)
                 _session.OpenCgosResultScreen();
+        }
+    }
+
+    private void SendCgosPlayerResign(GoStone stone)
+    {
+        var process = stone == GoStone.Black ? _cgosBlackConnectionProcess : _cgosWhiteConnectionProcess;
+        try
+        {
+            var status = process.SendCommand("resign");
+            SetCgosPlayerConnectionProcessStatus(stone, status, process.IsRunning, process);
+            GuiOperationLog.User("Requested CGOS player resignation", $"player={stone}");
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or IOException or System.ComponentModel.Win32Exception)
+        {
+            SetCgosPlayerConnectionProcessStatus(stone, "ERROR: " + ex.Message, process.IsRunning, process);
         }
     }
 

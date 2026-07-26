@@ -59,12 +59,17 @@ internal static class Program
                 return 2;
             }
 
+            var playerControl = new CgosPlayerControl();
             _ = CgosStandardInputRelay.Start(
                 (line, _) =>
                 {
                     if (CgosStandardInputRelay.IsExitCommand(line))
                     {
                         cancellation.Cancel();
+                    }
+                    else if (line.Equals("resign", StringComparison.OrdinalIgnoreCase))
+                    {
+                        playerControl.RequestResign();
                     }
 
                     return Task.CompletedTask;
@@ -73,7 +78,7 @@ internal static class Program
                 cancellation.Token);
 
             var tasks = accounts
-                .Select(account => RunClientAsync(options, account, cancellation))
+                .Select(account => RunClientAsync(options, account, playerControl, cancellation))
                 .ToArray();
 
             await Task.WhenAll(tasks);
@@ -147,11 +152,15 @@ internal static class Program
         }
     }
 
-    private static async Task RunClientAsync(CgosClientOptions options, CgosAccount account, CancellationTokenSource cancellation)
+    private static async Task RunClientAsync(
+        CgosClientOptions options,
+        CgosAccount account,
+        CgosPlayerControl playerControl,
+        CancellationTokenSource cancellation)
     {
         try
         {
-            await new CgosClient(options, account).RunAsync(cancellation.Token);
+            await new CgosClient(options, account, playerControl).RunAsync(cancellation.Token);
         }
         catch
         {
@@ -159,6 +168,15 @@ internal static class Program
             throw;
         }
     }
+}
+
+internal sealed class CgosPlayerControl
+{
+    private int _resignRequested;
+
+    public void RequestResign() => Interlocked.Exchange(ref _resignRequested, 1);
+
+    public bool ConsumeResignRequest() => Interlocked.Exchange(ref _resignRequested, 0) != 0;
 }
 
 internal static class CgosStandardInputRelay
@@ -695,16 +713,21 @@ internal sealed class CgosClient
 
     private readonly CgosClientOptions _options;
     private readonly CgosAccount _account;
+    private readonly CgosPlayerControl _playerControl;
     private readonly object _logLock = new();
     private readonly string _logPath;
     private GtpEngineProcess? _engine;
     private string _engineColor = "black";
     private bool _engineSupportsCgosAnalyze;
 
-    public CgosClient(CgosClientOptions options, CgosAccount account)
+    public CgosClient(
+        CgosClientOptions options,
+        CgosAccount account,
+        CgosPlayerControl playerControl)
     {
         _options = options;
         _account = account;
+        _playerControl = playerControl;
         _logPath = Path.Combine(options.LogDirectory, $"cgos-{account.Label}-{DateTime.Now:yyyyMMdd-HHmmss}.log");
     }
 
@@ -796,10 +819,21 @@ internal sealed class CgosClient
             throw new InvalidOperationException("CGOS genmove requires 2 parameters.");
         }
 
+        if (_playerControl.ConsumeResignRequest())
+        {
+            Log("# GUI requested resignation.");
+            return "resign";
+        }
+
         var engine = RequireEngine();
         var color = parameters[0];
         var useAnalyze = serverSupportsAnalyze && _engineSupportsCgosAnalyze;
         var response = await engine.CommandAsync((useAnalyze ? "cgos-genmove_analyze " : "genmove ") + color, cancellationToken);
+        if (_playerControl.ConsumeResignRequest())
+        {
+            Log("# GUI requested resignation while the engine was thinking.");
+            return "resign";
+        }
         if (useAnalyze)
             return ParseAnalyzeResponse(response);
 

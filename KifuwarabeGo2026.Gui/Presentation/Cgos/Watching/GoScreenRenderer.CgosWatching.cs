@@ -91,10 +91,7 @@ public sealed partial class GoScreenRenderer
         DrawRect(panel, 2, new Color(82, 111, 114));
 
         DrawText(observation.IsFinished ? "CGOS RESULT" : "CGOS WATCH", new Vector2(1144, 136), new Color(255, 230, 160), 0.72f);
-        if (observation.IsFinished)
-        {
-            DrawCommandButton(CgosWatchingBackButtonBounds, "BACK TO CONNECTION", false, mousePoint, scale: 0.3f);
-        }
+        DrawCommandButton(CgosWatchingBackButtonBounds, "BACK TO CONNECTION", false, mousePoint, scale: 0.3f);
 
         DrawVerticalResultSection(new Rectangle(1144, 204, 668, 58), "GAME INFO", new Color(66, 104, 116));
         DrawFittedText(

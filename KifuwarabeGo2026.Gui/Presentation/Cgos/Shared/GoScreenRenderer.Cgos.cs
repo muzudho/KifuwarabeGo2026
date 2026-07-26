@@ -117,12 +117,18 @@ public sealed partial class GoScreenRenderer
         enabled && CgosAdminTailButtonBounds.Contains(point);
 
 
-    public static bool GetCgosBlackConnectionButtonHit(Point point, bool enabled) =>
-        enabled && CgosBlackConnectionButtonBounds.Contains(point);
+    public static bool GetCgosBlackConnectionButtonHit(Point point, bool enabled, bool gameInProgress) =>
+        enabled && CgosBlackConnectionButtonBounds(gameInProgress).Contains(point);
 
 
-    public static bool GetCgosWhiteConnectionButtonHit(Point point, bool enabled) =>
-        enabled && CgosWhiteConnectionButtonBounds.Contains(point);
+    public static bool GetCgosWhiteConnectionButtonHit(Point point, bool enabled, bool gameInProgress) =>
+        enabled && CgosWhiteConnectionButtonBounds(gameInProgress).Contains(point);
+
+    public static bool GetCgosBlackResignButtonHit(Point point, bool enabled) =>
+        enabled && CgosBlackResignButtonBounds.Contains(point);
+
+    public static bool GetCgosWhiteResignButtonHit(Point point, bool enabled) =>
+        enabled && CgosWhiteResignButtonBounds.Contains(point);
 
     /// <summary>
     /// ［プレイヤー１　＞　LOG: EDIT］ボタンの活性化状態
@@ -402,13 +408,19 @@ public sealed partial class GoScreenRenderer
             string.IsNullOrWhiteSpace(session.CgosBlackGtpResponseWaitDisplay)
                 ? session.CgosBlackConnectionElapsedDisplay
                 : session.CgosBlackGtpResponseWaitDisplay,
-            CgosBlackConnectionButtonBounds,
-            session.IsCgosBlackConnectionRunning ? "DISCONNECT" : "CONNECT",
+            CgosBlackConnectionButtonBounds(session.IsCgosGameInProgress),
+            session.IsCgosBlackConnectionRunning
+                ? session.IsCgosGameInProgress ? "ABORT" : "DISCONNECT"
+                : "CONNECT",
             session.IsCgosBlackConnectionRunning || session.SelectedCgosBlackGtpEngineProfile is not null,
             CgosBlackTailButtonBounds,
             CgosPlayer1CodeButtonBounds,
             !string.IsNullOrWhiteSpace(session.CgosBlackConnectionLogDirectory),
             mousePoint);
+        if (session.IsCgosGameInProgress && session.IsCgosBlackConnectionRunning)
+        {
+            DrawCommandButton(CgosBlackResignButtonBounds, "RESIGN", false, mousePoint, scale: 0.34f);
+        }
         DrawCgosCredentialFields(session, GoStone.Black, mousePoint);
 
         DrawCgosProcessPanel(
@@ -420,13 +432,19 @@ public sealed partial class GoScreenRenderer
             string.IsNullOrWhiteSpace(session.CgosWhiteGtpResponseWaitDisplay)
                 ? session.CgosWhiteConnectionElapsedDisplay
                 : session.CgosWhiteGtpResponseWaitDisplay,
-            CgosWhiteConnectionButtonBounds,
-            session.IsCgosWhiteConnectionRunning ? "DISCONNECT" : "CONNECT",
+            CgosWhiteConnectionButtonBounds(session.IsCgosGameInProgress),
+            session.IsCgosWhiteConnectionRunning
+                ? session.IsCgosGameInProgress ? "ABORT" : "DISCONNECT"
+                : "CONNECT",
             session.IsCgosWhiteConnectionRunning || session.SelectedCgosWhiteGtpEngineProfile is not null,
             CgosWhiteTailButtonBounds,
             CgosWhiteCodeButtonBounds,
             !string.IsNullOrWhiteSpace(session.CgosWhiteConnectionLogDirectory),
             mousePoint);
+        if (session.IsCgosGameInProgress && session.IsCgosWhiteConnectionRunning)
+        {
+            DrawCommandButton(CgosWhiteResignButtonBounds, "RESIGN", false, mousePoint, scale: 0.34f);
+        }
         DrawCgosCredentialFields(session, GoStone.White, mousePoint);
 
         DrawCgosConnectionTooltips(session, mousePoint);
@@ -846,7 +864,10 @@ public sealed partial class GoScreenRenderer
     private static Rectangle CgosConnectionStartBackButtonBounds => new(1308, 244, 324, 48);
 
 
-    private static Rectangle CgosBlackConnectionButtonBounds => new(CgosBlackProcessPanelBounds.X + 16, CgosBlackProcessPanelBounds.Y + 284, CgosBlackProcessPanelBounds.Width - 32, 48);
+    private static Rectangle CgosBlackConnectionButtonBounds(bool gameInProgress) =>
+        CgosPlayerConnectionButtonBounds(CgosBlackProcessPanelBounds, gameInProgress);
+
+    private static Rectangle CgosBlackResignButtonBounds => CgosPlayerResignButtonBounds(CgosBlackProcessPanelBounds);
 
 
     private static Rectangle CgosBlackTailButtonBounds => new(CgosBlackProcessPanelBounds.X + 160, CgosBlackProcessPanelBounds.Y + 342, 120, 44);
@@ -855,7 +876,24 @@ public sealed partial class GoScreenRenderer
     private static Rectangle CgosPlayer1CodeButtonBounds => new(CgosBlackProcessPanelBounds.X + 294, CgosBlackProcessPanelBounds.Y + 342, 120, 44);
 
 
-    private static Rectangle CgosWhiteConnectionButtonBounds => new(CgosWhiteProcessPanelBounds.X + 16, CgosWhiteProcessPanelBounds.Y + 284, CgosWhiteProcessPanelBounds.Width - 32, 48);
+    private static Rectangle CgosWhiteConnectionButtonBounds(bool gameInProgress) =>
+        CgosPlayerConnectionButtonBounds(CgosWhiteProcessPanelBounds, gameInProgress);
+
+    private static Rectangle CgosWhiteResignButtonBounds => CgosPlayerResignButtonBounds(CgosWhiteProcessPanelBounds);
+
+    private static Rectangle CgosPlayerConnectionButtonBounds(Rectangle panel, bool gameInProgress) =>
+        new(
+            panel.X + 16,
+            panel.Y + 284,
+            gameInProgress ? (panel.Width - 44) / 2 : panel.Width - 32,
+            48);
+
+    private static Rectangle CgosPlayerResignButtonBounds(Rectangle panel) =>
+        new(
+            panel.X + 28 + (panel.Width - 44) / 2,
+            panel.Y + 284,
+            (panel.Width - 44) / 2,
+            48);
 
 
     private static Rectangle CgosWhiteTailButtonBounds => new(CgosWhiteProcessPanelBounds.X + 160, CgosWhiteProcessPanelBounds.Y + 342, 120, 44);
