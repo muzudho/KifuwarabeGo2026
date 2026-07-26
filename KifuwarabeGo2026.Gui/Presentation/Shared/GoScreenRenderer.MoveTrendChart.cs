@@ -112,12 +112,17 @@ public sealed partial class GoScreenRenderer
             DrawLine(new Vector2(plot.Left, y), new Vector2(plot.Right, y), step == 0 ? 2 : 1,
                 step == 0 ? new Color(211, 226, 219, 165) : new Color(104, 139, 143, 70));
             DrawFittedText(
-                (step * 10).ToString("+0;-0;0", CultureInfo.InvariantCulture),
+                step switch
+                {
+                    > 0 => $"B+{step * 10}",
+                    < 0 => $"W+{-step * 10}",
+                    _ => "EVEN",
+                },
                 scoreAxisBounds,
                 new Color(205, 217, 214),
                 popup ? 0.46f : 0.25f);
             DrawFittedText(
-                step switch { 2 => "+100%", 1 => "+50%", 0 => "EVEN", -1 => "-50%", _ => "-100%" },
+                step switch { 2 => "B100%", 1 => "B50%", 0 => "EVEN", -1 => "W50%", _ => "W100%" },
                 winRateAxisBounds,
                 new Color(165, 193, 194),
                 popup ? 0.4f : 0.2f);
