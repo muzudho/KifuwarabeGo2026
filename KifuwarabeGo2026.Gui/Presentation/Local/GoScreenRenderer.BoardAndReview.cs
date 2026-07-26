@@ -49,6 +49,14 @@ public sealed partial class GoScreenRenderer
 
     public static bool GetVariationEditingUndoButtonHit(Point point) => VariationEditingUndoButtonBounds.Contains(point);
 
+    public static bool GetVariationEditingPlayButtonHit(Point point) => VariationEditingPlayButtonBounds.Contains(point);
+
+    public static bool GetVariationEditingBlackButtonHit(Point point) => VariationEditingBlackButtonBounds.Contains(point);
+
+    public static bool GetVariationEditingWhiteButtonHit(Point point) => VariationEditingWhiteButtonBounds.Contains(point);
+
+    public static bool GetVariationEditingEraseButtonHit(Point point) => VariationEditingEraseButtonBounds.Contains(point);
+
 
     public static int? GetReviewStepButtonHit(Point point)
     {
@@ -104,7 +112,7 @@ public sealed partial class GoScreenRenderer
         DrawResultRow(
             new Rectangle(1164, 210, 628, 44),
             "SOURCE",
-            $"MOVE {session.VariationSourceMoveIndex}",
+            session.HasVariationCustomPosition ? "CUSTOM POSITION" : $"MOVE {session.VariationSourceMoveIndex}",
             new Color(67, 112, 118),
             Color.White);
         DrawResultRow(
@@ -129,10 +137,16 @@ public sealed partial class GoScreenRenderer
             session.CurrentTurn,
             minimal: true);
 
-        DrawVerticalResultSection(new Rectangle(1144, 548, 668, 110), "HOW TO USE", new Color(86, 99, 104));
+        DrawVerticalResultSection(new Rectangle(1144, 548, 668, 112), "TOOL", new Color(67, 112, 118));
+        DrawCommandButton(VariationEditingPlayButtonBounds, "PLAY", session.VariationEditingStone is null, mousePoint, scale: 0.42f);
+        DrawCommandButton(VariationEditingBlackButtonBounds, "BLACK", session.VariationEditingStone == GoStone.Black, mousePoint, scale: 0.4f);
+        DrawCommandButton(VariationEditingWhiteButtonBounds, "WHITE", session.VariationEditingStone == GoStone.White, mousePoint, scale: 0.4f);
+        DrawCommandButton(VariationEditingEraseButtonBounds, "ERASE", session.VariationEditingStone == GoStone.Empty, mousePoint, scale: 0.4f);
+
+        DrawVerticalResultSection(new Rectangle(1144, 676, 668, 110), "HOW TO USE", new Color(86, 99, 104));
         DrawFittedText(
-            "PLAY LEGAL MOVES ON THE WHITEBOARD. THE ORIGINAL GAME IS NEVER CHANGED.",
-            new Rectangle(1166, 562, 624, 78),
+            "PLAY: LEGAL MOVES.  BLACK / WHITE / ERASE: EDIT THE POSITION DIRECTLY. THE ORIGINAL GAME IS NEVER CHANGED.",
+            new Rectangle(1166, 690, 624, 78),
             new Color(218, 228, 226),
             0.3f);
 
@@ -225,6 +239,10 @@ public sealed partial class GoScreenRenderer
     private static Rectangle VariationEditingExportSgfButtonBounds => new(1636, 120, 176, 52);
     private static Rectangle VariationEditingUndoButtonBounds => new(1164, 924, 306, 56);
     private static Rectangle VariationEditingPassButtonBounds => new(1486, 924, 306, 56);
+    private static Rectangle VariationEditingPlayButtonBounds => new(1164, 584, 140, 56);
+    private static Rectangle VariationEditingBlackButtonBounds => new(1320, 584, 140, 56);
+    private static Rectangle VariationEditingWhiteButtonBounds => new(1476, 584, 140, 56);
+    private static Rectangle VariationEditingEraseButtonBounds => new(1632, 584, 140, 56);
 
 
     private static readonly int[] ReviewStepButtonValues =
@@ -291,9 +309,12 @@ public sealed partial class GoScreenRenderer
             return;
         }
 
+        var editingStone = session.CurrentMode.Kind == GoAppModeKind.VariationEditing
+            ? session.VariationEditingStone ?? GoStone.Black
+            : session.BoardEditingStone;
         var layout = GetBoardLayout(session.BoardSize);
         var center = BoardPoint(layout.Start, layout.Cell, intersection.X, intersection.Y);
-        if (session.BoardEditingStone == GoStone.Empty)
+        if (editingStone == GoStone.Empty)
         {
             var radius = cell * 0.32f;
             DrawLine(new Vector2(center.X - radius, center.Y - radius), new Vector2(center.X + radius, center.Y + radius), 6, new Color(180, 42, 42, 205));
@@ -301,7 +322,7 @@ public sealed partial class GoScreenRenderer
             return;
         }
 
-        var black = session.BoardEditingStone == GoStone.Black;
+        var black = editingStone == GoStone.Black;
         DrawCircle(center, cell * 0.55f, black ? new Color(8, 10, 14, 105) : new Color(255, 250, 232, 120));
         DrawCircle(center, cell * 0.36f, black ? new Color(8, 10, 14, 95) : new Color(255, 250, 232, 105));
     }

@@ -1204,6 +1204,30 @@ public class Game1 : Game
             return true;
         }
 
+        if (GoScreenRenderer.GetVariationEditingPlayButtonHit(point))
+        {
+            variationSession.SetVariationEditingStone(null);
+            return true;
+        }
+
+        if (GoScreenRenderer.GetVariationEditingBlackButtonHit(point))
+        {
+            variationSession.SetVariationEditingStone(GoStone.Black);
+            return true;
+        }
+
+        if (GoScreenRenderer.GetVariationEditingWhiteButtonHit(point))
+        {
+            variationSession.SetVariationEditingStone(GoStone.White);
+            return true;
+        }
+
+        if (GoScreenRenderer.GetVariationEditingEraseButtonHit(point))
+        {
+            variationSession.SetVariationEditingStone(GoStone.Empty);
+            return true;
+        }
+
         if (GoScreenRenderer.GetVariationEditingUndoButtonHit(point))
         {
             variationSession.UndoVariation();
@@ -1212,15 +1236,24 @@ public class Game1 : Game
 
         if (GoScreenRenderer.GetVariationEditingPassButtonHit(point))
         {
-            if (variationSession.PassVariation())
+            if (variationSession.VariationEditingStone is null &&
+                variationSession.PassVariation())
                 PlayPlaceStoneSound(0.45f, 0.25f, 0f);
             return true;
         }
 
         if (GoScreenRenderer.TryGetBoardIntersection(point, variationSession.BoardSize, out var intersection))
         {
-            if (variationSession.TryPlaceVariationStone(intersection.X, intersection.Y))
-                PlayPlaceStoneSound();
+            if (variationSession.VariationEditingStone is null)
+            {
+                if (variationSession.TryPlaceVariationStone(intersection.X, intersection.Y))
+                    PlayPlaceStoneSound();
+            }
+            else if (variationSession.TryEditVariationStone(intersection.X, intersection.Y))
+            {
+                PlayPlaceStoneSound(
+                    variationSession.VariationEditingStone == GoStone.Empty ? 0.42f : 0.78f);
+            }
             return true;
         }
 

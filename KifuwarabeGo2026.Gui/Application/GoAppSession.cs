@@ -284,6 +284,8 @@ public sealed class GoAppSession
     public int VariationSourceMoveIndex => _variationSourceMoveIndex;
     public int VariationMoveCount => Math.Max(0, CurrentGameRecord.Moves.Count - _variationSourceMoveIndex);
     public bool CanUndoVariation => CurrentMode.Kind == GoAppModeKind.VariationEditing && VariationMoveCount > 0;
+    public GoStone? VariationEditingStone { get; private set; }
+    public bool HasVariationCustomPosition { get; private set; }
 
     public int PlayedMoveCount { get; private set; }
 
@@ -1083,6 +1085,8 @@ public sealed class GoAppSession
         _variationSourceRecord = sourceRecord.Clone();
         _variationSourceMoveIndex = clampedMoveIndex;
         _variationReturnMode = returnMode;
+        VariationEditingStone = null;
+        HasVariationCustomPosition = false;
         CurrentGameRecord.Result = "";
         Winner = null;
         GameOverReason = "";
@@ -1116,7 +1120,8 @@ public sealed class GoAppSession
 
     public bool TryPlaceVariationStone(int x, int y)
     {
-        if (CurrentMode.Kind != GoAppModeKind.VariationEditing)
+        if (CurrentMode.Kind != GoAppModeKind.VariationEditing ||
+            VariationEditingStone is not null)
             return false;
 
         var trialBoard = _board.Clone();
@@ -1144,9 +1149,43 @@ public sealed class GoAppSession
         return true;
     }
 
+    public void SetVariationEditingStone(GoStone? stone)
+    {
+        if (stone is not (null or GoStone.Empty or GoStone.Black or GoStone.White))
+        {
+            throw new ArgumentOutOfRangeException(nameof(stone), stone, "Variation editing stone is out of range.");
+        }
+
+        VariationEditingStone = stone;
+    }
+
+    public bool TryEditVariationStone(int x, int y)
+    {
+        if (CurrentMode.Kind != GoAppModeKind.VariationEditing ||
+            VariationEditingStone is not { } editingStone)
+        {
+            return false;
+        }
+
+        var oldStone = _board.GetStone(x, y);
+        if (oldStone == editingStone || !_board.TrySetEditedStone(x, y, editingStone))
+        {
+            return false;
+        }
+
+        var metadata = CurrentGameRecord.Clone();
+        ResetEditedPositionState();
+        CopyGameRecordMetadata(metadata, CurrentGameRecord);
+        CurrentGameRecord.Result = "";
+        _variationSourceMoveIndex = 0;
+        HasVariationCustomPosition = true;
+        return true;
+    }
+
     public bool PassVariation()
     {
-        if (CurrentMode.Kind != GoAppModeKind.VariationEditing)
+        if (CurrentMode.Kind != GoAppModeKind.VariationEditing ||
+            VariationEditingStone is not null)
             return false;
 
         CurrentGameRecord.Moves.Add(new GoGameMove(CurrentTurn, null, "", null, null));
@@ -2826,6 +2865,21 @@ public sealed class GoAppSession
         }
 
         return record;
+    }
+
+    private static void CopyGameRecordMetadata(GoGameRecord source, GoGameRecord destination)
+    {
+        destination.GameName = source.GameName;
+        destination.RuleName = source.RuleName;
+        destination.BlackPlayerName = source.BlackPlayerName;
+        destination.WhitePlayerName = source.WhitePlayerName;
+        destination.BlackRank = source.BlackRank;
+        destination.WhiteRank = source.WhiteRank;
+        destination.PlayedDate = source.PlayedDate;
+        destination.Result = source.Result;
+        destination.Place = source.Place;
+        destination.Komi = source.Komi;
+        destination.TimeLimit = source.TimeLimit;
     }
 
     private static GoGameRecord CreateReviewGameRecord(GoGameRecord source, int moveCount)

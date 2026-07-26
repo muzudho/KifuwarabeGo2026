@@ -252,7 +252,9 @@ public sealed partial class GoScreenRenderer
     /// <param name="cell"></param>
     private void DrawHoverStone(GoAppSession session, Point mousePoint, float cell)
     {
-        if (session.CurrentMode.Kind == GoAppModeKind.BoardEditing)
+        if (session.CurrentMode.Kind == GoAppModeKind.BoardEditing ||
+            (session.CurrentMode.Kind == GoAppModeKind.VariationEditing &&
+             session.VariationEditingStone is not null))
         {
             DrawBoardEditingHoverStone(session, mousePoint, cell);
             return;
