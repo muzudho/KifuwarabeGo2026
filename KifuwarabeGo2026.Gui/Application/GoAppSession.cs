@@ -25,8 +25,8 @@ public sealed class GoAppSession
     private GoRenParseResult? _cachedRenParseResult;
     private int _cachedRenParseBoardSize;
     private ulong _cachedRenParseHash;
-    private readonly Stack<BoardEditingChange> _boardEditingUndoHistory = new();
-    private readonly Stack<BoardEditingChange> _boardEditingRedoHistory = new();
+    private readonly Stack<BoardEditingChange[]> _boardEditingUndoHistory = new();
+    private readonly Stack<BoardEditingChange[]> _boardEditingRedoHistory = new();
     private GoGameRecord? _beforeBoardEditingRecord;
     private GoGameRecord? _variationSourceRecord;
     private int _variationSourceMoveIndex;
@@ -1295,7 +1295,37 @@ public sealed class GoAppSession
             return false;
         }
 
-        _boardEditingUndoHistory.Push(new BoardEditingChange(x, y, oldStone, BoardEditingStone));
+        _boardEditingUndoHistory.Push([new BoardEditingChange(x, y, oldStone, BoardEditingStone)]);
+        _boardEditingRedoHistory.Clear();
+        ResetEditedPositionState();
+        return true;
+    }
+
+    public bool ClearBoardEditing()
+    {
+        if (CurrentMode.Kind != GoAppModeKind.BoardEditing)
+            return false;
+
+        var changes = new List<BoardEditingChange>();
+        for (var y = 0; y < BoardSize; y++)
+        {
+            for (var x = 0; x < BoardSize; x++)
+            {
+                var stone = _board.GetStone(x, y);
+                if (stone == GoStone.Empty)
+                    continue;
+
+                changes.Add(new BoardEditingChange(x, y, stone, GoStone.Empty));
+            }
+        }
+
+        if (changes.Count == 0)
+            return false;
+
+        foreach (var change in changes)
+            _board.TrySetEditedStone(change.X, change.Y, GoStone.Empty);
+
+        _boardEditingUndoHistory.Push(changes.ToArray());
         _boardEditingRedoHistory.Clear();
         ResetEditedPositionState();
         return true;
@@ -1308,13 +1338,11 @@ public sealed class GoAppSession
             return false;
         }
 
-        var change = _boardEditingUndoHistory.Pop();
-        if (!_board.TrySetEditedStone(change.X, change.Y, change.OldStone))
-        {
-            return false;
-        }
+        var changes = _boardEditingUndoHistory.Pop();
+        foreach (var change in changes)
+            _board.TrySetEditedStone(change.X, change.Y, change.OldStone);
 
-        _boardEditingRedoHistory.Push(change);
+        _boardEditingRedoHistory.Push(changes);
         ResetEditedPositionState();
         return true;
     }
@@ -1326,13 +1354,11 @@ public sealed class GoAppSession
             return false;
         }
 
-        var change = _boardEditingRedoHistory.Pop();
-        if (!_board.TrySetEditedStone(change.X, change.Y, change.NewStone))
-        {
-            return false;
-        }
+        var changes = _boardEditingRedoHistory.Pop();
+        foreach (var change in changes)
+            _board.TrySetEditedStone(change.X, change.Y, change.NewStone);
 
-        _boardEditingUndoHistory.Push(change);
+        _boardEditingUndoHistory.Push(changes);
         ResetEditedPositionState();
         return true;
     }

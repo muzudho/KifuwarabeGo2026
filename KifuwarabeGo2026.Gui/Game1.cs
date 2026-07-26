@@ -10,6 +10,7 @@ using KifuwarabeGo2026.Gui.Domain;
 using KifuwarabeGo2026.Shared.Domain;
 using KifuwarabeGo2026.Gui.Infrastructure.FileSystem;
 using KifuwarabeGo2026.Gui.Infrastructure.Logging;
+using KifuwarabeGo2026.Gui.Infrastructure;
 using KifuwarabeGo2026.Gui.Presentation;
 using KifuwarabeGo2026.Gui.Presentation.Cgos.Connect;
 using KifuwarabeGo2026.Gui.Presentation.Cgos.ConnectionTarget;
@@ -116,6 +117,7 @@ public class Game1 : Game
 
     protected override void LoadContent()
     {
+        WindowIcon.TryApply(Window.Handle);
         _renderer = new GoScreenRenderer(GraphicsDevice, Content);
         _placeStoneSound = CreatePlaceStoneSound();
         _placeStoneSoundInstance = _placeStoneSound.CreateInstance();
@@ -1005,6 +1007,13 @@ public class Game1 : Game
         if (GoScreenRenderer.GetBoardEditingRedoButtonHit(point))
         {
             _session.RedoBoardEditing();
+            return true;
+        }
+
+        if (GoScreenRenderer.GetBoardEditingClearButtonHit(point))
+        {
+            if (_session.ClearBoardEditing())
+                PlayPlaceStoneSound(0.42f, -0.35f, 0f);
             return true;
         }
 

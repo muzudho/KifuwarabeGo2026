@@ -241,13 +241,66 @@ public sealed partial class GoScreenRenderer
         int moveCount,
         Point mousePoint)
     {
-        FillRect(new Rectangle(492, 1018, 1126, 56), new Color(17, 24, 48, 215));
-        DrawRect(new Rectangle(492, 1018, 1126, 56), 2, new Color(137, 160, 205));
+        FillRect(new Rectangle(492, 1018, 928, 56), new Color(17, 24, 48, 215));
+        DrawRect(new Rectangle(492, 1018, 928, 56), 2, new Color(137, 160, 205));
         DrawReviewChartPopupStepButtons(currentMoveIndex, moveCount, mousePoint);
-        DrawCommandButton(ReplayEditButtonBounds, "EDIT", false, mousePoint, scale: 0.36f);
+        DrawReplayEditIconButton(mousePoint);
     }
 
-    private static Rectangle ReplayEditButtonBounds => new(1438, 1028, 160, 44);
+    private static Rectangle ReplayEditButtonBounds => new(1018, 72, 72, 72);
+
+    private void DrawReplayEditIconButton(Point mousePoint)
+    {
+        var hovered = ReplayEditButtonBounds.Contains(mousePoint);
+        FillRect(
+            new Rectangle(
+                ReplayEditButtonBounds.X + 5,
+                ReplayEditButtonBounds.Y + 7,
+                ReplayEditButtonBounds.Width,
+                ReplayEditButtonBounds.Height),
+            new Color(0, 0, 0, 100));
+        FillRect(
+            ReplayEditButtonBounds,
+            hovered ? new Color(53, 92, 97, 245) : new Color(30, 43, 54, 245));
+        DrawRect(
+            ReplayEditButtonBounds,
+            hovered ? 4 : 2,
+            hovered ? new Color(91, 218, 211) : new Color(137, 160, 205));
+
+        var board = new Rectangle(
+            ReplayEditButtonBounds.X + 13,
+            ReplayEditButtonBounds.Y + 12,
+            40,
+            40);
+        FillRect(board, new Color(239, 241, 235));
+        DrawRect(board, 3, new Color(88, 100, 102));
+        DrawLine(
+            new Vector2(board.X + 10, board.Y + 13),
+            new Vector2(board.Right - 9, board.Y + 13),
+            2,
+            new Color(109, 121, 120));
+        DrawLine(
+            new Vector2(board.X + 10, board.Y + 25),
+            new Vector2(board.Right - 9, board.Y + 25),
+            2,
+            new Color(109, 121, 120));
+
+        var penColor = hovered ? new Color(255, 225, 128) : new Color(235, 190, 86);
+        DrawLine(
+            new Vector2(ReplayEditButtonBounds.X + 43, ReplayEditButtonBounds.Y + 55),
+            new Vector2(ReplayEditButtonBounds.X + 60, ReplayEditButtonBounds.Y + 31),
+            8,
+            new Color(18, 27, 32));
+        DrawLine(
+            new Vector2(ReplayEditButtonBounds.X + 43, ReplayEditButtonBounds.Y + 54),
+            new Vector2(ReplayEditButtonBounds.X + 59, ReplayEditButtonBounds.Y + 32),
+            5,
+            penColor);
+        DrawCircle(
+            new Vector2(ReplayEditButtonBounds.X + 60, ReplayEditButtonBounds.Y + 31),
+            4,
+            new Color(238, 242, 255));
+    }
 
     private static Rectangle ReviewChartPopupStepButtonBounds(int index) =>
         new(512 + index * 112, 1028, 102, 44);

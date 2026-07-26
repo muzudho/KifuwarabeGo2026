@@ -34,6 +34,8 @@ public sealed partial class GoScreenRenderer
 
     public static bool GetBoardEditingRedoButtonHit(Point point) => BoardEditingRedoButtonBounds.Contains(point);
 
+    public static bool GetBoardEditingClearButtonHit(Point point) => BoardEditingClearButtonBounds.Contains(point);
+
 
     public static bool GetBoardEditingCancelButtonHit(Point point) => BoardEditingCancelButtonBounds.Contains(point);
 
@@ -85,6 +87,7 @@ public sealed partial class GoScreenRenderer
         DrawResultLabel(new Rectangle(1164, 414, 628, 40), "HISTORY", new Color(76, 91, 126));
         DrawCommandButton(BoardEditingUndoButtonBounds, "UNDO", false, mousePoint, enabled: session.CanUndoBoardEditing, scale: 0.5f);
         DrawCommandButton(BoardEditingRedoButtonBounds, "REDO", false, mousePoint, enabled: session.CanRedoBoardEditing, scale: 0.5f);
+        DrawCommandButton(BoardEditingClearButtonBounds, "CLEAR BOARD", false, mousePoint, scale: 0.28f);
 
         DrawVerticalResultSection(new Rectangle(1144, 564, 668, 220), "POSITION", new Color(62, 112, 105));
         DrawStoneCountStrip(session, 584, showLeader: false, minimal: true);
@@ -206,10 +209,12 @@ public sealed partial class GoScreenRenderer
     private static Rectangle BoardEditingEraseButtonBounds => new(GameOverValueX + 312, 340, 140, 56);
 
 
-    private static Rectangle BoardEditingUndoButtonBounds => new(GameOverValueX, 458, 220, 56);
+    private static Rectangle BoardEditingUndoButtonBounds => new(GameOverValueX, 458, 140, 56);
 
 
-    private static Rectangle BoardEditingRedoButtonBounds => new(GameOverValueX + 244, 458, 220, 56);
+    private static Rectangle BoardEditingRedoButtonBounds => new(GameOverValueX + 156, 458, 140, 56);
+
+    private static Rectangle BoardEditingClearButtonBounds => new(GameOverValueX + 312, 458, 140, 56);
 
 
     private static Rectangle BoardEditingCancelButtonBounds => new(1480, 120, 156, 52);
