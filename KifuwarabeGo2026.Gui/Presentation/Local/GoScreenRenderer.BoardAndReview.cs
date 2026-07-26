@@ -54,7 +54,7 @@ public sealed partial class GoScreenRenderer
     {
         for (var i = 0; i < ReviewStepButtonValues.Length; i++)
         {
-            if (ReviewStepButtonBounds(i).Contains(point))
+            if (ReviewChartPopupStepButtonBounds(i).Contains(point))
             {
                 return ReviewStepButtonValues[i];
             }
@@ -187,7 +187,7 @@ public sealed partial class GoScreenRenderer
             session.ReviewMoveIndex,
             session.ReviewMoveCount,
             mousePoint,
-            ReviewStepButtonBounds);
+            ReviewChartPopupStepButtonBounds);
         DrawFittedText("KEYS  HOME/END: FIRST/LAST   ARROWS: -/+1,10   PGDN/PGUP: -/+50", new Rectangle(1168, 950, 624, 24), new Color(147, 201, 190), 0.23f);
 
     }
@@ -259,9 +259,6 @@ public sealed partial class GoScreenRenderer
         > 0 => $"+{step}",
         _ => step.ToString(),
     };
-
-
-    private static Rectangle ReviewStepButtonBounds(int index) => new(1172 + index * 77, 898, 69, 44);
 
 
     private static Rectangle ReviewAnalysisSectionBounds => new(1144, 692, 668, 146);

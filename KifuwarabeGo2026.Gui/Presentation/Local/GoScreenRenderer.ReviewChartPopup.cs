@@ -241,8 +241,6 @@ public sealed partial class GoScreenRenderer
         int moveCount,
         Point mousePoint)
     {
-        FillRect(new Rectangle(492, 1018, 928, 56), new Color(17, 24, 48, 215));
-        DrawRect(new Rectangle(492, 1018, 928, 56), 2, new Color(137, 160, 205));
         DrawReviewChartPopupStepButtons(currentMoveIndex, moveCount, mousePoint);
         DrawReplayEditIconButton(mousePoint);
     }
