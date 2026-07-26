@@ -67,6 +67,11 @@ public sealed partial class GoScreenRenderer
                     mousePoint,
                     showBackToLive: session.CurrentMode.Kind == GoAppModeKind.Playing);
             }
+            else if (session.CurrentMode.Kind == GoAppModeKind.Playing &&
+                     session.CanOpenLocalChartPopup)
+            {
+                DrawReplayEditIconButton(mousePoint);
+            }
             DrawTournamentRulesSelectionDialog(session, mousePoint);
             DrawTournamentRulesAddPanel(session, mousePoint);
             DrawGtpEngineSelectionDialog(session, mousePoint);

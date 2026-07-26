@@ -478,6 +478,15 @@ public class Game1 : Game
             var isReplayNavigationVisible =
                 (_session.UseKind == GoAppUseKind.LocalGame && _session.IsLocalReplayMode) ||
                 (_session.UseKind == GoAppUseKind.CgosClient && _cgosGameObservation.IsReplayMode);
+            var isVariationEditVisible =
+                isReplayNavigationVisible ||
+                (_session.UseKind == GoAppUseKind.LocalGame &&
+                 _session.CurrentMode.Kind == GoAppModeKind.Playing &&
+                 _session.CanOpenLocalChartPopup) ||
+                (_session.UseKind == GoAppUseKind.CgosClient &&
+                 _session.CgosConnectionFlowKind == CgosConnectionFlowKind.Watching &&
+                 _cgosGameObservation.IsStarted &&
+                 !_cgosGameObservation.IsFinished);
             var canReturnReplayToLive =
                 (_session.UseKind == GoAppUseKind.LocalGame &&
                  _session.CurrentMode.Kind == GoAppModeKind.Playing &&
@@ -501,7 +510,7 @@ public class Game1 : Game
                 _previousMouse = mouse;
                 return;
             }
-            if (isReplayNavigationVisible && GoScreenRenderer.GetReplayEditButtonHit(point))
+            if (isVariationEditVisible && GoScreenRenderer.GetReplayEditButtonHit(point))
             {
                 StartVariationEditingFromReplay();
                 _previousMouse = mouse;

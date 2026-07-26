@@ -60,6 +60,10 @@ public sealed partial class GoScreenRenderer
                     mousePoint,
                     showBackToLive: !observation.IsFinished);
             }
+            else if (observation.IsStarted && !observation.IsFinished)
+            {
+                DrawReplayEditIconButton(mousePoint);
+            }
         }
         else
         {
