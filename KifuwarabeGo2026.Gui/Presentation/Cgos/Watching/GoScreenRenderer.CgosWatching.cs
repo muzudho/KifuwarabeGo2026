@@ -80,6 +80,8 @@ public sealed partial class GoScreenRenderer
     /// </summary>
     public static bool GetCgosWatchingExportSgfButtonHit(Point point) => CgosWatchingExportSgfButtonBounds.Contains(point);
 
+    public static bool GetCgosWatchingSgfAutoSaveCheckHit(Point point) => CgosWatchingExportSgfButtonBounds.Contains(point);
+
     /// <summary>
     /// ［KIFU REVIEW］ボタンが押されたか判定します。
     /// </summary>
@@ -126,7 +128,10 @@ public sealed partial class GoScreenRenderer
 
             DrawVerticalResultSection(new Rectangle(1144, 912, 668, 68), "ACTION", new Color(91, 82, 105));
             DrawCommandButton(CgosWatchingReviewButtonBounds, "KIFU REVIEW", false, mousePoint, scale: 0.36f);
-            DrawCommandButton(CgosWatchingExportSgfButtonBounds, "SGF OUTPUT", false, mousePoint, scale: 0.4f);
+            if (session.IsSgfAutoSaveAvailable)
+                DrawSgfAutoSaveCheckBox(CgosWatchingExportSgfButtonBounds, session, mousePoint);
+            else
+                DrawCommandButton(CgosWatchingExportSgfButtonBounds, "SGF OUTPUT", false, mousePoint, scale: 0.4f);
         }
         else
         {

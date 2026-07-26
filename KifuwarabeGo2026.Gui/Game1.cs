@@ -74,6 +74,8 @@ public class Game1 : Game
     private double _lastReviewPopupSeekClickAt = double.NegativeInfinity;
     private Point _lastReviewPopupSeekClickPoint;
     private int? _lastReadOnlyChartPopupSeekMoveIndex;
+    private GoGameRecord? _lastAutoSavedLocalGameRecord;
+    private int? _lastAutoSavedCgosGameId;
 
     private const double CgosMatchCountdownSeconds = 10d;
     private const double CgosMatchFadeSeconds = 1.2d;
@@ -91,6 +93,7 @@ public class Game1 : Game
         _session.SetTournamentRules(_tournamentRulesCatalog.Rules);
         _session.SetGtpEngineProfiles(_gtpEngineCatalog.Profiles);
         _session.SetCgosConnectionProfiles(_cgosConnectionCatalog.Profiles);
+        RefreshSgfAutoSaveState();
         _tournamentRulesSetting = new TournamentRulesSetting(_session, _tournamentRulesCatalog, OpenTournamentRulesSelectionDialog);
         _playingScene = new PlayingScene(
             _session,
@@ -167,6 +170,7 @@ public class Game1 : Game
             _tournamentRulesSetting.UpdateByKeyboard(keyboard, gameTime);
         }
         UpdateMouseInput();
+        TryAutoSaveCompletedLocalGame();
 
         base.Update(gameTime);
     }
@@ -560,7 +564,18 @@ public class Game1 : Game
                     {
                         StartReviewingGameRecord(_cgosGameObservation.CreateGameRecord(), "CGOS review");
                     }
-                    else if (GoScreenRenderer.GetCgosWatchingExportSgfButtonHit(point))
+                    else if (_session.IsSgfAutoSaveAvailable &&
+                             GoScreenRenderer.GetCgosWatchingSgfAutoSaveCheckHit(point))
+                    {
+                        ToggleSgfAutoSave();
+                        if (_session.IsSgfAutoSaveEnabled)
+                        {
+                            _lastAutoSavedCgosGameId = null;
+                            TryAutoSaveCgosGame();
+                        }
+                    }
+                    else if (!_session.IsSgfAutoSaveAvailable &&
+                             GoScreenRenderer.GetCgosWatchingExportSgfButtonHit(point))
                     {
                         ExportSgf(
                             _cgosGameObservation.CreateGameRecord(),
@@ -824,7 +839,20 @@ public class Game1 : Game
             {
                 _session.ReturnToSetup();
             }
-            else if (_session.CurrentMode.Kind == GoAppModeKind.GameOver && GoScreenRenderer.GetExportSgfButtonHit(point))
+            else if (_session.CurrentMode.Kind == GoAppModeKind.GameOver &&
+                     _session.IsSgfAutoSaveAvailable &&
+                     GoScreenRenderer.GetSgfAutoSaveCheckHit(point))
+            {
+                ToggleSgfAutoSave();
+                if (_session.IsSgfAutoSaveEnabled)
+                {
+                    _lastAutoSavedLocalGameRecord = null;
+                    TryAutoSaveCompletedLocalGame();
+                }
+            }
+            else if (_session.CurrentMode.Kind == GoAppModeKind.GameOver &&
+                     !_session.IsSgfAutoSaveAvailable &&
+                     GoScreenRenderer.GetExportSgfButtonHit(point))
             {
                 ExportSgf();
             }
@@ -1309,6 +1337,7 @@ public class Game1 : Game
 
         if (!wasFinished && _cgosGameObservation.IsFinished)
         {
+            TryAutoSaveCgosGame();
             if (_cgosMatchNotificationMode == CgosMatchNotificationMode.None)
                 _session.OpenCgosResultScreen();
         }
@@ -2123,10 +2152,87 @@ public class Game1 : Game
             var sgf = SgfGameRecordConverter.ToSgf(record);
             File.WriteAllText(dialog.FileName, sgf, Encoding.UTF8);
             RememberSgfDirectory(dialog.FileName);
+            RefreshSgfAutoSaveState();
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             ShowMessage(ex.Message, "SGF output");
+        }
+    }
+
+    private void ToggleSgfAutoSave()
+    {
+        var enabled = !_session.IsSgfAutoSaveEnabled;
+        try
+        {
+            ApplicationSettings.SaveSgfAutoSaveEnabled(enabled);
+            _session.SetSgfAutoSaveEnabled(enabled);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
+        {
+            _session.SetSgfAutoSaveStatus("SAVE FAILED");
+            ApplicationErrorLog.Write("SGF AUTO SAVE", "Could not save the auto-save setting.", ex);
+        }
+    }
+
+    private void RefreshSgfAutoSaveState()
+    {
+        var available = Directory.Exists(ApplicationSettings.Current.SgfSaveDirectory);
+        _session.SetSgfAutoSaveAvailability(available);
+        _session.SetSgfAutoSaveEnabled(available && ApplicationSettings.Current.IsSgfAutoSaveEnabled);
+    }
+
+    private void TryAutoSaveCompletedLocalGame()
+    {
+        if (!_session.IsSgfAutoSaveEnabled ||
+            _session.CurrentMode.Kind != GoAppModeKind.GameOver ||
+            ReferenceEquals(_lastAutoSavedLocalGameRecord, _session.CurrentGameRecord))
+        {
+            return;
+        }
+
+        _lastAutoSavedLocalGameRecord = _session.CurrentGameRecord;
+        AutoSaveSgf(
+            _session.CurrentGameRecord,
+            $"kifuwarabe-go-{DateTime.Now:yyyyMMdd-HHmmss}.sgf");
+    }
+
+    private void TryAutoSaveCgosGame()
+    {
+        if (!_session.IsSgfAutoSaveEnabled ||
+            !_cgosGameObservation.IsFinished ||
+            _lastAutoSavedCgosGameId == _cgosGameObservation.GameId)
+        {
+            return;
+        }
+
+        _lastAutoSavedCgosGameId = _cgosGameObservation.GameId;
+        AutoSaveSgf(
+            _cgosGameObservation.CreateGameRecord(),
+            CgosSgfFileNameBuilder.Create(_session.SelectedCgosConnectionProfile, _cgosGameObservation));
+    }
+
+    private void AutoSaveSgf(GoGameRecord record, string fileName)
+    {
+        var directory = ApplicationSettings.Current.SgfSaveDirectory;
+        if (!Directory.Exists(directory))
+        {
+            RefreshSgfAutoSaveState();
+            return;
+        }
+
+        try
+        {
+            var sgf = SgfGameRecordConverter.ToSgf(record);
+            var path = Path.Combine(directory, Path.GetFileName(fileName));
+            File.WriteAllText(path, sgf, Encoding.UTF8);
+            _session.SetSgfAutoSaveStatus("AUTO SAVED");
+            GuiOperationLog.User("Automatically saved SGF", path);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
+        {
+            _session.SetSgfAutoSaveStatus("SAVE FAILED");
+            ApplicationErrorLog.Write("SGF AUTO SAVE", "Could not automatically save the SGF game record.", ex);
         }
     }
 

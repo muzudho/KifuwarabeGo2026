@@ -29,6 +29,8 @@ public sealed class ApplicationSettings
 
     public string SgfSaveDirectory { get; set; } = "";
 
+    public bool IsSgfAutoSaveEnabled { get; set; }
+
     public List<TournamentRules> TournamentRules { get; set; } = CreateDefaultTournamentRules();
 
     public List<CgosConnectionProfile> CgosConnections { get; set; } = CreateDefaultCgosConnections();
@@ -58,6 +60,12 @@ public sealed class ApplicationSettings
         var fullPath = Path.GetFullPath(directory.Trim());
         Directory.CreateDirectory(fullPath);
         Current.SgfSaveDirectory = fullPath;
+        WriteCurrent();
+    }
+
+    public static void SaveSgfAutoSaveEnabled(bool enabled)
+    {
+        Current.IsSgfAutoSaveEnabled = enabled;
         WriteCurrent();
     }
 

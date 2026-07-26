@@ -158,6 +158,9 @@ public sealed class GoAppSession
     public bool IsPopupCommentVisible { get; private set; }
     public bool IsLiveChartAutoUpdateEnabled { get; private set; } = true;
     private int? _liveChartFrozenMoveCount;
+    public bool IsSgfAutoSaveAvailable { get; private set; }
+    public bool IsSgfAutoSaveEnabled { get; private set; }
+    public string SgfAutoSaveStatus { get; private set; } = "";
 
     public bool CanOpenLocalChartPopup =>
         CurrentMode.Kind == GoAppModeKind.GameOver ||
@@ -171,6 +174,24 @@ public sealed class GoAppSession
 
     public int LocalDisplayMoveIndex =>
         _localReplayMoveIndex ?? CurrentGameRecord.Moves.Count;
+
+    public void SetSgfAutoSaveAvailability(bool available)
+    {
+        IsSgfAutoSaveAvailable = available;
+        if (!available)
+        {
+            IsSgfAutoSaveEnabled = false;
+            SgfAutoSaveStatus = "";
+        }
+    }
+
+    public void SetSgfAutoSaveEnabled(bool enabled)
+    {
+        IsSgfAutoSaveEnabled = IsSgfAutoSaveAvailable && enabled;
+        SgfAutoSaveStatus = "";
+    }
+
+    public void SetSgfAutoSaveStatus(string status) => SgfAutoSaveStatus = status;
 
     public int SelectedCgosConnectionProfileIndex { get; private set; }
 

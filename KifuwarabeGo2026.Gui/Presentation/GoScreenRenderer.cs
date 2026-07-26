@@ -176,6 +176,8 @@ public sealed partial class GoScreenRenderer
 
     public static bool GetExportSgfButtonHit(Point point) => ExportSgfButtonBounds.Contains(point);
 
+    public static bool GetSgfAutoSaveCheckHit(Point point) => ExportSgfButtonBounds.Contains(point);
+
     public static bool GetSetupBackToTitleButtonHit(Point point) => SetupBackToTitleButtonBounds.Contains(point);
 
     public static GoPlayerKind? GetBlackPlayerKindButtonHit(Point point) => GetPlayerKindButtonHit(point, BlackPlayerKindButtonY);
@@ -360,7 +362,44 @@ public sealed partial class GoScreenRenderer
 
         var actionSection = new Rectangle(1144, 854, 668, 126);
         DrawVerticalResultSection(actionSection, "ACTION", new Color(91, 82, 105));
-        DrawCommandButton(ExportSgfButtonBounds, "SGF OUTPUT", false, mousePoint, scale: 0.52f);
+        if (session.IsSgfAutoSaveAvailable)
+            DrawSgfAutoSaveCheckBox(ExportSgfButtonBounds, session, mousePoint);
+        else
+            DrawCommandButton(ExportSgfButtonBounds, "SGF OUTPUT", false, mousePoint, scale: 0.52f);
+    }
+
+    private void DrawSgfAutoSaveCheckBox(Rectangle bounds, GoAppSession session, Point mousePoint)
+    {
+        var hovered = bounds.Contains(mousePoint);
+        FillRect(bounds, hovered ? new Color(47, 65, 91, 230) : new Color(31, 45, 70, 220));
+        DrawRect(bounds, 2, new Color(137, 160, 205));
+
+        var checkBounds = new Rectangle(bounds.X + 12, bounds.Y + (bounds.Height - 28) / 2, 28, 28);
+        FillRect(checkBounds, new Color(17, 24, 48, 245));
+        DrawRect(checkBounds, 2, new Color(176, 194, 242));
+        if (session.IsSgfAutoSaveEnabled)
+        {
+            DrawLine(new Vector2(checkBounds.X + 6, checkBounds.Y + 15), new Vector2(checkBounds.X + 12, checkBounds.Bottom - 7), 4, new Color(91, 218, 211));
+            DrawLine(new Vector2(checkBounds.X + 12, checkBounds.Bottom - 7), new Vector2(checkBounds.Right - 5, checkBounds.Y + 6), 4, new Color(91, 218, 211));
+        }
+
+        var statusWidth = string.IsNullOrEmpty(session.SgfAutoSaveStatus) ? 0 : 116;
+        DrawFittedText(
+            "AUTO SAVE",
+            new Rectangle(checkBounds.Right + 10, bounds.Y + 6, bounds.Width - 60 - statusWidth, bounds.Height - 12),
+            Color.White,
+            0.34f);
+        if (statusWidth > 0)
+        {
+            var statusColor = session.SgfAutoSaveStatus == "AUTO SAVED"
+                ? new Color(99, 223, 185)
+                : new Color(255, 145, 151);
+            DrawFittedText(
+                session.SgfAutoSaveStatus,
+                new Rectangle(bounds.Right - statusWidth - 8, bounds.Y + 6, statusWidth, bounds.Height - 12),
+                statusColor,
+                0.28f);
+        }
     }
     private void DrawDisplayNameTextBox(GoAppSession session, Point mousePoint)
     {
@@ -633,7 +672,7 @@ public sealed partial class GoScreenRenderer
     private static Rectangle LocalUseButtonBounds => new(508, 404, 438, 300);
     private static Rectangle ReturnToSetupButtonBounds => new(1492, 132, 320, 56);
 
-    private static Rectangle ExportSgfButtonBounds => new(1164, 910, 140, 56);
+    private static Rectangle ExportSgfButtonBounds => new(1164, 910, 306, 56);
 
     private static Rectangle PassButtonBounds => new(1144, 920, 320, 72);
 
