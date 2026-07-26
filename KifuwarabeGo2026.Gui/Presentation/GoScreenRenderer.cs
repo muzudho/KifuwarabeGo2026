@@ -64,7 +64,8 @@ public sealed partial class GoScreenRenderer
                 DrawReplayNavigationControls(
                     session.LocalDisplayMoveIndex,
                     session.CurrentGameRecord.Moves.Count,
-                    mousePoint);
+                    mousePoint,
+                    showBackToLive: session.CurrentMode.Kind == GoAppModeKind.Playing);
             }
             DrawTournamentRulesSelectionDialog(session, mousePoint);
             DrawTournamentRulesAddPanel(session, mousePoint);

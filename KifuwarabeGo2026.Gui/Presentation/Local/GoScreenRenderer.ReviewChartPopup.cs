@@ -91,6 +91,9 @@ public sealed partial class GoScreenRenderer
     public static bool GetReplayEditButtonHit(Point point) =>
         ReplayEditButtonBounds.Contains(point);
 
+    public static bool GetReplayBackToLiveButtonHit(Point point) =>
+        ReplayBackToLiveButtonBounds.Contains(point);
+
     private void DrawReviewChartPopup(GoAppSession session, Point mousePoint)
     {
         FillRect(new Rectangle(0, 0, VirtualScreen.Width, VirtualScreen.Height), new Color(65, 80, 125, 58));
@@ -239,13 +242,24 @@ public sealed partial class GoScreenRenderer
     private void DrawReplayNavigationControls(
         int currentMoveIndex,
         int moveCount,
-        Point mousePoint)
+        Point mousePoint,
+        bool showBackToLive)
     {
         DrawReviewChartPopupStepButtons(currentMoveIndex, moveCount, mousePoint);
+        if (showBackToLive)
+        {
+            DrawCommandButton(
+                ReplayBackToLiveButtonBounds,
+                "BACK TO LIVE",
+                false,
+                mousePoint,
+                scale: 0.3f);
+        }
         DrawReplayEditIconButton(mousePoint);
     }
 
     private static Rectangle ReplayEditButtonBounds => new(1018, 72, 72, 72);
+    private static Rectangle ReplayBackToLiveButtonBounds => new(836, 72, 170, 54);
 
     private void DrawReplayEditIconButton(Point mousePoint)
     {

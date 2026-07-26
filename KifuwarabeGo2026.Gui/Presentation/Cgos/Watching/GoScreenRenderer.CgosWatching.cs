@@ -57,7 +57,8 @@ public sealed partial class GoScreenRenderer
                 DrawReplayNavigationControls(
                     observation.DisplayMoveIndex,
                     observation.MoveCount,
-                    mousePoint);
+                    mousePoint,
+                    showBackToLive: !observation.IsFinished);
             }
         }
         else
@@ -193,7 +194,9 @@ public sealed partial class GoScreenRenderer
         var replay = label == "REPLAY";
         var bounds = chartPopup
             ? new Rectangle(850, 55, 164, 48)
-            : new Rectangle(842, 72, 164, 54);
+            : replay
+                ? new Rectangle(660, 72, 164, 54)
+                : new Rectangle(842, 72, 164, 54);
         FillRect(bounds, replay ? new Color(43, 83, 126, 238) : new Color(137, 34, 41, 238));
         DrawRect(bounds, 2, replay ? new Color(137, 201, 255) : new Color(255, 145, 151));
         if (!replay)
