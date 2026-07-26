@@ -152,6 +152,8 @@ public sealed class GoAppSession
     public int CommentPageCount { get; private set; } = 1;
 
     public bool IsReviewChartPopupOpen { get; private set; }
+    public bool IsLiveChartAutoUpdateEnabled { get; private set; } = true;
+    private int? _liveChartFrozenMoveCount;
 
     public bool CanOpenLocalChartPopup =>
         CurrentMode.Kind == GoAppModeKind.GameOver ||
@@ -437,6 +439,25 @@ public sealed class GoAppSession
         {
             IsReviewChartPopupOpen = true;
         }
+    }
+
+    public int GetLiveChartVisibleMoveCount(int currentMoveCount) =>
+        IsLiveChartAutoUpdateEnabled
+            ? currentMoveCount
+            : Math.Min(_liveChartFrozenMoveCount ?? currentMoveCount, currentMoveCount);
+
+    public void ToggleLiveChartAutoUpdate(int currentMoveCount)
+    {
+        IsLiveChartAutoUpdateEnabled = !IsLiveChartAutoUpdateEnabled;
+        _liveChartFrozenMoveCount = IsLiveChartAutoUpdateEnabled
+            ? null
+            : Math.Max(0, currentMoveCount);
+    }
+
+    public void ResetLiveChartAutoUpdate()
+    {
+        IsLiveChartAutoUpdateEnabled = true;
+        _liveChartFrozenMoveCount = null;
     }
 
     public void SeekLocalReplay(int moveIndex)
@@ -935,6 +956,7 @@ public sealed class GoAppSession
 
     public void StartPlaying()
     {
+        ResetLiveChartAutoUpdate();
         if (CurrentMode.Kind == GoAppModeKind.GameOver)
         {
             ClearBoard();

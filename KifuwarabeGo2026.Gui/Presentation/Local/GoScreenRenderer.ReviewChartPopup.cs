@@ -13,6 +13,7 @@ public sealed partial class GoScreenRenderer
     private static readonly Rectangle ReviewChartPopupChartBounds = new(100, 115, 1720, 850);
     private static readonly Rectangle ReviewChartPopupCloseButtonBounds = new(1660, 55, 160, 48);
     private static readonly Rectangle ReviewChartPopupBackToLiveButtonBounds = new(1432, 55, 216, 48);
+    private static readonly Rectangle ReviewChartPopupAutoUpdateBounds = new(1080, 55, 336, 48);
     private static readonly Rectangle ReviewChartPopupSeekBounds = new(180, 994, 1560, 28);
     private static readonly Rectangle ReviewChartPopupPlotBounds = new(
         ReviewChartPopupChartBounds.X + 72,
@@ -37,6 +38,9 @@ public sealed partial class GoScreenRenderer
 
     public static bool GetReviewChartPopupBackToLiveHit(Point point) =>
         ReviewChartPopupBackToLiveButtonBounds.Contains(point);
+
+    public static bool GetReviewChartPopupAutoUpdateHit(Point point) =>
+        ReviewChartPopupAutoUpdateBounds.Contains(point);
 
     public static MoveInformationDisplayMode? GetReviewChartPopupInformationDisplayModeButtonHit(Point point) =>
         GetMoveInformationDisplayModeButtonHit(point, ReviewChartPopupChartBounds);
@@ -121,6 +125,11 @@ public sealed partial class GoScreenRenderer
         bool showBackToLive = false,
         bool backToLiveEnabled = false)
     {
+        var visibleMoves = new MovePrefixView(
+            moves,
+            showBackToLive
+                ? session.GetLiveChartVisibleMoveCount(moves.Count)
+                : moves.Count);
         FillRect(new Rectangle(0, 0, VirtualScreen.Width, VirtualScreen.Height), new Color(65, 80, 125, 58));
         FillRect(ReviewChartPopupBounds, new Color(54, 69, 112, 108));
         DrawRect(ReviewChartPopupBounds, 4, new Color(158, 177, 229, 230));
@@ -133,6 +142,7 @@ public sealed partial class GoScreenRenderer
             scale: 0.38f);
         if (showBackToLive)
         {
+            DrawLiveChartAutoUpdateCheckBox(session, mousePoint);
             DrawCommandButton(
                 ReviewChartPopupBackToLiveButtonBounds,
                 "BACK TO LIVE",
@@ -144,15 +154,17 @@ public sealed partial class GoScreenRenderer
 
         DrawMoveTrendChart(
             session,
-            moves,
+            visibleMoves,
             ReviewChartPopupChartBounds,
             mousePoint,
-            selectedMoveIndex ?? moves.Count,
+            Math.Min(selectedMoveIndex ?? visibleMoves.Count, visibleMoves.Count),
             popup: true);
 
         if (seekable)
         {
-            DrawChartPopupSeekBar(selectedMoveIndex ?? moves.Count, moves.Count);
+            DrawChartPopupSeekBar(
+                Math.Min(selectedMoveIndex ?? visibleMoves.Count, visibleMoves.Count),
+                visibleMoves.Count);
         }
         else
         {
@@ -162,6 +174,64 @@ public sealed partial class GoScreenRenderer
                 new Color(238, 242, 255),
                 0.48f);
         }
+    }
+
+    private void DrawLiveChartAutoUpdateCheckBox(GoAppSession session, Point mousePoint)
+    {
+        var hovered = ReviewChartPopupAutoUpdateBounds.Contains(mousePoint);
+        FillRect(
+            ReviewChartPopupAutoUpdateBounds,
+            hovered ? new Color(47, 65, 91, 230) : new Color(31, 45, 70, 220));
+        DrawRect(ReviewChartPopupAutoUpdateBounds, 2, new Color(137, 160, 205));
+        var checkBounds = new Rectangle(
+            ReviewChartPopupAutoUpdateBounds.X + 12,
+            ReviewChartPopupAutoUpdateBounds.Y + 10,
+            28,
+            28);
+        FillRect(checkBounds, new Color(17, 24, 48, 245));
+        DrawRect(checkBounds, 2, new Color(176, 194, 242));
+        if (session.IsLiveChartAutoUpdateEnabled)
+        {
+            DrawLine(
+                new Vector2(checkBounds.X + 6, checkBounds.Y + 15),
+                new Vector2(checkBounds.X + 12, checkBounds.Bottom - 7),
+                4,
+                new Color(91, 218, 211));
+            DrawLine(
+                new Vector2(checkBounds.X + 12, checkBounds.Bottom - 7),
+                new Vector2(checkBounds.Right - 5, checkBounds.Y + 6),
+                4,
+                new Color(91, 218, 211));
+        }
+        DrawFittedText(
+            "AUTO UPDATE",
+            new Rectangle(
+                checkBounds.Right + 10,
+                ReviewChartPopupAutoUpdateBounds.Y + 6,
+                ReviewChartPopupAutoUpdateBounds.Width - 60,
+                ReviewChartPopupAutoUpdateBounds.Height - 12),
+            Color.White,
+            0.34f);
+    }
+
+    private readonly struct MovePrefixView(
+        IReadOnlyList<GoGameMove> moves,
+        int count) : IReadOnlyList<GoGameMove>
+    {
+        public int Count { get; } = Math.Clamp(count, 0, moves.Count);
+        public GoGameMove this[int index] =>
+            index >= 0 && index < Count
+                ? moves[index]
+                : throw new ArgumentOutOfRangeException(nameof(index));
+        public IEnumerator<GoGameMove> GetEnumerator()
+        {
+            for (var index = 0; index < Count; index++)
+            {
+                yield return moves[index];
+            }
+        }
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() =>
+            GetEnumerator();
     }
 
     private void DrawReviewChartPopupSeekBar(GoAppSession session)
