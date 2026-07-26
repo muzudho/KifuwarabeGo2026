@@ -1360,23 +1360,35 @@ public class Game1 : Game
             return;
         }
 
-        if (GoScreenRenderer.GetReviewChartPopupInformationDisplayModeButtonHit(point) is { } informationMode)
+        if (GoScreenRenderer.GetReviewChartPopupTrendToggleHit(point))
         {
-            _session.SetMoveInformationDisplayMode(informationMode);
+            _session.TogglePopupTrendVisibility();
             return;
         }
 
-        if (_session.MoveInformationDisplayMode == MoveInformationDisplayMode.Comment &&
+        if (GoScreenRenderer.GetReviewChartPopupCommentToggleHit(point))
+        {
+            _session.TogglePopupCommentVisibility();
+            return;
+        }
+
+        if (_session.IsPopupCommentVisible &&
             GoScreenRenderer.GetReviewChartPopupCommentPageStepButtonHit(point) is { } commentPageStep)
         {
             _session.ChangeCommentPage(commentPageStep);
             return;
         }
 
-        if (_session.MoveInformationDisplayMode == MoveInformationDisplayMode.Trend &&
+        if (_session.IsPopupTrendVisible &&
             GoScreenRenderer.GetReviewChartPopupTrendDisplayModeButtonHit(point) is { } trendMode)
         {
             _session.SetMoveTrendDisplayMode(trendMode);
+            return;
+        }
+
+        if (GoScreenRenderer.GetReviewChartPopupStepButtonHit(point) is { } popupStep)
+        {
+            ExecuteReviewNavigation(popupStep);
             return;
         }
 
@@ -1448,23 +1460,43 @@ public class Game1 : Game
             return;
         }
 
-        if (GoScreenRenderer.GetReviewChartPopupInformationDisplayModeButtonHit(point) is { } informationMode)
+        if (GoScreenRenderer.GetReviewChartPopupTrendToggleHit(point))
         {
-            _session.SetMoveInformationDisplayMode(informationMode);
+            _session.TogglePopupTrendVisibility();
             return;
         }
 
-        if (_session.MoveInformationDisplayMode == MoveInformationDisplayMode.Comment &&
+        if (GoScreenRenderer.GetReviewChartPopupCommentToggleHit(point))
+        {
+            _session.TogglePopupCommentVisibility();
+            return;
+        }
+
+        if (_session.IsPopupCommentVisible &&
             GoScreenRenderer.GetReviewChartPopupCommentPageStepButtonHit(point) is { } commentPageStep)
         {
             _session.ChangeCommentPage(commentPageStep);
             return;
         }
 
-        if (_session.MoveInformationDisplayMode == MoveInformationDisplayMode.Trend &&
+        if (_session.IsPopupTrendVisible &&
             GoScreenRenderer.GetReviewChartPopupTrendDisplayModeButtonHit(point) is { } trendMode)
         {
             _session.SetMoveTrendDisplayMode(trendMode);
+            return;
+        }
+
+        if (GoScreenRenderer.GetReviewChartPopupStepButtonHit(point) is { } popupStep &&
+            TryGetReadOnlyChartNavigation(out var currentMoveIndex, out var maximumMoveIndex))
+        {
+            var targetMoveIndex = popupStep switch
+            {
+                int.MinValue => 0,
+                int.MaxValue => maximumMoveIndex,
+                _ => Math.Clamp(currentMoveIndex + popupStep, 0, maximumMoveIndex),
+            };
+            SeekReadOnlyChartPopup(targetMoveIndex);
+            ResetReadOnlyChartPopupDoubleClick();
             return;
         }
 
@@ -1541,6 +1573,32 @@ public class Game1 : Game
         _session.UseKind == GoAppUseKind.CgosClient
             ? _cgosGameObservation.MoveCount
             : _session.CurrentGameRecord.Moves.Count;
+
+    private bool TryGetReadOnlyChartNavigation(
+        out int currentMoveIndex,
+        out int maximumMoveIndex)
+    {
+        if (_session.UseKind == GoAppUseKind.CgosClient &&
+            _session.CgosConnectionFlowKind == CgosConnectionFlowKind.Watching &&
+            !_cgosGameObservation.IsFinished)
+        {
+            currentMoveIndex = _cgosGameObservation.DisplayMoveIndex;
+            maximumMoveIndex = _session.GetLiveChartVisibleMoveCount(_cgosGameObservation.MoveCount);
+            return true;
+        }
+
+        if (_session.UseKind == GoAppUseKind.LocalGame &&
+            _session.CurrentMode.Kind == GoAppModeKind.Playing)
+        {
+            currentMoveIndex = _session.LocalDisplayMoveIndex;
+            maximumMoveIndex = _session.GetLiveChartVisibleMoveCount(_session.CurrentGameRecord.Moves.Count);
+            return true;
+        }
+
+        currentMoveIndex = 0;
+        maximumMoveIndex = 0;
+        return false;
+    }
 
     private void ResetReadOnlyChartPopupDoubleClick()
     {

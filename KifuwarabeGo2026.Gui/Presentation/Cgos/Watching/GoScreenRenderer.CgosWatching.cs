@@ -40,7 +40,9 @@ public sealed partial class GoScreenRenderer
         DrawBoardFrameHighlights(surface.Outer);
         if (!observation.IsFinished)
         {
-            DrawBroadcastStatusBadge(observation.IsReplayMode ? "REPLAY" : "LIVE");
+            DrawBroadcastStatusBadge(
+                observation.IsReplayMode ? "REPLAY" : "LIVE",
+                session.IsReviewChartPopupOpen);
         }
         if (!session.IsReviewChartPopupOpen)
         {
@@ -169,10 +171,12 @@ public sealed partial class GoScreenRenderer
     /// </summary>
     private static Rectangle CgosWatchingReviewButtonBounds => new(1164, 920, 306, 52);
 
-    private void DrawBroadcastStatusBadge(string label)
+    private void DrawBroadcastStatusBadge(string label, bool chartPopup = false)
     {
         var replay = label == "REPLAY";
-        var bounds = new Rectangle(842, 72, 164, 54);
+        var bounds = chartPopup
+            ? new Rectangle(850, 55, 164, 48)
+            : new Rectangle(842, 72, 164, 54);
         FillRect(bounds, replay ? new Color(43, 83, 126, 238) : new Color(137, 34, 41, 238));
         DrawRect(bounds, 2, replay ? new Color(137, 201, 255) : new Color(255, 145, 151));
         if (!replay)

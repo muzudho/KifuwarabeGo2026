@@ -4,6 +4,7 @@ using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.Shared.Domain;
 using Microsoft.Xna.Framework;
+using System;
 
 /// <summary>
 /// ［盤編集画面］［棋譜レビュー画面］共通
@@ -119,20 +120,11 @@ public sealed partial class GoScreenRenderer
             new Rectangle(1164, 858, 628, 36),
             $"STEP {session.ReviewMoveIndex} / {session.ReviewMoveCount}   DISPLAY {FormatRenParseDisplayMode(session.RenParseDisplayMode)}",
             new Color(76, 91, 126));
-        for (var i = 0; i < ReviewStepButtonValues.Length; i++)
-        {
-            var step = ReviewStepButtonValues[i];
-            var movesBackward = step < 0;
-            var enabled = movesBackward ? session.ReviewMoveIndex > 0 : session.ReviewMoveIndex < session.ReviewMoveCount;
-            var label = step switch
-            {
-                int.MinValue => "|<",
-                int.MaxValue => ">|",
-                > 0 => $"+{step}",
-                _ => step.ToString(),
-            };
-            DrawCommandButton(ReviewStepButtonBounds(i), label, false, mousePoint, enabled, 0.31f);
-        }
+        DrawMoveNavigationButtons(
+            session.ReviewMoveIndex,
+            session.ReviewMoveCount,
+            mousePoint,
+            ReviewStepButtonBounds);
         DrawFittedText("KEYS  HOME/END: FIRST/LAST   ARROWS: -/+1,10   PGDN/PGUP: -/+50", new Rectangle(1168, 950, 624, 24), new Color(147, 201, 190), 0.23f);
 
     }
@@ -168,6 +160,36 @@ public sealed partial class GoScreenRenderer
 
     private static readonly int[] ReviewStepButtonValues =
         [int.MinValue, -50, -10, -1, 1, 10, 50, int.MaxValue];
+
+    private void DrawMoveNavigationButtons(
+        int currentMoveIndex,
+        int moveCount,
+        Point mousePoint,
+        Func<int, Rectangle> getButtonBounds)
+    {
+        for (var index = 0; index < ReviewStepButtonValues.Length; index++)
+        {
+            var step = ReviewStepButtonValues[index];
+            var enabled = step < 0
+                ? currentMoveIndex > 0
+                : currentMoveIndex < moveCount;
+            DrawCommandButton(
+                getButtonBounds(index),
+                FormatMoveNavigationStep(step),
+                false,
+                mousePoint,
+                enabled,
+                0.31f);
+        }
+    }
+
+    private static string FormatMoveNavigationStep(int step) => step switch
+    {
+        int.MinValue => "|<",
+        int.MaxValue => ">|",
+        > 0 => $"+{step}",
+        _ => step.ToString(),
+    };
 
 
     private static Rectangle ReviewStepButtonBounds(int index) => new(1172 + index * 77, 898, 69, 44);

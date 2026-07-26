@@ -12,14 +12,14 @@ public sealed partial class GoScreenRenderer
     private static readonly Rectangle ReviewChartPopupBounds = new(56, 42, 1808, 996);
     private static readonly Rectangle ReviewChartPopupChartBounds = new(100, 115, 1720, 850);
     private static readonly Rectangle ReviewChartPopupCloseButtonBounds = new(1660, 55, 160, 48);
-    private static readonly Rectangle ReviewChartPopupBackToLiveButtonBounds = new(1432, 55, 216, 48);
-    private static readonly Rectangle ReviewChartPopupAutoUpdateBounds = new(1080, 55, 336, 48);
+    private static readonly Rectangle ReviewChartPopupBackToLiveButtonBounds = new(1026, 55, 216, 48);
+    private static readonly Rectangle ReviewChartPopupAutoUpdateBounds = new(1260, 55, 300, 48);
     private static readonly Rectangle ReviewChartPopupSeekBounds = new(180, 994, 1560, 28);
     private static readonly Rectangle ReviewChartPopupPlotBounds = new(
         ReviewChartPopupChartBounds.X + 72,
         ReviewChartPopupChartBounds.Y + 92,
         ReviewChartPopupChartBounds.Width - 144,
-        ReviewChartPopupChartBounds.Height - 190);
+        ReviewChartPopupChartBounds.Height - 260);
 
     public static bool GetReviewChartPopupOpenHit(Point point) =>
         ReviewTrendChartBounds.Contains(point);
@@ -42,14 +42,20 @@ public sealed partial class GoScreenRenderer
     public static bool GetReviewChartPopupAutoUpdateHit(Point point) =>
         ReviewChartPopupAutoUpdateBounds.Contains(point);
 
-    public static MoveInformationDisplayMode? GetReviewChartPopupInformationDisplayModeButtonHit(Point point) =>
-        GetMoveInformationDisplayModeButtonHit(point, ReviewChartPopupChartBounds);
+    public static bool GetReviewChartPopupTrendToggleHit(Point point) =>
+        GetPopupTrendToggleBounds(ReviewChartPopupChartBounds).Contains(point);
+
+    public static bool GetReviewChartPopupCommentToggleHit(Point point) =>
+        GetPopupCommentToggleBounds(ReviewChartPopupChartBounds).Contains(point);
 
     public static MoveTrendDisplayMode? GetReviewChartPopupTrendDisplayModeButtonHit(Point point) =>
         GetMoveTrendDisplayModeButtonHit(point, ReviewChartPopupChartBounds);
 
     public static int? GetReviewChartPopupCommentPageStepButtonHit(Point point) =>
-        GetCommentPageStepButtonHit(point, ReviewChartPopupChartBounds);
+        GetCommentPageStepButtonHit(point, ReviewChartPopupCommentOverlayBounds);
+
+    private static Rectangle ReviewChartPopupCommentOverlayBounds =>
+        new(1120, 205, 680, 740);
 
     public static int? GetReviewChartPopupSeekMove(Point point, int moveCount)
     {
@@ -62,6 +68,18 @@ public sealed partial class GoScreenRenderer
             0d,
             1d);
         return Math.Clamp((int)Math.Round(ratio * moveCount), 0, moveCount);
+    }
+
+    public static int? GetReviewChartPopupStepButtonHit(Point point)
+    {
+        for (var index = 0; index < ReviewStepButtonValues.Length; index++)
+        {
+            if (ReviewChartPopupStepButtonBounds(index).Contains(point))
+            {
+                return ReviewStepButtonValues[index];
+            }
+        }
+        return null;
     }
 
     private void DrawReviewChartPopup(GoAppSession session, Point mousePoint)
@@ -85,6 +103,10 @@ public sealed partial class GoScreenRenderer
             session.ReviewMoveIndex,
             popup: true);
 
+        DrawReviewChartPopupStepButtons(
+            session.ReviewMoveIndex,
+            session.ReviewMoveCount,
+            mousePoint);
         DrawReviewChartPopupSeekBar(session);
     }
 
@@ -162,6 +184,10 @@ public sealed partial class GoScreenRenderer
 
         if (seekable)
         {
+            DrawReviewChartPopupStepButtons(
+                Math.Min(selectedMoveIndex ?? visibleMoves.Count, visibleMoves.Count),
+                visibleMoves.Count,
+                mousePoint);
             DrawChartPopupSeekBar(
                 Math.Min(selectedMoveIndex ?? visibleMoves.Count, visibleMoves.Count),
                 visibleMoves.Count);
@@ -175,6 +201,21 @@ public sealed partial class GoScreenRenderer
                 0.48f);
         }
     }
+
+    private void DrawReviewChartPopupStepButtons(
+        int currentMoveIndex,
+        int moveCount,
+        Point mousePoint)
+    {
+        DrawMoveNavigationButtons(
+            currentMoveIndex,
+            moveCount,
+            mousePoint,
+            ReviewChartPopupStepButtonBounds);
+    }
+
+    private static Rectangle ReviewChartPopupStepButtonBounds(int index) =>
+        new(130 + index * 112, 910, 102, 48);
 
     private void DrawLiveChartAutoUpdateCheckBox(GoAppSession session, Point mousePoint)
     {
