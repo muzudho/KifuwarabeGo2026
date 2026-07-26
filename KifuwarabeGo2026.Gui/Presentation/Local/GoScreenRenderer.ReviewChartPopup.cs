@@ -24,6 +24,9 @@ public sealed partial class GoScreenRenderer
     public static bool GetLocalLiveChartPopupOpenHit(Point point) =>
         LocalTrendChartBounds.Contains(point);
 
+    public static bool GetLocalGameOverChartPopupOpenHit(Point point) =>
+        LocalGameOverTrendChartBounds.Contains(point);
+
     public static bool GetCgosLiveChartPopupOpenHit(Point point) =>
         CgosTrendChartBounds.Contains(point);
 
@@ -76,12 +79,14 @@ public sealed partial class GoScreenRenderer
         DrawReviewChartPopupSeekBar(session);
     }
 
-    private void DrawLocalLiveChartPopup(GoAppSession session, Point mousePoint) =>
+    private void DrawLocalChartPopup(GoAppSession session, Point mousePoint) =>
         DrawReadOnlyChartPopup(
             session,
             session.CurrentGameRecord.Moves,
             mousePoint,
-            "LIVE GAME TREND");
+            session.CurrentMode.Kind == GoAppModeKind.GameOver
+                ? "GAME RESULT TREND"
+                : "LIVE GAME TREND");
 
     private void DrawCgosLiveChartPopup(
         GoAppSession session,

@@ -772,10 +772,15 @@ public class Game1 : Game
                 return;
             }
 
-            if (_session.CanOpenLocalLiveChartPopup &&
-                GoScreenRenderer.GetLocalLiveChartPopupOpenHit(point))
+            var localChartPopupOpenHit = _session.CurrentMode.Kind switch
             {
-                _session.OpenLocalLiveChartPopup();
+                GoAppModeKind.Playing => GoScreenRenderer.GetLocalLiveChartPopupOpenHit(point),
+                GoAppModeKind.GameOver => GoScreenRenderer.GetLocalGameOverChartPopupOpenHit(point),
+                _ => false,
+            };
+            if (_session.CanOpenLocalChartPopup && localChartPopupOpenHit)
+            {
+                _session.OpenLocalChartPopup();
                 _previousMouse = mouse;
                 return;
             }

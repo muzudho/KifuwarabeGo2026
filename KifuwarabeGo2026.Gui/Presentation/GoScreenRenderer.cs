@@ -61,9 +61,9 @@ public sealed partial class GoScreenRenderer
         {
             DrawReviewChartPopup(session, mousePoint);
         }
-        else if (session.CanOpenLocalLiveChartPopup && session.IsReviewChartPopupOpen)
+        else if (session.CanOpenLocalChartPopup && session.IsReviewChartPopupOpen)
         {
-            DrawLocalLiveChartPopup(session, mousePoint);
+            DrawLocalChartPopup(session, mousePoint);
         }
 
         _spriteBatch.End();

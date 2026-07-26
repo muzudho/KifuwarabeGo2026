@@ -151,10 +151,11 @@ public sealed class GoAppSession
 
     public bool IsReviewChartPopupOpen { get; private set; }
 
-    public bool CanOpenLocalLiveChartPopup =>
-        CurrentMode.Kind == GoAppModeKind.Playing &&
-        BlackPlayerKind == GoPlayerKind.Computer &&
-        WhitePlayerKind == GoPlayerKind.Computer;
+    public bool CanOpenLocalChartPopup =>
+        CurrentMode.Kind == GoAppModeKind.GameOver ||
+        (CurrentMode.Kind == GoAppModeKind.Playing &&
+         BlackPlayerKind == GoPlayerKind.Computer &&
+         WhitePlayerKind == GoPlayerKind.Computer);
 
     public int SelectedCgosConnectionProfileIndex { get; private set; }
 
@@ -417,9 +418,9 @@ public sealed class GoAppSession
         }
     }
 
-    public void OpenLocalLiveChartPopup()
+    public void OpenLocalChartPopup()
     {
-        if (CanOpenLocalLiveChartPopup)
+        if (CanOpenLocalChartPopup)
         {
             IsReviewChartPopupOpen = true;
         }
