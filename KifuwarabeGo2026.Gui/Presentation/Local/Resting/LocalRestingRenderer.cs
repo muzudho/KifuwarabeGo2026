@@ -6,6 +6,10 @@ using Microsoft.Xna.Framework;
 
 public static class LocalRestingRenderer
 {
-    public static void Draw(GoScreenRenderer renderer, GoAppSession session, Point mousePosition) =>
-        renderer.Draw(session, mousePosition);
+    public static void Draw(
+        GoScreenRenderer renderer,
+        GoAppSession session,
+        Point mousePosition,
+        LiveBoardPreview? liveBoardPreview = null) =>
+        renderer.Draw(session, mousePosition, liveBoardPreview);
 }

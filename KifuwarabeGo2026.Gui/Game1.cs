@@ -371,7 +371,11 @@ public class Game1 : Game
         {
             if (_renderer is not null)
             {
-                LocalRestingRenderer.Draw(_renderer, _variationSession, Mouse.GetState().Position);
+                LocalRestingRenderer.Draw(
+                    _renderer,
+                    _variationSession,
+                    Mouse.GetState().Position,
+                    CreateLiveBoardPreview());
             }
         }
         else if (_session.UseKind == GoAppUseKind.CgosClient)
@@ -1214,7 +1218,9 @@ public class Game1 : Game
             variationSession.CurrentMode.Kind != GoAppModeKind.VariationEditing)
             return false;
 
-        if (GoScreenRenderer.GetVariationEditingDiscardButtonHit(point))
+        if (GoScreenRenderer.GetVariationEditingDiscardButtonHit(
+                point,
+                CreateLiveBoardPreview() is not null))
         {
             _variationSession = null;
             return true;
@@ -1874,6 +1880,41 @@ public class Game1 : Game
         currentMoveIndex = 0;
         maximumMoveIndex = 0;
         return false;
+    }
+
+    private LiveBoardPreview? CreateLiveBoardPreview()
+    {
+        if (_variationSession is null)
+            return null;
+
+        if (_session.UseKind == GoAppUseKind.LocalGame &&
+            _session.CurrentMode.Kind == GoAppModeKind.Playing)
+        {
+            var moves = _session.CurrentGameRecord.Moves;
+            return new LiveBoardPreview(
+                _session.BoardSize,
+                _session.GetStone,
+                moves.Count == 0 ? null : moves[^1],
+                moves.Count,
+                _session.GetLocalPlayerName(GoStone.Black),
+                _session.GetLocalPlayerName(GoStone.White));
+        }
+
+        if (_session.UseKind == GoAppUseKind.CgosClient &&
+            _session.CgosConnectionFlowKind == CgosConnectionFlowKind.Watching &&
+            _cgosGameObservation.IsStarted &&
+            !_cgosGameObservation.IsFinished)
+        {
+            return new LiveBoardPreview(
+                _cgosGameObservation.BoardSize,
+                _cgosGameObservation.GetLiveStone,
+                _cgosGameObservation.LatestMove,
+                _cgosGameObservation.MoveCount,
+                _cgosGameObservation.BlackPlayerName,
+                _cgosGameObservation.WhitePlayerName);
+        }
+
+        return null;
     }
 
     private void ResetReadOnlyChartPopupDoubleClick()

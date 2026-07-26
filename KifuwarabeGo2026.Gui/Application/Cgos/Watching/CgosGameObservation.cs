@@ -42,6 +42,8 @@ public sealed class CgosGameObservation
     public int DisplayMoveIndex => _replayMoveIndex ?? MoveCount;
 
     public GoStone GetStone(int x, int y) => (_replayBoard ?? _board).GetStone(x, y);
+    public GoStone GetLiveStone(int x, int y) => _board.GetStone(x, y);
+    public GoGameMove? LatestMove => _moves.Count == 0 ? null : _moves[^1];
 
     /// <summary>
     /// 現在の観戦盤面を連解析します。

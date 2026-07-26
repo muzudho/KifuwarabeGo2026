@@ -41,7 +41,9 @@ public sealed partial class GoScreenRenderer
 
     public static bool GetBoardEditingAdoptButtonHit(Point point) => BoardEditingAdoptButtonBounds.Contains(point);
 
-    public static bool GetVariationEditingDiscardButtonHit(Point point) => VariationEditingDiscardButtonBounds.Contains(point);
+    public static bool GetVariationEditingDiscardButtonHit(Point point, bool hasLiveBoardPreview) =>
+        (hasLiveBoardPreview ? VariationEditingLiveDiscardButtonBounds : VariationEditingDiscardButtonBounds)
+        .Contains(point);
 
     public static bool GetVariationEditingAdoptButtonHit(Point point) => VariationEditingAdoptButtonBounds.Contains(point);
 
@@ -106,33 +108,45 @@ public sealed partial class GoScreenRenderer
         DrawCurrentStoneResultRow(new Rectangle(1164, 690, 628, 64), session);
     }
 
-    private void DrawVariationEditingSidePanel(GoAppSession session, Point mousePoint)
+    private void DrawVariationEditingSidePanel(
+        GoAppSession session,
+        Point mousePoint,
+        LiveBoardPreview? liveBoardPreview)
     {
         DrawText("ANALYSIS BOARD", new Vector2(1144, 136), new Color(42, 62, 68), 0.68f);
-        DrawCommandButton(VariationEditingDiscardButtonBounds, "DISCARD", false, mousePoint, scale: 0.34f);
+        if (liveBoardPreview is null)
+            DrawCommandButton(VariationEditingDiscardButtonBounds, "DISCARD", false, mousePoint, scale: 0.34f);
         if (session.CanAdoptVariationPosition)
             DrawCommandButton(VariationEditingAdoptButtonBounds, "ADOPT", false, mousePoint, scale: 0.34f);
         DrawCommandButton(VariationEditingExportSgfButtonBounds, "SGF OUTPUT", false, mousePoint, scale: 0.29f);
 
-        DrawVerticalResultSection(new Rectangle(1144, 204, 668, 112), "EDITING", new Color(67, 112, 118));
+        var informationWidth = liveBoardPreview is null ? 668 : 372;
+        var informationRowWidth = liveBoardPreview is null ? 628 : 332;
+        DrawVerticalResultSection(
+            new Rectangle(1144, 204, informationWidth, 112),
+            "EDITING",
+            new Color(67, 112, 118));
         DrawResultRow(
-            new Rectangle(1164, 210, 628, 44),
+            new Rectangle(1164, 210, informationRowWidth, 44),
             "SOURCE",
             session.HasVariationCustomPosition ? "CUSTOM POSITION" : $"MOVE {session.VariationSourceMoveIndex}",
             new Color(67, 112, 118),
             Color.White);
         DrawResultRow(
-            new Rectangle(1164, 260, 628, 44),
+            new Rectangle(1164, 260, informationRowWidth, 44),
             "VARIATION",
             $"+{session.VariationMoveCount} MOVES",
             new Color(67, 112, 118),
             new Color(99, 223, 185));
 
-        DrawVerticalResultSection(new Rectangle(1144, 332, 668, 200), "POSITION", new Color(76, 91, 126));
+        DrawVerticalResultSection(
+            new Rectangle(1144, 332, informationWidth, 200),
+            "POSITION",
+            new Color(76, 91, 126));
         DrawBothPlayersComponent(
             1144,
             340,
-            668,
+            informationWidth,
             string.IsNullOrWhiteSpace(session.CurrentGameRecord.BlackPlayerName) ? "BLACK" : session.CurrentGameRecord.BlackPlayerName,
             string.IsNullOrWhiteSpace(session.CurrentGameRecord.WhitePlayerName) ? "WHITE" : session.CurrentGameRecord.WhitePlayerName,
             null,
@@ -142,6 +156,22 @@ public sealed partial class GoScreenRenderer
             session.WhiteAgehama,
             session.CurrentTurn,
             minimal: true);
+
+        if (liveBoardPreview is not null)
+        {
+            DrawLiveBoardWipe(liveBoardPreview);
+            DrawCommandButton(
+                VariationEditingLiveDiscardButtonBounds,
+                "DISCARD",
+                false,
+                mousePoint,
+                scale: 0.34f);
+            DrawFittedText(
+                "DISCARD THIS ANALYSIS BOARD AND RETURN TO THE LIVE VIEW.",
+                VariationEditingLiveDiscardCommentBounds,
+                new Color(184, 211, 205),
+                0.23f);
+        }
 
         DrawVerticalResultSection(new Rectangle(1144, 548, 668, 112), "TOOL", new Color(67, 112, 118));
         DrawCommandButton(VariationEditingPlayButtonBounds, "PLAY", session.VariationEditingStone is null, mousePoint, scale: 0.42f);
@@ -245,6 +275,9 @@ public sealed partial class GoScreenRenderer
     private static Rectangle BoardEditingAdoptButtonBounds => new(1648, 120, 164, 52);
 
     private static Rectangle VariationEditingDiscardButtonBounds => new(1396, 120, 128, 52);
+    private static Rectangle VariationEditingLiveBoardBounds => new(1540, 188, 252, 252);
+    private static Rectangle VariationEditingLiveDiscardButtonBounds => new(1540, 456, 252, 52);
+    private static Rectangle VariationEditingLiveDiscardCommentBounds => new(1540, 512, 252, 30);
     private static Rectangle VariationEditingAdoptButtonBounds => new(1536, 120, 128, 52);
     private static Rectangle VariationEditingExportSgfButtonBounds => new(1676, 120, 136, 52);
     private static Rectangle VariationEditingUndoButtonBounds => new(1164, 924, 306, 56);
@@ -254,6 +287,77 @@ public sealed partial class GoScreenRenderer
     private static Rectangle VariationEditingWhiteButtonBounds => new(1476, 584, 140, 56);
     private static Rectangle VariationEditingEraseButtonBounds => new(1632, 584, 140, 56);
     private static Rectangle VariationEditingClearButtonBounds => new(1164, 810, 608, 52);
+
+    private void DrawLiveBoardWipe(LiveBoardPreview preview)
+    {
+        var bounds = VariationEditingLiveBoardBounds;
+        FillRect(new Rectangle(bounds.X + 7, bounds.Y + 8, bounds.Width, bounds.Height), new Color(0, 0, 0, 95));
+        FillRect(bounds, new Color(31, 43, 45));
+        DrawRect(bounds, 3, new Color(91, 218, 211));
+        DrawText(
+            $"LIVE  MOVE {preview.MoveCount}",
+            new Vector2(bounds.X + 12, bounds.Y + 8),
+            new Color(91, 218, 211),
+            0.28f);
+
+        var board = new Rectangle(bounds.X + 15, bounds.Y + 38, bounds.Width - 30, bounds.Height - 53);
+        FillRect(board, new Color(221, 166, 82));
+        DrawRect(board, 2, new Color(83, 55, 32));
+        var margin = 12f;
+        var start = new Vector2(board.X + margin, board.Y + margin);
+        var usable = board.Width - margin * 2f;
+        var cell = preview.BoardSize <= 1 ? usable : usable / (preview.BoardSize - 1);
+        var end = start + new Vector2(cell * (preview.BoardSize - 1), cell * (preview.BoardSize - 1));
+
+        for (var index = 0; index < preview.BoardSize; index++)
+        {
+            var offset = cell * index;
+            DrawLine(
+                new Vector2(start.X + offset, start.Y),
+                new Vector2(start.X + offset, end.Y),
+                1,
+                new Color(55, 38, 25));
+            DrawLine(
+                new Vector2(start.X, start.Y + offset),
+                new Vector2(end.X, start.Y + offset),
+                1,
+                new Color(55, 38, 25));
+        }
+
+        var stoneRadius = Math.Max(3f, cell * 0.38f);
+        for (var y = 0; y < preview.BoardSize; y++)
+        {
+            for (var x = 0; x < preview.BoardSize; x++)
+            {
+                var stone = preview.GetStone(x, y);
+                if (stone == GoStone.Empty)
+                    continue;
+
+                var center = new Vector2(start.X + cell * x, start.Y + cell * y);
+                DrawCircle(
+                    center,
+                    stoneRadius,
+                    stone == GoStone.Black ? new Color(27, 31, 34) : new Color(247, 245, 237));
+            }
+        }
+
+        if (preview.LatestMove?.Point is { } point)
+        {
+            var center = new Vector2(start.X + cell * point.X, start.Y + cell * point.Y);
+            var radius = stoneRadius + 2f;
+            const int segments = 16;
+            for (var index = 0; index < segments; index++)
+            {
+                var angleA = MathHelper.TwoPi * index / segments;
+                var angleB = MathHelper.TwoPi * (index + 1) / segments;
+                DrawLine(
+                    center + new Vector2(MathF.Cos(angleA), MathF.Sin(angleA)) * radius,
+                    center + new Vector2(MathF.Cos(angleB), MathF.Sin(angleB)) * radius,
+                    2,
+                    new Color(91, 218, 211));
+            }
+        }
+    }
 
 
     private static readonly int[] ReviewStepButtonValues =

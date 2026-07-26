@@ -39,7 +39,10 @@ public sealed partial class GoScreenRenderer
         _stoneDark = CreateStoneTexture(128, lightStone: false);
     }
 
-    public void Draw(GoAppSession session, Point mousePosition)
+    public void Draw(
+        GoAppSession session,
+        Point mousePosition,
+        LiveBoardPreview? liveBoardPreview = null)
     {
         var mousePoint = VirtualScreen.ToVirtualPoint(_graphicsDevice.Viewport, mousePosition);
 
@@ -58,7 +61,7 @@ public sealed partial class GoScreenRenderer
         }
         if (!session.IsReviewChartPopupOpen)
         {
-            DrawSidePanel(session, mousePoint);
+            DrawSidePanel(session, mousePoint, liveBoardPreview);
             if (session.IsLocalReplayMode)
             {
                 DrawReplayNavigationControls(
@@ -225,7 +228,10 @@ public sealed partial class GoScreenRenderer
         DrawGlow(new Vector2(1030, 90), 520, new Color(39, 122, 104, 80));
         DrawGlow(new Vector2(1700, 850), 360, new Color(144, 59, 48, 72));
     }
-    private void DrawSidePanel(GoAppSession session, Point mousePoint)
+    private void DrawSidePanel(
+        GoAppSession session,
+        Point mousePoint,
+        LiveBoardPreview? liveBoardPreview)
     {
         var panel = new Rectangle(1102, 78, 760, 924);
         FillRect(new Rectangle(panel.X + 16, panel.Y + 18, panel.Width, panel.Height), new Color(0, 0, 0, 120));
@@ -252,7 +258,7 @@ public sealed partial class GoScreenRenderer
 
         if (session.CurrentMode.Kind == GoAppModeKind.VariationEditing)
         {
-            DrawVariationEditingSidePanel(session, mousePoint);
+            DrawVariationEditingSidePanel(session, mousePoint, liveBoardPreview);
             return;
         }
 
