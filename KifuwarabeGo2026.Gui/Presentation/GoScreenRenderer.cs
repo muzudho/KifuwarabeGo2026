@@ -244,6 +244,12 @@ public sealed partial class GoScreenRenderer
             return;
         }
 
+        if (session.CurrentMode.Kind == GoAppModeKind.VariationEditing)
+        {
+            DrawVariationEditingSidePanel(session, mousePoint);
+            return;
+        }
+
         if (session.CurrentMode.Kind == GoAppModeKind.Reviewing)
         {
             DrawReviewingSidePanel(session, mousePoint);

@@ -35,10 +35,17 @@ public sealed partial class GoScreenRenderer
     public static bool GetBoardEditingRedoButtonHit(Point point) => BoardEditingRedoButtonBounds.Contains(point);
 
 
-    public static bool GetBoardEditingExportSgfButtonHit(Point point) => BoardEditingExportSgfButtonBounds.Contains(point);
+    public static bool GetBoardEditingCancelButtonHit(Point point) => BoardEditingCancelButtonBounds.Contains(point);
 
+    public static bool GetBoardEditingAdoptButtonHit(Point point) => BoardEditingAdoptButtonBounds.Contains(point);
 
-    public static bool GetBoardEditingDoneButtonHit(Point point) => BoardEditingDoneButtonBounds.Contains(point);
+    public static bool GetVariationEditingDiscardButtonHit(Point point) => VariationEditingDiscardButtonBounds.Contains(point);
+
+    public static bool GetVariationEditingExportSgfButtonHit(Point point) => VariationEditingExportSgfButtonBounds.Contains(point);
+
+    public static bool GetVariationEditingPassButtonHit(Point point) => VariationEditingPassButtonBounds.Contains(point);
+
+    public static bool GetVariationEditingUndoButtonHit(Point point) => VariationEditingUndoButtonBounds.Contains(point);
 
 
     public static int? GetReviewStepButtonHit(Point point)
@@ -63,8 +70,8 @@ public sealed partial class GoScreenRenderer
     private void DrawBoardEditingSidePanel(GoAppSession session, Point mousePoint)
     {
         DrawText("BOARD EDIT", new Vector2(1144, 136), new Color(255, 230, 160), 0.72f);
-        DrawCommandButton(BoardEditingExportSgfButtonBounds, "SGF OUTPUT", false, mousePoint, scale: 0.32f);
-        DrawCommandButton(BoardEditingDoneButtonBounds, "DONE", false, mousePoint, scale: 0.4f);
+        DrawCommandButton(BoardEditingCancelButtonBounds, "CANCEL", false, mousePoint, scale: 0.34f);
+        DrawCommandButton(BoardEditingAdoptButtonBounds, "ADOPT", false, mousePoint, scale: 0.4f);
 
         DrawVerticalResultSection(new Rectangle(1144, 204, 668, 76), "BOARD", new Color(66, 104, 116));
         DrawResultRow(new Rectangle(1164, 208, 628, 60), "SIZE", $"{session.BoardSize} x {session.BoardSize}", new Color(62, 112, 105), Color.White);
@@ -82,6 +89,59 @@ public sealed partial class GoScreenRenderer
         DrawVerticalResultSection(new Rectangle(1144, 564, 668, 220), "POSITION", new Color(62, 112, 105));
         DrawStoneCountStrip(session, 584, showLeader: false, minimal: true);
         DrawCurrentStoneResultRow(new Rectangle(1164, 690, 628, 64), session);
+    }
+
+    private void DrawVariationEditingSidePanel(GoAppSession session, Point mousePoint)
+    {
+        DrawText("ANALYSIS BOARD", new Vector2(1144, 136), new Color(42, 62, 68), 0.68f);
+        DrawCommandButton(VariationEditingDiscardButtonBounds, "DISCARD", false, mousePoint, scale: 0.34f);
+        DrawCommandButton(VariationEditingExportSgfButtonBounds, "SGF OUTPUT", false, mousePoint, scale: 0.29f);
+
+        DrawVerticalResultSection(new Rectangle(1144, 204, 668, 112), "EDITING", new Color(67, 112, 118));
+        DrawResultRow(
+            new Rectangle(1164, 210, 628, 44),
+            "SOURCE",
+            $"MOVE {session.VariationSourceMoveIndex}",
+            new Color(67, 112, 118),
+            Color.White);
+        DrawResultRow(
+            new Rectangle(1164, 260, 628, 44),
+            "VARIATION",
+            $"+{session.VariationMoveCount} MOVES",
+            new Color(67, 112, 118),
+            new Color(99, 223, 185));
+
+        DrawVerticalResultSection(new Rectangle(1144, 332, 668, 200), "POSITION", new Color(76, 91, 126));
+        DrawBothPlayersComponent(
+            1144,
+            340,
+            668,
+            string.IsNullOrWhiteSpace(session.CurrentGameRecord.BlackPlayerName) ? "BLACK" : session.CurrentGameRecord.BlackPlayerName,
+            string.IsNullOrWhiteSpace(session.CurrentGameRecord.WhitePlayerName) ? "WHITE" : session.CurrentGameRecord.WhitePlayerName,
+            null,
+            null,
+            null,
+            session.BlackAgehama,
+            session.WhiteAgehama,
+            session.CurrentTurn,
+            minimal: true);
+
+        DrawVerticalResultSection(new Rectangle(1144, 548, 668, 110), "HOW TO USE", new Color(86, 99, 104));
+        DrawFittedText(
+            "PLAY LEGAL MOVES ON THE WHITEBOARD. THE ORIGINAL GAME IS NEVER CHANGED.",
+            new Rectangle(1166, 562, 624, 78),
+            new Color(218, 228, 226),
+            0.3f);
+
+        DrawVerticalResultSection(new Rectangle(1144, 916, 668, 76), "ACTION", new Color(91, 82, 105));
+        DrawCommandButton(
+            VariationEditingUndoButtonBounds,
+            "UNDO",
+            false,
+            mousePoint,
+            enabled: session.CanUndoVariation,
+            scale: 0.42f);
+        DrawCommandButton(VariationEditingPassButtonBounds, "PASS", false, mousePoint, scale: 0.44f);
     }
 
 
@@ -152,10 +212,14 @@ public sealed partial class GoScreenRenderer
     private static Rectangle BoardEditingRedoButtonBounds => new(GameOverValueX + 244, 458, 220, 56);
 
 
-    private static Rectangle BoardEditingExportSgfButtonBounds => new(1480, 120, 156, 52);
+    private static Rectangle BoardEditingCancelButtonBounds => new(1480, 120, 156, 52);
 
+    private static Rectangle BoardEditingAdoptButtonBounds => new(1648, 120, 164, 52);
 
-    private static Rectangle BoardEditingDoneButtonBounds => new(1648, 120, 164, 52);
+    private static Rectangle VariationEditingDiscardButtonBounds => new(1448, 120, 176, 52);
+    private static Rectangle VariationEditingExportSgfButtonBounds => new(1636, 120, 176, 52);
+    private static Rectangle VariationEditingUndoButtonBounds => new(1164, 924, 306, 56);
+    private static Rectangle VariationEditingPassButtonBounds => new(1486, 924, 306, 56);
 
 
     private static readonly int[] ReviewStepButtonValues =

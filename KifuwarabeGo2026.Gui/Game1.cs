@@ -143,7 +143,7 @@ public class Game1 : Game
                 UpdateCgosGameObservation();
                 UpdateCgosMatchNotification();
 
-                if (_session.CurrentMode.Kind == GoAppModeKind.Reviewing)
+                if (_session.CurrentMode.Kind is GoAppModeKind.Reviewing or GoAppModeKind.VariationEditing)
                     UpdateGlobalKeyboardInput(keyboard);
                 else
                     // ［CGOS　＞　観戦画面］キーボード入力
@@ -476,6 +476,12 @@ public class Game1 : Game
             var isReplayNavigationVisible =
                 (_session.UseKind == GoAppUseKind.LocalGame && _session.IsLocalReplayMode) ||
                 (_session.UseKind == GoAppUseKind.CgosClient && _cgosGameObservation.IsReplayMode);
+            if (isReplayNavigationVisible && GoScreenRenderer.GetReplayEditButtonHit(point))
+            {
+                StartVariationEditingFromReplay();
+                _previousMouse = mouse;
+                return;
+            }
             if (isReplayNavigationVisible &&
                 GoScreenRenderer.GetReplayStepButtonHit(point) is { } replayStep &&
                 TryGetReadOnlyChartNavigation(out var replayMoveIndex, out var replayMaximumMoveIndex))
@@ -487,6 +493,13 @@ public class Game1 : Game
                     _ => Math.Clamp(replayMoveIndex + replayStep, 0, replayMaximumMoveIndex),
                 };
                 SeekReadOnlyChartPopup(targetMoveIndex);
+                _previousMouse = mouse;
+                return;
+            }
+
+            if (_session.CurrentMode.Kind == GoAppModeKind.VariationEditing)
+            {
+                TryHandleVariationEditingClick(point);
                 _previousMouse = mouse;
                 return;
             }
@@ -995,13 +1008,13 @@ public class Game1 : Game
             return true;
         }
 
-        if (GoScreenRenderer.GetBoardEditingExportSgfButtonHit(point))
+        if (GoScreenRenderer.GetBoardEditingCancelButtonHit(point))
         {
-            ExportSgf();
+            _session.CancelBoardEditing();
             return true;
         }
 
-        if (GoScreenRenderer.GetBoardEditingDoneButtonHit(point))
+        if (GoScreenRenderer.GetBoardEditingAdoptButtonHit(point))
         {
             _session.FinishBoardEditing();
             return true;
@@ -1076,6 +1089,71 @@ public class Game1 : Game
         if (GoScreenRenderer.GetReviewBackToRestButtonHit(point))
         {
             _session.ReturnFromReviewingToResting();
+            return true;
+        }
+
+        return true;
+    }
+
+    private void StartVariationEditingFromReplay()
+    {
+        GoGameRecord sourceRecord;
+        int sourceMoveIndex;
+        GoAppModeKind returnMode;
+        if (_session.UseKind == GoAppUseKind.CgosClient)
+        {
+            sourceRecord = _cgosGameObservation.CreateGameRecord();
+            sourceMoveIndex = _cgosGameObservation.DisplayMoveIndex;
+            returnMode = GoAppModeKind.Resting;
+        }
+        else
+        {
+            sourceRecord = _session.CurrentGameRecord.Clone();
+            sourceMoveIndex = _session.LocalDisplayMoveIndex;
+            returnMode = _session.CurrentMode.Kind;
+        }
+
+        if (!_session.StartVariationEditing(sourceRecord, sourceMoveIndex, returnMode, out var warning) &&
+            !string.IsNullOrWhiteSpace(warning))
+        {
+            ShowMessage(warning, "Analysis editing");
+        }
+    }
+
+    private bool TryHandleVariationEditingClick(Point point)
+    {
+        if (_session.CurrentMode.Kind != GoAppModeKind.VariationEditing)
+            return false;
+
+        if (GoScreenRenderer.GetVariationEditingDiscardButtonHit(point))
+        {
+            _session.DiscardVariationEditing();
+            return true;
+        }
+
+        if (GoScreenRenderer.GetVariationEditingExportSgfButtonHit(point))
+        {
+            ExportSgf();
+            return true;
+        }
+
+        if (GoScreenRenderer.GetVariationEditingUndoButtonHit(point))
+        {
+            _session.UndoVariation();
+            return true;
+        }
+
+        if (GoScreenRenderer.GetVariationEditingPassButtonHit(point))
+        {
+            if (_session.PassVariation())
+                PlayPlaceStoneSound(0.45f, 0.25f, 0f);
+            return true;
+        }
+
+        if (GoScreenRenderer.TryGetBoardIntersection(point, _session.BoardSize, out var intersection))
+        {
+            if (_session.TryPlaceVariationStone(intersection.X, intersection.Y))
+                PlayPlaceStoneSound();
             return true;
         }
 

@@ -5,6 +5,7 @@ public enum GoAppModeKind
     Playing,
     GameOver,
     BoardEditing,
+    VariationEditing,
     Reviewing,
     Resting,
 }

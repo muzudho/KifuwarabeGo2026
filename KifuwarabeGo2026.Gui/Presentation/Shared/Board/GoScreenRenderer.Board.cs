@@ -36,7 +36,8 @@ public sealed partial class GoScreenRenderer
     /// <param name="mousePoint"></param>
     private void DrawBoard(GoAppSession session, Point mousePoint)
     {
-        var surface = DrawBoardSurface(session.BoardSize);
+        var whiteboard = session.CurrentMode.Kind == GoAppModeKind.VariationEditing;
+        var surface = DrawBoardSurface(session.BoardSize, whiteboard);
         var start = surface.Start;
         var cell = surface.Cell;
 
@@ -63,19 +64,25 @@ public sealed partial class GoScreenRenderer
     /// <summary>
     /// 対局方式に依存しない碁盤面を描画します。
     /// </summary>
-    private (Vector2 Start, float Cell, Rectangle Outer) DrawBoardSurface(int boardSize)
+    private (Vector2 Start, float Cell, Rectangle Outer) DrawBoardSurface(int boardSize, bool whiteboard = false)
     {
         var boardOuter = new Rectangle(54, 50, 980, 980);
 
         FillRect(new Rectangle(boardOuter.X + 18, boardOuter.Y + 22, boardOuter.Width, boardOuter.Height), new Color(0, 0, 0, 125));
-        FillRect(boardOuter, new Color(66, 42, 28));
-        FillRect(new Rectangle(boardOuter.X + 8, boardOuter.Y + 8, boardOuter.Width - 16, boardOuter.Height - 16), new Color(180, 126, 62));
-        FillRect(BoardBounds, new Color(221, 166, 82));
+        FillRect(boardOuter, whiteboard ? new Color(105, 112, 114) : new Color(66, 42, 28));
+        FillRect(
+            new Rectangle(boardOuter.X + 8, boardOuter.Y + 8, boardOuter.Width - 16, boardOuter.Height - 16),
+            whiteboard ? new Color(210, 214, 211) : new Color(180, 126, 62));
+        FillRect(BoardBounds, whiteboard ? new Color(239, 241, 235) : new Color(221, 166, 82));
 
         for (var i = 0; i < 24; i++)
         {
             var x = BoardBounds.X + i * 38;
-            DrawLine(new Vector2(x, BoardBounds.Y), new Vector2(x + 220, BoardBounds.Bottom), 1, new Color(246, 196, 113, 42));
+            DrawLine(
+                new Vector2(x, BoardBounds.Y),
+                new Vector2(x + 220, BoardBounds.Bottom),
+                1,
+                whiteboard ? new Color(165, 177, 173, 28) : new Color(246, 196, 113, 42));
         }
 
         var layout = GetBoardLayout(boardSize);
@@ -87,15 +94,15 @@ public sealed partial class GoScreenRenderer
         for (var i = 0; i < boardSize; i++)
         {
             var p = start.X + cell * i;
-            DrawLine(new Vector2(p, start.Y), new Vector2(p, end.Y), i == 0 || i == boardSize - 1 ? 4 : 2, new Color(42, 31, 24));
+            DrawLine(new Vector2(p, start.Y), new Vector2(p, end.Y), i == 0 || i == boardSize - 1 ? 4 : 2, whiteboard ? new Color(67, 78, 80) : new Color(42, 31, 24));
             p = start.Y + cell * i;
-            DrawLine(new Vector2(start.X, p), new Vector2(end.X, p), i == 0 || i == boardSize - 1 ? 4 : 2, new Color(42, 31, 24));
+            DrawLine(new Vector2(start.X, p), new Vector2(end.X, p), i == 0 || i == boardSize - 1 ? 4 : 2, whiteboard ? new Color(67, 78, 80) : new Color(42, 31, 24));
         }
 
         foreach (var star in GetStarPoints(boardSize))
         {
             var center = BoardPoint(start, cell, star.X, star.Y);
-            DrawCircle(center, Math.Max(5, cell * 0.1f), new Color(55, 38, 25));
+            DrawCircle(center, Math.Max(5, cell * 0.1f), whiteboard ? new Color(67, 78, 80) : new Color(55, 38, 25));
         }
 
         DrawBoardCoordinates(boardSize, start, cell, boardOuter);
@@ -170,9 +177,31 @@ public sealed partial class GoScreenRenderer
                 var stone = session.GetDisplayStone(x, y);
                 if (stone != GoStone.Empty)
                 {
-                    DrawStone(BoardPoint(start, cell, x, y), cell * 0.44f, stone == GoStone.Black);
+                    var center = BoardPoint(start, cell, x, y);
+                    if (session.CurrentMode.Kind == GoAppModeKind.VariationEditing)
+                        DrawWhiteboardStone(center, cell * 0.4f, stone == GoStone.Black);
+                    else
+                        DrawStone(center, cell * 0.44f, stone == GoStone.Black);
                 }
             }
+        }
+    }
+
+    private void DrawWhiteboardStone(Vector2 center, float radius, bool black)
+    {
+        DrawCircle(center + new Vector2(4, 5), radius, new Color(75, 82, 82, 62));
+        DrawCircle(center, radius, black ? new Color(36, 43, 47) : new Color(250, 250, 245));
+        var outlineColor = black ? new Color(14, 20, 23) : new Color(73, 83, 84);
+        const int segments = 24;
+        for (var index = 0; index < segments; index++)
+        {
+            var a = MathHelper.TwoPi * index / segments;
+            var b = MathHelper.TwoPi * (index + 1) / segments;
+            DrawLine(
+                center + new Vector2(MathF.Cos(a), MathF.Sin(a)) * radius,
+                center + new Vector2(MathF.Cos(b), MathF.Sin(b)) * radius,
+                2,
+                outlineColor);
         }
     }
 
@@ -229,7 +258,7 @@ public sealed partial class GoScreenRenderer
             return;
         }
 
-        if (session.CurrentMode.Kind != GoAppModeKind.Playing ||
+        if (session.CurrentMode.Kind is not (GoAppModeKind.Playing or GoAppModeKind.VariationEditing) ||
             !session.CanAcceptHumanMove ||
             !TryGetBoardIntersection(mousePoint, session.BoardSize, out var intersection) ||
             session.GetStone(intersection.X, intersection.Y) != GoStone.Empty ||

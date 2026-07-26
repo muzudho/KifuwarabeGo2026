@@ -88,6 +88,9 @@ public sealed partial class GoScreenRenderer
     public static int? GetReplayStepButtonHit(Point point) =>
         GetReviewChartPopupStepButtonHit(point);
 
+    public static bool GetReplayEditButtonHit(Point point) =>
+        ReplayEditButtonBounds.Contains(point);
+
     private void DrawReviewChartPopup(GoAppSession session, Point mousePoint)
     {
         FillRect(new Rectangle(0, 0, VirtualScreen.Width, VirtualScreen.Height), new Color(65, 80, 125, 58));
@@ -238,10 +241,13 @@ public sealed partial class GoScreenRenderer
         int moveCount,
         Point mousePoint)
     {
-        FillRect(new Rectangle(492, 1018, 928, 56), new Color(17, 24, 48, 215));
-        DrawRect(new Rectangle(492, 1018, 928, 56), 2, new Color(137, 160, 205));
+        FillRect(new Rectangle(492, 1018, 1126, 56), new Color(17, 24, 48, 215));
+        DrawRect(new Rectangle(492, 1018, 1126, 56), 2, new Color(137, 160, 205));
         DrawReviewChartPopupStepButtons(currentMoveIndex, moveCount, mousePoint);
+        DrawCommandButton(ReplayEditButtonBounds, "EDIT", false, mousePoint, scale: 0.36f);
     }
+
+    private static Rectangle ReplayEditButtonBounds => new(1438, 1028, 160, 44);
 
     private static Rectangle ReviewChartPopupStepButtonBounds(int index) =>
         new(512 + index * 112, 1028, 102, 44);

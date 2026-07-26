@@ -27,6 +27,10 @@ public sealed class GoAppSession
     private ulong _cachedRenParseHash;
     private readonly Stack<BoardEditingChange> _boardEditingUndoHistory = new();
     private readonly Stack<BoardEditingChange> _boardEditingRedoHistory = new();
+    private GoGameRecord? _beforeBoardEditingRecord;
+    private GoGameRecord? _variationSourceRecord;
+    private int _variationSourceMoveIndex;
+    private GoAppModeKind _variationReturnMode = GoAppModeKind.Resting;
     private GoGameRecord? _reviewGameRecord;
     private GoGameRecord? _beforeReviewGameRecord;
     private DateTime? _cgosBlackConnectionStartedAt;
@@ -37,6 +41,7 @@ public sealed class GoAppSession
         [GoAppModeKind.Playing] = new PlayingMode(),
         [GoAppModeKind.GameOver] = new GameOverMode(),
         [GoAppModeKind.BoardEditing] = new BoardEditingMode(),
+        [GoAppModeKind.VariationEditing] = new VariationEditingMode(),
         [GoAppModeKind.Reviewing] = new ReviewingMode(),
         [GoAppModeKind.Resting] = new RestingMode(),
     };
@@ -276,6 +281,9 @@ public sealed class GoAppSession
     public bool CanUndoBoardEditing => _boardEditingUndoHistory.Count > 0;
 
     public bool CanRedoBoardEditing => _boardEditingRedoHistory.Count > 0;
+    public int VariationSourceMoveIndex => _variationSourceMoveIndex;
+    public int VariationMoveCount => Math.Max(0, CurrentGameRecord.Moves.Count - _variationSourceMoveIndex);
+    public bool CanUndoVariation => CurrentMode.Kind == GoAppModeKind.VariationEditing && VariationMoveCount > 0;
 
     public int PlayedMoveCount { get; private set; }
 
@@ -411,11 +419,12 @@ public sealed class GoAppSession
         string.IsNullOrWhiteSpace(_reviewGameRecord?.WhitePlayerName) ? "WHITE" : _reviewGameRecord.WhitePlayerName;
 
     public bool CanAcceptHumanMove =>
-        CurrentMode.Kind == GoAppModeKind.Playing &&
-        IsEngineReady &&
-        !IsEngineThinking &&
-        string.IsNullOrWhiteSpace(EngineErrorMessage) &&
-        GetPlayerKind(CurrentTurn) == GoPlayerKind.Human;
+        CurrentMode.Kind == GoAppModeKind.VariationEditing ||
+        (CurrentMode.Kind == GoAppModeKind.Playing &&
+         IsEngineReady &&
+         !IsEngineThinking &&
+         string.IsNullOrWhiteSpace(EngineErrorMessage) &&
+         GetPlayerKind(CurrentTurn) == GoPlayerKind.Human);
 
     public void ChangeMode(GoAppModeKind modeKind)
     {
@@ -1025,6 +1034,7 @@ public sealed class GoAppSession
 
     public void StartBoardEditing()
     {
+        _beforeBoardEditingRecord = CurrentGameRecord.Clone();
         KoPoint = null;
         ConsecutivePasses = 0;
         PlayedMoveCount = 0;
@@ -1041,9 +1051,129 @@ public sealed class GoAppSession
 
     public void FinishBoardEditing()
     {
+        _beforeBoardEditingRecord = null;
         CurrentGameRecord = CreateGameRecordFromCurrentPosition();
         ResetPositionHistory();
         ChangeMode(GoAppModeKind.Resting);
+    }
+
+    public void CancelBoardEditing()
+    {
+        if (CurrentMode.Kind != GoAppModeKind.BoardEditing ||
+            _beforeBoardEditingRecord is not { } record)
+        {
+            return;
+        }
+
+        _beforeBoardEditingRecord = null;
+        LoadGameRecordAsInitialPosition(record, out _);
+    }
+
+    public bool StartVariationEditing(
+        GoGameRecord sourceRecord,
+        int sourceMoveIndex,
+        GoAppModeKind returnMode,
+        out string warning)
+    {
+        ArgumentNullException.ThrowIfNull(sourceRecord);
+        var clampedMoveIndex = Math.Clamp(sourceMoveIndex, 0, sourceRecord.Moves.Count);
+        if (!LoadRecordPosition(sourceRecord, clampedMoveIndex, out warning))
+            return false;
+
+        _variationSourceRecord = sourceRecord.Clone();
+        _variationSourceMoveIndex = clampedMoveIndex;
+        _variationReturnMode = returnMode;
+        CurrentGameRecord.Result = "";
+        Winner = null;
+        GameOverReason = "";
+        ChangeMode(GoAppModeKind.VariationEditing);
+        return true;
+    }
+
+    public void DiscardVariationEditing()
+    {
+        if (CurrentMode.Kind != GoAppModeKind.VariationEditing)
+            return;
+
+        var sourceRecord = _variationSourceRecord;
+        var sourceMoveIndex = _variationSourceMoveIndex;
+        var returnMode = _variationReturnMode;
+        _variationSourceRecord = null;
+
+        if (UseKind == GoAppUseKind.LocalGame && sourceRecord is not null)
+        {
+            if (LoadRecordPosition(sourceRecord, sourceRecord.Moves.Count, out _))
+            {
+                CurrentGameRecord = sourceRecord.Clone();
+                ChangeMode(returnMode);
+                SeekLocalReplay(sourceMoveIndex);
+                return;
+            }
+        }
+
+        ChangeMode(GoAppModeKind.Resting);
+    }
+
+    public bool TryPlaceVariationStone(int x, int y)
+    {
+        if (CurrentMode.Kind != GoAppModeKind.VariationEditing)
+            return false;
+
+        var trialBoard = _board.Clone();
+        if (!trialBoard.TryPlaceStone(x, y, CurrentTurn, KoPoint, out _, out _) ||
+            _positionHashes.Contains(trialBoard.CurrentHash))
+        {
+            return false;
+        }
+
+        if (!_board.TryPlaceStone(x, y, CurrentTurn, KoPoint, out var capturedStones, out var nextKoPoint))
+            return false;
+
+        var placedBy = CurrentTurn;
+        CurrentGameRecord.Moves.Add(new GoGameMove(placedBy, new GoPoint(x, y), "", null, null));
+        if (placedBy == GoStone.Black)
+            BlackAgehama += capturedStones;
+        else
+            WhiteAgehama += capturedStones;
+
+        _positionHashes.Add(_board.CurrentHash);
+        KoPoint = nextKoPoint;
+        ConsecutivePasses = 0;
+        PlayedMoveCount++;
+        PassTurn();
+        return true;
+    }
+
+    public bool PassVariation()
+    {
+        if (CurrentMode.Kind != GoAppModeKind.VariationEditing)
+            return false;
+
+        CurrentGameRecord.Moves.Add(new GoGameMove(CurrentTurn, null, "", null, null));
+        KoPoint = null;
+        ConsecutivePasses++;
+        PlayedMoveCount++;
+        PassTurn();
+        return true;
+    }
+
+    public bool UndoVariation()
+    {
+        if (!CanUndoVariation)
+            return false;
+
+        var record = CurrentGameRecord.Clone();
+        record.Moves.RemoveAt(record.Moves.Count - 1);
+        return LoadRecordPosition(record, record.Moves.Count, out _);
+    }
+
+    private bool LoadRecordPosition(GoGameRecord record, int moveIndex, out string warning)
+    {
+        var savedReviewRecord = _reviewGameRecord;
+        _reviewGameRecord = record.Clone();
+        var loaded = ApplyReviewPosition(moveIndex, out warning);
+        _reviewGameRecord = savedReviewRecord;
+        return loaded;
     }
 
     public bool StartReviewingGameRecord(GoGameRecord record, out string warning)
@@ -2263,7 +2393,7 @@ public sealed class GoAppSession
 
     public bool IsSuperKoPoint(int x, int y)
     {
-        if (CurrentMode.Kind != GoAppModeKind.Playing)
+        if (CurrentMode.Kind is not (GoAppModeKind.Playing or GoAppModeKind.VariationEditing))
         {
             return false;
         }
@@ -2275,7 +2405,7 @@ public sealed class GoAppSession
 
     public IEnumerable<GoPoint> EnumerateSuperKoPoints()
     {
-        if (CurrentMode.Kind != GoAppModeKind.Playing)
+        if (CurrentMode.Kind is not (GoAppModeKind.Playing or GoAppModeKind.VariationEditing))
         {
             yield break;
         }
