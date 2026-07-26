@@ -153,7 +153,8 @@ public sealed class GoAppSession
     public int CommentPageCount { get; private set; } = 1;
 
     public bool IsReviewChartPopupOpen { get; private set; }
-    public bool IsPopupTrendVisible { get; private set; } = true;
+    public bool IsPopupScoreVisible { get; private set; } = true;
+    public bool IsPopupWinRateVisible { get; private set; } = true;
     public bool IsPopupCommentVisible { get; private set; }
     public bool IsLiveChartAutoUpdateEnabled { get; private set; } = true;
     private int? _liveChartFrozenMoveCount;
@@ -414,9 +415,14 @@ public sealed class GoAppSession
         CommentPageCount = 1;
     }
 
-    public void TogglePopupTrendVisibility()
+    public void TogglePopupScoreVisibility()
     {
-        IsPopupTrendVisible = !IsPopupTrendVisible;
+        IsPopupScoreVisible = !IsPopupScoreVisible;
+    }
+
+    public void TogglePopupWinRateVisibility()
+    {
+        IsPopupWinRateVisible = !IsPopupWinRateVisible;
     }
 
     public void TogglePopupCommentVisibility()

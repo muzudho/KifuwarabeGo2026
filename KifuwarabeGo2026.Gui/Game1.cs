@@ -1360,9 +1360,15 @@ public class Game1 : Game
             return;
         }
 
-        if (GoScreenRenderer.GetReviewChartPopupTrendToggleHit(point))
+        if (GoScreenRenderer.GetReviewChartPopupScoreToggleHit(point))
         {
-            _session.TogglePopupTrendVisibility();
+            _session.TogglePopupScoreVisibility();
+            return;
+        }
+
+        if (GoScreenRenderer.GetReviewChartPopupWinRateToggleHit(point))
+        {
+            _session.TogglePopupWinRateVisibility();
             return;
         }
 
@@ -1376,13 +1382,6 @@ public class Game1 : Game
             GoScreenRenderer.GetReviewChartPopupCommentPageStepButtonHit(point) is { } commentPageStep)
         {
             _session.ChangeCommentPage(commentPageStep);
-            return;
-        }
-
-        if (_session.IsPopupTrendVisible &&
-            GoScreenRenderer.GetReviewChartPopupTrendDisplayModeButtonHit(point) is { } trendMode)
-        {
-            _session.SetMoveTrendDisplayMode(trendMode);
             return;
         }
 
@@ -1460,9 +1459,15 @@ public class Game1 : Game
             return;
         }
 
-        if (GoScreenRenderer.GetReviewChartPopupTrendToggleHit(point))
+        if (GoScreenRenderer.GetReviewChartPopupScoreToggleHit(point))
         {
-            _session.TogglePopupTrendVisibility();
+            _session.TogglePopupScoreVisibility();
+            return;
+        }
+
+        if (GoScreenRenderer.GetReviewChartPopupWinRateToggleHit(point))
+        {
+            _session.TogglePopupWinRateVisibility();
             return;
         }
 
@@ -1476,13 +1481,6 @@ public class Game1 : Game
             GoScreenRenderer.GetReviewChartPopupCommentPageStepButtonHit(point) is { } commentPageStep)
         {
             _session.ChangeCommentPage(commentPageStep);
-            return;
-        }
-
-        if (_session.IsPopupTrendVisible &&
-            GoScreenRenderer.GetReviewChartPopupTrendDisplayModeButtonHit(point) is { } trendMode)
-        {
-            _session.SetMoveTrendDisplayMode(trendMode);
             return;
         }
 

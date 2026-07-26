@@ -84,14 +84,6 @@ public sealed partial class GoScreenRenderer
         if (popup)
         {
             DrawPopupInformationChecks(session, bounds, mousePoint);
-            if (!session.IsPopupTrendVisible)
-            {
-                if (session.IsPopupCommentVisible)
-                {
-                    DrawPopupCommentOverlay(moves, session, mousePoint, currentMoveNumber);
-                }
-                return;
-            }
         }
         else
         {
@@ -104,9 +96,12 @@ public sealed partial class GoScreenRenderer
             }
         }
 
-        DrawCgosTrendModeButton(MoveTrendScoreButtonBounds(bounds), "SCORE", session.MoveTrendDisplayMode == MoveTrendDisplayMode.Score, mousePoint);
-        DrawCgosTrendModeButton(MoveTrendBothButtonBounds(bounds), "BOTH", session.MoveTrendDisplayMode == MoveTrendDisplayMode.Both, mousePoint);
-        DrawCgosTrendModeButton(MoveTrendWinRateButtonBounds(bounds), "WIN RATE", session.MoveTrendDisplayMode == MoveTrendDisplayMode.WinRate, mousePoint);
+        if (!popup)
+        {
+            DrawCgosTrendModeButton(MoveTrendScoreButtonBounds(bounds), "SCORE", session.MoveTrendDisplayMode == MoveTrendDisplayMode.Score, mousePoint);
+            DrawCgosTrendModeButton(MoveTrendBothButtonBounds(bounds), "BOTH", session.MoveTrendDisplayMode == MoveTrendDisplayMode.Both, mousePoint);
+            DrawCgosTrendModeButton(MoveTrendWinRateButtonBounds(bounds), "WIN RATE", session.MoveTrendDisplayMode == MoveTrendDisplayMode.WinRate, mousePoint);
+        }
 
         var plot = popup
             ? new Rectangle(bounds.X + 72, bounds.Y + 92, bounds.Width - 144, bounds.Height - 260)
@@ -114,6 +109,12 @@ public sealed partial class GoScreenRenderer
         FillRect(plot, popup ? new Color(26, 38, 70, 92) : new Color(31, 57, 65));
         DrawRect(plot, 1, new Color(84, 119, 123));
         var centerY = plot.Center.Y;
+        var drawWinRate = popup
+            ? session.IsPopupWinRateVisible
+            : session.MoveTrendDisplayMode is MoveTrendDisplayMode.Both or MoveTrendDisplayMode.WinRate;
+        var drawScore = popup
+            ? session.IsPopupScoreVisible
+            : session.MoveTrendDisplayMode is MoveTrendDisplayMode.Both or MoveTrendDisplayMode.Score;
 
         for (var step = -2; step <= 2; step++)
         {
@@ -126,33 +127,41 @@ public sealed partial class GoScreenRenderer
                 : new Rectangle(plot.Right + 5, y - 12, 47, 24);
             DrawLine(new Vector2(plot.Left, y), new Vector2(plot.Right, y), step == 0 ? 2 : 1,
                 step == 0 ? new Color(211, 226, 219, 165) : new Color(104, 139, 143, 70));
-            DrawFittedText(
-                step switch
-                {
-                    > 0 => $"B+{step * 10}",
-                    < 0 => $"W+{-step * 10}",
-                    _ => "EVEN",
-                },
-                scoreAxisBounds,
-                new Color(205, 217, 214),
-                popup ? 0.46f : 0.25f);
-            DrawFittedText(
-                step switch { 2 => "B100%", 1 => "B50%", 0 => "EVEN", -1 => "W50%", _ => "W100%" },
-                winRateAxisBounds,
-                new Color(165, 193, 194),
-                popup ? 0.4f : 0.2f);
+            if (drawScore)
+            {
+                DrawFittedText(
+                    step switch
+                    {
+                        > 0 => $"B+{step * 10}",
+                        < 0 => $"W+{-step * 10}",
+                        _ => "EVEN",
+                    },
+                    scoreAxisBounds,
+                    new Color(205, 217, 214),
+                    popup ? 0.46f : 0.25f);
+            }
+            if (drawWinRate)
+            {
+                DrawFittedText(
+                    step switch { 2 => "B100%", 1 => "B50%", 0 => "EVEN", -1 => "W50%", _ => "W100%" },
+                    winRateAxisBounds,
+                    new Color(165, 193, 194),
+                    popup ? 0.4f : 0.2f);
+            }
         }
 
         var points = MoveTrendSeriesBuilder.Build(moves);
         var maximumMove = popup ? Math.Max(1, moves.Count) : Math.Max(100, points.Count);
-        if (session.MoveTrendDisplayMode is MoveTrendDisplayMode.Both or MoveTrendDisplayMode.WinRate)
+        if (drawWinRate)
         {
-            var alpha = session.MoveTrendDisplayMode == MoveTrendDisplayMode.Both ? (byte)68 : (byte)205;
+            var alpha = popup
+                ? session.IsPopupScoreVisible ? (byte)68 : (byte)205
+                : session.MoveTrendDisplayMode == MoveTrendDisplayMode.Both ? (byte)68 : (byte)205;
             DrawCgosWinRateSeries(points, GoStone.Black, maximumMove, plot, new Color((byte)56, (byte)220, (byte)216, alpha));
             DrawCgosWinRateSeries(points, GoStone.White, maximumMove, plot, new Color((byte)248, (byte)239, (byte)215, alpha));
         }
 
-        if (session.MoveTrendDisplayMode is MoveTrendDisplayMode.Both or MoveTrendDisplayMode.Score)
+        if (drawScore)
         {
             DrawCgosScoreBars(points, maximumMove, plot);
         }
@@ -175,7 +184,13 @@ public sealed partial class GoScreenRenderer
         }
         DrawCgosTrendMoveTicks(maximumMove, plot);
         DrawCommentMoveMarkers(moves, maximumMove, plot);
-        DrawCgosCurrentTrendPoint(points, maximumMove, plot, currentMoveNumber);
+        DrawCgosCurrentTrendPoint(
+            points,
+            maximumMove,
+            plot,
+            currentMoveNumber,
+            drawScore,
+            drawWinRate);
         if (popup && session.IsPopupCommentVisible)
         {
             DrawPopupCommentOverlay(moves, session, mousePoint, currentMoveNumber);
@@ -188,9 +203,14 @@ public sealed partial class GoScreenRenderer
         Point mousePoint)
     {
         DrawPopupInformationCheck(
-            GetPopupTrendToggleBounds(bounds),
-            "CHART",
-            session.IsPopupTrendVisible,
+            GetPopupScoreToggleBounds(bounds),
+            "SCORE",
+            session.IsPopupScoreVisible,
+            mousePoint);
+        DrawPopupInformationCheck(
+            GetPopupWinRateToggleBounds(bounds),
+            "WIN RATE",
+            session.IsPopupWinRateVisible,
             mousePoint);
         DrawPopupInformationCheck(
             GetPopupCommentToggleBounds(bounds),
@@ -238,7 +258,7 @@ public sealed partial class GoScreenRenderer
         int? currentMoveNumber)
     {
         var overlay = ReviewChartPopupCommentOverlayBounds;
-        FillRect(overlay, new Color(10, 18, 31, 218));
+        FillRect(overlay, new Color(10, 18, 31, 170));
         DrawRect(overlay, 3, new Color(255, 215, 92, 210));
         DrawMoveCommentContent(moves, overlay, session, mousePoint, currentMoveNumber);
     }
@@ -381,9 +401,11 @@ public sealed partial class GoScreenRenderer
         IReadOnlyList<MoveTrendPoint> points,
         int maximumMove,
         Rectangle plot,
-        int? currentMoveNumber)
+        int? currentMoveNumber,
+        bool showScore,
+        bool showWinRate)
     {
-        if (points.Count == 0) return;
+        if (points.Count == 0 || (!showScore && !showWinRate)) return;
         MoveTrendPoint? selectedPoint = null;
         foreach (var candidate in points)
         {
@@ -403,20 +425,32 @@ public sealed partial class GoScreenRenderer
             : "BLACK WIN -";
         var popup = plot.Width > 1000;
         var tooltip = popup
-            ? new Rectangle(Math.Clamp(x + 16, plot.Left + 440, plot.Right - 300), plot.Top + 76, 284, 94)
+            ? new Rectangle(
+                Math.Clamp(x + 16, plot.Left + 440, plot.Right - 300),
+                plot.Top + 76,
+                284,
+                showScore && showWinRate ? 94 : 54)
             : new Rectangle(Math.Clamp(x + 10, plot.Left + 280, plot.Right - 158), plot.Top + 44, 150, 54);
         FillRect(tooltip, new Color(16, 26, 31, 242));
         DrawRect(tooltip, 1, new Color(113, 153, 154));
-        DrawFittedText(
-            score,
-            popup ? new Rectangle(tooltip.X + 12, tooltip.Y + 8, tooltip.Width - 24, 34) : new Rectangle(tooltip.X + 8, tooltip.Y + 5, tooltip.Width - 16, 19),
-            Color.White,
-            popup ? 0.38f : 0.2f);
-        DrawFittedText(
-            winrate,
-            popup ? new Rectangle(tooltip.X + 12, tooltip.Y + 50, tooltip.Width - 24, 34) : new Rectangle(tooltip.X + 8, tooltip.Y + 28, tooltip.Width - 16, 19),
-            new Color(126, 225, 215),
-            popup ? 0.38f : 0.2f);
+        if (showScore)
+        {
+            DrawFittedText(
+                score,
+                popup ? new Rectangle(tooltip.X + 12, tooltip.Y + 8, tooltip.Width - 24, 34) : new Rectangle(tooltip.X + 8, tooltip.Y + 5, tooltip.Width - 16, 19),
+                Color.White,
+                popup ? 0.38f : 0.2f);
+        }
+        if (showWinRate)
+        {
+            DrawFittedText(
+                winrate,
+                popup
+                    ? new Rectangle(tooltip.X + 12, tooltip.Y + (showScore ? 50 : 8), tooltip.Width - 24, 34)
+                    : new Rectangle(tooltip.X + 8, tooltip.Y + (showScore ? 28 : 5), tooltip.Width - 16, 19),
+                new Color(126, 225, 215),
+                popup ? 0.38f : 0.2f);
+        }
     }
 
     private static float CgosTrendX(int moveNumber, int maximumMove, Rectangle plot) =>
@@ -424,7 +458,7 @@ public sealed partial class GoScreenRenderer
 
     private static Rectangle MoveTrendScoreButtonBounds(Rectangle chartBounds) =>
         chartBounds.Width > 1000
-            ? new(chartBounds.Right - 570, chartBounds.Y + 18, 160, 52)
+            ? new(582, chartBounds.Y + 18, 160, 52)
             : new(chartBounds.Right - 360, chartBounds.Y + 12, 104, 36);
 
     private static Rectangle MoveInformationTrendButtonBounds(Rectangle bounds) =>
@@ -437,19 +471,22 @@ public sealed partial class GoScreenRenderer
             ? new(bounds.X + 212, bounds.Y + 18, 240, 52)
             : new(bounds.X + 122, bounds.Y + 12, 142, 36);
 
-    internal static Rectangle GetPopupTrendToggleBounds(Rectangle bounds) =>
-        new(450, 55, 170, 48);
+    internal static Rectangle GetPopupScoreToggleBounds(Rectangle bounds) =>
+        new(400, 55, 150, 48);
+
+    internal static Rectangle GetPopupWinRateToggleBounds(Rectangle bounds) =>
+        new(558, 55, 190, 48);
 
     internal static Rectangle GetPopupCommentToggleBounds(Rectangle bounds) =>
-        new(628, 55, 210, 48);
+        new(1120, ReviewChartPopupCommentOverlayBounds.Y - 56, 210, 48);
 
     private static Rectangle MoveTrendBothButtonBounds(Rectangle chartBounds) =>
         chartBounds.Width > 1000
-            ? new(chartBounds.Right - 400, chartBounds.Y + 18, 160, 52)
+            ? new(752, chartBounds.Y + 18, 160, 52)
             : new(chartBounds.Right - 254, chartBounds.Y + 12, 104, 36);
 
     private static Rectangle MoveTrendWinRateButtonBounds(Rectangle chartBounds) =>
         chartBounds.Width > 1000
-            ? new(chartBounds.Right - 230, chartBounds.Y + 18, 200, 52)
+            ? new(922, chartBounds.Y + 18, 186, 52)
             : new(chartBounds.Right - 148, chartBounds.Y + 12, 132, 36);
 }

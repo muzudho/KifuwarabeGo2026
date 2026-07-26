@@ -9,7 +9,7 @@ using System.Collections.Generic;
 
 public sealed partial class GoScreenRenderer
 {
-    private static readonly Rectangle ReviewChartPopupBounds = new(56, 42, 1808, 996);
+    private static readonly Rectangle ReviewChartPopupBounds = new(56, 42, 1808, 1030);
     private static readonly Rectangle ReviewChartPopupChartBounds = new(100, 115, 1720, 850);
     private static readonly Rectangle ReviewChartPopupCloseButtonBounds = new(1660, 55, 160, 48);
     private static readonly Rectangle ReviewChartPopupBackToLiveButtonBounds = new(1026, 55, 216, 48);
@@ -42,8 +42,11 @@ public sealed partial class GoScreenRenderer
     public static bool GetReviewChartPopupAutoUpdateHit(Point point) =>
         ReviewChartPopupAutoUpdateBounds.Contains(point);
 
-    public static bool GetReviewChartPopupTrendToggleHit(Point point) =>
-        GetPopupTrendToggleBounds(ReviewChartPopupChartBounds).Contains(point);
+    public static bool GetReviewChartPopupScoreToggleHit(Point point) =>
+        GetPopupScoreToggleBounds(ReviewChartPopupChartBounds).Contains(point);
+
+    public static bool GetReviewChartPopupWinRateToggleHit(Point point) =>
+        GetPopupWinRateToggleBounds(ReviewChartPopupChartBounds).Contains(point);
 
     public static bool GetReviewChartPopupCommentToggleHit(Point point) =>
         GetPopupCommentToggleBounds(ReviewChartPopupChartBounds).Contains(point);
@@ -215,7 +218,7 @@ public sealed partial class GoScreenRenderer
     }
 
     private static Rectangle ReviewChartPopupStepButtonBounds(int index) =>
-        new(130 + index * 112, 910, 102, 48);
+        new(512 + index * 112, 1028, 102, 44);
 
     private void DrawLiveChartAutoUpdateCheckBox(GoAppSession session, Point mousePoint)
     {
