@@ -43,6 +43,8 @@ public sealed partial class GoScreenRenderer
 
     public static bool GetVariationEditingDiscardButtonHit(Point point) => VariationEditingDiscardButtonBounds.Contains(point);
 
+    public static bool GetVariationEditingAdoptButtonHit(Point point) => VariationEditingAdoptButtonBounds.Contains(point);
+
     public static bool GetVariationEditingExportSgfButtonHit(Point point) => VariationEditingExportSgfButtonBounds.Contains(point);
 
     public static bool GetVariationEditingPassButtonHit(Point point) => VariationEditingPassButtonBounds.Contains(point);
@@ -56,6 +58,8 @@ public sealed partial class GoScreenRenderer
     public static bool GetVariationEditingWhiteButtonHit(Point point) => VariationEditingWhiteButtonBounds.Contains(point);
 
     public static bool GetVariationEditingEraseButtonHit(Point point) => VariationEditingEraseButtonBounds.Contains(point);
+
+    public static bool GetVariationEditingClearButtonHit(Point point) => VariationEditingClearButtonBounds.Contains(point);
 
 
     public static int? GetReviewStepButtonHit(Point point)
@@ -106,6 +110,8 @@ public sealed partial class GoScreenRenderer
     {
         DrawText("ANALYSIS BOARD", new Vector2(1144, 136), new Color(42, 62, 68), 0.68f);
         DrawCommandButton(VariationEditingDiscardButtonBounds, "DISCARD", false, mousePoint, scale: 0.34f);
+        if (session.CanAdoptVariationPosition)
+            DrawCommandButton(VariationEditingAdoptButtonBounds, "ADOPT", false, mousePoint, scale: 0.34f);
         DrawCommandButton(VariationEditingExportSgfButtonBounds, "SGF OUTPUT", false, mousePoint, scale: 0.29f);
 
         DrawVerticalResultSection(new Rectangle(1144, 204, 668, 112), "EDITING", new Color(67, 112, 118));
@@ -149,6 +155,9 @@ public sealed partial class GoScreenRenderer
             new Rectangle(1166, 690, 624, 78),
             new Color(218, 228, 226),
             0.3f);
+
+        DrawVerticalResultSection(new Rectangle(1144, 802, 668, 74), "BOARD", new Color(76, 91, 126));
+        DrawCommandButton(VariationEditingClearButtonBounds, "CLEAR BOARD", false, mousePoint, scale: 0.32f);
 
         DrawVerticalResultSection(new Rectangle(1144, 916, 668, 76), "ACTION", new Color(91, 82, 105));
         DrawCommandButton(
@@ -235,14 +244,16 @@ public sealed partial class GoScreenRenderer
 
     private static Rectangle BoardEditingAdoptButtonBounds => new(1648, 120, 164, 52);
 
-    private static Rectangle VariationEditingDiscardButtonBounds => new(1448, 120, 176, 52);
-    private static Rectangle VariationEditingExportSgfButtonBounds => new(1636, 120, 176, 52);
+    private static Rectangle VariationEditingDiscardButtonBounds => new(1396, 120, 128, 52);
+    private static Rectangle VariationEditingAdoptButtonBounds => new(1536, 120, 128, 52);
+    private static Rectangle VariationEditingExportSgfButtonBounds => new(1676, 120, 136, 52);
     private static Rectangle VariationEditingUndoButtonBounds => new(1164, 924, 306, 56);
     private static Rectangle VariationEditingPassButtonBounds => new(1486, 924, 306, 56);
     private static Rectangle VariationEditingPlayButtonBounds => new(1164, 584, 140, 56);
     private static Rectangle VariationEditingBlackButtonBounds => new(1320, 584, 140, 56);
     private static Rectangle VariationEditingWhiteButtonBounds => new(1476, 584, 140, 56);
     private static Rectangle VariationEditingEraseButtonBounds => new(1632, 584, 140, 56);
+    private static Rectangle VariationEditingClearButtonBounds => new(1164, 810, 608, 52);
 
 
     private static readonly int[] ReviewStepButtonValues =

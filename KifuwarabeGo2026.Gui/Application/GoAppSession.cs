@@ -283,9 +283,12 @@ public sealed class GoAppSession
     public bool CanRedoBoardEditing => _boardEditingRedoHistory.Count > 0;
     public int VariationSourceMoveIndex => _variationSourceMoveIndex;
     public int VariationMoveCount => Math.Max(0, CurrentGameRecord.Moves.Count - _variationSourceMoveIndex);
-    public bool CanUndoVariation => CurrentMode.Kind == GoAppModeKind.VariationEditing && VariationMoveCount > 0;
+    public bool CanUndoVariation =>
+        CurrentMode.Kind == GoAppModeKind.VariationEditing &&
+        (VariationMoveCount > 0 || _boardEditingUndoHistory.Count > 0);
     public GoStone? VariationEditingStone { get; private set; }
     public bool HasVariationCustomPosition { get; private set; }
+    public bool CanAdoptVariationPosition { get; private set; }
 
     public int PlayedMoveCount { get; private set; }
 
@@ -1087,11 +1090,28 @@ public sealed class GoAppSession
         _variationReturnMode = returnMode;
         VariationEditingStone = null;
         HasVariationCustomPosition = false;
+        CanAdoptVariationPosition = false;
+        ClearBoardEditingHistory();
         CurrentGameRecord.Result = "";
         Winner = null;
         GameOverReason = "";
         ChangeMode(GoAppModeKind.VariationEditing);
         return true;
+    }
+
+    public void EnableVariationPositionAdoption()
+    {
+        if (CurrentMode.Kind == GoAppModeKind.VariationEditing)
+            CanAdoptVariationPosition = true;
+    }
+
+    public GoGameRecord CreateCurrentPositionAsSetupRecord()
+    {
+        var metadata = CurrentGameRecord.Clone();
+        var record = CreateGameRecordFromCurrentPosition();
+        CopyGameRecordMetadata(metadata, record);
+        record.Result = "";
+        return record;
     }
 
     public void DiscardVariationEditing()
@@ -1173,12 +1193,39 @@ public sealed class GoAppSession
             return false;
         }
 
+        _boardEditingUndoHistory.Push([new BoardEditingChange(x, y, oldStone, editingStone)]);
+        _boardEditingRedoHistory.Clear();
         var metadata = CurrentGameRecord.Clone();
-        ResetEditedPositionState();
-        CopyGameRecordMetadata(metadata, CurrentGameRecord);
-        CurrentGameRecord.Result = "";
-        _variationSourceMoveIndex = 0;
-        HasVariationCustomPosition = true;
+        ResetVariationEditedPosition(metadata);
+        return true;
+    }
+
+    public bool ClearVariationBoard()
+    {
+        if (CurrentMode.Kind != GoAppModeKind.VariationEditing)
+            return false;
+
+        var changes = new List<BoardEditingChange>();
+        for (var y = 0; y < BoardSize; y++)
+        {
+            for (var x = 0; x < BoardSize; x++)
+            {
+                var stone = _board.GetStone(x, y);
+                if (stone != GoStone.Empty)
+                    changes.Add(new BoardEditingChange(x, y, stone, GoStone.Empty));
+            }
+        }
+
+        if (changes.Count == 0)
+            return false;
+
+        foreach (var change in changes)
+            _board.TrySetEditedStone(change.X, change.Y, GoStone.Empty);
+
+        _boardEditingUndoHistory.Push(changes.ToArray());
+        _boardEditingRedoHistory.Clear();
+        var metadata = CurrentGameRecord.Clone();
+        ResetVariationEditedPosition(metadata);
         return true;
     }
 
@@ -1201,9 +1248,29 @@ public sealed class GoAppSession
         if (!CanUndoVariation)
             return false;
 
-        var record = CurrentGameRecord.Clone();
-        record.Moves.RemoveAt(record.Moves.Count - 1);
-        return LoadRecordPosition(record, record.Moves.Count, out _);
+        if (VariationMoveCount > 0)
+        {
+            var record = CurrentGameRecord.Clone();
+            record.Moves.RemoveAt(record.Moves.Count - 1);
+            return LoadRecordPosition(record, record.Moves.Count, out _);
+        }
+
+        var changes = _boardEditingUndoHistory.Pop();
+        foreach (var change in changes)
+            _board.TrySetEditedStone(change.X, change.Y, change.OldStone);
+
+        var metadata = CurrentGameRecord.Clone();
+        ResetVariationEditedPosition(metadata);
+        return true;
+    }
+
+    private void ResetVariationEditedPosition(GoGameRecord metadata)
+    {
+        ResetEditedPositionState();
+        CopyGameRecordMetadata(metadata, CurrentGameRecord);
+        CurrentGameRecord.Result = "";
+        _variationSourceMoveIndex = 0;
+        HasVariationCustomPosition = true;
     }
 
     private bool LoadRecordPosition(GoGameRecord record, int moveIndex, out string warning)

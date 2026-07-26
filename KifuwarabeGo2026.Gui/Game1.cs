@@ -950,7 +950,7 @@ public class Game1 : Game
             }
             else if (isSetupMode && GoScreenRenderer.GetStartBoardEditingButtonHit(point, _session.CurrentMode.Kind))
             {
-                _session.StartBoardEditing();
+                StartWhiteboardFromLocalSetup();
             }
             else if (isSetupMode &&
                      _session.CanStartPlaying &&
@@ -1182,6 +1182,26 @@ public class Game1 : Game
         _variationSession = variationSession;
     }
 
+    private void StartWhiteboardFromLocalSetup()
+    {
+        var sourceRecord = _session.CurrentGameRecord.Clone();
+        var variationSession = new GoAppSession();
+        variationSession.SelectUseKind(GoAppUseKind.LocalGame);
+        if (!variationSession.StartVariationEditing(
+                sourceRecord,
+                sourceRecord.Moves.Count,
+                GoAppModeKind.Resting,
+                out var warning))
+        {
+            if (!string.IsNullOrWhiteSpace(warning))
+                ShowMessage(warning, "Whiteboard");
+            return;
+        }
+
+        variationSession.EnableVariationPositionAdoption();
+        _variationSession = variationSession;
+    }
+
     private bool TryHandleVariationEditingClick(Point point)
     {
         var variationSession = _variationSession;
@@ -1192,6 +1212,21 @@ public class Game1 : Game
         if (GoScreenRenderer.GetVariationEditingDiscardButtonHit(point))
         {
             _variationSession = null;
+            return true;
+        }
+
+        if (variationSession.CanAdoptVariationPosition &&
+            GoScreenRenderer.GetVariationEditingAdoptButtonHit(point))
+        {
+            var adoptedRecord = variationSession.CreateCurrentPositionAsSetupRecord();
+            if (_session.LoadGameRecordAsInitialPosition(adoptedRecord, out var warning))
+            {
+                _variationSession = null;
+            }
+            else if (!string.IsNullOrWhiteSpace(warning))
+            {
+                ShowMessage(warning, "Whiteboard");
+            }
             return true;
         }
 
@@ -1225,6 +1260,13 @@ public class Game1 : Game
         if (GoScreenRenderer.GetVariationEditingEraseButtonHit(point))
         {
             variationSession.SetVariationEditingStone(GoStone.Empty);
+            return true;
+        }
+
+        if (GoScreenRenderer.GetVariationEditingClearButtonHit(point))
+        {
+            if (variationSession.ClearVariationBoard())
+                PlayPlaceStoneSound(0.42f, -0.35f, 0f);
             return true;
         }
 
