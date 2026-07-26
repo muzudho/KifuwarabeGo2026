@@ -36,6 +36,11 @@ public sealed partial class GoScreenRenderer
             () => DrawCgosWatchingStones(observation, surface.Start, surface.Cell),
             surface.Start,
             surface.Cell);
+        var displayMoveIndex = observation.DisplayMoveIndex;
+        GoGameMove? displayLastMove = displayMoveIndex > 0 && displayMoveIndex <= observation.Moves.Count
+            ? observation.Moves[displayMoveIndex - 1]
+            : null;
+        DrawLastMoveMarker(displayLastMove, surface.Start, surface.Cell);
 
         DrawBoardFrameHighlights(surface.Outer);
         if (!observation.IsFinished)

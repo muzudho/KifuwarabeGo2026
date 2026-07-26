@@ -1,6 +1,7 @@
 namespace KifuwarabeGo2026.Gui.Presentation;
 
 using KifuwarabeGo2026.Gui.Application;
+using KifuwarabeGo2026.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.Shared.Domain;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -48,6 +49,7 @@ public sealed partial class GoScreenRenderer
             () => DrawPlacedStones(session, start, cell),
             start,
             cell);
+        DrawLastMoveMarker(GetLocalDisplayLastMove(session), start, cell);
 
         if (!session.IsLocalReplayMode)
         {
@@ -172,6 +174,45 @@ public sealed partial class GoScreenRenderer
                 }
             }
         }
+    }
+
+    private static GoGameMove? GetLocalDisplayLastMove(GoAppSession session)
+    {
+        if (session.CurrentMode.Kind == GoAppModeKind.Reviewing)
+            return session.ReviewCurrentMove;
+
+        var moveIndex = session.LocalDisplayMoveIndex;
+        return moveIndex > 0 && moveIndex <= session.CurrentGameRecord.Moves.Count
+            ? session.CurrentGameRecord.Moves[moveIndex - 1]
+            : null;
+    }
+
+    /// <summary>
+    /// 現在表示中の局面における最終着手を、石の上の発光リングで示します。
+    /// </summary>
+    private void DrawLastMoveMarker(GoGameMove? move, Vector2 start, float cell)
+    {
+        if (move?.Point is not { } point)
+            return;
+
+        var center = BoardPoint(start, cell, point.X, point.Y);
+        var radius = Math.Max(9f, cell * 0.19f);
+        var shadowColor = new Color(8, 24, 30, 185);
+        var accentColor = new Color(91, 218, 211, 245);
+        const int segmentCount = 20;
+
+        for (var index = 0; index < segmentCount; index++)
+        {
+            var startAngle = MathHelper.TwoPi * index / segmentCount;
+            var endAngle = MathHelper.TwoPi * (index + 1) / segmentCount;
+            var segmentStart = center + new Vector2(MathF.Cos(startAngle), MathF.Sin(startAngle)) * radius;
+            var segmentEnd = center + new Vector2(MathF.Cos(endAngle), MathF.Sin(endAngle)) * radius;
+            DrawLine(segmentStart, segmentEnd, Math.Max(5f, cell * 0.09f), shadowColor);
+            DrawLine(segmentStart, segmentEnd, Math.Max(2f, cell * 0.045f), accentColor);
+        }
+
+        DrawCircle(center, Math.Max(3f, cell * 0.055f), shadowColor);
+        DrawCircle(center, Math.Max(2f, cell * 0.032f), accentColor);
     }
 
     /// <summary>
