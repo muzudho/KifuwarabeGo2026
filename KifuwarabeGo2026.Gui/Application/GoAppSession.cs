@@ -160,7 +160,7 @@ public sealed class GoAppSession
     public bool IsReviewChartPopupOpen { get; private set; }
     public bool IsPopupScoreVisible { get; private set; } = true;
     public bool IsPopupWinRateVisible { get; private set; } = true;
-    public bool IsPopupCommentVisible { get; private set; }
+    public bool IsPopupCommentVisible { get; private set; } = true;
     public bool IsLiveChartAutoUpdateEnabled { get; private set; } = true;
     private int? _liveChartFrozenMoveCount;
     public bool IsSgfAutoSaveAvailable { get; private set; }

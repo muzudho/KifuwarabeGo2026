@@ -225,6 +225,9 @@ internal sealed class GtpEngine
         var winrate = 1.0 / (1.0 + Math.Exp(-perspectiveLead / 5.0));
         var json = JsonSerializer.Serialize(new
         {
+            comment = move.Equals("pass", StringComparison.OrdinalIgnoreCase)
+                ? "パスしたぜ（＾～＾）"
+                : $"{move.ToUpperInvariant()}に打ったぜ（＾～＾）",
             moves = new[]
             {
                 new
