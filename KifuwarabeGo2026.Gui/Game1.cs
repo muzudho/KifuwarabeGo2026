@@ -1390,6 +1390,15 @@ public class Game1 : Game
         {
             _cgosGameObservation.SeekReplay(moveIndex);
             _reviewPopupSeekDragging = true;
+            return;
+        }
+
+        if (_session.UseKind == GoAppUseKind.LocalGame &&
+            _session.CurrentMode.Kind == GoAppModeKind.Playing &&
+            GoScreenRenderer.GetReviewChartPopupSeekMove(point, _session.CurrentGameRecord.Moves.Count) is { } localMoveIndex)
+        {
+            _session.SeekLocalReplay(localMoveIndex);
+            _reviewPopupSeekDragging = true;
         }
     }
 
@@ -1422,6 +1431,14 @@ public class Game1 : Game
             GoScreenRenderer.GetReviewChartPopupSeekMove(point, _cgosGameObservation.MoveCount) is { } cgosMoveIndex)
         {
             _cgosGameObservation.SeekReplay(cgosMoveIndex);
+            return;
+        }
+
+        if (_session.UseKind == GoAppUseKind.LocalGame &&
+            _session.CurrentMode.Kind == GoAppModeKind.Playing &&
+            GoScreenRenderer.GetReviewChartPopupSeekMove(point, _session.CurrentGameRecord.Moves.Count) is { } localMoveIndex)
+        {
+            _session.SeekLocalReplay(localMoveIndex);
         }
     }
 

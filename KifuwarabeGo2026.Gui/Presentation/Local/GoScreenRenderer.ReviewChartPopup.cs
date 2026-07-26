@@ -87,7 +87,9 @@ public sealed partial class GoScreenRenderer
             mousePoint,
             session.CurrentMode.Kind == GoAppModeKind.GameOver
                 ? "GAME RESULT TREND"
-                : "LIVE GAME TREND");
+                : session.IsLocalReplayMode ? "REPLAY GAME TREND" : "LIVE GAME TREND",
+            session.LocalDisplayMoveIndex,
+            seekable: session.CurrentMode.Kind == GoAppModeKind.Playing);
 
     private void DrawCgosLiveChartPopup(
         GoAppSession session,

@@ -52,7 +52,7 @@ public sealed partial class GoScreenRenderer
         if (session.CurrentMode.Kind == GoAppModeKind.Playing &&
             session.CanOpenLocalChartPopup)
         {
-            DrawBroadcastStatusBadge("LIVE");
+            DrawBroadcastStatusBadge(session.IsLocalReplayMode ? "REPLAY" : "LIVE");
         }
         if (!session.IsReviewChartPopupOpen)
         {

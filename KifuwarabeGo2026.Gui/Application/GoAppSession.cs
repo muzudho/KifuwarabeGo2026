@@ -14,6 +14,8 @@ using System.Linq;
 public sealed class GoAppSession
 {
     private GoBoard _board;
+    private GoBoard? _localReplayBoard;
+    private int? _localReplayMoveIndex;
     private readonly HashSet<ulong> _positionHashes = new();
     private readonly List<TournamentRules> _tournamentRules = new();
     private readonly List<GtpEngineProfile> _gtpEngineProfiles = new();
@@ -156,6 +158,13 @@ public sealed class GoAppSession
         (CurrentMode.Kind == GoAppModeKind.Playing &&
          BlackPlayerKind == GoPlayerKind.Computer &&
          WhitePlayerKind == GoPlayerKind.Computer);
+
+    public bool IsLocalReplayMode =>
+        CurrentMode.Kind == GoAppModeKind.Playing &&
+        _localReplayMoveIndex is not null;
+
+    public int LocalDisplayMoveIndex =>
+        _localReplayMoveIndex ?? CurrentGameRecord.Moves.Count;
 
     public int SelectedCgosConnectionProfileIndex { get; private set; }
 
@@ -378,6 +387,10 @@ public sealed class GoAppSession
     public void ChangeMode(GoAppModeKind modeKind)
     {
         CurrentMode = _modes[modeKind];
+        if (modeKind != GoAppModeKind.Playing)
+        {
+            ReturnLocalReplayToLive();
+        }
         if (modeKind != GoAppModeKind.Reviewing)
         {
             IsReviewChartPopupOpen = false;
@@ -424,6 +437,30 @@ public sealed class GoAppSession
         {
             IsReviewChartPopupOpen = true;
         }
+    }
+
+    public void SeekLocalReplay(int moveIndex)
+    {
+        if (CurrentMode.Kind != GoAppModeKind.Playing || !CanOpenLocalChartPopup)
+        {
+            return;
+        }
+
+        var clampedMoveIndex = Math.Clamp(moveIndex, 0, CurrentGameRecord.Moves.Count);
+        if (clampedMoveIndex == CurrentGameRecord.Moves.Count)
+        {
+            ReturnLocalReplayToLive();
+            return;
+        }
+
+        _localReplayMoveIndex = clampedMoveIndex;
+        _localReplayBoard = BuildLocalReplayBoard(clampedMoveIndex);
+    }
+
+    public void ReturnLocalReplayToLive()
+    {
+        _localReplayMoveIndex = null;
+        _localReplayBoard = null;
     }
 
     public void OpenCgosLiveChartPopup()
@@ -2099,6 +2136,52 @@ public sealed class GoAppSession
     public GoStone GetStone(int x, int y)
     {
         return _board.GetStone(x, y);
+    }
+
+    public GoStone GetDisplayStone(int x, int y)
+    {
+        return (_localReplayBoard ?? _board).GetStone(x, y);
+    }
+
+    public GoRenParseResult ParseDisplayRens()
+    {
+        return _localReplayBoard?.ParseRens() ?? ParseRens();
+    }
+
+    private GoBoard BuildLocalReplayBoard(int moveIndex)
+    {
+        var board = new GoBoard(CurrentGameRecord.BoardSize);
+        foreach (var setupStone in CurrentGameRecord.SetupStones)
+        {
+            board.TrySetSetupStone(
+                setupStone.Point.X,
+                setupStone.Point.Y,
+                setupStone.Stone);
+        }
+
+        GoPoint? koPoint = null;
+        for (var index = 0; index < moveIndex; index++)
+        {
+            var move = CurrentGameRecord.Moves[index];
+            if (move.Point is not { } point)
+            {
+                koPoint = null;
+                continue;
+            }
+
+            if (board.TryPlaceStone(
+                    point.X,
+                    point.Y,
+                    move.Stone,
+                    koPoint,
+                    out _,
+                    out var nextKoPoint))
+            {
+                koPoint = nextKoPoint;
+            }
+        }
+
+        return board;
     }
 
     public bool IsSuperKoPoint(int x, int y)

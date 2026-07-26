@@ -43,15 +43,18 @@ public sealed partial class GoScreenRenderer
         DrawBoardRenAnalysis(
             session.RenParseDisplayMode,
             session.BoardSize,
-            session.GetStone,
-            session.ParseRens,
+            session.GetDisplayStone,
+            session.ParseDisplayRens,
             () => DrawPlacedStones(session, start, cell),
             start,
             cell);
 
-        DrawSuperKoMarks(session, start, cell);
-        DrawKoMark(session, start, cell);
-        DrawHoverStone(session, mousePoint, cell);
+        if (!session.IsLocalReplayMode)
+        {
+            DrawSuperKoMarks(session, start, cell);
+            DrawKoMark(session, start, cell);
+            DrawHoverStone(session, mousePoint, cell);
+        }
         DrawBoardFrameHighlights(surface.Outer);
     }
 
@@ -162,7 +165,7 @@ public sealed partial class GoScreenRenderer
         {
             for (var x = 0; x < session.BoardSize; x++)
             {
-                var stone = session.GetStone(x, y);
+                var stone = session.GetDisplayStone(x, y);
                 if (stone != GoStone.Empty)
                 {
                     DrawStone(BoardPoint(start, cell, x, y), cell * 0.44f, stone == GoStone.Black);
