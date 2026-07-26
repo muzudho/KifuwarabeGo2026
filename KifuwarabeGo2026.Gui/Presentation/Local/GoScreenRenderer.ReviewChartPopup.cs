@@ -12,6 +12,7 @@ public sealed partial class GoScreenRenderer
     private static readonly Rectangle ReviewChartPopupBounds = new(56, 42, 1808, 996);
     private static readonly Rectangle ReviewChartPopupChartBounds = new(100, 115, 1720, 850);
     private static readonly Rectangle ReviewChartPopupCloseButtonBounds = new(1660, 55, 160, 48);
+    private static readonly Rectangle ReviewChartPopupBackToLiveButtonBounds = new(1432, 55, 216, 48);
     private static readonly Rectangle ReviewChartPopupSeekBounds = new(180, 994, 1560, 28);
     private static readonly Rectangle ReviewChartPopupPlotBounds = new(
         ReviewChartPopupChartBounds.X + 72,
@@ -33,6 +34,9 @@ public sealed partial class GoScreenRenderer
 
     public static bool GetReviewChartPopupCloseHit(Point point) =>
         ReviewChartPopupCloseButtonBounds.Contains(point);
+
+    public static bool GetReviewChartPopupBackToLiveHit(Point point) =>
+        ReviewChartPopupBackToLiveButtonBounds.Contains(point);
 
     public static MoveInformationDisplayMode? GetReviewChartPopupInformationDisplayModeButtonHit(Point point) =>
         GetMoveInformationDisplayModeButtonHit(point, ReviewChartPopupChartBounds);
@@ -89,7 +93,9 @@ public sealed partial class GoScreenRenderer
                 ? "GAME RESULT TREND"
                 : session.IsLocalReplayMode ? "REPLAY GAME TREND" : "LIVE GAME TREND",
             session.LocalDisplayMoveIndex,
-            seekable: session.CurrentMode.Kind == GoAppModeKind.Playing);
+            seekable: session.CurrentMode.Kind == GoAppModeKind.Playing,
+            showBackToLive: session.CurrentMode.Kind == GoAppModeKind.Playing,
+            backToLiveEnabled: session.IsLocalReplayMode);
 
     private void DrawCgosLiveChartPopup(
         GoAppSession session,
@@ -101,7 +107,9 @@ public sealed partial class GoScreenRenderer
             mousePoint,
             observation.IsReplayMode ? "CGOS REPLAY TREND" : "CGOS LIVE TREND",
             observation.DisplayMoveIndex,
-            seekable: !observation.IsFinished);
+            seekable: !observation.IsFinished,
+            showBackToLive: !observation.IsFinished,
+            backToLiveEnabled: observation.IsReplayMode);
 
     private void DrawReadOnlyChartPopup(
         GoAppSession session,
@@ -109,7 +117,9 @@ public sealed partial class GoScreenRenderer
         Point mousePoint,
         string title,
         int? selectedMoveIndex = null,
-        bool seekable = false)
+        bool seekable = false,
+        bool showBackToLive = false,
+        bool backToLiveEnabled = false)
     {
         FillRect(new Rectangle(0, 0, VirtualScreen.Width, VirtualScreen.Height), new Color(65, 80, 125, 58));
         FillRect(ReviewChartPopupBounds, new Color(54, 69, 112, 108));
@@ -121,6 +131,16 @@ public sealed partial class GoScreenRenderer
             false,
             mousePoint,
             scale: 0.38f);
+        if (showBackToLive)
+        {
+            DrawCommandButton(
+                ReviewChartPopupBackToLiveButtonBounds,
+                "BACK TO LIVE",
+                false,
+                mousePoint,
+                enabled: backToLiveEnabled,
+                scale: 0.34f);
+        }
 
         DrawMoveTrendChart(
             session,
