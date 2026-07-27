@@ -466,7 +466,7 @@ public sealed partial class GoScreenRenderer
             var bar = new Rectangle(x - barWidth / 2, top, barWidth, height);
             var black = point.Reporter == GoStone.Black;
             FillRect(bar, black ? new Color(8, 13, 17, 230) : new Color(245, 237, 213, 232));
-            DrawRect(bar, 1, black ? new Color(57, 211, 205, 205) : new Color(86, 93, 91, 220));
+            DrawRect(bar, 1, black ? new Color(3, 6, 10, 240) : new Color(86, 93, 91, 220));
         }
     }
 
