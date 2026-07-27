@@ -51,8 +51,10 @@ public sealed partial class GoScreenRenderer
     public static bool GetReviewChartPopupCommentToggleHit(Point point) =>
         GetPopupCommentToggleBounds(ReviewChartPopupChartBounds).Contains(point);
 
-    public static MoveTrendDisplayMode? GetReviewChartPopupTrendDisplayModeButtonHit(Point point) =>
-        GetMoveTrendDisplayModeButtonHit(point, ReviewChartPopupChartBounds);
+    public static MoveTrendDisplayMode? GetReviewChartPopupTrendDisplayModeButtonHit(
+        Point point,
+        MoveTrendDisplayMode currentMode) =>
+        GetMoveTrendDisplayModeButtonHit(point, ReviewChartPopupChartBounds, currentMode);
 
     public static int? GetReviewChartPopupCommentPageStepButtonHit(Point point) =>
         GetCommentPageStepButtonHit(point, ReviewChartPopupCommentOverlayBounds);

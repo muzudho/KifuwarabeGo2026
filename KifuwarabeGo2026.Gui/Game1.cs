@@ -614,7 +614,7 @@ public class Game1 : Game
                 }
 
                 if (_session.CgosConnectionFlowKind is CgosConnectionFlowKind.Watching or CgosConnectionFlowKind.Result &&
-                    GoScreenRenderer.GetCgosTrendDisplayModeButtonHit(point) is { } trendMode)
+                    GoScreenRenderer.GetCgosTrendDisplayModeButtonHit(point, _session.MoveTrendDisplayMode) is { } trendMode)
                 {
                     _session.SetMoveTrendDisplayMode(trendMode);
                     GuiOperationLog.User("Changed CGOS trend display", $"mode={trendMode}");
@@ -886,8 +886,8 @@ public class Game1 : Game
 
             MoveTrendDisplayMode? localTrendMode = _session.CurrentMode.Kind switch
             {
-                GoAppModeKind.Playing => GoScreenRenderer.GetLocalTrendDisplayModeButtonHit(point),
-                GoAppModeKind.GameOver => GoScreenRenderer.GetLocalGameOverTrendDisplayModeButtonHit(point),
+                GoAppModeKind.Playing => GoScreenRenderer.GetLocalTrendDisplayModeButtonHit(point, _session.MoveTrendDisplayMode),
+                GoAppModeKind.GameOver => GoScreenRenderer.GetLocalGameOverTrendDisplayModeButtonHit(point, _session.MoveTrendDisplayMode),
                 _ => null,
             };
             if (localTrendMode is { } selectedLocalTrendMode)
@@ -1124,7 +1124,7 @@ public class Game1 : Game
             return true;
         }
 
-        if (GoScreenRenderer.GetReviewTrendDisplayModeButtonHit(point) is { } reviewTrendMode)
+        if (GoScreenRenderer.GetReviewTrendDisplayModeButtonHit(point, _session.MoveTrendDisplayMode) is { } reviewTrendMode)
         {
             _session.SetMoveTrendDisplayMode(reviewTrendMode);
             return true;

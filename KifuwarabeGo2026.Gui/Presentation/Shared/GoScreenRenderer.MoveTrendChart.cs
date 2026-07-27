@@ -16,9 +16,9 @@ public sealed partial class GoScreenRenderer
     private static readonly Rectangle LocalGameOverTrendChartBounds = new(1144, 376, 668, 466);
     private static readonly Rectangle ReviewTrendChartBounds = new(1144, 548, 668, 290);
 
-    public static MoveTrendDisplayMode? GetCgosTrendDisplayModeButtonHit(Point point)
+    public static MoveTrendDisplayMode? GetCgosTrendDisplayModeButtonHit(Point point, MoveTrendDisplayMode currentMode)
     {
-        return GetMoveTrendDisplayModeButtonHit(point, CgosTrendChartBounds);
+        return GetMoveTrendDisplayModeButtonHit(point, CgosTrendChartBounds, currentMode);
     }
 
     public static MoveInformationDisplayMode? GetCgosMoveInformationDisplayModeButtonHit(Point point) =>
@@ -33,24 +33,42 @@ public sealed partial class GoScreenRenderer
     public static MoveInformationDisplayMode? GetReviewMoveInformationDisplayModeButtonHit(Point point) =>
         GetMoveInformationDisplayModeButtonHit(point, ReviewTrendChartBounds);
 
-    public static MoveTrendDisplayMode? GetLocalTrendDisplayModeButtonHit(Point point)
+    public static MoveTrendDisplayMode? GetLocalTrendDisplayModeButtonHit(Point point, MoveTrendDisplayMode currentMode)
     {
-        return GetMoveTrendDisplayModeButtonHit(point, LocalTrendChartBounds);
+        return GetMoveTrendDisplayModeButtonHit(point, LocalTrendChartBounds, currentMode);
     }
 
-    public static MoveTrendDisplayMode? GetLocalGameOverTrendDisplayModeButtonHit(Point point)
+    public static MoveTrendDisplayMode? GetLocalGameOverTrendDisplayModeButtonHit(Point point, MoveTrendDisplayMode currentMode)
     {
-        return GetMoveTrendDisplayModeButtonHit(point, LocalGameOverTrendChartBounds);
+        return GetMoveTrendDisplayModeButtonHit(point, LocalGameOverTrendChartBounds, currentMode);
     }
 
-    public static MoveTrendDisplayMode? GetReviewTrendDisplayModeButtonHit(Point point) =>
-        GetMoveTrendDisplayModeButtonHit(point, ReviewTrendChartBounds);
+    public static MoveTrendDisplayMode? GetReviewTrendDisplayModeButtonHit(Point point, MoveTrendDisplayMode currentMode) =>
+        GetMoveTrendDisplayModeButtonHit(point, ReviewTrendChartBounds, currentMode);
 
-    private static MoveTrendDisplayMode? GetMoveTrendDisplayModeButtonHit(Point point, Rectangle chartBounds)
+    private static MoveTrendDisplayMode? GetMoveTrendDisplayModeButtonHit(
+        Point point,
+        Rectangle chartBounds,
+        MoveTrendDisplayMode currentMode)
     {
-        if (MoveTrendScoreButtonBounds(chartBounds).Contains(point)) return MoveTrendDisplayMode.Score;
-        if (MoveTrendBothButtonBounds(chartBounds).Contains(point)) return MoveTrendDisplayMode.Both;
-        if (MoveTrendWinRateButtonBounds(chartBounds).Contains(point)) return MoveTrendDisplayMode.WinRate;
+        if (MoveTrendScoreButtonBounds(chartBounds).Contains(point))
+        {
+            return currentMode switch
+            {
+                MoveTrendDisplayMode.Both => MoveTrendDisplayMode.WinRate,
+                MoveTrendDisplayMode.WinRate => MoveTrendDisplayMode.Both,
+                _ => MoveTrendDisplayMode.Score,
+            };
+        }
+        if (MoveTrendWinRateButtonBounds(chartBounds).Contains(point))
+        {
+            return currentMode switch
+            {
+                MoveTrendDisplayMode.Both => MoveTrendDisplayMode.Score,
+                MoveTrendDisplayMode.Score => MoveTrendDisplayMode.Both,
+                _ => MoveTrendDisplayMode.WinRate,
+            };
+        }
         return null;
     }
 
@@ -97,9 +115,16 @@ public sealed partial class GoScreenRenderer
 
         if (!popup)
         {
-            DrawCgosTrendModeButton(MoveTrendScoreButtonBounds(bounds), "SCORE", session.MoveTrendDisplayMode == MoveTrendDisplayMode.Score, mousePoint);
-            DrawCgosTrendModeButton(MoveTrendBothButtonBounds(bounds), "BOTH", session.MoveTrendDisplayMode == MoveTrendDisplayMode.Both, mousePoint);
-            DrawCgosTrendModeButton(MoveTrendWinRateButtonBounds(bounds), "WIN RATE", session.MoveTrendDisplayMode == MoveTrendDisplayMode.WinRate, mousePoint);
+            DrawTrendDisplayCheck(
+                MoveTrendScoreButtonBounds(bounds),
+                "SCORE",
+                session.MoveTrendDisplayMode is MoveTrendDisplayMode.Score or MoveTrendDisplayMode.Both,
+                mousePoint);
+            DrawTrendDisplayCheck(
+                MoveTrendWinRateButtonBounds(bounds),
+                "WIN RATE",
+                session.MoveTrendDisplayMode is MoveTrendDisplayMode.WinRate or MoveTrendDisplayMode.Both,
+                mousePoint);
         }
 
         var plot = popup
@@ -417,6 +442,41 @@ public sealed partial class GoScreenRenderer
             selected ? new Color(105, 247, 232) : new Color(211, 216, 210), bounds.Height >= 50 ? 0.42f : 0.27f);
     }
 
+    private void DrawTrendDisplayCheck(Rectangle bounds, string label, bool isChecked, Point mousePoint)
+    {
+        var hovered = bounds.Contains(mousePoint);
+        FillRect(bounds, hovered ? new Color(43, 67, 83, 238) : new Color(24, 43, 57, 232));
+        DrawRect(bounds, 1, isChecked ? new Color(91, 218, 211) : new Color(91, 117, 128));
+
+        var checkSize = bounds.Height - 12;
+        var checkBounds = new Rectangle(bounds.X + 6, bounds.Y + 6, checkSize, checkSize);
+        FillRect(checkBounds, new Color(14, 23, 35, 245));
+        DrawRect(checkBounds, 2, new Color(176, 194, 212));
+        if (isChecked)
+        {
+            DrawLine(
+                new Vector2(checkBounds.X + 5, checkBounds.Center.Y),
+                new Vector2(checkBounds.X + 10, checkBounds.Bottom - 6),
+                3,
+                new Color(91, 218, 211));
+            DrawLine(
+                new Vector2(checkBounds.X + 10, checkBounds.Bottom - 6),
+                new Vector2(checkBounds.Right - 4, checkBounds.Y + 5),
+                3,
+                new Color(91, 218, 211));
+        }
+
+        DrawFittedText(
+            label,
+            new Rectangle(
+                checkBounds.Right + 8,
+                bounds.Y + 5,
+                bounds.Right - checkBounds.Right - 14,
+                bounds.Height - 10),
+            isChecked ? Color.White : new Color(188, 202, 204),
+            0.3f);
+    }
+
     private void DrawCgosWinRateSeries(
         IReadOnlyList<MoveTrendPoint> points,
         GoStone reporter,
@@ -574,8 +634,8 @@ public sealed partial class GoScreenRenderer
 
     private static Rectangle MoveTrendScoreButtonBounds(Rectangle chartBounds) =>
         chartBounds.Width > 1000
-            ? new(582, chartBounds.Y + 18, 160, 52)
-            : new(chartBounds.Right - 360, chartBounds.Y + 12, 104, 36);
+            ? new(chartBounds.Right - 390, chartBounds.Y + 18, 170, 52)
+            : new(chartBounds.Right - 300, chartBounds.Y + 12, 130, 36);
 
     private static Rectangle MoveInformationTrendButtonBounds(Rectangle bounds) =>
         bounds.Width > 1000
@@ -596,13 +656,8 @@ public sealed partial class GoScreenRenderer
     internal static Rectangle GetPopupCommentToggleBounds(Rectangle bounds) =>
         new(1120, ReviewChartPopupCommentOverlayBounds.Y - 56, 210, 48);
 
-    private static Rectangle MoveTrendBothButtonBounds(Rectangle chartBounds) =>
-        chartBounds.Width > 1000
-            ? new(752, chartBounds.Y + 18, 160, 52)
-            : new(chartBounds.Right - 254, chartBounds.Y + 12, 104, 36);
-
     private static Rectangle MoveTrendWinRateButtonBounds(Rectangle chartBounds) =>
         chartBounds.Width > 1000
-            ? new(922, chartBounds.Y + 18, 186, 52)
-            : new(chartBounds.Right - 148, chartBounds.Y + 12, 132, 36);
+            ? new(chartBounds.Right - 210, chartBounds.Y + 18, 194, 52)
+            : new(chartBounds.Right - 160, chartBounds.Y + 12, 144, 36);
 }
