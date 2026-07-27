@@ -206,14 +206,41 @@ public sealed partial class GoScreenRenderer
         var sectionX = popup ? bounds.X + 4 : plot.X + 46;
         DrawVerticalResultSection(
             new Rectangle(sectionX, plot.Y, plot.Right - sectionX, plot.Height / 2),
-            "BLACK ADVANTAGE",
+            string.Empty,
             new Color(10, 20, 34),
             new Color(220, 232, 238));
         DrawVerticalResultSection(
             new Rectangle(sectionX, plot.Center.Y, plot.Right - sectionX, plot.Height / 2),
-            "WHITE ADVANTAGE",
+            string.Empty,
             new Color(210, 224, 232),
             new Color(24, 38, 52));
+
+        var labelBounds = new Rectangle(sectionX - 42, plot.Y, 30, plot.Height);
+        const string label = "WHITE  \u2190  ADVANTAGE  \u2192  BLACK";
+        const float scale = 0.34f;
+        var textSize = _font.MeasureString(label);
+        var center = new Vector2(labelBounds.Center.X, labelBounds.Center.Y);
+        var origin = textSize / 2f;
+        _spriteBatch.DrawString(
+            _font,
+            label,
+            center + new Vector2(2, 2),
+            new Color(0, 0, 0, 175),
+            -MathHelper.PiOver2,
+            origin,
+            scale,
+            Microsoft.Xna.Framework.Graphics.SpriteEffects.None,
+            0f);
+        _spriteBatch.DrawString(
+            _font,
+            label,
+            center,
+            new Color(105, 232, 224),
+            -MathHelper.PiOver2,
+            origin,
+            scale,
+            Microsoft.Xna.Framework.Graphics.SpriteEffects.None,
+            0f);
     }
 
     private void DrawPopupInformationChecks(

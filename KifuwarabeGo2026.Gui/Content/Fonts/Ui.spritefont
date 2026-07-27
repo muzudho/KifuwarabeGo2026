@@ -144,6 +144,10 @@
         <Start>&#12449;</Start>
         <End>&#12540;</End>
       </CharacterRegion>
+      <CharacterRegion>
+        <Start>&#8592;</Start>
+        <End>&#8594;</End>
+      </CharacterRegion>
     </CharacterRegions>
   </Asset>
 </XnaContent>
