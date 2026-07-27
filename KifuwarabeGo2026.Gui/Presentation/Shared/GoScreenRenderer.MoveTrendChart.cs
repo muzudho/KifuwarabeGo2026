@@ -485,14 +485,15 @@ public sealed partial class GoScreenRenderer
     private void DrawCgosTrendMoveTicks(int maximumMove, Rectangle plot)
     {
         var popup = plot.Width > 1000;
-        foreach (var move in new[] { 0, 25, 50, 75, 100 })
+        var previousMove = -1;
+        for (var index = 0; index <= 4; index++)
         {
-            if (move > maximumMove) continue;
-            var x = (int)CgosTrendX(move, maximumMove, plot);
-            if (move == 0)
-            {
-                x += popup ? 18 : 10;
-            }
+            var move = (int)MathF.Round(maximumMove * index / 4f);
+            if (move == previousMove) continue;
+            previousMove = move;
+
+            // 目盛り位置は常に 0%, 25%, 50%, 75%, 100% に固定する。
+            var x = (int)MathF.Round(plot.Left + plot.Width * index / 4f);
             DrawFittedText(
                 text: move.ToString(CultureInfo.InvariantCulture),
                 bounds: popup ? new Rectangle(x - 32, plot.Bottom + 4, 64, 34) : new Rectangle(x - 20, plot.Bottom + 4, 40, 20),
