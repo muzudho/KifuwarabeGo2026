@@ -42,12 +42,13 @@ public sealed partial class GoScreenRenderer
     public static bool GetBoardEditingAdoptButtonHit(Point point) => BoardEditingAdoptButtonBounds.Contains(point);
 
     public static bool GetVariationEditingDiscardButtonHit(Point point, bool hasLiveBoardPreview) =>
-        (hasLiveBoardPreview ? VariationEditingLiveDiscardButtonBounds : VariationEditingDiscardButtonBounds)
-        .Contains(point);
+        VariationEditingDiscardButtonBounds.Contains(point);
 
     public static bool GetVariationEditingAdoptButtonHit(Point point) => VariationEditingAdoptButtonBounds.Contains(point);
 
-    public static bool GetVariationEditingExportSgfButtonHit(Point point) => VariationEditingExportSgfButtonBounds.Contains(point);
+    public static bool GetVariationEditingExportSgfButtonHit(Point point, bool hasLiveBoardPreview) =>
+        (hasLiveBoardPreview ? VariationEditingLiveExportSgfButtonBounds : VariationEditingExportSgfButtonBounds)
+        .Contains(point);
 
     public static bool GetVariationEditingPassButtonHit(Point point) => VariationEditingPassButtonBounds.Contains(point);
 
@@ -114,11 +115,11 @@ public sealed partial class GoScreenRenderer
         LiveBoardPreview? liveBoardPreview)
     {
         DrawText("ANALYSIS BOARD", new Vector2(1144, 136), new Color(42, 62, 68), 0.68f);
-        if (liveBoardPreview is null)
-            DrawCommandButton(VariationEditingDiscardButtonBounds, "DISCARD", false, mousePoint, scale: 0.34f);
+        DrawCommandButton(VariationEditingDiscardButtonBounds, "DISCARD", false, mousePoint, scale: 0.34f);
         if (session.CanAdoptVariationPosition)
             DrawCommandButton(VariationEditingAdoptButtonBounds, "ADOPT", false, mousePoint, scale: 0.34f);
-        DrawCommandButton(VariationEditingExportSgfButtonBounds, "SGF OUTPUT", false, mousePoint, scale: 0.29f);
+        if (liveBoardPreview is null)
+            DrawCommandButton(VariationEditingExportSgfButtonBounds, "SGF OUTPUT", false, mousePoint, scale: 0.29f);
 
         var informationWidth = liveBoardPreview is null ? 668 : 372;
         var informationRowWidth = liveBoardPreview is null ? 628 : 332;
@@ -161,14 +162,14 @@ public sealed partial class GoScreenRenderer
         {
             DrawLiveBoardWipe(liveBoardPreview);
             DrawCommandButton(
-                VariationEditingLiveDiscardButtonBounds,
-                "DISCARD",
+                VariationEditingLiveExportSgfButtonBounds,
+                "SGF OUTPUT",
                 false,
                 mousePoint,
-                scale: 0.34f);
+                scale: 0.29f);
             DrawFittedText(
-                "DISCARD THIS ANALYSIS BOARD AND RETURN TO THE LIVE VIEW.",
-                VariationEditingLiveDiscardCommentBounds,
+                "EXPORT THIS ANALYSIS BOARD AS AN SGF FILE.",
+                VariationEditingLiveExportSgfCommentBounds,
                 new Color(184, 211, 205),
                 0.23f);
         }
@@ -276,8 +277,8 @@ public sealed partial class GoScreenRenderer
 
     private static Rectangle VariationEditingDiscardButtonBounds => new(1684, 120, 128, 52);
     private static Rectangle VariationEditingLiveBoardBounds => new(1540, 188, 252, 252);
-    private static Rectangle VariationEditingLiveDiscardButtonBounds => new(1540, 456, 252, 52);
-    private static Rectangle VariationEditingLiveDiscardCommentBounds => new(1540, 512, 252, 30);
+    private static Rectangle VariationEditingLiveExportSgfButtonBounds => new(1540, 456, 252, 52);
+    private static Rectangle VariationEditingLiveExportSgfCommentBounds => new(1540, 512, 252, 30);
     private static Rectangle VariationEditingAdoptButtonBounds => new(1396, 120, 128, 52);
     private static Rectangle VariationEditingExportSgfButtonBounds => new(1536, 120, 136, 52);
     private static Rectangle VariationEditingUndoButtonBounds => new(1164, 924, 306, 56);
