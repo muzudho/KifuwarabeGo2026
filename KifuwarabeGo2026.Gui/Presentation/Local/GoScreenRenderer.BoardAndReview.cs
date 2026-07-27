@@ -41,14 +41,13 @@ public sealed partial class GoScreenRenderer
 
     public static bool GetBoardEditingAdoptButtonHit(Point point) => BoardEditingAdoptButtonBounds.Contains(point);
 
-    public static bool GetVariationEditingDiscardButtonHit(Point point, bool hasLiveBoardPreview) =>
+    public static bool GetVariationEditingDiscardButtonHit(Point point) =>
         VariationEditingDiscardButtonBounds.Contains(point);
 
     public static bool GetVariationEditingAdoptButtonHit(Point point) => VariationEditingAdoptButtonBounds.Contains(point);
 
-    public static bool GetVariationEditingExportSgfButtonHit(Point point, bool hasLiveBoardPreview) =>
-        (hasLiveBoardPreview ? VariationEditingLiveExportSgfButtonBounds : VariationEditingExportSgfButtonBounds)
-        .Contains(point);
+    public static bool GetVariationEditingExportSgfButtonHit(Point point) =>
+        VariationEditingExportSgfButtonBounds.Contains(point);
 
     public static bool GetVariationEditingPassButtonHit(Point point) => VariationEditingPassButtonBounds.Contains(point);
 
@@ -118,8 +117,6 @@ public sealed partial class GoScreenRenderer
         DrawCommandButton(VariationEditingDiscardButtonBounds, "DISCARD", false, mousePoint, scale: 0.34f);
         if (session.CanAdoptVariationPosition)
             DrawCommandButton(VariationEditingAdoptButtonBounds, "ADOPT", false, mousePoint, scale: 0.34f);
-        if (liveBoardPreview is null)
-            DrawCommandButton(VariationEditingExportSgfButtonBounds, "SGF OUTPUT", false, mousePoint, scale: 0.29f);
 
         var informationWidth = liveBoardPreview is null ? 668 : 372;
         var informationRowWidth = liveBoardPreview is null ? 628 : 332;
@@ -161,17 +158,6 @@ public sealed partial class GoScreenRenderer
         if (liveBoardPreview is not null)
         {
             DrawLiveBoardWipe(liveBoardPreview);
-            DrawCommandButton(
-                VariationEditingLiveExportSgfButtonBounds,
-                "SGF OUTPUT",
-                false,
-                mousePoint,
-                scale: 0.29f);
-            DrawFittedText(
-                "EXPORT THIS ANALYSIS BOARD AS AN SGF FILE.",
-                VariationEditingLiveExportSgfCommentBounds,
-                new Color(184, 211, 205),
-                0.23f);
         }
 
         DrawVerticalResultSection(new Rectangle(1144, 548, 668, 112), "TOOL", new Color(67, 112, 118));
@@ -191,6 +177,7 @@ public sealed partial class GoScreenRenderer
         DrawCommandButton(VariationEditingClearButtonBounds, "CLEAR BOARD", false, mousePoint, scale: 0.32f);
 
         DrawVerticalResultSection(new Rectangle(1144, 916, 668, 76), "ACTION", new Color(91, 82, 105));
+        DrawCommandButton(VariationEditingExportSgfButtonBounds, "SGF OUTPUT", false, mousePoint, scale: 0.29f);
         DrawCommandButton(
             VariationEditingUndoButtonBounds,
             "UNDO",
@@ -277,12 +264,10 @@ public sealed partial class GoScreenRenderer
 
     private static Rectangle VariationEditingDiscardButtonBounds => new(1684, 120, 128, 52);
     private static Rectangle VariationEditingLiveBoardBounds => new(1540, 188, 252, 252);
-    private static Rectangle VariationEditingLiveExportSgfButtonBounds => new(1540, 456, 252, 52);
-    private static Rectangle VariationEditingLiveExportSgfCommentBounds => new(1540, 512, 252, 30);
     private static Rectangle VariationEditingAdoptButtonBounds => new(1396, 120, 128, 52);
-    private static Rectangle VariationEditingExportSgfButtonBounds => new(1536, 120, 136, 52);
-    private static Rectangle VariationEditingUndoButtonBounds => new(1164, 924, 306, 56);
-    private static Rectangle VariationEditingPassButtonBounds => new(1486, 924, 306, 56);
+    private static Rectangle VariationEditingExportSgfButtonBounds => new(1164, 924, 196, 56);
+    private static Rectangle VariationEditingUndoButtonBounds => new(1374, 924, 196, 56);
+    private static Rectangle VariationEditingPassButtonBounds => new(1584, 924, 196, 56);
     private static Rectangle VariationEditingPlayButtonBounds => new(1164, 584, 140, 56);
     private static Rectangle VariationEditingBlackButtonBounds => new(1320, 584, 140, 56);
     private static Rectangle VariationEditingWhiteButtonBounds => new(1476, 584, 140, 56);

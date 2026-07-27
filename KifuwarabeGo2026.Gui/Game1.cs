@@ -1218,10 +1218,7 @@ public class Game1 : Game
             variationSession.CurrentMode.Kind != GoAppModeKind.VariationEditing)
             return false;
 
-        var hasLiveBoardPreview = CreateLiveBoardPreview() is not null;
-        if (GoScreenRenderer.GetVariationEditingDiscardButtonHit(
-                point,
-                hasLiveBoardPreview))
+        if (GoScreenRenderer.GetVariationEditingDiscardButtonHit(point))
         {
             _variationSession = null;
             return true;
@@ -1242,7 +1239,7 @@ public class Game1 : Game
             return true;
         }
 
-        if (GoScreenRenderer.GetVariationEditingExportSgfButtonHit(point, hasLiveBoardPreview))
+        if (GoScreenRenderer.GetVariationEditingExportSgfButtonHit(point))
         {
             ExportSgf(
                 variationSession.CurrentGameRecord,
