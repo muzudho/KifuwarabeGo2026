@@ -105,8 +105,8 @@ public sealed partial class GoScreenRenderer
         var plot = popup
             ? new Rectangle(bounds.X + 72, bounds.Y + 92, bounds.Width - 144, bounds.Height - 260)
             : new Rectangle(bounds.X + 64, bounds.Y + 62, bounds.Width - 104, bounds.Height - 106);
-        FillRect(plot, popup ? new Color(26, 38, 70, 92) : new Color(26, 38, 70, 205));
-        DrawRect(plot, 1, popup ? new Color(84, 119, 123) : new Color(113, 140, 166));
+        FillRect(plot, popup ? new Color(58, 75, 118, 140) : new Color(52, 68, 108, 225));
+        DrawRect(plot, 1, popup ? new Color(112, 143, 158) : new Color(137, 162, 190));
         var centerY = plot.Center.Y;
         var drawWinRate = popup
             ? session.IsPopupWinRateVisible
@@ -162,7 +162,8 @@ public sealed partial class GoScreenRenderer
             var alpha = popup
                 ? session.IsPopupScoreVisible ? (byte)68 : (byte)205
                 : session.MoveTrendDisplayMode == MoveTrendDisplayMode.Both ? (byte)68 : (byte)205;
-            DrawCgosWinRateSeries(points, GoStone.Black, maximumMove, plot, new Color((byte)56, (byte)220, (byte)216, alpha));
+            var blackAlpha = (byte)Math.Max(190, (int)alpha);
+            DrawCgosWinRateSeries(points, GoStone.Black, maximumMove, plot, new Color((byte)7, (byte)12, (byte)18, blackAlpha));
             DrawCgosWinRateSeries(points, GoStone.White, maximumMove, plot, new Color((byte)248, (byte)239, (byte)215, alpha));
         }
 
@@ -423,6 +424,9 @@ public sealed partial class GoScreenRenderer
         Rectangle plot,
         Color color)
     {
+        var outlineColor = reporter == GoStone.Black
+            ? new Color(88, 108, 142, Math.Max(135, (int)color.A))
+            : new Color(color.R, color.G, color.B, (byte)Math.Max(20, color.A / 3));
         Vector2? previous = null;
         foreach (var point in points)
         {
@@ -438,11 +442,12 @@ public sealed partial class GoScreenRenderer
                 plot.Center.Y - (float)Math.Clamp(advantage, -1.0, 1.0) * plot.Height / 2f);
             if (previous is { } start)
             {
-                DrawLine(start, current, 5, new Color(color.R, color.G, color.B, (byte)Math.Max(20, color.A / 3)));
-                DrawLine(start, current, 2, color);
+                DrawLine(start, current, 4, outlineColor);
+                DrawLine(start, current, 3, color);
             }
 
-            DrawCircle(current, 4, color);
+            DrawCircle(current, 4, outlineColor);
+            DrawCircle(current, 3, color);
             previous = current;
         }
     }
