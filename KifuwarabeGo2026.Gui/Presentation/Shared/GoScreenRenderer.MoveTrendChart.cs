@@ -271,7 +271,7 @@ public sealed partial class GoScreenRenderer
             labelGap: 0);
 
         var labelBounds = new Rectangle(sectionX - labelWidth, plot.Y, labelWidth, plot.Height);
-        const string label = "WHITE  \u2190  ADVANTAGE  \u2192  BLACK";
+        const string label = "ADVANTAGE";
         const float scale = 0.34f;
         var textSize = _font.MeasureString(label);
         var center = new Vector2(labelBounds.Center.X, labelBounds.Center.Y);
