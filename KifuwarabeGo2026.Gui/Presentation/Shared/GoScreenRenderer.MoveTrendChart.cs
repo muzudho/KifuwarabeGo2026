@@ -654,7 +654,11 @@ public sealed partial class GoScreenRenderer
         new(558, 55, 190, 48);
 
     internal static Rectangle GetPopupCommentToggleBounds(Rectangle bounds) =>
-        new(1120, ReviewChartPopupCommentOverlayBounds.Y - 56, 210, 48);
+        new(
+            ReviewChartPopupCommentOverlayBounds.X,
+            ReviewChartPopupCommentOverlayBounds.Y - 56,
+            210,
+            48);
 
     private static Rectangle MoveTrendWinRateButtonBounds(Rectangle chartBounds) =>
         chartBounds.Width > 1000

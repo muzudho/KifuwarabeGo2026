@@ -60,7 +60,7 @@ public sealed partial class GoScreenRenderer
         GetCommentPageStepButtonHit(point, ReviewChartPopupCommentOverlayBounds);
 
     private static Rectangle ReviewChartPopupCommentOverlayBounds =>
-        new(1120, 205, 680, 740);
+        new(1060, 205, 680, 740);
 
     public static int? GetReviewChartPopupSeekMove(Point point, int moveCount)
     {
