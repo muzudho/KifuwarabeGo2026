@@ -170,10 +170,7 @@ public sealed class GoAppSession
     public bool IsCgosResultSgfSaved { get; private set; }
 
     public bool CanOpenLocalChartPopup =>
-        CurrentMode.Kind == GoAppModeKind.GameOver ||
-        (CurrentMode.Kind == GoAppModeKind.Playing &&
-         BlackPlayerKind == GoPlayerKind.Computer &&
-         WhitePlayerKind == GoPlayerKind.Computer);
+        CurrentMode.Kind is GoAppModeKind.Playing or GoAppModeKind.GameOver;
 
     public bool IsLocalReplayMode =>
         CurrentMode.Kind is GoAppModeKind.Playing or GoAppModeKind.GameOver &&
@@ -426,6 +423,7 @@ public sealed class GoAppSession
     public bool CanAcceptHumanMove =>
         CurrentMode.Kind == GoAppModeKind.VariationEditing ||
         (CurrentMode.Kind == GoAppModeKind.Playing &&
+         !IsLocalReplayMode &&
          IsEngineReady &&
          !IsEngineThinking &&
          string.IsNullOrWhiteSpace(EngineErrorMessage) &&
