@@ -189,17 +189,45 @@ public sealed partial class GoScreenRenderer
 
     private void DrawWhiteboardStone(Vector2 center, float radius, bool black)
     {
-        DrawCircle(center + new Vector2(4, 5), radius, new Color(75, 82, 82, 62));
-        DrawCircle(center, radius, black ? new Color(36, 43, 47) : new Color(250, 250, 245));
+        // 扁平な碁石が盤へ落とす影。外側の柔らかい影と、石の直下の接地影を重ねる。
+        // 黒石は光を吸うため濃く冷たい影、白石は反射光を含むため薄く暖かい影にする。
+        var castShadowColor = black
+            ? new Color(13, 20, 24, 105)
+            : new Color(48, 54, 55, 120);
+        var contactShadowColor = black
+            ? new Color(5, 9, 12, 115)
+            : new Color(30, 35, 36, 145);
+        _spriteBatch.Draw(
+            _softCircle,
+            new Rectangle(
+                (int)(center.X - radius + 9),
+                (int)(center.Y - radius + 11),
+                (int)(radius * 2),
+                (int)(radius * 2)),
+            castShadowColor);
+        _spriteBatch.Draw(
+            _softCircle,
+            new Rectangle(
+                (int)(center.X - radius * 0.72f + 5),
+                (int)(center.Y - radius * 0.24f + 9),
+                (int)(radius * 1.44f),
+                (int)(radius * 0.48f)),
+            contactShadowColor);
+
+        var size = (int)(radius * 2);
+        var destination = new Rectangle((int)(center.X - radius), (int)(center.Y - radius), size, size);
+        _spriteBatch.Draw(black ? _stoneDark : _stoneLight, destination, Color.White);
+
         var outlineColor = black ? new Color(14, 20, 23) : new Color(73, 83, 84);
+        var outlineRadius = radius * 0.96f;
         const int segments = 24;
         for (var index = 0; index < segments; index++)
         {
             var a = MathHelper.TwoPi * index / segments;
             var b = MathHelper.TwoPi * (index + 1) / segments;
             DrawLine(
-                center + new Vector2(MathF.Cos(a), MathF.Sin(a)) * radius,
-                center + new Vector2(MathF.Cos(b), MathF.Sin(b)) * radius,
+                center + new Vector2(MathF.Cos(a), MathF.Sin(a)) * outlineRadius,
+                center + new Vector2(MathF.Cos(b), MathF.Sin(b)) * outlineRadius,
                 2,
                 outlineColor);
         }
