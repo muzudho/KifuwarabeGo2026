@@ -605,15 +605,23 @@ public sealed partial class GoScreenRenderer
                 Math.Clamp(x + 16, plot.Left + 440, plot.Right - 300),
                 plot.Top + 76,
                 284,
-                showScore && showWinRate ? 94 : 54)
+                42 + (showScore ? 42 : 0) + (showWinRate ? 42 : 0))
             : new Rectangle(Math.Clamp(x + 10, plot.Left + 280, plot.Right - 158), plot.Top + 44, 150, 54);
         FillRect(tooltip, new Color(16, 26, 31, 242));
         DrawRect(tooltip, 1, new Color(113, 153, 154));
+        if (popup)
+        {
+            DrawFittedText(
+                $"MOVE {point.MoveNumber.ToString(CultureInfo.InvariantCulture)}",
+                new Rectangle(tooltip.X + 12, tooltip.Y + 6, tooltip.Width - 24, 30),
+                new Color(255, 215, 92),
+                0.4f);
+        }
         if (showScore)
         {
             DrawFittedText(
                 score,
-                popup ? new Rectangle(tooltip.X + 12, tooltip.Y + 8, tooltip.Width - 24, 34) : new Rectangle(tooltip.X + 8, tooltip.Y + 5, tooltip.Width - 16, 19),
+                popup ? new Rectangle(tooltip.X + 12, tooltip.Y + 42, tooltip.Width - 24, 34) : new Rectangle(tooltip.X + 8, tooltip.Y + 5, tooltip.Width - 16, 19),
                 Color.White,
                 popup ? 0.38f : 0.2f);
         }
@@ -622,7 +630,7 @@ public sealed partial class GoScreenRenderer
             DrawFittedText(
                 winrate,
                 popup
-                    ? new Rectangle(tooltip.X + 12, tooltip.Y + (showScore ? 50 : 8), tooltip.Width - 24, 34)
+                    ? new Rectangle(tooltip.X + 12, tooltip.Y + 42 + (showScore ? 42 : 0), tooltip.Width - 24, 34)
                     : new Rectangle(tooltip.X + 8, tooltip.Y + (showScore ? 28 : 5), tooltip.Width - 16, 19),
                 new Color(126, 225, 215),
                 popup ? 0.38f : 0.2f);
