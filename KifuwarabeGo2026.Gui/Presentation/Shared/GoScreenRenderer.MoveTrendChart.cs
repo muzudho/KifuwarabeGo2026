@@ -79,8 +79,7 @@ public sealed partial class GoScreenRenderer
         int? currentMoveNumber = null,
         bool popup = false)
     {
-        FillRect(bounds, popup ? new Color(42, 55, 92, 108) : new Color(25, 48, 57, 246));
-        DrawRect(bounds, popup ? 4 : 2, popup ? new Color(151, 170, 224) : new Color(72, 115, 121));
+        DrawMoveTrendChartSurface(bounds, popup);
         if (popup)
         {
             DrawPopupInformationChecks(session, bounds, mousePoint);
@@ -106,8 +105,8 @@ public sealed partial class GoScreenRenderer
         var plot = popup
             ? new Rectangle(bounds.X + 72, bounds.Y + 92, bounds.Width - 144, bounds.Height - 260)
             : new Rectangle(bounds.X + 52, bounds.Y + 62, bounds.Width - 106, bounds.Height - 106);
-        FillRect(plot, popup ? new Color(26, 38, 70, 92) : new Color(31, 57, 65));
-        DrawRect(plot, 1, new Color(84, 119, 123));
+        FillRect(plot, popup ? new Color(26, 38, 70, 92) : new Color(26, 38, 70, 205));
+        DrawRect(plot, 1, popup ? new Color(84, 119, 123) : new Color(113, 140, 166));
         var centerY = plot.Center.Y;
         var drawWinRate = popup
             ? session.IsPopupWinRateVisible
@@ -166,22 +165,7 @@ public sealed partial class GoScreenRenderer
             DrawCgosScoreBars(points, maximumMove, plot);
         }
 
-        if (popup)
-        {
-            DrawVerticalResultSection(
-                new Rectangle(bounds.X + 4, plot.Y, plot.Right - bounds.X - 4, plot.Height / 2),
-                "BLACK ADVANTAGE",
-                new Color(18, 86, 91));
-            DrawVerticalResultSection(
-                new Rectangle(bounds.X + 4, plot.Center.Y, plot.Right - bounds.X - 4, plot.Height / 2),
-                "WHITE ADVANTAGE",
-                new Color(91, 76, 52));
-        }
-        else
-        {
-            DrawCgosAdvantageLabel(new Rectangle(plot.X + 12, plot.Y + 8, 254, 30), black: true);
-            DrawCgosAdvantageLabel(new Rectangle(plot.X + 12, plot.Bottom - 38, 254, 30), black: false);
-        }
+        DrawMoveTrendAdvantageSections(bounds, plot, popup);
         DrawCgosTrendMoveTicks(maximumMove, plot);
         DrawCommentMoveMarkers(moves, maximumMove, plot);
         DrawCgosCurrentTrendPoint(
@@ -195,6 +179,41 @@ public sealed partial class GoScreenRenderer
         {
             DrawPopupCommentOverlay(moves, session, mousePoint, currentMoveNumber);
         }
+    }
+
+    /// <summary>
+    /// ポップアップとサイドパネルで共有するチャート外装。
+    /// サイズと不透明度だけを変え、色と階層は同じデザインに揃える。
+    /// </summary>
+    private void DrawMoveTrendChartSurface(Rectangle bounds, bool popup)
+    {
+        FillRect(
+            new Rectangle(bounds.X + (popup ? 10 : 5), bounds.Y + (popup ? 12 : 6), bounds.Width, bounds.Height),
+            new Color(0, 0, 0, popup ? 92 : 105));
+        FillRect(bounds, popup ? new Color(42, 55, 92, 108) : new Color(35, 48, 78, 232));
+        DrawRect(bounds, popup ? 4 : 2, new Color(151, 170, 224, popup ? 230 : 205));
+        DrawRect(
+            new Rectangle(bounds.X + 4, bounds.Y + 4, bounds.Width - 8, bounds.Height - 8),
+            1,
+            new Color(85, 112, 151, popup ? 120 : 145));
+    }
+
+    /// <summary>
+    /// 黒有利・白有利の領域表示を大小チャートで共有する。
+    /// </summary>
+    private void DrawMoveTrendAdvantageSections(Rectangle bounds, Rectangle plot, bool popup)
+    {
+        var sectionX = popup ? bounds.X + 4 : plot.X + 46;
+        DrawVerticalResultSection(
+            new Rectangle(sectionX, plot.Y, plot.Right - sectionX, plot.Height / 2),
+            "BLACK ADVANTAGE",
+            new Color(10, 20, 34),
+            new Color(220, 232, 238));
+        DrawVerticalResultSection(
+            new Rectangle(sectionX, plot.Center.Y, plot.Right - sectionX, plot.Height / 2),
+            "WHITE ADVANTAGE",
+            new Color(210, 224, 232),
+            new Color(24, 38, 52));
     }
 
     private void DrawPopupInformationChecks(

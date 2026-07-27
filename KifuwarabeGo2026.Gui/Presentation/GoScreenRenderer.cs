@@ -829,7 +829,7 @@ public sealed partial class GoScreenRenderer
         DrawLine(new Vector2(x, y + 40), new Vector2(x + 668, y + 40), 1, new Color(58, 78, 86));
     }
 
-    private void DrawVerticalResultSection(Rectangle bounds, string title, Color accentColor)
+    private void DrawVerticalResultSection(Rectangle bounds, string title, Color accentColor, Color? textColor = null)
     {
         DrawLine(new Vector2(bounds.X, bounds.Y), new Vector2(bounds.Right, bounds.Y), 1, new Color(58, 78, 86));
 
@@ -842,7 +842,7 @@ public sealed partial class GoScreenRenderer
         var center = new Vector2(labelBounds.Center.X, labelBounds.Center.Y);
         var origin = textSize / 2f;
         _spriteBatch.DrawString(_font, title, center + new Vector2(2, 2), new Color(0, 0, 0, 125), -MathHelper.PiOver2, origin, scale, SpriteEffects.None, 0f);
-        _spriteBatch.DrawString(_font, title, center, new Color(205, 218, 218), -MathHelper.PiOver2, origin, scale, SpriteEffects.None, 0f);
+        _spriteBatch.DrawString(_font, title, center, textColor ?? new Color(205, 218, 218), -MathHelper.PiOver2, origin, scale, SpriteEffects.None, 0f);
     }
 
     private void DrawResultRow(Rectangle bounds, string label, string value, Color chipColor, Color valueColor)
