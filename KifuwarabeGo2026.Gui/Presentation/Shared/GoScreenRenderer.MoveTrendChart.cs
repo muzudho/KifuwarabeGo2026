@@ -104,7 +104,7 @@ public sealed partial class GoScreenRenderer
 
         var plot = popup
             ? new Rectangle(bounds.X + 72, bounds.Y + 92, bounds.Width - 144, bounds.Height - 260)
-            : new Rectangle(bounds.X + 52, bounds.Y + 62, bounds.Width - 106, bounds.Height - 106);
+            : new Rectangle(bounds.X + 64, bounds.Y + 62, bounds.Width - 104, bounds.Height - 106);
         FillRect(plot, popup ? new Color(26, 38, 70, 92) : new Color(26, 38, 70, 205));
         DrawRect(plot, 1, popup ? new Color(84, 119, 123) : new Color(113, 140, 166));
         var centerY = plot.Center.Y;
@@ -120,32 +120,36 @@ public sealed partial class GoScreenRenderer
             var y = centerY - step * plot.Height / 4;
             var scoreAxisBounds = popup
                 ? new Rectangle(bounds.X + 4, y - 20, 68, 40)
-                : new Rectangle(bounds.X + 8, y - 12, 42, 24);
+                : new Rectangle(bounds.X, y - 22, 34, 44);
             var winRateAxisBounds = popup
                 ? new Rectangle(plot.Right + 4, y - 20, 76, 40)
-                : new Rectangle(plot.Right + 5, y - 12, 47, 24);
+                : new Rectangle(plot.Right + 2, y - 22, 36, 44);
             DrawLine(new Vector2(plot.Left, y), new Vector2(plot.Right, y), step == 0 ? 2 : 1,
                 step == 0 ? new Color(211, 226, 219, 165) : new Color(104, 139, 143, 70));
             if (drawScore)
             {
-                DrawFittedText(
+                DrawRotatedTrendAxisText(
                     step switch
                     {
-                        > 0 => $"B+{step * 10}",
-                        < 0 => $"W+{-step * 10}",
+                        > 0 => $"+{step * 10}",
+                        < 0 => $"+{-step * 10}",
                         _ => "EVEN",
                     },
                     scoreAxisBounds,
-                    new Color(205, 217, 214),
-                    popup ? 0.46f : 0.25f);
+                    new Color(105, 232, 224),
+                    popup ? 0.58f : 0.44f,
+                    plot,
+                    step);
             }
             if (drawWinRate)
             {
-                DrawFittedText(
-                    step switch { 2 => "B100%", 1 => "B50%", 0 => "EVEN", -1 => "W50%", _ => "W100%" },
+                DrawRotatedTrendAxisText(
+                    step switch { 2 => "100%", 1 => "50%", 0 => "EVEN", -1 => "50%", _ => "100%" },
                     winRateAxisBounds,
-                    new Color(165, 193, 194),
-                    popup ? 0.4f : 0.2f);
+                    new Color(105, 232, 224),
+                    popup ? 0.58f : 0.44f,
+                    plot,
+                    step);
             }
         }
 
@@ -181,6 +185,49 @@ public sealed partial class GoScreenRenderer
         }
     }
 
+    private void DrawRotatedTrendAxisText(
+        string text,
+        Rectangle bounds,
+        Color color,
+        float scale,
+        Rectangle plot,
+        int axisStep)
+    {
+        var textSize = _font.MeasureString(text);
+        if (textSize.X <= 0f || textSize.Y <= 0f) return;
+
+        // 上下端はプロットの内側へ揃え、中間目盛りはグリッド線へセンタリングする。
+        var rotatedHeight = textSize.X * scale;
+        var centerY = axisStep switch
+        {
+            2 => plot.Top + rotatedHeight / 2f,
+            -2 => plot.Bottom - rotatedHeight / 2f,
+            _ => bounds.Center.Y,
+        };
+        var center = new Vector2(bounds.Center.X, centerY);
+        var origin = textSize / 2f;
+        _spriteBatch.DrawString(
+            _font,
+            text,
+            center + new Vector2(1, 1),
+            new Color(0, 0, 0, 135),
+            -MathHelper.PiOver2,
+            origin,
+            scale,
+            Microsoft.Xna.Framework.Graphics.SpriteEffects.None,
+            0f);
+        _spriteBatch.DrawString(
+            _font,
+            text,
+            center,
+            color,
+            -MathHelper.PiOver2,
+            origin,
+            scale,
+            Microsoft.Xna.Framework.Graphics.SpriteEffects.None,
+            0f);
+    }
+
     /// <summary>
     /// ポップアップとサイドパネルで共有するチャート外装。
     /// サイズと不透明度だけを変え、色と階層は同じデザインに揃える。
@@ -203,19 +250,25 @@ public sealed partial class GoScreenRenderer
     /// </summary>
     private void DrawMoveTrendAdvantageSections(Rectangle bounds, Rectangle plot, bool popup)
     {
-        var sectionX = popup ? bounds.X + 4 : plot.X + 46;
+        const int labelWidth = 24;
+        const int plotOverlap = 2;
+        var sectionX = plot.X + plotOverlap;
         DrawVerticalResultSection(
             new Rectangle(sectionX, plot.Y, plot.Right - sectionX, plot.Height / 2),
             string.Empty,
             new Color(10, 20, 34),
-            new Color(220, 232, 238));
+            new Color(220, 232, 238),
+            labelWidth,
+            labelGap: 0);
         DrawVerticalResultSection(
             new Rectangle(sectionX, plot.Center.Y, plot.Right - sectionX, plot.Height / 2),
             string.Empty,
             new Color(210, 224, 232),
-            new Color(24, 38, 52));
+            new Color(24, 38, 52),
+            labelWidth,
+            labelGap: 0);
 
-        var labelBounds = new Rectangle(sectionX - 42, plot.Y, 30, plot.Height);
+        var labelBounds = new Rectangle(sectionX - labelWidth, plot.Y, labelWidth, plot.Height);
         const string label = "WHITE  \u2190  ADVANTAGE  \u2192  BLACK";
         const float scale = 0.34f;
         var textSize = _font.MeasureString(label);
@@ -428,11 +481,15 @@ public sealed partial class GoScreenRenderer
         foreach (var move in new[] { 0, 25, 50, 75, 100 })
         {
             if (move > maximumMove) continue;
-            var x = (int)CgosTrendX(Math.Max(1, move), maximumMove, plot);
+            var x = (int)CgosTrendX(move, maximumMove, plot);
+            if (move == 0)
+            {
+                x += popup ? 18 : 10;
+            }
             DrawFittedText(
                 move.ToString(CultureInfo.InvariantCulture),
                 popup ? new Rectangle(x - 32, plot.Bottom + 4, 64, 34) : new Rectangle(x - 20, plot.Bottom + 4, 40, 20),
-                new Color(180, 200, 198),
+                new Color(105, 232, 224),
                 popup ? 0.38f : 0.2f);
         }
 
@@ -500,7 +557,7 @@ public sealed partial class GoScreenRenderer
     }
 
     private static float CgosTrendX(int moveNumber, int maximumMove, Rectangle plot) =>
-        plot.Left + (Math.Clamp(moveNumber, 1, maximumMove) - 1f) / Math.Max(1, maximumMove - 1) * plot.Width;
+        plot.Left + Math.Clamp(moveNumber, 0, maximumMove) / (float)Math.Max(1, maximumMove) * plot.Width;
 
     private static Rectangle MoveTrendScoreButtonBounds(Rectangle chartBounds) =>
         chartBounds.Width > 1000

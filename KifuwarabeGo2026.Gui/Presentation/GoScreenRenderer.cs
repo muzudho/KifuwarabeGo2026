@@ -829,11 +829,17 @@ public sealed partial class GoScreenRenderer
         DrawLine(new Vector2(x, y + 40), new Vector2(x + 668, y + 40), 1, new Color(58, 78, 86));
     }
 
-    private void DrawVerticalResultSection(Rectangle bounds, string title, Color accentColor, Color? textColor = null)
+    private void DrawVerticalResultSection(
+        Rectangle bounds,
+        string title,
+        Color accentColor,
+        Color? textColor = null,
+        int labelWidth = 38,
+        int labelGap = 8)
     {
         DrawLine(new Vector2(bounds.X, bounds.Y), new Vector2(bounds.Right, bounds.Y), 1, new Color(58, 78, 86));
 
-        var labelBounds = new Rectangle(bounds.X - 46, bounds.Y, 38, bounds.Height);
+        var labelBounds = new Rectangle(bounds.X - labelWidth - labelGap, bounds.Y, labelWidth, bounds.Height);
         FillRect(labelBounds, new Color(accentColor, 150));
         DrawRect(labelBounds, 1, new Color(accentColor, 230));
 
