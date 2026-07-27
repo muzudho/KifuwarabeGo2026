@@ -105,8 +105,8 @@ public sealed partial class GoScreenRenderer
         var plot = popup
             ? new Rectangle(bounds.X + 72, bounds.Y + 92, bounds.Width - 144, bounds.Height - 260)
             : new Rectangle(bounds.X + 64, bounds.Y + 62, bounds.Width - 104, bounds.Height - 106);
-        FillRect(plot, popup ? new Color(58, 75, 118, 140) : new Color(52, 68, 108, 225));
-        DrawRect(plot, 1, popup ? new Color(112, 143, 158) : new Color(137, 162, 190));
+        FillRect(plot, popup ? new Color(53, 119, 139, 175) : new Color(45, 115, 132, 235));
+        DrawRect(plot, 1, popup ? new Color(143, 189, 196) : new Color(151, 198, 204));
         var centerY = plot.Center.Y;
         var drawWinRate = popup
             ? session.IsPopupWinRateVisible
@@ -425,7 +425,7 @@ public sealed partial class GoScreenRenderer
         Color color)
     {
         var outlineColor = reporter == GoStone.Black
-            ? new Color(88, 108, 142, Math.Max(135, (int)color.A))
+            ? new Color(22, 29, 34, Math.Max(175, (int)color.A))
             : new Color(color.R, color.G, color.B, (byte)Math.Max(20, color.A / 3));
         Vector2? previous = null;
         foreach (var point in points)
