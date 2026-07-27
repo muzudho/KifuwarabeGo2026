@@ -118,38 +118,40 @@ public sealed partial class GoScreenRenderer
         for (var step = -2; step <= 2; step++)
         {
             var y = centerY - step * plot.Height / 4;
-            var scoreAxisBounds = popup
-                ? new Rectangle(bounds.X + 4, y - 20, 68, 40)
-                : new Rectangle(bounds.X, y - 22, 34, 44);
-            var winRateAxisBounds = popup
-                ? new Rectangle(plot.Right + 4, y - 20, 76, 40)
-                : new Rectangle(plot.Right + 2, y - 22, 36, 44);
             DrawLine(new Vector2(plot.Left, y), new Vector2(plot.Right, y), step == 0 ? 2 : 1,
                 step == 0 ? new Color(211, 226, 219, 165) : new Color(104, 139, 143, 70));
             if (drawScore)
             {
-                DrawRotatedTrendAxisText(
-                    step switch
+                var scoreAxisBounds = popup
+                    ? new Rectangle(bounds.X + 4, y - 20, 68, 40)
+                    : new Rectangle(bounds.X + 6, y - 22, 34, 44);
+
+                DrawRotatedTrendAxisText(   // チャートの左側のＹ軸ラベル
+                    text: step switch
                     {
                         > 0 => $"+{step * 10}",
                         < 0 => $"+{-step * 10}",
                         _ => "EVEN",
                     },
-                    scoreAxisBounds,
-                    new Color(105, 232, 224),
-                    popup ? 0.58f : 0.44f,
-                    plot,
-                    step);
+                    bounds: scoreAxisBounds,
+                    color: new Color(105, 232, 224),
+                    scale: popup ? 0.58f : 0.35f,   // フォントサイズ
+                    plot: plot,
+                    axisStep: step);
             }
             if (drawWinRate)
             {
-                DrawRotatedTrendAxisText(
-                    step switch { 2 => "100%", 1 => "50%", 0 => "EVEN", -1 => "50%", _ => "100%" },
-                    winRateAxisBounds,
-                    new Color(105, 232, 224),
-                    popup ? 0.58f : 0.44f,
-                    plot,
-                    step);
+                var winRateAxisBounds = popup
+                    ? new Rectangle(plot.Right + 4, y - 20, 76, 40)
+                    : new Rectangle(plot.Right + 2, y - 22, 36, 44);
+
+                DrawRotatedTrendAxisText(   // チャートの右側のＹ軸ラベル
+                    text: step switch { 2 => "100%", 1 => "50%", 0 => "EVEN", -1 => "50%", _ => "100%" },
+                    bounds: winRateAxisBounds,
+                    color: new Color(105, 232, 224),
+                    scale: popup ? 0.58f : 0.35f,   // フォントサイズ
+                    plot: plot,
+                    axisStep: step);
             }
         }
 
@@ -475,6 +477,11 @@ public sealed partial class GoScreenRenderer
             bounds.Height >= 48 ? 0.42f : 0.23f);
     }
 
+    /// <summary>
+    /// チャートのＸ軸のラベル
+    /// </summary>
+    /// <param name="maximumMove"></param>
+    /// <param name="plot"></param>
     private void DrawCgosTrendMoveTicks(int maximumMove, Rectangle plot)
     {
         var popup = plot.Width > 1000;
@@ -487,17 +494,17 @@ public sealed partial class GoScreenRenderer
                 x += popup ? 18 : 10;
             }
             DrawFittedText(
-                move.ToString(CultureInfo.InvariantCulture),
-                popup ? new Rectangle(x - 32, plot.Bottom + 4, 64, 34) : new Rectangle(x - 20, plot.Bottom + 4, 40, 20),
-                new Color(105, 232, 224),
-                popup ? 0.38f : 0.2f);
+                text: move.ToString(CultureInfo.InvariantCulture),
+                bounds: popup ? new Rectangle(x - 32, plot.Bottom + 4, 64, 34) : new Rectangle(x - 20, plot.Bottom + 4, 40, 20),
+                color: new Color(105, 232, 224),
+                scale: popup ? 0.38f : 0.35f);   // フォントサイズ
         }
 
         DrawFittedText(
-            "MOVE",
-            popup ? new Rectangle(plot.Center.X - 60, plot.Bottom + 34, 120, 38) : new Rectangle(plot.Center.X - 36, plot.Bottom + 23, 72, 20),
-            new Color(76, 222, 213),
-            popup ? 0.42f : 0.23f);
+            text: "MOVE",
+            bounds: popup ? new Rectangle(plot.Center.X - 60, plot.Bottom + 34, 120, 38) : new Rectangle(plot.Center.X - 36, plot.Bottom + 23, 72, 20),
+            color: new Color(76, 222, 213),
+            scale: popup ? 0.42f : 0.23f);  // フォントサイズ
     }
 
     private void DrawCgosCurrentTrendPoint(
