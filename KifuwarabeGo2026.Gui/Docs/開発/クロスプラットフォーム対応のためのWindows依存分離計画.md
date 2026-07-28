@@ -244,13 +244,25 @@ Windows専用ソースを新プロジェクトへ移してから、旧 `Kifuwara
 
 ### 2026-07-29: Windows配布物CIを追加
 
-- `windows-latest` で6プロジェクトのsolution全体をReleaseビルドする。
+- `windows-latest` で7プロジェクトのsolution全体をReleaseビルドする。
 - GUI publish前にWindowsプロジェクトを `win-x64` RID付きでrestoreする。
 - Windows GUIを `win-x64`、framework-dependentでpublishする。
 - GUI exe、Core DLL、Shared DLL、主要Content、同梱CGOSの必須4ファイルを検査する。
 - 同梱CGOS通信コンポーネントを `--help` で起動確認する。
 - GitHub-hosted runner上の初回結果は、ワークフローを含む変更がpushされた後に確認する。
 - Windows CIと同じ手順をローカル実行し、RID付きrestore、GUI publish、9個の必須配布ファイル、同梱CGOSの `--help` が成功した。
+
+### 2026-07-29: Windows固有サービスの非対話スモークを追加
+
+- `KifuwarabeGo2026.Gui.WindowsSmoke` を `net8.0-windows` のコンソールプロジェクトとして追加した。
+- 8個のWindowsプラットフォームサービスをダイアログやウィンドウを出さずに生成できることを確認する。
+- Windowsの `.exe` 付与と選択フィルターを確認する。
+- `WindowsTextRasterizer` が単行PNGと指定寸法の折返しPNGを生成できることを確認する。
+- Windows起動アセンブリ名が `KifuwarabeGo2026.Gui` のままであることを確認する。
+- WindowsとCoreのアセンブリバージョン一致、`GuiIcon.ico` 埋込み資源を確認する。
+- solutionを7プロジェクト構成にし、Releaseビルドが警告0、エラー0で成功した。
+- Windows非対話スモークが `PASS` で成功した。
+- Windows CIの全体ビルド後にも同じスモークを実行する。
 
 ## 目標構成
 

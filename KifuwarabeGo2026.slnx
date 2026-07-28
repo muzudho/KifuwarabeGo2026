@@ -3,6 +3,7 @@
   <Project Path="KifuwarabeGo2026.Engine/KifuwarabeGo2026.Engine.csproj" />
   <Project Path="KifuwarabeGo2026.Gui.PortabilitySmoke/KifuwarabeGo2026.Gui.PortabilitySmoke.csproj" />
   <Project Path="KifuwarabeGo2026.Gui.Windows/KifuwarabeGo2026.Gui.Windows.csproj" />
+  <Project Path="KifuwarabeGo2026.Gui.WindowsSmoke/KifuwarabeGo2026.Gui.WindowsSmoke.csproj" />
   <Project Path="KifuwarabeGo2026.Gui/KifuwarabeGo2026.Gui.Core.csproj" />
   <Project Path="KifuwarabeGo2026.Shared/KifuwarabeGo2026.Shared.csproj" />
 </Solution>

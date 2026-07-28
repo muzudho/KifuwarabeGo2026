@@ -6,7 +6,7 @@
 
 - `dotnet restore KifuwarabeGo2026.slnx` が成功。
 - 通常出力先で `dotnet build KifuwarabeGo2026.slnx --no-restore` が成功。
-- 6プロジェクトすべて警告0、エラー0。
+- 7プロジェクトすべて警告0、エラー0。
 - Core単独の `net8.0` ビルドが成功。
 - Windows起動プロジェクトのビルドが成功。
 - `win-x64` publishが成功。
@@ -28,6 +28,8 @@
 - Windows CIでsolution全体のReleaseビルド、GUI publish、必須配布ファイル、同梱CGOSの `--help` を確認するジョブを追加済み。
 - GitHub-hosted runner上の初回結果はpush後に確認する。
 - Windows CIと同じRID付きrestore、GUI publish、9個の必須配布ファイル検査、同梱CGOSの `--help` をローカルで実行し、成功済み。
+- `KifuwarabeGo2026.Gui.WindowsSmoke` で8個のWindowsサービス生成、`.exe`命名、実行ファイルフィルター、文字PNG生成、折返しページ画像、アセンブリ名、Coreとのバージョン一致、埋込みアイコン資源を確認済み。
+- Windows非対話スモークはRelease構成で `PASS`。
 
 ## 作業中に修正したこと
 
@@ -37,6 +39,7 @@
 - Core用の通常 `project.assets.json` を再生成するため、solutionをrestoreし直した。
 - `.slnx` のCLI対応に合わせ、開発用SDKを.NET 10.0.302へ統一した。対象フレームワークと利用者向けランタイムは.NET 8のまま。
 - solution restoreだけでは `win-x64` 用assetsがなく `NETSDK1047` になったため、CIへGUIのRID付きrestoreを追加した。
+- Windows固有実装の非対話確認を繰り返せるよう、専用スモークプロジェクトをsolutionへ追加した。
 
 ## 手動確認すること
 
