@@ -1,0 +1,39 @@
+name: Portability
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  core:
+    name: Core on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up .NET 8
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 8.0.423
+
+      - name: Restore portability smoke
+        run: dotnet restore KifuwarabeGo2026.Gui.PortabilitySmoke/KifuwarabeGo2026.Gui.PortabilitySmoke.csproj
+
+      - name: Build Core and portability smoke
+        run: dotnet build KifuwarabeGo2026.Gui.PortabilitySmoke/KifuwarabeGo2026.Gui.PortabilitySmoke.csproj --configuration Release --no-restore
+
+      - name: Run portability checks
+        run: dotnet run --project KifuwarabeGo2026.Gui.PortabilitySmoke/KifuwarabeGo2026.Gui.PortabilitySmoke.csproj --configuration Release --no-build

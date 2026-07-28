@@ -220,6 +220,18 @@ Windows専用ソースを新プロジェクトへ移してから、旧 `Kifuwara
 - 成功時は `PASS:` と表示して終了コード0、失敗時は `FAIL:` と理由を表示して終了コード1を返す。
 - 6プロジェクト全体のDebugビルドが警告0、エラー0で成功し、移植性スモークの全検査が成功した。
 
+### 2026-07-29: 3 OSの移植性CIを追加
+
+- `.github/workflows/portability.yml` を追加した。
+- プッシュ、プルリクエスト、手動実行で起動する。
+- `ubuntu-latest`、`macos-latest`、`windows-latest` のマトリックスで実行する。
+- 各環境で移植性スモークプロジェクトをrestore、Releaseビルド、実行する。
+- `fail-fast: false` とし、一つのOSが失敗しても残りの結果を収集する。
+- 権限はリポジトリ内容の読取りだけに限定する。
+- SDKは3環境で同じ.NET 8 SDK `8.0.423` を使用する。
+
+ローカルWindowsでは同じReleaseビルドとスモークを検証する。GitHub-hosted runner上の結果は、ワークフローを含む変更がGitHubへpushされた後に確認する。
+
 ## 目標構成
 
 ```text
