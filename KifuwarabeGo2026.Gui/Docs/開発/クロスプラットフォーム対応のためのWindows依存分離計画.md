@@ -235,11 +235,22 @@ Windows専用ソースを新プロジェクトへ移してから、旧 `Kifuwara
 ### 2026-07-29: SDK選択方針を明示
 
 - リポジトリ直下へ `global.json` を追加した。
-- 基準SDKはCIと同じ.NET 8 SDK `8.0.423` とする。
-- `rollForward` は `major` とし、基準SDKがない開発PCでは互換性のある上位メジャーSDKを許可する。
+- 当初は基準SDKを.NET 8 SDK `8.0.423` としたが、`.slnx` のCLI対応が.NET SDK 9.0.200以降であるため見直した。
+- 基準SDKは作者環境とCIで共通の.NET SDK `10.0.302` とする。
+- `rollForward` は `latestFeature` とし、同じ10.0系列の新しいfeature bandを許可する。
 - `allowPrerelease` は `false` とし、プレビューSDKを自動選択しない。
-- 作者のWindows環境は10.0.302だけが導入済みであるため、8.0.423への厳密固定は採用しない。
-- CIは8.0.423を明示的に導入するため、同バージョンが選択される。
+- 対象フレームワークと利用者向けランタイムは `net8.0`／`net8.0-windows` のまま維持する。
+- CIも10.0.302を明示的に導入する。
+
+### 2026-07-29: Windows配布物CIを追加
+
+- `windows-latest` で6プロジェクトのsolution全体をReleaseビルドする。
+- GUI publish前にWindowsプロジェクトを `win-x64` RID付きでrestoreする。
+- Windows GUIを `win-x64`、framework-dependentでpublishする。
+- GUI exe、Core DLL、Shared DLL、主要Content、同梱CGOSの必須4ファイルを検査する。
+- 同梱CGOS通信コンポーネントを `--help` で起動確認する。
+- GitHub-hosted runner上の初回結果は、ワークフローを含む変更がpushされた後に確認する。
+- Windows CIと同じ手順をローカル実行し、RID付きrestore、GUI publish、9個の必須配布ファイル、同梱CGOSの `--help` が成功した。
 
 ## 目標構成
 

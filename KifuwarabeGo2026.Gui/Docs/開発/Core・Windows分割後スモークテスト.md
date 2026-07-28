@@ -6,7 +6,7 @@
 
 - `dotnet restore KifuwarabeGo2026.slnx` が成功。
 - 通常出力先で `dotnet build KifuwarabeGo2026.slnx --no-restore` が成功。
-- 5プロジェクトすべて警告0、エラー0。
+- 6プロジェクトすべて警告0、エラー0。
 - Core単独の `net8.0` ビルドが成功。
 - Windows起動プロジェクトのビルドが成功。
 - `win-x64` publishが成功。
@@ -23,13 +23,20 @@
 - クリック入力が新しいGUI操作ログへ記録された。
 - 最新のアプリケーションエラーログに例外記録はない。
 - ログ保存先は分割前と同じリポジトリ直下の `Logs/Gui`。
+- `KifuwarabeGo2026.Gui.PortabilitySmoke` のDebug／Release実行が `PASS`。
+- Windows・Ubuntu・macOSでCoreを検査するGitHub Actionsを追加済み。
+- Windows CIでsolution全体のReleaseビルド、GUI publish、必須配布ファイル、同梱CGOSの `--help` を確認するジョブを追加済み。
+- GitHub-hosted runner上の初回結果はpush後に確認する。
+- Windows CIと同じRID付きrestore、GUI publish、9個の必須配布ファイル検査、同梱CGOSの `--help` をローカルで実行し、成功済み。
 
 ## 作業中に修正したこと
 
-- Visual Studioが保持していた旧solution状態から、削除済み `KifuwarabeGo2026.Gui.csproj` の参照が `.slnx` へ戻っていたため、Core／Windowsの5プロジェクト構成へ修正した。
+- Visual Studioが保持していた旧solution状態から、削除済み `KifuwarabeGo2026.Gui.csproj` の参照が `.slnx` へ戻っていたため、Core／Windowsを含む構成へ修正した。
 - `.slnx` に重複したWindowsプロジェクト参照を除去した。
 - 新しいWindowsプロジェクトからMonoGameの `dotnet-mgcb` を復元できるよう、ローカルツールマニフェストを追加した。
 - Core用の通常 `project.assets.json` を再生成するため、solutionをrestoreし直した。
+- `.slnx` のCLI対応に合わせ、開発用SDKを.NET 10.0.302へ統一した。対象フレームワークと利用者向けランタイムは.NET 8のまま。
+- solution restoreだけでは `win-x64` 用assetsがなく `NETSDK1047` になったため、CIへGUIのRID付きrestoreを追加した。
 
 ## 手動確認すること
 
