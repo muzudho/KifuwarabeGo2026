@@ -36,6 +36,8 @@
 - Windows
 - .NET 8 SDK
 
+現在、作者が動作確認できる環境はWindowsだけです。Linux版やmacOS版への移植協力を歓迎しています。詳しくは[きふわらべの碁2026・移植の手引き](./KifuwarabeGo2026.Gui/Docs/設計/きふわらべの碁2026・移植の手引き.md)をご覧ください。
+
 
 ## 起動方法
 
@@ -83,3 +85,4 @@ GUI の publish 時には、CGOS 通信コンポーネントも `Tools\Cgos` 以
 
 - [共有ドキュメント](./KifuwarabeGo2026.Gui/Docs/README.md)
 - [きふわらべ式SGF形式仕様](./KifuwarabeGo2026.Gui/Docs/設計/きふわらべ式SGF形式仕様.md)
+- [きふわらべの碁2026・移植の手引き](./KifuwarabeGo2026.Gui/Docs/設計/きふわらべの碁2026・移植の手引き.md)
