@@ -34,6 +34,8 @@ using System.Threading.Tasks;
 public class Game1 : Game
 {
     private readonly GraphicsDeviceManager _graphics;
+    private readonly IClipboardService _clipboardService;
+    private readonly IMessageDialogService _messageDialogService;
     private readonly GoAppSession _session = new();
     private readonly TournamentRulesCatalog _tournamentRulesCatalog;
     private readonly GtpEngineCatalog _gtpEngineCatalog;
@@ -87,8 +89,12 @@ public class Game1 : Game
     private const double ReviewPopupDoubleClickSeconds = 0.36d;
     private const int ReviewPopupDoubleClickDistance = 18;
 
-    public Game1()
+    public Game1(
+        IClipboardService clipboardService,
+        IMessageDialogService messageDialogService)
     {
+        _clipboardService = clipboardService;
+        _messageDialogService = messageDialogService;
         _tournamentRulesCatalog = TournamentRulesCatalog.LoadFromDefaultLocation();
         _gtpEngineCatalog = GtpEngineCatalog.LoadFromDefaultLocation();
         _cgosConnectionCatalog = CgosConnectionCatalog.LoadFromDefaultLocation();
@@ -96,7 +102,11 @@ public class Game1 : Game
         _session.SetGtpEngineProfiles(_gtpEngineCatalog.Profiles);
         _session.SetCgosConnectionProfiles(_cgosConnectionCatalog.Profiles);
         RefreshSgfAutoSaveState();
-        _tournamentRulesSetting = new TournamentRulesSetting(_session, _tournamentRulesCatalog, OpenTournamentRulesSelectionDialog);
+        _tournamentRulesSetting = new TournamentRulesSetting(
+            _session,
+            _tournamentRulesCatalog,
+            OpenTournamentRulesSelectionDialog,
+            _clipboardService);
         _playingScene = new PlayingScene(
             _session,
             PlayPlaceStoneSound,
@@ -2578,14 +2588,8 @@ public class Game1 : Game
         }
     }
 
-    private static void ShowMessage(string message, string caption)
-    {
-        System.Windows.Forms.MessageBox.Show(
-            message,
-            caption,
-            System.Windows.Forms.MessageBoxButtons.OK,
-            System.Windows.Forms.MessageBoxIcon.Warning);
-    }
+    private void ShowMessage(string message, string caption) =>
+        _messageDialogService.ShowWarning(caption, message);
 
     private void OpenGtpEngineSelectionDialog(GoStone stone)
     {
@@ -2606,7 +2610,7 @@ public class Game1 : Game
 
         if (GoScreenRenderer.TryGetGtpEngineSelectionDialogPathCopyText(point, _session, out var path))
         {
-            SystemClipboard.SetText(path);
+            _clipboardService.TrySetText(path);
             return true;
         }
 

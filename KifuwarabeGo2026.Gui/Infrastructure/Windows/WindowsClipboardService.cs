@@ -1,21 +1,21 @@
-namespace KifuwarabeGo2026.Gui.Application;
+namespace KifuwarabeGo2026.Gui.Infrastructure.Windows;
 
+using KifuwarabeGo2026.Gui.Application;
 using System;
 using System.Runtime.InteropServices;
 using System.Text;
 
 /// <summary>
-/// ［システム・クリップボード］の操作をするぜ（＾～＾）
+/// Windows のクリップボードへテキストを書き込みます。
 /// </summary>
-public static class SystemClipboard
+public sealed class WindowsClipboardService : IClipboardService
 {
     private const uint CfUnicodeText = 13;
     private const uint GmemMoveable = 0x0002;
 
-    public static bool SetText(string text)
+    public bool TrySetText(string text)
     {
         if (string.IsNullOrEmpty(text)) return false;
-        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) return false;
         if (!OpenClipboard(IntPtr.Zero)) return false;
 
         var clipboardData = IntPtr.Zero;

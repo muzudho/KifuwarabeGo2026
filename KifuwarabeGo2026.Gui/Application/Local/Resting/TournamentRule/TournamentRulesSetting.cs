@@ -1,5 +1,6 @@
 namespace KifuwarabeGo2026.Gui.Application.Local.Resting.TournamentRule;
 
+using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Presentation;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
@@ -15,6 +16,7 @@ public sealed class TournamentRulesSetting
     private readonly GoAppSession _session;
     private readonly TournamentRulesCatalog _catalog;
     private readonly Action _browseTournamentRules;
+    private readonly IClipboardService _clipboardService;
     private readonly TextBoxController _displayNameTextBox = new(MaxDisplayNameLength);
     private readonly TextBoxController _mainTimeTextBox = new(8);
     private readonly TextBoxController _moveLimitTextBox = new(4);
@@ -23,11 +25,13 @@ public sealed class TournamentRulesSetting
     public TournamentRulesSetting(
         GoAppSession session,
         TournamentRulesCatalog catalog,
-        Action browseTournamentRules)
+        Action browseTournamentRules,
+        IClipboardService clipboardService)
     {
         _session = session;
         _catalog = catalog;
         _browseTournamentRules = browseTournamentRules;
+        _clipboardService = clipboardService;
     }
 
     public void UpdateByKeyboard(KeyboardState keyboard, GameTime gameTime)
@@ -207,7 +211,7 @@ public sealed class TournamentRulesSetting
 
         if (GoScreenRenderer.TryGetTournamentRulesSelectionDialogPathCopyText(point, _session, out var path))
         {
-            SystemClipboard.SetText(path);
+            _clipboardService.TrySetText(path);
             return true;
         }
 

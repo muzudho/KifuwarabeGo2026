@@ -1,6 +1,7 @@
 namespace KifuwarabeGo2026.Gui;
 
 using KifuwarabeGo2026.Gui.Infrastructure.Logging;
+using KifuwarabeGo2026.Gui.Infrastructure.Windows;
 using System;
 
 internal static class Program
@@ -19,7 +20,9 @@ internal static class Program
         try
         {
             GuiOperationLog.App("Application session started");
-            using var game = new Game1();
+            using var game = new Game1(
+                new WindowsClipboardService(),
+                new WindowsMessageDialogService());
             game.Run();
         }
         catch (Exception ex)

@@ -16,7 +16,24 @@
 - 巨大な `IPlatformService` 一個にせず、役割別に分ける。
 - Windows 実装のプロジェクト名は `KifuwarabeGo2026.Gui.Windows` を第一候補とする。
 - 将来は `KifuwarabeGo2026.Gui.Linux`、`KifuwarabeGo2026.Gui.Mac` を同じ並びで追加できる形にする。
-- 既存の実行ファイル名、設定保存先、publish 内容は可能な限り維持する。
+- Windows 実装を別プロジェクトへ移した後も、`AssemblyName` を `KifuwarabeGo2026.Gui` に指定し、利用者が起動するファイル名を `KifuwarabeGo2026.Gui.exe` のまま維持する。
+- 既存の設定保存先と publish 内容も可能な限り維持する。
+
+## 実装状況
+
+### 2026-07-28: 第1段階の一部を完了
+
+- `IClipboardService` を追加した。
+- `IMessageDialogService` を追加した。
+- `WindowsClipboardService` を `Infrastructure/Windows` へ追加し、`user32.dll` と `kernel32.dll` の呼び出しを集約した。
+- `WindowsMessageDialogService` を `Infrastructure/Windows` へ追加し、WinForms `MessageBox` の呼び出しを集約した。
+- `Program` を現在の構成地点とし、Windows 実装を生成して `Game1` へ渡すようにした。
+- `Game1` と `TournamentRulesSetting` のクリップボード直接呼び出しを置換した。
+- `Game1` の警告メッセージ直接表示を置換した。
+- 旧 `Application/SystemClipboard.cs` を削除した。
+- ソリューション全体の Debug ビルドが警告 0、エラー 0 で成功した。
+
+まだ Windows 実装プロジェクトの分割は行っていない。次はファイル・フォルダーダイアログをサービス化し、WinForms 型を `Game1` から減らす。
 
 ## 目標構成
 
@@ -113,6 +130,14 @@ public interface IDesktopLauncher
 6. `AssemblyName`、アイコン、バージョン、設定保存先を維持する。
 7. GUI publish 時の CGOS `Tools/Cgos` 同梱処理を Windows 起動プロジェクトへ移す。
 
+Windows 起動プロジェクトには次を明示する。
+
+```xml
+<AssemblyName>KifuwarabeGo2026.Gui</AssemblyName>
+```
+
+これにより、プロジェクト名が `KifuwarabeGo2026.Gui.Windows` でも、利用者が起動するファイルは `KifuwarabeGo2026.Gui.exe` になる。
+
 既存名を Windows 実行プロジェクトと共通ライブラリのどちらに残すかは、実行ファイル名と publish 手順への影響を調査してから決める。
 
 ### 第3段階: Windows 依存を閉じ込める
@@ -195,15 +220,16 @@ dotnet publish <Windows用GUIプロジェクト> -c Release -r win-x64 --self-co
 - アイコン、バージョン、設定保存先が変わっていない。
 - publish 後の `Tools/Cgos` が欠落していない。
 
-## 最初に着手する作業
+## 次に着手する作業
 
-1. `IClipboardService` と `IMessageDialogService` を追加する。
-2. `WindowsClipboardService` と `WindowsMessageDialogService` を追加する。
-3. 起動地点から `Game1` へ注入する。
-4. `Game1` と `TournamentRulesSetting` の直接呼び出しを置換する。
-5. ビルドと手動スモークテストを行う。
+1. `IFileDialogService` と OS 非依存のオプション型を追加する。
+2. `WindowsFileDialogService` に Open、Save、FolderBrowser の実装を集める。
+3. `Program` から `Game1` へ注入する。
+4. まず SGF の読込・保存ダイアログを置換する。
+5. 続いてエンジン、ルール、CGOS関連のファイル・フォルダー選択を置換する。
+6. 手動スモークテストで初期フォルダー、フィルター、既定ファイル名が維持されていることを確認する。
 
-次にファイルダイアログ、入力ダイアログ、外部起動、文字画像生成の順で抽出する。最初からプロジェクト移動まで同時に行わず、動作を保ったまま境界を一本ずつ作る。
+その後、入力ダイアログ、外部起動、文字画像生成の順で抽出する。最初からプロジェクト移動まで同時に行わず、動作を保ったまま境界を一本ずつ作る。
 
 ## 引継ぎ時の注意
 
