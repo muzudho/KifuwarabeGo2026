@@ -40,6 +40,7 @@ public class Game1 : Game
     private readonly IDesktopLauncher _desktopLauncher;
     private readonly ITextRasterizer _textRasterizer;
     private readonly IWindowIconService _windowIconService;
+    private readonly IPlatformExecutableService _platformExecutableService;
     private readonly GoAppSession _session = new();
     private readonly TournamentRulesCatalog _tournamentRulesCatalog;
     private readonly GtpEngineCatalog _gtpEngineCatalog;
@@ -100,7 +101,8 @@ public class Game1 : Game
         ITextInputDialogService textInputDialogService,
         IDesktopLauncher desktopLauncher,
         ITextRasterizer textRasterizer,
-        IWindowIconService windowIconService)
+        IWindowIconService windowIconService,
+        IPlatformExecutableService platformExecutableService)
     {
         _clipboardService = clipboardService;
         _messageDialogService = messageDialogService;
@@ -109,9 +111,10 @@ public class Game1 : Game
         _desktopLauncher = desktopLauncher;
         _textRasterizer = textRasterizer;
         _windowIconService = windowIconService;
-        _cgosBlackConnectionProcess = new CgosConnectionProcess(_desktopLauncher, "BlackPlayer");
-        _cgosWhiteConnectionProcess = new CgosConnectionProcess(_desktopLauncher, "WhitePlayer");
-        _cgosAdminProcess = new CgosConnectionProcess(_desktopLauncher, "Admin");
+        _platformExecutableService = platformExecutableService;
+        _cgosBlackConnectionProcess = new CgosConnectionProcess(_desktopLauncher, _platformExecutableService, "BlackPlayer");
+        _cgosWhiteConnectionProcess = new CgosConnectionProcess(_desktopLauncher, _platformExecutableService, "WhitePlayer");
+        _cgosAdminProcess = new CgosConnectionProcess(_desktopLauncher, _platformExecutableService, "Admin");
         _tournamentRulesCatalog = TournamentRulesCatalog.LoadFromDefaultLocation();
         _gtpEngineCatalog = GtpEngineCatalog.LoadFromDefaultLocation();
         _cgosConnectionCatalog = CgosConnectionCatalog.LoadFromDefaultLocation();
@@ -2936,11 +2939,7 @@ public class Game1 : Game
         var fileName = _fileDialogService.OpenFile(new OpenFileDialogOptions
         {
             CheckFileExists = true,
-            Filters =
-            [
-                new FileDialogFilter("Executable files", ["*.exe"]),
-                new FileDialogFilter("All files", ["*.*"]),
-            ],
+            Filters = _platformExecutableService.SelectionFilters,
             InitialFileName = Path.GetFileName(source.ExecutablePath),
             InitialDirectory = GetInitialGtpEngineDirectory(source),
             Title = "Select GTP engine executable",

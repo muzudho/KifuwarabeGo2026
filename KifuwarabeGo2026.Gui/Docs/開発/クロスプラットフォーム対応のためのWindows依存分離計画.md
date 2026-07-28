@@ -91,6 +91,88 @@
 
 これでWindows固有サービスの境界作りは一巡した。まだ物理的なプロジェクト分割は行っていない。次はパスやフィルターに残るWindows前提を整理し、`KifuwarabeGo2026.Gui.Core` と `KifuwarabeGo2026.Gui.Windows` を作る前の最終監査を行う。
 
+### 2026-07-28: プロジェクト分割前の最終監査を完了
+
+- 共通候補コードの `.exe`、Windowsパス、RID、Windows API、条件付きコンパイルを再検索した。
+- GTP実行ファイル選択の `*.exe` フィルターを `IPlatformExecutableService.SelectionFilters` へ移した。
+- CGOS通信コンポーネントの `.exe` 付きファイル名を `IPlatformExecutableService.GetFileName` へ移した。
+- `WindowsPlatformExecutableService` がWindows用の拡張子と選択フィルターを提供する。
+- 共通コードのパス結合は `Path.Combine`、区切り判定は `Path.DirectorySeparatorChar` / `Path.AltDirectorySeparatorChar` を利用しており、そのまま共通化できる。
+- 標準入出力を扱うGTP/CGOS子プロセスは.NET共通APIであり、Windowsシェル依存とは分離済み。
+- TEMP内の別出力先へGUIプロジェクトをビルドし、警告0、エラー0を確認した。
+
+現在コード側に残る主なWindows指定は、既存GUI csprojの `net8.0-windows`、WinForms、高DPI、manifest、アプリアイコン、publish設定と、`Infrastructure/Windows` 配下だけである。
+
+## 物理的なプロジェクト分割の配置表
+
+### `KifuwarabeGo2026.Gui.Core`
+
+```text
+Game1.cs
+Application/**
+Gtp/**
+Presentation/**
+Infrastructure/Logging/**
+MonoGame.Framework.DesktopGL 参照
+KifuwarabeGo2026.Shared 参照
+```
+
+- `TargetFramework` は `net8.0`。
+- `OutputType` はライブラリ。
+- WinForms、manifest、アプリアイコン、Windows P/Invokeを含めない。
+- `Application` 内のインターフェースはCoreに置く。
+- GTP/CGOSの子プロセス通信は共通APIとしてCoreに置く。
+
+### `KifuwarabeGo2026.Gui.Windows`
+
+```text
+Program.cs
+Infrastructure/Windows/**
+app.manifest
+GuiIcon.ico
+必要な配布用アイコン
+Windows用GUI csproj
+```
+
+- `OutputType` は `WinExe`。
+- `TargetFramework` は `net8.0-windows`。
+- `UseWindowsForms=true` と高DPI設定を持つ。
+- `KifuwarabeGo2026.Gui.Core` を参照する。
+- `AssemblyName=KifuwarabeGo2026.Gui` とし、実行ファイル名を `KifuwarabeGo2026.Gui.exe` にする。
+- GUI publish時のCGOS `Tools/Cgos` 同梱ターゲットを受け持つ。
+- `GuiIcon.ico` をエントリアセンブリへ `GuiIcon.ico` の論理名で埋め込む。
+
+### MonoGame Content
+
+`Game1` と描画コードはCoreに置くが、ContentのビルドとWindows配布物へのコピーはWindows起動プロジェクトが受け持つ。
+
+最初の分割では既存の `KifuwarabeGo2026.Gui/Content` を移動せず、Windows csprojからリンクまたは明示参照する。これにより大量のアセット移動を避け、`Content.RootDirectory = "Content"` と実行時の相対配置を維持する。
+
+Core単体でContentをビルドする必要はない。将来Linux/macOS起動プロジェクトも同じContent定義を参照する。
+
+### ソース配置
+
+大量の共通ソースを一度に移動しないため、当初は現在の `KifuwarabeGo2026.Gui` ディレクトリをCoreのソース置場として利用する。
+
+```text
+KifuwarabeGo2026.Gui/
+    KifuwarabeGo2026.Gui.Core.csproj
+    Game1.cs
+    Application/
+    Gtp/
+    Presentation/
+    Content/
+
+KifuwarabeGo2026.Gui.Windows/
+    KifuwarabeGo2026.Gui.Windows.csproj
+    Program.cs
+    Infrastructure/Windows/
+    app.manifest
+    GuiIcon.ico
+```
+
+Windows専用ソースを新プロジェクトへ移してから、旧 `KifuwarabeGo2026.Gui.csproj` をCore用csprojへ置換する。既存のビルド・publish手順はWindowsプロジェクトを指すよう更新する。
+
 ## 目標構成
 
 ```text
@@ -278,12 +360,15 @@ dotnet publish <Windows用GUIプロジェクト> -c Release -r win-x64 --self-co
 
 ## 次に着手する作業
 
-1. 共通候補コードに残る `.exe`、Windowsパス区切り、`win-x64`、OS名、条件付きコンパイルを検索して分類する。
-2. GTP実行ファイル選択の `*.exe` フィルターを、OS別実装が決定できる意味的な指定へ変更する。
-3. `KifuwarabeGo2026.Gui.csproj` のMonoGame Content、埋込みアイコン、AssemblyName、publish時CGOS同梱処理を、CoreとWindowsのどちらへ置くか一覧化する。
-4. Windows起動プロジェクトの `AssemblyName` を `KifuwarabeGo2026.Gui` とし、実行ファイル名 `KifuwarabeGo2026.Gui.exe` を維持する。
-5. 既存の設定保存先、ログ保存先、Contentルート、CGOS探索基準がプロジェクト分割で変化しない方法を決める。
-6. 事前条件が揃ったら `KifuwarabeGo2026.Gui.Core` と `KifuwarabeGo2026.Gui.Windows` の物理的なプロジェクト分割へ進む。
+1. `KifuwarabeGo2026.Gui.Windows` ディレクトリとWindows用csprojを追加する。
+2. `Program.cs`、`Infrastructure/Windows`、manifest、アイコンをWindowsプロジェクトへ移す。
+3. 現在の共通ソース側へ `KifuwarabeGo2026.Gui.Core.csproj` を作り、`net8.0` でコンパイルする。
+4. WindowsプロジェクトからCoreとSharedを参照する。
+5. Content定義をWindowsプロジェクトからリンクし、出力の `Content` 配置を維持する。
+6. `AssemblyName=KifuwarabeGo2026.Gui`、バージョン、アイコン、設定保存先を維持する。
+7. CGOS publishターゲットをWindows csprojへ移す。
+8. ソリューション、リリース手順、publishコマンドを新しいWindowsプロジェクトへ更新する。
+9. Debugビルドとwin-x64 publishを行い、実行ファイル名と `Tools/Cgos` を確認する。
 
 SDL2アイコン実装をLinux/macOSでも再利用できるかは、各OSでのライブラリ名とウィンドウハンドル取得方法を確認してから判断する。
 

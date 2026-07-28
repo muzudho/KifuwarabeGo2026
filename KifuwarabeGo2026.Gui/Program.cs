@@ -20,6 +20,7 @@ internal static class Program
         try
         {
             GuiOperationLog.App("Application session started");
+            var platformExecutableService = new WindowsPlatformExecutableService();
             using var game = new Game1(
                 new WindowsClipboardService(),
                 new WindowsMessageDialogService(),
@@ -27,7 +28,8 @@ internal static class Program
                 new WindowsTextInputDialogService(),
                 new WindowsDesktopLauncher(),
                 new WindowsTextRasterizer(),
-                new WindowsWindowIconService());
+                new WindowsWindowIconService(),
+                platformExecutableService);
             game.Run();
         }
         catch (Exception ex)

@@ -16,6 +16,7 @@ public sealed class CgosConnectionProcess : IDisposable
 {
     private readonly string _logFolderName;
     private readonly IDesktopLauncher _desktopLauncher;
+    private readonly IPlatformExecutableService _platformExecutableService;
     private readonly object _outputLock = new();
     private readonly Queue<string> _recentOutput = new();
     private readonly Queue<string> _pendingOutput = new();
@@ -54,9 +55,11 @@ public sealed class CgosConnectionProcess : IDisposable
 
     public CgosConnectionProcess(
         IDesktopLauncher desktopLauncher,
+        IPlatformExecutableService platformExecutableService,
         string logFolderName = "")
     {
         _desktopLauncher = desktopLauncher;
+        _platformExecutableService = platformExecutableService;
         _logFolderName = logFolderName.Trim();
     }
 
@@ -958,13 +961,15 @@ public sealed class CgosConnectionProcess : IDisposable
             : Path.Combine(baseDirectory, _logFolderName);
     }
 
-    private static string GetCgosCommunicationExecutablePath(string repositoryRoot)
+    private string GetCgosCommunicationExecutablePath(string repositoryRoot)
     {
+        var executableFileName = _platformExecutableService.GetFileName(
+            "KifuwarabeGo2026.Gui.Communication.Cgos");
         var bundledExecutablePath = Path.Combine(
             AppContext.BaseDirectory,
             "Tools",
             "Cgos",
-            "KifuwarabeGo2026.Gui.Communication.Cgos.exe");
+            executableFileName);
         if (File.Exists(bundledExecutablePath))
         {
             return bundledExecutablePath;
@@ -981,7 +986,7 @@ public sealed class CgosConnectionProcess : IDisposable
             "bin",
             buildConfiguration,
             "net8.0",
-            "KifuwarabeGo2026.Gui.Communication.Cgos.exe");
+            executableFileName);
     }
 
     private static void AddParentProcessArguments(ProcessStartInfo startInfo)
