@@ -188,6 +188,15 @@ Windows専用ソースを新プロジェクトへ移してから、旧 `Kifuwara
 - `win-x64` publishが成功し、`KifuwarabeGo2026.Gui.exe`、`KifuwarabeGo2026.Gui.Core.dll`、Content、`Tools/Cgos` を確認した。
 - README、リリース手順、再開地点のコマンドと出力先を新Windowsプロジェクトへ更新した。
 
+### 2026-07-29: 分割後の起動スモークテストを実施
+
+- staleな旧GUI csproj参照と重複したWindowsプロジェクト参照をsolutionから除去した。
+- solutionを再restoreし、通常出力先で5プロジェクトすべて警告0、エラー0を確認した。
+- 新WindowsプロジェクトのDebug版 `KifuwarabeGo2026.Gui.exe` を起動した。
+- 応答中のタイトル画面、Content読込、クリック入力ログ、例外0件を確認した。
+- ログ保存先が分割前と同じ `Logs/Gui` であることを確認した。
+- 詳細と残る画面操作は [Core・Windows分割後スモークテスト.md](./Core・Windows分割後スモークテスト.md) に記録した。
+
 ## 目標構成
 
 ```text
