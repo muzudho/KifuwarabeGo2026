@@ -4,6 +4,8 @@
     <TargetFramework>net8.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <AssemblyName>KifuwarabeGo2026.Gui</AssemblyName>
+    <RootNamespace>KifuwarabeGo2026.Gui</RootNamespace>
     <RollForward>Major</RollForward>
     <Nullable>enable</Nullable>
     <Version>2.5.0</Version>
@@ -11,47 +13,38 @@
     <FileVersion>2.5.0.0</FileVersion>
     <PublishReadyToRun>false</PublishReadyToRun>
     <TieredCompilation>false</TieredCompilation>
-  </PropertyGroup>
-  <PropertyGroup>
-    <ApplicationManifest>app.manifest</ApplicationManifest>
-    <ApplicationIcon>GuiIcon.ico</ApplicationIcon>
+    <ApplicationManifest>..\KifuwarabeGo2026.Gui\app.manifest</ApplicationManifest>
+    <ApplicationIcon>..\KifuwarabeGo2026.Gui\GuiIcon.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
-    <None Remove="Icon.ico" />
-    <None Remove="GuiIcon.ico" />
-    <None Remove="Icon.bmp" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Icon.ico">
+    <EmbeddedResource Include="..\KifuwarabeGo2026.Gui\Icon.ico">
+      <Link>Icon.ico</Link>
       <LogicalName>Icon.ico</LogicalName>
     </EmbeddedResource>
-    <EmbeddedResource Include="GuiIcon.ico">
+    <EmbeddedResource Include="..\KifuwarabeGo2026.Gui\GuiIcon.ico">
+      <Link>GuiIcon.ico</Link>
       <LogicalName>GuiIcon.ico</LogicalName>
     </EmbeddedResource>
-    <EmbeddedResource Include="Icon.bmp">
+    <EmbeddedResource Include="..\KifuwarabeGo2026.Gui\Icon.bmp">
+      <Link>Icon.bmp</Link>
       <LogicalName>Icon.bmp</LogicalName>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <None Update="Content\GtpEngines\gtp-engine-list.example.json" CopyToOutputDirectory="PreserveNewest" />
+    <MonoGameContentReference Include="..\KifuwarabeGo2026.Gui\Content\Content.mgcb">
+      <Link>Content\Content.mgcb</Link>
+    </MonoGameContentReference>
+    <None Include="..\KifuwarabeGo2026.Gui\Content\GtpEngines\gtp-engine-list.example.json">
+      <Link>Content\GtpEngines\gtp-engine-list.example.json</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.*" />
     <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.*" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\KifuwarabeGo2026.Shared\KifuwarabeGo2026.Shared.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Application\Cgos\Shared\" />
-    <Folder Include="Application\Local\Resting\EngineSelect\" />
-    <Folder Include="Application\Shared\" />
-    <Folder Include="Docs\企画\" />
-    <Folder Include="Presentation\Cgos\Shared\" />
-    <Folder Include="Presentation\LocalResting\TournamentRule\" />
-    <Folder Include="Presentation\Local\Resting\EngineSelect\" />
-    <Folder Include="Presentation\Shared\Board\Analisys\" />
-    <Folder Include="Infrastructure\" />
+    <ProjectReference Include="..\KifuwarabeGo2026.Gui\KifuwarabeGo2026.Gui.Core.csproj" />
   </ItemGroup>
   <Target Name="PublishCgosCommunication" AfterTargets="Publish">
     <PropertyGroup>

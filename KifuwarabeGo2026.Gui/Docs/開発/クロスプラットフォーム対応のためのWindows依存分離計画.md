@@ -173,6 +173,21 @@ KifuwarabeGo2026.Gui.Windows/
 
 Windows専用ソースを新プロジェクトへ移してから、旧 `KifuwarabeGo2026.Gui.csproj` をCore用csprojへ置換する。既存のビルド・publish手順はWindowsプロジェクトを指すよう更新する。
 
+### 2026-07-28: Core／Windowsの物理的なプロジェクト分割を完了
+
+- `KifuwarabeGo2026.Gui.Core.csproj` を追加し、共通GUIを `net8.0` のライブラリにした。
+- `KifuwarabeGo2026.Gui.Windows.csproj` を追加し、Windows起動側を `net8.0-windows` の `WinExe` にした。
+- `Program.cs` と `Infrastructure/Windows` の全実装をWindowsプロジェクトへ移した。
+- Windowsプロジェクトの `AssemblyName` を `KifuwarabeGo2026.Gui` とし、実行ファイル名を維持した。
+- MonoGame Content、アイコン、manifestは既存資産をWindowsプロジェクトから参照する。
+- MonoGameのローカルツールマニフェストをWindowsプロジェクトへ追加した。
+- CGOS同梱publishターゲットをWindows csprojへ移した。
+- solutionを5プロジェクト構成へ更新した。
+- Core単独の `net8.0` ビルドが警告0、エラー0で成功した。
+- Windows起動プロジェクトの別出力先ビルドが警告0、エラー0で成功した。
+- `win-x64` publishが成功し、`KifuwarabeGo2026.Gui.exe`、`KifuwarabeGo2026.Gui.Core.dll`、Content、`Tools/Cgos` を確認した。
+- README、リリース手順、再開地点のコマンドと出力先を新Windowsプロジェクトへ更新した。
+
 ## 目標構成
 
 ```text
@@ -360,22 +375,19 @@ dotnet publish <Windows用GUIプロジェクト> -c Release -r win-x64 --self-co
 
 ## 次に着手する作業
 
-1. `KifuwarabeGo2026.Gui.Windows` ディレクトリとWindows用csprojを追加する。
-2. `Program.cs`、`Infrastructure/Windows`、manifest、アイコンをWindowsプロジェクトへ移す。
-3. 現在の共通ソース側へ `KifuwarabeGo2026.Gui.Core.csproj` を作り、`net8.0` でコンパイルする。
-4. WindowsプロジェクトからCoreとSharedを参照する。
-5. Content定義をWindowsプロジェクトからリンクし、出力の `Content` 配置を維持する。
-6. `AssemblyName=KifuwarabeGo2026.Gui`、バージョン、アイコン、設定保存先を維持する。
-7. CGOS publishターゲットをWindows csprojへ移す。
-8. ソリューション、リリース手順、publishコマンドを新しいWindowsプロジェクトへ更新する。
-9. Debugビルドとwin-x64 publishを行い、実行ファイル名と `Tools/Cgos` を確認する。
+1. 起動中の旧Debug GUIを終了できるタイミングで、通常の `dotnet build KifuwarabeGo2026.slnx --no-restore` を実行する。
+2. 新しいWindowsプロジェクトからGUIを起動し、アイコンとContent読込を確認する。
+3. SGF読込・保存、GTP設定の各ダイアログ、クリップボード、外部ログ起動を手動確認する。
+4. CGOS画面から通信コンポーネント探索とログ起動を確認する。
+5. 設定・ログ・自動保存先が分割前と同じことを確認する。
+6. Linux/macOS向け起動プロジェクトの雛形またはテスト用プラットフォーム実装を追加し、CoreをWindows APIなしで利用できることを継続検証する。
 
 SDL2アイコン実装をLinux/macOSでも再利用できるかは、各OSでのライブラリ名とウィンドウハンドル取得方法を確認してから判断する。
 
 ## 引継ぎ時の注意
 
 - 現在の正式対応 OS は Windows であり、Linux/macOS 対応済みとは記載しない。
-- GUI csproj の CGOS 同梱処理を、分割時に移し忘れない。
+- GUIのCGOS同梱処理は `KifuwarabeGo2026.Gui.Windows.csproj` にある。
 - WinForms 型をインターフェースの引数や戻り値へ含めない。
 - `Game1` は大きいため、サービス単位の小さな変更を優先する。
 - 判断変更や調査結果はこの文書へ追記する。

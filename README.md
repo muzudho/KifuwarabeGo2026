@@ -40,7 +40,7 @@
 ## 起動方法
 
 ```powershell
-dotnet run --project KifuwarabeGo2026.Gui\KifuwarabeGo2026.Gui.csproj
+dotnet run --project KifuwarabeGo2026.Gui.Windows\KifuwarabeGo2026.Gui.Windows.csproj
 ```
 
 GTP エンジン単体を確認する場合:
@@ -66,17 +66,17 @@ dotnet run --project KifuwarabeGo2026.Gui.Communication.Cgos -- --both
 ## リリースビルド
 
 ```powershell
-dotnet publish KifuwarabeGo2026.Gui\KifuwarabeGo2026.Gui.csproj -c Release -r win-x64 --self-contained false
+dotnet publish KifuwarabeGo2026.Gui.Windows\KifuwarabeGo2026.Gui.Windows.csproj -c Release -r win-x64 --self-contained false
 dotnet publish KifuwarabeGo2026.Engine\KifuwarabeGo2026.Engine.csproj -c Release -r win-x64 --self-contained false
 ```
 
 出力先:
 
-- `KifuwarabeGo2026.Gui\bin\Release\net8.0-windows\win-x64\publish`
+- `KifuwarabeGo2026.Gui.Windows\bin\Release\net8.0-windows\win-x64\publish`
 - `KifuwarabeGo2026.Engine\bin\Release\net8.0\win-x64\publish`
 
 GUI の publish 時には、CGOS 通信コンポーネントも `Tools\Cgos` 以下へ自動的に publish されます。
-`KifuwarabeGo2026.Shared.dll` は GUI と Engine の両方の publish 成果物へ自動的に含まれます。
+`KifuwarabeGo2026.Gui.Core.dll` はGUI版へ、`KifuwarabeGo2026.Shared.dll` はGUI版とEngine版の両方へ自動的に含まれます。
 
 
 ## ドキュメント
