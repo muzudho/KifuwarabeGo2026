@@ -1,5 +1,6 @@
-namespace KifuwarabeGo2026.Gui.Infrastructure;
+namespace KifuwarabeGo2026.Gui.Infrastructure.Windows;
 
+using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Infrastructure.Logging;
 using System;
 using System.Drawing;
@@ -8,13 +9,18 @@ using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
-internal static class WindowIcon
+/// <summary>
+/// System.Drawing と SDL2 を使ってWindowsウィンドウへアイコンを適用します。
+/// </summary>
+public sealed class WindowsWindowIconService : IWindowIconService
 {
-    public static void TryApply(IntPtr windowHandle)
+    public void TryApply(IntPtr windowHandle)
     {
         try
         {
-            using var iconStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("GuiIcon.ico");
+            var entryAssembly = Assembly.GetEntryAssembly()
+                ?? throw new InvalidOperationException("The application entry assembly was not found.");
+            using var iconStream = entryAssembly.GetManifestResourceStream("GuiIcon.ico");
             if (iconStream is null)
                 throw new InvalidOperationException("The embedded GUI icon was not found.");
 

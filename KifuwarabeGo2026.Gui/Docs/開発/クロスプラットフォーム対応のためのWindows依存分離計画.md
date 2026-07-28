@@ -78,7 +78,18 @@
 - Presentation配下から `System.Windows.Forms` と `System.Drawing` の直接参照がなくなった。
 - 実行中の `KifuwarabeGo2026.Gui.exe` が通常のDebug出力先をロックしていたため、TEMP内の別出力先へGUIプロジェクトをビルドし、警告0、エラー0を確認した。
 
-まだ Windows 実装プロジェクトの分割は行っていない。残る主な画像系依存は `Infrastructure/WindowIcon.cs` の `System.Drawing` とSDL2呼び出しである。次はウィンドウアイコン適用をサービス境界へ移し、プロジェクト分割の事前条件を再確認する。
+### 2026-07-28: ウィンドウアイコン適用の分離を完了
+
+- `IWindowIconService` を追加した。
+- `WindowsWindowIconService` にICO解析、System.Drawing、SDL2 P/Invokeを集約した。
+- `Program` から `Game1` へウィンドウアイコンサービスを注入した。
+- `Game1` の静的 `WindowIcon.TryApply` 呼び出しをサービス経由へ置換した。
+- 旧 `Infrastructure/WindowIcon.cs` を削除した。
+- 将来Windows実装が別DLLになってもアイコンを見つけられるよう、埋込みリソースは `Assembly.GetEntryAssembly()` から取得する。
+- Windows固有APIの再検索結果は `Infrastructure/Windows` 配下へ集約されている。
+- 起動中GUIによる通常出力先のロックを避け、TEMP内の別出力先へGUIプロジェクトをビルドし、警告0、エラー0を確認した。
+
+これでWindows固有サービスの境界作りは一巡した。まだ物理的なプロジェクト分割は行っていない。次はパスやフィルターに残るWindows前提を整理し、`KifuwarabeGo2026.Gui.Core` と `KifuwarabeGo2026.Gui.Windows` を作る前の最終監査を行う。
 
 ## 目標構成
 
@@ -267,14 +278,14 @@ dotnet publish <Windows用GUIプロジェクト> -c Release -r win-x64 --self-co
 
 ## 次に着手する作業
 
-1. `Infrastructure/WindowIcon.cs` の `System.Drawing`、SDL2 P/Invoke、MonoGameウィンドウハンドルの責務を調査する。
-2. `IWindowIconService` などの境界を作り、`Game1` が静的なWindows寄り実装を直接呼ばない形にする。
-3. Windows実装を `Infrastructure/Windows` へ移す。
-4. SDL2部分を共通実装として再利用できるかは、Linux/macOSでのライブラリ名とハンドル取得方法を確認してから決める。
-5. 共通候補コードからWinForms、System.Drawing、Windows P/Invoke、Windowsシェル名が消えているか再検索する。
-6. GTP 実行ファイルフィルターの `*.exe` を、将来の OS 別実装が自然に置換できる意味的な指定へ変更するか検討する。
+1. 共通候補コードに残る `.exe`、Windowsパス区切り、`win-x64`、OS名、条件付きコンパイルを検索して分類する。
+2. GTP実行ファイル選択の `*.exe` フィルターを、OS別実装が決定できる意味的な指定へ変更する。
+3. `KifuwarabeGo2026.Gui.csproj` のMonoGame Content、埋込みアイコン、AssemblyName、publish時CGOS同梱処理を、CoreとWindowsのどちらへ置くか一覧化する。
+4. Windows起動プロジェクトの `AssemblyName` を `KifuwarabeGo2026.Gui` とし、実行ファイル名 `KifuwarabeGo2026.Gui.exe` を維持する。
+5. 既存の設定保存先、ログ保存先、Contentルート、CGOS探索基準がプロジェクト分割で変化しない方法を決める。
+6. 事前条件が揃ったら `KifuwarabeGo2026.Gui.Core` と `KifuwarabeGo2026.Gui.Windows` の物理的なプロジェクト分割へ進む。
 
-上記の後、`KifuwarabeGo2026.Gui.Core` と `KifuwarabeGo2026.Gui.Windows` の物理的なプロジェクト分割へ進めるか判断する。
+SDL2アイコン実装をLinux/macOSでも再利用できるかは、各OSでのライブラリ名とウィンドウハンドル取得方法を確認してから判断する。
 
 ## 引継ぎ時の注意
 

@@ -39,6 +39,7 @@ public class Game1 : Game
     private readonly ITextInputDialogService _textInputDialogService;
     private readonly IDesktopLauncher _desktopLauncher;
     private readonly ITextRasterizer _textRasterizer;
+    private readonly IWindowIconService _windowIconService;
     private readonly GoAppSession _session = new();
     private readonly TournamentRulesCatalog _tournamentRulesCatalog;
     private readonly GtpEngineCatalog _gtpEngineCatalog;
@@ -98,7 +99,8 @@ public class Game1 : Game
         IFileDialogService fileDialogService,
         ITextInputDialogService textInputDialogService,
         IDesktopLauncher desktopLauncher,
-        ITextRasterizer textRasterizer)
+        ITextRasterizer textRasterizer,
+        IWindowIconService windowIconService)
     {
         _clipboardService = clipboardService;
         _messageDialogService = messageDialogService;
@@ -106,6 +108,7 @@ public class Game1 : Game
         _textInputDialogService = textInputDialogService;
         _desktopLauncher = desktopLauncher;
         _textRasterizer = textRasterizer;
+        _windowIconService = windowIconService;
         _cgosBlackConnectionProcess = new CgosConnectionProcess(_desktopLauncher, "BlackPlayer");
         _cgosWhiteConnectionProcess = new CgosConnectionProcess(_desktopLauncher, "WhitePlayer");
         _cgosAdminProcess = new CgosConnectionProcess(_desktopLauncher, "Admin");
@@ -142,7 +145,7 @@ public class Game1 : Game
 
     protected override void LoadContent()
     {
-        WindowIcon.TryApply(Window.Handle);
+        _windowIconService.TryApply(Window.Handle);
         _renderer = new GoScreenRenderer(GraphicsDevice, Content, _textRasterizer);
         _placeStoneSound = CreatePlaceStoneSound();
         _placeStoneSoundInstance = _placeStoneSound.CreateInstance();
