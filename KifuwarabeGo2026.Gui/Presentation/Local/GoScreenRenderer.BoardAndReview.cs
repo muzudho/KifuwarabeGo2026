@@ -281,7 +281,7 @@ public sealed partial class GoScreenRenderer
         FillRect(bounds, new Color(31, 43, 45));
         DrawRect(bounds, 3, new Color(91, 218, 211));
         DrawText(
-            $"LIVE  MOVE {preview.MoveCount}",
+            $"CURRENT  MOVE {preview.MoveCount}",
             new Vector2(bounds.X + 12, bounds.Y + 8),
             new Color(91, 218, 211),
             0.28f);

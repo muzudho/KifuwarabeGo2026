@@ -58,7 +58,8 @@ public sealed partial class GoScreenRenderer
                     observation.DisplayMoveIndex,
                     observation.MoveCount,
                     mousePoint,
-                    showBackToLive: !observation.IsFinished);
+                    showBackToLive: !observation.IsFinished,
+                    backToLiveLabel: "BACK TO LIVE");
             }
             else if (observation.IsStarted && !observation.IsFinished)
             {

@@ -56,7 +56,7 @@ public sealed partial class GoScreenRenderer
             session.CanOpenLocalChartPopup)
         {
             DrawBroadcastStatusBadge(
-                session.IsLocalReplayMode ? "REPLAY" : "LIVE",
+                session.IsLocalReplayMode ? "REPLAY" : "CURRENT",
                 session.IsReviewChartPopupOpen);
         }
         if (!session.IsReviewChartPopupOpen)
@@ -68,7 +68,8 @@ public sealed partial class GoScreenRenderer
                     session.LocalDisplayMoveIndex,
                     session.CurrentGameRecord.Moves.Count,
                     mousePoint,
-                    showBackToLive: session.CurrentMode.Kind == GoAppModeKind.Playing);
+                    showBackToLive: session.CurrentMode.Kind == GoAppModeKind.Playing,
+                    backToLiveLabel: "BACK TO CURRENT");
             }
             else if (session.CanOpenLocalChartPopup ||
                      session.CurrentMode.Kind == GoAppModeKind.Reviewing)

@@ -131,11 +131,12 @@ public sealed partial class GoScreenRenderer
             mousePoint,
             session.CurrentMode.Kind == GoAppModeKind.GameOver
                 ? "GAME RESULT TREND"
-                : session.IsLocalReplayMode ? "REPLAY GAME TREND" : "LIVE GAME TREND",
+                : session.IsLocalReplayMode ? "REPLAY GAME TREND" : "CURRENT GAME TREND",
             session.LocalDisplayMoveIndex,
             seekable: true,
             showBackToLive: session.CurrentMode.Kind == GoAppModeKind.Playing,
             backToLiveEnabled: session.IsLocalReplayMode,
+            backToLiveLabel: "BACK TO CURRENT",
             showUnsavedNotice:
                 session.CurrentMode.Kind == GoAppModeKind.GameOver &&
                 !session.IsLocalResultSgfSaved);
@@ -164,6 +165,7 @@ public sealed partial class GoScreenRenderer
         bool seekable = false,
         bool showBackToLive = false,
         bool backToLiveEnabled = false,
+        string backToLiveLabel = "BACK TO LIVE",
         bool showUnsavedNotice = false)
     {
         var visibleMoves = new MovePrefixView(
@@ -194,7 +196,7 @@ public sealed partial class GoScreenRenderer
             DrawLiveChartAutoUpdateCheckBox(session, mousePoint);
             DrawCommandButton(
                 ReviewChartPopupBackToLiveButtonBounds,
-                "BACK TO LIVE",
+                backToLiveLabel,
                 false,
                 mousePoint,
                 enabled: backToLiveEnabled,
@@ -245,14 +247,15 @@ public sealed partial class GoScreenRenderer
         int currentMoveIndex,
         int moveCount,
         Point mousePoint,
-        bool showBackToLive)
+        bool showBackToLive,
+        string backToLiveLabel)
     {
         DrawReviewChartPopupStepButtons(currentMoveIndex, moveCount, mousePoint);
         if (showBackToLive)
         {
             DrawCommandButton(
                 ReplayBackToLiveButtonBounds,
-                "BACK TO LIVE",
+                backToLiveLabel,
                 false,
                 mousePoint,
                 scale: 0.3f);
