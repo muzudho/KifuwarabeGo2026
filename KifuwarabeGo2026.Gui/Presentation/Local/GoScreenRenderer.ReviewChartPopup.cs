@@ -59,6 +59,9 @@ public sealed partial class GoScreenRenderer
     public static int? GetReviewChartPopupCommentPageStepButtonHit(Point point) =>
         GetCommentPageStepButtonHit(point, ReviewChartPopupCommentOverlayBounds);
 
+    public static int? GetReviewChartPopupCommentMoveStepButtonHit(Point point) =>
+        GetCommentMoveStepButtonHit(point, ReviewChartPopupCommentOverlayBounds);
+
     private static Rectangle ReviewChartPopupCommentOverlayBounds =>
         new(1060, 205, 680, 740);
 

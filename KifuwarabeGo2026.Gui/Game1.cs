@@ -627,6 +627,15 @@ public class Game1 : Game
 
                 if (_session.CgosConnectionFlowKind is CgosConnectionFlowKind.Watching or CgosConnectionFlowKind.Result &&
                     _session.MoveInformationDisplayMode == MoveInformationDisplayMode.Comment &&
+                    GoScreenRenderer.GetCgosCommentMoveStepButtonHit(point) is { } cgosCommentMoveStep)
+                {
+                    TrySeekReadOnlyAdjacentComment(cgosCommentMoveStep);
+                    _previousMouse = mouse;
+                    return;
+                }
+
+                if (_session.CgosConnectionFlowKind is CgosConnectionFlowKind.Watching or CgosConnectionFlowKind.Result &&
+                    _session.MoveInformationDisplayMode == MoveInformationDisplayMode.Comment &&
                     GoScreenRenderer.GetCgosCommentPageStepButtonHit(point) is { } cgosCommentPageStep)
                 {
                     _session.ChangeCommentPage(cgosCommentPageStep);
@@ -893,6 +902,23 @@ public class Game1 : Game
                 _ => null,
             };
             if (_session.MoveInformationDisplayMode == MoveInformationDisplayMode.Comment &&
+                _session.CurrentMode.Kind is GoAppModeKind.Playing or GoAppModeKind.GameOver)
+            {
+                int? localCommentMoveStep = _session.CurrentMode.Kind switch
+                {
+                    GoAppModeKind.Playing => GoScreenRenderer.GetLocalCommentMoveStepButtonHit(point),
+                    GoAppModeKind.GameOver => GoScreenRenderer.GetLocalGameOverCommentMoveStepButtonHit(point),
+                    _ => null,
+                };
+                if (localCommentMoveStep is { } selectedLocalCommentMoveStep)
+                {
+                    TrySeekReadOnlyAdjacentComment(selectedLocalCommentMoveStep);
+                    _previousMouse = mouse;
+                    return;
+                }
+            }
+
+            if (_session.MoveInformationDisplayMode == MoveInformationDisplayMode.Comment &&
                 localCommentPageStep is { } selectedLocalCommentPageStep)
             {
                 _session.ChangeCommentPage(selectedLocalCommentPageStep);
@@ -1120,6 +1146,13 @@ public class Game1 : Game
             ExecuteReviewNavigation(step);
             _reviewMouseRepeatCommand = step is int.MinValue or int.MaxValue ? null : step;
             _reviewMouseNextRepeatAt = _inputClockSeconds + ReviewRepeatInitialDelaySeconds;
+            return true;
+        }
+
+        if (_session.MoveInformationDisplayMode == MoveInformationDisplayMode.Comment &&
+            GoScreenRenderer.GetReviewCommentMoveStepButtonHit(point) is { } reviewCommentMoveStep)
+        {
+            TryMoveReviewAdjacentComment(reviewCommentMoveStep);
             return true;
         }
 
@@ -1668,6 +1701,13 @@ public class Game1 : Game
         }
 
         if (_session.IsPopupCommentVisible &&
+            GoScreenRenderer.GetReviewChartPopupCommentMoveStepButtonHit(point) is { } commentMoveStep)
+        {
+            TryMoveReviewAdjacentComment(commentMoveStep);
+            return;
+        }
+
+        if (_session.IsPopupCommentVisible &&
             GoScreenRenderer.GetReviewChartPopupCommentPageStepButtonHit(point) is { } commentPageStep)
         {
             _session.ChangeCommentPage(commentPageStep);
@@ -1767,6 +1807,14 @@ public class Game1 : Game
         }
 
         if (_session.IsPopupCommentVisible &&
+            GoScreenRenderer.GetReviewChartPopupCommentMoveStepButtonHit(point) is { } commentMoveStep)
+        {
+            TrySeekReadOnlyAdjacentComment(commentMoveStep);
+            ResetReadOnlyChartPopupDoubleClick();
+            return;
+        }
+
+        if (_session.IsPopupCommentVisible &&
             GoScreenRenderer.GetReviewChartPopupCommentPageStepButtonHit(point) is { } commentPageStep)
         {
             _session.ChangeCommentPage(commentPageStep);
@@ -1856,6 +1904,54 @@ public class Game1 : Game
         {
             _session.SeekLocalReplay(moveIndex);
         }
+    }
+
+    private bool TrySeekReadOnlyAdjacentComment(int direction)
+    {
+        if (!TryGetReadOnlyChartNavigation(out var currentMoveIndex, out var maximumMoveIndex))
+        {
+            return false;
+        }
+
+        IReadOnlyList<GoGameMove> moves;
+        if (_session.UseKind == GoAppUseKind.CgosClient)
+        {
+            moves = _cgosGameObservation.Moves;
+        }
+        else
+        {
+            moves = _session.CurrentGameRecord.Moves;
+        }
+
+        var targetMoveNumber = MoveCommentNavigator.FindAdjacent(
+            moves,
+            currentMoveIndex,
+            direction,
+            maximumMoveIndex);
+        if (targetMoveNumber is not { } target)
+        {
+            return false;
+        }
+
+        SeekReadOnlyChartPopup(target);
+        _session.ResetCommentPage();
+        return true;
+    }
+
+    private bool TryMoveReviewAdjacentComment(int direction)
+    {
+        var targetMoveNumber = MoveCommentNavigator.FindAdjacent(
+            _session.ReviewMoves,
+            _session.ReviewMoveIndex,
+            direction,
+            _session.ReviewMoveCount);
+        if (targetMoveNumber is not { } target)
+        {
+            return false;
+        }
+
+        MoveReview(target - _session.ReviewMoveIndex);
+        return true;
     }
 
     private int GetReadOnlyChartCurrentMoveCount() =>

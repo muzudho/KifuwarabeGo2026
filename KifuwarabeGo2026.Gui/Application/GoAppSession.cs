@@ -479,6 +479,12 @@ public sealed class GoAppSession
             Math.Max(0, CommentPageCount - 1));
     }
 
+    public void ResetCommentPage()
+    {
+        CommentPageIndex = 0;
+        CommentPageCount = 1;
+    }
+
     public void UpdateCommentPageCount(int pageCount)
     {
         CommentPageCount = Math.Max(1, pageCount);

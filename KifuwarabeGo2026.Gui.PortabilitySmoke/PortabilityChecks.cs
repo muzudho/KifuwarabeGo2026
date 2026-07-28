@@ -25,6 +25,7 @@ internal static class PortabilityChecks
         VerifyNoPlatformInvokes(coreAssembly);
         VerifyPortableFallbacks();
         VerifyScoreAxisScaling();
+        VerifyCommentNavigation();
         VerifyComposition();
     }
 
@@ -114,6 +115,34 @@ internal static class PortabilityChecks
             MoveTrendScoreAxis.CalculateMaximum(
                 [new MoveTrendPoint(1, GoStone.Black, 50.0, null)]) == 60.0,
             "An exact outer tick must receive headroom.");
+    }
+
+    private static void VerifyCommentNavigation()
+    {
+        var moves = new[]
+        {
+            new GoGameMove(GoStone.Black, null, "first"),
+            new GoGameMove(GoStone.White, null, ""),
+            new GoGameMove(GoStone.Black, null, "second"),
+            new GoGameMove(GoStone.White, null, "third"),
+        };
+
+        Require(MoveCommentNavigator.Count(moves) == 3, "Comment count must ignore empty comments.");
+        Require(MoveCommentNavigator.GetOrdinal(moves, 1) == 1, "First comment ordinal is incorrect.");
+        Require(MoveCommentNavigator.GetOrdinal(moves, 2) == 0, "Uncommented move must not have an ordinal.");
+        Require(MoveCommentNavigator.GetOrdinal(moves, 4) == 3, "Last comment ordinal is incorrect.");
+        Require(
+            MoveCommentNavigator.FindAdjacent(moves, 0, 1) == 1,
+            "Next comment from the beginning must select the first comment.");
+        Require(
+            MoveCommentNavigator.FindAdjacent(moves, 1, 1) == 3,
+            "Next comment navigation is incorrect.");
+        Require(
+            MoveCommentNavigator.FindAdjacent(moves, 4, -1) == 3,
+            "Previous comment navigation is incorrect.");
+        Require(
+            MoveCommentNavigator.FindAdjacent(moves, 4, 1) is null,
+            "Comment navigation must not wrap at the end.");
     }
 
     private static Game1 CreateGame()

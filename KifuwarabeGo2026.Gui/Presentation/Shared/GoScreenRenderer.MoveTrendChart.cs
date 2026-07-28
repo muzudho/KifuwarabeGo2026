@@ -73,13 +73,28 @@ public sealed partial class GoScreenRenderer
     }
 
     private void DrawCgosTrendChart(GoAppSession session, CgosGameObservation observation, Point mousePoint) =>
-        DrawMoveTrendChart(session, observation.Moves, CgosTrendChartBounds, mousePoint);
+        DrawMoveTrendChart(
+            session,
+            observation.Moves,
+            CgosTrendChartBounds,
+            mousePoint,
+            observation.DisplayMoveIndex);
 
     private void DrawLocalTrendChart(GoAppSession session, Point mousePoint) =>
-        DrawMoveTrendChart(session, session.CurrentGameRecord.Moves, LocalTrendChartBounds, mousePoint);
+        DrawMoveTrendChart(
+            session,
+            session.CurrentGameRecord.Moves,
+            LocalTrendChartBounds,
+            mousePoint,
+            session.LocalDisplayMoveIndex);
 
     private void DrawLocalGameOverTrendChart(GoAppSession session, Point mousePoint) =>
-        DrawMoveTrendChart(session, session.CurrentGameRecord.Moves, LocalGameOverTrendChartBounds, mousePoint);
+        DrawMoveTrendChart(
+            session,
+            session.CurrentGameRecord.Moves,
+            LocalGameOverTrendChartBounds,
+            mousePoint,
+            session.LocalDisplayMoveIndex);
 
     private void DrawReviewTrendChart(GoAppSession session, Point mousePoint) =>
         DrawMoveTrendChart(
@@ -200,7 +215,6 @@ public sealed partial class GoScreenRenderer
 
         DrawMoveTrendAdvantageSections(bounds, plot, popup);
         DrawCgosTrendMoveTicks(maximumMove, plot);
-        DrawCommentMoveMarkers(moves, maximumMove, plot);
         DrawCgosCurrentTrendPoint(
             points,
             maximumMove,
@@ -415,23 +429,6 @@ public sealed partial class GoScreenRenderer
             hasComment ? "COMMENT *" : "COMMENT",
             session.MoveInformationDisplayMode == MoveInformationDisplayMode.Comment,
             mousePoint);
-    }
-
-    private void DrawCommentMoveMarkers(
-        IReadOnlyList<GoGameMove> moves,
-        int maximumMove,
-        Rectangle plot)
-    {
-        for (var index = 0; index < moves.Count; index++)
-        {
-            if (string.IsNullOrWhiteSpace(moves[index].Comment)) continue;
-            var x = (int)CgosTrendX(index + 1, maximumMove, plot);
-            DrawCenteredText(
-                "*",
-                new Vector2(x, plot.Bottom - 48),
-                new Color(255, 215, 92),
-                0.35f);
-        }
     }
 
     private void DrawCgosTrendModeButton(Rectangle bounds, string label, bool selected, Point mousePoint)
