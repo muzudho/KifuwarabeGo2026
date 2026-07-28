@@ -49,15 +49,17 @@ CoreとWindowsプロジェクトを分割した後も、利用者が実際に見
 
 このラウンドではフォルダー選択画面とExplorerが開きます。
 
-- [ ] タイトル画面右下の歯車ボタンから `APPLICATION SETTINGS` を開ける。
-- [ ] `LOG ROOT FOLDER` の `BROWSE` でフォルダー選択画面が開き、キャンセルできる。
-- [ ] `SGF SAVE FOLDER` の `BROWSE` でフォルダー選択画面が開き、キャンセルできる。
-- [ ] `APPLICATION SETTINGS FILE` の `OPEN FOLDER` でExplorerが開く。
-- [ ] `ENGINE SETTINGS FILE` の `OPEN FOLDER` でExplorerが開く。
-- [ ] `RECENT GUI LOGS` にログがある場合、選択して `EDIT IN CODE` を押すとVS Codeまたは既定アプリで開く。
-- [ ] `BACK` でタイトル画面へ戻れる。
+- [x] タイトル画面右下の歯車ボタンから `APPLICATION SETTINGS` を開ける。
+- [x] `LOG ROOT FOLDER` の `BROWSE` でフォルダー選択画面が開き、キャンセルできる。
+- [x] `SGF SAVE FOLDER` の `BROWSE` でフォルダー選択画面が開き、キャンセルできる。
+- [x] `APPLICATION SETTINGS FILE` の `OPEN FOLDER` でExplorerが開く。
+- [x] `ENGINE SETTINGS FILE` の `OPEN FOLDER` でExplorerが開く。
+- [x] `RECENT GUI LOGS` にログがある場合、選択して `EDIT IN CODE` を押すとVS Codeまたは既定アプリで開く。
+- [x] `BACK` でタイトル画面へ戻れる。
 
 キャンセルした場合、保存フォルダーの設定が変わらないことも確認します。
+
+2026-07-29に利用者が全項目OKと確認。GUIプロセスも終了済み。
 
 ## ラウンドC：SGFの保存と読込
 

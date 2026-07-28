@@ -1,6 +1,8 @@
 namespace KifuwarabeGo2026.Gui.PortabilitySmoke;
 
 using KifuwarabeGo2026.Gui;
+using KifuwarabeGo2026.Gui.Application.Local.Playing;
+using KifuwarabeGo2026.Shared.Domain;
 using System;
 using System.Linq;
 using System.Reflection;
@@ -22,6 +24,7 @@ internal static class PortabilityChecks
         VerifyAssemblyReferences(coreAssembly);
         VerifyNoPlatformInvokes(coreAssembly);
         VerifyPortableFallbacks();
+        VerifyScoreAxisScaling();
         VerifyComposition();
     }
 
@@ -88,6 +91,29 @@ internal static class PortabilityChecks
     {
         Func<Game1> composition = CreateGame;
         Require(composition is not null, "Game composition must compile.");
+    }
+
+    private static void VerifyScoreAxisScaling()
+    {
+        Require(
+            MoveTrendScoreAxis.CalculateMaximum([]) == 20.0,
+            "Empty score series must use the default ±20 axis.");
+        Require(
+            MoveTrendScoreAxis.CalculateMaximum(
+                [new MoveTrendPoint(1, GoStone.Black, 19.9, null)]) == 20.0,
+            "Scores within ±20 must retain the default axis.");
+        Require(
+            MoveTrendScoreAxis.CalculateMaximum(
+                [new MoveTrendPoint(1, GoStone.Black, 21.0, null)]) == 30.0,
+            "A score of 21 must expand the axis to ±30.");
+        Require(
+            MoveTrendScoreAxis.CalculateMaximum(
+                [new MoveTrendPoint(1, GoStone.White, -47.0, null)]) == 50.0,
+            "A score of -47 must expand the axis to ±50.");
+        Require(
+            MoveTrendScoreAxis.CalculateMaximum(
+                [new MoveTrendPoint(1, GoStone.Black, 50.0, null)]) == 60.0,
+            "An exact outer tick must receive headroom.");
     }
 
     private static Game1 CreateGame()

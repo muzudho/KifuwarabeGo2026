@@ -139,6 +139,8 @@ public sealed partial class GoScreenRenderer
         var drawScore = popup
             ? session.IsPopupScoreVisible
             : session.MoveTrendDisplayMode is MoveTrendDisplayMode.Both or MoveTrendDisplayMode.Score;
+        var points = MoveTrendSeriesBuilder.Build(moves);
+        var scoreAxisMaximum = MoveTrendScoreAxis.CalculateMaximum(points);
 
         for (var step = -2; step <= 2; step++)
         {
@@ -154,8 +156,8 @@ public sealed partial class GoScreenRenderer
                 DrawRotatedTrendAxisText(   // チャートの左側のＹ軸ラベル
                     text: step switch
                     {
-                        > 0 => $"+{step * 10}",
-                        < 0 => $"+{-step * 10}",
+                        > 0 => FormatTrendScoreAxisValue(step * scoreAxisMaximum / 2.0),
+                        < 0 => FormatTrendScoreAxisValue(-step * scoreAxisMaximum / 2.0),
                         _ => "EVEN",
                     },
                     bounds: scoreAxisBounds,
@@ -180,7 +182,6 @@ public sealed partial class GoScreenRenderer
             }
         }
 
-        var points = MoveTrendSeriesBuilder.Build(moves);
         var maximumMove = popup ? Math.Max(1, moves.Count) : Math.Max(100, points.Count);
         if (drawWinRate)
         {
@@ -194,7 +195,7 @@ public sealed partial class GoScreenRenderer
 
         if (drawScore)
         {
-            DrawCgosScoreBars(points, maximumMove, plot);
+            DrawCgosScoreBars(points, maximumMove, plot, scoreAxisMaximum);
         }
 
         DrawMoveTrendAdvantageSections(bounds, plot, popup);
@@ -512,7 +513,11 @@ public sealed partial class GoScreenRenderer
         }
     }
 
-    private void DrawCgosScoreBars(IReadOnlyList<MoveTrendPoint> points, int maximumMove, Rectangle plot)
+    private void DrawCgosScoreBars(
+        IReadOnlyList<MoveTrendPoint> points,
+        int maximumMove,
+        Rectangle plot,
+        double scoreAxisMaximum)
     {
         var barWidth = Math.Clamp(plot.Width / Math.Max(maximumMove, 1), 2, 7);
         foreach (var point in points)
@@ -520,7 +525,9 @@ public sealed partial class GoScreenRenderer
             if (point.BlackPerspectiveScore is not { } score) continue;
 
             var x = (int)CgosTrendX(point.MoveNumber, maximumMove, plot);
-            var valueY = plot.Center.Y - (float)Math.Clamp(score / 20.0, -1.0, 1.0) * plot.Height / 2f;
+            var valueY = plot.Center.Y
+                - (float)Math.Clamp(score / scoreAxisMaximum, -1.0, 1.0)
+                * plot.Height / 2f;
             var top = (int)Math.Min(valueY, plot.Center.Y);
             var height = Math.Max(2, (int)Math.Abs(valueY - plot.Center.Y));
             var bar = new Rectangle(x - barWidth / 2, top, barWidth, height);
@@ -528,6 +535,12 @@ public sealed partial class GoScreenRenderer
             FillRect(bar, black ? new Color(8, 13, 17, 230) : new Color(245, 237, 213, 232));
             DrawRect(bar, 1, black ? new Color(3, 6, 10, 240) : new Color(86, 93, 91, 220));
         }
+    }
+
+    private static string FormatTrendScoreAxisValue(double value)
+    {
+        var format = Math.Abs(value) >= 10000.0 ? "0.#E+0" : "0.#";
+        return "+" + value.ToString(format, CultureInfo.InvariantCulture);
     }
 
     private void DrawCgosAdvantageLabel(Rectangle bounds, bool black)
