@@ -1,6 +1,6 @@
 # クロスプラットフォーム対応のための Windows 依存分離計画
 
-最終更新: 2026-07-28
+最終更新: 2026-07-29
 
 ## 目的
 
@@ -197,6 +197,19 @@ Windows専用ソースを新プロジェクトへ移してから、旧 `Kifuwara
 - ログ保存先が分割前と同じ `Logs/Gui` であることを確認した。
 - 詳細と残る画面操作は [Core・Windows分割後スモークテスト.md](./Core・Windows分割後スモークテスト.md) に記録した。
 
+### 2026-07-29: 移植者向けスモークプロジェクトを追加
+
+- `KifuwarabeGo2026.Gui.PortabilitySmoke` を `net8.0` のコンソールプロジェクトとして追加した。
+- `PortablePlatformServices` が8個のプラットフォーム契約をWindows APIなしで実装する。
+- ファイル選択と入力はキャンセル、クリップボードは失敗、外部起動と警告とアイコンは無操作として、安全に機能を利用不可にする。
+- 実行ファイル名は拡張子を足さず、動的文字画像には透明な代替PNGを返す。
+- `Program.CreateGame` に、同じサービス群を `Game1` へ注入する最小の構成例を置いた。
+- スモーク実行ではGUIを起動せず、構成例がCoreの契約に対してコンパイルできることを確認する。
+- solutionを6プロジェクト構成に更新し、全体ビルドが警告0、エラー0で成功した。
+- `dotnet run --project KifuwarabeGo2026.Gui.PortabilitySmoke\KifuwarabeGo2026.Gui.PortabilitySmoke.csproj --no-build` が成功した。
+
+このプロジェクトはLinux/macOS対応済みという意味ではない。移植者はこれを雛形にし、ダイアログ、クリップボード、デスクトップ起動、文字描画、アイコンを対象OSの実装へ順番に置き換える。
+
 ## 目標構成
 
 ```text
@@ -389,7 +402,7 @@ dotnet publish <Windows用GUIプロジェクト> -c Release -r win-x64 --self-co
 3. SGF読込・保存、GTP設定の各ダイアログ、クリップボード、外部ログ起動を手動確認する。
 4. CGOS画面から通信コンポーネント探索とログ起動を確認する。
 5. 設定・ログ・自動保存先が分割前と同じことを確認する。
-6. Linux/macOS向け起動プロジェクトの雛形またはテスト用プラットフォーム実装を追加し、CoreをWindows APIなしで利用できることを継続検証する。
+6. Linux/macOS向け起動プロジェクトを作る際は、`KifuwarabeGo2026.Gui.PortabilitySmoke` の構成例をコピーし、対象OSの実装へ順番に置き換える。
 
 SDL2アイコン実装をLinux/macOSでも再利用できるかは、各OSでのライブラリ名とウィンドウハンドル取得方法を確認してから判断する。
 
