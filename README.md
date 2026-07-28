@@ -16,7 +16,7 @@
 ## リンク
 
 - [リリースページ](https://github.com/muzudho/KifuwarabeGo2026/releases)
-- [開発日誌 2026年7月](./KifuwarabeGo2026/Docs/開発/開発日誌/2026-07.md)
+- [開発日誌 2026年7月](./KifuwarabeGo2026.Gui/Docs/開発/開発日誌/2026-07.md)
 
 
 ## 主な機能
