@@ -22,7 +22,8 @@ internal static class Program
             GuiOperationLog.App("Application session started");
             using var game = new Game1(
                 new WindowsClipboardService(),
-                new WindowsMessageDialogService());
+                new WindowsMessageDialogService(),
+                new WindowsFileDialogService());
             game.Run();
         }
         catch (Exception ex)

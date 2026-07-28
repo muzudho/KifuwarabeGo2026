@@ -33,7 +33,19 @@
 - 旧 `Application/SystemClipboard.cs` を削除した。
 - ソリューション全体の Debug ビルドが警告 0、エラー 0 で成功した。
 
-まだ Windows 実装プロジェクトの分割は行っていない。次はファイル・フォルダーダイアログをサービス化し、WinForms 型を `Game1` から減らす。
+### 2026-07-28: ファイル・フォルダー選択の分離を完了
+
+- `IFileDialogService` を追加した。
+- `OpenFileDialogOptions`、`SaveFileDialogOptions`、`FolderDialogOptions`、`FileDialogFilter` を OS 非依存の契約として追加した。
+- `WindowsFileDialogService` に WinForms の Open、Save、FolderBrowser 実装を集約した。
+- `Program` から `Game1` へファイルダイアログサービスを注入した。
+- SGF の読込・保存をサービス経由へ置換した。
+- GTP エンジン実行ファイルとファイル名オプションの選択をサービス経由へ置換した。
+- GTP エンジン作業フォルダー、ログ保存先、SGF 保存先の選択をサービス経由へ置換した。
+- WinForms の `OpenFileDialog`、`SaveFileDialog`、`FolderBrowserDialog` は `Infrastructure/Windows/WindowsFileDialogService.cs` だけに残っている。
+- ソリューション全体の Debug ビルドが警告 0、エラー 0 で成功した。
+
+まだ Windows 実装プロジェクトの分割は行っていない。次は文字列・数値入力ダイアログをサービス化し、`Game1` から WinForms の `Form`、`TextBox`、`NumericUpDown`、`Button` への直接参照を除く。
 
 ## 目標構成
 
@@ -222,14 +234,14 @@ dotnet publish <Windows用GUIプロジェクト> -c Release -r win-x64 --self-co
 
 ## 次に着手する作業
 
-1. `IFileDialogService` と OS 非依存のオプション型を追加する。
-2. `WindowsFileDialogService` に Open、Save、FolderBrowser の実装を集める。
+1. `ITextInputDialogService` と文字列・数値入力の OS 非依存オプション型を追加する。
+2. `WindowsTextInputDialogService` に WinForms の入力フォームを移す。
 3. `Program` から `Game1` へ注入する。
-4. まず SGF の読込・保存ダイアログを置換する。
-5. 続いてエンジン、ルール、CGOS関連のファイル・フォルダー選択を置換する。
-6. 手動スモークテストで初期フォルダー、フィルター、既定ファイル名が維持されていることを確認する。
+4. GTP エンジンの文字列オプションと数値オプション編集を置換する。
+5. 入力初期値、最大長、最小値、最大値、キャンセル時の挙動が維持されていることを確認する。
+6. GTP 実行ファイルフィルターの `*.exe` を、将来の OS 別実装が自然に置換できる意味的な指定へ変更するか検討する。
 
-その後、入力ダイアログ、外部起動、文字画像生成の順で抽出する。最初からプロジェクト移動まで同時に行わず、動作を保ったまま境界を一本ずつ作る。
+その後、外部起動、文字画像生成の順で抽出する。最初からプロジェクト移動まで同時に行わず、動作を保ったまま境界を一本ずつ作る。
 
 ## 引継ぎ時の注意
 

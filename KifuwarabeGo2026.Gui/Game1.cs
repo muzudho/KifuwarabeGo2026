@@ -36,6 +36,7 @@ public class Game1 : Game
     private readonly GraphicsDeviceManager _graphics;
     private readonly IClipboardService _clipboardService;
     private readonly IMessageDialogService _messageDialogService;
+    private readonly IFileDialogService _fileDialogService;
     private readonly GoAppSession _session = new();
     private readonly TournamentRulesCatalog _tournamentRulesCatalog;
     private readonly GtpEngineCatalog _gtpEngineCatalog;
@@ -91,10 +92,12 @@ public class Game1 : Game
 
     public Game1(
         IClipboardService clipboardService,
-        IMessageDialogService messageDialogService)
+        IMessageDialogService messageDialogService,
+        IFileDialogService fileDialogService)
     {
         _clipboardService = clipboardService;
         _messageDialogService = messageDialogService;
+        _fileDialogService = fileDialogService;
         _tournamentRulesCatalog = TournamentRulesCatalog.LoadFromDefaultLocation();
         _gtpEngineCatalog = GtpEngineCatalog.LoadFromDefaultLocation();
         _cgosConnectionCatalog = CgosConnectionCatalog.LoadFromDefaultLocation();
@@ -2397,24 +2400,28 @@ public class Game1 : Game
 
     private void ImportSgf()
     {
-        using var dialog = new System.Windows.Forms.OpenFileDialog
+        var fileName = _fileDialogService.OpenFile(new OpenFileDialogOptions
         {
             CheckFileExists = true,
-            DefaultExt = "sgf",
-            Filter = "SGF files (*.sgf)|*.sgf|All files (*.*)|*.*",
+            DefaultExtension = "sgf",
+            Filters =
+            [
+                new FileDialogFilter("SGF files", ["*.sgf"]),
+                new FileDialogFilter("All files", ["*.*"]),
+            ],
             InitialDirectory = GetInitialSgfDirectory(),
             Title = "Load SGF game record",
-        };
+        });
 
-        if (dialog.ShowDialog() != System.Windows.Forms.DialogResult.OK)
+        if (fileName is null)
         {
             return;
         }
 
         try
         {
-            var record = SgfGameRecordConverter.FromSgf(File.ReadAllText(dialog.FileName, Encoding.UTF8));
-            RememberSgfDirectory(dialog.FileName);
+            var record = SgfGameRecordConverter.FromSgf(File.ReadAllText(fileName, Encoding.UTF8));
+            RememberSgfDirectory(fileName);
             StartReviewingGameRecord(record, "SGF input");
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or SgfParseException or ArgumentOutOfRangeException)
@@ -2434,19 +2441,23 @@ public class Game1 : Game
         string fileName,
         bool markCurrentResultSaved = true)
     {
-        using var dialog = new System.Windows.Forms.SaveFileDialog
+        var selectedFileName = _fileDialogService.SaveFile(new SaveFileDialogOptions
         {
             AddExtension = true,
             CheckPathExists = true,
-            DefaultExt = "sgf",
-            Filter = "SGF files (*.sgf)|*.sgf|All files (*.*)|*.*",
-            FileName = fileName,
+            DefaultExtension = "sgf",
+            Filters =
+            [
+                new FileDialogFilter("SGF files", ["*.sgf"]),
+                new FileDialogFilter("All files", ["*.*"]),
+            ],
+            InitialDirectory = GetInitialSgfDirectory(),
+            InitialFileName = fileName,
             OverwritePrompt = true,
             Title = "Save SGF game record",
-        };
-        dialog.InitialDirectory = GetInitialSgfDirectory();
+        });
 
-        if (dialog.ShowDialog() != System.Windows.Forms.DialogResult.OK)
+        if (selectedFileName is null)
         {
             return;
         }
@@ -2454,8 +2465,8 @@ public class Game1 : Game
         try
         {
             var sgf = SgfGameRecordConverter.ToSgf(record);
-            File.WriteAllText(dialog.FileName, sgf, Encoding.UTF8);
-            RememberSgfDirectory(dialog.FileName);
+            File.WriteAllText(selectedFileName, sgf, Encoding.UTF8);
+            RememberSgfDirectory(selectedFileName);
             RefreshSgfAutoSaveState();
             if (markCurrentResultSaved)
                 MarkCurrentResultSgfSaved();
@@ -2926,21 +2937,25 @@ public class Game1 : Game
     {
         EndGtpEngineEditField();
         var source = _session.GtpEngineEditDraft;
-        using var dialog = new System.Windows.Forms.OpenFileDialog
+        var fileName = _fileDialogService.OpenFile(new OpenFileDialogOptions
         {
             CheckFileExists = true,
-            Filter = "Executable files (*.exe)|*.exe|All files (*.*)|*.*",
-            FileName = Path.GetFileName(source.ExecutablePath),
+            Filters =
+            [
+                new FileDialogFilter("Executable files", ["*.exe"]),
+                new FileDialogFilter("All files", ["*.*"]),
+            ],
+            InitialFileName = Path.GetFileName(source.ExecutablePath),
             InitialDirectory = GetInitialGtpEngineDirectory(source),
             Title = "Select GTP engine executable",
-        };
+        });
 
-        if (dialog.ShowDialog() != System.Windows.Forms.DialogResult.OK)
+        if (fileName is null)
         {
             return;
         }
 
-        _session.SetGtpEngineExecutablePathDraft(dialog.FileName);
+        _session.SetGtpEngineExecutablePathDraft(fileName);
     }
 
     private void EditGtpEngineStringOption(GtpEngineGuiOptionSpec option)
@@ -3003,38 +3018,38 @@ public class Game1 : Game
 
     private void BrowseGtpEngineFilenameOption(GtpEngineGuiOptionSpec option)
     {
-        using var dialog = new System.Windows.Forms.OpenFileDialog
+        var fileName = _fileDialogService.OpenFile(new OpenFileDialogOptions
         {
             CheckFileExists = false,
-            FileName = Path.GetFileName(_session.GetGtpEngineGuiOptionDraft(option)),
-            Filter = "All files (*.*)|*.*",
+            InitialFileName = Path.GetFileName(_session.GetGtpEngineGuiOptionDraft(option)),
+            Filters = [new FileDialogFilter("All files", ["*.*"])],
             Title = $"Select {option.Label}",
-        };
-        if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+        });
+        if (fileName is not null)
         {
-            if (dialog.FileName.Length > GtpEngineGuiOptions.MaximumTextLength)
+            if (fileName.Length > GtpEngineGuiOptions.MaximumTextLength)
                 ShowMessage($"The file path exceeds {GtpEngineGuiOptions.MaximumTextLength} characters.", "GTP engine option");
             else
-                _session.SetGtpEngineGuiOptionDraft(option, dialog.FileName);
+                _session.SetGtpEngineGuiOptionDraft(option, fileName);
         }
     }
 
     private void BrowseGtpEngineWorkingDirectory()
     {
         EndGtpEngineEditField();
-        using var dialog = new System.Windows.Forms.FolderBrowserDialog
+        var selectedPath = _fileDialogService.SelectFolder(new FolderDialogOptions
         {
-            Description = "Select GTP engine working directory",
-            SelectedPath = GetInitialGtpEngineDirectory(_session.GtpEngineEditDraft),
-            ShowNewFolderButton = true,
-        };
+            AllowCreateFolder = true,
+            InitialDirectory = GetInitialGtpEngineDirectory(_session.GtpEngineEditDraft),
+            Title = "Select GTP engine working directory",
+        });
 
-        if (dialog.ShowDialog() != System.Windows.Forms.DialogResult.OK)
+        if (selectedPath is null)
         {
             return;
         }
 
-        _session.SetGtpEngineWorkingDirectoryDraft(WorkingDirectoryModel.FromString(dialog.SelectedPath));
+        _session.SetGtpEngineWorkingDirectoryDraft(WorkingDirectoryModel.FromString(selectedPath));
     }
 
     private void SaveGtpEngineEditDraft()
@@ -3132,18 +3147,17 @@ public class Game1 : Game
         if (GoScreenRenderer.GetSettingsBrowseButtonHit(point))
         {
             GuiOperationLog.User("Pressed log folder Browse button");
-            using var dialog = new System.Windows.Forms.FolderBrowserDialog
+            var selectedPath = _fileDialogService.SelectFolder(new FolderDialogOptions
             {
-                Description = "Select the folder which will contain the Gui and Cgos log folders.",
-                SelectedPath = ApplicationSettings.Current.LogRootDirectory,
-                UseDescriptionForTitle = true,
-            };
-            if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                InitialDirectory = ApplicationSettings.Current.LogRootDirectory,
+                Title = "Select the folder which will contain the Gui and Cgos log folders.",
+            });
+            if (selectedPath is not null)
             {
                 try
                 {
                     var previous = ApplicationSettings.Current.LogRootDirectory;
-                    ApplicationSettings.Save(dialog.SelectedPath);
+                    ApplicationSettings.Save(selectedPath);
                     GuiOperationLog.User("Changed log folder", $"from={previous} to={ApplicationSettings.Current.LogRootDirectory}");
                     _applicationSettingsMessage = "SAVED. New log files will use this folder.";
                     RefreshGuiLogFiles();
@@ -3164,19 +3178,18 @@ public class Game1 : Game
         if (GoScreenRenderer.GetSettingsSgfBrowseButtonHit(point))
         {
             GuiOperationLog.User("Pressed SGF folder Browse button");
-            using var dialog = new System.Windows.Forms.FolderBrowserDialog
+            var selectedPath = _fileDialogService.SelectFolder(new FolderDialogOptions
             {
-                Description = "Select the default folder for SGF game records.",
-                SelectedPath = Directory.Exists(ApplicationSettings.Current.SgfSaveDirectory)
+                InitialDirectory = Directory.Exists(ApplicationSettings.Current.SgfSaveDirectory)
                     ? ApplicationSettings.Current.SgfSaveDirectory
                     : Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-                UseDescriptionForTitle = true,
-            };
-            if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                Title = "Select the default folder for SGF game records.",
+            });
+            if (selectedPath is not null)
             {
                 try
                 {
-                    ApplicationSettings.SaveSgfDirectory(dialog.SelectedPath);
+                    ApplicationSettings.SaveSgfDirectory(selectedPath);
                     _applicationSettingsMessage = "SAVED. SGF files will start in this folder.";
                     GuiOperationLog.User("Changed SGF save folder", ApplicationSettings.Current.SgfSaveDirectory);
                 }
