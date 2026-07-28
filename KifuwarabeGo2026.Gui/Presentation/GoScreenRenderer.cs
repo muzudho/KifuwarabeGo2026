@@ -20,6 +20,7 @@ public sealed partial class GoScreenRenderer
 
     private readonly GraphicsDevice _graphicsDevice;
     private readonly SpriteBatch _spriteBatch;
+    private readonly ITextRasterizer _textRasterizer;
     private readonly SpriteFont _font;
     private readonly SpriteFont _boardCoordinateFont;
     private readonly Texture2D _pixel;
@@ -27,9 +28,13 @@ public sealed partial class GoScreenRenderer
     private readonly Texture2D _stoneLight;
     private readonly Texture2D _stoneDark;
 
-    public GoScreenRenderer(GraphicsDevice graphicsDevice, ContentManager content)
+    public GoScreenRenderer(
+        GraphicsDevice graphicsDevice,
+        ContentManager content,
+        ITextRasterizer textRasterizer)
     {
         _graphicsDevice = graphicsDevice;
+        _textRasterizer = textRasterizer;
         _spriteBatch = new SpriteBatch(graphicsDevice);
         _font = content.Load<SpriteFont>("Fonts/Ui");
         _boardCoordinateFont = content.Load<SpriteFont>("Fonts/BoardCoordinate");

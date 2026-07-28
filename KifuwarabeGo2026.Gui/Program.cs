@@ -25,7 +25,8 @@ internal static class Program
                 new WindowsMessageDialogService(),
                 new WindowsFileDialogService(),
                 new WindowsTextInputDialogService(),
-                new WindowsDesktopLauncher());
+                new WindowsDesktopLauncher(),
+                new WindowsTextRasterizer());
             game.Run();
         }
         catch (Exception ex)

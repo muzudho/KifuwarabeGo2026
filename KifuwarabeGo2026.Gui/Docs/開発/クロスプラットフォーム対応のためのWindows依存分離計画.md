@@ -67,7 +67,18 @@
 - Notepad、Explorer、PowerShellの実行ファイル名は `Infrastructure/Windows/WindowsDesktopLauncher.cs` だけに残っている。
 - ソリューション全体の Debug ビルドが警告 0、エラー 0 で成功した。
 
-まだ Windows 実装プロジェクトの分割は行っていない。次は WinForms `TextRenderer` と `System.Drawing` を使うGTPエンジン文字画像生成を調査し、共通描画または差し替え可能なサービスへ移す。
+### 2026-07-28: 文字画像生成の分離を完了
+
+- `ITextRasterizer` を追加した。
+- OS非依存の入力を「文字列、ピクセル高、太字、描画領域、行間、ページ」とし、出力を透明背景のPNGバイト列とした。
+- `WindowsTextRasterizer` にMeiryo、WinForms `TextRenderer`、`System.Drawing` の描画と折返し計測を集約した。
+- `Program` から `Game1`、`GoScreenRenderer` へ文字ラスタライザーを注入した。
+- GTPエンジン設定の動的オプション文字列をサービス経由へ置換した。
+- 棋譜コメントの折返し、ページ数計算、ページ画像生成も同じサービス経由へ置換した。
+- Presentation配下から `System.Windows.Forms` と `System.Drawing` の直接参照がなくなった。
+- 実行中の `KifuwarabeGo2026.Gui.exe` が通常のDebug出力先をロックしていたため、TEMP内の別出力先へGUIプロジェクトをビルドし、警告0、エラー0を確認した。
+
+まだ Windows 実装プロジェクトの分割は行っていない。残る主な画像系依存は `Infrastructure/WindowIcon.cs` の `System.Drawing` とSDL2呼び出しである。次はウィンドウアイコン適用をサービス境界へ移し、プロジェクト分割の事前条件を再確認する。
 
 ## 目標構成
 
@@ -256,14 +267,14 @@ dotnet publish <Windows用GUIプロジェクト> -c Release -r win-x64 --self-co
 
 ## 次に着手する作業
 
-1. `GoScreenRenderer.GtpEngine.cs` の WinForms `TextRenderer` と `System.Drawing` の利用範囲を調査する。
-2. MonoGame の `SpriteFont` で同じ表示を作れるか、OS別の文字画像サービスが必要かを判断する。
-3. OS別サービスが必要なら、入力と出力を MonoGame または共通の値型だけで表現する。
-4. Windows 実装を `Infrastructure/Windows` へ移し、PresentationからWinForms参照を除く。
-5. 文字の寸法、折返し、色、表示品質を比較する。
+1. `Infrastructure/WindowIcon.cs` の `System.Drawing`、SDL2 P/Invoke、MonoGameウィンドウハンドルの責務を調査する。
+2. `IWindowIconService` などの境界を作り、`Game1` が静的なWindows寄り実装を直接呼ばない形にする。
+3. Windows実装を `Infrastructure/Windows` へ移す。
+4. SDL2部分を共通実装として再利用できるかは、Linux/macOSでのライブラリ名とハンドル取得方法を確認してから決める。
+5. 共通候補コードからWinForms、System.Drawing、Windows P/Invoke、Windowsシェル名が消えているか再検索する。
 6. GTP 実行ファイルフィルターの `*.exe` を、将来の OS 別実装が自然に置換できる意味的な指定へ変更するか検討する。
 
-文字画像生成の分離後、共通コードを `net8.0` でビルドするために残っているWindows依存を再検索し、プロジェクト分割の事前条件を確認する。
+上記の後、`KifuwarabeGo2026.Gui.Core` と `KifuwarabeGo2026.Gui.Windows` の物理的なプロジェクト分割へ進めるか判断する。
 
 ## 引継ぎ時の注意
 

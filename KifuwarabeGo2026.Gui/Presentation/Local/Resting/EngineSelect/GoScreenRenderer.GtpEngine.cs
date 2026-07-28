@@ -417,17 +417,8 @@ public sealed partial class GoScreenRenderer
 
         if (!_dynamicOptionTextTextures.TryGetValue(text, out var texture))
         {
-            using var font = new System.Drawing.Font("Meiryo", 28, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Pixel);
-            var measured = System.Windows.Forms.TextRenderer.MeasureText(text, font, new System.Drawing.Size(int.MaxValue, int.MaxValue), System.Windows.Forms.TextFormatFlags.NoPadding);
-            using var bitmap = new System.Drawing.Bitmap(Math.Max(1, measured.Width), Math.Max(1, measured.Height), System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-            using (var graphics = System.Drawing.Graphics.FromImage(bitmap))
-            {
-                graphics.Clear(System.Drawing.Color.Transparent);
-                System.Windows.Forms.TextRenderer.DrawText(graphics, text, font, new System.Drawing.Point(0, 0), System.Drawing.Color.White, System.Windows.Forms.TextFormatFlags.NoPadding);
-            }
-            using var stream = new MemoryStream();
-            bitmap.Save(stream, System.Drawing.Imaging.ImageFormat.Png);
-            stream.Position = 0;
+            var png = _textRasterizer.RasterizePng(text, pixelHeight: 28, bold: true);
+            using var stream = new MemoryStream(png, writable: false);
             texture = Texture2D.FromStream(_graphicsDevice, stream);
             _dynamicOptionTextTextures[text] = texture;
         }
