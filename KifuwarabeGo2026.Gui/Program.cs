@@ -23,7 +23,8 @@ internal static class Program
             using var game = new Game1(
                 new WindowsClipboardService(),
                 new WindowsMessageDialogService(),
-                new WindowsFileDialogService());
+                new WindowsFileDialogService(),
+                new WindowsTextInputDialogService());
             game.Run();
         }
         catch (Exception ex)

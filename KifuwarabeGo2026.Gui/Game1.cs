@@ -37,6 +37,7 @@ public class Game1 : Game
     private readonly IClipboardService _clipboardService;
     private readonly IMessageDialogService _messageDialogService;
     private readonly IFileDialogService _fileDialogService;
+    private readonly ITextInputDialogService _textInputDialogService;
     private readonly GoAppSession _session = new();
     private readonly TournamentRulesCatalog _tournamentRulesCatalog;
     private readonly GtpEngineCatalog _gtpEngineCatalog;
@@ -93,11 +94,13 @@ public class Game1 : Game
     public Game1(
         IClipboardService clipboardService,
         IMessageDialogService messageDialogService,
-        IFileDialogService fileDialogService)
+        IFileDialogService fileDialogService,
+        ITextInputDialogService textInputDialogService)
     {
         _clipboardService = clipboardService;
         _messageDialogService = messageDialogService;
         _fileDialogService = fileDialogService;
+        _textInputDialogService = textInputDialogService;
         _tournamentRulesCatalog = TournamentRulesCatalog.LoadFromDefaultLocation();
         _gtpEngineCatalog = GtpEngineCatalog.LoadFromDefaultLocation();
         _cgosConnectionCatalog = CgosConnectionCatalog.LoadFromDefaultLocation();
@@ -2960,60 +2963,28 @@ public class Game1 : Game
 
     private void EditGtpEngineStringOption(GtpEngineGuiOptionSpec option)
     {
-        var current = _session.GetGtpEngineGuiOptionDraft(option);
-        using var dialog = new System.Windows.Forms.Form
+        var value = _textInputDialogService.PromptText(new TextInputDialogOptions
         {
-            AcceptButton = null,
-            CancelButton = null,
-            ClientSize = new System.Drawing.Size(620, 150),
-            FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog,
-            MaximizeBox = false,
-            MinimizeBox = false,
-            StartPosition = System.Windows.Forms.FormStartPosition.CenterParent,
-            Text = option.Label,
-        };
-        using var textBox = new System.Windows.Forms.TextBox { Left = 20, Top = 20, Width = 580, Text = current, MaxLength = GtpEngineGuiOptions.MaximumTextLength };
-        using var cancelButton = new System.Windows.Forms.Button { Left = 20, Top = 78, Width = 110, Height = 42, Text = "CANCEL", DialogResult = System.Windows.Forms.DialogResult.Cancel };
-        using var okButton = new System.Windows.Forms.Button { Left = 150, Top = 78, Width = 110, Height = 42, Text = "OK", DialogResult = System.Windows.Forms.DialogResult.OK };
-        dialog.AcceptButton = okButton;
-        dialog.CancelButton = cancelButton;
-        dialog.Controls.AddRange([textBox, cancelButton, okButton]);
-        textBox.SelectAll();
-        if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-            _session.SetGtpEngineGuiOptionDraft(option, textBox.Text);
+            InitialValue = _session.GetGtpEngineGuiOptionDraft(option),
+            MaximumLength = GtpEngineGuiOptions.MaximumTextLength,
+            Title = option.Label,
+        });
+        if (value is not null)
+            _session.SetGtpEngineGuiOptionDraft(option, value);
     }
 
     private void EditGtpEngineSpinOption(GtpEngineGuiOptionSpec option)
     {
         _ = int.TryParse(_session.GetGtpEngineGuiOptionDraft(option), out var current);
-        using var dialog = new System.Windows.Forms.Form
+        var value = _textInputDialogService.PromptInteger(new IntegerInputDialogOptions
         {
-            ClientSize = new System.Drawing.Size(620, 150),
-            FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog,
-            MaximizeBox = false,
-            MinimizeBox = false,
-            StartPosition = System.Windows.Forms.FormStartPosition.CenterParent,
-            Text = option.Label,
-        };
-        using var numberBox = new System.Windows.Forms.NumericUpDown
-        {
-            Left = 20,
-            Top = 20,
-            Width = 580,
-            DecimalPlaces = 0,
+            InitialValue = current,
             Minimum = option.Min ?? int.MinValue,
             Maximum = option.Max ?? int.MaxValue,
-            Value = Math.Clamp(current, option.Min ?? int.MinValue, option.Max ?? int.MaxValue),
-            ThousandsSeparator = false,
-        };
-        using var cancelButton = new System.Windows.Forms.Button { Left = 20, Top = 78, Width = 110, Height = 42, Text = "CANCEL", DialogResult = System.Windows.Forms.DialogResult.Cancel };
-        using var okButton = new System.Windows.Forms.Button { Left = 150, Top = 78, Width = 110, Height = 42, Text = "OK", DialogResult = System.Windows.Forms.DialogResult.OK };
-        dialog.AcceptButton = okButton;
-        dialog.CancelButton = cancelButton;
-        dialog.Controls.AddRange([numberBox, cancelButton, okButton]);
-        numberBox.Select(0, numberBox.Text.Length);
-        if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-            _session.SetGtpEngineGuiOptionDraft(option, decimal.ToInt32(numberBox.Value).ToString());
+            Title = option.Label,
+        });
+        if (value is not null)
+            _session.SetGtpEngineGuiOptionDraft(option, value.Value.ToString());
     }
 
     private void BrowseGtpEngineFilenameOption(GtpEngineGuiOptionSpec option)

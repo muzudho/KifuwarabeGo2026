@@ -45,7 +45,18 @@
 - WinForms の `OpenFileDialog`、`SaveFileDialog`、`FolderBrowserDialog` は `Infrastructure/Windows/WindowsFileDialogService.cs` だけに残っている。
 - ソリューション全体の Debug ビルドが警告 0、エラー 0 で成功した。
 
-まだ Windows 実装プロジェクトの分割は行っていない。次は文字列・数値入力ダイアログをサービス化し、`Game1` から WinForms の `Form`、`TextBox`、`NumericUpDown`、`Button` への直接参照を除く。
+### 2026-07-28: 文字列・整数入力の分離を完了
+
+- `ITextInputDialogService` を追加した。
+- `TextInputDialogOptions` と `IntegerInputDialogOptions` を OS 非依存の契約として追加した。
+- `WindowsTextInputDialogService` に WinForms の文字列・整数入力フォームを移した。
+- `Program` から `Game1` へ入力ダイアログサービスを注入した。
+- GTP エンジンの文字列オプションと数値オプション編集をサービス経由へ置換した。
+- 初期値、文字列最大長、数値の最小値・最大値、キャンセル時に値を変更しない挙動を維持した。
+- WinForms の `Form`、`TextBox`、`NumericUpDown`、入力フォーム用 `Button` は `Infrastructure/Windows/WindowsTextInputDialogService.cs` だけに残っている。
+- ソリューション全体の Debug ビルドが警告 0、エラー 0 で成功した。
+
+まだ Windows 実装プロジェクトの分割は行っていない。次は外部ファイル・フォルダー・URL・エディターを開く処理を分類し、OS差があるものを `IDesktopLauncher` の後ろへ移す。
 
 ## 目標構成
 
@@ -234,14 +245,14 @@ dotnet publish <Windows用GUIプロジェクト> -c Release -r win-x64 --self-co
 
 ## 次に着手する作業
 
-1. `ITextInputDialogService` と文字列・数値入力の OS 非依存オプション型を追加する。
-2. `WindowsTextInputDialogService` に WinForms の入力フォームを移す。
-3. `Program` から `Game1` へ注入する。
-4. GTP エンジンの文字列オプションと数値オプション編集を置換する。
-5. 入力初期値、最大長、最小値、最大値、キャンセル時の挙動が維持されていることを確認する。
+1. `Game1` と周辺クラスの `Process.Start` / `ProcessStartInfo` を用途別に分類する。
+2. ファイル、フォルダー、URL、任意エディターを開くための `IDesktopLauncher` を追加する。
+3. `WindowsDesktopLauncher` に Windows シェルを使う処理を集約する。
+4. OS 非依存な子プロセス通信は、無理にデスクトップ起動サービスへ混ぜず既存の専用クラスに残す。
+5. `Program` から必要な利用箇所へ注入し、Windowsシェルの直接利用を置換する。
 6. GTP 実行ファイルフィルターの `*.exe` を、将来の OS 別実装が自然に置換できる意味的な指定へ変更するか検討する。
 
-その後、外部起動、文字画像生成の順で抽出する。最初からプロジェクト移動まで同時に行わず、動作を保ったまま境界を一本ずつ作る。
+その後、WinForms `TextRenderer` を使う文字画像生成を抽出する。最初からプロジェクト移動まで同時に行わず、動作を保ったまま境界を一本ずつ作る。
 
 ## 引継ぎ時の注意
 
