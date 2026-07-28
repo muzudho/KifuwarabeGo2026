@@ -135,7 +135,7 @@ public sealed partial class GoScreenRenderer
     {
         if (string.IsNullOrWhiteSpace(text) || bounds.Width <= 0 || bounds.Height <= 0) return 1;
 
-        var pixelHeight = bounds.Width > 1000 || bounds.Height > 500 ? 36 : 16;
+        var pixelHeight = bounds.Width > 1000 || bounds.Height >= 500 ? 36 : 16;
         const int extraLineSpacing = 3;
         var pageCount = _textRasterizer.GetWrappedPageCount(
             text,
