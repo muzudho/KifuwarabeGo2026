@@ -1,5 +1,6 @@
 namespace KifuwarabeGo2026.Gui.Application.Cgos.Connect;
 
+using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Application.Cgos.ConnectionTarget;
 using System;
 using System.Collections.Generic;
@@ -14,6 +15,7 @@ using System.Threading.Tasks;
 public sealed class CgosConnectionProcess : IDisposable
 {
     private readonly string _logFolderName;
+    private readonly IDesktopLauncher _desktopLauncher;
     private readonly object _outputLock = new();
     private readonly Queue<string> _recentOutput = new();
     private readonly Queue<string> _pendingOutput = new();
@@ -50,8 +52,11 @@ public sealed class CgosConnectionProcess : IDisposable
         }
     }
 
-    public CgosConnectionProcess(string logFolderName = "")
+    public CgosConnectionProcess(
+        IDesktopLauncher desktopLauncher,
+        string logFolderName = "")
     {
+        _desktopLauncher = desktopLauncher;
         _logFolderName = logFolderName.Trim();
     }
 
@@ -428,19 +433,27 @@ public sealed class CgosConnectionProcess : IDisposable
         var targetPath = GetLogTargetPath(openStandardError, allowGuiFallback: !openStandardError);
 
         var opensFile = File.Exists(targetPath);
-        var fileName = opensFile
-            ? string.IsNullOrWhiteSpace(app) ? "notepad" : app.Trim()
-            : "explorer";
-        var startInfo = new ProcessStartInfo
+        string openedWith;
+        if (!opensFile)
         {
-            FileName = fileName,
-            UseShellExecute = true,
-        };
-        startInfo.ArgumentList.Add(targetPath);
-        Process.Start(startInfo);
+            _desktopLauncher.OpenDirectory(targetPath);
+            openedWith = "file manager";
+        }
+        else if (string.IsNullOrWhiteSpace(app))
+        {
+            _desktopLauncher.OpenTextFile(targetPath);
+            openedWith = "text editor";
+        }
+        else
+        {
+            var result = _desktopLauncher.OpenFileWithPreferredApplication(targetPath, app.Trim());
+            openedWith = result == DesktopOpenResult.PreferredApplication
+                ? app.Trim()
+                : "default application";
+        }
 
         var openedName = File.Exists(targetPath) ? Path.GetFileName(targetPath) : targetPath;
-        AddOutput($"# Opened {(openStandardError ? "standard error" : "CGOS")} log with {fileName}: {openedName}");
+        AddOutput($"# Opened {(openStandardError ? "standard error" : "CGOS")} log with {openedWith}: {openedName}");
         return openStandardError ? "OPENED STDERR LOG" : "OPENED LOG";
     }
 
@@ -452,20 +465,7 @@ public sealed class CgosConnectionProcess : IDisposable
             targetPath = EnsureGuiLogFile();
         }
 
-        var escapedPath = targetPath.Replace("'", "''", StringComparison.Ordinal);
-        var command = $"$Host.UI.RawUI.WindowTitle = 'CGOS log tail'; Get-Content -LiteralPath '{escapedPath}' -Wait";
-        var startInfo = new ProcessStartInfo
-        {
-            FileName = "powershell",
-            UseShellExecute = true,
-        };
-        startInfo.ArgumentList.Add("-NoExit");
-        startInfo.ArgumentList.Add("-NoProfile");
-        startInfo.ArgumentList.Add("-ExecutionPolicy");
-        startInfo.ArgumentList.Add("Bypass");
-        startInfo.ArgumentList.Add("-Command");
-        startInfo.ArgumentList.Add(command);
-        Process.Start(startInfo);
+        _desktopLauncher.TailTextFile(targetPath, "CGOS log tail");
 
         AddOutput("# Tailing CGOS log with PowerShell: " + Path.GetFileName(targetPath));
         return openStandardError ? "TAIL STDERR LOG" : "TAIL LOG";

@@ -24,7 +24,6 @@ using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Collections.Generic;
@@ -38,15 +37,16 @@ public class Game1 : Game
     private readonly IMessageDialogService _messageDialogService;
     private readonly IFileDialogService _fileDialogService;
     private readonly ITextInputDialogService _textInputDialogService;
+    private readonly IDesktopLauncher _desktopLauncher;
     private readonly GoAppSession _session = new();
     private readonly TournamentRulesCatalog _tournamentRulesCatalog;
     private readonly GtpEngineCatalog _gtpEngineCatalog;
     private readonly CgosConnectionCatalog _cgosConnectionCatalog;
     private readonly TournamentRulesSetting _tournamentRulesSetting;
     private readonly PlayingScene _playingScene;
-    private readonly CgosConnectionProcess _cgosBlackConnectionProcess = new("BlackPlayer");
-    private readonly CgosConnectionProcess _cgosWhiteConnectionProcess = new("WhitePlayer");
-    private readonly CgosConnectionProcess _cgosAdminProcess = new("Admin");
+    private readonly CgosConnectionProcess _cgosBlackConnectionProcess;
+    private readonly CgosConnectionProcess _cgosWhiteConnectionProcess;
+    private readonly CgosConnectionProcess _cgosAdminProcess;
     private readonly CgosGameObservation _cgosGameObservation = new();
     private GoAppSession? _variationSession;
     private GoScreenRenderer? _renderer;
@@ -95,12 +95,17 @@ public class Game1 : Game
         IClipboardService clipboardService,
         IMessageDialogService messageDialogService,
         IFileDialogService fileDialogService,
-        ITextInputDialogService textInputDialogService)
+        ITextInputDialogService textInputDialogService,
+        IDesktopLauncher desktopLauncher)
     {
         _clipboardService = clipboardService;
         _messageDialogService = messageDialogService;
         _fileDialogService = fileDialogService;
         _textInputDialogService = textInputDialogService;
+        _desktopLauncher = desktopLauncher;
+        _cgosBlackConnectionProcess = new CgosConnectionProcess(_desktopLauncher, "BlackPlayer");
+        _cgosWhiteConnectionProcess = new CgosConnectionProcess(_desktopLauncher, "WhitePlayer");
+        _cgosAdminProcess = new CgosConnectionProcess(_desktopLauncher, "Admin");
         _tournamentRulesCatalog = TournamentRulesCatalog.LoadFromDefaultLocation();
         _gtpEngineCatalog = GtpEngineCatalog.LoadFromDefaultLocation();
         _cgosConnectionCatalog = CgosConnectionCatalog.LoadFromDefaultLocation();
@@ -1016,25 +1021,7 @@ public class Game1 : Game
     private void OpenEngineLog()
     {
         var logPath = ApplicationErrorLog.FilePath;
-
-        try
-        {
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = logPath,
-                UseShellExecute = true,
-            });
-        }
-        catch
-        {
-            var startInfo = new ProcessStartInfo
-            {
-                FileName = "notepad",
-                UseShellExecute = true,
-            };
-            startInfo.ArgumentList.Add(logPath);
-            Process.Start(startInfo);
-        }
+        _desktopLauncher.OpenTextFile(logPath);
     }
 
     private bool TryHandleBoardEditingClick(Point point)
@@ -3199,23 +3186,15 @@ public class Game1 : Game
             GuiOperationLog.User("Pressed Edit in Code button", Path.GetFileName(path));
             try
             {
-                var startInfo = new ProcessStartInfo { FileName = "code", UseShellExecute = true };
-                startInfo.ArgumentList.Add(path);
-                Process.Start(startInfo);
-                _applicationSettingsMessage = "OPENED IN CODE";
+                var result = _desktopLauncher.OpenFileWithPreferredApplication(path, "code");
+                _applicationSettingsMessage = result == DesktopOpenResult.PreferredApplication
+                    ? "OPENED IN CODE"
+                    : "CODE NOT FOUND; OPENED WITH DEFAULT APP";
             }
-            catch (Exception ex) when (ex is System.ComponentModel.Win32Exception or InvalidOperationException)
+            catch (Exception ex)
             {
-                try
-                {
-                    Process.Start(new ProcessStartInfo { FileName = path, UseShellExecute = true });
-                    _applicationSettingsMessage = "CODE NOT FOUND; OPENED WITH DEFAULT APP";
-                }
-                catch (Exception fallbackEx)
-                {
-                    _applicationSettingsMessage = "ERROR: " + fallbackEx.Message;
-                    ApplicationErrorLog.Write("OPEN GUI LOG", "Could not open the selected GUI log.", fallbackEx);
-                }
+                _applicationSettingsMessage = "ERROR: " + ex.Message;
+                ApplicationErrorLog.Write("OPEN GUI LOG", "Could not open the selected GUI log.", ex);
             }
         }
     }
@@ -3231,14 +3210,7 @@ public class Game1 : Game
             }
 
             Directory.CreateDirectory(directory);
-            var startInfo = new ProcessStartInfo
-            {
-                FileName = "explorer.exe",
-                UseShellExecute = true,
-            };
-            startInfo.ArgumentList.Add("/select,");
-            startInfo.ArgumentList.Add(filePath);
-            Process.Start(startInfo);
+            _desktopLauncher.RevealFile(filePath);
             _applicationSettingsMessage = $"OPENED {description.ToUpperInvariant()} FOLDER";
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException or System.ComponentModel.Win32Exception)

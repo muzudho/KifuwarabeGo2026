@@ -24,7 +24,8 @@ internal static class Program
                 new WindowsClipboardService(),
                 new WindowsMessageDialogService(),
                 new WindowsFileDialogService(),
-                new WindowsTextInputDialogService());
+                new WindowsTextInputDialogService(),
+                new WindowsDesktopLauncher());
             game.Run();
         }
         catch (Exception ex)

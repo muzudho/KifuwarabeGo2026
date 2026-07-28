@@ -56,7 +56,18 @@
 - WinForms の `Form`、`TextBox`、`NumericUpDown`、入力フォーム用 `Button` は `Infrastructure/Windows/WindowsTextInputDialogService.cs` だけに残っている。
 - ソリューション全体の Debug ビルドが警告 0、エラー 0 で成功した。
 
-まだ Windows 実装プロジェクトの分割は行っていない。次は外部ファイル・フォルダー・URL・エディターを開く処理を分類し、OS差があるものを `IDesktopLauncher` の後ろへ移す。
+### 2026-07-28: デスクトップ外部起動の分離を完了
+
+- `IDesktopLauncher` と `DesktopOpenResult` を追加した。
+- `WindowsDesktopLauncher` に既定アプリ、Notepad、VS Code、Explorer、PowerShellを使う処理を集約した。
+- `Program` から `Game1` へデスクトップランチャーを注入した。
+- GUIエラーログを開く処理、GUIログをVS Codeまたは既定アプリで開く処理、設定ファイルの場所をExplorerで示す処理をサービス経由へ置換した。
+- `CgosConnectionProcess` に同じサービスを注入し、CGOSログを開く、ログフォルダーを開く、ログを追尾する操作を置換した。
+- GTPエンジンとCGOS通信コンポーネントの起動は、標準入出力を制御する子プロセス通信であるため、デスクトップランチャーへ混ぜず専用クラスに残した。
+- Notepad、Explorer、PowerShellの実行ファイル名は `Infrastructure/Windows/WindowsDesktopLauncher.cs` だけに残っている。
+- ソリューション全体の Debug ビルドが警告 0、エラー 0 で成功した。
+
+まだ Windows 実装プロジェクトの分割は行っていない。次は WinForms `TextRenderer` と `System.Drawing` を使うGTPエンジン文字画像生成を調査し、共通描画または差し替え可能なサービスへ移す。
 
 ## 目標構成
 
@@ -245,14 +256,14 @@ dotnet publish <Windows用GUIプロジェクト> -c Release -r win-x64 --self-co
 
 ## 次に着手する作業
 
-1. `Game1` と周辺クラスの `Process.Start` / `ProcessStartInfo` を用途別に分類する。
-2. ファイル、フォルダー、URL、任意エディターを開くための `IDesktopLauncher` を追加する。
-3. `WindowsDesktopLauncher` に Windows シェルを使う処理を集約する。
-4. OS 非依存な子プロセス通信は、無理にデスクトップ起動サービスへ混ぜず既存の専用クラスに残す。
-5. `Program` から必要な利用箇所へ注入し、Windowsシェルの直接利用を置換する。
+1. `GoScreenRenderer.GtpEngine.cs` の WinForms `TextRenderer` と `System.Drawing` の利用範囲を調査する。
+2. MonoGame の `SpriteFont` で同じ表示を作れるか、OS別の文字画像サービスが必要かを判断する。
+3. OS別サービスが必要なら、入力と出力を MonoGame または共通の値型だけで表現する。
+4. Windows 実装を `Infrastructure/Windows` へ移し、PresentationからWinForms参照を除く。
+5. 文字の寸法、折返し、色、表示品質を比較する。
 6. GTP 実行ファイルフィルターの `*.exe` を、将来の OS 別実装が自然に置換できる意味的な指定へ変更するか検討する。
 
-その後、WinForms `TextRenderer` を使う文字画像生成を抽出する。最初からプロジェクト移動まで同時に行わず、動作を保ったまま境界を一本ずつ作る。
+文字画像生成の分離後、共通コードを `net8.0` でビルドするために残っているWindows依存を再検索し、プロジェクト分割の事前条件を確認する。
 
 ## 引継ぎ時の注意
 
