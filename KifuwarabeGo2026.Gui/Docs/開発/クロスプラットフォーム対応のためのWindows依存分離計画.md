@@ -232,6 +232,15 @@ Windows専用ソースを新プロジェクトへ移してから、旧 `Kifuwara
 
 ローカルWindowsでは同じReleaseビルドとスモークを検証する。GitHub-hosted runner上の結果は、ワークフローを含む変更がGitHubへpushされた後に確認する。
 
+### 2026-07-29: SDK選択方針を明示
+
+- リポジトリ直下へ `global.json` を追加した。
+- 基準SDKはCIと同じ.NET 8 SDK `8.0.423` とする。
+- `rollForward` は `major` とし、基準SDKがない開発PCでは互換性のある上位メジャーSDKを許可する。
+- `allowPrerelease` は `false` とし、プレビューSDKを自動選択しない。
+- 作者のWindows環境は10.0.302だけが導入済みであるため、8.0.423への厳密固定は採用しない。
+- CIは8.0.423を明示的に導入するため、同バージョンが選択される。
+
 ## 目標構成
 
 ```text
