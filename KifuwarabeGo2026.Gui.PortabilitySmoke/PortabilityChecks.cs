@@ -221,7 +221,9 @@ internal static class PortabilityChecks
             {
               "DisplayName": "Current",
               "Rule": "Japanese",
-              "MainTime": "999:59:59",
+              "TimeControl": {
+                "Main": "999:59:59"
+              },
               "MoveLimit": 9999
             }
             """;
@@ -232,7 +234,9 @@ internal static class PortabilityChecks
 
         var serialized = JsonSerializer.Serialize(current);
         Require(serialized.Contains("\"Rule\":\"Japanese\"", StringComparison.Ordinal), "Rule names must serialize in PascalCase.");
-        Require(serialized.Contains("\"MainTime\":\"999:59:59\"", StringComparison.Ordinal), "Main time must serialize as hhh:mm:ss.");
+        Require(
+            serialized.Contains("\"TimeControl\":{\"Main\":\"999:59:59\"}", StringComparison.Ordinal),
+            "Main time must serialize as TimeControl.Main.");
         Require(!serialized.Contains("MainTimeMinutes", StringComparison.Ordinal), "Legacy minute fields must not be written.");
     }
 

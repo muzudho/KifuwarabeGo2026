@@ -85,6 +85,12 @@ public sealed class TournamentRulesJsonConverter : JsonConverter<TournamentRules
                 case "MAINTIME":
                     mainTime = property.Value.GetString();
                     break;
+                case "TIMECONTROL":
+                    if (property.Value.ValueKind == JsonValueKind.Object &&
+                        TryGetPropertyIgnoreCase(property.Value, "Main", out var mainProperty) &&
+                        mainProperty.ValueKind == JsonValueKind.String)
+                        mainTime = mainProperty.GetString();
+                    break;
                 case "MAINTIMEMINUTES":
                     property.Value.TryGetInt32(out legacyMinutes);
                     break;
@@ -115,9 +121,29 @@ public sealed class TournamentRulesJsonConverter : JsonConverter<TournamentRules
         writer.WriteString("Rule", rules.Rule.ToString());
         writer.WriteNumber("BoardSize", rules.BoardSize);
         writer.WriteNumber("Komi", rules.Komi);
-        writer.WriteString("MainTime", FormatMainTime(rules.MainTime));
+        writer.WriteStartObject("TimeControl");
+        writer.WriteString("Main", FormatMainTime(rules.MainTime));
+        writer.WriteEndObject();
         writer.WriteNumber("MoveLimit", rules.MoveLimit);
         writer.WriteEndObject();
+    }
+
+    private static bool TryGetPropertyIgnoreCase(
+        JsonElement element,
+        string name,
+        out JsonElement value)
+    {
+        foreach (var property in element.EnumerateObject())
+        {
+            if (property.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
+            {
+                value = property.Value;
+                return true;
+            }
+        }
+
+        value = default;
+        return false;
     }
 
     public static bool TryParseMainTime(string? text, out int totalSeconds)

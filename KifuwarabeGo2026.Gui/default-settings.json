@@ -4,29 +4,32 @@
     "TournamentRules": [
       {
         "DisplayName": "Yamashita CGOS Server 9-ro",
-        "Id": "yamashita-cgos-server-9ro",
         "Rule": "Chinese",
         "BoardSize": 9,
         "Komi": 7.0,
-        "MainTime": "00:15:00",
+        "TimeControl": {
+          "Main": "00:15:00"
+        },
         "MoveLimit": 9999
       },
       {
         "DisplayName": "CGF Open 2026 9-ro",
-        "Id": "cgf-open-2026-9ro",
         "Rule": "Chinese",
         "BoardSize": 9,
         "Komi": 7.0,
-        "MainTime": "00:10:00",
+        "TimeControl": {
+          "Main": "00:10:00"
+        },
         "MoveLimit": 400
       },
       {
         "DisplayName": "CGF Open 2026 19-ro",
-        "Id": "cgf-open-2026-19ro",
         "Rule": "Japanese",
         "BoardSize": 19,
         "Komi": 6.5,
-        "MainTime": "00:30:00",
+        "TimeControl": {
+          "Main": "00:30:00"
+        },
         "MoveLimit": 400
       }
     ]
@@ -34,21 +37,11 @@
   "EngineSettings": {
     "GtpEngines": [
       {
-        "DisplayName": "Example GTP Engine (set ExecutablePath)",
-        "DefaultCgosLoginName": "",
-        "DefaultCgosPlainTextPassword": "",
-        "ExecutablePath": "",
-        "WorkingDirectory": "",
+        "DisplayName": "Kifuwarabe",
+        "ExecutablePath": "KifuwarabeGo2026.Engine.exe",
+        "WorkingDirectory": ".",
         "Arguments": "",
-        "EnableGtpLog": true,
-        "GuiOptions": {
-          "RandomMove": "ChebyshevDistanceFromStar",
-          "AvoidEyes": "true",
-          "RandomSeed": "0",
-          "EngineTag": "",
-          "DebugLogFile": "",
-          "ClearCache": "false"
-        }
+        "EnableGtpLog": true
       }
     ]
   },
