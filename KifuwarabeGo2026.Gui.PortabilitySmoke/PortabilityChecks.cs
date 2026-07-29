@@ -1,6 +1,7 @@
 namespace KifuwarabeGo2026.Gui.PortabilitySmoke;
 
 using KifuwarabeGo2026.Gui;
+using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.Shared.Domain;
 using System;
@@ -26,6 +27,7 @@ internal static class PortabilityChecks
         VerifyPortableFallbacks();
         VerifyScoreAxisScaling();
         VerifyCommentNavigation();
+        VerifyCatalogOrderEditor();
         VerifyComposition();
     }
 
@@ -143,6 +145,32 @@ internal static class PortabilityChecks
         Require(
             MoveCommentNavigator.FindAdjacent(moves, 4, 1) is null,
             "Comment navigation must not wrap at the end.");
+    }
+
+    private static void VerifyCatalogOrderEditor()
+    {
+        var source = new[] { "A", "B", "C", "D", "E", "F", "G" };
+        var editor = new CatalogOrderEditor<string>();
+        editor.Open(source, 6, 3);
+        Require(editor.PagePairIndex == 1, "Order editor must open the page pair containing the selection.");
+
+        editor.MoveSelected(-3);
+        Require(editor.SelectedIndex == 3, "Page move must update the selected index.");
+        Require(editor.Items.SequenceEqual(["A", "B", "C", "G", "D", "E", "F"]), "Page move produced the wrong order.");
+
+        editor.BeginDrag(3);
+        editor.DragTo(1);
+        editor.EndDrag();
+        Require(editor.Items.SequenceEqual(["A", "G", "B", "C", "D", "E", "F"]), "Drag move produced the wrong order.");
+
+        editor.MoveSelectedToTop();
+        Require(editor.Items.SequenceEqual(["G", "A", "B", "C", "D", "E", "F"]), "Move-to-top produced the wrong order.");
+        Require(editor.Commit().SequenceEqual(["G", "A", "B", "C", "D", "E", "F"]), "Commit must return the edited order.");
+
+        editor.Open(source, 0, 3);
+        editor.MoveSelected(1);
+        editor.Cancel();
+        Require(source.SequenceEqual(["A", "B", "C", "D", "E", "F", "G"]), "Cancel must not mutate the source list.");
     }
 
     private static Game1 CreateGame()

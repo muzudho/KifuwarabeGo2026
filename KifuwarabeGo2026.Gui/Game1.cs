@@ -467,6 +467,7 @@ public class Game1 : Game
 
         var mouse = Mouse.GetState();
         var point = VirtualScreen.ToVirtualPoint(GraphicsDevice.Viewport, mouse.Position);
+        UpdateCatalogOrderDrag(mouse, point);
         var engineErrorLogHovered = _session.UseKind == GoAppUseKind.LocalGame &&
             GoScreenRenderer.GetEngineErrorLogHit(point, _session);
         Mouse.SetCursor(engineErrorLogHovered ? MouseCursor.Hand : MouseCursor.Arrow);
@@ -1051,6 +1052,31 @@ public class Game1 : Game
         }
 
         _previousMouse = mouse;
+    }
+
+    private void UpdateCatalogOrderDrag(MouseState mouse, Point point)
+    {
+        UpdateCatalogOrderDrag(_session.TournamentRulesOrderEditor, mouse, point);
+        UpdateCatalogOrderDrag(_session.GtpEngineOrderEditor, mouse, point);
+    }
+
+    private void UpdateCatalogOrderDrag<T>(CatalogOrderEditor<T> editor, MouseState mouse, Point point)
+    {
+        if (!editor.IsOpen || editor.DraggedIndex < 0)
+        {
+            return;
+        }
+
+        if (mouse.LeftButton == ButtonState.Released)
+        {
+            editor.EndDrag();
+            return;
+        }
+
+        if (GoScreenRenderer.GetCatalogOrderCardHit(point, editor) is { } index)
+        {
+            editor.DragTo(index);
+        }
     }
 
     private void OpenEngineLog()
@@ -2709,6 +2735,11 @@ public class Game1 : Game
             return false;
         }
 
+        if (_session.GtpEngineOrderEditor.IsOpen)
+        {
+            return TryHandleGtpEngineOrderEditorClick(point);
+        }
+
         if (_session.IsGtpEngineDeleteConfirmationOpen)
         {
             return TryHandleGtpEngineDeleteConfirmationClick(point);
@@ -2756,6 +2787,13 @@ public class Game1 : Game
             return true;
         }
 
+        if (_session.GtpEngineProfiles.Count > 1 &&
+            GoScreenRenderer.GetGtpEngineSelectionDialogOrderButtonHit(point))
+        {
+            _session.OpenGtpEngineOrderEditor();
+            return true;
+        }
+
         if (GoScreenRenderer.GetGtpEngineSelectionDialogPreviousPageButtonHit(point))
         {
             _session.MoveGtpEngineSelectionPage(-1);
@@ -2773,6 +2811,35 @@ public class Game1 : Game
             _session.SelectGtpEngineDialogItem(index);
             return true;
         }
+
+        return true;
+    }
+
+    private bool TryHandleGtpEngineOrderEditorClick(Point point)
+    {
+        var editor = _session.GtpEngineOrderEditor;
+        if (GoScreenRenderer.GetCatalogOrderCancelButtonHit(point))
+        {
+            _session.CancelGtpEngineOrderEditor();
+            return true;
+        }
+
+        if (GoScreenRenderer.GetCatalogOrderSaveButtonHit(point))
+        {
+            var profiles = _session.CommitGtpEngineOrderEditor();
+            _gtpEngineCatalog.Save(profiles);
+            return true;
+        }
+
+        var moveStep = GoScreenRenderer.GetCatalogOrderMoveStep(point, editor.PageSize);
+        if (moveStep == int.MinValue)
+            editor.MoveSelectedToTop();
+        else if (moveStep != 0)
+            editor.MoveSelected(moveStep);
+        else if (GoScreenRenderer.GetCatalogOrderPagePairStep(point) is var pageStep && pageStep != 0)
+            editor.MovePagePair(pageStep);
+        else if (GoScreenRenderer.GetCatalogOrderCardHit(point, editor) is { } index)
+            editor.BeginDrag(index);
 
         return true;
     }

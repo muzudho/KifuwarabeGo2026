@@ -227,6 +227,8 @@ public sealed class GoAppSession
 
     public IReadOnlyList<TournamentRules> TournamentRulesList => _tournamentRules;
 
+    public CatalogOrderEditor<TournamentRules> TournamentRulesOrderEditor { get; } = new();
+
     public int SelectedTournamentRulesIndex { get; private set; }
 
     public bool IsTournamentRulesSelectionDialogOpen { get; private set; }
@@ -310,6 +312,8 @@ public sealed class GoAppSession
     public int HumanPlayerNameCaretIndex { get; private set; }
 
     public IReadOnlyList<GtpEngineProfile> GtpEngineProfiles => _gtpEngineProfiles;
+
+    public CatalogOrderEditor<GtpEngineProfile> GtpEngineOrderEditor { get; } = new();
 
     public int SelectedBlackGtpEngineIndex { get; private set; }
 
@@ -1525,6 +1529,31 @@ public sealed class GoAppSession
         SelectTournamentRules(0);
     }
 
+    public void OpenTournamentRulesOrderEditor() =>
+        TournamentRulesOrderEditor.Open(
+            _tournamentRules,
+            TournamentRulesDialogSelectionIndex,
+            TournamentRulesSelectionPageSize);
+
+    public void CancelTournamentRulesOrderEditor() => TournamentRulesOrderEditor.Cancel();
+
+    public IReadOnlyList<TournamentRules> CommitTournamentRulesOrderEditor()
+    {
+        var selectedRules = SelectedTournamentRulesIndex >= 0 && SelectedTournamentRulesIndex < _tournamentRules.Count
+            ? _tournamentRules[SelectedTournamentRulesIndex]
+            : null;
+        var dialogRules = TournamentRulesDialogSelectionIndex >= 0 && TournamentRulesDialogSelectionIndex < _tournamentRules.Count
+            ? _tournamentRules[TournamentRulesDialogSelectionIndex]
+            : null;
+        var orderedRules = TournamentRulesOrderEditor.Commit();
+        _tournamentRules.Clear();
+        _tournamentRules.AddRange(orderedRules);
+        SelectedTournamentRulesIndex = selectedRules is null ? 0 : Math.Max(0, _tournamentRules.IndexOf(selectedRules));
+        TournamentRulesDialogSelectionIndex = dialogRules is null ? SelectedTournamentRulesIndex : Math.Max(0, _tournamentRules.IndexOf(dialogRules));
+        TournamentRulesSelectionPageIndex = TournamentRulesDialogSelectionIndex / TournamentRulesSelectionPageSize;
+        return _tournamentRules.Select(rule => rule.Clone()).ToArray();
+    }
+
     public void SelectTournamentRules(int index)
     {
         if (index < 0 || index >= _tournamentRules.Count)
@@ -1834,6 +1863,44 @@ public sealed class GoAppSession
         SelectedCgosWhiteGtpEngineIndex = 0;
         SetCgosPlayerCredentials(GoStone.Black, _gtpEngineProfiles[0].DefaultCgosLoginName, _gtpEngineProfiles[0].DefaultCgosPlainTextPassword);
         SetCgosPlayerCredentials(GoStone.White, _gtpEngineProfiles[0].DefaultCgosLoginName, _gtpEngineProfiles[0].DefaultCgosPlainTextPassword);
+    }
+
+    public void OpenGtpEngineOrderEditor() =>
+        GtpEngineOrderEditor.Open(
+            _gtpEngineProfiles,
+            GtpEngineDialogSelectionIndex,
+            GtpEngineSelectionPageSize);
+
+    public void CancelGtpEngineOrderEditor() => GtpEngineOrderEditor.Cancel();
+
+    public IReadOnlyList<GtpEngineProfile> CommitGtpEngineOrderEditor()
+    {
+        var black = GetGtpEngineProfileOrNull(SelectedBlackGtpEngineIndex);
+        var white = GetGtpEngineProfileOrNull(SelectedWhiteGtpEngineIndex);
+        var cgosBlack = GetGtpEngineProfileOrNull(SelectedCgosBlackGtpEngineIndex);
+        var cgosWhite = GetGtpEngineProfileOrNull(SelectedCgosWhiteGtpEngineIndex);
+        var dialog = GetGtpEngineProfileOrNull(GtpEngineDialogSelectionIndex);
+        var orderedProfiles = GtpEngineOrderEditor.Commit();
+        _gtpEngineProfiles.Clear();
+        _gtpEngineProfiles.AddRange(orderedProfiles);
+        SelectedBlackGtpEngineIndex = GetReorderedGtpEngineIndex(black);
+        SelectedWhiteGtpEngineIndex = GetReorderedGtpEngineIndex(white);
+        SelectedCgosBlackGtpEngineIndex = GetReorderedGtpEngineIndex(cgosBlack);
+        SelectedCgosWhiteGtpEngineIndex = GetReorderedGtpEngineIndex(cgosWhite);
+        GtpEngineDialogSelectionIndex = GetReorderedGtpEngineIndex(dialog);
+        GtpEngineSelectionPageIndex = GtpEngineDialogSelectionIndex / GtpEngineSelectionPageSize;
+        return _gtpEngineProfiles.Select(profile => profile.Clone()).ToArray();
+    }
+
+    private GtpEngineProfile? GetGtpEngineProfileOrNull(int? index) =>
+        index is { } value && value >= 0 && value < _gtpEngineProfiles.Count
+            ? _gtpEngineProfiles[value]
+            : null;
+
+    private int GetReorderedGtpEngineIndex(GtpEngineProfile? profile)
+    {
+        var index = profile is null ? -1 : _gtpEngineProfiles.IndexOf(profile);
+        return index >= 0 ? index : 0;
     }
 
     private GtpEngineProfile? GetCgosGtpEngineProfile(int? index) =>

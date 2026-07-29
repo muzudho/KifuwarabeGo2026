@@ -54,6 +54,10 @@ public sealed class TournamentRulesCatalog
         ApplicationSettings.SaveTournamentRules(savedRules);
     }
 
+    public void SaveOrder(IEnumerable<TournamentRules> rules) =>
+        ApplicationSettings.SaveTournamentRules(
+            rules.Select(NormalizeForApplicationSettings).ToList());
+
     public TournamentRules CreateNew(TournamentRules source)
     {
         var rules = NormalizeForApplicationSettings(source);

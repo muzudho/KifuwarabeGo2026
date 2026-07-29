@@ -204,6 +204,11 @@ public sealed class TournamentRulesSetting
 
     private bool TryHandleTournamentRulesSelectionDialogClick(Point point)
     {
+        if (_session.TournamentRulesOrderEditor.IsOpen)
+        {
+            return TryHandleTournamentRulesOrderEditorClick(point);
+        }
+
         if (_session.IsTournamentRulesDeleteConfirmationOpen)
         {
             return TryHandleTournamentRulesDeleteConfirmationClick(point);
@@ -251,6 +256,13 @@ public sealed class TournamentRulesSetting
             return true;
         }
 
+        if (_session.TournamentRulesList.Count > 1 &&
+            GoScreenRenderer.GetTournamentRulesSelectionDialogOrderButtonHit(point))
+        {
+            _session.OpenTournamentRulesOrderEditor();
+            return true;
+        }
+
         if (GoScreenRenderer.GetTournamentRulesSelectionDialogPreviousPageButtonHit(point))
         {
             _session.MoveTournamentRulesSelectionPage(-1);
@@ -268,6 +280,35 @@ public sealed class TournamentRulesSetting
             _session.SelectTournamentRulesDialogItem(index);
             return true;
         }
+
+        return true;
+    }
+
+    private bool TryHandleTournamentRulesOrderEditorClick(Point point)
+    {
+        var editor = _session.TournamentRulesOrderEditor;
+        if (GoScreenRenderer.GetCatalogOrderCancelButtonHit(point))
+        {
+            _session.CancelTournamentRulesOrderEditor();
+            return true;
+        }
+
+        if (GoScreenRenderer.GetCatalogOrderSaveButtonHit(point))
+        {
+            var rules = _session.CommitTournamentRulesOrderEditor();
+            _catalog.SaveOrder(rules);
+            return true;
+        }
+
+        var moveStep = GoScreenRenderer.GetCatalogOrderMoveStep(point, editor.PageSize);
+        if (moveStep == int.MinValue)
+            editor.MoveSelectedToTop();
+        else if (moveStep != 0)
+            editor.MoveSelected(moveStep);
+        else if (GoScreenRenderer.GetCatalogOrderPagePairStep(point) is var pageStep && pageStep != 0)
+            editor.MovePagePair(pageStep);
+        else if (GoScreenRenderer.GetCatalogOrderCardHit(point, editor) is { } index)
+            editor.BeginDrag(index);
 
         return true;
     }

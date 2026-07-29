@@ -44,6 +44,9 @@ public sealed partial class GoScreenRenderer
     public static bool GetGtpEngineSelectionDialogDeleteButtonHit(Point point, bool enabled) =>
         enabled && GtpEngineSelectionDialogDeleteButtonBounds.Contains(point);
 
+    public static bool GetGtpEngineSelectionDialogOrderButtonHit(Point point) =>
+        GtpEngineSelectionDialogOrderButtonBounds.Contains(point);
+
 
     public static bool GetGtpEngineDeleteConfirmationConfirmButtonHit(Point point) =>
         GtpEngineDeleteConfirmationConfirmButtonBounds.Contains(point);
@@ -256,7 +259,14 @@ public sealed partial class GoScreenRenderer
         DrawCommandButton(GtpEngineSelectionDialogEditButtonBounds, "EDIT", false, mousePoint, enabled: session.GtpEngineProfiles.Count > 0, scale: 0.42f);
         DrawCommandButton(GtpEngineSelectionDialogDuplicateButtonBounds, "DUPLICATE", false, mousePoint, enabled: session.GtpEngineProfiles.Count > 0, scale: 0.32f);
         DrawCommandButton(GtpEngineSelectionDialogDeleteButtonBounds, "DELETE", false, mousePoint, enabled: session.CanDeleteSelectedGtpEngine, scale: 0.42f);
+        DrawCommandButton(GtpEngineSelectionDialogOrderButtonBounds, "ORDER", false, mousePoint, enabled: session.GtpEngineProfiles.Count > 1, scale: 0.38f);
         DrawGtpEngineDeleteConfirmation(session, mousePoint);
+        DrawCatalogOrderEditor(
+            session.GtpEngineOrderEditor,
+            "GTP ENGINES",
+            mousePoint,
+            profile => profile.DisplayName,
+            profile => string.IsNullOrWhiteSpace(profile.ExecutablePath) ? "EXECUTABLE NOT SET" : Path.GetFileName(profile.ExecutablePath));
     }
 
 
@@ -607,6 +617,8 @@ public sealed partial class GoScreenRenderer
 
 
     private static Rectangle GtpEngineSelectionDialogDeleteButtonBounds => new(620, 874, 100, 44);
+
+    private static Rectangle GtpEngineSelectionDialogOrderButtonBounds => new(740, 874, 120, 44);
 
 
     private static Rectangle GtpEngineDeleteConfirmationBounds => new(654, 358, 612, 260);

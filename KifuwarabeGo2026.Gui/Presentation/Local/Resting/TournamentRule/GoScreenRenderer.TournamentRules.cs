@@ -39,6 +39,9 @@ public sealed partial class GoScreenRenderer
     public static bool GetTournamentRulesSelectionDialogDeleteButtonHit(Point point, bool enabled) =>
         enabled && TournamentRulesSelectionDialogDeleteButtonBounds.Contains(point);
 
+    public static bool GetTournamentRulesSelectionDialogOrderButtonHit(Point point) =>
+        TournamentRulesSelectionDialogOrderButtonBounds.Contains(point);
+
 
     public static bool GetTournamentRulesDeleteConfirmationConfirmButtonHit(Point point) =>
         TournamentRulesDeleteConfirmationConfirmButtonBounds.Contains(point);
@@ -151,7 +154,14 @@ public sealed partial class GoScreenRenderer
         DrawCommandButton(TournamentRulesSelectionDialogEditButtonBounds, "EDIT", false, mousePoint, enabled: session.TournamentRulesList.Count > 0, scale: 0.42f);
         DrawCommandButton(TournamentRulesSelectionDialogDuplicateButtonBounds, "DUPLICATE", false, mousePoint, enabled: session.TournamentRulesList.Count > 0, scale: 0.34f);
         DrawCommandButton(TournamentRulesSelectionDialogDeleteButtonBounds, "DELETE", false, mousePoint, enabled: session.CanDeleteSelectedTournamentRules, scale: 0.42f);
+        DrawCommandButton(TournamentRulesSelectionDialogOrderButtonBounds, "ORDER", false, mousePoint, enabled: session.TournamentRulesList.Count > 1, scale: 0.38f);
         DrawTournamentRulesDeleteConfirmation(session, mousePoint);
+        DrawCatalogOrderEditor(
+            session.TournamentRulesOrderEditor,
+            "TOURNAMENT RULES",
+            mousePoint,
+            rules => rules.DisplayName,
+            rules => $"{rules.Rule}  {rules.BoardSize}x{rules.BoardSize}  KOMI {FormatKomi(rules.Komi)}");
     }
 
 
@@ -273,6 +283,8 @@ public sealed partial class GoScreenRenderer
 
 
     private static Rectangle TournamentRulesSelectionDialogDeleteButtonBounds => new(620, 874, 100, 44);
+
+    private static Rectangle TournamentRulesSelectionDialogOrderButtonBounds => new(740, 874, 120, 44);
 
 
     private static Rectangle TournamentRulesSelectionDialogPreviousPageButtonBounds => new(730, 816, 90, 44);
