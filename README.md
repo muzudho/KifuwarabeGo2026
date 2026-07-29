@@ -18,8 +18,8 @@
 
 ## リンク
 
-- [リリースページ](https://github.com/muzudho/KifuwarabeGo2026/releases)
-- [開発日誌 2026年7月](./KifuwarabeGo2026.Gui/Docs/開発/開発日誌/2026-07.md)
+- [最新版をダウンロードする](https://github.com/muzudho/KifuwarabeGo2026/releases/latest)
+- [開発に参加する方はこちら](./README.developer.md)
 
 
 ## 主な機能
@@ -33,63 +33,30 @@
 - SGF 棋譜の読み込み、局面編集、棋譜レビュー
 - `R` キーによる連解析表示
 - CGOS サーバーへの接続（CGF Open 2026 への参加の実績有り）
+- 大会ルール、思考エンジン、CGOS接続先を使いたい順に並べ替える順序編集
 
 
 ## 動作環境
 
-- Windows
-- .NET SDK 10.0.302、または互換性のある新しい10.0 feature band
+- Windows x64
+- .NET 8 Desktop Runtime
 
-アプリケーションの対象フレームワークと利用者向けランタイムは.NET 8です。開発用SDKには、ソリューションの `.slnx` 形式を扱える.NET 10を使用します。
+プログラム開発用のSDKやVisual Studioは必要ありません。
 
 > [!Note]
-> 現在、作者が動作確認できる環境はWindowsだけです。Linux版やmacOS版への移植協力を歓迎しています。詳しくは[きふわらべの碁2026・移植の手引き](./KifuwarabeGo2026.Gui/Docs/設計/きふわらべの碁2026・移植の手引き.md)をご覧ください。
+> 現在、作者が動作確認している環境はWindowsだけです。
 
 
 ## 起動方法
 
-```powershell
-dotnet run --project KifuwarabeGo2026.Gui.Windows\KifuwarabeGo2026.Gui.Windows.csproj
-```
+1. [リリースページ](https://github.com/muzudho/KifuwarabeGo2026/releases/latest)を開きます。
+2. 画面を使う場合は `KifuwarabeGo2026.Gui-v～-win-x64.zip` をダウンロードします。
+3. 思考エンジンも使う場合は `KifuwarabeGo2026.Engine-v～-win-x64.zip` もダウンロードします。
+4. ZIPファイルを右クリックし、［すべて展開］で展開します。
+5. `KifuwarabeGo2026.Gui.exe` をダブルクリックします。
 
-GTP エンジン単体を確認する場合:
+GUI版とEngine版の両方を使う場合は、両方のZIPが必要です。
 
-```powershell
-@('protocol_version','name','version','boardsize 9','clear_board','play black D4','genmove white','quit') | dotnet run --project KifuwarabeGo2026.Engine\KifuwarabeGo2026.Engine.csproj
-```
+思考エンジンを別のフォルダーへ展開した場合は、GUIのエンジン設定画面で `KifuwarabeGo2026.Engine.exe` を選択してください。
 
-CGOS 練習サーバーへ接続する場合:
-
-```powershell
-dotnet run --project KifuwarabeGo2026.Gui.Communication.Cgos -- --account black
-dotnet run --project KifuwarabeGo2026.Gui.Communication.Cgos -- --account white
-```
-
-黒番・白番の両方を同じ端末から接続する場合:
-
-```powershell
-dotnet run --project KifuwarabeGo2026.Gui.Communication.Cgos -- --both
-```
-
-
-## リリースビルド
-
-```powershell
-dotnet publish KifuwarabeGo2026.Gui.Windows\KifuwarabeGo2026.Gui.Windows.csproj -c Release -r win-x64 --self-contained false
-dotnet publish KifuwarabeGo2026.Engine\KifuwarabeGo2026.Engine.csproj -c Release -r win-x64 --self-contained false
-```
-
-出力先:
-
-- `KifuwarabeGo2026.Gui.Windows\bin\Release\net8.0-windows\win-x64\publish`
-- `KifuwarabeGo2026.Engine\bin\Release\net8.0\win-x64\publish`
-
-GUI の publish 時には、CGOS 通信コンポーネントも `Tools\Cgos` 以下へ自動的に publish されます。
-`KifuwarabeGo2026.Gui.Core.dll` はGUI版へ、`KifuwarabeGo2026.Shared.dll` はGUI版とEngine版の両方へ自動的に含まれます。
-
-
-## ドキュメント
-
-- [共有ドキュメント](./KifuwarabeGo2026.Gui/Docs/README.md)
-- [きふわらべ式SGF形式仕様](./KifuwarabeGo2026.Gui/Docs/設計/きふわらべ式SGF形式仕様.md)
-- [きふわらべの碁2026・移植の手引き](./KifuwarabeGo2026.Gui/Docs/設計/きふわらべの碁2026・移植の手引き.md)
+起動時にWindowsから確認画面が出た場合は、ダウンロード元がこのGitHubリポジトリのリリースページであることを確認してから操作してください。
