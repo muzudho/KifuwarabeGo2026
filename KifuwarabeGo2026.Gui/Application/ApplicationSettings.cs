@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
 public sealed class ApplicationSettings
 {
@@ -15,8 +14,16 @@ public sealed class ApplicationSettings
     {
         PropertyNameCaseInsensitive = true,
         WriteIndented = true,
-        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
     };
+
+    public ApplicationSettings()
+    {
+        TournamentRules = ReleaseDefaultSettings.Current.TournamentRuleSettings.TournamentRules
+            .Select(rule => rule.Clone())
+            .ToList();
+        CgosConnections = ReleaseDefaultSettings.Current.CgosConnectionSettings.CgosConnections
+            .ToList();
+    }
 
     public static string FilePath { get; } = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -31,9 +38,9 @@ public sealed class ApplicationSettings
 
     public bool IsSgfAutoSaveEnabled { get; set; }
 
-    public List<TournamentRules> TournamentRules { get; set; } = CreateDefaultTournamentRules();
+    public List<TournamentRules> TournamentRules { get; set; }
 
-    public List<CgosConnectionProfile> CgosConnections { get; set; } = CreateDefaultCgosConnections();
+    public List<CgosConnectionProfile> CgosConnections { get; set; }
 
     public static void Save(string logRootDirectory)
     {
@@ -80,8 +87,9 @@ public sealed class ApplicationSettings
                 {
                     settings.LogRootDirectory = Path.GetFullPath(settings.LogRootDirectory);
                     settings.SgfSaveDirectory = NormalizeOptionalDirectory(settings.SgfSaveDirectory);
-                    settings.TournamentRules ??= CreateDefaultTournamentRules();
-                    settings.CgosConnections ??= CreateDefaultCgosConnections();
+                    var releaseDefaults = new ApplicationSettings();
+                    settings.TournamentRules ??= releaseDefaults.TournamentRules;
+                    settings.CgosConnections ??= releaseDefaults.CgosConnections;
                     return settings;
                 }
             }
@@ -94,8 +102,9 @@ public sealed class ApplicationSettings
                 {
                     legacy.LogRootDirectory = Path.GetFullPath(legacy.LogRootDirectory);
                     legacy.SgfSaveDirectory = NormalizeOptionalDirectory(legacy.SgfSaveDirectory);
-                    legacy.TournamentRules = CreateDefaultTournamentRules();
-                    legacy.CgosConnections = CreateDefaultCgosConnections();
+                    var releaseDefaults = new ApplicationSettings();
+                    legacy.TournamentRules = releaseDefaults.TournamentRules;
+                    legacy.CgosConnections = releaseDefaults.CgosConnections;
                     TryWrite(legacy);
                     return legacy;
                 }
@@ -130,14 +139,6 @@ public sealed class ApplicationSettings
             // Read-only or temporarily unavailable user storage must not prevent startup.
         }
     }
-
-    private static List<TournamentRules> CreateDefaultTournamentRules() =>
-        ReleaseDefaultSettings.Current.TournamentRuleSettings.TournamentRules
-            .Select(rule => rule.Clone())
-            .ToList();
-
-    private static List<CgosConnectionProfile> CreateDefaultCgosConnections() =>
-        ReleaseDefaultSettings.Current.CgosConnectionSettings.CgosConnections.ToList();
 
     private static string NormalizeOptionalDirectory(string? directory) =>
         string.IsNullOrWhiteSpace(directory) ? "" : Path.GetFullPath(directory);
