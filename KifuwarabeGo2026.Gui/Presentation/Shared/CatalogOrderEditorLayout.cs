@@ -20,10 +20,10 @@ public static class CatalogOrderEditorLayout
     public static Rectangle DownButtonBounds => new(1370, 598, 244, 44);
     public static Rectangle PageDownButtonBounds => new(1370, 656, 244, 44);
 
-    public static Rectangle CardBounds(int visibleIndex)
+    public static Rectangle CardBounds(int visibleIndex, int pageSize)
     {
-        var column = visibleIndex / 6;
-        var row = visibleIndex % 6;
+        var column = visibleIndex / pageSize;
+        var row = visibleIndex % pageSize;
         return new Rectangle(BoardBounds.X + 16 + column * 512, BoardBounds.Y + 50 + row * 82, 496, 68);
     }
 }

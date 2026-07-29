@@ -717,6 +717,13 @@ public class Game1 : Game
                     return;
                 }
 
+                if (_session.CgosConnectionOrderEditor.IsOpen)
+                {
+                    TryHandleCgosConnectionOrderEditorClick(point);
+                    _previousMouse = mouse;
+                    return;
+                }
+
                 if (TryHandleCgosConnectionEditPanelClick(point))
                 {
                     _previousMouse = mouse;
@@ -845,6 +852,11 @@ public class Game1 : Game
                 {
                     _session.RemoveSelectedCgosConnectionProfile();
                     _cgosConnectionCatalog.Save(_session.CgosConnectionProfiles);
+                }
+                else if (_session.CgosConnectionProfiles.Count > 1 &&
+                         GoScreenRenderer.GetCgosOrderButtonHit(point))
+                {
+                    _session.OpenCgosConnectionOrderEditor();
                 }
                 else if (GoScreenRenderer.GetCgosPreviousPageButtonHit(point))
                 {
@@ -1058,6 +1070,7 @@ public class Game1 : Game
     {
         UpdateCatalogOrderDrag(_session.TournamentRulesOrderEditor, mouse, point);
         UpdateCatalogOrderDrag(_session.GtpEngineOrderEditor, mouse, point);
+        UpdateCatalogOrderDrag(_session.CgosConnectionOrderEditor, mouse, point);
     }
 
     private void UpdateCatalogOrderDrag<T>(CatalogOrderEditor<T> editor, MouseState mouse, Point point)
@@ -2811,6 +2824,35 @@ public class Game1 : Game
             _session.SelectGtpEngineDialogItem(index);
             return true;
         }
+
+        return true;
+    }
+
+    private bool TryHandleCgosConnectionOrderEditorClick(Point point)
+    {
+        var editor = _session.CgosConnectionOrderEditor;
+        if (GoScreenRenderer.GetCatalogOrderCancelButtonHit(point))
+        {
+            _session.CancelCgosConnectionOrderEditor();
+            return true;
+        }
+
+        if (GoScreenRenderer.GetCatalogOrderSaveButtonHit(point))
+        {
+            var profiles = _session.CommitCgosConnectionOrderEditor();
+            _cgosConnectionCatalog.Save(profiles);
+            return true;
+        }
+
+        var moveStep = GoScreenRenderer.GetCatalogOrderMoveStep(point, editor.PageSize);
+        if (moveStep == int.MinValue)
+            editor.MoveSelectedToTop();
+        else if (moveStep != 0)
+            editor.MoveSelected(moveStep);
+        else if (GoScreenRenderer.GetCatalogOrderPagePairStep(point) is var pageStep && pageStep != 0)
+            editor.MovePagePair(pageStep);
+        else if (GoScreenRenderer.GetCatalogOrderCardHit(point, editor) is { } index)
+            editor.BeginDrag(index);
 
         return true;
     }

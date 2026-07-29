@@ -60,6 +60,8 @@ public sealed class GoAppSession
 
     public IReadOnlyList<CgosConnectionProfile> CgosConnectionProfiles => _cgosConnectionProfiles;
 
+    public CatalogOrderEditor<CgosConnectionProfile> CgosConnectionOrderEditor { get; } = new();
+
     public CgosConnectionFlowKind CgosConnectionFlowKind { get; private set; }
 
     public string CgosConnectionStatusMessage { get; private set; } = "READY";
@@ -827,6 +829,35 @@ public sealed class GoAppSession
 
         SelectedCgosConnectionProfileIndex = Math.Clamp(SelectedCgosConnectionProfileIndex, 0, _cgosConnectionProfiles.Count - 1);
         CgosConnectionSelectionPageIndex = SelectedCgosConnectionProfileIndex / CgosConnectionSelectionPageSize;
+    }
+
+    public void OpenCgosConnectionOrderEditor() =>
+        CgosConnectionOrderEditor.Open(
+            _cgosConnectionProfiles,
+            SelectedCgosConnectionProfileIndex,
+            CgosConnectionSelectionPageSize);
+
+    public void CancelCgosConnectionOrderEditor() => CgosConnectionOrderEditor.Cancel();
+
+    public IReadOnlyList<CgosConnectionProfile> CommitCgosConnectionOrderEditor()
+    {
+        var selectedProfile =
+            SelectedCgosConnectionProfileIndex >= 0 &&
+            SelectedCgosConnectionProfileIndex < _cgosConnectionProfiles.Count
+                ? _cgosConnectionProfiles[SelectedCgosConnectionProfileIndex]
+                : null;
+        var orderedProfiles = CgosConnectionOrderEditor.Commit();
+        _cgosConnectionProfiles.Clear();
+        _cgosConnectionProfiles.AddRange(orderedProfiles);
+        var selectedIndex = selectedProfile is null
+            ? -1
+            : _cgosConnectionProfiles.FindIndex(
+                profile => ReferenceEquals(profile, selectedProfile));
+        SelectedCgosConnectionProfileIndex =
+            _cgosConnectionProfiles.Count == 0 ? 0 : Math.Max(0, selectedIndex);
+        CgosConnectionSelectionPageIndex =
+            SelectedCgosConnectionProfileIndex / CgosConnectionSelectionPageSize;
+        return _cgosConnectionProfiles.ToArray();
     }
 
     public void OpenCgosConnectionEditPanel()

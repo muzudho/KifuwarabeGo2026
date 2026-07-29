@@ -2,6 +2,7 @@ namespace KifuwarabeGo2026.Gui.PortabilitySmoke;
 
 using KifuwarabeGo2026.Gui;
 using KifuwarabeGo2026.Gui.Application;
+using KifuwarabeGo2026.Gui.Application.Cgos.ConnectionTarget;
 using KifuwarabeGo2026.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.Gui.Application.Local.Resting.TournamentRule;
 using KifuwarabeGo2026.Shared.Domain;
@@ -31,6 +32,7 @@ internal static class PortabilityChecks
         VerifyScoreAxisScaling();
         VerifyCommentNavigation();
         VerifyCatalogOrderEditor();
+        VerifyCgosConnectionOrder();
         VerifyDefaultCgosConnection();
         VerifyTournamentRulesJsonCompatibility();
         VerifyComposition();
@@ -176,6 +178,24 @@ internal static class PortabilityChecks
         editor.MoveSelected(1);
         editor.Cancel();
         Require(source.SequenceEqual(["A", "B", "C", "D", "E", "F", "G"]), "Cancel must not mutate the source list.");
+    }
+
+    private static void VerifyCgosConnectionOrder()
+    {
+        var session = new GoAppSession();
+        session.SetCgosConnectionProfiles(
+        [
+            new CgosConnectionProfile("A", "a.example", 6809, "", ""),
+            new CgosConnectionProfile("B", "b.example", 6809, "", ""),
+            new CgosConnectionProfile("C", "c.example", 6809, "", ""),
+        ]);
+        session.SelectCgosConnectionProfile(1);
+        session.OpenCgosConnectionOrderEditor();
+        session.CgosConnectionOrderEditor.MoveSelected(-1);
+        var ordered = session.CommitCgosConnectionOrderEditor();
+
+        Require(ordered.Select(profile => profile.DisplayName).SequenceEqual(["B", "A", "C"]), "CGOS connection order was not committed.");
+        Require(session.SelectedCgosConnectionProfile.DisplayName == "B", "CGOS selection must follow the same profile after reordering.");
     }
 
     private static void VerifyDefaultCgosConnection()

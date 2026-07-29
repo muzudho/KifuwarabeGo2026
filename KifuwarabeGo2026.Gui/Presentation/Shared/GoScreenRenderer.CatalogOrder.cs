@@ -30,7 +30,7 @@ public sealed partial class GoScreenRenderer
         var startIndex = editor.PagePairIndex * editor.PageSize * 2;
         for (var visibleIndex = 0; visibleIndex < editor.PageSize * 2; visibleIndex++)
         {
-            if (!CatalogOrderEditorLayout.CardBounds(visibleIndex).Contains(point))
+            if (!CatalogOrderEditorLayout.CardBounds(visibleIndex, editor.PageSize).Contains(point))
             {
                 continue;
             }
@@ -88,7 +88,7 @@ public sealed partial class GoScreenRenderer
             }
 
             var item = editor.Items[index];
-            var cardBounds = CatalogOrderEditorLayout.CardBounds(visibleIndex);
+            var cardBounds = CatalogOrderEditorLayout.CardBounds(visibleIndex, editor.PageSize);
             var selected = index == editor.SelectedIndex;
             var dragged = index == editor.DraggedIndex;
             var hovered = cardBounds.Contains(mousePoint);

@@ -216,6 +216,9 @@ public sealed partial class GoScreenRenderer
     public static bool GetCgosDeleteButtonHit(Point point, bool enabled) =>
         enabled && CgosDeleteButtonBounds.Contains(point);
 
+    public static bool GetCgosOrderButtonHit(Point point) =>
+        CgosOrderButtonBounds.Contains(point);
+
 
     public static bool GetCgosConnectionEditPanelCloseButtonHit(Point point) =>
         CgosConnectionEditPanelCloseButtonBounds.Contains(point);
@@ -361,9 +364,16 @@ public sealed partial class GoScreenRenderer
         DrawCommandButton(CgosEditButtonBounds, "EDIT", false, mousePoint, enabled: session.CgosConnectionProfiles.Count > 0, scale: 0.38f);
         DrawCommandButton(CgosDuplicateButtonBounds, "DUPLICATE", false, mousePoint, enabled: session.CgosConnectionProfiles.Count > 0, scale: 0.25f);
         DrawCommandButton(CgosDeleteButtonBounds, "DELETE", false, mousePoint, enabled: session.CanDeleteSelectedCgosConnectionProfile, scale: 0.34f);
+        DrawCommandButton(CgosOrderButtonBounds, "ORDER", false, mousePoint, enabled: session.CgosConnectionProfiles.Count > 1, scale: 0.34f);
         DrawCommandButton(CgosUseSelectedProfileButtonBounds, "SELECT", false, mousePoint, enabled: session.CgosConnectionProfiles.Count > 0, scale: 0.34f);
         DrawCommandButton(CgosBackButtonBounds, "CANCEL", false, mousePoint, scale: 0.34f);
         DrawCgosConnectionEditPanel(session, mousePoint);
+        DrawCatalogOrderEditor(
+            session.CgosConnectionOrderEditor,
+            "CGOS CONNECTIONS",
+            mousePoint,
+            profile => profile.DisplayName,
+            profile => $"{profile.Host}:{profile.Port}  {profile.Event} {profile.Round}".Trim());
     }
 
 
@@ -939,6 +949,8 @@ public sealed partial class GoScreenRenderer
 
 
     private static Rectangle CgosDeleteButtonBounds => new(620, 874, 100, 44);
+
+    private static Rectangle CgosOrderButtonBounds => new(740, 874, 120, 44);
 
 
     private static Rectangle CgosConnectionListBounds => new(270, 242, 650, 560);
