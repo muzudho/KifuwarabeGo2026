@@ -1679,13 +1679,16 @@ public sealed class GoAppSession
 
     public void ChangeMainTime(TimeSpan step)
     {
-        var totalSeconds = Math.Max(0, (int)(_currentTournamentRules.MainTime + step).TotalSeconds);
+        var totalSeconds = Math.Clamp(
+            (int)(_currentTournamentRules.MainTime + step).TotalSeconds,
+            0,
+            999 * 3600 + 59 * 60 + 59);
         SetMainTime(totalSeconds);
     }
 
     public void SetMainTime(int totalSeconds)
     {
-        totalSeconds = Math.Clamp(totalSeconds, 0, 359999);
+        totalSeconds = Math.Clamp(totalSeconds, 0, 999 * 3600 + 59 * 60 + 59);
         _currentTournamentRules.MainTimeMinutes = totalSeconds / 60;
         _currentTournamentRules.MainTimeSeconds = totalSeconds % 60;
         TournamentRulesSaveMessage = "UNSAVED";

@@ -564,7 +564,7 @@ public sealed class TournamentRulesSetting
         {
             _session.SetTournamentRulesDisplayNameWarning(
                 field == TournamentRulesNumericField.MainTime
-                    ? "Time must be h:mm:ss (maximum 99:59:59)."
+                    ? "Time must be h:mm:ss (maximum 999:59:59)."
                     : "Moves must be 0-9999.");
             return false;
         }
@@ -600,23 +600,7 @@ public sealed class TournamentRulesSetting
         $"{(int)time.TotalHours}:{time.Minutes:00}:{time.Seconds:00}";
 
     private static bool TryParseMainTime(string text, out int totalSeconds)
-    {
-        totalSeconds = 0;
-        var parts = text.Trim().Split(':');
-        if (parts.Length != 3 ||
-            !int.TryParse(parts[0], out var hours) ||
-            !int.TryParse(parts[1], out var minutes) ||
-            !int.TryParse(parts[2], out var seconds) ||
-            hours is < 0 or > 99 ||
-            minutes is < 0 or > 59 ||
-            seconds is < 0 or > 59)
-        {
-            return false;
-        }
-
-        totalSeconds = hours * 3600 + minutes * 60 + seconds;
-        return true;
-    }
+        => TournamentRulesJsonConverter.TryParseMainTime(text, out totalSeconds);
 
     private bool IsNewKeyPress(KeyboardState keyboard, Keys key) =>
         keyboard.IsKeyDown(key) && _previousKeyboard.IsKeyUp(key);

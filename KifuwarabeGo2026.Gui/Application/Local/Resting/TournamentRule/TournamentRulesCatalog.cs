@@ -83,7 +83,10 @@ public sealed class TournamentRulesCatalog
         rules.DisplayName = string.IsNullOrWhiteSpace(rules.DisplayName) ? "Unnamed tournament" : rules.DisplayName.Trim();
         rules.BoardSize = rules.BoardSize is 9 or 13 or 19 ? rules.BoardSize : 19;
         rules.Komi = Math.Clamp(rules.Komi, -99.5m, 99.5m);
-        var totalSeconds = Math.Max(0, rules.MainTimeMinutes * 60 + rules.MainTimeSeconds);
+        var totalSeconds = Math.Clamp(
+            rules.MainTimeMinutes * 60 + rules.MainTimeSeconds,
+            0,
+            999 * 3600 + 59 * 60 + 59);
         rules.MainTimeMinutes = totalSeconds / 60;
         rules.MainTimeSeconds = totalSeconds % 60;
         rules.MoveLimit = Math.Clamp(rules.MoveLimit, 0, 9999);

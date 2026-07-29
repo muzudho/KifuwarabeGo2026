@@ -1,30 +1,56 @@
 {
+  "SchemaVersion": 1,
   "TournamentRuleSettings": {
     "TournamentRules": [
       {
-        "Id": "cgf-open-2026-9ro",
-        "DisplayName": "CGF Open 2026 9-ro",
-        "Rule": "chinese",
+        "DisplayName": "Yamashita CGOS Server 9-ro",
+        "Id": "yamashita-cgos-server-9ro",
+        "Rule": "Chinese",
         "BoardSize": 9,
         "Komi": 7.0,
-        "MainTimeMinutes": 10,
-        "MainTimeSeconds": 0,
+        "MainTime": "00:15:00",
+        "MoveLimit": 9999
+      },
+      {
+        "DisplayName": "CGF Open 2026 9-ro",
+        "Id": "cgf-open-2026-9ro",
+        "Rule": "Chinese",
+        "BoardSize": 9,
+        "Komi": 7.0,
+        "MainTime": "00:10:00",
         "MoveLimit": 400
       },
       {
-        "Id": "cgf-open-2026-19ro",
         "DisplayName": "CGF Open 2026 19-ro",
-        "Rule": "japanese",
+        "Id": "cgf-open-2026-19ro",
+        "Rule": "Japanese",
         "BoardSize": 19,
         "Komi": 6.5,
-        "MainTimeMinutes": 30,
-        "MainTimeSeconds": 0,
+        "MainTime": "00:30:00",
         "MoveLimit": 400
       }
     ]
   },
   "EngineSettings": {
-    "GtpEngines": []
+    "GtpEngines": [
+      {
+        "DisplayName": "Example GTP Engine (set ExecutablePath)",
+        "DefaultCgosLoginName": "",
+        "DefaultCgosPlainTextPassword": "",
+        "ExecutablePath": "",
+        "WorkingDirectory": "",
+        "Arguments": "",
+        "EnableGtpLog": true,
+        "GuiOptions": {
+          "RandomMove": "ChebyshevDistanceFromStar",
+          "AvoidEyes": "true",
+          "RandomSeed": "0",
+          "EngineTag": "",
+          "DebugLogFile": "",
+          "ClearCache": "false"
+        }
+      }
+    ]
   },
   "CgosConnectionSettings": {
     "CgosConnections": [
@@ -32,17 +58,25 @@
         "DisplayName": "Yamashita CGOS Server",
         "Host": "yss-aya.com",
         "Port": 6809,
+        "Event": "",
         "Round": "-",
-        "Note": "yss-aya.com/cgos",
-        "Event": ""
+        "Note": "See also: yss-aya.com/cgos"
       },
       {
-        "DisplayName": "CGF Open 2026",
+        "DisplayName": "CGF Open 2026 - 1day",
         "Host": "uec-go.com",
         "Port": 6809,
-        "Round": "1day, 2day",
-        "Note": "CGOS server",
-        "Event": "CGF Open 2026"
+        "Event": "CGF Open 2026",
+        "Round": "1day",
+        "Note": "See also: http://www.yss-aya.com/cgfopen/"
+      },
+      {
+        "DisplayName": "CGF Open 2026 - 2day",
+        "Host": "uec-go.com",
+        "Port": 6819,
+        "Event": "CGF Open 2026",
+        "Round": "2day",
+        "Note": "See also: http://www.yss-aya.com/cgfopen/"
       }
     ]
   }

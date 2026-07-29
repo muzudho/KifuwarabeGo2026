@@ -14,6 +14,8 @@ using System.Text.Json.Serialization;
 /// </summary>
 public sealed class ReleaseDefaultSettings
 {
+    public const int CurrentSchemaVersion = 1;
+
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNameCaseInsensitive = true,
@@ -21,6 +23,8 @@ public sealed class ReleaseDefaultSettings
     };
 
     public TournamentRuleDefaultSettings TournamentRuleSettings { get; set; } = new();
+
+    public int SchemaVersion { get; set; } = CurrentSchemaVersion;
 
     public EngineDefaultSettings EngineSettings { get; set; } = new();
 
@@ -43,6 +47,11 @@ public sealed class ReleaseDefaultSettings
                 File.ReadAllText(FilePath),
                 JsonOptions);
             if (settings is null)
+            {
+                return new ReleaseDefaultSettings();
+            }
+
+            if (settings.SchemaVersion is < 1 or > CurrentSchemaVersion)
             {
                 return new ReleaseDefaultSettings();
             }

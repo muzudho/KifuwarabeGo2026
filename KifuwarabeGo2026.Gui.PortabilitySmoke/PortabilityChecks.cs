@@ -3,12 +3,14 @@ namespace KifuwarabeGo2026.Gui.PortabilitySmoke;
 using KifuwarabeGo2026.Gui;
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Application.Local.Playing;
+using KifuwarabeGo2026.Gui.Application.Local.Resting.TournamentRule;
 using KifuwarabeGo2026.Shared.Domain;
 using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Versioning;
+using System.Text.Json;
 
 internal static class PortabilityChecks
 {
@@ -30,6 +32,7 @@ internal static class PortabilityChecks
         VerifyCommentNavigation();
         VerifyCatalogOrderEditor();
         VerifyDefaultCgosConnection();
+        VerifyTournamentRulesJsonCompatibility();
         VerifyComposition();
     }
 
@@ -182,12 +185,55 @@ internal static class PortabilityChecks
             $"Release default settings file was not found: {ReleaseDefaultSettings.FilePath}");
         var settings = new ApplicationSettings();
         Require(
-            settings.TournamentRules.Count == 2,
+            settings.TournamentRules.Count == 3,
             "Default tournament rules must be loaded from default-settings.json.");
+        Require(
+            ReleaseDefaultSettings.Current.SchemaVersion == ReleaseDefaultSettings.CurrentSchemaVersion,
+            "Release default settings schema version is incorrect.");
+        Require(
+            ReleaseDefaultSettings.Current.EngineSettings.GtpEngines.Count == 1,
+            "Release default settings must contain one editable GTP engine example.");
         Require(settings.CgosConnections.Count > 0, "Default settings must contain a CGOS connection.");
         var profile = settings.CgosConnections[0];
         Require(profile.DisplayName == "Yamashita CGOS Server", "Yamashita CGOS Server must be the first default connection.");
         Require(profile.Host == "yss-aya.com" && profile.Port == 6809, "Yamashita CGOS Server endpoint is incorrect.");
+    }
+
+    private static void VerifyTournamentRulesJsonCompatibility()
+    {
+        const string legacyJson =
+            """
+            {
+              "DisplayName": "Legacy",
+              "Rule": "chinese",
+              "MainTimeMinutes": 61,
+              "MainTimeSeconds": 2,
+              "MoveLimit": 400
+            }
+            """;
+        var legacy = JsonSerializer.Deserialize<TournamentRules>(legacyJson) ??
+            throw new InvalidOperationException("Legacy tournament rules JSON must deserialize.");
+        Require(legacy.Rule == GoRuleKind.Chinese, "Lower-case legacy rule name must remain compatible.");
+        Require(legacy.MainTime == TimeSpan.FromSeconds(3662), "Legacy minute/second time must remain compatible.");
+
+        const string currentJson =
+            """
+            {
+              "DisplayName": "Current",
+              "Rule": "Japanese",
+              "MainTime": "999:59:59",
+              "MoveLimit": 9999
+            }
+            """;
+        var current = JsonSerializer.Deserialize<TournamentRules>(currentJson) ??
+            throw new InvalidOperationException("Current tournament rules JSON must deserialize.");
+        Require((int)current.MainTime.TotalHours == 999, "Current main time must accept 999 hours.");
+        Require(!string.IsNullOrWhiteSpace(current.Id), "A missing tournament rule ID must be generated.");
+
+        var serialized = JsonSerializer.Serialize(current);
+        Require(serialized.Contains("\"Rule\":\"Japanese\"", StringComparison.Ordinal), "Rule names must serialize in PascalCase.");
+        Require(serialized.Contains("\"MainTime\":\"999:59:59\"", StringComparison.Ordinal), "Main time must serialize as hhh:mm:ss.");
+        Require(!serialized.Contains("MainTimeMinutes", StringComparison.Ordinal), "Legacy minute fields must not be written.");
     }
 
     private static Game1 CreateGame()
