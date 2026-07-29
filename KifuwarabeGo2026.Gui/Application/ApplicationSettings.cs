@@ -132,38 +132,12 @@ public sealed class ApplicationSettings
     }
 
     private static List<TournamentRules> CreateDefaultTournamentRules() =>
-    [
-        new TournamentRules
-        {
-            Id = "cgf-open-2026-9ro",
-            DisplayName = "CGF Open 2026 9-ro",
-            Rule = GoRuleKind.Chinese,
-            BoardSize = 9,
-            Komi = 7.0m,
-            MainTimeMinutes = 10,
-            MainTimeSeconds = 0,
-            MoveLimit = 400,
-        },
-        new TournamentRules
-        {
-            Id = "cgf-open-2026-19ro",
-            DisplayName = "CGF Open 2026 19-ro",
-            Rule = GoRuleKind.Japanese,
-            BoardSize = 19,
-            Komi = 6.5m,
-            MainTimeMinutes = 30,
-            MainTimeSeconds = 0,
-            MoveLimit = 400,
-        },
-    ];
+        ReleaseDefaultSettings.Current.TournamentRuleSettings.TournamentRules
+            .Select(rule => rule.Clone())
+            .ToList();
 
     private static List<CgosConnectionProfile> CreateDefaultCgosConnections() =>
-    [
-        new("CGF Open 2026", "uec-go.com", 6809, "1day, 2day", "CGOS server")
-        {
-            Event = "CGF Open 2026",
-        },
-    ];
+        ReleaseDefaultSettings.Current.CgosConnectionSettings.CgosConnections.ToList();
 
     private static string NormalizeOptionalDirectory(string? directory) =>
         string.IsNullOrWhiteSpace(directory) ? "" : Path.GetFullPath(directory);

@@ -5,6 +5,7 @@ using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.Shared.Domain;
 using System;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Versioning;
@@ -28,6 +29,7 @@ internal static class PortabilityChecks
         VerifyScoreAxisScaling();
         VerifyCommentNavigation();
         VerifyCatalogOrderEditor();
+        VerifyDefaultCgosConnection();
         VerifyComposition();
     }
 
@@ -171,6 +173,21 @@ internal static class PortabilityChecks
         editor.MoveSelected(1);
         editor.Cancel();
         Require(source.SequenceEqual(["A", "B", "C", "D", "E", "F", "G"]), "Cancel must not mutate the source list.");
+    }
+
+    private static void VerifyDefaultCgosConnection()
+    {
+        Require(
+            File.Exists(ReleaseDefaultSettings.FilePath),
+            $"Release default settings file was not found: {ReleaseDefaultSettings.FilePath}");
+        var settings = new ApplicationSettings();
+        Require(
+            settings.TournamentRules.Count == 2,
+            "Default tournament rules must be loaded from default-settings.json.");
+        Require(settings.CgosConnections.Count > 0, "Default settings must contain a CGOS connection.");
+        var profile = settings.CgosConnections[0];
+        Require(profile.DisplayName == "Yamashita CGOS Server", "Yamashita CGOS Server must be the first default connection.");
+        Require(profile.Host == "yss-aya.com" && profile.Port == 6809, "Yamashita CGOS Server endpoint is incorrect.");
     }
 
     private static Game1 CreateGame()

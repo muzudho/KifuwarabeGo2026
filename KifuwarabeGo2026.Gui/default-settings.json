@@ -1,0 +1,49 @@
+{
+  "TournamentRuleSettings": {
+    "TournamentRules": [
+      {
+        "Id": "cgf-open-2026-9ro",
+        "DisplayName": "CGF Open 2026 9-ro",
+        "Rule": "chinese",
+        "BoardSize": 9,
+        "Komi": 7.0,
+        "MainTimeMinutes": 10,
+        "MainTimeSeconds": 0,
+        "MoveLimit": 400
+      },
+      {
+        "Id": "cgf-open-2026-19ro",
+        "DisplayName": "CGF Open 2026 19-ro",
+        "Rule": "japanese",
+        "BoardSize": 19,
+        "Komi": 6.5,
+        "MainTimeMinutes": 30,
+        "MainTimeSeconds": 0,
+        "MoveLimit": 400
+      }
+    ]
+  },
+  "EngineSettings": {
+    "GtpEngines": []
+  },
+  "CgosConnectionSettings": {
+    "CgosConnections": [
+      {
+        "DisplayName": "Yamashita CGOS Server",
+        "Host": "yss-aya.com",
+        "Port": 6809,
+        "Round": "-",
+        "Note": "yss-aya.com/cgos",
+        "Event": ""
+      },
+      {
+        "DisplayName": "CGF Open 2026",
+        "Host": "uec-go.com",
+        "Port": 6809,
+        "Round": "1day, 2day",
+        "Note": "CGOS server",
+        "Event": "CGF Open 2026"
+      }
+    ]
+  }
+}

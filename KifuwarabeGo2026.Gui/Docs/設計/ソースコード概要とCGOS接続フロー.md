@@ -122,27 +122,40 @@ CGOS 用通信クライアントにも似た処理があるが、現状は共有
 
 ## 設定ファイル
 
-### CGOS 接続先
+### リリース用の初期値
 
-`KifuwarabeGo2026/Content/CgosConnections/cgos-connection-list.json`
+`KifuwarabeGo2026.Gui/default-settings.json`
 
-`CgosConnectionCatalog` が読み書きする。各要素は `CgosConnectionProfile`。
+大会ルール、GTPエンジン、CGOS接続先の初期値を一つにまとめる。リリースへ同梱し、新規環境で利用者設定を初めて作るときだけ使用する。作者がリリース既定値を調整するときは、このJSONを編集する。
+
+### 利用者の大会ルールとCGOS接続先
+
+```text
+%LOCALAPPDATA%\KifuwarabeGo2026\application-settings.json
+```
+
+`ApplicationSettings` が読み書きする。大会ルールは `TournamentRules`、CGOS接続先は `CgosConnections` に保存する。
 
 | 項目 | 意味 |
 | --- | --- |
 | `displayName` | 画面に表示する接続先名 |
 | `host` | CGOS ホスト名 |
 | `port` | CGOS ポート番号 |
-| `role` | `PRACTICE`、`QUALIFIER`、`FINAL` などの用途メモ |
+| `round` | 対局ラウンドなどの用途メモ |
 | `note` | 補足 |
+| `event` | イベント名 |
 
-既定値は `uec-go.com:6809` の練習、大会予選、大会本戦。
+既定の先頭は `Yamashita CGOS Server`（`yss-aya.com:6809`）。
 
 ### GTP エンジン
 
-`KifuwarabeGo2026/Content/GtpEngines/gtp-engine-list.json`
+```text
+%LOCALAPPDATA%\KifuwarabeGo2026\GtpEngines\gtp-engine-list.json
+```
 
 `GtpEngineCatalog` が読み書きする。GUI のローカル対局と CGOS 接続開始画面の両方で使う。
+
+利用者のエンジン一覧がまだ存在しない場合だけ、`default-settings.json` の `EngineSettings.GtpEngines` から作成する。初期値内の相対パスは、`default-settings.json` のあるディレクトリーを基準に解決する。
 
 CGOS 接続では、選択した `GtpEngineProfile` から `executablePath` と `arguments` を組み立て、`--engine-command` として通信クライアントへ渡す。
 
@@ -171,10 +184,10 @@ GUI 起動時、`Game1` のコンストラクターで `CgosConnectionCatalog.Lo
 読み込み先:
 
 ```text
-KifuwarabeGo2026/Content/CgosConnections/cgos-connection-list.json
+%LOCALAPPDATA%\KifuwarabeGo2026\application-settings.json
 ```
 
-読み込んだ一覧は `GoAppSession.SetCgosConnectionProfiles(...)` でセッションへ入る。ファイルがない、または有効な接続先がない場合は `CgosConnectionCatalog` の既定プロファイルが使われる。
+読み込んだ一覧は `GoAppSession.SetCgosConnectionProfiles(...)` でセッションへ入る。利用者設定がまだない新規環境では、同梱した `default-settings.json` の接続先一覧から `application-settings.json` を作る。
 
 ### 2. タイトルから CGOS 画面へ入る
 
@@ -364,4 +377,3 @@ GUI からは `KifuwarabeGo2026.Gui.Communication.Cgos.exe` を直接探して�
 | CGOS コマンド対応を増やす | `KifuwarabeGo2026.Gui.Communication.Cgos/Program.cs` の `CgosClient.HandleLineAsync(...)` |
 | GTP エンジン起動・応答読み取りを変える | `KifuwarabeGo2026.Gui.Communication.Cgos/Program.cs` の `GtpEngineProcess` |
 | CGOS の局面を GUI へ反映する | まず `CgosConnectionProcess` の出力監視だけでは不足。通信結果を構造化して `GoAppSession` や対局画面へ渡す設計が必要 |
-

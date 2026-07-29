@@ -38,9 +38,13 @@ public sealed class GtpEngineCatalog
         if (!File.Exists(listPath))
         {
             Directory.CreateDirectory(directory);
-            File.WriteAllText(
-                listPath,
-                JsonSerializer.Serialize(new GtpEngineProfileList(), JsonOptions));
+            var defaultDirectory =
+                Path.GetDirectoryName(ReleaseDefaultSettings.FilePath) ??
+                AppContext.BaseDirectory;
+            var defaultProfiles = ReleaseDefaultSettings.Current.EngineSettings.GtpEngines
+                .Select(profile => Normalize(profile, defaultDirectory))
+                .ToList();
+            new GtpEngineCatalog(listPath, defaultProfiles).Save(defaultProfiles);
         }
 
         return Load(listPath);
