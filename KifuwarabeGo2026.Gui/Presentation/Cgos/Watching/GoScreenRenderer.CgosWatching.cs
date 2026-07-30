@@ -61,7 +61,7 @@ public sealed partial class GoScreenRenderer
                     showBackToLive: !observation.IsFinished,
                     backToLiveLabel: "BACK TO LIVE");
             }
-            else if (observation.IsStarted && !observation.IsFinished)
+            else if (observation.IsStarted)
             {
                 DrawReplayEditIconButton(mousePoint);
             }

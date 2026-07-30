@@ -200,6 +200,9 @@ public sealed partial class GoScreenRenderer
 
     public static bool GetSgfAutoSaveCheckHit(Point point) => ExportSgfButtonBounds.Contains(point);
 
+    public static bool GetLocalGameOverReviewButtonHit(Point point) =>
+        LocalGameOverReviewButtonBounds.Contains(point);
+
     public static bool GetSetupBackToTitleButtonHit(Point point) => SetupBackToTitleButtonBounds.Contains(point);
 
     public static GoPlayerKind? GetBlackPlayerKindButtonHit(Point point) => GetPlayerKindButtonHit(point, BlackPlayerKindButtonY);
@@ -412,6 +415,7 @@ public sealed partial class GoScreenRenderer
 
         var actionSection = new Rectangle(1144, 854, 668, 126);
         DrawVerticalResultSection(actionSection, "ACTION", new Color(91, 82, 105));
+        DrawCommandButton(LocalGameOverReviewButtonBounds, "KIFU REVIEW", false, mousePoint, scale: 0.36f);
         if (session.IsSgfAutoSaveAvailable)
             DrawSgfAutoSaveCheckBox(ExportSgfButtonBounds, session, mousePoint);
         else
@@ -723,6 +727,8 @@ public sealed partial class GoScreenRenderer
     private static Rectangle ReturnToSetupButtonBounds => new(1492, 132, 320, 56);
 
     private static Rectangle ExportSgfButtonBounds => new(1164, 910, 306, 56);
+
+    private static Rectangle LocalGameOverReviewButtonBounds => new(1486, 910, 306, 56);
 
     private static Rectangle PassButtonBounds => new(1144, 920, 320, 72);
 

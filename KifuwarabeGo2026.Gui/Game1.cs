@@ -533,9 +533,8 @@ public class Game1 : Game
                 (_session.UseKind == GoAppUseKind.LocalGame &&
                  _session.CanOpenLocalChartPopup) ||
                 (_session.UseKind == GoAppUseKind.CgosClient &&
-                 _session.CgosConnectionFlowKind == CgosConnectionFlowKind.Watching &&
-                 _cgosGameObservation.IsStarted &&
-                 !_cgosGameObservation.IsFinished);
+                 (_session.CgosConnectionFlowKind is CgosConnectionFlowKind.Watching or CgosConnectionFlowKind.Result) &&
+                 _cgosGameObservation.IsStarted);
             var canReturnReplayToLive =
                 (_session.UseKind == GoAppUseKind.LocalGame &&
                  _session.CurrentMode.Kind == GoAppModeKind.Playing &&
@@ -1007,6 +1006,11 @@ public class Game1 : Game
             else if (_session.CurrentMode.Kind == GoAppModeKind.GameOver && GoScreenRenderer.GetReturnToSetupButtonHit(point))
             {
                 _session.ReturnToSetup();
+            }
+            else if (_session.CurrentMode.Kind == GoAppModeKind.GameOver &&
+                     GoScreenRenderer.GetLocalGameOverReviewButtonHit(point))
+            {
+                StartReviewingGameRecord(_session.CurrentGameRecord.Clone(), "Local review");
             }
             else if (_session.CurrentMode.Kind == GoAppModeKind.GameOver &&
                      _session.IsSgfAutoSaveAvailable &&
