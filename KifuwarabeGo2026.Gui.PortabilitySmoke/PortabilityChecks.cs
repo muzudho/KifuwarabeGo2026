@@ -228,6 +228,19 @@ internal static class PortabilityChecks
         controller.TryInputCharacter('X');
         Require(controller.Text == "aXd", "Typing must replace the selected text.");
 
+        var clickTimestamp = 1d;
+        var doubleClickController = new TextBoxController(20, () => clickTimestamp);
+        doubleClickController.Begin("double click", 3);
+        doubleClickController.BeginMouseSelection(3, false);
+        doubleClickController.EndMouseSelection();
+        clickTimestamp = 1.2d;
+        doubleClickController.BeginMouseSelection(4, false);
+        Require(
+            doubleClickController.SelectionStart == 0 &&
+            doubleClickController.SelectionLength == doubleClickController.Text.Length &&
+            !doubleClickController.IsMouseSelecting,
+            "Double-clicking a text box must select all text and preserve the selection.");
+
         controller.Begin("abcd", 2);
         controller.HandleKeyboard(
             new KeyboardState(Keys.LeftShift, Keys.Right),

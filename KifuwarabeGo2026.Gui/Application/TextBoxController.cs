@@ -4,27 +4,33 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 public sealed class TextBoxController
 {
     private const double CaretKeyRepeatInitialDelaySeconds = 0.42d;
     private const double CaretKeyRepeatIntervalSeconds = 0.055d;
+    private const double MouseDoubleClickSeconds = 0.36d;
     private const int MaximumHistoryCount = 100;
 
     private readonly int _maxLength;
+    private readonly Func<double> _timestampProvider;
     private double _leftKeyRepeatCountdown = CaretKeyRepeatInitialDelaySeconds;
     private double _rightKeyRepeatCountdown = CaretKeyRepeatInitialDelaySeconds;
     private double _backKeyRepeatCountdown = CaretKeyRepeatInitialDelaySeconds;
     private double _deleteKeyRepeatCountdown = CaretKeyRepeatInitialDelaySeconds;
     private double _undoKeyRepeatCountdown = CaretKeyRepeatInitialDelaySeconds;
     private double _redoKeyRepeatCountdown = CaretKeyRepeatInitialDelaySeconds;
+    private double _lastMouseSelectionStartedAt = double.NegativeInfinity;
     private readonly Stack<TextEditSnapshot> _undoHistory = new();
     private readonly Stack<TextEditSnapshot> _redoHistory = new();
 
-    public TextBoxController(int maxLength)
+    public TextBoxController(int maxLength, Func<double>? timestampProvider = null)
     {
         _maxLength = maxLength;
+        _timestampProvider = timestampProvider ??
+            (() => (double)Stopwatch.GetTimestamp() / Stopwatch.Frequency);
     }
 
     public string Text { get; private set; } = "";
@@ -72,6 +78,7 @@ public sealed class TextBoxController
         ClearHistory();
         IsCaretNavigationKeyHeld = false;
         ResetCaretKeyRepeat();
+        ResetMouseDoubleClick();
     }
 
     public void SetCaretIndex(int caretIndex, bool extendSelection = false)
@@ -85,6 +92,23 @@ public sealed class TextBoxController
 
     public void BeginMouseSelection(int caretIndex, bool extendSelection)
     {
+        var timestampSeconds = _timestampProvider();
+        var isDoubleClick =
+            !extendSelection &&
+            timestampSeconds >= _lastMouseSelectionStartedAt &&
+            timestampSeconds - _lastMouseSelectionStartedAt <= MouseDoubleClickSeconds;
+        _lastMouseSelectionStartedAt = isDoubleClick
+            ? double.NegativeInfinity
+            : timestampSeconds;
+
+        if (isDoubleClick)
+        {
+            SelectionAnchor = 0;
+            CaretIndex = Text.Length;
+            IsMouseSelecting = false;
+            return;
+        }
+
         SetCaretIndex(caretIndex, extendSelection);
         if (!extendSelection)
             SelectionAnchor = CaretIndex;
@@ -108,6 +132,7 @@ public sealed class TextBoxController
         ClearHistory();
         IsCaretNavigationKeyHeld = false;
         ResetCaretKeyRepeat();
+        ResetMouseDoubleClick();
     }
 
     public bool TryInputCharacter(char character)
@@ -371,6 +396,9 @@ public sealed class TextBoxController
         _undoKeyRepeatCountdown = CaretKeyRepeatInitialDelaySeconds;
         _redoKeyRepeatCountdown = CaretKeyRepeatInitialDelaySeconds;
     }
+
+    private void ResetMouseDoubleClick() =>
+        _lastMouseSelectionStartedAt = double.NegativeInfinity;
 
     private readonly record struct TextEditSnapshot(string Text, int CaretIndex, int? SelectionAnchor);
 }

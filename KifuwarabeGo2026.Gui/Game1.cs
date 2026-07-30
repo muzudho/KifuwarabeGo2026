@@ -669,6 +669,7 @@ public class Game1 : Game
                 if (_session.CgosConnectionFlowKind == CgosConnectionFlowKind.Watching &&
                     GoScreenRenderer.GetCgosWatchingBackButtonHit(point))
                 {
+                    RestoreCgosMatchNotificationAfterLeavingView();
                     _session.ReturnToCgosConnectionScreen();
                     _previousMouse = mouse;
                     return;
@@ -2297,6 +2298,19 @@ public class Game1 : Game
         GuiOperationLog.User(
             "Deferred CGOS match notification",
             $"gameId={_cgosGameObservation.GameId} reason={reason}");
+    }
+
+    private void RestoreCgosMatchNotificationAfterLeavingView()
+    {
+        if (!_cgosGameObservation.IsStarted || _cgosGameObservation.IsFinished)
+            return;
+
+        _cgosMatchNotificationGameId = _cgosGameObservation.GameId;
+        _cgosMatchNotificationMode = CgosMatchNotificationMode.Deferred;
+        _cgosMatchNotificationStartedAt = DateTimeOffset.UtcNow;
+        GuiOperationLog.User(
+            "Restored CGOS match notification after leaving view",
+            $"gameId={_cgosGameObservation.GameId}");
     }
 
     private bool IsCgosConnectionWaitingScreen() =>
