@@ -162,7 +162,8 @@ public sealed partial class GoScreenRenderer
             var y = centerY - step * plot.Height / 4;
             DrawLine(new Vector2(plot.Left, y), new Vector2(plot.Right, y), step == 0 ? 2 : 1,
                 step == 0 ? new Color(211, 226, 219, 165) : new Color(104, 139, 143, 70));
-            if (drawScore)
+            var drawAxisLabel = popup || step is -2 or 0 or 2;
+            if (drawScore && drawAxisLabel)
             {
                 var scoreAxisBounds = popup
                     ? new Rectangle(bounds.X + 4, y - 20, 68, 40)
@@ -181,7 +182,7 @@ public sealed partial class GoScreenRenderer
                     plot: plot,
                     axisStep: step);
             }
-            if (drawWinRate)
+            if (drawWinRate && drawAxisLabel)
             {
                 var winRateAxisBounds = popup
                     ? new Rectangle(plot.Right + 4, y - 20, 76, 40)
