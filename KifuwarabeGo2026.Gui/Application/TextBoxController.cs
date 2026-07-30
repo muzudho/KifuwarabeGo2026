@@ -17,6 +17,8 @@ public sealed class TextBoxController
     private double _rightKeyRepeatCountdown = CaretKeyRepeatInitialDelaySeconds;
     private double _backKeyRepeatCountdown = CaretKeyRepeatInitialDelaySeconds;
     private double _deleteKeyRepeatCountdown = CaretKeyRepeatInitialDelaySeconds;
+    private double _undoKeyRepeatCountdown = CaretKeyRepeatInitialDelaySeconds;
+    private double _redoKeyRepeatCountdown = CaretKeyRepeatInitialDelaySeconds;
     private readonly Stack<TextEditSnapshot> _undoHistory = new();
     private readonly Stack<TextEditSnapshot> _redoHistory = new();
 
@@ -139,16 +141,24 @@ public sealed class TextBoxController
         var control = keyboard.IsKeyDown(Keys.LeftControl) || keyboard.IsKeyDown(Keys.RightControl);
         var shift = keyboard.IsKeyDown(Keys.LeftShift) || keyboard.IsKeyDown(Keys.RightShift);
 
-        if (control && IsNewKeyPress(keyboard, previousKeyboard, Keys.Z))
+        if (control &&
+            ShouldHandleRepeatedKey(keyboard, previousKeyboard, Keys.Z, ref _undoKeyRepeatCountdown, gameTime))
         {
             Undo();
             return TextBoxKeyboardAction.None;
         }
 
-        if (control && IsNewKeyPress(keyboard, previousKeyboard, Keys.Y))
+        if (control &&
+            ShouldHandleRepeatedKey(keyboard, previousKeyboard, Keys.Y, ref _redoKeyRepeatCountdown, gameTime))
         {
             Redo();
             return TextBoxKeyboardAction.None;
+        }
+
+        if (!control)
+        {
+            _undoKeyRepeatCountdown = CaretKeyRepeatInitialDelaySeconds;
+            _redoKeyRepeatCountdown = CaretKeyRepeatInitialDelaySeconds;
         }
 
         if (control && IsNewKeyPress(keyboard, previousKeyboard, Keys.A))
@@ -358,6 +368,8 @@ public sealed class TextBoxController
         _rightKeyRepeatCountdown = CaretKeyRepeatInitialDelaySeconds;
         _backKeyRepeatCountdown = CaretKeyRepeatInitialDelaySeconds;
         _deleteKeyRepeatCountdown = CaretKeyRepeatInitialDelaySeconds;
+        _undoKeyRepeatCountdown = CaretKeyRepeatInitialDelaySeconds;
+        _redoKeyRepeatCountdown = CaretKeyRepeatInitialDelaySeconds;
     }
 
     private readonly record struct TextEditSnapshot(string Text, int CaretIndex, int? SelectionAnchor);

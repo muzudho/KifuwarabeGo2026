@@ -286,6 +286,32 @@ internal static class PortabilityChecks
             clipboard);
         Require(controller.Text == "abcd" && controller.CaretIndex == 4, "Ctrl+Y must redo the previous text edit.");
 
+        controller.TryInputCharacter('e');
+        controller.HandleKeyboard(
+            new KeyboardState(Keys.LeftControl, Keys.Z),
+            new KeyboardState(),
+            frame,
+            clipboard);
+        controller.HandleKeyboard(
+            new KeyboardState(Keys.LeftControl, Keys.Z),
+            new KeyboardState(Keys.LeftControl, Keys.Z),
+            new GameTime(TimeSpan.Zero, TimeSpan.FromSeconds(1)),
+            clipboard);
+        Require(controller.Text == "abc", "Holding Ctrl+Z must repeat undo.");
+        controller.HandleKeyboard(
+            new KeyboardState(Keys.LeftControl, Keys.Y),
+            new KeyboardState(),
+            frame,
+            clipboard);
+        controller.HandleKeyboard(
+            new KeyboardState(Keys.LeftControl, Keys.Y),
+            new KeyboardState(Keys.LeftControl, Keys.Y),
+            new GameTime(TimeSpan.Zero, TimeSpan.FromSeconds(1)),
+            clipboard);
+        Require(controller.Text == "abcde", "Holding Ctrl+Y must repeat redo.");
+
+        controller.Begin("abc", 3);
+        controller.TryInputCharacter('d');
         controller.HandleKeyboard(
             new KeyboardState(Keys.LeftControl, Keys.Z),
             new KeyboardState(),
