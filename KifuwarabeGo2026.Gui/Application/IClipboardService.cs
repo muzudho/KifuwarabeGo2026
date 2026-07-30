@@ -6,4 +6,6 @@ namespace KifuwarabeGo2026.Gui.Application;
 public interface IClipboardService
 {
     bool TrySetText(string text);
+
+    bool TryGetText(out string text);
 }

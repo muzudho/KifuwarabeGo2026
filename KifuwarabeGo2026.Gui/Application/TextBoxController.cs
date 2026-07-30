@@ -3,6 +3,7 @@ namespace KifuwarabeGo2026.Gui.Application;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using System;
+using System.Linq;
 
 public sealed class TextBoxController
 {
@@ -24,6 +25,16 @@ public sealed class TextBoxController
 
     public int CaretIndex { get; private set; }
 
+    public int SelectionStart => SelectionAnchor is { } anchor ? Math.Min(anchor, CaretIndex) : CaretIndex;
+
+    public int SelectionLength => SelectionAnchor is { } anchor ? Math.Abs(anchor - CaretIndex) : 0;
+
+    public bool HasSelection => SelectionLength > 0;
+
+    private int? SelectionAnchor { get; set; }
+
+    public bool IsMouseSelecting { get; private set; }
+
     public bool IsCaretNavigationKeyHeld { get; private set; }
 
     public void Begin(string text)
@@ -35,19 +46,42 @@ public sealed class TextBoxController
     {
         Text = text;
         SetCaretIndex(caretIndex);
+        ClearSelection();
         IsCaretNavigationKeyHeld = false;
         ResetCaretKeyRepeat();
     }
 
-    public void SetCaretIndex(int caretIndex)
+    public void SetCaretIndex(int caretIndex, bool extendSelection = false)
     {
+        if (extendSelection && SelectionAnchor is null)
+            SelectionAnchor = CaretIndex;
+        else if (!extendSelection)
+            SelectionAnchor = null;
         CaretIndex = Math.Clamp(caretIndex, 0, Text.Length);
     }
+
+    public void BeginMouseSelection(int caretIndex, bool extendSelection)
+    {
+        SetCaretIndex(caretIndex, extendSelection);
+        if (!extendSelection)
+            SelectionAnchor = CaretIndex;
+        IsMouseSelecting = true;
+    }
+
+    public void UpdateMouseSelection(int caretIndex)
+    {
+        if (IsMouseSelecting)
+            SetCaretIndex(caretIndex, extendSelection: true);
+    }
+
+    public void EndMouseSelection() => IsMouseSelecting = false;
 
     public void Clear()
     {
         Text = "";
         CaretIndex = 0;
+        ClearSelection();
+        IsMouseSelecting = false;
         IsCaretNavigationKeyHeld = false;
         ResetCaretKeyRepeat();
     }
@@ -59,6 +93,7 @@ public sealed class TextBoxController
             return true;
         }
 
+        DeleteSelection();
         if (Text.Length >= _maxLength)
         {
             return false;
@@ -69,9 +104,42 @@ public sealed class TextBoxController
         return true;
     }
 
-    public TextBoxKeyboardAction HandleKeyboard(KeyboardState keyboard, KeyboardState previousKeyboard, GameTime gameTime)
+    public TextBoxKeyboardAction HandleKeyboard(
+        KeyboardState keyboard,
+        KeyboardState previousKeyboard,
+        GameTime gameTime,
+        IClipboardService clipboardService,
+        bool allowClipboardExport = true,
+        Func<char, bool>? pasteCharacterFilter = null)
     {
         IsCaretNavigationKeyHeld = keyboard.IsKeyDown(Keys.Left) || keyboard.IsKeyDown(Keys.Right);
+        var control = keyboard.IsKeyDown(Keys.LeftControl) || keyboard.IsKeyDown(Keys.RightControl);
+        var shift = keyboard.IsKeyDown(Keys.LeftShift) || keyboard.IsKeyDown(Keys.RightShift);
+
+        if (control && IsNewKeyPress(keyboard, previousKeyboard, Keys.A))
+        {
+            SelectionAnchor = 0;
+            CaretIndex = Text.Length;
+        }
+
+        if (control && IsNewKeyPress(keyboard, previousKeyboard, Keys.C) &&
+            allowClipboardExport && HasSelection)
+        {
+            clipboardService.TrySetText(Text.Substring(SelectionStart, SelectionLength));
+        }
+
+        if (control && IsNewKeyPress(keyboard, previousKeyboard, Keys.X) &&
+            allowClipboardExport && HasSelection)
+        {
+            if (clipboardService.TrySetText(Text.Substring(SelectionStart, SelectionLength)))
+                DeleteSelection();
+        }
+
+        if (control && IsNewKeyPress(keyboard, previousKeyboard, Keys.V) &&
+            clipboardService.TryGetText(out var clipboardText))
+        {
+            InsertText(clipboardText, pasteCharacterFilter);
+        }
 
         if (IsNewKeyPress(keyboard, previousKeyboard, Keys.Enter))
         {
@@ -85,37 +153,70 @@ public sealed class TextBoxController
 
         if (ShouldHandleRepeatedKey(keyboard, previousKeyboard, Keys.Left, ref _leftKeyRepeatCountdown, gameTime) && CaretIndex > 0)
         {
-            CaretIndex--;
+            SetCaretIndex(CaretIndex - 1, shift);
         }
 
         if (ShouldHandleRepeatedKey(keyboard, previousKeyboard, Keys.Right, ref _rightKeyRepeatCountdown, gameTime) && CaretIndex < Text.Length)
         {
-            CaretIndex++;
+            SetCaretIndex(CaretIndex + 1, shift);
         }
 
         if (IsNewKeyPress(keyboard, previousKeyboard, Keys.Home))
         {
-            CaretIndex = 0;
+            SetCaretIndex(0, shift);
         }
 
         if (IsNewKeyPress(keyboard, previousKeyboard, Keys.End))
         {
-            CaretIndex = Text.Length;
+            SetCaretIndex(Text.Length, shift);
         }
 
-        if (ShouldHandleRepeatedKey(keyboard, previousKeyboard, Keys.Back, ref _backKeyRepeatCountdown, gameTime) && CaretIndex > 0)
+        if (ShouldHandleRepeatedKey(keyboard, previousKeyboard, Keys.Back, ref _backKeyRepeatCountdown, gameTime))
         {
-            Text = Text.Remove(CaretIndex - 1, 1);
-            CaretIndex--;
+            if (!DeleteSelection() && CaretIndex > 0)
+            {
+                Text = Text.Remove(CaretIndex - 1, 1);
+                CaretIndex--;
+            }
         }
 
-        if (ShouldHandleRepeatedKey(keyboard, previousKeyboard, Keys.Delete, ref _deleteKeyRepeatCountdown, gameTime) && CaretIndex < Text.Length)
+        if (ShouldHandleRepeatedKey(keyboard, previousKeyboard, Keys.Delete, ref _deleteKeyRepeatCountdown, gameTime))
         {
-            Text = Text.Remove(CaretIndex, 1);
+            if (!DeleteSelection() && CaretIndex < Text.Length)
+                Text = Text.Remove(CaretIndex, 1);
         }
 
         return TextBoxKeyboardAction.None;
     }
+
+    private void InsertText(string value, Func<char, bool>? characterFilter)
+    {
+        value = value.Replace("\r", "").Replace("\n", "");
+        if (characterFilter is not null)
+            value = new string(value.Where(characterFilter).ToArray());
+        DeleteSelection();
+        var available = _maxLength - Text.Length;
+        if (available <= 0 || value.Length == 0) return;
+        var inserted = value[..Math.Min(available, value.Length)];
+        Text = Text.Insert(CaretIndex, inserted);
+        CaretIndex += inserted.Length;
+    }
+
+    private bool DeleteSelection()
+    {
+        if (!HasSelection)
+        {
+            ClearSelection();
+            return false;
+        }
+        var start = SelectionStart;
+        Text = Text.Remove(start, SelectionLength);
+        CaretIndex = start;
+        ClearSelection();
+        return true;
+    }
+
+    private void ClearSelection() => SelectionAnchor = null;
 
     private static bool IsNewKeyPress(KeyboardState keyboard, KeyboardState previousKeyboard, Keys key) =>
         keyboard.IsKeyDown(key) && previousKeyboard.IsKeyUp(key);

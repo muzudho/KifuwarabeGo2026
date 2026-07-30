@@ -492,6 +492,8 @@ public sealed partial class GoScreenRenderer
         DrawUiLabel(UiLabel.InCompactRow(label, bounds));
 
         var textBounds = GtpEngineEditPanelFieldTextBounds(field);
+        if (active)
+            DrawTextBoxSelection(text, session.GtpEngineEditSelectionStart, session.GtpEngineEditSelectionLength, textBounds, 0.42f);
         DrawFittedText(string.IsNullOrEmpty(text) ? "-" : text, textBounds, Color.White, 0.42f);
         if (active)
         {

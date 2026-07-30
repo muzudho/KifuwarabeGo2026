@@ -516,6 +516,8 @@ public sealed partial class GoScreenRenderer
             DrawDataRowFrame(bounds, active, bounds.Contains(mousePoint));
             DrawUiLabel(UiLabel.InCompactRow(field == CgosPlayerCredentialField.LoginName ? "LOGIN" : "PASSWORD", bounds));
             var text = session.GetCgosCredential(stone, field);
+            if (active)
+                DrawTextBoxSelection(text, session.CgosCredentialSelectionStart, session.CgosCredentialSelectionLength, CgosCredentialTextBounds(stone, field), 0.32f);
             DrawFittedText(string.IsNullOrEmpty(text) ? "-" : text, CgosCredentialTextBounds(stone, field), Color.White, 0.32f);
             if (active) DrawTextBoxCaret(text, session.CgosCredentialCaretIndex, CgosCredentialTextBounds(stone, field), 0.32f);
         }
@@ -812,6 +814,8 @@ public sealed partial class GoScreenRenderer
         DrawUiLabel(UiLabel.InCompactRow(label, bounds));
 
         var textBounds = CgosConnectionEditPanelFieldTextBounds(field);
+        if (active)
+            DrawTextBoxSelection(text, session.CgosConnectionEditSelectionStart, session.CgosConnectionEditSelectionLength, textBounds, 0.42f);
         DrawFittedText(string.IsNullOrEmpty(text) ? "-" : text, textBounds, Color.White, 0.42f);
         if (active)
         {

@@ -27,6 +27,12 @@ internal sealed class PortablePlatformServices :
 
     public bool TrySetText(string text) => false;
 
+    public bool TryGetText(out string text)
+    {
+        text = "";
+        return false;
+    }
+
     public void ShowWarning(string title, string message)
     {
     }

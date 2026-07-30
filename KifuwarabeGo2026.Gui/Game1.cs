@@ -462,6 +462,7 @@ public class Game1 : Game
 
         var mouse = Mouse.GetState();
         var point = VirtualScreen.ToVirtualPoint(GraphicsDevice.Viewport, mouse.Position);
+        UpdateTextBoxMouseDrag(mouse, point);
         UpdateCatalogOrderDrag(mouse, point);
         var engineErrorLogHovered = _session.UseKind == GoAppUseKind.LocalGame &&
             GoScreenRenderer.GetEngineErrorLogHit(point, _session);
@@ -903,11 +904,14 @@ public class Game1 : Game
             Func<Point, string, int>? getDisplayNameCaretIndex = _renderer is null
                 ? null
                 : (caretPoint, text) => TournamentRuleRenderer.GetDisplayNameCaretIndex(_renderer, caretPoint, text);
+            Func<Point, TournamentRulesNumericField, string, int>? getNumericCaretIndex = _renderer is null
+                ? null
+                : (caretPoint, field, text) => _renderer.GetTournamentRulesNumericCaretIndex(caretPoint, field, text);
             var handledByTournamentRulesSetting = !handledByGtpEngineEditPanel &&
                 !handledByGtpEngineSelectionDialog &&
                 isSetupMode &&
                 !isBoardEditing &&
-                _tournamentRulesSetting.TryHandleMouseClick(point, getDisplayNameCaretIndex);
+                _tournamentRulesSetting.TryHandleMouseClick(point, getDisplayNameCaretIndex, getNumericCaretIndex);
             if (handledByGtpEngineEditPanel || handledByGtpEngineSelectionDialog || handledByTournamentRulesSetting)
             {
                 _previousMouse = mouse;
@@ -1087,6 +1091,64 @@ public class Game1 : Game
         }
 
         _previousMouse = mouse;
+    }
+
+    private void UpdateTextBoxMouseDrag(MouseState mouse, Point point)
+    {
+        if (mouse.LeftButton == ButtonState.Released)
+        {
+            _cgosConnectionEditTextBox.EndMouseSelection();
+            _cgosCredentialTextBox.EndMouseSelection();
+            _humanPlayerNameTextBox.EndMouseSelection();
+            _gtpEngineEditTextBox.EndMouseSelection();
+            _tournamentRulesSetting.EndMouseSelection();
+            return;
+        }
+
+        if (_renderer is null || _previousMouse.LeftButton != ButtonState.Pressed) return;
+
+        if (_cgosConnectionEditTextBox.IsMouseSelecting &&
+            _session.ActiveCgosConnectionEditField is { } connectionField)
+        {
+            _cgosConnectionEditTextBox.UpdateMouseSelection(
+                _renderer.GetCgosConnectionEditPanelCaretIndex(point, connectionField, _cgosConnectionEditTextBox.Text));
+            SyncCgosConnectionEditField(connectionField);
+        }
+        else if (_cgosCredentialTextBox.IsMouseSelecting &&
+                 _session.ActiveCgosCredentialStone is { } credentialStone &&
+                 _session.ActiveCgosCredentialField is { } credentialField)
+        {
+            _cgosCredentialTextBox.UpdateMouseSelection(
+                _renderer.GetCgosCredentialCaretIndex(point, credentialStone, credentialField, _cgosCredentialTextBox.Text));
+            _session.SetCgosCredential(credentialStone, credentialField, _cgosCredentialTextBox.Text, _cgosCredentialTextBox.CaretIndex);
+            SyncCgosCredentialSelection();
+        }
+        else if (_humanPlayerNameTextBox.IsMouseSelecting &&
+                 _session.ActiveHumanPlayerNameStone is { } humanStone)
+        {
+            _humanPlayerNameTextBox.UpdateMouseSelection(
+                _renderer.GetHumanPlayerNameCaretIndex(point, humanStone, _humanPlayerNameTextBox.Text));
+            _session.SetHumanPlayerNameDraft(_humanPlayerNameTextBox.Text, _humanPlayerNameTextBox.CaretIndex);
+            _session.SetHumanPlayerNameSelection(_humanPlayerNameTextBox.SelectionStart, _humanPlayerNameTextBox.SelectionLength);
+        }
+        else if (_gtpEngineEditTextBox.IsMouseSelecting &&
+                 _session.ActiveGtpEngineEditField is { } engineField)
+        {
+            _gtpEngineEditTextBox.UpdateMouseSelection(
+                _renderer.GetGtpEngineEditPanelCaretIndex(point, engineField, _gtpEngineEditTextBox.Text));
+            SyncGtpEngineEditField(engineField);
+        }
+
+        _tournamentRulesSetting.UpdateMouseSelection(
+            point,
+            (caretPoint, text) => TournamentRuleRenderer.GetDisplayNameCaretIndex(_renderer, caretPoint, text),
+            (caretPoint, field, text) => _renderer.GetTournamentRulesNumericCaretIndex(caretPoint, field, text));
+    }
+
+    private static bool IsShiftDown()
+    {
+        var keyboard = Keyboard.GetState();
+        return keyboard.IsKeyDown(Keys.LeftShift) || keyboard.IsKeyDown(Keys.RightShift);
     }
 
     private void UpdateCatalogOrderDrag(MouseState mouse, Point point)
@@ -1492,7 +1554,7 @@ public class Game1 : Game
 
         if (_session.ActiveCgosConnectionEditField is { } field)
         {
-            switch (_cgosConnectionEditTextBox.HandleKeyboard(keyboard, _previousCgosConnectionKeyboard, gameTime))
+            switch (_cgosConnectionEditTextBox.HandleKeyboard(keyboard, _previousCgosConnectionKeyboard, gameTime, _clipboardService))
             {
                 case TextBoxKeyboardAction.Commit:
                     EndCgosConnectionEditField();
@@ -2323,12 +2385,13 @@ public class Game1 : Game
 
         if (_session.ActiveCgosConnectionEditField == field)
         {
-            _cgosConnectionEditTextBox.SetCaretIndex(caretIndex);
+            _cgosConnectionEditTextBox.BeginMouseSelection(caretIndex, IsShiftDown());
             SyncCgosConnectionEditField(field);
             return;
         }
 
         _cgosConnectionEditTextBox.Begin(text, caretIndex);
+        _cgosConnectionEditTextBox.BeginMouseSelection(caretIndex, extendSelection: false);
         SyncCgosConnectionEditField(field);
         _session.BeginCgosConnectionEditField(field, _cgosConnectionEditTextBox.CaretIndex);
         UpdateCgosConnectionEditWarning();
@@ -2337,6 +2400,7 @@ public class Game1 : Game
     private void SyncCgosConnectionEditField(CgosConnectionProfileEditField field)
     {
         _session.SetCgosConnectionEditField(field, _cgosConnectionEditTextBox.Text, _cgosConnectionEditTextBox.CaretIndex);
+        _session.SetCgosConnectionEditSelection(_cgosConnectionEditTextBox.SelectionStart, _cgosConnectionEditTextBox.SelectionLength);
     }
 
     private void EndCgosConnectionEditField()
@@ -2463,7 +2527,10 @@ public class Game1 : Game
         if (_session.ActiveCgosCredentialStone is not { } stone ||
             _session.ActiveCgosCredentialField is not { } field) return false;
         if (_cgosCredentialTextBox.TryInputCharacter(character))
+        {
             _session.SetCgosCredential(stone, field, _cgosCredentialTextBox.Text, _cgosCredentialTextBox.CaretIndex);
+            SyncCgosCredentialSelection();
+        }
         return true;
     }
 
@@ -2481,9 +2548,9 @@ public class Game1 : Game
         var caret = _renderer?.GetCgosCredentialCaretIndex(point, stone, field, text) ?? text.Length;
         if (_session.ActiveCgosCredentialStone != stone || _session.ActiveCgosCredentialField != field)
             _cgosCredentialTextBox.Begin(text, caret);
-        else
-            _cgosCredentialTextBox.SetCaretIndex(caret);
+        _cgosCredentialTextBox.BeginMouseSelection(caret, IsShiftDown());
         _session.BeginCgosCredentialEdit(stone, field, _cgosCredentialTextBox.CaretIndex);
+        SyncCgosCredentialSelection();
     }
 
     private void UpdateCgosCredentialByKeyboard(KeyboardState keyboard, GameTime gameTime)
@@ -2497,7 +2564,12 @@ public class Game1 : Game
             return;
         }
 
-        switch (_cgosCredentialTextBox.HandleKeyboard(keyboard, _previousCgosCredentialKeyboard, gameTime))
+        switch (_cgosCredentialTextBox.HandleKeyboard(
+                    keyboard,
+                    _previousCgosCredentialKeyboard,
+                    gameTime,
+                    _clipboardService,
+                    allowClipboardExport: field != CgosPlayerCredentialField.Password))
         {
             case TextBoxKeyboardAction.Commit:
             case TextBoxKeyboardAction.Cancel:
@@ -2505,6 +2577,7 @@ public class Game1 : Game
                 break;
             default:
                 _session.SetCgosCredential(stone, field, _cgosCredentialTextBox.Text, _cgosCredentialTextBox.CaretIndex);
+                SyncCgosCredentialSelection();
                 break;
         }
         _previousCgosCredentialKeyboard = keyboard;
@@ -2518,12 +2591,13 @@ public class Game1 : Game
         var caretIndex = _renderer?.GetHumanPlayerNameCaretIndex(point, stone, text) ?? text.Length;
         if (_session.ActiveHumanPlayerNameStone == stone)
         {
-            _humanPlayerNameTextBox.SetCaretIndex(caretIndex);
+            _humanPlayerNameTextBox.BeginMouseSelection(caretIndex, IsShiftDown());
             _session.SetHumanPlayerNameDraft(text, caretIndex);
             return;
         }
 
         _humanPlayerNameTextBox.Begin(text, caretIndex);
+        _humanPlayerNameTextBox.BeginMouseSelection(caretIndex, extendSelection: false);
         _session.BeginHumanPlayerNameEdit(stone, caretIndex);
     }
 
@@ -2537,8 +2611,13 @@ public class Game1 : Game
             return;
         }
 
-        var action = _humanPlayerNameTextBox.HandleKeyboard(keyboard, _previousHumanPlayerNameKeyboard, gameTime);
+        var action = _humanPlayerNameTextBox.HandleKeyboard(
+            keyboard,
+            _previousHumanPlayerNameKeyboard,
+            gameTime,
+            _clipboardService);
         _session.SetHumanPlayerNameDraft(_humanPlayerNameTextBox.Text, _humanPlayerNameTextBox.CaretIndex);
+        _session.SetHumanPlayerNameSelection(_humanPlayerNameTextBox.SelectionStart, _humanPlayerNameTextBox.SelectionLength);
         if (action == TextBoxKeyboardAction.Commit) EndHumanPlayerNameEdit(commit: true);
         if (action == TextBoxKeyboardAction.Cancel) EndHumanPlayerNameEdit(commit: false);
         _previousHumanPlayerNameKeyboard = keyboard;
@@ -2549,6 +2628,7 @@ public class Game1 : Game
         if (_session.ActiveHumanPlayerNameStone is null) return false;
         if (!_humanPlayerNameTextBox.TryInputCharacter(character)) return true;
         _session.SetHumanPlayerNameDraft(_humanPlayerNameTextBox.Text, _humanPlayerNameTextBox.CaretIndex);
+        _session.SetHumanPlayerNameSelection(_humanPlayerNameTextBox.SelectionStart, _humanPlayerNameTextBox.SelectionLength);
         return true;
     }
 
@@ -3080,7 +3160,12 @@ public class Game1 : Game
 
         if (_session.ActiveGtpEngineEditField is { } field)
         {
-            switch (_gtpEngineEditTextBox.HandleKeyboard(keyboard, _previousGtpEngineKeyboard, gameTime))
+            switch (_gtpEngineEditTextBox.HandleKeyboard(
+                        keyboard,
+                        _previousGtpEngineKeyboard,
+                        gameTime,
+                        _clipboardService,
+                        allowClipboardExport: field != GtpEngineProfileEditField.DefaultCgosPlainTextPassword))
             {
                 case TextBoxKeyboardAction.Commit:
                     EndGtpEngineEditField();
@@ -3132,12 +3217,13 @@ public class Game1 : Game
 
         if (_session.ActiveGtpEngineEditField == field)
         {
-            _gtpEngineEditTextBox.SetCaretIndex(caretIndex);
+            _gtpEngineEditTextBox.BeginMouseSelection(caretIndex, IsShiftDown());
             SyncGtpEngineEditField(field);
             return;
         }
 
         _gtpEngineEditTextBox.Begin(text, caretIndex);
+        _gtpEngineEditTextBox.BeginMouseSelection(caretIndex, extendSelection: false);
         SyncGtpEngineEditField(field);
         _session.BeginGtpEngineEditField(field, _gtpEngineEditTextBox.CaretIndex);
         UpdateGtpEngineEditWarning();
@@ -3146,7 +3232,11 @@ public class Game1 : Game
     private void SyncGtpEngineEditField(GtpEngineProfileEditField field)
     {
         _session.SetGtpEngineEditField(field, _gtpEngineEditTextBox.Text, _gtpEngineEditTextBox.CaretIndex);
+        _session.SetGtpEngineEditSelection(_gtpEngineEditTextBox.SelectionStart, _gtpEngineEditTextBox.SelectionLength);
     }
+
+    private void SyncCgosCredentialSelection() =>
+        _session.SetCgosCredentialSelection(_cgosCredentialTextBox.SelectionStart, _cgosCredentialTextBox.SelectionLength);
 
     private void EndGtpEngineEditField()
     {

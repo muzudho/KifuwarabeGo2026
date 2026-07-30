@@ -110,7 +110,10 @@ public sealed class TournamentRulesSetting
         return true;
     }
 
-    public bool TryHandleMouseClick(Point point, Func<Point, string, int>? getDisplayNameCaretIndex = null)
+    public bool TryHandleMouseClick(
+        Point point,
+        Func<Point, string, int>? getDisplayNameCaretIndex = null,
+        Func<Point, TournamentRulesNumericField, string, int>? getNumericCaretIndex = null)
     {
         if (_session.IsTournamentRulesSelectionDialogOpen)
         {
@@ -119,7 +122,7 @@ public sealed class TournamentRulesSetting
 
         if (_session.IsTournamentRulesAddPanelOpen)
         {
-            return TryHandleTournamentRulesAddPanelClick(point, getDisplayNameCaretIndex);
+            return TryHandleTournamentRulesAddPanelClick(point, getDisplayNameCaretIndex, getNumericCaretIndex);
         }
 
         if (GoScreenRenderer.GetTournamentRulesBrowseButtonHit(point))
@@ -131,7 +134,10 @@ public sealed class TournamentRulesSetting
         return false;
     }
 
-    private bool TryHandleTournamentRulesAddPanelClick(Point point, Func<Point, string, int>? getDisplayNameCaretIndex)
+    private bool TryHandleTournamentRulesAddPanelClick(
+        Point point,
+        Func<Point, string, int>? getDisplayNameCaretIndex,
+        Func<Point, TournamentRulesNumericField, string, int>? getNumericCaretIndex)
     {
         if (GoScreenRenderer.GetTournamentRulesAddPanelCloseButtonHit(point))
         {
@@ -150,13 +156,13 @@ public sealed class TournamentRulesSetting
 
         if (GoScreenRenderer.GetTournamentRulesMainTimeTextBoxHit(point))
         {
-            BeginNumericEdit(TournamentRulesNumericField.MainTime);
+            BeginOrMoveNumericEdit(point, TournamentRulesNumericField.MainTime, getNumericCaretIndex);
             return true;
         }
 
         if (GoScreenRenderer.GetTournamentRulesMoveLimitTextBoxHit(point))
         {
-            BeginNumericEdit(TournamentRulesNumericField.MoveLimit);
+            BeginOrMoveNumericEdit(point, TournamentRulesNumericField.MoveLimit, getNumericCaretIndex);
             return true;
         }
 
@@ -408,17 +414,19 @@ public sealed class TournamentRulesSetting
 
         if (_session.IsTournamentRulesDisplayNameEditing)
         {
-            _displayNameTextBox.SetCaretIndex(caretIndex);
+            _displayNameTextBox.BeginMouseSelection(caretIndex, IsShiftDown());
             SyncDisplayNameDraft();
             return;
         }
 
         BeginDisplayNameEdit(caretIndex);
+        _displayNameTextBox.BeginMouseSelection(caretIndex, extendSelection: false);
+        SyncDisplayNameDraft();
     }
 
     private void HandleDisplayNameKeyboard(KeyboardState keyboard, GameTime gameTime)
     {
-        switch (_displayNameTextBox.HandleKeyboard(keyboard, _previousKeyboard, gameTime))
+        switch (_displayNameTextBox.HandleKeyboard(keyboard, _previousKeyboard, gameTime, _clipboardService))
         {
             case TextBoxKeyboardAction.Commit:
                 CommitDisplayNameEdit();
@@ -476,6 +484,7 @@ public sealed class TournamentRulesSetting
     private void SyncDisplayNameDraft()
     {
         _session.SetTournamentRulesDisplayNameDraft(_displayNameTextBox.Text, _displayNameTextBox.CaretIndex);
+        _session.SetTournamentRulesDisplayNameSelection(_displayNameTextBox.SelectionStart, _displayNameTextBox.SelectionLength);
     }
 
     private void UpdateBoardSizeByKeyboard(KeyboardState keyboard)
@@ -523,10 +532,73 @@ public sealed class TournamentRulesSetting
         _session.SetTournamentRulesDisplayNameWarning("");
     }
 
+    private void BeginOrMoveNumericEdit(
+        Point point,
+        TournamentRulesNumericField field,
+        Func<Point, TournamentRulesNumericField, string, int>? getCaretIndex)
+    {
+        if (_session.ActiveTournamentRulesNumericField == field)
+        {
+            var activeController = GetNumericController(field);
+            var caret = getCaretIndex?.Invoke(point, field, activeController.Text) ?? activeController.Text.Length;
+            activeController.BeginMouseSelection(caret, IsShiftDown());
+            SyncNumericDraft(field);
+            return;
+        }
+
+        BeginNumericEdit(field);
+        var controller = GetNumericController(field);
+        var caretIndex = getCaretIndex?.Invoke(point, field, controller.Text) ?? controller.Text.Length;
+        controller.SetCaretIndex(caretIndex);
+        controller.BeginMouseSelection(caretIndex, extendSelection: false);
+        SyncNumericDraft(field);
+    }
+
+    public void UpdateMouseSelection(
+        Point point,
+        Func<Point, string, int> getDisplayNameCaretIndex,
+        Func<Point, TournamentRulesNumericField, string, int> getNumericCaretIndex)
+    {
+        if (_displayNameTextBox.IsMouseSelecting)
+        {
+            _displayNameTextBox.UpdateMouseSelection(getDisplayNameCaretIndex(point, _displayNameTextBox.Text));
+            SyncDisplayNameDraft();
+        }
+        else if (_session.ActiveTournamentRulesNumericField is { } field)
+        {
+            var controller = GetNumericController(field);
+            if (controller.IsMouseSelecting)
+            {
+                controller.UpdateMouseSelection(getNumericCaretIndex(point, field, controller.Text));
+                SyncNumericDraft(field);
+            }
+        }
+    }
+
+    public void EndMouseSelection()
+    {
+        _displayNameTextBox.EndMouseSelection();
+        _mainTimeTextBox.EndMouseSelection();
+        _moveLimitTextBox.EndMouseSelection();
+    }
+
+    private static bool IsShiftDown()
+    {
+        var keyboard = Keyboard.GetState();
+        return keyboard.IsKeyDown(Keys.LeftShift) || keyboard.IsKeyDown(Keys.RightShift);
+    }
+
     private void HandleNumericKeyboard(TournamentRulesNumericField field, KeyboardState keyboard, GameTime gameTime)
     {
         var controller = GetNumericController(field);
-        switch (controller.HandleKeyboard(keyboard, _previousKeyboard, gameTime))
+        switch (controller.HandleKeyboard(
+                    keyboard,
+                    _previousKeyboard,
+                    gameTime,
+                    _clipboardService,
+                    pasteCharacterFilter: character =>
+                        char.IsAsciiDigit(character) ||
+                        (field == TournamentRulesNumericField.MainTime && character == ':')))
         {
             case TextBoxKeyboardAction.Commit:
                 CommitNumericEdit();
@@ -591,6 +663,7 @@ public sealed class TournamentRulesSetting
     {
         var controller = GetNumericController(field);
         _session.SetTournamentRulesNumericDraft(controller.Text, controller.CaretIndex);
+        _session.SetTournamentRulesNumericSelection(controller.SelectionStart, controller.SelectionLength);
     }
 
     private TextBoxController GetNumericController(TournamentRulesNumericField field) =>

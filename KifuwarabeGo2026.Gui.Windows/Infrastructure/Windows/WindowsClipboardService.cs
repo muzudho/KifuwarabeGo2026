@@ -55,6 +55,32 @@ public sealed class WindowsClipboardService : IClipboardService
         }
     }
 
+    public bool TryGetText(out string text)
+    {
+        text = "";
+        if (!OpenClipboard(IntPtr.Zero)) return false;
+        try
+        {
+            var clipboardData = GetClipboardData(CfUnicodeText);
+            if (clipboardData == IntPtr.Zero) return false;
+            var lockedMemory = GlobalLock(clipboardData);
+            if (lockedMemory == IntPtr.Zero) return false;
+            try
+            {
+                text = Marshal.PtrToStringUni(lockedMemory) ?? "";
+                return true;
+            }
+            finally
+            {
+                GlobalUnlock(clipboardData);
+            }
+        }
+        finally
+        {
+            CloseClipboard();
+        }
+    }
+
     [DllImport("user32.dll", SetLastError = true)]
     private static extern bool OpenClipboard(IntPtr hWndNewOwner);
 
@@ -63,6 +89,9 @@ public sealed class WindowsClipboardService : IClipboardService
 
     [DllImport("user32.dll", SetLastError = true)]
     private static extern IntPtr SetClipboardData(uint uFormat, IntPtr hMem);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern IntPtr GetClipboardData(uint uFormat);
 
     [DllImport("user32.dll", SetLastError = true)]
     private static extern bool CloseClipboard();

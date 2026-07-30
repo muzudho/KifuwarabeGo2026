@@ -217,6 +217,14 @@ public sealed partial class GoScreenRenderer
 
     public int GetHumanPlayerNameCaretIndex(Point point, GoStone stone, string text) =>
         GetTextBoxCaretIndex(point.X, text, HumanPlayerNameTextBounds(stone == GoStone.Black ? BlackEngineButtonY : WhiteEngineButtonY), 0.42f);
+
+    public int GetTournamentRulesNumericCaretIndex(Point point, TournamentRulesNumericField field, string text)
+    {
+        var bounds = field == TournamentRulesNumericField.MainTime
+            ? TournamentRulesMainTimeTextBounds
+            : TournamentRulesMoveLimitTextBounds;
+        return GetTextBoxCaretIndex(point.X, text, new Rectangle(bounds.X + 8, bounds.Y + 4, bounds.Width - 16, bounds.Height - 8), 0.42f);
+    }
     public static bool GetPassButtonHit(Point point) => PassButtonBounds.Contains(point);
 
     public static bool GetResignButtonHit(Point point) => ResignButtonBounds.Contains(point);
@@ -466,6 +474,8 @@ public sealed partial class GoScreenRenderer
         DrawUiLabel(UiLabel.InCompactRow("DISPLAY", bounds));
 
         var textBounds = TournamentRulesAddPanelDisplayNameTextBounds;
+        if (active)
+            DrawTextBoxSelection(displayName, session.TournamentRulesDisplayNameSelectionStart, session.TournamentRulesDisplayNameSelectionLength, textBounds, 0.46f);
         DrawFittedText(displayName, textBounds, Color.White, 0.46f);
         if (active)
         {
@@ -495,6 +505,19 @@ public sealed partial class GoScreenRenderer
         var fittedScale = MathF.Min(textScale, MathF.Min(textBounds.Width / Math.Max(1f, measuredText.X), textBounds.Height / Math.Max(1f, measuredText.Y)));
         var x = textBounds.X + MathF.Min(textBounds.Width - 2, _font.MeasureString(prefix).X * fittedScale);
         DrawLine(new Vector2(x, textBounds.Y + 5), new Vector2(x, textBounds.Bottom - 5), 2, new Color(147, 244, 200));
+    }
+
+    private void DrawTextBoxSelection(string text, int selectionStart, int selectionLength, Rectangle textBounds, float textScale)
+    {
+        if (selectionLength <= 0 || selectionStart < 0 || selectionStart >= text.Length) return;
+        var end = Math.Min(text.Length, selectionStart + selectionLength);
+        var measuredText = _font.MeasureString(text);
+        var fittedScale = MathF.Min(textScale, MathF.Min(textBounds.Width / Math.Max(1f, measuredText.X), textBounds.Height / Math.Max(1f, measuredText.Y)));
+        var startX = textBounds.X + _font.MeasureString(text[..selectionStart]).X * fittedScale;
+        var endX = textBounds.X + _font.MeasureString(text[..end]).X * fittedScale;
+        FillRect(
+            new Rectangle((int)startX, textBounds.Y + 3, Math.Max(2, (int)MathF.Ceiling(endX - startX)), textBounds.Height - 6),
+            new Color(50, 108, 139, 210));
     }
 
     private int GetTextBoxCaretIndex(int pointX, string text, Rectangle textBounds, float textScale)
@@ -601,7 +624,10 @@ public sealed partial class GoScreenRenderer
         DrawUiLabel(UiLabel.InCompactRow(label, bounds));
         FillRect(textBounds, active ? new Color(35, 63, 59) : new Color(24, 31, 37));
         DrawRect(textBounds, active ? 2 : 1, active ? new Color(147, 244, 200) : new Color(82, 111, 114));
-        DrawFittedText(text, new Rectangle(textBounds.X + 8, textBounds.Y + 4, textBounds.Width - 16, textBounds.Height - 8), Color.White, 0.42f);
+        var numericTextBounds = new Rectangle(textBounds.X + 8, textBounds.Y + 4, textBounds.Width - 16, textBounds.Height - 8);
+        if (active)
+            DrawTextBoxSelection(text, session.TournamentRulesNumericSelectionStart, session.TournamentRulesNumericSelectionLength, numericTextBounds, 0.42f);
+        DrawFittedText(text, numericTextBounds, Color.White, 0.42f);
         if (active)
         {
             DrawTextBoxCaret(text, session.TournamentRulesNumericCaretIndex, new Rectangle(textBounds.X + 8, textBounds.Y + 4, textBounds.Width - 16, textBounds.Height - 8), 0.42f);
@@ -663,6 +689,8 @@ public sealed partial class GoScreenRenderer
         var active = session.ActiveHumanPlayerNameStone == stone;
         var text = active ? session.HumanPlayerNameDraft : session.GetHumanPlayerName(stone);
         DrawResultLabel(new Rectangle(bounds.X + 20, bounds.Y - 6, bounds.Width - 40, bounds.Height + 12), "NAME", new Color(76, 91, 126));
+        if (active)
+            DrawTextBoxSelection(text, session.HumanPlayerNameSelectionStart, session.HumanPlayerNameSelectionLength, HumanPlayerNameTextBounds(y), 0.42f);
         DrawFittedText(text, HumanPlayerNameTextBounds(y), Color.White, 0.42f);
         if (active) DrawTextBoxCaret(text, session.HumanPlayerNameCaretIndex, HumanPlayerNameTextBounds(y), 0.42f);
     }

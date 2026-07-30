@@ -6,6 +6,8 @@ using KifuwarabeGo2026.Gui.Application.Cgos.ConnectionTarget;
 using KifuwarabeGo2026.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.Gui.Application.Local.Resting.TournamentRule;
 using KifuwarabeGo2026.Shared.Domain;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Input;
 using System;
 using System.IO;
 using System.Linq;
@@ -34,6 +36,7 @@ internal static class PortabilityChecks
         VerifyCatalogOrderEditor();
         VerifyCgosConnectionOrder();
         VerifyOptionalCgosInputs();
+        VerifyTextBoxEditing();
         VerifyDefaultCgosConnection();
         VerifyTournamentRulesJsonCompatibility();
         VerifyComposition();
@@ -211,6 +214,64 @@ internal static class PortabilityChecks
         Require(session.IsCgosAdminInputEnabled, "CGOS Admin input toggle did not enable the panel.");
     }
 
+    private static void VerifyTextBoxEditing()
+    {
+        var clipboard = new TestClipboardService();
+        var controller = new TextBoxController(20);
+        var frame = new GameTime(TimeSpan.Zero, TimeSpan.FromMilliseconds(16));
+
+        controller.Begin("abcd", 1);
+        controller.BeginMouseSelection(1, false);
+        controller.UpdateMouseSelection(3);
+        controller.EndMouseSelection();
+        Require(controller.SelectionStart == 1 && controller.SelectionLength == 2, "Mouse selection range is incorrect.");
+        controller.TryInputCharacter('X');
+        Require(controller.Text == "aXd", "Typing must replace the selected text.");
+
+        controller.Begin("abcd", 2);
+        controller.HandleKeyboard(
+            new KeyboardState(Keys.LeftShift, Keys.Right),
+            new KeyboardState(),
+            frame,
+            clipboard);
+        Require(controller.SelectionStart == 2 && controller.SelectionLength == 1, "Shift+Right must extend the selection.");
+
+        controller.HandleKeyboard(
+            new KeyboardState(Keys.LeftControl, Keys.A),
+            new KeyboardState(),
+            frame,
+            clipboard);
+        controller.HandleKeyboard(new KeyboardState(Keys.Back), new KeyboardState(), frame, clipboard);
+        Require(controller.Text == "", "Backspace must delete the complete selection.");
+
+        clipboard.Text = "paste";
+        controller.Begin("ab", 1);
+        controller.HandleKeyboard(
+            new KeyboardState(Keys.LeftControl, Keys.V),
+            new KeyboardState(),
+            frame,
+            clipboard);
+        Require(controller.Text == "apasteb", "Ctrl+V must insert clipboard text at the caret.");
+
+        controller.BeginMouseSelection(1, false);
+        controller.UpdateMouseSelection(6);
+        controller.EndMouseSelection();
+        controller.HandleKeyboard(
+            new KeyboardState(Keys.LeftControl, Keys.C),
+            new KeyboardState(),
+            frame,
+            clipboard);
+        Require(clipboard.Text == "paste", "Ctrl+C must copy the selected text.");
+
+        controller.HandleKeyboard(
+            new KeyboardState(Keys.LeftControl, Keys.X),
+            new KeyboardState(),
+            frame,
+            clipboard,
+            allowClipboardExport: false);
+        Require(controller.Text == "apasteb", "Password-style Ctrl+X must not copy or delete text.");
+    }
+
     private static void VerifyDefaultCgosConnection()
     {
         Require(
@@ -292,6 +353,23 @@ internal static class PortabilityChecks
         if (!condition)
         {
             throw new InvalidOperationException(message);
+        }
+    }
+
+    private sealed class TestClipboardService : IClipboardService
+    {
+        public string Text { get; set; } = "";
+
+        public bool TrySetText(string text)
+        {
+            Text = text;
+            return true;
+        }
+
+        public bool TryGetText(out string text)
+        {
+            text = Text;
+            return true;
         }
     }
 }

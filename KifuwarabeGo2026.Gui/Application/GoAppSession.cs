@@ -146,6 +146,8 @@ public sealed class GoAppSession
     public GoStone? ActiveCgosCredentialStone { get; private set; }
     public CgosPlayerCredentialField? ActiveCgosCredentialField { get; private set; }
     public int CgosCredentialCaretIndex { get; private set; }
+    public int CgosCredentialSelectionStart { get; private set; }
+    public int CgosCredentialSelectionLength { get; private set; }
 
     public bool HasSelectedCgosGtpEngine => SelectedCgosBlackGtpEngineProfile is not null || SelectedCgosWhiteGtpEngineProfile is not null;
 
@@ -218,6 +220,8 @@ public sealed class GoAppSession
     public CgosConnectionProfileEditField? ActiveCgosConnectionEditField { get; private set; }
 
     public int CgosConnectionEditCaretIndex { get; private set; }
+    public int CgosConnectionEditSelectionStart { get; private set; }
+    public int CgosConnectionEditSelectionLength { get; private set; }
 
     public CgosConnectionProfile CgosConnectionEditDraft { get; private set; } = CreateDefaultCgosConnectionProfile();
 
@@ -258,6 +262,8 @@ public sealed class GoAppSession
     public bool IsTournamentRulesDisplayNameEditing { get; private set; }
 
     public int TournamentRulesDisplayNameCaretIndex { get; private set; }
+    public int TournamentRulesDisplayNameSelectionStart { get; private set; }
+    public int TournamentRulesDisplayNameSelectionLength { get; private set; }
 
     public string TournamentRulesDisplayNameWarning { get; private set; } = "";
 
@@ -266,6 +272,8 @@ public sealed class GoAppSession
     public string TournamentRulesNumericDraft { get; private set; } = "";
 
     public int TournamentRulesNumericCaretIndex { get; private set; }
+    public int TournamentRulesNumericSelectionStart { get; private set; }
+    public int TournamentRulesNumericSelectionLength { get; private set; }
 
     public string TournamentDisplayName => _currentTournamentRules.DisplayName;
 
@@ -316,6 +324,8 @@ public sealed class GoAppSession
     public string HumanPlayerNameDraft { get; private set; } = "";
 
     public int HumanPlayerNameCaretIndex { get; private set; }
+    public int HumanPlayerNameSelectionStart { get; private set; }
+    public int HumanPlayerNameSelectionLength { get; private set; }
 
     public IReadOnlyList<GtpEngineProfile> GtpEngineProfiles => _gtpEngineProfiles;
 
@@ -346,6 +356,8 @@ public sealed class GoAppSession
     public GtpEngineProfileEditField? ActiveGtpEngineEditField { get; private set; }
 
     public int GtpEngineEditCaretIndex { get; private set; }
+    public int GtpEngineEditSelectionStart { get; private set; }
+    public int GtpEngineEditSelectionLength { get; private set; }
 
     public string GtpEngineEditWarning { get; private set; } = "";
 
@@ -3127,6 +3139,24 @@ public sealed class GoAppSession
 
     private static CgosConnectionProfile CreateDefaultCgosConnectionProfile() =>
         new("New CGOS Connection", "uec-go.com", 6809, "PRACTICE", "CGOS practice server") { Event = "PRACTICE" };
+
+    public void SetCgosConnectionEditSelection(int start, int length) =>
+        (CgosConnectionEditSelectionStart, CgosConnectionEditSelectionLength) = (start, length);
+
+    public void SetTournamentRulesNumericSelection(int start, int length) =>
+        (TournamentRulesNumericSelectionStart, TournamentRulesNumericSelectionLength) = (start, length);
+
+    public void SetTournamentRulesDisplayNameSelection(int start, int length) =>
+        (TournamentRulesDisplayNameSelectionStart, TournamentRulesDisplayNameSelectionLength) = (start, length);
+
+    public void SetHumanPlayerNameSelection(int start, int length) =>
+        (HumanPlayerNameSelectionStart, HumanPlayerNameSelectionLength) = (start, length);
+
+    public void SetGtpEngineEditSelection(int start, int length) =>
+        (GtpEngineEditSelectionStart, GtpEngineEditSelectionLength) = (start, length);
+
+    public void SetCgosCredentialSelection(int start, int length) =>
+        (CgosCredentialSelectionStart, CgosCredentialSelectionLength) = (start, length);
 
     private static int AdjustGtpEngineSelectionAfterDelete(int selectedIndex, int removedIndex, int fallbackIndex)
     {
