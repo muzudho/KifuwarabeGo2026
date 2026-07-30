@@ -298,6 +298,22 @@ internal static class PortabilityChecks
             frame,
             clipboard);
         Require(controller.Text == "abcX", "A new edit must discard the redo history.");
+
+        controller.Begin("abcd", 4);
+        controller.BeginMouseSelection(4, false);
+        controller.UpdateMouseSelection(3);
+        controller.HandleKeyboard(
+            new KeyboardState(Keys.Delete),
+            new KeyboardState(),
+            frame,
+            clipboard);
+        controller.UpdateMouseSelection(4);
+        controller.HandleKeyboard(
+            new KeyboardState(Keys.Delete),
+            new KeyboardState(Keys.Delete),
+            new GameTime(TimeSpan.Zero, TimeSpan.FromSeconds(1)),
+            clipboard);
+        Require(controller.Text == "abc", "Delete key repeat must tolerate a selection endpoint beyond the shortened text.");
     }
 
     private static void VerifyDefaultCgosConnection()

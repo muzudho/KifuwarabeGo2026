@@ -277,11 +277,25 @@ public sealed partial class GoScreenRenderer
         DrawRect(panel, 2, new Color(82, 111, 114));
 
         DrawText("KIFUWARABE GO 2026", new Vector2(panel.X + 58, panel.Y + 58), new Color(244, 238, 218), 1.05f);
+        DrawText(GetDisplayVersion(), new Vector2(panel.X + 790, panel.Y + 91), new Color(99, 223, 185), 0.38f);
+        DrawLine(
+            new Vector2(panel.X + 790, panel.Y + 126),
+            new Vector2(panel.X + 958, panel.Y + 126),
+            2,
+            new Color(99, 223, 185, 120));
         DrawText("SELECT USE", new Vector2(panel.X + 62, panel.Y + 142), new Color(180, 195, 195), 0.54f);
 
         DrawUseChoice(LocalUseButtonBounds, "Local (推奨)", "PLAY / REVIEW", cgosClient: false, mousePoint);
         DrawUseChoice(CgosUseButtonBounds, "Connect To CGOS", "WATCH / CONNECT", cgosClient: true, mousePoint);
         DrawSettingsButton(mousePoint);
+    }
+
+    private static string GetDisplayVersion()
+    {
+        var version = typeof(GoScreenRenderer).Assembly.GetName().Version;
+        return version is null
+            ? "VERSION"
+            : $"v{version.Major}.{version.Minor}.{version.Build}";
     }
 
 

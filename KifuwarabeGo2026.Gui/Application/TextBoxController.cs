@@ -29,9 +29,25 @@ public sealed class TextBoxController
 
     public int CaretIndex { get; private set; }
 
-    public int SelectionStart => SelectionAnchor is { } anchor ? Math.Min(anchor, CaretIndex) : CaretIndex;
+    public int SelectionStart
+    {
+        get
+        {
+            var caret = Math.Clamp(CaretIndex, 0, Text.Length);
+            var anchor = Math.Clamp(SelectionAnchor ?? caret, 0, Text.Length);
+            return Math.Min(anchor, caret);
+        }
+    }
 
-    public int SelectionLength => SelectionAnchor is { } anchor ? Math.Abs(anchor - CaretIndex) : 0;
+    public int SelectionLength
+    {
+        get
+        {
+            var caret = Math.Clamp(CaretIndex, 0, Text.Length);
+            var anchor = Math.Clamp(SelectionAnchor ?? caret, 0, Text.Length);
+            return Math.Abs(anchor - caret);
+        }
+    }
 
     public bool HasSelection => SelectionLength > 0;
 
@@ -247,7 +263,8 @@ public sealed class TextBoxController
             return false;
         }
         var start = SelectionStart;
-        Text = Text.Remove(start, SelectionLength);
+        var length = Math.Min(SelectionLength, Text.Length - start);
+        Text = Text.Remove(start, length);
         CaretIndex = start;
         ClearSelection();
         return true;
