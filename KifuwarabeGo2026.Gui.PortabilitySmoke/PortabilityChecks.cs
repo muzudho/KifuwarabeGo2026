@@ -270,6 +270,34 @@ internal static class PortabilityChecks
             clipboard,
             allowClipboardExport: false);
         Require(controller.Text == "apasteb", "Password-style Ctrl+X must not copy or delete text.");
+
+        controller.Begin("abc", 3);
+        controller.TryInputCharacter('d');
+        controller.HandleKeyboard(
+            new KeyboardState(Keys.LeftControl, Keys.Z),
+            new KeyboardState(),
+            frame,
+            clipboard);
+        Require(controller.Text == "abc" && controller.CaretIndex == 3, "Ctrl+Z must undo the previous text edit.");
+        controller.HandleKeyboard(
+            new KeyboardState(Keys.LeftControl, Keys.Y),
+            new KeyboardState(),
+            frame,
+            clipboard);
+        Require(controller.Text == "abcd" && controller.CaretIndex == 4, "Ctrl+Y must redo the previous text edit.");
+
+        controller.HandleKeyboard(
+            new KeyboardState(Keys.LeftControl, Keys.Z),
+            new KeyboardState(),
+            frame,
+            clipboard);
+        controller.TryInputCharacter('X');
+        controller.HandleKeyboard(
+            new KeyboardState(Keys.LeftControl, Keys.Y),
+            new KeyboardState(),
+            frame,
+            clipboard);
+        Require(controller.Text == "abcX", "A new edit must discard the redo history.");
     }
 
     private static void VerifyDefaultCgosConnection()

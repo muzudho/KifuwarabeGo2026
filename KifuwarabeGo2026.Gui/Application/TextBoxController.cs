@@ -3,18 +3,22 @@ namespace KifuwarabeGo2026.Gui.Application;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 public sealed class TextBoxController
 {
     private const double CaretKeyRepeatInitialDelaySeconds = 0.42d;
     private const double CaretKeyRepeatIntervalSeconds = 0.055d;
+    private const int MaximumHistoryCount = 100;
 
     private readonly int _maxLength;
     private double _leftKeyRepeatCountdown = CaretKeyRepeatInitialDelaySeconds;
     private double _rightKeyRepeatCountdown = CaretKeyRepeatInitialDelaySeconds;
     private double _backKeyRepeatCountdown = CaretKeyRepeatInitialDelaySeconds;
     private double _deleteKeyRepeatCountdown = CaretKeyRepeatInitialDelaySeconds;
+    private readonly Stack<TextEditSnapshot> _undoHistory = new();
+    private readonly Stack<TextEditSnapshot> _redoHistory = new();
 
     public TextBoxController(int maxLength)
     {
@@ -47,6 +51,7 @@ public sealed class TextBoxController
         Text = text;
         SetCaretIndex(caretIndex);
         ClearSelection();
+        ClearHistory();
         IsCaretNavigationKeyHeld = false;
         ResetCaretKeyRepeat();
     }
@@ -82,6 +87,7 @@ public sealed class TextBoxController
         CaretIndex = 0;
         ClearSelection();
         IsMouseSelecting = false;
+        ClearHistory();
         IsCaretNavigationKeyHeld = false;
         ResetCaretKeyRepeat();
     }
@@ -93,12 +99,13 @@ public sealed class TextBoxController
             return true;
         }
 
-        DeleteSelection();
-        if (Text.Length >= _maxLength)
+        if (!HasSelection && Text.Length >= _maxLength)
         {
             return false;
         }
 
+        PushUndoSnapshot();
+        DeleteSelection();
         Text = Text.Insert(CaretIndex, character.ToString());
         CaretIndex++;
         return true;
@@ -116,6 +123,18 @@ public sealed class TextBoxController
         var control = keyboard.IsKeyDown(Keys.LeftControl) || keyboard.IsKeyDown(Keys.RightControl);
         var shift = keyboard.IsKeyDown(Keys.LeftShift) || keyboard.IsKeyDown(Keys.RightShift);
 
+        if (control && IsNewKeyPress(keyboard, previousKeyboard, Keys.Z))
+        {
+            Undo();
+            return TextBoxKeyboardAction.None;
+        }
+
+        if (control && IsNewKeyPress(keyboard, previousKeyboard, Keys.Y))
+        {
+            Redo();
+            return TextBoxKeyboardAction.None;
+        }
+
         if (control && IsNewKeyPress(keyboard, previousKeyboard, Keys.A))
         {
             SelectionAnchor = 0;
@@ -132,7 +151,10 @@ public sealed class TextBoxController
             allowClipboardExport && HasSelection)
         {
             if (clipboardService.TrySetText(Text.Substring(SelectionStart, SelectionLength)))
+            {
+                PushUndoSnapshot();
                 DeleteSelection();
+            }
         }
 
         if (control && IsNewKeyPress(keyboard, previousKeyboard, Keys.V) &&
@@ -173,8 +195,14 @@ public sealed class TextBoxController
 
         if (ShouldHandleRepeatedKey(keyboard, previousKeyboard, Keys.Back, ref _backKeyRepeatCountdown, gameTime))
         {
-            if (!DeleteSelection() && CaretIndex > 0)
+            if (HasSelection)
             {
+                PushUndoSnapshot();
+                DeleteSelection();
+            }
+            else if (CaretIndex > 0)
+            {
+                PushUndoSnapshot();
                 Text = Text.Remove(CaretIndex - 1, 1);
                 CaretIndex--;
             }
@@ -182,8 +210,16 @@ public sealed class TextBoxController
 
         if (ShouldHandleRepeatedKey(keyboard, previousKeyboard, Keys.Delete, ref _deleteKeyRepeatCountdown, gameTime))
         {
-            if (!DeleteSelection() && CaretIndex < Text.Length)
+            if (HasSelection)
+            {
+                PushUndoSnapshot();
+                DeleteSelection();
+            }
+            else if (CaretIndex < Text.Length)
+            {
+                PushUndoSnapshot();
                 Text = Text.Remove(CaretIndex, 1);
+            }
         }
 
         return TextBoxKeyboardAction.None;
@@ -194,10 +230,11 @@ public sealed class TextBoxController
         value = value.Replace("\r", "").Replace("\n", "");
         if (characterFilter is not null)
             value = new string(value.Where(characterFilter).ToArray());
-        DeleteSelection();
-        var available = _maxLength - Text.Length;
+        var available = _maxLength - (Text.Length - SelectionLength);
         if (available <= 0 || value.Length == 0) return;
         var inserted = value[..Math.Min(available, value.Length)];
+        PushUndoSnapshot();
+        DeleteSelection();
         Text = Text.Insert(CaretIndex, inserted);
         CaretIndex += inserted.Length;
     }
@@ -217,6 +254,49 @@ public sealed class TextBoxController
     }
 
     private void ClearSelection() => SelectionAnchor = null;
+
+    private void PushUndoSnapshot()
+    {
+        _undoHistory.Push(CaptureSnapshot());
+        while (_undoHistory.Count > MaximumHistoryCount)
+        {
+            var snapshots = _undoHistory.Take(MaximumHistoryCount).Reverse().ToArray();
+            _undoHistory.Clear();
+            foreach (var snapshot in snapshots)
+                _undoHistory.Push(snapshot);
+        }
+        _redoHistory.Clear();
+    }
+
+    private void Undo()
+    {
+        if (_undoHistory.Count == 0) return;
+        _redoHistory.Push(CaptureSnapshot());
+        RestoreSnapshot(_undoHistory.Pop());
+    }
+
+    private void Redo()
+    {
+        if (_redoHistory.Count == 0) return;
+        _undoHistory.Push(CaptureSnapshot());
+        RestoreSnapshot(_redoHistory.Pop());
+    }
+
+    private TextEditSnapshot CaptureSnapshot() => new(Text, CaretIndex, SelectionAnchor);
+
+    private void RestoreSnapshot(TextEditSnapshot snapshot)
+    {
+        Text = snapshot.Text;
+        CaretIndex = snapshot.CaretIndex;
+        SelectionAnchor = snapshot.SelectionAnchor;
+        IsMouseSelecting = false;
+    }
+
+    private void ClearHistory()
+    {
+        _undoHistory.Clear();
+        _redoHistory.Clear();
+    }
 
     private static bool IsNewKeyPress(KeyboardState keyboard, KeyboardState previousKeyboard, Keys key) =>
         keyboard.IsKeyDown(key) && previousKeyboard.IsKeyUp(key);
@@ -262,6 +342,8 @@ public sealed class TextBoxController
         _backKeyRepeatCountdown = CaretKeyRepeatInitialDelaySeconds;
         _deleteKeyRepeatCountdown = CaretKeyRepeatInitialDelaySeconds;
     }
+
+    private readonly record struct TextEditSnapshot(string Text, int CaretIndex, int? SelectionAnchor);
 }
 
 public enum TextBoxKeyboardAction
