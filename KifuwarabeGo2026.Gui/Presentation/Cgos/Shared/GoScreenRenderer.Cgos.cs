@@ -57,6 +57,12 @@ public sealed partial class GoScreenRenderer
     public static bool GetCgosAdminButtonHit(Point point, bool enabled) =>
         enabled && CgosAdminButtonBounds.Contains(point);
 
+    public static bool GetCgosPlayer2InputCheckHit(Point point, bool enabled) =>
+        enabled && CgosPlayer2InputCheckBounds.Contains(point);
+
+    public static bool GetCgosAdminInputCheckHit(Point point, bool enabled) =>
+        enabled && CgosAdminInputCheckBounds.Contains(point);
+
 
     public static bool GetCgosAdminWhoButtonHit(Point point, bool enabled) =>
         enabled && CgosAdminWhoButtonBounds.Contains(point);
@@ -178,7 +184,11 @@ public sealed partial class GoScreenRenderer
     public static GoStone? GetCgosConnectionEngineSelectButtonHit(Point point, GoAppSession session)
     {
         if (!session.IsCgosBlackConnectionRunning && CgosBlackEngineSelector.ContainsBrowseButton(point)) return GoStone.Black;
-        return !session.IsCgosWhiteConnectionRunning && CgosWhiteEngineSelector.ContainsBrowseButton(point) ? GoStone.White : null;
+        return session.IsCgosPlayer2InputEnabled &&
+               !session.IsCgosWhiteConnectionRunning &&
+               CgosWhiteEngineSelector.ContainsBrowseButton(point)
+            ? GoStone.White
+            : null;
     }
 
 
@@ -398,16 +408,24 @@ public sealed partial class GoScreenRenderer
             null,
             CgosAdminButtonBounds,
             session.IsCgosAdminRunning ? "DISCONNECT" : "CONNECT",
-            true,
+            session.IsCgosAdminInputEnabled,
             CgosAdminTailButtonBounds,
             CgosAdminCodeButtonBounds,
-            !string.IsNullOrWhiteSpace(session.CgosAdminLogDirectory),
+            session.IsCgosAdminInputEnabled && !string.IsNullOrWhiteSpace(session.CgosAdminLogDirectory),
             mousePoint);
-        DrawCommandButton(CgosAdminWhoButtonBounds, "WHO", false, mousePoint, enabled: session.IsCgosAdminRunning, scale: 0.28f);
+        DrawCommandButton(CgosAdminWhoButtonBounds, "WHO", false, mousePoint, enabled: session.IsCgosAdminInputEnabled && session.IsCgosAdminRunning, scale: 0.28f);
         DrawCgosAdminPlayerSelector(CgosAdminWhitePlayerRowBounds, "WHITE", session.CgosAdminWhitePlayerName, CgosAdminWhitePlayerSelectButtonBounds, mousePoint);
         DrawCgosAdminPlayerSelector(CgosAdminBlackPlayerRowBounds, "BLACK", session.CgosAdminBlackPlayerName, CgosAdminBlackPlayerSelectButtonBounds, mousePoint);
-        DrawCommandButton(CgosAdminMatchButtonBounds, "MATCH", false, mousePoint, enabled: session.CanSendCgosAdminMatch, scale: 0.22f);
-        DrawCommandButton(CgosAdminSwapButtonBounds, "SWAP", false, mousePoint, enabled: session.CanSendCgosAdminMatch, scale: 0.22f);
+        DrawCommandButton(CgosAdminMatchButtonBounds, "MATCH", false, mousePoint, enabled: session.IsCgosAdminInputEnabled && session.CanSendCgosAdminMatch, scale: 0.22f);
+        DrawCommandButton(CgosAdminSwapButtonBounds, "SWAP", false, mousePoint, enabled: session.IsCgosAdminInputEnabled && session.CanSendCgosAdminMatch, scale: 0.22f);
+        if (!session.IsCgosAdminInputEnabled)
+            FillRect(CgosAdminProcessPanelBounds, new Color(8, 11, 15, 176));
+        DrawCgosOptionalInputCheck(
+            CgosAdminInputCheckBounds,
+            "Adminを入力する",
+            session.IsCgosAdminInputEnabled,
+            !session.IsCgosAdminRunning,
+            mousePoint);
 
         DrawCgosProcessPanel(
             CgosBlackProcessPanelBounds,
@@ -438,7 +456,7 @@ public sealed partial class GoScreenRenderer
             "PLAYER 2",
             session.CgosWhiteConnectionStatusMessage,
             session.SelectedCgosWhiteGtpEngineProfile?.DisplayName,
-            CgosWhiteEngineSelector with { Enabled = !session.IsCgosWhiteConnectionRunning },
+            CgosWhiteEngineSelector with { Enabled = session.IsCgosPlayer2InputEnabled && !session.IsCgosWhiteConnectionRunning },
             string.IsNullOrWhiteSpace(session.CgosWhiteGtpResponseWaitDisplay)
                 ? session.CgosWhiteConnectionElapsedDisplay
                 : session.CgosWhiteGtpResponseWaitDisplay,
@@ -446,16 +464,25 @@ public sealed partial class GoScreenRenderer
             session.IsCgosWhiteConnectionRunning
                 ? session.IsCgosGameInProgress ? "ABORT" : "DISCONNECT"
                 : "CONNECT",
-            session.IsCgosWhiteConnectionRunning || session.SelectedCgosWhiteGtpEngineProfile is not null,
+            session.IsCgosPlayer2InputEnabled &&
+            (session.IsCgosWhiteConnectionRunning || session.SelectedCgosWhiteGtpEngineProfile is not null),
             CgosWhiteTailButtonBounds,
             CgosWhiteCodeButtonBounds,
-            !string.IsNullOrWhiteSpace(session.CgosWhiteConnectionLogDirectory),
+            session.IsCgosPlayer2InputEnabled && !string.IsNullOrWhiteSpace(session.CgosWhiteConnectionLogDirectory),
             mousePoint);
         if (session.IsCgosGameInProgress && session.IsCgosWhiteConnectionRunning)
         {
             DrawCommandButton(CgosWhiteResignButtonBounds, "RESIGN", false, mousePoint, scale: 0.34f);
         }
         DrawCgosCredentialFields(session, GoStone.White, mousePoint);
+        if (!session.IsCgosPlayer2InputEnabled)
+            FillRect(CgosWhiteProcessPanelBounds, new Color(8, 11, 15, 176));
+        DrawCgosOptionalInputCheck(
+            CgosPlayer2InputCheckBounds,
+            "Player2を入力する",
+            session.IsCgosPlayer2InputEnabled,
+            !session.IsCgosWhiteConnectionRunning,
+            mousePoint);
 
         DrawCgosConnectionTooltips(session, mousePoint);
     }
@@ -492,6 +519,27 @@ public sealed partial class GoScreenRenderer
             DrawFittedText(string.IsNullOrEmpty(text) ? "-" : text, CgosCredentialTextBounds(stone, field), Color.White, 0.32f);
             if (active) DrawTextBoxCaret(text, session.CgosCredentialCaretIndex, CgosCredentialTextBounds(stone, field), 0.32f);
         }
+    }
+
+    private void DrawCgosOptionalInputCheck(
+        Rectangle bounds,
+        string label,
+        bool isChecked,
+        bool enabled,
+        Point mousePoint)
+    {
+        var hovered = enabled && bounds.Contains(mousePoint);
+        var checkBounds = new Rectangle(bounds.X, bounds.Y + 3, 22, 22);
+        DrawRect(checkBounds, 2, isChecked ? new Color(99, 223, 185) : new Color(91, 117, 128));
+        if (isChecked)
+        {
+            FillRect(new Rectangle(checkBounds.X + 5, checkBounds.Y + 5, 12, 12), new Color(99, 223, 185));
+        }
+        DrawFittedText(
+            label,
+            new Rectangle(bounds.X + 32, bounds.Y, bounds.Width - 32, bounds.Height),
+            enabled ? hovered ? new Color(220, 255, 242) : Color.White : new Color(115, 125, 130),
+            0.32f);
     }
 
 
@@ -962,13 +1010,19 @@ public sealed partial class GoScreenRenderer
     private static Rectangle CgosSelectedProfileBarBounds => new(288, 358, 1344, 56);
 
 
-    private static Rectangle CgosAdminProcessPanelBounds => new(288, 452, 428, 448);
+    private static Rectangle CgosAdminProcessPanelBounds => new(1204, 464, 428, 448);
 
 
-    private static Rectangle CgosBlackProcessPanelBounds => new(746, 452, 428, 448);
+    private static Rectangle CgosBlackProcessPanelBounds => new(288, 464, 428, 448);
 
 
-    private static Rectangle CgosWhiteProcessPanelBounds => new(1204, 452, 428, 448);
+    private static Rectangle CgosWhiteProcessPanelBounds => new(746, 464, 428, 448);
+
+    private static Rectangle CgosPlayer2InputCheckBounds =>
+        new(CgosWhiteProcessPanelBounds.X + 16, CgosWhiteProcessPanelBounds.Y - 34, CgosWhiteProcessPanelBounds.Width - 32, 28);
+
+    private static Rectangle CgosAdminInputCheckBounds =>
+        new(CgosAdminProcessPanelBounds.X + 16, CgosAdminProcessPanelBounds.Y - 34, CgosAdminProcessPanelBounds.Width - 32, 28);
 
 
     private static LabeledBrowseSelector CgosBlackEngineSelector => new(

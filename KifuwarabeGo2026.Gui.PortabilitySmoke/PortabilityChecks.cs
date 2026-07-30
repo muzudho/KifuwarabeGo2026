@@ -33,6 +33,7 @@ internal static class PortabilityChecks
         VerifyCommentNavigation();
         VerifyCatalogOrderEditor();
         VerifyCgosConnectionOrder();
+        VerifyOptionalCgosInputs();
         VerifyDefaultCgosConnection();
         VerifyTournamentRulesJsonCompatibility();
         VerifyComposition();
@@ -196,6 +197,18 @@ internal static class PortabilityChecks
 
         Require(ordered.Select(profile => profile.DisplayName).SequenceEqual(["B", "A", "C"]), "CGOS connection order was not committed.");
         Require(session.SelectedCgosConnectionProfile.DisplayName == "B", "CGOS selection must follow the same profile after reordering.");
+    }
+
+    private static void VerifyOptionalCgosInputs()
+    {
+        var session = new GoAppSession();
+        Require(!session.IsCgosPlayer2InputEnabled, "CGOS Player 2 input must be disabled initially.");
+        Require(!session.IsCgosAdminInputEnabled, "CGOS Admin input must be disabled initially.");
+
+        session.ToggleCgosPlayer2Input();
+        session.ToggleCgosAdminInput();
+        Require(session.IsCgosPlayer2InputEnabled, "CGOS Player 2 input toggle did not enable the panel.");
+        Require(session.IsCgosAdminInputEnabled, "CGOS Admin input toggle did not enable the panel.");
     }
 
     private static void VerifyDefaultCgosConnection()

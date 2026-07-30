@@ -727,7 +727,8 @@ public class Game1 : Game
 
                 if (_session.CgosConnectionFlowKind == CgosConnectionFlowKind.ConnectionStart)
                 {
-                    if (GoScreenRenderer.GetCgosCredentialFieldHit(point) is { } credential)
+                    if (GoScreenRenderer.GetCgosCredentialFieldHit(point) is { } credential &&
+                        (credential.Stone == GoStone.Black || _session.IsCgosPlayer2InputEnabled))
                     {
                         BeginOrMoveCgosCredentialEdit(point, credential.Stone, credential.Field);
                     }
@@ -739,23 +740,37 @@ public class Game1 : Game
                             if (_session.IsAnyCgosProcessRunning) _ = DisconnectAllCgosProcessesAsync();
                             _session.ReturnToCgosConnectionProfiles();
                         }
+                        else if (GoScreenRenderer.GetCgosPlayer2InputCheckHit(point, !_session.IsCgosWhiteConnectionRunning))
+                        {
+                            _session.ToggleCgosPlayer2Input();
+                        }
+                        else if (GoScreenRenderer.GetCgosAdminInputCheckHit(point, !_session.IsCgosAdminRunning))
+                        {
+                            _session.ToggleCgosAdminInput();
+                        }
                         else if (GoScreenRenderer.GetCgosConnectionEngineSelectButtonHit(point, _session) is { } engineStone)
                         {
                             _session.OpenCgosGtpEngineSelectionDialog(engineStone);
                         }
-                        else if (GoScreenRenderer.GetCgosAdminButtonHit(point, _session.CgosConnectionProfiles.Count > 0))
+                        else if (GoScreenRenderer.GetCgosAdminButtonHit(
+                                     point,
+                                     _session.IsCgosAdminInputEnabled && _session.CgosConnectionProfiles.Count > 0))
                         {
                             ToggleCgosAdminProcess();
                         }
-                        else if (GoScreenRenderer.GetCgosAdminWhoButtonHit(point, _session.IsCgosAdminRunning))
+                        else if (GoScreenRenderer.GetCgosAdminWhoButtonHit(
+                                     point,
+                                     _session.IsCgosAdminInputEnabled && _session.IsCgosAdminRunning))
                         {
                             SendCgosAdminCommand("who");
                         }
-                        else if (GoScreenRenderer.GetCgosAdminWhitePlayerSelectButtonHit(point))
+                        else if (_session.IsCgosAdminInputEnabled &&
+                                 GoScreenRenderer.GetCgosAdminWhitePlayerSelectButtonHit(point))
                         {
                             _session.OpenCgosAdminPlayerSelectionDialog(GoStone.White);
                         }
-                        else if (GoScreenRenderer.GetCgosAdminBlackPlayerSelectButtonHit(point))
+                        else if (_session.IsCgosAdminInputEnabled &&
+                                 GoScreenRenderer.GetCgosAdminBlackPlayerSelectButtonHit(point))
                         {
                             _session.OpenCgosAdminPlayerSelectionDialog(GoStone.Black);
                         }
@@ -783,7 +798,9 @@ public class Game1 : Game
                         }
                         else if (GoScreenRenderer.GetCgosWhiteResignButtonHit(
                                      point,
-                                     _session.IsCgosGameInProgress && _session.IsCgosWhiteConnectionRunning))
+                                     _session.IsCgosPlayer2InputEnabled &&
+                                     _session.IsCgosGameInProgress &&
+                                     _session.IsCgosWhiteConnectionRunning))
                         {
                             SendCgosPlayerResign(GoStone.White);
                         }
@@ -796,7 +813,8 @@ public class Game1 : Game
                         }
                         else if (GoScreenRenderer.GetCgosWhiteConnectionButtonHit(
                                      point,
-                                     _session.IsCgosWhiteConnectionRunning || _session.SelectedCgosWhiteGtpEngineProfile is not null,
+                                     _session.IsCgosPlayer2InputEnabled &&
+                                     (_session.IsCgosWhiteConnectionRunning || _session.SelectedCgosWhiteGtpEngineProfile is not null),
                                      _session.IsCgosGameInProgress))
                         {
                             ToggleCgosPlayerConnectionProcess(GoStone.White);
@@ -809,11 +827,17 @@ public class Game1 : Game
                         {
                             TailCgosPlayerConnectionLog(GoStone.Black);
                         }
-                        else if (GoScreenRenderer.GetCgosPlayer2CodeButtonHit(point, !string.IsNullOrWhiteSpace(_session.CgosWhiteConnectionLogDirectory)))
+                        else if (GoScreenRenderer.GetCgosPlayer2CodeButtonHit(
+                                     point,
+                                     _session.IsCgosPlayer2InputEnabled &&
+                                     !string.IsNullOrWhiteSpace(_session.CgosWhiteConnectionLogDirectory)))
                         {
                             OpenCgosPlayerConnectionLog(GoStone.White);
                         }
-                        else if (GoScreenRenderer.GetCgosPlayer2TailButtonHit(point, !string.IsNullOrWhiteSpace(_session.CgosWhiteConnectionLogDirectory)))
+                        else if (GoScreenRenderer.GetCgosPlayer2TailButtonHit(
+                                     point,
+                                     _session.IsCgosPlayer2InputEnabled &&
+                                     !string.IsNullOrWhiteSpace(_session.CgosWhiteConnectionLogDirectory)))
                         {
                             TailCgosPlayerConnectionLog(GoStone.White);
                         }

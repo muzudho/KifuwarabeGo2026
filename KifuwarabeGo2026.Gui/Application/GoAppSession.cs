@@ -91,6 +91,8 @@ public sealed class GoAppSession
 
     public bool IsCgosWhiteConnectionRunning { get; private set; }
 
+    public bool IsCgosPlayer2InputEnabled { get; private set; }
+
     public string CgosWhiteConnectionElapsedDisplay =>
         FormatCgosConnectionElapsedDisplay(_cgosWhiteConnectionStartedAt, IsCgosWhiteConnectionRunning);
 
@@ -103,6 +105,8 @@ public sealed class GoAppSession
     public IReadOnlyList<string> CgosAdminRecentOutput { get; private set; } = Array.Empty<string>();
 
     public bool IsCgosAdminRunning { get; private set; }
+
+    public bool IsCgosAdminInputEnabled { get; private set; }
 
     public IReadOnlyList<string> CgosAdminWaitingPlayers { get; private set; } = Array.Empty<string>();
 
@@ -638,6 +642,18 @@ public sealed class GoAppSession
     /// CGOS 接続画面へ戻ります。
     /// </summary>
     public void ReturnToCgosConnectionScreen() => CgosConnectionFlowKind = CgosConnectionFlowKind.ConnectionStart;
+
+    public void ToggleCgosPlayer2Input()
+    {
+        if (!IsCgosWhiteConnectionRunning)
+            IsCgosPlayer2InputEnabled = !IsCgosPlayer2InputEnabled;
+    }
+
+    public void ToggleCgosAdminInput()
+    {
+        if (!IsCgosAdminRunning)
+            IsCgosAdminInputEnabled = !IsCgosAdminInputEnabled;
+    }
 
     public void SetCgosGameInProgress(bool inProgress)
     {
