@@ -2154,6 +2154,13 @@ public class Game1 : Game
         if (_cgosMatchNotificationMode == CgosMatchNotificationMode.None)
             return;
 
+        if (_cgosGameObservation.IsFinished &&
+            _session.CgosConnectionFlowKind is CgosConnectionFlowKind.Watching or CgosConnectionFlowKind.Result)
+        {
+            _cgosMatchNotificationMode = CgosMatchNotificationMode.None;
+            return;
+        }
+
         if (_cgosMatchNotificationMode == CgosMatchNotificationMode.Countdown &&
             !IsCgosConnectionWaitingScreen())
         {

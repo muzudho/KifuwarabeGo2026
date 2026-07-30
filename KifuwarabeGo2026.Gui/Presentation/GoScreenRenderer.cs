@@ -221,14 +221,33 @@ public sealed partial class GoScreenRenderer
     public static bool GetCancelPlayingButtonHit(Point point) => CancelPlayingButtonBounds.Contains(point);
     private void DrawBackground()
     {
-        FillRect(new Rectangle(0, 0, VirtualScreen.Width, VirtualScreen.Height), new Color(11, 13, 18));
-        FillRect(new Rectangle(0, 0, VirtualScreen.Width, 150), new Color(24, 30, 40));
-        FillRect(new Rectangle(0, 930, VirtualScreen.Width, 150), new Color(9, 28, 31));
+        var topLeft = VirtualScreen.ToVirtualPoint(_graphicsDevice.Viewport, Point.Zero);
+        var bottomRight = VirtualScreen.ToVirtualPoint(
+            _graphicsDevice.Viewport,
+            new Point(_graphicsDevice.Viewport.Width, _graphicsDevice.Viewport.Height));
+        var visibleLeft = Math.Min(topLeft.X, bottomRight.X) - 2;
+        var visibleRight = Math.Max(topLeft.X, bottomRight.X) + 2;
+        var visibleTop = Math.Min(topLeft.Y, bottomRight.Y) - 2;
+        var visibleBottom = Math.Max(topLeft.Y, bottomRight.Y) + 2;
+        var visibleWidth = visibleRight - visibleLeft;
+
+        FillRect(
+            new Rectangle(visibleLeft, visibleTop, visibleWidth, visibleBottom - visibleTop),
+            new Color(11, 13, 18));
+        FillRect(new Rectangle(visibleLeft, 0, visibleWidth, 150), new Color(24, 30, 40));
+        FillRect(new Rectangle(visibleLeft, 930, visibleWidth, 150), new Color(9, 28, 31));
 
         for (var i = 0; i < 18; i++)
         {
             var alpha = (byte)(50 - i * 2);
-            DrawLine(new Vector2(-120, 180 + i * 42), new Vector2(2050, -40 + i * 64), 2, new Color((byte)56, (byte)86, (byte)96, alpha));
+            var start = new Vector2(-120, 180 + i * 42);
+            var end = new Vector2(2050, -40 + i * 64);
+            var slope = (end.Y - start.Y) / (end.X - start.X);
+            DrawLine(
+                new Vector2(visibleLeft, start.Y + (visibleLeft - start.X) * slope),
+                new Vector2(visibleRight, start.Y + (visibleRight - start.X) * slope),
+                2,
+                new Color((byte)56, (byte)86, (byte)96, alpha));
         }
 
         DrawGlow(new Vector2(1030, 90), 520, new Color(39, 122, 104, 80));
