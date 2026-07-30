@@ -211,10 +211,6 @@ public class Game1 : Game
     private void OnGameDeactivated(object? sender, EventArgs e)
     {
         _inputArmed = false;
-        if (_cgosMatchNotificationMode == CgosMatchNotificationMode.Countdown)
-        {
-            DeferCgosMatchNotification("Application became inactive");
-        }
     }
 
     private void SynchronizeOrArmWindowInput(KeyboardState keyboard, MouseState mouse)
@@ -439,7 +435,6 @@ public class Game1 : Game
         }
 
         if (_renderer is not null &&
-            _variationSession is null &&
             _session.UseKind == GoAppUseKind.CgosClient &&
             _cgosMatchNotificationMode != CgosMatchNotificationMode.None)
         {
@@ -2122,9 +2117,9 @@ public class Game1 : Game
 
         _cgosMatchNotificationGameId = _cgosGameObservation.GameId;
         _cgosMatchNotificationStartedAt = DateTimeOffset.UtcNow;
-        _cgosMatchNotificationMode = ShouldDeferCgosMatchNotification()
-            ? CgosMatchNotificationMode.Deferred
-            : CgosMatchNotificationMode.Countdown;
+        _cgosMatchNotificationMode = IsCgosConnectionWaitingScreen()
+            ? CgosMatchNotificationMode.Countdown
+            : CgosMatchNotificationMode.Deferred;
         GuiOperationLog.App(
             "CGOS match notification opened",
             $"gameId={_cgosGameObservation.GameId} mode={_cgosMatchNotificationMode}");
@@ -2136,9 +2131,9 @@ public class Game1 : Game
             return;
 
         if (_cgosMatchNotificationMode == CgosMatchNotificationMode.Countdown &&
-            ShouldDeferCgosMatchNotification())
+            !IsCgosConnectionWaitingScreen())
         {
-            DeferCgosMatchNotification("User is editing, reviewing, or the application is inactive");
+            DeferCgosMatchNotification("Left CGOS connection waiting screen");
             return;
         }
 
@@ -2157,7 +2152,7 @@ public class Game1 : Game
         if (_cgosMatchNotificationMode == CgosMatchNotificationMode.Deferred)
         {
             if (!GoScreenRenderer.GetCgosMatchDeferredHit(point))
-                return false;
+                return GoScreenRenderer.GetCgosMatchDeferredBannerHit(point);
 
             OpenNotifiedCgosMatch("Pressed deferred match notification");
             return true;
@@ -2207,14 +2202,14 @@ public class Game1 : Game
             $"gameId={_cgosGameObservation.GameId} reason={reason}");
     }
 
-    private bool ShouldDeferCgosMatchNotification() =>
-        !IsActive ||
-        _session.CurrentMode.Kind == GoAppModeKind.Reviewing ||
-        _session.IsGtpEngineSelectionDialogOpen ||
-        _session.IsGtpEngineEditPanelOpen ||
-        _session.IsCgosConnectionEditPanelOpen ||
-        _session.IsCgosAdminPlayerSelectionDialogOpen ||
-        _session.ActiveCgosCredentialField is not null;
+    private bool IsCgosConnectionWaitingScreen() =>
+        !_isApplicationSettingsOpen &&
+        _variationSession is null &&
+        _session.CurrentMode.Kind != GoAppModeKind.Reviewing &&
+        _session.CgosConnectionFlowKind == CgosConnectionFlowKind.ConnectionStart &&
+        !_session.IsGtpEngineSelectionDialogOpen &&
+        !_session.IsGtpEngineEditPanelOpen &&
+        !_session.IsCgosAdminPlayerSelectionDialogOpen;
 
     private TimeSpan GetCgosMatchNotificationAge() =>
         DateTimeOffset.UtcNow - _cgosMatchNotificationStartedAt;

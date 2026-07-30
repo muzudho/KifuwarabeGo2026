@@ -9,6 +9,7 @@ public sealed partial class GoScreenRenderer
     private static Rectangle CgosMatchWatchNowBounds => new(1110, 76, 154, 48);
     private static Rectangle CgosMatchWatchLaterBounds => new(1276, 76, 164, 48);
     private static Rectangle CgosMatchDeferredBounds => new(1450, 30, 410, 62);
+    private static Rectangle CgosMatchDeferredWatchBounds => new(1680, 38, 166, 46);
 
     public static bool GetCgosMatchWatchNowHit(Point point, bool enabled) =>
         enabled && CgosMatchWatchNowBounds.Contains(point);
@@ -17,6 +18,9 @@ public sealed partial class GoScreenRenderer
         enabled && CgosMatchWatchLaterBounds.Contains(point);
 
     public static bool GetCgosMatchDeferredHit(Point point) =>
+        CgosMatchDeferredWatchBounds.Contains(point);
+
+    public static bool GetCgosMatchDeferredBannerHit(Point point) =>
         CgosMatchDeferredBounds.Contains(point);
 
     public void DrawCgosMatchNotification(
@@ -80,9 +84,16 @@ public sealed partial class GoScreenRenderer
         DrawRect(bounds, 2, hovered ? new Color(178, 219, 226) : new Color(99, 223, 185, (int)(255 * opacity)));
         DrawCircle(new Vector2(bounds.X + 27, bounds.Center.Y), 7, finished ? new Color(255, 183, 146) : new Color(99, 223, 185));
         DrawFittedText(
-            finished ? "対局終了  VIEW RESULT" : "対局中  WATCH GAME",
-            new Rectangle(bounds.X + 48, bounds.Y + 12, bounds.Width - 64, 38),
+            finished ? "対局が終了しました" : "自動遷移を中断中",
+            new Rectangle(bounds.X + 48, bounds.Y + 12, 170, 38),
             Color.White * opacity,
-            0.38f);
+            0.34f);
+        DrawMatchNotificationButton(
+            CgosMatchDeferredWatchBounds,
+            finished ? "結果を見る" : "対局を観る",
+            mousePoint,
+            opacity,
+            true,
+            0.31f);
     }
 }
