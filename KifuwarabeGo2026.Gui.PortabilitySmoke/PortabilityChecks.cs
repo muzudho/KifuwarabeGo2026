@@ -27,7 +27,7 @@ internal static class PortabilityChecks
     public static void Run()
     {
         var coreAssembly = typeof(Game1).Assembly;
-        var matchAssembly = typeof(MatchProject).Assembly;
+        var matchAssembly = typeof(MatchSession).Assembly;
 
         VerifyTargetFramework(coreAssembly);
         VerifyAssemblyReferences(coreAssembly);
@@ -73,9 +73,87 @@ internal static class PortabilityChecks
                 $"Match directly references Windows-only assembly '{forbiddenReference}'.");
         }
 
-        Require(
-            MatchProject.SharedContractType == typeof(GoPoint),
-            "Match must expose its dependency on Shared without a GUI dependency.");
+        VerifyMatchStateTransitions();
+    }
+
+    private static void VerifyMatchStateTransitions()
+    {
+        var session = new MatchSession(9);
+        var initial = session.Snapshot;
+        Require(initial.BoardSize == 9, "Match must create the requested board size.");
+        Require(initial.CurrentTurn == GoStone.Black, "Black must play first.");
+        Require(initial.Revision == 0 && initial.MoveCount == 0, "A new match must start at revision zero.");
+
+        var outside = session.Play(new GoPoint(-1, 0));
+        Require(!outside.Succeeded && outside.Failure == MatchActionFailure.PointOutsideBoard, "An off-board play must be rejected.");
+        Require(outside.Snapshot.Revision == 0, "A rejected play must not change the revision.");
+
+        var first = session.Play(new GoPoint(4, 4));
+        Require(first.Succeeded && first.PlayedBy == GoStone.Black, "Black's first play must succeed.");
+        Require(first.Snapshot.GetStone(new GoPoint(4, 4)) == GoStone.Black, "The played stone is missing from the snapshot.");
+        Require(first.Snapshot.CurrentTurn == GoStone.White, "A legal play must pass the turn.");
+
+        var occupied = session.Play(new GoPoint(4, 4));
+        Require(!occupied.Succeeded && occupied.Failure == MatchActionFailure.PointOccupied, "An occupied point must be rejected.");
+        Require(occupied.Snapshot.Revision == first.Snapshot.Revision, "An occupied-point rejection must not change the revision.");
+
+        var suicideSession = new MatchSession(9);
+        PlayRequired(suicideSession, 8, 8);
+        PlayRequired(suicideSession, 1, 0);
+        PlayRequired(suicideSession, 8, 7);
+        PlayRequired(suicideSession, 0, 1);
+        var suicide = suicideSession.Play(new GoPoint(0, 0));
+        Require(!suicide.Succeeded && suicide.Failure == MatchActionFailure.IllegalMove, "A suicide play must be rejected.");
+        Require(suicide.Snapshot.Revision == 4, "A rejected suicide must not change the revision.");
+
+        var immutableSnapshot = first.Snapshot;
+        session.Play(new GoPoint(5, 4));
+        Require(immutableSnapshot.GetStone(new GoPoint(5, 4)) == GoStone.Empty, "A snapshot must not change after later actions.");
+
+        var passSession = new MatchSession(9);
+        var blackPass = passSession.Pass();
+        Require(blackPass.Succeeded && blackPass.Snapshot.CurrentTurn == GoStone.White, "A pass must pass the turn.");
+        var whitePass = passSession.Pass();
+        Require(whitePass.Snapshot.IsCompleted, "Two consecutive passes must complete the match.");
+        Require(whitePass.Snapshot.EndReason == MatchEndReason.ConsecutivePasses, "Two passes must report the correct end reason.");
+        Require(whitePass.Snapshot.CurrentTurn == GoStone.Black, "The second pass must complete its turn before the match ends.");
+        var afterPassEnd = passSession.Play(new GoPoint(0, 0));
+        Require(!afterPassEnd.Succeeded && afterPassEnd.Failure == MatchActionFailure.MatchCompleted, "A completed match must reject plays.");
+
+        var resignSession = new MatchSession(9);
+        var resignation = resignSession.Resign();
+        Require(resignation.Snapshot.IsCompleted, "Resignation must complete the match.");
+        Require(resignation.Snapshot.EndReason == MatchEndReason.Resignation, "Resignation must report the correct end reason.");
+        Require(resignation.Snapshot.Winner == GoStone.White, "The opponent of the resigning player must win.");
+        Require(resignation.Snapshot.MoveCount == 0, "Resignation must not be counted as a played move.");
+
+        VerifySimpleKo();
+    }
+
+    private static void VerifySimpleKo()
+    {
+        var session = new MatchSession(9);
+        PlayRequired(session, 0, 1);
+        PlayRequired(session, 0, 2);
+        PlayRequired(session, 1, 0);
+        PlayRequired(session, 2, 2);
+        PlayRequired(session, 2, 1);
+        PlayRequired(session, 1, 3);
+        PlayRequired(session, 8, 8);
+        PlayRequired(session, 1, 1);
+        var capture = session.Play(new GoPoint(1, 2));
+        Require(capture.Succeeded && capture.CapturedStones == 1, "The ko capture must take one stone.");
+        Require(capture.Snapshot.KoPoint == new GoPoint(1, 1), "The ko point is incorrect.");
+
+        var recapture = session.Play(new GoPoint(1, 1));
+        Require(!recapture.Succeeded && recapture.Failure == MatchActionFailure.Ko, "Immediate ko recapture must be rejected.");
+        Require(recapture.Snapshot.Revision == capture.Snapshot.Revision, "Rejected ko recapture must not change the revision.");
+    }
+
+    private static void PlayRequired(MatchSession session, int x, int y)
+    {
+        var result = session.Play(new GoPoint(x, y));
+        Require(result.Succeeded, $"Required setup play at {x},{y} failed: {result.Failure}.");
     }
 
     private static void VerifyTargetFramework(Assembly coreAssembly)
