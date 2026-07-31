@@ -10,6 +10,8 @@ public sealed class MatchSession
     private readonly GoBoard _board;
     private readonly HashSet<ulong> _positionHashes;
     private readonly int _moveLimit;
+    private readonly MatchSetupStone[] _setupStones;
+    private readonly List<MatchActionRecord> _actions = [];
     private GoStone _currentTurn = GoStone.Black;
     private GoPoint? _koPoint;
     private int _consecutivePasses;
@@ -20,15 +22,29 @@ public sealed class MatchSession
     private GoStone? _winner;
 
     public MatchSession(int boardSize = 19, int moveLimit = 0)
+        : this(new MatchConfiguration(boardSize, moveLimit))
     {
-        if (moveLimit < 0)
+    }
+
+    public MatchSession(MatchConfiguration configuration)
+    {
+        ArgumentNullException.ThrowIfNull(configuration);
+        _board = new GoBoard(configuration.BoardSize);
+        foreach (var setupStone in configuration.SetupStones)
         {
-            throw new ArgumentOutOfRangeException(nameof(moveLimit), moveLimit, "Move limit cannot be negative.");
+            if (!_board.TrySetSetupStone(
+                    setupStone.Point.X,
+                    setupStone.Point.Y,
+                    setupStone.Stone))
+            {
+                throw new ArgumentException($"Invalid setup stone at {setupStone.Point}.", nameof(configuration));
+            }
         }
 
-        _board = new GoBoard(boardSize);
+        _currentTurn = configuration.StartingTurn;
+        _setupStones = configuration.SetupStones.ToArray();
         _positionHashes = [_board.CurrentHash];
-        _moveLimit = moveLimit;
+        _moveLimit = configuration.MoveLimit;
     }
 
     public MatchSnapshot Snapshot => CreateSnapshot();
@@ -89,6 +105,7 @@ public sealed class MatchSession
             PassTurn();
         }
 
+        RecordAction(MatchActionKind.Play, playedBy, point, capturedStones);
         return Succeeded(MatchActionKind.Play, playedBy, point, capturedStones);
     }
 
@@ -116,6 +133,7 @@ public sealed class MatchSession
             _endReason = MatchEndReason.MoveLimit;
         }
 
+        RecordAction(MatchActionKind.Pass, playedBy);
         return Succeeded(MatchActionKind.Pass, playedBy);
     }
 
@@ -133,6 +151,7 @@ public sealed class MatchSession
         _winner = OppositeOf(playedBy);
         _phase = MatchPhase.Completed;
         _endReason = MatchEndReason.Resignation;
+        RecordAction(MatchActionKind.Resign, playedBy);
         return Succeeded(MatchActionKind.Resign, playedBy);
     }
 
@@ -147,6 +166,13 @@ public sealed class MatchSession
         _phase == MatchPhase.AwaitingResult
             ? MatchActionFailure.AwaitingResult
             : MatchActionFailure.MatchCompleted;
+
+    private void RecordAction(
+        MatchActionKind action,
+        GoStone playedBy,
+        GoPoint? point = null,
+        int capturedStones = 0) =>
+        _actions.Add(new MatchActionRecord(_revision, action, playedBy, point, capturedStones));
 
     private static GoStone OppositeOf(GoStone stone) =>
         stone == GoStone.Black ? GoStone.White : GoStone.Black;
@@ -179,6 +205,8 @@ public sealed class MatchSession
         return new MatchSnapshot(
             _board.Size,
             stones,
+            _setupStones.ToArray(),
+            _actions.ToArray(),
             _currentTurn,
             _koPoint,
             _consecutivePasses,

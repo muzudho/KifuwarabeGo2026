@@ -135,6 +135,51 @@ internal static class PortabilityChecks
         Require(resignation.Snapshot.MoveCount == 0, "Resignation must not be counted as a played move.");
 
         VerifySimpleKo();
+        VerifyMatchInitialPositionAndHistory();
+    }
+
+    private static void VerifyMatchInitialPositionAndHistory()
+    {
+        var sourceSetup = new[]
+        {
+            new MatchSetupStone(GoStone.Black, new GoPoint(3, 3)),
+            new MatchSetupStone(GoStone.White, new GoPoint(4, 4)),
+        };
+        var configuration = new MatchConfiguration(9, startingTurn: GoStone.White, setupStones: sourceSetup);
+        var session = new MatchSession(configuration);
+        sourceSetup[0] = new MatchSetupStone(GoStone.White, new GoPoint(0, 0));
+
+        var initial = session.Snapshot;
+        Require(initial.GetStone(new GoPoint(3, 3)) == GoStone.Black, "Match must copy its initial setup.");
+        Require(initial.GetStone(new GoPoint(0, 0)) == GoStone.Empty, "External setup mutations must not affect Match.");
+        Require(initial.CurrentTurn == GoStone.White, "Match must honor the configured starting turn.");
+        Require(initial.SetupStones.Count == 2 && initial.Actions.Count == 0, "Initial setup and action history are incorrect.");
+
+        var play = session.Play(new GoPoint(5, 5));
+        var pass = session.Pass();
+        Require(play.Snapshot.Actions.Count == 1, "A play must be added to Match action history.");
+        Require(play.Snapshot.Actions[0].Action == MatchActionKind.Play, "The first history action must be a play.");
+        Require(play.Snapshot.Actions[0].PlayedBy == GoStone.White, "History must record the acting player.");
+        Require(pass.Snapshot.Actions.Count == 2 && pass.Snapshot.Actions[1].Action == MatchActionKind.Pass, "A pass must be added to history.");
+        Require(play.Snapshot.Actions.Count == 1, "An earlier snapshot history must remain immutable.");
+
+        var duplicateRejected = false;
+        try
+        {
+            _ = new MatchConfiguration(
+                9,
+                setupStones:
+                [
+                    new MatchSetupStone(GoStone.Black, new GoPoint(1, 1)),
+                    new MatchSetupStone(GoStone.White, new GoPoint(1, 1)),
+                ]);
+        }
+        catch (ArgumentException)
+        {
+            duplicateRejected = true;
+        }
+
+        Require(duplicateRejected, "Duplicate setup points must be rejected.");
     }
 
     private static void VerifyGuiMatchIntegration()
@@ -164,6 +209,19 @@ internal static class PortabilityChecks
         resignSession.StartPlaying();
         Require(resignSession.Resign(), "The GUI session must pass resignation through Match.");
         Require(resignSession.Winner == GoStone.White, "The GUI must reflect the Match resignation winner.");
+
+        var editedSession = new GoAppSession();
+        editedSession.SetPlayerKind(GoStone.Black, GoPlayerKind.Human);
+        editedSession.SetPlayerKind(GoStone.White, GoPlayerKind.Human);
+        editedSession.StartBoardEditing();
+        Require(editedSession.TryEditBoardStone(3, 3), "The board editor must place a setup stone.");
+        editedSession.FinishBoardEditing();
+        editedSession.StartPlaying();
+        Require(editedSession.IsMatchBackedLocalGame, "A human game from an edited position must use MatchSession.");
+        Require(editedSession.GetStone(3, 3) == GoStone.Black, "The edited setup stone must survive Match construction.");
+        Require(editedSession.TryPlaceStone(4, 4), "Match must accept a play after an edited setup.");
+        Require(editedSession.CurrentGameRecord.SetupStones.Count == 1, "The GUI record must preserve edited setup stones.");
+        Require(editedSession.CurrentGameRecord.Moves.Count == 1, "The GUI record must keep post-setup moves separate.");
     }
 
     private static void VerifySimpleKo()

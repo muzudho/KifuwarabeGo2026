@@ -9,10 +9,14 @@ using System.Collections.ObjectModel;
 public sealed class MatchSnapshot
 {
     private readonly ReadOnlyCollection<GoStone> _stones;
+    private readonly ReadOnlyCollection<MatchSetupStone> _setupStones;
+    private readonly ReadOnlyCollection<MatchActionRecord> _actions;
 
     internal MatchSnapshot(
         int boardSize,
         GoStone[] stones,
+        MatchSetupStone[] setupStones,
+        MatchActionRecord[] actions,
         GoStone currentTurn,
         GoPoint? koPoint,
         int consecutivePasses,
@@ -24,6 +28,8 @@ public sealed class MatchSnapshot
     {
         BoardSize = boardSize;
         _stones = Array.AsReadOnly(stones);
+        _setupStones = Array.AsReadOnly(setupStones);
+        _actions = Array.AsReadOnly(actions);
         CurrentTurn = currentTurn;
         KoPoint = koPoint;
         ConsecutivePasses = consecutivePasses;
@@ -37,6 +43,10 @@ public sealed class MatchSnapshot
     public int BoardSize { get; }
 
     public IReadOnlyList<GoStone> Stones => _stones;
+
+    public IReadOnlyList<MatchSetupStone> SetupStones => _setupStones;
+
+    public IReadOnlyList<MatchActionRecord> Actions => _actions;
 
     public GoStone CurrentTurn { get; }
 

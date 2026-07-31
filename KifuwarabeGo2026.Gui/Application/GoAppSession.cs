@@ -1106,7 +1106,7 @@ public sealed class GoAppSession
         BlackElapsedTime = TimeSpan.Zero;
         WhiteElapsedTime = TimeSpan.Zero;
         _matchSession = ShouldStartMatchBackedGame()
-            ? new MatchSession(BoardSize, MoveLimit)
+            ? new MatchSession(CreateMatchConfiguration())
             : null;
         ChangeMode(GoAppModeKind.Playing);
     }
@@ -3035,10 +3035,25 @@ public sealed class GoAppSession
 
     private bool ShouldStartMatchBackedGame() =>
         BlackPlayerKind == GoPlayerKind.Human &&
-        WhitePlayerKind == GoPlayerKind.Human &&
-        BlackStoneCount == 0 &&
-        WhiteStoneCount == 0 &&
-        CurrentTurn == GoStone.Black;
+        WhitePlayerKind == GoPlayerKind.Human;
+
+    private MatchConfiguration CreateMatchConfiguration()
+    {
+        var setupStones = new List<MatchSetupStone>();
+        for (var y = 0; y < BoardSize; y++)
+        {
+            for (var x = 0; x < BoardSize; x++)
+            {
+                var stone = _board.GetStone(x, y);
+                if (stone != GoStone.Empty)
+                {
+                    setupStones.Add(new MatchSetupStone(stone, new GoPoint(x, y)));
+                }
+            }
+        }
+
+        return new MatchConfiguration(BoardSize, MoveLimit, CurrentTurn, setupStones);
+    }
 
     private bool TryPlaceStoneWithMatch(
         int x,
