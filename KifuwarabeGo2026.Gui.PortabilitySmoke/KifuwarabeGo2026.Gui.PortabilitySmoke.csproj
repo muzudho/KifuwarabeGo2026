@@ -6,5 +6,6 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\KifuwarabeGo2026.Gui\KifuwarabeGo2026.Gui.Core.csproj" />
+    <ProjectReference Include="..\KifuwarabeGo2026.Match\KifuwarabeGo2026.Match.csproj" />
   </ItemGroup>
 </Project>

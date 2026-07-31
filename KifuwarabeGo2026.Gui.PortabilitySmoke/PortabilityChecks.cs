@@ -5,6 +5,7 @@ using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Application.Cgos.ConnectionTarget;
 using KifuwarabeGo2026.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.Gui.Application.Local.Resting.TournamentRule;
+using KifuwarabeGo2026.Match;
 using KifuwarabeGo2026.Shared.Domain;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
@@ -26,10 +27,12 @@ internal static class PortabilityChecks
     public static void Run()
     {
         var coreAssembly = typeof(Game1).Assembly;
+        var matchAssembly = typeof(MatchProject).Assembly;
 
         VerifyTargetFramework(coreAssembly);
         VerifyAssemblyReferences(coreAssembly);
         VerifyNoPlatformInvokes(coreAssembly);
+        VerifyMatchAssembly(matchAssembly);
         VerifyPortableFallbacks();
         VerifyScoreAxisScaling();
         VerifyCommentNavigation();
@@ -42,15 +45,51 @@ internal static class PortabilityChecks
         VerifyComposition();
     }
 
-    private static void VerifyTargetFramework(Assembly coreAssembly)
+    private static void VerifyMatchAssembly(Assembly matchAssembly)
     {
-        var framework = coreAssembly
+        VerifyTargetFramework(matchAssembly, "Match");
+        VerifyNoPlatformInvokes(matchAssembly, "Match");
+
+        var references = matchAssembly
+            .GetReferencedAssemblies()
+            .Select(reference => reference.Name)
+            .Where(name => name is not null)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        Require(
+            references.Contains("KifuwarabeGo2026.Shared"),
+            "Match must reference KifuwarabeGo2026.Shared.");
+        Require(
+            !references.Contains("KifuwarabeGo2026.Gui.Core"),
+            "Match must not reference the GUI assembly.");
+        Require(
+            !references.Contains("MonoGame.Framework"),
+            "Match must not reference MonoGame.");
+
+        foreach (var forbiddenReference in ForbiddenAssemblyReferences)
+        {
+            Require(
+                !references.Contains(forbiddenReference),
+                $"Match directly references Windows-only assembly '{forbiddenReference}'.");
+        }
+
+        Require(
+            MatchProject.SharedContractType == typeof(GoPoint),
+            "Match must expose its dependency on Shared without a GUI dependency.");
+    }
+
+    private static void VerifyTargetFramework(Assembly coreAssembly)
+        => VerifyTargetFramework(coreAssembly, "Core");
+
+    private static void VerifyTargetFramework(Assembly assembly, string assemblyLabel)
+    {
+        var framework = assembly
             .GetCustomAttribute<TargetFrameworkAttribute>()
             ?.FrameworkName;
 
         Require(
             framework == ".NETCoreApp,Version=v8.0",
-            $"Core must target net8.0, but was '{framework ?? "(unknown)"}'.");
+            $"{assemblyLabel} must target net8.0, but was '{framework ?? "(unknown)"}'.");
     }
 
     private static void VerifyAssemblyReferences(Assembly coreAssembly)
@@ -70,8 +109,11 @@ internal static class PortabilityChecks
     }
 
     private static void VerifyNoPlatformInvokes(Assembly coreAssembly)
+        => VerifyNoPlatformInvokes(coreAssembly, "Core");
+
+    private static void VerifyNoPlatformInvokes(Assembly assembly, string assemblyLabel)
     {
-        var platformInvoke = coreAssembly
+        var platformInvoke = assembly
             .GetTypes()
             .SelectMany(type => type.GetMethods(
                 BindingFlags.Public
@@ -85,7 +127,7 @@ internal static class PortabilityChecks
             platformInvoke is null,
             platformInvoke is null
                 ? string.Empty
-                : $"Core contains P/Invoke method '{platformInvoke.DeclaringType?.FullName}.{platformInvoke.Name}'.");
+                : $"{assemblyLabel} contains P/Invoke method '{platformInvoke.DeclaringType?.FullName}.{platformInvoke.Name}'.");
     }
 
     private static void VerifyPortableFallbacks()
