@@ -4,8 +4,15 @@ using KifuwarabeGo2026.Gui;
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Infrastructure.Windows;
 using KifuwarabeGo2026.Engine;
+using KifuwarabeGo2026.Gui.Gtp;
+using KifuwarabeGo2026.GtpExtensions.Capabilities;
+using KifuwarabeGo2026.GtpExtensions.Engines;
+using KifuwarabeGo2026.GtpExtensions.InitialPosition;
+using KifuwarabeGo2026.Match;
+using KifuwarabeGo2026.Shared.Domain;
 using System;
 using System.Buffers.Binary;
+using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 
@@ -23,6 +30,7 @@ internal static class Program
             VerifyTextRasterizer();
             VerifyWindowsAssembly();
             VerifyAtomicInitialPositionProtocol();
+            VerifyBundledEngineInitialPositionPipeline();
             Console.WriteLine("PASS: Windows platform services passed non-interactive checks.");
             return 0;
         }
@@ -30,6 +38,55 @@ internal static class Program
         {
             Console.Error.WriteLine($"FAIL: {ex.Message}");
             return 1;
+        }
+    }
+
+    private static void VerifyBundledEngineInitialPositionPipeline()
+    {
+        var executablePath = Path.Combine(AppContext.BaseDirectory, "KifuwarabeGo2026.Engine.exe");
+        Require(File.Exists(executablePath), "The bundled engine executable was not copied to WindowsSmoke output.");
+        var workingDirectoryProfile = new GtpEngineProfile
+        {
+            WorkingDirectoryStr = AppContext.BaseDirectory,
+        };
+        var settings = new GtpEngineSettings(
+            "Bundled Kifuwarabe smoke",
+            executablePath,
+            workingDirectoryProfile.WorkingDirectoryModel,
+            "",
+            EnableGtpLog: false,
+            LogPrefix: "[atomic-smoke]",
+            GuiOptions: new Dictionary<string, string>());
+        var client = new GtpEngineClient(settings, TimeSpan.FromSeconds(10));
+        try
+        {
+            client.StartAsync().GetAwaiter().GetResult();
+            var capabilities = new GtpCapabilityProbe()
+                .ProbeInitialPositionAsync(new GtpEngineClientCommandSession(client))
+                .GetAwaiter().GetResult();
+            var profile = BuiltInGtpProfiles.Resolve(capabilities);
+            Require(profile.Id == BuiltInGtpProfiles.KifuwarabeId,
+                "The bundled engine identity did not select the Kifuwarabe profile.");
+            var request = new InitialPositionRequest(
+                19,
+                6.5m,
+                GoStone.White,
+                [
+                    new MatchSetupStone(GoStone.Black, new GoPoint(3, 15)),
+                    new MatchSetupStone(GoStone.White, new GoPoint(15, 3)),
+                ]);
+            var result = new InitialPositionConcierge().ExecuteAsync(
+                new GtpInitialPositionExecutionHost(client),
+                request,
+                capabilities,
+                profile).GetAwaiter().GetResult();
+            Require(result.IsVerified &&
+                    result.LastAttempt?.Method == InitialPositionMethod.KifuwarabeAtomicSetup,
+                "The bundled engine did not complete the GUI atomic initial-position pipeline as verified.");
+        }
+        finally
+        {
+            client.DisposeAsync().AsTask().GetAwaiter().GetResult();
         }
     }
 

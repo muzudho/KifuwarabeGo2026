@@ -67,6 +67,7 @@ public sealed class KifuwarabeGtpProfile : BuiltInGtpProfile
     private KifuwarabeGtpProfile() : base(
         BuiltInGtpProfiles.KifuwarabeId,
         "きふわらべ",
+        GtpProfileEvidence.BundledEngineVerified,
         [KifuwarabeAtomicSetupStrategy.Instance, .. StandardStrategies])
     {
     }
@@ -75,19 +76,19 @@ public sealed class KifuwarabeGtpProfile : BuiltInGtpProfile
 public sealed class KataGoGtpProfile : BuiltInGtpProfile
 {
     public static KataGoGtpProfile Instance { get; } = new();
-    private KataGoGtpProfile() : base(BuiltInGtpProfiles.KataGoId, "KataGo", StandardStrategies) { }
+    private KataGoGtpProfile() : base(BuiltInGtpProfiles.KataGoId, "KataGo", GtpProfileEvidence.OfficialDocumentationOnly, StandardStrategies) { }
 }
 
 public sealed class LeelaZeroGtpProfile : BuiltInGtpProfile
 {
     public static LeelaZeroGtpProfile Instance { get; } = new();
-    private LeelaZeroGtpProfile() : base(BuiltInGtpProfiles.LeelaZeroId, "Leela Zero", StandardStrategies) { }
+    private LeelaZeroGtpProfile() : base(BuiltInGtpProfiles.LeelaZeroId, "Leela Zero", GtpProfileEvidence.OfficialDocumentationOnly, StandardStrategies) { }
 }
 
 public sealed class GnuGoGtpProfile : BuiltInGtpProfile
 {
     public static GnuGoGtpProfile Instance { get; } = new();
-    private GnuGoGtpProfile() : base(BuiltInGtpProfiles.GnuGoId, "GNU Go", StandardStrategies) { }
+    private GnuGoGtpProfile() : base(BuiltInGtpProfiles.GnuGoId, "GNU Go", GtpProfileEvidence.OfficialDocumentationOnly, StandardStrategies) { }
 }
 
 public abstract class BuiltInGtpProfile : IGtpEngineCompatibilityProfile
@@ -100,15 +101,21 @@ public abstract class BuiltInGtpProfile : IGtpEngineCompatibilityProfile
         SequentialPlayStrategy.Instance,
     ];
 
-    protected BuiltInGtpProfile(string id, string displayName, IReadOnlyList<IInitialPositionStrategy> strategies)
+    protected BuiltInGtpProfile(
+        string id,
+        string displayName,
+        GtpProfileEvidence evidence,
+        IReadOnlyList<IInitialPositionStrategy> strategies)
     {
         Id = id;
         DisplayName = displayName;
+        Evidence = evidence;
         Strategies = strategies;
     }
 
     public string Id { get; }
     public string DisplayName { get; }
+    public GtpProfileEvidence Evidence { get; }
     public IReadOnlyList<IInitialPositionStrategy> Strategies { get; }
     public InitialPositionRecoveryMode RecoveryAfterAttempt => InitialPositionRecoveryMode.RestartSession;
     public GtpFilePathArgumentStyle LoadSgfPathStyle => GtpFilePathArgumentStyle.Auto;
@@ -121,6 +128,7 @@ internal sealed class PreferredMethodGtpProfile : IGtpEngineCompatibilityProfile
     {
         Id = source.Id;
         DisplayName = source.DisplayName;
+        Evidence = source.Evidence;
         RecoveryAfterAttempt = source.RecoveryAfterAttempt;
         LoadSgfPathStyle = source.LoadSgfPathStyle;
         LoadSgfMoveNumber = source.LoadSgfMoveNumber;
@@ -131,6 +139,7 @@ internal sealed class PreferredMethodGtpProfile : IGtpEngineCompatibilityProfile
 
     public string Id { get; }
     public string DisplayName { get; }
+    public GtpProfileEvidence Evidence { get; }
     public IReadOnlyList<IInitialPositionStrategy> Strategies { get; }
     public InitialPositionRecoveryMode RecoveryAfterAttempt { get; }
     public GtpFilePathArgumentStyle LoadSgfPathStyle { get; }

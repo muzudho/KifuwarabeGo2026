@@ -18,6 +18,8 @@ public sealed class GenericGtpProfile : IGtpEngineCompatibilityProfile
 
     public string DisplayName => "汎用GTP";
 
+    public GtpProfileEvidence Evidence => GtpProfileEvidence.ConservativeFallback;
+
     public IReadOnlyList<IInitialPositionStrategy> Strategies { get; } =
     [
         FixedHandicapStrategy.Instance,

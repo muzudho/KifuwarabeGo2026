@@ -12,6 +12,8 @@ public interface IGtpEngineCompatibilityProfile
 
     string DisplayName { get; }
 
+    GtpProfileEvidence Evidence { get; }
+
     IReadOnlyList<IInitialPositionStrategy> Strategies { get; }
 
     InitialPositionRecoveryMode RecoveryAfterAttempt { get; }

@@ -122,6 +122,12 @@ internal static class PortabilityChecks
             "GNU Go must resolve to its built-in profile.");
         Require(BuiltInGtpProfiles.ResolveBase("KifuwarabeGo2026", "auto").Id == BuiltInGtpProfiles.KifuwarabeId,
             "Kifuwarabe must resolve to its built-in profile.");
+        Require(KifuwarabeGtpProfile.Instance.Evidence == GtpProfileEvidence.BundledEngineVerified &&
+                KataGoGtpProfile.Instance.Evidence == GtpProfileEvidence.OfficialDocumentationOnly &&
+                LeelaZeroGtpProfile.Instance.Evidence == GtpProfileEvidence.OfficialDocumentationOnly &&
+                GnuGoGtpProfile.Instance.Evidence == GtpProfileEvidence.OfficialDocumentationOnly &&
+                GenericGtpProfile.Instance.Evidence == GtpProfileEvidence.ConservativeFallback,
+            "Profile evidence must distinguish local verification, documentation, and safe fallback assumptions.");
         Require(BuiltInGtpProfiles.ResolveBase("Unknown experimental engine", "auto").Id == GenericGtpProfile.Instance.Id,
             "An unknown engine must safely resolve to Generic GTP.");
         Require(BuiltInGtpProfiles.ResolveBase("KataGo", "unknown-profile-id").Id == GenericGtpProfile.Instance.Id,
@@ -1697,6 +1703,8 @@ internal static class PortabilityChecks
         public string Id => "smoke-profile";
 
         public string DisplayName => "Smoke Profile";
+
+        public GtpProfileEvidence Evidence => GtpProfileEvidence.ConservativeFallback;
 
         public IReadOnlyList<IInitialPositionStrategy> Strategies { get; }
 
