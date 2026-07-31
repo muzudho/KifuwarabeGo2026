@@ -3,9 +3,11 @@ namespace KifuwarabeGo2026.Gui.WindowsSmoke;
 using KifuwarabeGo2026.Gui;
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Infrastructure.Windows;
+using KifuwarabeGo2026.Engine;
 using System;
 using System.Buffers.Binary;
 using System.Linq;
+using System.IO;
 
 internal static class Program
 {
@@ -20,6 +22,7 @@ internal static class Program
             VerifyExecutableNaming();
             VerifyTextRasterizer();
             VerifyWindowsAssembly();
+            VerifyAtomicInitialPositionProtocol();
             Console.WriteLine("PASS: Windows platform services passed non-interactive checks.");
             return 0;
         }
@@ -28,6 +31,92 @@ internal static class Program
             Console.Error.WriteLine($"FAIL: {ex.Message}");
             return 1;
         }
+    }
+
+    private static void VerifyAtomicInitialPositionProtocol()
+    {
+        var successful = RunEngine(
+            "list_commands\n" +
+            "clear_board\n" +
+            "begin_position\n" +
+            "add_black D4\n" +
+            "add_white Q16\n" +
+            "set_to_play white\n" +
+            "commit_position\n" +
+            "play black D4\n" +
+            "play black Q16\n" +
+            "quit\n");
+        Require(successful.Contains("begin_position", StringComparison.Ordinal) &&
+                successful.Contains("commit_position", StringComparison.Ordinal) &&
+                CountOccurrences(successful, "? illegal move") == 2,
+            "Atomic commit did not expose both setup stones on the live board.");
+
+        var freelyEdited = RunEngine(
+            "clear_board\n" +
+            "begin_position\n" +
+            "add_black D4\n" +
+            "add_white C4\n" +
+            "add_white E4\n" +
+            "add_white D3\n" +
+            "add_white D5\n" +
+            "set_to_play black\n" +
+            "commit_position\n" +
+            "play black D4\n" +
+            "quit\n");
+        Require(CountOccurrences(freelyEdited, "?") == 1 &&
+                freelyEdited.Contains("? illegal move", StringComparison.Ordinal),
+            "Atomic setup did not preserve a freely edited position containing a stone with no liberties.");
+
+        var failed = RunEngine(
+            "clear_board\n" +
+            "play black D4\n" +
+            "begin_position\n" +
+            "add_white Q16\n" +
+            "add_black Q16\n" +
+            "play white D4\n" +
+            "begin_position\n" +
+            "add_black A0\n" +
+            "play white D4\n" +
+            "begin_position\n" +
+            "add_black Q16\n" +
+            "commit_position\n" +
+            "play white D4\n" +
+            "quit\n");
+        Require(failed.Contains("point is already occupied", StringComparison.Ordinal) &&
+                failed.Contains("invalid vertex", StringComparison.Ordinal) &&
+                failed.Contains("set_to_play is required", StringComparison.Ordinal) &&
+                CountOccurrences(failed, "? illegal move") == 3,
+            "A failed atomic setup changed the pre-existing live position.");
+
+        var guarded = RunEngine(
+            "clear_board\n" +
+            "play black D4\n" +
+            "begin_position\n" +
+            "add_white Q16\n" +
+            "play white C3\n" +
+            "abort_position\n" +
+            "abort_position\n" +
+            "play white D4\n" +
+            "quit\n");
+        Require(guarded.Contains("position setup is active", StringComparison.Ordinal) &&
+                guarded.Contains("? illegal move", StringComparison.Ordinal),
+            "Standard board mutation was not guarded during atomic setup or abort changed the live board.");
+    }
+
+    private static string RunEngine(string commands)
+    {
+        using var input = new StringReader(commands);
+        using var output = new StringWriter();
+        new GtpEngine().Run(input, output);
+        return output.ToString();
+    }
+
+    private static int CountOccurrences(string source, string value)
+    {
+        var count = 0;
+        for (var index = 0; (index = source.IndexOf(value, index, StringComparison.Ordinal)) >= 0; index += value.Length)
+            count++;
+        return count;
     }
 
     private static void VerifyServiceComposition()

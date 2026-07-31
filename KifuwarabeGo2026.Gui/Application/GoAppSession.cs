@@ -2297,6 +2297,7 @@ public sealed class GoAppSession
             InitialPositionMethod.FixedHandicap,
             InitialPositionMethod.SetFreeHandicap,
             InitialPositionMethod.LoadSgf,
+            InitialPositionMethod.KifuwarabeAtomicSetup,
             InitialPositionMethod.SequentialPlay,
         ];
         var current = Array.FindIndex(methods, method =>

@@ -53,6 +53,7 @@ internal static class PortabilityChecks
         VerifyInitialPositionConcierge();
         VerifyInitialPositionConciergeGuiModel();
         VerifyInitialPositionEngineProfiles();
+        VerifyKifuwarabeAtomicSetupStrategy();
         VerifyMatchAssembly(matchAssembly);
         VerifyGuiMatchIntegration();
         VerifyGtpMatchAdapter();
@@ -183,6 +184,56 @@ internal static class PortabilityChecks
             if (Directory.Exists(temporaryRoot))
                 Directory.Delete(temporaryRoot, recursive: true);
         }
+    }
+
+    private static void VerifyKifuwarabeAtomicSetupStrategy()
+    {
+        var request = new InitialPositionRequest(
+            19,
+            6.5m,
+            GoStone.White,
+            [
+                new MatchSetupStone(GoStone.Black, new GoPoint(3, 15)),
+                new MatchSetupStone(GoStone.White, new GoPoint(15, 3)),
+            ]);
+        var strategy = KifuwarabeAtomicSetupStrategy.Instance;
+        var commands = strategy.BuildCommands(request);
+        Require(commands.SequenceEqual(
+            [
+                "boardsize 19",
+                "komi 6.5",
+                "begin_position",
+                "add_black D4",
+                "add_white Q16",
+                "set_to_play white",
+                "commit_position",
+            ]),
+            "The Kifuwarabe atomic setup command sequence is incorrect.");
+        Require(strategy.RequiredCommands.SequenceEqual(
+            ["begin_position", "add_black", "add_white", "set_to_play", "commit_position", "abort_position"]),
+            "The atomic strategy must require the complete transactional command set.");
+        Require(KifuwarabeGtpProfile.Instance.Strategies[0].Method == InitialPositionMethod.KifuwarabeAtomicSetup,
+            "The Kifuwarabe profile must try its verified atomic method first.");
+
+        var capabilities = new GtpCapabilitySet(
+            "Kifuwarabe Star Random GTP",
+            "2.8.2",
+            strategy.RequiredCommands.Select(command => new GtpCommandCapability(
+                command,
+                GtpCommandSupport.Supported,
+                GtpCapabilityEvidence.KnownCommand,
+                "smoke")));
+        var host = new StubInitialPositionExecutionHost((_, _) =>
+            Task.FromResult(new GtpCommandResult(true, "")));
+        var result = new InitialPositionConcierge().ExecuteAsync(
+            host,
+            request,
+            capabilities,
+            KifuwarabeGtpProfile.Instance).GetAwaiter().GetResult();
+        Require(result.IsVerified && result.LastAttempt?.Method == InitialPositionMethod.KifuwarabeAtomicSetup,
+            "A fully accepted atomic transaction must be recorded as verified.");
+        Require(host.Commands.SequenceEqual(commands),
+            "The concierge did not send the complete atomic command sequence.");
     }
 
     private static void VerifyGtpExtensionsAssembly(Assembly gtpExtensionsAssembly)

@@ -269,6 +269,21 @@ public sealed class InitialPositionConcierge
                 EngineMayBeDirty: status != InitialPositionAttemptStatus.VerifiedSuccess);
         }
 
+        if (strategy is KifuwarabeAtomicSetupStrategy atomicSetupStrategy)
+        {
+            var verification = atomicSetupStrategy.VerifySuccessfulResponse();
+            return new StrategyExecution(
+                CreateAttempt(
+                    strategy,
+                    InitialPositionAttemptStatus.VerifiedSuccess,
+                    startedAt,
+                    timestamp,
+                    commands,
+                    engineResponse: responsePayload,
+                    detail: verification.Detail),
+                EngineMayBeDirty: false);
+        }
+
         var detail = strategy is LoadSgfStrategy loadSgfStrategy
             ? loadSgfStrategy.VerifySuccessfulResponse().Detail
             : "The engine accepted every command, but the resulting board could not be verified through portable GTP.";

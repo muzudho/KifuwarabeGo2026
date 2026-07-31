@@ -24,11 +24,14 @@ internal sealed class GtpEngine
     private static readonly string[] Commands =
     [
         "protocol_version", "name", "version", "known_command", "list_commands", "boardsize", "clear_board",
-        "komi", "play", "genmove", "cgos-genmove_analyze", "gui_options", "gui_getoption", "gui_setoption", "quit",
+        "komi", "play", "genmove", "cgos-genmove_analyze", "gui_options", "gui_getoption", "gui_setoption",
+        "begin_position", "add_black", "add_white", "set_to_play", "commit_position", "abort_position", "quit",
     ];
     private Random _random = new(0);
     private GoBoard _board = new(19);
     private GoPoint? _koPoint;
+    private GoStone _sideToPlay = GoStone.Black;
+    private readonly AtomicPositionSetup _positionSetup = new();
     private decimal _komi = 6.5m;
     private RandomMoveKind _randomMove = RandomMoveKind.ChebyshevDistanceFromStar;
     private bool _avoidEyes = true;
@@ -88,23 +91,47 @@ internal sealed class GtpEngine
                 return false;
 
             case "boardsize":
+                if (RejectWhilePositionSetupActive(out error)) return false;
                 ExecuteBoardSize(tokens, out error);
                 return false;
             case "clear_board":
+                if (RejectWhilePositionSetupActive(out error)) return false;
                 _board = new GoBoard(_board.Size);
                 _koPoint = null;
+                _sideToPlay = GoStone.Black;
                 return false;
             case "komi":
                 ExecuteKomi(tokens, out error);
                 return false;
             case "play":
+                if (RejectWhilePositionSetupActive(out error)) return false;
                 ExecutePlay(tokens, out error);
                 return false;
             case "genmove":
+                if (RejectWhilePositionSetupActive(out error)) return false;
                 ExecuteGenMove(tokens, out response, out error);
                 return false;
             case "cgos-genmove_analyze":
+                if (RejectWhilePositionSetupActive(out error)) return false;
                 ExecuteCgosGenMoveAnalyze(tokens, out response, out error);
+                return false;
+            case "begin_position":
+                ExecuteBeginPosition(tokens, out error);
+                return false;
+            case "add_black":
+                ExecuteAddPositionStone(tokens, GoStone.Black, out error);
+                return false;
+            case "add_white":
+                ExecuteAddPositionStone(tokens, GoStone.White, out error);
+                return false;
+            case "set_to_play":
+                ExecuteSetPositionTurn(tokens, out error);
+                return false;
+            case "commit_position":
+                ExecuteCommitPosition(tokens, out error);
+                return false;
+            case "abort_position":
+                ExecuteAbortPosition(tokens, out error);
                 return false;
             case "quit":
                 return true;
@@ -125,6 +152,7 @@ internal sealed class GtpEngine
 
         _board = new GoBoard(size);
         _koPoint = null;
+        _sideToPlay = GoStone.Black;
     }
 
     private void ExecuteKomi(string[] tokens, out string? error)
@@ -151,6 +179,7 @@ internal sealed class GtpEngine
         if (IsPass(tokens[2]))
         {
             _koPoint = null;
+            _sideToPlay = Opponent(color);
             return;
         }
 
@@ -167,6 +196,7 @@ internal sealed class GtpEngine
         }
 
         _koPoint = nextKoPoint;
+        _sideToPlay = Opponent(color);
     }
 
     private void ExecuteGenMove(string[] tokens, out string response, out string? error)
@@ -197,6 +227,7 @@ internal sealed class GtpEngine
         if (legalMoves.Count == 0)
         {
             _koPoint = null;
+            _sideToPlay = Opponent(color);
             response = "pass";
             return;
         }
@@ -205,7 +236,84 @@ internal sealed class GtpEngine
             ? legalMoves[_random.Next(legalMoves.Count)]
             : StarRegionRandomMoveSelector.Select(legalMoves, _board.Size, _random);
         _board.TryPlaceStone(move.X, move.Y, color, _koPoint, out _, out _koPoint);
+        _sideToPlay = Opponent(color);
         response = FormatVertex(move, _board.Size);
+    }
+
+    private bool RejectWhilePositionSetupActive(out string? error)
+    {
+        error = _positionSetup.IsActive
+            ? "position setup is active; use commit_position or abort_position"
+            : null;
+        return error is not null;
+    }
+
+    private void ExecuteBeginPosition(string[] tokens, out string? error)
+    {
+        if (tokens.Length != 1)
+        {
+            _positionSetup.Discard();
+            error = "usage: begin_position; pending position discarded";
+            return;
+        }
+
+        _positionSetup.Begin(_board.Size, out error);
+    }
+
+    private void ExecuteAddPositionStone(string[] tokens, GoStone stone, out string? error)
+    {
+        if (tokens.Length != 2)
+        {
+            _positionSetup.Discard();
+            error = $"usage: {(stone == GoStone.Black ? "add_black" : "add_white")} vertex; pending position discarded";
+            return;
+        }
+
+        _positionSetup.AddStone(tokens[1], stone, out error);
+    }
+
+    private void ExecuteSetPositionTurn(string[] tokens, out string? error)
+    {
+        if (tokens.Length != 2)
+        {
+            _positionSetup.Discard();
+            error = "usage: set_to_play black|white; pending position discarded";
+            return;
+        }
+
+        _positionSetup.SetTurn(tokens[1], out error);
+    }
+
+    private void ExecuteCommitPosition(string[] tokens, out string? error)
+    {
+        if (tokens.Length != 1)
+        {
+            _positionSetup.Discard();
+            error = "usage: commit_position; pending position discarded";
+            return;
+        }
+
+        if (!_positionSetup.Commit(out var board, out var turn, out error))
+        {
+            return;
+        }
+
+        _board = board!;
+        _sideToPlay = turn;
+        _koPoint = null;
+    }
+
+    private void ExecuteAbortPosition(string[] tokens, out string? error)
+    {
+        error = null;
+        if (tokens.Length != 1)
+        {
+            _positionSetup.Discard();
+            error = "usage: abort_position";
+            return;
+        }
+
+        _positionSetup.Discard();
     }
 
     /// <summary>CGOSへ着手、簡易評価値、1手の読み筋を返します。</summary>
@@ -396,7 +504,7 @@ internal sealed class GtpEngine
         return version.ToString(fieldCount);
     }
 
-    private static bool TryParseColor(string text, out GoStone stone)
+    internal static bool TryParseColor(string text, out GoStone stone)
     {
         if (text.Equals("black", StringComparison.OrdinalIgnoreCase) || text.Equals("b", StringComparison.OrdinalIgnoreCase))
         {
@@ -414,7 +522,7 @@ internal sealed class GtpEngine
         return false;
     }
 
-    private static bool TryParseVertex(string text, int boardSize, out GoPoint point)
+    internal static bool TryParseVertex(string text, int boardSize, out GoPoint point)
     {
         point = default;
         if (text.Length < 2 || IsPass(text))

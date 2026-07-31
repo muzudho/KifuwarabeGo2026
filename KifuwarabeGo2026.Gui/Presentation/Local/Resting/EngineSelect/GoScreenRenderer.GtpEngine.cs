@@ -343,6 +343,7 @@ public sealed partial class GoScreenRenderer
         InitialPositionMethod.FixedHandicap => "FIXED",
         InitialPositionMethod.SetFreeHandicap => "FREE",
         InitialPositionMethod.LoadSgf => "LOAD SGF",
+        InitialPositionMethod.KifuwarabeAtomicSetup => "ATOMIC",
         InitialPositionMethod.SequentialPlay => "PLAY",
         _ => method.ToString()!.ToUpperInvariant(),
     };

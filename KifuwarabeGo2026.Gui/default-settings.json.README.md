@@ -134,7 +134,7 @@ GUIのエンジン編集画面にある `POSITION` 欄から設定できます�
 | `InitialPositionDetectedEngineVersion` | 空 | 自動結果を得たversion。現在のversionと異なる場合は自動結果を破棄して再検査 |
 | `InitialPositionDetectedProfileId` | 空 | 自動結果を得た互換Profile |
 
-手動優先方式は `fixedHandicap`、`setFreeHandicap`、`loadSgf`、`sequentialPlay` から選べます。
+手動優先方式は `fixedHandicap`、`setFreeHandicap`、`loadSgf`、`kifuwarabeAtomicSetup`、`sequentialPlay` から選べます。
 自動検出欄は診断用なので、通常は利用者が編集する必要はありません。
 
 `ExecutablePath` と `WorkingDirectory` の相対パスは、`default-settings.json` のあるディレクトリーを基準にします。

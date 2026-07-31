@@ -66,6 +66,22 @@ Kifuwarabe Go 2026 は、通常のGTPコマンドに加えて次の独自コマ�
 
 対応コマンドは `list_commands` の結果へ含め、`known_command gui_options` に `true` を返してください。`gui_options` に対応していないエンジンは、従来のGTPエンジンとしてそのまま利用できます。
 
+## 原子的に指定局面を設定する
+
+きふわらべエンジンは、黒白混在局面や通常の着手順では作れない編集局面を準備盤で組み立て、成功時だけ実対局盤へ反映できます。
+
+```text
+begin_position
+add_black D4
+add_white Q16
+set_to_play black
+commit_position
+```
+
+途中で座標不正や重複などが起きた場合、準備盤全体を破棄し、実対局盤は変更しません。明示的に中止する場合は `abort_position` を送ります。
+
+これは標準GTPではなくKifuwarabeGo2026独自拡張です。厳密な引数、失敗時の動作、準備中に利用できるコマンドは、[きふわらべ原子的指定局面GTP拡張仕様](../KifuwarabeGo2026.Gui/Docs/設計/きふわらべ原子的指定局面GTP拡張仕様.md)を参照してください。
+
 GUIに保存されたオプションはエンジン起動時に送信されます。概略は次の順序です。
 
 1. GUIが `known_command gui_options` を送る。

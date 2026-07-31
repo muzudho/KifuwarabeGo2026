@@ -64,7 +64,12 @@ public static class BuiltInGtpProfiles
 public sealed class KifuwarabeGtpProfile : BuiltInGtpProfile
 {
     public static KifuwarabeGtpProfile Instance { get; } = new();
-    private KifuwarabeGtpProfile() : base(BuiltInGtpProfiles.KifuwarabeId, "きふわらべ", StandardStrategies) { }
+    private KifuwarabeGtpProfile() : base(
+        BuiltInGtpProfiles.KifuwarabeId,
+        "きふわらべ",
+        [KifuwarabeAtomicSetupStrategy.Instance, .. StandardStrategies])
+    {
+    }
 }
 
 public sealed class KataGoGtpProfile : BuiltInGtpProfile

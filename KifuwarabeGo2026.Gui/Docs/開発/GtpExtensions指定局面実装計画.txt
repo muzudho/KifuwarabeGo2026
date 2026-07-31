@@ -704,6 +704,8 @@ VerifiedSuccess
 
 第9段階: きふわらべ原子的指定局面拡張
 
+状態: 2026-08-01 実装完了。同梱エンジン以外の実機検証は第10段階で行う。
+
 ・先にGTP拡張仕様書を作成する。
 ・begin_position、add_black、add_white、set_to_play、commit_position、abort_positionを実装する。
 ・commit前は実対局盤を変更しない。
@@ -714,6 +716,22 @@ VerifiedSuccess
 完了確認:
     黒白混在局面を途中の合法性に影響されず設定できる。
     不正座標、重複、盤外、commit失敗で実対局盤が変化しない。
+
+実装結果:
+    先に「きふわらべ原子的指定局面GTP拡張仕様」を作成し、トランザクション境界、
+    コマンド引数、失敗時の準備盤破棄、通常盤保護、abortの冪等性を定義した。
+    Engineへbegin_position、add_black、add_white、set_to_play、commit_position、abort_positionを追加した。
+    準備盤はGoBoard.TrySetSetupStoneで直接構築するため、呼吸点、自殺、劫、着手順を要求しない。
+    commit成功時だけ実対局盤を準備盤へ交換し、劫点を解除して開始手番を保持する。
+    拡張コマンドの不正引数、盤外、重複、開始手番なし、二重beginでは準備盤を破棄する。
+    準備中のboardsize、clear_board、play、genmove、cgos-genmove_analyzeは拒否して通常盤を保護する。
+    abort_positionは準備中でなくても成功する。
+    全6コマンドをknown_commandとlist_commandsへ追加した。
+    GtpExtensionsへKifuwarabeAtomicSetupStrategyを追加し、きふわらべProfileの最優先方式にした。
+    全コマンドの成功応答を受けた場合は、原子的commit契約によりVerifiedSuccessとして扱う。
+    Strategyのコマンド列、必須能力、Profile優先順位、ConciergeのVerifiedSuccessを移植性スモークへ追加した。
+    Engineを直接動かすWindowsスモークへ、正常commit、黒白混在、呼吸点のない編集形、重複、盤外、
+    開始手番なし、準備中の通常着手拒否、abort、失敗後の通常盤維持を追加した。
 
 
 第10段階: 実エンジン検証と文書化
