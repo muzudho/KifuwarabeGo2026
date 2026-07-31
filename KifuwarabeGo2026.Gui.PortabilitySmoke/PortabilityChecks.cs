@@ -223,7 +223,7 @@ internal static class PortabilityChecks
 
         var capabilities = new GtpCapabilitySet(
             "Kifuwarabe Star Random GTP",
-            "2.8.2",
+            "2.9.0",
             strategy.RequiredCommands.Select(command => new GtpCommandCapability(
                 command,
                 GtpCommandSupport.Supported,
