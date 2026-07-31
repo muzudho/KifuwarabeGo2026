@@ -6,6 +6,7 @@ using KifuwarabeGo2026.Gui.Application.Cgos.ConnectionTarget;
 using KifuwarabeGo2026.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.Gui.Application.Local.Resting.TournamentRule;
 using KifuwarabeGo2026.Gui.Gtp;
+using KifuwarabeGo2026.GtpExtensions;
 using KifuwarabeGo2026.Match;
 using KifuwarabeGo2026.Shared.Domain;
 using Microsoft.Xna.Framework;
@@ -28,11 +29,13 @@ internal static class PortabilityChecks
     public static void Run()
     {
         var coreAssembly = typeof(Game1).Assembly;
+        var gtpExtensionsAssembly = typeof(GtpExtensionsAssembly).Assembly;
         var matchAssembly = typeof(MatchSession).Assembly;
 
         VerifyTargetFramework(coreAssembly);
         VerifyAssemblyReferences(coreAssembly);
         VerifyNoPlatformInvokes(coreAssembly);
+        VerifyGtpExtensionsAssembly(gtpExtensionsAssembly);
         VerifyMatchAssembly(matchAssembly);
         VerifyGuiMatchIntegration();
         VerifyGtpMatchAdapter();
@@ -46,6 +49,38 @@ internal static class PortabilityChecks
         VerifyDefaultCgosConnection();
         VerifyTournamentRulesJsonCompatibility();
         VerifyComposition();
+    }
+
+    private static void VerifyGtpExtensionsAssembly(Assembly gtpExtensionsAssembly)
+    {
+        VerifyTargetFramework(gtpExtensionsAssembly, "GtpExtensions");
+        VerifyNoPlatformInvokes(gtpExtensionsAssembly, "GtpExtensions");
+
+        var references = gtpExtensionsAssembly
+            .GetReferencedAssemblies()
+            .Select(reference => reference.Name)
+            .Where(name => name is not null)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        Require(
+            !references.Contains("KifuwarabeGo2026.Gui.Core"),
+            "GtpExtensions must not reference the GUI assembly.");
+        Require(
+            !references.Contains("KifuwarabeGo2026.Engine"),
+            "GtpExtensions must not reference the engine executable.");
+        Require(
+            !references.Contains("MonoGame.Framework"),
+            "GtpExtensions must not reference MonoGame.");
+        Require(
+            !references.Contains("System.Diagnostics.Process"),
+            "GtpExtensions must not own external processes.");
+
+        foreach (var forbiddenReference in ForbiddenAssemblyReferences)
+        {
+            Require(
+                !references.Contains(forbiddenReference),
+                $"GtpExtensions directly references Windows-only assembly '{forbiddenReference}'.");
+        }
     }
 
     private static void VerifyMatchAssembly(Assembly matchAssembly)

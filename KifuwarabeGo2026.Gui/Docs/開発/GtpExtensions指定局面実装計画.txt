@@ -437,6 +437,8 @@ VerifiedSuccess
 
 第1段階: 空プロジェクトと依存境界
 
+状態: 2026-08-01 実装完了。GUIの指定局面動作は変更していない。
+
 ・KifuwarabeGo2026.GtpExtensions.csprojをnet8.0で追加する。
 ・MatchとSharedだけを参照する。
 ・ソリューション、GUI、移植性スモークから参照する。
@@ -446,6 +448,17 @@ VerifiedSuccess
 完了確認:
     ソリューション全体のビルド成功。
     移植性スモーク成功。
+
+実施結果:
+    KifuwarabeGo2026.GtpExtensionsをnet8.0クラスライブラリとして追加した。
+    自作プロジェクト参照はMatchとSharedだけにした。
+    ソリューション、GUI、移植性スモークから参照した。
+    GtpExtensionsAssemblyを、機能を持たないアセンブリ識別子として追加した。
+    移植性スモークへ、net8.0、P/Invokeなし、GUI、Engine、MonoGame、
+    System.Diagnostics.Process、Windows専用アセンブリを参照しない検査を追加した。
+    現行GtpInitialPositionCommandBuilderとGUIの対局開始処理は移動・変更していない。
+    9プロジェクト全体のDebugビルドは警告0・エラー0で成功した。
+    移植性スモークはGtpExtensionsを含む検査でPASS、終了コード0だった。
 
 
 第2段階: 要求、分類、Strategy計画

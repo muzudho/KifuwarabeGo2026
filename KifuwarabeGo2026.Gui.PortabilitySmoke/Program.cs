@@ -10,7 +10,7 @@ internal static class Program
         {
             PortabilityChecks.Run();
             Console.WriteLine(
-                "PASS: Core, Match, and portable platform composition are free of Windows-only dependencies.");
+                "PASS: Core, Match, GtpExtensions, and portable platform composition are free of Windows-only dependencies.");
             return 0;
         }
         catch (Exception ex)
