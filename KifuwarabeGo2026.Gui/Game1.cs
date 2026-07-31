@@ -3171,6 +3171,20 @@ public class Game1 : Game
             return true;
         }
 
+        if (GoScreenRenderer.GetGtpEngineEditPanelInitialPositionProfileButtonHit(point))
+        {
+            EndGtpEngineEditField();
+            _session.CycleGtpEngineInitialPositionProfile();
+            return true;
+        }
+
+        if (GoScreenRenderer.GetGtpEngineEditPanelInitialPositionMethodButtonHit(point))
+        {
+            EndGtpEngineEditField();
+            _session.CycleGtpEngineInitialPositionPreferredMethod();
+            return true;
+        }
+
         if (GoScreenRenderer.GetGtpEngineEditPanelGuiOptionsButtonHit(point))
         {
             EndGtpEngineEditField();

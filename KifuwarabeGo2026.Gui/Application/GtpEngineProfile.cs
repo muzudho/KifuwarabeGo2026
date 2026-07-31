@@ -1,6 +1,7 @@
 namespace KifuwarabeGo2026.Gui.Application;
 
 using KifuwarabeGo2026.Gui.Domain;
+using KifuwarabeGo2026.GtpExtensions.InitialPosition;
 using KifuwarabeGo2026.Shared.Domain;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
@@ -36,6 +37,21 @@ public sealed class GtpEngineProfile
 
     public bool EnableGtpLog { get; set; } = true;
 
+    /// <summary>"auto" or a built-in GTP compatibility profile id.</summary>
+    public string InitialPositionProfileId { get; set; } = "auto";
+
+    /// <summary>A user-selected priority. This is never invalidated by an engine version change.</summary>
+    public InitialPositionMethod? InitialPositionManualPreferredMethod { get; set; }
+
+    /// <summary>The last method accepted automatically or explicitly by the user.</summary>
+    public InitialPositionMethod? InitialPositionDetectedMethod { get; set; }
+
+    public string InitialPositionDetectedEngineName { get; set; } = "";
+
+    public string InitialPositionDetectedEngineVersion { get; set; } = "";
+
+    public string InitialPositionDetectedProfileId { get; set; } = "";
+
     public Dictionary<string, string> GuiOptions { get; set; } = new()
     {
         [GtpEngineGuiOptions.RandomMoveId] = GtpEngineGuiOptions.ChebyshevDistanceFromStarRandomMove,
@@ -53,12 +69,46 @@ public sealed class GtpEngineProfile
         WorkingDirectoryModel = WorkingDirectoryModel,
         Arguments = Arguments,
         EnableGtpLog = EnableGtpLog,
+        InitialPositionProfileId = InitialPositionProfileId,
+        InitialPositionManualPreferredMethod = InitialPositionManualPreferredMethod,
+        InitialPositionDetectedMethod = InitialPositionDetectedMethod,
+        InitialPositionDetectedEngineName = InitialPositionDetectedEngineName,
+        InitialPositionDetectedEngineVersion = InitialPositionDetectedEngineVersion,
+        InitialPositionDetectedProfileId = InitialPositionDetectedProfileId,
         GuiOptions = new Dictionary<string, string>(GuiOptions ?? []),
         LogPrefix = LogPrefix,
     };
 
     public string GetGuiOption(string id, string fallback) =>
         GuiOptions.TryGetValue(id, out var value) ? value : fallback;
+
+    public bool HasMatchingInitialPositionDetection(string? engineName, string? engineVersion) =>
+        InitialPositionDetectedMethod is not null &&
+        string.Equals(InitialPositionDetectedEngineName, engineName ?? "", System.StringComparison.OrdinalIgnoreCase) &&
+        string.Equals(InitialPositionDetectedEngineVersion, engineVersion ?? "", System.StringComparison.OrdinalIgnoreCase);
+
+    public bool ClearStaleInitialPositionDetection(string? engineName, string? engineVersion)
+    {
+        if (InitialPositionDetectedMethod is null || HasMatchingInitialPositionDetection(engineName, engineVersion))
+            return false;
+        InitialPositionDetectedMethod = null;
+        InitialPositionDetectedEngineName = "";
+        InitialPositionDetectedEngineVersion = "";
+        InitialPositionDetectedProfileId = "";
+        return true;
+    }
+
+    public void RememberInitialPositionDetection(
+        InitialPositionMethod method,
+        string? engineName,
+        string? engineVersion,
+        string profileId)
+    {
+        InitialPositionDetectedMethod = method;
+        InitialPositionDetectedEngineName = engineName ?? "";
+        InitialPositionDetectedEngineVersion = engineVersion ?? "";
+        InitialPositionDetectedProfileId = profileId;
+    }
 }
 
 public enum GtpEngineProfileEditField

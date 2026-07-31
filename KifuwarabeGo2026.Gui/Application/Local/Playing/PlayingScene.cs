@@ -304,14 +304,21 @@ public sealed class PlayingScene : IDisposable
                     var commandSession = new GtpEngineClientCommandSession(engine.Client);
                     var capabilities = await new GtpCapabilityProbe()
                         .ProbeInitialPositionAsync(commandSession, cancellationToken);
+                    var compatibilityProfile = ResolveInitialPositionProfile(
+                        _session.GetGtpEngineProfile(engine.Stone),
+                        capabilities);
                     var host = new GtpInitialPositionExecutionHost(engine.Client);
                     var result = await new InitialPositionConcierge().ExecuteAsync(
                         host,
                         request,
                         capabilities,
-                        GenericGtpProfile.Instance,
+                        compatibilityProfile,
                         cancellationToken: cancellationToken);
-                    updates.Add(new EngineInitialPositionUpdate(engine.Stone, capabilities, result));
+                    updates.Add(new EngineInitialPositionUpdate(
+                        engine.Stone,
+                        capabilities,
+                        compatibilityProfile,
+                        result));
                 }
                 catch (Exception ex)
                 {
@@ -354,6 +361,7 @@ public sealed class PlayingScene : IDisposable
             _pendingEngineCommand is not null ||
             !_initialPositionStates.TryGetValue(stone, out var state) ||
             state.Capabilities is null ||
+            state.CompatibilityProfile is null ||
             state.Cursor is null ||
             GetEngine(stone) is not { } engine ||
             _session.CurrentMatchSnapshot is not { } snapshot)
@@ -363,6 +371,7 @@ public sealed class PlayingScene : IDisposable
 
         state.IsBusy = true;
         var capabilities = state.Capabilities;
+        var compatibilityProfile = state.CompatibilityProfile;
         var cursor = state.Cursor;
         var request = InitialPositionRequest.FromSnapshot(snapshot, _session.Komi);
         BeginEngineCommand(async cancellationToken =>
@@ -373,11 +382,11 @@ public sealed class PlayingScene : IDisposable
                     new GtpInitialPositionExecutionHost(engine),
                     request,
                     capabilities,
-                    GenericGtpProfile.Instance,
+                    compatibilityProfile,
                     cursor,
                     cancellationToken);
                 return EngineCommandResult.InitialPositionProgress(
-                    [new EngineInitialPositionUpdate(stone, capabilities, result)]);
+                    [new EngineInitialPositionUpdate(stone, capabilities, compatibilityProfile, result)]);
             }
             catch (Exception ex)
             {
@@ -397,6 +406,7 @@ public sealed class PlayingScene : IDisposable
 
         state.IsAccepted = true;
         state.IsBusy = false;
+        RememberSuccessfulInitialPositionMethod(stone, state);
         SelectAdjacentInitialPositionEngine(1);
         TryFinalizeInitialPositionSetup();
     }
@@ -407,7 +417,20 @@ public sealed class PlayingScene : IDisposable
         {
             if (_initialPositionStates.TryGetValue(update.Stone, out var state))
             {
+                var persistedProfile = _session.GetGtpEngineProfile(update.Stone);
+                var shouldSave = persistedProfile.ClearStaleInitialPositionDetection(
+                    update.Capabilities.EngineName,
+                    update.Capabilities.EngineVersion);
                 state.Apply(update);
+                if (update.Result.IsVerified)
+                {
+                    shouldSave |= RememberSuccessfulInitialPositionMethod(update.Stone, state, saveNow: false);
+                }
+
+                if (shouldSave)
+                {
+                    _saveGtpEngineProfiles();
+                }
             }
         }
 
@@ -415,6 +438,71 @@ public sealed class PlayingScene : IDisposable
             .OrderBy(state => state.Stone == GoStone.Black ? 0 : 1)
             .FirstOrDefault(state => !state.IsAccepted);
         _selectedInitialPositionEngine = next?.Stone ?? _selectedInitialPositionEngine;
+    }
+
+    private static IGtpEngineCompatibilityProfile ResolveInitialPositionProfile(
+        GtpEngineProfile persistedProfile,
+        GtpCapabilitySet capabilities)
+    {
+        var baseProfile = BuiltInGtpProfiles.ResolveBase(
+            capabilities.EngineName,
+            persistedProfile.InitialPositionProfileId);
+        var preferredMethod = persistedProfile.InitialPositionManualPreferredMethod;
+        if (preferredMethod is null &&
+            persistedProfile.HasMatchingInitialPositionDetection(
+                capabilities.EngineName,
+                capabilities.EngineVersion) &&
+            string.Equals(
+                persistedProfile.InitialPositionDetectedProfileId,
+                baseProfile.Id,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            preferredMethod = persistedProfile.InitialPositionDetectedMethod;
+        }
+
+        return BuiltInGtpProfiles.Resolve(
+            capabilities,
+            baseProfile.Id,
+            preferredMethod);
+    }
+
+    private bool RememberSuccessfulInitialPositionMethod(
+        GoStone stone,
+        EngineInitialPositionState state,
+        bool saveNow = true)
+    {
+        if (state.LastAttempt is not { } attempt ||
+            state.Capabilities is null ||
+            state.CompatibilityProfile is null)
+        {
+            return false;
+        }
+
+        var persistedProfile = _session.GetGtpEngineProfile(stone);
+        var changed = persistedProfile.InitialPositionDetectedMethod != attempt.Method ||
+            !persistedProfile.HasMatchingInitialPositionDetection(
+                state.Capabilities.EngineName,
+                state.Capabilities.EngineVersion) ||
+            !string.Equals(
+                persistedProfile.InitialPositionDetectedProfileId,
+                state.CompatibilityProfile.Id,
+                StringComparison.OrdinalIgnoreCase);
+        if (!changed)
+        {
+            return false;
+        }
+
+        persistedProfile.RememberInitialPositionDetection(
+            attempt.Method,
+            state.Capabilities.EngineName,
+            state.Capabilities.EngineVersion,
+            state.CompatibilityProfile.Id);
+        if (saveNow)
+        {
+            _saveGtpEngineProfiles();
+        }
+
+        return true;
     }
 
     private void TryFinalizeInitialPositionSetup()
@@ -871,6 +959,7 @@ public sealed class PlayingScene : IDisposable
     private sealed record EngineInitialPositionUpdate(
         GoStone Stone,
         GtpCapabilitySet Capabilities,
+        IGtpEngineCompatibilityProfile CompatibilityProfile,
         InitialPositionConciergeResult Result);
 
     private sealed class EngineInitialPositionState(GoStone stone, string engineName)
@@ -884,6 +973,8 @@ public sealed class PlayingScene : IDisposable
 
         public GtpCapabilitySet? Capabilities { get; private set; }
 
+        public IGtpEngineCompatibilityProfile? CompatibilityProfile { get; private set; }
+
         public InitialPositionConciergeCursor? Cursor { get; private set; }
 
         public bool IsAccepted { get; set; }
@@ -895,6 +986,7 @@ public sealed class PlayingScene : IDisposable
         public void Apply(EngineInitialPositionUpdate update)
         {
             Capabilities = update.Capabilities;
+            CompatibilityProfile = update.CompatibilityProfile;
             _attempts.AddRange(update.Result.Attempts);
             _diagnostics.AddRange(update.Result.Diagnostics);
             Cursor = update.Result.Continuation;

@@ -1,6 +1,7 @@
 namespace KifuwarabeGo2026.Gui.Presentation;
 
 using KifuwarabeGo2026.Gui.Application;
+using KifuwarabeGo2026.GtpExtensions.InitialPosition;
 using KifuwarabeGo2026.Shared.Domain;
 using KifuwarabeGo2026.Gui.Presentation.Local.Resting.TournamentRule;
 using Microsoft.Xna.Framework;
@@ -74,6 +75,12 @@ public sealed partial class GoScreenRenderer
 
     public static bool GetGtpEngineEditPanelLogButtonHit(Point point) =>
         GtpEngineEditPanelLogButtonBounds.Contains(point);
+
+    public static bool GetGtpEngineEditPanelInitialPositionProfileButtonHit(Point point) =>
+        GtpEngineEditPanelInitialPositionProfileButtonBounds.Contains(point);
+
+    public static bool GetGtpEngineEditPanelInitialPositionMethodButtonHit(Point point) =>
+        GtpEngineEditPanelInitialPositionMethodButtonBounds.Contains(point);
 
 
     public static bool GetGtpEngineEditPanelGuiOptionsButtonHit(Point point) =>
@@ -297,6 +304,22 @@ public sealed partial class GoScreenRenderer
 
         DrawCommandButton(GtpEngineEditPanelGuiOptionsButtonBounds, "GUI OPTIONS", false, mousePoint, scale: 0.42f);
 
+        var initialPositionBounds = GtpEngineEditPanelInitialPositionRowBounds;
+        DrawDataRowFrame(initialPositionBounds);
+        DrawUiLabel(UiLabel.InCompactRow("POSITION", initialPositionBounds));
+        DrawCommandButton(
+            GtpEngineEditPanelInitialPositionProfileButtonBounds,
+            $"PROFILE {FormatInitialPositionProfile(session.GtpEngineEditDraft.InitialPositionProfileId)}",
+            false,
+            mousePoint,
+            scale: 0.28f);
+        DrawCommandButton(
+            GtpEngineEditPanelInitialPositionMethodButtonBounds,
+            $"METHOD {FormatInitialPositionMethod(session.GtpEngineEditDraft.InitialPositionManualPreferredMethod)}",
+            false,
+            mousePoint,
+            scale: 0.27f);
+
         var logBounds = GtpEngineEditPanelLogRowBounds;
         DrawDataRowFrame(logBounds);
         DrawUiLabel(UiLabel.InCompactRow("GTP LOG", logBounds));
@@ -304,12 +327,25 @@ public sealed partial class GoScreenRenderer
 
         if (!string.IsNullOrWhiteSpace(session.GtpEngineEditWarning))
         {
-            DrawFittedText(session.GtpEngineEditWarning, new Rectangle(GtpEngineEditPanelEditorBounds.X + 48, GtpEngineEditPanelEditorBounds.Bottom - 74, GtpEngineEditPanelEditorBounds.Width - 96, 34), new Color(255, 183, 146), 0.38f);
+            DrawFittedText(session.GtpEngineEditWarning, new Rectangle(GtpEngineEditPanelEditorBounds.X + 48, GtpEngineEditPanelEditorBounds.Bottom - 36, GtpEngineEditPanelEditorBounds.Width - 96, 28), new Color(255, 183, 146), 0.32f);
         }
 
         DrawCommandButton(GtpEngineEditPanelSaveButtonBounds, SaveGtpEngineLabel(session), false, mousePoint);
         DrawGtpEngineGuiOptionsDialog(session, mousePoint);
     }
+
+    private static string FormatInitialPositionProfile(string? id) =>
+        string.IsNullOrWhiteSpace(id) ? "AUTO" : id.Trim().ToUpperInvariant();
+
+    private static string FormatInitialPositionMethod(InitialPositionMethod? method) => method switch
+    {
+        null => "AUTO",
+        InitialPositionMethod.FixedHandicap => "FIXED",
+        InitialPositionMethod.SetFreeHandicap => "FREE",
+        InitialPositionMethod.LoadSgf => "LOAD SGF",
+        InitialPositionMethod.SequentialPlay => "PLAY",
+        _ => method.ToString()!.ToUpperInvariant(),
+    };
 
 
     /// <summary>
@@ -661,7 +697,16 @@ public sealed partial class GoScreenRenderer
     private static Rectangle GtpEngineEditPanelGuiOptionsButtonBounds => new(AddPanelControlX, 590, 300, 56);
 
 
-    private static Rectangle GtpEngineEditPanelLogRowBounds => new(AddPanelControlX, 660, 668, 56);
+    private static Rectangle GtpEngineEditPanelInitialPositionRowBounds => new(AddPanelControlX, 654, 668, 56);
+
+
+    private static Rectangle GtpEngineEditPanelInitialPositionProfileButtonBounds => new(AddPanelControlX + 152, 662, 220, 40);
+
+
+    private static Rectangle GtpEngineEditPanelInitialPositionMethodButtonBounds => new(AddPanelControlX + 384, 662, 268, 40);
+
+
+    private static Rectangle GtpEngineEditPanelLogRowBounds => new(AddPanelControlX, 718, 668, 56);
 
 
     private static Rectangle GtpEngineEditPanelLogButtonBounds => new(GtpEngineEditPanelLogRowBounds.X + 152, GtpEngineEditPanelLogRowBounds.Y + 8, 120, 40);

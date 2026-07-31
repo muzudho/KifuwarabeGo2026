@@ -121,6 +121,22 @@
 | `Arguments` | いいえ | 起動時のコマンドライン引数 |
 | `EnableGtpLog` | いいえ | `true` ならGTP通信ログを保存 |
 
+### 指定局面の互換設定
+
+GUIのエンジン編集画面にある `POSITION` 欄から設定できます。
+
+| 項目 | 既定値 | 説明 |
+| --- | --- | --- |
+| `InitialPositionProfileId` | `auto` | `name` の検査結果から互換Profileを選択。手動では `generic-gtp`、`kifuwarabe`、`katago`、`leela-zero`、`gnu-go` も選択可能 |
+| `InitialPositionManualPreferredMethod` | `null` | 利用者が優先する方式。自動検出結果より常に優先され、エンジンのversionが変わっても保持 |
+| `InitialPositionDetectedMethod` | `null` | コンシェルジュで前回成功または利用者承認された方式。GUIが自動保存 |
+| `InitialPositionDetectedEngineName` | 空 | 自動結果を得たエンジン名 |
+| `InitialPositionDetectedEngineVersion` | 空 | 自動結果を得たversion。現在のversionと異なる場合は自動結果を破棄して再検査 |
+| `InitialPositionDetectedProfileId` | 空 | 自動結果を得た互換Profile |
+
+手動優先方式は `fixedHandicap`、`setFreeHandicap`、`loadSgf`、`sequentialPlay` から選べます。
+自動検出欄は診断用なので、通常は利用者が編集する必要はありません。
+
 `ExecutablePath` と `WorkingDirectory` の相対パスは、`default-settings.json` のあるディレクトリーを基準にします。
 
 `ExecutablePath` が空の項目は、有効なエンジンとしてGUIへ表示されません。

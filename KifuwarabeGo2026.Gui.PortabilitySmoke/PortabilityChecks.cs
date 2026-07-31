@@ -52,6 +52,7 @@ internal static class PortabilityChecks
         VerifyLoadSgfStrategyAndTemporaryFile();
         VerifyInitialPositionConcierge();
         VerifyInitialPositionConciergeGuiModel();
+        VerifyInitialPositionEngineProfiles();
         VerifyMatchAssembly(matchAssembly);
         VerifyGuiMatchIntegration();
         VerifyGtpMatchAdapter();
@@ -105,6 +106,83 @@ internal static class PortabilityChecks
             KifuwarabeGo2026.Gui.Presentation.GoScreenRenderer.GetInitialPositionCancelButtonHit(new Point(1200, 940)) &&
             KifuwarabeGo2026.Gui.Presentation.GoScreenRenderer.GetInitialPositionLogButtonHit(new Point(1550, 940)),
             "The concierge footer button hit areas are incorrect.");
+    }
+
+    private static void VerifyInitialPositionEngineProfiles()
+    {
+        static GtpCapabilitySet Capabilities(string name, string version) =>
+            new(name, version, []);
+
+        Require(BuiltInGtpProfiles.ResolveBase("KataGo", "auto").Id == BuiltInGtpProfiles.KataGoId,
+            "KataGo must resolve to its built-in profile.");
+        Require(BuiltInGtpProfiles.ResolveBase("Leela Zero 0.17", "auto").Id == BuiltInGtpProfiles.LeelaZeroId,
+            "Leela Zero must resolve to its built-in profile.");
+        Require(BuiltInGtpProfiles.ResolveBase("GNU Go", "auto").Id == BuiltInGtpProfiles.GnuGoId,
+            "GNU Go must resolve to its built-in profile.");
+        Require(BuiltInGtpProfiles.ResolveBase("KifuwarabeGo2026", "auto").Id == BuiltInGtpProfiles.KifuwarabeId,
+            "Kifuwarabe must resolve to its built-in profile.");
+        Require(BuiltInGtpProfiles.ResolveBase("Unknown experimental engine", "auto").Id == GenericGtpProfile.Instance.Id,
+            "An unknown engine must safely resolve to Generic GTP.");
+        Require(BuiltInGtpProfiles.ResolveBase("KataGo", "unknown-profile-id").Id == GenericGtpProfile.Instance.Id,
+            "An unknown explicit profile id must safely resolve to Generic GTP.");
+        Require(
+            KifuwarabeGo2026.Gui.Presentation.GoScreenRenderer.GetGtpEngineEditPanelInitialPositionProfileButtonHit(new Point(800, 680)) &&
+            KifuwarabeGo2026.Gui.Presentation.GoScreenRenderer.GetGtpEngineEditPanelInitialPositionMethodButtonHit(new Point(1050, 680)),
+            "The engine editor initial-position setting button hit areas are incorrect.");
+
+        var manuallyPreferred = BuiltInGtpProfiles.Resolve(
+            Capabilities("KataGo", "1.15"),
+            BuiltInGtpProfiles.AutoId,
+            InitialPositionMethod.LoadSgf);
+        Require(manuallyPreferred.Strategies[0].Method == InitialPositionMethod.LoadSgf,
+            "A preferred method must be moved to the front without changing the base profile.");
+
+        var profile = new GtpEngineProfile
+        {
+            DisplayName = "Profile persistence smoke",
+            ExecutablePath = "profile-smoke-engine",
+            InitialPositionProfileId = BuiltInGtpProfiles.AutoId,
+            InitialPositionManualPreferredMethod = InitialPositionMethod.SequentialPlay,
+        };
+        profile.RememberInitialPositionDetection(
+            InitialPositionMethod.LoadSgf,
+            "KataGo",
+            "1.15",
+            BuiltInGtpProfiles.KataGoId);
+        Require(profile.HasMatchingInitialPositionDetection("katago", "1.15"),
+            "A saved automatic result must match the same engine identity case-insensitively.");
+        Require(!profile.ClearStaleInitialPositionDetection("KataGo", "1.15"),
+            "The same engine version must retain its automatic result.");
+        Require(profile.ClearStaleInitialPositionDetection("KataGo", "1.16"),
+            "An engine version change must invalidate the automatic result.");
+        Require(profile.InitialPositionDetectedMethod is null &&
+                profile.InitialPositionManualPreferredMethod == InitialPositionMethod.SequentialPlay,
+            "Version invalidation must preserve the manual preference.");
+
+        profile.RememberInitialPositionDetection(
+            InitialPositionMethod.LoadSgf,
+            "KataGo",
+            "1.16",
+            BuiltInGtpProfiles.KataGoId);
+        var temporaryRoot = Path.Combine(Path.GetTempPath(), $"kifuwarabe-profile-smoke-{Guid.NewGuid():N}");
+        var listPath = Path.Combine(temporaryRoot, "gtp-engine-list.json");
+        try
+        {
+            var catalog = GtpEngineCatalog.Load(listPath);
+            catalog.Save([profile]);
+            var restored = GtpEngineCatalog.Load(listPath).Profiles.Single();
+            Require(restored.InitialPositionProfileId == BuiltInGtpProfiles.AutoId &&
+                    restored.InitialPositionManualPreferredMethod == InitialPositionMethod.SequentialPlay &&
+                    restored.InitialPositionDetectedMethod == InitialPositionMethod.LoadSgf &&
+                    restored.InitialPositionDetectedEngineVersion == "1.16" &&
+                    restored.InitialPositionDetectedProfileId == BuiltInGtpProfiles.KataGoId,
+                "Manual and automatic initial-position selections must survive profile JSON round-trip.");
+        }
+        finally
+        {
+            if (Directory.Exists(temporaryRoot))
+                Directory.Delete(temporaryRoot, recursive: true);
+        }
     }
 
     private static void VerifyGtpExtensionsAssembly(Assembly gtpExtensionsAssembly)

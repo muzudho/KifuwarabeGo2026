@@ -677,6 +677,8 @@ VerifiedSuccess
 
 第8段階: エンジンProfileと成功方式の保存
 
+状態: 2026-08-01 実装完了。Profileごとの実エンジン確認結果は第10段階で追記する。
+
 ・Generic、Kifuwarabe、KataGo、Leela Zero、GNU GoのProfileを追加する。
 ・既存GtpEngineProfileへ選択結果を保存する。
 ・version変更時の再検査を実装する。
@@ -685,6 +687,19 @@ VerifiedSuccess
 完了確認:
     エンジンごとに別の成功方式を保持できる。
     未知のエンジンがGenericとして安全に動く。
+
+実装結果:
+    GtpExtensionsへGeneric、Kifuwarabe、KataGo、Leela Zero、GNU Goの組み込みProfile解決を追加した。
+    auto指定では能力検査で得たnameからProfileを選び、未知の名前と未知の明示Profile IDはGenericへ戻す。
+    現段階の既知Profileは実機成功を仮定せず、再起動回復と既存の保守的Strategyだけを使用する。
+    GtpEngineProfileへ手動Profile、手動優先方式、自動成功方式、検査時name、version、Profile IDを追加した。
+    エンジン編集画面のPOSITION欄からProfileと手動優先方式を循環選択できる。
+    手動優先方式を最優先し、未指定なら同じname・version・Profileで前回成功した方式を先頭へ移す。
+    VerifiedSuccessまたは利用者が「このまま続ける」を選んだ方式だけを自動結果として保存する。
+    nameまたはversionが変わった場合は自動結果だけを破棄して再検査し、手動優先方式は保持する。
+    既存JSONに新項目がなくてもautoと未検出として読み込める。編集、複製、並べ替えでも設定を保持する。
+    既知Profile判定、未知Generic、優先順、version無効化、手動設定保持、JSON往復、GUIボタン領域を
+    移植性スモークへ追加した。
 
 
 第9段階: きふわらべ原子的指定局面拡張

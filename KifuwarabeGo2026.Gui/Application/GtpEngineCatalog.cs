@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 /// <summary>
 /// GTPプロトコルに対応した思考エンジンのカタログ
@@ -18,6 +19,7 @@ public sealed class GtpEngineCatalog
         PropertyNameCaseInsensitive = true,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         WriteIndented = true,
+        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
     };
 
     private GtpEngineCatalog(string listPath, IReadOnlyList<GtpEngineProfile> profiles)
@@ -89,6 +91,12 @@ public sealed class GtpEngineCatalog
             : normalized.DisplayName.Trim();
         normalized.DefaultCgosLoginName = normalized.DefaultCgosLoginName?.Trim() ?? "";
         normalized.DefaultCgosPlainTextPassword ??= "";
+        normalized.InitialPositionProfileId = string.IsNullOrWhiteSpace(normalized.InitialPositionProfileId)
+            ? "auto"
+            : normalized.InitialPositionProfileId.Trim();
+        normalized.InitialPositionDetectedEngineName ??= "";
+        normalized.InitialPositionDetectedEngineVersion ??= "";
+        normalized.InitialPositionDetectedProfileId ??= "";
         normalized.ExecutablePath = ResolvePath(normalized.ExecutablePath, baseDirectory);
         normalized.WorkingDirectoryModel = normalized.WorkingDirectoryModel.IsEmpty
             ? WorkingDirectoryModel.FromString(Path.GetDirectoryName(normalized.ExecutablePath) ?? baseDirectory)

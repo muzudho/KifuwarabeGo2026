@@ -5,6 +5,8 @@ using KifuwarabeGo2026.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.Gui.Application.Local.Resting;
 using KifuwarabeGo2026.Gui.Application.Local.Resting.TournamentRule;
 using KifuwarabeGo2026.Gui.Domain;
+using KifuwarabeGo2026.GtpExtensions.Engines;
+using KifuwarabeGo2026.GtpExtensions.InitialPosition;
 using KifuwarabeGo2026.Match;
 using KifuwarabeGo2026.Shared.Domain;
 using System;
@@ -2267,6 +2269,40 @@ public sealed class GoAppSession
     public void ToggleGtpEngineEditLog()
     {
         GtpEngineEditDraft.EnableGtpLog = !GtpEngineEditDraft.EnableGtpLog;
+        GtpEngineEditSaveMessage = "UNSAVED";
+    }
+
+    public void CycleGtpEngineInitialPositionProfile()
+    {
+        string[] ids =
+        [
+            BuiltInGtpProfiles.AutoId,
+            GenericGtpProfile.Instance.Id,
+            BuiltInGtpProfiles.KifuwarabeId,
+            BuiltInGtpProfiles.KataGoId,
+            BuiltInGtpProfiles.LeelaZeroId,
+            BuiltInGtpProfiles.GnuGoId,
+        ];
+        var current = Array.FindIndex(ids, id =>
+            id.Equals(GtpEngineEditDraft.InitialPositionProfileId, StringComparison.OrdinalIgnoreCase));
+        GtpEngineEditDraft.InitialPositionProfileId = ids[(current + 1 + ids.Length) % ids.Length];
+        GtpEngineEditSaveMessage = "UNSAVED";
+    }
+
+    public void CycleGtpEngineInitialPositionPreferredMethod()
+    {
+        InitialPositionMethod?[] methods =
+        [
+            null,
+            InitialPositionMethod.FixedHandicap,
+            InitialPositionMethod.SetFreeHandicap,
+            InitialPositionMethod.LoadSgf,
+            InitialPositionMethod.SequentialPlay,
+        ];
+        var current = Array.FindIndex(methods, method =>
+            method == GtpEngineEditDraft.InitialPositionManualPreferredMethod);
+        GtpEngineEditDraft.InitialPositionManualPreferredMethod =
+            methods[(current + 1 + methods.Length) % methods.Length];
         GtpEngineEditSaveMessage = "UNSAVED";
     }
 
