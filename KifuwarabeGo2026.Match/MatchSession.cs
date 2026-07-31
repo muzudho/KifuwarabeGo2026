@@ -22,6 +22,9 @@ public sealed class MatchSession
     private MatchPhase _phase = MatchPhase.Playing;
     private MatchEndReason _endReason;
     private GoStone? _winner;
+    private MatchResult? _blackResultDeclaration;
+    private MatchResult? _whiteResultDeclaration;
+    private MatchResult? _confirmedResult;
 
     public MatchSession(int boardSize = 19, int moveLimit = 0)
         : this(new MatchConfiguration(boardSize, moveLimit))
@@ -83,8 +86,94 @@ public sealed class MatchSession
             _clock,
             _phase,
             _endReason,
-            _winner));
+            _winner,
+            null));
         return true;
+    }
+
+    public MatchResultUpdate DeclareResult(GoStone player, MatchResult result)
+    {
+        if (player is not (GoStone.Black or GoStone.White))
+        {
+            throw new ArgumentOutOfRangeException(nameof(player), player, "A result can be declared only by black or white.");
+        }
+
+        ArgumentNullException.ThrowIfNull(result);
+        if (_phase != MatchPhase.AwaitingResult)
+        {
+            return ResultUpdate(false, false);
+        }
+
+        var currentDeclaration = player == GoStone.Black
+            ? _blackResultDeclaration
+            : _whiteResultDeclaration;
+        if (currentDeclaration == result)
+        {
+            return ResultUpdate(true, false);
+        }
+
+        if (player == GoStone.Black)
+        {
+            _blackResultDeclaration = result;
+        }
+        else
+        {
+            _whiteResultDeclaration = result;
+        }
+
+        var completed = _blackResultDeclaration is not null &&
+                        _blackResultDeclaration == _whiteResultDeclaration;
+        if (completed)
+        {
+            _confirmedResult = result;
+            _winner = GetWinner(result);
+            _phase = MatchPhase.Completed;
+        }
+
+        _revision++;
+        AddResultEvent(
+            completed ? MatchEventKind.ResultConfirmed : MatchEventKind.ResultDeclared,
+            new MatchResultEventData(player, result));
+        return ResultUpdate(true, true);
+    }
+
+    public MatchResultUpdate ResumePlay()
+    {
+        if (_phase != MatchPhase.AwaitingResult)
+        {
+            return ResultUpdate(false, false);
+        }
+
+        _blackResultDeclaration = null;
+        _whiteResultDeclaration = null;
+        _confirmedResult = null;
+        _winner = null;
+        _phase = MatchPhase.Playing;
+        _endReason = MatchEndReason.None;
+        _consecutivePasses = 0;
+        _revision++;
+        AddResultEvent(MatchEventKind.PlayResumed, null);
+        return ResultUpdate(true, true);
+    }
+
+    public MatchResultUpdate ApplyAdjudicatedResult(MatchResult result)
+    {
+        ArgumentNullException.ThrowIfNull(result);
+        if (_phase == MatchPhase.Completed)
+        {
+            return ResultUpdate(false, false);
+        }
+
+        _confirmedResult = result;
+        _winner = GetWinner(result);
+        _phase = MatchPhase.Completed;
+        _endReason = MatchEndReason.Adjudication;
+        _koPoint = null;
+        _revision++;
+        AddResultEvent(
+            MatchEventKind.ResultAdjudicated,
+            new MatchResultEventData(null, result));
+        return ResultUpdate(true, true);
     }
 
     public MatchActionResult Play(GoPoint point)
@@ -187,6 +276,8 @@ public sealed class MatchSession
         _consecutivePasses = 0;
         _revision++;
         _winner = OppositeOf(playedBy);
+        _confirmedResult = new MatchResult(
+            _winner == GoStone.Black ? MatchOutcome.BlackWin : MatchOutcome.WhiteWin);
         _phase = MatchPhase.Completed;
         _endReason = MatchEndReason.Resignation;
         RecordAction(MatchActionKind.Resign, playedBy);
@@ -220,8 +311,30 @@ public sealed class MatchSession
             _clock,
             _phase,
             _endReason,
-            _winner));
+            _winner,
+            null));
     }
+
+    private void AddResultEvent(MatchEventKind kind, MatchResultEventData? resultData) =>
+        _events.Add(new MatchEventRecord(
+            _revision,
+            kind,
+            null,
+            _clock,
+            _phase,
+            _endReason,
+            _winner,
+            resultData));
+
+    private MatchResultUpdate ResultUpdate(bool accepted, bool changed) =>
+        new(accepted, changed, _phase == MatchPhase.Completed, CreateSnapshot());
+
+    private static GoStone? GetWinner(MatchResult result) => result.Outcome switch
+    {
+        MatchOutcome.BlackWin => GoStone.Black,
+        MatchOutcome.WhiteWin => GoStone.White,
+        _ => null,
+    };
 
     private static void ValidateClockUpdate(MatchClockUpdate update)
     {
@@ -277,6 +390,9 @@ public sealed class MatchSession
             _clock,
             _phase,
             _endReason,
-            _winner);
+            _winner,
+            _blackResultDeclaration,
+            _whiteResultDeclaration,
+            _confirmedResult);
     }
 }

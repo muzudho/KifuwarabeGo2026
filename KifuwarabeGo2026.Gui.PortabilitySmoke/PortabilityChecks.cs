@@ -134,11 +134,13 @@ internal static class PortabilityChecks
         Require(resignation.Snapshot.IsCompleted, "Resignation must complete the match.");
         Require(resignation.Snapshot.EndReason == MatchEndReason.Resignation, "Resignation must report the correct end reason.");
         Require(resignation.Snapshot.Winner == GoStone.White, "The opponent of the resigning player must win.");
+        Require(resignation.Snapshot.ConfirmedResult?.Outcome == MatchOutcome.WhiteWin, "Resignation must expose a structured result.");
         Require(resignation.Snapshot.MoveCount == 0, "Resignation must not be counted as a played move.");
 
         VerifySimpleKo();
         VerifyMatchInitialPositionAndHistory();
         VerifyAuthoritativeClockAndObservationEvents();
+        VerifyResultAgreementAndAdjudication();
     }
 
     private static void VerifyAuthoritativeClockAndObservationEvents()
@@ -311,6 +313,73 @@ internal static class PortabilityChecks
         Require(
             typeof(GtpInitialPositionCommandBuilder).Assembly != typeof(MatchSession).Assembly,
             "The GTP adapter must remain outside Match.");
+    }
+
+    private static void VerifyResultAgreementAndAdjudication()
+    {
+        var agreementSession = new MatchSession(9);
+        agreementSession.Pass();
+        agreementSession.Pass();
+        var blackClaim = new MatchResult(MatchOutcome.BlackWin, 2.5m);
+        var firstDeclaration = agreementSession.DeclareResult(GoStone.Black, blackClaim);
+        Require(firstDeclaration.Accepted && firstDeclaration.Changed && !firstDeclaration.Completed, "The first result declaration must wait for the opponent.");
+        Require(firstDeclaration.Snapshot.BlackResultDeclaration == blackClaim, "Black's result declaration is missing.");
+
+        var duplicateRevision = firstDeclaration.Snapshot.Revision;
+        var duplicateDeclaration = agreementSession.DeclareResult(GoStone.Black, blackClaim);
+        Require(duplicateDeclaration.Accepted && !duplicateDeclaration.Changed, "An identical repeated declaration must be idempotent.");
+        Require(duplicateDeclaration.Snapshot.Revision == duplicateRevision, "An idempotent declaration must not advance the revision.");
+
+        var conflictingClaim = new MatchResult(MatchOutcome.WhiteWin, 1.5m);
+        var conflict = agreementSession.DeclareResult(GoStone.White, conflictingClaim);
+        Require(conflict.Accepted && !conflict.Completed, "Conflicting declarations must remain unresolved.");
+        Require(conflict.Snapshot.Phase == MatchPhase.AwaitingResult, "A declaration conflict must remain in result waiting.");
+
+        var agreement = agreementSession.DeclareResult(GoStone.White, blackClaim);
+        Require(agreement.Completed && agreement.Snapshot.IsCompleted, "Matching declarations must complete the match.");
+        Require(agreement.Snapshot.ConfirmedResult == blackClaim, "The agreed result is incorrect.");
+        Require(agreement.Snapshot.Winner == GoStone.Black, "The agreed winner is incorrect.");
+        Require(
+            agreementSession.GetEventsAfter(0).Any(matchEvent => matchEvent.Kind == MatchEventKind.ResultConfirmed),
+            "Observers must receive a result-confirmed event.");
+
+        var resumeSession = new MatchSession(9);
+        resumeSession.Pass();
+        resumeSession.Pass();
+        resumeSession.DeclareResult(GoStone.Black, new MatchResult(MatchOutcome.Draw));
+        var resumed = resumeSession.ResumePlay();
+        Require(resumed.Accepted && resumed.Snapshot.Phase == MatchPhase.Playing, "A disputed result must be able to resume play.");
+        Require(resumed.Snapshot.BlackResultDeclaration is null, "Resuming play must clear old declarations.");
+        Require(resumeSession.Play(new GoPoint(0, 0)).Succeeded, "Play must continue after result waiting is resumed.");
+        Require(
+            resumeSession.GetEventsAfter(0).Any(matchEvent => matchEvent.Kind == MatchEventKind.PlayResumed),
+            "Observers must receive a play-resumed event.");
+
+        var adjudicationSession = new MatchSession(9);
+        adjudicationSession.Pass();
+        adjudicationSession.Pass();
+        adjudicationSession.DeclareResult(GoStone.Black, new MatchResult(MatchOutcome.BlackWin));
+        adjudicationSession.DeclareResult(GoStone.White, new MatchResult(MatchOutcome.WhiteWin));
+        var adjudicated = adjudicationSession.ApplyAdjudicatedResult(new MatchResult(MatchOutcome.NoResult));
+        Require(adjudicated.Completed, "An adjudicated result must complete the match.");
+        Require(adjudicated.Snapshot.EndReason == MatchEndReason.Adjudication, "Adjudication must report its end reason.");
+        Require(adjudicated.Snapshot.ConfirmedResult?.Outcome == MatchOutcome.NoResult, "The adjudicated result is incorrect.");
+        Require(adjudicated.Snapshot.Winner is null, "A no-result adjudication must not infer a winner.");
+        Require(
+            adjudicationSession.GetEventsAfter(0).Any(matchEvent => matchEvent.Kind == MatchEventKind.ResultAdjudicated),
+            "Observers must receive an adjudication event.");
+
+        var invalidMarginRejected = false;
+        try
+        {
+            _ = new MatchResult(MatchOutcome.Draw, 0.5m);
+        }
+        catch (ArgumentException)
+        {
+            invalidMarginRejected = true;
+        }
+
+        Require(invalidMarginRejected, "A draw with a winning margin must be rejected.");
     }
 
     private static void VerifySimpleKo()

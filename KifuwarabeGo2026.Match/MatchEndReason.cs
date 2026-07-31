@@ -10,4 +10,5 @@ public enum MatchEndReason
     MoveLimit,
     Resignation,
     SuperKoViolation,
+    Adjudication,
 }

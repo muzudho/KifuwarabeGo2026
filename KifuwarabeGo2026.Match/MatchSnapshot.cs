@@ -25,7 +25,10 @@ public sealed class MatchSnapshot
         MatchClockSnapshot? clock,
         MatchPhase phase,
         MatchEndReason endReason,
-        GoStone? winner)
+        GoStone? winner,
+        MatchResult? blackResultDeclaration,
+        MatchResult? whiteResultDeclaration,
+        MatchResult? confirmedResult)
     {
         BoardSize = boardSize;
         _stones = Array.AsReadOnly(stones);
@@ -40,6 +43,9 @@ public sealed class MatchSnapshot
         Phase = phase;
         EndReason = endReason;
         Winner = winner;
+        BlackResultDeclaration = blackResultDeclaration;
+        WhiteResultDeclaration = whiteResultDeclaration;
+        ConfirmedResult = confirmedResult;
     }
 
     public int BoardSize { get; }
@@ -71,6 +77,12 @@ public sealed class MatchSnapshot
     public bool IsCompleted => Phase == MatchPhase.Completed;
 
     public GoStone? Winner { get; }
+
+    public MatchResult? BlackResultDeclaration { get; }
+
+    public MatchResult? WhiteResultDeclaration { get; }
+
+    public MatchResult? ConfirmedResult { get; }
 
     public GoStone GetStone(GoPoint point)
     {

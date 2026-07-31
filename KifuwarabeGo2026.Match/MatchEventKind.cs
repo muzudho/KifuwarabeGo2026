@@ -7,4 +7,8 @@ public enum MatchEventKind
 {
     ActionAccepted,
     ClockSynchronized,
+    ResultDeclared,
+    ResultConfirmed,
+    PlayResumed,
+    ResultAdjudicated,
 }

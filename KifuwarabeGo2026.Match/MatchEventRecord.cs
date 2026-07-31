@@ -12,4 +12,5 @@ public readonly record struct MatchEventRecord(
     MatchClockSnapshot? Clock,
     MatchPhase Phase,
     MatchEndReason EndReason,
-    GoStone? Winner);
+    GoStone? Winner,
+    MatchResultEventData? ResultData);
