@@ -31,7 +31,9 @@ public sealed class FixedHandicapStrategy : IInitialPositionStrategy
             request.StartingTurn == GoStone.White;
     }
 
-    public IReadOnlyList<string> BuildCommands(InitialPositionRequest request)
+    public IReadOnlyList<string> BuildCommands(
+        InitialPositionRequest request,
+        InitialPositionStrategyContext? context = null)
     {
         ArgumentNullException.ThrowIfNull(request);
         var classification = InitialPositionClassifier.Classify(request);

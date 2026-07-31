@@ -563,6 +563,8 @@ VerifiedSuccess
 
 第5段階: SGF Strategy
 
+状態: 2026-08-01 実装完了。外部エンジン実機ごとのパス形式検証は第10段階で行う。
+
 ・最小SGF生成を実装する。
 ・GUI側へ一時文書の保存と削除を実装する。
 ・loadsgfのパスと手数指定をエンジン別に検証する。
@@ -571,6 +573,27 @@ VerifiedSuccess
 完了確認:
     AB、AW、PL、SZ、KMが要求どおり生成される。
     空白を含むパスとUTF-8ファイルを検査する。
+
+実施結果:
+    InitialPositionDocumentとInitialPositionSgfBuilderをGtpExtensions.Sgfへ追加した。
+    Matchの指定局面から、GM[1]、FF[4]、CA[UTF-8]、SZ、KM、PL、AB、AWを持つ
+    最小SGFルートノードを生成するようにした。
+    黒石と白石をAB、AWへ分離し、開始手番をPL[B]またはPL[W]として保持する。
+    空の石色プロパティは出力せず、コミはカルチャー非依存の小数表記にした。
+    LoadSgfStrategyを追加し、HistorySensitivePosition以外をloadsgf候補にできるようにした。
+    SGFファイルパスはGUIまたはWebサーバーが作成してStrategyContextへ渡す。
+    GtpExtensionsはファイルI/Oを行わない。
+    GtpFilePathArgumentStyleを追加し、Auto、Unquoted、DoubleQuotedをエンジンProfileから選べるようにした。
+    Autoでは空白を含むパスを二重引用符で囲み、改行、NUL、二重引用符を含む危険なパスを拒否する。
+    エンジン差へ対応するため、loadsgfの任意手数引数もStrategyContextへ保持できるようにした。
+    GUI側へGtpInitialPositionSgfFileを追加し、一意な一時SGFをUTF-8 BOMなしで保存し、
+    Dispose時にそのファイルだけを削除するようにした。
+    loadsgf成功後も標準GTPだけでは盤面照合できないため、Unverifiedとして診断を返す。
+    AB、AW、PL、SZ、KM、黒番開始、空局面、空白パス、自動引用、明示引用、非引用、
+    手数引数、コマンド行注入拒否、UTF-8日本語、BOMなし、Dispose後削除を移植性スモークへ追加した。
+    GUIの対局開始処理はまだLoadSgfStrategyへ接続していない。
+    9プロジェクト全体のDebugビルドは警告0・エラー0で成功した。
+    移植性スモークはSGF Strategyと一時ファイルの全追加ケースを含めてPASS、終了コード0だった。
 
 
 第6段階: Conciergeと安全なフォールバック

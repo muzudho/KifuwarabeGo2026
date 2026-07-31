@@ -15,5 +15,7 @@ public interface IInitialPositionStrategy
 
     bool CanApply(InitialPositionRequest request, InitialPositionClassification classification);
 
-    IReadOnlyList<string> BuildCommands(InitialPositionRequest request);
+    IReadOnlyList<string> BuildCommands(
+        InitialPositionRequest request,
+        InitialPositionStrategyContext? context = null);
 }

@@ -10,6 +10,7 @@ using KifuwarabeGo2026.GtpExtensions;
 using KifuwarabeGo2026.GtpExtensions.Capabilities;
 using KifuwarabeGo2026.GtpExtensions.InitialPosition;
 using KifuwarabeGo2026.GtpExtensions.Protocol;
+using KifuwarabeGo2026.GtpExtensions.Sgf;
 using KifuwarabeGo2026.GtpExtensions.Strategies;
 using KifuwarabeGo2026.Match;
 using KifuwarabeGo2026.Shared.Domain;
@@ -21,6 +22,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Versioning;
+using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -46,6 +48,7 @@ internal static class PortabilityChecks
         VerifyGtpExtensionsInitialPositionPlanning();
         VerifyGtpCapabilityProbe();
         VerifyStandardHandicapStrategies();
+        VerifyLoadSgfStrategyAndTemporaryFile();
         VerifyMatchAssembly(matchAssembly);
         VerifyGuiMatchIntegration();
         VerifyGtpMatchAdapter();
@@ -364,6 +367,126 @@ internal static class PortabilityChecks
         }
 
         Require(mixedBuildRejected, "An inapplicable set_free_handicap strategy must not build commands.");
+    }
+
+    private static void VerifyLoadSgfStrategyAndTemporaryFile()
+    {
+        var mixedRequest = new InitialPositionRequest(
+            9,
+            6.5m,
+            GoStone.White,
+            [
+                new MatchSetupStone(GoStone.Black, new GoPoint(0, 0)),
+                new MatchSetupStone(GoStone.Black, new GoPoint(4, 4)),
+                new MatchSetupStone(GoStone.White, new GoPoint(8, 8)),
+            ]);
+        var mixedClassification = InitialPositionClassifier.Classify(mixedRequest);
+        var strategy = LoadSgfStrategy.Instance;
+        var capabilities = new GtpCapabilitySet(
+            "SGF Engine",
+            "1",
+            [
+                new GtpCommandCapability(
+                    "loadsgf",
+                    GtpCommandSupport.Supported,
+                    GtpCapabilityEvidence.KnownCommand),
+            ]);
+
+        Require(strategy.CanApply(mixedRequest, mixedClassification), "loadsgf must support a black-and-white setup.");
+        Require(strategy.CanAttempt(mixedRequest, mixedClassification, capabilities), "A supported loadsgf strategy must be attempted.");
+        var document = strategy.CreateDocument(mixedRequest);
+        Require(
+            document.Content == "(;GM[1]FF[4]CA[UTF-8]SZ[9]KM[6.5]PL[W]AB[aa][ee]AW[ii])\n",
+            "The minimal initial-position SGF is incorrect.");
+        Require(document.SuggestedFileName.EndsWith(".sgf", StringComparison.OrdinalIgnoreCase), "The initial-position document must suggest an SGF filename.");
+
+        var blackToPlayDocument = InitialPositionSgfBuilder.Build(new InitialPositionRequest(9, 0m, GoStone.Black));
+        Require(blackToPlayDocument.Content.Contains("PL[B]", StringComparison.Ordinal), "SGF must retain a Black starting turn.");
+        Require(!blackToPlayDocument.Content.Contains("AB[", StringComparison.Ordinal), "An empty SGF must omit AB.");
+        Require(!blackToPlayDocument.Content.Contains("AW[", StringComparison.Ordinal), "An empty SGF must omit AW.");
+
+        const string spacedPath = @"C:\Engine Data\initial position.sgf";
+        Require(
+            strategy.BuildCommands(
+                mixedRequest,
+                new InitialPositionStrategyContext(spacedPath)).Single() ==
+            "loadsgf \"C:\\Engine Data\\initial position.sgf\"",
+            "An automatic loadsgf path with spaces must be double quoted.");
+        Require(
+            strategy.BuildCommands(
+                mixedRequest,
+                new InitialPositionStrategyContext(
+                    spacedPath,
+                    GtpFilePathArgumentStyle.DoubleQuoted,
+                    12)).Single() ==
+            "loadsgf \"C:\\Engine Data\\initial position.sgf\" 12",
+            "A profile-selected loadsgf move number is incorrect.");
+        Require(
+            strategy.BuildCommands(
+                mixedRequest,
+                new InitialPositionStrategyContext(
+                    "initial-position.sgf",
+                    GtpFilePathArgumentStyle.Unquoted)).Single() ==
+            "loadsgf initial-position.sgf",
+            "An unquoted loadsgf path is incorrect.");
+        Require(
+            strategy.VerifySuccessfulResponse().Status == InitialPositionVerificationStatus.Unverified,
+            "A successful loadsgf response must remain unverified without a portable board query.");
+
+        var missingPathRejected = false;
+        try
+        {
+            strategy.BuildCommands(mixedRequest);
+        }
+        catch (InvalidOperationException)
+        {
+            missingPathRejected = true;
+        }
+
+        Require(missingPathRejected, "loadsgf must not build a command before the host creates its document.");
+
+        var unsafePathRejected = false;
+        try
+        {
+            strategy.BuildCommands(
+                mixedRequest,
+                new InitialPositionStrategyContext("position.sgf\nquit"));
+        }
+        catch (ArgumentException)
+        {
+            unsafePathRejected = true;
+        }
+
+        Require(unsafePathRejected, "A loadsgf path must not inject another GTP line.");
+
+        var temporaryRoot = Path.Combine(
+            Path.GetTempPath(),
+            $"KifuwarabeGo2026 GTP smoke {Guid.NewGuid():N}");
+        Directory.CreateDirectory(temporaryRoot);
+        var utf8Document = new InitialPositionDocument("initial-position.sgf", "(;C[指定局面])\n");
+        string temporaryPath;
+        try
+        {
+            using (var temporaryFile = GtpInitialPositionSgfFile.Create(utf8Document, temporaryRoot))
+            {
+                temporaryPath = temporaryFile.FilePath;
+                Require(File.Exists(temporaryPath), "The GUI host must materialize the initial-position SGF.");
+                Require(File.ReadAllText(temporaryPath, Encoding.UTF8) == utf8Document.Content, "The materialized SGF content is incorrect.");
+                var bytes = File.ReadAllBytes(temporaryPath);
+                Require(
+                    bytes.Length < 3 || bytes[0] != 0xEF || bytes[1] != 0xBB || bytes[2] != 0xBF,
+                    "The temporary SGF must be UTF-8 without BOM.");
+            }
+
+            Require(!File.Exists(temporaryPath), "Disposing the GUI SGF file must delete it.");
+        }
+        finally
+        {
+            if (Directory.Exists(temporaryRoot))
+            {
+                Directory.Delete(temporaryRoot, recursive: false);
+            }
+        }
     }
 
     private static void VerifyMatchAssembly(Assembly matchAssembly)

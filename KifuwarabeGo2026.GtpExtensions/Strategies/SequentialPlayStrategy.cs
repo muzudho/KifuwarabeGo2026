@@ -28,7 +28,9 @@ public sealed class SequentialPlayStrategy : IInitialPositionStrategy
         return classification.Kind != InitialPositionKind.HistorySensitivePosition;
     }
 
-    public IReadOnlyList<string> BuildCommands(InitialPositionRequest request)
+    public IReadOnlyList<string> BuildCommands(
+        InitialPositionRequest request,
+        InitialPositionStrategyContext? context = null)
     {
         ArgumentNullException.ThrowIfNull(request);
 
