@@ -7,5 +7,7 @@ public enum MatchEndReason
 {
     None,
     ConsecutivePasses,
+    MoveLimit,
     Resignation,
+    SuperKoViolation,
 }

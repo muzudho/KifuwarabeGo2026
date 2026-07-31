@@ -6,6 +6,7 @@ namespace KifuwarabeGo2026.Match;
 public enum MatchActionFailure
 {
     None,
+    AwaitingResult,
     MatchCompleted,
     PointOutsideBoard,
     PointOccupied,

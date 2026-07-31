@@ -33,6 +33,7 @@ internal static class PortabilityChecks
         VerifyAssemblyReferences(coreAssembly);
         VerifyNoPlatformInvokes(coreAssembly);
         VerifyMatchAssembly(matchAssembly);
+        VerifyGuiMatchIntegration();
         VerifyPortableFallbacks();
         VerifyScoreAxisScaling();
         VerifyCommentNavigation();
@@ -114,11 +115,17 @@ internal static class PortabilityChecks
         var blackPass = passSession.Pass();
         Require(blackPass.Succeeded && blackPass.Snapshot.CurrentTurn == GoStone.White, "A pass must pass the turn.");
         var whitePass = passSession.Pass();
-        Require(whitePass.Snapshot.IsCompleted, "Two consecutive passes must complete the match.");
+        Require(whitePass.Snapshot.IsAwaitingResult, "Two consecutive passes must wait for result agreement.");
+        Require(!whitePass.Snapshot.IsCompleted, "Two consecutive passes must not decide the result.");
         Require(whitePass.Snapshot.EndReason == MatchEndReason.ConsecutivePasses, "Two passes must report the correct end reason.");
         Require(whitePass.Snapshot.CurrentTurn == GoStone.Black, "The second pass must complete its turn before the match ends.");
         var afterPassEnd = passSession.Play(new GoPoint(0, 0));
-        Require(!afterPassEnd.Succeeded && afterPassEnd.Failure == MatchActionFailure.MatchCompleted, "A completed match must reject plays.");
+        Require(!afterPassEnd.Succeeded && afterPassEnd.Failure == MatchActionFailure.AwaitingResult, "A match awaiting agreement must reject plays.");
+
+        var limitedSession = new MatchSession(9, moveLimit: 1);
+        var limitedMove = limitedSession.Play(new GoPoint(0, 0));
+        Require(limitedMove.Snapshot.IsAwaitingResult, "A reached move limit must wait for a result.");
+        Require(limitedMove.Snapshot.Winner is null, "A move limit must not infer a winner.");
 
         var resignSession = new MatchSession(9);
         var resignation = resignSession.Resign();
@@ -128,6 +135,35 @@ internal static class PortabilityChecks
         Require(resignation.Snapshot.MoveCount == 0, "Resignation must not be counted as a played move.");
 
         VerifySimpleKo();
+    }
+
+    private static void VerifyGuiMatchIntegration()
+    {
+        var session = new GoAppSession();
+        session.SetPlayerKind(GoStone.Black, GoPlayerKind.Human);
+        session.SetPlayerKind(GoStone.White, GoPlayerKind.Human);
+        session.StartPlaying();
+
+        Require(session.IsMatchBackedLocalGame, "A normal human-versus-human game must use MatchSession.");
+        Require(session.TryPlaceStone(3, 3), "The GUI session must accept a Match-backed play.");
+        Require(session.GetStone(3, 3) == GoStone.Black, "The GUI board must reflect the Match snapshot.");
+        Require(session.CurrentTurn == GoStone.White, "The GUI turn must follow the Match snapshot.");
+        Require(session.CurrentGameRecord.Moves.Count == 1, "A Match-backed play must update the GUI game record.");
+
+        var passSession = new GoAppSession();
+        passSession.SetPlayerKind(GoStone.Black, GoPlayerKind.Human);
+        passSession.SetPlayerKind(GoStone.White, GoPlayerKind.Human);
+        passSession.StartPlaying();
+        Require(passSession.Pass() && passSession.Pass(), "The GUI session must pass through Match.");
+        Require(passSession.CurrentMode.Kind == GoAppModeKind.GameOver, "The local wrapper must enter its result screen after result waiting begins.");
+        Require(passSession.Winner is null, "Match must not infer a winner from two passes on an empty board.");
+
+        var resignSession = new GoAppSession();
+        resignSession.SetPlayerKind(GoStone.Black, GoPlayerKind.Human);
+        resignSession.SetPlayerKind(GoStone.White, GoPlayerKind.Human);
+        resignSession.StartPlaying();
+        Require(resignSession.Resign(), "The GUI session must pass resignation through Match.");
+        Require(resignSession.Winner == GoStone.White, "The GUI must reflect the Match resignation winner.");
     }
 
     private static void VerifySimpleKo()

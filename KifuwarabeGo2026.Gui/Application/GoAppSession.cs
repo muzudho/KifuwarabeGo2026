@@ -5,6 +5,7 @@ using KifuwarabeGo2026.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.Gui.Application.Local.Resting;
 using KifuwarabeGo2026.Gui.Application.Local.Resting.TournamentRule;
 using KifuwarabeGo2026.Gui.Domain;
+using KifuwarabeGo2026.Match;
 using KifuwarabeGo2026.Shared.Domain;
 using System;
 using System.Collections.Generic;
@@ -14,6 +15,7 @@ using System.Linq;
 public sealed class GoAppSession
 {
     private GoBoard _board;
+    private MatchSession? _matchSession;
     private GoBoard? _localReplayBoard;
     private int? _localReplayMoveIndex;
     private readonly HashSet<ulong> _positionHashes = new();
@@ -288,6 +290,8 @@ public sealed class GoAppSession
     public TournamentRules CurrentTournamentRules => _currentTournamentRules.Clone();
 
     public GoStone CurrentTurn { get; private set; } = GoStone.Black;
+
+    public bool IsMatchBackedLocalGame => _matchSession is not null;
 
     public GoStone BoardEditingStone { get; private set; } = GoStone.Black;
 
@@ -1101,6 +1105,9 @@ public sealed class GoAppSession
         CurrentGameRecord = CreateGameRecordFromCurrentPosition();
         BlackElapsedTime = TimeSpan.Zero;
         WhiteElapsedTime = TimeSpan.Zero;
+        _matchSession = ShouldStartMatchBackedGame()
+            ? new MatchSession(BoardSize, MoveLimit)
+            : null;
         ChangeMode(GoAppModeKind.Playing);
     }
 
@@ -2700,6 +2707,11 @@ public sealed class GoAppSession
         string comment = "",
         string? commonAnalysisJson = null)
     {
+        if (_matchSession is not null)
+        {
+            return TryPlaceStoneWithMatch(x, y, analysis, comment, commonAnalysisJson);
+        }
+
         if (CurrentMode.Kind != GoAppModeKind.Playing || !_board.TryPlaceStone(x, y, CurrentTurn, KoPoint, out var capturedStones, out var nextKoPoint))
         {
             return false;
@@ -2743,6 +2755,11 @@ public sealed class GoAppSession
         GoMoveAnalysis? analysis = null,
         string? commonAnalysisJson = null)
     {
+        if (_matchSession is not null)
+        {
+            return PassWithMatch(comment, analysis, commonAnalysisJson);
+        }
+
         if (CurrentMode.Kind != GoAppModeKind.Playing)
         {
             return false;
@@ -2803,6 +2820,11 @@ public sealed class GoAppSession
 
     public bool Resign()
     {
+        if (_matchSession is not null)
+        {
+            return ResignWithMatch();
+        }
+
         if (CurrentMode.Kind != GoAppModeKind.Playing)
         {
             return false;
@@ -2961,6 +2983,7 @@ public sealed class GoAppSession
 
     private void ClearBoard()
     {
+        _matchSession = null;
         _board = new GoBoard(BoardSize);
         CurrentTurn = GoStone.Black;
         BlackAgehama = 0;
@@ -3008,6 +3031,142 @@ public sealed class GoAppSession
         }
 
         PassTurn();
+    }
+
+    private bool ShouldStartMatchBackedGame() =>
+        BlackPlayerKind == GoPlayerKind.Human &&
+        WhitePlayerKind == GoPlayerKind.Human &&
+        BlackStoneCount == 0 &&
+        WhiteStoneCount == 0 &&
+        CurrentTurn == GoStone.Black;
+
+    private bool TryPlaceStoneWithMatch(
+        int x,
+        int y,
+        GoMoveAnalysis? analysis,
+        string comment,
+        string? commonAnalysisJson)
+    {
+        if (CurrentMode.Kind != GoAppModeKind.Playing || _matchSession is null)
+        {
+            return false;
+        }
+
+        var result = _matchSession.Play(new GoPoint(x, y));
+        if (!result.Succeeded)
+        {
+            return false;
+        }
+
+        CurrentGameRecord.Moves.Add(new GoGameMove(
+            result.PlayedBy,
+            result.Point,
+            comment,
+            analysis,
+            commonAnalysisJson));
+        if (result.PlayedBy == GoStone.Black)
+        {
+            BlackAgehama += result.CapturedStones;
+        }
+        else
+        {
+            WhiteAgehama += result.CapturedStones;
+        }
+
+        ApplyMatchSnapshot(result.Snapshot);
+        CompleteMatchBackedActionIfNeeded(result.Snapshot, result.PlayedBy);
+        return true;
+    }
+
+    private bool PassWithMatch(
+        string comment,
+        GoMoveAnalysis? analysis,
+        string? commonAnalysisJson)
+    {
+        if (CurrentMode.Kind != GoAppModeKind.Playing || _matchSession is null)
+        {
+            return false;
+        }
+
+        var result = _matchSession.Pass();
+        if (!result.Succeeded)
+        {
+            return false;
+        }
+
+        CurrentGameRecord.Moves.Add(new GoGameMove(
+            result.PlayedBy,
+            null,
+            comment,
+            analysis,
+            commonAnalysisJson));
+        ApplyMatchSnapshot(result.Snapshot);
+        CompleteMatchBackedActionIfNeeded(result.Snapshot, result.PlayedBy);
+        return true;
+    }
+
+    private bool ResignWithMatch()
+    {
+        if (CurrentMode.Kind != GoAppModeKind.Playing || _matchSession is null)
+        {
+            return false;
+        }
+
+        var result = _matchSession.Resign();
+        if (!result.Succeeded)
+        {
+            return false;
+        }
+
+        ApplyMatchSnapshot(result.Snapshot);
+        CompleteMatchBackedActionIfNeeded(result.Snapshot, result.PlayedBy);
+        return true;
+    }
+
+    private void ApplyMatchSnapshot(MatchSnapshot snapshot)
+    {
+        var board = new GoBoard(snapshot.BoardSize);
+        for (var y = 0; y < snapshot.BoardSize; y++)
+        {
+            for (var x = 0; x < snapshot.BoardSize; x++)
+            {
+                var stone = snapshot.GetStone(new GoPoint(x, y));
+                if (stone != GoStone.Empty)
+                {
+                    board.TrySetSetupStone(x, y, stone);
+                }
+            }
+        }
+
+        _board = board;
+        CurrentTurn = snapshot.CurrentTurn;
+        KoPoint = snapshot.KoPoint;
+        ConsecutivePasses = snapshot.ConsecutivePasses;
+        PlayedMoveCount = snapshot.MoveCount;
+    }
+
+    private void CompleteMatchBackedActionIfNeeded(MatchSnapshot snapshot, GoStone playedBy)
+    {
+        if (snapshot.IsAwaitingResult)
+        {
+            DecidePureGoResult();
+            ChangeMode(GoAppModeKind.GameOver);
+            return;
+        }
+
+        if (!snapshot.IsCompleted)
+        {
+            return;
+        }
+
+        Winner = snapshot.Winner;
+        GameOverReason = snapshot.EndReason switch
+        {
+            MatchEndReason.Resignation => $"{StoneName(playedBy)} RESIGNS",
+            MatchEndReason.SuperKoViolation => $"{StoneName(playedBy)} SUPER KO LOSS",
+            _ => "MATCH COMPLETED",
+        };
+        ChangeMode(GoAppModeKind.GameOver);
     }
 
     private void PassTurn()

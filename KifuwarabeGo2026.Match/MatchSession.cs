@@ -8,17 +8,27 @@ using KifuwarabeGo2026.Shared.Domain;
 public sealed class MatchSession
 {
     private readonly GoBoard _board;
+    private readonly HashSet<ulong> _positionHashes;
+    private readonly int _moveLimit;
     private GoStone _currentTurn = GoStone.Black;
     private GoPoint? _koPoint;
     private int _consecutivePasses;
     private int _moveCount;
     private long _revision;
+    private MatchPhase _phase = MatchPhase.Playing;
     private MatchEndReason _endReason;
     private GoStone? _winner;
 
-    public MatchSession(int boardSize = 19)
+    public MatchSession(int boardSize = 19, int moveLimit = 0)
     {
+        if (moveLimit < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(moveLimit), moveLimit, "Move limit cannot be negative.");
+        }
+
         _board = new GoBoard(boardSize);
+        _positionHashes = [_board.CurrentHash];
+        _moveLimit = moveLimit;
     }
 
     public MatchSnapshot Snapshot => CreateSnapshot();
@@ -26,9 +36,9 @@ public sealed class MatchSession
     public MatchActionResult Play(GoPoint point)
     {
         var playedBy = _currentTurn;
-        if (IsCompleted)
+        if (_phase != MatchPhase.Playing)
         {
-            return Failed(MatchActionKind.Play, MatchActionFailure.MatchCompleted, playedBy, point);
+            return Failed(MatchActionKind.Play, GetInactiveFailure(), playedBy, point);
         }
 
         if (!IsOnBoard(point))
@@ -59,16 +69,35 @@ public sealed class MatchSession
 
         _koPoint = nextKoPoint;
         _consecutivePasses = 0;
-        CompleteTurn();
+        _moveCount++;
+        _revision++;
+        if (!_positionHashes.Add(_board.CurrentHash))
+        {
+            _koPoint = null;
+            _phase = MatchPhase.Completed;
+            _endReason = MatchEndReason.SuperKoViolation;
+            _winner = OppositeOf(playedBy);
+        }
+        else if (HasReachedMoveLimit())
+        {
+            _koPoint = null;
+            _phase = MatchPhase.AwaitingResult;
+            _endReason = MatchEndReason.MoveLimit;
+        }
+        else
+        {
+            PassTurn();
+        }
+
         return Succeeded(MatchActionKind.Play, playedBy, point, capturedStones);
     }
 
     public MatchActionResult Pass()
     {
         var playedBy = _currentTurn;
-        if (IsCompleted)
+        if (_phase != MatchPhase.Playing)
         {
-            return Failed(MatchActionKind.Pass, MatchActionFailure.MatchCompleted, playedBy);
+            return Failed(MatchActionKind.Pass, GetInactiveFailure(), playedBy);
         }
 
         _koPoint = null;
@@ -78,7 +107,13 @@ public sealed class MatchSession
         PassTurn();
         if (_consecutivePasses >= 2)
         {
+            _phase = MatchPhase.AwaitingResult;
             _endReason = MatchEndReason.ConsecutivePasses;
+        }
+        else if (HasReachedMoveLimit())
+        {
+            _phase = MatchPhase.AwaitingResult;
+            _endReason = MatchEndReason.MoveLimit;
         }
 
         return Succeeded(MatchActionKind.Pass, playedBy);
@@ -87,32 +122,31 @@ public sealed class MatchSession
     public MatchActionResult Resign()
     {
         var playedBy = _currentTurn;
-        if (IsCompleted)
+        if (_phase != MatchPhase.Playing)
         {
-            return Failed(MatchActionKind.Resign, MatchActionFailure.MatchCompleted, playedBy);
+            return Failed(MatchActionKind.Resign, GetInactiveFailure(), playedBy);
         }
 
         _koPoint = null;
         _consecutivePasses = 0;
         _revision++;
         _winner = OppositeOf(playedBy);
+        _phase = MatchPhase.Completed;
         _endReason = MatchEndReason.Resignation;
         return Succeeded(MatchActionKind.Resign, playedBy);
     }
 
-    private bool IsCompleted => _endReason != MatchEndReason.None;
-
     private bool IsOnBoard(GoPoint point) =>
         point.X >= 0 && point.X < _board.Size && point.Y >= 0 && point.Y < _board.Size;
 
-    private void CompleteTurn()
-    {
-        _moveCount++;
-        _revision++;
-        PassTurn();
-    }
-
     private void PassTurn() => _currentTurn = OppositeOf(_currentTurn);
+
+    private bool HasReachedMoveLimit() => _moveLimit > 0 && _moveCount >= _moveLimit;
+
+    private MatchActionFailure GetInactiveFailure() =>
+        _phase == MatchPhase.AwaitingResult
+            ? MatchActionFailure.AwaitingResult
+            : MatchActionFailure.MatchCompleted;
 
     private static GoStone OppositeOf(GoStone stone) =>
         stone == GoStone.Black ? GoStone.White : GoStone.Black;
@@ -150,6 +184,7 @@ public sealed class MatchSession
             _consecutivePasses,
             _moveCount,
             _revision,
+            _phase,
             _endReason,
             _winner);
     }

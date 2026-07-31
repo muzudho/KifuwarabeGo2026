@@ -18,6 +18,7 @@ public sealed class MatchSnapshot
         int consecutivePasses,
         int moveCount,
         long revision,
+        MatchPhase phase,
         MatchEndReason endReason,
         GoStone? winner)
     {
@@ -28,6 +29,7 @@ public sealed class MatchSnapshot
         ConsecutivePasses = consecutivePasses;
         MoveCount = moveCount;
         Revision = revision;
+        Phase = phase;
         EndReason = endReason;
         Winner = winner;
     }
@@ -46,9 +48,13 @@ public sealed class MatchSnapshot
 
     public long Revision { get; }
 
+    public MatchPhase Phase { get; }
+
     public MatchEndReason EndReason { get; }
 
-    public bool IsCompleted => EndReason != MatchEndReason.None;
+    public bool IsAwaitingResult => Phase == MatchPhase.AwaitingResult;
+
+    public bool IsCompleted => Phase == MatchPhase.Completed;
 
     public GoStone? Winner { get; }
 
