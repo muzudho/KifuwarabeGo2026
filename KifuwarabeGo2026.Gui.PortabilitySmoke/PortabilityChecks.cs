@@ -45,6 +45,7 @@ internal static class PortabilityChecks
         VerifyGtpExtensionsAssembly(gtpExtensionsAssembly);
         VerifyGtpExtensionsInitialPositionPlanning();
         VerifyGtpCapabilityProbe();
+        VerifyStandardHandicapStrategies();
         VerifyMatchAssembly(matchAssembly);
         VerifyGuiMatchIntegration();
         VerifyGtpMatchAdapter();
@@ -249,6 +250,120 @@ internal static class PortabilityChecks
         }
 
         Require(cancellationPropagated, "Caller cancellation must not be converted into an unknown capability.");
+    }
+
+    private static void VerifyStandardHandicapStrategies()
+    {
+        var supportedCapabilities = new GtpCapabilitySet(
+            "Handicap Engine",
+            "1",
+            [
+                new GtpCommandCapability(
+                    "fixed_handicap",
+                    GtpCommandSupport.Supported,
+                    GtpCapabilityEvidence.KnownCommand),
+                new GtpCommandCapability(
+                    "set_free_handicap",
+                    GtpCommandSupport.Supported,
+                    GtpCapabilityEvidence.KnownCommand),
+            ]);
+        var unsupportedFixed = new GtpCapabilitySet(
+            "No Fixed Handicap",
+            "1",
+            [
+                new GtpCommandCapability(
+                    "fixed_handicap",
+                    GtpCommandSupport.Unsupported,
+                    GtpCapabilityEvidence.KnownCommand),
+            ]);
+        var unknownCapabilities = new GtpCapabilitySet("Unknown Engine", null, []);
+
+        var fixedRequest = new InitialPositionRequest(
+            19,
+            0.5m,
+            GoStone.White,
+            FixedHandicapPoints.Get(19, 2)
+                .Select(point => new MatchSetupStone(GoStone.Black, point)));
+        var fixedClassification = InitialPositionClassifier.Classify(fixedRequest);
+        var fixedStrategy = FixedHandicapStrategy.Instance;
+        Require(fixedStrategy.CanApply(fixedRequest, fixedClassification), "A standard fixed handicap with White to play must be applicable.");
+        Require(fixedStrategy.CanAttempt(fixedRequest, fixedClassification, supportedCapabilities), "A supported fixed handicap must be attempted.");
+        Require(!fixedStrategy.CanAttempt(fixedRequest, fixedClassification, unsupportedFixed), "A known unsupported fixed handicap must not be attempted.");
+        Require(fixedStrategy.CanAttempt(fixedRequest, fixedClassification, unknownCapabilities), "An unknown capability must remain available for a user-requested attempt.");
+        Require(
+            fixedStrategy.BuildCommands(fixedRequest).SequenceEqual(
+            [
+                "boardsize 19",
+                "komi 0.5",
+                "clear_board",
+                "fixed_handicap 2",
+            ]),
+            "The fixed-handicap command sequence is incorrect.");
+
+        var verified = fixedStrategy.VerifyResponse(fixedRequest, "Q16 D4");
+        Require(verified.Status == InitialPositionVerificationStatus.Verified, "A matching fixed-handicap response must be verified regardless of vertex order.");
+        var mismatch = fixedStrategy.VerifyResponse(fixedRequest, "D4");
+        Require(mismatch.Status == InitialPositionVerificationStatus.PositionMismatch, "A missing fixed-handicap vertex must be reported as a mismatch.");
+        Require(mismatch.ExpectedVertices.Count == 2 && mismatch.ActualVertices.Count == 1, "Mismatch diagnostics must retain expected and actual vertices.");
+        var invalid = fixedStrategy.VerifyResponse(fixedRequest, "D4 I4");
+        Require(invalid.Status == InitialPositionVerificationStatus.InvalidResponse, "An invalid fixed-handicap vertex must be diagnosed.");
+        var duplicate = fixedStrategy.VerifyResponse(fixedRequest, "D4 D4");
+        Require(duplicate.Status == InitialPositionVerificationStatus.InvalidResponse, "A duplicate fixed-handicap vertex must be diagnosed.");
+
+        var blackToPlayRequest = new InitialPositionRequest(
+            19,
+            0.5m,
+            GoStone.Black,
+            FixedHandicapPoints.Get(19, 2)
+                .Select(point => new MatchSetupStone(GoStone.Black, point)));
+        Require(
+            !fixedStrategy.CanApply(blackToPlayRequest, InitialPositionClassifier.Classify(blackToPlayRequest)),
+            "fixed_handicap must not be used when the requested starting turn is Black.");
+
+        var freeRequest = new InitialPositionRequest(
+            9,
+            6.5m,
+            GoStone.White,
+            [
+                new MatchSetupStone(GoStone.Black, new GoPoint(0, 0)),
+                new MatchSetupStone(GoStone.Black, new GoPoint(4, 4)),
+            ]);
+        var freeClassification = InitialPositionClassifier.Classify(freeRequest);
+        var freeStrategy = SetFreeHandicapStrategy.Instance;
+        Require(freeStrategy.CanApply(freeRequest, freeClassification), "A specified black setup with White to play must use set_free_handicap.");
+        Require(freeStrategy.CanAttempt(freeRequest, freeClassification, supportedCapabilities), "A supported free handicap must be attempted.");
+        Require(
+            freeStrategy.BuildCommands(freeRequest).SequenceEqual(
+            [
+                "boardsize 9",
+                "komi 6.5",
+                "clear_board",
+                "set_free_handicap A9 E5",
+            ]),
+            "The set-free-handicap command sequence is incorrect.");
+
+        var mixedRequest = new InitialPositionRequest(
+            9,
+            6.5m,
+            GoStone.White,
+            [
+                new MatchSetupStone(GoStone.Black, new GoPoint(0, 0)),
+                new MatchSetupStone(GoStone.White, new GoPoint(8, 8)),
+            ]);
+        var mixedClassification = InitialPositionClassifier.Classify(mixedRequest);
+        Require(!freeStrategy.CanApply(mixedRequest, mixedClassification), "set_free_handicap must reject a black-and-white setup.");
+
+        var mixedBuildRejected = false;
+        try
+        {
+            freeStrategy.BuildCommands(mixedRequest);
+        }
+        catch (InvalidOperationException)
+        {
+            mixedBuildRejected = true;
+        }
+
+        Require(mixedBuildRejected, "An inapplicable set_free_handicap strategy must not build commands.");
     }
 
     private static void VerifyMatchAssembly(Assembly matchAssembly)

@@ -11,5 +11,9 @@ public interface IInitialPositionStrategy
 
     string DisplayName { get; }
 
+    IReadOnlyList<string> RequiredCommands { get; }
+
     bool CanApply(InitialPositionRequest request, InitialPositionClassification classification);
+
+    IReadOnlyList<string> BuildCommands(InitialPositionRequest request);
 }

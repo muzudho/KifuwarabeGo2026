@@ -528,6 +528,8 @@ VerifiedSuccess
 
 第4段階: 標準置き碁Strategy
 
+状態: 2026-08-01 実装完了。実エンジンへの自動送信は第6段階でConciergeへ接続する。
+
 ・FixedHandicapStrategyを実装する。
 ・SetFreeHandicapStrategyを実装する。
 ・標準置石位置の判定を盤サイズ別に検査する。
@@ -536,6 +538,27 @@ VerifiedSuccess
 完了確認:
     適用できない局面ではコマンドを送らない。
     黒白混在局面へset_free_handicapを使わない。
+
+実施結果:
+    IInitialPositionStrategyへRequiredCommandsとBuildCommandsを追加した。
+    全Strategy共通のCanAttemptを拡張メソッドとして追加し、局面へ適用可能で、
+    必須コマンドが明確にUnsupportedではない場合だけ試行候補にするようにした。
+    能力がUnknownの場合は、利用者が試せる可能性を残すため候補から除外しない。
+    FixedHandicapStrategyを追加し、標準2子から9子、白番開始、白石なしの場合だけ適用する。
+    boardsize、komi、clear_board、fixed_handicap Nのコマンド列を生成する。
+    fixed_handicap成功応答の座標を解析し、要求した初期配置と集合比較するようにした。
+    一致はVerified、石の不足・余分はPositionMismatch、不正座標と重複はInvalidResponseとして、
+    説明、期待座標、実座標をInitialPositionVerificationResultへ保持する。
+    SetFreeHandicapStrategyを追加し、黒石だけの標準置き碁または自由置き碁で、
+    白番開始の場合にset_free_handicapと全指定座標を生成するようにした。
+    黒白混在、空局面、黒番開始ではfixed_handicapとset_free_handicapを適用しない。
+    共通のboardsize、komi、clear_board生成をInitialPositionCommandPreambleへ集約した。
+    既存SequentialPlayStrategyも共通Preambleと新しいStrategy契約へ接続した。
+    対応、明確な非対応、能力不明、標準固定置き碁、自由置き碁、黒番開始、黒白混在、
+    応答順序違い、石不足、不正座標、重複座標を移植性スモークへ追加した。
+    GUI表示と対局開始時の送信方式はまだ変更していない。
+    9プロジェクト全体のDebugビルドは警告0・エラー0で成功した。
+    移植性スモークは標準置き碁Strategyの全追加ケースを含めてPASS、終了コード0だった。
 
 
 第5段階: SGF Strategy

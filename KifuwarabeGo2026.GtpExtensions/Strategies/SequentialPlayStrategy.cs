@@ -3,7 +3,6 @@ namespace KifuwarabeGo2026.GtpExtensions.Strategies;
 using KifuwarabeGo2026.GtpExtensions.InitialPosition;
 using KifuwarabeGo2026.GtpExtensions.Protocol;
 using KifuwarabeGo2026.Shared.Domain;
-using System.Globalization;
 
 /// <summary>
 /// Reproduces setup stones as sequential play commands for compatibility with existing behavior.
@@ -20,6 +19,8 @@ public sealed class SequentialPlayStrategy : IInitialPositionStrategy
 
     public string DisplayName => "連続着手による互換設定";
 
+    public IReadOnlyList<string> RequiredCommands { get; } = ["play"];
+
     public bool CanApply(InitialPositionRequest request, InitialPositionClassification classification)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -31,12 +32,7 @@ public sealed class SequentialPlayStrategy : IInitialPositionStrategy
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var commands = new List<string>
-        {
-            $"boardsize {request.BoardSize}",
-            $"komi {request.Komi.ToString(CultureInfo.InvariantCulture)}",
-            "clear_board",
-        };
+        var commands = InitialPositionCommandPreamble.Create(request);
 
         foreach (var setupStone in request.SetupStones)
         {
