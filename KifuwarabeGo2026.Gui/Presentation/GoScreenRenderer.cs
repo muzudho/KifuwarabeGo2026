@@ -2,6 +2,7 @@ namespace KifuwarabeGo2026.Gui.Presentation;
 
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Application.Local.Resting.TournamentRule;
+using KifuwarabeGo2026.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.Shared.Domain;
 using KifuwarabeGo2026.Gui.Presentation.Local.Resting.TournamentRule;
 using Microsoft.Xna.Framework;
@@ -47,7 +48,8 @@ public sealed partial class GoScreenRenderer
     public void Draw(
         GoAppSession session,
         Point mousePosition,
-        LiveBoardPreview? liveBoardPreview = null)
+        LiveBoardPreview? liveBoardPreview = null,
+        InitialPositionConciergeView? initialPositionConcierge = null)
     {
         var mousePoint = VirtualScreen.ToVirtualPoint(_graphicsDevice.Viewport, mousePosition);
 
@@ -66,7 +68,7 @@ public sealed partial class GoScreenRenderer
         }
         if (!session.IsReviewChartPopupOpen)
         {
-            DrawSidePanel(session, mousePoint, liveBoardPreview);
+            DrawSidePanel(session, mousePoint, liveBoardPreview, initialPositionConcierge);
             if (session.IsLocalReplayMode)
             {
                 DrawReplayNavigationControls(
@@ -267,12 +269,19 @@ public sealed partial class GoScreenRenderer
     private void DrawSidePanel(
         GoAppSession session,
         Point mousePoint,
-        LiveBoardPreview? liveBoardPreview)
+        LiveBoardPreview? liveBoardPreview,
+        InitialPositionConciergeView? initialPositionConcierge)
     {
         var panel = new Rectangle(1102, 78, 760, 924);
         FillRect(new Rectangle(panel.X + 16, panel.Y + 18, panel.Width, panel.Height), new Color(0, 0, 0, 120));
         FillRect(panel, new Color(21, 25, 32, 236));
         DrawRect(panel, 2, new Color(82, 111, 114));
+
+        if (initialPositionConcierge is { IsVisible: true })
+        {
+            DrawInitialPositionConcierge(initialPositionConcierge, mousePoint);
+            return;
+        }
 
         if (session.CurrentMode.Kind == GoAppModeKind.Playing)
         {

@@ -130,7 +130,8 @@ public class Game1 : Game
         _playingScene = new PlayingScene(
             _session,
             PlayPlaceStoneSound,
-            () => _gtpEngineCatalog.Save(_session.GtpEngineProfiles));
+            () => _gtpEngineCatalog.Save(_session.GtpEngineProfiles),
+            OpenGtpLog);
 
         _graphics = new GraphicsDeviceManager(this);
         _graphics.PreferredBackBufferWidth = VirtualScreen.Width;
@@ -239,6 +240,25 @@ public class Game1 : Game
     private void UpdateGlobalKeyboardInput(KeyboardState keyboard)
     {
         if (!IsActive || !_inputArmed) return;
+
+        if (_playingScene.IsInitialPositionConciergeVisible)
+        {
+            if (IsNewGlobalKeyPress(keyboard, Keys.Escape))
+                _playingScene.CancelInitialPositionConcierge();
+            else if (IsNewGlobalKeyPress(keyboard, Keys.Up) || IsNewGlobalKeyPress(keyboard, Keys.Left))
+                _playingScene.SelectPreviousInitialPositionEngine();
+            else if (IsNewGlobalKeyPress(keyboard, Keys.Down) || IsNewGlobalKeyPress(keyboard, Keys.Right))
+                _playingScene.SelectNextInitialPositionEngine();
+            else if (IsNewGlobalKeyPress(keyboard, Keys.Space))
+                _playingScene.TryAnotherSelectedInitialPositionMethod();
+            else if (IsNewGlobalKeyPress(keyboard, Keys.Enter))
+                _playingScene.ContinueSelectedInitialPositionMethod();
+            else if (IsNewGlobalKeyPress(keyboard, Keys.L))
+                _playingScene.OpenInitialPositionLog();
+
+            _previousKeyboard = keyboard;
+            return;
+        }
 
         if (_session.IsReviewChartPopupOpen &&
             _session.CurrentMode.Kind != GoAppModeKind.Reviewing &&
@@ -430,7 +450,11 @@ public class Game1 : Game
         {
             if (_renderer is not null)
             {
-                LocalRestingRenderer.Draw(_renderer, _session, Mouse.GetState().Position);
+                LocalRestingRenderer.Draw(
+                    _renderer,
+                    _session,
+                    Mouse.GetState().Position,
+                    initialPositionConcierge: _playingScene.InitialPositionConciergeView);
             }
         }
 
@@ -1181,6 +1205,12 @@ public class Game1 : Game
     private void OpenEngineLog()
     {
         var logPath = ApplicationErrorLog.FilePath;
+        _desktopLauncher.OpenTextFile(logPath);
+    }
+
+    private void OpenGtpLog()
+    {
+        var logPath = Path.Combine(AppContext.BaseDirectory, "logs", "gtp.log");
         _desktopLauncher.OpenTextFile(logPath);
     }
 
@@ -3593,7 +3623,9 @@ public class Game1 : Game
             : _session.UseKind is null
                 ? "Title"
                 : _session.UseKind == GoAppUseKind.LocalGame
-                    ? $"Local/{_session.CurrentMode.Kind}"
+                    ? _playingScene.IsInitialPositionConciergeVisible
+                        ? "Local/Playing/InitialPositionConcierge"
+                        : $"Local/{_session.CurrentMode.Kind}"
                     : $"CGOS/{_session.CgosConnectionFlowKind}/{_session.CurrentMode.Kind}";
 
     protected override void Dispose(bool disposing)

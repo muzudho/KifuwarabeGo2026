@@ -51,6 +51,7 @@ internal static class PortabilityChecks
         VerifyStandardHandicapStrategies();
         VerifyLoadSgfStrategyAndTemporaryFile();
         VerifyInitialPositionConcierge();
+        VerifyInitialPositionConciergeGuiModel();
         VerifyMatchAssembly(matchAssembly);
         VerifyGuiMatchIntegration();
         VerifyGtpMatchAdapter();
@@ -64,6 +65,46 @@ internal static class PortabilityChecks
         VerifyDefaultCgosConnection();
         VerifyTournamentRulesJsonCompatibility();
         VerifyComposition();
+    }
+
+    private static void VerifyInitialPositionConciergeGuiModel()
+    {
+        var black = new InitialPositionEngineProgressView(
+            GoStone.Black,
+            "Black engine",
+            false,
+            false,
+            true,
+            false,
+            [],
+            []);
+        var white = new InitialPositionEngineProgressView(
+            GoStone.White,
+            "White engine",
+            false,
+            false,
+            false,
+            true,
+            [],
+            []);
+        var view = new InitialPositionConciergeView(true, false, GoStone.Black, [black, white]);
+
+        Require(view.Engines.Count == 2, "The concierge GUI must keep two engine flows independently.");
+        Require(view.Engines[0].CanTryAnotherMethod && view.Engines[1].CanContinueAsIs,
+            "Each engine card must expose its own available action.");
+        Require(
+            KifuwarabeGo2026.Gui.Presentation.GoScreenRenderer.GetInitialPositionTryAnotherButtonHit(new Point(1170, 455)) == GoStone.Black,
+            "The black-engine fallback button hit area is incorrect.");
+        Require(
+            KifuwarabeGo2026.Gui.Presentation.GoScreenRenderer.GetInitialPositionContinueButtonHit(new Point(1500, 781)) == GoStone.White,
+            "The white-engine continue button hit area is incorrect.");
+        Require(
+            KifuwarabeGo2026.Gui.Presentation.GoScreenRenderer.GetInitialPositionEngineCardHit(new Point(1200, 550)) == GoStone.White,
+            "The white-engine card selection hit area is incorrect.");
+        Require(
+            KifuwarabeGo2026.Gui.Presentation.GoScreenRenderer.GetInitialPositionCancelButtonHit(new Point(1200, 940)) &&
+            KifuwarabeGo2026.Gui.Presentation.GoScreenRenderer.GetInitialPositionLogButtonHit(new Point(1550, 940)),
+            "The concierge footer button hit areas are incorrect.");
     }
 
     private static void VerifyGtpExtensionsAssembly(Assembly gtpExtensionsAssembly)

@@ -1,5 +1,8 @@
 namespace KifuwarabeGo2026.Gui.Application.Local.Playing;
 
+using KifuwarabeGo2026.GtpExtensions.Capabilities;
+using KifuwarabeGo2026.GtpExtensions.Engines;
+using KifuwarabeGo2026.GtpExtensions.InitialPosition;
 using KifuwarabeGo2026.Gui.Application.Cgos.Watching;
 using KifuwarabeGo2026.Gui.Domain;
 using KifuwarabeGo2026.Shared.Domain;
@@ -21,18 +24,53 @@ public sealed class PlayingScene : IDisposable
     private readonly GoAppSession _session;
     private readonly Action<float, float, float> _playPlaceStoneSound;
     private readonly Action _saveGtpEngineProfiles;
+    private readonly Action _openGtpLog;
     private readonly Dictionary<GoStone, GtpEngineClient> _gtpEngines = new();
+    private readonly Dictionary<GoStone, EngineInitialPositionState> _initialPositionStates = new();
     private readonly HashSet<GoStone> _analysisEngines = new();
     private readonly Queue<Func<CancellationToken, Task<EngineCommandResult>>> _engineCommandQueue = new();
     private CancellationTokenSource _engineCancellation = new();
     private Task<EngineCommandCompletion>? _pendingEngineCommand;
     private int _engineCommandGeneration;
+    private bool _isInitialPositionConciergeActive;
+    private GoStone? _selectedInitialPositionEngine;
 
-    public PlayingScene(GoAppSession session, Action<float, float, float> playPlaceStoneSound, Action saveGtpEngineProfiles)
+    public PlayingScene(
+        GoAppSession session,
+        Action<float, float, float> playPlaceStoneSound,
+        Action saveGtpEngineProfiles,
+        Action openGtpLog)
     {
         _session = session;
         _playPlaceStoneSound = playPlaceStoneSound;
         _saveGtpEngineProfiles = saveGtpEngineProfiles;
+        _openGtpLog = openGtpLog;
+    }
+
+    public bool IsInitialPositionConciergeVisible =>
+        _isInitialPositionConciergeActive &&
+        _session.CurrentMode.Kind == GoAppModeKind.Playing;
+
+    public InitialPositionConciergeView InitialPositionConciergeView
+    {
+        get
+        {
+            if (!IsInitialPositionConciergeVisible)
+            {
+                return InitialPositionConciergeView.Hidden;
+            }
+
+            var isBusy = _pendingEngineCommand is not null;
+            var engines = _initialPositionStates
+                .OrderBy(pair => pair.Key == GoStone.Black ? 0 : 1)
+                .Select(pair => pair.Value.CreateView(isBusy))
+                .ToArray();
+            return new InitialPositionConciergeView(
+                true,
+                isBusy,
+                _selectedInitialPositionEngine,
+                engines);
+        }
     }
 
     public void Update()
@@ -49,6 +87,35 @@ public sealed class PlayingScene : IDisposable
 
     public bool TryHandleMouseClick(Point point)
     {
+        if (IsInitialPositionConciergeVisible)
+        {
+            if (GoScreenRenderer.GetInitialPositionTryAnotherButtonHit(point) is { } tryStone)
+            {
+                SelectInitialPositionEngine(tryStone);
+                TryAnotherInitialPositionMethod(tryStone);
+            }
+            else if (GoScreenRenderer.GetInitialPositionContinueButtonHit(point) is { } continueStone)
+            {
+                SelectInitialPositionEngine(continueStone);
+                ContinueWithInitialPositionMethod(continueStone);
+            }
+            else if (GoScreenRenderer.GetInitialPositionLogButtonHit(point))
+            {
+                _openGtpLog();
+            }
+            else if (GoScreenRenderer.GetInitialPositionCancelButtonHit(point))
+            {
+                CancelGtpGame();
+                _session.CancelPlaying();
+            }
+            else if (GoScreenRenderer.GetInitialPositionEngineCardHit(point) is { } selectedStone)
+            {
+                SelectInitialPositionEngine(selectedStone);
+            }
+
+            return true;
+        }
+
         if (ShouldShowEnginePreparing() && GoScreenRenderer.GetCancelPlayingButtonHit(point))
         {
             CancelGtpGame();
@@ -105,6 +172,45 @@ public sealed class PlayingScene : IDisposable
         return false;
     }
 
+    public void SelectPreviousInitialPositionEngine() => SelectAdjacentInitialPositionEngine(-1);
+
+    public void SelectNextInitialPositionEngine() => SelectAdjacentInitialPositionEngine(1);
+
+    public void TryAnotherSelectedInitialPositionMethod()
+    {
+        if (_selectedInitialPositionEngine is { } stone)
+        {
+            TryAnotherInitialPositionMethod(stone);
+        }
+    }
+
+    public void ContinueSelectedInitialPositionMethod()
+    {
+        if (_selectedInitialPositionEngine is { } stone)
+        {
+            ContinueWithInitialPositionMethod(stone);
+        }
+    }
+
+    public void CancelInitialPositionConcierge()
+    {
+        if (!IsInitialPositionConciergeVisible)
+        {
+            return;
+        }
+
+        CancelGtpGame();
+        _session.CancelPlaying();
+    }
+
+    public void OpenInitialPositionLog()
+    {
+        if (IsInitialPositionConciergeVisible)
+        {
+            _openGtpLog();
+        }
+    }
+
     public void Dispose()
     {
         _engineCancellation.Cancel();
@@ -136,6 +242,15 @@ public sealed class PlayingScene : IDisposable
         var enginesToStart = GetEngineSnapshot();
         if (_session.ConsumeQueuedGtpEngineButtonsForComputerPlayers())
             _saveGtpEngineProfiles();
+
+        var matchSnapshot = _session.CurrentMatchSnapshot ??
+            throw new InvalidOperationException("A local GTP game requires a Match snapshot.");
+        if (matchSnapshot.SetupStones.Count > 0)
+        {
+            StartInitialPositionConcierge(enginesToStart, matchSnapshot);
+            return;
+        }
+
         BeginEngineCommand(async cancellationToken =>
         {
             foreach (var engine in enginesToStart)
@@ -148,11 +263,184 @@ public sealed class PlayingScene : IDisposable
                     {
                         _analysisEngines.Add(engine.Stone);
                     }
-                    var matchSnapshot = _session.CurrentMatchSnapshot ??
-                        throw new InvalidOperationException("A local GTP game requires a Match snapshot.");
                     foreach (var command in GtpInitialPositionCommandBuilder.Build(matchSnapshot, _session.Komi))
                     {
                         await engine.Client.SendCommandExpectSuccessAsync(command, cancellationToken);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw CreateEngineCommandException(engine.Stone, ex);
+                }
+            }
+
+            return EngineCommandResult.EngineReady();
+        });
+    }
+
+    private void StartInitialPositionConcierge(
+        IReadOnlyList<EngineEntry> engines,
+        KifuwarabeGo2026.Match.MatchSnapshot matchSnapshot)
+    {
+        _isInitialPositionConciergeActive = true;
+        _initialPositionStates.Clear();
+        foreach (var engine in engines)
+        {
+            _initialPositionStates[engine.Stone] = new EngineInitialPositionState(
+                engine.Stone,
+                _session.GetGtpEngineProfile(engine.Stone).DisplayName);
+        }
+
+        _selectedInitialPositionEngine = engines.FirstOrDefault()?.Stone;
+        var request = InitialPositionRequest.FromSnapshot(matchSnapshot, _session.Komi);
+        BeginEngineCommand(async cancellationToken =>
+        {
+            var updates = new List<EngineInitialPositionUpdate>();
+            foreach (var engine in engines)
+            {
+                try
+                {
+                    await engine.Client.StartAsync(cancellationToken);
+                    var commandSession = new GtpEngineClientCommandSession(engine.Client);
+                    var capabilities = await new GtpCapabilityProbe()
+                        .ProbeInitialPositionAsync(commandSession, cancellationToken);
+                    var host = new GtpInitialPositionExecutionHost(engine.Client);
+                    var result = await new InitialPositionConcierge().ExecuteAsync(
+                        host,
+                        request,
+                        capabilities,
+                        GenericGtpProfile.Instance,
+                        cancellationToken: cancellationToken);
+                    updates.Add(new EngineInitialPositionUpdate(engine.Stone, capabilities, result));
+                }
+                catch (Exception ex)
+                {
+                    throw CreateEngineCommandException(engine.Stone, ex);
+                }
+            }
+
+            return EngineCommandResult.InitialPositionProgress(updates);
+        });
+    }
+
+    private void SelectInitialPositionEngine(GoStone stone)
+    {
+        if (_initialPositionStates.ContainsKey(stone))
+        {
+            _selectedInitialPositionEngine = stone;
+        }
+    }
+
+    private void SelectAdjacentInitialPositionEngine(int offset)
+    {
+        if (!IsInitialPositionConciergeVisible || _initialPositionStates.Count == 0)
+        {
+            return;
+        }
+
+        var stones = _initialPositionStates.Keys
+            .OrderBy(stone => stone == GoStone.Black ? 0 : 1)
+            .ToArray();
+        var currentIndex = _selectedInitialPositionEngine is { } selected
+            ? Array.IndexOf(stones, selected)
+            : 0;
+        var nextIndex = (currentIndex + offset + stones.Length) % stones.Length;
+        _selectedInitialPositionEngine = stones[nextIndex];
+    }
+
+    private void TryAnotherInitialPositionMethod(GoStone stone)
+    {
+        if (!IsInitialPositionConciergeVisible ||
+            _pendingEngineCommand is not null ||
+            !_initialPositionStates.TryGetValue(stone, out var state) ||
+            state.Capabilities is null ||
+            state.Cursor is null ||
+            GetEngine(stone) is not { } engine ||
+            _session.CurrentMatchSnapshot is not { } snapshot)
+        {
+            return;
+        }
+
+        state.IsBusy = true;
+        var capabilities = state.Capabilities;
+        var cursor = state.Cursor;
+        var request = InitialPositionRequest.FromSnapshot(snapshot, _session.Komi);
+        BeginEngineCommand(async cancellationToken =>
+        {
+            try
+            {
+                var result = await new InitialPositionConcierge().ExecuteAsync(
+                    new GtpInitialPositionExecutionHost(engine),
+                    request,
+                    capabilities,
+                    GenericGtpProfile.Instance,
+                    cursor,
+                    cancellationToken);
+                return EngineCommandResult.InitialPositionProgress(
+                    [new EngineInitialPositionUpdate(stone, capabilities, result)]);
+            }
+            catch (Exception ex)
+            {
+                throw CreateEngineCommandException(stone, ex);
+            }
+        });
+    }
+
+    private void ContinueWithInitialPositionMethod(GoStone stone)
+    {
+        if (_pendingEngineCommand is not null ||
+            !_initialPositionStates.TryGetValue(stone, out var state) ||
+            state.LastAttempt?.Status != InitialPositionAttemptStatus.UnverifiedSuccess)
+        {
+            return;
+        }
+
+        state.IsAccepted = true;
+        state.IsBusy = false;
+        SelectAdjacentInitialPositionEngine(1);
+        TryFinalizeInitialPositionSetup();
+    }
+
+    private void ApplyInitialPositionUpdates(IReadOnlyList<EngineInitialPositionUpdate> updates)
+    {
+        foreach (var update in updates)
+        {
+            if (_initialPositionStates.TryGetValue(update.Stone, out var state))
+            {
+                state.Apply(update);
+            }
+        }
+
+        var next = _initialPositionStates.Values
+            .OrderBy(state => state.Stone == GoStone.Black ? 0 : 1)
+            .FirstOrDefault(state => !state.IsAccepted);
+        _selectedInitialPositionEngine = next?.Stone ?? _selectedInitialPositionEngine;
+    }
+
+    private void TryFinalizeInitialPositionSetup()
+    {
+        if (!IsInitialPositionConciergeVisible ||
+            _pendingEngineCommand is not null ||
+            _initialPositionStates.Count == 0 ||
+            _initialPositionStates.Values.Any(state => !state.IsAccepted))
+        {
+            return;
+        }
+
+        var engines = GetEngineSnapshot();
+        BeginEngineCommand(async cancellationToken =>
+        {
+            foreach (var engine in engines)
+            {
+                try
+                {
+                    var knownAnalyze = await engine.Client.SendCommandAsync(
+                        "known_command cgos-genmove_analyze",
+                        cancellationToken);
+                    if (knownAnalyze.IsSuccess &&
+                        knownAnalyze.Payload.Equals("true", StringComparison.OrdinalIgnoreCase))
+                    {
+                        _analysisEngines.Add(engine.Stone);
                     }
                 }
                 catch (Exception ex)
@@ -205,6 +493,7 @@ public sealed class PlayingScene : IDisposable
         var currentTurn = _session.CurrentTurn;
         if (_pendingEngineCommand is not null ||
             _session.CurrentMode.Kind != GoAppModeKind.Playing ||
+            !_session.IsEngineReady ||
             _session.IsEngineThinking ||
             !string.IsNullOrWhiteSpace(_session.EngineErrorMessage) ||
             _session.GetPlayerKind(currentTurn) != GoPlayerKind.Computer)
@@ -287,12 +576,31 @@ public sealed class PlayingScene : IDisposable
         _session.SetEngineThinking(false);
         if (result.Error is not null)
         {
+            if (_isInitialPositionConciergeActive &&
+                result.ErrorStone is { } errorStone &&
+                _initialPositionStates.TryGetValue(errorStone, out var state))
+            {
+                state.AddFailure(result.Error.Message);
+                _selectedInitialPositionEngine = errorStone;
+            }
+
             SetEngineError(result.Error.Message, result.ErrorStone ?? _session.CurrentTurn, result.Error);
+            return;
+        }
+
+        if (result.InitialPositionUpdates is not null)
+        {
+            ApplyInitialPositionUpdates(result.InitialPositionUpdates);
+            TryFinalizeInitialPositionSetup();
+            StartQueuedEngineCommandIfNeeded();
             return;
         }
 
         if (result.MakesEngineReady)
         {
+            _isInitialPositionConciergeActive = false;
+            _initialPositionStates.Clear();
+            _selectedInitialPositionEngine = null;
             _session.SetEngineReady(true);
         }
 
@@ -450,6 +758,9 @@ public sealed class PlayingScene : IDisposable
         var engines = GetEngineSnapshot();
         _gtpEngines.Clear();
         _analysisEngines.Clear();
+        _initialPositionStates.Clear();
+        _isInitialPositionConciergeActive = false;
+        _selectedInitialPositionEngine = null;
         foreach (var engine in engines)
         {
             _ = Task.Run(async () =>
@@ -528,11 +839,15 @@ public sealed class PlayingScene : IDisposable
         bool ClosesEngine = false,
         GoMoveAnalysis? Analysis = null,
         string Comment = "",
-        string? CommonAnalysisJson = null)
+        string? CommonAnalysisJson = null,
+        IReadOnlyList<EngineInitialPositionUpdate>? InitialPositionUpdates = null)
     {
         public static EngineCommandResult Success(bool closesEngine = false) => new(null, null, null, ClosesEngine: closesEngine);
 
         public static EngineCommandResult EngineReady() => new(null, null, null, MakesEngineReady: true);
+
+        public static EngineCommandResult InitialPositionProgress(IReadOnlyList<EngineInitialPositionUpdate> updates) =>
+            new(null, null, null, InitialPositionUpdates: updates);
 
         public static EngineCommandResult EngineMove(
             string moveText,
@@ -552,6 +867,59 @@ public sealed class PlayingScene : IDisposable
     }
 
     private sealed record EngineEntry(GoStone Stone, GtpEngineClient Client);
+
+    private sealed record EngineInitialPositionUpdate(
+        GoStone Stone,
+        GtpCapabilitySet Capabilities,
+        InitialPositionConciergeResult Result);
+
+    private sealed class EngineInitialPositionState(GoStone stone, string engineName)
+    {
+        private readonly List<InitialPositionAttempt> _attempts = [];
+        private readonly List<string> _diagnostics = [];
+
+        public GoStone Stone { get; } = stone;
+
+        public string EngineName { get; } = engineName;
+
+        public GtpCapabilitySet? Capabilities { get; private set; }
+
+        public InitialPositionConciergeCursor? Cursor { get; private set; }
+
+        public bool IsAccepted { get; set; }
+
+        public bool IsBusy { get; set; } = true;
+
+        public InitialPositionAttempt? LastAttempt => _attempts.LastOrDefault();
+
+        public void Apply(EngineInitialPositionUpdate update)
+        {
+            Capabilities = update.Capabilities;
+            _attempts.AddRange(update.Result.Attempts);
+            _diagnostics.AddRange(update.Result.Diagnostics);
+            Cursor = update.Result.Continuation;
+            IsAccepted = update.Result.IsVerified;
+            IsBusy = false;
+        }
+
+        public void AddFailure(string diagnostic)
+        {
+            _diagnostics.Add(diagnostic);
+            IsBusy = false;
+        }
+
+        public InitialPositionEngineProgressView CreateView(bool globalBusy) =>
+            new(
+                Stone,
+                EngineName,
+                IsAccepted,
+                IsBusy || globalBusy,
+                !globalBusy && !IsBusy && Cursor is not null,
+                !globalBusy && !IsBusy && !IsAccepted &&
+                    LastAttempt?.Status == InitialPositionAttemptStatus.UnverifiedSuccess,
+                _attempts.ToArray(),
+                _diagnostics.ToArray());
+    }
 
     private sealed class EngineCommandException(GoStone stone, string message, Exception innerException)
         : Exception(message, innerException)
