@@ -9,7 +9,6 @@ using KifuwarabeGo2026.Gui.Presentation;
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -149,9 +148,12 @@ public sealed class PlayingScene : IDisposable
                     {
                         _analysisEngines.Add(engine.Stone);
                     }
-                    await engine.Client.SendCommandExpectSuccessAsync($"boardsize {_session.BoardSize}", cancellationToken);
-                    await engine.Client.SendCommandExpectSuccessAsync($"komi {_session.Komi.ToString(CultureInfo.InvariantCulture)}", cancellationToken);
-                    await engine.Client.SendCommandExpectSuccessAsync("clear_board", cancellationToken);
+                    var matchSnapshot = _session.CurrentMatchSnapshot ??
+                        throw new InvalidOperationException("A local GTP game requires a Match snapshot.");
+                    foreach (var command in GtpInitialPositionCommandBuilder.Build(matchSnapshot, _session.Komi))
+                    {
+                        await engine.Client.SendCommandExpectSuccessAsync(command, cancellationToken);
+                    }
                 }
                 catch (Exception ex)
                 {

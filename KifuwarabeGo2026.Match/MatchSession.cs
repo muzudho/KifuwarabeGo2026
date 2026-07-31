@@ -12,11 +12,13 @@ public sealed class MatchSession
     private readonly int _moveLimit;
     private readonly MatchSetupStone[] _setupStones;
     private readonly List<MatchActionRecord> _actions = [];
+    private readonly List<MatchEventRecord> _events = [];
     private GoStone _currentTurn = GoStone.Black;
     private GoPoint? _koPoint;
     private int _consecutivePasses;
     private int _moveCount;
     private long _revision;
+    private MatchClockSnapshot? _clock;
     private MatchPhase _phase = MatchPhase.Playing;
     private MatchEndReason _endReason;
     private GoStone? _winner;
@@ -48,6 +50,42 @@ public sealed class MatchSession
     }
 
     public MatchSnapshot Snapshot => CreateSnapshot();
+
+    public IReadOnlyList<MatchEventRecord> GetEventsAfter(long revision)
+    {
+        if (revision < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(revision), revision, "Revision cannot be negative.");
+        }
+
+        return _events.Where(matchEvent => matchEvent.Revision > revision).ToArray();
+    }
+
+    public bool TryApplyAuthoritativeClock(MatchClockUpdate update)
+    {
+        ValidateClockUpdate(update);
+        if (_clock is { } currentClock && update.Sequence <= currentClock.Sequence)
+        {
+            return false;
+        }
+
+        _clock = new MatchClockSnapshot(
+            update.Sequence,
+            update.SynchronizedAt,
+            update.BlackRemaining,
+            update.WhiteRemaining,
+            update.ActiveTurnDeadline);
+        _revision++;
+        _events.Add(new MatchEventRecord(
+            _revision,
+            MatchEventKind.ClockSynchronized,
+            null,
+            _clock,
+            _phase,
+            _endReason,
+            _winner));
+        return true;
+    }
 
     public MatchActionResult Play(GoPoint point)
     {
@@ -171,8 +209,32 @@ public sealed class MatchSession
         MatchActionKind action,
         GoStone playedBy,
         GoPoint? point = null,
-        int capturedStones = 0) =>
-        _actions.Add(new MatchActionRecord(_revision, action, playedBy, point, capturedStones));
+        int capturedStones = 0)
+    {
+        var actionRecord = new MatchActionRecord(_revision, action, playedBy, point, capturedStones);
+        _actions.Add(actionRecord);
+        _events.Add(new MatchEventRecord(
+            _revision,
+            MatchEventKind.ActionAccepted,
+            actionRecord,
+            _clock,
+            _phase,
+            _endReason,
+            _winner));
+    }
+
+    private static void ValidateClockUpdate(MatchClockUpdate update)
+    {
+        if (update.Sequence < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(update), update.Sequence, "Clock sequence cannot be negative.");
+        }
+
+        if (update.BlackRemaining < TimeSpan.Zero || update.WhiteRemaining < TimeSpan.Zero)
+        {
+            throw new ArgumentOutOfRangeException(nameof(update), "Remaining time cannot be negative.");
+        }
+    }
 
     private static GoStone OppositeOf(GoStone stone) =>
         stone == GoStone.Black ? GoStone.White : GoStone.Black;
@@ -212,6 +274,7 @@ public sealed class MatchSession
             _consecutivePasses,
             _moveCount,
             _revision,
+            _clock,
             _phase,
             _endReason,
             _winner);

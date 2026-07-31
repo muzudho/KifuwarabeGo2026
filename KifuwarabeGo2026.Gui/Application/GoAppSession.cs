@@ -293,6 +293,8 @@ public sealed class GoAppSession
 
     public bool IsMatchBackedLocalGame => _matchSession is not null;
 
+    public MatchSnapshot? CurrentMatchSnapshot => _matchSession?.Snapshot;
+
     public GoStone BoardEditingStone { get; private set; } = GoStone.Black;
 
     public bool CanUndoBoardEditing => _boardEditingUndoHistory.Count > 0;
@@ -1105,9 +1107,7 @@ public sealed class GoAppSession
         CurrentGameRecord = CreateGameRecordFromCurrentPosition();
         BlackElapsedTime = TimeSpan.Zero;
         WhiteElapsedTime = TimeSpan.Zero;
-        _matchSession = ShouldStartMatchBackedGame()
-            ? new MatchSession(CreateMatchConfiguration())
-            : null;
+        _matchSession = new MatchSession(CreateMatchConfiguration());
         ChangeMode(GoAppModeKind.Playing);
     }
 
@@ -3032,10 +3032,6 @@ public sealed class GoAppSession
 
         PassTurn();
     }
-
-    private bool ShouldStartMatchBackedGame() =>
-        BlackPlayerKind == GoPlayerKind.Human &&
-        WhitePlayerKind == GoPlayerKind.Human;
 
     private MatchConfiguration CreateMatchConfiguration()
     {

@@ -5,6 +5,7 @@ using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Application.Cgos.ConnectionTarget;
 using KifuwarabeGo2026.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.Gui.Application.Local.Resting.TournamentRule;
+using KifuwarabeGo2026.Gui.Gtp;
 using KifuwarabeGo2026.Match;
 using KifuwarabeGo2026.Shared.Domain;
 using Microsoft.Xna.Framework;
@@ -34,6 +35,7 @@ internal static class PortabilityChecks
         VerifyNoPlatformInvokes(coreAssembly);
         VerifyMatchAssembly(matchAssembly);
         VerifyGuiMatchIntegration();
+        VerifyGtpMatchAdapter();
         VerifyPortableFallbacks();
         VerifyScoreAxisScaling();
         VerifyCommentNavigation();
@@ -136,6 +138,59 @@ internal static class PortabilityChecks
 
         VerifySimpleKo();
         VerifyMatchInitialPositionAndHistory();
+        VerifyAuthoritativeClockAndObservationEvents();
+    }
+
+    private static void VerifyAuthoritativeClockAndObservationEvents()
+    {
+        var session = new MatchSession(9);
+        var synchronizedAt = new DateTimeOffset(2026, 7, 31, 12, 0, 0, TimeSpan.Zero);
+        var deadline = synchronizedAt.AddMinutes(5);
+        var update = new MatchClockUpdate(
+            1,
+            synchronizedAt,
+            TimeSpan.FromMinutes(5),
+            TimeSpan.FromMinutes(5),
+            deadline);
+
+        Require(session.TryApplyAuthoritativeClock(update), "The first authoritative clock update must be accepted.");
+        var clockSnapshot = session.Snapshot.Clock;
+        Require(clockSnapshot?.Sequence == 1, "The authoritative clock sequence is incorrect.");
+        Require(clockSnapshot?.ActiveTurnDeadline == deadline, "The active-turn deadline is incorrect.");
+        Require(session.Snapshot.MoveCount == 0, "A clock synchronization must not count as a move.");
+        Require(session.Snapshot.Revision == 1, "A clock synchronization must advance the Match revision.");
+
+        var staleUpdate = update with { BlackRemaining = TimeSpan.Zero };
+        Require(!session.TryApplyAuthoritativeClock(staleUpdate), "A stale clock sequence must be rejected.");
+        Require(session.Snapshot.Clock?.BlackRemaining == TimeSpan.FromMinutes(5), "A stale update must not change the clock.");
+        Require(session.Snapshot.Revision == 1, "A stale update must not change the revision.");
+
+        var move = session.Play(new GoPoint(4, 4));
+        Require(move.Snapshot.Revision == 2, "An action after clock synchronization must use the next revision.");
+        var allEvents = session.GetEventsAfter(0);
+        Require(allEvents.Count == 2, "Observers must receive clock and action events.");
+        Require(allEvents[0].Kind == MatchEventKind.ClockSynchronized, "The first event must synchronize the clock.");
+        Require(allEvents[1].Kind == MatchEventKind.ActionAccepted, "The second event must contain the accepted action.");
+        Require(allEvents[1].Action?.Point == new GoPoint(4, 4), "The action event point is incorrect.");
+
+        var incrementalEvents = session.GetEventsAfter(1);
+        Require(incrementalEvents.Count == 1 && incrementalEvents[0].Revision == 2, "Observers must resume from a known revision.");
+
+        var invalidClockRejected = false;
+        try
+        {
+            session.TryApplyAuthoritativeClock(update with
+            {
+                Sequence = 2,
+                BlackRemaining = TimeSpan.FromSeconds(-1),
+            });
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            invalidClockRejected = true;
+        }
+
+        Require(invalidClockRejected, "A negative authoritative remaining time must be rejected.");
     }
 
     private static void VerifyMatchInitialPositionAndHistory()
@@ -222,6 +277,40 @@ internal static class PortabilityChecks
         Require(editedSession.TryPlaceStone(4, 4), "Match must accept a play after an edited setup.");
         Require(editedSession.CurrentGameRecord.SetupStones.Count == 1, "The GUI record must preserve edited setup stones.");
         Require(editedSession.CurrentGameRecord.Moves.Count == 1, "The GUI record must keep post-setup moves separate.");
+
+        var computerSession = new GoAppSession();
+        computerSession.SetPlayerKind(GoStone.Black, GoPlayerKind.Computer);
+        computerSession.SetPlayerKind(GoStone.White, GoPlayerKind.Computer);
+        computerSession.StartPlaying();
+        Require(computerSession.IsMatchBackedLocalGame, "A computer-versus-computer game must use MatchSession.");
+        Require(computerSession.TryPlaceStone(2, 2), "An engine move must be accepted through Match.");
+        Require(computerSession.CurrentMatchSnapshot?.Actions.Count == 1, "An engine move must appear in Match history.");
+    }
+
+    private static void VerifyGtpMatchAdapter()
+    {
+        var match = new MatchSession(new MatchConfiguration(
+            9,
+            setupStones:
+            [
+                new MatchSetupStone(GoStone.Black, new GoPoint(0, 0)),
+                new MatchSetupStone(GoStone.White, new GoPoint(8, 8)),
+            ]));
+        var commands = GtpInitialPositionCommandBuilder.Build(match.Snapshot, 6.5m);
+
+        Require(
+            commands.SequenceEqual(
+            [
+                "boardsize 9",
+                "komi 6.5",
+                "clear_board",
+                "play black A9",
+                "play white J1",
+            ]),
+            "The GTP adapter must send Match setup stones after clearing the engine board.");
+        Require(
+            typeof(GtpInitialPositionCommandBuilder).Assembly != typeof(MatchSession).Assembly,
+            "The GTP adapter must remain outside Match.");
     }
 
     private static void VerifySimpleKo()

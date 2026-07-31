@@ -22,6 +22,7 @@ public sealed class MatchSnapshot
         int consecutivePasses,
         int moveCount,
         long revision,
+        MatchClockSnapshot? clock,
         MatchPhase phase,
         MatchEndReason endReason,
         GoStone? winner)
@@ -35,6 +36,7 @@ public sealed class MatchSnapshot
         ConsecutivePasses = consecutivePasses;
         MoveCount = moveCount;
         Revision = revision;
+        Clock = clock;
         Phase = phase;
         EndReason = endReason;
         Winner = winner;
@@ -57,6 +59,8 @@ public sealed class MatchSnapshot
     public int MoveCount { get; }
 
     public long Revision { get; }
+
+    public MatchClockSnapshot? Clock { get; }
 
     public MatchPhase Phase { get; }
 
