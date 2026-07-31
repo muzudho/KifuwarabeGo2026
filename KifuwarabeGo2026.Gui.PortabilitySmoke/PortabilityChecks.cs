@@ -7,6 +7,8 @@ using KifuwarabeGo2026.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.Gui.Application.Local.Resting.TournamentRule;
 using KifuwarabeGo2026.Gui.Gtp;
 using KifuwarabeGo2026.GtpExtensions;
+using KifuwarabeGo2026.GtpExtensions.InitialPosition;
+using KifuwarabeGo2026.GtpExtensions.Strategies;
 using KifuwarabeGo2026.Match;
 using KifuwarabeGo2026.Shared.Domain;
 using Microsoft.Xna.Framework;
@@ -36,6 +38,7 @@ internal static class PortabilityChecks
         VerifyAssemblyReferences(coreAssembly);
         VerifyNoPlatformInvokes(coreAssembly);
         VerifyGtpExtensionsAssembly(gtpExtensionsAssembly);
+        VerifyGtpExtensionsInitialPositionPlanning();
         VerifyMatchAssembly(matchAssembly);
         VerifyGuiMatchIntegration();
         VerifyGtpMatchAdapter();
@@ -81,6 +84,80 @@ internal static class PortabilityChecks
                 !references.Contains(forbiddenReference),
                 $"GtpExtensions directly references Windows-only assembly '{forbiddenReference}'.");
         }
+    }
+
+    private static void VerifyGtpExtensionsInitialPositionPlanning()
+    {
+        foreach (var boardSize in new[] { 9, 13, 19 })
+        {
+            for (var stoneCount = 2; stoneCount <= 9; stoneCount++)
+            {
+                var points = FixedHandicapPoints.Get(boardSize, stoneCount);
+                Require(
+                    FixedHandicapPoints.IsStandardPlacement(boardSize, points),
+                    $"The {boardSize}x{boardSize} fixed-handicap placement for {stoneCount} stones must be recognized.");
+            }
+        }
+
+        var emptyRequest = new InitialPositionRequest(9, 6.5m, GoStone.Black);
+        var empty = InitialPositionClassifier.Classify(emptyRequest);
+        Require(empty.Kind == InitialPositionKind.Empty, "An empty setup must be classified as empty.");
+        Require(empty.BlackStoneCount == 0 && empty.WhiteStoneCount == 0, "An empty setup must have no setup stones.");
+
+        var standardPoints = FixedHandicapPoints.Get(19, 9);
+        var standardRequest = new InitialPositionRequest(
+            19,
+            0.5m,
+            GoStone.White,
+            standardPoints.Select(point => new MatchSetupStone(GoStone.Black, point)));
+        var standard = InitialPositionClassifier.Classify(standardRequest);
+        Require(standard.Kind == InitialPositionKind.StandardFixedHandicap, "Nine standard handicap stones must be recognized.");
+        Require(standard.FixedHandicapStoneCount == 9, "The fixed handicap count is incorrect.");
+        Require(standard.StartingTurn == GoStone.White, "Classification must preserve the requested starting turn.");
+
+        var freeRequest = new InitialPositionRequest(
+            9,
+            6.5m,
+            GoStone.White,
+            [new MatchSetupStone(GoStone.Black, new GoPoint(0, 0))]);
+        var free = InitialPositionClassifier.Classify(freeRequest);
+        Require(free.Kind == InitialPositionKind.SpecifiedBlackHandicap, "A nonstandard black setup must be classified as specified handicap.");
+
+        var sourceSetup = new[]
+        {
+            new MatchSetupStone(GoStone.Black, new GoPoint(0, 0)),
+            new MatchSetupStone(GoStone.White, new GoPoint(8, 8)),
+        };
+        var mixedRequest = new InitialPositionRequest(9, 6.5m, GoStone.Black, sourceSetup);
+        sourceSetup[0] = new MatchSetupStone(GoStone.White, new GoPoint(1, 1));
+        var mixed = InitialPositionClassifier.Classify(mixedRequest);
+        Require(mixed.Kind == InitialPositionKind.MixedSetup, "A black-and-white setup must be classified as mixed.");
+        Require(mixed.BlackStoneCount == 1 && mixed.WhiteStoneCount == 1, "Mixed setup stone counts are incorrect.");
+        Require(mixedRequest.SetupStones[0].Point == new GoPoint(0, 0), "An initial-position request must copy its setup stones.");
+
+        var strategy = SequentialPlayStrategy.Instance;
+        Require(strategy.CanApply(mixedRequest, mixed), "Sequential play must remain available for a mixed setup.");
+        Require(strategy.Method == InitialPositionMethod.SequentialPlay, "The compatibility strategy method is incorrect.");
+        Require(
+            strategy.BuildCommands(mixedRequest).SequenceEqual(
+            [
+                "boardsize 9",
+                "komi 6.5",
+                "clear_board",
+                "play black A9",
+                "play white J1",
+            ]),
+            "The migrated sequential-play strategy changed the existing command sequence.");
+
+        Require(
+            global::KifuwarabeGo2026.GtpExtensions.Protocol.GtpCoordinate.FormatVertex(new GoPoint(8, 8), 9) == "J1",
+            "GTP formatting must skip the I column.");
+        Require(
+            global::KifuwarabeGo2026.GtpExtensions.Protocol.GtpCoordinate.TryParseVertex("J1", 9, out var parsed) && parsed == new GoPoint(8, 8),
+            "GTP parsing must reverse formatted coordinates.");
+        Require(
+            !global::KifuwarabeGo2026.GtpExtensions.Protocol.GtpCoordinate.TryParseVertex("I1", 9, out _),
+            "The invalid GTP I column must be rejected.");
     }
 
     private static void VerifyMatchAssembly(Assembly matchAssembly)

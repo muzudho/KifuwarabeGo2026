@@ -463,6 +463,8 @@ VerifiedSuccess
 
 第2段階: 要求、分類、Strategy計画
 
+状態: 2026-08-01 実装完了。エンジン能力検査と複数方式の選択は第3段階以降で行う。
+
 ・InitialPositionRequestと局面分類を実装する。
 ・Strategyインターフェースと適用可否判定を実装する。
 ・現行GtpInitialPositionCommandBuilder相当をSequentialPlayStrategyへ移す。
@@ -471,6 +473,23 @@ VerifiedSuccess
 完了確認:
     空局面、標準置き碁、自由置き碁、黒白混在、開始手番を分類できる。
     現行の連続playコマンド列が変わらない。
+
+実施結果:
+    InitialPositionRequestを追加し、盤サイズ、コミ、開始手番、初期配置を防御的にコピーして保持するようにした。
+    InitialPositionClassifierとInitialPositionClassificationを追加し、Empty、StandardFixedHandicap、
+    SpecifiedBlackHandicap、MixedSetupへ分類できるようにした。
+    HistorySensitivePositionは将来の履歴情報向けに列挙値だけを予約した。
+    9路、13路、19路の2子から9子までの標準置石位置をFixedHandicapPointsへ定義した。
+    IInitialPositionStrategy、InitialPositionMethod、SequentialPlayStrategyを追加した。
+    現行のboardsize、komi、clear_board、連続play生成をSequentialPlayStrategyへ移した。
+    GUI側のGtpInitialPositionCommandBuilderは、新Strategyを呼ぶ互換窓口として残した。
+    GTP座標変換の本体をGtpExtensions.Protocolへ移し、GUI側のGtpCoordinateは互換窓口として残した。
+    GTPでは使わないI列を解析時にも拒否するようにした。
+    標準置き碁全盤サイズ・全石数、空局面、自由置き碁、黒白混在、開始手番、
+    防御的コピー、Strategy適用可否、従来コマンド列、座標往復を移植性スモークへ追加した。
+    GUIの対局開始順序と表示は変更していない。
+    9プロジェクト全体のDebugビルドは警告0・エラー0で成功した。
+    移植性スモークは追加した分類・Strategy検査を含めてPASS、終了コード0だった。
 
 
 第3段階: 能力検査
