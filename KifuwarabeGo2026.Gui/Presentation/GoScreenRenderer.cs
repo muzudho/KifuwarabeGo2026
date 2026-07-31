@@ -9,6 +9,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using System;
+using System.Linq;
 
 /// <summary>
 /// ［画面描画］の共通処理
@@ -838,10 +839,17 @@ public sealed partial class GoScreenRenderer
         }
 
         var textColor = enabled ? Color.White : new Color(91, 100, 106);
-        var measured = _font.MeasureString(label);
-        var fittedScale = MathF.Min(scale, MathF.Min((bounds.Width - 20) / Math.Max(1f, measured.X), (bounds.Height - 10) / Math.Max(1f, measured.Y)));
-        var size = measured * fittedScale;
-        DrawText(label, new Vector2(bounds.Center.X - size.X / 2, bounds.Center.Y - size.Y / 2), textColor, fittedScale);
+        if (label.All(character => _font.Characters.Contains(character)))
+        {
+            var measured = _font.MeasureString(label);
+            var fittedScale = MathF.Min(scale, MathF.Min((bounds.Width - 20) / Math.Max(1f, measured.X), (bounds.Height - 10) / Math.Max(1f, measured.Y)));
+            var size = measured * fittedScale;
+            DrawText(label, new Vector2(bounds.Center.X - size.X / 2, bounds.Center.Y - size.Y / 2), textColor, fittedScale);
+        }
+        else
+        {
+            DrawDynamicOptionText(label, new Rectangle(bounds.X + 10, bounds.Y + 5, bounds.Width - 20, bounds.Height - 10), textColor, scale);
+        }
     }
     private void DrawPathTooltip(Rectangle bounds, string fullPath, Point mousePoint)
     {

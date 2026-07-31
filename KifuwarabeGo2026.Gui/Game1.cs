@@ -943,6 +943,13 @@ public class Game1 : Game
                 return;
             }
 
+            if (_playingScene.IsInitialPositionConciergeVisible)
+            {
+                _playingScene.TryHandleMouseClick(point);
+                _previousMouse = mouse;
+                return;
+            }
+
             if (isBoardEditing && TryHandleBoardEditingClick(point))
             {
                 _previousMouse = mouse;

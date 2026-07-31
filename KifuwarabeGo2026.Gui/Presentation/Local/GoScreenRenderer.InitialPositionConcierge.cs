@@ -53,16 +53,16 @@ public sealed partial class GoScreenRenderer
 
     private void DrawInitialPositionConcierge(InitialPositionConciergeView view, Point mousePoint)
     {
-        DrawText("指定局面コンシェルジュ", new Vector2(1144, 104), new Color(255, 230, 160), 0.62f);
-        DrawText("エンジンごとに使える設定方法を試します", new Vector2(1144, 151), new Color(180, 195, 195), 0.31f);
+        DrawDynamicOptionText("指定局面コンシェルジュ", new Rectangle(1144, 98, 668, 44), new Color(255, 230, 160), 0.62f);
+        DrawDynamicOptionText("エンジンごとに使える設定方法を試します", new Rectangle(1144, 143, 668, 32), new Color(180, 195, 195), 0.31f);
 
         foreach (var engine in view.Engines)
         {
             DrawInitialPositionEngineCard(engine, view.SelectedStone == engine.Stone, mousePoint);
         }
 
-        DrawText("↑↓ 選択  SPACE 別の方法  ENTER 続ける  L ログ  ESC 中止",
-            new Vector2(1144, 858), new Color(137, 158, 164), 0.26f);
+        DrawDynamicOptionText("↑↓ 選択  SPACE 別の方法  ENTER 続ける  L ログ  ESC 中止",
+            new Rectangle(1144, 850, 668, 32), new Color(137, 158, 164), 0.26f);
         DrawCommandButton(InitialPositionCancelButtonBounds, "CANCEL", false, mousePoint, scale: 0.42f);
         DrawCommandButton(InitialPositionLogButtonBounds, "GTP LOG", false, mousePoint, scale: 0.42f);
     }
@@ -78,7 +78,7 @@ public sealed partial class GoScreenRenderer
 
         var colorName = engine.Stone == GoStone.Black ? "BLACK" : "WHITE";
         DrawText(colorName, new Vector2(bounds.X + 18, bounds.Y + 15), new Color(99, 223, 185), 0.38f);
-        DrawFittedText(engine.EngineName, new Rectangle(bounds.X + 116, bounds.Y + 10, 410, 40), Color.White, 0.4f);
+        DrawDynamicOptionText(engine.EngineName, new Rectangle(bounds.X + 116, bounds.Y + 10, 410, 40), Color.White, 0.4f);
         var stateLabel = engine.IsAccepted ? "READY" : engine.IsBusy ? "CHECKING..." : "ACTION NEEDED";
         DrawFittedText(stateLabel, new Rectangle(bounds.Right - 130, bounds.Y + 12, 112, 32),
             engine.IsAccepted ? new Color(177, 255, 215) : new Color(255, 210, 135), 0.27f);
@@ -87,7 +87,7 @@ public sealed partial class GoScreenRenderer
         if (attempts.Length == 0)
         {
             var message = engine.Diagnostics.LastOrDefault() ?? "能力と対応コマンドを調査中...";
-            DrawFittedText(message, new Rectangle(bounds.X + 20, bounds.Y + 70, bounds.Width - 40, 64),
+            DrawDynamicOptionText(message, new Rectangle(bounds.X + 20, bounds.Y + 70, bounds.Width - 40, 64),
                 engine.Diagnostics.Count == 0 ? new Color(180, 195, 195) : new Color(255, 150, 140), 0.32f);
         }
         else
@@ -98,14 +98,14 @@ public sealed partial class GoScreenRenderer
                 var y = bounds.Y + 62 + i * 45;
                 DrawText(FormatAttemptMark(attempt.Status), new Vector2(bounds.X + 20, y),
                     GetAttemptColor(attempt.Status), 0.34f);
-                DrawFittedText(attempt.MethodDisplayName, new Rectangle(bounds.X + 58, y - 3, 246, 34),
+                DrawDynamicOptionText(attempt.MethodDisplayName, new Rectangle(bounds.X + 58, y - 3, 246, 34),
                     Color.White, 0.31f);
-                DrawFittedText(FormatAttemptStatus(attempt.Status), new Rectangle(bounds.X + 320, y - 3, 310, 34),
+                DrawDynamicOptionText(FormatAttemptStatus(attempt.Status), new Rectangle(bounds.X + 320, y - 3, 310, 34),
                     GetAttemptColor(attempt.Status), 0.29f);
             }
 
             var detail = attempts[^1].Detail ?? engine.Diagnostics.LastOrDefault() ?? string.Empty;
-            DrawFittedText(detail, new Rectangle(bounds.X + 20, bounds.Bottom - 102, bounds.Width - 40, 30),
+            DrawDynamicOptionText(detail, new Rectangle(bounds.X + 20, bounds.Bottom - 102, bounds.Width - 40, 30),
                 new Color(158, 178, 178), 0.25f);
         }
 
