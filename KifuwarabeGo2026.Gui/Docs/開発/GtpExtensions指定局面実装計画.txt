@@ -494,6 +494,8 @@ VerifiedSuccess
 
 第3段階: 能力検査
 
+状態: 2026-08-01 実装完了。対局開始時の自動検査への接続は第6段階以降で行う。
+
 ・IGtpCommandSessionとGUI側アダプターを追加する。
 ・known_commandを優先し、list_commandsを補助にするProbeを実装する。
 ・Supported、Unsupported、Unknownを区別する。
@@ -502,6 +504,26 @@ VerifiedSuccess
 完了確認:
     模擬応答で正常、非対応、矛盾、タイムアウトを検査できる。
     既存GtpEngineClientのログとタイムアウトを壊さない。
+
+実施結果:
+    GtpCommandResultとIGtpCommandSessionをGtpExtensions.Protocolへ追加した。
+    GUI側へGtpEngineClientCommandSessionを追加し、既存GtpEngineClientのSendCommandAsyncへ委譲した。
+    GtpEngineClient本体を変更していないため、既存の送受信ログ、タイムアウト、プロセス管理を維持した。
+    GtpCapabilityProbeを追加し、name、version、known_command、list_commandsを取得するようにした。
+    known_commandを各対象コマンドで先に試し、list_commandsで補助確認する。
+    known_commandが拒否または不正応答の場合は、list_commandsの結果へフォールバックする。
+    両者が矛盾した場合は対応・非対応を推測せずUnknownとし、ContradictoryResponsesを根拠に残す。
+    タイムアウト、通信例外、利用不能な応答はUnsupportedにせずUnknownとして診断を保持する。
+    呼び出し元によるCancellationTokenのキャンセルはUnknownへ変換せず、そのまま伝播する。
+    GtpCapabilitySet、GtpCommandCapability、GtpCommandSupport、GtpCapabilityEvidenceを追加し、
+    エンジン名、version、コマンド別状態、判定根拠、診断メッセージを変更不能な結果として返すようにした。
+    指定局面用の初期検査対象としてfixed_handicap、set_free_handicap、place_free_handicap、loadsgfと、
+    将来のきふわらべ原子的指定局面コマンド群を定義した。
+    正常、非対応、known_command拒否後のlist_commands成功、回答矛盾、タイムアウト、
+    呼び出し元キャンセルを模擬GTPセッションで移植性スモークへ追加した。
+    GUI表示と対局開始時のコマンド列はまだ変更していない。
+    9プロジェクト全体のDebugビルドは警告0・エラー0で成功した。
+    移植性スモークは能力検査の全追加ケースを含めてPASS、終了コード0だった。
 
 
 第4段階: 標準置き碁Strategy

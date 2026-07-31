@@ -7,18 +7,23 @@ using KifuwarabeGo2026.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.Gui.Application.Local.Resting.TournamentRule;
 using KifuwarabeGo2026.Gui.Gtp;
 using KifuwarabeGo2026.GtpExtensions;
+using KifuwarabeGo2026.GtpExtensions.Capabilities;
 using KifuwarabeGo2026.GtpExtensions.InitialPosition;
+using KifuwarabeGo2026.GtpExtensions.Protocol;
 using KifuwarabeGo2026.GtpExtensions.Strategies;
 using KifuwarabeGo2026.Match;
 using KifuwarabeGo2026.Shared.Domain;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Versioning;
 using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
 
 internal static class PortabilityChecks
 {
@@ -39,6 +44,7 @@ internal static class PortabilityChecks
         VerifyNoPlatformInvokes(coreAssembly);
         VerifyGtpExtensionsAssembly(gtpExtensionsAssembly);
         VerifyGtpExtensionsInitialPositionPlanning();
+        VerifyGtpCapabilityProbe();
         VerifyMatchAssembly(matchAssembly);
         VerifyGuiMatchIntegration();
         VerifyGtpMatchAdapter();
@@ -158,6 +164,91 @@ internal static class PortabilityChecks
         Require(
             !global::KifuwarabeGo2026.GtpExtensions.Protocol.GtpCoordinate.TryParseVertex("I1", 9, out _),
             "The invalid GTP I column must be rejected.");
+    }
+
+    private static void VerifyGtpCapabilityProbe()
+    {
+        var probe = new GtpCapabilityProbe();
+        var normalSession = new StubGtpCommandSession((command, _) => Task.FromResult(command switch
+        {
+            "name" => new GtpCommandResult(true, "Example Engine"),
+            "version" => new GtpCommandResult(true, "1.2.3"),
+            "known_command fixed_handicap" => new GtpCommandResult(true, "true"),
+            "known_command loadsgf" => new GtpCommandResult(true, "false"),
+            "list_commands" => new GtpCommandResult(true, "fixed_handicap\ngenmove"),
+            _ => new GtpCommandResult(false, "unknown command"),
+        }));
+        var normal = probe.ProbeAsync(normalSession, ["fixed_handicap", "loadsgf"])
+            .GetAwaiter()
+            .GetResult();
+
+        Require(normal.EngineName == "Example Engine" && normal.EngineVersion == "1.2.3", "The capability probe must retain engine identity.");
+        Require(normal.Get("fixed_handicap").Support == GtpCommandSupport.Supported, "A consistently supported command must be reported as supported.");
+        Require(normal.Get("fixed_handicap").Evidence == GtpCapabilityEvidence.ConsistentResponses, "Consistent capability evidence is missing.");
+        Require(normal.Get("loadsgf").Support == GtpCommandSupport.Unsupported, "A consistently unsupported command must be reported as unsupported.");
+        Require(
+            normalSession.Commands.IndexOf("known_command fixed_handicap") < normalSession.Commands.IndexOf("list_commands"),
+            "known_command must be attempted before the list_commands cross-check.");
+
+        var fallbackSession = new StubGtpCommandSession((command, _) => Task.FromResult(command switch
+        {
+            "name" => new GtpCommandResult(true, "Fallback Engine"),
+            "version" => new GtpCommandResult(true, "1"),
+            "known_command fixed_handicap" => new GtpCommandResult(false, "not implemented"),
+            "list_commands" => new GtpCommandResult(true, "fixed_handicap\nplay"),
+            _ => new GtpCommandResult(false, "unknown command"),
+        }));
+        var fallback = probe.ProbeAsync(fallbackSession, ["fixed_handicap"])
+            .GetAwaiter()
+            .GetResult();
+        Require(fallback.Get("fixed_handicap").Support == GtpCommandSupport.Supported, "list_commands must recover a rejected known_command probe.");
+        Require(fallback.Get("fixed_handicap").Evidence == GtpCapabilityEvidence.ListCommands, "Fallback evidence must identify list_commands.");
+
+        var contradictorySession = new StubGtpCommandSession((command, _) => Task.FromResult(command switch
+        {
+            "name" => new GtpCommandResult(true, "Contradictory Engine"),
+            "version" => new GtpCommandResult(true, "1"),
+            "known_command loadsgf" => new GtpCommandResult(true, "true"),
+            "list_commands" => new GtpCommandResult(true, "play\ngenmove"),
+            _ => new GtpCommandResult(false, "unknown command"),
+        }));
+        var contradictory = probe.ProbeAsync(contradictorySession, ["loadsgf"])
+            .GetAwaiter()
+            .GetResult();
+        Require(contradictory.Get("loadsgf").Support == GtpCommandSupport.Unknown, "Contradictory engine answers must not be guessed.");
+        Require(
+            contradictory.Get("loadsgf").Evidence == GtpCapabilityEvidence.ContradictoryResponses,
+            "Contradictory capability evidence must be retained for diagnosis.");
+
+        var timeoutSession = new StubGtpCommandSession((command, _) => command switch
+        {
+            "name" => Task.FromResult(new GtpCommandResult(true, "Slow Engine")),
+            "version" => Task.FromResult(new GtpCommandResult(true, "1")),
+            _ => Task.FromException<GtpCommandResult>(new TimeoutException("probe timeout")),
+        });
+        var timedOut = probe.ProbeAsync(timeoutSession, ["set_free_handicap"])
+            .GetAwaiter()
+            .GetResult();
+        Require(timedOut.Get("set_free_handicap").Support == GtpCommandSupport.Unknown, "A timeout must remain unknown instead of becoming unsupported.");
+        Require(timedOut.Get("set_free_handicap").Evidence == GtpCapabilityEvidence.Unavailable, "Timeout evidence must be unavailable.");
+        Require(timedOut.Diagnostics.Any(message => message.Contains("TimeoutException", StringComparison.Ordinal)), "Timeout diagnostics must be retained.");
+
+        using var cancellationSource = new CancellationTokenSource();
+        cancellationSource.Cancel();
+        var cancellationPropagated = false;
+        try
+        {
+            probe.ProbeAsync(
+                new StubGtpCommandSession((_, token) => Task.FromCanceled<GtpCommandResult>(token)),
+                ["loadsgf"],
+                cancellationSource.Token).GetAwaiter().GetResult();
+        }
+        catch (OperationCanceledException)
+        {
+            cancellationPropagated = true;
+        }
+
+        Require(cancellationPropagated, "Caller cancellation must not be converted into an unknown capability.");
     }
 
     private static void VerifyMatchAssembly(Assembly matchAssembly)
@@ -937,6 +1028,24 @@ internal static class PortabilityChecks
         {
             text = Text;
             return true;
+        }
+    }
+
+    private sealed class StubGtpCommandSession : IGtpCommandSession
+    {
+        private readonly Func<string, CancellationToken, Task<GtpCommandResult>> _handler;
+
+        public StubGtpCommandSession(Func<string, CancellationToken, Task<GtpCommandResult>> handler)
+        {
+            _handler = handler;
+        }
+
+        public List<string> Commands { get; } = [];
+
+        public Task<GtpCommandResult> SendAsync(string command, CancellationToken cancellationToken = default)
+        {
+            Commands.Add(command);
+            return _handler(command, cancellationToken);
         }
     }
 }
