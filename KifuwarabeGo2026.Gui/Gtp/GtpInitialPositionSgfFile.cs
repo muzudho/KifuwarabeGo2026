@@ -1,14 +1,16 @@
 namespace KifuwarabeGo2026.Gui.Gtp;
 
+using KifuwarabeGo2026.GtpExtensions.InitialPosition;
 using KifuwarabeGo2026.GtpExtensions.Sgf;
 using System;
 using System.IO;
 using System.Text;
+using System.Threading.Tasks;
 
 /// <summary>
 /// Materializes an initial-position SGF document for a local engine and deletes it on disposal.
 /// </summary>
-public sealed class GtpInitialPositionSgfFile : IDisposable
+public sealed class GtpInitialPositionSgfFile : IDisposable, IInitialPositionDocumentLease
 {
     private GtpInitialPositionSgfFile(string filePath)
     {
@@ -44,5 +46,11 @@ public sealed class GtpInitialPositionSgfFile : IDisposable
         {
             File.Delete(FilePath);
         }
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        Dispose();
+        return ValueTask.CompletedTask;
     }
 }

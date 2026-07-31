@@ -598,6 +598,8 @@ VerifiedSuccess
 
 第6段階: Conciergeと安全なフォールバック
 
+状態: 2026-08-01 実装完了。GUI表示と実エンジンプロセスへの接続は第7段階で行う。
+
 ・Profile、能力、局面分類から候補順を作る。
 ・一試行ごとの結果を保存する。
 ・明確な拒否だけを自動フォールバック対象にする。
@@ -607,6 +609,34 @@ VerifiedSuccess
 完了確認:
     途中失敗後の石が次の試行へ残らない。
     すべて失敗した場合に通常局面で対局を始めない。
+
+実施結果:
+    InitialPositionConciergeを追加し、ProfileのStrategy順、局面分類、能力検査結果から、
+    各方式を対象外、非対応、実行対象へ分類するようにした。
+    GenericGtpProfileを追加し、fixed_handicap、set_free_handicap、loadsgf、連続playの順で試す。
+    Genericでは局面汚染を避けるため、次方式の前にRestartSessionを要求する。
+    エンジン別Profileは第8段階で追加し、安全性が確認できた場合だけClearBoardへ変更できる。
+    IInitialPositionExecutionHostを追加し、コマンド送信、ClearBoardまたはRestartSessionによる回復、
+    一時SGFの物質化をGUIやWebサーバー側へ委譲した。
+    明確なコマンド拒否だけを自動フォールバック対象とし、回復成功後に次方式を実行する。
+    UnverifiedSuccess、PositionMismatch、InvalidResponse、TransportFailureでは自動継続せず停止する。
+    InitialPositionConciergeCursorを返し、利用者が「別の方法を試す」を選んだときだけ、
+    必要な回復を行って次のStrategyから再開できるようにした。
+    回復に失敗した場合は次方式を実行せず、同じ回復要求を持つCursorと診断を返す。
+    InitialPositionAttemptへ方式、表示名、状態、開始時刻、所要時間、実際に送信を試みたコマンド、
+    失敗コマンド、エンジン応答、説明を変更不能な進捗情報として保持するようにした。
+    対象外と非対応もAttemptへ残すため、画面で「何を検討し、なぜ試さなかったか」を表示できる。
+    Attempt状態としてNotApplicable、Unsupported、CommandRejected、TransportFailure、
+    PositionMismatch、InvalidResponse、UnverifiedSuccess、VerifiedSuccessを定義した。
+    LoadSgfStrategy実行時は一時SGF Leaseを必ずDisposeしてから結果を返す。
+    黒番・白番の各エンジンは、別々のExecutionHost、CapabilitySet、Cursor、Resultを持つことで、
+    独立した方式選択、進捗、診断、継続位置を保持できる。
+    黒白混在局面の対象外表示、loadsgf未検証停止、手動継続、再起動要求、固定置き碁成功、
+    コマンド拒否後の自動フォールバック、ClearBoard回復、局面不一致停止、既知非対応の送信抑止、
+    通信失敗停止、回復失敗、SGF Lease解放、全方式非対応を移植性スモークへ追加した。
+    GUI対局開始処理はまだConciergeへ接続していない。
+    9プロジェクト全体のDebugビルドは警告0・エラー0で成功した。
+    移植性スモークはConciergeと安全なフォールバックの全追加ケースを含めてPASS、終了コード0だった。
 
 
 第7段階: GUIの「別の方法を試す」

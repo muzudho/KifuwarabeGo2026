@@ -8,6 +8,7 @@ using KifuwarabeGo2026.Gui.Application.Local.Resting.TournamentRule;
 using KifuwarabeGo2026.Gui.Gtp;
 using KifuwarabeGo2026.GtpExtensions;
 using KifuwarabeGo2026.GtpExtensions.Capabilities;
+using KifuwarabeGo2026.GtpExtensions.Engines;
 using KifuwarabeGo2026.GtpExtensions.InitialPosition;
 using KifuwarabeGo2026.GtpExtensions.Protocol;
 using KifuwarabeGo2026.GtpExtensions.Sgf;
@@ -49,6 +50,7 @@ internal static class PortabilityChecks
         VerifyGtpCapabilityProbe();
         VerifyStandardHandicapStrategies();
         VerifyLoadSgfStrategyAndTemporaryFile();
+        VerifyInitialPositionConcierge();
         VerifyMatchAssembly(matchAssembly);
         VerifyGuiMatchIntegration();
         VerifyGtpMatchAdapter();
@@ -488,6 +490,168 @@ internal static class PortabilityChecks
             }
         }
     }
+
+    private static void VerifyInitialPositionConcierge()
+    {
+        var concierge = new InitialPositionConcierge();
+        var allSupported = new GtpCapabilitySet(
+            "Concierge Engine",
+            "1",
+            [
+                Capability("fixed_handicap", GtpCommandSupport.Supported),
+                Capability("set_free_handicap", GtpCommandSupport.Supported),
+                Capability("loadsgf", GtpCommandSupport.Supported),
+                Capability("play", GtpCommandSupport.Supported),
+            ]);
+        var mixedRequest = new InitialPositionRequest(
+            9,
+            6.5m,
+            GoStone.White,
+            [
+                new MatchSetupStone(GoStone.Black, new GoPoint(0, 0)),
+                new MatchSetupStone(GoStone.White, new GoPoint(8, 8)),
+            ]);
+        var mixedHost = new StubInitialPositionExecutionHost((_, _) =>
+            Task.FromResult(new GtpCommandResult(true, string.Empty)));
+        var mixedResult = concierge.ExecuteAsync(mixedHost, mixedRequest, allSupported)
+            .GetAwaiter()
+            .GetResult();
+
+        Require(mixedResult.Attempts.Count == 3, "The concierge must show two inapplicable handicap methods before loadsgf.");
+        Require(mixedResult.Attempts[0].Status == InitialPositionAttemptStatus.NotApplicable, "fixed_handicap must be visibly inapplicable to a mixed setup.");
+        Require(mixedResult.Attempts[1].Status == InitialPositionAttemptStatus.NotApplicable, "set_free_handicap must be visibly inapplicable to a mixed setup.");
+        Require(mixedResult.Attempts[2].Status == InitialPositionAttemptStatus.UnverifiedSuccess, "A successful loadsgf must pause as unverified.");
+        Require(mixedResult.CanTryAnotherMethod, "An unverified loadsgf result must offer another method.");
+        Require(mixedResult.Continuation == new InitialPositionConciergeCursor(3, true), "The loadsgf continuation cursor is incorrect.");
+        Require(mixedHost.DocumentLeases.Count == 1 && mixedHost.DocumentLeases[0].IsDisposed, "The concierge must dispose its temporary SGF lease.");
+        Require(mixedHost.RecoveryModes.Count == 0, "An unverified success must wait for the user before recovery.");
+
+        var continuedResult = concierge.ExecuteAsync(
+                mixedHost,
+                mixedRequest,
+                allSupported,
+                cursor: mixedResult.Continuation)
+            .GetAwaiter()
+            .GetResult();
+        Require(mixedHost.RecoveryModes.SequenceEqual([InitialPositionRecoveryMode.RestartSession]), "Trying another method must recover the engine first.");
+        Require(continuedResult.Attempts.Count == 1, "Continuation must resume at the next method.");
+        Require(continuedResult.Attempts[0].Method == InitialPositionMethod.SequentialPlay, "Continuation must try sequential play next.");
+        Require(continuedResult.Attempts[0].Status == InitialPositionAttemptStatus.UnverifiedSuccess, "Sequential play must remain visibly unverified.");
+        Require(!continuedResult.CanTryAnotherMethod, "The final method must not offer a nonexistent continuation.");
+
+        var fixedRequest = new InitialPositionRequest(
+            19,
+            0.5m,
+            GoStone.White,
+            FixedHandicapPoints.Get(19, 2)
+                .Select(point => new MatchSetupStone(GoStone.Black, point)));
+        var verifiedHost = new StubInitialPositionExecutionHost((command, _) =>
+            Task.FromResult(command.StartsWith("fixed_handicap", StringComparison.Ordinal)
+                ? new GtpCommandResult(true, "Q16 D4")
+                : new GtpCommandResult(true, string.Empty)));
+        var verifiedResult = concierge.ExecuteAsync(verifiedHost, fixedRequest, allSupported)
+            .GetAwaiter()
+            .GetResult();
+        Require(verifiedResult.IsVerified, "A matching fixed_handicap response must complete the concierge as verified.");
+        Require(verifiedResult.Attempts.Count == 1 && !verifiedResult.CanTryAnotherMethod, "A verified method must stop without another-method prompt.");
+        Require(verifiedResult.LastAttempt?.StartedAt != default, "An executed attempt must record its start time.");
+        Require(verifiedResult.LastAttempt?.Duration >= TimeSpan.Zero, "An executed attempt must record a nonnegative duration.");
+
+        var rejectionHost = new StubInitialPositionExecutionHost((command, _) =>
+            Task.FromResult(command.StartsWith("fixed_handicap", StringComparison.Ordinal)
+                ? new GtpCommandResult(false, "unsupported handicap count")
+                : new GtpCommandResult(true, string.Empty)));
+        var clearBoardProfile = new StubCompatibilityProfile(
+            [FixedHandicapStrategy.Instance, SetFreeHandicapStrategy.Instance, LoadSgfStrategy.Instance, SequentialPlayStrategy.Instance],
+            InitialPositionRecoveryMode.ClearBoard);
+        var rejectionResult = concierge.ExecuteAsync(
+                rejectionHost,
+                fixedRequest,
+                allSupported,
+                clearBoardProfile)
+            .GetAwaiter()
+            .GetResult();
+        Require(rejectionResult.Attempts.Count == 2, "A rejected fixed handicap must automatically fall back to set_free_handicap.");
+        Require(rejectionResult.Attempts[0].Status == InitialPositionAttemptStatus.CommandRejected, "The rejected command must remain visible.");
+        Require(rejectionResult.Attempts[0].FailedCommand == "fixed_handicap 2", "The rejected command must be diagnosed.");
+        Require(rejectionResult.Attempts[1].Method == InitialPositionMethod.SetFreeHandicap, "The next compatible method is incorrect.");
+        Require(rejectionHost.RecoveryModes.SequenceEqual([InitialPositionRecoveryMode.ClearBoard]), "Automatic fallback must use the profile recovery policy.");
+
+        var mismatchHost = new StubInitialPositionExecutionHost((command, _) =>
+            Task.FromResult(command.StartsWith("fixed_handicap", StringComparison.Ordinal)
+                ? new GtpCommandResult(true, "D4")
+                : new GtpCommandResult(true, string.Empty)));
+        var mismatchResult = concierge.ExecuteAsync(mismatchHost, fixedRequest, allSupported)
+            .GetAwaiter()
+            .GetResult();
+        Require(mismatchResult.LastAttempt?.Status == InitialPositionAttemptStatus.PositionMismatch, "A fixed-handicap mismatch must pause for the user.");
+        Require(mismatchHost.RecoveryModes.Count == 0, "A mismatch must not automatically fall back.");
+        Require(mismatchResult.Continuation?.RecoveryRequired == true, "Another method after a mismatch must require recovery.");
+
+        var unsupportedCapabilities = new GtpCapabilitySet(
+            "Limited Engine",
+            "1",
+            [
+                Capability("fixed_handicap", GtpCommandSupport.Unsupported),
+                Capability("set_free_handicap", GtpCommandSupport.Supported),
+                Capability("loadsgf", GtpCommandSupport.Supported),
+                Capability("play", GtpCommandSupport.Supported),
+            ]);
+        var unsupportedHost = new StubInitialPositionExecutionHost((_, _) =>
+            Task.FromResult(new GtpCommandResult(true, string.Empty)));
+        var unsupportedResult = concierge.ExecuteAsync(unsupportedHost, fixedRequest, unsupportedCapabilities)
+            .GetAwaiter()
+            .GetResult();
+        Require(unsupportedResult.Attempts[0].Status == InitialPositionAttemptStatus.Unsupported, "A known unsupported method must be shown without execution.");
+        Require(!unsupportedHost.Commands.Any(command => command.StartsWith("fixed_handicap", StringComparison.Ordinal)), "A known unsupported method must not send its command.");
+
+        var transportHost = new StubInitialPositionExecutionHost((command, _) =>
+            command == "komi 0.5"
+                ? Task.FromException<GtpCommandResult>(new TimeoutException("engine timeout"))
+                : Task.FromResult(new GtpCommandResult(true, string.Empty)));
+        var transportResult = concierge.ExecuteAsync(transportHost, fixedRequest, allSupported)
+            .GetAwaiter()
+            .GetResult();
+        Require(transportResult.LastAttempt?.Status == InitialPositionAttemptStatus.TransportFailure, "A transport failure must pause instead of auto-fallback.");
+        Require(transportResult.LastAttempt?.FailedCommand == "komi 0.5", "The failed transport command must be retained.");
+
+        var recoveryFailureHost = new StubInitialPositionExecutionHost((command, _) =>
+            Task.FromResult(command.StartsWith("fixed_handicap", StringComparison.Ordinal)
+                ? new GtpCommandResult(false, "rejected")
+                : new GtpCommandResult(true, string.Empty)))
+        {
+            RecoveryException = new InvalidOperationException("restart failed"),
+        };
+        var recoveryFailure = concierge.ExecuteAsync(recoveryFailureHost, fixedRequest, allSupported)
+            .GetAwaiter()
+            .GetResult();
+        Require(recoveryFailure.Diagnostics.Any(detail => detail.Contains("restart failed", StringComparison.Ordinal)), "A recovery failure must be visible to the GUI.");
+        Require(recoveryFailure.Continuation?.RecoveryRequired == true, "A failed recovery must remain required before continuation.");
+        Require(!recoveryFailureHost.Commands.Any(command => command.StartsWith("set_free_handicap", StringComparison.Ordinal)), "No next method may run after failed recovery.");
+
+        var nothingSupported = new GtpCapabilitySet(
+            "Unsupported Engine",
+            "1",
+            [
+                Capability("fixed_handicap", GtpCommandSupport.Unsupported),
+                Capability("set_free_handicap", GtpCommandSupport.Unsupported),
+                Capability("loadsgf", GtpCommandSupport.Unsupported),
+                Capability("play", GtpCommandSupport.Unsupported),
+            ]);
+        var noCommandHost = new StubInitialPositionExecutionHost((_, _) =>
+            throw new InvalidOperationException("No command should be sent."));
+        var noMethodResult = concierge.ExecuteAsync(noCommandHost, fixedRequest, nothingSupported)
+            .GetAwaiter()
+            .GetResult();
+        Require(noMethodResult.Attempts.Count == 4, "Every unavailable method must remain visible in progress.");
+        Require(noMethodResult.Attempts.All(attempt => attempt.Status == InitialPositionAttemptStatus.Unsupported), "All known unsupported methods must be labeled unsupported.");
+        Require(noCommandHost.Commands.Count == 0, "No GTP command may be sent when every method is unsupported.");
+        Require(!noMethodResult.IsVerified && !noMethodResult.IsUnverifiedSuccess, "Exhausting all methods must not report setup success.");
+        Require(!noMethodResult.CanTryAnotherMethod, "Exhausting all methods must not offer a nonexistent method.");
+    }
+
+    private static GtpCommandCapability Capability(string command, GtpCommandSupport support) =>
+        new(command, support, GtpCapabilityEvidence.KnownCommand);
 
     private static void VerifyMatchAssembly(Assembly matchAssembly)
     {
@@ -1285,5 +1449,91 @@ internal static class PortabilityChecks
             Commands.Add(command);
             return _handler(command, cancellationToken);
         }
+    }
+
+    private sealed class StubInitialPositionExecutionHost : IInitialPositionExecutionHost
+    {
+        private readonly Func<string, CancellationToken, Task<GtpCommandResult>> _handler;
+
+        public StubInitialPositionExecutionHost(Func<string, CancellationToken, Task<GtpCommandResult>> handler)
+        {
+            _handler = handler;
+        }
+
+        public List<string> Commands { get; } = [];
+
+        public List<InitialPositionRecoveryMode> RecoveryModes { get; } = [];
+
+        public List<StubDocumentLease> DocumentLeases { get; } = [];
+
+        public Exception? RecoveryException { get; init; }
+
+        public Task<GtpCommandResult> SendAsync(string command, CancellationToken cancellationToken = default)
+        {
+            Commands.Add(command);
+            return _handler(command, cancellationToken);
+        }
+
+        public Task RecoverAsync(
+            InitialPositionRecoveryMode recoveryMode,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            RecoveryModes.Add(recoveryMode);
+            return RecoveryException is null
+                ? Task.CompletedTask
+                : Task.FromException(RecoveryException);
+        }
+
+        public Task<IInitialPositionDocumentLease> MaterializeAsync(
+            InitialPositionDocument document,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var lease = new StubDocumentLease(@"C:\Engine Data\initial position.sgf");
+            DocumentLeases.Add(lease);
+            return Task.FromResult<IInitialPositionDocumentLease>(lease);
+        }
+    }
+
+    private sealed class StubDocumentLease : IInitialPositionDocumentLease
+    {
+        public StubDocumentLease(string filePath)
+        {
+            FilePath = filePath;
+        }
+
+        public string FilePath { get; }
+
+        public bool IsDisposed { get; private set; }
+
+        public ValueTask DisposeAsync()
+        {
+            IsDisposed = true;
+            return ValueTask.CompletedTask;
+        }
+    }
+
+    private sealed class StubCompatibilityProfile : IGtpEngineCompatibilityProfile
+    {
+        public StubCompatibilityProfile(
+            IReadOnlyList<IInitialPositionStrategy> strategies,
+            InitialPositionRecoveryMode recoveryMode)
+        {
+            Strategies = strategies;
+            RecoveryAfterAttempt = recoveryMode;
+        }
+
+        public string Id => "smoke-profile";
+
+        public string DisplayName => "Smoke Profile";
+
+        public IReadOnlyList<IInitialPositionStrategy> Strategies { get; }
+
+        public InitialPositionRecoveryMode RecoveryAfterAttempt { get; }
+
+        public GtpFilePathArgumentStyle LoadSgfPathStyle => GtpFilePathArgumentStyle.Auto;
+
+        public int? LoadSgfMoveNumber => null;
     }
 }
