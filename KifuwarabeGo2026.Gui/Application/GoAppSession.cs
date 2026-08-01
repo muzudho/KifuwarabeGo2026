@@ -2916,6 +2916,22 @@ public sealed class GoAppSession
         return true;
     }
 
+    public void CompleteLocalApp(GoStone? winner, string reason)
+    {
+        if (UseKind != GoAppUseKind.LocalApps || CurrentMode.Kind != GoAppModeKind.Playing)
+            return;
+
+        Winner = winner;
+        GameOverReason = string.IsNullOrWhiteSpace(reason) ? "APP COMPLETED" : reason;
+        CurrentGameRecord.Result = winner switch
+        {
+            GoStone.Black => "B+App",
+            GoStone.White => "W+App",
+            _ => "0",
+        };
+        ChangeMode(GoAppModeKind.GameOver);
+    }
+
     public bool LoadGameRecordAsInitialPosition(GoGameRecord record, out string warning)
     {
         ArgumentNullException.ThrowIfNull(record);

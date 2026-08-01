@@ -15,9 +15,12 @@ public static class PonnukiPositionProvider
         var settings = CreateSettings(profile);
         await using var client = new GtpEngineClient(settings, TimeSpan.FromSeconds(10));
         await client.StartAsync();
-        var response = await client.SendCommandAsync("known_command kfw-make-position");
-        response.ThrowIfError("known_command kfw-make-position");
-        var supported = response.Payload.Trim().Equals("true", StringComparison.OrdinalIgnoreCase);
+        var makePositionResponse = await client.SendCommandAsync("known_command kfw-make-position");
+        makePositionResponse.ThrowIfError("known_command kfw-make-position");
+        var listenMoveResponse = await client.SendCommandAsync("known_command kfw-listen-move");
+        listenMoveResponse.ThrowIfError("known_command kfw-listen-move");
+        var supported = makePositionResponse.Payload.Trim().Equals("true", StringComparison.OrdinalIgnoreCase) &&
+                        listenMoveResponse.Payload.Trim().Equals("true", StringComparison.OrdinalIgnoreCase);
         return supported
             ? (true, "PONNUKI v1 READY")
             : (false, "PONNUKI v1 NOT SUPPORTED");
@@ -34,8 +37,14 @@ public static class PonnukiPositionProvider
         var response = await client.SendCommandAsync(command);
         response.ThrowIfError(command);
 
+        return ParsePosition(response.Payload);
+    }
+
+    internal static GoGameRecord ParsePosition(string payload)
+    {
+        var app = LocalAppCatalog.Ponnuki;
         var document = JsonSerializer.Deserialize<PonnukiPositionDocument>(
-            response.Payload,
+            payload,
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
             ?? throw new InvalidOperationException("The App Provider returned an empty position.");
         if (!string.Equals(document.App, app.Id, StringComparison.OrdinalIgnoreCase) ||
@@ -54,7 +63,7 @@ public static class PonnukiPositionProvider
         return record;
     }
 
-    private static GtpEngineSettings CreateSettings(GtpEngineProfile profile) =>
+    internal static GtpEngineSettings CreateSettings(GtpEngineProfile profile) =>
         new(
             profile.DisplayName,
             profile.ExecutablePath,

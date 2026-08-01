@@ -90,6 +90,8 @@ public class Game1 : Game
     private int? _lastReadOnlyChartPopupSeekMoveIndex;
     private GoGameRecord? _lastAutoSavedLocalGameRecord;
     private int? _lastAutoSavedCgosGameId;
+    private PonnukiProviderGameSession? _ponnukiProviderGameSession;
+    private int _ponnukiProviderObservedMoveCount;
 
     private const double CgosMatchCountdownSeconds = 10d;
     private const double CgosMatchFadeSeconds = 1.2d;
@@ -209,6 +211,7 @@ public class Game1 : Game
         }
 
         _playingScene.Update();
+        UpdatePonnukiProviderGame();
         _session.AddCurrentTurnElapsedTime(gameTime.ElapsedGameTime);
         UpdateGlobalKeyboardInput(keyboard);
         UpdateHumanPlayerNameTextBox(keyboard, gameTime);
@@ -1250,9 +1253,12 @@ public class Game1 : Game
         try
         {
             var provider = _session.SelectedAppProviderEngine;
-            var record = PonnukiPositionProvider.MakePositionAsync(provider).GetAwaiter().GetResult();
+            StopPonnukiProviderGame();
+            _ponnukiProviderGameSession = new PonnukiProviderGameSession(provider);
+            var record = _ponnukiProviderGameSession.StartAsync().GetAwaiter().GetResult();
             if (!_session.LoadGameRecordAsInitialPosition(record, out var warning))
                 throw new InvalidOperationException(warning);
+            _ponnukiProviderObservedMoveCount = 0;
 
             GuiOperationLog.User(
                 "Started Local App",
@@ -1261,9 +1267,63 @@ public class Game1 : Game
         }
         catch (Exception ex)
         {
+            StopPonnukiProviderGame();
             _session.SetLocalAppsError(ex.Message);
             ApplicationErrorLog.Write("PONNUKI APP", "Could not create the initial position with the App Provider engine.", ex);
             GuiOperationLog.App("Could not start Local App", $"app=ponnuki; error={ex.Message}");
+        }
+    }
+
+    private void UpdatePonnukiProviderGame()
+    {
+        if (_ponnukiProviderGameSession is null || _session.UseKind != GoAppUseKind.LocalApps)
+            return;
+
+        try
+        {
+            while (_ponnukiProviderObservedMoveCount < _session.CurrentGameRecord.Moves.Count)
+            {
+                var move = _session.CurrentGameRecord.Moves[_ponnukiProviderObservedMoveCount];
+                var vertex = move.Point is { } point
+                    ? KifuwarabeGo2026.Gui.Gtp.GtpCoordinate.FormatVertex(point, _session.BoardSize)
+                    : "pass";
+                var result = _ponnukiProviderGameSession.ListenMoveAsync(vertex).GetAwaiter().GetResult();
+                _ponnukiProviderObservedMoveCount++;
+                if (!result.Accepted)
+                    throw new InvalidOperationException("The App Provider rejected the move notification.");
+
+                if (result.GameOver)
+                {
+                    _session.CompleteLocalApp(result.WinnerStone, result.Reason);
+                    StopPonnukiProviderGame();
+                    return;
+                }
+            }
+
+            if (_session.CurrentMode.Kind != GoAppModeKind.Playing)
+                StopPonnukiProviderGame();
+        }
+        catch (Exception ex)
+        {
+            _session.SetLocalAppsError(ex.Message);
+            ApplicationErrorLog.Write("PONNUKI APP", "Could not notify the App Provider of a move.", ex);
+            StopPonnukiProviderGame();
+        }
+    }
+
+    private void StopPonnukiProviderGame()
+    {
+        var providerSession = _ponnukiProviderGameSession;
+        _ponnukiProviderGameSession = null;
+        if (providerSession is null) return;
+
+        try
+        {
+            providerSession.DisposeAsync().AsTask().GetAwaiter().GetResult();
+        }
+        catch (Exception ex)
+        {
+            ApplicationErrorLog.Write("PONNUKI APP", "Could not stop the App Provider engine.", ex);
         }
     }
 

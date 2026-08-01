@@ -25,7 +25,7 @@ internal sealed class GtpEngine
     [
         "protocol_version", "name", "version", "known_command", "list_commands", "boardsize", "clear_board",
         "komi", "play", "genmove", "cgos-genmove_analyze",
-        "kfw-options", "kfw-get-option", "kfw-set-option", "kfw-make-position",
+        "kfw-options", "kfw-get-option", "kfw-set-option", "kfw-make-position", "kfw-listen-move",
         "gui_options", "gui_getoption", "gui_setoption",
         "kfw-begin-position", "kfw-add-black", "kfw-add-white", "kfw-set-to-play", "kfw-commit-position", "kfw-abort-position", "quit",
     ];
@@ -40,6 +40,10 @@ internal sealed class GtpEngine
     private int _randomSeed;
     private string _engineTag = "";
     private string _debugLogFile = "";
+    private bool _ponnukiProviderActive;
+    private int _ponnukiBlackCaptures;
+    private int _ponnukiWhiteCaptures;
+    private const int PonnukiCaptureTarget = 20;
 
     public void Run(TextReader input, TextWriter output)
     {
@@ -93,6 +97,9 @@ internal sealed class GtpEngine
                 return false;
             case "kfw-make-position":
                 ExecuteMakePosition(tokens, out response, out error);
+                return false;
+            case "kfw-listen-move":
+                ExecuteListenMove(tokens, out response, out error);
                 return false;
 
             case "boardsize":
@@ -325,6 +332,70 @@ internal sealed class GtpEngine
             toPlay = sideToPlay == GoStone.Black ? "black" : "white",
             captures = new { black = 0, white = 0 },
             seed,
+        });
+
+        _board = board;
+        _koPoint = null;
+        _sideToPlay = sideToPlay;
+        _ponnukiBlackCaptures = 0;
+        _ponnukiWhiteCaptures = 0;
+        _ponnukiProviderActive = true;
+    }
+
+    private void ExecuteListenMove(string[] tokens, out string response, out string? error)
+    {
+        response = "";
+        error = null;
+        if (!_ponnukiProviderActive)
+        {
+            error = "kfw-make-position must be called first";
+            return;
+        }
+
+        if (tokens.Length != 2)
+        {
+            error = "usage: kfw-listen-move vertex|pass";
+            return;
+        }
+
+        var playedBy = _sideToPlay;
+        var capturedStones = 0;
+        if (IsPass(tokens[1]))
+        {
+            _koPoint = null;
+        }
+        else
+        {
+            if (!TryParseVertex(tokens[1], _board.Size, out var point) ||
+                !_board.TryPlaceStone(point.X, point.Y, playedBy, _koPoint, out capturedStones, out var nextKoPoint))
+            {
+                error = "illegal provider move notification";
+                return;
+            }
+
+            _koPoint = nextKoPoint;
+        }
+
+        if (playedBy == GoStone.Black)
+            _ponnukiBlackCaptures += capturedStones;
+        else
+            _ponnukiWhiteCaptures += capturedStones;
+        _sideToPlay = Opponent(playedBy);
+
+        var gameOver = _ponnukiBlackCaptures >= PonnukiCaptureTarget ||
+                       _ponnukiWhiteCaptures >= PonnukiCaptureTarget;
+        var winner = !gameOver
+            ? ""
+            : _ponnukiBlackCaptures >= PonnukiCaptureTarget ? "black" : "white";
+        response = JsonSerializer.Serialize(new
+        {
+            accepted = true,
+            gameOver,
+            winner,
+            reason = gameOver ? $"PONNUKI {winner.ToUpperInvariant()} CAPTURED {PonnukiCaptureTarget}" : "",
+            blackCaptures = _ponnukiBlackCaptures,
+            whiteCaptures = _ponnukiWhiteCaptures,
+            nextToPlay = _sideToPlay == GoStone.Black ? "black" : "white",
         });
     }
 
