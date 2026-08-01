@@ -887,21 +887,29 @@ internal sealed class CgosClient
         if (_options.EngineOptions.Count == 0) return;
 
         IReadOnlyList<string> known;
+        var optionsCommand = "kfw-options";
+        var setOptionCommand = "kfw-set-option";
         try
         {
-            known = await engine.CommandAsync("known_command gui_options", cancellationToken);
+            known = await engine.CommandAsync($"known_command {optionsCommand}", cancellationToken);
         }
         catch (InvalidOperationException)
         {
             return;
         }
 
-        if (!known.Any(value => value.Equals("true", StringComparison.OrdinalIgnoreCase))) return;
+        if (!known.Any(value => value.Equals("true", StringComparison.OrdinalIgnoreCase)))
+        {
+            optionsCommand = "gui_options";
+            setOptionCommand = "gui_setoption";
+            known = await engine.CommandAsync($"known_command {optionsCommand}", cancellationToken);
+            if (!known.Any(value => value.Equals("true", StringComparison.OrdinalIgnoreCase))) return;
+        }
 
-        var optionsJson = await engine.CommandAsync("gui_options", cancellationToken);
+        var optionsJson = await engine.CommandAsync(optionsCommand, cancellationToken);
         using var document = System.Text.Json.JsonDocument.Parse(string.Join('\n', optionsJson));
         if (!document.RootElement.TryGetProperty("version", out var version) || version.GetInt32() != 1)
-            throw new InvalidOperationException("Unsupported gui_options version.");
+            throw new InvalidOperationException($"Unsupported {optionsCommand} version.");
         if (!document.RootElement.TryGetProperty("options", out var definitions)) return;
 
         foreach (var option in _options.EngineOptions)
@@ -919,12 +927,12 @@ internal sealed class CgosClient
                     queued &&
                     _consumedButtonOptions.Add(option.Key))
                 {
-                    await engine.CommandAsync($"gui_setoption {option.Key}", cancellationToken);
+                    await engine.CommandAsync($"{setOptionCommand} {option.Key}", cancellationToken);
                 }
                 continue;
             }
 
-            await engine.CommandAsync($"gui_setoption {option.Key} {option.Value}", cancellationToken);
+            await engine.CommandAsync($"{setOptionCommand} {option.Key} {option.Value}", cancellationToken);
         }
     }
 

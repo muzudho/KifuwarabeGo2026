@@ -29,14 +29,16 @@ USIでは初期化中にエンジンが複数の `option` 行をGUIへ送りま�
 
 GTP Version 2はGNU Go 3.4の実装が事実上の参照実装になっており、共通コマンド以外には私的拡張が多く存在します。現在もKataGoなどのエンジンや各GUIが、それぞれ独自の接頭辞を持つコマンドを追加しています。
 
-本拡張は特定の思考エンジン固有の機能ではなく、GUIとエンジンの間で設定画面を構築するための機能です。この役割をコマンド名から判断できるよう、`gui_` 接頭辞を使用します。
+本拡張は特定の思考エンジン固有の機能ではなく、GUIとエンジンの間でGo Appsや設定画面を構築するための機能です。GTPの私的拡張であることとKifuwarabeGo2026発祥であることを明確にし、他の作者も同じ仕様を利用できる固有名として、`kfw-`接頭辞を使用します。`kfw`はKifuwarabeの先頭三音「Ki Fu Wa」に由来します。
+
+旧 `gui_options`、`gui_getoption`、`gui_setoption` は互換エイリアスです。新しい実装は正規名である `kfw-options`、`kfw-get-option`、`kfw-set-option` を使用してください。
 
 ## Version 1のコマンド
 
 ```text
-gui_options
-gui_getoption <id>
-gui_setoption <id> [value]
+kfw-options
+kfw-get-option <id>
+kfw-set-option <id> [value]
 ```
 
 ### 対応確認
@@ -44,20 +46,20 @@ gui_setoption <id> [value]
 GUIはGTP標準の `known_command` を使用して、エンジンが本拡張へ対応しているか確認します。
 
 ```text
-> known_command gui_options
+> known_command kfw-options
 < = true
 ```
 
 `false` が返る場合、GUIはエンジン設定画面を表示しません。
 
-現在の `KifuwarabeGo2026.Engine` には、GTP Version 2必須コマンドの `known_command` と `list_commands` がありません。本拡張の実装前に、この2コマンドを追加する必要があります。
+`KifuwarabeGo2026.Engine` は、GTP Version 2必須コマンドの `known_command` と `list_commands` に対応しています。
 
 ## オプション一覧の取得
 
 ### 要求
 
 ```text
-gui_options
+kfw-options
 ```
 
 ### 成功応答例
@@ -138,7 +140,7 @@ Version 1ではUSIと同じ6種類を採用します。
 ### 要求
 
 ```text
-gui_getoption threads
+kfw-get-option threads
 ```
 
 ### 成功応答
@@ -160,19 +162,19 @@ gui_getoption threads
 ### check
 
 ```text
-gui_setoption use_book true
+kfw-set-option use_book true
 ```
 
 ### spin
 
 ```text
-gui_setoption threads 8
+kfw-set-option threads 8
 ```
 
 ### combo
 
 ```text
-gui_setoption style risky
+kfw-set-option style risky
 ```
 
 ### string・filename
@@ -180,13 +182,13 @@ gui_setoption style risky
 `id` より後ろの残り全部を値として扱い、空白を含む文字列とパスを許可します。
 
 ```text
-gui_setoption book_file C:\Program Files\Kifuwarabe\book.bin
+kfw-set-option book_file C:\Program Files\Kifuwarabe\book.bin
 ```
 
 空文字にはUSIと同じ `<empty>` を使用する案とします。
 
 ```text
-gui_setoption log_directory <empty>
+kfw-set-option log_directory <empty>
 ```
 
 ### button
@@ -194,7 +196,7 @@ gui_setoption log_directory <empty>
 `button` は値を付けずに送信します。
 
 ```text
-gui_setoption clear_learning
+kfw-set-option clear_learning
 ```
 
 ### 成功応答
@@ -217,11 +219,11 @@ gui_setoption clear_learning
 GUI                                      Engine
  |--- protocol_version ------------------>|
  |<-- = 2 --------------------------------|
- |--- known_command gui_options ---------->|
+ |--- known_command kfw-options ---------->|
  |<-- = true -----------------------------|
- |--- gui_options ------------------------>|
+ |--- kfw-options ------------------------>|
  |<-- = { ... option definitions ... } ---|
- |--- gui_setoption threads 8 ------------>|
+ |--- kfw-set-option threads 8 ------------>|
  |<-- = ----------------------------------|
  |--- boardsize 9 ------------------------>|
  |--- komi 7.0 --------------------------->|
@@ -257,8 +259,8 @@ Version 1では次の制約を設ける案とします。
 
 1. `KifuwarabeGo2026.Engine` に `known_command` と `list_commands` を追加する。
 2. オプション定義モデルと6種類の型をエンジン側へ追加する。
-3. `gui_options` を実装する。
-4. `gui_getoption` と `gui_setoption` を実装する。
+3. `kfw-options` を実装する。
+4. `kfw-get-option` と `kfw-set-option` を実装する。
 5. GUI側のGTPクライアントへ対応確認とJSON解析を追加する。
 6. GUIへ型別の設定パネルを追加する。
 7. GTPエンジンプロファイルへ設定値を保存する。

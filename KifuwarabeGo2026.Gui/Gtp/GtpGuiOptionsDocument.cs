@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Text.Json;
 
 /// <summary>
-/// `gui_options` 応答のJSON文書です。
+/// `kfw-options` 応答のJSON文書です。
 /// </summary>
 public sealed class GtpGuiOptionsDocument
 {
@@ -17,7 +17,7 @@ public sealed class GtpGuiOptionsDocument
         JsonSerializer.Deserialize<GtpGuiOptionsDocument>(json, new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true,
-        }) ?? throw new FormatException("gui_options returned an empty JSON document.");
+        }) ?? throw new FormatException("kfw-options returned an empty JSON document.");
 }
 
 /// <summary>

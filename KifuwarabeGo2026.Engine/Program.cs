@@ -24,7 +24,9 @@ internal sealed class GtpEngine
     private static readonly string[] Commands =
     [
         "protocol_version", "name", "version", "known_command", "list_commands", "boardsize", "clear_board",
-        "komi", "play", "genmove", "cgos-genmove_analyze", "gui_options", "gui_getoption", "gui_setoption",
+        "komi", "play", "genmove", "cgos-genmove_analyze",
+        "kfw-options", "kfw-get-option", "kfw-set-option",
+        "gui_options", "gui_getoption", "gui_setoption",
         "begin_position", "add_black", "add_white", "set_to_play", "commit_position", "abort_position", "quit",
     ];
     private Random _random = new(0);
@@ -59,7 +61,7 @@ internal sealed class GtpEngine
         error = null;
 
         var tokens = commandLine.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        var command = tokens[0].ToLowerInvariant();
+        var command = NormalizePrivateCommand(tokens[0]);
         switch (command)
         {
             case "protocol_version":
@@ -80,13 +82,13 @@ internal sealed class GtpEngine
             case "list_commands":
                 response = string.Join('\n', Commands);
                 return false;
-            case "gui_options":
+            case "kfw-options":
                 response = CreateGuiOptionsJson();
                 return false;
-            case "gui_getoption":
+            case "kfw-get-option":
                 ExecuteGuiGetOption(tokens, out response, out error);
                 return false;
-            case "gui_setoption":
+            case "kfw-set-option":
                 ExecuteGuiSetOption(tokens, out error);
                 return false;
 
@@ -140,6 +142,17 @@ internal sealed class GtpEngine
                 return false;
         }
     }
+
+    /// <summary>
+    /// 旧gui_独自コマンド名を、kfw-接頭辞の正規名へ読み替えます。
+    /// </summary>
+    private static string NormalizePrivateCommand(string command) => command.ToLowerInvariant() switch
+    {
+        "gui_options" => "kfw-options",
+        "gui_getoption" => "kfw-get-option",
+        "gui_setoption" => "kfw-set-option",
+        var canonical => canonical,
+    };
 
     private void ExecuteBoardSize(string[] tokens, out string? error)
     {
@@ -447,7 +460,7 @@ internal sealed class GtpEngine
         error = null;
         if (tokens.Length < 2)
         {
-            error = "usage: gui_setoption RandomMove Normal|ChebyshevDistanceFromStar";
+            error = "usage: kfw-set-option RandomMove Normal|ChebyshevDistanceFromStar";
             return;
         }
 

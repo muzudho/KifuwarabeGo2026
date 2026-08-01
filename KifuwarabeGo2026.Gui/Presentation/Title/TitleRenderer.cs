@@ -14,8 +14,8 @@ public static class TitleRenderer
     public static bool IsCgosClientButtonHit(Point point) =>
         GoScreenRenderer.GetTitleHomeCgosButtonHit(point);
 
-    public static int? GetProblemCategoryHit(Point point) =>
-        GoScreenRenderer.GetTitleProblemCategoryHit(point);
+    public static int? GetAppHit(Point point) =>
+        GoScreenRenderer.GetTitleAppHit(point);
 
     public static bool IsBackButtonHit(Point point) =>
         GoScreenRenderer.GetTitleMenuBackButtonHit(point);

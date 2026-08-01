@@ -27,20 +27,20 @@ public sealed partial class GoScreenRenderer
         {
             case TitleMenuPage.Home:
                 DrawText("GO PLAY", new Vector2(500, 338), new Color(99, 223, 185), 0.58f);
-                DrawText("GO PROBLEMS", new Vector2(950, 338), new Color(255, 190, 92), 0.58f);
+                DrawText("GO APPS", new Vector2(950, 338), new Color(255, 190, 92), 0.58f);
                 DrawHomeServiceChoice(TitleHomeLocalButtonBounds, "Local", "PLAY / REVIEW", new Color(99, 223, 185), mousePoint);
                 DrawHomeServiceChoice(TitleHomeCgosButtonBounds, "Connect To CGOS", "WATCH / CONNECT", new Color(99, 223, 185), mousePoint);
-                DrawProblemCategoryChoice(TitleProblemCategoryBounds(0), "ポン抜きゲーム", "CAPTURE GAME", mousePoint);
-                DrawProblemCategoryChoice(TitleProblemCategoryBounds(1), "詰碁", "LIFE & DEATH", mousePoint);
-                DrawProblemCategoryChoice(TitleProblemCategoryBounds(2), "次の一手問題", "NEXT MOVE", mousePoint);
+                DrawAppChoice(TitleAppBounds(0), "ポン抜きゲーム", "CAPTURE GAME", mousePoint);
+                DrawAppChoice(TitleAppBounds(1), "詰碁", "LIFE & DEATH", mousePoint);
+                DrawAppChoice(TitleAppBounds(2), "次の一手問題", "NEXT MOVE", mousePoint);
                 DrawDynamicOptionText("対局、観戦、問題演習をここから直接選べます。", new Rectangle(500, 700, 890, 38), new Color(180, 195, 195), 0.34f);
-                if (TitleProblemCategoryBounds(0).Contains(mousePoint))
+                if (TitleAppBounds(0).Contains(mousePoint))
                 {
                     DrawCaptureGamePreview();
                 }
                 break;
             default:
-                DrawProblemPlaceholder(page, panel, mousePoint);
+                DrawAppPlaceholder(page, panel, mousePoint);
                 break;
         }
     }
@@ -63,7 +63,7 @@ public sealed partial class GoScreenRenderer
         DrawLine(new Vector2(panel.X + 62, panel.Y + 184), new Vector2(panel.Right - 62, panel.Y + 184), 1, new Color(82, 111, 114));
     }
 
-    private void DrawProblemCategoryChoice(Rectangle bounds, string title, string caption, Point mousePoint)
+    private void DrawAppChoice(Rectangle bounds, string title, string caption, Point mousePoint)
     {
         var hovered = bounds.Contains(mousePoint);
         FillRect(new Rectangle(bounds.X + 7, bounds.Y + 9, bounds.Width, bounds.Height), new Color(0, 0, 0, 90));
@@ -106,7 +106,7 @@ public sealed partial class GoScreenRenderer
             0.38f);
     }
 
-    private void DrawProblemPlaceholder(TitleMenuPage page, Rectangle panel, Point mousePoint)
+    private void DrawAppPlaceholder(TitleMenuPage page, Rectangle panel, Point mousePoint)
     {
         var (title, caption) = page switch
         {
@@ -114,7 +114,7 @@ public sealed partial class GoScreenRenderer
             TitleMenuPage.Tsumego => ("詰碁", "LIFE & DEATH"),
             _ => ("次の一手問題", "NEXT MOVE"),
         };
-        DrawTitleBreadcrumb($"HOME  >  GO PROBLEMS  >  {caption}", panel);
+        DrawTitleBreadcrumb($"HOME  >  GO APPS  >  {caption}", panel);
         DrawDynamicOptionText(title, new Rectangle(panel.X + 150, panel.Y + 280, panel.Width - 300, 92), Color.White, 0.84f);
         DrawFittedText("COMING SOON", new Rectangle(panel.X + 250, panel.Y + 430, panel.Width - 500, 70), new Color(99, 223, 185), 0.72f);
         DrawDynamicOptionText("問題集と問題一覧は、ここからディレクトリーのように開いていく予定です。", new Rectangle(panel.X + 150, panel.Y + 530, panel.Width - 300, 54), new Color(180, 195, 195), 0.38f);

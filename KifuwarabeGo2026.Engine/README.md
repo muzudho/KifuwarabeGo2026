@@ -60,11 +60,11 @@ Kifuwarabe Go 2026 は、通常のGTPコマンドに加えて次の独自コマ�
 
 | コマンド | 用途 |
 |---|---|
-| `gui_options` | GUIが表示・検証するオプション定義をJSONで返す |
-| `gui_getoption <id>` | 指定オプションの現在値を返す |
-| `gui_setoption <id> <value>` | 指定オプションへ値を設定する |
+| `kfw-options` | GUIが表示・検証するオプション定義をJSONで返す |
+| `kfw-get-option <id>` | 指定オプションの現在値を返す |
+| `kfw-set-option <id> <value>` | 指定オプションへ値を設定する |
 
-対応コマンドは `list_commands` の結果へ含め、`known_command gui_options` に `true` を返してください。`gui_options` に対応していないエンジンは、従来のGTPエンジンとしてそのまま利用できます。
+対応コマンドは `list_commands` の結果へ含め、`known_command kfw-options` に `true` を返してください。`kfw-options` に対応していないエンジンは、従来のGTPエンジンとしてそのまま利用できます。旧 `gui_options`、`gui_getoption`、`gui_setoption` も互換エイリアスとして受け付けます。
 
 ## 原子的に指定局面を設定する
 
@@ -84,13 +84,13 @@ commit_position
 
 GUIに保存されたオプションはエンジン起動時に送信されます。概略は次の順序です。
 
-1. GUIが `known_command gui_options` を送る。
-2. 対応していれば `gui_options` を送る。
+1. GUIが `known_command kfw-options` を送る。
+2. 対応していれば `kfw-options` を送る。
 3. GUIがJSONのバージョンと保存値を検証する。
-4. GUIが保存済みの各値を `gui_setoption <id> <value>` で送る。
+4. GUIが保存済みの各値を `kfw-set-option <id> <value>` で送る。
 5. その後、通常の対局初期化を行う。
 
-## `gui_options` のJSON形式
+## `kfw-options` のJSON形式
 
 現在の形式のバージョンは `1` です。このエンジンは次のようなJSONを1行で返します。
 
@@ -141,7 +141,7 @@ GUIに保存されたオプションはエンジン起動時に送信されま�
 
 Kifuwarabe Go 2026では、`string` と `filename` の値を文字数で最大10,000文字に制限しています。長い値はオプション一覧では末尾を `...` にして省略し、値にマウスカーソルを合わせると、より長い内容をポップアップ表示します。
 
-`button` は通常の保存値ではありません。［EXECUTE］を押すと［QUEUED］になり、もう一度押すと予約を取り消せます。予約した処理は、次回対局でエンジンを起動した直後に `gui_setoption <id>` と値を付けずに一度だけ送信されます。送信後の対局で再実行するには、改めて予約してください。
+`button` は通常の保存値ではありません。［EXECUTE］を押すと［QUEUED］になり、もう一度押すと予約を取り消せます。予約した処理は、次回対局でエンジンを起動した直後に `kfw-set-option <id>` と値を付けずに一度だけ送信されます。送信後の対局で再実行するには、改めて予約してください。
 
 サンプルエンジンは5型を確認できるよう、次のオプションを公開します。
 
@@ -164,10 +164,10 @@ Kifuwarabe Go 2026では、`string` と `filename` の値を文字数で最大10
 GTPで直接確認できます。
 
 ```text
-gui_options
-gui_getoption RandomMove
-gui_setoption RandomMove Normal
-gui_getoption RandomMove
+kfw-options
+kfw-get-option RandomMove
+kfw-set-option RandomMove Normal
+kfw-get-option RandomMove
 ```
 
 成功応答の例です。
@@ -231,11 +231,11 @@ GUI側では、`KifuwarabeGo2026.Gui/Application/GtpEngineGuiOptions.cs` の `Ra
 
 ## 実装時の注意
 
-- `id`、`default`、`value`、`vars`、`gui_getoption`、`gui_setoption` の表記を一致させてください。
+- `id`、`default`、`value`、`vars`、`kfw-get-option`、`kfw-set-option` の表記を一致させてください。
 - 現在のコマンド解析は空白区切りです。IDや値には空白を含めないでください。
 - オプション値はエンジンのプロセス内に保持されます。永続化はGUIのエンジンプロファイルが担当します。
-- `gui_setoption` は不正なIDや値を黙って受理せず、GTPエラーを返してください。
-- `gui_options` のJSONはGTP成功応答の本文として返してください。
+- `kfw-set-option` は不正なIDや値を黙って受理せず、GTPエラーを返してください。
+- `kfw-options` のJSONはGTP成功応答の本文として返してください。
 - 標準入力と標準出力はGTP通信だけに使用してください。
 - 標準エラー出力にも診断情報やデバッグ情報を書き込まないでください。囲碁GUIによっては、出力があるだけでエンジンエラーと判断されます。
 - エラーログやデバッグログは、標準入出力および標準エラー出力を使わず、専用のログファイルへ書き出してください。

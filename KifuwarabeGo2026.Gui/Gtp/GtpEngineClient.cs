@@ -158,13 +158,21 @@ public sealed class GtpEngineClient : IAsyncDisposable
     {
         if (_settings.GuiOptions is null || _settings.GuiOptions.Count == 0) return;
 
-        var knownCommand = await SendCommandAsync("known_command gui_options", cancellationToken);
-        if (!knownCommand.IsSuccess || !knownCommand.Payload.Equals("true", StringComparison.OrdinalIgnoreCase)) return;
+        var optionsCommand = "kfw-options";
+        var setOptionCommand = "kfw-set-option";
+        var knownCommand = await SendCommandAsync($"known_command {optionsCommand}", cancellationToken);
+        if (!knownCommand.IsSuccess || !knownCommand.Payload.Equals("true", StringComparison.OrdinalIgnoreCase))
+        {
+            optionsCommand = "gui_options";
+            setOptionCommand = "gui_setoption";
+            knownCommand = await SendCommandAsync($"known_command {optionsCommand}", cancellationToken);
+            if (!knownCommand.IsSuccess || !knownCommand.Payload.Equals("true", StringComparison.OrdinalIgnoreCase)) return;
+        }
 
-        var optionsResponse = await SendCommandAsync("gui_options", cancellationToken);
-        optionsResponse.ThrowIfError("gui_options");
+        var optionsResponse = await SendCommandAsync(optionsCommand, cancellationToken);
+        optionsResponse.ThrowIfError(optionsCommand);
         var document = GtpGuiOptionsDocument.Parse(optionsResponse.Payload);
-        if (document.Version != 1) throw new InvalidOperationException($"Unsupported gui_options version: {document.Version}");
+        if (document.Version != 1) throw new InvalidOperationException($"Unsupported {optionsCommand} version: {document.Version}");
 
         foreach (var savedOption in _settings.GuiOptions)
         {
@@ -173,7 +181,7 @@ public sealed class GtpEngineClient : IAsyncDisposable
             if (definition.Type.Equals("button", StringComparison.OrdinalIgnoreCase))
             {
                 if (bool.TryParse(savedOption.Value, out var queued) && queued)
-                    await SendCommandExpectSuccessAsync($"gui_setoption {savedOption.Key}", cancellationToken);
+                    await SendCommandExpectSuccessAsync($"{setOptionCommand} {savedOption.Key}", cancellationToken);
                 continue;
             }
             if (definition.Type.Equals("combo", StringComparison.OrdinalIgnoreCase) &&
@@ -185,7 +193,7 @@ public sealed class GtpEngineClient : IAsyncDisposable
                 (!int.TryParse(savedOption.Value, out var number) ||
                  number < (definition.Min ?? int.MinValue) || number > (definition.Max ?? int.MaxValue))) continue;
 
-            await SendCommandExpectSuccessAsync($"gui_setoption {savedOption.Key} {savedOption.Value}", cancellationToken);
+            await SendCommandExpectSuccessAsync($"{setOptionCommand} {savedOption.Key} {savedOption.Value}", cancellationToken);
         }
     }
 

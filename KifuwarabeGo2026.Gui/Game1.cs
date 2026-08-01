@@ -1253,15 +1253,15 @@ public class Game1 : Game
                 return true;
             }
 
-            if (TitleRenderer.GetProblemCategoryHit(point) is { } categoryIndex)
+            if (TitleRenderer.GetAppHit(point) is { } appIndex)
             {
-                _titleMenuPage = categoryIndex switch
+                _titleMenuPage = appIndex switch
                 {
                     0 => TitleMenuPage.CaptureGame,
                     1 => TitleMenuPage.Tsumego,
                     _ => TitleMenuPage.NextMove,
                 };
-                GuiOperationLog.User("Opened Go Problems category", $"page={_titleMenuPage}");
+                GuiOperationLog.User("Opened Go Apps entry", $"page={_titleMenuPage}");
                 return true;
             }
         }
