@@ -107,16 +107,14 @@ public sealed partial class GoScreenRenderer
             color: TitleGoEquipmentOutlineColor,
             thickness: 4,
             rotation: 0f,
-            startAngle: 11f * MathF.PI / 6f, // 2時
-            endAngle: 7f * MathF.PI / 6f);  // 10時
+            startAngle: (11f + 0.1f) * MathF.PI / 6f, // 2時
+            endAngle: (7f - 0.1f) * MathF.PI / 6f);  // 10時
 
-        DrawEllipseWire(mouthCenter, 300 - 40, 76, TitleGoEquipmentOutlineColor, 4, 0f);                // 口の輪郭
-
-        //DrawEllipseWire(mouthCenter + new Vector2(0, 8), 260, 54, TitleGoEquipmentThinColor, 1, 0f); // 口の傾斜
+        DrawEllipseWire(mouthCenter, 300 - 25, 76, TitleGoEquipmentOutlineColor, 4, 0f);                // 口の輪郭
 
         DrawEllipseWire(center + new Vector2(0, 21), 292, 70, TitleGoEquipmentThinColor, 1, 0f);     // 下側の膨らみ
 
-        DrawEllipseWire(center + new Vector2(0, 86), 175, 34, TitleGoEquipmentThinColor, 1, 0f);     // 高台
+        DrawEllipseWire(center + new Vector2(0, 86 + 20), 175, 34, TitleGoEquipmentThinColor, 1, 0f);     // 高台
     }
 
     /// <summary>右の碁笥の蓋の描画</summary>
