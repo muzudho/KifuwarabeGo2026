@@ -16,6 +16,8 @@ public sealed class PonnukiProviderGameSession : IAsyncDisposable
         _client = new GtpEngineClient(PonnukiPositionProvider.CreateSettings(profile), TimeSpan.FromSeconds(10));
     }
 
+    public int Seed { get; private set; }
+
     public async Task<GoGameRecord> StartAsync()
     {
         var app = LocalAppCatalog.Ponnuki;
@@ -23,6 +25,7 @@ public sealed class PonnukiProviderGameSession : IAsyncDisposable
         var command = $"kfw-make-position {app.Id} {app.Version} {app.BoardSize} {app.InitialRandomMoveCount}";
         var response = await _client.SendCommandAsync(command);
         response.ThrowIfError(command);
+        Seed = PonnukiPositionProvider.ParseSeed(response.Payload);
         return PonnukiPositionProvider.ParsePosition(response.Payload);
     }
 

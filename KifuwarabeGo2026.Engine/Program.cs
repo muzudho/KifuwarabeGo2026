@@ -2,6 +2,7 @@ namespace KifuwarabeGo2026.Engine;
 
 using KifuwarabeGo2026.Shared.Domain;
 using System.Reflection;
+using System.Security.Cryptography;
 using System.Text.Json;
 
 /// <summary>
@@ -273,17 +274,22 @@ internal sealed class GtpEngine
     {
         response = "";
         error = null;
-        if (tokens.Length != 5 ||
+        if (tokens.Length is not (5 or 6) ||
             !tokens[1].Equals("ponnuki", StringComparison.OrdinalIgnoreCase) ||
             tokens[2] != "1" ||
             !int.TryParse(tokens[3], out var boardSize) || boardSize != 9 ||
-            !int.TryParse(tokens[4], out var requestedMoveCount) || requestedMoveCount is < 0 or > 200)
+            !int.TryParse(tokens[4], out var requestedMoveCount) || requestedMoveCount is < 0 or > 200 ||
+            (tokens.Length == 6 && !int.TryParse(tokens[5], out _)))
         {
-            error = "usage: kfw-make-position ponnuki 1 9 move-count";
+            error = "usage: kfw-make-position ponnuki 1 9 move-count [seed]";
             return;
         }
 
-        var seed = _random.Next(0, int.MaxValue);
+        // GetInt32 uses rejection sampling over the OS cryptographic random source,
+        // so the automatically selected seed has no modulo bias.
+        var seed = tokens.Length == 6
+            ? int.Parse(tokens[5], System.Globalization.CultureInfo.InvariantCulture)
+            : RandomNumberGenerator.GetInt32(int.MinValue, int.MaxValue);
         var random = new Random(seed);
         var board = new GoBoard(boardSize);
         GoPoint? koPoint = null;

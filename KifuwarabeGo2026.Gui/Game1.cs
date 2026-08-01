@@ -1262,7 +1262,7 @@ public class Game1 : Game
 
             GuiOperationLog.User(
                 "Started Local App",
-                $"app=ponnuki; provider={provider.DisplayName}; board={record.BoardSize}; setupStones={record.SetupStones.Count}");
+                $"app=ponnuki; provider={provider.DisplayName}; board={record.BoardSize}; setupStones={record.SetupStones.Count}; seed={_ponnukiProviderGameSession.Seed}");
             _playingScene.StartPlaying();
         }
         catch (Exception ex)

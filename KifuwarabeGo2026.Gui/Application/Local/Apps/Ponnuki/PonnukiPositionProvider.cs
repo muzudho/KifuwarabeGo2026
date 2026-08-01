@@ -63,6 +63,14 @@ public static class PonnukiPositionProvider
         return record;
     }
 
+    internal static int ParseSeed(string payload)
+    {
+        using var json = JsonDocument.Parse(payload);
+        return json.RootElement.TryGetProperty("seed", out var seedElement) && seedElement.TryGetInt32(out var seed)
+            ? seed
+            : throw new InvalidOperationException("The App Provider did not return the random seed.");
+    }
+
     internal static GtpEngineSettings CreateSettings(GtpEngineProfile profile) =>
         new(
             profile.DisplayName,
