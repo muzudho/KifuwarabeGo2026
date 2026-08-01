@@ -1,11 +1,13 @@
 namespace KifuwarabeGo2026.Gui.Presentation;
 
+using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Presentation.Title;
 using Microsoft.Xna.Framework;
+using System;
 
 public sealed partial class GoScreenRenderer
 {
-    private void DrawUseSelectionPanel(Point mousePoint, TitleMenuPage page)
+    private void DrawUseSelectionPanel(GoAppSession session, Point mousePoint, TitleMenuPage page)
     {
         // Title background artwork is suspended for now.
         // DrawTitleGoEquipment();
@@ -17,11 +19,11 @@ public sealed partial class GoScreenRenderer
         DrawText("KIFUWARABE GO 2026", new Vector2(panel.X + 58, panel.Y + 58), new Color(244, 238, 218), 1.05f);
         DrawText(GetDisplayVersion(), new Vector2(panel.X + 790, panel.Y + 91), new Color(99, 223, 185), 0.38f);
         DrawLine(new Vector2(panel.X + 790, panel.Y + 126), new Vector2(panel.X + 958, panel.Y + 126), 2, new Color(99, 223, 185, 120));
-        DrawTitleMenuContent(page, panel, mousePoint);
+        DrawTitleMenuContent(session, page, panel, mousePoint);
         DrawSettingsButton(mousePoint);
     }
 
-    private void DrawTitleMenuContent(TitleMenuPage page, Rectangle panel, Point mousePoint)
+    private void DrawTitleMenuContent(GoAppSession session, TitleMenuPage page, Rectangle panel, Point mousePoint)
     {
         switch (page)
         {
@@ -40,7 +42,7 @@ public sealed partial class GoScreenRenderer
                 }
                 break;
             default:
-                DrawAppPlaceholder(page, panel, mousePoint);
+                DrawAppPage(session, page, panel, mousePoint);
                 break;
         }
     }
@@ -106,8 +108,14 @@ public sealed partial class GoScreenRenderer
             0.38f);
     }
 
-    private void DrawAppPlaceholder(TitleMenuPage page, Rectangle panel, Point mousePoint)
+    private void DrawAppPage(GoAppSession session, TitleMenuPage page, Rectangle panel, Point mousePoint)
     {
+        if (page == TitleMenuPage.CaptureGame)
+        {
+            DrawPonnukiProviderSelection(session, panel, mousePoint);
+            return;
+        }
+
         var (title, caption) = page switch
         {
             TitleMenuPage.CaptureGame => ("ポン抜きゲーム", "CAPTURE GAME"),
@@ -118,6 +126,34 @@ public sealed partial class GoScreenRenderer
         DrawDynamicOptionText(title, new Rectangle(panel.X + 150, panel.Y + 280, panel.Width - 300, 92), Color.White, 0.84f);
         DrawFittedText("COMING SOON", new Rectangle(panel.X + 250, panel.Y + 430, panel.Width - 500, 70), new Color(99, 223, 185), 0.72f);
         DrawDynamicOptionText("問題集と問題一覧は、ここからディレクトリーのように開いていく予定です。", new Rectangle(panel.X + 150, panel.Y + 530, panel.Width - 300, 54), new Color(180, 195, 195), 0.38f);
+        DrawTitleBackButton(mousePoint);
+    }
+
+    private void DrawPonnukiProviderSelection(GoAppSession session, Rectangle panel, Point mousePoint)
+    {
+        DrawTitleBreadcrumb("HOME  >  GO APPS  >  PONNUKI", panel);
+        DrawDynamicOptionText("ポン抜きゲーム", new Rectangle(500, 320, 500, 54), Color.White, 0.62f);
+        DrawText("APP PROVIDER ENGINE", new Vector2(530, 388), new Color(255, 190, 92), 0.42f);
+        DrawDynamicOptionText("問題提供エンジン", new Rectangle(950, 386, 330, 34), new Color(210, 214, 207), 0.32f);
+
+        for (var index = 0; index < Math.Min(session.GtpEngineProfiles.Count, 5); index++)
+        {
+            var bounds = TitleAppProviderEngineBounds(index);
+            var selected = index == session.SelectedAppProviderEngineIndex;
+            var hovered = bounds.Contains(mousePoint);
+            FillRect(bounds, selected ? new Color(58, 66, 51) : hovered ? new Color(42, 55, 63) : new Color(24, 31, 37));
+            DrawRect(bounds, selected ? 3 : 2, selected ? new Color(255, 190, 92) : new Color(88, 102, 112));
+            DrawFittedText(session.GtpEngineProfiles[index].DisplayName, new Rectangle(bounds.X + 18, bounds.Y + 13, 560, 30), Color.White, 0.34f);
+            DrawFittedText(selected ? "SELECTED" : "SELECT", new Rectangle(bounds.Right - 130, bounds.Y + 14, 104, 28), selected ? new Color(255, 210, 128) : new Color(180, 195, 195), 0.27f);
+        }
+
+        DrawCommandButton(
+            TitleAppProviderStartButtonBounds,
+            session.CanUseSelectedAppProvider ? "START" : "ENGINE REQUIRED",
+            false,
+            mousePoint,
+            enabled: session.CanUseSelectedAppProvider,
+            scale: session.CanUseSelectedAppProvider ? 0.40f : 0.23f);
         DrawTitleBackButton(mousePoint);
     }
 

@@ -1,11 +1,13 @@
-namespace KifuwarabeGo2026.Gui.Presentation.Local.Resting;
+namespace KifuwarabeGo2026.Gui.Presentation.Local.Intermission;
 
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Application.Local.Playing;
-using KifuwarabeGo2026.Gui.Presentation;
 using Microsoft.Xna.Framework;
 
-public static class LocalRestingRenderer
+/// <summary>
+/// ローカルプレイとローカルアップスが共有する幕間画面の描画入口です。
+/// </summary>
+public static class LocalIntermissionRenderer
 {
     public static void Draw(
         GoScreenRenderer renderer,

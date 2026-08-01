@@ -102,7 +102,7 @@ public sealed partial class GoScreenRenderer
         _spriteBatch.End();
     }
 
-    public void DrawUseSelection(Point mousePosition, TitleMenuPage page)
+    public void DrawUseSelection(GoAppSession session, Point mousePosition, TitleMenuPage page)
     {
         var mousePoint = VirtualScreen.ToVirtualPoint(_graphicsDevice.Viewport, mousePosition);
 
@@ -111,7 +111,7 @@ public sealed partial class GoScreenRenderer
             transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));
 
         DrawBackground();
-        DrawUseSelectionPanel(mousePoint, page);
+        DrawUseSelectionPanel(session, mousePoint, page);
 
         _spriteBatch.End();
     }
@@ -197,6 +197,7 @@ public sealed partial class GoScreenRenderer
     public static bool GetImportSgfButtonHit(Point point) => ImportSgfButtonBounds.Contains(point);
     public static bool GetStartPlayingButtonHit(Point point, GoAppModeKind modeKind) =>
         modeKind != GoAppModeKind.GameOver && StartPlayingButtonBounds.Contains(point);
+    public static bool GetChangeAppProviderButtonHit(Point point) => ChangeAppProviderButtonBounds.Contains(point);
 
     public static bool GetReturnToSetupButtonHit(Point point) => ReturnToSetupButtonBounds.Contains(point);
 
@@ -315,7 +316,14 @@ public sealed partial class GoScreenRenderer
             return;
         }
 
-        DrawSetupSidePanel(session, mousePoint);
+        if (session.UseKind == GoAppUseKind.LocalApps)
+        {
+            DrawLocalAppsIntermissionSidePanel(session, mousePoint);
+        }
+        else
+        {
+            DrawSetupSidePanel(session, mousePoint);
+        }
     }
     private void DrawLocalClosedBox(Rectangle bounds)
     {
@@ -758,17 +766,64 @@ public sealed partial class GoScreenRenderer
 
     private static Rectangle HumanPlayerNameTextBounds(int y) => new(GameOverValueX, y + 2, 468, 32);
     private static Rectangle StartPlayingButtonBounds => new(1658, 920, 154, 56);
+    private static Rectangle ChangeAppProviderButtonBounds => new(1492, 620, 320, 56);
 
     private static Rectangle ImportSgfButtonBounds => new(1492, 184, 320, 56);
 
     private static Rectangle SetupBackToTitleButtonBounds => new(1642, 104, 170, 52);
     private static Rectangle LocalUseButtonBounds => new(508, 404, 438, 300);
-    private static Rectangle TitleMenuBackButtonBounds => new(1260, 760, 152, 54);
+    private static Rectangle TitleMenuBackButtonBounds => new(1260, 238, 152, 54);
+    private static Rectangle TitleAppProviderEngineBounds(int index) => new(570, 438 + index * 66, 780, 56);
+    private static Rectangle TitleAppProviderStartButtonBounds => new(1198, 790, 152, 54);
     private static Rectangle TitleHomeLocalButtonBounds => new(500, 390, 400, 126);
     private static Rectangle TitleHomeCgosButtonBounds => new(500, 536, 400, 126);
     private static Rectangle TitleAppBounds(int index) => new(950, 390 + index * 100, 440, 84);
 
     public static bool GetTitleMenuBackButtonHit(Point point) => TitleMenuBackButtonBounds.Contains(point);
+    public static bool GetTitleAppProviderStartButtonHit(Point point) => TitleAppProviderStartButtonBounds.Contains(point);
+
+    public static int? GetTitleAppProviderEngineHit(Point point, int engineCount)
+    {
+        for (var index = 0; index < Math.Min(engineCount, 5); index++)
+        {
+            if (TitleAppProviderEngineBounds(index).Contains(point)) return index;
+        }
+
+        return null;
+    }
+
+    private void DrawLocalAppsIntermissionSidePanel(GoAppSession session, Point mousePoint)
+    {
+        DrawCommandButton(SetupBackToTitleButtonBounds, "BACK TO TITLE", false, mousePoint, scale: 0.32f);
+
+        DrawVerticalResultSection(new Rectangle(1144, 184, 668, 176), "LOCAL APPS", new Color(99, 76, 48));
+        DrawResultRow(new Rectangle(1164, 236, 628, 56), "APP", "PONNUKI", new Color(73, 57, 39), Color.White);
+        DrawResultRow(new Rectangle(1164, 296, 628, 48), "STATUS", "INTERMISSION", new Color(58, 48, 38), new Color(255, 210, 128));
+
+        DrawVerticalResultSection(new Rectangle(1144, 392, 668, 208), "APP PROVIDER ENGINE", new Color(66, 104, 116));
+        DrawDynamicOptionText("問題提供エンジン", new Rectangle(1164, 410, 300, 34), new Color(180, 195, 195), 0.30f);
+        DrawResultRow(
+            new Rectangle(1164, 466, 628, 64),
+            "PROVIDER",
+            session.SelectedAppProviderEngine.DisplayName,
+            new Color(39, 68, 65),
+            Color.White);
+        DrawFittedText(
+            "プロバイダーを変える場合は、いったんタイトルへ戻ります。",
+            new Rectangle(1164, 548, 628, 30),
+            new Color(180, 195, 195),
+            0.30f);
+        DrawCommandButton(ChangeAppProviderButtonBounds, "CHANGE PROVIDER", false, mousePoint, scale: 0.30f);
+
+        DrawVerticalResultSection(new Rectangle(1144, 916, 668, 76), "ACTION", new Color(91, 82, 105));
+        DrawCommandButton(
+            StartPlayingButtonBounds,
+            "START",
+            false,
+            mousePoint,
+            enabled: false,
+            scale: 0.48f);
+    }
     public static bool GetTitleHomeLocalButtonHit(Point point) => TitleHomeLocalButtonBounds.Contains(point);
     public static bool GetTitleHomeCgosButtonHit(Point point) => TitleHomeCgosButtonBounds.Contains(point);
 

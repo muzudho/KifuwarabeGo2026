@@ -343,6 +343,21 @@ public sealed class GoAppSession
 
     public int SelectedWhiteGtpEngineIndex { get; private set; }
 
+    public int SelectedAppProviderEngineIndex { get; private set; }
+
+    public GtpEngineProfile SelectedAppProviderEngine =>
+        _gtpEngineProfiles[Math.Clamp(SelectedAppProviderEngineIndex, 0, _gtpEngineProfiles.Count - 1)];
+
+    public bool CanUseSelectedAppProvider
+    {
+        get
+        {
+            var path = SelectedAppProviderEngine.ExecutablePath;
+            if (string.IsNullOrWhiteSpace(path)) return false;
+            return !Path.IsPathFullyQualified(path) || File.Exists(path);
+        }
+    }
+
     public bool IsGtpEngineSelectionDialogOpen { get; private set; }
 
     public bool IsGtpEngineSelectionForCgos { get; private set; }
@@ -1930,10 +1945,18 @@ public sealed class GoAppSession
 
         SelectedBlackGtpEngineIndex = 0;
         SelectedWhiteGtpEngineIndex = 0;
+        SelectedAppProviderEngineIndex = 0;
         SelectedCgosBlackGtpEngineIndex = 0;
         SelectedCgosWhiteGtpEngineIndex = 0;
         SetCgosPlayerCredentials(GoStone.Black, _gtpEngineProfiles[0].DefaultCgosLoginName, _gtpEngineProfiles[0].DefaultCgosPlainTextPassword);
         SetCgosPlayerCredentials(GoStone.White, _gtpEngineProfiles[0].DefaultCgosLoginName, _gtpEngineProfiles[0].DefaultCgosPlainTextPassword);
+    }
+
+    public void SelectAppProviderEngine(int index)
+    {
+        if (index < 0 || index >= _gtpEngineProfiles.Count)
+            throw new ArgumentOutOfRangeException(nameof(index), index, "App Provider engine index is out of range.");
+        SelectedAppProviderEngineIndex = index;
     }
 
     public void OpenGtpEngineOrderEditor() =>

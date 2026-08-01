@@ -15,7 +15,7 @@ using KifuwarabeGo2026.Gui.Presentation;
 using KifuwarabeGo2026.Gui.Presentation.Cgos.Connect;
 using KifuwarabeGo2026.Gui.Presentation.Cgos.ConnectionTarget;
 using KifuwarabeGo2026.Gui.Presentation.Cgos.Watching;
-using KifuwarabeGo2026.Gui.Presentation.Local.Resting;
+using KifuwarabeGo2026.Gui.Presentation.Local.Intermission;
 using KifuwarabeGo2026.Gui.Presentation.Local.Resting.TournamentRule;
 using KifuwarabeGo2026.Gui.Presentation.Title;
 using KifuwarabeGo2026.Gui.Sgf;
@@ -424,14 +424,14 @@ public class Game1 : Game
                 if (_isApplicationSettingsOpen)
                     _renderer.DrawApplicationSettings(Mouse.GetState().Position, ApplicationSettings.Current.LogRootDirectory, ApplicationSettings.Current.SgfSaveDirectory, ApplicationSettings.FilePath, _gtpEngineCatalog.ListPath, _guiLogFiles, _selectedGuiLogIndex, _applicationSettingsMessage);
                 else
-                    TitleRenderer.Draw(_renderer, Mouse.GetState().Position, _titleMenuPage);
+                    TitleRenderer.Draw(_renderer, _session, Mouse.GetState().Position, _titleMenuPage);
             }
         }
         else if (_variationSession is not null)
         {
             if (_renderer is not null)
             {
-                LocalRestingRenderer.Draw(
+                LocalIntermissionRenderer.Draw(
                     _renderer,
                     _variationSession,
                     Mouse.GetState().Position,
@@ -444,7 +444,7 @@ public class Game1 : Game
             {
                 if (_session.CurrentMode.Kind == GoAppModeKind.Reviewing)
                 {
-                    LocalRestingRenderer.Draw(_renderer, _session, Mouse.GetState().Position);
+                    LocalIntermissionRenderer.Draw(_renderer, _session, Mouse.GetState().Position);
                 }
                 else if (_session.CgosConnectionFlowKind is CgosConnectionFlowKind.Watching or CgosConnectionFlowKind.Result)
                 {
@@ -464,7 +464,7 @@ public class Game1 : Game
         {
             if (_renderer is not null)
             {
-                LocalRestingRenderer.Draw(
+                LocalIntermissionRenderer.Draw(
                     _renderer,
                     _session,
                     Mouse.GetState().Position,
@@ -926,7 +926,9 @@ public class Game1 : Game
                 return;
             }
 
-            var isSetupMode = _session.CurrentMode.Kind == GoAppModeKind.Resting;
+            var isIntermissionMode = _session.CurrentMode.Kind == GoAppModeKind.Resting;
+            var isSetupMode = isIntermissionMode && _session.UseKind == GoAppUseKind.LocalGame;
+            var isLocalAppsIntermission = isIntermissionMode && _session.UseKind == GoAppUseKind.LocalApps;
             var isBoardEditing = _session.CurrentMode.Kind == GoAppModeKind.BoardEditing;
             var humanPlayerNameHit = isSetupMode ? GoScreenRenderer.GetHumanPlayerNameTextBoxHit(point, _session) : null;
             if (_session.ActiveHumanPlayerNameStone is not null && humanPlayerNameHit is null)
@@ -1042,9 +1044,20 @@ public class Game1 : Game
                 return;
             }
 
-            if (isSetupMode && GoScreenRenderer.GetSetupBackToTitleButtonHit(point))
+            if ((isSetupMode || isLocalAppsIntermission) && GoScreenRenderer.GetSetupBackToTitleButtonHit(point))
             {
                 _session.ReturnToUseSelection();
+            }
+            else if (isLocalAppsIntermission && GoScreenRenderer.GetChangeAppProviderButtonHit(point))
+            {
+                _session.ReturnToUseSelection();
+                _titleMenuPage = TitleMenuPage.CaptureGame;
+                GuiOperationLog.User("Returned to App Provider selection", "app=ponnuki");
+            }
+            else if (isLocalAppsIntermission &&
+                     GoScreenRenderer.GetStartPlayingButtonHit(point, _session.CurrentMode.Kind))
+            {
+                GuiOperationLog.User("Pressed disabled Local Apps Start button", "app=ponnuki; no transition yet");
             }
             else if (_session.CurrentMode.Kind == GoAppModeKind.GameOver && GoScreenRenderer.GetReturnToSetupButtonHit(point))
             {
@@ -1262,6 +1275,23 @@ public class Game1 : Game
                     _ => TitleMenuPage.NextMove,
                 };
                 GuiOperationLog.User("Opened Go Apps entry", $"page={_titleMenuPage}");
+                return true;
+            }
+        }
+
+        if (_titleMenuPage == TitleMenuPage.CaptureGame)
+        {
+            if (TitleRenderer.GetAppProviderEngineHit(point, _session.GtpEngineProfiles.Count) is { } providerIndex)
+            {
+                _session.SelectAppProviderEngine(providerIndex);
+                GuiOperationLog.User("Selected Ponnuki App Provider", $"engine={_session.SelectedAppProviderEngine.DisplayName}");
+                return true;
+            }
+
+            if (_session.CanUseSelectedAppProvider && TitleRenderer.IsAppProviderStartButtonHit(point))
+            {
+                _session.SelectUseKind(GoAppUseKind.LocalApps);
+                GuiOperationLog.User("Entered Local Apps intermission", "app=ponnuki");
                 return true;
             }
         }
