@@ -34,6 +34,10 @@ public sealed partial class GoScreenRenderer
                 DrawProblemCategoryChoice(TitleProblemCategoryBounds(1), "詰碁", "LIFE & DEATH", mousePoint);
                 DrawProblemCategoryChoice(TitleProblemCategoryBounds(2), "次の一手問題", "NEXT MOVE", mousePoint);
                 DrawDynamicOptionText("対局、観戦、問題演習をここから直接選べます。", new Rectangle(500, 700, 890, 38), new Color(180, 195, 195), 0.34f);
+                if (TitleProblemCategoryBounds(0).Contains(mousePoint))
+                {
+                    DrawCaptureGamePreview();
+                }
                 break;
             default:
                 DrawProblemPlaceholder(page, panel, mousePoint);
@@ -69,6 +73,37 @@ public sealed partial class GoScreenRenderer
         DrawDynamicOptionText(title, new Rectangle(bounds.X + 18, bounds.Y + 12, 250, 38), Color.White, 0.43f);
         DrawFittedText(caption, new Rectangle(bounds.X + 18, bounds.Y + 52, 260, 22), new Color(255, 221, 164), 0.27f);
         DrawFittedText("OPEN  >", new Rectangle(bounds.Right - 92, bounds.Y + 28, 68, 28), new Color(180, 195, 195), 0.28f);
+    }
+
+    /// <summary>
+    /// ［ポン抜きゲーム］へカーソルを合わせたときの紹介ポップアップ
+    /// </summary>
+    private void DrawCaptureGamePreview()
+    {
+        var bounds = new Rectangle(1412, 390, 420, 174);
+        var accent = new Color(255, 190, 92);
+
+        FillRect(new Rectangle(bounds.X + 9, bounds.Y + 11, bounds.Width, bounds.Height), new Color(0, 0, 0, 115));
+        FillRect(bounds, new Color(19, 25, 30, 248));
+        DrawRect(bounds, 2, new Color(142, 105, 57));
+        FillRect(new Rectangle(bounds.X, bounds.Y, 7, bounds.Height), accent);
+        DrawLine(new Vector2(1390, 432), new Vector2(bounds.X, 432), 2, accent);
+
+        DrawDynamicOptionText(
+            "ポン抜きゲームとは？",
+            new Rectangle(bounds.X + 26, bounds.Y + 20, bounds.Width - 52, 38),
+            accent,
+            0.40f);
+        DrawDynamicOptionText(
+            "とにかく相手よりアゲハマを",
+            new Rectangle(bounds.X + 26, bounds.Y + 73, bounds.Width - 52, 32),
+            new Color(235, 238, 229),
+            0.34f);
+        DrawDynamicOptionText(
+            "多く取った方が勝ち！",
+            new Rectangle(bounds.X + 26, bounds.Y + 113, bounds.Width - 52, 32),
+            Color.White,
+            0.38f);
     }
 
     private void DrawProblemPlaceholder(TitleMenuPage page, Rectangle panel, Point mousePoint)
