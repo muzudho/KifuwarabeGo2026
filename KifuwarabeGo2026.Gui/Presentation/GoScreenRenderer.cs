@@ -815,7 +815,7 @@ public sealed partial class GoScreenRenderer
             session.SelectedAppProviderEngine.DisplayName,
             new Color(39, 68, 65),
             Color.White);
-        DrawFittedText(
+        DrawDynamicOptionText(
             string.IsNullOrWhiteSpace(session.LocalAppsErrorMessage)
                 ? "初期局面とポン抜きの進行を提供します。"
                 : session.LocalAppsErrorMessage,
