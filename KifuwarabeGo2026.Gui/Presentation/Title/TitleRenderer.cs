@@ -5,14 +5,20 @@ using Microsoft.Xna.Framework;
 
 public static class TitleRenderer
 {
-    public static void Draw(GoScreenRenderer renderer, Point mousePosition) =>
-        renderer.DrawUseSelection(mousePosition);
+    public static void Draw(GoScreenRenderer renderer, Point mousePosition, TitleMenuPage page) =>
+        renderer.DrawUseSelection(mousePosition, page);
 
     public static bool IsLocalGameButtonHit(Point point) =>
-        GoScreenRenderer.GetLocalUseButtonHit(point);
+        GoScreenRenderer.GetTitleHomeLocalButtonHit(point);
 
     public static bool IsCgosClientButtonHit(Point point) =>
-        GoScreenRenderer.GetCgosUseButtonHit(point);
+        GoScreenRenderer.GetTitleHomeCgosButtonHit(point);
+
+    public static int? GetProblemCategoryHit(Point point) =>
+        GoScreenRenderer.GetTitleProblemCategoryHit(point);
+
+    public static bool IsBackButtonHit(Point point) =>
+        GoScreenRenderer.GetTitleMenuBackButtonHit(point);
 
     public static bool IsSettingsButtonHit(Point point) =>
         GoScreenRenderer.GetSettingsButtonHit(point);

@@ -69,6 +69,7 @@ public class Game1 : Game
     private KeyboardState _previousCgosCredentialKeyboard;
     private readonly TextBoxController _cgosCredentialTextBox = new(240);
     private bool _isApplicationSettingsOpen;
+    private TitleMenuPage _titleMenuPage = TitleMenuPage.Home;
     private readonly List<string> _guiLogFiles = new();
     private int _selectedGuiLogIndex = -1;
     private string _applicationSettingsMessage = "";
@@ -423,7 +424,7 @@ public class Game1 : Game
                 if (_isApplicationSettingsOpen)
                     _renderer.DrawApplicationSettings(Mouse.GetState().Position, ApplicationSettings.Current.LogRootDirectory, ApplicationSettings.Current.SgfSaveDirectory, ApplicationSettings.FilePath, _gtpEngineCatalog.ListPath, _guiLogFiles, _selectedGuiLogIndex, _applicationSettingsMessage);
                 else
-                    TitleRenderer.Draw(_renderer, Mouse.GetState().Position);
+                    TitleRenderer.Draw(_renderer, Mouse.GetState().Position, _titleMenuPage);
             }
         }
         else if (_variationSession is not null)
@@ -525,15 +526,8 @@ public class Game1 : Game
                 {
                     HandleApplicationSettingsClick(point);
                 }
-                else if (TitleRenderer.IsLocalGameButtonHit(point))
+                else if (TryHandleTitleMenuClick(point))
                 {
-                    GuiOperationLog.User("Pressed Local button", "Navigate from title to local setup");
-                    _session.SelectUseKind(GoAppUseKind.LocalGame);
-                }
-                else if (TitleRenderer.IsCgosClientButtonHit(point))
-                {
-                    GuiOperationLog.User("Pressed CGOS button", "Navigate from title to CGOS connection selection");
-                    _session.SelectUseKind(GoAppUseKind.CgosClient);
                 }
                 else if (TitleRenderer.IsSettingsButtonHit(point))
                 {
@@ -1232,6 +1226,47 @@ public class Game1 : Game
     {
         var logPath = Path.Combine(AppContext.BaseDirectory, "logs", "gtp.log");
         _desktopLauncher.OpenTextFile(logPath);
+    }
+
+    private bool TryHandleTitleMenuClick(Point point)
+    {
+        if (TitleRenderer.IsBackButtonHit(point))
+        {
+            _titleMenuPage = TitleMenuPage.Home;
+            GuiOperationLog.User("Pressed title menu Back button", $"page={_titleMenuPage}");
+            return true;
+        }
+
+        if (_titleMenuPage == TitleMenuPage.Home)
+        {
+            if (TitleRenderer.IsLocalGameButtonHit(point))
+            {
+                GuiOperationLog.User("Pressed Local button", "Navigate from title to local setup");
+                _session.SelectUseKind(GoAppUseKind.LocalGame);
+                return true;
+            }
+
+            if (TitleRenderer.IsCgosClientButtonHit(point))
+            {
+                GuiOperationLog.User("Pressed CGOS button", "Navigate from title to CGOS connection selection");
+                _session.SelectUseKind(GoAppUseKind.CgosClient);
+                return true;
+            }
+
+            if (TitleRenderer.GetProblemCategoryHit(point) is { } categoryIndex)
+            {
+                _titleMenuPage = categoryIndex switch
+                {
+                    0 => TitleMenuPage.CaptureGame,
+                    1 => TitleMenuPage.Tsumego,
+                    _ => TitleMenuPage.NextMove,
+                };
+                GuiOperationLog.User("Opened Go Problems category", $"page={_titleMenuPage}");
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private bool TryHandleBoardEditingClick(Point point)
@@ -3656,7 +3691,7 @@ public class Game1 : Game
         _isApplicationSettingsOpen
             ? "Application settings"
             : _session.UseKind is null
-                ? "Title"
+                ? $"Title/{_titleMenuPage}"
                 : _session.UseKind == GoAppUseKind.LocalGame
                     ? _playingScene.IsInitialPositionConciergeVisible
                         ? "Local/Playing/InitialPositionConcierge"

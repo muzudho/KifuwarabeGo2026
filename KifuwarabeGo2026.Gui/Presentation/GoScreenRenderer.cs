@@ -5,6 +5,7 @@ using KifuwarabeGo2026.Gui.Application.Local.Resting.TournamentRule;
 using KifuwarabeGo2026.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.Shared.Domain;
 using KifuwarabeGo2026.Gui.Presentation.Local.Resting.TournamentRule;
+using KifuwarabeGo2026.Gui.Presentation.Title;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -101,7 +102,7 @@ public sealed partial class GoScreenRenderer
         _spriteBatch.End();
     }
 
-    public void DrawUseSelection(Point mousePosition)
+    public void DrawUseSelection(Point mousePosition, TitleMenuPage page)
     {
         var mousePoint = VirtualScreen.ToVirtualPoint(_graphicsDevice.Viewport, mousePosition);
 
@@ -110,7 +111,7 @@ public sealed partial class GoScreenRenderer
             transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));
 
         DrawBackground();
-        DrawUseSelectionPanel(mousePoint);
+        DrawUseSelectionPanel(mousePoint, page);
 
         _spriteBatch.End();
     }
@@ -762,6 +763,27 @@ public sealed partial class GoScreenRenderer
 
     private static Rectangle SetupBackToTitleButtonBounds => new(1642, 104, 170, 52);
     private static Rectangle LocalUseButtonBounds => new(508, 404, 438, 300);
+    private static Rectangle TitleMenuBackButtonBounds => new(1260, 760, 152, 54);
+    private static Rectangle TitleHomeLocalButtonBounds => new(500, 390, 400, 126);
+    private static Rectangle TitleHomeCgosButtonBounds => new(500, 536, 400, 126);
+    private static Rectangle TitleProblemCategoryBounds(int index) => new(950, 390 + index * 100, 440, 84);
+
+    public static bool GetTitleMenuBackButtonHit(Point point) => TitleMenuBackButtonBounds.Contains(point);
+    public static bool GetTitleHomeLocalButtonHit(Point point) => TitleHomeLocalButtonBounds.Contains(point);
+    public static bool GetTitleHomeCgosButtonHit(Point point) => TitleHomeCgosButtonBounds.Contains(point);
+
+    public static int? GetTitleProblemCategoryHit(Point point)
+    {
+        for (var index = 0; index < 3; index++)
+        {
+            if (TitleProblemCategoryBounds(index).Contains(point))
+            {
+                return index;
+            }
+        }
+
+        return null;
+    }
     private static Rectangle ReturnToSetupButtonBounds => new(1492, 132, 320, 56);
 
     private static Rectangle ExportSgfButtonBounds => new(1164, 910, 306, 56);

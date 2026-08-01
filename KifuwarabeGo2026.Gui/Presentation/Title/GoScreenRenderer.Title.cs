@@ -1,0 +1,97 @@
+namespace KifuwarabeGo2026.Gui.Presentation;
+
+using KifuwarabeGo2026.Gui.Presentation.Title;
+using Microsoft.Xna.Framework;
+
+public sealed partial class GoScreenRenderer
+{
+    private void DrawUseSelectionPanel(Point mousePoint, TitleMenuPage page)
+    {
+        // Title background artwork is suspended for now.
+        // DrawTitleGoEquipment();
+        var panel = new Rectangle(420, 172, 1080, 736);
+        FillRect(new Rectangle(panel.X + 18, panel.Y + 20, panel.Width, panel.Height), new Color(0, 0, 0, 130));
+        FillRect(panel, new Color(21, 25, 32, 242));
+        DrawRect(panel, 2, new Color(82, 111, 114));
+
+        DrawText("KIFUWARABE GO 2026", new Vector2(panel.X + 58, panel.Y + 58), new Color(244, 238, 218), 1.05f);
+        DrawText(GetDisplayVersion(), new Vector2(panel.X + 790, panel.Y + 91), new Color(99, 223, 185), 0.38f);
+        DrawLine(new Vector2(panel.X + 790, panel.Y + 126), new Vector2(panel.X + 958, panel.Y + 126), 2, new Color(99, 223, 185, 120));
+        DrawTitleMenuContent(page, panel, mousePoint);
+        DrawSettingsButton(mousePoint);
+    }
+
+    private void DrawTitleMenuContent(TitleMenuPage page, Rectangle panel, Point mousePoint)
+    {
+        switch (page)
+        {
+            case TitleMenuPage.Home:
+                DrawText("GO PLAY", new Vector2(500, 338), new Color(99, 223, 185), 0.58f);
+                DrawText("GO PROBLEMS", new Vector2(950, 338), new Color(255, 190, 92), 0.58f);
+                DrawHomeServiceChoice(TitleHomeLocalButtonBounds, "Local", "PLAY / REVIEW", new Color(99, 223, 185), mousePoint);
+                DrawHomeServiceChoice(TitleHomeCgosButtonBounds, "Connect To CGOS", "WATCH / CONNECT", new Color(99, 223, 185), mousePoint);
+                DrawProblemCategoryChoice(TitleProblemCategoryBounds(0), "ポン抜きゲーム", "CAPTURE GAME", mousePoint);
+                DrawProblemCategoryChoice(TitleProblemCategoryBounds(1), "詰碁", "LIFE & DEATH", mousePoint);
+                DrawProblemCategoryChoice(TitleProblemCategoryBounds(2), "次の一手問題", "NEXT MOVE", mousePoint);
+                DrawDynamicOptionText("対局、観戦、問題演習をここから直接選べます。", new Rectangle(500, 700, 890, 38), new Color(180, 195, 195), 0.34f);
+                break;
+            default:
+                DrawProblemPlaceholder(page, panel, mousePoint);
+                break;
+        }
+    }
+
+    private void DrawHomeServiceChoice(Rectangle bounds, string title, string caption, Color accent, Point mousePoint)
+    {
+        var hovered = bounds.Contains(mousePoint);
+        FillRect(new Rectangle(bounds.X + 6, bounds.Y + 8, bounds.Width, bounds.Height), new Color(0, 0, 0, 95));
+        FillRect(bounds, hovered ? new Color(36, 50, 58) : new Color(24, 31, 37));
+        DrawRect(bounds, 2, hovered ? new Color(178, 219, 226) : new Color(88, 102, 112));
+        FillRect(new Rectangle(bounds.X, bounds.Y, 6, bounds.Height), hovered ? accent : new Color(accent.R, accent.G, accent.B, (byte)100));
+        DrawText(title, new Vector2(bounds.X + 28, bounds.Y + 24), Color.White, 0.52f);
+        DrawFittedText(caption, new Rectangle(bounds.X + 28, bounds.Y + 74, bounds.Width - 100, 30), new Color(204, 241, 226), 0.34f);
+        DrawFittedText("OPEN  >", new Rectangle(bounds.Right - 92, bounds.Y + 46, 68, 28), hovered ? accent : new Color(180, 195, 195), 0.28f);
+    }
+
+    private void DrawTitleBreadcrumb(string text, Rectangle panel)
+    {
+        DrawText(text, new Vector2(panel.X + 62, panel.Y + 142), new Color(180, 195, 195), 0.46f);
+        DrawLine(new Vector2(panel.X + 62, panel.Y + 184), new Vector2(panel.Right - 62, panel.Y + 184), 1, new Color(82, 111, 114));
+    }
+
+    private void DrawProblemCategoryChoice(Rectangle bounds, string title, string caption, Point mousePoint)
+    {
+        var hovered = bounds.Contains(mousePoint);
+        FillRect(new Rectangle(bounds.X + 7, bounds.Y + 9, bounds.Width, bounds.Height), new Color(0, 0, 0, 90));
+        FillRect(bounds, hovered ? new Color(42, 55, 63) : new Color(24, 31, 37));
+        DrawRect(bounds, 2, hovered ? new Color(255, 214, 132) : new Color(88, 102, 112));
+        FillRect(new Rectangle(bounds.X, bounds.Y, bounds.Width, 7), hovered ? new Color(255, 190, 92) : new Color(99, 76, 48));
+        DrawDynamicOptionText(title, new Rectangle(bounds.X + 18, bounds.Y + 12, 250, 38), Color.White, 0.43f);
+        DrawFittedText(caption, new Rectangle(bounds.X + 18, bounds.Y + 52, 260, 22), new Color(255, 221, 164), 0.27f);
+        DrawFittedText("OPEN  >", new Rectangle(bounds.Right - 92, bounds.Y + 28, 68, 28), new Color(180, 195, 195), 0.28f);
+    }
+
+    private void DrawProblemPlaceholder(TitleMenuPage page, Rectangle panel, Point mousePoint)
+    {
+        var (title, caption) = page switch
+        {
+            TitleMenuPage.CaptureGame => ("ポン抜きゲーム", "CAPTURE GAME"),
+            TitleMenuPage.Tsumego => ("詰碁", "LIFE & DEATH"),
+            _ => ("次の一手問題", "NEXT MOVE"),
+        };
+        DrawTitleBreadcrumb($"HOME  >  GO PROBLEMS  >  {caption}", panel);
+        DrawDynamicOptionText(title, new Rectangle(panel.X + 150, panel.Y + 280, panel.Width - 300, 92), Color.White, 0.84f);
+        DrawFittedText("COMING SOON", new Rectangle(panel.X + 250, panel.Y + 430, panel.Width - 500, 70), new Color(99, 223, 185), 0.72f);
+        DrawDynamicOptionText("問題集と問題一覧は、ここからディレクトリーのように開いていく予定です。", new Rectangle(panel.X + 150, panel.Y + 530, panel.Width - 300, 54), new Color(180, 195, 195), 0.38f);
+        DrawTitleBackButton(mousePoint);
+    }
+
+    private void DrawTitleBackButton(Point mousePoint) =>
+        DrawCommandButton(TitleMenuBackButtonBounds, "BACK", false, mousePoint, scale: 0.36f);
+
+    private static string GetDisplayVersion()
+    {
+        var version = typeof(GoScreenRenderer).Assembly.GetName().Version;
+        return version is null ? "VERSION" : $"v{version.Major}.{version.Minor}.{version.Build}";
+    }
+}
