@@ -56,6 +56,8 @@ public class Game1 : Game
     private GoScreenRenderer? _renderer;
     private SoundEffect? _placeStoneSound;
     private SoundEffectInstance? _placeStoneSoundInstance;
+    private SoundEffect? _upcomingMatchChime;
+    private SoundEffectInstance? _upcomingMatchChimeInstance;
     private MouseState _previousMouse;
     private KeyboardState _previousKeyboard;
     private KeyboardState _previousGtpEngineKeyboard;
@@ -162,6 +164,8 @@ public class Game1 : Game
         _renderer = new GoScreenRenderer(GraphicsDevice, Content, _textRasterizer);
         _placeStoneSound = CreatePlaceStoneSound();
         _placeStoneSoundInstance = _placeStoneSound.CreateInstance();
+        _upcomingMatchChime = CreateUpcomingMatchChime();
+        _upcomingMatchChimeInstance = _upcomingMatchChime.CreateInstance();
     }
 
     protected override void Update(GameTime gameTime)
@@ -2257,6 +2261,7 @@ public class Game1 : Game
         _cgosMatchNotificationMode = IsCgosConnectionWaitingScreen()
             ? CgosMatchNotificationMode.Countdown
             : CgosMatchNotificationMode.Deferred;
+        PlayUpcomingMatchChime();
         GuiOperationLog.App(
             "CGOS match notification opened",
             $"gameId={_cgosGameObservation.GameId} mode={_cgosMatchNotificationMode}");
@@ -3668,6 +3673,8 @@ public class Game1 : Game
             _cgosWhiteConnectionProcess.Dispose();
             _cgosAdminProcess.Dispose();
             _playingScene.Dispose();
+            _upcomingMatchChimeInstance?.Dispose();
+            _upcomingMatchChime?.Dispose();
             _placeStoneSoundInstance?.Dispose();
             _placeStoneSound?.Dispose();
         }
@@ -3686,6 +3693,59 @@ public class Game1 : Game
         _placeStoneSoundInstance.Pitch = pitch;
         _placeStoneSoundInstance.Pan = pan;
         _placeStoneSoundInstance.Play();
+    }
+
+    private void PlayUpcomingMatchChime()
+    {
+        if (_upcomingMatchChimeInstance is null)
+        {
+            return;
+        }
+
+        if (_upcomingMatchChimeInstance.State == SoundState.Playing)
+        {
+            _upcomingMatchChimeInstance.Stop();
+        }
+
+        _upcomingMatchChimeInstance.Volume = 0.72f;
+        _upcomingMatchChimeInstance.Play();
+    }
+
+    private static SoundEffect CreateUpcomingMatchChime()
+    {
+        const int sampleRate = 44100;
+        const float duration = 0.82f;
+        var sampleCount = (int)(sampleRate * duration);
+        var buffer = new byte[sampleCount * sizeof(short)];
+
+        for (var i = 0; i < sampleCount; i++)
+        {
+            var t = i / (float)sampleRate;
+            var wave = CreateBellTone(t, 0f, 0.34f, 659.25f) +
+                       CreateBellTone(t, 0.38f, 0.40f, 783.99f);
+            var sample = (short)(Math.Clamp(wave, -1f, 1f) * short.MaxValue * 0.52f);
+            buffer[i * 2] = (byte)(sample & 0xff);
+            buffer[i * 2 + 1] = (byte)((sample >> 8) & 0xff);
+        }
+
+        return new SoundEffect(buffer, sampleRate, AudioChannels.Mono);
+
+        static float CreateBellTone(float time, float start, float toneDuration, float frequency)
+        {
+            var localTime = time - start;
+            if (localTime < 0f || localTime >= toneDuration)
+            {
+                return 0f;
+            }
+
+            var attack = Math.Clamp(localTime / 0.012f, 0f, 1f);
+            var tail = Math.Clamp((toneDuration - localTime) / 0.045f, 0f, 1f);
+            var envelope = attack * tail * MathF.Exp(-4.2f * localTime);
+            var fundamental = MathF.Sin(MathF.Tau * frequency * localTime);
+            var secondPartial = MathF.Sin(MathF.Tau * frequency * 2.01f * localTime) * 0.34f;
+            var thirdPartial = MathF.Sin(MathF.Tau * frequency * 3.97f * localTime) * 0.16f;
+            return (fundamental + secondPartial + thirdPartial) * envelope;
+        }
     }
 
     private static SoundEffect CreatePlaceStoneSound()
