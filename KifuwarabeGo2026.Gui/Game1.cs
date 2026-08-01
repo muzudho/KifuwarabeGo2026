@@ -32,6 +32,7 @@ using System.Threading.Tasks;
 
 public class Game1 : Game
 {
+    private const string ProductTitle = "Kifuwarabe Go 2026";
     private readonly GraphicsDeviceManager _graphics;
     private readonly IClipboardService _clipboardService;
     private readonly IMessageDialogService _messageDialogService;
@@ -140,11 +141,19 @@ public class Game1 : Game
 
         Content.RootDirectory = "Content";
         IsMouseVisible = true;
-        Window.Title = "Kifuwarabe Go 2026";
+        Window.Title = CreateWindowTitle();
         Window.AllowUserResizing = true;
         Window.TextInput += OnTextInput;
         Deactivated += OnGameDeactivated;
         RefreshGuiLogFiles();
+    }
+
+    private static string CreateWindowTitle()
+    {
+        var version = typeof(Game1).Assembly.GetName().Version;
+        return version is null
+            ? ProductTitle
+            : $"{ProductTitle} | v{version.Major}.{version.Minor}.{version.Build}";
     }
 
     protected override void LoadContent()
