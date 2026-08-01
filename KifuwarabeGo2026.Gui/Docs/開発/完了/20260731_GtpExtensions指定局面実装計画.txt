@@ -758,6 +758,7 @@ VerifiedSuccess
     外部3エンジンは公式資料だけを確認し、未実機・未成功として記録した。
     KataGoはGTP起動方法とモデル・設定要件、Leela ZeroはGTP v2とloadsgf、
     GNU Goはfixed_handicap、set_free_handicap、loadsgfの公式記載を確認した。
+    外部エンジンの未実機確認は、現役の ../指定局面エンジン検証結果.md で継続する。
     「指定局面コンシェルジュ利用ガイド」を追加し、操作、結果表示、方式、自動保存、
     Profile設定、GTPログ、loadsgf・連続play・起動失敗のトラブル対応をまとめた。
     「指定局面エンジン検証結果」を追加し、判定区分、version、OS、方式、Evidence、
