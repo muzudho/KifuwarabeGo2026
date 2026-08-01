@@ -8,8 +8,10 @@ using System;
 /// </summary>
 public sealed partial class GoScreenRenderer
 {
-    private static readonly Color TitleGoEquipmentThinColor = new(112, 231, 235, 112);
-    private static readonly Color TitleGoEquipmentOutlineColor = new(112, 231, 235, 172);
+    // SpriteBatchのAlphaBlendはプリマルチプライドAlphaを前提とするため、
+    // RGBもAlphaに合わせて変換してから渡す。
+    private static readonly Color TitleGoEquipmentThinColor = Color.FromNonPremultiplied(112, 231, 235, 140);
+    private static readonly Color TitleGoEquipmentOutlineColor = Color.FromNonPremultiplied(112, 231, 235, 170);
 
     /// <summary>
     /// 背景の描画
