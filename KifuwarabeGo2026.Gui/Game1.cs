@@ -5,6 +5,7 @@ using KifuwarabeGo2026.Gui.Application.Cgos.Connect;
 using KifuwarabeGo2026.Gui.Application.Cgos.ConnectionTarget;
 using KifuwarabeGo2026.Gui.Application.Cgos.Watching;
 using KifuwarabeGo2026.Gui.Application.Local.Playing;
+using KifuwarabeGo2026.Gui.Application.Local.Apps.Ponnuki;
 using KifuwarabeGo2026.Gui.Application.Local.Resting.TournamentRule;
 using KifuwarabeGo2026.Gui.Domain;
 using KifuwarabeGo2026.Shared.Domain;
@@ -182,7 +183,7 @@ public class Game1 : Game
             Exit();
         }
 
-        if (_session.UseKind is not GoAppUseKind.LocalGame)
+        if (_session.UseKind is not (GoAppUseKind.LocalGame or GoAppUseKind.LocalApps))
         {
             if (_session.UseKind == GoAppUseKind.CgosClient)
             {
@@ -929,12 +930,13 @@ public class Game1 : Game
             var isIntermissionMode = _session.CurrentMode.Kind == GoAppModeKind.Resting;
             var isSetupMode = isIntermissionMode && _session.UseKind == GoAppUseKind.LocalGame;
             var isLocalAppsIntermission = isIntermissionMode && _session.UseKind == GoAppUseKind.LocalApps;
+            var isPlayerSelectionIntermission = isSetupMode || isLocalAppsIntermission;
             var isBoardEditing = _session.CurrentMode.Kind == GoAppModeKind.BoardEditing;
-            var humanPlayerNameHit = isSetupMode ? GoScreenRenderer.GetHumanPlayerNameTextBoxHit(point, _session) : null;
+            var humanPlayerNameHit = isPlayerSelectionIntermission ? GoScreenRenderer.GetHumanPlayerNameTextBoxHit(point, _session) : null;
             if (_session.ActiveHumanPlayerNameStone is not null && humanPlayerNameHit is null)
                 EndHumanPlayerNameEdit(commit: true);
-            var handledByGtpEngineEditPanel = isSetupMode && !isBoardEditing && TryHandleGtpEngineEditPanelClick(point);
-            var handledByGtpEngineSelectionDialog = !handledByGtpEngineEditPanel && isSetupMode && !isBoardEditing && TryHandleGtpEngineSelectionDialogClick(point);
+            var handledByGtpEngineEditPanel = isPlayerSelectionIntermission && !isBoardEditing && TryHandleGtpEngineEditPanelClick(point);
+            var handledByGtpEngineSelectionDialog = !handledByGtpEngineEditPanel && isPlayerSelectionIntermission && !isBoardEditing && TryHandleGtpEngineSelectionDialogClick(point);
             Func<Point, string, int>? getDisplayNameCaretIndex = _renderer is null
                 ? null
                 : (caretPoint, text) => TournamentRuleRenderer.GetDisplayNameCaretIndex(_renderer, caretPoint, text);
@@ -1055,9 +1057,10 @@ public class Game1 : Game
                 GuiOperationLog.User("Returned to App Provider selection", "app=ponnuki");
             }
             else if (isLocalAppsIntermission &&
+                     _session.CanStartPlaying &&
                      GoScreenRenderer.GetStartPlayingButtonHit(point, _session.CurrentMode.Kind))
             {
-                GuiOperationLog.User("Pressed disabled Local Apps Start button", "app=ponnuki; no transition yet");
+                StartPonnukiApp();
             }
             else if (_session.CurrentMode.Kind == GoAppModeKind.GameOver && GoScreenRenderer.GetReturnToSetupButtonHit(point))
             {
@@ -1110,21 +1113,21 @@ public class Game1 : Game
             {
                 _playingScene.StartPlaying();
             }
-            else if (isSetupMode && GoScreenRenderer.GetBlackPlayerKindButtonHit(point) is { } blackPlayerKind)
+            else if (isPlayerSelectionIntermission && GoScreenRenderer.GetBlackPlayerKindButtonHit(point) is { } blackPlayerKind)
             {
                 EndHumanPlayerNameEdit(commit: true);
                 _session.SetPlayerKind(GoStone.Black, blackPlayerKind);
             }
-            else if (isSetupMode && _session.BlackPlayerKind == GoPlayerKind.Computer && GoScreenRenderer.GetBlackGtpEngineBrowseButtonHit(point))
+            else if (isPlayerSelectionIntermission && _session.BlackPlayerKind == GoPlayerKind.Computer && GoScreenRenderer.GetBlackGtpEngineBrowseButtonHit(point))
             {
                 OpenGtpEngineSelectionDialog(GoStone.Black);
             }
-            else if (isSetupMode && GoScreenRenderer.GetWhitePlayerKindButtonHit(point) is { } whitePlayerKind)
+            else if (isPlayerSelectionIntermission && GoScreenRenderer.GetWhitePlayerKindButtonHit(point) is { } whitePlayerKind)
             {
                 EndHumanPlayerNameEdit(commit: true);
                 _session.SetPlayerKind(GoStone.White, whitePlayerKind);
             }
-            else if (isSetupMode && _session.WhitePlayerKind == GoPlayerKind.Computer && GoScreenRenderer.GetWhiteGtpEngineBrowseButtonHit(point))
+            else if (isPlayerSelectionIntermission && _session.WhitePlayerKind == GoPlayerKind.Computer && GoScreenRenderer.GetWhiteGtpEngineBrowseButtonHit(point))
             {
                 OpenGtpEngineSelectionDialog(GoStone.White);
             }
@@ -1239,6 +1242,29 @@ public class Game1 : Game
     {
         var logPath = Path.Combine(AppContext.BaseDirectory, "logs", "gtp.log");
         _desktopLauncher.OpenTextFile(logPath);
+    }
+
+    private void StartPonnukiApp()
+    {
+        _session.ClearLocalAppsError();
+        try
+        {
+            var provider = _session.SelectedAppProviderEngine;
+            var record = PonnukiPositionProvider.MakePositionAsync(provider).GetAwaiter().GetResult();
+            if (!_session.LoadGameRecordAsInitialPosition(record, out var warning))
+                throw new InvalidOperationException(warning);
+
+            GuiOperationLog.User(
+                "Started Local App",
+                $"app=ponnuki; provider={provider.DisplayName}; board={record.BoardSize}; setupStones={record.SetupStones.Count}");
+            _playingScene.StartPlaying();
+        }
+        catch (Exception ex)
+        {
+            _session.SetLocalAppsError(ex.Message);
+            ApplicationErrorLog.Write("PONNUKI APP", "Could not create the initial position with the App Provider engine.", ex);
+            GuiOperationLog.App("Could not start Local App", $"app=ponnuki; error={ex.Message}");
+        }
     }
 
     private bool TryHandleTitleMenuClick(Point point)

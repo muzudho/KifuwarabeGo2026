@@ -49,7 +49,47 @@ public sealed class GtpEngineCatalog
             new GtpEngineCatalog(listPath, defaultProfiles).Save(defaultProfiles);
         }
 
+        var catalog = Load(listPath);
+        var developmentListPath = FindDevelopmentListPath();
+        if (developmentListPath is null) return catalog;
+
+        var profiles = catalog.Profiles.ToList();
+        var changed = false;
+        foreach (var defaultProfile in Load(developmentListPath).Profiles.Take(1))
+        {
+            if (profiles.Any(profile =>
+                    string.Equals(profile.ExecutablePath, defaultProfile.ExecutablePath, StringComparison.OrdinalIgnoreCase)))
+                continue;
+
+            profiles.Insert(0, defaultProfile);
+            changed = true;
+        }
+
+        if (!changed) return catalog;
+        catalog.Save(profiles);
         return Load(listPath);
+    }
+
+    private static string? FindDevelopmentListPath()
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory is not null)
+        {
+            if (File.Exists(Path.Combine(directory.FullName, "KifuwarabeGo2026.slnx")))
+            {
+                var path = Path.Combine(
+                    directory.FullName,
+                    "KifuwarabeGo2026.Gui",
+                    "Content",
+                    "GtpEngines",
+                    "gtp-engine-list.json");
+                return File.Exists(path) ? path : null;
+            }
+
+            directory = directory.Parent;
+        }
+
+        return null;
     }
 
     public static GtpEngineCatalog Load(string listPath)

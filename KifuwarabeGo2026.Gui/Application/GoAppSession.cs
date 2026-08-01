@@ -358,6 +358,12 @@ public sealed class GoAppSession
         }
     }
 
+    public string LocalAppsErrorMessage { get; private set; } = "";
+
+    public void ClearLocalAppsError() => LocalAppsErrorMessage = "";
+
+    public void SetLocalAppsError(string message) => LocalAppsErrorMessage = message ?? "";
+
     public bool IsGtpEngineSelectionDialogOpen { get; private set; }
 
     public bool IsGtpEngineSelectionForCgos { get; private set; }

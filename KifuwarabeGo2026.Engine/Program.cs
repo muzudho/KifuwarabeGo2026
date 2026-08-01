@@ -25,7 +25,7 @@ internal sealed class GtpEngine
     [
         "protocol_version", "name", "version", "known_command", "list_commands", "boardsize", "clear_board",
         "komi", "play", "genmove", "cgos-genmove_analyze",
-        "kfw-options", "kfw-get-option", "kfw-set-option",
+        "kfw-options", "kfw-get-option", "kfw-set-option", "kfw-make-position",
         "gui_options", "gui_getoption", "gui_setoption",
         "begin_position", "add_black", "add_white", "set_to_play", "commit_position", "abort_position", "quit",
     ];
@@ -90,6 +90,9 @@ internal sealed class GtpEngine
                 return false;
             case "kfw-set-option":
                 ExecuteGuiSetOption(tokens, out error);
+                return false;
+            case "kfw-make-position":
+                ExecuteMakePosition(tokens, out response, out error);
                 return false;
 
             case "boardsize":
@@ -251,6 +254,72 @@ internal sealed class GtpEngine
         _board.TryPlaceStone(move.X, move.Y, color, _koPoint, out _, out _koPoint);
         _sideToPlay = Opponent(color);
         response = FormatVertex(move, _board.Size);
+    }
+
+    private void ExecuteMakePosition(string[] tokens, out string response, out string? error)
+    {
+        response = "";
+        error = null;
+        if (tokens.Length != 5 ||
+            !tokens[1].Equals("ponnuki", StringComparison.OrdinalIgnoreCase) ||
+            tokens[2] != "1" ||
+            !int.TryParse(tokens[3], out var boardSize) || boardSize != 9 ||
+            !int.TryParse(tokens[4], out var requestedMoveCount) || requestedMoveCount is < 0 or > 200)
+        {
+            error = "usage: kfw-make-position ponnuki 1 9 move-count";
+            return;
+        }
+
+        var seed = _random.Next(0, int.MaxValue);
+        var random = new Random(seed);
+        var board = new GoBoard(boardSize);
+        GoPoint? koPoint = null;
+        var sideToPlay = GoStone.Black;
+
+        for (var ply = 0; ply < requestedMoveCount; ply++)
+        {
+            var legalMoves = new List<GoPoint>();
+            for (var y = 0; y < boardSize; y++)
+            {
+                for (var x = 0; x < boardSize; x++)
+                {
+                    var trial = board.Clone();
+                    if (trial.TryPlaceStone(x, y, sideToPlay, koPoint, out _, out _))
+                        legalMoves.Add(new GoPoint(x, y));
+                }
+            }
+
+            if (legalMoves.Count == 0)
+                break;
+
+            var move = legalMoves[random.Next(legalMoves.Count)];
+            board.TryPlaceStone(move.X, move.Y, sideToPlay, koPoint, out _, out koPoint);
+            sideToPlay = Opponent(sideToPlay);
+        }
+
+        var black = new List<string>();
+        var white = new List<string>();
+        for (var y = 0; y < boardSize; y++)
+        {
+            for (var x = 0; x < boardSize; x++)
+            {
+                var stone = board.GetStone(x, y);
+                if (stone == GoStone.Black) black.Add(FormatVertex(new GoPoint(x, y), boardSize));
+                if (stone == GoStone.White) white.Add(FormatVertex(new GoPoint(x, y), boardSize));
+            }
+        }
+
+        response = JsonSerializer.Serialize(new
+        {
+            app = "ponnuki",
+            version = 1,
+            boardSize,
+            black,
+            white,
+            toPlay = sideToPlay == GoStone.Black ? "black" : "white",
+            captures = new { black = 0, white = 0 },
+            seed,
+        });
     }
 
     private bool RejectWhilePositionSetupActive(out string? error)

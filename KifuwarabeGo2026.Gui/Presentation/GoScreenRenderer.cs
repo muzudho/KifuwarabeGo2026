@@ -798,7 +798,12 @@ public sealed partial class GoScreenRenderer
 
         DrawVerticalResultSection(new Rectangle(1144, 184, 668, 176), "LOCAL APPS", new Color(99, 76, 48));
         DrawResultRow(new Rectangle(1164, 236, 628, 56), "APP", "PONNUKI", new Color(73, 57, 39), Color.White);
-        DrawResultRow(new Rectangle(1164, 296, 628, 48), "STATUS", "INTERMISSION", new Color(58, 48, 38), new Color(255, 210, 128));
+        DrawResultRow(
+            new Rectangle(1164, 296, 628, 48),
+            "STATUS",
+            string.IsNullOrWhiteSpace(session.LocalAppsErrorMessage) ? "INTERMISSION" : "PROVIDER ERROR",
+            new Color(58, 48, 38),
+            string.IsNullOrWhiteSpace(session.LocalAppsErrorMessage) ? new Color(255, 210, 128) : new Color(255, 145, 151));
 
         DrawVerticalResultSection(new Rectangle(1144, 392, 668, 208), "APP PROVIDER ENGINE", new Color(66, 104, 116));
         DrawDynamicOptionText("問題提供エンジン", new Rectangle(1164, 410, 300, 34), new Color(180, 195, 195), 0.30f);
@@ -809,20 +814,28 @@ public sealed partial class GoScreenRenderer
             new Color(39, 68, 65),
             Color.White);
         DrawFittedText(
-            "プロバイダーを変える場合は、いったんタイトルへ戻ります。",
+            string.IsNullOrWhiteSpace(session.LocalAppsErrorMessage)
+                ? "初期局面とポン抜きの進行を提供します。"
+                : session.LocalAppsErrorMessage,
             new Rectangle(1164, 548, 628, 30),
             new Color(180, 195, 195),
             0.30f);
         DrawCommandButton(ChangeAppProviderButtonBounds, "CHANGE PROVIDER", false, mousePoint, scale: 0.30f);
 
+        DrawVerticalResultSection(new Rectangle(1144, 696, 668, 216), "PLAYERS", new Color(76, 91, 126));
+        DrawSetupPlayerKindRow(GoStone.Black, session.BlackPlayerKind, mousePoint, BlackPlayerKindButtonY);
+        DrawSetupPlayerSelector(session, GoStone.Black, mousePoint, BlackEngineButtonY);
+        DrawSetupPlayerKindRow(GoStone.White, session.WhitePlayerKind, mousePoint, WhitePlayerKindButtonY);
+        DrawSetupPlayerSelector(session, GoStone.White, mousePoint, WhiteEngineButtonY);
+
         DrawVerticalResultSection(new Rectangle(1144, 916, 668, 76), "ACTION", new Color(91, 82, 105));
         DrawCommandButton(
             StartPlayingButtonBounds,
-            "START",
+            session.CanStartPlaying ? "START" : "ENGINE REQUIRED",
             false,
             mousePoint,
-            enabled: false,
-            scale: 0.48f);
+            enabled: session.CanStartPlaying,
+            scale: session.CanStartPlaying ? 0.48f : 0.28f);
     }
     public static bool GetTitleHomeLocalButtonHit(Point point) => TitleHomeLocalButtonBounds.Contains(point);
     public static bool GetTitleHomeCgosButtonHit(Point point) => TitleHomeCgosButtonBounds.Contains(point);
