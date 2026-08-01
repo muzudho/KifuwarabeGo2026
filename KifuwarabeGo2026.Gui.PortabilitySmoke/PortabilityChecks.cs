@@ -208,15 +208,15 @@ internal static class PortabilityChecks
             [
                 "boardsize 19",
                 "komi 6.5",
-                "begin_position",
-                "add_black D4",
-                "add_white Q16",
-                "set_to_play white",
-                "commit_position",
+                "kfw-begin-position",
+                "kfw-add-black D4",
+                "kfw-add-white Q16",
+                "kfw-set-to-play white",
+                "kfw-commit-position",
             ]),
             "The Kifuwarabe atomic setup command sequence is incorrect.");
         Require(strategy.RequiredCommands.SequenceEqual(
-            ["begin_position", "add_black", "add_white", "set_to_play", "commit_position", "abort_position"]),
+            ["kfw-begin-position", "kfw-add-black", "kfw-add-white", "kfw-set-to-play", "kfw-commit-position", "kfw-abort-position"]),
             "The atomic strategy must require the complete transactional command set.");
         Require(KifuwarabeGtpProfile.Instance.Strategies[0].Method == InitialPositionMethod.KifuwarabeAtomicSetup,
             "The Kifuwarabe profile must try its verified atomic method first.");

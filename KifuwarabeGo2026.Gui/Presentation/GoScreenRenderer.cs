@@ -772,15 +772,17 @@ public sealed partial class GoScreenRenderer
 
     private static Rectangle SetupBackToTitleButtonBounds => new(1642, 104, 170, 52);
     private static Rectangle LocalUseButtonBounds => new(508, 404, 438, 300);
-    private static Rectangle TitleMenuBackButtonBounds => new(1260, 238, 152, 54);
-    private static Rectangle TitleAppProviderEngineBounds(int index) => new(570, 438 + index * 66, 780, 56);
-    private static Rectangle TitleAppProviderStartButtonBounds => new(1198, 790, 152, 54);
+    private static Rectangle TitleMenuBackButtonBounds => new(1260, 316, 152, 54);
+    private static Rectangle TitleAppProviderEngineBounds(int index) => new(570, 466 + index * 66, 780, 56);
+    private static Rectangle TitleAppProviderStartButtonBounds => new(1198, 826, 152, 54);
+    private static Rectangle TitleAppProviderRecheckButtonBounds => new(828, 826, 340, 54);
     private static Rectangle TitleHomeLocalButtonBounds => new(500, 390, 400, 126);
     private static Rectangle TitleHomeCgosButtonBounds => new(500, 536, 400, 126);
     private static Rectangle TitleAppBounds(int index) => new(950, 390 + index * 100, 440, 84);
 
     public static bool GetTitleMenuBackButtonHit(Point point) => TitleMenuBackButtonBounds.Contains(point);
     public static bool GetTitleAppProviderStartButtonHit(Point point) => TitleAppProviderStartButtonBounds.Contains(point);
+    public static bool GetTitleAppProviderRecheckButtonHit(Point point) => TitleAppProviderRecheckButtonBounds.Contains(point);
 
     public static int? GetTitleAppProviderEngineHit(Point point, int engineCount)
     {

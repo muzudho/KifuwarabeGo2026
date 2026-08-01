@@ -1267,6 +1267,24 @@ public class Game1 : Game
         }
     }
 
+    private void RecheckPonnukiProvider()
+    {
+        try
+        {
+            var provider = _session.SelectedAppProviderEngine;
+            var result = PonnukiPositionProvider.CheckCapabilityAsync(provider).GetAwaiter().GetResult();
+            _session.SetAppProviderCapability(result.IsSupported, result.Message);
+            GuiOperationLog.User(
+                "Rechecked App Provider",
+                $"app=ponnuki; engine={provider.DisplayName}; supported={result.IsSupported}");
+        }
+        catch (Exception ex)
+        {
+            _session.SetAppProviderCapability(false, $"CHECK FAILED: {ex.Message}");
+            ApplicationErrorLog.Write("APP PROVIDER CHECK", "Could not check the Ponnuki App Provider capability.", ex);
+        }
+    }
+
     private bool TryHandleTitleMenuClick(Point point)
     {
         if (TitleRenderer.IsBackButtonHit(point))
@@ -1311,6 +1329,12 @@ public class Game1 : Game
             {
                 _session.SelectAppProviderEngine(providerIndex);
                 GuiOperationLog.User("Selected Ponnuki App Provider", $"engine={_session.SelectedAppProviderEngine.DisplayName}");
+                return true;
+            }
+
+            if (_session.CanUseSelectedAppProvider && TitleRenderer.IsAppProviderRecheckButtonHit(point))
+            {
+                RecheckPonnukiProvider();
                 return true;
             }
 

@@ -27,6 +27,9 @@ public static class TitleRenderer
     public static bool IsAppProviderStartButtonHit(Point point) =>
         GoScreenRenderer.GetTitleAppProviderStartButtonHit(point);
 
+    public static bool IsAppProviderRecheckButtonHit(Point point) =>
+        GoScreenRenderer.GetTitleAppProviderRecheckButtonHit(point);
+
     public static bool IsSettingsButtonHit(Point point) =>
         GoScreenRenderer.GetSettingsButtonHit(point);
 }

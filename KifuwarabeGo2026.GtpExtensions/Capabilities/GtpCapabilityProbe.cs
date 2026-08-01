@@ -13,12 +13,12 @@ public sealed class GtpCapabilityProbe
         "set_free_handicap",
         "place_free_handicap",
         "loadsgf",
-        "begin_position",
-        "add_black",
-        "add_white",
-        "set_to_play",
-        "commit_position",
-        "abort_position",
+        "kfw-begin-position",
+        "kfw-add-black",
+        "kfw-add-white",
+        "kfw-set-to-play",
+        "kfw-commit-position",
+        "kfw-abort-position",
     ];
 
     public Task<GtpCapabilitySet> ProbeInitialPositionAsync(

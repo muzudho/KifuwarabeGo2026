@@ -32,7 +32,7 @@ internal sealed class AtomicPositionSetup
         error = null;
         if (_pendingBoard is null)
         {
-            error = "begin_position is required";
+            error = "kfw-begin-position is required";
             return false;
         }
 
@@ -54,13 +54,13 @@ internal sealed class AtomicPositionSetup
         error = null;
         if (_pendingBoard is null)
         {
-            error = "begin_position is required";
+            error = "kfw-begin-position is required";
             return false;
         }
 
         if (!GtpEngine.TryParseColor(color, out var stone))
         {
-            return Fail("set_to_play requires black or white", out error);
+            return Fail("kfw-set-to-play requires black or white", out error);
         }
 
         _pendingTurn = stone;
@@ -74,13 +74,13 @@ internal sealed class AtomicPositionSetup
         error = null;
         if (_pendingBoard is null)
         {
-            error = "begin_position is required";
+            error = "kfw-begin-position is required";
             return false;
         }
 
         if (_pendingTurn is null)
         {
-            return Fail("set_to_play is required", out error);
+            return Fail("kfw-set-to-play is required", out error);
         }
 
         board = _pendingBoard;

@@ -132,9 +132,9 @@ public sealed partial class GoScreenRenderer
     private void DrawPonnukiProviderSelection(GoAppSession session, Rectangle panel, Point mousePoint)
     {
         DrawTitleBreadcrumb("HOME  >  GO APPS  >  PONNUKI", panel);
-        DrawDynamicOptionText("ポン抜きゲーム", new Rectangle(500, 320, 500, 54), Color.White, 0.62f);
-        DrawText("APP PROVIDER ENGINE", new Vector2(530, 388), new Color(255, 190, 92), 0.42f);
-        DrawDynamicOptionText("問題提供エンジン", new Rectangle(950, 386, 330, 34), new Color(210, 214, 207), 0.32f);
+        DrawDynamicOptionText("ポン抜きゲーム", new Rectangle(500, 350, 500, 54), Color.White, 0.62f);
+        DrawText("APP PROVIDER ENGINE", new Vector2(530, 416), new Color(255, 190, 92), 0.42f);
+        DrawDynamicOptionText("問題提供エンジン", new Rectangle(950, 414, 330, 34), new Color(210, 214, 207), 0.32f);
 
         for (var index = 0; index < Math.Min(session.GtpEngineProfiles.Count, 5); index++)
         {
@@ -147,6 +147,23 @@ public sealed partial class GoScreenRenderer
             DrawFittedText(selected ? "SELECTED" : "SELECT", new Rectangle(bounds.Right - 130, bounds.Y + 14, 104, 28), selected ? new Color(255, 210, 128) : new Color(180, 195, 195), 0.27f);
         }
 
+        var capabilityColor = session.IsAppProviderCapabilityConfirmed
+            ? new Color(99, 223, 185)
+            : session.AppProviderCapabilityStatus == "NOT CHECKED"
+                ? new Color(180, 195, 195)
+                : new Color(255, 145, 151);
+        DrawFittedText(
+            session.AppProviderCapabilityStatus,
+            new Rectangle(570, 794, 780, 26),
+            capabilityColor,
+            0.30f);
+        DrawCommandButton(
+            TitleAppProviderRecheckButtonBounds,
+            "RECHECK PROVIDER",
+            false,
+            mousePoint,
+            enabled: session.CanUseSelectedAppProvider,
+            scale: 0.30f);
         DrawCommandButton(
             TitleAppProviderStartButtonBounds,
             session.CanUseSelectedAppProvider ? "START" : "ENGINE REQUIRED",

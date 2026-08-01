@@ -22,7 +22,7 @@ public sealed class KifuwarabeAtomicSetupStrategy : IInitialPositionStrategy
 
     public IReadOnlyList<string> RequiredCommands { get; } =
     [
-        "begin_position", "add_black", "add_white", "set_to_play", "commit_position", "abort_position",
+        "kfw-begin-position", "kfw-add-black", "kfw-add-white", "kfw-set-to-play", "kfw-commit-position", "kfw-abort-position",
     ];
 
     public bool CanApply(InitialPositionRequest request, InitialPositionClassification classification)
@@ -45,16 +45,16 @@ public sealed class KifuwarabeAtomicSetupStrategy : IInitialPositionStrategy
         {
             $"boardsize {request.BoardSize}",
             $"komi {request.Komi.ToString(CultureInfo.InvariantCulture)}",
-            "begin_position",
+            "kfw-begin-position",
         };
         foreach (var setupStone in request.SetupStones)
         {
-            var command = setupStone.Stone == GoStone.Black ? "add_black" : "add_white";
+            var command = setupStone.Stone == GoStone.Black ? "kfw-add-black" : "kfw-add-white";
             commands.Add($"{command} {GtpCoordinate.FormatVertex(setupStone.Point, request.BoardSize)}");
         }
 
-        commands.Add($"set_to_play {(request.StartingTurn == GoStone.Black ? "black" : "white")}");
-        commands.Add("commit_position");
+        commands.Add($"kfw-set-to-play {(request.StartingTurn == GoStone.Black ? "black" : "white")}");
+        commands.Add("kfw-commit-position");
         return commands;
     }
 

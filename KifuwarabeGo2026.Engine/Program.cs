@@ -27,7 +27,7 @@ internal sealed class GtpEngine
         "komi", "play", "genmove", "cgos-genmove_analyze",
         "kfw-options", "kfw-get-option", "kfw-set-option", "kfw-make-position",
         "gui_options", "gui_getoption", "gui_setoption",
-        "begin_position", "add_black", "add_white", "set_to_play", "commit_position", "abort_position", "quit",
+        "kfw-begin-position", "kfw-add-black", "kfw-add-white", "kfw-set-to-play", "kfw-commit-position", "kfw-abort-position", "quit",
     ];
     private Random _random = new(0);
     private GoBoard _board = new(19);
@@ -120,22 +120,22 @@ internal sealed class GtpEngine
                 if (RejectWhilePositionSetupActive(out error)) return false;
                 ExecuteCgosGenMoveAnalyze(tokens, out response, out error);
                 return false;
-            case "begin_position":
+            case "kfw-begin-position":
                 ExecuteBeginPosition(tokens, out error);
                 return false;
-            case "add_black":
+            case "kfw-add-black":
                 ExecuteAddPositionStone(tokens, GoStone.Black, out error);
                 return false;
-            case "add_white":
+            case "kfw-add-white":
                 ExecuteAddPositionStone(tokens, GoStone.White, out error);
                 return false;
-            case "set_to_play":
+            case "kfw-set-to-play":
                 ExecuteSetPositionTurn(tokens, out error);
                 return false;
-            case "commit_position":
+            case "kfw-commit-position":
                 ExecuteCommitPosition(tokens, out error);
                 return false;
-            case "abort_position":
+            case "kfw-abort-position":
                 ExecuteAbortPosition(tokens, out error);
                 return false;
             case "quit":
@@ -147,13 +147,19 @@ internal sealed class GtpEngine
     }
 
     /// <summary>
-    /// 旧gui_独自コマンド名を、kfw-接頭辞の正規名へ読み替えます。
+    /// 旧独自コマンド名を、kfw-接頭辞の正規名へ読み替えます。
     /// </summary>
     private static string NormalizePrivateCommand(string command) => command.ToLowerInvariant() switch
     {
         "gui_options" => "kfw-options",
         "gui_getoption" => "kfw-get-option",
         "gui_setoption" => "kfw-set-option",
+        "begin_position" => "kfw-begin-position",
+        "add_black" => "kfw-add-black",
+        "add_white" => "kfw-add-white",
+        "set_to_play" => "kfw-set-to-play",
+        "commit_position" => "kfw-commit-position",
+        "abort_position" => "kfw-abort-position",
         var canonical => canonical,
     };
 
@@ -325,7 +331,7 @@ internal sealed class GtpEngine
     private bool RejectWhilePositionSetupActive(out string? error)
     {
         error = _positionSetup.IsActive
-            ? "position setup is active; use commit_position or abort_position"
+            ? "position setup is active; use kfw-commit-position or kfw-abort-position"
             : null;
         return error is not null;
     }
@@ -335,7 +341,7 @@ internal sealed class GtpEngine
         if (tokens.Length != 1)
         {
             _positionSetup.Discard();
-            error = "usage: begin_position; pending position discarded";
+            error = "usage: kfw-begin-position; pending position discarded";
             return;
         }
 
@@ -347,7 +353,7 @@ internal sealed class GtpEngine
         if (tokens.Length != 2)
         {
             _positionSetup.Discard();
-            error = $"usage: {(stone == GoStone.Black ? "add_black" : "add_white")} vertex; pending position discarded";
+            error = $"usage: {(stone == GoStone.Black ? "kfw-add-black" : "kfw-add-white")} vertex; pending position discarded";
             return;
         }
 
@@ -359,7 +365,7 @@ internal sealed class GtpEngine
         if (tokens.Length != 2)
         {
             _positionSetup.Discard();
-            error = "usage: set_to_play black|white; pending position discarded";
+            error = "usage: kfw-set-to-play black|white; pending position discarded";
             return;
         }
 
@@ -371,7 +377,7 @@ internal sealed class GtpEngine
         if (tokens.Length != 1)
         {
             _positionSetup.Discard();
-            error = "usage: commit_position; pending position discarded";
+            error = "usage: kfw-commit-position; pending position discarded";
             return;
         }
 
@@ -391,7 +397,7 @@ internal sealed class GtpEngine
         if (tokens.Length != 1)
         {
             _positionSetup.Discard();
-            error = "usage: abort_position";
+            error = "usage: kfw-abort-position";
             return;
         }
 
@@ -465,7 +471,8 @@ internal sealed class GtpEngine
             return;
         }
 
-        response = Commands.Contains(tokens[1], StringComparer.OrdinalIgnoreCase) ? "true" : "false";
+        var normalizedCommand = NormalizePrivateCommand(tokens[1]);
+        response = Commands.Contains(normalizedCommand, StringComparer.OrdinalIgnoreCase) ? "true" : "false";
     }
 
     /// <summary>

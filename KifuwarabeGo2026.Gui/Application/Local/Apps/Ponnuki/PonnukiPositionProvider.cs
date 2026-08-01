@@ -10,17 +10,23 @@ namespace KifuwarabeGo2026.Gui.Application.Local.Apps.Ponnuki;
 
 public static class PonnukiPositionProvider
 {
+    public static async Task<(bool IsSupported, string Message)> CheckCapabilityAsync(GtpEngineProfile profile)
+    {
+        var settings = CreateSettings(profile);
+        await using var client = new GtpEngineClient(settings, TimeSpan.FromSeconds(10));
+        await client.StartAsync();
+        var response = await client.SendCommandAsync("known_command kfw-make-position");
+        response.ThrowIfError("known_command kfw-make-position");
+        var supported = response.Payload.Trim().Equals("true", StringComparison.OrdinalIgnoreCase);
+        return supported
+            ? (true, "PONNUKI v1 READY")
+            : (false, "PONNUKI v1 NOT SUPPORTED");
+    }
+
     public static async Task<GoGameRecord> MakePositionAsync(GtpEngineProfile profile)
     {
         var app = LocalAppCatalog.Ponnuki;
-        var settings = new GtpEngineSettings(
-            profile.DisplayName,
-            profile.ExecutablePath,
-            profile.WorkingDirectoryModel,
-            profile.Arguments,
-            profile.EnableGtpLog,
-            "app-provider",
-            new Dictionary<string, string>(profile.GuiOptions));
+        var settings = CreateSettings(profile);
 
         await using var client = new GtpEngineClient(settings, TimeSpan.FromSeconds(10));
         await client.StartAsync();
@@ -47,6 +53,16 @@ public static class PonnukiPositionProvider
         AddStones(record, document.White, GoStone.White);
         return record;
     }
+
+    private static GtpEngineSettings CreateSettings(GtpEngineProfile profile) =>
+        new(
+            profile.DisplayName,
+            profile.ExecutablePath,
+            profile.WorkingDirectoryModel,
+            profile.Arguments,
+            profile.EnableGtpLog,
+            "app-provider",
+            new Dictionary<string, string>(profile.GuiOptions));
 
     private static void AddStones(GoGameRecord record, IReadOnlyList<string>? vertices, GoStone stone)
     {

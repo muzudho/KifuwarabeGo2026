@@ -95,16 +95,16 @@ internal static class Program
         var successful = RunEngine(
             "list_commands\n" +
             "clear_board\n" +
-            "begin_position\n" +
-            "add_black D4\n" +
-            "add_white Q16\n" +
-            "set_to_play white\n" +
-            "commit_position\n" +
+            "kfw-begin-position\n" +
+            "kfw-add-black D4\n" +
+            "kfw-add-white Q16\n" +
+            "kfw-set-to-play white\n" +
+            "kfw-commit-position\n" +
             "play black D4\n" +
             "play black Q16\n" +
             "quit\n");
-        Require(successful.Contains("begin_position", StringComparison.Ordinal) &&
-                successful.Contains("commit_position", StringComparison.Ordinal) &&
+        Require(successful.Contains("kfw-begin-position", StringComparison.Ordinal) &&
+                successful.Contains("kfw-commit-position", StringComparison.Ordinal) &&
                 CountOccurrences(successful, "? illegal move") == 2,
             "Atomic commit did not expose both setup stones on the live board.");
 
@@ -141,7 +141,7 @@ internal static class Program
             "quit\n");
         Require(failed.Contains("point is already occupied", StringComparison.Ordinal) &&
                 failed.Contains("invalid vertex", StringComparison.Ordinal) &&
-                failed.Contains("set_to_play is required", StringComparison.Ordinal) &&
+                failed.Contains("kfw-set-to-play is required", StringComparison.Ordinal) &&
                 CountOccurrences(failed, "? illegal move") == 3,
             "A failed atomic setup changed the pre-existing live position.");
 

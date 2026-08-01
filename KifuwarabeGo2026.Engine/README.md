@@ -71,14 +71,14 @@ Kifuwarabe Go 2026 は、通常のGTPコマンドに加えて次の独自コマ�
 きふわらべエンジンは、黒白混在局面や通常の着手順では作れない編集局面を準備盤で組み立て、成功時だけ実対局盤へ反映できます。
 
 ```text
-begin_position
-add_black D4
-add_white Q16
-set_to_play black
-commit_position
+kfw-begin-position
+kfw-add-black D4
+kfw-add-white Q16
+kfw-set-to-play black
+kfw-commit-position
 ```
 
-途中で座標不正や重複などが起きた場合、準備盤全体を破棄し、実対局盤は変更しません。明示的に中止する場合は `abort_position` を送ります。
+途中で座標不正や重複などが起きた場合、準備盤全体を破棄し、実対局盤は変更しません。明示的に中止する場合は `kfw-abort-position` を送ります。旧snake_case名も互換エイリアスとして受け付けます。
 
 これは標準GTPではなくKifuwarabeGo2026独自拡張です。厳密な引数、失敗時の動作、準備中に利用できるコマンドは、[きふわらべ原子的指定局面GTP拡張仕様](../KifuwarabeGo2026.Gui/Docs/設計/きふわらべ原子的指定局面GTP拡張仕様.md)を参照してください。
 

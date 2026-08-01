@@ -360,9 +360,19 @@ public sealed class GoAppSession
 
     public string LocalAppsErrorMessage { get; private set; } = "";
 
+    public string AppProviderCapabilityStatus { get; private set; } = "NOT CHECKED";
+
+    public bool IsAppProviderCapabilityConfirmed { get; private set; }
+
     public void ClearLocalAppsError() => LocalAppsErrorMessage = "";
 
     public void SetLocalAppsError(string message) => LocalAppsErrorMessage = message ?? "";
+
+    public void SetAppProviderCapability(bool isConfirmed, string status)
+    {
+        IsAppProviderCapabilityConfirmed = isConfirmed;
+        AppProviderCapabilityStatus = status ?? "";
+    }
 
     public bool IsGtpEngineSelectionDialogOpen { get; private set; }
 
@@ -1963,6 +1973,7 @@ public sealed class GoAppSession
         if (index < 0 || index >= _gtpEngineProfiles.Count)
             throw new ArgumentOutOfRangeException(nameof(index), index, "App Provider engine index is out of range.");
         SelectedAppProviderEngineIndex = index;
+        SetAppProviderCapability(false, "NOT CHECKED");
     }
 
     public void OpenGtpEngineOrderEditor() =>
