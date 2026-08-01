@@ -844,7 +844,7 @@ public sealed partial class GoScreenRenderer
 
     public static int? GetTitleAppHit(Point point)
     {
-        for (var index = 0; index < 3; index++)
+        for (var index = 0; index < 1; index++)
         {
             if (TitleAppBounds(index).Contains(point))
             {

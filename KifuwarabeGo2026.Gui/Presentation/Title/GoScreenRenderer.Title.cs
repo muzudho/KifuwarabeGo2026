@@ -9,8 +9,9 @@ public sealed partial class GoScreenRenderer
 {
     private void DrawUseSelectionPanel(GoAppSession session, Point mousePoint, TitleMenuPage page)
     {
-        // Title background artwork is suspended for now.
-        // DrawTitleGoEquipment();
+        // タイトル画面の囲碁用具ワイヤー装飾。
+        DrawTitleGoEquipment();
+
         var panel = new Rectangle(420, 172, 1080, 736);
         FillRect(new Rectangle(panel.X + 18, panel.Y + 20, panel.Width, panel.Height), new Color(0, 0, 0, 130));
         FillRect(panel, new Color(21, 25, 32, 242));
@@ -33,8 +34,6 @@ public sealed partial class GoScreenRenderer
                 DrawHomeServiceChoice(TitleHomeLocalButtonBounds, "Local", "PLAY / REVIEW", new Color(99, 223, 185), mousePoint);
                 DrawHomeServiceChoice(TitleHomeCgosButtonBounds, "Connect To CGOS", "WATCH / CONNECT", new Color(99, 223, 185), mousePoint);
                 DrawAppChoice(TitleAppBounds(0), "ポン抜きゲーム", "CAPTURE GAME", mousePoint);
-                DrawAppChoice(TitleAppBounds(1), "詰碁", "LIFE & DEATH", mousePoint);
-                DrawAppChoice(TitleAppBounds(2), "次の一手問題", "NEXT MOVE", mousePoint);
                 DrawDynamicOptionText("対局、観戦、問題演習をここから直接選べます。", new Rectangle(500, 700, 890, 38), new Color(180, 195, 195), 0.34f);
                 if (TitleAppBounds(0).Contains(mousePoint))
                 {
