@@ -22,10 +22,13 @@ internal static class Program
 /// </summary>
 internal sealed partial class GtpEngine
 {
+    private static readonly string[] SupportedAppIds = ["play", "ponnuki"];
+
     private static readonly string[] Commands =
     [
         "protocol_version", "name", "version", "known_command", "list_commands", "boardsize", "clear_board",
         "komi", "play", "genmove", "cgos-genmove_analyze",
+        "kfw-list-apps",
         "kfw-describe-options", "kfw-get-options", "kfw-patch-options", "kfw-invoke-option",
         "kfw-options", "kfw-get-option", "kfw-set-option", "kfw-make-position", "kfw-listen-move",
         "gui_options", "gui_getoption", "gui_setoption",
@@ -87,6 +90,14 @@ internal sealed partial class GtpEngine
                 return false;
             case "list_commands":
                 response = string.Join('\n', Commands);
+                return false;
+            case "kfw-list-apps":
+                if (tokens.Length != 1)
+                {
+                    error = "usage: kfw-list-apps";
+                    return false;
+                }
+                response = string.Join('\n', SupportedAppIds);
                 return false;
             case "kfw-describe-options":
                 ExecuteDescribeOptions(tokens, out response, out error);

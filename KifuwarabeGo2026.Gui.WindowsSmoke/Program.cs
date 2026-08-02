@@ -29,6 +29,7 @@ internal static class Program
             VerifyExecutableNaming();
             VerifyTextRasterizer();
             VerifyWindowsAssembly();
+            VerifyGoAppsDiscoveryProtocol();
             VerifyAtomicInitialPositionProtocol();
             VerifyJsonEngineOptionsProtocol();
             VerifyBundledEngineInitialPositionPipeline();
@@ -40,6 +41,22 @@ internal static class Program
             Console.Error.WriteLine($"FAIL: {ex.Message}");
             return 1;
         }
+    }
+
+    private static void VerifyGoAppsDiscoveryProtocol()
+    {
+        var output = RunEngine(
+            "known_command kfw-list-apps\n" +
+            "list_commands\n" +
+            "kfw-list-apps\n" +
+            "kfw-list-apps extra\n" +
+            "quit\n");
+
+        Require(output.Contains("= true", StringComparison.Ordinal) &&
+                output.Contains("kfw-list-apps", StringComparison.Ordinal) &&
+                output.Contains("= play\nponnuki", StringComparison.Ordinal) &&
+                output.Contains("? usage: kfw-list-apps", StringComparison.Ordinal),
+            "The bundled engine did not publish or validate its supported Go Apps list.");
     }
 
     private static void VerifyBundledEngineInitialPositionPipeline()
