@@ -40,7 +40,8 @@ public sealed partial class GoScreenRenderer
         GoGameMove? displayLastMove = displayMoveIndex > 0 && displayMoveIndex <= observation.Moves.Count
             ? observation.Moves[displayMoveIndex - 1]
             : null;
-        DrawLastMoveMarker(displayLastMove, surface.Start, surface.Cell);
+        if (!session.IsRenParseDisplayEnabled)
+            DrawLastMoveMarker(displayLastMove, surface.Start, surface.Cell);
 
         DrawBoardFrameHighlights(surface.Outer);
         if (!observation.IsFinished)

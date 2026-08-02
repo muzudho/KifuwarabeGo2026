@@ -50,7 +50,8 @@ public sealed partial class GoScreenRenderer
             () => DrawPlacedStones(session, start, cell),
             start,
             cell);
-        DrawLastMoveMarker(GetLocalDisplayLastMove(session), start, cell);
+        if (!session.IsRenParseDisplayEnabled)
+            DrawLastMoveMarker(GetLocalDisplayLastMove(session), start, cell);
 
         if (!session.IsLocalReplayMode)
         {
