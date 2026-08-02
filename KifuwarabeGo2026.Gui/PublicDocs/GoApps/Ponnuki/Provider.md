@@ -1,6 +1,6 @@
 # ポン抜きProvider実装リファレンス
 
-> 対応バージョン：KifuwarabeGo2026 v3.1.0<br>
+> 対応バージョン：KifuwarabeGo2026 v3.3.0<br>
 > 記事の更新日：2026-08-02
 
 ## 1. Providerの責務
@@ -17,9 +17,12 @@ Providerは対局者の次の着手を生成しません。着手生成はPlayer
 Providerは次のコマンドへ対応し、`known_command`と`list_commands`で公開します。
 
 ```text
+kfw-list-apps provider
 kfw-make-position
 kfw-listen-move
 ```
+
+最初に`kfw-list-apps provider`を単体確認し、応答へ`ponnuki`が含まれることを確認します。次に`kfw-make-position`、最後に`kfw-listen-move`の順で実装すると、一段ずつ動作を確認できます。
 
 ## 3. 初期局面を作る
 
@@ -102,9 +105,11 @@ kfw-listen-move を0回以上反復
 
 ## 6. 実装確認表
 
+- `known_command kfw-list-apps`が`true`を返す。
+- `kfw-list-apps provider`が`ponnuki`を返す。
 - `known_command kfw-make-position`が`true`を返す。
 - `known_command kfw-listen-move`が`true`を返す。
-- 両コマンドが`list_commands`に含まれる。
+- 3コマンドが`list_commands`に含まれる。
 - 同じseedで局面を再現できる。
 - 不正なアプリID、バージョン、盤サイズ、手数、seedをGTPエラーにできる。
 - `kfw-listen-move`を順番どおり状態へ反映できる。

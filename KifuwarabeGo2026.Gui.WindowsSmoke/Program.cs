@@ -49,14 +49,36 @@ internal static class Program
             "known_command kfw-list-apps\n" +
             "list_commands\n" +
             "kfw-list-apps\n" +
-            "kfw-list-apps extra\n" +
+            "kfw-list-apps player\n" +
+            "kfw-list-apps provider\n" +
+            "kfw-list-apps spectator\n" +
+            "kfw-list-apps player extra\n" +
             "quit\n");
 
         Require(output.Contains("= true", StringComparison.Ordinal) &&
                 output.Contains("kfw-list-apps", StringComparison.Ordinal) &&
                 output.Contains("= play\nponnuki", StringComparison.Ordinal) &&
-                output.Contains("? usage: kfw-list-apps", StringComparison.Ordinal),
+                output.Contains("= ponnuki", StringComparison.Ordinal) &&
+                output.Contains("? usage: kfw-list-apps [player|provider]", StringComparison.Ordinal),
             "The bundled engine did not publish or validate its supported Go Apps list.");
+
+        var executablePath = Path.Combine(AppContext.BaseDirectory, "KifuwarabeGo2026.Engine.exe");
+        var profile = new GtpEngineProfile
+        {
+            DisplayName = "Bundled Kifuwarabe discovery smoke",
+            ExecutablePath = executablePath,
+            WorkingDirectoryStr = AppContext.BaseDirectory,
+        };
+        var playPlayer = GtpEngineAppCompatibilityProbe.CheckAsync(profile, "play", "player").GetAwaiter().GetResult();
+        var playProvider = GtpEngineAppCompatibilityProbe.CheckAsync(profile, "play", "provider").GetAwaiter().GetResult();
+        var ponnukiPlayer = GtpEngineAppCompatibilityProbe.CheckAsync(profile, "ponnuki", "player").GetAwaiter().GetResult();
+        var ponnukiProvider = GtpEngineAppCompatibilityProbe.CheckAsync(profile, "ponnuki", "provider").GetAwaiter().GetResult();
+        Require(
+            playPlayer.CanSelect &&
+            playProvider.Kind == GtpEngineAppCompatibilityKind.Unsupported &&
+            ponnukiPlayer.CanSelect &&
+            ponnukiProvider.CanSelect,
+            "The GUI did not honor the bundled engine's role-specific Go App list.");
     }
 
     private static void VerifyBundledEngineInitialPositionPipeline()

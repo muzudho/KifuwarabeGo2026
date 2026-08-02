@@ -2091,11 +2091,11 @@ public sealed class GoAppSession
         throw new ArgumentOutOfRangeException(nameof(stone), stone, "GTP engine can be selected only for black or white.");
     }
 
-    public void OpenGtpEngineSelectionDialog(GoStone stone)
+    public void OpenGtpEngineSelectionDialog(GoStone stone, string appId = "play")
     {
         IsGtpEngineSelectionForCgos = false;
         EngineSelectionPurpose = GtpEngineSelectionPurpose.LocalPlayer;
-        GtpEngineSelectionAppId = "play";
+        GtpEngineSelectionAppId = appId;
         OpenGtpEngineSelectionDialogCore(stone);
     }
 
@@ -2259,7 +2259,7 @@ public sealed class GoAppSession
         else if (IsGtpEngineSelectionForCgos)
             OpenCgosGtpEngineSelectionDialog(GtpEngineSelectionTargetStone);
         else
-            OpenGtpEngineSelectionDialog(GtpEngineSelectionTargetStone);
+            OpenGtpEngineSelectionDialog(GtpEngineSelectionTargetStone, GtpEngineSelectionAppId);
         if (dialogSelectionIndex >= 0 && dialogSelectionIndex < _gtpEngineProfiles.Count)
             GtpEngineDialogSelectionIndex = dialogSelectionIndex;
     }

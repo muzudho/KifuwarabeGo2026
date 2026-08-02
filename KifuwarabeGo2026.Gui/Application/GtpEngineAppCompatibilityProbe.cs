@@ -35,20 +35,37 @@ public static class GtpEngineAppCompatibilityProbe
             known.ThrowIfError("known_command kfw-list-apps");
             if (!known.Payload.Trim().Equals("true", StringComparison.OrdinalIgnoreCase))
             {
-                return appId.Equals("play", StringComparison.Ordinal)
+                return appId.Equals("play", StringComparison.Ordinal) &&
+                    role.Equals("player", StringComparison.Ordinal)
                     ? new(GtpEngineAppCompatibilityKind.LegacyPlay, "LEGACY GO PLAY")
                     : new(GtpEngineAppCompatibilityKind.Unsupported, $"{appId} NOT SUPPORTED");
             }
 
-            var response = await client.SendCommandAsync("kfw-list-apps");
-            response.ThrowIfError("kfw-list-apps");
+            if (role is not ("player" or "provider"))
+            {
+                throw new ArgumentException("role must be player or provider.", nameof(role));
+            }
+
+            var command = $"kfw-list-apps {role}";
+            var response = await client.SendCommandAsync(command);
+            var roleVerified = response.IsSuccess;
+            if (!roleVerified)
+            {
+                command = "kfw-list-apps";
+                response = await client.SendCommandAsync(command);
+            }
+            response.ThrowIfError(command);
             var appIds = response.Payload
                 .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
             if (appIds.Any(id => !AppIdPattern.IsMatch(id)) ||
                 appIds.Distinct(StringComparer.Ordinal).Count() != appIds.Length)
                 throw new InvalidOperationException("kfw-list-apps returned invalid app IDs.");
             return appIds.Contains(appId, StringComparer.Ordinal)
-                ? new(GtpEngineAppCompatibilityKind.Supported, $"{appId} READY")
+                ? new(
+                    GtpEngineAppCompatibilityKind.Supported,
+                    roleVerified
+                        ? $"{appId} {role} READY"
+                        : $"{appId} READY; ROLE UNVERIFIED")
                 : new(GtpEngineAppCompatibilityKind.Unsupported, $"{appId} NOT SUPPORTED");
         }
         catch (Exception ex)

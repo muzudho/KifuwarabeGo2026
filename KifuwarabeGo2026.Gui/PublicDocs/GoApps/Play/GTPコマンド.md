@@ -1,6 +1,6 @@
 # Playで使用するGTPコマンド
 
-> 対応バージョン：KifuwarabeGo2026 v3.1.0<br>
+> 対応バージョン：KifuwarabeGo2026 v3.3.0<br>
 > 記事の更新日：2026-08-02
 
 ## 1. 通信と応答
@@ -85,6 +85,18 @@ GTPプロトコルの版を返します。
 ### `list_commands`
 
 対応するコマンド名を一行に一つ返します。掲載する名前と`known_command`の結果を一致させます。
+
+### `kfw-list-apps [player|provider]`
+
+このエンジンが対応するGo AppのアプリIDを、一行に一つ返します。Playへ対応するエンジンは`play`を含めます。
+
+```text
+> kfw-list-apps player
+= play
+
+```
+
+Player／Providerのroleはこの応答へ含めません。Play実装では、後続の`boardsize`、`play`、`genmove`などの対応によって`play player`として動作します。引数は指定しません。
 
 ### `boardsize <size>`
 

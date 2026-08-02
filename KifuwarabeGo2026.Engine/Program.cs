@@ -23,6 +23,8 @@ internal static class Program
 internal sealed partial class GtpEngine
 {
     private static readonly string[] SupportedAppIds = ["play", "ponnuki"];
+    private static readonly string[] SupportedPlayerAppIds = ["play", "ponnuki"];
+    private static readonly string[] SupportedProviderAppIds = ["ponnuki"];
 
     private static readonly string[] Commands =
     [
@@ -92,12 +94,31 @@ internal sealed partial class GtpEngine
                 response = string.Join('\n', Commands);
                 return false;
             case "kfw-list-apps":
-                if (tokens.Length != 1)
+                if (tokens.Length > 2)
                 {
-                    error = "usage: kfw-list-apps";
+                    error = "usage: kfw-list-apps [player|provider]";
                     return false;
                 }
-                response = string.Join('\n', SupportedAppIds);
+
+                if (tokens.Length == 1)
+                {
+                    response = string.Join('\n', SupportedAppIds);
+                    return false;
+                }
+
+                var roleAppIds = tokens[1].ToLowerInvariant() switch
+                {
+                    "player" => SupportedPlayerAppIds,
+                    "provider" => SupportedProviderAppIds,
+                    _ => null,
+                };
+                if (roleAppIds is null)
+                {
+                    error = "usage: kfw-list-apps [player|provider]";
+                    return false;
+                }
+
+                response = string.Join('\n', roleAppIds);
                 return false;
             case "kfw-describe-options":
                 ExecuteDescribeOptions(tokens, out response, out error);

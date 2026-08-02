@@ -3099,8 +3099,9 @@ public class Game1 : Game
 
     private void OpenGtpEngineSelectionDialog(GoStone stone)
     {
-        RefreshGtpEngineAppCompatibilities("play", "player");
-        _session.OpenGtpEngineSelectionDialog(stone);
+        var appId = _session.UseKind == GoAppUseKind.LocalApps ? "ponnuki" : "play";
+        RefreshGtpEngineAppCompatibilities(appId, "player");
+        _session.OpenGtpEngineSelectionDialog(stone, appId);
     }
 
     private void OpenCgosGtpEngineSelectionDialog(GoStone stone)

@@ -1,6 +1,6 @@
 # ポン抜きPlayer実装リファレンス
 
-> 対応バージョン：KifuwarabeGo2026 v3.1.0<br>
+> 対応バージョン：KifuwarabeGo2026 v3.3.0<br>
 > 記事の更新日：2026-08-02
 
 ## 1. Playerの責務
@@ -17,6 +17,7 @@ Playerは初期局面の生成、アゲハマの集計、ポン抜き固有の�
 ポン抜きでは、通常の空盤開始とは異なる初期配置が渡されます。Playerは次の原子的指定局面コマンド一式へ対応してください。
 
 ```text
+kfw-list-apps player
 kfw-begin-position
 kfw-add-black <vertex>
 kfw-add-white <vertex>
@@ -24,6 +25,8 @@ kfw-set-to-play <black|white>
 kfw-commit-position
 kfw-abort-position
 ```
+
+最初に`kfw-list-apps player`を実装して`ponnuki`を返し、ポン抜きPlayer対応を公開できることを確認します。次に原子的指定局面6コマンド、最後に標準GTPの`play`と`genmove`を確認します。
 
 対応する全コマンドを`known_command`と`list_commands`で公開します。一部だけへ対応したエンジンは、原子的指定局面へ対応しているとは見なしません。
 
@@ -86,6 +89,7 @@ kfw-commit-position
 
 ## 6. 実装確認表
 
+- `known_command kfw-list-apps`が`true`を返し、`kfw-list-apps player`が`ponnuki`を返す。
 - 原子的指定局面の全6コマンドを能力情報で公開している。
 - `kfw-begin-position`以前の実対局盤を準備中に変更しない。
 - 黒石と白石を交互着手ではなく直接配置できる。

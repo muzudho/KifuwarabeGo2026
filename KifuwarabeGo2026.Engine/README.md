@@ -60,7 +60,7 @@ Kifuwarabe Go 2026 は、通常のGTPコマンドに加えて次の独自コマ�
 
 | コマンド | 用途 |
 |---|---|
-| `kfw-list-apps` | エンジンが対応するGo AppのアプリIDを1行に1件ずつ返す |
+| `kfw-list-apps [player\|provider]` | 対応するGo AppのアプリIDを1行に1件ずつ返す。role省略時は全roleの和集合 |
 | `kfw-describe-options <app-id> <role>` | 指定用途の型付きオプションスキーマをJSONで返す |
 | `kfw-get-options <app-id> <role>` | 指定用途の現在値をJSONで返す |
 | `kfw-patch-options <app-id> <role> <json>` | 複数の値を原子的な差分パッチとして反映する |
