@@ -30,7 +30,8 @@ public sealed partial class GoScreenRenderer
         int secondsRemaining,
         float opacity,
         float buttonOpacity,
-        bool buttonsEnabled)
+        bool buttonsEnabled,
+        bool showDeferredAction)
     {
         var mousePoint = VirtualScreen.ToVirtualPoint(_graphicsDevice.Viewport, mousePosition);
         _spriteBatch.Begin(
@@ -39,7 +40,7 @@ public sealed partial class GoScreenRenderer
 
         if (deferred)
         {
-            DrawDeferredMatchNotification(mousePoint, finished, opacity);
+            DrawDeferredMatchNotification(mousePoint, finished, opacity, showDeferredAction);
         }
         else
         {
@@ -75,7 +76,7 @@ public sealed partial class GoScreenRenderer
         DrawFittedText(text, new Rectangle(bounds.X + 12, bounds.Y + 7, bounds.Width - 24, bounds.Height - 14), Color.White * opacity, scale);
     }
 
-    private void DrawDeferredMatchNotification(Point mousePoint, bool finished, float opacity)
+    private void DrawDeferredMatchNotification(Point mousePoint, bool finished, float opacity, bool showAction)
     {
         var bounds = CgosMatchDeferredBounds;
         var hovered = bounds.Contains(mousePoint);
@@ -88,6 +89,9 @@ public sealed partial class GoScreenRenderer
             new Rectangle(bounds.X + 48, bounds.Y + 12, 170, 38),
             Color.White * opacity,
             0.34f);
+        if (!showAction)
+            return;
+
         var watchButtonBounds = CgosMatchDeferredWatchBounds;
         var watchButtonHovered = watchButtonBounds.Contains(mousePoint);
         FillRect(watchButtonBounds, watchButtonHovered

@@ -492,7 +492,8 @@ public class Game1 : Game
                 GetCgosMatchSecondsRemaining(notificationAge),
                 notificationOpacity,
                 notificationOpacity,
-                buttonsEnabled);
+                buttonsEnabled,
+                _session.CgosConnectionFlowKind != CgosConnectionFlowKind.Watching);
         }
 
         base.Draw(gameTime);
@@ -2475,6 +2476,9 @@ public class Game1 : Game
 
         if (_cgosMatchNotificationMode == CgosMatchNotificationMode.Deferred)
         {
+            if (_session.CgosConnectionFlowKind == CgosConnectionFlowKind.Watching)
+                return GoScreenRenderer.GetCgosMatchDeferredBannerHit(point);
+
             if (!GoScreenRenderer.GetCgosMatchDeferredHit(point))
                 return GoScreenRenderer.GetCgosMatchDeferredBannerHit(point);
 
