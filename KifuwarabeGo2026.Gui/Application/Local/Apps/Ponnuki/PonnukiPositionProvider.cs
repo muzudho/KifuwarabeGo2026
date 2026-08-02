@@ -79,7 +79,9 @@ public static class PonnukiPositionProvider
             profile.Arguments,
             profile.EnableGtpLog,
             "app-provider",
-            new Dictionary<string, string>(profile.GuiOptions));
+            new Dictionary<string, string>(profile.GuiOptions),
+            "ponnuki",
+            "provider");
 
     private static void AddStones(GoGameRecord record, IReadOnlyList<string>? vertices, GoStone stone)
     {

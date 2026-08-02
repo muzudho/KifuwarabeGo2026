@@ -41,3 +41,44 @@ public sealed class GtpGuiOptionDefinition
 
     public List<string> Vars { get; set; } = [];
 }
+
+/// <summary>
+/// `kfw-describe-options` 応答のJSON文書です。
+/// </summary>
+public sealed class GtpOptionSchemaDocument
+{
+    public int Version { get; set; }
+
+    public string App { get; set; } = "";
+
+    public string Role { get; set; } = "";
+
+    public List<GtpOptionSchemaDefinition> Options { get; set; } = [];
+
+    public static GtpOptionSchemaDocument Parse(string json) =>
+        JsonSerializer.Deserialize<GtpOptionSchemaDocument>(json, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true,
+        }) ?? throw new FormatException("kfw-describe-options returned an empty JSON document.");
+}
+
+public sealed class GtpOptionSchemaDefinition
+{
+    public string Id { get; set; } = "";
+
+    public string Label { get; set; } = "";
+
+    public string Type { get; set; } = "";
+
+    public JsonElement Default { get; set; }
+
+    public int? Minimum { get; set; }
+
+    public int? Maximum { get; set; }
+
+    public int? MaximumLength { get; set; }
+
+    public List<string> Values { get; set; } = [];
+
+    public string Apply { get; set; } = "";
+}

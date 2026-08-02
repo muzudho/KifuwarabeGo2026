@@ -56,7 +56,24 @@ Kifuwarabe Go 2026 では次の手順で設定します。
 
 ## エンジンオプションの仕組み
 
-Kifuwarabe Go 2026 は、通常のGTPコマンドに加えて次の独自コマンドを使用します。
+Kifuwarabe Go 2026 は、通常のGTPコマンドに加えて次の独自コマンドを正規プロトコルとして使用します。
+
+| コマンド | 用途 |
+|---|---|
+| `kfw-describe-options <app-id> <role>` | 指定用途の型付きオプションスキーマをJSONで返す |
+| `kfw-get-options <app-id> <role>` | 指定用途の現在値をJSONで返す |
+| `kfw-patch-options <app-id> <role> <json>` | 複数の値を原子的な差分パッチとして反映する |
+| `kfw-invoke-option <app-id> <role> <id>` | `action`型の処理を独立して実行する |
+
+型は`boolean`、`integer`、`enum`、`string`、`file`、`action`です。値にはJSON本来のboolean、number、stringを使用します。定義には適用タイミングとして`immediate`、`next-game`、`restart`のいずれかを含めます。
+
+`kfw-patch-options`は、要求された全項目を検証してから一度に反映します。一項目でも不正なら何も変更せず、詳細をJSONで含むGTPエラーを返します。
+
+外部エンジン作者向けの完全な形式と例は、[Playのエンジンオプション公開仕様](../KifuwarabeGo2026.Gui/PublicDocs/GoApps/Play/エンジンオプション.md)を参照してください。
+
+### 移行期間の旧コマンド
+
+次の旧コマンドにも引き続き対応します。
 
 | コマンド | 用途 |
 |---|---|
@@ -64,7 +81,7 @@ Kifuwarabe Go 2026 は、通常のGTPコマンドに加えて次の独自コマ�
 | `kfw-get-option <id>` | 指定オプションの現在値を返す |
 | `kfw-set-option <id> <value>` | 指定オプションへ値を設定する |
 
-対応コマンドは `list_commands` の結果へ含め、`known_command kfw-options` に `true` を返してください。`kfw-options` に対応していないエンジンは、従来のGTPエンジンとしてそのまま利用できます。旧 `gui_options`、`gui_getoption`、`gui_setoption` も互換エイリアスとして受け付けます。
+新しいGUIは`known_command kfw-describe-options`を先に確認し、非対応エンジンではこの旧形式へフォールバックします。旧 `gui_options`、`gui_getoption`、`gui_setoption` も互換エイリアスとして受け付けます。
 
 ## 原子的に指定局面を設定する
 
@@ -82,15 +99,17 @@ kfw-commit-position
 
 これは標準GTPではなくKifuwarabeGo2026独自拡張です。厳密な引数、失敗時の動作、準備中に利用できるコマンドは、[きふわらべ原子的指定局面GTP拡張仕様](../KifuwarabeGo2026.Gui/Docs/設計/きふわらべ原子的指定局面GTP拡張仕様.md)を参照してください。
 
-GUIに保存されたオプションはエンジン起動時に送信されます。概略は次の順序です。
+新プロトコルでは、GUIに保存されたオプションをエンジン起動時に次の順序で送信します。
 
-1. GUIが `known_command kfw-options` を送る。
-2. 対応していれば `kfw-options` を送る。
-3. GUIがJSONのバージョンと保存値を検証する。
-4. GUIが保存済みの各値を `kfw-set-option <id> <value>` で送る。
-5. その後、通常の対局初期化を行う。
+1. GUIが `known_command kfw-describe-options` を送る。
+2. 対応していれば `kfw-describe-options play player` を送る。
+3. GUIがJSONのバージョン、型、制約、保存値を検証する。
+4. GUIが保存済みの値を一つの `kfw-patch-options play player <json>` で送る。
+5. 予約されたactionを `kfw-invoke-option play player <id>` で個別に送る。
+6. 新プロトコル非対応なら旧コマンドへフォールバックする。
+7. その後、通常の対局初期化を行う。
 
-## `kfw-options` のJSON形式
+## 旧`kfw-options`のJSON形式（移行互換）
 
 現在の形式のバージョンは `1` です。このエンジンは次のようなJSONを1行で返します。
 
@@ -128,7 +147,7 @@ GUIに保存されたオプションはエンジン起動時に送信されま�
 
 `combo` の保存値が `vars` に存在しない場合、GUIはその値をエンジンへ送信しません。値の名前を変更するときは、既存設定との互換性に注意してください。
 
-## 対応しているオプション型
+## 旧プロトコルで対応しているオプション型
 
 | 型 | GUIでの表示 | 保存値 |
 |---|---|---|

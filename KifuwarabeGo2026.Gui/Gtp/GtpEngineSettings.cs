@@ -11,4 +11,6 @@ public sealed record GtpEngineSettings(
     string Arguments,
     bool EnableGtpLog,
     string LogPrefix = "",
-    IReadOnlyDictionary<string, string>? GuiOptions = null);
+    IReadOnlyDictionary<string, string>? GuiOptions = null,
+    string AppId = "play",
+    string Role = "player");

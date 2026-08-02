@@ -886,6 +886,8 @@ internal sealed class CgosClient
     {
         if (_options.EngineOptions.Count == 0) return;
 
+        if (await TryApplyJsonEngineOptionsAsync(engine, cancellationToken)) return;
+
         IReadOnlyList<string> known;
         var optionsCommand = "kfw-options";
         var setOptionCommand = "kfw-set-option";
@@ -933,6 +935,98 @@ internal sealed class CgosClient
             }
 
             await engine.CommandAsync($"{setOptionCommand} {option.Key} {option.Value}", cancellationToken);
+        }
+    }
+
+    private async Task<bool> TryApplyJsonEngineOptionsAsync(GtpEngineProcess engine, CancellationToken cancellationToken)
+    {
+        IReadOnlyList<string> known;
+        try
+        {
+            known = await engine.CommandAsync("known_command kfw-describe-options", cancellationToken);
+        }
+        catch (InvalidOperationException)
+        {
+            return false;
+        }
+
+        if (!known.Any(value => value.Equals("true", StringComparison.OrdinalIgnoreCase))) return false;
+
+        var schemaLines = await engine.CommandAsync("kfw-describe-options play player", cancellationToken);
+        using var schema = System.Text.Json.JsonDocument.Parse(string.Join('\n', schemaLines));
+        var root = schema.RootElement;
+        if (!root.TryGetProperty("version", out var version) || version.GetInt32() != 1)
+            throw new InvalidOperationException("Unsupported kfw-describe-options version.");
+        if (!root.TryGetProperty("app", out var app) || app.GetString() != "play" ||
+            !root.TryGetProperty("role", out var role) || role.GetString() != "player")
+            throw new InvalidOperationException("kfw-describe-options returned a different app or role.");
+        if (!root.TryGetProperty("options", out var definitions) || definitions.ValueKind != System.Text.Json.JsonValueKind.Array)
+            throw new InvalidOperationException("kfw-describe-options returned no options array.");
+
+        var values = new Dictionary<string, object?>(StringComparer.Ordinal);
+        var actions = new List<string>();
+        foreach (var option in _options.EngineOptions)
+        {
+            var definition = definitions.EnumerateArray().FirstOrDefault(candidate =>
+                candidate.TryGetProperty("id", out var id) && id.GetString() == option.Key);
+            if (definition.ValueKind == System.Text.Json.JsonValueKind.Undefined) continue;
+
+            var type = definition.TryGetProperty("type", out var typeProperty)
+                ? typeProperty.GetString()?.ToLowerInvariant()
+                : null;
+            if (type == "action")
+            {
+                if (bool.TryParse(option.Value, out var queued) && queued && _consumedButtonOptions.Add(option.Key))
+                    actions.Add(option.Key);
+                continue;
+            }
+
+            if (TryConvertJsonOption(definition, type, option.Value, out var typedValue))
+                values[option.Key] = typedValue;
+        }
+
+        if (values.Count > 0)
+        {
+            var request = System.Text.Json.JsonSerializer.Serialize(new { version = 1, values });
+            await engine.CommandAsync($"kfw-patch-options play player {request}", cancellationToken);
+        }
+
+        foreach (var action in actions)
+            await engine.CommandAsync($"kfw-invoke-option play player {action}", cancellationToken);
+        return true;
+    }
+
+    private static bool TryConvertJsonOption(
+        System.Text.Json.JsonElement definition,
+        string? type,
+        string value,
+        out object? typedValue)
+    {
+        typedValue = null;
+        switch (type)
+        {
+            case "boolean":
+                if (!bool.TryParse(value, out var booleanValue)) return false;
+                typedValue = booleanValue;
+                return true;
+            case "integer":
+                if (!int.TryParse(value, out var integerValue)) return false;
+                if (definition.TryGetProperty("minimum", out var minimum) && integerValue < minimum.GetInt32()) return false;
+                if (definition.TryGetProperty("maximum", out var maximum) && integerValue > maximum.GetInt32()) return false;
+                typedValue = integerValue;
+                return true;
+            case "enum":
+                if (!definition.TryGetProperty("values", out var enumValues) ||
+                    !enumValues.EnumerateArray().Any(candidate => candidate.GetString() == value)) return false;
+                typedValue = value;
+                return true;
+            case "string":
+            case "file":
+                if (definition.TryGetProperty("maximumLength", out var maximumLength) && value.Length > maximumLength.GetInt32()) return false;
+                typedValue = value;
+                return true;
+            default:
+                return false;
         }
     }
 

@@ -43,46 +43,47 @@ provider
 
 ## 用途に関係するエンジンオプションの問い合わせ
 
-GUIが指定用途に関係するエンジンオプションを調べられるよう、次のKFW拡張GTPコマンドを設ける方針とする。
+GUIが指定用途に関係するエンジンオプションを調べられるよう、次のKFW拡張GTPコマンドを使用する。
 
 ```text
-kfw-list-engine-options <app-id> <role>
+kfw-describe-options <app-id> <role>
 ```
 
 問い合わせ例を示す。
 
 ```text
-kfw-list-engine-options play player
-kfw-list-engine-options ponnuki player
-kfw-list-engine-options ponnuki provider
+kfw-describe-options play player
+kfw-describe-options ponnuki player
+kfw-describe-options ponnuki provider
 ```
 
-成功応答の本文には、`kfw-options`が返す定義に存在するoption IDのJSON配列を返す。
+成功応答の本文には、そのアプリと役割に関係する型付きオプションスキーマをJSONで返す。
 
 ```text
-> kfw-list-engine-options ponnuki provider
+> kfw-describe-options ponnuki provider
 
-= ["RandomMove","PonnukiCaptureTarget"]
+= {"version":1,"app":"ponnuki","role":"provider","options":[]}
 ```
 
 各コマンドの責務は次のように分ける。
 
-- `kfw-options`は、全オプションのID、型、既定値、選択肢、説明などの定義を返す。
-- `kfw-list-engine-options`は、指定されたアプリと役割に関係するoption IDを返す。
-- `kfw-get-option`と`kfw-set-option`は、オプション値の取得と変更を行う。
+- `kfw-describe-options`は、指定されたアプリと役割に関係する定義を返す。
+- `kfw-get-options`は、指定用途の現在値を型付きJSONで返す。
+- `kfw-patch-options`は、指定項目だけを原子的な差分パッチとして反映する。
+- `kfw-invoke-option`は、副作用を持つ`action`をパッチと独立して実行する。
 
-`kfw-list-engine-options`が返すIDは、必ず`kfw-options`の結果に存在しなければならない。GUIは存在しないIDを受け取った場合、そのIDを無視し、診断ログへ記録する。
+`kfw-patch-options`は全項目の検証に成功した場合だけ全項目を反映し、一項目でも失敗した場合は何も変更せずJSONエラーを返す。
 
 ## オプション値の共有
 
 オプション値は、基本的にエンジンプロファイル単位で保持する。同じoption IDが複数のアプリまたは役割に現れた場合、それらは一つの値を共有する。
 
-用途ごとに異なる値が必要な場合は、用途を区別できる別のoption IDを定義する。最初の仕様では、`kfw-get-option`と`kfw-set-option`へアプリIDや役割を追加しない。
+用途ごとに異なる値が必要な場合は、用途を区別できる別のoption IDを定義する。新しい各コマンドはアプリIDと役割を受け取るが、同じoption IDは基本的に一つのエンジン設定値を共有する。
 
 ## 後方互換性
 
-GUIは最初に`known_command kfw-list-engine-options`で対応状況を確認する。
+GUIは最初に`known_command kfw-describe-options`で対応状況を確認する。
 
-非対応のエンジンについては、従来の`kfw-options`で取得した全項目を「用途別分類なし」として扱えるようにする。これにより、新しい問い合わせコマンドへ対応していない既存エンジンも引き続き利用できる。
+非対応のエンジンについては、従来の`kfw-options`、`kfw-get-option`、`kfw-set-option`へフォールバックする。これにより、新しいJSONプロトコルへ対応していない既存エンジンも引き続き利用できる。
 
 アプリのプロトコルに互換性のない変更が必要になった場合は、アプリIDへバージョンを埋め込まず、アプリの対応バージョンを問い合わせる別の仕組みで扱う。

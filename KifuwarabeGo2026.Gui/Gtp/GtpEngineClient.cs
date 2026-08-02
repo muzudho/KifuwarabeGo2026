@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -158,6 +159,14 @@ public sealed class GtpEngineClient : IAsyncDisposable
     {
         if (_settings.GuiOptions is null || _settings.GuiOptions.Count == 0) return;
 
+        var describeCommand = "kfw-describe-options";
+        var knownDescribe = await SendCommandAsync($"known_command {describeCommand}", cancellationToken);
+        if (knownDescribe.IsSuccess && knownDescribe.Payload.Equals("true", StringComparison.OrdinalIgnoreCase))
+        {
+            await ApplyJsonOptionsAsync(cancellationToken);
+            return;
+        }
+
         var optionsCommand = "kfw-options";
         var setOptionCommand = "kfw-set-option";
         var knownCommand = await SendCommandAsync($"known_command {optionsCommand}", cancellationToken);
@@ -194,6 +203,79 @@ public sealed class GtpEngineClient : IAsyncDisposable
                  number < (definition.Min ?? int.MinValue) || number > (definition.Max ?? int.MaxValue))) continue;
 
             await SendCommandExpectSuccessAsync($"{setOptionCommand} {savedOption.Key} {savedOption.Value}", cancellationToken);
+        }
+    }
+
+    private async Task ApplyJsonOptionsAsync(CancellationToken cancellationToken)
+    {
+        var app = _settings.AppId.ToLowerInvariant();
+        var role = _settings.Role.ToLowerInvariant();
+        var describeCommand = $"kfw-describe-options {app} {role}";
+        var describeResponse = await SendCommandAsync(describeCommand, cancellationToken);
+        describeResponse.ThrowIfError(describeCommand);
+        var schema = GtpOptionSchemaDocument.Parse(describeResponse.Payload);
+        if (schema.Version != 1) throw new InvalidOperationException($"Unsupported kfw-describe-options version: {schema.Version}");
+        if (!schema.App.Equals(app, StringComparison.OrdinalIgnoreCase) ||
+            !schema.Role.Equals(role, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("kfw-describe-options returned a different app or role.");
+
+        var values = new Dictionary<string, object?>(StringComparer.Ordinal);
+        var actions = new List<string>();
+        foreach (var savedOption in _settings.GuiOptions!)
+        {
+            var definition = schema.Options.FirstOrDefault(option => option.Id.Equals(savedOption.Key, StringComparison.Ordinal));
+            if (definition is null) continue;
+            if (definition.Type.Equals("action", StringComparison.OrdinalIgnoreCase))
+            {
+                if (bool.TryParse(savedOption.Value, out var queued) && queued)
+                    actions.Add(definition.Id);
+                continue;
+            }
+
+            if (TryConvertSavedOption(definition, savedOption.Value, out var typedValue))
+                values[definition.Id] = typedValue;
+        }
+
+        if (values.Count > 0)
+        {
+            var request = JsonSerializer.Serialize(new { version = 1, values });
+            var patchCommand = $"kfw-patch-options {app} {role} {request}";
+            await SendCommandExpectSuccessAsync(patchCommand, cancellationToken);
+        }
+
+        foreach (var action in actions)
+            await SendCommandExpectSuccessAsync($"kfw-invoke-option {app} {role} {action}", cancellationToken);
+    }
+
+    private static bool TryConvertSavedOption(
+        GtpOptionSchemaDefinition definition,
+        string value,
+        out object? typedValue)
+    {
+        typedValue = null;
+        switch (definition.Type.ToLowerInvariant())
+        {
+            case "boolean":
+                if (!bool.TryParse(value, out var booleanValue)) return false;
+                typedValue = booleanValue;
+                return true;
+            case "integer":
+                if (!int.TryParse(value, out var integerValue) ||
+                    integerValue < (definition.Minimum ?? int.MinValue) ||
+                    integerValue > (definition.Maximum ?? int.MaxValue)) return false;
+                typedValue = integerValue;
+                return true;
+            case "enum":
+                if (!definition.Values.Contains(value, StringComparer.Ordinal)) return false;
+                typedValue = value;
+                return true;
+            case "string":
+            case "file":
+                if (value.Length > (definition.MaximumLength ?? int.MaxValue)) return false;
+                typedValue = value;
+                return true;
+            default:
+                return false;
         }
     }
 

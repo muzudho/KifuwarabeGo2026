@@ -30,6 +30,7 @@ internal static class Program
             VerifyTextRasterizer();
             VerifyWindowsAssembly();
             VerifyAtomicInitialPositionProtocol();
+            VerifyJsonEngineOptionsProtocol();
             VerifyBundledEngineInitialPositionPipeline();
             Console.WriteLine("PASS: Windows platform services passed non-interactive checks.");
             return 0;
@@ -56,11 +57,25 @@ internal static class Program
             "",
             EnableGtpLog: false,
             LogPrefix: "[atomic-smoke]",
-            GuiOptions: new Dictionary<string, string>());
+            GuiOptions: new Dictionary<string, string>
+            {
+                ["RandomMove"] = "Normal",
+                ["AvoidEyes"] = "false",
+                ["RandomSeed"] = "42",
+                ["EngineTag"] = "windows smoke",
+                ["ClearCache"] = "true",
+            });
         var client = new GtpEngineClient(settings, TimeSpan.FromSeconds(10));
         try
         {
             client.StartAsync().GetAwaiter().GetResult();
+            var options = client.SendCommandAsync("kfw-get-options play player").GetAwaiter().GetResult();
+            options.ThrowIfError("kfw-get-options play player");
+            Require(options.Payload.Contains("\"RandomMove\":\"Normal\"", StringComparison.Ordinal) &&
+                    options.Payload.Contains("\"AvoidEyes\":false", StringComparison.Ordinal) &&
+                    options.Payload.Contains("\"RandomSeed\":42", StringComparison.Ordinal) &&
+                    options.Payload.Contains("\"EngineTag\":\"windows smoke\"", StringComparison.Ordinal),
+                "The GUI client did not apply saved options through the typed JSON protocol.");
             var capabilities = new GtpCapabilityProbe()
                 .ProbeInitialPositionAsync(new GtpEngineClientCommandSession(client))
                 .GetAwaiter().GetResult();
@@ -158,6 +173,43 @@ internal static class Program
         Require(guarded.Contains("position setup is active", StringComparison.Ordinal) &&
                 guarded.Contains("? illegal move", StringComparison.Ordinal),
             "Standard board mutation was not guarded during atomic setup or abort changed the live board.");
+    }
+
+    private static void VerifyJsonEngineOptionsProtocol()
+    {
+        var output = RunEngine(
+            "known_command kfw-describe-options\n" +
+            "known_command kfw-patch-options\n" +
+            "known_command kfw-invoke-option\n" +
+            "kfw-describe-options play player\n" +
+            "kfw-describe-options ponnuki provider\n" +
+            "kfw-describe-options play provider\n" +
+            "kfw-patch-options play player {\"version\":1,\"values\":{\"RandomMove\":\"Normal\",\"AvoidEyes\":false,\"RandomSeed\":42,\"EngineTag\":\"two words\"}}\n" +
+            "kfw-get-options play player\n" +
+            "kfw-patch-options play player {\"version\":1,\"values\":{\"RandomMove\":\"invalid\",\"AvoidEyes\":true}}\n" +
+            "kfw-get-options play player\n" +
+            "kfw-patch-options play player {\"version\":1,\"values\":{\"ClearCache\":true}}\n" +
+            "kfw-invoke-option play player ClearCache\n" +
+            "kfw-get-option RandomMove\n" +
+            "quit\n");
+
+        const string expectedValues = "\"values\":{\"RandomMove\":\"Normal\",\"AvoidEyes\":false,\"RandomSeed\":42,\"EngineTag\":\"two words\"";
+        Require(CountOccurrences(output, "= true") >= 3,
+            "The JSON option commands were not published through known_command.");
+        Require(output.Contains("\"type\":\"boolean\"", StringComparison.Ordinal) &&
+                output.Contains("\"apply\":\"restart\"", StringComparison.Ordinal),
+            "The option schema did not expose JSON-native types and apply timing.");
+        Require(output.Contains("\"app\":\"ponnuki\",\"role\":\"provider\",\"options\":[]", StringComparison.Ordinal) &&
+                output.Contains("\"code\":\"unsupported-app-role\"", StringComparison.Ordinal),
+            "Supported scopes without options were not distinguished from unsupported app roles.");
+        Require(CountOccurrences(output, expectedValues) == 2 &&
+                output.Contains("\"code\":\"option-validation-failed\"", StringComparison.Ordinal),
+            "A failed option patch changed state or did not return a JSON validation error.");
+        Require(output.Contains("action options must be invoked with kfw-invoke-option", StringComparison.Ordinal) &&
+                output.Contains("\"invoked\":\"ClearCache\"", StringComparison.Ordinal),
+            "Action options were not separated from atomic value patches.");
+        Require(output.Contains("= Normal", StringComparison.Ordinal),
+            "The legacy single-option commands did not remain compatible.");
     }
 
     private static string RunEngine(string commands)

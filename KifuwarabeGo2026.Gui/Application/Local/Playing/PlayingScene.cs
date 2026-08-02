@@ -906,6 +906,7 @@ public sealed class PlayingScene : IDisposable
     {
         var profile = _session.GetGtpEngineProfile(stone);
         var logPrefix = stone == GoStone.Black ? "[black-engine]" : "[white-engine]";
+        var appId = _session.UseKind == GoAppUseKind.LocalApps ? "ponnuki" : "play";
         return new GtpEngineSettings(
             profile.DisplayName,
             profile.ExecutablePath,
@@ -913,7 +914,9 @@ public sealed class PlayingScene : IDisposable
             profile.Arguments,
             profile.EnableGtpLog,
             logPrefix,
-            new Dictionary<string, string>(profile.GuiOptions));
+            new Dictionary<string, string>(profile.GuiOptions),
+            appId,
+            "player");
     }
 
     private sealed record EngineCommandCompletion(EngineCommandResult Result, int Generation);

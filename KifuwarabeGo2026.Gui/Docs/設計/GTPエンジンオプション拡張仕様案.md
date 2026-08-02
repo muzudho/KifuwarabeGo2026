@@ -1,4 +1,8 @@
-# GTPエンジンオプション拡張仕様案
+# GTPエンジンオプション拡張仕様案（旧単項目プロトコル）
+
+> **移行中の旧仕様です。**
+>
+> 正規仕様は、Go Appと役割を指定する`kfw-describe-options`、`kfw-get-options`、`kfw-patch-options`、`kfw-invoke-option`へ更新されました。型はJSON本来の`boolean`、`integer`、`enum`、`string`、`file`、`action`を使用し、パッチは全項目成功または全項目不反映の原子処理です。現在の外部公開仕様は[Playのエンジンオプション](../../PublicDocs/GoApps/Play/エンジンオプション.md)を参照してください。以下は`kfw-options`、`kfw-get-option`、`kfw-set-option`を使用する既存実装の移行互換資料として残します。
 
 ## この文書について
 
