@@ -22,6 +22,50 @@ public static class SgfGameRecordConverter
     public static string UpgradeToCurrentFormat(string sgf) =>
         ToSgf(FromSgf(sgf));
 
+    /// <summary>
+    /// Renames the legacy KFA property to KFW without reformatting the SGF.
+    /// Text inside property values, including comments and JSON strings, is left unchanged.
+    /// </summary>
+    public static string ConvertKfaToKfw(string sgf)
+    {
+        ArgumentNullException.ThrowIfNull(sgf);
+
+        var builder = new StringBuilder(sgf.Length);
+        var index = 0;
+        while (index < sgf.Length)
+        {
+            if (sgf[index] == '[')
+            {
+                AppendPropertyValueVerbatim(builder, sgf, ref index);
+                continue;
+            }
+
+            if (sgf[index] is >= 'A' and <= 'Z')
+            {
+                var nameStart = index;
+                while (index < sgf.Length && sgf[index] is >= 'A' and <= 'Z')
+                {
+                    index++;
+                }
+
+                var name = sgf.AsSpan(nameStart, index - nameStart);
+                if (name.SequenceEqual("KFA"))
+                {
+                    builder.Append("KFW");
+                }
+                else
+                {
+                    builder.Append(name);
+                }
+                continue;
+            }
+
+            builder.Append(sgf[index++]);
+        }
+
+        return builder.ToString();
+    }
+
     public static string ToSgf(GoGameRecord record)
     {
         ArgumentNullException.ThrowIfNull(record);
@@ -109,7 +153,7 @@ public static class SgfGameRecordConverter
             }
             else if (move.LegacyKifuwarabeAnalysisJson is not null)
             {
-                AppendProperty(builder, "KFA", move.LegacyKifuwarabeAnalysisJson);
+                AppendProperty(builder, "KFW", move.LegacyKifuwarabeAnalysisJson);
             }
         }
 
@@ -296,8 +340,8 @@ public static class SgfGameRecordConverter
         }
 
         if (analysis is null &&
-            readLegacyKifuwarabeAnalysis &&
-            TryGetSingleValue(node, "KFA", out var legacyAnalysisJson))
+            (TryGetSingleValue(node, "KFW", out var legacyAnalysisJson) ||
+             (readLegacyKifuwarabeAnalysis && TryGetSingleValue(node, "KFA", out legacyAnalysisJson))))
         {
             analysis = CgosMoveAnalysisParser.Parse(legacyAnalysisJson, playedVertex);
             if (analysis is null)
@@ -391,6 +435,24 @@ public static class SgfGameRecordConverter
     private static string EscapeValue(string value)
     {
         return value.Replace("\\", "\\\\", StringComparison.Ordinal).Replace("]", "\\]", StringComparison.Ordinal);
+    }
+
+    private static void AppendPropertyValueVerbatim(StringBuilder builder, string sgf, ref int index)
+    {
+        builder.Append(sgf[index++]);
+        while (index < sgf.Length)
+        {
+            var ch = sgf[index++];
+            builder.Append(ch);
+            if (ch == '\\' && index < sgf.Length)
+            {
+                builder.Append(sgf[index++]);
+            }
+            else if (ch == ']')
+            {
+                return;
+            }
+        }
     }
 
     private sealed class Parser

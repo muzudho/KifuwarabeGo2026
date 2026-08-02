@@ -41,8 +41,8 @@ public readonly record struct GoGameMove
     public string? CommonAnalysisJson { get; }
 
     /// <summary>
-    /// Unreadable legacy KFA JSON retained as a last-resort lossless fallback.
-    /// Readable KFA data is migrated to CC when the record is saved.
+    /// Unreadable KFW or legacy KFA JSON retained as a last-resort lossless fallback.
+    /// Readable data is migrated to CC; unreadable legacy KFA is renamed to KFW when saved.
     /// </summary>
     public string? LegacyKifuwarabeAnalysisJson { get; }
 

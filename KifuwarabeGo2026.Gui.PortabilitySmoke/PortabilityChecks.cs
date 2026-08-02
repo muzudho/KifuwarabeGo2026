@@ -6,6 +6,7 @@ using KifuwarabeGo2026.Gui.Application.Cgos.ConnectionTarget;
 using KifuwarabeGo2026.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.Gui.Application.Local.Resting.TournamentRule;
 using KifuwarabeGo2026.Gui.Gtp;
+using KifuwarabeGo2026.Gui.Sgf;
 using KifuwarabeGo2026.GtpExtensions;
 using KifuwarabeGo2026.GtpExtensions.Capabilities;
 using KifuwarabeGo2026.GtpExtensions.Engines;
@@ -50,6 +51,7 @@ internal static class PortabilityChecks
         VerifyGtpCapabilityProbe();
         VerifyStandardHandicapStrategies();
         VerifyLoadSgfStrategyAndTemporaryFile();
+        VerifyKfaToKfwConversion();
         VerifyInitialPositionConcierge();
         VerifyInitialPositionConciergeGuiModel();
         VerifyInitialPositionEngineProfiles();
@@ -67,6 +69,25 @@ internal static class PortabilityChecks
         VerifyDefaultCgosConnection();
         VerifyTournamentRulesJsonCompatibility();
         VerifyComposition();
+    }
+
+    private static void VerifyKfaToKfwConversion()
+    {
+        const string legacy = "(;C[KFA[comment\\] text]KFA[{\"unknown\":true}];B[aa](;W[bb]KFA[x]))";
+        const string expected = "(;C[KFA[comment\\] text]KFW[{\"unknown\":true}];B[aa](;W[bb]KFW[x]))";
+        Require(
+            SgfGameRecordConverter.ConvertKfaToKfw(legacy) == expected,
+            "KFA properties must be renamed without changing values or variations.");
+
+        var record = SgfGameRecordConverter.FromSgf("(;GM[1]SZ[9];B[aa]KFA[{\"unknown\":true}])");
+        var upgraded = SgfGameRecordConverter.ToSgf(record);
+        Require(upgraded.Contains("KFW[{\"unknown\":true}]", StringComparison.Ordinal), "Unreadable legacy KFA must be saved as KFW.");
+        Require(!upgraded.Contains("KFA[", StringComparison.Ordinal), "Current SGF output must not contain KFA.");
+
+        var current = SgfGameRecordConverter.FromSgf("(;GM[1]SZ[9];B[aa]KFW[{\"unknown\":true}])");
+        Require(
+            current.Moves.Count == 1 && current.Moves[0].LegacyKifuwarabeAnalysisJson == "{\"unknown\":true}",
+            "KFW analysis JSON must be readable.");
     }
 
     private static void VerifyInitialPositionConciergeGuiModel()

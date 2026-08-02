@@ -20,15 +20,15 @@ KFAV[1]
 
 解析情報を一つ以上保存するときだけ出力します。現在のバージョンは `1` です。
 
-### `KFA`
+### `KFW`
 
-解析対象となる着手ノードへ記録する KifuwarabeGo2026 Analysis です。値は改行なしの UTF-8 JSON とし、SGF の通常のエスケープ規則を適用します。
+解析対象となる着手ノードへ記録する KifuwarabeGo2026 固有データです。`KFW` は独自拡張 GTP コマンドの `kfw-` 接頭辞と揃えた名前です。値は改行なしの UTF-8 JSON とし、SGF の通常のエスケープ規則を適用します。
 
 JSON のキーと意味は、zakki/cgos の Proposed GTP tournament game expansion ver 0.1 に合わせます。
 
 ```sgf
 (;FF[4]GM[1]CA[UTF-8]AP[KifuwarabeGo2026]KFAV[1]SZ[9]KM[7]
-;B[dd]KFA[{"moves":[{"move":"D6","winrate":0.532,"score":1.5,"pv":"E5 F3","visits":100}]}])
+;B[dd]KFW[{"moves":[{"move":"D6","winrate":0.532,"score":1.5,"pv":"E5 F3","visits":100}]}])
 ```
 
 ## JSON version 1
@@ -47,9 +47,13 @@ JSON のキーと意味は、zakki/cgos の Proposed GTP tournament game expansi
 
 ## コメントとの関係
 
-人間が記入した文章は標準の `C` プロパティへ保存します。機械的に再利用する解析値は `KFA` へ保存し、コメントを上書きしません。
+人間が記入した文章は標準の `C` プロパティへ保存します。機械的に再利用する解析値は `KFW` へ保存し、コメントを上書きしません。
 
-未対応アプリケーションは `KFA` と `KFAV` を無視して構いません。対応アプリケーションは、認識できない版の解析情報を無理に解釈せず、通常のSGF棋譜として読み込みます。
+未対応アプリケーションは `KFW` と `KFAV` を無視して構いません。対応アプリケーションは、認識できない版の解析情報を無理に解釈せず、通常のSGF棋譜として読み込みます。
+
+## 旧 `KFA` との互換性
+
+旧仕様の `KFA` は読み込みに対応します。保存時には `KFA` を出力せず、解釈できる解析 JSON は共通の `CC`、未解釈の JSON は値を保持したまま `KFW` として出力します。`ConvertKfaToKfw` を使うと、コメントや JSON 内の文字列には触れず、SGF 全体の `KFA` プロパティ名だけを `KFW` へ変換できます。
 
 ## 参照仕様
 
