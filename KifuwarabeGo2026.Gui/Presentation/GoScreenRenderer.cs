@@ -112,6 +112,8 @@ public sealed partial class GoScreenRenderer
 
         DrawBackground();
         DrawUseSelectionPanel(session, mousePoint, page);
+        DrawGtpEngineSelectionDialog(session, mousePoint);
+        DrawGtpEngineEditPanel(session, mousePoint);
 
         _spriteBatch.End();
     }

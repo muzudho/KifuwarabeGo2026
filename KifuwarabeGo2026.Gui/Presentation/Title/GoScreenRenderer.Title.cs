@@ -135,16 +135,12 @@ public sealed partial class GoScreenRenderer
         DrawText("APP PROVIDER ENGINE", new Vector2(530, 416), new Color(255, 190, 92), 0.42f);
         DrawDynamicOptionText("アプリ提供エンジン", new Rectangle(950, 414, 330, 34), new Color(210, 214, 207), 0.32f);
 
-        for (var index = 0; index < Math.Min(session.GtpEngineProfiles.Count, 5); index++)
-        {
-            var bounds = TitleAppProviderEngineBounds(index);
-            var selected = index == session.SelectedAppProviderEngineIndex;
-            var hovered = bounds.Contains(mousePoint);
-            FillRect(bounds, selected ? new Color(58, 66, 51) : hovered ? new Color(42, 55, 63) : new Color(24, 31, 37));
-            DrawRect(bounds, selected ? 3 : 2, selected ? new Color(255, 190, 92) : new Color(88, 102, 112));
-            DrawFittedText(session.GtpEngineProfiles[index].DisplayName, new Rectangle(bounds.X + 18, bounds.Y + 13, 560, 30), Color.White, 0.34f);
-            DrawFittedText(selected ? "SELECTED" : "SELECT", new Rectangle(bounds.Right - 130, bounds.Y + 14, 104, 28), selected ? new Color(255, 210, 128) : new Color(180, 195, 195), 0.27f);
-        }
+        var bounds = TitleAppProviderEngineBounds(0);
+        var hovered = bounds.Contains(mousePoint);
+        FillRect(bounds, hovered ? new Color(42, 55, 63) : new Color(24, 31, 37));
+        DrawRect(bounds, 2, hovered ? new Color(255, 190, 92) : new Color(88, 102, 112));
+        DrawFittedText(session.SelectedAppProviderEngine.DisplayName, new Rectangle(bounds.X + 18, bounds.Y + 13, 560, 30), Color.White, 0.34f);
+        DrawFittedText("CHANGE", new Rectangle(bounds.Right - 130, bounds.Y + 14, 104, 28), new Color(255, 210, 128), 0.27f);
 
         var capabilityColor = session.IsAppProviderCapabilityConfirmed
             ? new Color(99, 223, 185)
@@ -165,11 +161,11 @@ public sealed partial class GoScreenRenderer
             scale: 0.30f);
         DrawCommandButton(
             TitleAppProviderStartButtonBounds,
-            session.CanUseSelectedAppProvider ? "START" : "ENGINE REQUIRED",
+            session.CanStartSelectedAppProvider ? "START" : session.CanUseSelectedAppProvider ? "CHECK REQUIRED" : "ENGINE REQUIRED",
             false,
             mousePoint,
-            enabled: session.CanUseSelectedAppProvider,
-            scale: session.CanUseSelectedAppProvider ? 0.40f : 0.23f);
+            enabled: session.CanStartSelectedAppProvider,
+            scale: session.CanStartSelectedAppProvider ? 0.40f : 0.23f);
         DrawTitleBackButton(mousePoint);
     }
 

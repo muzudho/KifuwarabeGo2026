@@ -231,12 +231,14 @@ public sealed partial class GoScreenRenderer
         FillRect(GtpEngineSelectionDialogBounds, new Color(19, 24, 31, 248));
         DrawRect(GtpEngineSelectionDialogBounds, 2, new Color(116, 145, 146));
 
-        var target = session.IsGtpEngineSelectionForCgos
-            ? session.GtpEngineSelectionTargetStone == GoStone.Black ? "CGOS PLAYER 1" : "CGOS PLAYER 2"
-            : session.GtpEngineSelectionTargetStone == GoStone.Black ? "BLACK" : "WHITE";
+        var target = session.IsGtpEngineSelectionForAppProvider
+            ? $"{session.GtpEngineSelectionAppId} PROVIDER"
+            : session.IsGtpEngineSelectionForCgos
+                ? session.GtpEngineSelectionTargetStone == GoStone.Black ? "CGOS PLAYER 1" : "CGOS PLAYER 2"
+                : session.GtpEngineSelectionTargetStone == GoStone.Black ? "BLACK" : "WHITE";
         DrawText($"GTP ENGINE SELECT  {target}", new Vector2(GtpEngineSelectionDialogBounds.X + 30, GtpEngineSelectionDialogBounds.Y + 24), new Color(244, 238, 218), 0.78f);
         DrawCommandButton(GtpEngineSelectionDialogCancelButtonBounds, "CANCEL", false, mousePoint, scale: 0.34f);
-        DrawCommandButton(GtpEngineSelectionDialogOkButtonBounds, "SELECT", false, mousePoint, scale: 0.34f);
+        DrawCommandButton(GtpEngineSelectionDialogOkButtonBounds, "SELECT", false, mousePoint, enabled: session.CanCommitGtpEngineSelection, scale: 0.34f);
 
         DrawText("LIST", new Vector2(GtpEngineSelectionDialogListBounds.X, GtpEngineSelectionDialogListBounds.Y - 34), new Color(180, 195, 195), 0.46f);
         DrawText("PROPERTIES", new Vector2(GtpEngineSelectionDialogPropertyBounds.X, GtpEngineSelectionDialogPropertyBounds.Y - 34), new Color(180, 195, 195), 0.46f);
@@ -574,12 +576,14 @@ public sealed partial class GoScreenRenderer
         var profile = session.GtpEngineProfiles[index];
         var selectedIndex = session.GtpEngineDialogSelectionIndex;
         var selected = index == selectedIndex;
-        var hovered = bounds.Contains(mousePoint);
-        FillRect(bounds, selected ? new Color(38, 103, 86) : hovered ? new Color(43, 52, 62) : new Color(24, 31, 37));
-        DrawRect(bounds, 1, selected ? new Color(147, 244, 200) : new Color(70, 85, 94));
+        var compatibility = session.GetGtpEngineAppCompatibility(index);
+        var enabled = compatibility.CanSelect;
+        var hovered = enabled && bounds.Contains(mousePoint);
+        FillRect(bounds, selected ? new Color(38, 103, 86) : hovered ? new Color(43, 52, 62) : enabled ? new Color(24, 31, 37) : new Color(27, 28, 31));
+        DrawRect(bounds, 1, selected ? new Color(147, 244, 200) : enabled ? new Color(70, 85, 94) : new Color(75, 63, 65));
         DrawText($"{index + 1:00}", new Vector2(bounds.X + 14, bounds.Y + 16), selected ? new Color(177, 255, 215) : new Color(180, 195, 195), 0.4f);
-        DrawFittedText(profile.DisplayName, new Rectangle(bounds.X + 62, bounds.Y + 6, bounds.Width - 82, 32), Color.White, 0.5f);
-        DrawFittedText(string.IsNullOrWhiteSpace(profile.ExecutablePath) ? "-" : profile.ExecutablePath, new Rectangle(bounds.X + 62, bounds.Y + 40, bounds.Width - 82, 24), new Color(204, 211, 206), 0.34f);
+        DrawFittedText(profile.DisplayName, new Rectangle(bounds.X + 62, bounds.Y + 6, bounds.Width - 82, 30), enabled ? Color.White : new Color(145, 145, 145), 0.5f);
+        DrawFittedText(compatibility.Message, new Rectangle(bounds.X + 62, bounds.Y + 39, bounds.Width - 82, 24), enabled ? new Color(99, 223, 185) : new Color(255, 145, 151), 0.29f);
     }
 
 
@@ -610,6 +614,7 @@ public sealed partial class GoScreenRenderer
         DrawPathPropertyRow(workingDirectoryRowBounds, "WORKDIR", displayWorkingDirectory);
         DrawGtpEnginePropertyRow(y + 210, "ARGS", string.IsNullOrWhiteSpace(profile.Arguments) ? "-" : profile.Arguments);
         DrawGtpEnginePropertyRow(y + 280, "GTP LOG", profile.EnableGtpLog ? "ON" : "OFF");
+        DrawGtpEnginePropertyRow(y + 350, "APP", session.GetGtpEngineAppCompatibility(selectedIndex).Message);
 
         DrawPathTooltipIfHovered(executablePathRowBounds, executablePath, mousePoint);
         DrawPathTooltipIfHovered(workingDirectoryRowBounds, displayWorkingDirectory, mousePoint);

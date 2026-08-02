@@ -55,6 +55,7 @@ internal static class PortabilityChecks
         VerifyInitialPositionConcierge();
         VerifyInitialPositionConciergeGuiModel();
         VerifyInitialPositionEngineProfiles();
+        VerifyGoAppEngineSelectionCompatibility();
         VerifyKifuwarabeAtomicSetupStrategy();
         VerifyMatchAssembly(matchAssembly);
         VerifyGuiMatchIntegration();
@@ -69,6 +70,41 @@ internal static class PortabilityChecks
         VerifyDefaultCgosConnection();
         VerifyTournamentRulesJsonCompatibility();
         VerifyComposition();
+    }
+
+    private static void VerifyGoAppEngineSelectionCompatibility()
+    {
+        var session = new GoAppSession();
+        session.SetGtpEngineProfiles(
+        [
+            new GtpEngineProfile { DisplayName = "Legacy" },
+            new GtpEngineProfile { DisplayName = "Ponnuki" },
+        ]);
+        session.SetGtpEngineAppCompatibilities(
+        [
+            new(GtpEngineAppCompatibilityKind.Unsupported, "ponnuki NOT SUPPORTED"),
+            new(GtpEngineAppCompatibilityKind.Supported, "ponnuki READY"),
+        ]);
+        session.OpenAppProviderGtpEngineSelectionDialog("ponnuki");
+        session.SelectGtpEngineDialogItem(0);
+        Require(session.GtpEngineDialogSelectionIndex == -1 && !session.CanCommitGtpEngineSelection,
+            "An engine that omits the target app must remain visible but unselectable.");
+        session.SelectGtpEngineDialogItem(1);
+        Require(session.GtpEngineDialogSelectionIndex == 1 && session.CanCommitGtpEngineSelection,
+            "An engine that publishes the target app must be selectable.");
+
+        session.SetGtpEngineAppCompatibilities(
+        [
+            new(GtpEngineAppCompatibilityKind.LegacyPlay, "LEGACY GO PLAY"),
+            new(GtpEngineAppCompatibilityKind.Unsupported, "play NOT SUPPORTED"),
+        ]);
+        session.OpenGtpEngineSelectionDialog(GoStone.Black);
+        session.SelectGtpEngineDialogItem(0);
+        Require(session.CanCommitGtpEngineSelection,
+            "An engine without kfw-list-apps must remain compatible with Go Play.");
+        session.SelectGtpEngineDialogItem(1);
+        Require(session.GtpEngineDialogSelectionIndex == 0,
+            "An engine that explicitly omits play must not replace the selectable engine.");
     }
 
     private static void VerifyKfaToKfwConversion()

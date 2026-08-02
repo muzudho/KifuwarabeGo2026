@@ -23,6 +23,7 @@ public sealed class GoAppSession
     private readonly HashSet<ulong> _positionHashes = new();
     private readonly List<TournamentRules> _tournamentRules = new();
     private readonly List<GtpEngineProfile> _gtpEngineProfiles = new();
+    private readonly List<GtpEngineAppCompatibility> _gtpEngineAppCompatibilities = new();
     private readonly List<CgosConnectionProfile> _cgosConnectionProfiles = new();
     private CgosConnectionProfile _cgosConnectionEditSource = CreateDefaultCgosConnectionProfile();
     private TournamentRules _currentTournamentRules = new();
@@ -55,6 +56,7 @@ public sealed class GoAppSession
         CurrentMode = _modes[GoAppModeKind.Resting];
         _board = new GoBoard(BoardSize);
         _gtpEngineProfiles.Add(new GtpEngineProfile());
+        _gtpEngineAppCompatibilities.Add(new(GtpEngineAppCompatibilityKind.LegacyPlay, "LEGACY GO PLAY"));
         ResetPositionHistory();
     }
 
@@ -358,6 +360,9 @@ public sealed class GoAppSession
         }
     }
 
+    public bool CanStartSelectedAppProvider =>
+        CanUseSelectedAppProvider && IsAppProviderCapabilityConfirmed;
+
     public string LocalAppsErrorMessage { get; private set; } = "";
 
     public string AppProviderCapabilityStatus { get; private set; } = "NOT CHECKED";
@@ -377,6 +382,13 @@ public sealed class GoAppSession
     public bool IsGtpEngineSelectionDialogOpen { get; private set; }
 
     public bool IsGtpEngineSelectionForCgos { get; private set; }
+
+    public bool IsGtpEngineSelectionForAppProvider =>
+        EngineSelectionPurpose == GtpEngineSelectionPurpose.AppProvider;
+
+    public GtpEngineSelectionPurpose EngineSelectionPurpose { get; private set; }
+
+    public string GtpEngineSelectionAppId { get; private set; } = "play";
 
     public int GtpEngineDialogSelectionIndex { get; private set; }
 
@@ -1964,6 +1976,9 @@ public sealed class GoAppSession
         SelectedAppProviderEngineIndex = 0;
         SelectedCgosBlackGtpEngineIndex = 0;
         SelectedCgosWhiteGtpEngineIndex = 0;
+        _gtpEngineAppCompatibilities.Clear();
+        _gtpEngineAppCompatibilities.AddRange(_gtpEngineProfiles.Select(
+            _ => new GtpEngineAppCompatibility(GtpEngineAppCompatibilityKind.LegacyPlay, "LEGACY GO PLAY")));
         SetCgosPlayerCredentials(GoStone.Black, _gtpEngineProfiles[0].DefaultCgosLoginName, _gtpEngineProfiles[0].DefaultCgosPlainTextPassword);
         SetCgosPlayerCredentials(GoStone.White, _gtpEngineProfiles[0].DefaultCgosLoginName, _gtpEngineProfiles[0].DefaultCgosPlainTextPassword);
     }
@@ -2079,6 +2094,8 @@ public sealed class GoAppSession
     public void OpenGtpEngineSelectionDialog(GoStone stone)
     {
         IsGtpEngineSelectionForCgos = false;
+        EngineSelectionPurpose = GtpEngineSelectionPurpose.LocalPlayer;
+        GtpEngineSelectionAppId = "play";
         OpenGtpEngineSelectionDialogCore(stone);
     }
 
@@ -2088,12 +2105,23 @@ public sealed class GoAppSession
     public void OpenCgosGtpEngineSelectionDialog(GoStone stone)
     {
         IsGtpEngineSelectionForCgos = true;
+        EngineSelectionPurpose = GtpEngineSelectionPurpose.CgosPlayer;
+        GtpEngineSelectionAppId = "play";
         OpenGtpEngineSelectionDialogCore(stone);
+    }
+
+    public void OpenAppProviderGtpEngineSelectionDialog(string appId)
+    {
+        IsGtpEngineSelectionForCgos = false;
+        EngineSelectionPurpose = GtpEngineSelectionPurpose.AppProvider;
+        GtpEngineSelectionAppId = appId;
+        OpenGtpEngineSelectionDialogCore(GoStone.Empty);
     }
 
     private void OpenGtpEngineSelectionDialogCore(GoStone stone)
     {
-        if (stone is not (GoStone.Black or GoStone.White))
+        if (EngineSelectionPurpose != GtpEngineSelectionPurpose.AppProvider &&
+            stone is not (GoStone.Black or GoStone.White))
         {
             throw new ArgumentOutOfRangeException(nameof(stone), stone, "GTP engine can be selected only for black or white.");
         }
@@ -2107,7 +2135,16 @@ public sealed class GoAppSession
         IsGtpEngineDeleteConfirmationOpen = false;
         GtpEngineSelectionTargetStone = stone;
         var selectedIndex = SelectedGtpEngineIndex;
-        GtpEngineDialogSelectionIndex = selectedIndex;
+        if (EngineSelectionPurpose == GtpEngineSelectionPurpose.LocalPlayer &&
+            !CanSelectGtpEngineForCurrentApp(selectedIndex))
+        {
+            if (stone == GoStone.Black)
+                SelectedBlackGtpEngineIndex = -1;
+            else
+                SelectedWhiteGtpEngineIndex = -1;
+            selectedIndex = -1;
+        }
+        GtpEngineDialogSelectionIndex = CanSelectGtpEngineForCurrentApp(selectedIndex) ? selectedIndex : -1;
         GtpEngineSelectionPageIndex = Math.Max(0, selectedIndex) / GtpEngineSelectionPageSize;
     }
 
@@ -2115,12 +2152,19 @@ public sealed class GoAppSession
     {
         if (index < 0 || index >= _gtpEngineProfiles.Count)
             throw new ArgumentOutOfRangeException(nameof(index), index, "GTP engine index is out of range.");
-        GtpEngineDialogSelectionIndex = index;
+        if (CanSelectGtpEngineForCurrentApp(index))
+            GtpEngineDialogSelectionIndex = index;
     }
 
     public void CommitGtpEngineSelectionDialog()
     {
-        SelectGtpEngine(GtpEngineSelectionTargetStone, GtpEngineDialogSelectionIndex);
+        if (!CanCommitGtpEngineSelection)
+            return;
+
+        if (EngineSelectionPurpose == GtpEngineSelectionPurpose.AppProvider)
+            SelectAppProviderEngine(GtpEngineDialogSelectionIndex);
+        else
+            SelectGtpEngine(GtpEngineSelectionTargetStone, GtpEngineDialogSelectionIndex);
         IsGtpEngineSelectionDialogOpen = false;
         CloseGtpEngineDeleteConfirmation();
     }
@@ -2210,7 +2254,9 @@ public sealed class GoAppSession
         ActiveGtpEngineEditField = null;
         GtpEngineEditWarning = "";
         GtpEngineEditSaveMessage = "";
-        if (IsGtpEngineSelectionForCgos)
+        if (EngineSelectionPurpose == GtpEngineSelectionPurpose.AppProvider)
+            OpenAppProviderGtpEngineSelectionDialog(GtpEngineSelectionAppId);
+        else if (IsGtpEngineSelectionForCgos)
             OpenCgosGtpEngineSelectionDialog(GtpEngineSelectionTargetStone);
         else
             OpenGtpEngineSelectionDialog(GtpEngineSelectionTargetStone);
@@ -2229,9 +2275,32 @@ public sealed class GoAppSession
         GtpEngineDialogSelectionIndex >= 0 &&
         GtpEngineDialogSelectionIndex < _gtpEngineProfiles.Count;
 
-    public int SelectedGtpEngineIndex => IsGtpEngineSelectionForCgos
-        ? GetSelectedCgosGtpEngineIndex(GtpEngineSelectionTargetStone) ?? -1
-        : GtpEngineSelectionTargetStone == GoStone.Black ? SelectedBlackGtpEngineIndex : SelectedWhiteGtpEngineIndex;
+    public int SelectedGtpEngineIndex => EngineSelectionPurpose switch
+    {
+        GtpEngineSelectionPurpose.AppProvider => SelectedAppProviderEngineIndex,
+        GtpEngineSelectionPurpose.CgosPlayer => GetSelectedCgosGtpEngineIndex(GtpEngineSelectionTargetStone) ?? -1,
+        _ => GtpEngineSelectionTargetStone == GoStone.Black ? SelectedBlackGtpEngineIndex : SelectedWhiteGtpEngineIndex,
+    };
+
+    public bool CanCommitGtpEngineSelection =>
+        CanSelectGtpEngineForCurrentApp(GtpEngineDialogSelectionIndex);
+
+    public bool CanSelectGtpEngineForCurrentApp(int index) =>
+        index >= 0 &&
+        index < _gtpEngineProfiles.Count &&
+        index < _gtpEngineAppCompatibilities.Count &&
+        _gtpEngineAppCompatibilities[index].CanSelect;
+
+    public GtpEngineAppCompatibility GetGtpEngineAppCompatibility(int index) =>
+        index >= 0 && index < _gtpEngineAppCompatibilities.Count
+            ? _gtpEngineAppCompatibilities[index]
+            : new(GtpEngineAppCompatibilityKind.CheckFailed, "NOT CHECKED");
+
+    public void SetGtpEngineAppCompatibilities(IEnumerable<GtpEngineAppCompatibility> compatibilities)
+    {
+        _gtpEngineAppCompatibilities.Clear();
+        _gtpEngineAppCompatibilities.AddRange(compatibilities);
+    }
 
     public void ReplaceSelectedGtpEngine(GtpEngineProfile profile)
     {
@@ -2616,6 +2685,10 @@ public sealed class GoAppSession
         {
             return true;
         }
+
+        var selectedIndex = stone == GoStone.Black ? SelectedBlackGtpEngineIndex : SelectedWhiteGtpEngineIndex;
+        if (selectedIndex < 0 || selectedIndex >= _gtpEngineProfiles.Count)
+            return false;
 
         var profile = GetGtpEngineProfile(stone);
         if (string.IsNullOrWhiteSpace(profile.ExecutablePath))

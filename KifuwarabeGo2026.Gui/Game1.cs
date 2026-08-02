@@ -531,6 +531,14 @@ public class Game1 : Game
                 {
                     HandleApplicationSettingsClick(point);
                 }
+                else if (_session.IsGtpEngineEditPanelOpen)
+                {
+                    TryHandleGtpEngineEditPanelClick(point);
+                }
+                else if (_session.IsGtpEngineSelectionDialogOpen)
+                {
+                    TryHandleGtpEngineSelectionDialogClick(point);
+                }
                 else if (TryHandleTitleMenuClick(point))
                 {
                 }
@@ -787,7 +795,7 @@ public class Game1 : Game
                         }
                         else if (GoScreenRenderer.GetCgosConnectionEngineSelectButtonHit(point, _session) is { } engineStone)
                         {
-                            _session.OpenCgosGtpEngineSelectionDialog(engineStone);
+                            OpenCgosGtpEngineSelectionDialog(engineStone);
                         }
                         else if (GoScreenRenderer.GetCgosAdminButtonHit(
                                      point,
@@ -1386,10 +1394,9 @@ public class Game1 : Game
 
         if (_titleMenuPage == TitleMenuPage.CaptureGame)
         {
-            if (TitleRenderer.GetAppProviderEngineHit(point, _session.GtpEngineProfiles.Count) is { } providerIndex)
+            if (TitleRenderer.GetAppProviderEngineHit(point, 1) is not null)
             {
-                _session.SelectAppProviderEngine(providerIndex);
-                GuiOperationLog.User("Selected Ponnuki App Provider", $"engine={_session.SelectedAppProviderEngine.DisplayName}");
+                OpenAppProviderGtpEngineSelectionDialog("ponnuki");
                 return true;
             }
 
@@ -1399,7 +1406,7 @@ public class Game1 : Game
                 return true;
             }
 
-            if (_session.CanUseSelectedAppProvider && TitleRenderer.IsAppProviderStartButtonHit(point))
+            if (_session.CanStartSelectedAppProvider && TitleRenderer.IsAppProviderStartButtonHit(point))
             {
                 _session.SelectUseKind(GoAppUseKind.LocalApps);
                 GuiOperationLog.User("Entered Local Apps intermission", "app=ponnuki");
@@ -3092,8 +3099,35 @@ public class Game1 : Game
 
     private void OpenGtpEngineSelectionDialog(GoStone stone)
     {
+        RefreshGtpEngineAppCompatibilities("play", "player");
         _session.OpenGtpEngineSelectionDialog(stone);
     }
+
+    private void OpenCgosGtpEngineSelectionDialog(GoStone stone)
+    {
+        RefreshGtpEngineAppCompatibilities("play", "player");
+        _session.OpenCgosGtpEngineSelectionDialog(stone);
+    }
+
+    private void OpenAppProviderGtpEngineSelectionDialog(string appId)
+    {
+        RefreshGtpEngineAppCompatibilities(appId, "provider");
+        _session.OpenAppProviderGtpEngineSelectionDialog(appId);
+    }
+
+    private void RefreshGtpEngineAppCompatibilities(string appId, string role)
+    {
+        var checks = _session.GtpEngineProfiles
+            .Select(profile => GtpEngineAppCompatibilityProbe.CheckAsync(profile, appId, role))
+            .ToArray();
+        var results = Task.WhenAll(checks).GetAwaiter().GetResult();
+        _session.SetGtpEngineAppCompatibilities(results);
+    }
+
+    private void RefreshCurrentGtpEngineAppCompatibilities() =>
+        RefreshGtpEngineAppCompatibilities(
+            _session.GtpEngineSelectionAppId,
+            _session.EngineSelectionPurpose == GtpEngineSelectionPurpose.AppProvider ? "provider" : "player");
 
     private bool TryHandleGtpEngineSelectionDialogClick(Point point)
     {
@@ -3126,7 +3160,12 @@ public class Game1 : Game
 
         if (GoScreenRenderer.GetGtpEngineSelectionDialogOkButtonHit(point))
         {
-            _session.CommitGtpEngineSelectionDialog();
+            if (_session.CanCommitGtpEngineSelection)
+            {
+                _session.CommitGtpEngineSelectionDialog();
+                if (_session.EngineSelectionPurpose == GtpEngineSelectionPurpose.AppProvider)
+                    RecheckPonnukiProvider();
+            }
             return true;
         }
 
@@ -3175,7 +3214,8 @@ public class Game1 : Game
 
         if (GoScreenRenderer.GetGtpEngineSelectionDialogListItemHit(point, _session) is { } index)
         {
-            _session.SelectGtpEngineDialogItem(index);
+            if (_session.CanSelectGtpEngineForCurrentApp(index))
+                _session.SelectGtpEngineDialogItem(index);
             return true;
         }
 
@@ -3224,6 +3264,7 @@ public class Game1 : Game
         {
             var profiles = _session.CommitGtpEngineOrderEditor();
             _gtpEngineCatalog.Save(profiles);
+            RefreshCurrentGtpEngineAppCompatibilities();
             return true;
         }
 
@@ -3252,6 +3293,7 @@ public class Game1 : Game
         {
             _session.RemoveSelectedGtpEngine();
             _gtpEngineCatalog.Save(_session.GtpEngineProfiles);
+            RefreshCurrentGtpEngineAppCompatibilities();
             return true;
         }
 
@@ -3341,6 +3383,7 @@ public class Game1 : Game
         {
             EndGtpEngineEditField();
             _gtpEngineEditTextBox.Clear();
+            RefreshCurrentGtpEngineAppCompatibilities();
             _session.CloseGtpEngineEditPanel();
             return true;
         }
