@@ -1,6 +1,6 @@
 # ポン抜きPlayer実装リファレンス
 
-> 対応バージョン：KifuwarabeGo2026 v3.1.0
+> 対応バージョン：KifuwarabeGo2026 v3.1.0<br>
 > 記事の更新日：2026-08-02
 
 ## 1. Playerの責務
