@@ -16,10 +16,22 @@
 （画面は開発中のものです。 v2.5.0）  
 
 
-## リンク
+## 囲碁エンジンを作りたい人向け
+
+［きふわらべの碁２０２６］で動くGTPエンジンを作るための目次です。外部のGTP仕様書を探さなくても実装へ取り掛かれる公開リファレンスを用意しています。
+
+1. [Play（通常の囲碁対局）](./KifuwarabeGo2026.Gui/PublicDocs/GoApps/Play/README.md)
+2. [ポン抜き](./KifuwarabeGo2026.Gui/PublicDocs/GoApps/Ponnuki/README.md)
+
+
+## きふわらべの碁２０２６の開発に参加したい方
+
+- [リポジトリ開発者向けREADME](./README.developer.md)
+
+
+## ダウンロード
 
 - [最新版をダウンロードする](https://github.com/muzudho/KifuwarabeGo2026/releases/latest)
-- [開発に参加する方はこちら](./README.developer.md)
 
 
 ## 主な機能
