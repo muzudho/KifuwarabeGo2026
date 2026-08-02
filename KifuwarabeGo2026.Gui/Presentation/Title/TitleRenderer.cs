@@ -21,8 +21,8 @@ public static class TitleRenderer
     public static bool IsBackButtonHit(Point point) =>
         GoScreenRenderer.GetTitleMenuBackButtonHit(point);
 
-    public static int? GetAppProviderEngineHit(Point point, int engineCount) =>
-        GoScreenRenderer.GetTitleAppProviderEngineHit(point, engineCount);
+    public static bool IsAppProviderEngineSelectButtonHit(Point point) =>
+        GoScreenRenderer.GetTitleAppProviderEngineSelectButtonHit(point);
 
     public static bool IsAppProviderStartButtonHit(Point point) =>
         GoScreenRenderer.GetTitleAppProviderStartButtonHit(point);

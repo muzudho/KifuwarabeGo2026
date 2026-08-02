@@ -60,3 +60,14 @@ Codex セッションと Visual Studio を再起動しても再現する。
 2. Codex CLI の MCP 起動タイムアウト、プロキシ、環境変数継承に関する設定・診断オプションを確認する。
 3. `cp-reactivememory-mcp-server` の Codex 経由起動について、標準エラー出力または詳細ログを取得する。
 4. 回避策として Apps、ReactiveMemory、Developer Docs を個別に無効化する場合は、必要な機能を利用しているか確認してから `config.toml` を日時付きバックアップしたうえで変更する。
+
+## 追加調査（継続中）
+
+- `codex mcp --help` と `codex --help` を確認したが、MCP 起動タイムアウトを直接設定する公開 CLI オプションは見つからなかった。
+- Codex の設定は `-c <key=value>` により起動時だけ一時上書きできる。Apps の一時無効化には `-c features.apps=false` を使用できる。
+- Developer Docs MCP への JSON-RPC `initialize` POST は、応答待機中に中止した。再試行はしていない。
+- 直接 HTTPS 接続の `GET https://developers.openai.com/mcp` は `405 Method Not Allowed` を返した。これはエンドポイントに到達しており、GET が許可されないことを示す。
+
+## 調査時の注意
+
+対話型 Codex をバックグラウンドで起動して強制停止すると、起動途中の MCP が `MCP startup interrupted` として表示される。停止後の警告だけでは、その MCP 自体の初期化失敗を断定しない。

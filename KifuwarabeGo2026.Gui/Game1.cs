@@ -1394,7 +1394,7 @@ public class Game1 : Game
 
         if (_titleMenuPage == TitleMenuPage.CaptureGame)
         {
-            if (TitleRenderer.GetAppProviderEngineHit(point, 1) is not null)
+            if (TitleRenderer.IsAppProviderEngineSelectButtonHit(point))
             {
                 OpenAppProviderGtpEngineSelectionDialog("ponnuki");
                 return true;

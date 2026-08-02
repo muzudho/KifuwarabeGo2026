@@ -135,12 +135,17 @@ public sealed partial class GoScreenRenderer
         DrawText("APP PROVIDER ENGINE", new Vector2(530, 416), new Color(255, 190, 92), 0.42f);
         DrawDynamicOptionText("アプリ提供エンジン", new Rectangle(950, 414, 330, 34), new Color(210, 214, 207), 0.32f);
 
-        var bounds = TitleAppProviderEngineBounds(0);
-        var hovered = bounds.Contains(mousePoint);
-        FillRect(bounds, hovered ? new Color(42, 55, 63) : new Color(24, 31, 37));
-        DrawRect(bounds, 2, hovered ? new Color(255, 190, 92) : new Color(88, 102, 112));
+        var bounds = TitleAppProviderEngineDisplayBounds;
+        FillRect(bounds, new Color(24, 31, 37));
+        DrawRect(bounds, 2, new Color(88, 102, 112));
         DrawFittedText(session.SelectedAppProviderEngine.DisplayName, new Rectangle(bounds.X + 18, bounds.Y + 13, 560, 30), Color.White, 0.34f);
-        DrawFittedText("CHANGE", new Rectangle(bounds.Right - 130, bounds.Y + 14, 104, 28), new Color(255, 210, 128), 0.27f);
+        DrawFittedText("SELECTED ENGINE", new Rectangle(bounds.Right - 190, bounds.Y + 14, 164, 28), new Color(180, 195, 195), 0.24f);
+        DrawCommandButton(
+            TitleAppProviderEngineSelectButtonBounds,
+            "SELECT PROVIDER ENGINE",
+            false,
+            mousePoint,
+            scale: 0.31f);
 
         var capabilityColor = session.IsAppProviderCapabilityConfirmed
             ? new Color(99, 223, 185)

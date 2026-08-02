@@ -775,7 +775,8 @@ public sealed partial class GoScreenRenderer
     private static Rectangle SetupBackToTitleButtonBounds => new(1642, 104, 170, 52);
     private static Rectangle LocalUseButtonBounds => new(508, 404, 438, 300);
     private static Rectangle TitleMenuBackButtonBounds => new(1260, 316, 152, 54);
-    private static Rectangle TitleAppProviderEngineBounds(int index) => new(570, 466 + index * 66, 780, 56);
+    private static Rectangle TitleAppProviderEngineDisplayBounds => new(570, 466, 780, 56);
+    private static Rectangle TitleAppProviderEngineSelectButtonBounds => new(850, 548, 500, 54);
     private static Rectangle TitleAppProviderStartButtonBounds => new(1198, 826, 152, 54);
     private static Rectangle TitleAppProviderRecheckButtonBounds => new(828, 826, 340, 54);
     private static Rectangle TitleHomeLocalButtonBounds => new(500, 390, 400, 126);
@@ -786,15 +787,8 @@ public sealed partial class GoScreenRenderer
     public static bool GetTitleAppProviderStartButtonHit(Point point) => TitleAppProviderStartButtonBounds.Contains(point);
     public static bool GetTitleAppProviderRecheckButtonHit(Point point) => TitleAppProviderRecheckButtonBounds.Contains(point);
 
-    public static int? GetTitleAppProviderEngineHit(Point point, int engineCount)
-    {
-        for (var index = 0; index < Math.Min(engineCount, 5); index++)
-        {
-            if (TitleAppProviderEngineBounds(index).Contains(point)) return index;
-        }
-
-        return null;
-    }
+    public static bool GetTitleAppProviderEngineSelectButtonHit(Point point) =>
+        TitleAppProviderEngineSelectButtonBounds.Contains(point);
 
     private void DrawLocalAppsIntermissionSidePanel(GoAppSession session, Point mousePoint)
     {
