@@ -7,7 +7,8 @@ Go Appsは、囲碁の着手生成だけでなく、局面生成、問題、練�
 ## 最初に読む文書
 
 1. [共通規約](共通規約.md) — アプリID、役割、GTP応答、能力確認
-2. [Ponnuki](Ponnuki/README.md) — ポン抜きへ対応するProviderとPlayerの実装
+2. [Play](Play/README.md) — 通常の対局を行うGTPエンジンの実装
+3. [Ponnuki](Ponnuki/README.md) — ポン抜きへ対応するProviderとPlayerの実装
 
 ## 最小の実装経路
 
@@ -17,6 +18,8 @@ Go Appsは、囲碁の着手生成だけでなく、局面生成、問題、練�
 - 与えられた局面で着手を生成したい場合は、`ponnuki player`を実装します。
 
 ProviderとPlayerは別の役割です。一つの実行ファイルが両方へ対応しても、片方だけへ対応しても構いません。
+
+通常の囲碁対局へ参加するエンジンを作りたい場合は、[Play](Play/README.md)から始めます。従来画面の`Go Play`とGo Appsの`Play`は同じアプリです。
 
 ## 安定性
 

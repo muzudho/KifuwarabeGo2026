@@ -19,7 +19,7 @@ Go Appsで共通利用するアプリIDと、エンジンオプションが影�
 代表的なアプリIDは次のとおりとする。
 
 ```text
-go-play
+play
 ponnuki
 ```
 
@@ -52,7 +52,7 @@ kfw-list-engine-options <app-id> <role>
 問い合わせ例を示す。
 
 ```text
-kfw-list-engine-options go-play player
+kfw-list-engine-options play player
 kfw-list-engine-options ponnuki player
 kfw-list-engine-options ponnuki provider
 ```
