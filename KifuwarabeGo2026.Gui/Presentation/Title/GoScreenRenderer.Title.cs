@@ -133,7 +133,7 @@ public sealed partial class GoScreenRenderer
         DrawTitleBreadcrumb("HOME  >  GO APPS  >  PONNUKI", panel);
         DrawDynamicOptionText("ポン抜きゲーム", new Rectangle(500, 350, 500, 54), Color.White, 0.62f);
         DrawText("APP PROVIDER ENGINE", new Vector2(530, 416), new Color(255, 190, 92), 0.42f);
-        DrawDynamicOptionText("問題提供エンジン", new Rectangle(950, 414, 330, 34), new Color(210, 214, 207), 0.32f);
+        DrawDynamicOptionText("アプリ提供エンジン", new Rectangle(950, 414, 330, 34), new Color(210, 214, 207), 0.32f);
 
         for (var index = 0; index < Math.Min(session.GtpEngineProfiles.Count, 5); index++)
         {

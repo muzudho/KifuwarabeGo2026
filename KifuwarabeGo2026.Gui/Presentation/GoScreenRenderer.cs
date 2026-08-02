@@ -808,7 +808,7 @@ public sealed partial class GoScreenRenderer
             string.IsNullOrWhiteSpace(session.LocalAppsErrorMessage) ? new Color(255, 210, 128) : new Color(255, 145, 151));
 
         DrawVerticalResultSection(new Rectangle(1144, 392, 668, 208), "APP PROVIDER ENGINE", new Color(66, 104, 116));
-        DrawDynamicOptionText("問題提供エンジン", new Rectangle(1164, 410, 300, 34), new Color(180, 195, 195), 0.30f);
+        DrawDynamicOptionText("アプリ提供エンジン", new Rectangle(1164, 410, 300, 34), new Color(180, 195, 195), 0.30f);
         DrawResultRow(
             new Rectangle(1164, 466, 628, 64),
             "PROVIDER",
