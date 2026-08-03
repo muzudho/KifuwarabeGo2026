@@ -602,7 +602,7 @@ public sealed partial class GoScreenRenderer
         {
             var bounds = BoardSizeButtonBounds(i, y);
             var selected = boardSize == sizes[i];
-            DrawTournamentRulesChoiceButton(bounds, labels[i], selected, mousePoint, 0.7f);
+            DrawTournamentRulesChoiceButton(bounds, labels[i], selected, mousePoint, 0.56f);
         }
     }
 
@@ -840,7 +840,7 @@ public sealed partial class GoScreenRenderer
 
     private const int WhiteEngineButtonY = 872;
 
-    private static Rectangle BoardSizeButtonBounds(int index, int y) => new(AddPanelControlX + 132 + index * 180, y, 164, 62);
+    private static Rectangle BoardSizeButtonBounds(int index, int y) => new(AddPanelControlX + 132 + index * 180, y, 164, 50);
     private static Rectangle PathTooltipBounds(Rectangle rowBounds)
     {
         var y = rowBounds.Y - 102;
