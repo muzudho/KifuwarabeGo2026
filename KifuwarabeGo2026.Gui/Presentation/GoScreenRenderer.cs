@@ -492,7 +492,7 @@ public sealed partial class GoScreenRenderer
         var displayName = active ? session.TournamentRulesDisplayNameDraft : session.TournamentDisplayName;
 
         DrawTournamentRulesTabNavigationHint(bounds, session, 0);
-        DrawUiLabel(UiLabel.InCompactRow("DISPLAY", bounds));
+        DrawTournamentRulesFieldLabel("DISPLAY", bounds);
 
         var textBounds = TournamentRulesAddPanelDisplayNameTextBounds;
         DrawTournamentRulesTextInputSurface(textBounds, active, hovered);
@@ -515,7 +515,7 @@ public sealed partial class GoScreenRenderer
         var bounds = TournamentRulesAddPanelFileRowBounds;
         var filePath = string.IsNullOrWhiteSpace(session.CurrentTournamentRules.FilePath) ? "-" : session.CurrentTournamentRules.FilePath;
         DrawDataRowFrame(bounds);
-        DrawUiLabel(UiLabel.InCompactRow("SETTINGS", bounds));
+        DrawTournamentRulesFieldLabel("SETTINGS", bounds);
         DrawFittedText(filePath, new Rectangle(bounds.X + 152, bounds.Y + 7, bounds.Width - 170, 42), Color.White, 0.38f);
     }
 
@@ -617,7 +617,7 @@ public sealed partial class GoScreenRenderer
     {
         var bounds = new Rectangle(x, y, 668, 56);
         DrawDataRowFrame(bounds);
-        DrawUiLabel(UiLabel.InRow(label, bounds));
+        DrawTournamentRulesFieldLabel(label, bounds);
         DrawText(value, new Vector2(bounds.X + 176, bounds.Y + 13), Color.White, 0.52f);
         DrawTournamentRulesAdjustmentButton(minusBounds, minusLabel, mousePoint, 0.42f);
         DrawTournamentRulesAdjustmentButton(plusBounds, plusLabel, mousePoint, 0.42f);
@@ -641,7 +641,7 @@ public sealed partial class GoScreenRenderer
             bounds,
             session,
             field == TournamentRulesNumericField.MainTime ? 1 : 2);
-        DrawUiLabel(UiLabel.InCompactRow(label, bounds));
+        DrawTournamentRulesFieldLabel(label, bounds);
         DrawTournamentRulesTextInputSurface(textBounds, active, textBounds.Contains(mousePoint));
         var numericTextBounds = new Rectangle(textBounds.X + 8, textBounds.Y + 4, textBounds.Width - 16, textBounds.Height - 8);
         if (active)
@@ -676,6 +676,29 @@ public sealed partial class GoScreenRenderer
             background,
             selected ? new Color(190, 255, 229) : hovered ? new Color(128, 160, 164) : new Color(73, 91, 98));
         DrawFittedText(label, new Rectangle(bounds.X + 10, bounds.Y + 7, bounds.Width - 20, bounds.Height - 14), Color.White, scale);
+    }
+
+    private void DrawTournamentRulesFieldLabel(string label, Rectangle rowBounds)
+    {
+        const float preferredScale = 0.38f;
+        const int labelRightGap = 20;
+        var labelBounds = new Rectangle(
+            AddPanelControlX,
+            rowBounds.Y,
+            132 - labelRightGap,
+            rowBounds.Height);
+        var measured = _font.MeasureString(label);
+        var scale = MathF.Min(
+            preferredScale,
+            MathF.Min(
+                labelBounds.Width / Math.Max(1f, measured.X),
+                (labelBounds.Height - 8) / Math.Max(1f, measured.Y)));
+        var size = measured * scale;
+        DrawText(
+            label,
+            new Vector2(labelBounds.Right - size.X, labelBounds.Center.Y - size.Y / 2),
+            new Color(180, 195, 195),
+            scale);
     }
 
     private void DrawTournamentRulesAdjustmentButton(Rectangle bounds, string label, Point mousePoint, float scale)

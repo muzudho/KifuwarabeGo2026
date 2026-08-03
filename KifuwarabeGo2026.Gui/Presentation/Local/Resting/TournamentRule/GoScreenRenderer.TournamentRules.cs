@@ -184,9 +184,9 @@ public sealed partial class GoScreenRenderer
         DrawRect(TournamentRulesAddPanelEditorBounds, 1, new Color(67, 84, 92));
 
         DrawDisplayNameTextBox(session, mousePoint);
-        DrawText("RULE", new Vector2(AddPanelControlX, 324), new Color(180, 195, 195), 0.5f);
+        DrawTournamentRulesFieldLabel("RULE", new Rectangle(AddPanelControlX, 320, 668, 36));
         DrawRuleKindButtons(session.RuleKind, mousePoint);
-        DrawText($"BOARD {session.BoardSize} x {session.BoardSize}", new Vector2(AddPanelControlX, 414), new Color(99, 223, 185), 0.62f);
+        DrawTournamentRulesFieldLabel($"BOARD {session.BoardSize} x {session.BoardSize}", new Rectangle(AddPanelControlX, 412, 668, 36));
         DrawBoardSizeButtons(session.BoardSize, mousePoint, AddPanelBoardSizeButtonY);
         DrawRulesNumberStrip(AddPanelControlX, 508, "KOMI", FormatKomi(session.Komi), KomiStepButtonBounds(0), "-0.5", KomiStepButtonBounds(1), "+0.5", mousePoint);
         DrawEditableRulesNumberStrip(session, 572, "TIME", TournamentRulesNumericField.MainTime, $"{(int)session.MainTime.TotalHours}:{session.MainTime.Minutes:00}:{session.MainTime.Seconds:00}", TournamentRulesMainTimeTextBounds, ["-1m", "-1s", "+1s", "+1m"], MainTimeStepButtonBounds, mousePoint);
