@@ -42,6 +42,13 @@ public sealed class TournamentRulesSetting
             return;
         }
 
+        if (IsNewKeyPress(keyboard, Keys.Tab))
+        {
+            MoveTextBoxFocus(IsShiftDown(keyboard) ? -1 : 1);
+            _previousKeyboard = keyboard;
+            return;
+        }
+
         if (_session.IsTournamentRulesDisplayNameEditing)
         {
             HandleDisplayNameKeyboard(keyboard, gameTime);
@@ -586,6 +593,50 @@ public sealed class TournamentRulesSetting
     {
         var keyboard = Keyboard.GetState();
         return keyboard.IsKeyDown(Keys.LeftShift) || keyboard.IsKeyDown(Keys.RightShift);
+    }
+
+    private static bool IsShiftDown(KeyboardState keyboard) =>
+        keyboard.IsKeyDown(Keys.LeftShift) || keyboard.IsKeyDown(Keys.RightShift);
+
+    private void MoveTextBoxFocus(int step)
+    {
+        var currentIndex = _session.IsTournamentRulesDisplayNameEditing
+            ? 0
+            : _session.ActiveTournamentRulesNumericField switch
+            {
+                TournamentRulesNumericField.MainTime => 1,
+                TournamentRulesNumericField.MoveLimit => 2,
+                _ => step > 0 ? -1 : 0,
+            };
+
+        if (_session.IsTournamentRulesDisplayNameEditing)
+        {
+            if (!TryApplyDisplayName())
+            {
+                return;
+            }
+
+            _session.EndTournamentRulesDisplayNameEdit();
+            _displayNameTextBox.Clear();
+        }
+        else if (!CommitNumericEdit())
+        {
+            return;
+        }
+
+        var nextIndex = (currentIndex + step + 3) % 3;
+        switch (nextIndex)
+        {
+            case 0:
+                BeginDisplayNameEdit();
+                break;
+            case 1:
+                BeginNumericEdit(TournamentRulesNumericField.MainTime);
+                break;
+            case 2:
+                BeginNumericEdit(TournamentRulesNumericField.MoveLimit);
+                break;
+        }
     }
 
     private void HandleNumericKeyboard(TournamentRulesNumericField field, KeyboardState keyboard, GameTime gameTime)

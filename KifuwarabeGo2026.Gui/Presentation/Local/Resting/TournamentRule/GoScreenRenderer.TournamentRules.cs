@@ -325,14 +325,14 @@ public sealed partial class GoScreenRenderer
 
 
     private static Rectangle TournamentRulesAddPanelDisplayNameTextBounds =>
-        new(TournamentRulesAddPanelDisplayNameRowBounds.X + 152, TournamentRulesAddPanelDisplayNameRowBounds.Y + 7, TournamentRulesAddPanelDisplayNameRowBounds.Width - 168, 42);
+        new(TournamentRulesAddPanelDisplayNameRowBounds.X + 132, TournamentRulesAddPanelDisplayNameRowBounds.Y + 7, TournamentRulesAddPanelDisplayNameRowBounds.Width - 148, 42);
 
 
     private static Rectangle TournamentRulesAddPanelFileRowBounds => new(AddPanelControlX, 710, 668, 56);
 
 
 
-    private static Rectangle SaveTournamentRulesButtonBounds => new(974, 798, 320, 56);
+    private static Rectangle SaveTournamentRulesButtonBounds => new(974, 836, 320, 56);
 
 
     private static string SaveTournamentRulesLabel(GoAppSession session) =>

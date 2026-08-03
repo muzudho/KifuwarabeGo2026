@@ -491,10 +491,11 @@ public sealed partial class GoScreenRenderer
         var active = session.IsTournamentRulesDisplayNameEditing;
         var displayName = active ? session.TournamentRulesDisplayNameDraft : session.TournamentDisplayName;
 
-        DrawDataRowFrame(bounds, active, hovered);
+        DrawTournamentRulesTabNavigationHint(bounds, session, 0);
         DrawUiLabel(UiLabel.InCompactRow("DISPLAY", bounds));
 
         var textBounds = TournamentRulesAddPanelDisplayNameTextBounds;
+        DrawTournamentRulesTextInputSurface(textBounds, active, hovered);
         if (active)
             DrawTextBoxSelection(displayName, session.TournamentRulesDisplayNameSelectionStart, session.TournamentRulesDisplayNameSelectionLength, textBounds, 0.46f);
         DrawFittedText(displayName, textBounds, Color.White, 0.46f);
@@ -601,20 +602,15 @@ public sealed partial class GoScreenRenderer
         {
             var bounds = BoardSizeButtonBounds(i, y);
             var selected = boardSize == sizes[i];
-            var hovered = bounds.Contains(mousePoint);
-            FillRect(bounds, selected ? new Color(39, 125, 97) : hovered ? new Color(50, 62, 72) : new Color(32, 38, 47));
-            DrawRect(bounds, 2, selected ? new Color(147, 244, 200) : new Color(88, 102, 112));
-
-            var size = _font.MeasureString(labels[i]) * 0.7f;
-            DrawText(labels[i], new Vector2(bounds.Center.X - size.X / 2, bounds.Center.Y - size.Y / 2), Color.White, 0.7f);
+            DrawTournamentRulesChoiceButton(bounds, labels[i], selected, mousePoint, 0.7f);
         }
     }
 
     private void DrawRuleKindButtons(GoRuleKind selectedKind, Point mousePoint)
     {
-        DrawCommandButton(RuleKindButtonBounds(0), "JAPANESE", selectedKind == GoRuleKind.Japanese, mousePoint, scale: 0.44f);
-        DrawCommandButton(RuleKindButtonBounds(1), "PURE GO", selectedKind == GoRuleKind.PureGo, mousePoint, scale: 0.44f);
-        DrawCommandButton(RuleKindButtonBounds(2), "CHINESE", selectedKind == GoRuleKind.Chinese, mousePoint, scale: 0.44f);
+        DrawTournamentRulesChoiceButton(RuleKindButtonBounds(0), "JAPANESE", selectedKind == GoRuleKind.Japanese, mousePoint, 0.44f);
+        DrawTournamentRulesChoiceButton(RuleKindButtonBounds(1), "PURE GO", selectedKind == GoRuleKind.PureGo, mousePoint, 0.44f);
+        DrawTournamentRulesChoiceButton(RuleKindButtonBounds(2), "CHINESE", selectedKind == GoRuleKind.Chinese, mousePoint, 0.44f);
     }
 
     private void DrawRulesNumberStrip(int x, int y, string label, string value, Rectangle minusBounds, string minusLabel, Rectangle plusBounds, string plusLabel, Point mousePoint)
@@ -623,8 +619,8 @@ public sealed partial class GoScreenRenderer
         DrawDataRowFrame(bounds);
         DrawUiLabel(UiLabel.InRow(label, bounds));
         DrawText(value, new Vector2(bounds.X + 176, bounds.Y + 13), Color.White, 0.52f);
-        DrawCommandButton(minusBounds, minusLabel, false, mousePoint, scale: 0.42f);
-        DrawCommandButton(plusBounds, plusLabel, false, mousePoint, scale: 0.42f);
+        DrawTournamentRulesAdjustmentButton(minusBounds, minusLabel, mousePoint, 0.42f);
+        DrawTournamentRulesAdjustmentButton(plusBounds, plusLabel, mousePoint, 0.42f);
     }
 
     private void DrawEditableRulesNumberStrip(
@@ -641,10 +637,12 @@ public sealed partial class GoScreenRenderer
         var bounds = new Rectangle(AddPanelControlX, y, 668, 56);
         var active = session.ActiveTournamentRulesNumericField == field;
         var text = active ? session.TournamentRulesNumericDraft : value;
-        DrawDataRowFrame(bounds);
+        DrawTournamentRulesTabNavigationHint(
+            bounds,
+            session,
+            field == TournamentRulesNumericField.MainTime ? 1 : 2);
         DrawUiLabel(UiLabel.InCompactRow(label, bounds));
-        FillRect(textBounds, active ? new Color(35, 63, 59) : new Color(24, 31, 37));
-        DrawRect(textBounds, active ? 2 : 1, active ? new Color(147, 244, 200) : new Color(82, 111, 114));
+        DrawTournamentRulesTextInputSurface(textBounds, active, textBounds.Contains(mousePoint));
         var numericTextBounds = new Rectangle(textBounds.X + 8, textBounds.Y + 4, textBounds.Width - 16, textBounds.Height - 8);
         if (active)
             DrawTextBoxSelection(text, session.TournamentRulesNumericSelectionStart, session.TournamentRulesNumericSelectionLength, numericTextBounds, 0.42f);
@@ -656,8 +654,99 @@ public sealed partial class GoScreenRenderer
 
         for (var index = 0; index < stepLabels.Length; index++)
         {
-            DrawCommandButton(stepBounds(index), stepLabels[index], false, mousePoint, scale: 0.32f);
+            DrawTournamentRulesAdjustmentButton(stepBounds(index), stepLabels[index], mousePoint, 0.32f);
         }
+    }
+
+    private void DrawTournamentRulesChoiceButton(
+        Rectangle bounds,
+        string label,
+        bool selected,
+        Point mousePoint,
+        float scale)
+    {
+        var hovered = bounds.Contains(mousePoint);
+        var background = selected
+            ? new Color(38, 91, 78)
+            : hovered
+                ? new Color(42, 53, 61)
+                : new Color(27, 35, 42);
+        DrawTournamentRulesRoundedButton(
+            bounds,
+            background,
+            selected ? new Color(190, 255, 229) : hovered ? new Color(128, 160, 164) : new Color(73, 91, 98));
+        DrawFittedText(label, new Rectangle(bounds.X + 10, bounds.Y + 7, bounds.Width - 20, bounds.Height - 14), Color.White, scale);
+    }
+
+    private void DrawTournamentRulesAdjustmentButton(Rectangle bounds, string label, Point mousePoint, float scale)
+    {
+        var hovered = bounds.Contains(mousePoint);
+        DrawTournamentRulesRoundedButton(
+            bounds,
+            hovered ? new Color(53, 66, 75) : new Color(31, 40, 47),
+            hovered ? new Color(184, 220, 216) : new Color(105, 127, 134));
+        DrawFittedText(label, new Rectangle(bounds.X + 6, bounds.Y + 5, bounds.Width - 12, bounds.Height - 10), Color.White, scale);
+    }
+
+    private void DrawTournamentRulesRoundedButton(Rectangle bounds, Color background, Color border)
+    {
+        DrawRoundedFill(bounds, 7, border);
+        DrawRoundedFill(new Rectangle(bounds.X + 2, bounds.Y + 2, bounds.Width - 4, bounds.Height - 4), 5, background);
+    }
+
+    private void DrawRoundedFill(Rectangle bounds, int radius, Color color)
+    {
+        radius = Math.Min(radius, Math.Min(bounds.Width, bounds.Height) / 2);
+        FillRect(new Rectangle(bounds.X + radius, bounds.Y, bounds.Width - radius * 2, bounds.Height), color);
+        FillRect(new Rectangle(bounds.X, bounds.Y + radius, bounds.Width, bounds.Height - radius * 2), color);
+        DrawCircle(new Vector2(bounds.X + radius, bounds.Y + radius), radius, color);
+        DrawCircle(new Vector2(bounds.Right - radius, bounds.Y + radius), radius, color);
+        DrawCircle(new Vector2(bounds.X + radius, bounds.Bottom - radius), radius, color);
+        DrawCircle(new Vector2(bounds.Right - radius, bounds.Bottom - radius), radius, color);
+    }
+
+    private void DrawTournamentRulesTabNavigationHint(Rectangle bounds, GoAppSession session, int tabIndex)
+    {
+        var activeIndex = session.IsTournamentRulesDisplayNameEditing
+            ? 0
+            : session.ActiveTournamentRulesNumericField switch
+            {
+                TournamentRulesNumericField.MainTime => 1,
+                TournamentRulesNumericField.MoveLimit => 2,
+                _ => -1,
+            };
+        if (activeIndex < 0 || tabIndex == activeIndex)
+        {
+            return;
+        }
+
+        var isPrevious = tabIndex == (activeIndex + 2) % 3;
+        var hintText = isPrevious ? "TAB + SHIFT" : "TAB";
+        var hintWidth = isPrevious ? 104 : 48;
+        var hintBounds = new Rectangle(bounds.X - hintWidth - 6, bounds.Y + 2, hintWidth, 20);
+        DrawRoundedFill(hintBounds, 6, new Color(4, 6, 8, 235));
+        DrawFittedText(
+            hintText,
+            new Rectangle(hintBounds.X + 4, hintBounds.Y + 2, hintBounds.Width - 8, hintBounds.Height - 4),
+            Color.White,
+            0.24f);
+    }
+
+    private void DrawTournamentRulesTextInputSurface(Rectangle bounds, bool active, bool hovered)
+    {
+        var background = active
+            ? new Color(63, 128, 106)
+            : hovered
+                ? new Color(35, 47, 53)
+                : new Color(22, 29, 34);
+        var underline = active
+            ? new Color(190, 255, 229)
+            : hovered
+                ? new Color(128, 174, 168)
+                : new Color(70, 91, 96);
+
+        FillRect(bounds, background);
+        FillRect(new Rectangle(bounds.X, bounds.Bottom - (active ? 3 : 2), bounds.Width, active ? 3 : 2), underline);
     }
 
     private void DrawSetupPlayerKindRow(GoStone stone, GoPlayerKind selectedKind, Point mousePoint, int y)
@@ -728,7 +817,7 @@ public sealed partial class GoScreenRenderer
 
     private const int WhiteEngineButtonY = 872;
 
-    private static Rectangle BoardSizeButtonBounds(int index, int y) => new(AddPanelControlX + index * 224, y, 188, 62);
+    private static Rectangle BoardSizeButtonBounds(int index, int y) => new(AddPanelControlX + 132 + index * 180, y, 164, 62);
     private static Rectangle PathTooltipBounds(Rectangle rowBounds)
     {
         var y = rowBounds.Y - 102;
@@ -748,7 +837,7 @@ public sealed partial class GoScreenRenderer
     private static Rectangle PathTooltipCopyButtonBoundsFromPopup(Rectangle popupBounds) =>
         new(popupBounds.Right - 124, popupBounds.Y + 56, 100, 34);
 
-    private static Rectangle RuleKindButtonBounds(int index) => new(AddPanelControlX + index * 224, 358, 188, 50);
+    private static Rectangle RuleKindButtonBounds(int index) => new(AddPanelControlX + 132 + index * 180, 358, 164, 50);
 
     private static Rectangle KomiStepButtonBounds(int index) => new(AddPanelControlX + 444 + index * 112, 516, 92, 40);
 
