@@ -506,7 +506,11 @@ public sealed partial class GoScreenRenderer
 
         if (!string.IsNullOrWhiteSpace(session.TournamentRulesDisplayNameWarning))
         {
-            DrawFittedText(session.TournamentRulesDisplayNameWarning, new Rectangle(bounds.X, bounds.Bottom + 8, bounds.Width, 28), new Color(255, 183, 146), 0.34f);
+            DrawFittedText(
+                session.TournamentRulesDisplayNameWarning,
+                new Rectangle(AddPanelControlX + 132, 740, 536, 28),
+                new Color(255, 183, 146),
+                0.34f);
         }
     }
 
@@ -744,7 +748,7 @@ public sealed partial class GoScreenRenderer
         }
 
         var isPrevious = tabIndex == (activeIndex + 2) % 3;
-        var hintText = isPrevious ? "TAB + SHIFT" : "TAB";
+        var hintText = isPrevious ? "SHIFT + TAB" : "TAB";
         var hintWidth = isPrevious ? 104 : 48;
         var hintBounds = new Rectangle(bounds.X - hintWidth - 6, bounds.Y + 2, hintWidth, 20);
         DrawRoundedFill(hintBounds, 6, new Color(4, 6, 8, 235));
@@ -830,7 +834,7 @@ public sealed partial class GoScreenRenderer
 
     private const int AddPanelControlX = 626;
 
-    private const int AddPanelBoardSizeButtonY = 452;
+    private const int AddPanelBoardSizeButtonY = 391;
 
     private const int BlackPlayerKindButtonY = 710;
 
@@ -860,17 +864,17 @@ public sealed partial class GoScreenRenderer
     private static Rectangle PathTooltipCopyButtonBoundsFromPopup(Rectangle popupBounds) =>
         new(popupBounds.Right - 124, popupBounds.Y + 56, 100, 34);
 
-    private static Rectangle RuleKindButtonBounds(int index) => new(AddPanelControlX + 132 + index * 180, 358, 164, 50);
+    private static Rectangle RuleKindButtonBounds(int index) => new(AddPanelControlX + 132 + index * 180, 319, 164, 50);
 
-    private static Rectangle KomiStepButtonBounds(int index) => new(AddPanelControlX + 444 + index * 112, 516, 92, 40);
+    private static Rectangle KomiStepButtonBounds(int index) => new(AddPanelControlX + 444 + index * 112, 468, 92, 40);
 
-    private static Rectangle TournamentRulesMainTimeTextBounds => new(AddPanelControlX + 132, 580, 176, 40);
+    private static Rectangle TournamentRulesMainTimeTextBounds => new(AddPanelControlX + 132, 540, 176, 40);
 
-    private static Rectangle TournamentRulesMoveLimitTextBounds => new(AddPanelControlX + 132, 644, 176, 40);
+    private static Rectangle TournamentRulesMoveLimitTextBounds => new(AddPanelControlX + 132, 612, 176, 40);
 
-    private static Rectangle MainTimeStepButtonBounds(int index) => new(AddPanelControlX + 324 + index * 84, 580, 72, 40);
+    private static Rectangle MainTimeStepButtonBounds(int index) => new(AddPanelControlX + 324 + index * 84, 540, 72, 40);
 
-    private static Rectangle MoveLimitStepButtonBounds(int index) => new(AddPanelControlX + 324 + index * 84, 644, 72, 40);
+    private static Rectangle MoveLimitStepButtonBounds(int index) => new(AddPanelControlX + 324 + index * 84, 612, 72, 40);
 
     private static Rectangle PlayerKindButtonBounds(int index, int y) => new(GameOverValueX + index * 236, y, 236, 52);
 

@@ -184,15 +184,15 @@ public sealed partial class GoScreenRenderer
         DrawRect(TournamentRulesAddPanelEditorBounds, 1, new Color(67, 84, 92));
 
         DrawDisplayNameTextBox(session, mousePoint);
-        DrawTournamentRulesFieldLabel("RULE", new Rectangle(AddPanelControlX, 358, 668, 50));
+        DrawTournamentRulesFieldLabel("RULE", new Rectangle(AddPanelControlX, 319, 668, 50));
         DrawRuleKindButtons(session.RuleKind, mousePoint);
         DrawTournamentRulesFieldLabel(
             "BOARD SIZE",
             new Rectangle(AddPanelControlX, AddPanelBoardSizeButtonY, 668, 50));
         DrawBoardSizeButtons(session.BoardSize, mousePoint, AddPanelBoardSizeButtonY);
-        DrawRulesNumberStrip(AddPanelControlX, 508, "KOMI", FormatKomi(session.Komi), KomiStepButtonBounds(0), "-0.5", KomiStepButtonBounds(1), "+0.5", mousePoint);
-        DrawEditableRulesNumberStrip(session, 572, "TIME", TournamentRulesNumericField.MainTime, $"{(int)session.MainTime.TotalHours}:{session.MainTime.Minutes:00}:{session.MainTime.Seconds:00}", TournamentRulesMainTimeTextBounds, ["-1m", "-1s", "+1s", "+1m"], MainTimeStepButtonBounds, mousePoint);
-        DrawEditableRulesNumberStrip(session, 636, "MOVES", TournamentRulesNumericField.MoveLimit, session.MoveLimit.ToString(), TournamentRulesMoveLimitTextBounds, ["-10", "-1", "+1", "+10"], MoveLimitStepButtonBounds, mousePoint);
+        DrawRulesNumberStrip(AddPanelControlX, 460, "KOMI", FormatKomi(session.Komi), KomiStepButtonBounds(0), "-0.5", KomiStepButtonBounds(1), "+0.5", mousePoint);
+        DrawEditableRulesNumberStrip(session, 532, "TIME", TournamentRulesNumericField.MainTime, $"{(int)session.MainTime.TotalHours}:{session.MainTime.Minutes:00}:{session.MainTime.Seconds:00}", TournamentRulesMainTimeTextBounds, ["-1m", "-1s", "+1s", "+1m"], MainTimeStepButtonBounds, mousePoint);
+        DrawEditableRulesNumberStrip(session, 604, "MOVES", TournamentRulesNumericField.MoveLimit, session.MoveLimit.ToString(), TournamentRulesMoveLimitTextBounds, ["-10", "-1", "+1", "+10"], MoveLimitStepButtonBounds, mousePoint);
         DrawFilePathSelector(session, mousePoint);
         DrawCommandButton(SaveTournamentRulesButtonBounds, SaveTournamentRulesLabel(session), false, mousePoint);
     }
@@ -330,7 +330,7 @@ public sealed partial class GoScreenRenderer
         new(TournamentRulesAddPanelDisplayNameRowBounds.X + 132, TournamentRulesAddPanelDisplayNameRowBounds.Y + 7, TournamentRulesAddPanelDisplayNameRowBounds.Width - 148, 42);
 
 
-    private static Rectangle TournamentRulesAddPanelFileRowBounds => new(AddPanelControlX, 710, 668, 56);
+    private static Rectangle TournamentRulesAddPanelFileRowBounds => new(AddPanelControlX, 676, 668, 56);
 
 
 
