@@ -742,12 +742,22 @@ public sealed partial class GoScreenRenderer
                 TournamentRulesNumericField.MoveLimit => 2,
                 _ => -1,
             };
-        if (activeIndex < 0 || tabIndex == activeIndex)
+        DrawTabNavigationHint(bounds, tabIndex, activeIndex, 3);
+    }
+
+    private void DrawTabNavigationHint(Rectangle bounds, int tabIndex, int activeIndex, int stopCount)
+    {
+        if (activeIndex < 0 || tabIndex == activeIndex || stopCount < 2)
         {
             return;
         }
 
-        var isPrevious = tabIndex == (activeIndex + 2) % 3;
+        var isPrevious = tabIndex == (activeIndex + stopCount - 1) % stopCount;
+        var isNext = tabIndex == (activeIndex + 1) % stopCount;
+        if (!isPrevious && !isNext)
+        {
+            return;
+        }
         var hintText = isPrevious ? "SHIFT + TAB" : "TAB";
         var hintWidth = isPrevious ? 104 : 48;
         var hintBounds = new Rectangle(bounds.X - hintWidth - 6, bounds.Y + 2, hintWidth, 20);
@@ -826,10 +836,20 @@ public sealed partial class GoScreenRenderer
         var active = session.ActiveHumanPlayerNameStone == stone;
         var text = active ? session.HumanPlayerNameDraft : session.GetHumanPlayerName(stone);
         DrawResultLabel(new Rectangle(bounds.X + 20, bounds.Y - 6, bounds.Width - 40, bounds.Height + 12), "NAME", new Color(76, 91, 126));
+        var textBounds = HumanPlayerNameTextBounds(y);
+        DrawTournamentRulesTextInputSurface(textBounds, active, bounds.Contains(mousePoint));
+        var humanStops = new[] { GoStone.Black, GoStone.White }
+            .Where(candidate => session.GetPlayerKind(candidate) == GoPlayerKind.Human)
+            .ToArray();
+        DrawTabNavigationHint(
+            bounds,
+            Array.IndexOf(humanStops, stone),
+            session.ActiveHumanPlayerNameStone is { } activeStone ? Array.IndexOf(humanStops, activeStone) : -1,
+            humanStops.Length);
         if (active)
-            DrawTextBoxSelection(text, session.HumanPlayerNameSelectionStart, session.HumanPlayerNameSelectionLength, HumanPlayerNameTextBounds(y), 0.42f);
-        DrawFittedText(text, HumanPlayerNameTextBounds(y), Color.White, 0.42f);
-        if (active) DrawTextBoxCaret(text, session.HumanPlayerNameCaretIndex, HumanPlayerNameTextBounds(y), 0.42f);
+            DrawTextBoxSelection(text, session.HumanPlayerNameSelectionStart, session.HumanPlayerNameSelectionLength, textBounds, 0.42f);
+        DrawFittedText(text, textBounds, Color.White, 0.42f);
+        if (active) DrawTextBoxCaret(text, session.HumanPlayerNameCaretIndex, textBounds, 0.42f);
     }
 
     private const int AddPanelControlX = 626;

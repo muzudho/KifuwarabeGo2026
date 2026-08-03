@@ -1218,6 +1218,9 @@ public class Game1 : Game
         return keyboard.IsKeyDown(Keys.LeftShift) || keyboard.IsKeyDown(Keys.RightShift);
     }
 
+    private static bool IsShiftDown(KeyboardState keyboard) =>
+        keyboard.IsKeyDown(Keys.LeftShift) || keyboard.IsKeyDown(Keys.RightShift);
+
     private void UpdateCatalogOrderDrag(MouseState mouse, Point point)
     {
         UpdateCatalogOrderDrag(_session.TournamentRulesOrderEditor, mouse, point);
@@ -1782,6 +1785,13 @@ public class Game1 : Game
 
         if (!_session.IsCgosConnectionEditPanelOpen)
         {
+            _previousCgosConnectionKeyboard = keyboard;
+            return;
+        }
+
+        if (keyboard.IsKeyDown(Keys.Tab) && _previousCgosConnectionKeyboard.IsKeyUp(Keys.Tab))
+        {
+            MoveCgosConnectionEditFocus(IsShiftDown(keyboard) ? -1 : 1);
             _previousCgosConnectionKeyboard = keyboard;
             return;
         }
@@ -2648,6 +2658,25 @@ public class Game1 : Game
         UpdateCgosConnectionEditWarning();
     }
 
+    private void MoveCgosConnectionEditFocus(int step)
+    {
+        var fields = Enum.GetValues<CgosConnectionProfileEditField>();
+        var currentIndex = _session.ActiveCgosConnectionEditField is { } current
+            ? Array.IndexOf(fields, current)
+            : step > 0 ? -1 : 0;
+        EndCgosConnectionEditField();
+        BeginCgosConnectionEditField(fields[(currentIndex + step + fields.Length) % fields.Length]);
+    }
+
+    private void BeginCgosConnectionEditField(CgosConnectionProfileEditField field)
+    {
+        var text = _session.GetCgosConnectionEditFieldText(field);
+        _cgosConnectionEditTextBox.Begin(text);
+        _session.BeginCgosConnectionEditField(field, _cgosConnectionEditTextBox.CaretIndex);
+        SyncCgosConnectionEditField(field);
+        UpdateCgosConnectionEditWarning();
+    }
+
     private void SyncCgosConnectionEditField(CgosConnectionProfileEditField field)
     {
         _session.SetCgosConnectionEditField(field, _cgosConnectionEditTextBox.Text, _cgosConnectionEditTextBox.CaretIndex);
@@ -2808,6 +2837,15 @@ public class Game1 : Game
     {
         if (!IsActive || !_inputArmed) return;
 
+        if (_session.ActiveCgosCredentialStone is { } activeStone &&
+            _session.ActiveCgosCredentialField is { } activeField &&
+            keyboard.IsKeyDown(Keys.Tab) && _previousCgosCredentialKeyboard.IsKeyUp(Keys.Tab))
+        {
+            MoveCgosCredentialFocus(activeStone, activeField, IsShiftDown(keyboard) ? -1 : 1);
+            _previousCgosCredentialKeyboard = keyboard;
+            return;
+        }
+
         if (_session.ActiveCgosCredentialStone is not { } stone ||
             _session.ActiveCgosCredentialField is not { } field)
         {
@@ -2832,6 +2870,24 @@ public class Game1 : Game
                 break;
         }
         _previousCgosCredentialKeyboard = keyboard;
+    }
+
+    private void MoveCgosCredentialFocus(GoStone stone, CgosPlayerCredentialField field, int step)
+    {
+        var stops = new[]
+        {
+            (GoStone.Black, CgosPlayerCredentialField.LoginName),
+            (GoStone.Black, CgosPlayerCredentialField.Password),
+            (GoStone.White, CgosPlayerCredentialField.LoginName),
+            (GoStone.White, CgosPlayerCredentialField.Password),
+        };
+        var currentIndex = Array.FindIndex(stops, stop => stop.Item1 == stone && stop.Item2 == field);
+        EndCgosCredentialEdit();
+        var next = stops[(currentIndex + step + stops.Length) % stops.Length];
+        var text = _session.GetCgosCredential(next.Item1, next.Item2);
+        _cgosCredentialTextBox.Begin(text);
+        _session.BeginCgosCredentialEdit(next.Item1, next.Item2, _cgosCredentialTextBox.CaretIndex);
+        SyncCgosCredentialSelection();
     }
 
     private void BeginHumanPlayerNameEdit(Point point, GoStone stone)
@@ -2862,6 +2918,13 @@ public class Game1 : Game
             return;
         }
 
+        if (keyboard.IsKeyDown(Keys.Tab) && _previousHumanPlayerNameKeyboard.IsKeyUp(Keys.Tab))
+        {
+            MoveHumanPlayerNameFocus(IsShiftDown(keyboard) ? -1 : 1);
+            _previousHumanPlayerNameKeyboard = keyboard;
+            return;
+        }
+
         var action = _humanPlayerNameTextBox.HandleKeyboard(
             keyboard,
             _previousHumanPlayerNameKeyboard,
@@ -2872,6 +2935,24 @@ public class Game1 : Game
         if (action == TextBoxKeyboardAction.Commit) EndHumanPlayerNameEdit(commit: true);
         if (action == TextBoxKeyboardAction.Cancel) EndHumanPlayerNameEdit(commit: false);
         _previousHumanPlayerNameKeyboard = keyboard;
+    }
+
+    private void MoveHumanPlayerNameFocus(int step)
+    {
+        var stops = new[] { GoStone.Black, GoStone.White }
+            .Where(stone => _session.GetPlayerKind(stone) == GoPlayerKind.Human)
+            .ToArray();
+        if (stops.Length == 0 || _session.ActiveHumanPlayerNameStone is not { } current)
+        {
+            return;
+        }
+
+        var currentIndex = Array.IndexOf(stops, current);
+        EndHumanPlayerNameEdit(commit: true);
+        var next = stops[(currentIndex + step + stops.Length) % stops.Length];
+        var text = _session.GetHumanPlayerName(next);
+        _humanPlayerNameTextBox.Begin(text);
+        _session.BeginHumanPlayerNameEdit(next, _humanPlayerNameTextBox.CaretIndex);
     }
 
     private bool TryInputHumanPlayerNameCharacter(char character)
@@ -3454,6 +3535,13 @@ public class Game1 : Game
             return;
         }
 
+        if (keyboard.IsKeyDown(Keys.Tab) && _previousGtpEngineKeyboard.IsKeyUp(Keys.Tab))
+        {
+            MoveGtpEngineEditFocus(IsShiftDown(keyboard) ? -1 : 1);
+            _previousGtpEngineKeyboard = keyboard;
+            return;
+        }
+
         if (_session.IsGtpEngineGuiOptionsDialogOpen)
         {
             _previousGtpEngineKeyboard = keyboard;
@@ -3528,6 +3616,25 @@ public class Game1 : Game
         _gtpEngineEditTextBox.BeginMouseSelection(caretIndex, extendSelection: false);
         SyncGtpEngineEditField(field);
         _session.BeginGtpEngineEditField(field, _gtpEngineEditTextBox.CaretIndex);
+        UpdateGtpEngineEditWarning();
+    }
+
+    private void MoveGtpEngineEditFocus(int step)
+    {
+        var fields = Enum.GetValues<GtpEngineProfileEditField>();
+        var currentIndex = _session.ActiveGtpEngineEditField is { } current
+            ? Array.IndexOf(fields, current)
+            : step > 0 ? -1 : 0;
+        EndGtpEngineEditField();
+        BeginGtpEngineEditField(fields[(currentIndex + step + fields.Length) % fields.Length]);
+    }
+
+    private void BeginGtpEngineEditField(GtpEngineProfileEditField field)
+    {
+        var text = _session.GetGtpEngineEditFieldText(field);
+        _gtpEngineEditTextBox.Begin(text);
+        _session.BeginGtpEngineEditField(field, _gtpEngineEditTextBox.CaretIndex);
+        SyncGtpEngineEditField(field);
         UpdateGtpEngineEditWarning();
     }
 

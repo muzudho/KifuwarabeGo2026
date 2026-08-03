@@ -527,10 +527,15 @@ public sealed partial class GoScreenRenderer
         var active = session.ActiveGtpEngineEditField == field;
         var hovered = bounds.Contains(mousePoint);
         var text = session.GetGtpEngineEditFieldText(field);
-        DrawDataRowFrame(bounds, active, hovered);
         DrawUiLabel(UiLabel.InCompactRow(label, bounds));
 
         var textBounds = GtpEngineEditPanelFieldTextBounds(field);
+        DrawTournamentRulesTextInputSurface(textBounds, active, hovered);
+        DrawTabNavigationHint(
+            bounds,
+            Array.IndexOf(GtpEngineEditFields, field),
+            session.ActiveGtpEngineEditField is { } activeField ? Array.IndexOf(GtpEngineEditFields, activeField) : -1,
+            GtpEngineEditFields.Length);
         if (active)
             DrawTextBoxSelection(text, session.GtpEngineEditSelectionStart, session.GtpEngineEditSelectionLength, textBounds, 0.42f);
         DrawFittedText(string.IsNullOrEmpty(text) ? "-" : text, textBounds, Color.White, 0.42f);

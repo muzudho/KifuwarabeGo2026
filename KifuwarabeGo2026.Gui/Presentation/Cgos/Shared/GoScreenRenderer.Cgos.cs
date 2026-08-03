@@ -498,13 +498,20 @@ public sealed partial class GoScreenRenderer
         {
             var bounds = CgosCredentialRowBounds(stone, field);
             var active = session.ActiveCgosCredentialStone == stone && session.ActiveCgosCredentialField == field;
-            DrawDataRowFrame(bounds, active, bounds.Contains(mousePoint));
             DrawUiLabel(UiLabel.InCompactRow(field == CgosPlayerCredentialField.LoginName ? "LOGIN" : "PASSWORD", bounds));
+            var textBounds = CgosCredentialTextBounds(stone, field);
+            DrawTournamentRulesTextInputSurface(textBounds, active, bounds.Contains(mousePoint));
+            var tabIndex = (stone == GoStone.Black ? 0 : 2) + (field == CgosPlayerCredentialField.LoginName ? 0 : 1);
+            var activeTabIndex = session.ActiveCgosCredentialStone is { } activeStone &&
+                session.ActiveCgosCredentialField is { } activeField
+                ? (activeStone == GoStone.Black ? 0 : 2) + (activeField == CgosPlayerCredentialField.LoginName ? 0 : 1)
+                : -1;
+            DrawTabNavigationHint(bounds, tabIndex, activeTabIndex, 4);
             var text = session.GetCgosCredential(stone, field);
             if (active)
-                DrawTextBoxSelection(text, session.CgosCredentialSelectionStart, session.CgosCredentialSelectionLength, CgosCredentialTextBounds(stone, field), 0.32f);
-            DrawFittedText(string.IsNullOrEmpty(text) ? "-" : text, CgosCredentialTextBounds(stone, field), Color.White, 0.32f);
-            if (active) DrawTextBoxCaret(text, session.CgosCredentialCaretIndex, CgosCredentialTextBounds(stone, field), 0.32f);
+                DrawTextBoxSelection(text, session.CgosCredentialSelectionStart, session.CgosCredentialSelectionLength, textBounds, 0.32f);
+            DrawFittedText(string.IsNullOrEmpty(text) ? "-" : text, textBounds, Color.White, 0.32f);
+            if (active) DrawTextBoxCaret(text, session.CgosCredentialCaretIndex, textBounds, 0.32f);
         }
     }
 
@@ -795,10 +802,15 @@ public sealed partial class GoScreenRenderer
         var bounds = CgosConnectionEditPanelFieldRowBounds(field);
         var active = session.ActiveCgosConnectionEditField == field;
         var text = session.GetCgosConnectionEditFieldText(field);
-        DrawDataRowFrame(bounds, active, bounds.Contains(mousePoint));
         DrawUiLabel(UiLabel.InCompactRow(label, bounds));
 
         var textBounds = CgosConnectionEditPanelFieldTextBounds(field);
+        DrawTournamentRulesTextInputSurface(textBounds, active, bounds.Contains(mousePoint));
+        DrawTabNavigationHint(
+            bounds,
+            Array.IndexOf(CgosConnectionEditFields, field),
+            session.ActiveCgosConnectionEditField is { } activeField ? Array.IndexOf(CgosConnectionEditFields, activeField) : -1,
+            CgosConnectionEditFields.Length);
         if (active)
             DrawTextBoxSelection(text, session.CgosConnectionEditSelectionStart, session.CgosConnectionEditSelectionLength, textBounds, 0.42f);
         DrawFittedText(string.IsNullOrEmpty(text) ? "-" : text, textBounds, Color.White, 0.42f);
