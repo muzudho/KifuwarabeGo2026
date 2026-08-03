@@ -40,16 +40,19 @@ public sealed partial class GoScreenRenderer
         GoStone currentTurn,
         GoStone? engineErrorStone = null,
         Point? mousePoint = null,
-        bool minimal = false)
+        bool minimal = false,
+        TimeSpan? blackLiveElapsed = null,
+        TimeSpan? whiteLiveElapsed = null)
     {
-        DrawPlayerComponent(new Rectangle(x, y, width, 88), blackName, blackElapsed, mainTime, blackAgehama, black: true, currentTurn == GoStone.Black, engineErrorStone == GoStone.Black, mousePoint, minimal);
-        DrawPlayerComponent(new Rectangle(x, y + 96, width, 88), whiteName, whiteElapsed, mainTime, whiteAgehama, black: false, currentTurn == GoStone.White, engineErrorStone == GoStone.White, mousePoint, minimal);
+        DrawPlayerComponent(new Rectangle(x, y, width, 88), blackName, blackElapsed, blackLiveElapsed, mainTime, blackAgehama, black: true, currentTurn == GoStone.Black, engineErrorStone == GoStone.Black, mousePoint, minimal);
+        DrawPlayerComponent(new Rectangle(x, y + 96, width, 88), whiteName, whiteElapsed, whiteLiveElapsed, mainTime, whiteAgehama, black: false, currentTurn == GoStone.White, engineErrorStone == GoStone.White, mousePoint, minimal);
     }
 
     private void DrawPlayerComponent(
         Rectangle bounds,
         string playerName,
         TimeSpan? elapsed,
+        TimeSpan? liveElapsed,
         TimeSpan? mainTime,
         int agehama,
         bool black,
@@ -64,14 +67,30 @@ public sealed partial class GoScreenRenderer
         var valueX = minimal ? GameOverValueX : bounds.X + 62;
         var nameBounds = new Rectangle(valueX + (minimal ? 44 : 0), bounds.Y + 5, bounds.Right - valueX - 60, 34);
         var statusX = valueX + (minimal ? 44 : -44);
-        var statusBounds = new Rectangle(statusX, bounds.Y + 48, bounds.Right - statusX - 18, 30);
+        var statusWidth = bounds.Right - statusX - (minimal ? 154 : 18);
+        var statusBounds = new Rectangle(statusX, bounds.Y + 43, statusWidth, liveElapsed is null ? 30 : 20);
         if (minimal) DrawIconStone(new Vector2(valueX + 18, bounds.Y + 23), 16, black);
         else DrawStone(new Vector2(bounds.X + 31, bounds.Y + 23), 16, black);
         DrawFittedText(playerName, nameBounds, Color.White, 0.5f);
 
         var elapsedText = elapsed is { } used ? FormatElapsedTime(used) : "--:--";
         var mainTimeText = mainTime is { } limit ? FormatElapsedTime(limit) : "--:--";
-        DrawFittedText($"USED {elapsedText} / LIMIT {mainTimeText}    AGEHAMA {agehama}", statusBounds, new Color(204, 211, 206), 0.34f);
+        var statusText = minimal
+            ? $"USED {elapsedText} / LIMIT {mainTimeText}"
+            : $"USED {elapsedText} / LIMIT {mainTimeText}    AGEHAMA {agehama}";
+        DrawFittedText(statusText, statusBounds, new Color(204, 211, 206), 0.34f);
+        if (liveElapsed is { } currentElapsed)
+        {
+            DrawFittedText(
+                $"NOW  {FormatElapsedTime(currentElapsed)}",
+                new Rectangle(statusX, bounds.Y + 65, statusWidth, 18),
+                active ? new Color(147, 244, 200) : new Color(158, 178, 178),
+                0.30f);
+        }
+        if (minimal)
+        {
+            DrawAgehamaPlate(new Rectangle(bounds.Right - 136, bounds.Y + 43, 118, 38), agehama, capturedBlack: !black);
+        }
         if (engineError)
         {
             var errorLogBounds = PlayerEngineErrorBounds(bounds);
@@ -80,6 +99,21 @@ public sealed partial class GoScreenRenderer
             DrawRect(errorLogBounds, 1, new Color(255, 96, 96));
             DrawFittedText("ERROR LOG", new Rectangle(errorLogBounds.X + 10, errorLogBounds.Y + 4, errorLogBounds.Width - 20, errorLogBounds.Height - 8), new Color(255, 126, 126), 0.34f);
         }
+    }
+
+    private void DrawAgehamaPlate(Rectangle bounds, int agehama, bool capturedBlack)
+    {
+        _spriteBatch.Draw(_softCircle, bounds, new Color(91, 55, 31));
+        _spriteBatch.Draw(
+            _softCircle,
+            new Rectangle(bounds.X + 5, bounds.Y + 5, bounds.Width - 10, bounds.Height - 11),
+            new Color(145, 92, 48));
+        DrawStone(new Vector2(bounds.X + 30, bounds.Center.Y - 1), 12, capturedBlack);
+        DrawFittedText(
+            agehama.ToString(),
+            new Rectangle(bounds.X + 53, bounds.Y + 5, bounds.Width - 62, bounds.Height - 10),
+            Color.White,
+            0.50f);
     }
 
     private static Rectangle PlayerEngineErrorBounds(Rectangle playerBounds) =>

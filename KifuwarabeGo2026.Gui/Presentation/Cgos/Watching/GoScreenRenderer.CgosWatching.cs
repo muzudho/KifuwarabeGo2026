@@ -136,7 +136,9 @@ public sealed partial class GoScreenRenderer
             observation.BlackAgehama,
             observation.WhiteAgehama,
             observation.CurrentTurn,
-            minimal: true);
+            minimal: true,
+            blackLiveElapsed: observation.BlackLiveElapsedTime,
+            whiteLiveElapsed: observation.WhiteLiveElapsedTime);
 
         DrawCgosTrendChart(session, observation, mousePoint);
 

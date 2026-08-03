@@ -2533,6 +2533,13 @@ public class Game1 : Game
         if (_cgosMatchNotificationMode == CgosMatchNotificationMode.None)
             return;
 
+        if (_session.CgosConnectionFlowKind == CgosConnectionFlowKind.Watching &&
+            _cgosMatchNotificationGameId == _cgosGameObservation.GameId)
+        {
+            _cgosMatchNotificationMode = CgosMatchNotificationMode.None;
+            return;
+        }
+
         if (_cgosGameObservation.IsFinished &&
             _session.CgosConnectionFlowKind is CgosConnectionFlowKind.Watching or CgosConnectionFlowKind.Result)
         {

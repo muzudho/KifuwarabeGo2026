@@ -17,6 +17,7 @@ public sealed class CgosGameObservation
     private GoPoint? _koPoint;
     private readonly List<GoGameMove> _moves = [];
     private int? _replayMoveIndex;
+    private DateTimeOffset _lastClockSyncAt = DateTimeOffset.UtcNow;
 
     public bool IsStarted { get; private set; }
     public bool IsFinished { get; private set; }
@@ -34,6 +35,8 @@ public sealed class CgosGameObservation
     public TimeSpan WhiteRemainingTime { get; private set; }
     public TimeSpan BlackElapsedTime => MainTime - BlackRemainingTime;
     public TimeSpan WhiteElapsedTime => MainTime - WhiteRemainingTime;
+    public TimeSpan BlackLiveElapsedTime => GetLiveElapsedTime(GoStone.Black, BlackElapsedTime);
+    public TimeSpan WhiteLiveElapsedTime => GetLiveElapsedTime(GoStone.White, WhiteElapsedTime);
     public int BlackAgehama { get; private set; }
     public int WhiteAgehama { get; private set; }
     public IReadOnlyList<GoGameMove> Moves => _moves;
@@ -173,6 +176,7 @@ public sealed class CgosGameObservation
         IsFinished = false;
         IsStarted = true;
         StartedAt = DateTime.Now;
+        _lastClockSyncAt = DateTimeOffset.UtcNow;
 
         for (var index = 7; index + 1 < parts.Length; index += 2)
         {
@@ -227,7 +231,19 @@ public sealed class CgosGameObservation
         }
         MoveCount++;
         CurrentTurn = stone == GoStone.Black ? GoStone.White : GoStone.Black;
+        _lastClockSyncAt = DateTimeOffset.UtcNow;
         return movePoint is not null;
+    }
+
+    private TimeSpan GetLiveElapsedTime(GoStone stone, TimeSpan serverElapsed)
+    {
+        if (!IsStarted || IsFinished || CurrentTurn != stone)
+        {
+            return serverElapsed;
+        }
+
+        var liveElapsed = serverElapsed + (DateTimeOffset.UtcNow - _lastClockSyncAt);
+        return liveElapsed < TimeSpan.Zero ? TimeSpan.Zero : liveElapsed;
     }
 
     private GoBoard BuildBoardAt(int moveIndex)
