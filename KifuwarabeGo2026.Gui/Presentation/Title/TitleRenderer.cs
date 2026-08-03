@@ -6,8 +6,8 @@ using Microsoft.Xna.Framework;
 
 public static class TitleRenderer
 {
-    public static void Draw(GoScreenRenderer renderer, GoAppSession session, Point mousePosition, TitleMenuPage page) =>
-        renderer.DrawUseSelection(session, mousePosition, page);
+    public static void Draw(GoScreenRenderer renderer, GoAppSession session, Point mousePosition, TitleMenuPage page, int appProviderTabIndex) =>
+        renderer.DrawUseSelection(session, mousePosition, page, appProviderTabIndex);
 
     public static bool IsLocalGameButtonHit(Point point) =>
         GoScreenRenderer.GetTitleHomeLocalButtonHit(point);

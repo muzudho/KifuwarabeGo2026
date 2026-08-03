@@ -71,6 +71,7 @@ public class Game1 : Game
     private readonly TextBoxController _cgosCredentialTextBox = new(240);
     private bool _isApplicationSettingsOpen;
     private TitleMenuPage _titleMenuPage = TitleMenuPage.Home;
+    private int _appProviderTabIndex;
     private readonly List<string> _guiLogFiles = new();
     private int _selectedGuiLogIndex = -1;
     private string _applicationSettingsMessage = "";
@@ -183,6 +184,12 @@ public class Game1 : Game
         if (acceptsInput && GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
         {
             Exit();
+        }
+
+        if (_session.UseKind is null)
+        {
+            UpdateAppProviderSelectionKeyboard(keyboard);
+            UpdateGtpEngineEditPanelByKeyboard(keyboard, gameTime);
         }
 
         if (_session.UseKind is not (GoAppUseKind.LocalGame or GoAppUseKind.LocalApps))
@@ -428,7 +435,7 @@ public class Game1 : Game
                 if (_isApplicationSettingsOpen)
                     _renderer.DrawApplicationSettings(Mouse.GetState().Position, ApplicationSettings.Current.LogRootDirectory, ApplicationSettings.Current.SgfSaveDirectory, ApplicationSettings.FilePath, _gtpEngineCatalog.ListPath, _guiLogFiles, _selectedGuiLogIndex, _applicationSettingsMessage);
                 else
-                    TitleRenderer.Draw(_renderer, _session, Mouse.GetState().Position, _titleMenuPage);
+                    TitleRenderer.Draw(_renderer, _session, Mouse.GetState().Position, _titleMenuPage, _appProviderTabIndex);
             }
         }
         else if (_variationSession is not null)
@@ -1418,6 +1425,67 @@ public class Game1 : Game
         }
 
         return false;
+    }
+
+    private void UpdateAppProviderSelectionKeyboard(KeyboardState keyboard)
+    {
+        if (!IsActive || !_inputArmed || _titleMenuPage != TitleMenuPage.CaptureGame ||
+            _session.IsGtpEngineSelectionDialogOpen || _session.IsGtpEngineEditPanelOpen)
+        {
+            return;
+        }
+
+        var enabled = new[]
+        {
+            true,
+            _session.CanUseSelectedAppProvider,
+            _session.CanStartSelectedAppProvider,
+            true,
+        };
+        if (!enabled[_appProviderTabIndex])
+        {
+            _appProviderTabIndex = Array.FindIndex(enabled, value => value);
+        }
+
+        if (keyboard.IsKeyDown(Keys.Tab) && _previousKeyboard.IsKeyUp(Keys.Tab))
+        {
+            var step = IsShiftDown(keyboard) ? -1 : 1;
+            do
+            {
+                _appProviderTabIndex = (_appProviderTabIndex + step + enabled.Length) % enabled.Length;
+            }
+            while (!enabled[_appProviderTabIndex]);
+
+            _previousKeyboard = keyboard;
+            return;
+        }
+
+        var activate = (keyboard.IsKeyDown(Keys.Enter) && _previousKeyboard.IsKeyUp(Keys.Enter)) ||
+            (keyboard.IsKeyDown(Keys.Space) && _previousKeyboard.IsKeyUp(Keys.Space));
+        if (!activate)
+        {
+            return;
+        }
+
+        switch (_appProviderTabIndex)
+        {
+            case 0:
+                OpenAppProviderGtpEngineSelectionDialog("ponnuki");
+                break;
+            case 1:
+                RecheckPonnukiProvider();
+                break;
+            case 2:
+                _session.SelectUseKind(GoAppUseKind.LocalApps);
+                GuiOperationLog.User("Entered Local Apps intermission", "app=ponnuki; input=keyboard");
+                break;
+            case 3:
+                _titleMenuPage = TitleMenuPage.Home;
+                GuiOperationLog.User("Pressed title menu Back button", "page=Home; input=keyboard");
+                break;
+        }
+
+        _previousKeyboard = keyboard;
     }
 
     private bool TryHandleBoardEditingClick(Point point)

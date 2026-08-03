@@ -4,10 +4,11 @@ using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Presentation.Title;
 using Microsoft.Xna.Framework;
 using System;
+using System.Linq;
 
 public sealed partial class GoScreenRenderer
 {
-    private void DrawUseSelectionPanel(GoAppSession session, Point mousePoint, TitleMenuPage page)
+    private void DrawUseSelectionPanel(GoAppSession session, Point mousePoint, TitleMenuPage page, int appProviderTabIndex)
     {
         // タイトル画面の囲碁用具ワイヤー装飾。
         DrawTitleGoEquipment();
@@ -20,11 +21,11 @@ public sealed partial class GoScreenRenderer
         DrawText("KIFUWARABE GO 2026", new Vector2(panel.X + 58, panel.Y + 58), new Color(244, 238, 218), 1.05f);
         DrawText(GetDisplayVersion(), new Vector2(panel.X + 790, panel.Y + 91), new Color(99, 223, 185), 0.38f);
         DrawLine(new Vector2(panel.X + 790, panel.Y + 126), new Vector2(panel.X + 958, panel.Y + 126), 2, new Color(99, 223, 185, 120));
-        DrawTitleMenuContent(session, page, panel, mousePoint);
+        DrawTitleMenuContent(session, page, panel, mousePoint, appProviderTabIndex);
         DrawSettingsButton(mousePoint);
     }
 
-    private void DrawTitleMenuContent(GoAppSession session, TitleMenuPage page, Rectangle panel, Point mousePoint)
+    private void DrawTitleMenuContent(GoAppSession session, TitleMenuPage page, Rectangle panel, Point mousePoint, int appProviderTabIndex)
     {
         switch (page)
         {
@@ -41,7 +42,7 @@ public sealed partial class GoScreenRenderer
                 }
                 break;
             default:
-                DrawAppPage(session, page, panel, mousePoint);
+                DrawAppPage(session, page, panel, mousePoint, appProviderTabIndex);
                 break;
         }
     }
@@ -107,11 +108,11 @@ public sealed partial class GoScreenRenderer
             0.38f);
     }
 
-    private void DrawAppPage(GoAppSession session, TitleMenuPage page, Rectangle panel, Point mousePoint)
+    private void DrawAppPage(GoAppSession session, TitleMenuPage page, Rectangle panel, Point mousePoint, int appProviderTabIndex)
     {
         if (page == TitleMenuPage.CaptureGame)
         {
-            DrawPonnukiProviderSelection(session, panel, mousePoint);
+            DrawPonnukiProviderSelection(session, panel, mousePoint, appProviderTabIndex);
             return;
         }
 
@@ -128,7 +129,7 @@ public sealed partial class GoScreenRenderer
         DrawTitleBackButton(mousePoint);
     }
 
-    private void DrawPonnukiProviderSelection(GoAppSession session, Rectangle panel, Point mousePoint)
+    private void DrawPonnukiProviderSelection(GoAppSession session, Rectangle panel, Point mousePoint, int appProviderTabIndex)
     {
         DrawTitleBreadcrumb("HOME  >  GO APPS  >  PONNUKI", panel);
         DrawDynamicOptionText("ポン抜きゲーム", new Rectangle(500, 350, 500, 54), Color.White, 0.62f);
@@ -143,7 +144,7 @@ public sealed partial class GoScreenRenderer
         DrawCommandButton(
             TitleAppProviderEngineSelectButtonBounds,
             "SELECT PROVIDER ENGINE",
-            false,
+            appProviderTabIndex == 0,
             mousePoint,
             scale: 0.31f);
 
@@ -160,22 +161,40 @@ public sealed partial class GoScreenRenderer
         DrawCommandButton(
             TitleAppProviderRecheckButtonBounds,
             "RECHECK PROVIDER",
-            false,
+            appProviderTabIndex == 1,
             mousePoint,
             enabled: session.CanUseSelectedAppProvider,
             scale: 0.30f);
         DrawCommandButton(
             TitleAppProviderStartButtonBounds,
             session.CanStartSelectedAppProvider ? "START" : session.CanUseSelectedAppProvider ? "CHECK REQUIRED" : "ENGINE REQUIRED",
-            false,
+            appProviderTabIndex == 2,
             mousePoint,
             enabled: session.CanStartSelectedAppProvider,
             scale: session.CanStartSelectedAppProvider ? 0.40f : 0.23f);
-        DrawTitleBackButton(mousePoint);
+        DrawTitleBackButton(mousePoint, appProviderTabIndex == 3);
+
+        DrawAppProviderTabHints(session, appProviderTabIndex);
     }
 
-    private void DrawTitleBackButton(Point mousePoint) =>
-        DrawCommandButton(TitleMenuBackButtonBounds, "BACK", false, mousePoint, scale: 0.36f);
+    private void DrawAppProviderTabHints(GoAppSession session, int activeTabIndex)
+    {
+        var stops = new[]
+        {
+            (Index: 0, Bounds: TitleAppProviderEngineSelectButtonBounds, Enabled: true),
+            (Index: 1, Bounds: TitleAppProviderRecheckButtonBounds, Enabled: session.CanUseSelectedAppProvider),
+            (Index: 2, Bounds: TitleAppProviderStartButtonBounds, Enabled: session.CanStartSelectedAppProvider),
+            (Index: 3, Bounds: TitleMenuBackButtonBounds, Enabled: true),
+        }.Where(stop => stop.Enabled).ToArray();
+        var activeStopIndex = Array.FindIndex(stops, stop => stop.Index == activeTabIndex);
+        for (var index = 0; index < stops.Length; index++)
+        {
+            DrawTabNavigationHint(stops[index].Bounds, index, activeStopIndex, stops.Length);
+        }
+    }
+
+    private void DrawTitleBackButton(Point mousePoint, bool focused = false) =>
+        DrawCommandButton(TitleMenuBackButtonBounds, "BACK", focused, mousePoint, scale: 0.36f);
 
     private static string GetDisplayVersion()
     {
