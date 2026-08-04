@@ -18,7 +18,9 @@ public sealed class TournamentRulesSetting
     private readonly Action _browseTournamentRules;
     private readonly IClipboardService _clipboardService;
     private readonly TextBoxController _displayNameTextBox = new(MaxDisplayNameLength);
-    private readonly TextBoxController _mainTimeTextBox = new(8);
+    private readonly TextBoxController _mainTimeHoursTextBox = new(3);
+    private readonly TextBoxController _mainTimeMinutesTextBox = new(2);
+    private readonly TextBoxController _mainTimeSecondsTextBox = new(2);
     private readonly TextBoxController _moveLimitTextBox = new(4);
     private KeyboardState _previousKeyboard;
 
@@ -85,12 +87,7 @@ public sealed class TournamentRulesSetting
 
         if (_session.ActiveTournamentRulesNumericField is { } numericField)
         {
-            if (numericField == TournamentRulesNumericField.MainTime && character != ':' && !char.IsAsciiDigit(character))
-            {
-                return true;
-            }
-
-            if (numericField == TournamentRulesNumericField.MoveLimit && !char.IsAsciiDigit(character))
+            if (!char.IsAsciiDigit(character))
             {
                 return true;
             }
@@ -161,9 +158,9 @@ public sealed class TournamentRulesSetting
             return true;
         }
 
-        if (GoScreenRenderer.GetTournamentRulesMainTimeTextBoxHit(point))
+        if (GoScreenRenderer.GetTournamentRulesMainTimeTextBoxHit(point) is { } mainTimeField)
         {
-            BeginOrMoveNumericEdit(point, TournamentRulesNumericField.MainTime, getNumericCaretIndex);
+            BeginOrMoveNumericEdit(point, mainTimeField, getNumericCaretIndex);
             return true;
         }
 
@@ -531,9 +528,13 @@ public sealed class TournamentRulesSetting
         CommitNumericEdit();
         CancelDisplayNameEdit();
         var controller = GetNumericController(field);
-        var text = field == TournamentRulesNumericField.MainTime
-            ? FormatEditableMainTime(_session.MainTime)
-            : _session.MoveLimit.ToString();
+        var text = field switch
+        {
+            TournamentRulesNumericField.MainTimeHours => ((int)_session.MainTime.TotalHours).ToString("00"),
+            TournamentRulesNumericField.MainTimeMinutes => _session.MainTime.Minutes.ToString("00"),
+            TournamentRulesNumericField.MainTimeSeconds => _session.MainTime.Seconds.ToString("00"),
+            _ => _session.MoveLimit.ToString(),
+        };
         controller.Begin(text);
         _session.BeginTournamentRulesNumericEdit(field, controller.Text, controller.CaretIndex);
         _session.SetTournamentRulesDisplayNameWarning("");
@@ -585,7 +586,9 @@ public sealed class TournamentRulesSetting
     public void EndMouseSelection()
     {
         _displayNameTextBox.EndMouseSelection();
-        _mainTimeTextBox.EndMouseSelection();
+        _mainTimeHoursTextBox.EndMouseSelection();
+        _mainTimeMinutesTextBox.EndMouseSelection();
+        _mainTimeSecondsTextBox.EndMouseSelection();
         _moveLimitTextBox.EndMouseSelection();
     }
 
@@ -604,8 +607,10 @@ public sealed class TournamentRulesSetting
             ? 0
             : _session.ActiveTournamentRulesNumericField switch
             {
-                TournamentRulesNumericField.MainTime => 1,
-                TournamentRulesNumericField.MoveLimit => 2,
+                TournamentRulesNumericField.MainTimeHours => 1,
+                TournamentRulesNumericField.MainTimeMinutes => 2,
+                TournamentRulesNumericField.MainTimeSeconds => 3,
+                TournamentRulesNumericField.MoveLimit => 4,
                 _ => step > 0 ? -1 : 0,
             };
 
@@ -624,16 +629,22 @@ public sealed class TournamentRulesSetting
             return;
         }
 
-        var nextIndex = (currentIndex + step + 3) % 3;
+        var nextIndex = (currentIndex + step + 5) % 5;
         switch (nextIndex)
         {
             case 0:
                 BeginDisplayNameEdit();
                 break;
             case 1:
-                BeginNumericEdit(TournamentRulesNumericField.MainTime);
+                BeginNumericEdit(TournamentRulesNumericField.MainTimeHours);
                 break;
             case 2:
+                BeginNumericEdit(TournamentRulesNumericField.MainTimeMinutes);
+                break;
+            case 3:
+                BeginNumericEdit(TournamentRulesNumericField.MainTimeSeconds);
+                break;
+            case 4:
                 BeginNumericEdit(TournamentRulesNumericField.MoveLimit);
                 break;
         }
@@ -648,8 +659,7 @@ public sealed class TournamentRulesSetting
                     gameTime,
                     _clipboardService,
                     pasteCharacterFilter: character =>
-                        char.IsAsciiDigit(character) ||
-                        (field == TournamentRulesNumericField.MainTime && character == ':')))
+                        char.IsAsciiDigit(character)))
         {
             case TextBoxKeyboardAction.Commit:
                 CommitNumericEdit();
@@ -675,8 +685,13 @@ public sealed class TournamentRulesSetting
         var controller = GetNumericController(field);
         var valid = field switch
         {
-            TournamentRulesNumericField.MainTime => TryParseMainTime(controller.Text, out var seconds)
-                && ApplyMainTime(seconds),
+            TournamentRulesNumericField.MainTimeHours => int.TryParse(controller.Text, out var hours)
+                && hours is >= 0 and <= 999
+                && ApplyMainTimePart(field, hours),
+            TournamentRulesNumericField.MainTimeMinutes or TournamentRulesNumericField.MainTimeSeconds
+                => int.TryParse(controller.Text, out var part)
+                && part is >= 0 and <= 59
+                && ApplyMainTimePart(field, part),
             TournamentRulesNumericField.MoveLimit => int.TryParse(controller.Text, out var moves)
                 && moves is >= 0 and <= 9999
                 && ApplyMoveLimit(moves),
@@ -686,9 +701,11 @@ public sealed class TournamentRulesSetting
         if (!valid)
         {
             _session.SetTournamentRulesDisplayNameWarning(
-                field == TournamentRulesNumericField.MainTime
-                    ? "Time must be h:mm:ss (maximum 999:59:59)."
-                    : "Moves must be 0-9999.");
+                field == TournamentRulesNumericField.MoveLimit
+                    ? "Moves must be 0-9999."
+                    : field == TournamentRulesNumericField.MainTimeHours
+                        ? "Hours must be 0-999."
+                        : "Minutes and seconds must be 0-59.");
             return false;
         }
 
@@ -717,14 +734,22 @@ public sealed class TournamentRulesSetting
         _session.SetTournamentRulesNumericSelection(controller.SelectionStart, controller.SelectionLength);
     }
 
-    private TextBoxController GetNumericController(TournamentRulesNumericField field) =>
-        field == TournamentRulesNumericField.MainTime ? _mainTimeTextBox : _moveLimitTextBox;
+    private bool ApplyMainTimePart(TournamentRulesNumericField field, int value)
+    {
+        var time = _session.MainTime;
+        var hours = field == TournamentRulesNumericField.MainTimeHours ? value : (int)time.TotalHours;
+        var minutes = field == TournamentRulesNumericField.MainTimeMinutes ? value : time.Minutes;
+        var seconds = field == TournamentRulesNumericField.MainTimeSeconds ? value : time.Seconds;
+        return ApplyMainTime(hours * 3600 + minutes * 60 + seconds);
+    }
 
-    private static string FormatEditableMainTime(TimeSpan time) =>
-        $"{(int)time.TotalHours}:{time.Minutes:00}:{time.Seconds:00}";
-
-    private static bool TryParseMainTime(string text, out int totalSeconds)
-        => TournamentRulesJsonConverter.TryParseMainTime(text, out totalSeconds);
+    private TextBoxController GetNumericController(TournamentRulesNumericField field) => field switch
+    {
+        TournamentRulesNumericField.MainTimeHours => _mainTimeHoursTextBox,
+        TournamentRulesNumericField.MainTimeMinutes => _mainTimeMinutesTextBox,
+        TournamentRulesNumericField.MainTimeSeconds => _mainTimeSecondsTextBox,
+        _ => _moveLimitTextBox,
+    };
 
     private bool IsNewKeyPress(KeyboardState keyboard, Keys key) =>
         keyboard.IsKeyDown(key) && _previousKeyboard.IsKeyUp(key);

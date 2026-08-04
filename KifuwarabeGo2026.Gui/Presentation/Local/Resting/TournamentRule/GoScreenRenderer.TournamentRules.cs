@@ -190,9 +190,9 @@ public sealed partial class GoScreenRenderer
             "BOARD SIZE",
             new Rectangle(AddPanelControlX, AddPanelBoardSizeButtonY, 668, 50));
         DrawBoardSizeButtons(session.BoardSize, mousePoint, AddPanelBoardSizeButtonY);
-        DrawRulesNumberStrip(AddPanelControlX, 460, "KOMI", FormatKomi(session.Komi), KomiStepButtonBounds(0), "-0.5", KomiStepButtonBounds(1), "+0.5", mousePoint);
-        DrawEditableRulesNumberStrip(session, 532, "TIME", TournamentRulesNumericField.MainTime, $"{(int)session.MainTime.TotalHours}:{session.MainTime.Minutes:00}:{session.MainTime.Seconds:00}", TournamentRulesMainTimeTextBounds, ["-1m", "-1s", "+1s", "+1m"], MainTimeStepButtonBounds, mousePoint);
-        DrawEditableRulesNumberStrip(session, 604, "MOVES", TournamentRulesNumericField.MoveLimit, session.MoveLimit.ToString(), TournamentRulesMoveLimitTextBounds, ["-10", "-1", "+1", "+10"], MoveLimitStepButtonBounds, mousePoint);
+        DrawTournamentRulesKomiStrip(session, mousePoint);
+        DrawTournamentRulesTimeStrip(session, mousePoint);
+        DrawTournamentRulesMoveLimitStrip(session, mousePoint);
         DrawFilePathSelector(session, mousePoint);
         DrawCommandButton(SaveTournamentRulesButtonBounds, SaveTournamentRulesLabel(session), false, mousePoint);
     }

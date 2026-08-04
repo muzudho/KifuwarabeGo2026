@@ -171,6 +171,8 @@ public sealed class TournamentRulesJsonConverter : JsonConverter<TournamentRules
 
 public enum TournamentRulesNumericField
 {
-    MainTime,
+    MainTimeHours,
+    MainTimeMinutes,
+    MainTimeSeconds,
     MoveLimit,
 }

@@ -154,23 +154,17 @@ public sealed partial class GoScreenRenderer
 
     public static decimal? GetKomiStepButtonHit(Point point)
     {
-        if (KomiStepButtonBounds(0).Contains(point))
-        {
-            return -0.5m;
-        }
-
-        return KomiStepButtonBounds(1).Contains(point) ? 0.5m : null;
+        if (KomiSpinButtonBounds(true).Contains(point)) return 0.5m;
+        return KomiSpinButtonBounds(false).Contains(point) ? -0.5m : null;
     }
 
     public static TimeSpan? GetMainTimeStepButtonHit(Point point)
     {
-        var steps = new[] { -60, -1, 1, 60 };
+        var steps = new[] { 3600, 60, 1 };
         for (var index = 0; index < steps.Length; index++)
         {
-            if (MainTimeStepButtonBounds(index).Contains(point))
-            {
-                return TimeSpan.FromSeconds(steps[index]);
-            }
+            if (MainTimeSpinButtonBounds(index, true).Contains(point)) return TimeSpan.FromSeconds(steps[index]);
+            if (MainTimeSpinButtonBounds(index, false).Contains(point)) return TimeSpan.FromSeconds(-steps[index]);
         }
 
         return null;
@@ -178,20 +172,25 @@ public sealed partial class GoScreenRenderer
 
     public static int? GetMoveLimitStepButtonHit(Point point)
     {
-        var steps = new[] { -10, -1, 1, 10 };
+        var steps = new[] { 100, 10, 1 };
         for (var index = 0; index < steps.Length; index++)
         {
-            if (MoveLimitStepButtonBounds(index).Contains(point))
-            {
-                return steps[index];
-            }
+            if (MoveLimitSpinButtonBounds(index, true).Contains(point)) return steps[index];
+            if (MoveLimitSpinButtonBounds(index, false).Contains(point)) return -steps[index];
         }
 
         return null;
     }
 
-    public static bool GetTournamentRulesMainTimeTextBoxHit(Point point) =>
-        TournamentRulesMainTimeTextBounds.Contains(point);
+    public static TournamentRulesNumericField? GetTournamentRulesMainTimeTextBoxHit(Point point)
+    {
+        for (var index = 0; index < 3; index++)
+        {
+            if (TournamentRulesMainTimePartTextBounds(index).Contains(point))
+                return (TournamentRulesNumericField)((int)TournamentRulesNumericField.MainTimeHours + index);
+        }
+        return null;
+    }
 
     public static bool GetTournamentRulesMoveLimitTextBoxHit(Point point) =>
         TournamentRulesMoveLimitTextBounds.Contains(point);
@@ -227,9 +226,13 @@ public sealed partial class GoScreenRenderer
 
     public int GetTournamentRulesNumericCaretIndex(Point point, TournamentRulesNumericField field, string text)
     {
-        var bounds = field == TournamentRulesNumericField.MainTime
-            ? TournamentRulesMainTimeTextBounds
-            : TournamentRulesMoveLimitTextBounds;
+        var bounds = field switch
+        {
+            TournamentRulesNumericField.MainTimeHours => TournamentRulesMainTimePartTextBounds(0),
+            TournamentRulesNumericField.MainTimeMinutes => TournamentRulesMainTimePartTextBounds(1),
+            TournamentRulesNumericField.MainTimeSeconds => TournamentRulesMainTimePartTextBounds(2),
+            _ => TournamentRulesMoveLimitTextBounds,
+        };
         return GetTextBoxCaretIndex(point.X, text, new Rectangle(bounds.X + 8, bounds.Y + 4, bounds.Width - 16, bounds.Height - 8), 0.42f);
     }
     public static bool GetPassButtonHit(Point point) => PassButtonBounds.Contains(point);
@@ -617,50 +620,89 @@ public sealed partial class GoScreenRenderer
         DrawTournamentRulesChoiceButton(RuleKindButtonBounds(2), "CHINESE", selectedKind == GoRuleKind.Chinese, mousePoint, 0.44f);
     }
 
-    private void DrawRulesNumberStrip(int x, int y, string label, string value, Rectangle minusBounds, string minusLabel, Rectangle plusBounds, string plusLabel, Point mousePoint)
+    private void DrawTournamentRulesKomiStrip(GoAppSession session, Point mousePoint)
     {
-        var bounds = new Rectangle(x, y, 668, 56);
+        var bounds = new Rectangle(AddPanelControlX, 460, 668, 56);
         DrawDataRowFrame(bounds);
-        DrawTournamentRulesFieldLabel(label, bounds);
-        DrawText(value, new Vector2(bounds.X + 176, bounds.Y + 13), Color.White, 0.52f);
-        DrawTournamentRulesAdjustmentButton(minusBounds, minusLabel, mousePoint, 0.42f);
-        DrawTournamentRulesAdjustmentButton(plusBounds, plusLabel, mousePoint, 0.42f);
+        DrawTournamentRulesFieldLabel("KOMI", bounds);
+        DrawText(FormatKomi(session.Komi), new Vector2(bounds.X + 176, bounds.Y + 13), Color.White, 0.52f);
+        DrawTournamentRulesSpinControl(KomiSpinButtonBounds(true), KomiSpinButtonBounds(false), "0.5", mousePoint);
     }
 
-    private void DrawEditableRulesNumberStrip(
-        GoAppSession session,
-        int y,
-        string label,
-        TournamentRulesNumericField field,
-        string value,
-        Rectangle textBounds,
-        string[] stepLabels,
-        Func<int, Rectangle> stepBounds,
-        Point mousePoint)
+    private void DrawTournamentRulesTimeStrip(GoAppSession session, Point mousePoint)
     {
-        var bounds = new Rectangle(AddPanelControlX, y, 668, 56);
+        var bounds = new Rectangle(AddPanelControlX, 532, 668, 56);
+        DrawTournamentRulesFieldLabel("TIME", bounds);
+        var values = new[] { ((int)session.MainTime.TotalHours).ToString("00"), session.MainTime.Minutes.ToString("00"), session.MainTime.Seconds.ToString("00") };
+        var units = new[] { "h", "m", "s" };
+        for (var index = 0; index < 3; index++)
+        {
+            var field = (TournamentRulesNumericField)((int)TournamentRulesNumericField.MainTimeHours + index);
+            DrawTournamentRulesNumericTextBox(session, field, values[index], TournamentRulesMainTimePartTextBounds(index), mousePoint, index + 1);
+            DrawTournamentRulesSpinControl(MainTimeSpinButtonBounds(index, true), MainTimeSpinButtonBounds(index, false), units[index], mousePoint);
+            if (index < 2)
+            {
+                var colonBounds = TournamentRulesMainTimeColonBounds(index);
+                DrawFittedText(":", colonBounds, new Color(210, 218, 214), 0.46f);
+            }
+        }
+    }
+
+    private void DrawTournamentRulesMoveLimitStrip(GoAppSession session, Point mousePoint)
+    {
+        var bounds = new Rectangle(AddPanelControlX, 604, 668, 56);
+        DrawTournamentRulesFieldLabel("MOVES", bounds);
+        DrawTournamentRulesNumericTextBox(session, TournamentRulesNumericField.MoveLimit, session.MoveLimit.ToString(), TournamentRulesMoveLimitTextBounds, mousePoint, 4);
+        var amounts = new[] { "100", "10", "1" };
+        for (var index = 0; index < amounts.Length; index++)
+        {
+            DrawTournamentRulesSpinControl(MoveLimitSpinButtonBounds(index, true), MoveLimitSpinButtonBounds(index, false), amounts[index], mousePoint);
+        }
+    }
+
+    private void DrawTournamentRulesNumericTextBox(GoAppSession session, TournamentRulesNumericField field, string value, Rectangle textBounds, Point mousePoint, int tabIndex)
+    {
         var active = session.ActiveTournamentRulesNumericField == field;
         var text = active ? session.TournamentRulesNumericDraft : value;
-        DrawTournamentRulesTabNavigationHint(
-            bounds,
-            session,
-            field == TournamentRulesNumericField.MainTime ? 1 : 2);
-        DrawTournamentRulesFieldLabel(label, bounds);
+        DrawTournamentRulesTabNavigationHint(textBounds, session, tabIndex);
         DrawTournamentRulesTextInputSurface(textBounds, active, textBounds.Contains(mousePoint));
-        var numericTextBounds = new Rectangle(textBounds.X + 8, textBounds.Y + 4, textBounds.Width - 16, textBounds.Height - 8);
-        if (active)
-            DrawTextBoxSelection(text, session.TournamentRulesNumericSelectionStart, session.TournamentRulesNumericSelectionLength, numericTextBounds, 0.42f);
-        DrawFittedText(text, numericTextBounds, Color.White, 0.42f);
-        if (active)
-        {
-            DrawTextBoxCaret(text, session.TournamentRulesNumericCaretIndex, new Rectangle(textBounds.X + 8, textBounds.Y + 4, textBounds.Width - 16, textBounds.Height - 8), 0.42f);
-        }
+        var contentBounds = new Rectangle(textBounds.X + 8, textBounds.Y + 4, textBounds.Width - 16, textBounds.Height - 8);
+        if (active) DrawTextBoxSelection(text, session.TournamentRulesNumericSelectionStart, session.TournamentRulesNumericSelectionLength, contentBounds, 0.42f);
+        DrawFittedText(text, contentBounds, Color.White, 0.42f);
+        if (active) DrawTextBoxCaret(text, session.TournamentRulesNumericCaretIndex, contentBounds, 0.42f);
+    }
 
-        for (var index = 0; index < stepLabels.Length; index++)
+    private void DrawTournamentRulesSpinControl(Rectangle upBounds, Rectangle downBounds, string amount, Point mousePoint)
+    {
+        var border = new Color(105, 127, 134);
+        var normal = new Color(31, 40, 47);
+        var hovered = new Color(53, 66, 75);
+        DrawFilledSpinTriangle(upBounds, pointsUp: true, border);
+        DrawFilledSpinTriangle(downBounds, pointsUp: false, border);
+        DrawFilledSpinTriangle(SpinTriangleInnerBounds(upBounds, pointsUp: true), pointsUp: true, upBounds.Contains(mousePoint) ? hovered : normal);
+        DrawFilledSpinTriangle(SpinTriangleInnerBounds(downBounds, pointsUp: false), pointsUp: false, downBounds.Contains(mousePoint) ? hovered : normal);
+
+        var wholeBounds = Rectangle.Union(upBounds, downBounds);
+        var gapTop = upBounds.Bottom;
+        var gapHeight = Math.Max(1, downBounds.Top - gapTop);
+        var labelBounds = new Rectangle(wholeBounds.X + 4, gapTop, wholeBounds.Width - 8, gapHeight);
+        DrawFittedText(amount, labelBounds, Color.White, 0.38f);
+    }
+
+    private void DrawFilledSpinTriangle(Rectangle bounds, bool pointsUp, Color color)
+    {
+        for (var row = 0; row < bounds.Height; row++)
         {
-            DrawTournamentRulesAdjustmentButton(stepBounds(index), stepLabels[index], mousePoint, 0.32f);
+            var distanceFromTip = pointsUp ? row : bounds.Height - 1 - row;
+            var halfWidth = Math.Max(1, (distanceFromTip + 1) * bounds.Width / (bounds.Height * 2));
+            FillRect(new Rectangle(bounds.Center.X - halfWidth, bounds.Y + row, halfWidth * 2, 1), color);
         }
     }
+
+    private static Rectangle SpinTriangleInnerBounds(Rectangle bounds, bool pointsUp) =>
+        pointsUp
+            ? new Rectangle(bounds.X + 3, bounds.Y + 3, bounds.Width - 6, bounds.Height - 3)
+            : new Rectangle(bounds.X + 3, bounds.Y, bounds.Width - 6, bounds.Height - 3);
 
     private void DrawTournamentRulesChoiceButton(
         Rectangle bounds,
@@ -738,11 +780,13 @@ public sealed partial class GoScreenRenderer
             ? 0
             : session.ActiveTournamentRulesNumericField switch
             {
-                TournamentRulesNumericField.MainTime => 1,
-                TournamentRulesNumericField.MoveLimit => 2,
+                TournamentRulesNumericField.MainTimeHours => 1,
+                TournamentRulesNumericField.MainTimeMinutes => 2,
+                TournamentRulesNumericField.MainTimeSeconds => 3,
+                TournamentRulesNumericField.MoveLimit => 4,
                 _ => -1,
             };
-        DrawTabNavigationHint(bounds, tabIndex, activeIndex, 3);
+        DrawTabNavigationHint(bounds, tabIndex, activeIndex, 5);
     }
 
     private void DrawTabNavigationHint(Rectangle bounds, int tabIndex, int activeIndex, int stopCount)
@@ -886,15 +930,17 @@ public sealed partial class GoScreenRenderer
 
     private static Rectangle RuleKindButtonBounds(int index) => new(AddPanelControlX + 132 + index * 180, 319, 164, 50);
 
-    private static Rectangle KomiStepButtonBounds(int index) => new(AddPanelControlX + 444 + index * 112, 468, 92, 40);
+    private static Rectangle KomiSpinButtonBounds(bool up) => new(AddPanelControlX + 300, up ? 462 : 498, 88, 14);
 
-    private static Rectangle TournamentRulesMainTimeTextBounds => new(AddPanelControlX + 132, 540, 176, 40);
+    private static Rectangle TournamentRulesMainTimePartTextBounds(int index) => new(AddPanelControlX + 132 + index * 112, 540, 52, 40);
+
+    private static Rectangle TournamentRulesMainTimeColonBounds(int index) => new(AddPanelControlX + 230 + index * 112, 544, 14, 28);
 
     private static Rectangle TournamentRulesMoveLimitTextBounds => new(AddPanelControlX + 132, 612, 176, 40);
 
-    private static Rectangle MainTimeStepButtonBounds(int index) => new(AddPanelControlX + 324 + index * 84, 540, 72, 40);
+    private static Rectangle MainTimeSpinButtonBounds(int index, bool up) => new(AddPanelControlX + 188 + index * 112, up ? 534 : 570, 40, 14);
 
-    private static Rectangle MoveLimitStepButtonBounds(int index) => new(AddPanelControlX + 324 + index * 84, 612, 72, 40);
+    private static Rectangle MoveLimitSpinButtonBounds(int index, bool up) => new(AddPanelControlX + 324 + index * 92, up ? 606 : 642, 76, 14);
 
     private static Rectangle PlayerKindButtonBounds(int index, int y) => new(GameOverValueX + index * 236, y, 236, 52);
 
