@@ -700,7 +700,7 @@ public sealed partial class GoScreenRenderer
         var size = measured * scale;
         DrawText(
             label,
-            new Vector2(labelBounds.Right - size.X, labelBounds.Center.Y - size.Y / 2),
+            new Vector2(labelBounds.X, labelBounds.Center.Y - size.Y / 2),
             new Color(180, 195, 195),
             scale);
     }
