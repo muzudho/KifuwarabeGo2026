@@ -626,7 +626,7 @@ public sealed partial class GoScreenRenderer
         DrawDataRowFrame(bounds);
         DrawTournamentRulesFieldLabel("KOMI", bounds);
         DrawText(FormatKomi(session.Komi), new Vector2(bounds.X + 176, bounds.Y + 13), Color.White, 0.52f);
-        DrawTournamentRulesSpinControl(KomiSpinButtonBounds(true), KomiSpinButtonBounds(false), "0.5", mousePoint);
+        DrawSpinBox(KomiSpinButtonBounds(true), KomiSpinButtonBounds(false), "0.5", mousePoint);
     }
 
     private void DrawTournamentRulesTimeStrip(GoAppSession session, Point mousePoint)
@@ -639,7 +639,7 @@ public sealed partial class GoScreenRenderer
         {
             var field = (TournamentRulesNumericField)((int)TournamentRulesNumericField.MainTimeHours + index);
             DrawTournamentRulesNumericTextBox(session, field, values[index], TournamentRulesMainTimePartTextBounds(index), mousePoint, index + 1);
-            DrawTournamentRulesSpinControl(MainTimeSpinButtonBounds(index, true), MainTimeSpinButtonBounds(index, false), units[index], mousePoint);
+            DrawSpinBox(MainTimeSpinButtonBounds(index, true), MainTimeSpinButtonBounds(index, false), units[index], mousePoint);
             if (index < 2)
             {
                 var colonBounds = TournamentRulesMainTimeColonBounds(index);
@@ -656,7 +656,7 @@ public sealed partial class GoScreenRenderer
         var amounts = new[] { "100", "10", "1" };
         for (var index = 0; index < amounts.Length; index++)
         {
-            DrawTournamentRulesSpinControl(MoveLimitSpinButtonBounds(index, true), MoveLimitSpinButtonBounds(index, false), amounts[index], mousePoint);
+            DrawSpinBox(MoveLimitSpinButtonBounds(index, true), MoveLimitSpinButtonBounds(index, false), amounts[index], mousePoint);
         }
     }
 
@@ -671,38 +671,6 @@ public sealed partial class GoScreenRenderer
         DrawFittedText(text, contentBounds, Color.White, 0.42f);
         if (active) DrawTextBoxCaret(text, session.TournamentRulesNumericCaretIndex, contentBounds, 0.42f);
     }
-
-    private void DrawTournamentRulesSpinControl(Rectangle upBounds, Rectangle downBounds, string amount, Point mousePoint)
-    {
-        var border = new Color(105, 127, 134);
-        var normal = new Color(31, 40, 47);
-        var hovered = new Color(53, 66, 75);
-        DrawFilledSpinTriangle(upBounds, pointsUp: true, border);
-        DrawFilledSpinTriangle(downBounds, pointsUp: false, border);
-        DrawFilledSpinTriangle(SpinTriangleInnerBounds(upBounds, pointsUp: true), pointsUp: true, upBounds.Contains(mousePoint) ? hovered : normal);
-        DrawFilledSpinTriangle(SpinTriangleInnerBounds(downBounds, pointsUp: false), pointsUp: false, downBounds.Contains(mousePoint) ? hovered : normal);
-
-        var wholeBounds = Rectangle.Union(upBounds, downBounds);
-        var gapTop = upBounds.Bottom;
-        var gapHeight = Math.Max(1, downBounds.Top - gapTop);
-        var labelBounds = new Rectangle(wholeBounds.X + 4, gapTop, wholeBounds.Width - 8, gapHeight);
-        DrawFittedText(amount, labelBounds, Color.White, 0.38f);
-    }
-
-    private void DrawFilledSpinTriangle(Rectangle bounds, bool pointsUp, Color color)
-    {
-        for (var row = 0; row < bounds.Height; row++)
-        {
-            var distanceFromTip = pointsUp ? row : bounds.Height - 1 - row;
-            var halfWidth = Math.Max(1, (distanceFromTip + 1) * bounds.Width / (bounds.Height * 2));
-            FillRect(new Rectangle(bounds.Center.X - halfWidth, bounds.Y + row, halfWidth * 2, 1), color);
-        }
-    }
-
-    private static Rectangle SpinTriangleInnerBounds(Rectangle bounds, bool pointsUp) =>
-        pointsUp
-            ? new Rectangle(bounds.X + 3, bounds.Y + 3, bounds.Width - 6, bounds.Height - 3)
-            : new Rectangle(bounds.X + 3, bounds.Y, bounds.Width - 6, bounds.Height - 3);
 
     private void DrawTournamentRulesChoiceButton(
         Rectangle bounds,
