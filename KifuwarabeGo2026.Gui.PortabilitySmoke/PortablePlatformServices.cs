@@ -95,7 +95,6 @@ internal sealed class PortablePlatformServices :
 
     public string GetFileName(string baseName) => baseName;
 
-    public void SaveActiveWindow(string filePath)
-    {
-    }
+    public WindowScreenshotResult SaveActiveWindow(string filePath) =>
+        new(0, 0, 1, 1, 1, 1, 96, 96, "Portable", "Portable screenshot stub");
 }

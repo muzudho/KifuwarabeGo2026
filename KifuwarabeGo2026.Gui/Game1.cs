@@ -60,6 +60,8 @@ public class Game1 : Game
     private SoundEffectInstance? _placeStoneSoundInstance;
     private SoundEffect? _upcomingMatchChime;
     private SoundEffectInstance? _upcomingMatchChimeInstance;
+    private SoundEffect? _screenshotShutterSound;
+    private SoundEffectInstance? _screenshotShutterSoundInstance;
     private MouseState _previousMouse;
     private KeyboardState _previousKeyboard;
     private KeyboardState _previousScreenshotKeyboard;
@@ -84,6 +86,7 @@ public class Game1 : Game
     private DateTimeOffset _cgosMatchNotificationStartedAt;
     private int _cgosMatchNotificationGameId;
     private double _inputClockSeconds;
+    private double _screenshotEffectStartedAt = double.NegativeInfinity;
     private Keys? _reviewRepeatKey;
     private double _reviewKeyboardNextRepeatAt;
     private int? _reviewMouseRepeatCommand;
@@ -104,6 +107,7 @@ public class Game1 : Game
     private const double ReviewRepeatIntervalSeconds = 0.075d;
     private const double ReviewPopupDoubleClickSeconds = 0.36d;
     private const int ReviewPopupDoubleClickDistance = 18;
+    private const double ScreenshotEffectDurationSeconds = 0.42d;
 
     public Game1(
         IClipboardService clipboardService,
@@ -176,6 +180,8 @@ public class Game1 : Game
         _placeStoneSoundInstance = _placeStoneSound.CreateInstance();
         _upcomingMatchChime = CreateUpcomingMatchChime();
         _upcomingMatchChimeInstance = _upcomingMatchChime.CreateInstance();
+        _screenshotShutterSound = CreateScreenshotShutterSound();
+        _screenshotShutterSoundInstance = _screenshotShutterSound.CreateInstance();
     }
 
     protected override void Update(GameTime gameTime)
@@ -510,6 +516,13 @@ public class Game1 : Game
                 notificationOpacity,
                 buttonsEnabled,
                 _session.CgosConnectionFlowKind != CgosConnectionFlowKind.Watching);
+        }
+
+        if (_renderer is not null)
+        {
+            var screenshotEffectAge = _inputClockSeconds - _screenshotEffectStartedAt;
+            if (screenshotEffectAge >= 0d && screenshotEffectAge < ScreenshotEffectDurationSeconds)
+                _renderer.DrawScreenshotCaptureEffect((float)(screenshotEffectAge / ScreenshotEffectDurationSeconds));
         }
 
         base.Draw(gameTime);
@@ -1250,9 +1263,12 @@ public class Game1 : Game
             var directory = ApplicationSettings.Current.ScreenshotSaveDirectory;
             Directory.CreateDirectory(directory);
             var filePath = Path.Combine(directory, $"kifuwarabe-go-screenshot-{DateTime.Now:yyyyMMdd-HHmmss-fff}.png");
-            _windowScreenshotService.SaveActiveWindow(filePath);
+            var result = _windowScreenshotService.SaveActiveWindow(filePath);
+            _screenshotEffectStartedAt = _inputClockSeconds;
+            PlayScreenshotShutterSound();
             _applicationSettingsMessage = "SCREENSHOT SAVED: " + Path.GetFileName(filePath);
             GuiOperationLog.User("Captured window screenshot", filePath);
+            GuiOperationLog.App("Screenshot diagnostics", result.Diagnostics);
         }
         catch (Exception ex)
         {
@@ -4151,6 +4167,8 @@ public class Game1 : Game
             _playingScene.Dispose();
             _upcomingMatchChimeInstance?.Dispose();
             _upcomingMatchChime?.Dispose();
+            _screenshotShutterSoundInstance?.Dispose();
+            _screenshotShutterSound?.Dispose();
             _placeStoneSoundInstance?.Dispose();
             _placeStoneSound?.Dispose();
         }
@@ -4185,6 +4203,58 @@ public class Game1 : Game
 
         _upcomingMatchChimeInstance.Volume = 0.72f;
         _upcomingMatchChimeInstance.Play();
+    }
+
+    private void PlayScreenshotShutterSound()
+    {
+        if (_screenshotShutterSoundInstance is null)
+            return;
+
+        if (_screenshotShutterSoundInstance.State == SoundState.Playing)
+            _screenshotShutterSoundInstance.Stop();
+
+        _screenshotShutterSoundInstance.Volume = 0.72f;
+        _screenshotShutterSoundInstance.Play();
+    }
+
+    private static SoundEffect CreateScreenshotShutterSound()
+    {
+        const int sampleRate = 44100;
+        const float duration = 0.19f;
+        var sampleCount = (int)(sampleRate * duration);
+        var buffer = new byte[sampleCount * sizeof(short)];
+        uint noiseState = 0x4B1D5EED;
+
+        for (var i = 0; i < sampleCount; i++)
+        {
+            var t = i / (float)sampleRate;
+            noiseState = noiseState * 1664525u + 1013904223u;
+            var noise = ((noiseState >> 8) / 8388607.5f) - 1f;
+            var firstClick = ShutterPulse(t, 0f, 0.034f, 68f, noise);
+            var secondClick = ShutterPulse(t, 0.072f, 0.052f, 52f, -noise);
+            var mechanism = t >= 0.02f
+                ? MathF.Sin(MathF.Tau * (118f - 240f * (t - 0.02f)) * (t - 0.02f)) * MathF.Exp(-24f * (t - 0.02f)) * 0.22f
+                : 0f;
+            var wave = Math.Clamp(firstClick + secondClick + mechanism, -1f, 1f);
+            var sample = (short)(wave * short.MaxValue * 0.78f);
+            buffer[i * 2] = (byte)(sample & 0xff);
+            buffer[i * 2 + 1] = (byte)((sample >> 8) & 0xff);
+        }
+
+        return new SoundEffect(buffer, sampleRate, AudioChannels.Mono);
+
+        static float ShutterPulse(float time, float start, float pulseDuration, float decay, float noise)
+        {
+            var localTime = time - start;
+            if (localTime < 0f || localTime >= pulseDuration)
+                return 0f;
+
+            var attack = Math.Clamp(localTime / 0.0015f, 0f, 1f);
+            var envelope = attack * MathF.Exp(-decay * localTime);
+            var metal = MathF.Sin(MathF.Tau * 1850f * localTime) * 0.34f +
+                        MathF.Sin(MathF.Tau * 2730f * localTime) * 0.16f;
+            return (noise * 0.72f + metal) * envelope;
+        }
     }
 
     private static SoundEffect CreateUpcomingMatchChime()
