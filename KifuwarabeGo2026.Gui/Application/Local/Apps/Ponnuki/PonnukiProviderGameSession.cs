@@ -10,6 +10,8 @@ namespace KifuwarabeGo2026.Gui.Application.Local.Apps.Ponnuki;
 public sealed class PonnukiProviderGameSession : IAsyncDisposable
 {
     private readonly GtpEngineClient _client;
+    private bool _usesAppLifecycle;
+    private bool _appStarted;
 
     public PonnukiProviderGameSession(GtpEngineProfile profile)
     {
@@ -22,9 +24,15 @@ public sealed class PonnukiProviderGameSession : IAsyncDisposable
     {
         var app = LocalAppCatalog.Ponnuki;
         await _client.StartAsync();
-        var command = $"kfw-make-position {app.Id} {app.Version} {app.BoardSize} {app.InitialRandomMoveCount}";
+        var startSupported = await IsCommandSupportedAsync("kfw-start-app");
+        var endSupported = await IsCommandSupportedAsync("kfw-end-app");
+        _usesAppLifecycle = startSupported && endSupported;
+        var command = _usesAppLifecycle
+            ? $"kfw-start-app {app.Id} provider"
+            : $"kfw-make-position {app.Id} {app.Version} {app.BoardSize} {app.InitialRandomMoveCount}";
         var response = await _client.SendCommandAsync(command);
         response.ThrowIfError(command);
+        _appStarted = _usesAppLifecycle;
         Seed = PonnukiPositionProvider.ParseSeed(response.Payload);
         return PonnukiPositionProvider.ParsePosition(response.Payload);
     }
@@ -40,7 +48,28 @@ public sealed class PonnukiProviderGameSession : IAsyncDisposable
             ?? throw new InvalidOperationException("The App Provider returned an empty move result.");
     }
 
-    public ValueTask DisposeAsync() => _client.DisposeAsync();
+    public async ValueTask DisposeAsync()
+    {
+        if (_appStarted)
+        {
+            try
+            {
+                await _client.SendCommandAsync("kfw-end-app ponnuki provider");
+            }
+            catch (Exception)
+            {
+                // Disposal must continue even if the Provider has already exited.
+            }
+            _appStarted = false;
+        }
+        await _client.DisposeAsync();
+    }
+
+    private async Task<bool> IsCommandSupportedAsync(string command)
+    {
+        var response = await _client.SendCommandAsync($"known_command {command}");
+        return response.IsSuccess && response.Payload.Trim().Equals("true", StringComparison.OrdinalIgnoreCase);
+    }
 }
 
 public sealed class PonnukiMoveResult

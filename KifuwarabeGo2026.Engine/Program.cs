@@ -32,7 +32,7 @@ internal sealed partial class GtpEngine
         "komi", "play", "genmove", "cgos-genmove_analyze",
         "kfw-list-apps",
         "kfw-describe-options", "kfw-get-options", "kfw-patch-options", "kfw-invoke-option",
-        "kfw-options", "kfw-get-option", "kfw-set-option", "kfw-make-position", "kfw-listen-move",
+        "kfw-options", "kfw-get-option", "kfw-set-option", "kfw-start-app", "kfw-end-app", "kfw-make-position", "kfw-listen-move",
         "gui_options", "gui_getoption", "gui_setoption",
         "kfw-begin-position", "kfw-add-black", "kfw-add-white", "kfw-set-to-play", "kfw-commit-position", "kfw-abort-position", "quit",
     ];
@@ -47,6 +47,9 @@ internal sealed partial class GtpEngine
     private int _randomSeed;
     private string _engineTag = "";
     private string _debugLogFile = "";
+    private int _ponnukiBoardSize = 9;
+    private int _ponnukiInitialMoveCount = 20;
+    private int _ponnukiRandomSeed;
     private bool _ponnukiProviderActive;
     private int _ponnukiBlackCaptures;
     private int _ponnukiWhiteCaptures;
@@ -143,6 +146,12 @@ internal sealed partial class GtpEngine
                 return false;
             case "kfw-make-position":
                 ExecuteMakePosition(tokens, out response, out error);
+                return false;
+            case "kfw-start-app":
+                ExecuteStartApp(tokens, out response, out error);
+                return false;
+            case "kfw-end-app":
+                ExecuteEndApp(tokens, out response, out error);
                 return false;
             case "kfw-listen-move":
                 ExecuteListenMove(tokens, out response, out error);
@@ -393,13 +402,58 @@ internal sealed partial class GtpEngine
         _ponnukiProviderActive = true;
     }
 
+    private void ExecuteStartApp(string[] tokens, out string response, out string? error)
+    {
+        response = "";
+        error = null;
+        if (tokens.Length != 3 ||
+            !tokens[1].Equals("ponnuki", StringComparison.OrdinalIgnoreCase) ||
+            !tokens[2].Equals("provider", StringComparison.OrdinalIgnoreCase))
+        {
+            error = "usage: kfw-start-app ponnuki provider";
+            return;
+        }
+        if (_ponnukiProviderActive)
+        {
+            error = "ponnuki provider app is already started";
+            return;
+        }
+
+        var arguments = new List<string>
+        {
+            "kfw-make-position", "ponnuki", "1",
+            _ponnukiBoardSize.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            _ponnukiInitialMoveCount.ToString(System.Globalization.CultureInfo.InvariantCulture),
+        };
+        if (_ponnukiRandomSeed != 0)
+            arguments.Add(_ponnukiRandomSeed.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        ExecuteMakePosition(arguments.ToArray(), out response, out error);
+    }
+
+    private void ExecuteEndApp(string[] tokens, out string response, out string? error)
+    {
+        response = "";
+        error = null;
+        if (tokens.Length != 3 ||
+            !tokens[1].Equals("ponnuki", StringComparison.OrdinalIgnoreCase) ||
+            !tokens[2].Equals("provider", StringComparison.OrdinalIgnoreCase))
+        {
+            error = "usage: kfw-end-app ponnuki provider";
+            return;
+        }
+
+        _ponnukiProviderActive = false;
+        _ponnukiBlackCaptures = 0;
+        _ponnukiWhiteCaptures = 0;
+    }
+
     private void ExecuteListenMove(string[] tokens, out string response, out string? error)
     {
         response = "";
         error = null;
         if (!_ponnukiProviderActive)
         {
-            error = "kfw-make-position must be called first";
+            error = "kfw-start-app or kfw-make-position must be called first";
             return;
         }
 

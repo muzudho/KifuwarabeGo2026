@@ -238,9 +238,11 @@ internal static class Program
         Require(output.Contains("\"type\":\"boolean\"", StringComparison.Ordinal) &&
                 output.Contains("\"apply\":\"restart\"", StringComparison.Ordinal),
             "The option schema did not expose JSON-native types and apply timing.");
-        Require(output.Contains("\"app\":\"ponnuki\",\"role\":\"provider\",\"options\":[]", StringComparison.Ordinal) &&
+        Require(output.Contains("\"app\":\"ponnuki\",\"role\":\"provider\"", StringComparison.Ordinal) &&
+                output.Contains("\"id\":\"BoardSize\"", StringComparison.Ordinal) &&
+                output.Contains("\"id\":\"InitialMoveCount\"", StringComparison.Ordinal) &&
                 output.Contains("\"code\":\"unsupported-app-role\"", StringComparison.Ordinal),
-            "Supported scopes without options were not distinguished from unsupported app roles.");
+            "Ponnuki Provider options were not distinguished from unsupported app roles.");
         Require(CountOccurrences(output, expectedValues) == 2 &&
                 output.Contains("\"code\":\"option-validation-failed\"", StringComparison.Ordinal),
             "A failed option patch changed state or did not return a JSON validation error.");
@@ -249,6 +251,34 @@ internal static class Program
             "Action options were not separated from atomic value patches.");
         Require(output.Contains("= Normal", StringComparison.Ordinal),
             "The legacy single-option commands did not remain compatible.");
+
+        var playSchema = RunEngine("kfw-describe-options play player\nquit\n");
+        Require(!playSchema.Contains("BoardSize", StringComparison.Ordinal) &&
+                !playSchema.Contains("InitialMoveCount", StringComparison.Ordinal),
+            "Provider-owned Ponnuki settings leaked into the Play Player option schema.");
+
+        var lifecycle = RunEngine(
+            "known_command kfw-start-app\n" +
+            "known_command kfw-end-app\n" +
+            "kfw-patch-options ponnuki provider {\"version\":1,\"values\":{\"BoardSize\":9,\"InitialMoveCount\":0,\"RandomSeed\":123}}\n" +
+            "kfw-get-options ponnuki provider\n" +
+            "kfw-start-app ponnuki provider\n" +
+            "kfw-start-app ponnuki provider\n" +
+            "kfw-listen-move pass\n" +
+            "kfw-end-app ponnuki provider\n" +
+            "kfw-listen-move pass\n" +
+            "kfw-end-app ponnuki provider\n" +
+            "kfw-start-app ponnuki provider\n" +
+            "kfw-end-app ponnuki provider\n" +
+            "quit\n");
+        Require(CountOccurrences(lifecycle, "= true") >= 2 &&
+                lifecycle.Contains("\"BoardSize\":9", StringComparison.Ordinal) &&
+                lifecycle.Contains("\"InitialMoveCount\":0", StringComparison.Ordinal) &&
+                lifecycle.Contains("\"RandomSeed\":123", StringComparison.Ordinal) &&
+                lifecycle.Contains("\"boardSize\":9", StringComparison.Ordinal) &&
+                lifecycle.Contains("ponnuki provider app is already started", StringComparison.Ordinal) &&
+                lifecycle.Contains("kfw-start-app or kfw-make-position must be called first", StringComparison.Ordinal),
+            "The Ponnuki Provider lifecycle did not apply scoped options or enforce start/end state.");
     }
 
     private static string RunEngine(string commands)

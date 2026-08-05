@@ -12,6 +12,11 @@ internal sealed partial class GtpEngine
         "RandomMove", "AvoidEyes", "RandomSeed", "EngineTag", "DebugLogFile", "ClearCache",
     };
 
+    private static readonly HashSet<string> PonnukiProviderOptionIds = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "BoardSize", "InitialMoveCount", "RandomSeed",
+    };
+
     private void ExecuteDescribeOptions(string[] tokens, out string response, out string? error)
     {
         response = "";
@@ -88,6 +93,9 @@ internal sealed partial class GtpEngine
             var randomSeedChanged = false;
             var engineTag = _engineTag;
             var debugLogFile = _debugLogFile;
+            var ponnukiBoardSize = _ponnukiBoardSize;
+            var ponnukiInitialMoveCount = _ponnukiInitialMoveCount;
+            var ponnukiRandomSeed = _ponnukiRandomSeed;
             var applied = new Dictionary<string, object?>(StringComparer.Ordinal);
             var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var validationErrors = new List<object>();
@@ -132,6 +140,11 @@ internal sealed partial class GtpEngine
                         if (property.Value.ValueKind != JsonValueKind.Number ||
                             !property.Value.TryGetInt32(out var parsedSeed) || parsedSeed < 0)
                             validationErrors.Add(new { id = property.Name, message = "must be a non-negative 32-bit integer" });
+                        else if (app == "ponnuki" && role == "provider")
+                        {
+                            ponnukiRandomSeed = parsedSeed;
+                            applied["RandomSeed"] = parsedSeed;
+                        }
                         else
                         {
                             randomSeed = parsedSeed;
@@ -147,6 +160,26 @@ internal sealed partial class GtpEngine
                         break;
                     case "clearcache":
                         validationErrors.Add(new { id = property.Name, message = "action options must be invoked with kfw-invoke-option" });
+                        break;
+                    case "boardsize":
+                        if (property.Value.ValueKind != JsonValueKind.Number ||
+                            !property.Value.TryGetInt32(out var parsedBoardSize) || parsedBoardSize != 9)
+                            validationErrors.Add(new { id = property.Name, message = "Ponnuki v1 BoardSize must be 9" });
+                        else
+                        {
+                            ponnukiBoardSize = parsedBoardSize;
+                            applied["BoardSize"] = parsedBoardSize;
+                        }
+                        break;
+                    case "initialmovecount":
+                        if (property.Value.ValueKind != JsonValueKind.Number ||
+                            !property.Value.TryGetInt32(out var parsedMoveCount) || parsedMoveCount is < 0 or > 200)
+                            validationErrors.Add(new { id = property.Name, message = "must be an integer from 0 through 200" });
+                        else
+                        {
+                            ponnukiInitialMoveCount = parsedMoveCount;
+                            applied["InitialMoveCount"] = parsedMoveCount;
+                        }
                         break;
                 }
             }
@@ -170,6 +203,9 @@ internal sealed partial class GtpEngine
             if (randomSeedChanged) _random = new Random(randomSeed);
             _engineTag = engineTag;
             _debugLogFile = debugLogFile;
+            _ponnukiBoardSize = ponnukiBoardSize;
+            _ponnukiInitialMoveCount = ponnukiInitialMoveCount;
+            _ponnukiRandomSeed = ponnukiRandomSeed;
 
             response = JsonSerializer.Serialize(new
             {
@@ -243,7 +279,7 @@ internal sealed partial class GtpEngine
 
         if (app == "ponnuki" && role == "provider")
         {
-            optionIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            optionIds = PonnukiProviderOptionIds;
             return true;
         }
 
@@ -260,6 +296,8 @@ internal sealed partial class GtpEngine
         if (optionIds.Contains("EngineTag")) descriptions.Add(new { id = "EngineTag", label = "EngineTag", type = "string", @default = "", maximumLength = MaximumOptionTextLength, apply = "immediate" });
         if (optionIds.Contains("DebugLogFile")) descriptions.Add(new { id = "DebugLogFile", label = "DebugLogFile", type = "file", @default = "", maximumLength = MaximumOptionTextLength, apply = "restart" });
         if (optionIds.Contains("ClearCache")) descriptions.Add(new { id = "ClearCache", label = "ClearCache", type = "action", apply = "immediate" });
+        if (optionIds.Contains("BoardSize")) descriptions.Add(new { id = "BoardSize", label = "BoardSize", type = "integer", @default = 9, minimum = 9, maximum = 9, apply = "next-start" });
+        if (optionIds.Contains("InitialMoveCount")) descriptions.Add(new { id = "InitialMoveCount", label = "InitialMoveCount", type = "integer", @default = 20, minimum = 0, maximum = 200, apply = "next-start" });
         return descriptions.ToArray();
     }
 
@@ -271,6 +309,9 @@ internal sealed partial class GtpEngine
         if (optionIds.Contains("RandomSeed")) values["RandomSeed"] = _randomSeed;
         if (optionIds.Contains("EngineTag")) values["EngineTag"] = _engineTag;
         if (optionIds.Contains("DebugLogFile")) values["DebugLogFile"] = _debugLogFile;
+        if (optionIds.Contains("BoardSize")) values["BoardSize"] = _ponnukiBoardSize;
+        if (optionIds.Contains("InitialMoveCount")) values["InitialMoveCount"] = _ponnukiInitialMoveCount;
+        if (ReferenceEquals(optionIds, PonnukiProviderOptionIds) && optionIds.Contains("RandomSeed")) values["RandomSeed"] = _ponnukiRandomSeed;
         return values;
     }
 

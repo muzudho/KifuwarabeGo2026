@@ -101,8 +101,8 @@ public sealed partial class GoScreenRenderer
         for (var slot = 0; slot < GoAppSession.GtpEngineGuiOptionsPageSize; slot++)
         {
             var index = start + slot;
-            if (index >= GtpEngineGuiOptions.Specs.Length) break;
-            var option = GtpEngineGuiOptions.Specs[index];
+            if (index >= session.ActiveGtpEngineGuiOptionSpecs.Count) break;
+            var option = session.ActiveGtpEngineGuiOptionSpecs[index];
             if (option.Type != "button" && GtpEngineGuiOptionDefaultButtonBounds(slot).Contains(point)) return (index, 3);
             var primaryBounds = option.Type == "spin" ? GtpEngineGuiOptionPrimaryButtonBounds(slot) : GtpEngineGuiOptionWideButtonBounds(slot);
             if (primaryBounds.Contains(point)) return (index, 0);
@@ -371,8 +371,8 @@ public sealed partial class GoScreenRenderer
         for (var slot = 0; slot < GoAppSession.GtpEngineGuiOptionsPageSize; slot++)
         {
             var index = startIndex + slot;
-            if (index >= GtpEngineGuiOptions.Specs.Length) break;
-            DrawGtpEngineGuiOptionRow(session, GtpEngineGuiOptions.Specs[index], slot, mousePoint);
+            if (index >= session.ActiveGtpEngineGuiOptionSpecs.Count) break;
+            DrawGtpEngineGuiOptionRow(session, session.ActiveGtpEngineGuiOptionSpecs[index], slot, mousePoint);
         }
 
         DrawPager(
@@ -438,8 +438,8 @@ public sealed partial class GoScreenRenderer
         for (var slot = 0; slot < GoAppSession.GtpEngineGuiOptionsPageSize; slot++)
         {
             var index = startIndex + slot;
-            if (index >= GtpEngineGuiOptions.Specs.Length) break;
-            var option = GtpEngineGuiOptions.Specs[index];
+            if (index >= session.ActiveGtpEngineGuiOptionSpecs.Count) break;
+            var option = session.ActiveGtpEngineGuiOptionSpecs[index];
             if (option.Type is not ("string" or "filename") || !GtpEngineGuiOptionValueBounds(slot).Contains(mousePoint)) continue;
             var value = session.GetGtpEngineGuiOptionDraft(option);
             if (value.Length <= 28) continue;

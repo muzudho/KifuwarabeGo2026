@@ -427,6 +427,10 @@ public sealed class GoAppSession
     public int GtpEngineRandomMoveSelectionIndex { get; private set; }
 
     public int GtpEngineGuiOptionsPageIndex { get; private set; }
+    private IReadOnlyList<GtpEngineGuiOptionSpec> _appProviderGameSettingSpecs = GtpEngineGuiOptions.PonnukiProviderSpecs;
+
+    public IReadOnlyList<GtpEngineGuiOptionSpec> ActiveGtpEngineGuiOptionSpecs =>
+        IsAppProviderGameSettingsDialogOpen ? _appProviderGameSettingSpecs : GtpEngineGuiOptions.Specs;
 
     public int GtpEngineRandomMoveSelectionPageIndex { get; private set; }
 
@@ -2424,7 +2428,7 @@ public sealed class GoAppSession
     public void OpenGtpEngineGuiOptionsDialog()
     {
         GtpEngineGuiOptionsDialogDraft = new Dictionary<string, string>(GtpEngineEditDraft.GuiOptions);
-        foreach (var option in GtpEngineGuiOptions.Specs)
+        foreach (var option in ActiveGtpEngineGuiOptionSpecs)
             GtpEngineGuiOptionsDialogDraft.TryAdd(option.Id, option.DefaultValue);
         IsGtpEngineRandomMoveSelectionDialogOpen = false;
         GtpEngineGuiOptionsPageIndex = 0;
@@ -2432,8 +2436,9 @@ public sealed class GoAppSession
         ActiveGtpEngineEditField = null;
     }
 
-    public void OpenAppProviderGameSettingsDialog()
+    public void OpenAppProviderGameSettingsDialog(IReadOnlyList<GtpEngineGuiOptionSpec> specs)
     {
+        _appProviderGameSettingSpecs = specs.Count > 0 ? specs : GtpEngineGuiOptions.PonnukiProviderSpecs;
         GtpEngineEditProfileIndex = Math.Clamp(SelectedAppProviderEngineIndex, 0, _gtpEngineProfiles.Count - 1);
         GtpEngineEditDraft = _gtpEngineProfiles[GtpEngineEditProfileIndex].Clone();
         IsAppProviderGameSettingsDialogOpen = true;
@@ -2497,7 +2502,7 @@ public sealed class GoAppSession
     }
 
     public int GetGtpEngineGuiOptionsPageCount() =>
-        Math.Max(1, (GtpEngineGuiOptions.KnownOptionCount + GtpEngineGuiOptionsPageSize - 1) / GtpEngineGuiOptionsPageSize);
+        Math.Max(1, (ActiveGtpEngineGuiOptionSpecs.Count + GtpEngineGuiOptionsPageSize - 1) / GtpEngineGuiOptionsPageSize);
 
     public void MoveGtpEngineGuiOptionsPage(int step) =>
         GtpEngineGuiOptionsPageIndex = Math.Clamp(GtpEngineGuiOptionsPageIndex + step, 0, GetGtpEngineGuiOptionsPageCount() - 1);

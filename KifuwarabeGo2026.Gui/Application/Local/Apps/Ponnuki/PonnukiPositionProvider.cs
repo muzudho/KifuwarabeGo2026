@@ -3,6 +3,7 @@ using KifuwarabeGo2026.Gui.Gtp;
 using KifuwarabeGo2026.Shared.Domain;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -10,19 +11,69 @@ namespace KifuwarabeGo2026.Gui.Application.Local.Apps.Ponnuki;
 
 public static class PonnukiPositionProvider
 {
+    public static async Task<IReadOnlyList<GtpEngineGuiOptionSpec>> GetGameSettingSpecsAsync(GtpEngineProfile profile)
+    {
+        await using var client = new GtpEngineClient(CreateSettings(profile), TimeSpan.FromSeconds(10));
+        await client.StartAsync();
+        var response = await client.SendCommandAsync("kfw-describe-options ponnuki provider");
+        response.ThrowIfError("kfw-describe-options ponnuki provider");
+        var schema = GtpOptionSchemaDocument.Parse(response.Payload);
+        if (schema.Version != 1 ||
+            !schema.App.Equals("ponnuki", StringComparison.OrdinalIgnoreCase) ||
+            !schema.Role.Equals("provider", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("The App Provider returned an incompatible option schema.");
+
+        return schema.Options.Select(ToGuiOptionSpec).ToArray();
+    }
+
+    private static GtpEngineGuiOptionSpec ToGuiOptionSpec(GtpOptionSchemaDefinition definition)
+    {
+        var type = definition.Type.ToLowerInvariant() switch
+        {
+            "boolean" => "check",
+            "integer" => "spin",
+            "enum" => "combo",
+            "file" => "filename",
+            "action" => "button",
+            _ => "string",
+        };
+        var defaultValue = definition.Default.ValueKind switch
+        {
+            JsonValueKind.String => definition.Default.GetString() ?? "",
+            JsonValueKind.True => "true",
+            JsonValueKind.False => "false",
+            JsonValueKind.Number => definition.Default.GetRawText(),
+            _ => type == "button" ? "false" : "",
+        };
+        return new GtpEngineGuiOptionSpec(
+            definition.Id,
+            string.IsNullOrWhiteSpace(definition.Label) ? definition.Id : definition.Label,
+            type,
+            defaultValue,
+            definition.Minimum,
+            definition.Maximum,
+            definition.Values);
+    }
+
     public static async Task<(bool IsSupported, string Message)> CheckCapabilityAsync(GtpEngineProfile profile)
     {
         var settings = CreateSettings(profile);
         await using var client = new GtpEngineClient(settings, TimeSpan.FromSeconds(10));
         await client.StartAsync();
+        var startResponse = await client.SendCommandAsync("known_command kfw-start-app");
+        var endResponse = await client.SendCommandAsync("known_command kfw-end-app");
         var makePositionResponse = await client.SendCommandAsync("known_command kfw-make-position");
-        makePositionResponse.ThrowIfError("known_command kfw-make-position");
         var listenMoveResponse = await client.SendCommandAsync("known_command kfw-listen-move");
         listenMoveResponse.ThrowIfError("known_command kfw-listen-move");
-        var supported = makePositionResponse.Payload.Trim().Equals("true", StringComparison.OrdinalIgnoreCase) &&
+        var supportsLifecycle = startResponse.IsSuccess && endResponse.IsSuccess &&
+                                startResponse.Payload.Trim().Equals("true", StringComparison.OrdinalIgnoreCase) &&
+                                endResponse.Payload.Trim().Equals("true", StringComparison.OrdinalIgnoreCase);
+        var supportsLegacyStart = makePositionResponse.IsSuccess &&
+                                  makePositionResponse.Payload.Trim().Equals("true", StringComparison.OrdinalIgnoreCase);
+        var supported = (supportsLifecycle || supportsLegacyStart) &&
                         listenMoveResponse.Payload.Trim().Equals("true", StringComparison.OrdinalIgnoreCase);
         return supported
-            ? (true, "PONNUKI v1 READY")
+            ? (true, supportsLifecycle ? "PONNUKI v1 LIFECYCLE READY" : "PONNUKI v1 LEGACY READY")
             : (false, "PONNUKI v1 NOT SUPPORTED");
     }
 

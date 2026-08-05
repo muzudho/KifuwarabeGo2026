@@ -1124,8 +1124,7 @@ public class Game1 : Game
             }
             else if (isLocalAppsIntermission && GoScreenRenderer.GetAppProviderGameSettingsButtonHit(point))
             {
-                _session.OpenAppProviderGameSettingsDialog();
-                GuiOperationLog.User("Opened App Provider game settings", "app=ponnuki; role=provider");
+                OpenAppProviderGameSettings();
             }
             else if (isLocalAppsIntermission && GoScreenRenderer.GetChangeAppProviderButtonHit(point))
             {
@@ -3827,7 +3826,7 @@ public class Game1 : Game
         if (GoScreenRenderer.GetGtpEngineGuiOptionControlHit(point, _session) is not { } optionHit)
             return;
 
-        var option = GtpEngineGuiOptions.Specs[optionHit.Index];
+        var option = _session.ActiveGtpEngineGuiOptionSpecs[optionHit.Index];
         if (optionHit.Action == 3)
         {
             _session.SetGtpEngineGuiOptionDraft(option, option.DefaultValue);
@@ -3857,6 +3856,22 @@ public class Game1 : Game
             case "button":
                 _session.ToggleGtpEngineButtonOption(option);
                 break;
+        }
+    }
+
+    private void OpenAppProviderGameSettings()
+    {
+        try
+        {
+            var specs = PonnukiPositionProvider.GetGameSettingSpecsAsync(_session.SelectedAppProviderEngine)
+                .GetAwaiter().GetResult();
+            _session.OpenAppProviderGameSettingsDialog(specs);
+            GuiOperationLog.User("Opened App Provider game settings", $"app=ponnuki; role=provider; options={specs.Count}");
+        }
+        catch (Exception ex)
+        {
+            ApplicationErrorLog.Write("APP PROVIDER SETTINGS", "Could not load the Ponnuki Provider option schema.", ex);
+            ShowMessage(ex.Message, "Ponnuki game settings");
         }
     }
 

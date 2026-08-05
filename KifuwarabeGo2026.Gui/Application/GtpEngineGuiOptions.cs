@@ -21,6 +21,8 @@ public static class GtpEngineGuiOptions
     public const string EngineTagId = "EngineTag";
     public const string DebugLogFileId = "DebugLogFile";
     public const string ClearCacheId = "ClearCache";
+    public const string BoardSizeId = "BoardSize";
+    public const string InitialMoveCountId = "InitialMoveCount";
     public const string NormalRandomMove = "Normal";
     public const string ChebyshevDistanceFromStarRandomMove = "ChebyshevDistanceFromStar";
 
@@ -34,6 +36,13 @@ public static class GtpEngineGuiOptions
         new(EngineTagId, "EngineTag", "string", ""),
         new(DebugLogFileId, "DebugLogFile", "filename", ""),
         new(ClearCacheId, "ClearCache", "button", "false"),
+    ];
+
+    public static readonly GtpEngineGuiOptionSpec[] PonnukiProviderSpecs =
+    [
+        new(BoardSizeId, "BoardSize", "spin", "9", 9, 9),
+        new(InitialMoveCountId, "InitialMoveCount", "spin", "20", 0, 200),
+        new(RandomSeedId, "RandomSeed", "spin", "0", 0, int.MaxValue),
     ];
 
     public static int KnownOptionCount => Specs.Length;
