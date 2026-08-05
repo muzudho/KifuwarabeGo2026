@@ -193,7 +193,7 @@ public sealed partial class GoScreenRenderer
     {
         DrawText("KIFU REVIEW", new Vector2(1144, 136), new Color(255, 230, 160), 0.72f);
         DrawCommandButton(ReviewBackToRestButtonBounds, "BACK TO HOME", false, mousePoint, scale: 0.32f);
-        if (session.UseKind == GoAppUseKind.LocalGame)
+        if (session.UseKind == GoAppUseKind.LocalPlay)
         {
             DrawCommandButton(ReviewDoneButtonBounds, "USE POSITION", false, mousePoint, scale: 0.34f);
         }

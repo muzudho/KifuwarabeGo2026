@@ -221,7 +221,7 @@ public class Game1 : Game
             UpdateGtpEngineEditPanelByKeyboard(keyboard, gameTime);
         }
 
-        if (_session.UseKind is not (GoAppUseKind.LocalGame or GoAppUseKind.LocalApps))
+        if (_session.UseKind is not (GoAppUseKind.LocalPlay or GoAppUseKind.LocalApps))
         {
             if (_session.UseKind == GoAppUseKind.CgosClient)
             {
@@ -555,7 +555,7 @@ public class Game1 : Game
         var point = VirtualScreen.ToVirtualPoint(GraphicsDevice.Viewport, mouse.Position);
         UpdateTextBoxMouseDrag(mouse, point);
         UpdateCatalogOrderDrag(mouse, point);
-        var engineErrorLogHovered = _session.UseKind == GoAppUseKind.LocalGame &&
+        var engineErrorLogHovered = _session.UseKind == GoAppUseKind.LocalPlay &&
             GoScreenRenderer.GetEngineErrorLogHit(point, _session);
         Mouse.SetCursor(engineErrorLogHovered ? MouseCursor.Hand : MouseCursor.Arrow);
         if (_variationSession is null)
@@ -627,18 +627,18 @@ public class Game1 : Game
             }
 
             var isReplayNavigationVisible =
-                (_session.UseKind == GoAppUseKind.LocalGame && _session.IsLocalReplayMode) ||
+                (_session.UseKind == GoAppUseKind.LocalPlay && _session.IsLocalReplayMode) ||
                 (_session.UseKind == GoAppUseKind.CgosClient && _cgosGameObservation.IsReplayMode);
             var isVariationEditVisible =
                 isReplayNavigationVisible ||
                 _session.CurrentMode.Kind == GoAppModeKind.Reviewing ||
-                (_session.UseKind == GoAppUseKind.LocalGame &&
+                (_session.UseKind == GoAppUseKind.LocalPlay &&
                  _session.CanOpenLocalChartPopup) ||
                 (_session.UseKind == GoAppUseKind.CgosClient &&
                  (_session.CgosConnectionFlowKind is CgosConnectionFlowKind.Watching or CgosConnectionFlowKind.Result) &&
                  _cgosGameObservation.IsStarted);
             var canReturnReplayToLive =
-                (_session.UseKind == GoAppUseKind.LocalGame &&
+                (_session.UseKind == GoAppUseKind.LocalPlay &&
                  _session.CurrentMode.Kind == GoAppModeKind.Playing &&
                  _session.IsLocalReplayMode) ||
                 (_session.UseKind == GoAppUseKind.CgosClient &&
@@ -646,7 +646,7 @@ public class Game1 : Game
                  _cgosGameObservation.IsReplayMode);
             if (canReturnReplayToLive && GoScreenRenderer.GetReplayBackToLiveButtonHit(point))
             {
-                if (_session.UseKind == GoAppUseKind.LocalGame &&
+                if (_session.UseKind == GoAppUseKind.LocalPlay &&
                     _session.CurrentMode.Kind == GoAppModeKind.Playing)
                 {
                     _session.ReturnLocalReplayToLive();
@@ -997,7 +997,7 @@ public class Game1 : Game
             }
 
             var isIntermissionMode = _session.CurrentMode.Kind == GoAppModeKind.Resting;
-            var isSetupMode = isIntermissionMode && _session.UseKind == GoAppUseKind.LocalGame;
+            var isSetupMode = isIntermissionMode && _session.UseKind == GoAppUseKind.LocalPlay;
             var isLocalAppsIntermission = isIntermissionMode && _session.UseKind == GoAppUseKind.LocalApps;
             var isPlayerSelectionIntermission = isSetupMode || isLocalAppsIntermission;
             var isBoardEditing = _session.CurrentMode.Kind == GoAppModeKind.BoardEditing;
@@ -1468,7 +1468,7 @@ public class Game1 : Game
             if (TitleRenderer.IsLocalGameButtonHit(point))
             {
                 GuiOperationLog.User("Pressed Local button", "Navigate from title to local setup");
-                _session.SelectUseKind(GoAppUseKind.LocalGame);
+                _session.SelectUseKind(GoAppUseKind.LocalPlay);
                 return true;
             }
 
@@ -1701,7 +1701,7 @@ public class Game1 : Game
             return true;
         }
 
-        if (_session.UseKind == GoAppUseKind.LocalGame && GoScreenRenderer.GetReviewDoneButtonHit(point))
+        if (_session.UseKind == GoAppUseKind.LocalPlay && GoScreenRenderer.GetReviewDoneButtonHit(point))
         {
             _session.FinishReviewing();
             return true;
@@ -1759,7 +1759,7 @@ public class Game1 : Game
     {
         var sourceRecord = _session.CurrentGameRecord.Clone();
         var variationSession = new GoAppSession();
-        variationSession.SelectUseKind(GoAppUseKind.LocalGame);
+        variationSession.SelectUseKind(GoAppUseKind.LocalPlay);
         if (!variationSession.StartVariationEditing(
                 sourceRecord,
                 sourceRecord.Moves.Count,
@@ -2603,7 +2603,7 @@ public class Game1 : Game
     }
 
     private bool IsLocalPlayUseKind() =>
-        _session.UseKind is GoAppUseKind.LocalGame or GoAppUseKind.LocalApps;
+        _session.UseKind is GoAppUseKind.LocalPlay or GoAppUseKind.LocalApps;
 
     private void BeginCgosMatchNotification()
     {
@@ -3313,7 +3313,7 @@ public class Game1 : Game
 
     private void MarkCurrentResultSgfSaved()
     {
-        if (_session.UseKind == GoAppUseKind.LocalGame &&
+        if (_session.UseKind == GoAppUseKind.LocalPlay &&
             _session.CurrentMode.Kind == GoAppModeKind.GameOver)
         {
             _session.SetLocalResultSgfSaved(true);
@@ -4349,7 +4349,7 @@ public class Game1 : Game
             ? "Application settings"
             : _session.UseKind is null
                 ? $"Title/{_titleMenuPage}"
-                : _session.UseKind == GoAppUseKind.LocalGame
+                : _session.UseKind == GoAppUseKind.LocalPlay
                     ? _playingScene.IsInitialPositionConciergeVisible
                         ? "Local/Playing/InitialPositionConcierge"
                         : $"Local/{_session.CurrentMode.Kind}"

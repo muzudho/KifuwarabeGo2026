@@ -1258,7 +1258,7 @@ public sealed class GoAppSession
         var returnMode = _variationReturnMode;
         _variationSourceRecord = null;
 
-        if (UseKind == GoAppUseKind.LocalGame && sourceRecord is not null)
+        if (UseKind == GoAppUseKind.LocalPlay && sourceRecord is not null)
         {
             if (LoadRecordPosition(sourceRecord, sourceRecord.Moves.Count, out _))
             {
