@@ -80,6 +80,10 @@ internal static class PortabilityChecks
             new GtpEngineProfile { DisplayName = "Legacy" },
             new GtpEngineProfile { DisplayName = "Ponnuki" },
         ]);
+        Require(session.SelectedAppProviderEngineIndex == -1 &&
+                session.SelectedAppProviderEngineDisplayName == "未選択" &&
+                !session.CanUseSelectedAppProvider,
+            "The App Provider must remain unselected until the user explicitly chooses one.");
         session.SetGtpEngineAppCompatibilities(
         [
             new(GtpEngineAppCompatibilityKind.Unsupported, "ponnuki NOT SUPPORTED"),

@@ -347,6 +347,12 @@ public sealed class GoAppSession
 
     public int SelectedAppProviderEngineIndex { get; private set; }
 
+    public bool HasSelectedAppProviderEngine =>
+        SelectedAppProviderEngineIndex >= 0 && SelectedAppProviderEngineIndex < _gtpEngineProfiles.Count;
+
+    public string SelectedAppProviderEngineDisplayName =>
+        HasSelectedAppProviderEngine ? _gtpEngineProfiles[SelectedAppProviderEngineIndex].DisplayName : "未選択";
+
     public GtpEngineProfile SelectedAppProviderEngine =>
         _gtpEngineProfiles[Math.Clamp(SelectedAppProviderEngineIndex, 0, _gtpEngineProfiles.Count - 1)];
 
@@ -354,6 +360,7 @@ public sealed class GoAppSession
     {
         get
         {
+            if (!HasSelectedAppProviderEngine) return false;
             var path = SelectedAppProviderEngine.ExecutablePath;
             if (string.IsNullOrWhiteSpace(path)) return false;
             return !Path.IsPathFullyQualified(path) || File.Exists(path);
@@ -1981,7 +1988,7 @@ public sealed class GoAppSession
 
         SelectedBlackGtpEngineIndex = 0;
         SelectedWhiteGtpEngineIndex = 0;
-        SelectedAppProviderEngineIndex = 0;
+        SelectedAppProviderEngineIndex = -1;
         SelectedCgosBlackGtpEngineIndex = 0;
         SelectedCgosWhiteGtpEngineIndex = 0;
         _gtpEngineAppCompatibilities.Clear();

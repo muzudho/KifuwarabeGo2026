@@ -103,6 +103,8 @@ public class Game1 : Game
     private int? _lastAutoSavedCgosGameId;
     private PonnukiProviderGameSession? _ponnukiProviderGameSession;
     private int _ponnukiProviderObservedMoveCount;
+    private Task<GtpEngineAppCompatibility[]>? _appProviderSelectionLoadTask;
+    private string _appProviderSelectionLoadAppId = "";
 
     private const double CgosMatchCountdownSeconds = 10d;
     private const double CgosMatchFadeSeconds = 1.2d;
@@ -191,6 +193,7 @@ public class Game1 : Game
     protected override void Update(GameTime gameTime)
     {
         _inputClockSeconds = gameTime.TotalGameTime.TotalSeconds;
+        CompleteAppProviderSelectionLoading();
         var keyboard = Keyboard.GetState();
         var mouse = Mouse.GetState();
         SynchronizeOrArmWindowInput(keyboard, mouse);
@@ -463,7 +466,7 @@ public class Game1 : Game
                 if (_isApplicationSettingsOpen)
                     _renderer.DrawApplicationSettings(Mouse.GetState().Position, _applicationSettingsPage, ApplicationSettings.Current.LogRootDirectory, ApplicationSettings.Current.SgfSaveDirectory, ApplicationSettings.Current.ScreenshotSaveDirectory, ApplicationSettings.FilePath, _gtpEngineCatalog.ListPath, _guiLogFiles, _selectedGuiLogIndex, _applicationSettingsMessage);
                 else
-                    TitleRenderer.Draw(_renderer, _session, Mouse.GetState().Position, _titleMenuPage, _appProviderTabIndex);
+                    TitleRenderer.Draw(_renderer, _session, Mouse.GetState().Position, _titleMenuPage, _appProviderTabIndex, _appProviderSelectionLoadTask is not null);
             }
         }
         else if (_variationSession is not null)
@@ -1493,7 +1496,7 @@ public class Game1 : Game
         {
             if (TitleRenderer.IsAppProviderEngineSelectButtonHit(point))
             {
-                OpenAppProviderGtpEngineSelectionDialog("ponnuki");
+                BeginOpenAppProviderGtpEngineSelectionDialog("ponnuki");
                 return true;
             }
 
@@ -1524,7 +1527,7 @@ public class Game1 : Game
 
         var enabled = new[]
         {
-            true,
+            _appProviderSelectionLoadTask is null,
             _session.CanUseSelectedAppProvider,
             _session.CanStartSelectedAppProvider,
             true,
@@ -3363,6 +3366,35 @@ public class Game1 : Game
     {
         RefreshGtpEngineAppCompatibilities(appId, "provider");
         _session.OpenAppProviderGtpEngineSelectionDialog(appId);
+    }
+
+    private void BeginOpenAppProviderGtpEngineSelectionDialog(string appId)
+    {
+        if (_appProviderSelectionLoadTask is not null) return;
+        _appProviderSelectionLoadAppId = appId;
+        var checks = _session.GtpEngineProfiles
+            .Select(profile => GtpEngineAppCompatibilityProbe.CheckAsync(profile, appId, "provider"))
+            .ToArray();
+        _appProviderSelectionLoadTask = Task.WhenAll(checks);
+        GuiOperationLog.User("Loading App Provider engines", $"app={appId}; engines={checks.Length}");
+    }
+
+    private void CompleteAppProviderSelectionLoading()
+    {
+        var task = _appProviderSelectionLoadTask;
+        if (task is null || !task.IsCompleted) return;
+        _appProviderSelectionLoadTask = null;
+        try
+        {
+            _session.SetGtpEngineAppCompatibilities(task.GetAwaiter().GetResult());
+            if (_session.UseKind is null && _titleMenuPage == TitleMenuPage.CaptureGame)
+                _session.OpenAppProviderGtpEngineSelectionDialog(_appProviderSelectionLoadAppId);
+        }
+        catch (Exception ex)
+        {
+            ApplicationErrorLog.Write("APP PROVIDER SELECTION", "Could not inspect App Provider engines.", ex);
+            ShowMessage(ex.Message, "App Provider engines");
+        }
     }
 
     private void RefreshGtpEngineAppCompatibilities(string appId, string role)

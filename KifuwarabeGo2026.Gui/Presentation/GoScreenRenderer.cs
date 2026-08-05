@@ -104,7 +104,7 @@ public sealed partial class GoScreenRenderer
         _spriteBatch.End();
     }
 
-    public void DrawUseSelection(GoAppSession session, Point mousePosition, TitleMenuPage page, int appProviderTabIndex)
+    public void DrawUseSelection(GoAppSession session, Point mousePosition, TitleMenuPage page, int appProviderTabIndex, bool isAppProviderLoading)
     {
         var mousePoint = VirtualScreen.ToVirtualPoint(_graphicsDevice.Viewport, mousePosition);
 
@@ -113,7 +113,7 @@ public sealed partial class GoScreenRenderer
             transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));
 
         DrawBackground();
-        DrawUseSelectionPanel(session, mousePoint, page, appProviderTabIndex);
+        DrawUseSelectionPanel(session, mousePoint, page, appProviderTabIndex, isAppProviderLoading);
         DrawGtpEngineSelectionDialog(session, mousePoint);
         DrawGtpEngineEditPanel(session, mousePoint);
 
@@ -962,7 +962,7 @@ public sealed partial class GoScreenRenderer
         DrawResultRow(
             new Rectangle(1164, 466, 628, 64),
             "PROVIDER",
-            session.SelectedAppProviderEngine.DisplayName,
+            session.SelectedAppProviderEngineDisplayName,
             new Color(39, 68, 65),
             Color.White);
         DrawDynamicOptionText(
