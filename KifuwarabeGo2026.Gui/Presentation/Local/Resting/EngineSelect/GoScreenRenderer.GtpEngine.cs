@@ -120,11 +120,12 @@ public sealed partial class GoScreenRenderer
 
     public static int? GetGtpEngineRandomMoveSelectionDialogItemHit(Point point, GoAppSession session)
     {
+        var choices = session.GetActiveGtpEngineComboChoices();
         var startIndex = session.GtpEngineRandomMoveSelectionPageIndex * GoAppSession.GtpEngineComboSelectionPageSize;
         for (var slot = 0; slot < GoAppSession.GtpEngineComboSelectionPageSize; slot++)
         {
             var index = startIndex + slot;
-            if (index >= GtpEngineGuiOptions.RandomMoveValues.Length) break;
+            if (index >= choices.Count) break;
             if (GtpEngineRandomMoveSelectionDialogItemBounds(slot).Contains(point)) return index;
         }
         return null;

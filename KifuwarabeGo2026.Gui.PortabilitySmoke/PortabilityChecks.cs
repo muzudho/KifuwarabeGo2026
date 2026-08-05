@@ -110,8 +110,8 @@ internal static class PortabilityChecks
         ]);
         session.OpenAppProviderGtpEngineSelectionDialog("ponnuki");
         session.SelectGtpEngineDialogItem(0);
-        Require(session.GtpEngineDialogSelectionIndex == -1 && !session.CanCommitGtpEngineSelection,
-            "An engine that omits the target app must remain visible but unselectable.");
+        Require(session.GtpEngineDialogSelectionIndex == 0 && !session.CanCommitGtpEngineSelection,
+            "An engine that omits the target app must be selectable for EDIT while SELECT remains disabled.");
         session.SelectGtpEngineDialogItem(1);
         Require(session.GtpEngineDialogSelectionIndex == 1 && session.CanCommitGtpEngineSelection,
             "An engine that publishes the target app must be selectable.");

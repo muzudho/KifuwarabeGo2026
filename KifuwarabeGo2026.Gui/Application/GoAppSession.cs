@@ -2172,7 +2172,10 @@ public sealed class GoAppSession
                 SelectedWhiteGtpEngineIndex = -1;
             selectedIndex = -1;
         }
-        GtpEngineDialogSelectionIndex = CanSelectGtpEngineForCurrentApp(selectedIndex) ? selectedIndex : -1;
+        // Row selection is also used by EDIT/DELETE. Compatibility controls only SELECT.
+        GtpEngineDialogSelectionIndex = EngineSelectionPurpose == GtpEngineSelectionPurpose.AppProvider
+            ? selectedIndex >= 0 && selectedIndex < _gtpEngineProfiles.Count ? selectedIndex : -1
+            : CanSelectGtpEngineForCurrentApp(selectedIndex) ? selectedIndex : -1;
         GtpEngineSelectionPageIndex = Math.Max(0, selectedIndex) / GtpEngineSelectionPageSize;
     }
 
@@ -2180,7 +2183,7 @@ public sealed class GoAppSession
     {
         if (index < 0 || index >= _gtpEngineProfiles.Count)
             throw new ArgumentOutOfRangeException(nameof(index), index, "GTP engine index is out of range.");
-        if (CanSelectGtpEngineForCurrentApp(index))
+        if (EngineSelectionPurpose == GtpEngineSelectionPurpose.AppProvider || CanSelectGtpEngineForCurrentApp(index))
             GtpEngineDialogSelectionIndex = index;
     }
 

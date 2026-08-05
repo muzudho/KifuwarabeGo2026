@@ -5,6 +5,8 @@ using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Infrastructure.Windows;
 using KifuwarabeGo2026.Engine;
 using KifuwarabeGo2026.Gui.Gtp;
+using KifuwarabeGo2026.Gui.Presentation;
+using Microsoft.Xna.Framework;
 using KifuwarabeGo2026.GtpExtensions.Capabilities;
 using KifuwarabeGo2026.GtpExtensions.Engines;
 using KifuwarabeGo2026.GtpExtensions.InitialPosition;
@@ -28,6 +30,7 @@ internal static class Program
             VerifyServiceComposition();
             VerifyExecutableNaming();
             VerifyGuiExecutableGuard();
+            VerifyProviderSelectionEditingAndThirdComboChoice();
             VerifyTextRasterizer();
             VerifyWindowsAssembly();
             VerifyGoAppsDiscoveryProtocol();
@@ -50,6 +53,29 @@ internal static class Program
                 GtpEngineExecutableGuard.IsGuiApplication("dotnet", "KifuwarabeGo2026.Gui.dll") &&
                 !GtpEngineExecutableGuard.IsGuiApplication("KifuwarabeGo2026.Engine.exe"),
             "The GTP engine picker did not distinguish the GUI from an Engine executable.");
+    }
+
+    private static void VerifyProviderSelectionEditingAndThirdComboChoice()
+    {
+        var session = new GoAppSession();
+        session.SetGtpEngineProfiles([new GtpEngineProfile { DisplayName = "Unsupported", ExecutablePath = "unsupported.exe" }]);
+        session.SetGtpEngineAppCompatibilities([new GtpEngineAppCompatibility(GtpEngineAppCompatibilityKind.Unsupported, "ponnuki NOT SUPPORTED")]);
+        session.OpenAppProviderGtpEngineSelectionDialog("ponnuki");
+        session.SelectGtpEngineDialogItem(0);
+        Require(session.GtpEngineDialogSelectionIndex == 0 && !session.CanCommitGtpEngineSelection,
+            "An unsupported Provider row could not be selected for editing or incorrectly enabled SELECT.");
+
+        var boardSize = new GtpEngineGuiOptionSpec(
+            GtpEngineGuiOptions.BoardSizeId,
+            "BoardSize",
+            "combo",
+            "9",
+            Values: ["9", "13", "19"],
+            Choices: [new("9"), new("13"), new("19")]);
+        session.OpenAppProviderGameSettingsDialog([boardSize]);
+        session.OpenGtpEngineRandomMoveSelectionDialog(boardSize);
+        Require(GoScreenRenderer.GetGtpEngineRandomMoveSelectionDialogItemHit(new Point(700, 520), session) == 2,
+            "The third Provider combo choice was displayed but had no click hit target.");
     }
 
     private static void VerifyGoAppsDiscoveryProtocol()
