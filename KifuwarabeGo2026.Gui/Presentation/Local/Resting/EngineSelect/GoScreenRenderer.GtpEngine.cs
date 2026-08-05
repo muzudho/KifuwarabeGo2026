@@ -486,19 +486,23 @@ public sealed partial class GoScreenRenderer
         FillRect(GtpEngineRandomMoveSelectionDialogBounds, new Color(24, 29, 36, 252));
         DrawRect(GtpEngineRandomMoveSelectionDialogBounds, 2, new Color(116, 145, 146));
         DrawText("SELECT ITEM", new Vector2(GtpEngineRandomMoveSelectionDialogBounds.X + 30, GtpEngineRandomMoveSelectionDialogBounds.Y + 24), new Color(244, 238, 218), 0.68f);
-        DrawText("RandomMove", new Vector2(GtpEngineRandomMoveSelectionDialogBounds.X + 48, GtpEngineRandomMoveSelectionDialogBounds.Y + 80), new Color(180, 195, 195), 0.4f);
+        DrawText(session.ActiveGtpEngineComboOption?.Label ?? "OPTION", new Vector2(GtpEngineRandomMoveSelectionDialogBounds.X + 48, GtpEngineRandomMoveSelectionDialogBounds.Y + 80), new Color(180, 195, 195), 0.4f);
 
+        var choices = session.GetActiveGtpEngineComboChoices();
         var startIndex = session.GtpEngineRandomMoveSelectionPageIndex * GoAppSession.GtpEngineComboSelectionPageSize;
         for (var slot = 0; slot < GoAppSession.GtpEngineComboSelectionPageSize; slot++)
         {
             var index = startIndex + slot;
-            if (index >= GtpEngineGuiOptions.RandomMoveValues.Length) break;
+            if (index >= choices.Count) break;
+            var choice = choices[index];
             var bounds = GtpEngineRandomMoveSelectionDialogItemBounds(slot);
             var selected = index == session.GtpEngineRandomMoveSelectionIndex;
-            var hovered = bounds.Contains(mousePoint);
-            FillRect(bounds, selected ? new Color(38, 103, 86) : hovered ? new Color(43, 52, 62) : new Color(15, 20, 26));
-            DrawRect(bounds, 1, selected ? new Color(147, 244, 200) : new Color(67, 84, 92));
-            DrawFittedText(GtpEngineGuiOptions.RandomMoveValues[index], new Rectangle(bounds.X + 24, bounds.Y + 8, bounds.Width - 48, bounds.Height - 16), Color.White, 0.46f);
+            var hovered = choice.IsEnabled && bounds.Contains(mousePoint);
+            FillRect(bounds, selected ? new Color(38, 103, 86) : hovered ? new Color(43, 52, 62) : choice.IsEnabled ? new Color(15, 20, 26) : new Color(31, 31, 33));
+            DrawRect(bounds, 1, selected ? new Color(147, 244, 200) : choice.IsEnabled ? new Color(67, 84, 92) : new Color(75, 63, 65));
+            DrawFittedText(choice.Value, new Rectangle(bounds.X + 24, bounds.Y + 7, bounds.Width - 48, 32), choice.IsEnabled ? Color.White : new Color(145, 145, 145), 0.46f);
+            if (!choice.IsEnabled)
+                DrawFittedText(choice.DisabledReason, new Rectangle(bounds.X + 24, bounds.Y + 42, bounds.Width - 48, 24), new Color(255, 145, 151), 0.25f);
         }
 
         DrawPager(
@@ -510,7 +514,8 @@ public sealed partial class GoScreenRenderer
             mousePoint);
 
         DrawCommandButton(GtpEngineRandomMoveSelectionDialogCancelButtonBounds, "CANCEL", false, mousePoint, scale: 0.38f);
-        DrawCommandButton(GtpEngineRandomMoveSelectionDialogSelectButtonBounds, "SELECT", false, mousePoint, scale: 0.36f);
+        var canSelect = session.GtpEngineRandomMoveSelectionIndex >= 0 && session.GtpEngineRandomMoveSelectionIndex < choices.Count && choices[session.GtpEngineRandomMoveSelectionIndex].IsEnabled;
+        DrawCommandButton(GtpEngineRandomMoveSelectionDialogSelectButtonBounds, "SELECT", false, mousePoint, enabled: canSelect, scale: 0.36f);
     }
 
     private void DrawPager(int pageIndex, int pageCount, Rectangle previousBounds, Rectangle nextBounds, Rectangle labelBounds, Point mousePoint)

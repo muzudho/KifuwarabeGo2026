@@ -3611,7 +3611,7 @@ public class Game1 : Game
                             _session.StepGtpEngineSpinOption(option, optionHit.Action == 0 ? -1 : 1);
                         break;
                     case "combo":
-                        _session.OpenGtpEngineRandomMoveSelectionDialog();
+                        _session.OpenGtpEngineRandomMoveSelectionDialog(option);
                         break;
                     case "string":
                         EditGtpEngineStringOption(option);
@@ -3845,7 +3845,7 @@ public class Game1 : Game
                     _session.StepGtpEngineSpinOption(option, optionHit.Action == 0 ? -1 : 1);
                 break;
             case "combo":
-                _session.OpenGtpEngineRandomMoveSelectionDialog();
+                _session.OpenGtpEngineRandomMoveSelectionDialog(option);
                 break;
             case "string":
                 EditGtpEngineStringOption(option);

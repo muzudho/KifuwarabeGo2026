@@ -240,6 +240,8 @@ internal static class Program
             "The option schema did not expose JSON-native types and apply timing.");
         Require(output.Contains("\"app\":\"ponnuki\",\"role\":\"provider\"", StringComparison.Ordinal) &&
                 output.Contains("\"id\":\"BoardSize\"", StringComparison.Ordinal) &&
+                output.Contains("\"binding\":\"gtp.boardsize\"", StringComparison.Ordinal) &&
+                output.Contains("\"values\":[\"9\"]", StringComparison.Ordinal) &&
                 output.Contains("\"id\":\"InitialMoveCount\"", StringComparison.Ordinal) &&
                 output.Contains("\"code\":\"unsupported-app-role\"", StringComparison.Ordinal),
             "Ponnuki Provider options were not distinguished from unsupported app roles.");
@@ -260,7 +262,7 @@ internal static class Program
         var lifecycle = RunEngine(
             "known_command kfw-start-app\n" +
             "known_command kfw-end-app\n" +
-            "kfw-patch-options ponnuki provider {\"version\":1,\"values\":{\"BoardSize\":9,\"InitialMoveCount\":0,\"RandomSeed\":123}}\n" +
+            "kfw-patch-options ponnuki provider {\"version\":1,\"values\":{\"BoardSize\":\"9\",\"InitialMoveCount\":0,\"RandomSeed\":123}}\n" +
             "kfw-get-options ponnuki provider\n" +
             "kfw-start-app ponnuki provider\n" +
             "kfw-start-app ponnuki provider\n" +

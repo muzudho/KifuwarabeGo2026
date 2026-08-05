@@ -1,5 +1,6 @@
 namespace KifuwarabeGo2026.Gui.Gtp;
 
+using KifuwarabeGo2026.Gui.Application;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -221,6 +222,7 @@ public sealed class GtpEngineClient : IAsyncDisposable
 
         var values = new Dictionary<string, object?>(StringComparer.Ordinal);
         var actions = new List<string>();
+        int? boundBoardSize = null;
         foreach (var savedOption in _settings.GuiOptions!)
         {
             var definition = schema.Options.FirstOrDefault(option => option.Id.Equals(savedOption.Key, StringComparison.Ordinal));
@@ -233,7 +235,12 @@ public sealed class GtpEngineClient : IAsyncDisposable
             }
 
             if (TryConvertSavedOption(definition, savedOption.Value, out var typedValue))
+            {
                 values[definition.Id] = typedValue;
+                if (definition.Binding.Equals(GtpEngineGuiOptions.GtpBoardSizeBinding, StringComparison.OrdinalIgnoreCase) &&
+                    int.TryParse(savedOption.Value, out var boardSize))
+                    boundBoardSize = boardSize;
+            }
         }
 
         if (values.Count > 0)
@@ -241,6 +248,13 @@ public sealed class GtpEngineClient : IAsyncDisposable
             var request = JsonSerializer.Serialize(new { version = 1, values });
             var patchCommand = $"kfw-patch-options {app} {role} {request}";
             await SendCommandExpectSuccessAsync(patchCommand, cancellationToken);
+        }
+
+        if (boundBoardSize is { } selectedBoardSize)
+        {
+            if (!GtpEngineGuiOptions.IsSupportedBoardSize(selectedBoardSize))
+                throw new InvalidOperationException($"Board size {selectedBoardSize} is not supported by this GUI.");
+            await SendCommandExpectSuccessAsync($"boardsize {selectedBoardSize}", cancellationToken);
         }
 
         foreach (var action in actions)

@@ -18,11 +18,27 @@ GUIはゲーム画面と共通操作を提供し、Go App固有の初期局面�
 
 `kfw-describe-options ponnuki provider`は、少なくとも次を公開します。
 
-- `BoardSize`: 整数。初期値9。現行Ponnuki v1では9路盤。
+- `BoardSize`: `binding: "gtp.boardsize"`を持つ盤サイズ候補。現行Ponnuki v1では9路盤。
 - `InitialMoveCount`: 整数。初期値20。初期局面を作るランダム着手数。
 - `RandomSeed`: 整数。初期値0。0は開始ごとに自動生成し、1以上は再現用の固定シード。
 
 `kfw-describe-options play player`には`BoardSize`と`InitialMoveCount`を含めません。
+
+## 標準GTPへのバインド
+
+オプションIDはProviderが自由に命名できるため、GUIは`BoardSize`という名前だけでは盤サイズとして扱いません。標準GTPの盤サイズへ結び付く設定は、オプション定義へ次を付けます。
+
+```json
+{"id":"BoardSize","type":"enum","default":"9","values":["9","13","19"],"binding":"gtp.boardsize","apply":"next-start"}
+```
+
+離散的な対応サイズは`enum`を推奨します。連続範囲を受け付けるProviderは`type: "integer"`と`minimum`、`maximum`を使えます。GUIは`binding`を見てProviderの候補とGUI自身の対応サイズを照合します。
+
+- 両方が対応する値だけを選択可能にする。
+- Providerは対応するがGUIが対応しない値も一覧へ残し、グレー表示と理由を示す。
+- 選択を確定すると標準GTP `boardsize`で実際の盤サイズを設定する。
+- `boardsize`の成功応答を得るまで盤サイズは確定しない。オプション値だけを実盤サイズとして信用しない。
+- 未知の`binding`は通常のProvider固有オプションとして扱い、GUIの標準機能へ勝手に結び付けない。
 
 ## Providerセッション
 
@@ -45,10 +61,6 @@ kfw-end-app ponnuki provider
 - 開始処理が失敗した場合、途中状態を採用しない。
 - GUIは正常終了、開始失敗、途中離脱、例外のいずれでも終了を試みる。
 
-## 互換性
-
-旧`kfw-make-position ponnuki 1 9 20 [seed]`は既存GUIとProviderのために残します。新GUIは`known_command kfw-start-app`と`known_command kfw-end-app`を確認し、両方に対応するProviderでは新方式を優先します。未対応Providerだけ旧`kfw-make-position`へフォールバックします。
-
 ## GUIの責務
 
 - app-idとroleに対応するオプション定義を取得し、編集可能なProvider設定を描画する。
@@ -63,3 +75,9 @@ kfw-end-app ponnuki provider
 - 開始中の局面、手番、アゲハマ、終局状態を保持する。
 - GUIから通知された着手を順番に反映する。
 - 終了時に一局分の状態を破棄する。
+
+## 互換性
+
+旧`kfw-make-position ponnuki 1 9 20 [seed]`は既存GUIとProviderのために残します。新GUIは`known_command kfw-start-app`と`known_command kfw-end-app`を確認し、両方に対応するProviderでは新方式を優先します。未対応Providerだけ旧`kfw-make-position`へフォールバックします。
+
+`binding`を持たない旧スキーマの`BoardSize`は、名前が同じでも標準GTP盤サイズとは見なしません。通常のProvider固有オプションとして表示します。

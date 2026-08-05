@@ -81,4 +81,6 @@ public sealed class GtpOptionSchemaDefinition
     public List<string> Values { get; set; } = [];
 
     public string Apply { get; set; } = "";
+
+    public string Binding { get; set; } = "";
 }

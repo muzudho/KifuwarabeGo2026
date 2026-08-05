@@ -162,8 +162,11 @@ internal sealed partial class GtpEngine
                         validationErrors.Add(new { id = property.Name, message = "action options must be invoked with kfw-invoke-option" });
                         break;
                     case "boardsize":
-                        if (property.Value.ValueKind != JsonValueKind.Number ||
-                            !property.Value.TryGetInt32(out var parsedBoardSize) || parsedBoardSize != 9)
+                        var parsedBoardSize = 0;
+                        var hasBoardSize = property.Value.ValueKind == JsonValueKind.Number
+                            ? property.Value.TryGetInt32(out parsedBoardSize)
+                            : property.Value.ValueKind == JsonValueKind.String && int.TryParse(property.Value.GetString(), out parsedBoardSize);
+                        if (!hasBoardSize || parsedBoardSize != 9)
                             validationErrors.Add(new { id = property.Name, message = "Ponnuki v1 BoardSize must be 9" });
                         else
                         {
@@ -296,7 +299,7 @@ internal sealed partial class GtpEngine
         if (optionIds.Contains("EngineTag")) descriptions.Add(new { id = "EngineTag", label = "EngineTag", type = "string", @default = "", maximumLength = MaximumOptionTextLength, apply = "immediate" });
         if (optionIds.Contains("DebugLogFile")) descriptions.Add(new { id = "DebugLogFile", label = "DebugLogFile", type = "file", @default = "", maximumLength = MaximumOptionTextLength, apply = "restart" });
         if (optionIds.Contains("ClearCache")) descriptions.Add(new { id = "ClearCache", label = "ClearCache", type = "action", apply = "immediate" });
-        if (optionIds.Contains("BoardSize")) descriptions.Add(new { id = "BoardSize", label = "BoardSize", type = "integer", @default = 9, minimum = 9, maximum = 9, apply = "next-start" });
+        if (optionIds.Contains("BoardSize")) descriptions.Add(new { id = "BoardSize", label = "BoardSize", type = "enum", @default = "9", values = new[] { "9" }, binding = "gtp.boardsize", apply = "next-start" });
         if (optionIds.Contains("InitialMoveCount")) descriptions.Add(new { id = "InitialMoveCount", label = "InitialMoveCount", type = "integer", @default = 20, minimum = 0, maximum = 200, apply = "next-start" });
         return descriptions.ToArray();
     }

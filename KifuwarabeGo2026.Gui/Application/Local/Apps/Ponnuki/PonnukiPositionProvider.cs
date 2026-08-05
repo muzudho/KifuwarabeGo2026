@@ -28,6 +28,7 @@ public static class PonnukiPositionProvider
 
     private static GtpEngineGuiOptionSpec ToGuiOptionSpec(GtpOptionSchemaDefinition definition)
     {
+        var isBoardSizeBinding = definition.Binding.Equals(GtpEngineGuiOptions.GtpBoardSizeBinding, StringComparison.OrdinalIgnoreCase);
         var type = definition.Type.ToLowerInvariant() switch
         {
             "boolean" => "check",
@@ -37,6 +38,13 @@ public static class PonnukiPositionProvider
             "action" => "button",
             _ => "string",
         };
+        var values = definition.Values;
+        if (isBoardSizeBinding && type == "spin" && definition.Minimum is { } minimum && definition.Maximum is { } maximum && maximum >= minimum && maximum - minimum <= 100)
+        {
+            type = "combo";
+            values = Enumerable.Range(minimum, maximum - minimum + 1).Select(value => value.ToString()).ToList();
+        }
+        var choices = values.Select(value => CreateChoice(value, isBoardSizeBinding)).ToArray();
         var defaultValue = definition.Default.ValueKind switch
         {
             JsonValueKind.String => definition.Default.GetString() ?? "",
@@ -52,7 +60,18 @@ public static class PonnukiPositionProvider
             defaultValue,
             definition.Minimum,
             definition.Maximum,
-            definition.Values);
+            values,
+            definition.Binding,
+            choices);
+    }
+
+    private static GtpEngineGuiOptionChoice CreateChoice(string value, bool isBoardSizeBinding)
+    {
+        if (!isBoardSizeBinding)
+            return new(value);
+        return int.TryParse(value, out var boardSize) && GtpEngineGuiOptions.IsSupportedBoardSize(boardSize)
+            ? new(value)
+            : new(value, false, "This board size is not supported by this GUI.");
     }
 
     public static async Task<(bool IsSupported, string Message)> CheckCapabilityAsync(GtpEngineProfile profile)

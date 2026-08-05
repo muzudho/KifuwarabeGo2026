@@ -426,6 +426,8 @@ public sealed class GoAppSession
 
     public int GtpEngineRandomMoveSelectionIndex { get; private set; }
 
+    public GtpEngineGuiOptionSpec? ActiveGtpEngineComboOption { get; private set; }
+
     public int GtpEngineGuiOptionsPageIndex { get; private set; }
     private IReadOnlyList<GtpEngineGuiOptionSpec> _appProviderGameSettingSpecs = GtpEngineGuiOptions.PonnukiProviderSpecs;
 
@@ -2481,23 +2483,21 @@ public sealed class GoAppSession
         GtpEngineEditSaveMessage = "UNSAVED";
     }
 
-    /// <summary>
-    /// ［RandomMove］の項目選択ダイアログを開きます。
-    /// </summary>
-    public void OpenGtpEngineRandomMoveSelectionDialog()
+    public void OpenGtpEngineRandomMoveSelectionDialog(GtpEngineGuiOptionSpec option)
     {
-        var values = GtpEngineGuiOptions.RandomMoveValues;
-        var current = GtpEngineGuiOptionsDialogDraft.GetValueOrDefault(
-            GtpEngineGuiOptions.RandomMoveId,
-            GtpEngineGuiOptions.ChebyshevDistanceFromStarRandomMove);
-        GtpEngineRandomMoveSelectionIndex = Math.Max(0, Array.IndexOf(values, current));
+        ActiveGtpEngineComboOption = option;
+        var choices = GetActiveGtpEngineComboChoices();
+        var current = GetGtpEngineGuiOptionDraft(option);
+        var currentIndex = choices.ToList().FindIndex(choice => choice.Value == current && choice.IsEnabled);
+        GtpEngineRandomMoveSelectionIndex = currentIndex >= 0 ? currentIndex : Math.Max(0, choices.ToList().FindIndex(choice => choice.IsEnabled));
         GtpEngineRandomMoveSelectionPageIndex = GtpEngineRandomMoveSelectionIndex / GtpEngineComboSelectionPageSize;
         IsGtpEngineRandomMoveSelectionDialogOpen = true;
     }
 
     public void SelectGtpEngineRandomMoveItem(int index)
     {
-        if (index >= 0 && index < GtpEngineGuiOptions.RandomMoveValues.Length)
+        var choices = GetActiveGtpEngineComboChoices();
+        if (index >= 0 && index < choices.Count && choices[index].IsEnabled)
             GtpEngineRandomMoveSelectionIndex = index;
     }
 
@@ -2508,7 +2508,7 @@ public sealed class GoAppSession
         GtpEngineGuiOptionsPageIndex = Math.Clamp(GtpEngineGuiOptionsPageIndex + step, 0, GetGtpEngineGuiOptionsPageCount() - 1);
 
     public int GetGtpEngineRandomMoveSelectionPageCount() =>
-        Math.Max(1, (GtpEngineGuiOptions.RandomMoveValues.Length + GtpEngineComboSelectionPageSize - 1) / GtpEngineComboSelectionPageSize);
+        Math.Max(1, (GetActiveGtpEngineComboChoices().Count + GtpEngineComboSelectionPageSize - 1) / GtpEngineComboSelectionPageSize);
 
     public void MoveGtpEngineRandomMoveSelectionPage(int step) =>
         GtpEngineRandomMoveSelectionPageIndex = Math.Clamp(
@@ -2521,9 +2521,18 @@ public sealed class GoAppSession
 
     public void CommitGtpEngineRandomMoveSelectionDialog()
     {
-        GtpEngineGuiOptionsDialogDraft[GtpEngineGuiOptions.RandomMoveId] =
-            GtpEngineGuiOptions.RandomMoveValues[GtpEngineRandomMoveSelectionIndex];
+        var choices = GetActiveGtpEngineComboChoices();
+        if (ActiveGtpEngineComboOption is { } option &&
+            GtpEngineRandomMoveSelectionIndex >= 0 && GtpEngineRandomMoveSelectionIndex < choices.Count &&
+            choices[GtpEngineRandomMoveSelectionIndex].IsEnabled)
+            GtpEngineGuiOptionsDialogDraft[option.Id] = choices[GtpEngineRandomMoveSelectionIndex].Value;
         IsGtpEngineRandomMoveSelectionDialogOpen = false;
+    }
+
+    public IReadOnlyList<GtpEngineGuiOptionChoice> GetActiveGtpEngineComboChoices()
+    {
+        if (ActiveGtpEngineComboOption is not { } option) return [];
+        return option.Choices ?? option.Values?.Select(value => new GtpEngineGuiOptionChoice(value)).ToArray() ?? [];
     }
 
     public string GtpEngineRandomMoveDraft => GtpEngineGuiOptionsDialogDraft.GetValueOrDefault(

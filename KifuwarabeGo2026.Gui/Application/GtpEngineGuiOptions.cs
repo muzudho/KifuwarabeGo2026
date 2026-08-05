@@ -2,6 +2,8 @@ namespace KifuwarabeGo2026.Gui.Application;
 
 using System.Collections.Generic;
 
+public sealed record GtpEngineGuiOptionChoice(string Value, bool IsEnabled = true, string DisabledReason = "");
+
 public sealed record GtpEngineGuiOptionSpec(
     string Id,
     string Label,
@@ -9,7 +11,9 @@ public sealed record GtpEngineGuiOptionSpec(
     string DefaultValue,
     int? Min = null,
     int? Max = null,
-    IReadOnlyList<string>? Values = null);
+    IReadOnlyList<string>? Values = null,
+    string Binding = "",
+    IReadOnlyList<GtpEngineGuiOptionChoice>? Choices = null);
 
 /// <summary>GUIが編集できる既知のGTPエンジンオプションです。</summary>
 public static class GtpEngineGuiOptions
@@ -23,6 +27,7 @@ public static class GtpEngineGuiOptions
     public const string ClearCacheId = "ClearCache";
     public const string BoardSizeId = "BoardSize";
     public const string InitialMoveCountId = "InitialMoveCount";
+    public const string GtpBoardSizeBinding = "gtp.boardsize";
     public const string NormalRandomMove = "Normal";
     public const string ChebyshevDistanceFromStarRandomMove = "ChebyshevDistanceFromStar";
 
@@ -40,10 +45,13 @@ public static class GtpEngineGuiOptions
 
     public static readonly GtpEngineGuiOptionSpec[] PonnukiProviderSpecs =
     [
-        new(BoardSizeId, "BoardSize", "spin", "9", 9, 9),
+        new(BoardSizeId, "BoardSize", "combo", "9", Values: ["9"], Binding: GtpBoardSizeBinding,
+            Choices: [new("9")]),
         new(InitialMoveCountId, "InitialMoveCount", "spin", "20", 0, 200),
         new(RandomSeedId, "RandomSeed", "spin", "0", 0, int.MaxValue),
     ];
 
     public static int KnownOptionCount => Specs.Length;
+
+    public static bool IsSupportedBoardSize(int boardSize) => boardSize is 9 or 13 or 19;
 }
