@@ -2283,7 +2283,7 @@ public class Game1 : Game
 
         if (GoScreenRenderer.GetReviewChartPopupBackToLiveHit(point))
         {
-            if (_session.UseKind == GoAppUseKind.LocalGame &&
+            if (IsLocalPlayUseKind() &&
                 _session.CurrentMode.Kind == GoAppModeKind.Playing &&
                 _session.IsLocalReplayMode)
             {
@@ -2375,7 +2375,7 @@ public class Game1 : Game
             return;
         }
 
-        if (_session.UseKind == GoAppUseKind.LocalGame &&
+        if (IsLocalPlayUseKind() &&
             _session.CurrentMode.Kind is GoAppModeKind.Playing or GoAppModeKind.GameOver &&
             GoScreenRenderer.GetReviewChartPopupSeekMove(
                 point,
@@ -2425,7 +2425,7 @@ public class Game1 : Game
         {
             _cgosGameObservation.SeekReplay(moveIndex);
         }
-        else if (_session.UseKind == GoAppUseKind.LocalGame &&
+        else if (IsLocalPlayUseKind() &&
                  _session.CurrentMode.Kind is GoAppModeKind.Playing or GoAppModeKind.GameOver)
         {
             _session.SeekLocalReplay(moveIndex);
@@ -2499,7 +2499,7 @@ public class Game1 : Game
             return true;
         }
 
-        if (_session.UseKind == GoAppUseKind.LocalGame &&
+        if (IsLocalPlayUseKind() &&
             _session.CurrentMode.Kind is GoAppModeKind.Playing or GoAppModeKind.GameOver)
         {
             currentMoveIndex = _session.LocalDisplayMoveIndex;
@@ -2519,7 +2519,7 @@ public class Game1 : Game
         if (_variationSession is null)
             return null;
 
-        if (_session.UseKind == GoAppUseKind.LocalGame &&
+        if (IsLocalPlayUseKind() &&
             _session.CurrentMode.Kind == GoAppModeKind.Playing)
         {
             var moves = _session.CurrentGameRecord.Moves;
@@ -2590,7 +2590,7 @@ public class Game1 : Game
             return;
         }
 
-        if (_session.UseKind == GoAppUseKind.LocalGame &&
+        if (IsLocalPlayUseKind() &&
             _session.CurrentMode.Kind is GoAppModeKind.Playing or GoAppModeKind.GameOver &&
             GoScreenRenderer.GetReviewChartPopupSeekMove(
                 point,
@@ -2601,6 +2601,9 @@ public class Game1 : Game
             _session.SeekLocalReplay(localMoveIndex);
         }
     }
+
+    private bool IsLocalPlayUseKind() =>
+        _session.UseKind is GoAppUseKind.LocalGame or GoAppUseKind.LocalApps;
 
     private void BeginCgosMatchNotification()
     {
