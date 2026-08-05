@@ -1087,9 +1087,20 @@ public class Game1 : Game
                 return;
             }
 
+            if (isLocalAppsIntermission && _session.IsAppProviderGameSettingsDialogOpen)
+            {
+                TryHandleAppProviderGameSettingsClick(point);
+                _previousMouse = mouse;
+                return;
+            }
             if ((isSetupMode || isLocalAppsIntermission) && GoScreenRenderer.GetSetupBackToTitleButtonHit(point))
             {
                 _session.ReturnToUseSelection();
+            }
+            else if (isLocalAppsIntermission && GoScreenRenderer.GetAppProviderGameSettingsButtonHit(point))
+            {
+                _session.OpenAppProviderGameSettingsDialog();
+                GuiOperationLog.User("Opened App Provider game settings", "app=ponnuki; role=provider");
             }
             else if (isLocalAppsIntermission && GoScreenRenderer.GetChangeAppProviderButtonHit(point))
             {
@@ -3744,6 +3755,78 @@ public class Game1 : Game
         SyncGtpEngineEditField(field);
         _session.BeginGtpEngineEditField(field, _gtpEngineEditTextBox.CaretIndex);
         UpdateGtpEngineEditWarning();
+    }
+
+    private void TryHandleAppProviderGameSettingsClick(Point point)
+    {
+        if (_session.IsGtpEngineRandomMoveSelectionDialogOpen)
+        {
+            if (GoScreenRenderer.GetGtpEngineRandomMoveSelectionDialogPagerStep(point) is { } comboPageStep)
+                _session.MoveGtpEngineRandomMoveSelectionPage(comboPageStep);
+            else if (GoScreenRenderer.GetGtpEngineRandomMoveSelectionDialogCancelButtonHit(point))
+                _session.CancelGtpEngineRandomMoveSelectionDialog();
+            else if (GoScreenRenderer.GetGtpEngineRandomMoveSelectionDialogSelectButtonHit(point))
+                _session.CommitGtpEngineRandomMoveSelectionDialog();
+            else if (GoScreenRenderer.GetGtpEngineRandomMoveSelectionDialogItemHit(point, _session) is { } itemIndex)
+                _session.SelectGtpEngineRandomMoveItem(itemIndex);
+            return;
+        }
+
+        if (GoScreenRenderer.GetGtpEngineGuiOptionsDialogPagerStep(point) is { } pageStep)
+        {
+            _session.MoveGtpEngineGuiOptionsPage(pageStep);
+            return;
+        }
+
+        if (GoScreenRenderer.GetGtpEngineGuiOptionsDialogCancelButtonHit(point))
+        {
+            _session.CancelAppProviderGameSettingsDialog();
+            GuiOperationLog.User("Cancelled App Provider game settings", "app=ponnuki; role=provider");
+            return;
+        }
+
+        if (GoScreenRenderer.GetGtpEngineGuiOptionsDialogOkButtonHit(point))
+        {
+            var profiles = _session.CommitAppProviderGameSettingsDialog();
+            _gtpEngineCatalog.Save(profiles);
+            GuiOperationLog.User("Saved App Provider game settings", "app=ponnuki; role=provider");
+            return;
+        }
+
+        if (GoScreenRenderer.GetGtpEngineGuiOptionControlHit(point, _session) is not { } optionHit)
+            return;
+
+        var option = GtpEngineGuiOptions.Specs[optionHit.Index];
+        if (optionHit.Action == 3)
+        {
+            _session.SetGtpEngineGuiOptionDraft(option, option.DefaultValue);
+            return;
+        }
+
+        switch (option.Type)
+        {
+            case "check":
+                _session.ToggleGtpEngineCheckOption(option);
+                break;
+            case "spin":
+                if (optionHit.Action == 2)
+                    EditGtpEngineSpinOption(option);
+                else
+                    _session.StepGtpEngineSpinOption(option, optionHit.Action == 0 ? -1 : 1);
+                break;
+            case "combo":
+                _session.OpenGtpEngineRandomMoveSelectionDialog();
+                break;
+            case "string":
+                EditGtpEngineStringOption(option);
+                break;
+            case "filename":
+                BrowseGtpEngineFilenameOption(option);
+                break;
+            case "button":
+                _session.ToggleGtpEngineButtonOption(option);
+                break;
+        }
     }
 
     private void MoveGtpEngineEditFocus(int step)

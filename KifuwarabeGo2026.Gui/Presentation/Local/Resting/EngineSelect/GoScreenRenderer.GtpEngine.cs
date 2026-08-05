@@ -363,8 +363,8 @@ public sealed partial class GoScreenRenderer
         FillRect(GtpEngineGuiOptionsDialogBounds, new Color(24, 29, 36, 252));
         DrawRect(GtpEngineGuiOptionsDialogBounds, 2, new Color(116, 145, 146));
 
-        DrawText("GUI OPTIONS", new Vector2(GtpEngineGuiOptionsDialogBounds.X + 30, GtpEngineGuiOptionsDialogBounds.Y + 24), new Color(244, 238, 218), 0.72f);
-        DrawText("Settings are sent when the engine starts.", new Vector2(GtpEngineGuiOptionsDialogBounds.X + 32, GtpEngineGuiOptionsDialogBounds.Y + 82), new Color(180, 195, 195), 0.4f);
+        DrawText(session.IsAppProviderGameSettingsDialogOpen ? "GAME SETTINGS" : "GUI OPTIONS", new Vector2(GtpEngineGuiOptionsDialogBounds.X + 30, GtpEngineGuiOptionsDialogBounds.Y + 24), new Color(244, 238, 218), 0.72f);
+        DrawText(session.IsAppProviderGameSettingsDialogOpen ? "PONNUKI / PROVIDER settings are sent when the game starts." : "Settings are sent when the engine starts.", new Vector2(GtpEngineGuiOptionsDialogBounds.X + 32, GtpEngineGuiOptionsDialogBounds.Y + 82), new Color(180, 195, 195), 0.4f);
         DrawText("Text values (max 10000 characters)", new Vector2(GtpEngineGuiOptionsDialogBounds.X + 32, GtpEngineGuiOptionsDialogBounds.Y + 116), new Color(118, 139, 143), 0.3f);
 
         var startIndex = session.GtpEngineGuiOptionsPageIndex * GoAppSession.GtpEngineGuiOptionsPageSize;

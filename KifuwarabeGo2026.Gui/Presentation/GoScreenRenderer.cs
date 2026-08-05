@@ -89,6 +89,8 @@ public sealed partial class GoScreenRenderer
             DrawTournamentRulesAddPanel(session, mousePoint);
             DrawGtpEngineSelectionDialog(session, mousePoint);
             DrawGtpEngineEditPanel(session, mousePoint);
+            if (session.IsAppProviderGameSettingsDialogOpen)
+                DrawGtpEngineGuiOptionsDialog(session, mousePoint);
         }
         if (session.CurrentMode.Kind == GoAppModeKind.Reviewing && session.IsReviewChartPopupOpen)
         {
@@ -199,6 +201,7 @@ public sealed partial class GoScreenRenderer
     public static bool GetStartPlayingButtonHit(Point point, GoAppModeKind modeKind) =>
         modeKind != GoAppModeKind.GameOver && StartPlayingButtonBounds.Contains(point);
     public static bool GetChangeAppProviderButtonHit(Point point) => ChangeAppProviderButtonBounds.Contains(point);
+    public static bool GetAppProviderGameSettingsButtonHit(Point point) => AppProviderGameSettingsButtonBounds.Contains(point);
 
     public static bool GetReturnToSetupButtonHit(Point point) => ReturnToSetupButtonBounds.Contains(point);
 
@@ -919,6 +922,7 @@ public sealed partial class GoScreenRenderer
     private static Rectangle HumanPlayerNameTextBounds(int y) => new(GameOverValueX, y + 2, 468, 32);
     private static Rectangle StartPlayingButtonBounds => new(1658, 920, 154, 56);
     private static Rectangle ChangeAppProviderButtonBounds => new(1492, 620, 320, 56);
+    private static Rectangle AppProviderGameSettingsButtonBounds => new(1328, 556, 320, 52);
 
     private static Rectangle ImportSgfButtonBounds => new(1492, 184, 320, 56);
 
@@ -953,7 +957,7 @@ public sealed partial class GoScreenRenderer
             new Color(58, 48, 38),
             string.IsNullOrWhiteSpace(session.LocalAppsErrorMessage) ? new Color(255, 210, 128) : new Color(255, 145, 151));
 
-        DrawVerticalResultSection(new Rectangle(1144, 392, 668, 208), "APP PROVIDER ENGINE", new Color(66, 104, 116));
+        DrawVerticalResultSection(new Rectangle(1144, 392, 668, 224), "APP PROVIDER ENGINE", new Color(66, 104, 116));
         DrawDynamicOptionText("アプリ提供エンジン", new Rectangle(1164, 410, 300, 34), new Color(180, 195, 195), 0.30f);
         DrawResultRow(
             new Rectangle(1164, 466, 628, 64),
@@ -965,9 +969,10 @@ public sealed partial class GoScreenRenderer
             string.IsNullOrWhiteSpace(session.LocalAppsErrorMessage)
                 ? "初期局面とポン抜きの進行を提供します。"
                 : session.LocalAppsErrorMessage,
-            new Rectangle(1164, 548, 628, 30),
+            new Rectangle(1164, 536, 628, 22),
             new Color(180, 195, 195),
             0.30f);
+        DrawCommandButton(AppProviderGameSettingsButtonBounds, "GAME SETTINGS", false, mousePoint, scale: 0.32f);
         DrawCommandButton(ChangeAppProviderButtonBounds, "CHANGE PROVIDER", false, mousePoint, scale: 0.30f);
 
         DrawVerticalResultSection(new Rectangle(1144, 696, 668, 216), "PLAYERS", new Color(76, 91, 126));

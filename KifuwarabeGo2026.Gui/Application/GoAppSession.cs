@@ -418,6 +418,8 @@ public sealed class GoAppSession
 
     public bool IsGtpEngineGuiOptionsDialogOpen { get; private set; }
 
+    public bool IsAppProviderGameSettingsDialogOpen { get; private set; }
+
     public Dictionary<string, string> GtpEngineGuiOptionsDialogDraft { get; private set; } = [];
 
     public bool IsGtpEngineRandomMoveSelectionDialogOpen { get; private set; }
@@ -2428,6 +2430,28 @@ public sealed class GoAppSession
         GtpEngineGuiOptionsPageIndex = 0;
         IsGtpEngineGuiOptionsDialogOpen = true;
         ActiveGtpEngineEditField = null;
+    }
+
+    public void OpenAppProviderGameSettingsDialog()
+    {
+        GtpEngineEditProfileIndex = Math.Clamp(SelectedAppProviderEngineIndex, 0, _gtpEngineProfiles.Count - 1);
+        GtpEngineEditDraft = _gtpEngineProfiles[GtpEngineEditProfileIndex].Clone();
+        IsAppProviderGameSettingsDialogOpen = true;
+        OpenGtpEngineGuiOptionsDialog();
+    }
+
+    public void CancelAppProviderGameSettingsDialog()
+    {
+        CancelGtpEngineGuiOptionsDialog();
+        IsAppProviderGameSettingsDialogOpen = false;
+    }
+
+    public IReadOnlyList<GtpEngineProfile> CommitAppProviderGameSettingsDialog()
+    {
+        CommitGtpEngineGuiOptionsDialog();
+        ReplaceSelectedGtpEngine(GtpEngineEditDraft);
+        IsAppProviderGameSettingsDialogOpen = false;
+        return _gtpEngineProfiles;
     }
 
     /// <summary>
