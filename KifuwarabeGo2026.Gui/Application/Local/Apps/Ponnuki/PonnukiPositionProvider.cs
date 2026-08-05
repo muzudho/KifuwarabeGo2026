@@ -37,6 +37,23 @@ public static class PonnukiPositionProvider
     {
         await using var client = new GtpEngineClient(CreateSettings(profile), TimeSpan.FromSeconds(10));
         await client.StartAsync();
+        var knownResponse = await client.SendCommandAsync("known_command kfw-evaluate-options");
+        var supportsEvaluation = knownResponse.IsSuccess &&
+                                 knownResponse.Payload.Trim().Equals("true", StringComparison.OrdinalIgnoreCase);
+        if (!supportsEvaluation)
+        {
+            var legacyValues = new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                [GtpEngineGuiOptions.BoardSizeId] = "9",
+                [GtpEngineGuiOptions.InitialMoveCountId] = Math.Clamp(
+                    int.TryParse(tentativeValues.GetValueOrDefault(GtpEngineGuiOptions.InitialMoveCountId), out var count) ? count : 20,
+                    0,
+                    20).ToString(),
+                [GtpEngineGuiOptions.RandomSeedId] = tentativeValues.GetValueOrDefault(GtpEngineGuiOptions.RandomSeedId, "0"),
+            };
+            return new GameSettingsEvaluation(GtpEngineGuiOptions.PonnukiProviderSpecs, legacyValues, []);
+        }
+
         var typedValues = new Dictionary<string, object?>(StringComparer.Ordinal);
         foreach (var pair in tentativeValues)
         {
@@ -111,6 +128,9 @@ public static class PonnukiPositionProvider
 
     public static async Task<(bool IsSupported, string Message)> CheckCapabilityAsync(GtpEngineProfile profile)
     {
+        if (GtpEngineExecutableGuard.IsGuiApplication(profile))
+            return (false, GtpEngineExecutableGuard.GuiSelectedMessage);
+
         var settings = CreateSettings(profile);
         await using var client = new GtpEngineClient(settings, TimeSpan.FromSeconds(10));
         await client.StartAsync();

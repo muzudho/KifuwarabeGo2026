@@ -4113,6 +4113,13 @@ public class Game1 : Game
             return;
         }
 
+        if (GtpEngineExecutableGuard.IsGuiApplication(fileName))
+        {
+            _session.SetGtpEngineEditWarning(GtpEngineExecutableGuard.GuiSelectedMessage);
+            ShowMessage(GtpEngineExecutableGuard.GuiSelectedMessage, "GTP engine executable");
+            return;
+        }
+
         _session.SetGtpEngineExecutablePathDraft(fileName);
     }
 
@@ -4249,6 +4256,12 @@ public class Game1 : Game
             return false;
         }
 
+        if (GtpEngineExecutableGuard.IsGuiApplication(profile))
+        {
+            warning = GtpEngineExecutableGuard.GuiSelectedMessage;
+            return false;
+        }
+
         if (profile.WorkingDirectoryModel.IsEmpty)
         {
             profile.WorkingDirectoryModel = WorkingDirectoryModel.FromString(Path.GetDirectoryName(profile.ExecutablePath) ?? string.Empty);
@@ -4269,6 +4282,12 @@ public class Game1 : Game
         if (string.IsNullOrWhiteSpace(_session.GtpEngineEditDraft.ExecutablePath))
         {
             _session.SetGtpEngineEditWarning("Executable path is required.");
+            return;
+        }
+
+        if (GtpEngineExecutableGuard.IsGuiApplication(_session.GtpEngineEditDraft))
+        {
+            _session.SetGtpEngineEditWarning(GtpEngineExecutableGuard.GuiSelectedMessage);
             return;
         }
 

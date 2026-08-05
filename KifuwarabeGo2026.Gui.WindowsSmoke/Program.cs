@@ -27,6 +27,7 @@ internal static class Program
         {
             VerifyServiceComposition();
             VerifyExecutableNaming();
+            VerifyGuiExecutableGuard();
             VerifyTextRasterizer();
             VerifyWindowsAssembly();
             VerifyGoAppsDiscoveryProtocol();
@@ -41,6 +42,14 @@ internal static class Program
             Console.Error.WriteLine($"FAIL: {ex.Message}");
             return 1;
         }
+    }
+
+    private static void VerifyGuiExecutableGuard()
+    {
+        Require(GtpEngineExecutableGuard.IsGuiApplication("KifuwarabeGo2026.Gui.exe") &&
+                GtpEngineExecutableGuard.IsGuiApplication("dotnet", "KifuwarabeGo2026.Gui.dll") &&
+                !GtpEngineExecutableGuard.IsGuiApplication("KifuwarabeGo2026.Engine.exe"),
+            "The GTP engine picker did not distinguish the GUI from an Engine executable.");
     }
 
     private static void VerifyGoAppsDiscoveryProtocol()

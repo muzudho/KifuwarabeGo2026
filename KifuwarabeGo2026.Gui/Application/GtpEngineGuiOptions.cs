@@ -45,8 +45,10 @@ public static class GtpEngineGuiOptions
 
     public static readonly GtpEngineGuiOptionSpec[] PonnukiProviderSpecs =
     [
-        new(BoardSizeId, "BoardSize", "combo", "9", Values: ["9", "13", "19"], Binding: GtpBoardSizeBinding,
-            Choices: [new("9"), new("13"), new("19")]),
+        // Compatibility fallback for Providers that do not publish a schema.
+        // Do not advertise 13/19 here: only the Provider may claim those sizes.
+        new(BoardSizeId, "BoardSize", "combo", "9", Values: ["9"], Binding: GtpBoardSizeBinding,
+            Choices: [new("9")]),
         new(InitialMoveCountId, "InitialMoveCount", "spin", "20", 0, 20),
         new(RandomSeedId, "RandomSeed", "spin", "0", 0, int.MaxValue),
     ];

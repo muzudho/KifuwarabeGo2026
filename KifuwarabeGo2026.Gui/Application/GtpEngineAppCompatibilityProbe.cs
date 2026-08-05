@@ -16,6 +16,9 @@ public static class GtpEngineAppCompatibilityProbe
         string appId,
         string role)
     {
+        if (GtpEngineExecutableGuard.IsGuiApplication(profile))
+            return new(GtpEngineAppCompatibilityKind.CheckFailed, GtpEngineExecutableGuard.GuiSelectedMessage);
+
         try
         {
             var settings = new GtpEngineSettings(
@@ -60,13 +63,19 @@ public static class GtpEngineAppCompatibilityProbe
             if (appIds.Any(id => !AppIdPattern.IsMatch(id)) ||
                 appIds.Distinct(StringComparer.Ordinal).Count() != appIds.Length)
                 throw new InvalidOperationException("kfw-list-apps returned invalid app IDs.");
-            return appIds.Contains(appId, StringComparer.Ordinal)
-                ? new(
+            if (appIds.Contains(appId, StringComparer.Ordinal))
+                return new(
                     GtpEngineAppCompatibilityKind.Supported,
                     roleVerified
                         ? $"{appId} {role} READY"
-                        : $"{appId} READY; ROLE UNVERIFIED")
-                : new(GtpEngineAppCompatibilityKind.Unsupported, $"{appId} NOT SUPPORTED");
+                        : $"{appId} READY; ROLE UNVERIFIED");
+
+            var runtimeSibling = GtpEngineExecutableGuard.FindRuntimeSpecificSibling(profile);
+            return new(
+                GtpEngineAppCompatibilityKind.Unsupported,
+                runtimeSibling is null
+                    ? $"{appId} NOT SUPPORTED"
+                    : $"{appId} NOT SUPPORTED; SELECT {runtimeSibling}");
         }
         catch (Exception ex)
         {
