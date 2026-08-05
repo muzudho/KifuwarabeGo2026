@@ -143,6 +143,8 @@ public class Game1 : Game
         _cgosConnectionCatalog = CgosConnectionCatalog.LoadFromDefaultLocation();
         _session.SetTournamentRules(_tournamentRulesCatalog.Rules);
         _session.SetGtpEngineProfiles(_gtpEngineCatalog.Profiles);
+        ApplicationSettings.Current.LastSelectedAppProviderEnginePaths.TryGetValue("ponnuki", out var lastPonnukiProviderPath);
+        _session.RestoreAppProviderEngine(lastPonnukiProviderPath);
         _session.SetCgosConnectionProfiles(_cgosConnectionCatalog.Profiles);
         RefreshSgfAutoSaveState();
         _tournamentRulesSetting = new TournamentRulesSetting(
@@ -3449,7 +3451,12 @@ public class Game1 : Game
             {
                 _session.CommitGtpEngineSelectionDialog();
                 if (_session.EngineSelectionPurpose == GtpEngineSelectionPurpose.AppProvider)
+                {
+                    ApplicationSettings.SaveLastSelectedAppProviderEngine(
+                        _session.GtpEngineSelectionAppId,
+                        _session.SelectedAppProviderEngine.ExecutablePath);
                     RecheckPonnukiProvider();
+                }
             }
             return true;
         }

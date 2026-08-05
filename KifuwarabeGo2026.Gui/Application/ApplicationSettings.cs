@@ -44,6 +44,8 @@ public sealed class ApplicationSettings
 
     public List<CgosConnectionProfile> CgosConnections { get; set; }
 
+    public Dictionary<string, string> LastSelectedAppProviderEnginePaths { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+
     public static void Save(string logRootDirectory)
     {
         var fullPath = Path.GetFullPath(logRootDirectory.Trim());
@@ -86,6 +88,13 @@ public sealed class ApplicationSettings
         WriteCurrent();
     }
 
+    public static void SaveLastSelectedAppProviderEngine(string appId, string executablePath)
+    {
+        if (string.IsNullOrWhiteSpace(appId)) throw new ArgumentException("App ID is required.", nameof(appId));
+        Current.LastSelectedAppProviderEnginePaths[appId.Trim()] = executablePath ?? "";
+        WriteCurrent();
+    }
+
     private static ApplicationSettings Load()
     {
         try
@@ -101,6 +110,7 @@ public sealed class ApplicationSettings
                     var releaseDefaults = new ApplicationSettings();
                     settings.TournamentRules ??= releaseDefaults.TournamentRules;
                     settings.CgosConnections ??= releaseDefaults.CgosConnections;
+                    settings.LastSelectedAppProviderEnginePaths ??= new(StringComparer.OrdinalIgnoreCase);
                     return settings;
                 }
             }
@@ -117,6 +127,7 @@ public sealed class ApplicationSettings
                     var releaseDefaults = new ApplicationSettings();
                     legacy.TournamentRules = releaseDefaults.TournamentRules;
                     legacy.CgosConnections = releaseDefaults.CgosConnections;
+                    legacy.LastSelectedAppProviderEnginePaths ??= new(StringComparer.OrdinalIgnoreCase);
                     TryWrite(legacy);
                     return legacy;
                 }

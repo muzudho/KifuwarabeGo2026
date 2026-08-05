@@ -2006,6 +2006,16 @@ public sealed class GoAppSession
         SetAppProviderCapability(false, "NOT CHECKED");
     }
 
+    public bool RestoreAppProviderEngine(string? executablePath)
+    {
+        if (string.IsNullOrWhiteSpace(executablePath)) return false;
+        var index = _gtpEngineProfiles.FindIndex(profile =>
+            string.Equals(profile.ExecutablePath, executablePath, StringComparison.OrdinalIgnoreCase));
+        if (index < 0) return false;
+        SelectAppProviderEngine(index);
+        return true;
+    }
+
     public void OpenGtpEngineOrderEditor() =>
         GtpEngineOrderEditor.Open(
             _gtpEngineProfiles,

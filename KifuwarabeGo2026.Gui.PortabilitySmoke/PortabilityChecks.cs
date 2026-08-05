@@ -84,6 +84,19 @@ internal static class PortabilityChecks
                 session.SelectedAppProviderEngineDisplayName == "未選択" &&
                 !session.CanUseSelectedAppProvider,
             "The App Provider must remain unselected until the user explicitly chooses one.");
+        var restoreSession = new GoAppSession();
+        restoreSession.SetGtpEngineProfiles(
+        [
+            new GtpEngineProfile { DisplayName = "First", ExecutablePath = "first-engine" },
+            new GtpEngineProfile { DisplayName = "Remembered", ExecutablePath = "remembered-engine" },
+        ]);
+        Require(restoreSession.RestoreAppProviderEngine("remembered-engine") &&
+                restoreSession.SelectedAppProviderEngineIndex == 1 &&
+                restoreSession.SelectedAppProviderEngineDisplayName == "Remembered",
+            "The last App Provider selection was not restored by executable path.");
+        Require(!restoreSession.RestoreAppProviderEngine("missing-engine") &&
+                restoreSession.SelectedAppProviderEngineIndex == 1,
+            "A missing remembered App Provider must not select a different engine.");
         session.SetGtpEngineAppCompatibilities(
         [
             new(GtpEngineAppCompatibilityKind.Unsupported, "ponnuki NOT SUPPORTED"),
