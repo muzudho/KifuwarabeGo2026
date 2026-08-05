@@ -328,6 +328,13 @@ public class Game1 : Game
             return;
         }
 
+        if (_session.CurrentMode.Kind != GoAppModeKind.Reviewing &&
+            TryHandleReadOnlyChartKeyboardInput(keyboard))
+        {
+            _previousKeyboard = keyboard;
+            return;
+        }
+
         if (_session.CurrentMode.Kind == GoAppModeKind.Reviewing && TryHandleReviewKeyboardInput(keyboard))
         {
             _previousKeyboard = keyboard;
@@ -423,6 +430,42 @@ public class Game1 : Game
         }
 
         return false;
+    }
+
+    private bool TryHandleReadOnlyChartKeyboardInput(KeyboardState keyboard)
+    {
+        var navigationVisible =
+            _session.IsReviewChartPopupOpen ||
+            (IsLocalPlayUseKind() && _session.IsLocalReplayMode) ||
+            (_session.UseKind == GoAppUseKind.CgosClient && _cgosGameObservation.IsReplayMode);
+        if (!navigationVisible || !TryGetReadOnlyChartNavigation(out var currentMoveIndex, out var maximumMoveIndex))
+        {
+            _reviewRepeatKey = null;
+            return false;
+        }
+
+        var command = GetReviewKeyboardCommand(keyboard);
+        if (command is null)
+        {
+            _reviewRepeatKey = null;
+            return false;
+        }
+
+        var (key, navigation) = command.Value;
+        if (_reviewRepeatKey == key && _inputClockSeconds < _reviewKeyboardNextRepeatAt)
+            return true;
+
+        _reviewKeyboardNextRepeatAt = _inputClockSeconds +
+            (_reviewRepeatKey == key ? ReviewRepeatIntervalSeconds : ReviewRepeatInitialDelaySeconds);
+        _reviewRepeatKey = key;
+        var targetMoveIndex = navigation switch
+        {
+            int.MinValue => 0,
+            int.MaxValue => maximumMoveIndex,
+            _ => Math.Clamp(currentMoveIndex + navigation, 0, maximumMoveIndex),
+        };
+        SeekReadOnlyChartPopup(targetMoveIndex);
+        return true;
     }
 
     private static (Keys Key, int Navigation)? GetReviewKeyboardCommand(KeyboardState keyboard)
@@ -629,18 +672,18 @@ public class Game1 : Game
             }
 
             var isReplayNavigationVisible =
-                (_session.UseKind == GoAppUseKind.LocalPlay && _session.IsLocalReplayMode) ||
+                (IsLocalPlayUseKind() && _session.IsLocalReplayMode) ||
                 (_session.UseKind == GoAppUseKind.CgosClient && _cgosGameObservation.IsReplayMode);
             var isVariationEditVisible =
                 isReplayNavigationVisible ||
                 _session.CurrentMode.Kind == GoAppModeKind.Reviewing ||
-                (_session.UseKind == GoAppUseKind.LocalPlay &&
+                (IsLocalPlayUseKind() &&
                  _session.CanOpenLocalChartPopup) ||
                 (_session.UseKind == GoAppUseKind.CgosClient &&
                  (_session.CgosConnectionFlowKind is CgosConnectionFlowKind.Watching or CgosConnectionFlowKind.Result) &&
                  _cgosGameObservation.IsStarted);
             var canReturnReplayToLive =
-                (_session.UseKind == GoAppUseKind.LocalPlay &&
+                (IsLocalPlayUseKind() &&
                  _session.CurrentMode.Kind == GoAppModeKind.Playing &&
                  _session.IsLocalReplayMode) ||
                 (_session.UseKind == GoAppUseKind.CgosClient &&
@@ -648,7 +691,7 @@ public class Game1 : Game
                  _cgosGameObservation.IsReplayMode);
             if (canReturnReplayToLive && GoScreenRenderer.GetReplayBackToLiveButtonHit(point))
             {
-                if (_session.UseKind == GoAppUseKind.LocalPlay &&
+                if (IsLocalPlayUseKind() &&
                     _session.CurrentMode.Kind == GoAppModeKind.Playing)
                 {
                     _session.ReturnLocalReplayToLive();
