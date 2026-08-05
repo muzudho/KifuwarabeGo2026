@@ -97,6 +97,12 @@ internal static class PortabilityChecks
         Require(!restoreSession.RestoreAppProviderEngine("missing-engine") &&
                 restoreSession.SelectedAppProviderEngineIndex == 1,
             "A missing remembered App Provider must not select a different engine.");
+        restoreSession.SetAppProviderCapability(false, "CHECKING PROVIDER...");
+        Require(restoreSession.IsAppProviderCapabilityCheckRunning && !restoreSession.CanStartSelectedAppProvider,
+            "An automatically restored Provider must remain unavailable while its capability check is running.");
+        restoreSession.SetAppProviderCapability(true, "PONNUKI v1 LIFECYCLE READY");
+        Require(!restoreSession.IsAppProviderCapabilityCheckRunning && restoreSession.CanStartSelectedAppProvider,
+            "A restored Provider must become available after a successful automatic capability check.");
         session.SetGtpEngineAppCompatibilities(
         [
             new(GtpEngineAppCompatibilityKind.Unsupported, "ponnuki NOT SUPPORTED"),

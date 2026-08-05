@@ -105,6 +105,8 @@ public class Game1 : Game
     private int _ponnukiProviderObservedMoveCount;
     private Task<GtpEngineAppCompatibility[]>? _appProviderSelectionLoadTask;
     private string _appProviderSelectionLoadAppId = "";
+    private Task<(bool IsSupported, string Message)>? _restoredAppProviderCheckTask;
+    private string _restoredAppProviderCheckPath = "";
 
     private const double CgosMatchCountdownSeconds = 10d;
     private const double CgosMatchFadeSeconds = 1.2d;
@@ -144,7 +146,12 @@ public class Game1 : Game
         _session.SetTournamentRules(_tournamentRulesCatalog.Rules);
         _session.SetGtpEngineProfiles(_gtpEngineCatalog.Profiles);
         ApplicationSettings.Current.LastSelectedAppProviderEnginePaths.TryGetValue("ponnuki", out var lastPonnukiProviderPath);
-        _session.RestoreAppProviderEngine(lastPonnukiProviderPath);
+        if (_session.RestoreAppProviderEngine(lastPonnukiProviderPath) && _session.CanUseSelectedAppProvider)
+        {
+            _session.SetAppProviderCapability(false, "CHECKING PROVIDER...");
+            _restoredAppProviderCheckPath = _session.SelectedAppProviderEngine.ExecutablePath;
+            _restoredAppProviderCheckTask = PonnukiPositionProvider.CheckCapabilityAsync(_session.SelectedAppProviderEngine);
+        }
         _session.SetCgosConnectionProfiles(_cgosConnectionCatalog.Profiles);
         RefreshSgfAutoSaveState();
         _tournamentRulesSetting = new TournamentRulesSetting(
@@ -196,6 +203,7 @@ public class Game1 : Game
     {
         _inputClockSeconds = gameTime.TotalGameTime.TotalSeconds;
         CompleteAppProviderSelectionLoading();
+        CompleteRestoredAppProviderCheck();
         var keyboard = Keyboard.GetState();
         var mouse = Mouse.GetState();
         SynchronizeOrArmWindowInput(keyboard, mouse);
@@ -1545,7 +1553,9 @@ public class Game1 : Game
                 return true;
             }
 
-            if (_session.CanUseSelectedAppProvider && TitleRenderer.IsAppProviderRecheckButtonHit(point))
+            if (_session.CanUseSelectedAppProvider &&
+                !_session.IsAppProviderCapabilityCheckRunning &&
+                TitleRenderer.IsAppProviderRecheckButtonHit(point))
             {
                 RecheckPonnukiProvider();
                 return true;
@@ -1573,7 +1583,7 @@ public class Game1 : Game
         var enabled = new[]
         {
             _appProviderSelectionLoadTask is null,
-            _session.CanUseSelectedAppProvider,
+            _session.CanUseSelectedAppProvider && !_session.IsAppProviderCapabilityCheckRunning,
             _session.CanStartSelectedAppProvider,
             true,
         };
@@ -3442,6 +3452,31 @@ public class Game1 : Game
         {
             ApplicationErrorLog.Write("APP PROVIDER SELECTION", "Could not inspect App Provider engines.", ex);
             ShowMessage(ex.Message, "App Provider engines");
+        }
+    }
+
+    private void CompleteRestoredAppProviderCheck()
+    {
+        var task = _restoredAppProviderCheckTask;
+        if (task is null || !task.IsCompleted) return;
+        _restoredAppProviderCheckTask = null;
+        try
+        {
+            var result = task.GetAwaiter().GetResult();
+            if (!_session.HasSelectedAppProviderEngine ||
+                !string.Equals(_session.SelectedAppProviderEngine.ExecutablePath, _restoredAppProviderCheckPath, StringComparison.OrdinalIgnoreCase))
+                return;
+            _session.SetAppProviderCapability(result.IsSupported, result.Message);
+            GuiOperationLog.App(
+                "Automatically checked restored App Provider",
+                $"app=ponnuki; engine={_session.SelectedAppProviderEngine.DisplayName}; supported={result.IsSupported}");
+        }
+        catch (Exception ex)
+        {
+            if (_session.HasSelectedAppProviderEngine &&
+                string.Equals(_session.SelectedAppProviderEngine.ExecutablePath, _restoredAppProviderCheckPath, StringComparison.OrdinalIgnoreCase))
+                _session.SetAppProviderCapability(false, $"CHECK FAILED: {ex.Message}");
+            ApplicationErrorLog.Write("APP PROVIDER CHECK", "Could not automatically check the restored Ponnuki Provider.", ex);
         }
     }
 

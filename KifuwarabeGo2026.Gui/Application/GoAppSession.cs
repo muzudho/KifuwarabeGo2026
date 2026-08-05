@@ -376,6 +376,9 @@ public sealed class GoAppSession
 
     public bool IsAppProviderCapabilityConfirmed { get; private set; }
 
+    public bool IsAppProviderCapabilityCheckRunning =>
+        AppProviderCapabilityStatus.StartsWith("CHECKING", StringComparison.Ordinal);
+
     public void ClearLocalAppsError() => LocalAppsErrorMessage = "";
 
     public void SetLocalAppsError(string message) => LocalAppsErrorMessage = message ?? "";

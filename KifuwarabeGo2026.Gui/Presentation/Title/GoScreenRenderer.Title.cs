@@ -153,6 +153,8 @@ public sealed partial class GoScreenRenderer
 
         var capabilityColor = session.IsAppProviderCapabilityConfirmed
             ? new Color(99, 223, 185)
+            : session.IsAppProviderCapabilityCheckRunning
+                ? new Color(255, 210, 128)
             : session.AppProviderCapabilityStatus == "NOT CHECKED"
                 ? new Color(180, 195, 195)
                 : new Color(255, 145, 151);
@@ -166,7 +168,7 @@ public sealed partial class GoScreenRenderer
             "RECHECK PROVIDER",
             appProviderTabIndex == 1,
             mousePoint,
-            enabled: session.CanUseSelectedAppProvider,
+            enabled: session.CanUseSelectedAppProvider && !session.IsAppProviderCapabilityCheckRunning,
             scale: 0.30f);
         DrawCommandButton(
             TitleAppProviderStartButtonBounds,
@@ -199,7 +201,7 @@ public sealed partial class GoScreenRenderer
         var stops = new[]
         {
             (Index: 0, Bounds: TitleAppProviderEngineSelectButtonBounds, Enabled: !isAppProviderLoading),
-            (Index: 1, Bounds: TitleAppProviderRecheckButtonBounds, Enabled: session.CanUseSelectedAppProvider),
+            (Index: 1, Bounds: TitleAppProviderRecheckButtonBounds, Enabled: session.CanUseSelectedAppProvider && !session.IsAppProviderCapabilityCheckRunning),
             (Index: 2, Bounds: TitleAppProviderStartButtonBounds, Enabled: session.CanStartSelectedAppProvider),
             (Index: 3, Bounds: TitleMenuBackButtonBounds, Enabled: true),
         }.Where(stop => stop.Enabled).ToArray();
