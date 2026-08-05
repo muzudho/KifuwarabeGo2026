@@ -31,7 +31,7 @@ internal sealed partial class GtpEngine
         "protocol_version", "name", "version", "known_command", "list_commands", "boardsize", "clear_board",
         "komi", "play", "genmove", "cgos-genmove_analyze",
         "kfw-list-apps",
-        "kfw-describe-options", "kfw-get-options", "kfw-patch-options", "kfw-invoke-option",
+        "kfw-describe-options", "kfw-get-options", "kfw-evaluate-options", "kfw-patch-options", "kfw-invoke-option",
         "kfw-options", "kfw-get-option", "kfw-set-option", "kfw-start-app", "kfw-end-app", "kfw-make-position", "kfw-listen-move",
         "gui_options", "gui_getoption", "gui_setoption",
         "kfw-begin-position", "kfw-add-black", "kfw-add-white", "kfw-set-to-play", "kfw-commit-position", "kfw-abort-position", "quit",
@@ -128,6 +128,9 @@ internal sealed partial class GtpEngine
                 return false;
             case "kfw-get-options":
                 ExecuteGetOptions(tokens, out response, out error);
+                return false;
+            case "kfw-evaluate-options":
+                ExecuteEvaluateOptions(commandLine, tokens, out response, out error);
                 return false;
             case "kfw-patch-options":
                 ExecutePatchOptions(commandLine, tokens, out response, out error);
@@ -331,11 +334,12 @@ internal sealed partial class GtpEngine
         if (tokens.Length is not (5 or 6) ||
             !tokens[1].Equals("ponnuki", StringComparison.OrdinalIgnoreCase) ||
             tokens[2] != "1" ||
-            !int.TryParse(tokens[3], out var boardSize) || boardSize != 9 ||
-            !int.TryParse(tokens[4], out var requestedMoveCount) || requestedMoveCount is < 0 or > 200 ||
+            !int.TryParse(tokens[3], out var boardSize) || !IsSupportedPonnukiBoardSize(boardSize) ||
+            !int.TryParse(tokens[4], out var requestedMoveCount) || requestedMoveCount < 0 ||
+            requestedMoveCount > GetPonnukiInitialMoveCountMaximum(boardSize) ||
             (tokens.Length == 6 && !int.TryParse(tokens[5], out _)))
         {
-            error = "usage: kfw-make-position ponnuki 1 9 move-count [seed]";
+            error = "usage: kfw-make-position ponnuki 1 {9|13|19} move-count [seed]";
             return;
         }
 
@@ -351,21 +355,30 @@ internal sealed partial class GtpEngine
 
         for (var ply = 0; ply < requestedMoveCount; ply++)
         {
-            var legalMoves = new List<GoPoint>();
+            var candidates = new List<GoPoint>(boardSize * boardSize);
             for (var y = 0; y < boardSize; y++)
             {
                 for (var x = 0; x < boardSize; x++)
-                {
-                    var trial = board.Clone();
-                    if (trial.TryPlaceStone(x, y, sideToPlay, koPoint, out _, out _))
-                        legalMoves.Add(new GoPoint(x, y));
-                }
+                    candidates.Add(new GoPoint(x, y));
             }
 
-            if (legalMoves.Count == 0)
-                break;
+            // A shuffled candidate order makes the first legal point uniformly random,
+            // while avoiding a full board clone for every legal point on 13/19 boards.
+            for (var index = candidates.Count - 1; index > 0; index--)
+            {
+                var swapIndex = random.Next(index + 1);
+                (candidates[index], candidates[swapIndex]) = (candidates[swapIndex], candidates[index]);
+            }
 
-            var move = legalMoves[random.Next(legalMoves.Count)];
+            GoPoint? selectedMove = null;
+            foreach (var candidate in candidates)
+            {
+                var trial = board.Clone();
+                if (!trial.TryPlaceStone(candidate.X, candidate.Y, sideToPlay, koPoint, out _, out _)) continue;
+                selectedMove = candidate;
+                break;
+            }
+            if (selectedMove is not { } move) break;
             board.TryPlaceStone(move.X, move.Y, sideToPlay, koPoint, out _, out koPoint);
             sideToPlay = Opponent(sideToPlay);
         }

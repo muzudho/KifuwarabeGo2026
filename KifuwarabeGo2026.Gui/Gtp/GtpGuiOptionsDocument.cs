@@ -62,6 +62,29 @@ public sealed class GtpOptionSchemaDocument
         }) ?? throw new FormatException("kfw-describe-options returned an empty JSON document.");
 }
 
+/// <summary>`kfw-evaluate-options` が返す、未確定値の評価結果です。</summary>
+public sealed class GtpOptionEvaluationDocument
+{
+    public int Version { get; set; }
+    public string App { get; set; } = "";
+    public string Role { get; set; } = "";
+    public Dictionary<string, JsonElement> Values { get; set; } = [];
+    public List<GtpOptionSchemaDefinition> Options { get; set; } = [];
+    public List<GtpOptionAdjustment> Adjustments { get; set; } = [];
+
+    public static GtpOptionEvaluationDocument Parse(string json) =>
+        JsonSerializer.Deserialize<GtpOptionEvaluationDocument>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
+        ?? throw new FormatException("kfw-evaluate-options returned an empty JSON document.");
+}
+
+public sealed class GtpOptionAdjustment
+{
+    public string Id { get; set; } = "";
+    public JsonElement From { get; set; }
+    public JsonElement To { get; set; }
+    public string Reason { get; set; } = "";
+}
+
 public sealed class GtpOptionSchemaDefinition
 {
     public string Id { get; set; } = "";

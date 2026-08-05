@@ -107,6 +107,10 @@ public class Game1 : Game
     private string _appProviderSelectionLoadAppId = "";
     private Task<(bool IsSupported, string Message)>? _restoredAppProviderCheckTask;
     private string _restoredAppProviderCheckPath = "";
+    private Task<PonnukiPositionProvider.GameSettingsEvaluation>? _appProviderSettingsEvaluationTask;
+    private int _appProviderSettingsEvaluationGeneration;
+    private int _appProviderSettingsEvaluationTaskGeneration;
+    private string _appProviderSettingsEvaluationPath = "";
 
     private const double CgosMatchCountdownSeconds = 10d;
     private const double CgosMatchFadeSeconds = 1.2d;
@@ -204,6 +208,7 @@ public class Game1 : Game
         _inputClockSeconds = gameTime.TotalGameTime.TotalSeconds;
         CompleteAppProviderSelectionLoading();
         CompleteRestoredAppProviderCheck();
+        CompleteAppProviderSettingsEvaluation();
         var keyboard = Keyboard.GetState();
         var mouse = Mouse.GetState();
         SynchronizeOrArmWindowInput(keyboard, mouse);
@@ -3916,7 +3921,10 @@ public class Game1 : Game
             else if (GoScreenRenderer.GetGtpEngineRandomMoveSelectionDialogCancelButtonHit(point))
                 _session.CancelGtpEngineRandomMoveSelectionDialog();
             else if (GoScreenRenderer.GetGtpEngineRandomMoveSelectionDialogSelectButtonHit(point))
+            {
                 _session.CommitGtpEngineRandomMoveSelectionDialog();
+                QueueAppProviderSettingsEvaluation();
+            }
             else if (GoScreenRenderer.GetGtpEngineRandomMoveSelectionDialogItemHit(point, _session) is { } itemIndex)
                 _session.SelectGtpEngineRandomMoveItem(itemIndex);
             return;
@@ -3930,6 +3938,7 @@ public class Game1 : Game
 
         if (GoScreenRenderer.GetGtpEngineGuiOptionsDialogCancelButtonHit(point))
         {
+            _appProviderSettingsEvaluationGeneration++;
             _session.CancelAppProviderGameSettingsDialog();
             GuiOperationLog.User("Cancelled App Provider game settings", "app=ponnuki; role=provider");
             return;
@@ -3950,6 +3959,7 @@ public class Game1 : Game
         if (optionHit.Action == 3)
         {
             _session.SetGtpEngineGuiOptionDraft(option, option.DefaultValue);
+            QueueAppProviderSettingsEvaluation();
             return;
         }
 
@@ -3966,7 +3976,7 @@ public class Game1 : Game
                 break;
             case "combo":
                 _session.OpenGtpEngineRandomMoveSelectionDialog(option);
-                break;
+                return;
             case "string":
                 EditGtpEngineStringOption(option);
                 break;
@@ -3977,6 +3987,7 @@ public class Game1 : Game
                 _session.ToggleGtpEngineButtonOption(option);
                 break;
         }
+        QueueAppProviderSettingsEvaluation();
     }
 
     private void OpenAppProviderGameSettings()
@@ -3986,6 +3997,7 @@ public class Game1 : Game
             var specs = PonnukiPositionProvider.GetGameSettingSpecsAsync(_session.SelectedAppProviderEngine)
                 .GetAwaiter().GetResult();
             _session.OpenAppProviderGameSettingsDialog(specs);
+            QueueAppProviderSettingsEvaluation();
             GuiOperationLog.User("Opened App Provider game settings", $"app=ponnuki; role=provider; options={specs.Count}");
         }
         catch (Exception ex)
@@ -3993,6 +4005,47 @@ public class Game1 : Game
             ApplicationErrorLog.Write("APP PROVIDER SETTINGS", "Could not load the Ponnuki Provider option schema.", ex);
             ShowMessage(ex.Message, "Ponnuki game settings");
         }
+    }
+
+    private void QueueAppProviderSettingsEvaluation()
+    {
+        if (!_session.IsAppProviderGameSettingsDialogOpen || !_session.CanUseSelectedAppProvider) return;
+        _appProviderSettingsEvaluationGeneration++;
+        if (_appProviderSettingsEvaluationTask is not null) return;
+
+        _appProviderSettingsEvaluationTaskGeneration = _appProviderSettingsEvaluationGeneration;
+        _appProviderSettingsEvaluationPath = _session.SelectedAppProviderEngine.ExecutablePath;
+        var draft = new Dictionary<string, string>(_session.GtpEngineGuiOptionsDialogDraft, StringComparer.Ordinal);
+        _appProviderSettingsEvaluationTask = PonnukiPositionProvider.EvaluateGameSettingsAsync(
+            _session.SelectedAppProviderEngine,
+            draft);
+    }
+
+    private void CompleteAppProviderSettingsEvaluation()
+    {
+        if (_appProviderSettingsEvaluationTask is not { IsCompleted: true } task) return;
+        var completedGeneration = _appProviderSettingsEvaluationTaskGeneration;
+        var completedPath = _appProviderSettingsEvaluationPath;
+        _appProviderSettingsEvaluationTask = null;
+        try
+        {
+            var evaluation = task.GetAwaiter().GetResult();
+            if (_session.IsAppProviderGameSettingsDialogOpen &&
+                completedGeneration == _appProviderSettingsEvaluationGeneration &&
+                completedPath.Equals(_session.SelectedAppProviderEngine.ExecutablePath, StringComparison.OrdinalIgnoreCase))
+            {
+                _session.ApplyAppProviderGameSettingsEvaluation(evaluation.Specs, evaluation.Values);
+                if (evaluation.Adjustments.Count > 0)
+                    GuiOperationLog.User("App Provider adjusted tentative game settings", string.Join("; ", evaluation.Adjustments.Select(value => $"{value.Id}: {value.From.GetRawText()} -> {value.To.GetRawText()} ({value.Reason})")));
+            }
+        }
+        catch (Exception ex)
+        {
+            ApplicationErrorLog.Write("APP PROVIDER SETTINGS", "Could not evaluate tentative Ponnuki Provider options.", ex);
+        }
+
+        if (_session.IsAppProviderGameSettingsDialogOpen && completedGeneration != _appProviderSettingsEvaluationGeneration)
+            QueueAppProviderSettingsEvaluation();
     }
 
     private void MoveGtpEngineEditFocus(int step)
@@ -4115,6 +4168,8 @@ public class Game1 : Game
             return;
         }
         _session.SetGtpEngineGuiOptionDraft(option, value.ToString());
+        if (_session.IsAppProviderGameSettingsDialogOpen)
+            QueueAppProviderSettingsEvaluation();
         CancelGtpEngineIntegerInput();
     }
 

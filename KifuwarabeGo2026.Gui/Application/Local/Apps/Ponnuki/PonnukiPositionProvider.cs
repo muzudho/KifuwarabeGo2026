@@ -11,6 +11,11 @@ namespace KifuwarabeGo2026.Gui.Application.Local.Apps.Ponnuki;
 
 public static class PonnukiPositionProvider
 {
+    public sealed record GameSettingsEvaluation(
+        IReadOnlyList<GtpEngineGuiOptionSpec> Specs,
+        IReadOnlyDictionary<string, string> Values,
+        IReadOnlyList<GtpOptionAdjustment> Adjustments);
+
     public static async Task<IReadOnlyList<GtpEngineGuiOptionSpec>> GetGameSettingSpecsAsync(GtpEngineProfile profile)
     {
         await using var client = new GtpEngineClient(CreateSettings(profile), TimeSpan.FromSeconds(10));
@@ -24,6 +29,36 @@ public static class PonnukiPositionProvider
             throw new InvalidOperationException("The App Provider returned an incompatible option schema.");
 
         return schema.Options.Select(ToGuiOptionSpec).ToArray();
+    }
+
+    public static async Task<GameSettingsEvaluation> EvaluateGameSettingsAsync(
+        GtpEngineProfile profile,
+        IReadOnlyDictionary<string, string> tentativeValues)
+    {
+        await using var client = new GtpEngineClient(CreateSettings(profile), TimeSpan.FromSeconds(10));
+        await client.StartAsync();
+        var typedValues = new Dictionary<string, object?>(StringComparer.Ordinal);
+        foreach (var pair in tentativeValues)
+        {
+            if (pair.Key is GtpEngineGuiOptions.BoardSizeId or GtpEngineGuiOptions.InitialMoveCountId or GtpEngineGuiOptions.RandomSeedId &&
+                int.TryParse(pair.Value, out var integerValue))
+                typedValues[pair.Key] = integerValue;
+        }
+
+        var request = JsonSerializer.Serialize(new { version = 1, values = typedValues });
+        const string commandPrefix = "kfw-evaluate-options ponnuki provider ";
+        var response = await client.SendCommandAsync(commandPrefix + request);
+        response.ThrowIfError("kfw-evaluate-options ponnuki provider");
+        var evaluation = GtpOptionEvaluationDocument.Parse(response.Payload);
+        if (evaluation.Version != 1 || !evaluation.App.Equals("ponnuki", StringComparison.OrdinalIgnoreCase) ||
+            !evaluation.Role.Equals("provider", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("The App Provider returned an incompatible option evaluation.");
+
+        var values = evaluation.Values.ToDictionary(
+            pair => pair.Key,
+            pair => pair.Value.ValueKind == JsonValueKind.String ? pair.Value.GetString() ?? "" : pair.Value.GetRawText(),
+            StringComparer.Ordinal);
+        return new GameSettingsEvaluation(evaluation.Options.Select(ToGuiOptionSpec).ToArray(), values, evaluation.Adjustments);
     }
 
     private static GtpEngineGuiOptionSpec ToGuiOptionSpec(GtpOptionSchemaDefinition definition)
@@ -118,7 +153,7 @@ public static class PonnukiPositionProvider
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true })
             ?? throw new InvalidOperationException("The App Provider returned an empty position.");
         if (!string.Equals(document.App, app.Id, StringComparison.OrdinalIgnoreCase) ||
-            document.Version != app.Version || document.BoardSize != app.BoardSize)
+            document.Version != app.Version || !GtpEngineGuiOptions.IsSupportedBoardSize(document.BoardSize))
             throw new InvalidOperationException("The App Provider returned an incompatible Ponnuki position.");
 
         var record = new GoGameRecord

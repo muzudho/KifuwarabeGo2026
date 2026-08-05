@@ -2467,6 +2467,17 @@ public sealed class GoAppSession
         OpenGtpEngineGuiOptionsDialog();
     }
 
+    public void ApplyAppProviderGameSettingsEvaluation(
+        IReadOnlyList<GtpEngineGuiOptionSpec> specs,
+        IReadOnlyDictionary<string, string> values)
+    {
+        if (!IsAppProviderGameSettingsDialogOpen) return;
+        _appProviderGameSettingSpecs = specs.Count > 0 ? specs : _appProviderGameSettingSpecs;
+        foreach (var pair in values)
+            GtpEngineGuiOptionsDialogDraft[pair.Key] = pair.Value;
+        GtpEngineGuiOptionsPageIndex = Math.Clamp(GtpEngineGuiOptionsPageIndex, 0, GetGtpEngineGuiOptionsPageCount() - 1);
+    }
+
     public void CancelAppProviderGameSettingsDialog()
     {
         CancelGtpEngineGuiOptionsDialog();

@@ -18,8 +18,8 @@ GUIはゲーム画面と共通操作を提供し、Go App固有の初期局面�
 
 `kfw-describe-options ponnuki provider`は、少なくとも次を公開します。
 
-- `BoardSize`: `binding: "gtp.boardsize"`を持つ盤サイズ候補。現行Ponnuki v1では9路盤。
-- `InitialMoveCount`: 整数。初期値20。初期局面を作るランダム着手数。
+- `BoardSize`: `binding: "gtp.boardsize"`を持つ盤サイズ候補。現行Providerは9路、13路、19路に対応する。
+- `InitialMoveCount`: 整数。初期値20。初期局面を作るランダム着手数。上限は`BoardSize * BoardSize / 4`。
 - `RandomSeed`: 整数。初期値0。0は開始ごとに自動生成し、1以上は再現用の固定シード。
 
 `kfw-describe-options play player`には`BoardSize`と`InitialMoveCount`を含めません。
@@ -41,6 +41,10 @@ GUIはゲーム画面と共通操作を提供し、Go App固有の初期局面�
 - 未知の`binding`は通常のProvider固有オプションとして扱い、GUIの標準機能へ勝手に結び付けない。
 
 ## Providerセッション
+
+設定画面での変更は、まず`kfw-evaluate-options ponnuki provider <json>`へ送ります。Providerは保持中の正式値を変更せず、候補値をコピーへ適用して依存関係を評価します。応答には評価後の全値、動的な制約を含む全スキーマ、調整理由の差分を返します。GUIはその応答を画面用キャッシュとして丸ごと採用します。
+
+［OK］は評価済みキャッシュを設定へ保存し、次回開始時の正式な`kfw-patch-options`対象にします。［CANCEL］はキャッシュを破棄するため、Providerの正式値は変わりません。
 
 正規の開始・終了コマンドはapp-idとroleを明示します。
 

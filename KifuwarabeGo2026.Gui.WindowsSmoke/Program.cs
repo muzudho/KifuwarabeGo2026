@@ -241,7 +241,7 @@ internal static class Program
         Require(output.Contains("\"app\":\"ponnuki\",\"role\":\"provider\"", StringComparison.Ordinal) &&
                 output.Contains("\"id\":\"BoardSize\"", StringComparison.Ordinal) &&
                 output.Contains("\"binding\":\"gtp.boardsize\"", StringComparison.Ordinal) &&
-                output.Contains("\"values\":[\"9\"]", StringComparison.Ordinal) &&
+                output.Contains("\"values\":[\"9\",\"13\",\"19\"]", StringComparison.Ordinal) &&
                 output.Contains("\"id\":\"InitialMoveCount\"", StringComparison.Ordinal) &&
                 output.Contains("\"code\":\"unsupported-app-role\"", StringComparison.Ordinal),
             "Ponnuki Provider options were not distinguished from unsupported app roles.");
@@ -258,6 +258,16 @@ internal static class Program
         Require(!playSchema.Contains("BoardSize", StringComparison.Ordinal) &&
                 !playSchema.Contains("InitialMoveCount", StringComparison.Ordinal),
             "Provider-owned Ponnuki settings leaked into the Play Player option schema.");
+
+        var evaluation = RunEngine(
+            "kfw-evaluate-options ponnuki provider {\"version\":1,\"values\":{\"BoardSize\":13,\"InitialMoveCount\":90}}\n" +
+            "kfw-get-options ponnuki provider\nquit\n");
+        Require(evaluation.Contains("\"BoardSize\":13", StringComparison.Ordinal) &&
+                evaluation.Contains("\"InitialMoveCount\":42", StringComparison.Ordinal) &&
+                evaluation.Contains("\"maximum\":42", StringComparison.Ordinal) &&
+                evaluation.Contains("\"adjustments\":[{", StringComparison.Ordinal) &&
+                evaluation.Contains("\"BoardSize\":9,\"InitialMoveCount\":20", StringComparison.Ordinal),
+            "Tentative Ponnuki options were not evaluated dynamically and without mutation.");
 
         var lifecycle = RunEngine(
             "known_command kfw-start-app\n" +

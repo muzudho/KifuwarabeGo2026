@@ -28,7 +28,7 @@ internal sealed partial class GtpEngine
             version = OptionsProtocolVersion,
             app,
             role,
-            options = CreateOptionDescriptions(optionIds),
+            options = CreateOptionDescriptions(optionIds, _ponnukiBoardSize),
         });
     }
 
@@ -166,8 +166,8 @@ internal sealed partial class GtpEngine
                         var hasBoardSize = property.Value.ValueKind == JsonValueKind.Number
                             ? property.Value.TryGetInt32(out parsedBoardSize)
                             : property.Value.ValueKind == JsonValueKind.String && int.TryParse(property.Value.GetString(), out parsedBoardSize);
-                        if (!hasBoardSize || parsedBoardSize != 9)
-                            validationErrors.Add(new { id = property.Name, message = "Ponnuki v1 BoardSize must be 9" });
+                        if (!hasBoardSize || !IsSupportedPonnukiBoardSize(parsedBoardSize))
+                            validationErrors.Add(new { id = property.Name, message = "must be 9, 13, or 19" });
                         else
                         {
                             ponnukiBoardSize = parsedBoardSize;
@@ -176,8 +176,8 @@ internal sealed partial class GtpEngine
                         break;
                     case "initialmovecount":
                         if (property.Value.ValueKind != JsonValueKind.Number ||
-                            !property.Value.TryGetInt32(out var parsedMoveCount) || parsedMoveCount is < 0 or > 200)
-                            validationErrors.Add(new { id = property.Name, message = "must be an integer from 0 through 200" });
+                            !property.Value.TryGetInt32(out var parsedMoveCount) || parsedMoveCount < 0)
+                            validationErrors.Add(new { id = property.Name, message = "must be a non-negative integer" });
                         else
                         {
                             ponnukiInitialMoveCount = parsedMoveCount;
@@ -186,6 +186,10 @@ internal sealed partial class GtpEngine
                         break;
                 }
             }
+
+            var maximumMoveCount = GetPonnukiInitialMoveCountMaximum(ponnukiBoardSize);
+            if (ReferenceEquals(optionIds, PonnukiProviderOptionIds) && ponnukiInitialMoveCount > maximumMoveCount)
+                validationErrors.Add(new { id = "InitialMoveCount", message = $"must be an integer from 0 through {maximumMoveCount} for BoardSize {ponnukiBoardSize}" });
 
             if (validationErrors.Count > 0)
             {
@@ -218,6 +222,104 @@ internal sealed partial class GtpEngine
                 applied,
             });
             error = null;
+        }
+    }
+
+    private void ExecuteEvaluateOptions(string commandLine, string[] tokens, out string response, out string? error)
+    {
+        response = "";
+        error = null;
+        if (tokens.Length < 4 ||
+            !TryResolveOptionScope(tokens[..3], "kfw-evaluate-options", out var app, out var role, out var optionIds, out error) ||
+            !TryGetArgumentRemainder(commandLine, 3, out var json))
+        {
+            error ??= CreateOptionError("invalid-command", "usage: kfw-evaluate-options app role json");
+            return;
+        }
+
+        if (app != "ponnuki" || role != "provider")
+        {
+            error = CreateOptionError("unsupported-app-role", "option evaluation is currently supported for ponnuki provider");
+            return;
+        }
+
+        JsonDocument document;
+        try { document = JsonDocument.Parse(json); }
+        catch (JsonException ex)
+        {
+            error = CreateOptionError("invalid-json", ex.Message);
+            return;
+        }
+
+        using (document)
+        {
+            var root = document.RootElement;
+            if (root.ValueKind != JsonValueKind.Object ||
+                !root.TryGetProperty("version", out var versionElement) || !versionElement.TryGetInt32(out var version) || version != OptionsProtocolVersion ||
+                !root.TryGetProperty("values", out var valuesElement) || valuesElement.ValueKind != JsonValueKind.Object)
+            {
+                error = CreateOptionError("invalid-document", "version must be 1 and values must be an object");
+                return;
+            }
+
+            var boardSize = _ponnukiBoardSize;
+            var initialMoveCount = _ponnukiInitialMoveCount;
+            var randomSeed = _ponnukiRandomSeed;
+            var errors = new List<object>();
+            foreach (var property in valuesElement.EnumerateObject())
+            {
+                if (!optionIds.Contains(property.Name))
+                {
+                    errors.Add(new { id = property.Name, message = "option is not available for this app and role" });
+                    continue;
+                }
+
+                switch (property.Name.ToLowerInvariant())
+                {
+                    case "boardsize":
+                        var parsedBoardSize = 0;
+                        var hasBoardSize = property.Value.ValueKind == JsonValueKind.Number
+                            ? property.Value.TryGetInt32(out parsedBoardSize)
+                            : property.Value.ValueKind == JsonValueKind.String && int.TryParse(property.Value.GetString(), out parsedBoardSize);
+                        if (!hasBoardSize || !IsSupportedPonnukiBoardSize(parsedBoardSize)) errors.Add(new { id = property.Name, message = "must be 9, 13, or 19" });
+                        else boardSize = parsedBoardSize;
+                        break;
+                    case "initialmovecount":
+                        if (property.Value.ValueKind != JsonValueKind.Number || !property.Value.TryGetInt32(out var parsedCount) || parsedCount < 0)
+                            errors.Add(new { id = property.Name, message = "must be a non-negative integer" });
+                        else initialMoveCount = parsedCount;
+                        break;
+                    case "randomseed":
+                        if (property.Value.ValueKind != JsonValueKind.Number || !property.Value.TryGetInt32(out var parsedSeed) || parsedSeed < 0)
+                            errors.Add(new { id = property.Name, message = "must be a non-negative 32-bit integer" });
+                        else randomSeed = parsedSeed;
+                        break;
+                }
+            }
+
+            if (errors.Count > 0)
+            {
+                error = JsonSerializer.Serialize(new { version = OptionsProtocolVersion, code = "option-validation-failed", message = "Tentative options could not be evaluated.", errors });
+                return;
+            }
+
+            var adjustments = new List<object>();
+            var maximum = GetPonnukiInitialMoveCountMaximum(boardSize);
+            if (initialMoveCount > maximum)
+            {
+                adjustments.Add(new { id = "InitialMoveCount", from = initialMoveCount, to = maximum, reason = $"maximum for BoardSize {boardSize}" });
+                initialMoveCount = maximum;
+            }
+
+            response = JsonSerializer.Serialize(new
+            {
+                version = OptionsProtocolVersion,
+                app,
+                role,
+                values = new { BoardSize = boardSize, InitialMoveCount = initialMoveCount, RandomSeed = randomSeed },
+                options = CreateOptionDescriptions(optionIds, boardSize),
+                adjustments,
+            });
         }
     }
 
@@ -290,7 +392,7 @@ internal sealed partial class GtpEngine
         return false;
     }
 
-    private static object[] CreateOptionDescriptions(HashSet<string> optionIds)
+    private static object[] CreateOptionDescriptions(HashSet<string> optionIds, int ponnukiBoardSize)
     {
         var descriptions = new List<object>();
         if (optionIds.Contains("RandomMove")) descriptions.Add(new { id = "RandomMove", label = "RandomMove", type = "enum", @default = "ChebyshevDistanceFromStar", values = new[] { "Normal", "ChebyshevDistanceFromStar" }, apply = "immediate" });
@@ -299,10 +401,14 @@ internal sealed partial class GtpEngine
         if (optionIds.Contains("EngineTag")) descriptions.Add(new { id = "EngineTag", label = "EngineTag", type = "string", @default = "", maximumLength = MaximumOptionTextLength, apply = "immediate" });
         if (optionIds.Contains("DebugLogFile")) descriptions.Add(new { id = "DebugLogFile", label = "DebugLogFile", type = "file", @default = "", maximumLength = MaximumOptionTextLength, apply = "restart" });
         if (optionIds.Contains("ClearCache")) descriptions.Add(new { id = "ClearCache", label = "ClearCache", type = "action", apply = "immediate" });
-        if (optionIds.Contains("BoardSize")) descriptions.Add(new { id = "BoardSize", label = "BoardSize", type = "enum", @default = "9", values = new[] { "9" }, binding = "gtp.boardsize", apply = "next-start" });
-        if (optionIds.Contains("InitialMoveCount")) descriptions.Add(new { id = "InitialMoveCount", label = "InitialMoveCount", type = "integer", @default = 20, minimum = 0, maximum = 200, apply = "next-start" });
+        if (optionIds.Contains("BoardSize")) descriptions.Add(new { id = "BoardSize", label = "BoardSize", type = "enum", @default = "9", values = new[] { "9", "13", "19" }, binding = "gtp.boardsize", apply = "next-start" });
+        if (optionIds.Contains("InitialMoveCount")) descriptions.Add(new { id = "InitialMoveCount", label = "InitialMoveCount", type = "integer", @default = 20, minimum = 0, maximum = GetPonnukiInitialMoveCountMaximum(ponnukiBoardSize), apply = "next-start" });
         return descriptions.ToArray();
     }
+
+    private static bool IsSupportedPonnukiBoardSize(int boardSize) => boardSize is 9 or 13 or 19;
+
+    private static int GetPonnukiInitialMoveCountMaximum(int boardSize) => boardSize * boardSize / 4;
 
     private Dictionary<string, object?> CreateTypedOptionValues(HashSet<string> optionIds)
     {
