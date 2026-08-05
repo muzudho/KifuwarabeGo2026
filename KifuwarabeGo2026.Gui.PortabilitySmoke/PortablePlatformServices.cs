@@ -16,7 +16,8 @@ internal sealed class PortablePlatformServices :
     IDesktopLauncher,
     ITextRasterizer,
     IWindowIconService,
-    IPlatformExecutableService
+    IPlatformExecutableService,
+    IWindowScreenshotService
 {
     private static readonly byte[] TransparentPixelPng =
         Convert.FromBase64String(
@@ -93,4 +94,8 @@ internal sealed class PortablePlatformServices :
     }
 
     public string GetFileName(string baseName) => baseName;
+
+    public void SaveActiveWindow(string filePath)
+    {
+    }
 }

@@ -29,7 +29,8 @@ internal static class Program
                 new WindowsDesktopLauncher(),
                 new WindowsTextRasterizer(),
                 new WindowsWindowIconService(),
-                platformExecutableService);
+                platformExecutableService,
+                new WindowsWindowScreenshotService());
             game.Run();
         }
         catch (Exception ex)

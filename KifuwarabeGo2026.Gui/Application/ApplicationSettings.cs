@@ -36,6 +36,8 @@ public sealed class ApplicationSettings
 
     public string SgfSaveDirectory { get; set; } = "";
 
+    public string ScreenshotSaveDirectory { get; set; } = GetDefaultScreenshotSaveDirectory();
+
     public bool IsSgfAutoSaveEnabled { get; set; }
 
     public List<TournamentRules> TournamentRules { get; set; }
@@ -76,6 +78,14 @@ public sealed class ApplicationSettings
         WriteCurrent();
     }
 
+    public static void SaveScreenshotDirectory(string directory)
+    {
+        var fullPath = Path.GetFullPath(directory.Trim());
+        Directory.CreateDirectory(fullPath);
+        Current.ScreenshotSaveDirectory = fullPath;
+        WriteCurrent();
+    }
+
     private static ApplicationSettings Load()
     {
         try
@@ -87,6 +97,7 @@ public sealed class ApplicationSettings
                 {
                     settings.LogRootDirectory = Path.GetFullPath(settings.LogRootDirectory);
                     settings.SgfSaveDirectory = NormalizeOptionalDirectory(settings.SgfSaveDirectory);
+                    settings.ScreenshotSaveDirectory = NormalizeScreenshotDirectory(settings.ScreenshotSaveDirectory);
                     var releaseDefaults = new ApplicationSettings();
                     settings.TournamentRules ??= releaseDefaults.TournamentRules;
                     settings.CgosConnections ??= releaseDefaults.CgosConnections;
@@ -102,6 +113,7 @@ public sealed class ApplicationSettings
                 {
                     legacy.LogRootDirectory = Path.GetFullPath(legacy.LogRootDirectory);
                     legacy.SgfSaveDirectory = NormalizeOptionalDirectory(legacy.SgfSaveDirectory);
+                    legacy.ScreenshotSaveDirectory = NormalizeScreenshotDirectory(legacy.ScreenshotSaveDirectory);
                     var releaseDefaults = new ApplicationSettings();
                     legacy.TournamentRules = releaseDefaults.TournamentRules;
                     legacy.CgosConnections = releaseDefaults.CgosConnections;
@@ -142,6 +154,14 @@ public sealed class ApplicationSettings
 
     private static string NormalizeOptionalDirectory(string? directory) =>
         string.IsNullOrWhiteSpace(directory) ? "" : Path.GetFullPath(directory);
+
+    private static string NormalizeScreenshotDirectory(string? directory) =>
+        string.IsNullOrWhiteSpace(directory) ? GetDefaultScreenshotSaveDirectory() : Path.GetFullPath(directory);
+
+    private static string GetDefaultScreenshotSaveDirectory() => Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
+        "KifuwarabeGo2026",
+        "Screenshots");
 
     private static string GetDefaultLogRootDirectory()
     {

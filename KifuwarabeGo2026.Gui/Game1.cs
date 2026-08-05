@@ -43,6 +43,7 @@ public class Game1 : Game
     private readonly ITextRasterizer _textRasterizer;
     private readonly IWindowIconService _windowIconService;
     private readonly IPlatformExecutableService _platformExecutableService;
+    private readonly IWindowScreenshotService _windowScreenshotService;
     private readonly GoAppSession _session = new();
     private readonly TournamentRulesCatalog _tournamentRulesCatalog;
     private readonly GtpEngineCatalog _gtpEngineCatalog;
@@ -61,6 +62,7 @@ public class Game1 : Game
     private SoundEffectInstance? _upcomingMatchChimeInstance;
     private MouseState _previousMouse;
     private KeyboardState _previousKeyboard;
+    private KeyboardState _previousScreenshotKeyboard;
     private KeyboardState _previousGtpEngineKeyboard;
     private readonly TextBoxController _gtpEngineEditTextBox = new(520);
     private readonly TextBoxController _humanPlayerNameTextBox = new(80);
@@ -70,6 +72,7 @@ public class Game1 : Game
     private KeyboardState _previousCgosCredentialKeyboard;
     private readonly TextBoxController _cgosCredentialTextBox = new(240);
     private bool _isApplicationSettingsOpen;
+    private ApplicationSettingsPage _applicationSettingsPage = ApplicationSettingsPage.Log;
     private TitleMenuPage _titleMenuPage = TitleMenuPage.Home;
     private int _appProviderTabIndex;
     private readonly List<string> _guiLogFiles = new();
@@ -110,7 +113,8 @@ public class Game1 : Game
         IDesktopLauncher desktopLauncher,
         ITextRasterizer textRasterizer,
         IWindowIconService windowIconService,
-        IPlatformExecutableService platformExecutableService)
+        IPlatformExecutableService platformExecutableService,
+        IWindowScreenshotService windowScreenshotService)
     {
         _clipboardService = clipboardService;
         _messageDialogService = messageDialogService;
@@ -120,6 +124,7 @@ public class Game1 : Game
         _textRasterizer = textRasterizer;
         _windowIconService = windowIconService;
         _platformExecutableService = platformExecutableService;
+        _windowScreenshotService = windowScreenshotService;
         _cgosBlackConnectionProcess = new CgosConnectionProcess(_desktopLauncher, _platformExecutableService, "BlackPlayer");
         _cgosWhiteConnectionProcess = new CgosConnectionProcess(_desktopLauncher, _platformExecutableService, "WhitePlayer");
         _cgosAdminProcess = new CgosConnectionProcess(_desktopLauncher, _platformExecutableService, "Admin");
@@ -186,6 +191,9 @@ public class Game1 : Game
             Exit();
         }
 
+        if (acceptsInput)
+            UpdateScreenshotKeyboardInput(keyboard);
+
         if (_session.UseKind is null)
         {
             UpdateAppProviderSelectionKeyboard(keyboard);
@@ -245,6 +253,7 @@ public class Game1 : Game
         {
             _previousMouse = mouse;
             _previousKeyboard = keyboard;
+            _previousScreenshotKeyboard = keyboard;
             _previousGtpEngineKeyboard = keyboard;
             _previousHumanPlayerNameKeyboard = keyboard;
             _previousCgosConnectionKeyboard = keyboard;
@@ -433,7 +442,7 @@ public class Game1 : Game
             if (_renderer is not null)
             {
                 if (_isApplicationSettingsOpen)
-                    _renderer.DrawApplicationSettings(Mouse.GetState().Position, ApplicationSettings.Current.LogRootDirectory, ApplicationSettings.Current.SgfSaveDirectory, ApplicationSettings.FilePath, _gtpEngineCatalog.ListPath, _guiLogFiles, _selectedGuiLogIndex, _applicationSettingsMessage);
+                    _renderer.DrawApplicationSettings(Mouse.GetState().Position, _applicationSettingsPage, ApplicationSettings.Current.LogRootDirectory, ApplicationSettings.Current.SgfSaveDirectory, ApplicationSettings.Current.ScreenshotSaveDirectory, ApplicationSettings.FilePath, _gtpEngineCatalog.ListPath, _guiLogFiles, _selectedGuiLogIndex, _applicationSettingsMessage);
                 else
                     TitleRenderer.Draw(_renderer, _session, Mouse.GetState().Position, _titleMenuPage, _appProviderTabIndex);
             }
@@ -1223,6 +1232,33 @@ public class Game1 : Game
     {
         var keyboard = Keyboard.GetState();
         return keyboard.IsKeyDown(Keys.LeftShift) || keyboard.IsKeyDown(Keys.RightShift);
+    }
+
+    private void UpdateScreenshotKeyboardInput(KeyboardState keyboard)
+    {
+        var controlDown = keyboard.IsKeyDown(Keys.LeftControl) || keyboard.IsKeyDown(Keys.RightControl);
+        if (controlDown && keyboard.IsKeyDown(Keys.P) && _previousScreenshotKeyboard.IsKeyUp(Keys.P))
+            CaptureWindowScreenshot();
+
+        _previousScreenshotKeyboard = keyboard;
+    }
+
+    private void CaptureWindowScreenshot()
+    {
+        try
+        {
+            var directory = ApplicationSettings.Current.ScreenshotSaveDirectory;
+            Directory.CreateDirectory(directory);
+            var filePath = Path.Combine(directory, $"kifuwarabe-go-screenshot-{DateTime.Now:yyyyMMdd-HHmmss-fff}.png");
+            _windowScreenshotService.SaveActiveWindow(filePath);
+            _applicationSettingsMessage = "SCREENSHOT SAVED: " + Path.GetFileName(filePath);
+            GuiOperationLog.User("Captured window screenshot", filePath);
+        }
+        catch (Exception ex)
+        {
+            _applicationSettingsMessage = "SCREENSHOT ERROR: " + ex.Message;
+            ApplicationErrorLog.Write("SCREENSHOT", "Could not capture the game window.", ex);
+        }
     }
 
     private static bool IsShiftDown(KeyboardState keyboard) =>
@@ -3916,7 +3952,15 @@ public class Game1 : Game
             return;
         }
 
-        if (GoScreenRenderer.GetSettingsBrowseButtonHit(point))
+        if (GoScreenRenderer.GetSettingsTabHit(point) is { } page)
+        {
+            _applicationSettingsPage = page;
+            _applicationSettingsMessage = "";
+            GuiOperationLog.User("Changed settings tab", page.ToString());
+            return;
+        }
+
+        if (_applicationSettingsPage == ApplicationSettingsPage.Log && GoScreenRenderer.GetSettingsBrowseButtonHit(point))
         {
             GuiOperationLog.User("Pressed log folder Browse button");
             var selectedPath = _fileDialogService.SelectFolder(new FolderDialogOptions
@@ -3947,7 +3991,7 @@ public class Game1 : Game
             return;
         }
 
-        if (GoScreenRenderer.GetSettingsSgfBrowseButtonHit(point))
+        if (_applicationSettingsPage == ApplicationSettingsPage.OtherFolders && GoScreenRenderer.GetSettingsSgfBrowseButtonHit(point))
         {
             GuiOperationLog.User("Pressed SGF folder Browse button");
             var selectedPath = _fileDialogService.SelectFolder(new FolderDialogOptions
@@ -3974,19 +4018,46 @@ public class Game1 : Game
             return;
         }
 
-        if (GoScreenRenderer.GetSettingsOpenApplicationSettingsFolderButtonHit(point))
+        if (_applicationSettingsPage == ApplicationSettingsPage.OtherFolders && GoScreenRenderer.GetSettingsScreenshotBrowseButtonHit(point))
+        {
+            GuiOperationLog.User("Pressed screenshot folder Browse button");
+            var selectedPath = _fileDialogService.SelectFolder(new FolderDialogOptions
+            {
+                InitialDirectory = Directory.Exists(ApplicationSettings.Current.ScreenshotSaveDirectory)
+                    ? ApplicationSettings.Current.ScreenshotSaveDirectory
+                    : Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
+                Title = "Select the folder for window screenshots.",
+            });
+            if (selectedPath is not null)
+            {
+                try
+                {
+                    ApplicationSettings.SaveScreenshotDirectory(selectedPath);
+                    _applicationSettingsMessage = "SAVED. Ctrl + P screenshots will use this folder.";
+                    GuiOperationLog.User("Changed screenshot save folder", ApplicationSettings.Current.ScreenshotSaveDirectory);
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
+                {
+                    _applicationSettingsMessage = "ERROR: " + ex.Message;
+                    ApplicationErrorLog.Write("SETTINGS", "Could not save the screenshot folder.", ex);
+                }
+            }
+            return;
+        }
+
+        if (_applicationSettingsPage == ApplicationSettingsPage.Other && GoScreenRenderer.GetSettingsOpenApplicationSettingsFolderButtonHit(point))
         {
             OpenSettingsFolder(ApplicationSettings.FilePath, "application settings");
             return;
         }
 
-        if (GoScreenRenderer.GetSettingsOpenEngineSettingsFolderButtonHit(point))
+        if (_applicationSettingsPage == ApplicationSettingsPage.Other && GoScreenRenderer.GetSettingsOpenEngineSettingsFolderButtonHit(point))
         {
             OpenSettingsFolder(_gtpEngineCatalog.ListPath, "engine settings");
             return;
         }
 
-        if (GoScreenRenderer.GetSettingsLogItemHit(point, _guiLogFiles.Count) is { } index)
+        if (_applicationSettingsPage == ApplicationSettingsPage.Log && GoScreenRenderer.GetSettingsLogItemHit(point, _guiLogFiles.Count) is { } index)
         {
             _selectedGuiLogIndex = index;
             _applicationSettingsMessage = Path.GetFileName(_guiLogFiles[index]);
@@ -3994,7 +4065,7 @@ public class Game1 : Game
             return;
         }
 
-        if (GoScreenRenderer.GetSettingsEditButtonHit(point, _selectedGuiLogIndex >= 0))
+        if (_applicationSettingsPage == ApplicationSettingsPage.Log && GoScreenRenderer.GetSettingsEditButtonHit(point, _selectedGuiLogIndex >= 0))
         {
             var path = _guiLogFiles[_selectedGuiLogIndex];
             GuiOperationLog.User("Pressed Edit in Code button", Path.GetFileName(path));
