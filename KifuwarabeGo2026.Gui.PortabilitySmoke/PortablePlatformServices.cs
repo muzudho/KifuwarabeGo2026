@@ -46,8 +46,6 @@ internal sealed class PortablePlatformServices :
 
     public string? PromptText(TextInputDialogOptions options) => null;
 
-    public int? PromptInteger(IntegerInputDialogOptions options) => null;
-
     public void OpenTextFile(string path)
     {
     }

@@ -67,6 +67,10 @@ public class Game1 : Game
     private KeyboardState _previousScreenshotKeyboard;
     private KeyboardState _previousGtpEngineKeyboard;
     private readonly TextBoxController _gtpEngineEditTextBox = new(520);
+    private readonly TextBoxController _gtpEngineIntegerOptionTextBox = new(11);
+    private GtpEngineGuiOptionSpec? _activeGtpEngineIntegerOption;
+    private KeyboardState _previousGtpEngineIntegerKeyboard;
+    private string _gtpEngineIntegerInputMessage = "";
     private readonly TextBoxController _humanPlayerNameTextBox = new(80);
     private KeyboardState _previousHumanPlayerNameKeyboard;
     private KeyboardState _previousCgosConnectionKeyboard;
@@ -200,6 +204,14 @@ public class Game1 : Game
         if (acceptsInput)
             UpdateScreenshotKeyboardInput(keyboard);
 
+        if (acceptsInput && _activeGtpEngineIntegerOption is not null)
+        {
+            UpdateGtpEngineIntegerInputKeyboard(keyboard, gameTime);
+            UpdateMouseInput();
+            base.Update(gameTime);
+            return;
+        }
+
         if (_session.UseKind is null)
         {
             UpdateAppProviderSelectionKeyboard(keyboard);
@@ -260,6 +272,7 @@ public class Game1 : Game
             _previousMouse = mouse;
             _previousKeyboard = keyboard;
             _previousScreenshotKeyboard = keyboard;
+            _previousGtpEngineIntegerKeyboard = keyboard;
             _previousGtpEngineKeyboard = keyboard;
             _previousHumanPlayerNameKeyboard = keyboard;
             _previousCgosConnectionKeyboard = keyboard;
@@ -525,6 +538,9 @@ public class Game1 : Game
                 _renderer.DrawScreenshotCaptureEffect((float)(screenshotEffectAge / ScreenshotEffectDurationSeconds));
         }
 
+        if (_renderer is not null && _activeGtpEngineIntegerOption is { } integerOption)
+            _renderer.DrawIntegerInputDialog(Mouse.GetState().Position, integerOption.Label, _gtpEngineIntegerOptionTextBox.Text, _gtpEngineIntegerOptionTextBox.CaretIndex, _gtpEngineIntegerInputMessage);
+
         base.Draw(gameTime);
     }
 
@@ -548,6 +564,15 @@ public class Game1 : Game
         if (_previousMouse.LeftButton == ButtonState.Released && mouse.LeftButton == ButtonState.Pressed)
         {
             GuiOperationLog.User("Mouse click", $"screen={GetCurrentScreenState()} x={point.X} y={point.Y}");
+            if (_activeGtpEngineIntegerOption is not null)
+            {
+                if (GoScreenRenderer.GetIntegerInputDialogOkButtonHit(point))
+                    CommitGtpEngineIntegerInput();
+                else if (GoScreenRenderer.GetIntegerInputDialogCancelButtonHit(point))
+                    CancelGtpEngineIntegerInput();
+                _previousMouse = mouse;
+                return;
+            }
             if (TryHandleCgosMatchNotificationClick(point))
             {
                 _previousMouse = mouse;
@@ -2912,6 +2937,12 @@ public class Game1 : Game
 
     private void OnTextInput(object? sender, TextInputEventArgs e)
     {
+        if (_activeGtpEngineIntegerOption is not null)
+        {
+            if (char.IsDigit(e.Character) || (e.Character == '-' && _gtpEngineIntegerOptionTextBox.CaretIndex == 0))
+                _gtpEngineIntegerOptionTextBox.TryInputCharacter(e.Character);
+            return;
+        }
         if (!IsActive || !_inputArmed) return;
 
         // モーダル表示中の入力欄を、背後の画面に残った編集状態より優先します。
@@ -3911,16 +3942,52 @@ public class Game1 : Game
 
     private void EditGtpEngineSpinOption(GtpEngineGuiOptionSpec option)
     {
-        _ = int.TryParse(_session.GetGtpEngineGuiOptionDraft(option), out var current);
-        var value = _textInputDialogService.PromptInteger(new IntegerInputDialogOptions
+        _activeGtpEngineIntegerOption = option;
+        _gtpEngineIntegerOptionTextBox.Begin(_session.GetGtpEngineGuiOptionDraft(option));
+        _previousGtpEngineIntegerKeyboard = Keyboard.GetState();
+        _gtpEngineIntegerInputMessage = $"RANGE  {option.Min ?? int.MinValue} .. {option.Max ?? int.MaxValue}";
+    }
+
+    private void UpdateGtpEngineIntegerInputKeyboard(KeyboardState keyboard, GameTime gameTime)
+    {
+        var action = _gtpEngineIntegerOptionTextBox.HandleKeyboard(
+            keyboard,
+            _previousGtpEngineIntegerKeyboard,
+            gameTime,
+            _clipboardService,
+            pasteCharacterFilter: character => char.IsDigit(character) || character == '-');
+        if (action == TextBoxKeyboardAction.Commit)
+            CommitGtpEngineIntegerInput();
+        else if (action == TextBoxKeyboardAction.Cancel)
+            CancelGtpEngineIntegerInput();
+        _previousGtpEngineIntegerKeyboard = keyboard;
+    }
+
+    private void CommitGtpEngineIntegerInput()
+    {
+        if (_activeGtpEngineIntegerOption is not { } option)
+            return;
+        if (!int.TryParse(_gtpEngineIntegerOptionTextBox.Text, out var value))
         {
-            InitialValue = current,
-            Minimum = option.Min ?? int.MinValue,
-            Maximum = option.Max ?? int.MaxValue,
-            Title = option.Label,
-        });
-        if (value is not null)
-            _session.SetGtpEngineGuiOptionDraft(option, value.Value.ToString());
+            _gtpEngineIntegerInputMessage = "ENTER A VALID INTEGER";
+            return;
+        }
+        var minimum = option.Min ?? int.MinValue;
+        var maximum = option.Max ?? int.MaxValue;
+        if (value < minimum || value > maximum)
+        {
+            _gtpEngineIntegerInputMessage = $"OUT OF RANGE  {minimum} .. {maximum}";
+            return;
+        }
+        _session.SetGtpEngineGuiOptionDraft(option, value.ToString());
+        CancelGtpEngineIntegerInput();
+    }
+
+    private void CancelGtpEngineIntegerInput()
+    {
+        _activeGtpEngineIntegerOption = null;
+        _gtpEngineIntegerOptionTextBox.Clear();
+        _gtpEngineIntegerInputMessage = "";
     }
 
     private void BrowseGtpEngineFilenameOption(GtpEngineGuiOptionSpec option)

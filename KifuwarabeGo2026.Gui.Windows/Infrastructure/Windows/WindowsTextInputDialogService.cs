@@ -4,7 +4,7 @@ using KifuwarabeGo2026.Gui.Application;
 using System;
 
 /// <summary>
-/// WinForms を使って Windows の文字列・整数入力ダイアログを表示します。
+/// WinForms を使って Windows の文字列入力ダイアログを表示します。
 /// </summary>
 public sealed class WindowsTextInputDialogService : ITextInputDialogService
 {
@@ -31,37 +31,6 @@ public sealed class WindowsTextInputDialogService : ITextInputDialogService
 
         return dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK
             ? textBox.Text
-            : null;
-    }
-
-    public int? PromptInteger(IntegerInputDialogOptions options)
-    {
-        ArgumentNullException.ThrowIfNull(options);
-        if (options.Minimum > options.Maximum)
-            throw new ArgumentException("Minimum cannot be greater than Maximum.", nameof(options));
-
-        using var dialog = CreateDialog(options.Title);
-        using var numberBox = new System.Windows.Forms.NumericUpDown
-        {
-            Left = 20,
-            Top = 20,
-            Width = 580,
-            DecimalPlaces = 0,
-            Minimum = options.Minimum,
-            Maximum = options.Maximum,
-            Value = Math.Clamp(options.InitialValue, options.Minimum, options.Maximum),
-            ThousandsSeparator = false,
-        };
-        using var cancelButton = CreateCancelButton();
-        using var okButton = CreateOkButton();
-
-        dialog.AcceptButton = okButton;
-        dialog.CancelButton = cancelButton;
-        dialog.Controls.AddRange([numberBox, cancelButton, okButton]);
-        numberBox.Select(0, numberBox.Text.Length);
-
-        return dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK
-            ? decimal.ToInt32(numberBox.Value)
             : null;
     }
 
