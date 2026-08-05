@@ -116,6 +116,19 @@ public sealed partial class GoScreenRenderer
             0.50f);
     }
 
+    private void DrawAgehamaSummaryComponent(Rectangle bounds, int blackAgehama, int whiteAgehama)
+    {
+        DrawAgehamaSummaryRow(new Rectangle(bounds.X, bounds.Y, bounds.Width, 60), "BLACK CAPTURES", blackAgehama, capturedBlack: false);
+        DrawAgehamaSummaryRow(new Rectangle(bounds.X, bounds.Y + 68, bounds.Width, 60), "WHITE CAPTURES", whiteAgehama, capturedBlack: true);
+    }
+
+    private void DrawAgehamaSummaryRow(Rectangle bounds, string label, int agehama, bool capturedBlack)
+    {
+        DrawDataRowFrame(bounds);
+        DrawFittedText(label, new Rectangle(bounds.X + 20, bounds.Y + 13, bounds.Width - 190, 34), new Color(204, 211, 206), 0.38f);
+        DrawAgehamaPlate(new Rectangle(bounds.Right - 144, bounds.Y + 10, 126, 40), agehama, capturedBlack);
+    }
+
     private static Rectangle PlayerEngineErrorBounds(Rectangle playerBounds) =>
         new(playerBounds.Right - 190, playerBounds.Y + 48, 172, 30);
 }

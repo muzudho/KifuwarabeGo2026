@@ -1076,7 +1076,7 @@ public class Game1 : Game
             MoveInformationDisplayMode? localInformationMode = _session.CurrentMode.Kind switch
             {
                 GoAppModeKind.Playing => GoScreenRenderer.GetLocalMoveInformationDisplayModeButtonHit(point),
-                GoAppModeKind.GameOver => GoScreenRenderer.GetLocalGameOverMoveInformationDisplayModeButtonHit(point),
+                GoAppModeKind.GameOver => GoScreenRenderer.GetLocalGameOverMoveInformationDisplayModeButtonHit(point, _session),
                 _ => null,
             };
             if (localInformationMode is { } selectedLocalInformationMode)
@@ -1090,7 +1090,7 @@ public class Game1 : Game
             MoveTrendDisplayMode? localTrendMode = _session.CurrentMode.Kind switch
             {
                 GoAppModeKind.Playing => GoScreenRenderer.GetLocalTrendDisplayModeButtonHit(point, _session.MoveTrendDisplayMode),
-                GoAppModeKind.GameOver => GoScreenRenderer.GetLocalGameOverTrendDisplayModeButtonHit(point, _session.MoveTrendDisplayMode),
+                GoAppModeKind.GameOver => GoScreenRenderer.GetLocalGameOverTrendDisplayModeButtonHit(point, _session, _session.MoveTrendDisplayMode),
                 _ => null,
             };
             if (localTrendMode is { } selectedLocalTrendMode)

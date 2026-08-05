@@ -448,6 +448,12 @@ public sealed partial class GoScreenRenderer
 
         DrawLocalGameOverTrendChart(session, mousePoint);
 
+        if (session.UseKind == GoAppUseKind.LocalApps)
+        {
+            DrawVerticalResultSection(new Rectangle(1144, 668, 668, 174), "AGEHAMA", new Color(112, 76, 48));
+            DrawAgehamaSummaryComponent(new Rectangle(1164, 692, 628, 132), session.BlackAgehama, session.WhiteAgehama);
+        }
+
         var actionSection = new Rectangle(1144, 854, 668, 126);
         DrawVerticalResultSection(actionSection, "ACTION", new Color(91, 82, 105));
         DrawCommandButton(LocalGameOverReviewButtonBounds, "KIFU REVIEW", false, mousePoint, scale: 0.36f);
