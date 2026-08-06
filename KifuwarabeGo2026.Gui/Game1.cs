@@ -3589,8 +3589,7 @@ public class Game1 : Game
 
         if (GoScreenRenderer.GetGtpEngineSelectionDialogListItemHit(point, _session) is { } index)
         {
-            if (_session.CanSelectGtpEngineForCurrentApp(index))
-                _session.SelectGtpEngineDialogItem(index);
+            _session.SelectGtpEngineDialogItem(index);
             return true;
         }
 
