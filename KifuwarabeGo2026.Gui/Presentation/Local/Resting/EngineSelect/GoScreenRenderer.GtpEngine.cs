@@ -596,11 +596,42 @@ public sealed partial class GoScreenRenderer
         FillRect(bounds, inUse ? new Color(38, 103, 86) : hovered ? new Color(43, 52, 62) : enabled ? new Color(24, 31, 37) : new Color(27, 28, 31));
         DrawRect(bounds, inspected ? 2 : 1, inspected ? new Color(125, 225, 255) : inUse ? new Color(147, 244, 200) : enabled ? new Color(70, 85, 94) : new Color(75, 63, 65));
         DrawText($"{index + 1:00}", new Vector2(bounds.X + 14, bounds.Y + 16), inUse ? new Color(177, 255, 215) : new Color(180, 195, 195), 0.4f);
+        if (inspected)
+            DrawSelectionFingerMark(new Vector2(bounds.X - 55, bounds.Center.Y - 13), 1.65f);
         var nameWidth = inUse ? bounds.Width - 172 : bounds.Width - 82;
         DrawFittedText(profile.DisplayName, new Rectangle(bounds.X + 62, bounds.Y + 6, nameWidth, 30), enabled ? Color.White : new Color(145, 145, 145), 0.5f);
         if (inUse)
             DrawText("IN USE", new Vector2(bounds.Right - 82, bounds.Y + 12), new Color(177, 255, 215), 0.27f);
         DrawFittedText(compatibility.Message, new Rectangle(bounds.X + 62, bounds.Y + 39, bounds.Width - 82, 24), enabled ? new Color(99, 223, 185) : new Color(255, 145, 151), 0.29f);
+    }
+
+    private void DrawSelectionFingerMark(Vector2 origin, float scale)
+    {
+        var color = new Color(125, 225, 255);
+        var thickness = 2f * scale;
+        var points = new[]
+        {
+            origin + new Vector2(0, 2) * scale,
+            origin + new Vector2(5, 2) * scale,
+            origin + new Vector2(7, -3) * scale,
+            origin + new Vector2(9, -3) * scale,
+            origin + new Vector2(10, 0) * scale,
+            origin + new Vector2(21, 0) * scale,
+            origin + new Vector2(24, 3) * scale,
+            origin + new Vector2(21, 6) * scale,
+            origin + new Vector2(12, 6) * scale,
+            origin + new Vector2(15, 9) * scale,
+            origin + new Vector2(13, 12) * scale,
+            origin + new Vector2(10, 10) * scale,
+            origin + new Vector2(11, 14) * scale,
+            origin + new Vector2(8, 16) * scale,
+            origin + new Vector2(5, 12) * scale,
+            origin + new Vector2(0, 10) * scale,
+            origin + new Vector2(0, 2) * scale,
+        };
+
+        for (var i = 1; i < points.Length; i++)
+            DrawLine(points[i - 1], points[i], thickness, color);
     }
 
 
