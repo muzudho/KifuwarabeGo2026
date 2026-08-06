@@ -1109,7 +1109,8 @@ public sealed partial class GoScreenRenderer
             samplerState: SamplerState.LinearClamp,
             transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));
 
-        var bounds = new Rectangle(610, 48, 700, 92);
+        var showRectangleLensGuide = string.Equals(lensName, "REN RECTANGLE LENS", StringComparison.Ordinal);
+        var bounds = new Rectangle(610, 48, 700, showRectangleLensGuide ? 122 : 92);
         var shadowAlpha = (int)(150f * opacity);
         var panelAlpha = (int)(235f * opacity);
         var textAlpha = (int)(255f * opacity);
@@ -1136,6 +1137,18 @@ public sealed partial class GoScreenRenderer
             new Vector2(bounds.Center.X - size.X / 2f, bounds.Y + 43),
             new Color(235, 251, 255, textAlpha),
             scale);
+
+        if (showRectangleLensGuide)
+        {
+            const string guide = "[L] Graph    [2] Liberty";
+            var guideScale = 0.30f;
+            var guideSize = _font.MeasureString(guide) * guideScale;
+            DrawText(
+                guide,
+                new Vector2(bounds.Center.X - guideSize.X / 2f, bounds.Y + 82),
+                new Color(255, 220, 128, textAlpha),
+                guideScale);
+        }
 
         _spriteBatch.End();
     }

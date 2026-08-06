@@ -357,8 +357,8 @@ public sealed partial class GoScreenRenderer
 
     private void DrawRenRepresentativeNumbersWithLiberties(GoRenParseResult renParse, Vector2 start, float cell)
     {
-        var indexScale = MathHelper.Clamp(cell / 82f, 0.24f, 0.72f);
-        var libertyScale = MathHelper.Clamp(cell / 112f, 0.20f, 0.52f);
+        var indexScale = MathHelper.Clamp(cell / 120f, 0.18f, 0.46f);
+        var libertyScale = MathHelper.Clamp(cell / 68f, 0.34f, 0.80f);
         var drawn = new bool[renParse.Count + 1];
         for (var y = 0; y < renParse.Size; y++)
         {
@@ -383,7 +383,7 @@ public sealed partial class GoScreenRenderer
                     new Color(0, 177, 238),
                     indexScale);
                 DrawCenteredText(
-                    $"LIB {CountRenLiberties(renParse, ren)}",
+                    CountRenLiberties(renParse, ren).ToString(),
                     center + new Vector2(0f, cell * 0.20f),
                     new Color(126, 255, 188),
                     libertyScale);
