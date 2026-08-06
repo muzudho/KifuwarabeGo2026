@@ -335,7 +335,7 @@ public class Game1 : Game
 
         if (_session.IsReviewChartPopupOpen &&
             _session.CurrentMode.Kind != GoAppModeKind.Reviewing &&
-            IsNewGlobalKeyPress(keyboard, Keys.Escape))
+            (IsNewGlobalKeyPress(keyboard, Keys.Enter) || IsNewGlobalKeyPress(keyboard, Keys.Escape)))
         {
             _session.CloseReviewChartPopup();
             ResetReadOnlyChartPopupDoubleClick();
@@ -397,7 +397,8 @@ public class Game1 : Game
     {
         if (!IsActive || !_inputArmed) return;
 
-        if (_session.IsReviewChartPopupOpen && IsNewGlobalKeyPress(keyboard, Keys.Escape))
+        if (_session.IsReviewChartPopupOpen &&
+            (IsNewGlobalKeyPress(keyboard, Keys.Enter) || IsNewGlobalKeyPress(keyboard, Keys.Escape)))
         {
             _session.CloseReviewChartPopup();
             ResetReadOnlyChartPopupDoubleClick();
@@ -422,7 +423,8 @@ public class Game1 : Game
 
     private bool TryHandleReviewKeyboardInput(KeyboardState keyboard)
     {
-        if (_session.IsReviewChartPopupOpen && IsNewGlobalKeyPress(keyboard, Keys.Escape))
+        if (_session.IsReviewChartPopupOpen &&
+            (IsNewGlobalKeyPress(keyboard, Keys.Enter) || IsNewGlobalKeyPress(keyboard, Keys.Escape)))
         {
             _session.CloseReviewChartPopup();
             _reviewPopupSeekDragging = false;

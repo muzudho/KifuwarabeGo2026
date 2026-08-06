@@ -229,7 +229,7 @@ public sealed partial class GoScreenRenderer
             session.ReviewMoveCount,
             mousePoint,
             ReviewChartPopupStepButtonBounds);
-        DrawFittedText("KEYS  HOME/END: FIRST/LAST   ARROWS: -/+1,10   PGDN/PGUP: -/+50", new Rectangle(1168, 950, 624, 24), new Color(147, 201, 190), 0.23f);
+        DrawFittedText("[L] BOARD LENS    HOME/END    ARROWS: -/+1,10    PGDN/PGUP: -/+50", new Rectangle(1168, 950, 624, 24), new Color(147, 201, 190), 0.23f);
 
     }
 
