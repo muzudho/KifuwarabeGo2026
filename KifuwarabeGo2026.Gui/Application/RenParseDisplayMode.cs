@@ -5,6 +5,7 @@ public enum RenParseDisplayMode
     Off,
     Overlay,
     Graph,
+    LibertyNumber,
     GraphStep2,
     Eye,
 }

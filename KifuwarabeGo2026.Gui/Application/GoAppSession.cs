@@ -326,6 +326,7 @@ public sealed class GoAppSession
         RenParseDisplayMode.Off => "BOARD LENS OFF",
         RenParseDisplayMode.Overlay => "REN INDEX LENS",
         RenParseDisplayMode.Graph => "REN RECTANGLE LENS",
+        RenParseDisplayMode.LibertyNumber => "LIBERTY NUMBER LENS",
         RenParseDisplayMode.GraphStep2 => "REN GRAPH LENS - BASIC",
         RenParseDisplayMode.Eye => "REN GRAPH LENS - EYE MODE",
         _ => RenParseDisplayMode.ToString().ToUpperInvariant(),
@@ -1148,9 +1149,19 @@ public sealed class GoAppSession
             RenParseDisplayMode.Off => RenParseDisplayMode.Overlay,
             RenParseDisplayMode.Overlay => RenParseDisplayMode.Graph,
             RenParseDisplayMode.Graph => RenParseDisplayMode.GraphStep2,
+            RenParseDisplayMode.LibertyNumber => RenParseDisplayMode.GraphStep2,
             RenParseDisplayMode.GraphStep2 => RenParseDisplayMode.Eye,
             _ => RenParseDisplayMode.Off,
         };
+    }
+
+    public bool TryActivateLibertyNumberLens()
+    {
+        if (RenParseDisplayMode != RenParseDisplayMode.Graph)
+            return false;
+
+        RenParseDisplayMode = RenParseDisplayMode.LibertyNumber;
+        return true;
     }
 
     public GoRenParseResult ParseRens()

@@ -382,6 +382,10 @@ public class Game1 : Game
         {
             ToggleBoardLens();
         }
+        else if (CanHandleGlobalRenParseToggle() && IsNewLibertyNumberLensKeyPress(keyboard))
+        {
+            TryActivateLibertyNumberLens();
+        }
 
         _previousKeyboard = keyboard;
     }
@@ -404,12 +408,17 @@ public class Game1 : Game
         var canToggle = _session.CgosConnectionFlowKind is CgosConnectionFlowKind.Watching or CgosConnectionFlowKind.Result;
         if (canToggle && keyboard.IsKeyDown(Keys.L) && _previousKeyboard.IsKeyUp(Keys.L))
             ToggleBoardLens();
+        else if (canToggle && IsNewLibertyNumberLensKeyPress(keyboard))
+            TryActivateLibertyNumberLens();
 
         _previousKeyboard = keyboard;
     }
 
     private bool IsNewGlobalKeyPress(KeyboardState keyboard, Keys key) =>
         keyboard.IsKeyDown(key) && _previousKeyboard.IsKeyUp(key);
+
+    private bool IsNewLibertyNumberLensKeyPress(KeyboardState keyboard) =>
+        IsNewGlobalKeyPress(keyboard, Keys.D2) || IsNewGlobalKeyPress(keyboard, Keys.NumPad2);
 
     private bool TryHandleReviewKeyboardInput(KeyboardState keyboard)
     {
@@ -520,6 +529,12 @@ public class Game1 : Game
     {
         _session.ToggleRenParseDisplay();
         _boardLensBannerStartedAt = _inputClockSeconds;
+    }
+
+    private void TryActivateLibertyNumberLens()
+    {
+        if (_session.TryActivateLibertyNumberLens())
+            _boardLensBannerStartedAt = _inputClockSeconds;
     }
 
     protected override void Draw(GameTime gameTime)

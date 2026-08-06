@@ -23,12 +23,15 @@ public sealed partial class GoScreenRenderer
         Vector2 start,
         float cell)
     {
-        if (displayMode == RenParseDisplayMode.Graph)
+        if (displayMode is RenParseDisplayMode.Graph or RenParseDisplayMode.LibertyNumber)
         {
             var renParse = parseRens();
             DrawRenGraphCells(boardSize, getStone, start, cell);
             DrawRenBoundaries(renParse, start, cell);
-            DrawRenRepresentativeNumbers(renParse, start, cell);
+            if (displayMode == RenParseDisplayMode.LibertyNumber)
+                DrawRenRepresentativeNumbersWithLiberties(renParse, start, cell);
+            else
+                DrawRenRepresentativeNumbers(renParse, start, cell);
             return;
         }
 
@@ -348,6 +351,67 @@ public sealed partial class GoScreenRenderer
                 var center = BoardPoint(start, cell, x, y);
                 DrawCenteredText(renNumber.ToString(), center, new Color(0, 177, 238), scale);
             }
+        }
+    }
+
+
+    private void DrawRenRepresentativeNumbersWithLiberties(GoRenParseResult renParse, Vector2 start, float cell)
+    {
+        var indexScale = MathHelper.Clamp(cell / 82f, 0.24f, 0.72f);
+        var libertyScale = MathHelper.Clamp(cell / 112f, 0.20f, 0.52f);
+        var drawn = new bool[renParse.Count + 1];
+        for (var y = 0; y < renParse.Size; y++)
+        {
+            for (var x = 0; x < renParse.Size; x++)
+            {
+                var renNumber = renParse.GetRenNumber(x, y);
+                if (drawn[renNumber])
+                    continue;
+
+                drawn[renNumber] = true;
+                var ren = renParse.GetRen(renNumber);
+                var center = BoardPoint(start, cell, x, y);
+                if (ren.Stone == GoStone.Empty)
+                {
+                    DrawCenteredText(renNumber.ToString(), center, new Color(0, 177, 238), indexScale);
+                    continue;
+                }
+
+                DrawCenteredText(
+                    renNumber.ToString(),
+                    center - new Vector2(0f, cell * 0.14f),
+                    new Color(0, 177, 238),
+                    indexScale);
+                DrawCenteredText(
+                    $"LIB {CountRenLiberties(renParse, ren)}",
+                    center + new Vector2(0f, cell * 0.20f),
+                    new Color(126, 255, 188),
+                    libertyScale);
+            }
+        }
+    }
+
+
+    private static int CountRenLiberties(GoRenParseResult renParse, GoRen ren)
+    {
+        var liberties = new HashSet<GoPoint>();
+        foreach (var point in ren.Points)
+        {
+            AddLiberty(point.X - 1, point.Y);
+            AddLiberty(point.X + 1, point.Y);
+            AddLiberty(point.X, point.Y - 1);
+            AddLiberty(point.X, point.Y + 1);
+        }
+
+        return liberties.Count;
+
+        void AddLiberty(int x, int y)
+        {
+            if (x < 0 || x >= renParse.Size || y < 0 || y >= renParse.Size)
+                return;
+
+            if (renParse.GetRen(renParse.GetRenNumber(x, y)).Stone == GoStone.Empty)
+                liberties.Add(new GoPoint(x, y));
         }
     }
 
