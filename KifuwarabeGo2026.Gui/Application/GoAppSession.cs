@@ -321,6 +321,16 @@ public sealed class GoAppSession
 
     public bool IsRenParseDisplayEnabled => RenParseDisplayMode != RenParseDisplayMode.Off;
 
+    public string BoardLensDisplayName => RenParseDisplayMode switch
+    {
+        RenParseDisplayMode.Off => "BOARD LENS OFF",
+        RenParseDisplayMode.Overlay => "REN INDEX LENS",
+        RenParseDisplayMode.Graph => "REN RECTANGLE LENS",
+        RenParseDisplayMode.GraphStep2 => "REN GRAPH LENS - BASIC",
+        RenParseDisplayMode.Eye => "REN GRAPH LENS - EYE MODE",
+        _ => RenParseDisplayMode.ToString().ToUpperInvariant(),
+    };
+
     public GoPlayerKind BlackPlayerKind { get; private set; } = GoPlayerKind.Human;
 
     public GoPlayerKind WhitePlayerKind { get; private set; } = GoPlayerKind.Computer;

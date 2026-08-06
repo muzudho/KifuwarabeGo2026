@@ -222,7 +222,7 @@ public sealed partial class GoScreenRenderer
         DrawVerticalResultSection(new Rectangle(1144, 850, 668, 142), "REVIEW", new Color(76, 91, 126));
         DrawResultLabel(
             new Rectangle(1164, 858, 628, 36),
-            $"STEP {session.ReviewMoveIndex} / {session.ReviewMoveCount}   DISPLAY {FormatRenParseDisplayMode(session.RenParseDisplayMode)}",
+            $"STEP {session.ReviewMoveIndex} / {session.ReviewMoveCount}   {session.BoardLensDisplayName}",
             new Color(76, 91, 126));
         DrawMoveNavigationButtons(
             session.ReviewMoveIndex,
@@ -390,17 +390,6 @@ public sealed partial class GoScreenRenderer
 
 
     private static Rectangle ReviewBackToRestButtonBounds => new(1480, 120, 156, 52);
-
-
-    private static string FormatRenParseDisplayMode(RenParseDisplayMode mode) => mode switch
-    {
-        RenParseDisplayMode.Off => "OFF",
-        RenParseDisplayMode.Overlay => "REN NUMBER",
-        RenParseDisplayMode.Graph => "REN RECT",
-        RenParseDisplayMode.GraphStep2 => "REN GRAPH",
-        RenParseDisplayMode.Eye => "EYE",
-        _ => mode.ToString().ToUpperInvariant(),
-    };
 
 
     private void DrawBoardEditingHoverStone(GoAppSession session, Point mousePoint, float cell)

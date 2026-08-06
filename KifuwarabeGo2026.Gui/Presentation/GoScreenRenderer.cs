@@ -1100,6 +1100,45 @@ public sealed partial class GoScreenRenderer
             DrawDynamicOptionText(label, new Rectangle(bounds.X + 10, bounds.Y + 5, bounds.Width - 20, bounds.Height - 10), textColor, scale);
         }
     }
+
+    public void DrawBoardLensBanner(string lensName, float opacity)
+    {
+        opacity = Math.Clamp(opacity, 0f, 1f);
+        _spriteBatch.Begin(
+            blendState: BlendState.AlphaBlend,
+            samplerState: SamplerState.LinearClamp,
+            transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));
+
+        var bounds = new Rectangle(610, 48, 700, 92);
+        var shadowAlpha = (int)(150f * opacity);
+        var panelAlpha = (int)(235f * opacity);
+        var textAlpha = (int)(255f * opacity);
+
+        FillRect(new Rectangle(bounds.X + 8, bounds.Y + 10, bounds.Width, bounds.Height), new Color(0, 0, 0, shadowAlpha));
+        FillRect(bounds, new Color(13, 24, 31, panelAlpha));
+        DrawRect(bounds, 2, new Color(125, 225, 255, textAlpha));
+        FillRect(new Rectangle(bounds.X, bounds.Y, bounds.Width, 4), new Color(125, 225, 255, textAlpha));
+
+        const string heading = "BOARD LENS  [L]";
+        var headingScale = 0.28f;
+        var headingSize = _font.MeasureString(heading) * headingScale;
+        DrawText(
+            heading,
+            new Vector2(bounds.Center.X - headingSize.X / 2f, bounds.Y + 12),
+            new Color(159, 215, 225, textAlpha),
+            headingScale);
+
+        var measured = _font.MeasureString(lensName);
+        var scale = MathF.Min(0.58f, (bounds.Width - 48f) / Math.Max(1f, measured.X));
+        var size = measured * scale;
+        DrawText(
+            lensName,
+            new Vector2(bounds.Center.X - size.X / 2f, bounds.Y + 43),
+            new Color(235, 251, 255, textAlpha),
+            scale);
+
+        _spriteBatch.End();
+    }
     private void DrawPathTooltip(Rectangle bounds, string fullPath, Point mousePoint)
     {
         FillRect(new Rectangle(bounds.X + 8, bounds.Y + 10, bounds.Width, bounds.Height), new Color(0, 0, 0, 150));

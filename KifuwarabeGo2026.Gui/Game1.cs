@@ -91,6 +91,7 @@ public class Game1 : Game
     private int _cgosMatchNotificationGameId;
     private double _inputClockSeconds;
     private double _screenshotEffectStartedAt = double.NegativeInfinity;
+    private double _boardLensBannerStartedAt = double.NegativeInfinity;
     private Keys? _reviewRepeatKey;
     private double _reviewKeyboardNextRepeatAt;
     private int? _reviewMouseRepeatCommand;
@@ -120,6 +121,7 @@ public class Game1 : Game
     private const double ReviewPopupDoubleClickSeconds = 0.36d;
     private const int ReviewPopupDoubleClickDistance = 18;
     private const double ScreenshotEffectDurationSeconds = 0.42d;
+    private const double BoardLensBannerDurationSeconds = 2.2d;
 
     public Game1(
         IClipboardService clipboardService,
@@ -376,9 +378,9 @@ public class Game1 : Game
             }
         }
 
-        if (CanHandleGlobalRenParseToggle() && keyboard.IsKeyDown(Keys.R) && _previousKeyboard.IsKeyUp(Keys.R))
+        if (CanHandleGlobalRenParseToggle() && keyboard.IsKeyDown(Keys.L) && _previousKeyboard.IsKeyUp(Keys.L))
         {
-            _session.ToggleRenParseDisplay();
+            ToggleBoardLens();
         }
 
         _previousKeyboard = keyboard;
@@ -400,8 +402,8 @@ public class Game1 : Game
         }
 
         var canToggle = _session.CgosConnectionFlowKind is CgosConnectionFlowKind.Watching or CgosConnectionFlowKind.Result;
-        if (canToggle && keyboard.IsKeyDown(Keys.R) && _previousKeyboard.IsKeyUp(Keys.R))
-            _session.ToggleRenParseDisplay();
+        if (canToggle && keyboard.IsKeyDown(Keys.L) && _previousKeyboard.IsKeyUp(Keys.L))
+            ToggleBoardLens();
 
         _previousKeyboard = keyboard;
     }
@@ -514,6 +516,12 @@ public class Game1 : Game
         _session.ActiveGtpEngineEditField is null &&
         !_session.IsTournamentRulesDisplayNameEditing;
 
+    private void ToggleBoardLens()
+    {
+        _session.ToggleRenParseDisplay();
+        _boardLensBannerStartedAt = _inputClockSeconds;
+    }
+
     protected override void Draw(GameTime gameTime)
     {
         GraphicsDevice.Clear(new Color(11, 13, 18));
@@ -594,6 +602,15 @@ public class Game1 : Game
 
         if (_renderer is not null)
         {
+            var boardLensBannerAge = _inputClockSeconds - _boardLensBannerStartedAt;
+            if (boardLensBannerAge >= 0d && boardLensBannerAge < BoardLensBannerDurationSeconds)
+            {
+                var fade = boardLensBannerAge < 0.12d
+                    ? boardLensBannerAge / 0.12d
+                    : Math.Clamp((BoardLensBannerDurationSeconds - boardLensBannerAge) / 0.35d, 0d, 1d);
+                _renderer.DrawBoardLensBanner(_session.BoardLensDisplayName, (float)fade);
+            }
+
             var screenshotEffectAge = _inputClockSeconds - _screenshotEffectStartedAt;
             if (screenshotEffectAge >= 0d && screenshotEffectAge < ScreenshotEffectDurationSeconds)
                 _renderer.DrawScreenshotCaptureEffect((float)(screenshotEffectAge / ScreenshotEffectDurationSeconds));
