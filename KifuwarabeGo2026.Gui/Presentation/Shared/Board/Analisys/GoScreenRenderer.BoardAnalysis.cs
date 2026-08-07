@@ -426,14 +426,28 @@ public sealed partial class GoScreenRenderer
                 AddContact(point, point.X, point.Y + 1);
             }
 
-            if (showsAdjacentArea)
-            {
-                foreach (var adjacentRenNumber in adjacentRenNumbers)
-                    DrawAdjacentRenHighlight(renParse.GetRen(adjacentRenNumber), accent, start, cell);
-            }
-
             var legThickness = MathHelper.Clamp(cell * 0.035f, 2f, 4f);
             var legColor = RenGraphCellColor(ren.Stone);
+            if (showsAdjacentArea)
+            {
+                DrawAdjacentRenRelationships(
+                    renParse,
+                    contacts,
+                    adjacentRenNumbers,
+                    legColor,
+                    legThickness,
+                    start,
+                    cell);
+                DrawRenMetricNumber(
+                    ren,
+                    SumAdjacentRenAreas(renParse, adjacentRenNumbers),
+                    RenMetricUnit.PointCount,
+                    accent,
+                    start,
+                    cell);
+                continue;
+            }
+
             var originalMarkerRadius = MathHelper.Clamp(cell * 0.13f, 5f, 11f);
             var originalOuterMarkerRadius = originalMarkerRadius + 4f;
             var markerRadius = Math.Max(2f, originalMarkerRadius - legThickness);
@@ -471,9 +485,7 @@ public sealed partial class GoScreenRenderer
                 DrawCircle(marker.Value, markerRadius, RenGraphCellColor(targetStone));
             }
 
-            var value = showsAdjacentArea
-                ? SumAdjacentRenAreas(renParse, adjacentRenNumbers)
-                : boundaryPoints.Count;
+            var value = boundaryPoints.Count;
             var valueColor = displayMode == RenParseDisplayMode.BoundaryCount
                 ? RenGraphCellColor(ren.Stone)
                 : displayMode == RenParseDisplayMode.BoundaryEmptyCount
@@ -523,21 +535,71 @@ public sealed partial class GoScreenRenderer
     }
 
 
-    private void DrawAdjacentRenHighlight(GoRen ren, Color accent, Vector2 start, float cell)
+    private void DrawAdjacentRenRelationships(
+        GoRenParseResult renParse,
+        List<(GoPoint From, GoPoint To)> contacts,
+        HashSet<int> adjacentRenNumbers,
+        Color legColor,
+        float legThickness,
+        Vector2 start,
+        float cell)
     {
-        var inset = Math.Max(4, (int)MathF.Round(cell * 0.16f));
-        var size = Math.Max(6, (int)MathF.Round(cell) - (inset * 2));
-        foreach (var point in ren.Points)
+        var originalMarkerRadius = MathHelper.Clamp(cell * 0.13f, 5f, 11f);
+        var innerHalfSize = Math.Max(2, (int)MathF.Round(originalMarkerRadius - legThickness));
+        var outerHalfSize = Math.Max(innerHalfSize + 2, (int)MathF.Round(originalMarkerRadius + 3f - legThickness));
+        var sortedRenNumbers = new List<int>(adjacentRenNumbers);
+        sortedRenNumbers.Sort();
+        foreach (var adjacentRenNumber in sortedRenNumbers)
         {
-            var center = BoardPoint(start, cell, point.X, point.Y);
-            var bounds = new Rectangle(
-                (int)MathF.Round(center.X - (cell * 0.5f)) + inset,
-                (int)MathF.Round(center.Y - (cell * 0.5f)) + inset,
-                size,
-                size);
-            FillRect(bounds, new Color((int)accent.R, accent.G, accent.B, 72));
-            DrawRect(bounds, 2, new Color((int)accent.R, accent.G, accent.B, 210));
+            var targetRen = renParse.GetRen(adjacentRenNumber);
+            var selectedContact = FindFirstContact(adjacentRenNumber);
+            var sourceCenter = BoardPoint(start, cell, selectedContact.From.X, selectedContact.From.Y);
+            var boundaryCenter = BoardPoint(start, cell, selectedContact.To.X, selectedContact.To.Y);
+            var sourceDirection = new Vector2(
+                selectedContact.From.X - selectedContact.To.X,
+                selectedContact.From.Y - selectedContact.To.Y);
+            sourceDirection.Normalize();
+            var clockwiseDirection = new Vector2(-sourceDirection.Y, sourceDirection.X);
+            var markerCenter = boundaryCenter + (clockwiseDirection * outerHalfSize * 2f);
+            DrawLine(sourceCenter, markerCenter, legThickness, legColor);
+
+            var outerBounds = new Rectangle(
+                (int)MathF.Round(markerCenter.X) - outerHalfSize,
+                (int)MathF.Round(markerCenter.Y) - outerHalfSize,
+                outerHalfSize * 2,
+                outerHalfSize * 2);
+            var innerBounds = new Rectangle(
+                (int)MathF.Round(markerCenter.X) - innerHalfSize,
+                (int)MathF.Round(markerCenter.Y) - innerHalfSize,
+                innerHalfSize * 2,
+                innerHalfSize * 2);
+            FillRect(outerBounds, legColor);
+            FillRect(innerBounds, RenGraphCellColor(targetRen.Stone));
         }
+
+        (GoPoint From, GoPoint To) FindFirstContact(int targetRenNumber)
+        {
+            (GoPoint From, GoPoint To)? selected = null;
+            foreach (var contact in contacts)
+            {
+                if (renParse.GetRenNumber(contact.To.X, contact.To.Y) != targetRenNumber)
+                    continue;
+
+                if (selected is null || ComesFirst(contact, selected.Value))
+                    selected = contact;
+            }
+
+            return selected ?? throw new InvalidOperationException("Adjacent ren has no boundary contact.");
+        }
+
+        static bool ComesFirst(
+            (GoPoint From, GoPoint To) candidate,
+            (GoPoint From, GoPoint To) current) =>
+            candidate.To.Y < current.To.Y ||
+            (candidate.To.Y == current.To.Y && candidate.To.X < current.To.X) ||
+            (candidate.To == current.To &&
+             (candidate.From.Y < current.From.Y ||
+              (candidate.From.Y == current.From.Y && candidate.From.X < current.From.X)));
     }
 
 
@@ -569,11 +631,19 @@ public sealed partial class GoScreenRenderer
             new Color(0, 177, 238),
             new Color(0, 92, 132, 245),
             indexScale);
+        var valueText = value.ToString();
+        if (valueText.Length > 2)
+        {
+            var twoDigitWidth = _font.MeasureString("88").X * valueScale;
+            var valueWidth = _font.MeasureString(valueText).X * valueScale;
+            valueScale *= MathF.Min(1f, twoDigitWidth / Math.Max(1f, valueWidth));
+        }
+
         var valueCenter = center + new Vector2(0f, cell * 0.10f);
         if (valueOutlineColor is { } outlineColor)
-            DrawCenteredOutlinedText(value.ToString(), valueCenter, valueColor, outlineColor, valueScale);
+            DrawCenteredOutlinedText(valueText, valueCenter, valueColor, outlineColor, valueScale);
         else
-            DrawCenteredText(value.ToString(), valueCenter, valueColor, valueScale);
+            DrawCenteredText(valueText, valueCenter, valueColor, valueScale);
         if (unit == RenMetricUnit.RenCount)
         {
             DrawRenMetricUnit(
