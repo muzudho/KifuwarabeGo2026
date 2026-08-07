@@ -435,7 +435,6 @@ public sealed partial class GoScreenRenderer
             var legThickness = MathHelper.Clamp(cell * 0.035f, 2f, 4f);
             var legColor = RenGraphCellColor(ren.Stone);
             var markerRadius = MathHelper.Clamp(cell * 0.13f, 5f, 11f);
-            var ringMarkerRadius = markerRadius + 2f;
             var outerMarkerRadius = markerRadius + 4f;
             var markerCenters = new Dictionary<GoPoint, Vector2>();
             foreach (var point in boundaryPoints)
@@ -466,8 +465,7 @@ public sealed partial class GoScreenRenderer
             foreach (var marker in markerCenters)
             {
                 var targetStone = renParse.GetRen(renParse.GetRenNumber(marker.Key.X, marker.Key.Y)).Stone;
-                DrawCircle(marker.Value, outerMarkerRadius, new Color(245, 252, 250, 235));
-                DrawCircle(marker.Value, ringMarkerRadius, accent);
+                DrawCircle(marker.Value, outerMarkerRadius, legColor);
                 DrawCircle(marker.Value, markerRadius, RenGraphCellColor(targetStone));
             }
 
