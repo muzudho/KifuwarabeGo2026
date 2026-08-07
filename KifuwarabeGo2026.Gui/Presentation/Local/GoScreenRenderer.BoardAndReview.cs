@@ -85,6 +85,9 @@ public sealed partial class GoScreenRenderer
 
     public static bool GetReviewBoardLensButtonHit(Point point) => ReviewBoardLensButtonBounds.Contains(point);
 
+    public static bool GetReviewBoardLensFamilyButtonHit(Point point, bool enabled) =>
+        enabled && ReviewBoardLensFamilyButtonBounds.Contains(point);
+
     private void DrawBoardEditingSidePanel(GoAppSession session, Point mousePoint)
     {
         DrawText("BOARD EDIT", new Vector2(1144, 136), new Color(255, 230, 160), 0.72f);
@@ -223,9 +226,13 @@ public sealed partial class GoScreenRenderer
 
         DrawVerticalResultSection(new Rectangle(1144, 850, 668, 142), "REVIEW", new Color(76, 91, 126));
         DrawResultLabel(
-            new Rectangle(1164, 858, 548, 36),
+            new Rectangle(1164, 858, 468, 36),
             $"STEP {session.ReviewMoveIndex} / {session.ReviewMoveCount}",
             new Color(76, 91, 126));
+        DrawReviewBoardLensFamilyButton(
+            session.IsRenParseDisplayEnabled,
+            session.IsMeasureBoardLens,
+            mousePoint);
         DrawReviewBoardLensButton(session.IsRenParseDisplayEnabled, mousePoint);
         DrawMoveNavigationButtons(
             session.ReviewMoveIndex,
@@ -396,6 +403,46 @@ public sealed partial class GoScreenRenderer
 
 
     private static Rectangle ReviewBoardLensButtonBounds => new(1724, 858, 60, 60);
+
+    private static Rectangle ReviewBoardLensFamilyButtonBounds => new(1652, 858, 60, 60);
+
+
+    private void DrawReviewBoardLensFamilyButton(bool enabled, bool selected, Point mousePoint)
+    {
+        var bounds = ReviewBoardLensFamilyButtonBounds;
+        var hovered = enabled && bounds.Contains(mousePoint);
+        var fill = !enabled
+            ? new Color(24, 27, 31)
+            : selected
+                ? new Color(26, 91, 99)
+                : hovered
+                    ? new Color(50, 75, 86)
+                    : new Color(32, 44, 53);
+        var border = !enabled
+            ? new Color(43, 50, 56)
+            : selected
+                ? new Color(125, 225, 255)
+                : hovered
+                    ? new Color(178, 219, 226)
+                    : new Color(111, 137, 150);
+        FillRect(new Rectangle(bounds.X + 4, bounds.Y + 5, bounds.Width, bounds.Height), new Color(0, 0, 0, enabled ? 95 : 28));
+        FillRect(bounds, fill);
+        DrawRect(bounds, 2, border);
+
+        var iconColor = enabled
+            ? selected ? new Color(151, 255, 215) : new Color(220, 234, 237)
+            : new Color(91, 100, 106);
+        DrawCenteredText("<>", new Vector2(bounds.Center.X, bounds.Y + 22), iconColor, 0.25f);
+        DrawCenteredText("K", new Vector2(bounds.Center.X, bounds.Y + 43), enabled ? new Color(255, 220, 128) : iconColor, 0.19f);
+
+        if (hovered)
+        {
+            var tooltip = new Rectangle(bounds.Right - 276, bounds.Y - 38, 276, 32);
+            FillRect(tooltip, new Color(15, 24, 30, 245));
+            DrawRect(tooltip, 1, new Color(125, 225, 255));
+            DrawFittedText("SWITCH LENS FAMILY  [K]", new Rectangle(tooltip.X + 10, tooltip.Y + 4, tooltip.Width - 20, tooltip.Height - 8), Color.White, 0.25f);
+        }
+    }
 
 
     private void DrawReviewBoardLensButton(bool selected, Point mousePoint)

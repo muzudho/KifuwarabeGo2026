@@ -430,7 +430,7 @@ public class Game1 : Game
         IsNewGlobalKeyPress(keyboard, Keys.D1) || IsNewGlobalKeyPress(keyboard, Keys.NumPad1);
 
     private bool IsNewBoardLensFamilyKeyPress(KeyboardState keyboard) =>
-        IsNewGlobalKeyPress(keyboard, Keys.D2) || IsNewGlobalKeyPress(keyboard, Keys.NumPad2);
+        IsNewGlobalKeyPress(keyboard, Keys.K);
 
     private bool TryHandleReviewKeyboardInput(KeyboardState keyboard)
     {
@@ -689,7 +689,11 @@ public class Game1 : Game
             GoScreenRenderer.GetEngineErrorLogHit(point, _session);
         var boardLensButtonHovered = _session.CurrentMode.Kind == GoAppModeKind.Reviewing &&
             GoScreenRenderer.GetReviewBoardLensButtonHit(point);
-        Mouse.SetCursor(engineErrorLogHovered || boardLensButtonHovered ? MouseCursor.Hand : MouseCursor.Arrow);
+        var boardLensFamilyButtonHovered = _session.CurrentMode.Kind == GoAppModeKind.Reviewing &&
+            GoScreenRenderer.GetReviewBoardLensFamilyButtonHit(point, _session.IsRenParseDisplayEnabled);
+        Mouse.SetCursor(engineErrorLogHovered || boardLensButtonHovered || boardLensFamilyButtonHovered
+            ? MouseCursor.Hand
+            : MouseCursor.Arrow);
         if (_variationSession is null)
         {
             UpdateReviewMouseRepeat(mouse, point);
@@ -1797,6 +1801,12 @@ public class Game1 : Game
         if (GoScreenRenderer.GetReviewBoardLensButtonHit(point))
         {
             ToggleBoardLens();
+            return true;
+        }
+
+        if (GoScreenRenderer.GetReviewBoardLensFamilyButtonHit(point, _session.IsRenParseDisplayEnabled))
+        {
+            TrySwitchBoardLensFamily();
             return true;
         }
 

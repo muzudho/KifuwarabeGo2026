@@ -8,7 +8,7 @@ using System;
 using System.Collections.Generic;
 
 /// <summary>
-/// 囲碁盤上の連解析表示を描画します。
+/// 囲碁盤上の Board Lens 表示を描画します。
 /// </summary>
 public sealed partial class GoScreenRenderer
 {
@@ -442,7 +442,9 @@ public sealed partial class GoScreenRenderer
                     ren,
                     SumAdjacentRenAreas(renParse, adjacentRenNumbers),
                     RenMetricUnit.PointCount,
-                    accent,
+                    displayMode == RenParseDisplayMode.AdjacentEmptyArea
+                        ? RenGraphCellColor(GoStone.Empty)
+                        : accent,
                     start,
                     cell);
                 continue;
@@ -488,7 +490,7 @@ public sealed partial class GoScreenRenderer
             var value = boundaryPoints.Count;
             var valueColor = displayMode == RenParseDisplayMode.BoundaryCount
                 ? RenGraphCellColor(ren.Stone)
-                : displayMode == RenParseDisplayMode.BoundaryEmptyCount
+                : displayMode is RenParseDisplayMode.BoundaryEmptyCount or RenParseDisplayMode.AdjacentEmptyArea
                     ? RenGraphCellColor(GoStone.Empty)
                     : displayMode == RenParseDisplayMode.BoundaryOpponentCount
                         ? RenGraphCellColor(OpponentOf(ren.Stone))

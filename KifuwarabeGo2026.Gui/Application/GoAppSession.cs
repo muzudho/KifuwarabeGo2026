@@ -317,9 +317,20 @@ public sealed class GoAppSession
 
     public int NextMoveNumber => PlayedMoveCount + 1;
 
+    private int _boardLensStep;
+    private bool _measureBoardLensFamily;
+
     public RenParseDisplayMode RenParseDisplayMode { get; private set; }
 
     public bool IsRenParseDisplayEnabled => RenParseDisplayMode != RenParseDisplayMode.Off;
+
+    public bool IsMeasureBoardLens => RenParseDisplayMode is
+        RenParseDisplayMode.RenArea or
+        RenParseDisplayMode.BoundaryCount or
+        RenParseDisplayMode.BoundaryEmptyCount or
+        RenParseDisplayMode.BoundaryOpponentCount or
+        RenParseDisplayMode.AdjacentEmptyArea or
+        RenParseDisplayMode.AdjacentOpponentArea;
 
     public string BoardLensDisplayName => RenParseDisplayMode switch
     {
@@ -345,8 +356,8 @@ public sealed class GoAppSession
         RenParseDisplayMode.BoundaryEmptyCount or
         RenParseDisplayMode.BoundaryOpponentCount or
         RenParseDisplayMode.AdjacentEmptyArea or
-        RenParseDisplayMode.AdjacentOpponentArea => "[L] NEXT    [2] REN ANALYSIS    [1] EXIT",
-        _ => "[L] NEXT    [2] MEASURE    [1] EXIT",
+        RenParseDisplayMode.AdjacentOpponentArea => "[L] NEXT    [K] REN ANALYSIS    [1] EXIT",
+        _ => "[L] NEXT    [K] MEASURE    [1] EXIT",
     };
 
     public string BoardLensAlias => RenParseDisplayMode == RenParseDisplayMode.BoundaryEmptyCount
@@ -1165,20 +1176,16 @@ public sealed class GoAppSession
 
     public void ToggleRenParseDisplay()
     {
-        RenParseDisplayMode = RenParseDisplayMode switch
+        if (RenParseDisplayMode == RenParseDisplayMode.Off)
         {
-            RenParseDisplayMode.Off => RenParseDisplayMode.Overlay,
-            RenParseDisplayMode.Overlay => RenParseDisplayMode.Graph,
-            RenParseDisplayMode.Graph => RenParseDisplayMode.GraphStep2,
-            RenParseDisplayMode.GraphStep2 => RenParseDisplayMode.Eye,
-            RenParseDisplayMode.Eye => RenParseDisplayMode.Overlay,
-            RenParseDisplayMode.RenArea => RenParseDisplayMode.BoundaryCount,
-            RenParseDisplayMode.BoundaryCount => RenParseDisplayMode.BoundaryEmptyCount,
-            RenParseDisplayMode.BoundaryEmptyCount => RenParseDisplayMode.BoundaryOpponentCount,
-            RenParseDisplayMode.BoundaryOpponentCount => RenParseDisplayMode.AdjacentEmptyArea,
-            RenParseDisplayMode.AdjacentEmptyArea => RenParseDisplayMode.AdjacentOpponentArea,
-            _ => RenParseDisplayMode.RenArea,
-        };
+            _measureBoardLensFamily = false;
+        }
+        else
+        {
+            _boardLensStep = (_boardLensStep + 1) % 12;
+        }
+
+        ApplyBoardLensStep();
     }
 
     public bool TrySwitchBoardLensFamily()
@@ -1186,16 +1193,30 @@ public sealed class GoAppSession
         if (RenParseDisplayMode == RenParseDisplayMode.Off)
             return false;
 
-        RenParseDisplayMode = RenParseDisplayMode is
-            RenParseDisplayMode.RenArea or
-            RenParseDisplayMode.BoundaryCount or
-            RenParseDisplayMode.BoundaryEmptyCount or
-            RenParseDisplayMode.BoundaryOpponentCount or
-            RenParseDisplayMode.AdjacentEmptyArea or
-            RenParseDisplayMode.AdjacentOpponentArea
-                ? RenParseDisplayMode.Overlay
-                : RenParseDisplayMode.RenArea;
+        _measureBoardLensFamily = !_measureBoardLensFamily;
+        ApplyBoardLensStep();
         return true;
+    }
+
+    private void ApplyBoardLensStep()
+    {
+        RenParseDisplayMode = _measureBoardLensFamily
+            ? (_boardLensStep % 6) switch
+            {
+                0 => RenParseDisplayMode.RenArea,
+                1 => RenParseDisplayMode.BoundaryCount,
+                2 => RenParseDisplayMode.BoundaryEmptyCount,
+                3 => RenParseDisplayMode.BoundaryOpponentCount,
+                4 => RenParseDisplayMode.AdjacentEmptyArea,
+                _ => RenParseDisplayMode.AdjacentOpponentArea,
+            }
+            : (_boardLensStep % 4) switch
+            {
+                0 => RenParseDisplayMode.Overlay,
+                1 => RenParseDisplayMode.Graph,
+                2 => RenParseDisplayMode.GraphStep2,
+                _ => RenParseDisplayMode.Eye,
+            };
     }
 
     public bool TryDeactivateBoardLens()
