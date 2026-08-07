@@ -1109,8 +1109,7 @@ public sealed partial class GoScreenRenderer
             samplerState: SamplerState.LinearClamp,
             transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));
 
-        var showRectangleLensGuide = string.Equals(lensName, "REN RECTANGLE LENS", StringComparison.Ordinal);
-        var bounds = new Rectangle(610, 48, 700, showRectangleLensGuide ? 122 : 92);
+        var bounds = new Rectangle(560, 48, 800, 122);
         var shadowAlpha = (int)(150f * opacity);
         var panelAlpha = (int)(235f * opacity);
         var textAlpha = (int)(255f * opacity);
@@ -1120,7 +1119,7 @@ public sealed partial class GoScreenRenderer
         DrawRect(bounds, 2, new Color(125, 225, 255, textAlpha));
         FillRect(new Rectangle(bounds.X, bounds.Y, bounds.Width, 4), new Color(125, 225, 255, textAlpha));
 
-        const string heading = "BOARD LENS  [L]";
+        const string heading = "BOARD LENS";
         var headingScale = 0.28f;
         var headingSize = _font.MeasureString(heading) * headingScale;
         DrawText(
@@ -1138,17 +1137,14 @@ public sealed partial class GoScreenRenderer
             new Color(235, 251, 255, textAlpha),
             scale);
 
-        if (showRectangleLensGuide)
-        {
-            const string guide = "[L] Graph    [2] Liberty";
-            var guideScale = 0.30f;
-            var guideSize = _font.MeasureString(guide) * guideScale;
-            DrawText(
-                guide,
-                new Vector2(bounds.Center.X - guideSize.X / 2f, bounds.Y + 82),
-                new Color(255, 220, 128, textAlpha),
-                guideScale);
-        }
+        const string guide = "[L] NEXT    [1] EXIT";
+        var guideScale = 0.30f;
+        var guideSize = _font.MeasureString(guide) * guideScale;
+        DrawText(
+            guide,
+            new Vector2(bounds.Center.X - guideSize.X / 2f, bounds.Y + 82),
+            new Color(255, 220, 128, textAlpha),
+            guideScale);
 
         _spriteBatch.End();
     }

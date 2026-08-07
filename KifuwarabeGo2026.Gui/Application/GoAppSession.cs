@@ -324,11 +324,12 @@ public sealed class GoAppSession
     public string BoardLensDisplayName => RenParseDisplayMode switch
     {
         RenParseDisplayMode.Off => "BOARD LENS OFF",
-        RenParseDisplayMode.Overlay => "REN INDEX LENS",
-        RenParseDisplayMode.Graph => "REN RECTANGLE LENS",
-        RenParseDisplayMode.LibertyNumber => "LIBERTY NUMBER LENS",
-        RenParseDisplayMode.GraphStep2 => "REN GRAPH LENS - BASIC",
-        RenParseDisplayMode.Eye => "REN GRAPH LENS - EYE MODE",
+        RenParseDisplayMode.RenArea => "REN AREA LENS  1/6",
+        RenParseDisplayMode.BoundaryCount => "BOUNDARY COUNT LENS  2/6",
+        RenParseDisplayMode.BoundaryEmptyCount => "BOUNDARY EMPTY COUNT LENS  3/6",
+        RenParseDisplayMode.BoundaryOpponentCount => "BOUNDARY OPPONENT COUNT LENS  4/6",
+        RenParseDisplayMode.AdjacentEmptyArea => "ADJACENT EMPTY AREA LENS  5/6",
+        RenParseDisplayMode.AdjacentOpponentArea => "ADJACENT OPPONENT AREA LENS  6/6",
         _ => RenParseDisplayMode.ToString().ToUpperInvariant(),
     };
 
@@ -1146,21 +1147,22 @@ public sealed class GoAppSession
     {
         RenParseDisplayMode = RenParseDisplayMode switch
         {
-            RenParseDisplayMode.Off => RenParseDisplayMode.Overlay,
-            RenParseDisplayMode.Overlay => RenParseDisplayMode.Graph,
-            RenParseDisplayMode.Graph => RenParseDisplayMode.GraphStep2,
-            RenParseDisplayMode.LibertyNumber => RenParseDisplayMode.GraphStep2,
-            RenParseDisplayMode.GraphStep2 => RenParseDisplayMode.Eye,
-            _ => RenParseDisplayMode.Off,
+            RenParseDisplayMode.Off => RenParseDisplayMode.RenArea,
+            RenParseDisplayMode.RenArea => RenParseDisplayMode.BoundaryCount,
+            RenParseDisplayMode.BoundaryCount => RenParseDisplayMode.BoundaryEmptyCount,
+            RenParseDisplayMode.BoundaryEmptyCount => RenParseDisplayMode.BoundaryOpponentCount,
+            RenParseDisplayMode.BoundaryOpponentCount => RenParseDisplayMode.AdjacentEmptyArea,
+            RenParseDisplayMode.AdjacentEmptyArea => RenParseDisplayMode.AdjacentOpponentArea,
+            _ => RenParseDisplayMode.RenArea,
         };
     }
 
-    public bool TryActivateLibertyNumberLens()
+    public bool TryDeactivateBoardLens()
     {
-        if (RenParseDisplayMode != RenParseDisplayMode.Graph)
+        if (RenParseDisplayMode == RenParseDisplayMode.Off)
             return false;
 
-        RenParseDisplayMode = RenParseDisplayMode.LibertyNumber;
+        RenParseDisplayMode = RenParseDisplayMode.Off;
         return true;
     }
 

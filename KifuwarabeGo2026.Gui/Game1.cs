@@ -382,9 +382,9 @@ public class Game1 : Game
         {
             ToggleBoardLens();
         }
-        else if (CanHandleGlobalRenParseToggle() && IsNewLibertyNumberLensKeyPress(keyboard))
+        else if (CanHandleGlobalRenParseToggle() && IsNewBoardLensExitKeyPress(keyboard))
         {
-            TryActivateLibertyNumberLens();
+            TryDeactivateBoardLens();
         }
 
         _previousKeyboard = keyboard;
@@ -409,8 +409,8 @@ public class Game1 : Game
         var canToggle = _session.CgosConnectionFlowKind is CgosConnectionFlowKind.Watching or CgosConnectionFlowKind.Result;
         if (canToggle && keyboard.IsKeyDown(Keys.L) && _previousKeyboard.IsKeyUp(Keys.L))
             ToggleBoardLens();
-        else if (canToggle && IsNewLibertyNumberLensKeyPress(keyboard))
-            TryActivateLibertyNumberLens();
+        else if (canToggle && IsNewBoardLensExitKeyPress(keyboard))
+            TryDeactivateBoardLens();
 
         _previousKeyboard = keyboard;
     }
@@ -418,8 +418,8 @@ public class Game1 : Game
     private bool IsNewGlobalKeyPress(KeyboardState keyboard, Keys key) =>
         keyboard.IsKeyDown(key) && _previousKeyboard.IsKeyUp(key);
 
-    private bool IsNewLibertyNumberLensKeyPress(KeyboardState keyboard) =>
-        IsNewGlobalKeyPress(keyboard, Keys.D2) || IsNewGlobalKeyPress(keyboard, Keys.NumPad2);
+    private bool IsNewBoardLensExitKeyPress(KeyboardState keyboard) =>
+        IsNewGlobalKeyPress(keyboard, Keys.D1) || IsNewGlobalKeyPress(keyboard, Keys.NumPad1);
 
     private bool TryHandleReviewKeyboardInput(KeyboardState keyboard)
     {
@@ -533,9 +533,9 @@ public class Game1 : Game
         _boardLensBannerStartedAt = _inputClockSeconds;
     }
 
-    private void TryActivateLibertyNumberLens()
+    private void TryDeactivateBoardLens()
     {
-        if (_session.TryActivateLibertyNumberLens())
+        if (_session.TryDeactivateBoardLens())
             _boardLensBannerStartedAt = _inputClockSeconds;
     }
 

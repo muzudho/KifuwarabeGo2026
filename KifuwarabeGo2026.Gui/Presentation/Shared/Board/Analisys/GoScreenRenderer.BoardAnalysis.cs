@@ -23,34 +23,23 @@ public sealed partial class GoScreenRenderer
         Vector2 start,
         float cell)
     {
-        if (displayMode is RenParseDisplayMode.Graph or RenParseDisplayMode.LibertyNumber)
+        if (displayMode == RenParseDisplayMode.Off)
         {
-            var renParse = parseRens();
-            DrawRenGraphCells(boardSize, getStone, start, cell);
-            DrawRenBoundaries(renParse, start, cell);
-            if (displayMode == RenParseDisplayMode.LibertyNumber)
-                DrawRenRepresentativeNumbersWithLiberties(renParse, start, cell);
-            else
-                DrawRenRepresentativeNumbers(renParse, start, cell);
+            drawPlacedStones();
             return;
         }
 
-        if (displayMode is RenParseDisplayMode.GraphStep2 or RenParseDisplayMode.Eye)
+        var renParse = parseRens();
+        DrawRenGraphCells(boardSize, getStone, start, cell);
+        DrawRenBoundaries(renParse, start, cell);
+
+        if (displayMode == RenParseDisplayMode.RenArea)
         {
-            var renParse = parseRens();
-            var nodes = CreateRenGraphNodes(renParse, start, cell, displayMode == RenParseDisplayMode.Eye);
-            FillRect(BoardBounds, new Color(56, 145, 129));
-            DrawRenGraphEdges(nodes, renParse.Edges, cell);
-            DrawRenGraphNodes(nodes, cell);
+            DrawRenAreaNumbers(renParse, start, cell);
             return;
         }
 
-        drawPlacedStones();
-        if (displayMode != RenParseDisplayMode.Overlay) return;
-
-        var overlayRenParse = parseRens();
-        DrawRenBoundaries(overlayRenParse, start, cell);
-        DrawRenNumbers(overlayRenParse, start, cell);
+        DrawRenBoundaryLens(renParse, displayMode, start, cell);
     }
 
     /// <summary>
@@ -101,7 +90,7 @@ public sealed partial class GoScreenRenderer
     /// <param name="cell"></param>
     private void DrawRenParseOverlay(GoAppSession session, Vector2 start, float cell)
     {
-        if (session.RenParseDisplayMode != RenParseDisplayMode.Overlay)
+        if (session.RenParseDisplayMode != RenParseDisplayMode.RenArea)
         {
             return;
         }
@@ -355,64 +344,156 @@ public sealed partial class GoScreenRenderer
     }
 
 
-    private void DrawRenRepresentativeNumbersWithLiberties(GoRenParseResult renParse, Vector2 start, float cell)
+    private void DrawRenAreaNumbers(GoRenParseResult renParse, Vector2 start, float cell)
     {
-        var indexScale = MathHelper.Clamp(cell / 120f, 0.18f, 0.46f);
-        var libertyScale = MathHelper.Clamp(cell / 68f, 0.34f, 0.80f);
-        var drawn = new bool[renParse.Count + 1];
-        for (var y = 0; y < renParse.Size; y++)
+        for (var renNumber = 1; renNumber <= renParse.Count; renNumber++)
         {
-            for (var x = 0; x < renParse.Size; x++)
+            var ren = renParse.GetRen(renNumber);
+            DrawRenMetricNumber(ren, ren.Points.Count, new Color(126, 255, 188), start, cell);
+        }
+    }
+
+
+    /// <summary>
+    /// 接触している辺はすべて足として描き、終点と集計値だけを連ごとに重複除去します。
+    /// </summary>
+    private void DrawRenBoundaryLens(
+        GoRenParseResult renParse,
+        RenParseDisplayMode displayMode,
+        Vector2 start,
+        float cell)
+    {
+        var includesEmpty = displayMode is
+            RenParseDisplayMode.BoundaryCount or
+            RenParseDisplayMode.BoundaryEmptyCount or
+            RenParseDisplayMode.AdjacentEmptyArea;
+        var includesOpponent = displayMode is
+            RenParseDisplayMode.BoundaryCount or
+            RenParseDisplayMode.BoundaryOpponentCount or
+            RenParseDisplayMode.AdjacentOpponentArea;
+        var showsAdjacentArea = displayMode is
+            RenParseDisplayMode.AdjacentEmptyArea or
+            RenParseDisplayMode.AdjacentOpponentArea;
+        var accent = includesEmpty && includesOpponent
+            ? new Color(125, 225, 255)
+            : includesEmpty
+                ? new Color(126, 255, 188)
+                : new Color(255, 144, 126);
+
+        for (var renNumber = 1; renNumber <= renParse.Count; renNumber++)
+        {
+            var ren = renParse.GetRen(renNumber);
+            if (ren.Stone == GoStone.Empty)
+                continue;
+
+            var contacts = new List<(GoPoint From, GoPoint To)>();
+            var boundaryPoints = new HashSet<GoPoint>();
+            var adjacentRenNumbers = new HashSet<int>();
+            foreach (var point in ren.Points)
             {
-                var renNumber = renParse.GetRenNumber(x, y);
-                if (drawn[renNumber])
-                    continue;
+                AddContact(point, point.X - 1, point.Y);
+                AddContact(point, point.X + 1, point.Y);
+                AddContact(point, point.X, point.Y - 1);
+                AddContact(point, point.X, point.Y + 1);
+            }
 
-                drawn[renNumber] = true;
-                var ren = renParse.GetRen(renNumber);
-                var center = BoardPoint(start, cell, x, y);
-                if (ren.Stone == GoStone.Empty)
-                {
-                    DrawCenteredText(renNumber.ToString(), center, new Color(0, 177, 238), indexScale);
-                    continue;
-                }
+            if (showsAdjacentArea)
+            {
+                foreach (var adjacentRenNumber in adjacentRenNumbers)
+                    DrawAdjacentRenHighlight(renParse.GetRen(adjacentRenNumber), accent, start, cell);
+            }
 
-                DrawCenteredText(
-                    renNumber.ToString(),
-                    center - new Vector2(0f, cell * 0.14f),
-                    new Color(0, 177, 238),
-                    indexScale);
-                DrawCenteredText(
-                    CountRenLiberties(renParse, ren).ToString(),
-                    center + new Vector2(0f, cell * 0.20f),
-                    new Color(126, 255, 188),
-                    libertyScale);
+            var legThickness = MathHelper.Clamp(cell * 0.035f, 2f, 4f);
+            var legColor = new Color((int)accent.R, accent.G, accent.B, 185);
+            foreach (var contact in contacts)
+            {
+                DrawLine(
+                    BoardPoint(start, cell, contact.From.X, contact.From.Y),
+                    BoardPoint(start, cell, contact.To.X, contact.To.Y),
+                    legThickness,
+                    legColor);
+            }
+
+            var markerRadius = MathHelper.Clamp(cell * 0.13f, 5f, 11f);
+            foreach (var point in boundaryPoints)
+            {
+                var center = BoardPoint(start, cell, point.X, point.Y);
+                DrawCircle(center, markerRadius + 3f, new Color(245, 252, 250, 235));
+                DrawCircle(center, markerRadius, accent);
+            }
+
+            var value = showsAdjacentArea
+                ? SumAdjacentRenAreas(renParse, adjacentRenNumbers)
+                : boundaryPoints.Count;
+            DrawRenMetricNumber(ren, value, accent, start, cell);
+
+            void AddContact(GoPoint from, int x, int y)
+            {
+                if (x < 0 || x >= renParse.Size || y < 0 || y >= renParse.Size)
+                    return;
+
+                var targetRenNumber = renParse.GetRenNumber(x, y);
+                if (targetRenNumber == ren.Number)
+                    return;
+
+                var targetRen = renParse.GetRen(targetRenNumber);
+                var isEmpty = targetRen.Stone == GoStone.Empty;
+                var isOpponent = targetRen.Stone != GoStone.Empty && targetRen.Stone != ren.Stone;
+                if ((!isEmpty || !includesEmpty) && (!isOpponent || !includesOpponent))
+                    return;
+
+                var target = new GoPoint(x, y);
+                contacts.Add((from, target));
+                boundaryPoints.Add(target);
+                adjacentRenNumbers.Add(targetRenNumber);
             }
         }
     }
 
 
-    private static int CountRenLiberties(GoRenParseResult renParse, GoRen ren)
+    private void DrawAdjacentRenHighlight(GoRen ren, Color accent, Vector2 start, float cell)
     {
-        var liberties = new HashSet<GoPoint>();
+        var inset = Math.Max(4, (int)MathF.Round(cell * 0.16f));
+        var size = Math.Max(6, (int)MathF.Round(cell) - (inset * 2));
         foreach (var point in ren.Points)
         {
-            AddLiberty(point.X - 1, point.Y);
-            AddLiberty(point.X + 1, point.Y);
-            AddLiberty(point.X, point.Y - 1);
-            AddLiberty(point.X, point.Y + 1);
+            var center = BoardPoint(start, cell, point.X, point.Y);
+            var bounds = new Rectangle(
+                (int)MathF.Round(center.X - (cell * 0.5f)) + inset,
+                (int)MathF.Round(center.Y - (cell * 0.5f)) + inset,
+                size,
+                size);
+            FillRect(bounds, new Color((int)accent.R, accent.G, accent.B, 72));
+            DrawRect(bounds, 2, new Color((int)accent.R, accent.G, accent.B, 210));
         }
+    }
 
-        return liberties.Count;
 
-        void AddLiberty(int x, int y)
-        {
-            if (x < 0 || x >= renParse.Size || y < 0 || y >= renParse.Size)
-                return;
+    private static int SumAdjacentRenAreas(GoRenParseResult renParse, HashSet<int> adjacentRenNumbers)
+    {
+        var area = 0;
+        foreach (var renNumber in adjacentRenNumbers)
+            area += renParse.GetRen(renNumber).Points.Count;
+        return area;
+    }
 
-            if (renParse.GetRen(renParse.GetRenNumber(x, y)).Stone == GoStone.Empty)
-                liberties.Add(new GoPoint(x, y));
-        }
+
+    private void DrawRenMetricNumber(GoRen ren, int value, Color valueColor, Vector2 start, float cell)
+    {
+        var representative = ren.Points[0];
+        var center = BoardPoint(start, cell, representative.X, representative.Y);
+        var indexScale = MathHelper.Clamp(cell / 120f, 0.18f, 0.46f);
+        var valueScale = MathHelper.Clamp(cell / 68f, 0.34f, 0.80f);
+        DrawCenteredText(
+            ren.Number.ToString(),
+            center - new Vector2(0f, cell * 0.14f),
+            new Color(0, 177, 238),
+            indexScale);
+        DrawCenteredText(
+            value.ToString(),
+            center + new Vector2(0f, cell * 0.20f),
+            valueColor,
+            valueScale);
     }
 
 
