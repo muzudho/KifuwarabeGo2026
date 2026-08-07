@@ -1121,21 +1121,11 @@ public sealed partial class GoScreenRenderer
         var shadowAlpha = (int)(150f * opacity);
         var panelAlpha = (int)(235f * opacity);
         var textAlpha = (int)(255f * opacity);
-        var largeTextAlpha = (int)(textAlpha * (1f - compactProgress));
 
         FillRect(new Rectangle(bounds.X + 8, bounds.Y + 10, bounds.Width, bounds.Height), new Color(0, 0, 0, shadowAlpha));
         FillRect(bounds, new Color(13, 24, 31, panelAlpha));
         DrawRect(bounds, 2, new Color(125, 225, 255, textAlpha));
         FillRect(new Rectangle(bounds.X, bounds.Y, bounds.Width, 4), new Color(125, 225, 255, textAlpha));
-
-        const string heading = "BOARD LENS";
-        var headingScale = 0.28f;
-        var headingSize = _font.MeasureString(heading) * headingScale;
-        DrawText(
-            heading,
-            new Vector2(bounds.Center.X - headingSize.X / 2f, bounds.Y + 12),
-            new Color(159, 215, 225, largeTextAlpha),
-            headingScale);
 
         var measured = _font.MeasureString(lensName);
         var largeNameScale = MathF.Min(0.58f, (largeBounds.Width - 48f) / Math.Max(1f, measured.X));
