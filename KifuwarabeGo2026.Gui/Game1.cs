@@ -384,6 +384,10 @@ public class Game1 : Game
         {
             ToggleBoardLens();
         }
+        else if (CanHandleGlobalRenParseToggle() && IsNewBoardLensFamilyKeyPress(keyboard))
+        {
+            TrySwitchBoardLensFamily();
+        }
         else if (CanHandleGlobalRenParseToggle() && IsNewBoardLensExitKeyPress(keyboard))
         {
             TryDeactivateBoardLens();
@@ -411,6 +415,8 @@ public class Game1 : Game
         var canToggle = _session.CgosConnectionFlowKind is CgosConnectionFlowKind.Watching or CgosConnectionFlowKind.Result;
         if (canToggle && keyboard.IsKeyDown(Keys.L) && _previousKeyboard.IsKeyUp(Keys.L))
             ToggleBoardLens();
+        else if (canToggle && IsNewBoardLensFamilyKeyPress(keyboard))
+            TrySwitchBoardLensFamily();
         else if (canToggle && IsNewBoardLensExitKeyPress(keyboard))
             TryDeactivateBoardLens();
 
@@ -422,6 +428,9 @@ public class Game1 : Game
 
     private bool IsNewBoardLensExitKeyPress(KeyboardState keyboard) =>
         IsNewGlobalKeyPress(keyboard, Keys.D1) || IsNewGlobalKeyPress(keyboard, Keys.NumPad1);
+
+    private bool IsNewBoardLensFamilyKeyPress(KeyboardState keyboard) =>
+        IsNewGlobalKeyPress(keyboard, Keys.D2) || IsNewGlobalKeyPress(keyboard, Keys.NumPad2);
 
     private bool TryHandleReviewKeyboardInput(KeyboardState keyboard)
     {
@@ -541,6 +550,12 @@ public class Game1 : Game
             _boardLensBannerStartedAt = _inputClockSeconds;
     }
 
+    private void TrySwitchBoardLensFamily()
+    {
+        if (_session.TrySwitchBoardLensFamily())
+            _boardLensBannerStartedAt = _inputClockSeconds;
+    }
+
     protected override void Draw(GameTime gameTime)
     {
         GraphicsDevice.Clear(new Color(11, 13, 18));
@@ -632,6 +647,7 @@ public class Game1 : Game
                     1d);
                 _renderer.DrawBoardLensBanner(
                     _session.BoardLensDisplayName,
+                    _session.BoardLensGuide,
                     (float)opacity,
                     (float)compactProgress);
             }
@@ -641,7 +657,11 @@ public class Game1 : Game
                     (BoardLensBannerDurationSeconds - boardLensBannerAge) / 0.35d,
                     0d,
                     1d);
-                _renderer.DrawBoardLensBanner(_session.BoardLensDisplayName, (float)opacity, 0f);
+                _renderer.DrawBoardLensBanner(
+                    _session.BoardLensDisplayName,
+                    _session.BoardLensGuide,
+                    (float)opacity,
+                    0f);
             }
 
             var screenshotEffectAge = _inputClockSeconds - _screenshotEffectStartedAt;
@@ -665,7 +685,9 @@ public class Game1 : Game
         UpdateCatalogOrderDrag(mouse, point);
         var engineErrorLogHovered = _session.UseKind == GoAppUseKind.LocalPlay &&
             GoScreenRenderer.GetEngineErrorLogHit(point, _session);
-        Mouse.SetCursor(engineErrorLogHovered ? MouseCursor.Hand : MouseCursor.Arrow);
+        var boardLensButtonHovered = _session.CurrentMode.Kind == GoAppModeKind.Reviewing &&
+            GoScreenRenderer.GetReviewBoardLensButtonHit(point);
+        Mouse.SetCursor(engineErrorLogHovered || boardLensButtonHovered ? MouseCursor.Hand : MouseCursor.Arrow);
         if (_variationSession is null)
         {
             UpdateReviewMouseRepeat(mouse, point);
@@ -1767,6 +1789,12 @@ public class Game1 : Game
         if (_session.IsReviewChartPopupOpen)
         {
             HandleReviewChartPopupClick(point);
+            return true;
+        }
+
+        if (GoScreenRenderer.GetReviewBoardLensButtonHit(point))
+        {
+            ToggleBoardLens();
             return true;
         }
 

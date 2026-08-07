@@ -1101,7 +1101,7 @@ public sealed partial class GoScreenRenderer
         }
     }
 
-    public void DrawBoardLensBanner(string lensName, float opacity, float compactProgress)
+    public void DrawBoardLensBanner(string lensName, string guide, float opacity, float compactProgress)
     {
         opacity = Math.Clamp(opacity, 0f, 1f);
         compactProgress = Math.Clamp(compactProgress, 0f, 1f);
@@ -1112,7 +1112,7 @@ public sealed partial class GoScreenRenderer
             transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));
 
         var largeBounds = new Rectangle(560, 48, 800, 122);
-        var compactBounds = new Rectangle(222, 18, 644, 58);
+        var compactBounds = new Rectangle(209, 10, 670, 72);
         var bounds = new Rectangle(
             (int)MathF.Round(MathHelper.Lerp(largeBounds.X, compactBounds.X, compactProgress)),
             (int)MathF.Round(MathHelper.Lerp(largeBounds.Y, compactBounds.Y, compactProgress)),
@@ -1149,10 +1149,9 @@ public sealed partial class GoScreenRenderer
             new Color(235, 251, 255, textAlpha),
             scale);
 
-        const string guide = "[L] NEXT    [1] EXIT";
-        var guideScale = MathHelper.Lerp(0.30f, 0.19f, compactProgress);
+        var guideScale = MathHelper.Lerp(0.30f, 0.27f, compactProgress);
         var guideSize = _font.MeasureString(guide) * guideScale;
-        var guideY = MathHelper.Lerp(bounds.Y + 82f, bounds.Y + 34f, compactProgress);
+        var guideY = MathHelper.Lerp(bounds.Y + 82f, bounds.Y + 41f, compactProgress);
         DrawText(
             guide,
             new Vector2(bounds.Center.X - guideSize.X / 2f, guideY),

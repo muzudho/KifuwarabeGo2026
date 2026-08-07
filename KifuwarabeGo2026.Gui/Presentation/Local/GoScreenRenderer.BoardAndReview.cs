@@ -83,6 +83,8 @@ public sealed partial class GoScreenRenderer
 
     public static bool GetReviewBackToRestButtonHit(Point point) => ReviewBackToRestButtonBounds.Contains(point);
 
+    public static bool GetReviewBoardLensButtonHit(Point point) => ReviewBoardLensButtonBounds.Contains(point);
+
     private void DrawBoardEditingSidePanel(GoAppSession session, Point mousePoint)
     {
         DrawText("BOARD EDIT", new Vector2(1144, 136), new Color(255, 230, 160), 0.72f);
@@ -221,9 +223,10 @@ public sealed partial class GoScreenRenderer
 
         DrawVerticalResultSection(new Rectangle(1144, 850, 668, 142), "REVIEW", new Color(76, 91, 126));
         DrawResultLabel(
-            new Rectangle(1164, 858, 628, 36),
+            new Rectangle(1164, 858, 548, 36),
             $"STEP {session.ReviewMoveIndex} / {session.ReviewMoveCount}",
             new Color(76, 91, 126));
+        DrawReviewBoardLensButton(session.IsRenParseDisplayEnabled, mousePoint);
         DrawMoveNavigationButtons(
             session.ReviewMoveIndex,
             session.ReviewMoveCount,
@@ -390,6 +393,48 @@ public sealed partial class GoScreenRenderer
 
 
     private static Rectangle ReviewBackToRestButtonBounds => new(1480, 120, 156, 52);
+
+
+    private static Rectangle ReviewBoardLensButtonBounds => new(1724, 858, 60, 60);
+
+
+    private void DrawReviewBoardLensButton(bool selected, Point mousePoint)
+    {
+        var bounds = ReviewBoardLensButtonBounds;
+        var hovered = bounds.Contains(mousePoint);
+        var fill = selected
+            ? new Color(26, 91, 99)
+            : hovered
+                ? new Color(50, 75, 86)
+                : new Color(32, 44, 53);
+        var border = selected
+            ? new Color(125, 225, 255)
+            : hovered
+                ? new Color(178, 219, 226)
+                : new Color(111, 137, 150);
+        FillRect(new Rectangle(bounds.X + 4, bounds.Y + 5, bounds.Width, bounds.Height), new Color(0, 0, 0, 95));
+        FillRect(bounds, fill);
+        DrawRect(bounds, 2, border);
+
+        var iconColor = selected ? new Color(151, 255, 215) : new Color(220, 234, 237);
+        var a = new Vector2(bounds.X + 19, bounds.Y + 20);
+        var b = new Vector2(bounds.X + 39, bounds.Y + 20);
+        var c = new Vector2(bounds.X + 39, bounds.Y + 40);
+        DrawLine(a, b, 4f, iconColor);
+        DrawLine(b, c, 4f, iconColor);
+        DrawCircle(a, 7f, iconColor);
+        DrawCircle(b, 7f, iconColor);
+        DrawCircle(c, 7f, iconColor);
+        DrawCenteredText("L", new Vector2(bounds.X + 14, bounds.Y + 46), new Color(255, 220, 128), 0.16f);
+
+        if (hovered)
+        {
+            var tooltip = new Rectangle(bounds.Right - 238, bounds.Y - 38, 238, 32);
+            FillRect(tooltip, new Color(15, 24, 30, 245));
+            DrawRect(tooltip, 1, new Color(125, 225, 255));
+            DrawFittedText("BOARD LENS  [L]", new Rectangle(tooltip.X + 10, tooltip.Y + 4, tooltip.Width - 20, tooltip.Height - 8), Color.White, 0.25f);
+        }
+    }
 
 
     private void DrawBoardEditingHoverStone(GoAppSession session, Point mousePoint, float cell)

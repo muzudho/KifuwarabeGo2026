@@ -324,6 +324,10 @@ public sealed class GoAppSession
     public string BoardLensDisplayName => RenParseDisplayMode switch
     {
         RenParseDisplayMode.Off => "BOARD LENS OFF",
+        RenParseDisplayMode.Overlay => "REN INDEX LENS  1/4",
+        RenParseDisplayMode.Graph => "REN RECTANGLE LENS  2/4",
+        RenParseDisplayMode.GraphStep2 => "REN GRAPH LENS - BASIC  3/4",
+        RenParseDisplayMode.Eye => "REN GRAPH LENS - EYE MODE  4/4",
         RenParseDisplayMode.RenArea => "REN AREA LENS  1/6",
         RenParseDisplayMode.BoundaryCount => "BOUNDARY COUNT LENS  2/6",
         RenParseDisplayMode.BoundaryEmptyCount => "BOUNDARY EMPTY COUNT LENS  3/6",
@@ -331,6 +335,18 @@ public sealed class GoAppSession
         RenParseDisplayMode.AdjacentEmptyArea => "ADJACENT EMPTY AREA LENS  5/6",
         RenParseDisplayMode.AdjacentOpponentArea => "ADJACENT OPPONENT AREA LENS  6/6",
         _ => RenParseDisplayMode.ToString().ToUpperInvariant(),
+    };
+
+    public string BoardLensGuide => RenParseDisplayMode switch
+    {
+        RenParseDisplayMode.Off => "[L] OPEN",
+        RenParseDisplayMode.RenArea or
+        RenParseDisplayMode.BoundaryCount or
+        RenParseDisplayMode.BoundaryEmptyCount or
+        RenParseDisplayMode.BoundaryOpponentCount or
+        RenParseDisplayMode.AdjacentEmptyArea or
+        RenParseDisplayMode.AdjacentOpponentArea => "[L] NEXT    [2] REN ANALYSIS    [1] EXIT",
+        _ => "[L] NEXT    [2] MEASURE    [1] EXIT",
     };
 
     public GoPlayerKind BlackPlayerKind { get; private set; } = GoPlayerKind.Human;
@@ -1147,7 +1163,11 @@ public sealed class GoAppSession
     {
         RenParseDisplayMode = RenParseDisplayMode switch
         {
-            RenParseDisplayMode.Off => RenParseDisplayMode.RenArea,
+            RenParseDisplayMode.Off => RenParseDisplayMode.Overlay,
+            RenParseDisplayMode.Overlay => RenParseDisplayMode.Graph,
+            RenParseDisplayMode.Graph => RenParseDisplayMode.GraphStep2,
+            RenParseDisplayMode.GraphStep2 => RenParseDisplayMode.Eye,
+            RenParseDisplayMode.Eye => RenParseDisplayMode.Overlay,
             RenParseDisplayMode.RenArea => RenParseDisplayMode.BoundaryCount,
             RenParseDisplayMode.BoundaryCount => RenParseDisplayMode.BoundaryEmptyCount,
             RenParseDisplayMode.BoundaryEmptyCount => RenParseDisplayMode.BoundaryOpponentCount,
@@ -1155,6 +1175,23 @@ public sealed class GoAppSession
             RenParseDisplayMode.AdjacentEmptyArea => RenParseDisplayMode.AdjacentOpponentArea,
             _ => RenParseDisplayMode.RenArea,
         };
+    }
+
+    public bool TrySwitchBoardLensFamily()
+    {
+        if (RenParseDisplayMode == RenParseDisplayMode.Off)
+            return false;
+
+        RenParseDisplayMode = RenParseDisplayMode is
+            RenParseDisplayMode.RenArea or
+            RenParseDisplayMode.BoundaryCount or
+            RenParseDisplayMode.BoundaryEmptyCount or
+            RenParseDisplayMode.BoundaryOpponentCount or
+            RenParseDisplayMode.AdjacentEmptyArea or
+            RenParseDisplayMode.AdjacentOpponentArea
+                ? RenParseDisplayMode.Overlay
+                : RenParseDisplayMode.RenArea;
+        return true;
     }
 
     public bool TryDeactivateBoardLens()

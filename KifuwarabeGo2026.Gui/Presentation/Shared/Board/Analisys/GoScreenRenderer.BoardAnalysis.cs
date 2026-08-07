@@ -31,6 +31,32 @@ public sealed partial class GoScreenRenderer
         }
 
         var renParse = parseRens();
+
+        if (displayMode == RenParseDisplayMode.Overlay)
+        {
+            drawPlacedStones();
+            DrawRenBoundaries(renParse, start, cell);
+            DrawRenNumbers(renParse, start, cell);
+            return;
+        }
+
+        if (displayMode == RenParseDisplayMode.Graph)
+        {
+            DrawRenGraphCells(boardSize, getStone, start, cell);
+            DrawRenBoundaries(renParse, start, cell);
+            DrawRenRepresentativeNumbers(renParse, start, cell);
+            return;
+        }
+
+        if (displayMode is RenParseDisplayMode.GraphStep2 or RenParseDisplayMode.Eye)
+        {
+            var nodes = CreateRenGraphNodes(renParse, start, cell, displayMode == RenParseDisplayMode.Eye);
+            FillRect(BoardBounds, new Color(56, 145, 129));
+            DrawRenGraphEdges(nodes, renParse.Edges, cell);
+            DrawRenGraphNodes(nodes, cell);
+            return;
+        }
+
         DrawRenGraphCells(boardSize, getStone, start, cell);
         DrawRenBoundaries(renParse, start, cell);
 
@@ -409,7 +435,8 @@ public sealed partial class GoScreenRenderer
             var legThickness = MathHelper.Clamp(cell * 0.035f, 2f, 4f);
             var legColor = RenGraphCellColor(ren.Stone);
             var markerRadius = MathHelper.Clamp(cell * 0.13f, 5f, 11f);
-            var outerMarkerRadius = markerRadius + 3f;
+            var ringMarkerRadius = markerRadius + 2f;
+            var outerMarkerRadius = markerRadius + 4f;
             var markerCenters = new Dictionary<GoPoint, Vector2>();
             foreach (var point in boundaryPoints)
             {
@@ -436,16 +463,31 @@ public sealed partial class GoScreenRenderer
                     legColor);
             }
 
-            foreach (var markerCenter in markerCenters.Values)
+            foreach (var marker in markerCenters)
             {
-                DrawCircle(markerCenter, outerMarkerRadius, new Color(245, 252, 250, 235));
-                DrawCircle(markerCenter, markerRadius, accent);
+                var targetStone = renParse.GetRen(renParse.GetRenNumber(marker.Key.X, marker.Key.Y)).Stone;
+                DrawCircle(marker.Value, outerMarkerRadius, new Color(245, 252, 250, 235));
+                DrawCircle(marker.Value, ringMarkerRadius, accent);
+                DrawCircle(marker.Value, markerRadius, RenGraphCellColor(targetStone));
             }
 
             var value = showsAdjacentArea
                 ? SumAdjacentRenAreas(renParse, adjacentRenNumbers)
                 : boundaryPoints.Count;
-            DrawRenMetricNumber(ren, value, RenMetricUnit.PointCount, accent, start, cell);
+            var valueColor = displayMode == RenParseDisplayMode.BoundaryCount
+                ? RenGraphCellColor(ren.Stone)
+                : accent;
+            var valueOutlineColor = displayMode == RenParseDisplayMode.BoundaryCount
+                ? RenGraphCellColor(OpponentOf(ren.Stone))
+                : (Color?)null;
+            DrawRenMetricNumber(
+                ren,
+                value,
+                RenMetricUnit.PointCount,
+                valueColor,
+                start,
+                cell,
+                valueOutlineColor);
 
             void AddContact(GoPoint from, int x, int y)
             {
@@ -510,7 +552,8 @@ public sealed partial class GoScreenRenderer
         RenMetricUnit unit,
         Color valueColor,
         Vector2 start,
-        float cell)
+        float cell,
+        Color? valueOutlineColor = null)
     {
         var representative = ren.Points[0];
         var center = BoardPoint(start, cell, representative.X, representative.Y);
@@ -522,16 +565,17 @@ public sealed partial class GoScreenRenderer
             new Color(0, 177, 238),
             new Color(0, 92, 132, 245),
             indexScale);
-        DrawCenteredText(
-            value.ToString(),
-            center + new Vector2(0f, cell * 0.10f),
-            valueColor,
-            valueScale);
+        var valueCenter = center + new Vector2(0f, cell * 0.10f);
+        if (valueOutlineColor is { } outlineColor)
+            DrawCenteredOutlinedText(value.ToString(), valueCenter, valueColor, outlineColor, valueScale);
+        else
+            DrawCenteredText(value.ToString(), valueCenter, valueColor, valueScale);
         DrawRenMetricUnit(
             center + new Vector2(0f, cell * 0.37f),
             unit,
             valueColor,
-            cell);
+            cell,
+            valueOutlineColor);
     }
 
 
@@ -557,15 +601,22 @@ public sealed partial class GoScreenRenderer
     }
 
 
-    private void DrawRenMetricUnit(Vector2 center, RenMetricUnit unit, Color color, float cell)
+    private void DrawRenMetricUnit(
+        Vector2 center,
+        RenMetricUnit unit,
+        Color color,
+        float cell,
+        Color? outlineColor = null)
     {
         var radius = MathHelper.Clamp(cell * 0.075f, 3f, 6f);
         var thickness = Math.Max(2, (int)MathF.Round(radius * 0.42f));
         var backing = new Color(16, 26, 32, 220);
         if (unit == RenMetricUnit.PointCount)
         {
-            DrawCircle(center, radius + thickness, color);
-            DrawCircle(center, radius, backing);
+            DrawCircle(center, radius + thickness, outlineColor ?? color);
+            DrawCircle(center, radius, outlineColor is null ? backing : color);
+            if (outlineColor is not null)
+                DrawCircle(center, Math.Max(1f, radius - thickness), backing);
             return;
         }
 
@@ -578,6 +629,11 @@ public sealed partial class GoScreenRenderer
         FillRect(bounds, backing);
         DrawRect(bounds, thickness, color);
     }
+
+
+    private static GoStone OpponentOf(GoStone stone) => stone == GoStone.Black
+        ? GoStone.White
+        : GoStone.Black;
 
 
     private enum RenMetricUnit
