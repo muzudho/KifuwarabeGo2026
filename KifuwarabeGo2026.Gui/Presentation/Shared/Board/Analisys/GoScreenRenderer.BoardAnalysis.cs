@@ -495,7 +495,7 @@ public sealed partial class GoScreenRenderer
             $"#{ren.Number}",
             center - new Vector2(0f, cell * 0.20f),
             new Color(0, 177, 238),
-            new Color(11, 35, 54, 245),
+            new Color(0, 92, 132, 245),
             indexScale);
         DrawCenteredText(
             value.ToString(),
@@ -519,12 +519,16 @@ public sealed partial class GoScreenRenderer
     {
         var size = _font.MeasureString(text) * scale;
         var position = new Vector2(center.X - size.X / 2f, center.Y - size.Y / 2f);
-        var outline = MathHelper.Clamp(scale * 5f, 1f, 2.5f);
-        _spriteBatch.DrawString(_font, text, position + new Vector2(-outline, 0f), outlineColor, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
-        _spriteBatch.DrawString(_font, text, position + new Vector2(outline, 0f), outlineColor, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
-        _spriteBatch.DrawString(_font, text, position + new Vector2(0f, -outline), outlineColor, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
-        _spriteBatch.DrawString(_font, text, position + new Vector2(0f, outline), outlineColor, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
-        DrawText(text, position, color, scale);
+        var outline = MathHelper.Clamp(scale * 7f, 1.5f, 3f);
+        const int outlineSamples = 16;
+        for (var i = 0; i < outlineSamples; i++)
+        {
+            var angle = MathHelper.TwoPi * i / outlineSamples;
+            var offset = new Vector2(MathF.Cos(angle), MathF.Sin(angle)) * outline;
+            _spriteBatch.DrawString(_font, text, position + offset, outlineColor, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+        }
+
+        _spriteBatch.DrawString(_font, text, position, color, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
     }
 
 

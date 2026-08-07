@@ -1122,7 +1122,6 @@ public sealed partial class GoScreenRenderer
         var panelAlpha = (int)(235f * opacity);
         var textAlpha = (int)(255f * opacity);
         var largeTextAlpha = (int)(textAlpha * (1f - compactProgress));
-        var compactTextAlpha = (int)(textAlpha * compactProgress);
 
         FillRect(new Rectangle(bounds.X + 8, bounds.Y + 10, bounds.Width, bounds.Height), new Color(0, 0, 0, shadowAlpha));
         FillRect(bounds, new Color(13, 24, 31, panelAlpha));
@@ -1139,38 +1138,26 @@ public sealed partial class GoScreenRenderer
             headingScale);
 
         var measured = _font.MeasureString(lensName);
-        var scale = MathF.Min(0.58f, (bounds.Width - 48f) / Math.Max(1f, measured.X));
+        var largeNameScale = MathF.Min(0.58f, (largeBounds.Width - 48f) / Math.Max(1f, measured.X));
+        var compactNameScale = MathF.Min(0.34f, (compactBounds.Width - 28f) / Math.Max(1f, measured.X));
+        var scale = MathHelper.Lerp(largeNameScale, compactNameScale, compactProgress);
         var size = measured * scale;
+        var nameY = MathHelper.Lerp(bounds.Y + 43f, bounds.Y + 5f, compactProgress);
         DrawText(
             lensName,
-            new Vector2(bounds.Center.X - size.X / 2f, bounds.Y + 43),
-            new Color(235, 251, 255, largeTextAlpha),
+            new Vector2(bounds.Center.X - size.X / 2f, nameY),
+            new Color(235, 251, 255, textAlpha),
             scale);
 
         const string guide = "[L] NEXT    [1] EXIT";
-        var guideScale = 0.30f;
+        var guideScale = MathHelper.Lerp(0.30f, 0.19f, compactProgress);
         var guideSize = _font.MeasureString(guide) * guideScale;
+        var guideY = MathHelper.Lerp(bounds.Y + 82f, bounds.Y + 34f, compactProgress);
         DrawText(
             guide,
-            new Vector2(bounds.Center.X - guideSize.X / 2f, bounds.Y + 82),
-            new Color(255, 220, 128, largeTextAlpha),
+            new Vector2(bounds.Center.X - guideSize.X / 2f, guideY),
+            new Color(255, 220, 128, textAlpha),
             guideScale);
-
-        const string compactGuide = "[L] NEXT    [1] EXIT";
-        var compactNameScale = MathF.Min(0.34f, (bounds.Width - 28f) / Math.Max(1f, measured.X));
-        var compactNameSize = measured * compactNameScale;
-        DrawText(
-            lensName,
-            new Vector2(bounds.Center.X - compactNameSize.X / 2f, bounds.Y + 5),
-            new Color(235, 251, 255, compactTextAlpha),
-            compactNameScale);
-        var compactGuideScale = 0.19f;
-        var compactGuideSize = _font.MeasureString(compactGuide) * compactGuideScale;
-        DrawText(
-            compactGuide,
-            new Vector2(bounds.Center.X - compactGuideSize.X / 2f, bounds.Y + 34),
-            new Color(255, 220, 128, compactTextAlpha),
-            compactGuideScale);
 
         _spriteBatch.End();
     }
