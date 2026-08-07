@@ -570,12 +570,15 @@ public sealed partial class GoScreenRenderer
             DrawCenteredOutlinedText(value.ToString(), valueCenter, valueColor, outlineColor, valueScale);
         else
             DrawCenteredText(value.ToString(), valueCenter, valueColor, valueScale);
-        DrawRenMetricUnit(
-            center + new Vector2(0f, cell * 0.37f),
-            unit,
-            valueColor,
-            cell,
-            valueOutlineColor);
+        if (unit == RenMetricUnit.RenCount)
+        {
+            DrawRenMetricUnit(
+                center + new Vector2(0f, cell * 0.37f),
+                unit,
+                valueColor,
+                cell,
+                valueOutlineColor);
+        }
     }
 
 
