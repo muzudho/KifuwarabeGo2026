@@ -407,9 +407,7 @@ public sealed partial class GoScreenRenderer
             }
 
             var legThickness = MathHelper.Clamp(cell * 0.035f, 2f, 4f);
-            var legColor = ren.Stone == GoStone.Black
-                ? new Color(8, 10, 14, 240)
-                : new Color(248, 248, 244, 245);
+            var legColor = RenGraphCellColor(ren.Stone);
             var markerRadius = MathHelper.Clamp(cell * 0.13f, 5f, 11f);
             var outerMarkerRadius = markerRadius + 3f;
             var markerCenters = new Dictionary<GoPoint, Vector2>();
