@@ -297,21 +297,24 @@ internal sealed partial class GtpEngine
         }
 
         var renParse = _board.ParseRens();
-        var legalMoves = new List<GoPoint>();
+        var candidates = new List<PonnukiMoveCandidate>();
         for (var y = 0; y < _board.Size; y++)
         {
             for (var x = 0; x < _board.Size; x++)
             {
                 var trial = _board.Clone();
-                if (trial.TryPlaceStone(x, y, color, _koPoint, out _, out _) &&
+                if (trial.TryPlaceStone(x, y, color, _koPoint, out var capturedStones, out _) &&
                     (!_avoidEyes || !_board.IsEyeFor(renParse, x, y, color)))
                 {
-                    legalMoves.Add(new GoPoint(x, y));
+                    var point = new GoPoint(x, y);
+                    candidates.Add(new PonnukiMoveCandidate(
+                        point,
+                        PonnukiMovePrioritizer.Evaluate(trial, point, color, capturedStones)));
                 }
             }
         }
 
-        if (legalMoves.Count == 0)
+        if (candidates.Count == 0)
         {
             _koPoint = null;
             _sideToPlay = Opponent(color);
@@ -319,9 +322,10 @@ internal sealed partial class GtpEngine
             return;
         }
 
+        var preferredMoves = PonnukiMovePrioritizer.SelectBest(candidates);
         var move = _randomMove == RandomMoveKind.Normal
-            ? legalMoves[_random.Next(legalMoves.Count)]
-            : StarRegionRandomMoveSelector.Select(legalMoves, _board.Size, _random);
+            ? preferredMoves[_random.Next(preferredMoves.Count)]
+            : StarRegionRandomMoveSelector.Select(preferredMoves, _board.Size, _random);
         _board.TryPlaceStone(move.X, move.Y, color, _koPoint, out _, out _koPoint);
         _sideToPlay = Opponent(color);
         response = FormatVertex(move, _board.Size);

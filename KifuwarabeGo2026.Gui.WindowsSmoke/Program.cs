@@ -36,6 +36,7 @@ internal static class Program
             VerifyGoAppsDiscoveryProtocol();
             VerifyAtomicInitialPositionProtocol();
             VerifyJsonEngineOptionsProtocol();
+            VerifyPonnukiMovePriorities();
             VerifyBundledEngineInitialPositionPipeline();
             Console.WriteLine("PASS: Windows platform services passed non-interactive checks.");
             return 0;
@@ -45,6 +46,48 @@ internal static class Program
             Console.Error.WriteLine($"FAIL: {ex.Message}");
             return 1;
         }
+    }
+
+    private static void VerifyPonnukiMovePriorities()
+    {
+        var board = new GoBoard(9);
+        PlaceSetup(board, GoStone.White, (1, 1), (1, 2));
+        PlaceSetup(board, GoStone.Black, (1, 0), (0, 1), (2, 1), (0, 2), (2, 2));
+        PlaceSetup(board, GoStone.White, (5, 5));
+        PlaceSetup(board, GoStone.Black, (5, 4), (4, 5), (6, 5));
+
+        var twoStoneCapture = EvaluatePonnukiCandidate(board, new GoPoint(1, 3), GoStone.Black);
+        var oneStoneCapture = EvaluatePonnukiCandidate(board, new GoPoint(5, 6), GoStone.Black);
+        var selectedCaptures = PonnukiMovePrioritizer.SelectBest([oneStoneCapture, twoStoneCapture]);
+        Require(selectedCaptures.Count == 1 && selectedCaptures[0] == twoStoneCapture.Move,
+            "The ponnuki player did not prefer the move that captures more stones.");
+
+        var contactBoard = new GoBoard(9);
+        PlaceSetup(contactBoard, GoStone.Black, (1, 1), (1, 2));
+        PlaceSetup(contactBoard, GoStone.White, (3, 1), (5, 5), (5, 6));
+        var strongContact = EvaluatePonnukiCandidate(contactBoard, new GoPoint(2, 1), GoStone.Black);
+        var neutralMove = EvaluatePonnukiCandidate(contactBoard, new GoPoint(8, 8), GoStone.Black);
+        var weakContact = EvaluatePonnukiCandidate(contactBoard, new GoPoint(6, 5), GoStone.Black);
+        var selectedContacts = PonnukiMovePrioritizer.SelectBest([weakContact, neutralMove, strongContact]);
+        Require(selectedContacts.Count == 1 && selectedContacts[0] == strongContact.Move,
+            "The ponnuki player did not apply the Board Lens ren-area contact priority.");
+    }
+
+    private static PonnukiMoveCandidate EvaluatePonnukiCandidate(GoBoard board, GoPoint move, GoStone color)
+    {
+        var trial = board.Clone();
+        Require(trial.TryPlaceStone(move.X, move.Y, color, null, out var capturedStones, out _),
+            "A ponnuki priority smoke-test move was unexpectedly illegal.");
+        return new PonnukiMoveCandidate(
+            move,
+            PonnukiMovePrioritizer.Evaluate(trial, move, color, capturedStones));
+    }
+
+    private static void PlaceSetup(GoBoard board, GoStone color, params (int X, int Y)[] points)
+    {
+        foreach (var point in points)
+            Require(board.TrySetSetupStone(point.X, point.Y, color),
+                "A ponnuki priority smoke-test setup stone could not be placed.");
     }
 
     private static void VerifyGuiExecutableGuard()
