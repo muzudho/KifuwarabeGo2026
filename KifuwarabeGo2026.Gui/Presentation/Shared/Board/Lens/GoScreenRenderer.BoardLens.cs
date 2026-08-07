@@ -204,7 +204,6 @@ public sealed partial class GoScreenRenderer
     private void DrawRenGraphEdges(RenGraphNode[] nodes, IReadOnlyList<GoRenGraphEdge> edges, float cell)
     {
         var thickness = MathHelper.Clamp(cell * 0.08f, 4f, 8f);
-        var color = new Color(70, 70, 220, 230);
         foreach (var edge in edges)
         {
             if (!nodes[edge.From].IsVisible || !nodes[edge.To].IsVisible)
@@ -212,8 +211,26 @@ public sealed partial class GoScreenRenderer
                 continue;
             }
 
-            DrawLine(nodes[edge.From].Center, nodes[edge.To].Center, thickness, color);
+            var from = nodes[edge.From];
+            var to = nodes[edge.To];
+            DrawLine(
+                from.Center,
+                to.Center,
+                thickness,
+                RenNetworkEdgeColor(from.Stone, to.Stone));
         }
+    }
+
+
+    private static Color RenNetworkEdgeColor(GoStone from, GoStone to)
+    {
+        if (from == GoStone.Empty)
+            return RenGraphCellColor(to);
+
+        if (to == GoStone.Empty)
+            return RenGraphCellColor(from);
+
+        return new Color(66, 119, 145, 205);
     }
 
 
