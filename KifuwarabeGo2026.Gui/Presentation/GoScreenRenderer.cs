@@ -1101,18 +1101,28 @@ public sealed partial class GoScreenRenderer
         }
     }
 
-    public void DrawBoardLensBanner(string lensName, float opacity)
+    public void DrawBoardLensBanner(string lensName, float opacity, float compactProgress)
     {
         opacity = Math.Clamp(opacity, 0f, 1f);
+        compactProgress = Math.Clamp(compactProgress, 0f, 1f);
+        compactProgress = compactProgress * compactProgress * (3f - (2f * compactProgress));
         _spriteBatch.Begin(
             blendState: BlendState.AlphaBlend,
             samplerState: SamplerState.LinearClamp,
             transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));
 
-        var bounds = new Rectangle(560, 48, 800, 122);
+        var largeBounds = new Rectangle(560, 48, 800, 122);
+        var compactBounds = new Rectangle(222, 18, 644, 58);
+        var bounds = new Rectangle(
+            (int)MathF.Round(MathHelper.Lerp(largeBounds.X, compactBounds.X, compactProgress)),
+            (int)MathF.Round(MathHelper.Lerp(largeBounds.Y, compactBounds.Y, compactProgress)),
+            (int)MathF.Round(MathHelper.Lerp(largeBounds.Width, compactBounds.Width, compactProgress)),
+            (int)MathF.Round(MathHelper.Lerp(largeBounds.Height, compactBounds.Height, compactProgress)));
         var shadowAlpha = (int)(150f * opacity);
         var panelAlpha = (int)(235f * opacity);
         var textAlpha = (int)(255f * opacity);
+        var largeTextAlpha = (int)(textAlpha * (1f - compactProgress));
+        var compactTextAlpha = (int)(textAlpha * compactProgress);
 
         FillRect(new Rectangle(bounds.X + 8, bounds.Y + 10, bounds.Width, bounds.Height), new Color(0, 0, 0, shadowAlpha));
         FillRect(bounds, new Color(13, 24, 31, panelAlpha));
@@ -1125,7 +1135,7 @@ public sealed partial class GoScreenRenderer
         DrawText(
             heading,
             new Vector2(bounds.Center.X - headingSize.X / 2f, bounds.Y + 12),
-            new Color(159, 215, 225, textAlpha),
+            new Color(159, 215, 225, largeTextAlpha),
             headingScale);
 
         var measured = _font.MeasureString(lensName);
@@ -1134,7 +1144,7 @@ public sealed partial class GoScreenRenderer
         DrawText(
             lensName,
             new Vector2(bounds.Center.X - size.X / 2f, bounds.Y + 43),
-            new Color(235, 251, 255, textAlpha),
+            new Color(235, 251, 255, largeTextAlpha),
             scale);
 
         const string guide = "[L] NEXT    [1] EXIT";
@@ -1143,8 +1153,24 @@ public sealed partial class GoScreenRenderer
         DrawText(
             guide,
             new Vector2(bounds.Center.X - guideSize.X / 2f, bounds.Y + 82),
-            new Color(255, 220, 128, textAlpha),
+            new Color(255, 220, 128, largeTextAlpha),
             guideScale);
+
+        const string compactGuide = "[L] NEXT    [1] EXIT";
+        var compactNameScale = MathF.Min(0.34f, (bounds.Width - 28f) / Math.Max(1f, measured.X));
+        var compactNameSize = measured * compactNameScale;
+        DrawText(
+            lensName,
+            new Vector2(bounds.Center.X - compactNameSize.X / 2f, bounds.Y + 5),
+            new Color(235, 251, 255, compactTextAlpha),
+            compactNameScale);
+        var compactGuideScale = 0.19f;
+        var compactGuideSize = _font.MeasureString(compactGuide) * compactGuideScale;
+        DrawText(
+            compactGuide,
+            new Vector2(bounds.Center.X - compactGuideSize.X / 2f, bounds.Y + 34),
+            new Color(255, 220, 128, compactTextAlpha),
+            compactGuideScale);
 
         _spriteBatch.End();
     }
@@ -1430,7 +1456,8 @@ public sealed partial class GoScreenRenderer
 
     private void DrawText(string text, Vector2 position, Color color, float scale)
     {
-        _spriteBatch.DrawString(_font, text, position + new Vector2(2, 2), new Color(0, 0, 0, 125), 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+        var shadowAlpha = (int)MathF.Round(125f * color.A / 255f);
+        _spriteBatch.DrawString(_font, text, position + new Vector2(2, 2), new Color(0, 0, 0, shadowAlpha), 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
         _spriteBatch.DrawString(_font, text, position, color, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
     }
 

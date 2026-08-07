@@ -3,6 +3,7 @@ namespace KifuwarabeGo2026.Gui.Presentation;
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Shared.Domain;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 
@@ -349,7 +350,7 @@ public sealed partial class GoScreenRenderer
         for (var renNumber = 1; renNumber <= renParse.Count; renNumber++)
         {
             var ren = renParse.GetRen(renNumber);
-            DrawRenMetricNumber(ren, ren.Points.Count, new Color(126, 255, 188), start, cell);
+            DrawRenMetricNumber(ren, ren.Points.Count, RenMetricUnit.PointCount, new Color(126, 255, 188), start, cell);
         }
     }
 
@@ -375,7 +376,7 @@ public sealed partial class GoScreenRenderer
             RenParseDisplayMode.AdjacentEmptyArea or
             RenParseDisplayMode.AdjacentOpponentArea;
         var accent = includesEmpty && includesOpponent
-            ? new Color(125, 225, 255)
+            ? new Color(255, 210, 96)
             : includesEmpty
                 ? new Color(126, 255, 188)
                 : new Color(255, 144, 126);
@@ -425,7 +426,7 @@ public sealed partial class GoScreenRenderer
             var value = showsAdjacentArea
                 ? SumAdjacentRenAreas(renParse, adjacentRenNumbers)
                 : boundaryPoints.Count;
-            DrawRenMetricNumber(ren, value, accent, start, cell);
+            DrawRenMetricNumber(ren, value, RenMetricUnit.PointCount, accent, start, cell);
 
             void AddContact(GoPoint from, int x, int y)
             {
@@ -478,22 +479,82 @@ public sealed partial class GoScreenRenderer
     }
 
 
-    private void DrawRenMetricNumber(GoRen ren, int value, Color valueColor, Vector2 start, float cell)
+    private void DrawRenMetricNumber(
+        GoRen ren,
+        int value,
+        RenMetricUnit unit,
+        Color valueColor,
+        Vector2 start,
+        float cell)
     {
         var representative = ren.Points[0];
         var center = BoardPoint(start, cell, representative.X, representative.Y);
         var indexScale = MathHelper.Clamp(cell / 120f, 0.18f, 0.46f);
         var valueScale = MathHelper.Clamp(cell / 68f, 0.34f, 0.80f);
-        DrawCenteredText(
-            ren.Number.ToString(),
-            center - new Vector2(0f, cell * 0.14f),
+        DrawCenteredOutlinedText(
+            $"#{ren.Number}",
+            center - new Vector2(0f, cell * 0.20f),
             new Color(0, 177, 238),
+            new Color(11, 35, 54, 245),
             indexScale);
         DrawCenteredText(
             value.ToString(),
-            center + new Vector2(0f, cell * 0.20f),
+            center + new Vector2(0f, cell * 0.10f),
             valueColor,
             valueScale);
+        DrawRenMetricUnit(
+            center + new Vector2(0f, cell * 0.37f),
+            unit,
+            valueColor,
+            cell);
+    }
+
+
+    private void DrawCenteredOutlinedText(
+        string text,
+        Vector2 center,
+        Color color,
+        Color outlineColor,
+        float scale)
+    {
+        var size = _font.MeasureString(text) * scale;
+        var position = new Vector2(center.X - size.X / 2f, center.Y - size.Y / 2f);
+        var outline = MathHelper.Clamp(scale * 5f, 1f, 2.5f);
+        _spriteBatch.DrawString(_font, text, position + new Vector2(-outline, 0f), outlineColor, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+        _spriteBatch.DrawString(_font, text, position + new Vector2(outline, 0f), outlineColor, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+        _spriteBatch.DrawString(_font, text, position + new Vector2(0f, -outline), outlineColor, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+        _spriteBatch.DrawString(_font, text, position + new Vector2(0f, outline), outlineColor, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+        DrawText(text, position, color, scale);
+    }
+
+
+    private void DrawRenMetricUnit(Vector2 center, RenMetricUnit unit, Color color, float cell)
+    {
+        var radius = MathHelper.Clamp(cell * 0.075f, 3f, 6f);
+        var thickness = Math.Max(2, (int)MathF.Round(radius * 0.42f));
+        var backing = new Color(16, 26, 32, 220);
+        if (unit == RenMetricUnit.PointCount)
+        {
+            DrawCircle(center, radius + thickness, color);
+            DrawCircle(center, radius, backing);
+            return;
+        }
+
+        var extent = (int)MathF.Round(radius + thickness);
+        var bounds = new Rectangle(
+            (int)MathF.Round(center.X) - extent,
+            (int)MathF.Round(center.Y) - extent,
+            extent * 2,
+            extent * 2);
+        FillRect(bounds, backing);
+        DrawRect(bounds, thickness, color);
+    }
+
+
+    private enum RenMetricUnit
+    {
+        PointCount,
+        RenCount,
     }
 
 

@@ -122,6 +122,8 @@ public class Game1 : Game
     private const int ReviewPopupDoubleClickDistance = 18;
     private const double ScreenshotEffectDurationSeconds = 0.42d;
     private const double BoardLensBannerDurationSeconds = 2.2d;
+    private const double BoardLensBannerCompactStartSeconds = 1.35d;
+    private const double BoardLensBannerCompactDurationSeconds = 0.55d;
 
     public Game1(
         IClipboardService clipboardService,
@@ -620,12 +622,26 @@ public class Game1 : Game
         if (_renderer is not null)
         {
             var boardLensBannerAge = _inputClockSeconds - _boardLensBannerStartedAt;
-            if (boardLensBannerAge >= 0d && boardLensBannerAge < BoardLensBannerDurationSeconds)
+            if (boardLensBannerAge >= 0d && _session.IsRenParseDisplayEnabled)
             {
-                var fade = boardLensBannerAge < 0.12d
-                    ? boardLensBannerAge / 0.12d
-                    : Math.Clamp((BoardLensBannerDurationSeconds - boardLensBannerAge) / 0.35d, 0d, 1d);
-                _renderer.DrawBoardLensBanner(_session.BoardLensDisplayName, (float)fade);
+                var opacity = Math.Clamp(boardLensBannerAge / 0.12d, 0d, 1d);
+                var compactProgress = Math.Clamp(
+                    (boardLensBannerAge - BoardLensBannerCompactStartSeconds) /
+                    BoardLensBannerCompactDurationSeconds,
+                    0d,
+                    1d);
+                _renderer.DrawBoardLensBanner(
+                    _session.BoardLensDisplayName,
+                    (float)opacity,
+                    (float)compactProgress);
+            }
+            else if (boardLensBannerAge >= 0d && boardLensBannerAge < BoardLensBannerDurationSeconds)
+            {
+                var opacity = Math.Clamp(
+                    (BoardLensBannerDurationSeconds - boardLensBannerAge) / 0.35d,
+                    0d,
+                    1d);
+                _renderer.DrawBoardLensBanner(_session.BoardLensDisplayName, (float)opacity, 0f);
             }
 
             var screenshotEffectAge = _inputClockSeconds - _screenshotEffectStartedAt;

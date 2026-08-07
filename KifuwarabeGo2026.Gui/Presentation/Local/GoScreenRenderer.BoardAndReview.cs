@@ -222,7 +222,7 @@ public sealed partial class GoScreenRenderer
         DrawVerticalResultSection(new Rectangle(1144, 850, 668, 142), "REVIEW", new Color(76, 91, 126));
         DrawResultLabel(
             new Rectangle(1164, 858, 628, 36),
-            $"STEP {session.ReviewMoveIndex} / {session.ReviewMoveCount}   {session.BoardLensDisplayName}",
+            $"STEP {session.ReviewMoveIndex} / {session.ReviewMoveCount}",
             new Color(76, 91, 126));
         DrawMoveNavigationButtons(
             session.ReviewMoveIndex,
