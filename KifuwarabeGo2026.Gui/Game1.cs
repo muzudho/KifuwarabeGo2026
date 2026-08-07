@@ -647,6 +647,7 @@ public class Game1 : Game
                     1d);
                 _renderer.DrawBoardLensBanner(
                     _session.BoardLensDisplayName,
+                    _session.BoardLensAlias,
                     _session.BoardLensGuide,
                     (float)opacity,
                     (float)compactProgress);
@@ -659,6 +660,7 @@ public class Game1 : Game
                     1d);
                 _renderer.DrawBoardLensBanner(
                     _session.BoardLensDisplayName,
+                    _session.BoardLensAlias,
                     _session.BoardLensGuide,
                     (float)opacity,
                     0f);

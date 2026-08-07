@@ -474,6 +474,8 @@ public sealed partial class GoScreenRenderer
                 : boundaryPoints.Count;
             var valueColor = displayMode == RenParseDisplayMode.BoundaryCount
                 ? RenGraphCellColor(ren.Stone)
+                : displayMode == RenParseDisplayMode.BoundaryEmptyCount
+                    ? RenGraphCellColor(GoStone.Empty)
                 : accent;
             var valueOutlineColor = displayMode == RenParseDisplayMode.BoundaryCount
                 ? RenGraphCellColor(OpponentOf(ren.Stone))

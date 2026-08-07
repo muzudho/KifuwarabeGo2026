@@ -1101,7 +1101,7 @@ public sealed partial class GoScreenRenderer
         }
     }
 
-    public void DrawBoardLensBanner(string lensName, string guide, float opacity, float compactProgress)
+    public void DrawBoardLensBanner(string lensName, string lensAlias, string guide, float opacity, float compactProgress)
     {
         opacity = Math.Clamp(opacity, 0f, 1f);
         compactProgress = Math.Clamp(compactProgress, 0f, 1f);
@@ -1111,8 +1111,11 @@ public sealed partial class GoScreenRenderer
             samplerState: SamplerState.LinearClamp,
             transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));
 
+        var hasAlias = !string.IsNullOrWhiteSpace(lensAlias);
         var largeBounds = new Rectangle(560, 48, 800, 122);
-        var compactBounds = new Rectangle(209, 10, 670, 72);
+        var compactBounds = hasAlias
+            ? new Rectangle(209, 4, 670, 88)
+            : new Rectangle(209, 10, 670, 72);
         var bounds = new Rectangle(
             (int)MathF.Round(MathHelper.Lerp(largeBounds.X, compactBounds.X, compactProgress)),
             (int)MathF.Round(MathHelper.Lerp(largeBounds.Y, compactBounds.Y, compactProgress)),
@@ -1132,16 +1135,32 @@ public sealed partial class GoScreenRenderer
         var compactNameScale = MathF.Min(0.34f, (compactBounds.Width - 28f) / Math.Max(1f, measured.X));
         var scale = MathHelper.Lerp(largeNameScale, compactNameScale, compactProgress);
         var size = measured * scale;
-        var nameY = MathHelper.Lerp(bounds.Y + 43f, bounds.Y + 5f, compactProgress);
+        var largeNameY = hasAlias ? bounds.Y + 15f : bounds.Y + 43f;
+        var nameY = MathHelper.Lerp(largeNameY, bounds.Y + 5f, compactProgress);
         DrawText(
             lensName,
             new Vector2(bounds.Center.X - size.X / 2f, nameY),
             new Color(235, 251, 255, textAlpha),
             scale);
 
-        var guideScale = MathHelper.Lerp(0.30f, 0.27f, compactProgress);
+        if (hasAlias)
+        {
+            var aliasScale = MathHelper.Lerp(0.34f, 0.25f, compactProgress);
+            var aliasSize = _font.MeasureString(lensAlias) * aliasScale;
+            var aliasY = MathHelper.Lerp(bounds.Y + 51f, bounds.Y + 34f, compactProgress);
+            DrawText(
+                lensAlias,
+                new Vector2(bounds.Center.X - aliasSize.X / 2f, aliasY),
+                new Color(159, 215, 225, textAlpha),
+                aliasScale);
+        }
+
+        var guideScale = hasAlias
+            ? MathHelper.Lerp(0.28f, 0.23f, compactProgress)
+            : MathHelper.Lerp(0.30f, 0.27f, compactProgress);
         var guideSize = _font.MeasureString(guide) * guideScale;
-        var guideY = MathHelper.Lerp(bounds.Y + 82f, bounds.Y + 41f, compactProgress);
+        var compactGuideY = hasAlias ? bounds.Y + 61f : bounds.Y + 41f;
+        var guideY = MathHelper.Lerp(bounds.Y + 82f, compactGuideY, compactProgress);
         DrawText(
             guide,
             new Vector2(bounds.Center.X - guideSize.X / 2f, guideY),

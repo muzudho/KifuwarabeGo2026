@@ -349,6 +349,10 @@ public sealed class GoAppSession
         _ => "[L] NEXT    [2] MEASURE    [1] EXIT",
     };
 
+    public string BoardLensAlias => RenParseDisplayMode == RenParseDisplayMode.BoundaryEmptyCount
+        ? "(a.k.a. LIBERTY COUNT)"
+        : "";
+
     public GoPlayerKind BlackPlayerKind { get; private set; } = GoPlayerKind.Human;
 
     public GoPlayerKind WhitePlayerKind { get; private set; } = GoPlayerKind.Computer;
