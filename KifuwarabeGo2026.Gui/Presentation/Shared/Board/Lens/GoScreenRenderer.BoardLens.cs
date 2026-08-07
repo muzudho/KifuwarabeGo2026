@@ -376,7 +376,14 @@ public sealed partial class GoScreenRenderer
         for (var renNumber = 1; renNumber <= renParse.Count; renNumber++)
         {
             var ren = renParse.GetRen(renNumber);
-            DrawRenMetricNumber(ren, ren.Points.Count, RenMetricUnit.PointCount, new Color(126, 255, 188), start, cell);
+            DrawRenMetricNumber(
+                ren,
+                ren.Points.Count,
+                RenMetricUnit.PointCount,
+                RenGraphCellColor(ren.Stone),
+                start,
+                cell,
+                RenGraphCellColor(OpponentOf(ren.Stone)));
         }
     }
 
