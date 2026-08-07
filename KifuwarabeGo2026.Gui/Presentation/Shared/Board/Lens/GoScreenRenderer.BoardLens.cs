@@ -444,7 +444,7 @@ public sealed partial class GoScreenRenderer
                     RenMetricUnit.PointCount,
                     displayMode == RenParseDisplayMode.AdjacentEmptyArea
                         ? RenGraphCellColor(GoStone.Empty)
-                        : accent,
+                        : RenGraphCellColor(OpponentOf(ren.Stone)),
                     start,
                     cell);
                 continue;
