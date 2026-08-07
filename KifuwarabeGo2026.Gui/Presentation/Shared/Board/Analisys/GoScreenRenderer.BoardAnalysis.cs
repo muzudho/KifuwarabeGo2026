@@ -389,6 +389,8 @@ public sealed partial class GoScreenRenderer
 
             var contacts = new List<(GoPoint From, GoPoint To)>();
             var boundaryPoints = new HashSet<GoPoint>();
+            var boundaryDirectionSums = new Dictionary<GoPoint, Vector2>();
+            var boundaryFallbackDirections = new Dictionary<GoPoint, Vector2>();
             var adjacentRenNumbers = new HashSet<int>();
             foreach (var point in ren.Points)
             {
@@ -405,22 +407,41 @@ public sealed partial class GoScreenRenderer
             }
 
             var legThickness = MathHelper.Clamp(cell * 0.035f, 2f, 4f);
-            var legColor = new Color((int)accent.R, accent.G, accent.B, 185);
+            var legColor = ren.Stone == GoStone.Black
+                ? new Color(8, 10, 14, 240)
+                : new Color(248, 248, 244, 245);
+            var markerRadius = MathHelper.Clamp(cell * 0.13f, 5f, 11f);
+            var outerMarkerRadius = markerRadius + 3f;
+            var markerCenters = new Dictionary<GoPoint, Vector2>();
+            foreach (var point in boundaryPoints)
+            {
+                var boundaryCenter = BoardPoint(start, cell, point.X, point.Y);
+                var sourceDirection = boundaryDirectionSums[point];
+                if (sourceDirection.LengthSquared() < 0.01f)
+                    sourceDirection = boundaryFallbackDirections[point];
+                sourceDirection.Normalize();
+
+                // 隣点を中心に、足が来た方向を時計回りへ90度回した側へ逃がします。
+                var clockwiseDirection = new Vector2(-sourceDirection.Y, sourceDirection.X);
+                markerCenters[point] = boundaryCenter + (clockwiseDirection * outerMarkerRadius * 2f);
+            }
+
+            // 隣点で折り曲げず、各始点から退避済みマーカーへ直接つなぎます。
             foreach (var contact in contacts)
             {
+                var from = BoardPoint(start, cell, contact.From.X, contact.From.Y);
+                var to = markerCenters[contact.To];
                 DrawLine(
-                    BoardPoint(start, cell, contact.From.X, contact.From.Y),
-                    BoardPoint(start, cell, contact.To.X, contact.To.Y),
+                    from,
+                    to,
                     legThickness,
                     legColor);
             }
 
-            var markerRadius = MathHelper.Clamp(cell * 0.13f, 5f, 11f);
-            foreach (var point in boundaryPoints)
+            foreach (var markerCenter in markerCenters.Values)
             {
-                var center = BoardPoint(start, cell, point.X, point.Y);
-                DrawCircle(center, markerRadius + 3f, new Color(245, 252, 250, 235));
-                DrawCircle(center, markerRadius, accent);
+                DrawCircle(markerCenter, outerMarkerRadius, new Color(245, 252, 250, 235));
+                DrawCircle(markerCenter, markerRadius, accent);
             }
 
             var value = showsAdjacentArea
@@ -446,6 +467,12 @@ public sealed partial class GoScreenRenderer
                 var target = new GoPoint(x, y);
                 contacts.Add((from, target));
                 boundaryPoints.Add(target);
+                var sourceDirection = new Vector2(from.X - x, from.Y - y);
+                if (boundaryDirectionSums.TryGetValue(target, out var directionSum))
+                    boundaryDirectionSums[target] = directionSum + sourceDirection;
+                else
+                    boundaryDirectionSums[target] = sourceDirection;
+                boundaryFallbackDirections.TryAdd(target, sourceDirection);
                 adjacentRenNumbers.Add(targetRenNumber);
             }
         }
