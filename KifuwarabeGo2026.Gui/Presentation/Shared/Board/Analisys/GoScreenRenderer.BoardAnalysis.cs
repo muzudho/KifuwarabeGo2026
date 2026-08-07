@@ -434,7 +434,9 @@ public sealed partial class GoScreenRenderer
 
             var legThickness = MathHelper.Clamp(cell * 0.035f, 2f, 4f);
             var legColor = RenGraphCellColor(ren.Stone);
-            var markerRadius = MathHelper.Clamp(cell * 0.13f, 5f, 11f);
+            var originalMarkerRadius = MathHelper.Clamp(cell * 0.13f, 5f, 11f);
+            var originalOuterMarkerRadius = originalMarkerRadius + 4f;
+            var markerRadius = Math.Max(2f, originalMarkerRadius - legThickness);
             var outerMarkerRadius = markerRadius + 4f;
             var markerCenters = new Dictionary<GoPoint, Vector2>();
             foreach (var point in boundaryPoints)
@@ -447,7 +449,7 @@ public sealed partial class GoScreenRenderer
 
                 // 隣点を中心に、足が来た方向を時計回りへ90度回した側へ逃がします。
                 var clockwiseDirection = new Vector2(-sourceDirection.Y, sourceDirection.X);
-                markerCenters[point] = boundaryCenter + (clockwiseDirection * outerMarkerRadius * 2f);
+                markerCenters[point] = boundaryCenter + (clockwiseDirection * originalOuterMarkerRadius * 2f);
             }
 
             // 隣点で折り曲げず、各始点から退避済みマーカーへ直接つなぎます。
@@ -465,7 +467,7 @@ public sealed partial class GoScreenRenderer
             foreach (var marker in markerCenters)
             {
                 var targetStone = renParse.GetRen(renParse.GetRenNumber(marker.Key.X, marker.Key.Y)).Stone;
-                DrawCircle(marker.Value, outerMarkerRadius, legColor);
+                DrawCircle(marker.Value, Math.Max(1f, outerMarkerRadius - 1f), legColor);
                 DrawCircle(marker.Value, markerRadius, RenGraphCellColor(targetStone));
             }
 
@@ -476,6 +478,8 @@ public sealed partial class GoScreenRenderer
                 ? RenGraphCellColor(ren.Stone)
                 : displayMode == RenParseDisplayMode.BoundaryEmptyCount
                     ? RenGraphCellColor(GoStone.Empty)
+                    : displayMode == RenParseDisplayMode.BoundaryOpponentCount
+                        ? RenGraphCellColor(OpponentOf(ren.Stone))
                 : accent;
             var valueOutlineColor = displayMode == RenParseDisplayMode.BoundaryCount
                 ? RenGraphCellColor(OpponentOf(ren.Stone))
