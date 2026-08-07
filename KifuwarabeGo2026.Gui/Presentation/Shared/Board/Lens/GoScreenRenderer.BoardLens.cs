@@ -225,7 +225,7 @@ public sealed partial class GoScreenRenderer
     private void DrawRenGraphNodes(RenGraphNode[] nodes, float cell)
     {
         var radius = MathHelper.Clamp(cell * 0.45f, 22f, 46f);
-        var scale = MathHelper.Clamp(cell / 72f, 0.34f, 0.84f);
+        var scale = RenNumberScale(cell);
         for (var renNumber = 1; renNumber < nodes.Length; renNumber++)
         {
             var node = nodes[renNumber];
@@ -235,7 +235,7 @@ public sealed partial class GoScreenRenderer
             }
 
             DrawCircle(node.Center, radius, RenGraphNodeColor(node.Stone));
-            DrawCenteredText(node.Number.ToString(), node.Center, new Color(0, 177, 238), scale);
+            DrawRenNumber(node.Number, node.Center, scale);
             DrawRenGraphEyeMarkers(node, radius, scale);
         }
     }
@@ -269,7 +269,10 @@ public sealed partial class GoScreenRenderer
                 (int)MathF.Round(markerSize));
             FillRect(markerBounds, new Color(255, 238, 0, 245));
             DrawRect(markerBounds, 2, new Color(255, 250, 220));
-            DrawCenteredText(node.EyeNumbers[i].ToString(), new Vector2(markerBounds.Center.X, markerBounds.Center.Y), new Color(56, 94, 120), markerScale);
+            DrawRenNumber(
+                node.EyeNumbers[i],
+                new Vector2(markerBounds.Center.X, markerBounds.Center.Y),
+                markerScale);
         }
     }
 
@@ -330,14 +333,14 @@ public sealed partial class GoScreenRenderer
     /// <param name="cell"></param>
     private void DrawRenNumbers(GoRenParseResult renParse, Vector2 start, float cell)
     {
-        var scale = MathHelper.Clamp(cell / 72f, 0.28f, 0.88f);
+        var scale = RenNumberScale(cell);
         for (var y = 0; y < renParse.Size; y++)
         {
             for (var x = 0; x < renParse.Size; x++)
             {
-                var label = renParse.GetRenNumber(x, y).ToString();
+                var renNumber = renParse.GetRenNumber(x, y);
                 var center = BoardPoint(start, cell, x, y);
-                DrawCenteredText(label, center, new Color(0, 177, 238), scale);
+                DrawRenNumber(renNumber, center, scale);
             }
         }
     }
@@ -351,7 +354,7 @@ public sealed partial class GoScreenRenderer
     /// <param name="cell"></param>
     private void DrawRenRepresentativeNumbers(GoRenParseResult renParse, Vector2 start, float cell)
     {
-        var scale = MathHelper.Clamp(cell / 72f, 0.28f, 0.88f);
+        var scale = RenNumberScale(cell);
         var drawn = new bool[renParse.Count + 1];
         for (var y = 0; y < renParse.Size; y++)
         {
@@ -365,7 +368,7 @@ public sealed partial class GoScreenRenderer
 
                 drawn[renNumber] = true;
                 var center = BoardPoint(start, cell, x, y);
-                DrawCenteredText(renNumber.ToString(), center, new Color(0, 177, 238), scale);
+                DrawRenNumber(renNumber, center, scale);
             }
         }
     }
@@ -632,13 +635,11 @@ public sealed partial class GoScreenRenderer
     {
         var representative = ren.Points[0];
         var center = BoardPoint(start, cell, representative.X, representative.Y);
-        var indexScale = MathHelper.Clamp(cell / 120f, 0.18f, 0.46f);
+        var indexScale = RenNumberScale(cell);
         var valueScale = MathHelper.Clamp(cell / 68f, 0.34f, 0.80f);
-        DrawCenteredOutlinedText(
-            $"#{ren.Number}",
+        DrawRenNumber(
+            ren.Number,
             center - new Vector2(0f, cell * 0.20f),
-            new Color(0, 177, 238),
-            new Color(0, 92, 132, 245),
             indexScale);
         var valueText = value.ToString();
         if (valueText.Length > 2)
@@ -662,6 +663,21 @@ public sealed partial class GoScreenRenderer
                 cell,
                 valueOutlineColor);
         }
+    }
+
+
+    private static float RenNumberScale(float cell) =>
+        MathHelper.Clamp(cell / 120f, 0.18f, 0.46f);
+
+
+    private void DrawRenNumber(int renNumber, Vector2 center, float scale)
+    {
+        DrawCenteredOutlinedText(
+            $"#{renNumber}",
+            center,
+            new Color(0, 177, 238),
+            new Color(0, 92, 132, 245),
+            scale);
     }
 
 
