@@ -726,6 +726,8 @@ public class Game1 : Game
         if (_renderer is not null && _activeGtpEngineIntegerOption is { } integerOption)
             _renderer.DrawIntegerInputDialog(Mouse.GetState().Position, integerOption.Label, _gtpEngineIntegerOptionTextBox.Text, _gtpEngineIntegerOptionTextBox.CaretIndex, _gtpEngineIntegerInputMessage);
 
+        _renderer?.DrawBreadcrumb(GetScreenBreadcrumb());
+
         base.Draw(gameTime);
     }
 
@@ -4654,6 +4656,74 @@ public class Game1 : Game
                         ? "Local/Playing/InitialPositionConcierge"
                         : $"Local/{_session.CurrentMode.Kind}"
                     : $"CGOS/{_session.CgosConnectionFlowKind}/{_session.CurrentMode.Kind}";
+
+    private string GetScreenBreadcrumb()
+    {
+        if (_isApplicationSettingsOpen)
+            return "TITLE  >  SETTINGS";
+
+        if (_session.UseKind is null)
+        {
+            return _titleMenuPage switch
+            {
+                TitleMenuPage.Home => "TITLE",
+                TitleMenuPage.CaptureGame => "TITLE  >  APPS",
+                TitleMenuPage.Tsumego => "TITLE  >  APPS  >  TSUMEGO",
+                TitleMenuPage.NextMove => "TITLE  >  APPS  >  NEXT MOVE",
+                _ => "TITLE",
+            };
+        }
+
+        var breadcrumb = _session.UseKind switch
+        {
+            GoAppUseKind.LocalPlay => GetLocalPlayBreadcrumb(),
+            GoAppUseKind.LocalApps => "APPS  >  LOCAL APPS",
+            GoAppUseKind.CgosClient => GetCgosBreadcrumb(),
+            _ => "APPS",
+        };
+
+        if (_session.IsReviewChartPopupOpen)
+            breadcrumb += "  >  CHART POPUP";
+        else if (_session.IsGtpEngineSelectionDialogOpen)
+            breadcrumb += "  >  COMPUTER SELECT";
+        else if (_session.IsGtpEngineEditPanelOpen)
+            breadcrumb += "  >  COMPUTER EDIT";
+        else if (_session.IsTournamentRulesSelectionDialogOpen)
+            breadcrumb += "  >  TOURNAMENT RULE SELECT";
+        else if (_session.IsTournamentRulesAddPanelOpen)
+            breadcrumb += "  >  TOURNAMENT RULE EDIT";
+        else if (_session.IsTournamentRulesDeleteConfirmationOpen)
+            breadcrumb += "  >  TOURNAMENT RULE DELETE";
+
+        return breadcrumb;
+    }
+
+    private string GetLocalPlayBreadcrumb()
+    {
+        if (_playingScene.IsInitialPositionConciergeVisible)
+            return "APPS  >  LOCAL PLAY  >  PLAY  >  INITIAL POSITION";
+
+        return _session.CurrentMode.Kind switch
+        {
+            GoAppModeKind.Resting => "APPS  >  LOCAL PLAY  >  INTERVAL",
+            GoAppModeKind.Playing => "APPS  >  LOCAL PLAY  >  PLAY",
+            GoAppModeKind.GameOver => "APPS  >  LOCAL PLAY  >  PLAY  >  RESULT",
+            GoAppModeKind.BoardEditing => "APPS  >  LOCAL PLAY  >  PLAY  >  EDIT BOARD",
+            GoAppModeKind.VariationEditing => "APPS  >  LOCAL PLAY  >  PLAY  >  EDIT BOARD",
+            GoAppModeKind.Reviewing => "APPS  >  LOCAL PLAY  >  PLAY  >  REVIEW",
+            _ => "APPS  >  LOCAL PLAY",
+        };
+    }
+
+    private string GetCgosBreadcrumb() =>
+        _session.CgosConnectionFlowKind switch
+        {
+            CgosConnectionFlowKind.ProfileSelection => "APPS  >  CGOS  >  PROFILE SELECT",
+            CgosConnectionFlowKind.ConnectionStart => "APPS  >  CGOS  >  CONNECT",
+            CgosConnectionFlowKind.Watching => "APPS  >  CGOS  >  WATCH",
+            CgosConnectionFlowKind.Result => "APPS  >  CGOS  >  WATCH  >  RESULT",
+            _ => "APPS  >  CGOS",
+        };
 
     protected override void Dispose(bool disposing)
     {

@@ -55,8 +55,8 @@ public sealed class WindowsInitialWindowLayoutService : IInitialWindowLayoutServ
         var dpi = GetDpiForWindow(nativeWindowHandle);
         var pixelsPerLogical = dpi > 0 ? dpi / 96d : 1d;
         var maximumClientSize = new WindowClientSize(
-            Math.Max(1, (int)Math.Floor((workingArea.Right - workingArea.Left - frameWidth) / pixelsPerLogical)),
-            Math.Max(1, (int)Math.Floor((workingArea.Bottom - workingArea.Top - frameHeight) / pixelsPerLogical)));
+            Math.Max(1, (int)Math.Floor((workingArea.Right - workingArea.Left - PhysicalOuterMargin * 2 - frameWidth) / pixelsPerLogical)),
+            Math.Max(1, (int)Math.Floor((workingArea.Bottom - workingArea.Top - PhysicalOuterMargin * 2 - frameHeight) / pixelsPerLogical)));
 
         GuiOperationLog.App(
             "Measured initial window layout",
@@ -81,20 +81,21 @@ public sealed class WindowsInitialWindowLayoutService : IInitialWindowLayoutServ
         if (monitor == IntPtr.Zero || !GetMonitorInfo(monitor, ref monitorInfo))
             return;
 
-        var windowWidth = windowBounds.Right - windowBounds.Left;
-        var windowHeight = windowBounds.Bottom - windowBounds.Top;
         var workingArea = monitorInfo.WorkArea;
-        var positionX = workingArea.Left + Math.Max(0, (workingArea.Right - workingArea.Left - windowWidth) / 2);
-        var positionY = workingArea.Top + Math.Max(0, (workingArea.Bottom - workingArea.Top - windowHeight) / 2);
-        SetWindowPos(nativeWindowHandle, IntPtr.Zero, positionX, positionY, 0, 0, SetWindowPositionFlags);
+        var targetWidth = Math.Max(1, workingArea.Right - workingArea.Left - PhysicalOuterMargin * 2);
+        var targetHeight = Math.Max(1, workingArea.Bottom - workingArea.Top - PhysicalOuterMargin * 2);
+        var positionX = workingArea.Left + PhysicalOuterMargin;
+        var positionY = workingArea.Top + PhysicalOuterMargin;
+        SetWindowPos(nativeWindowHandle, IntPtr.Zero, positionX, positionY, targetWidth, targetHeight, SetWindowPositionFlags);
         GuiOperationLog.App(
-            "Centered initial window",
-            $"position={positionX},{positionY}; window={windowWidth}x{windowHeight}; " +
+            "Positioned initial window with work-area margins",
+            $"position={positionX},{positionY}; window={targetWidth}x{targetHeight}; margin={PhysicalOuterMargin}; " +
             $"workArea=({workingArea.Left},{workingArea.Top})-({workingArea.Right},{workingArea.Bottom})");
     }
 
     private const uint MonitorDefaultToNearest = 2;
-    private const uint SetWindowPositionFlags = 0x0001 | 0x0004 | 0x0010; // NOSIZE | NOZORDER | NOACTIVATE
+    private const int PhysicalOuterMargin = 16;
+    private const uint SetWindowPositionFlags = 0x0004 | 0x0010; // NOZORDER | NOACTIVATE
 
     [DllImport("user32.dll", SetLastError = true)]
     private static extern bool GetWindowRect(IntPtr hWnd, out WindowRect lpRect);

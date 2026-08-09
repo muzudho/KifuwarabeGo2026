@@ -1074,6 +1074,9 @@ public sealed partial class GoScreenRenderer
     }
 
     private static string FormatKomi(decimal komi) => komi.ToString("0.0");
+    private const float MinimumCommandButtonLabelScale = 0.36f;
+    private const float CommandButtonLabelScaleMultiplier = 1.25f;
+
     private void DrawCommandButton(Rectangle bounds, string label, bool selected, Point mousePoint, bool enabled = true, float scale = 0.62f)
     {
         var hovered = enabled && bounds.Contains(mousePoint);
@@ -1088,16 +1091,17 @@ public sealed partial class GoScreenRenderer
         }
 
         var textColor = enabled ? Color.White : new Color(91, 100, 106);
+        var requestedScale = MathF.Max(MinimumCommandButtonLabelScale, scale * CommandButtonLabelScaleMultiplier);
         if (label.All(character => _font.Characters.Contains(character)))
         {
             var measured = _font.MeasureString(label);
-            var fittedScale = MathF.Min(scale, MathF.Min((bounds.Width - 20) / Math.Max(1f, measured.X), (bounds.Height - 10) / Math.Max(1f, measured.Y)));
+            var fittedScale = MathF.Min(requestedScale, MathF.Min((bounds.Width - 20) / Math.Max(1f, measured.X), (bounds.Height - 10) / Math.Max(1f, measured.Y)));
             var size = measured * fittedScale;
             DrawText(label, new Vector2(bounds.Center.X - size.X / 2, bounds.Center.Y - size.Y / 2), textColor, fittedScale);
         }
         else
         {
-            DrawDynamicOptionText(label, new Rectangle(bounds.X + 10, bounds.Y + 5, bounds.Width - 20, bounds.Height - 10), textColor, scale);
+            DrawDynamicOptionText(label, new Rectangle(bounds.X + 10, bounds.Y + 5, bounds.Width - 20, bounds.Height - 10), textColor, requestedScale);
         }
     }
 
@@ -1185,7 +1189,7 @@ public sealed partial class GoScreenRenderer
         {
             DrawResultLabel(new Rectangle(selector.Bounds.X + 20, selector.Bounds.Y - 6, selector.Bounds.Width - 40, selector.Bounds.Height + 12), selector.Label, new Color(76, 91, 126));
             DrawFittedText(selector.Value, new Rectangle(GameOverValueX, selector.Bounds.Y + 6, selector.BrowseButtonBounds.X - GameOverValueX - 12, selector.Bounds.Height - 12), Color.White, 0.42f);
-            DrawCommandButton(selector.BrowseButtonBounds, selector.ButtonLabel, false, mousePoint, enabled: selector.Enabled, scale: 0.34f);
+            DrawCommandButton(selector.BrowseButtonBounds, selector.ButtonLabel, false, mousePoint, enabled: selector.Enabled, scale: 0.50f);
             return;
         }
 
@@ -1193,7 +1197,7 @@ public sealed partial class GoScreenRenderer
 
         DrawFittedText(selector.Label, selector.LabelBounds, new Color(158, 178, 178), 0.36f);
         DrawFittedText(selector.Value, selector.ValueBounds, Color.White, 0.52f);
-        DrawCommandButton(selector.BrowseButtonBounds, selector.ButtonLabel, false, mousePoint, enabled: selector.Enabled, scale: 0.34f);
+        DrawCommandButton(selector.BrowseButtonBounds, selector.ButtonLabel, false, mousePoint, enabled: selector.Enabled, scale: 0.50f);
     }
 
     private void DrawDataRowFrame(Rectangle bounds, bool active = false, bool hovered = false)
