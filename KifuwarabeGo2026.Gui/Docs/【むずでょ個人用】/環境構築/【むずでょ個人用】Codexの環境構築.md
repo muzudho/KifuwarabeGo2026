@@ -9,19 +9,33 @@ Visual Studio 2026 のメインメニューの［拡張機能］から、 `Claud
 Visual Studio 2026 を閉じる。インストールが開始される。  
 Visual Studio 2026 を開く。  
 ［表示　＞　その他のウィンドウ　＞　Claude Code Extension］をクリック。  
-画面にドッキングさせる。  
+
+最初は Claude Code Extension ではなく、 CMD という名前のウィンドウが開く。  
 
 
 ## ローカルにコーデックスをインストール
 
-ターミナル開いて以下を入力。  
+npm を使うので Node.JS をインストール。  
+https://nodejs.org/ja
+Windows にインストールするなら、 msi を選ぶと楽。  
+Node.JS の中に npm が含まれている。  
+
+Visual Studio のターミナルではなく、Windows 検索で cmd と入力して、コマンドプロンプトを開いて以下を入力。  
 
 ```shell
+# CMD を Claude Code にするため。
+npm install -g @anthropic-ai/claude-code
+
+# Claude Code で Codex を使えるようにするため。
 npm install -g @openai/codex
 ```
 
 Visual Sudio を開いているのなら、それを再起動。  
-AIの顔アイコンをクリック、コーデックスを選択。  
+
+画面にドッキングさせる。  
+歯車アイコンボタンをクリック。Configure Visible Code Agents をクリック。  
+もう１回歯車アイコンボタンをクリック。Codex をチェック。
+AIの顔アイコンをクリック、例えば GPT-5.6 Terra を選択。  
 
 
 ## PC に Codex をインストールする。
