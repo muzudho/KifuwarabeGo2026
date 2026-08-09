@@ -4,7 +4,7 @@ using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Application.Local.Resting.TournamentRule;
 using KifuwarabeGo2026.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.Shared.Domain;
-using KifuwarabeGo2026.Gui.Presentation.Apps.LocalPlay.Interval.TournamentRules;
+using KifuwarabeGo2026.Gui.Presentation.Shared.PlayerSelector;
 using KifuwarabeGo2026.Gui.Presentation.Title;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -848,7 +848,7 @@ public sealed partial class GoScreenRenderer
         var engineName = selectedIndex >= 0 && selectedIndex < session.GtpEngineProfiles.Count
             ? session.GtpEngineProfiles[selectedIndex].DisplayName
             : "No engine";
-        DrawLabeledBrowseSelector(GtpEngineSelectorBounds(y) with { Value = engineName }, mousePoint);
+        DrawPlayerSelector(PlayerSelectorLayout.CreateComputerEngineSelector(y) with { Value = engineName }, mousePoint);
     }
 
     private void DrawHumanPlayerNameTextBox(GoAppSession session, GoStone stone, Point mousePoint, int y)
@@ -1183,13 +1183,13 @@ public sealed partial class GoScreenRenderer
         DrawCommandButton(PathTooltipCopyButtonBoundsFromPopup(bounds), "COPY", false, mousePoint, scale: 0.34f);
     }
 
-    private void DrawLabeledBrowseSelector(LabeledBrowseSelector selector, Point mousePoint)
+    private void DrawPlayerSelector(PlayerSelector selector, Point mousePoint)
     {
         if (selector.Bounds.X == 1144 && selector.Bounds.Width == 668)
         {
             DrawResultLabel(new Rectangle(selector.Bounds.X + 20, selector.Bounds.Y - 6, selector.Bounds.Width - 40, selector.Bounds.Height + 12), selector.Label, new Color(76, 91, 126));
             DrawFittedText(selector.Value, new Rectangle(GameOverValueX, selector.Bounds.Y + 6, selector.BrowseButtonBounds.X - GameOverValueX - 12, selector.Bounds.Height - 12), Color.White, 0.42f);
-            DrawCommandButton(selector.BrowseButtonBounds, selector.ButtonLabel, false, mousePoint, enabled: selector.Enabled, scale: 0.50f);
+            DrawCommandButton(selector.BrowseButtonBounds, selector.ButtonLabel, false, mousePoint, enabled: selector.Enabled, scale: PlayerSelectorLayout.SelectButtonLabelScale);
             return;
         }
 
@@ -1197,7 +1197,7 @@ public sealed partial class GoScreenRenderer
 
         DrawFittedText(selector.Label, selector.LabelBounds, new Color(158, 178, 178), 0.36f);
         DrawFittedText(selector.Value, selector.ValueBounds, Color.White, 0.52f);
-        DrawCommandButton(selector.BrowseButtonBounds, selector.ButtonLabel, false, mousePoint, enabled: selector.Enabled, scale: 0.50f);
+        DrawCommandButton(selector.BrowseButtonBounds, selector.ButtonLabel, false, mousePoint, enabled: selector.Enabled, scale: PlayerSelectorLayout.SelectButtonLabelScale);
     }
 
     private void DrawDataRowFrame(Rectangle bounds, bool active = false, bool hovered = false)

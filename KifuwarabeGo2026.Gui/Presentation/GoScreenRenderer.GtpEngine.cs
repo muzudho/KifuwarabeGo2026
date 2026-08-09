@@ -3,7 +3,7 @@ namespace KifuwarabeGo2026.Gui.Presentation;
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.GtpExtensions.InitialPosition;
 using KifuwarabeGo2026.Shared.Domain;
-using KifuwarabeGo2026.Gui.Presentation.Apps.LocalPlay.Interval.TournamentRules;
+using KifuwarabeGo2026.Gui.Presentation.Shared.PlayerSelector;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -213,11 +213,11 @@ public sealed partial class GoScreenRenderer
 
 
     public static bool GetBlackGtpEngineBrowseButtonHit(Point point) =>
-        GtpEngineSelectorBounds(BlackEngineButtonY).ContainsBrowseButton(point);
+        PlayerSelectorLayout.CreateComputerEngineSelector(BlackEngineButtonY).ContainsBrowseButton(point);
 
 
     public static bool GetWhiteGtpEngineBrowseButtonHit(Point point) =>
-        GtpEngineSelectorBounds(WhiteEngineButtonY).ContainsBrowseButton(point);
+        PlayerSelectorLayout.CreateComputerEngineSelector(WhiteEngineButtonY).ContainsBrowseButton(point);
 
 
     private void DrawGtpEngineSelectionDialog(GoAppSession session, Point mousePoint)
@@ -844,9 +844,6 @@ public sealed partial class GoScreenRenderer
 
     private static Rectangle GtpEngineSelectionDialogPropertyRowBounds(int index) =>
         new(GtpEngineSelectionDialogPropertyBounds.X + 18, GtpEngineSelectionDialogPropertyBounds.Y + 22 + index * 70, GtpEngineSelectionDialogPropertyBounds.Width - 36, 52);
-
-
-    private static LabeledBrowseSelector GtpEngineSelectorBounds(int y) => new(new Rectangle(1144, y - 4, 668, 44), "NAME", "", "SELECT");
 
 
     private static string SaveGtpEngineLabel(GoAppSession session) =>

@@ -4,7 +4,7 @@ using KifuwarabeGo2026.Gui.Presentation.Title;
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Application.Cgos.ConnectionTarget;
 using KifuwarabeGo2026.Shared.Domain;
-using KifuwarabeGo2026.Gui.Presentation.Apps.LocalPlay.Interval.TournamentRules;
+using KifuwarabeGo2026.Gui.Presentation.Shared.PlayerSelector;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -600,7 +600,7 @@ public sealed partial class GoScreenRenderer
         string title,
         string status,
         string? engineName,
-        LabeledBrowseSelector? engineSelector,
+        PlayerSelector? engineSelector,
         string? elapsedDisplay,
         Rectangle startButtonBounds,
         string startLabel,
@@ -625,7 +625,7 @@ public sealed partial class GoScreenRenderer
 
         if (engineSelector is { } selector)
         {
-            DrawLabeledBrowseSelector(selector with { Value = engineName ?? "-" }, mousePoint);
+            DrawPlayerSelector(selector with { Value = engineName ?? "-" }, mousePoint);
         }
 
         DrawCommandButton(startButtonBounds, startLabel, false, mousePoint, enabled: startEnabled, scale: 0.36f);
@@ -1026,7 +1026,7 @@ public sealed partial class GoScreenRenderer
         new(CgosAdminProcessPanelBounds.X + 16, CgosAdminProcessPanelBounds.Y - 34, CgosAdminProcessPanelBounds.Width - 32, 28);
 
 
-    private static LabeledBrowseSelector CgosBlackEngineSelector => new(
+    private static PlayerSelector CgosBlackEngineSelector => new(
         new Rectangle(CgosBlackProcessPanelBounds.X + 16, CgosBlackProcessPanelBounds.Y + 120, CgosBlackProcessPanelBounds.Width - 32, 48),
         "ENGINE",
         "",
@@ -1035,7 +1035,7 @@ public sealed partial class GoScreenRenderer
         88);
 
 
-    private static LabeledBrowseSelector CgosWhiteEngineSelector => new(
+    private static PlayerSelector CgosWhiteEngineSelector => new(
         new Rectangle(CgosWhiteProcessPanelBounds.X + 16, CgosWhiteProcessPanelBounds.Y + 120, CgosWhiteProcessPanelBounds.Width - 32, 48),
         "ENGINE",
         "",
