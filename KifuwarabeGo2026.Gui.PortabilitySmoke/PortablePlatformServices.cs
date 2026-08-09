@@ -16,6 +16,7 @@ internal sealed class PortablePlatformServices :
     IDesktopLauncher,
     ITextRasterizer,
     IWindowIconService,
+    IInitialWindowLayoutService,
     IPlatformExecutableService,
     IWindowScreenshotService
 {
@@ -89,6 +90,12 @@ internal sealed class PortablePlatformServices :
 
     public void TryApply(IntPtr windowHandle)
     {
+    }
+
+    public bool TryGetInitialClientSize(IntPtr windowHandle, WindowClientSize preferredSize, out WindowClientSize clientSize)
+    {
+        clientSize = preferredSize;
+        return true;
     }
 
     public string GetFileName(string baseName) => baseName;

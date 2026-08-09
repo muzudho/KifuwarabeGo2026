@@ -42,6 +42,7 @@ public class Game1 : Game
     private readonly IDesktopLauncher _desktopLauncher;
     private readonly ITextRasterizer _textRasterizer;
     private readonly IWindowIconService _windowIconService;
+    private readonly IInitialWindowLayoutService _initialWindowLayoutService;
     private readonly IPlatformExecutableService _platformExecutableService;
     private readonly IWindowScreenshotService _windowScreenshotService;
     private readonly GoAppSession _session = new();
@@ -92,6 +93,9 @@ public class Game1 : Game
     private double _inputClockSeconds;
     private double _screenshotEffectStartedAt = double.NegativeInfinity;
     private double _boardLensBannerStartedAt = double.NegativeInfinity;
+    private bool _initialWindowLayoutPending = true;
+    private WindowClientSize _lastLoggedWindowClientSize = new(-1, -1);
+    private Point _lastLoggedWindowPosition = new(int.MinValue, int.MinValue);
     private Keys? _reviewRepeatKey;
     private double _reviewKeyboardNextRepeatAt;
     private int? _reviewMouseRepeatCommand;
@@ -133,6 +137,7 @@ public class Game1 : Game
         IDesktopLauncher desktopLauncher,
         ITextRasterizer textRasterizer,
         IWindowIconService windowIconService,
+        IInitialWindowLayoutService initialWindowLayoutService,
         IPlatformExecutableService platformExecutableService,
         IWindowScreenshotService windowScreenshotService)
     {
@@ -143,6 +148,7 @@ public class Game1 : Game
         _desktopLauncher = desktopLauncher;
         _textRasterizer = textRasterizer;
         _windowIconService = windowIconService;
+        _initialWindowLayoutService = initialWindowLayoutService;
         _platformExecutableService = platformExecutableService;
         _windowScreenshotService = windowScreenshotService;
         _cgosBlackConnectionProcess = new CgosConnectionProcess(_desktopLauncher, _platformExecutableService, "BlackPlayer");
@@ -183,6 +189,7 @@ public class Game1 : Game
         Window.Title = CreateWindowTitle();
         Window.AllowUserResizing = true;
         Window.TextInput += OnTextInput;
+        Window.ClientSizeChanged += OnWindowClientSizeChanged;
         Deactivated += OnGameDeactivated;
         RefreshGuiLogFiles();
     }
@@ -209,6 +216,8 @@ public class Game1 : Game
 
     protected override void Update(GameTime gameTime)
     {
+        ApplyInitialWindowLayout();
+        LogWindowPositionChange();
         _inputClockSeconds = gameTime.TotalGameTime.TotalSeconds;
         CompleteAppProviderSelectionLoading();
         CompleteRestoredAppProviderCheck();
@@ -280,6 +289,48 @@ public class Game1 : Game
         TryAutoSaveCompletedLocalGame();
 
         base.Update(gameTime);
+    }
+
+    private void ApplyInitialWindowLayout()
+    {
+        if (!_initialWindowLayoutPending)
+            return;
+
+        var preferredSize = new WindowClientSize(VirtualScreen.Width, VirtualScreen.Height);
+        if (!_initialWindowLayoutService.TryGetInitialClientSize(Window.Handle, preferredSize, out var initialSize))
+            return;
+
+        _initialWindowLayoutPending = false;
+        GuiOperationLog.App(
+            "Initial window layout",
+            $"preferred={preferredSize.Width}x{preferredSize.Height}; selected={initialSize.Width}x{initialSize.Height}");
+        if (initialSize == preferredSize)
+            return;
+
+        _graphics.PreferredBackBufferWidth = initialSize.Width;
+        _graphics.PreferredBackBufferHeight = initialSize.Height;
+        _graphics.ApplyChanges();
+    }
+
+    private void OnWindowClientSizeChanged(object? sender, EventArgs e)
+    {
+        var clientBounds = Window.ClientBounds;
+        var clientSize = new WindowClientSize(clientBounds.Width, clientBounds.Height);
+        if (clientSize == _lastLoggedWindowClientSize)
+            return;
+
+        _lastLoggedWindowClientSize = clientSize;
+        GuiOperationLog.App("Window client size changed", $"client={clientSize.Width}x{clientSize.Height}");
+    }
+
+    private void LogWindowPositionChange()
+    {
+        var position = Window.Position;
+        if (position == _lastLoggedWindowPosition)
+            return;
+
+        _lastLoggedWindowPosition = position;
+        GuiOperationLog.App("Window position changed", $"position={position.X},{position.Y}");
     }
 
     private void OnGameDeactivated(object? sender, EventArgs e)
@@ -4608,6 +4659,7 @@ public class Game1 : Game
         if (disposing)
         {
             Window.TextInput -= OnTextInput;
+            Window.ClientSizeChanged -= OnWindowClientSizeChanged;
             Deactivated -= OnGameDeactivated;
             _cgosBlackConnectionProcess.Dispose();
             _cgosWhiteConnectionProcess.Dispose();

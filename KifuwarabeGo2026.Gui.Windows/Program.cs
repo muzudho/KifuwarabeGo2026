@@ -29,6 +29,7 @@ internal static class Program
                 new WindowsDesktopLauncher(),
                 new WindowsTextRasterizer(),
                 new WindowsWindowIconService(),
+                new WindowsInitialWindowLayoutService(),
                 platformExecutableService,
                 new WindowsWindowScreenshotService());
             game.Run();

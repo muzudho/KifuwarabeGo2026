@@ -67,6 +67,7 @@ internal static class PortabilityChecks
         VerifyCgosConnectionOrder();
         VerifyOptionalCgosInputs();
         VerifyTextBoxEditing();
+        VerifyInitialWindowLayout();
         VerifyDefaultCgosConnection();
         VerifyTournamentRulesJsonCompatibility();
         VerifyComposition();
@@ -1662,7 +1663,20 @@ internal static class PortabilityChecks
             platform,
             platform,
             platform,
+            platform,
             platform);
+    }
+
+    private static void VerifyInitialWindowLayout()
+    {
+        var preferred = new WindowClientSize(1920, 1080);
+        var fitBelowTaskbar = preferred.ConstrainTo(new WindowClientSize(1904, 1120));
+        Require(fitBelowTaskbar == new WindowClientSize(1904, 1080),
+            "The initial window layout did not preserve available vertical margin while fitting the window frame horizontally.");
+
+        var fitBesideTaskbar = preferred.ConstrainTo(new WindowClientSize(1840, 1040));
+        Require(fitBesideTaskbar == new WindowClientSize(1840, 1040),
+            "The initial window layout did not fit within a work area reduced by a vertical taskbar.");
     }
 
     private static void Require(bool condition, string message)

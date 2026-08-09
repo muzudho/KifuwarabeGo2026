@@ -415,6 +415,7 @@ internal static class Program
         IDesktopLauncher desktopLauncher = new WindowsDesktopLauncher();
         ITextRasterizer textRasterizer = new WindowsTextRasterizer();
         IWindowIconService windowIcon = new WindowsWindowIconService();
+        IInitialWindowLayoutService initialWindowLayout = new WindowsInitialWindowLayoutService();
         IPlatformExecutableService executable = new WindowsPlatformExecutableService();
 
         Require(
@@ -425,6 +426,7 @@ internal static class Program
             && desktopLauncher is not null
             && textRasterizer is not null
             && windowIcon is not null
+            && initialWindowLayout is not null
             && executable is not null,
             "One or more Windows platform services could not be created.");
     }
