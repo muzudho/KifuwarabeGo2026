@@ -310,6 +310,7 @@ public class Game1 : Game
         _graphics.PreferredBackBufferWidth = initialSize.Width;
         _graphics.PreferredBackBufferHeight = initialSize.Height;
         _graphics.ApplyChanges();
+        _initialWindowLayoutService.CenterWindowInWorkingArea(Window.Handle);
     }
 
     private void OnWindowClientSizeChanged(object? sender, EventArgs e)

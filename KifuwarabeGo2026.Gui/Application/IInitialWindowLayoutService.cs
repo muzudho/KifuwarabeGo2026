@@ -8,6 +8,8 @@ using System;
 public interface IInitialWindowLayoutService
 {
     bool TryGetInitialClientSize(IntPtr windowHandle, WindowClientSize preferredSize, out WindowClientSize clientSize);
+
+    void CenterWindowInWorkingArea(IntPtr windowHandle);
 }
 
 public readonly record struct WindowClientSize(int Width, int Height)

@@ -98,6 +98,10 @@ internal sealed class PortablePlatformServices :
         return true;
     }
 
+    public void CenterWindowInWorkingArea(IntPtr windowHandle)
+    {
+    }
+
     public string GetFileName(string baseName) => baseName;
 
     public WindowScreenshotResult SaveActiveWindow(string filePath) =>

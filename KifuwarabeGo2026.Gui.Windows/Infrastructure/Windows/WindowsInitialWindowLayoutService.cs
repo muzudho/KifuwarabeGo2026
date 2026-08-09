@@ -68,7 +68,33 @@ public sealed class WindowsInitialWindowLayoutService : IInitialWindowLayoutServ
         return true;
     }
 
+    public void CenterWindowInWorkingArea(IntPtr windowHandle)
+    {
+        using var process = Process.GetCurrentProcess();
+        process.Refresh();
+        var nativeWindowHandle = process.MainWindowHandle;
+        if (nativeWindowHandle == IntPtr.Zero || !GetWindowRect(nativeWindowHandle, out var windowBounds))
+            return;
+
+        var monitor = MonitorFromWindow(nativeWindowHandle, MonitorDefaultToNearest);
+        var monitorInfo = new MonitorInfo { Size = Marshal.SizeOf<MonitorInfo>() };
+        if (monitor == IntPtr.Zero || !GetMonitorInfo(monitor, ref monitorInfo))
+            return;
+
+        var windowWidth = windowBounds.Right - windowBounds.Left;
+        var windowHeight = windowBounds.Bottom - windowBounds.Top;
+        var workingArea = monitorInfo.WorkArea;
+        var positionX = workingArea.Left + Math.Max(0, (workingArea.Right - workingArea.Left - windowWidth) / 2);
+        var positionY = workingArea.Top + Math.Max(0, (workingArea.Bottom - workingArea.Top - windowHeight) / 2);
+        SetWindowPos(nativeWindowHandle, IntPtr.Zero, positionX, positionY, 0, 0, SetWindowPositionFlags);
+        GuiOperationLog.App(
+            "Centered initial window",
+            $"position={positionX},{positionY}; window={windowWidth}x{windowHeight}; " +
+            $"workArea=({workingArea.Left},{workingArea.Top})-({workingArea.Right},{workingArea.Bottom})");
+    }
+
     private const uint MonitorDefaultToNearest = 2;
+    private const uint SetWindowPositionFlags = 0x0001 | 0x0004 | 0x0010; // NOSIZE | NOZORDER | NOACTIVATE
 
     [DllImport("user32.dll", SetLastError = true)]
     private static extern bool GetWindowRect(IntPtr hWnd, out WindowRect lpRect);
@@ -84,6 +110,16 @@ public sealed class WindowsInitialWindowLayoutService : IInitialWindowLayoutServ
 
     [DllImport("user32.dll")]
     private static extern uint GetDpiForWindow(IntPtr hWnd);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern bool SetWindowPos(
+        IntPtr hWnd,
+        IntPtr hWndInsertAfter,
+        int x,
+        int y,
+        int cx,
+        int cy,
+        uint flags);
 
     [StructLayout(LayoutKind.Sequential)]
     private struct WindowRect
