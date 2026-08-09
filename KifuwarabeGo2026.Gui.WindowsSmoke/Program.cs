@@ -36,6 +36,7 @@ internal static class Program
             VerifyGoAppsDiscoveryProtocol();
             VerifyAtomicInitialPositionProtocol();
             VerifyJsonEngineOptionsProtocol();
+            VerifyBoardLensStepCycle();
             VerifyPonnukiMovePriorities();
             VerifyBundledEngineInitialPositionPipeline();
             Console.WriteLine("PASS: Windows platform services passed non-interactive checks.");
@@ -71,6 +72,24 @@ internal static class Program
         var selectedContacts = PonnukiMovePrioritizer.SelectBest([weakContact, neutralMove, strongContact]);
         Require(selectedContacts.Count == 1 && selectedContacts[0] == strongContact.Move,
             "The ponnuki player did not apply the Board Lens ren-area contact priority.");
+    }
+
+    private static void VerifyBoardLensStepCycle()
+    {
+        var session = new GoAppSession();
+        session.ToggleRenParseDisplay();
+        Require(session.RenParseDisplayMode == RenParseDisplayMode.Overlay,
+            "The Board Lens did not start at the first ren lens.");
+
+        for (var i = 0; i < 12; i++)
+            session.ToggleRenParseDisplay();
+
+        Require(session.RenParseDisplayMode == RenParseDisplayMode.Overlay,
+            "The Board Lens step did not reset after the shared family cycle.");
+
+        session.TrySwitchBoardLensFamily();
+        Require(session.RenParseDisplayMode == RenParseDisplayMode.RenArea,
+            "Switching Board Lens family did not preserve the reset step.");
     }
 
     private static PonnukiMoveCandidate EvaluatePonnukiCandidate(GoBoard board, GoPoint move, GoStone color)

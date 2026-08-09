@@ -317,6 +317,13 @@ public sealed class GoAppSession
 
     public int NextMoveNumber => PlayedMoveCount + 1;
 
+    private const int RenBoardLensCount = 4;
+    private const int MeasureBoardLensCount = 6;
+    // Keep the shared step within the least common multiple of both families.
+    // This preserves each family's modulo position when switching families and
+    // prevents the counter from ever growing towards an integer overflow.
+    private const int BoardLensStepCycleLength = 12;
+
     private int _boardLensStep;
     private bool _measureBoardLensFamily;
 
@@ -1182,7 +1189,7 @@ public sealed class GoAppSession
         }
         else
         {
-            _boardLensStep = (_boardLensStep + 1) % 12;
+            _boardLensStep = (_boardLensStep + 1) % BoardLensStepCycleLength;
         }
 
         ApplyBoardLensStep();
@@ -1201,7 +1208,7 @@ public sealed class GoAppSession
     private void ApplyBoardLensStep()
     {
         RenParseDisplayMode = _measureBoardLensFamily
-            ? (_boardLensStep % 6) switch
+            ? (_boardLensStep % MeasureBoardLensCount) switch
             {
                 0 => RenParseDisplayMode.RenArea,
                 1 => RenParseDisplayMode.BoundaryCount,
@@ -1210,7 +1217,7 @@ public sealed class GoAppSession
                 4 => RenParseDisplayMode.AdjacentEmptyArea,
                 _ => RenParseDisplayMode.AdjacentOpponentArea,
             }
-            : (_boardLensStep % 4) switch
+            : (_boardLensStep % RenBoardLensCount) switch
             {
                 0 => RenParseDisplayMode.Overlay,
                 1 => RenParseDisplayMode.Graph,
