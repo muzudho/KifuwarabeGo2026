@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Gui.Presentation.Cgos.Watching;
+namespace KifuwarabeGo2026.Gui.Presentation.Apps.Cgos.Watch;
 
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Application.Cgos.Watching;

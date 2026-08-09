@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Gui.Presentation.Cgos.ConnectionTarget;
+namespace KifuwarabeGo2026.Gui.Presentation.Apps.Cgos.ProfileSelect;
 
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Presentation;

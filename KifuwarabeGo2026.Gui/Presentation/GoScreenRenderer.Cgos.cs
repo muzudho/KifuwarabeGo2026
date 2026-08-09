@@ -4,7 +4,7 @@ using KifuwarabeGo2026.Gui.Presentation.Title;
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Application.Cgos.ConnectionTarget;
 using KifuwarabeGo2026.Shared.Domain;
-using KifuwarabeGo2026.Gui.Presentation.Local.Resting.TournamentRule;
+using KifuwarabeGo2026.Gui.Presentation.Apps.LocalPlay.Interval.TournamentRules;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
