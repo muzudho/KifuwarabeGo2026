@@ -78,36 +78,6 @@ public sealed partial class GoScreenRenderer
     /// <param name="cell"></param>
     /// <param name="applyEyeJudgement"></param>
     /// <returns></returns>
-    private RenGraphNode[] CreateRenGraphNodes(GoRenParseResult renParse, Vector2 start, float cell, bool applyEyeJudgement)
-    {
-        var sumX = new float[renParse.Count + 1];
-        var sumY = new float[renParse.Count + 1];
-
-        for (var y = 0; y < renParse.Size; y++)
-        {
-            for (var x = 0; x < renParse.Size; x++)
-            {
-                var renNumber = renParse.GetRenNumber(x, y);
-                var center = BoardPoint(start, cell, x, y);
-                sumX[renNumber] += center.X;
-                sumY[renNumber] += center.Y;
-            }
-        }
-
-        var nodes = new RenGraphNode[renParse.Count + 1];
-        for (var renNumber = 1; renNumber <= renParse.Count; renNumber++)
-        {
-            var ren = renParse.GetRen(renNumber);
-            nodes[renNumber] = new RenGraphNode(
-                renNumber,
-                ren.Stone,
-                new Vector2(sumX[renNumber] / ren.Points.Count, sumY[renNumber] / ren.Points.Count),
-                !applyEyeJudgement || !ren.IsEye,
-                applyEyeJudgement ? new List<int>(ren.EyeRenNumbers) : []);
-        }
-
-        return nodes;
-    }
 
 
     /// <summary>
@@ -359,23 +329,6 @@ public sealed partial class GoScreenRenderer
     /// <param name="cell"></param>
 
 
-    private void DrawRenAreaNumbers(GoRenParseResult renParse, Vector2 start, float cell)
-    {
-        for (var renNumber = 1; renNumber <= renParse.Count; renNumber++)
-        {
-            var ren = renParse.GetRen(renNumber);
-            DrawRenMetricNumber(
-                ren,
-                ren.Points.Count,
-                RenMetricUnit.PointCount,
-                RenGraphCellColor(ren.Stone),
-                start,
-                cell,
-                RenGraphCellColor(OpponentOf(ren.Stone)));
-        }
-    }
-
-
     /// <summary>
     /// 接触している辺はすべて足として描き、終点と集計値だけを連ごとに重複除去します。
     /// </summary>
@@ -558,77 +511,6 @@ public sealed partial class GoScreenRenderer
             DrawRenMetricNumber(renParse.GetRen(metric.RenNumber), metric.Value, RenMetricUnit.PointCount, metric.Color, start, cell, metric.Outline);
     }
 
-    private void DrawNobiLens(GoAppSession session, Vector2 start, float cell)
-    {
-        var renParse = session.ParseRens();
-        var legColor = RenGraphCellColor(session.CurrentTurn);
-        var candidateColor = new Color(126, 255, 188);
-        var legThickness = MathHelper.Clamp(cell * 0.045f, 2f, 5f);
-        var markerRadius = MathHelper.Clamp(cell * 0.13f, 5f, 11f);
-
-        for (var renNumber = 1; renNumber <= renParse.Count; renNumber++)
-        {
-            var ren = renParse.GetRen(renNumber);
-            if (ren.Stone != session.CurrentTurn)
-                continue;
-
-            var contacts = new List<(GoPoint From, GoPoint To)>();
-            foreach (var point in ren.Points)
-            {
-                AddCandidate(point, point.X - 1, point.Y);
-                AddCandidate(point, point.X + 1, point.Y);
-                AddCandidate(point, point.X, point.Y - 1);
-                AddCandidate(point, point.X, point.Y + 1);
-            }
-
-            var markers = new HashSet<GoPoint>();
-            foreach (var contact in contacts)
-            {
-                var from = BoardPoint(start, cell, contact.From.X, contact.From.Y);
-                var target = BoardPoint(start, cell, contact.To.X, contact.To.Y);
-                DrawLine(from, target, legThickness, legColor);
-                markers.Add(contact.To);
-            }
-
-            foreach (var marker in markers)
-            {
-                var center = BoardPoint(start, cell, marker.X, marker.Y);
-                DrawCircle(center, markerRadius + 3f, RenGraphCellColor(session.CurrentTurn));
-                DrawCircle(center, markerRadius, candidateColor);
-            }
-
-            void AddCandidate(GoPoint from, int x, int y)
-            {
-                if (x < 0 || x >= renParse.Size || y < 0 || y >= renParse.Size ||
-                    renParse.GetRen(renParse.GetRenNumber(x, y)).Stone != GoStone.Empty ||
-                    !session.IsNobiCandidate(x, y))
-                    return;
-
-                contacts.Add((from, new GoPoint(x, y)));
-            }
-        }
-    }
-
-    private void DrawGlassesLens(GoAppSession session, Vector2 start, float cell)
-    {
-        var emerald = new Color(126, 255, 188, 180);
-        var size = session.BoardSize;
-        for (var y = 0; y < size; y++) for (var x = 0; x < size; x++)
-        {
-            if (session.GetDisplayStone(x, y) != GoStone.Empty) continue;
-            bool Z(int px, int py) => px >= 0 && px < size && py >= 0 && py < size &&
-                (session.GetDisplayStone(px, py) == GoStone.Empty || session.GetDisplayStone(px, py) == session.CurrentTurn);
-            var pattern1 = Z(x - 1, y - 1) && Z(x, y - 1) && Z(x + 1, y - 1) && Z(x - 1, y) && Z(x, y + 1) && Z(x + 1, y + 1);
-            var pattern2 = y == size - 1 && Z(x - 1, y - 1) && Z(x, y - 1) && Z(x + 1, y - 1) && Z(x - 1, y) && Z(x + 1, y);
-            var pattern3 = x == 0 && y == size - 2 && Z(x, y - 1) && Z(x + 1, y - 1) && Z(x + 1, y);
-            if (pattern1 || pattern2 || pattern3)
-            {
-                var center = BoardPoint(start, cell, x, y);
-                FillRect(new Rectangle((int)(center.X - cell * .28f), (int)(center.Y - cell * .28f), (int)(cell * .56f), (int)(cell * .56f)), emerald);
-            }
-        }
-    }
-
 
     private void DrawAdjacentRenRelationships(
         GoRenParseResult renParse,
@@ -707,138 +589,11 @@ public sealed partial class GoScreenRenderer
     }
 
 
-    private void DrawRenMetricNumber(
-        GoRen ren,
-        int value,
-        RenMetricUnit unit,
-        Color valueColor,
-        Vector2 start,
-        float cell,
-        Color? valueOutlineColor = null)
-    {
-        var representative = ren.Points[0];
-        var center = BoardPoint(start, cell, representative.X, representative.Y);
-        var indexScale = RenNumberScale(cell);
-        var valueScale = MathHelper.Clamp(cell / 68f, 0.34f, 0.80f);
-        DrawRenNumber(
-            ren.Number,
-            center - new Vector2(0f, cell * 0.20f),
-            indexScale);
-        var valueText = value.ToString();
-        if (valueText.Length > 2)
-        {
-            var twoDigitWidth = _font.MeasureString("88").X * valueScale;
-            var valueWidth = _font.MeasureString(valueText).X * valueScale;
-            valueScale *= MathF.Min(1f, twoDigitWidth / Math.Max(1f, valueWidth));
-        }
-
-        var valueCenter = center + new Vector2(0f, cell * 0.10f);
-        if (valueOutlineColor is { } outlineColor)
-            DrawCenteredOutlinedText(valueText, valueCenter, valueColor, outlineColor, valueScale);
-        else
-            DrawCenteredText(valueText, valueCenter, valueColor, valueScale);
-        if (unit == RenMetricUnit.RenCount)
-        {
-            DrawRenMetricUnit(
-                center + new Vector2(0f, cell * 0.37f),
-                unit,
-                valueColor,
-                cell,
-                valueOutlineColor);
-        }
-    }
-
-
-    private static float RenNumberScale(float cell) =>
-        MathHelper.Clamp(cell / 120f, 0.18f, 0.46f);
-
-
-    private void DrawRenNumber(int renNumber, Vector2 center, float scale)
-    {
-        DrawCenteredOutlinedText(
-            $"#{renNumber}",
-            center,
-            new Color(0, 177, 238),
-            new Color(0, 92, 132, 245),
-            scale);
-    }
-
-
-    private void DrawCenteredOutlinedText(
-        string text,
-        Vector2 center,
-        Color color,
-        Color outlineColor,
-        float scale)
-    {
-        var size = _font.MeasureString(text) * scale;
-        var position = new Vector2(center.X - size.X / 2f, center.Y - size.Y / 2f);
-        var outline = MathHelper.Clamp(scale * 7f, 1.5f, 3f);
-        const int outlineSamples = 16;
-        for (var i = 0; i < outlineSamples; i++)
-        {
-            var angle = MathHelper.TwoPi * i / outlineSamples;
-            var offset = new Vector2(MathF.Cos(angle), MathF.Sin(angle)) * outline;
-            _spriteBatch.DrawString(_font, text, position + offset, outlineColor, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
-        }
-
-        _spriteBatch.DrawString(_font, text, position, color, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
-    }
-
-
-    private void DrawRenMetricUnit(
-        Vector2 center,
-        RenMetricUnit unit,
-        Color color,
-        float cell,
-        Color? outlineColor = null)
-    {
-        var radius = MathHelper.Clamp(cell * 0.075f, 3f, 6f);
-        var thickness = Math.Max(2, (int)MathF.Round(radius * 0.42f));
-        var backing = new Color(16, 26, 32, 220);
-        if (unit == RenMetricUnit.PointCount)
-        {
-            DrawCircle(center, radius + thickness, outlineColor ?? color);
-            DrawCircle(center, radius, outlineColor is null ? backing : color);
-            if (outlineColor is not null)
-                DrawCircle(center, Math.Max(1f, radius - thickness), backing);
-            return;
-        }
-
-        var extent = (int)MathF.Round(radius + thickness);
-        var bounds = new Rectangle(
-            (int)MathF.Round(center.X) - extent,
-            (int)MathF.Round(center.Y) - extent,
-            extent * 2,
-            extent * 2);
-        FillRect(bounds, backing);
-        DrawRect(bounds, thickness, color);
-    }
-
-
-    private static GoStone OpponentOf(GoStone stone) => stone == GoStone.Black
-        ? GoStone.White
-        : GoStone.Black;
-
-
-    private enum RenMetricUnit
-    {
-        PointCount,
-        RenCount,
-    }
-
-
     /// <summary>
     /// ［連グラフ・ノード色］
     /// </summary>
     /// <param name="stone"></param>
     /// <returns></returns>
-    private static Color RenGraphNodeColor(GoStone stone) => stone switch
-    {
-        GoStone.Black => Color.Black,
-        GoStone.White => new Color(248, 248, 244),
-        _ => new Color(255, 197, 18),
-    };
 
 
     /// <summary>
@@ -846,12 +601,6 @@ public sealed partial class GoScreenRenderer
     /// </summary>
     /// <param name="stone"></param>
     /// <returns></returns>
-    private static Color RenGraphCellColor(GoStone stone) => stone switch
-    {
-        GoStone.Black => Color.Black,
-        GoStone.White => new Color(248, 248, 244),
-        _ => new Color(255, 197, 18),
-    };
 
 
     /// <summary>
