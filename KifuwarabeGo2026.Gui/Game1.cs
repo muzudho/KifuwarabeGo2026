@@ -39,7 +39,6 @@ public class Game1 : Game
     private readonly IClipboardService _clipboardService;
     private readonly IMessageDialogService _messageDialogService;
     private readonly IFileDialogService _fileDialogService;
-    private readonly ITextInputDialogService _textInputDialogService;
     private readonly IDesktopLauncher _desktopLauncher;
     private readonly ITextRasterizer _textRasterizer;
     private readonly IWindowIconService _windowIconService;
@@ -73,6 +72,10 @@ public class Game1 : Game
     private GtpEngineGuiOptionSpec? _activeGtpEngineIntegerOption;
     private KeyboardState _previousGtpEngineIntegerKeyboard;
     private string _gtpEngineIntegerInputMessage = "";
+    private readonly TextBoxController _gtpEngineStringOptionTextBox = new(GtpEngineGuiOptions.MaximumTextLength);
+    private GtpEngineGuiOptionSpec? _activeGtpEngineStringOption;
+    private KeyboardState _previousGtpEngineStringKeyboard;
+    private string _gtpEngineStringInputMessage = "";
     private readonly TextBoxController _humanPlayerNameTextBox = new(80);
     private KeyboardState _previousHumanPlayerNameKeyboard;
     private KeyboardState _previousCgosConnectionKeyboard;
@@ -134,7 +137,6 @@ public class Game1 : Game
         IClipboardService clipboardService,
         IMessageDialogService messageDialogService,
         IFileDialogService fileDialogService,
-        ITextInputDialogService textInputDialogService,
         IDesktopLauncher desktopLauncher,
         ITextRasterizer textRasterizer,
         IWindowIconService windowIconService,
@@ -145,7 +147,6 @@ public class Game1 : Game
         _clipboardService = clipboardService;
         _messageDialogService = messageDialogService;
         _fileDialogService = fileDialogService;
-        _textInputDialogService = textInputDialogService;
         _desktopLauncher = desktopLauncher;
         _textRasterizer = textRasterizer;
         _windowIconService = windowIconService;
@@ -239,6 +240,14 @@ public class Game1 : Game
         if (acceptsInput && _activeGtpEngineIntegerOption is not null)
         {
             UpdateGtpEngineIntegerInputKeyboard(keyboard, gameTime);
+            UpdateMouseInput();
+            base.Update(gameTime);
+            return;
+        }
+
+        if (acceptsInput && _activeGtpEngineStringOption is not null)
+        {
+            UpdateGtpEngineStringInputKeyboard(keyboard, gameTime);
             UpdateMouseInput();
             base.Update(gameTime);
             return;
@@ -743,6 +752,16 @@ public class Game1 : Game
                 _gtpEngineIntegerOptionTextBox.SelectionLength,
                 _gtpEngineIntegerInputMessage);
 
+        if (_renderer is not null && _activeGtpEngineStringOption is { } stringOption)
+            _renderer.DrawTextInputDialog(
+                Mouse.GetState().Position,
+                stringOption.Label,
+                _gtpEngineStringOptionTextBox.Text,
+                _gtpEngineStringOptionTextBox.CaretIndex,
+                _gtpEngineStringOptionTextBox.SelectionStart,
+                _gtpEngineStringOptionTextBox.SelectionLength,
+                _gtpEngineStringInputMessage);
+
         _renderer?.DrawBreadcrumb(GetScreenBreadcrumb());
 
         base.Draw(gameTime);
@@ -790,6 +809,21 @@ public class Game1 : Game
                     CommitGtpEngineIntegerInput();
                 else if (GoScreenRenderer.GetIntegerInputDialogCancelButtonHit(point))
                     CancelGtpEngineIntegerInput();
+                _previousMouse = mouse;
+                return;
+            }
+            if (_activeGtpEngineStringOption is not null)
+            {
+                if (_renderer is not null && GoScreenRenderer.IsTextInputDialogTextBoxHit(point))
+                {
+                    _gtpEngineStringOptionTextBox.BeginMouseSelection(
+                        _renderer.GetTextInputDialogCaretIndex(point, _gtpEngineStringOptionTextBox.Text),
+                        IsShiftDown());
+                }
+                else if (GoScreenRenderer.GetTextInputDialogOkButtonHit(point))
+                    CommitGtpEngineStringInput();
+                else if (GoScreenRenderer.GetTextInputDialogCancelButtonHit(point))
+                    CancelGtpEngineStringInput();
                 _previousMouse = mouse;
                 return;
             }
@@ -1453,6 +1487,7 @@ public class Game1 : Game
             _humanPlayerNameTextBox.EndMouseSelection();
             _gtpEngineEditTextBox.EndMouseSelection();
             _gtpEngineIntegerOptionTextBox.EndMouseSelection();
+            _gtpEngineStringOptionTextBox.EndMouseSelection();
             _tournamentRulesSetting.EndMouseSelection();
             return;
         }
@@ -1463,6 +1498,11 @@ public class Game1 : Game
         {
             _gtpEngineIntegerOptionTextBox.UpdateMouseSelection(
                 _renderer.GetIntegerInputDialogCaretIndex(point, _gtpEngineIntegerOptionTextBox.Text));
+        }
+        else if (_activeGtpEngineStringOption is not null && _gtpEngineStringOptionTextBox.IsMouseSelecting)
+        {
+            _gtpEngineStringOptionTextBox.UpdateMouseSelection(
+                _renderer.GetTextInputDialogCaretIndex(point, _gtpEngineStringOptionTextBox.Text));
         }
         else if (_cgosConnectionEditTextBox.IsMouseSelecting &&
             _session.ActiveCgosConnectionEditField is { } connectionField)
@@ -3225,6 +3265,12 @@ public class Game1 : Game
                 _gtpEngineIntegerOptionTextBox.TryInputCharacter(e.Character);
             return;
         }
+        if (_activeGtpEngineStringOption is not null)
+        {
+            if (!_gtpEngineStringOptionTextBox.TryInputCharacter(e.Character))
+                _gtpEngineStringInputMessage = $"TEXT IS TOO LONG (MAX {GtpEngineGuiOptions.MaximumTextLength})";
+            return;
+        }
         if (!IsActive || !_inputArmed) return;
 
         // モーダル表示中の入力欄を、背後の画面に残った編集状態より優先します。
@@ -4341,14 +4387,42 @@ public class Game1 : Game
 
     private void EditGtpEngineStringOption(GtpEngineGuiOptionSpec option)
     {
-        var value = _textInputDialogService.PromptText(new TextInputDialogOptions
-        {
-            InitialValue = _session.GetGtpEngineGuiOptionDraft(option),
-            MaximumLength = GtpEngineGuiOptions.MaximumTextLength,
-            Title = option.Label,
-        });
-        if (value is not null)
-            _session.SetGtpEngineGuiOptionDraft(option, value);
+        _activeGtpEngineStringOption = option;
+        _gtpEngineStringOptionTextBox.Begin(_session.GetGtpEngineGuiOptionDraft(option));
+        _previousGtpEngineStringKeyboard = Keyboard.GetState();
+        _gtpEngineStringInputMessage = $"TEXT VALUE (MAX {GtpEngineGuiOptions.MaximumTextLength})";
+    }
+
+    private void UpdateGtpEngineStringInputKeyboard(KeyboardState keyboard, GameTime gameTime)
+    {
+        var action = _gtpEngineStringOptionTextBox.HandleKeyboard(
+            keyboard,
+            _previousGtpEngineStringKeyboard,
+            gameTime,
+            _clipboardService);
+        if (action == TextBoxKeyboardAction.Commit)
+            CommitGtpEngineStringInput();
+        else if (action == TextBoxKeyboardAction.Cancel)
+            CancelGtpEngineStringInput();
+        _previousGtpEngineStringKeyboard = keyboard;
+    }
+
+    private void CommitGtpEngineStringInput()
+    {
+        if (_activeGtpEngineStringOption is not { } option)
+            return;
+
+        _session.SetGtpEngineGuiOptionDraft(option, _gtpEngineStringOptionTextBox.Text);
+        if (_session.IsAppProviderGameSettingsDialogOpen)
+            QueueAppProviderSettingsEvaluation();
+        CancelGtpEngineStringInput();
+    }
+
+    private void CancelGtpEngineStringInput()
+    {
+        _activeGtpEngineStringOption = null;
+        _gtpEngineStringOptionTextBox.Clear();
+        _gtpEngineStringInputMessage = "";
     }
 
     private void EditGtpEngineSpinOption(GtpEngineGuiOptionSpec option)

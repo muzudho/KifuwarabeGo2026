@@ -12,7 +12,6 @@ internal sealed class PortablePlatformServices :
     IClipboardService,
     IMessageDialogService,
     IFileDialogService,
-    ITextInputDialogService,
     IDesktopLauncher,
     ITextRasterizer,
     IWindowIconService,
@@ -44,8 +43,6 @@ internal sealed class PortablePlatformServices :
     public string? SaveFile(SaveFileDialogOptions options) => null;
 
     public string? SelectFolder(FolderDialogOptions options) => null;
-
-    public string? PromptText(TextInputDialogOptions options) => null;
 
     public void OpenTextFile(string path)
     {

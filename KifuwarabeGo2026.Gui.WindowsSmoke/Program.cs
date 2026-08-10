@@ -412,7 +412,6 @@ internal static class Program
         IClipboardService clipboard = new WindowsClipboardService();
         IMessageDialogService messageDialog = new WindowsMessageDialogService();
         IFileDialogService fileDialog = new WindowsFileDialogService();
-        ITextInputDialogService textInputDialog = new WindowsTextInputDialogService();
         IDesktopLauncher desktopLauncher = new WindowsDesktopLauncher();
         ITextRasterizer textRasterizer = new WindowsTextRasterizer();
         IWindowIconService windowIcon = new WindowsWindowIconService();
@@ -423,7 +422,6 @@ internal static class Program
             clipboard is not null
             && messageDialog is not null
             && fileDialog is not null
-            && textInputDialog is not null
             && desktopLauncher is not null
             && textRasterizer is not null
             && windowIcon is not null

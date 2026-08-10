@@ -6,6 +6,7 @@ using KifuwarabeGo2026.Gui.Application.Cgos.ConnectionTarget;
 using KifuwarabeGo2026.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.Gui.Application.Local.Resting.TournamentRule;
 using KifuwarabeGo2026.Gui.Gtp;
+using KifuwarabeGo2026.Gui.Presentation.Shared.TextBox;
 using KifuwarabeGo2026.Gui.Sgf;
 using KifuwarabeGo2026.GtpExtensions;
 using KifuwarabeGo2026.GtpExtensions.Capabilities;
@@ -1655,7 +1656,6 @@ internal static class PortabilityChecks
     {
         var platform = new PortablePlatformServices();
         return new Game1(
-            platform,
             platform,
             platform,
             platform,
