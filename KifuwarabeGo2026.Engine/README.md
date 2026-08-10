@@ -263,6 +263,6 @@ GUI側では、`KifuwarabeGo2026.Gui/Application/GtpEngineGuiOptions.cs` の `Ra
 ## 関連ソース
 
 - [Program.cs](./Program.cs)：GTPコマンドとオプションの実装
-- [StarRegionRandomMoveSelector.cs](./StarRegionRandomMoveSelector.cs)：星周辺を考慮する着手選択
+- [StarRegionRandomMoveSelector.cs](./Shared/StarRegionRandomMoveSelector.cs)：星周辺を考慮する着手選択
 - [KifuwarabeGo2026.Engine.csproj](./KifuwarabeGo2026.Engine.csproj)：プロジェクト設定
 - [LICENSE.txt](../LICENSE.txt)：MIT License

@@ -1,7 +1,7 @@
 namespace KifuwarabeGo2026.Engine.AppProvider;
 
 using KifuwarabeGo2026.Engine.AppProvider.NextMove;
-using KifuwarabeGo2026.Engine.AppProvider.Ponnuki;
+using KifuwarabeGo2026.Engine.GoApps.Ponnuki;
 using KifuwarabeGo2026.Engine.AppProvider.Tsumego;
 
 /// <summary>

@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Engine;
+namespace KifuwarabeGo2026.Engine.Shared;
 
 using KifuwarabeGo2026.Shared.Domain;
 
