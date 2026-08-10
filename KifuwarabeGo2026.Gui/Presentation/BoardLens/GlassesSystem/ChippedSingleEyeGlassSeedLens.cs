@@ -13,7 +13,7 @@ public sealed partial class GoScreenRenderer
         var emerald = new Color(126, 255, 188, 180);
 
         var size = session.BoardSize;
-        // 各段
+        // 各段（数字が大きくなるほど下の段）
         for (var y = 0; y < size; y++)
             // 各筋
             for (var x = 0; x < size; x++)
