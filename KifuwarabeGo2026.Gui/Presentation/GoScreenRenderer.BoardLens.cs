@@ -235,84 +235,12 @@ public sealed partial class GoScreenRenderer
     /// <param name="node"></param>
     /// <param name="radius"></param>
     /// <param name="scale"></param>
-    private void DrawRenGraphEyeMarkers(RenGraphNode node, float radius, float scale)
-    {
-        if (node.EyeNumbers.Count == 0)
-        {
-            return;
-        }
-
-        var markerScale = Math.Max(0.22f, scale * 0.52f);
-        var markerSize = Math.Max(16f, radius * 0.56f);
-        var spacing = markerSize + 6f;
-        var startX = node.Center.X + radius * 0.34f;
-        var startY = node.Center.Y + radius * 0.62f;
-
-        for (var i = 0; i < node.EyeNumbers.Count; i++)
-        {
-            var markerBounds = new Rectangle(
-                (int)MathF.Round(startX + (i * spacing) - (markerSize * 0.5f)),
-                (int)MathF.Round(startY - (markerSize * 0.5f)),
-                (int)MathF.Round(markerSize),
-                (int)MathF.Round(markerSize));
-            FillRect(markerBounds, new Color(255, 238, 0, 245));
-            DrawRect(markerBounds, 2, new Color(255, 250, 220));
-            DrawRenNumber(
-                node.EyeNumbers[i],
-                new Vector2(markerBounds.Center.X, markerBounds.Center.Y),
-                markerScale);
-        }
-    }
-
-
     /// <summary>
     /// ［連境界］描画
     /// </summary>
     /// <param name="renParse"></param>
     /// <param name="start"></param>
     /// <param name="cell"></param>
-    private void DrawRenBoundaries(GoRenParseResult renParse, Vector2 start, float cell)
-    {
-        var size = renParse.Size;
-        var halfCell = cell * 0.5f;
-        var thickness = Math.Max(5, (int)MathF.Round(cell * 0.08f));
-        var color = new Color(255, 238, 0, 238);
-
-        for (var y = 0; y < size; y++)
-        {
-            for (var x = 0; x < size; x++)
-            {
-                var renNumber = renParse.GetRenNumber(x, y);
-                var center = BoardPoint(start, cell, x, y);
-                var left = center.X - halfCell;
-                var top = center.Y - halfCell;
-                var right = center.X + halfCell;
-                var bottom = center.Y + halfCell;
-
-                if (x == 0 || renParse.GetRenNumber(x - 1, y) != renNumber)
-                {
-                    FillRect(CreateVerticalLineRect(left, top, bottom, thickness), color);
-                }
-
-                if (y == 0 || renParse.GetRenNumber(x, y - 1) != renNumber)
-                {
-                    FillRect(CreateHorizontalLineRect(left, right, top, thickness), color);
-                }
-
-                if (x == size - 1)
-                {
-                    FillRect(CreateVerticalLineRect(right, top, bottom, thickness), color);
-                }
-
-                if (y == size - 1)
-                {
-                    FillRect(CreateHorizontalLineRect(left, right, bottom, thickness), color);
-                }
-            }
-        }
-    }
-
-
     /// <summary>
     /// ［連番号］描画
     /// </summary>

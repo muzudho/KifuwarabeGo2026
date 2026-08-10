@@ -11,9 +11,14 @@ public sealed partial class GoScreenRenderer
     {
         var emerald = new Color(126, 255, 188, 180);
         var size = session.BoardSize;
-        for (var y = 0; y < size; y++) for (var x = 0; x < size; x++)
+        // 各段
+        for (var y = 0; y < size; y++)
+        // 各筋
+        for (var x = 0; x < size; x++)
         {
+            // すでに石が置かれている場所は描画しない。
             if (session.GetDisplayStone(x, y) != GoStone.Empty) continue;
+
             bool Z(int px, int py) => px >= 0 && px < size && py >= 0 && py < size &&
                 (session.GetDisplayStone(px, py) == GoStone.Empty || session.GetDisplayStone(px, py) == session.CurrentTurn);
             var pattern1 = Z(x - 1, y - 1) && Z(x, y - 1) && Z(x + 1, y - 1) && Z(x - 1, y) && Z(x, y + 1) && Z(x + 1, y + 1);
