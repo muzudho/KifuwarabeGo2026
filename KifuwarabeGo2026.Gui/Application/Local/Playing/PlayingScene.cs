@@ -258,6 +258,7 @@ public sealed class PlayingScene : IDisposable
                 try
                 {
                     await engine.Client.StartAsync(cancellationToken);
+                    await StartCasualPlayerAppIfNeededAsync(engine.Client, cancellationToken);
                     var knownAnalyze = await engine.Client.SendCommandAsync("known_command cgos-genmove_analyze", cancellationToken);
                     if (knownAnalyze.IsSuccess && knownAnalyze.Payload.Equals("true", StringComparison.OrdinalIgnoreCase))
                     {
@@ -301,6 +302,7 @@ public sealed class PlayingScene : IDisposable
                 try
                 {
                     await engine.Client.StartAsync(cancellationToken);
+                    await StartCasualPlayerAppIfNeededAsync(engine.Client, cancellationToken);
                     var commandSession = new GtpEngineClientCommandSession(engine.Client);
                     var capabilities = await new GtpCapabilityProbe()
                         .ProbeInitialPositionAsync(commandSession, cancellationToken);
@@ -328,6 +330,20 @@ public sealed class PlayingScene : IDisposable
 
             return EngineCommandResult.InitialPositionProgress(updates);
         });
+    }
+
+    private async Task StartCasualPlayerAppIfNeededAsync(GtpEngineClient client, CancellationToken cancellationToken)
+    {
+        if (_session.UseKind != GoAppUseKind.LocalApps)
+            return;
+
+        var startSupported = await client.SendCommandAsync("known_command kfw-start-app", cancellationToken);
+        if (!startSupported.IsSuccess || !startSupported.Payload.Equals("true", StringComparison.OrdinalIgnoreCase))
+            return;
+
+        const string command = "kfw-start-app ponnuki player";
+        var response = await client.SendCommandAsync(command, cancellationToken);
+        response.ThrowIfError(command);
     }
 
     private void SelectInitialPositionEngine(GoStone stone)

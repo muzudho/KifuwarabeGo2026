@@ -14,8 +14,12 @@ internal sealed partial class GtpEngine
     private int _ponnukiInitialMoveCount = 20;
     private int _ponnukiRandomSeed;
     private bool _ponnukiProviderActive;
+    private string? _activeCasualPlayerAppId;
     private int _ponnukiBlackCaptures;
     private int _ponnukiWhiteCaptures;
+
+    private bool IsPonnukiCasualPlayerActive =>
+        string.Equals(_activeCasualPlayerAppId, "ponnuki", StringComparison.OrdinalIgnoreCase);
 
     private void ExecuteMakePosition(string[] tokens, out string response, out string? error)
     {
@@ -75,7 +79,13 @@ internal sealed partial class GtpEngine
     {
         response = "";
         error = null;
-        if (tokens.Length != 3 || !tokens[1].Equals("ponnuki", StringComparison.OrdinalIgnoreCase) || !tokens[2].Equals("provider", StringComparison.OrdinalIgnoreCase)) { error = "usage: kfw-start-app ponnuki provider"; return; }
+        if (tokens.Length != 3 || !tokens[1].Equals("ponnuki", StringComparison.OrdinalIgnoreCase) || (!tokens[2].Equals("provider", StringComparison.OrdinalIgnoreCase) && !tokens[2].Equals("player", StringComparison.OrdinalIgnoreCase))) { error = "usage: kfw-start-app ponnuki provider|player"; return; }
+        if (tokens[2].Equals("player", StringComparison.OrdinalIgnoreCase))
+        {
+            if (_activeCasualPlayerAppId is not null) { error = "casual player app is already started"; return; }
+            _activeCasualPlayerAppId = "ponnuki";
+            return;
+        }
         if (_ponnukiProviderActive) { error = "ponnuki provider app is already started"; return; }
         var arguments = new List<string> { "kfw-make-position", "ponnuki", "1", _ponnukiBoardSize.ToString(System.Globalization.CultureInfo.InvariantCulture), _ponnukiInitialMoveCount.ToString(System.Globalization.CultureInfo.InvariantCulture) };
         if (_ponnukiRandomSeed != 0) arguments.Add(_ponnukiRandomSeed.ToString(System.Globalization.CultureInfo.InvariantCulture));
@@ -86,7 +96,12 @@ internal sealed partial class GtpEngine
     {
         response = "";
         error = null;
-        if (tokens.Length != 3 || !tokens[1].Equals("ponnuki", StringComparison.OrdinalIgnoreCase) || !tokens[2].Equals("provider", StringComparison.OrdinalIgnoreCase)) { error = "usage: kfw-end-app ponnuki provider"; return; }
+        if (tokens.Length != 3 || !tokens[1].Equals("ponnuki", StringComparison.OrdinalIgnoreCase) || (!tokens[2].Equals("provider", StringComparison.OrdinalIgnoreCase) && !tokens[2].Equals("player", StringComparison.OrdinalIgnoreCase))) { error = "usage: kfw-end-app ponnuki provider|player"; return; }
+        if (tokens[2].Equals("player", StringComparison.OrdinalIgnoreCase))
+        {
+            _activeCasualPlayerAppId = null;
+            return;
+        }
         _ponnukiProviderActive = false;
         _ponnukiBlackCaptures = 0;
         _ponnukiWhiteCaptures = 0;

@@ -291,7 +291,10 @@ internal sealed partial class GtpEngine
         }
 
         var renParse = _board.ParseRens();
-        var candidates = new List<PonnukiMoveCandidate>();
+        var legalMoves = new List<GoPoint>();
+        var ponnukiCandidates = IsPonnukiCasualPlayerActive
+            ? new List<PonnukiMoveCandidate>()
+            : null;
         for (var y = 0; y < _board.Size; y++)
         {
             for (var x = 0; x < _board.Size; x++)
@@ -301,14 +304,18 @@ internal sealed partial class GtpEngine
                     (!_avoidEyes || !_board.IsEyeFor(renParse, x, y, color)))
                 {
                     var point = new GoPoint(x, y);
-                    candidates.Add(new PonnukiMoveCandidate(
-                        point,
-                        PonnukiMovePrioritizer.Evaluate(trial, point, color, capturedStones)));
+                    legalMoves.Add(point);
+                    if (ponnukiCandidates is not null)
+                    {
+                        ponnukiCandidates.Add(new PonnukiMoveCandidate(
+                            point,
+                            PonnukiMovePrioritizer.Evaluate(trial, point, color, capturedStones)));
+                    }
                 }
             }
         }
 
-        if (candidates.Count == 0)
+        if (legalMoves.Count == 0)
         {
             _koPoint = null;
             _sideToPlay = Opponent(color);
@@ -316,7 +323,9 @@ internal sealed partial class GtpEngine
             return;
         }
 
-        var preferredMoves = PonnukiMovePrioritizer.SelectBest(candidates);
+        var preferredMoves = ponnukiCandidates is null
+            ? legalMoves
+            : PonnukiMovePrioritizer.SelectBest(ponnukiCandidates);
         var move = _randomMove == RandomMoveKind.Normal
             ? preferredMoves[_random.Next(preferredMoves.Count)]
             : StarRegionRandomMoveSelector.Select(preferredMoves, _board.Size, _random);
