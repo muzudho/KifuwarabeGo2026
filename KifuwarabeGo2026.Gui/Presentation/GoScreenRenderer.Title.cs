@@ -32,8 +32,8 @@ public sealed partial class GoScreenRenderer
             case TitleMenuPage.Home:
                 DrawText("FORMAL APPS", new Vector2(500, 338), new Color(99, 223, 185), 0.48f);
                 DrawText("CASUAL APPS", new Vector2(950, 338), new Color(255, 190, 92), 0.48f);
-                DrawHomeServiceChoice(TitleHomeLocalButtonBounds, "Local", "PLAY / REVIEW", new Color(99, 223, 185), mousePoint);
-                DrawHomeServiceChoice(TitleHomeCgosButtonBounds, "Connect To CGOS", "WATCH / CONNECT", new Color(99, 223, 185), mousePoint);
+                DrawHomeServiceChoice(TitleHomeLocalButtonBounds, "Local Match", "PLAY / REVIEW", new Color(99, 223, 185), mousePoint);
+                DrawHomeServiceChoice(TitleHomeCgosButtonBounds, "Online Match (CGOS)", "WATCH / CONNECT", new Color(99, 223, 185), mousePoint);
                 DrawAppChoice(TitleAppBounds(0), "ポン抜きゲーム", "CAPTURE GAME", mousePoint);
                 DrawDynamicOptionText("対局、観戦、問題演習をここから直接選べます。", new Rectangle(500, 700, 890, 38), new Color(180, 195, 195), 0.34f);
                 if (TitleAppBounds(0).Contains(mousePoint))
@@ -54,7 +54,7 @@ public sealed partial class GoScreenRenderer
         FillRect(bounds, hovered ? new Color(36, 50, 58) : new Color(24, 31, 37));
         DrawRect(bounds, 2, hovered ? new Color(178, 219, 226) : new Color(88, 102, 112));
         FillRect(new Rectangle(bounds.X, bounds.Y, 6, bounds.Height), hovered ? accent : new Color(accent.R, accent.G, accent.B, (byte)100));
-        DrawText(title, new Vector2(bounds.X + 28, bounds.Y + 24), Color.White, 0.52f);
+        DrawFittedText(title, new Rectangle(bounds.X + 28, bounds.Y + 20, bounds.Width - 124, 42), Color.White, 0.52f);
         DrawFittedText(caption, new Rectangle(bounds.X + 28, bounds.Y + 74, bounds.Width - 100, 30), new Color(204, 241, 226), 0.34f);
         DrawFittedText("OPEN  >", new Rectangle(bounds.Right - 92, bounds.Y + 46, 68, 28), hovered ? accent : new Color(180, 195, 195), 0.28f);
     }

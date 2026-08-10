@@ -1659,7 +1659,7 @@ public class Game1 : Game
         {
             if (TitleRenderer.IsLocalGameButtonHit(point))
             {
-                GuiOperationLog.User("Pressed Local button", "Navigate from title to local setup");
+                GuiOperationLog.User("Pressed Local Match button", "Navigate from title to local-match setup");
                 _session.SelectUseKind(GoAppUseKind.LocalPlay);
                 return true;
             }
@@ -4661,9 +4661,9 @@ public class Game1 : Game
                 ? $"Title/{_titleMenuPage}"
                 : _session.UseKind == GoAppUseKind.LocalPlay
                     ? _playingScene.IsInitialPositionConciergeVisible
-                        ? "Local/Playing/InitialPositionConcierge"
-                        : $"Local/{_session.CurrentMode.Kind}"
-                    : $"CGOS/{_session.CgosConnectionFlowKind}/{_session.CurrentMode.Kind}";
+                        ? "Formal/LocalMatch/InitialPositionConcierge"
+                        : $"Formal/LocalMatch/{_session.CurrentMode.Kind}"
+                    : $"Formal/OnlineMatch.Cgos/{_session.CgosConnectionFlowKind}/{_session.CurrentMode.Kind}";
 
     private string GetScreenBreadcrumb()
     {
@@ -4709,28 +4709,28 @@ public class Game1 : Game
     private string GetLocalPlayBreadcrumb()
     {
         if (_playingScene.IsInitialPositionConciergeVisible)
-            return "FORMAL APPS  >  LOCAL PLAY  >  PLAY  >  INITIAL POSITION";
+            return "FORMAL APPS  >  LOCAL MATCH  >  PLAY  >  INITIAL POSITION";
 
         return _session.CurrentMode.Kind switch
         {
-            GoAppModeKind.Resting => "FORMAL APPS  >  LOCAL PLAY  >  INTERVAL",
-            GoAppModeKind.Playing => "FORMAL APPS  >  LOCAL PLAY  >  PLAY",
-            GoAppModeKind.GameOver => "FORMAL APPS  >  LOCAL PLAY  >  PLAY  >  RESULT",
-            GoAppModeKind.BoardEditing => "FORMAL APPS  >  LOCAL PLAY  >  PLAY  >  EDIT BOARD",
-            GoAppModeKind.VariationEditing => "FORMAL APPS  >  LOCAL PLAY  >  PLAY  >  EDIT BOARD",
-            GoAppModeKind.Reviewing => "FORMAL APPS  >  LOCAL PLAY  >  PLAY  >  REVIEW",
-            _ => "FORMAL APPS  >  LOCAL PLAY",
+            GoAppModeKind.Resting => "FORMAL APPS  >  LOCAL MATCH  >  INTERVAL",
+            GoAppModeKind.Playing => "FORMAL APPS  >  LOCAL MATCH  >  PLAY",
+            GoAppModeKind.GameOver => "FORMAL APPS  >  LOCAL MATCH  >  PLAY  >  RESULT",
+            GoAppModeKind.BoardEditing => "FORMAL APPS  >  LOCAL MATCH  >  PLAY  >  EDIT BOARD",
+            GoAppModeKind.VariationEditing => "FORMAL APPS  >  LOCAL MATCH  >  PLAY  >  EDIT BOARD",
+            GoAppModeKind.Reviewing => "FORMAL APPS  >  LOCAL MATCH  >  PLAY  >  REVIEW",
+            _ => "FORMAL APPS  >  LOCAL MATCH",
         };
     }
 
     private string GetCgosBreadcrumb() =>
         _session.CgosConnectionFlowKind switch
         {
-            CgosConnectionFlowKind.ProfileSelection => "FORMAL APPS  >  CGOS  >  PROFILE SELECT",
-            CgosConnectionFlowKind.ConnectionStart => "FORMAL APPS  >  CGOS  >  CONNECT",
-            CgosConnectionFlowKind.Watching => "FORMAL APPS  >  CGOS  >  WATCH",
-            CgosConnectionFlowKind.Result => "FORMAL APPS  >  CGOS  >  WATCH  >  RESULT",
-            _ => "FORMAL APPS  >  CGOS",
+            CgosConnectionFlowKind.ProfileSelection => "FORMAL APPS  >  ONLINE MATCH (CGOS)  >  PROFILE SELECT",
+            CgosConnectionFlowKind.ConnectionStart => "FORMAL APPS  >  ONLINE MATCH (CGOS)  >  CONNECT",
+            CgosConnectionFlowKind.Watching => "FORMAL APPS  >  ONLINE MATCH (CGOS)  >  WATCH",
+            CgosConnectionFlowKind.Result => "FORMAL APPS  >  ONLINE MATCH (CGOS)  >  WATCH  >  RESULT",
+            _ => "FORMAL APPS  >  ONLINE MATCH (CGOS)",
         };
 
     protected override void Dispose(bool disposing)

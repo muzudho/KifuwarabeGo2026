@@ -24,7 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="GoStandard\CgosMatch\" />
+    <Folder Include="GoApps\Formal\OnlineMatch.Cgos\" />
   </ItemGroup>
 
 </Project>
