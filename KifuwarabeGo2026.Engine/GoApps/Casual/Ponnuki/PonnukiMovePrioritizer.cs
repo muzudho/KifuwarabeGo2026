@@ -1,6 +1,7 @@
 namespace KifuwarabeGo2026.Engine.GoApps.Casual.Ponnuki;
 
 using KifuwarabeGo2026.Shared.Domain;
+using KifuwarabeGo2026.Shared.BoardLens.Strong;
 
 /// <summary>
 /// Board Lens と同じ連解析を使い、ポン抜きプレイヤーの候補手を優先度付けします。
@@ -10,26 +11,14 @@ internal static class PonnukiMovePrioritizer
     public static PonnukiMovePriority Evaluate(
         GoBoard boardAfterMove,
         GoPoint move,
-        GoStone color,
         int capturedStones)
     {
         var renParse = boardAfterMove.ParseRens();
         var placedRen = renParse.GetRen(renParse.GetRenNumber(move.X, move.Y));
-        var adjacentOpponentArea = 0;
-        var touchesOpponent = false;
-        foreach (var adjacentRenNumber in placedRen.NeighborRenNumbers)
-        {
-            var adjacentRen = renParse.GetRen(adjacentRenNumber);
-            if (adjacentRen.Stone == color || adjacentRen.Stone == GoStone.Empty)
-                continue;
-
-            touchesOpponent = true;
-            adjacentOpponentArea += adjacentRen.Points.Count;
-        }
-
-        var contactPriority = !touchesOpponent
+        var strong = StrongAnalyzer.Analyze(renParse, placedRen.Number);
+        var contactPriority = !strong.TouchesOpponent
             ? 0
-            : placedRen.Points.Count > adjacentOpponentArea ? 1 : -1;
+            : strong.Value > 0 ? 1 : -1;
         return new PonnukiMovePriority(capturedStones, contactPriority);
     }
 

@@ -9,4 +9,9 @@
     <FileVersion>3.6.0.0</FileVersion>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Folder Include="BoardLens\LibertySystem\Strong\" />
+    <Folder Include="BoardLens\LibertySystem\" />
+  </ItemGroup>
+
 </Project>

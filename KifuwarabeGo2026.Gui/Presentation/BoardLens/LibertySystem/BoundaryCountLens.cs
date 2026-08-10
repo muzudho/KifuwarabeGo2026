@@ -1,6 +1,7 @@
 namespace KifuwarabeGo2026.Gui.Presentation;
 
 using KifuwarabeGo2026.Gui.Application;
+using KifuwarabeGo2026.Shared.BoardLens.Strong;
 using KifuwarabeGo2026.Shared.Domain;
 using Microsoft.Xna.Framework;
 using System;
@@ -47,7 +48,7 @@ public sealed partial class GoScreenRenderer
             {
                 DrawAdjacentRenRelationships(renParse, contacts, adjacentRenNumbers, legColor, legThickness, start, cell);
                 var adjacentArea = SumAdjacentRenAreas(renParse, adjacentRenNumbers);
-                var value = displayMode == RenParseDisplayMode.Strong ? GetStrongValue(ren, adjacentArea) : adjacentArea;
+                var value = displayMode == RenParseDisplayMode.Strong ? StrongAnalyzer.Analyze(renParse, ren.Number).Value : adjacentArea;
                 if (displayMode == RenParseDisplayMode.Strong)
                 {
                     deferredStrongMetrics.Add((ren.Number, value, legColor, RenGraphCellColor(OpponentOf(ren.Stone))));

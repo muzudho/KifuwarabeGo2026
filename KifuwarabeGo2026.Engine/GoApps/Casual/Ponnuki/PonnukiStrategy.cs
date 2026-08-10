@@ -20,7 +20,6 @@ internal sealed class PonnukiStrategy : IGenerateMoveStrategy
                 PonnukiMovePrioritizer.Evaluate(
                     candidate.BoardAfterMove,
                     candidate.Move,
-                    request.Color,
                     candidate.CapturedStones)));
         }
 
