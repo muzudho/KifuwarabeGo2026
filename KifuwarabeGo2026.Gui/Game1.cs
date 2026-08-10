@@ -2041,6 +2041,34 @@ public class Game1 : Game
             return true;
         }
 
+        if (GoScreenRenderer.GetVariationEditingBoardLensButtonHit(point))
+        {
+            variationSession.ToggleRenParseDisplay();
+            _boardLensBannerStartedAt = _inputClockSeconds;
+            return true;
+        }
+
+        if (GoScreenRenderer.GetVariationEditingBoardLensPreviousButtonHit(point, variationSession.IsRenParseDisplayEnabled))
+        {
+            if (variationSession.TryStepBoardLens(-1))
+                _boardLensBannerStartedAt = _inputClockSeconds;
+            return true;
+        }
+
+        if (GoScreenRenderer.GetVariationEditingBoardLensNextButtonHit(point, variationSession.IsRenParseDisplayEnabled))
+        {
+            if (variationSession.TryStepBoardLens(1))
+                _boardLensBannerStartedAt = _inputClockSeconds;
+            return true;
+        }
+
+        if (GoScreenRenderer.GetVariationEditingBoardLensExitButtonHit(point, variationSession.IsRenParseDisplayEnabled))
+        {
+            if (variationSession.TryDeactivateBoardLens())
+                _boardLensBannerStartedAt = _inputClockSeconds;
+            return true;
+        }
+
         if (GoScreenRenderer.GetVariationEditingPlayButtonHit(point))
         {
             variationSession.SetVariationEditingStone(null);

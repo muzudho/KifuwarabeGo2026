@@ -63,6 +63,17 @@ public sealed partial class GoScreenRenderer
 
     public static bool GetVariationEditingClearButtonHit(Point point) => VariationEditingClearButtonBounds.Contains(point);
 
+    public static bool GetVariationEditingBoardLensButtonHit(Point point) => VariationEditingBoardLensButtonBounds.Contains(point);
+
+    public static bool GetVariationEditingBoardLensPreviousButtonHit(Point point, bool enabled) =>
+        enabled && VariationEditingBoardLensPreviousButtonBounds.Contains(point);
+
+    public static bool GetVariationEditingBoardLensNextButtonHit(Point point, bool enabled) =>
+        enabled && VariationEditingBoardLensNextButtonBounds.Contains(point);
+
+    public static bool GetVariationEditingBoardLensExitButtonHit(Point point, bool enabled) =>
+        enabled && VariationEditingBoardLensExitButtonBounds.Contains(point);
+
 
     public static int? GetReviewStepButtonHit(Point point)
     {
@@ -186,9 +197,13 @@ public sealed partial class GoScreenRenderer
 
         DrawVerticalResultSection(new Rectangle(1144, 802, 668, 74), "BOARD", new Color(76, 91, 126));
         DrawCommandButton(VariationEditingClearButtonBounds, "CLEAR BOARD", false, mousePoint, scale: 0.32f);
+        DrawCommandButton(VariationEditingBoardLensButtonBounds, "L", session.IsRenParseDisplayEnabled, mousePoint, scale: 0.40f);
+        DrawCommandButton(VariationEditingBoardLensPreviousButtonBounds, "<J", false, mousePoint, enabled: session.IsRenParseDisplayEnabled, scale: 0.25f);
+        DrawCommandButton(VariationEditingBoardLensNextButtonBounds, "K>", false, mousePoint, enabled: session.IsRenParseDisplayEnabled, scale: 0.25f);
+        DrawCommandButton(VariationEditingBoardLensExitButtonBounds, "OFF/1", false, mousePoint, enabled: session.IsRenParseDisplayEnabled, scale: 0.22f);
 
         DrawVerticalResultSection(new Rectangle(1144, 916, 668, 76), "ACTION", new Color(91, 82, 105));
-        DrawCommandButton(VariationEditingExportSgfButtonBounds, "SGF OUTPUT", false, mousePoint, scale: 0.29f);
+        DrawCommandButton(VariationEditingExportSgfButtonBounds, "KIFU OUTPUT (SGF)", false, mousePoint, scale: 0.22f);
         DrawCommandButton(
             VariationEditingUndoButtonBounds,
             "UNDO",
@@ -290,7 +305,11 @@ public sealed partial class GoScreenRenderer
     private static Rectangle VariationEditingBlackButtonBounds => new(1320, 584, 140, 56);
     private static Rectangle VariationEditingWhiteButtonBounds => new(1476, 584, 140, 56);
     private static Rectangle VariationEditingEraseButtonBounds => new(1632, 584, 140, 56);
-    private static Rectangle VariationEditingClearButtonBounds => new(1164, 810, 608, 52);
+    private static Rectangle VariationEditingClearButtonBounds => new(1164, 810, 352, 52);
+    private static Rectangle VariationEditingBoardLensButtonBounds => new(1532, 806, 60, 60);
+    private static Rectangle VariationEditingBoardLensPreviousButtonBounds => new(1604, 806, 60, 60);
+    private static Rectangle VariationEditingBoardLensNextButtonBounds => new(1676, 806, 60, 60);
+    private static Rectangle VariationEditingBoardLensExitButtonBounds => new(1748, 806, 60, 60);
 
     private void DrawLiveBoardWipe(LiveBoardPreview preview)
     {
