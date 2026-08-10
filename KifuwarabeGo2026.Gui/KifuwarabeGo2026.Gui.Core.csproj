@@ -23,6 +23,10 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="Presentation\BoardLens\RenSystem\" />
+    <Folder Include="Presentation\BoardLens\LibertySystem\" />
+    <Folder Include="Presentation\BoardLens\GlassesSystem\" />
+    <Folder Include="Presentation\BoardLens\Shared\" />
     <Folder Include="Presentation\Shared\PlayerSelector\" />
   </ItemGroup>
 </Project>

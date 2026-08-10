@@ -1,6 +1,7 @@
 namespace KifuwarabeGo2026.Gui.Presentation;
 
 using KifuwarabeGo2026.Gui.Application;
+using KifuwarabeGo2026.Gui.Presentation.BoardLens.Shared;
 using KifuwarabeGo2026.Shared.Domain;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -586,6 +587,19 @@ public sealed partial class GoScreenRenderer
         Vector2 start,
         float cell)
     {
+        var context = new BoardLensRenderContext(displayMode, boardSize, getStone, parseRens, drawPlacedStones, start, cell);
+        DrawBoardRenAnalysis(context);
+    }
+
+    private void DrawBoardRenAnalysis(BoardLensRenderContext context)
+    {
+        var displayMode = context.DisplayMode;
+        var boardSize = context.BoardSize;
+        var getStone = context.GetStone;
+        var parseRens = context.ParseRens;
+        var drawPlacedStones = context.DrawPlacedStones;
+        var start = context.Start;
+        var cell = context.Cell;
         foreach (var metric in metrics)
             DrawRenMetricNumber(renParse.GetRen(metric.RenNumber), metric.Value, RenMetricUnit.PointCount, metric.Color, start, cell, metric.Outline);
     }
