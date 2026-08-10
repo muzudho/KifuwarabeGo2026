@@ -410,13 +410,14 @@ public sealed partial class GoScreenRenderer
     private static Rectangle ReviewBackToRestButtonBounds => new(1480, 120, 156, 52);
 
 
-    private static Rectangle ReviewBoardLensButtonBounds => new(1724, 858, 60, 60);
+    private static Rectangle ReviewBoardLensButtonBounds => new(1508, 858, 60, 60);
 
     private static Rectangle ReviewBoardLensFamilyButtonBounds => new(1652, 858, 60, 60);
 
-    private static Rectangle ReviewBoardLensExitButtonBounds => new(1580, 858, 60, 60);
+    private static Rectangle ReviewBoardLensExitButtonBounds => new(1724, 858, 60, 60);
 
-    private static Rectangle ReviewBoardLensPreviousButtonBounds => new(1508, 858, 60, 60);
+    private static Rectangle ReviewBoardLensPreviousButtonBounds => new(1580, 858, 60, 60);
+
 
     private void DrawReviewBoardLensPreviousButton(bool enabled, Point mousePoint)
     {

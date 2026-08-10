@@ -13,5 +13,6 @@ public enum RenParseDisplayMode
     BoundaryOpponentCount,
     AdjacentEmptyArea,
     AdjacentOpponentArea,
+    Strong,
     Nobi,
 }

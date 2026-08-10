@@ -318,7 +318,7 @@ public sealed class GoAppSession
     public int NextMoveNumber => PlayedMoveCount + 1;
 
     private const int RenBoardLensCount = 4;
-    private const int MeasureBoardLensCount = 7;
+    private const int MeasureBoardLensCount = 8;
     // Keep the shared step within the least common multiple of both families.
     // This preserves each family's modulo position when switching families and
     // prevents the counter from ever growing towards an integer overflow.
@@ -338,6 +338,7 @@ public sealed class GoAppSession
         RenParseDisplayMode.BoundaryOpponentCount or
         RenParseDisplayMode.AdjacentEmptyArea or
         RenParseDisplayMode.AdjacentOpponentArea or
+        RenParseDisplayMode.Strong or
         RenParseDisplayMode.Nobi;
 
     public string BoardLensDisplayName => RenParseDisplayMode switch
@@ -347,13 +348,14 @@ public sealed class GoAppSession
         RenParseDisplayMode.Graph => "REN RECTANGLE LENS  2/4",
         RenParseDisplayMode.GraphStep2 => "REN NETWORK LENS - BASIC  3/4",
         RenParseDisplayMode.Eye => "REN NETWORK LENS - EYE MODE  4/4",
-        RenParseDisplayMode.RenArea => "REN AREA LENS  1/7",
-        RenParseDisplayMode.BoundaryCount => "BOUNDARY COUNT LENS  2/7",
-        RenParseDisplayMode.BoundaryEmptyCount => "BOUNDARY EMPTY COUNT LENS  3/7",
-        RenParseDisplayMode.BoundaryOpponentCount => "BOUNDARY OPPONENT COUNT LENS  4/7",
-        RenParseDisplayMode.AdjacentEmptyArea => "ADJACENT EMPTY AREA LENS  5/7",
-        RenParseDisplayMode.AdjacentOpponentArea => "ADJACENT OPPONENT AREA LENS  6/7",
-        RenParseDisplayMode.Nobi => "NOBI LENS  7/7",
+        RenParseDisplayMode.RenArea => "REN AREA LENS  1/8",
+        RenParseDisplayMode.BoundaryCount => "BOUNDARY COUNT LENS  2/8",
+        RenParseDisplayMode.BoundaryEmptyCount => "BOUNDARY EMPTY COUNT LENS  3/8",
+        RenParseDisplayMode.BoundaryOpponentCount => "BOUNDARY OPPONENT COUNT LENS  4/8",
+        RenParseDisplayMode.AdjacentEmptyArea => "ADJACENT EMPTY AREA LENS  5/8",
+        RenParseDisplayMode.AdjacentOpponentArea => "ADJACENT OPPONENT AREA LENS  6/8",
+        RenParseDisplayMode.Strong => "STRONG LENS  7/8",
+        RenParseDisplayMode.Nobi => "NOBI LENS  8/8",
         _ => RenParseDisplayMode.ToString().ToUpperInvariant(),
     };
 
@@ -366,6 +368,7 @@ public sealed class GoAppSession
         RenParseDisplayMode.BoundaryOpponentCount or
         RenParseDisplayMode.AdjacentEmptyArea or
         RenParseDisplayMode.AdjacentOpponentArea or
+        RenParseDisplayMode.Strong or
         RenParseDisplayMode.Nobi => "[L] SYSTEM    [J]/[K] PREV/NEXT    [1] EXIT",
         _ => "[L] SYSTEM    [J]/[K] PREV/NEXT    [1] EXIT",
     };
@@ -1222,6 +1225,7 @@ public sealed class GoAppSession
                 3 => RenParseDisplayMode.BoundaryOpponentCount,
                 4 => RenParseDisplayMode.AdjacentEmptyArea,
                 5 => RenParseDisplayMode.AdjacentOpponentArea,
+                6 => RenParseDisplayMode.Strong,
                 _ => RenParseDisplayMode.Nobi,
             }
             : (_boardLensStep % RenBoardLensCount) switch

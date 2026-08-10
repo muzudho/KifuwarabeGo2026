@@ -427,10 +427,12 @@ public sealed partial class GoScreenRenderer
         var includesOpponent = displayMode is
             RenParseDisplayMode.BoundaryCount or
             RenParseDisplayMode.BoundaryOpponentCount or
-            RenParseDisplayMode.AdjacentOpponentArea;
+            RenParseDisplayMode.AdjacentOpponentArea or
+            RenParseDisplayMode.Strong;
         var showsAdjacentArea = displayMode is
             RenParseDisplayMode.AdjacentEmptyArea or
-            RenParseDisplayMode.AdjacentOpponentArea;
+            RenParseDisplayMode.AdjacentOpponentArea or
+            RenParseDisplayMode.Strong;
         var accent = includesEmpty && includesOpponent
             ? new Color(255, 210, 96)
             : includesEmpty
@@ -468,15 +470,19 @@ public sealed partial class GoScreenRenderer
                     legThickness,
                     start,
                     cell);
+                var adjacentArea = SumAdjacentRenAreas(renParse, adjacentRenNumbers);
                 DrawRenMetricNumber(
                     ren,
-                    SumAdjacentRenAreas(renParse, adjacentRenNumbers),
+                    displayMode == RenParseDisplayMode.Strong ? ren.Points.Count - adjacentArea : adjacentArea,
                     RenMetricUnit.PointCount,
-                    displayMode == RenParseDisplayMode.AdjacentEmptyArea
+                    displayMode == RenParseDisplayMode.Strong
+                        ? RenGraphCellColor(ren.Stone)
+                        : displayMode == RenParseDisplayMode.AdjacentEmptyArea
                         ? RenGraphCellColor(GoStone.Empty)
                         : RenGraphCellColor(OpponentOf(ren.Stone)),
                     start,
-                    cell);
+                    cell,
+                    displayMode == RenParseDisplayMode.Strong ? RenGraphCellColor(OpponentOf(ren.Stone)) : null);
                 continue;
             }
 
