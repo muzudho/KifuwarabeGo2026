@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Engine.AppProvider;
+namespace KifuwarabeGo2026.Engine.GoApps;
 
 /// <summary>
 /// GUIへGo Appを提供するエンジン内部コンポーネントの共通契約です。

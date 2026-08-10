@@ -1,8 +1,8 @@
-namespace KifuwarabeGo2026.Engine.AppProvider;
+namespace KifuwarabeGo2026.Engine.GoApps;
 
-using KifuwarabeGo2026.Engine.AppProvider.NextMove;
+using KifuwarabeGo2026.Engine.GoApps.NextMove;
 using KifuwarabeGo2026.Engine.GoApps.Ponnuki;
-using KifuwarabeGo2026.Engine.AppProvider.Tsumego;
+using KifuwarabeGo2026.Engine.GoApps.Tsumego;
 
 /// <summary>
 /// KifuwarabeGo2026.Engine が内蔵するGo App提供者の一覧です。

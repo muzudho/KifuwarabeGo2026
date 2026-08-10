@@ -1,6 +1,6 @@
 namespace KifuwarabeGo2026.Engine.GoApps.Ponnuki;
 
-using KifuwarabeGo2026.Engine.AppProvider;
+using KifuwarabeGo2026.Engine.GoApps;
 
 /// <summary>
 /// ポン抜きマイクロゲームの初期局面、進行、終局判定、結果を提供します。
