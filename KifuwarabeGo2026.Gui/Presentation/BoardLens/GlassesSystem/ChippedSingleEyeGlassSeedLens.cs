@@ -24,6 +24,9 @@ public sealed partial class GoScreenRenderer
             for (var x = 0; x < size; x++)
             {
                 
+                // 黒・白を別々に照合する。両方が該当する空点も表示対象にする。
+                var isBlackEye = MatchesOrientationForStone(x, y, GoStone.Black);
+                var isWhiteEye = MatchesOrientationForStone(x, y, GoStone.White);
                 if (
                     session.GetDisplayStone(x, y) != GoStone.Empty ||   // すでに石が置かれている場所は描画しない。
                     !MatchesAnyOrientation(x, y)    // どの形にも一致しない場合は描画しない。
@@ -35,13 +38,25 @@ public sealed partial class GoScreenRenderer
                 // 眼の外周はエメラルドの楕円、瞳はエメラルドで縁取った手番色の丸で描く。
                 var wireThickness = Math.Max(2, (int)MathF.Round(cell * .045f));
                 DrawEllipseWire(center, cell * .58f, cell * .36f, emerald, wireThickness, 0f);
-                DrawCircle(center, cell * .19f, emerald);
-                DrawCircle(center, cell * .14f, RenGraphCellColor(session.CurrentTurn));
+                if (!isBlackEye || !isWhiteEye)
+                {
+                    // 黒眼・白眼は、エメラルドで縁取った瞳を持つ。
+                    var pupilColor = isBlackEye ? RenGraphCellColor(GoStone.Black) : RenGraphCellColor(GoStone.White);
+                    DrawCircle(center, cell * .19f, emerald);
+                    DrawCircle(center, cell * .14f, pupilColor);
+                }
+                // 両者の候補地は瞳を描かず、エメラルドの眼の外周だけで示す。
             }
         }
 
         // パターンマッチング
-        bool MatchesAnyOrientation(int centerX, int centerY)
+        // 既存の呼び出しでは、黒白いずれかの候補地かを確認する。
+        bool MatchesAnyOrientation(int centerX, int centerY) =>
+            MatchesOrientationForStone(centerX, centerY, GoStone.Black) ||
+            MatchesOrientationForStone(centerX, centerY, GoStone.White);
+
+        // 指定した色の石と空点だけを z として、8 方向の形を照合する。
+        bool MatchesOrientationForStone(int centerX, int centerY, GoStone eyeStone)
         {
             for (var orientation = 0; orientation < 8; orientation++)
             {
@@ -84,7 +99,7 @@ public sealed partial class GoScreenRenderer
                 var px = centerX + tx;
                 var py = centerY + ty;
                 return px >= 0 && px < size && py >= 0 && py < size &&
-                    (session.GetDisplayStone(px, py) == GoStone.Empty || session.GetDisplayStone(px, py) == session.CurrentTurn);
+                    (session.GetDisplayStone(px, py) == GoStone.Empty || session.GetDisplayStone(px, py) == eyeStone);
             }
 
             bool IsOutside(int dx, int dy, int orientation)
