@@ -19,6 +19,7 @@ using KifuwarabeGo2026.Gui.Presentation.GoApps.Formal.OnlineMatch.Watch;
 using KifuwarabeGo2026.Gui.Presentation.GoApps.Formal.LocalMatch.Interval;
 using KifuwarabeGo2026.Gui.Presentation.GoApps.Formal.LocalMatch.Interval.TournamentRules;
 using KifuwarabeGo2026.Gui.Presentation.Title;
+using KifuwarabeGo2026.Gui.Presentation.Shared.TextBox;
 using KifuwarabeGo2026.Gui.Sgf;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;

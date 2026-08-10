@@ -1,5 +1,6 @@
-namespace KifuwarabeGo2026.Gui.Application;
+namespace KifuwarabeGo2026.Gui.Presentation.Shared.TextBox;
 
+using KifuwarabeGo2026.Gui.Application;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using System;

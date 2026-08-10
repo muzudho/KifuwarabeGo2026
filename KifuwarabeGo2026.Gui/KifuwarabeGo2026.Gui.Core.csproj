@@ -28,5 +28,6 @@
     <Folder Include="Presentation\BoardLens\GlassesSystem\" />
     <Folder Include="Presentation\BoardLens\Shared\" />
     <Folder Include="Presentation\Shared\PlayerSelector\" />
+    <Folder Include="Presentation\Shared\TextBox\" />
   </ItemGroup>
 </Project>
