@@ -18,7 +18,20 @@ public sealed partial class GoScreenRenderer
     public static bool GetIntegerInputDialogOkButtonHit(Point point) =>
         IntegerInputOkButtonBounds.Contains(point);
 
-    public void DrawIntegerInputDialog(Point mousePosition, string title, string text, int caretIndex, string message)
+    public static bool IsIntegerInputDialogTextBoxHit(Point point) =>
+        IntegerInputTextBounds.Contains(point);
+
+    public int GetIntegerInputDialogCaretIndex(Point point, string text) =>
+        GetTextBoxCaretIndex(point.X, text, IntegerInputTextContentBounds, 0.55f);
+
+    public void DrawIntegerInputDialog(
+        Point mousePosition,
+        string title,
+        string text,
+        int caretIndex,
+        int selectionStart,
+        int selectionLength,
+        string message)
     {
         var mousePoint = VirtualScreen.ToVirtualPoint(_graphicsDevice.Viewport, mousePosition);
         _spriteBatch.Begin(
@@ -35,10 +48,11 @@ public sealed partial class GoScreenRenderer
 
         FillRect(IntegerInputTextBounds, new Color(15, 20, 26));
         DrawRect(IntegerInputTextBounds, 2, new Color(99, 223, 185));
+        DrawTextBoxSelection(text, selectionStart, selectionLength, IntegerInputTextContentBounds, 0.55f);
         var displayText = string.IsNullOrEmpty(text) ? " " : text;
-        DrawFittedText(displayText, new Rectangle(IntegerInputTextBounds.X + 22, IntegerInputTextBounds.Y + 12, IntegerInputTextBounds.Width - 44, 46), Color.White, 0.55f);
+        DrawFittedText(displayText, IntegerInputTextContentBounds, Color.White, 0.55f);
         var prefix = text[..Math.Clamp(caretIndex, 0, text.Length)];
-        var caretX = IntegerInputTextBounds.X + 22 + (int)(_font.MeasureString(prefix).X * 0.55f);
+        var caretX = IntegerInputTextContentBounds.X + (int)(_font.MeasureString(prefix).X * 0.55f);
         FillRect(new Rectangle(Math.Min(caretX, IntegerInputTextBounds.Right - 24), IntegerInputTextBounds.Y + 14, 2, 42), new Color(147, 244, 200));
 
         DrawFittedText(message, new Rectangle(IntegerInputDialogBounds.X + 80, 540, IntegerInputDialogBounds.Width - 160, 32), new Color(255, 205, 140), 0.32f);
@@ -46,4 +60,7 @@ public sealed partial class GoScreenRenderer
         DrawCommandButton(IntegerInputOkButtonBounds, "OK", false, mousePoint, scale: 0.42f);
         _spriteBatch.End();
     }
+
+    private static Rectangle IntegerInputTextContentBounds =>
+        new(IntegerInputTextBounds.X + 22, IntegerInputTextBounds.Y + 12, IntegerInputTextBounds.Width - 44, 46);
 }

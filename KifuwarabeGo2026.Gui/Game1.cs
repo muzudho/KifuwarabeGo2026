@@ -734,7 +734,14 @@ public class Game1 : Game
         }
 
         if (_renderer is not null && _activeGtpEngineIntegerOption is { } integerOption)
-            _renderer.DrawIntegerInputDialog(Mouse.GetState().Position, integerOption.Label, _gtpEngineIntegerOptionTextBox.Text, _gtpEngineIntegerOptionTextBox.CaretIndex, _gtpEngineIntegerInputMessage);
+            _renderer.DrawIntegerInputDialog(
+                Mouse.GetState().Position,
+                integerOption.Label,
+                _gtpEngineIntegerOptionTextBox.Text,
+                _gtpEngineIntegerOptionTextBox.CaretIndex,
+                _gtpEngineIntegerOptionTextBox.SelectionStart,
+                _gtpEngineIntegerOptionTextBox.SelectionLength,
+                _gtpEngineIntegerInputMessage);
 
         _renderer?.DrawBreadcrumb(GetScreenBreadcrumb());
 
@@ -773,7 +780,13 @@ public class Game1 : Game
             GuiOperationLog.User("Mouse click", $"screen={GetCurrentScreenState()} x={point.X} y={point.Y}");
             if (_activeGtpEngineIntegerOption is not null)
             {
-                if (GoScreenRenderer.GetIntegerInputDialogOkButtonHit(point))
+                if (_renderer is not null && GoScreenRenderer.IsIntegerInputDialogTextBoxHit(point))
+                {
+                    _gtpEngineIntegerOptionTextBox.BeginMouseSelection(
+                        _renderer.GetIntegerInputDialogCaretIndex(point, _gtpEngineIntegerOptionTextBox.Text),
+                        IsShiftDown());
+                }
+                else if (GoScreenRenderer.GetIntegerInputDialogOkButtonHit(point))
                     CommitGtpEngineIntegerInput();
                 else if (GoScreenRenderer.GetIntegerInputDialogCancelButtonHit(point))
                     CancelGtpEngineIntegerInput();
@@ -1439,13 +1452,19 @@ public class Game1 : Game
             _cgosCredentialTextBox.EndMouseSelection();
             _humanPlayerNameTextBox.EndMouseSelection();
             _gtpEngineEditTextBox.EndMouseSelection();
+            _gtpEngineIntegerOptionTextBox.EndMouseSelection();
             _tournamentRulesSetting.EndMouseSelection();
             return;
         }
 
         if (_renderer is null || _previousMouse.LeftButton != ButtonState.Pressed) return;
 
-        if (_cgosConnectionEditTextBox.IsMouseSelecting &&
+        if (_activeGtpEngineIntegerOption is not null && _gtpEngineIntegerOptionTextBox.IsMouseSelecting)
+        {
+            _gtpEngineIntegerOptionTextBox.UpdateMouseSelection(
+                _renderer.GetIntegerInputDialogCaretIndex(point, _gtpEngineIntegerOptionTextBox.Text));
+        }
+        else if (_cgosConnectionEditTextBox.IsMouseSelecting &&
             _session.ActiveCgosConnectionEditField is { } connectionField)
         {
             _cgosConnectionEditTextBox.UpdateMouseSelection(
