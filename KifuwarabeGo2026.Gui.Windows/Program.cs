@@ -21,8 +21,10 @@ internal static class Program
         {
             GuiOperationLog.App("Application session started");
             var platformExecutableService = new WindowsPlatformExecutableService();
+            using var textCompositionService = new WindowsTextCompositionService();
             using var game = new Game1(
                 new WindowsClipboardService(),
+                textCompositionService,
                 new WindowsMessageDialogService(),
                 new WindowsFileDialogService(),
                 new WindowsDesktopLauncher(),
@@ -31,7 +33,15 @@ internal static class Program
                 new WindowsInitialWindowLayoutService(),
                 platformExecutableService,
                 new WindowsWindowScreenshotService());
-            game.Run();
+            textCompositionService.Attach(game.Window.Handle);
+            try
+            {
+                game.Run();
+            }
+            finally
+            {
+                textCompositionService.Detach();
+            }
         }
         catch (Exception ex)
         {

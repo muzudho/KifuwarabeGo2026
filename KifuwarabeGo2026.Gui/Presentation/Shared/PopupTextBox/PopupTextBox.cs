@@ -1,5 +1,6 @@
 namespace KifuwarabeGo2026.Gui.Presentation;
 
+using KifuwarabeGo2026.Gui.Application;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -35,7 +36,8 @@ public sealed partial class GoScreenRenderer
         int selectionStart,
         int selectionLength,
         string message,
-        bool showDefaultButton = false)
+        bool showDefaultButton = false,
+        TextCompositionState composition = default)
     {
         var mousePoint = VirtualScreen.ToVirtualPoint(_graphicsDevice.Viewport, mousePosition);
         _spriteBatch.Begin(
@@ -57,7 +59,24 @@ public sealed partial class GoScreenRenderer
         DrawFittedText(displayText, TextInputTextContentBounds, Color.White, 0.55f);
         var prefix = text[..Math.Clamp(caretIndex, 0, text.Length)];
         var caretX = TextInputTextContentBounds.X + (int)(_font.MeasureString(prefix).X * 0.55f);
-        FillRect(new Rectangle(Math.Min(caretX, TextInputTextBounds.Right - 24), TextInputTextBounds.Y + 14, 2, TextInputTextBounds.Height - 28), new Color(147, 244, 200));
+        if (composition.IsActive)
+        {
+            var compositionText = composition.Text ?? "";
+            DrawText(compositionText, new Vector2(caretX, TextInputTextContentBounds.Y + 2), new Color(255, 225, 128), 0.55f);
+            var compositionWidth = _font.MeasureString(compositionText).X * 0.55f;
+            DrawLine(
+                new Vector2(caretX, TextInputTextContentBounds.Bottom - 4),
+                new Vector2(caretX + compositionWidth, TextInputTextContentBounds.Bottom - 4),
+                2,
+                new Color(255, 225, 128));
+            var compositionCaret = compositionText[..Math.Clamp(composition.CaretIndex, 0, compositionText.Length)];
+            var compositionCaretX = caretX + (int)(_font.MeasureString(compositionCaret).X * 0.55f);
+            FillRect(new Rectangle(Math.Min(compositionCaretX, TextInputTextBounds.Right - 24), TextInputTextBounds.Y + 14, 2, TextInputTextBounds.Height - 28), new Color(255, 225, 128));
+        }
+        else
+        {
+            FillRect(new Rectangle(Math.Min(caretX, TextInputTextBounds.Right - 24), TextInputTextBounds.Y + 14, 2, TextInputTextBounds.Height - 28), new Color(147, 244, 200));
+        }
 
         DrawFittedText(message, new Rectangle(TextInputDialogBounds.X + 80, 544, TextInputDialogBounds.Width - 160, 32), new Color(180, 195, 195), 0.32f);
         if (showDefaultButton)

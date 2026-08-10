@@ -37,6 +37,7 @@ public class Game1 : Game
     private const string ProductTitle = "Kifuwarabe Go 2026";
     private readonly GraphicsDeviceManager _graphics;
     private readonly IClipboardService _clipboardService;
+    private readonly ITextCompositionService _textCompositionService;
     private readonly IMessageDialogService _messageDialogService;
     private readonly IFileDialogService _fileDialogService;
     private readonly IDesktopLauncher _desktopLauncher;
@@ -76,6 +77,7 @@ public class Game1 : Game
     private GtpEngineGuiOptionSpec? _activeGtpEngineStringOption;
     private KeyboardState _previousGtpEngineStringKeyboard;
     private string _gtpEngineStringInputMessage = "";
+    private TextCompositionState _gtpEngineStringComposition = TextCompositionState.Empty;
     private readonly TextBoxController _humanPlayerNameTextBox = new(80);
     private KeyboardState _previousHumanPlayerNameKeyboard;
     private KeyboardState _previousCgosConnectionKeyboard;
@@ -135,6 +137,7 @@ public class Game1 : Game
 
     public Game1(
         IClipboardService clipboardService,
+        ITextCompositionService textCompositionService,
         IMessageDialogService messageDialogService,
         IFileDialogService fileDialogService,
         IDesktopLauncher desktopLauncher,
@@ -145,6 +148,8 @@ public class Game1 : Game
         IWindowScreenshotService windowScreenshotService)
     {
         _clipboardService = clipboardService;
+        _textCompositionService = textCompositionService;
+        _textCompositionService.CompositionChanged += OnTextCompositionChanged;
         _messageDialogService = messageDialogService;
         _fileDialogService = fileDialogService;
         _desktopLauncher = desktopLauncher;
@@ -764,7 +769,8 @@ public class Game1 : Game
                 _gtpEngineStringOptionTextBox.SelectionStart,
                 _gtpEngineStringOptionTextBox.SelectionLength,
                 _gtpEngineStringInputMessage,
-                showDefaultButton: true);
+                showDefaultButton: true,
+                composition: _gtpEngineStringComposition);
 
         _renderer?.DrawBreadcrumb(GetScreenBreadcrumb());
 
@@ -3320,6 +3326,13 @@ public class Game1 : Game
         _tournamentRulesSetting.TryInputCharacter(e.Character);
     }
 
+    private void OnTextCompositionChanged(TextCompositionState composition)
+    {
+        _gtpEngineStringComposition = _activeGtpEngineStringOption is null
+            ? TextCompositionState.Empty
+            : composition;
+    }
+
     private bool TryInputCgosCredentialCharacter(char character)
     {
         if (_session.CgosConnectionFlowKind != CgosConnectionFlowKind.ConnectionStart ||
@@ -4413,6 +4426,7 @@ public class Game1 : Game
     {
         _activeGtpEngineStringOption = option;
         _gtpEngineStringOptionTextBox.Begin(_session.GetGtpEngineGuiOptionDraft(option));
+        _gtpEngineStringComposition = TextCompositionState.Empty;
         _previousGtpEngineStringKeyboard = Keyboard.GetState();
         _gtpEngineStringInputMessage = $"TEXT VALUE (MAX {GtpEngineGuiOptions.MaximumTextLength})";
     }
@@ -4455,6 +4469,8 @@ public class Game1 : Game
     {
         _activeGtpEngineStringOption = null;
         _gtpEngineStringOptionTextBox.Clear();
+        _gtpEngineStringComposition = TextCompositionState.Empty;
+        _gtpEngineStringInputMessage = "";
         _gtpEngineStringInputMessage = "";
     }
 
@@ -4918,6 +4934,7 @@ public class Game1 : Game
         if (disposing)
         {
             Window.TextInput -= OnTextInput;
+            _textCompositionService.CompositionChanged -= OnTextCompositionChanged;
             Window.ClientSizeChanged -= OnWindowClientSizeChanged;
             Deactivated -= OnGameDeactivated;
             _cgosBlackConnectionProcess.Dispose();

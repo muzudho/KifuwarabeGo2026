@@ -10,6 +10,7 @@ using System.Collections.Generic;
 /// </summary>
 internal sealed class PortablePlatformServices :
     IClipboardService,
+    ITextCompositionService,
     IMessageDialogService,
     IFileDialogService,
     IDesktopLauncher,
@@ -19,6 +20,12 @@ internal sealed class PortablePlatformServices :
     IPlatformExecutableService,
     IWindowScreenshotService
 {
+    public event Action<TextCompositionState>? CompositionChanged
+    {
+        add { }
+        remove { }
+    }
+
     private static readonly byte[] TransparentPixelPng =
         Convert.FromBase64String(
             "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M/wHwAF/gL+X2NDNwAAAABJRU5ErkJggg==");

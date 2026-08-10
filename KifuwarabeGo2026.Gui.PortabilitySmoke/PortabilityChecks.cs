@@ -1664,6 +1664,7 @@ internal static class PortabilityChecks
             platform,
             platform,
             platform,
+            platform,
             platform);
     }
 
