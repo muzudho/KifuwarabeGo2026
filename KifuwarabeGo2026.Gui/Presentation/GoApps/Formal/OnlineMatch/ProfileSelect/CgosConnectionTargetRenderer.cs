@@ -1,10 +1,10 @@
-namespace KifuwarabeGo2026.Gui.Presentation.Apps.Cgos.Connect;
+namespace KifuwarabeGo2026.Gui.Presentation.GoApps.Formal.OnlineMatch.ProfileSelect;
 
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Presentation;
 using Microsoft.Xna.Framework;
 
-public static class CgosConnectRenderer
+public static class CgosConnectionTargetRenderer
 {
     public static void Draw(GoScreenRenderer renderer, GoAppSession session, Point mousePosition) =>
         renderer.DrawCgosClientTop(session, mousePosition);

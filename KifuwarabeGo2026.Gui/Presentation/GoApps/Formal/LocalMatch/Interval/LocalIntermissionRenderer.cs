@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Gui.Presentation.Apps.LocalPlay.Interval;
+namespace KifuwarabeGo2026.Gui.Presentation.GoApps.Formal.LocalMatch.Interval;
 
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Application.Local.Playing;

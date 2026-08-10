@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Gui.Presentation.Apps.LocalPlay.Interval.TournamentRules;
+namespace KifuwarabeGo2026.Gui.Presentation.GoApps.Formal.LocalMatch.Interval.TournamentRules;
 
 using KifuwarabeGo2026.Gui.Presentation;
 using Microsoft.Xna.Framework;
