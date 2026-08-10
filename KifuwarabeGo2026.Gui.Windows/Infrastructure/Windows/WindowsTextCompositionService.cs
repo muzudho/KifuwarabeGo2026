@@ -40,6 +40,9 @@ public sealed class WindowsTextCompositionService : ITextCompositionService, IDi
         }
 
         Detach();
+        // Detach は前回接続の診断状態を消すため、今回成功した SDL→HWND 解決状態を復元する。
+        _diagnostics = new TextCompositionDiagnostics(IsSdlWindowResolved: true, IsWindowProcedureAttached: false);
+        PublishDiagnostics();
         _windowHandle = nativeWindowHandle;
         _windowProcedure = WindowProcedure;
         _previousWindowProcedure = SetWindowLongPtr(
