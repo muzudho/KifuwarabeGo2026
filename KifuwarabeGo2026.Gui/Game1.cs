@@ -436,9 +436,13 @@ public class Game1 : Game
         {
             ToggleBoardLens();
         }
-        else if (CanHandleGlobalRenParseToggle() && IsNewBoardLensFamilyKeyPress(keyboard))
+        else if (CanHandleGlobalRenParseToggle() && IsNewBoardLensNextKeyPress(keyboard))
         {
-            TrySwitchBoardLensFamily();
+            TryStepBoardLens(1);
+        }
+        else if (CanHandleGlobalRenParseToggle() && IsNewBoardLensPreviousKeyPress(keyboard))
+        {
+            TryStepBoardLens(-1);
         }
         else if (CanHandleGlobalRenParseToggle() && IsNewBoardLensExitKeyPress(keyboard))
         {
@@ -467,8 +471,10 @@ public class Game1 : Game
         var canToggle = _session.CgosConnectionFlowKind is CgosConnectionFlowKind.Watching or CgosConnectionFlowKind.Result;
         if (canToggle && keyboard.IsKeyDown(Keys.L) && _previousKeyboard.IsKeyUp(Keys.L))
             ToggleBoardLens();
-        else if (canToggle && IsNewBoardLensFamilyKeyPress(keyboard))
-            TrySwitchBoardLensFamily();
+        else if (canToggle && IsNewBoardLensNextKeyPress(keyboard))
+            TryStepBoardLens(1);
+        else if (canToggle && IsNewBoardLensPreviousKeyPress(keyboard))
+            TryStepBoardLens(-1);
         else if (canToggle && IsNewBoardLensExitKeyPress(keyboard))
             TryDeactivateBoardLens();
 
@@ -481,8 +487,11 @@ public class Game1 : Game
     private bool IsNewBoardLensExitKeyPress(KeyboardState keyboard) =>
         IsNewGlobalKeyPress(keyboard, Keys.D1) || IsNewGlobalKeyPress(keyboard, Keys.NumPad1);
 
-    private bool IsNewBoardLensFamilyKeyPress(KeyboardState keyboard) =>
+    private bool IsNewBoardLensNextKeyPress(KeyboardState keyboard) =>
         IsNewGlobalKeyPress(keyboard, Keys.K);
+
+    private bool IsNewBoardLensPreviousKeyPress(KeyboardState keyboard) =>
+        IsNewGlobalKeyPress(keyboard, Keys.J);
 
     private bool TryHandleReviewKeyboardInput(KeyboardState keyboard)
     {
@@ -747,7 +756,9 @@ public class Game1 : Game
             GoScreenRenderer.GetReviewBoardLensFamilyButtonHit(point, _session.IsRenParseDisplayEnabled);
         var boardLensExitButtonHovered = _session.CurrentMode.Kind == GoAppModeKind.Reviewing &&
             GoScreenRenderer.GetReviewBoardLensExitButtonHit(point, _session.IsRenParseDisplayEnabled);
-        Mouse.SetCursor(engineErrorLogHovered || boardLensButtonHovered || boardLensFamilyButtonHovered || boardLensExitButtonHovered
+        var boardLensPreviousButtonHovered = _session.CurrentMode.Kind == GoAppModeKind.Reviewing &&
+            GoScreenRenderer.GetReviewBoardLensPreviousButtonHit(point, _session.IsRenParseDisplayEnabled);
+        Mouse.SetCursor(engineErrorLogHovered || boardLensButtonHovered || boardLensFamilyButtonHovered || boardLensExitButtonHovered || boardLensPreviousButtonHovered
             ? MouseCursor.Hand
             : MouseCursor.Arrow);
         if (_variationSession is null)
@@ -1862,7 +1873,13 @@ public class Game1 : Game
 
         if (GoScreenRenderer.GetReviewBoardLensFamilyButtonHit(point, _session.IsRenParseDisplayEnabled))
         {
-            TrySwitchBoardLensFamily();
+            TryStepBoardLens(1);
+            return true;
+        }
+
+        if (GoScreenRenderer.GetReviewBoardLensPreviousButtonHit(point, _session.IsRenParseDisplayEnabled))
+        {
+            TryStepBoardLens(-1);
             return true;
         }
 
@@ -4704,6 +4721,12 @@ public class Game1 : Game
             breadcrumb += "  >  TOURNAMENT RULE DELETE";
 
         return breadcrumb;
+    }
+
+    private void TryStepBoardLens(int direction)
+    {
+        if (_session.TryStepBoardLens(direction))
+            _boardLensBannerStartedAt = _inputClockSeconds;
     }
 
     private string GetLocalPlayBreadcrumb()

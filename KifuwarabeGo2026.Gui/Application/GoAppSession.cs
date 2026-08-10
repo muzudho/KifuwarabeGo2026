@@ -366,8 +366,8 @@ public sealed class GoAppSession
         RenParseDisplayMode.BoundaryOpponentCount or
         RenParseDisplayMode.AdjacentEmptyArea or
         RenParseDisplayMode.AdjacentOpponentArea or
-        RenParseDisplayMode.Nobi => "[L] NEXT    [K] REN ANALYSIS    [1] EXIT",
-        _ => "[L] NEXT    [K] MEASURE    [1] EXIT",
+        RenParseDisplayMode.Nobi => "[L] SYSTEM    [J]/[K] PREV/NEXT    [1] EXIT",
+        _ => "[L] SYSTEM    [J]/[K] PREV/NEXT    [1] EXIT",
     };
 
     public string BoardLensAlias => RenParseDisplayMode == RenParseDisplayMode.BoundaryEmptyCount
@@ -1189,11 +1189,14 @@ public sealed class GoAppSession
         if (RenParseDisplayMode == RenParseDisplayMode.Off)
         {
             _measureBoardLensFamily = false;
+            _boardLensStep = 0;
         }
-        else
+        else if (!_measureBoardLensFamily)
         {
-            _boardLensStep = (_boardLensStep + 1) % BoardLensStepCycleLength;
+            _measureBoardLensFamily = true;
+            _boardLensStep = 0;
         }
+        else { RenParseDisplayMode = RenParseDisplayMode.Off; return; }
 
         ApplyBoardLensStep();
     }
@@ -2991,6 +2994,15 @@ public sealed class GoAppSession
         var trialBoard = _board.Clone();
         return trialBoard.TryPlaceStone(x, y, CurrentTurn, KoPoint, out _, out _) &&
             _positionHashes.Contains(trialBoard.CurrentHash);
+    }
+
+    public bool TryStepBoardLens(int direction)
+    {
+        if (RenParseDisplayMode == RenParseDisplayMode.Off) return false;
+        var count = _measureBoardLensFamily ? MeasureBoardLensCount : RenBoardLensCount;
+        _boardLensStep = (_boardLensStep + direction % count + count) % count;
+        ApplyBoardLensStep();
+        return true;
     }
 
     public bool IsNobiCandidate(int x, int y)
