@@ -438,6 +438,7 @@ public sealed partial class GoScreenRenderer
             : includesEmpty
                 ? new Color(126, 255, 188)
                 : new Color(255, 144, 126);
+        var deferredStrongMetrics = new List<(int RenNumber, int Value, Color Color, Color Outline)>();
 
         for (var renNumber = 1; renNumber <= renParse.Count; renNumber++)
         {
@@ -471,18 +472,22 @@ public sealed partial class GoScreenRenderer
                     start,
                     cell);
                 var adjacentArea = SumAdjacentRenAreas(renParse, adjacentRenNumbers);
+                var adjacentValue = displayMode == RenParseDisplayMode.Strong ? ren.Points.Count - adjacentArea : adjacentArea;
+                if (displayMode == RenParseDisplayMode.Strong)
+                {
+                    deferredStrongMetrics.Add((ren.Number, adjacentValue, RenGraphCellColor(ren.Stone), RenGraphCellColor(OpponentOf(ren.Stone))));
+                    continue;
+                }
                 DrawRenMetricNumber(
                     ren,
-                    displayMode == RenParseDisplayMode.Strong ? ren.Points.Count - adjacentArea : adjacentArea,
+                    adjacentValue,
                     RenMetricUnit.PointCount,
-                    displayMode == RenParseDisplayMode.Strong
-                        ? RenGraphCellColor(ren.Stone)
-                        : displayMode == RenParseDisplayMode.AdjacentEmptyArea
+                    displayMode == RenParseDisplayMode.AdjacentEmptyArea
                         ? RenGraphCellColor(GoStone.Empty)
                         : RenGraphCellColor(OpponentOf(ren.Stone)),
                     start,
                     cell,
-                    displayMode == RenParseDisplayMode.Strong ? RenGraphCellColor(OpponentOf(ren.Stone)) : null);
+                    null);
                 continue;
             }
 
@@ -570,6 +575,19 @@ public sealed partial class GoScreenRenderer
                 adjacentRenNumbers.Add(targetRenNumber);
             }
         }
+
+        if (displayMode == RenParseDisplayMode.Strong)
+            DrawDeferredStrongMetrics(renParse, deferredStrongMetrics, start, cell);
+    }
+
+    private void DrawDeferredStrongMetrics(
+        GoRenParseResult renParse,
+        List<(int RenNumber, int Value, Color Color, Color Outline)> metrics,
+        Vector2 start,
+        float cell)
+    {
+        foreach (var metric in metrics)
+            DrawRenMetricNumber(renParse.GetRen(metric.RenNumber), metric.Value, RenMetricUnit.PointCount, metric.Color, start, cell, metric.Outline);
     }
 
     private void DrawNobiLens(GoAppSession session, Vector2 start, float cell)

@@ -372,7 +372,7 @@ public sealed partial class GoScreenRenderer
 
         DrawVerticalResultSection(new Rectangle(1144, 184, 668, 176), "TOURNAMENT", new Color(62, 112, 105));
         DrawCommandButton(TournamentRulesSelectButtonBounds, "TOURNAMENT SELECT", false, mousePoint, scale: 0.32f);
-        DrawCommandButton(ImportSgfButtonBounds, session.HasReviewGameRecord ? "SGF CLEAR" : "KIFU INPUT (SGF)", false, mousePoint, scale: 0.34f);
+        DrawCommandButton(ImportSgfButtonBounds, session.HasReviewGameRecord ? "KIFU CLEAR (SGF)" : "KIFU INPUT (SGF)", false, mousePoint, scale: 0.34f);
         DrawResultRow(new Rectangle(1164, 292, 628, 56), "RULES", session.TournamentDisplayName, new Color(39, 68, 65), Color.White);
 
         DrawVerticalResultSection(new Rectangle(1144, 376, 668, 304), "RULES", new Color(66, 104, 116));
