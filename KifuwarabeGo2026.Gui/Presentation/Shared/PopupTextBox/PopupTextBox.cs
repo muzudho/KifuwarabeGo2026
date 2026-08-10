@@ -37,7 +37,8 @@ public sealed partial class GoScreenRenderer
         int selectionLength,
         string message,
         bool showDefaultButton = false,
-        TextCompositionState composition = default)
+        TextCompositionState composition = default,
+        TextCompositionDiagnostics compositionDiagnostics = default)
     {
         var mousePoint = VirtualScreen.ToVirtualPoint(_graphicsDevice.Viewport, mousePosition);
         _spriteBatch.Begin(
@@ -51,6 +52,10 @@ public sealed partial class GoScreenRenderer
         DrawRect(TextInputDialogBounds, 2, new Color(116, 145, 146));
         DrawText("TEXT INPUT", new Vector2(TextInputDialogBounds.X + 34, TextInputDialogBounds.Y + 28), new Color(244, 238, 218), 0.68f);
         DrawFittedText(title, new Rectangle(TextInputDialogBounds.X + 36, TextInputDialogBounds.Y + 92, TextInputDialogBounds.Width - 72, 40), new Color(180, 195, 195), 0.42f);
+        // IME composition の受信確認用ランプ。灰色なら未確定文字列イベントなし、黄色なら受信中。
+        DrawCompositionLamp("SDL", TextInputDialogBounds.Right - 120, compositionDiagnostics.IsSdlWindowResolved, new Color(99, 223, 185));
+        DrawCompositionLamp("HOOK", TextInputDialogBounds.Right - 76, compositionDiagnostics.IsWindowProcedureAttached, new Color(99, 223, 185));
+        DrawCompositionLamp("IME", TextInputDialogBounds.Right - 30, composition.IsActive, new Color(255, 225, 128));
 
         FillRect(TextInputTextBounds, new Color(15, 20, 26));
         DrawRect(TextInputTextBounds, 2, new Color(99, 223, 185));
@@ -88,4 +93,11 @@ public sealed partial class GoScreenRenderer
 
     private static Rectangle TextInputTextContentBounds =>
         new(TextInputTextBounds.X + 22, TextInputTextBounds.Y + 12, TextInputTextBounds.Width - 44, TextInputTextBounds.Height - 24);
+
+    private void DrawCompositionLamp(string label, int x, bool enabled, Color activeColor)
+    {
+        var center = new Vector2(x, TextInputDialogBounds.Y + 47);
+        DrawCircle(center, 8, enabled ? activeColor : new Color(79, 89, 98));
+        DrawText(label, new Vector2(center.X - _font.MeasureString(label).X * 0.11f, TextInputDialogBounds.Y + 66), new Color(180, 195, 195), 0.22f);
+    }
 }

@@ -78,6 +78,7 @@ public class Game1 : Game
     private KeyboardState _previousGtpEngineStringKeyboard;
     private string _gtpEngineStringInputMessage = "";
     private TextCompositionState _gtpEngineStringComposition = TextCompositionState.Empty;
+    private TextCompositionDiagnostics _textCompositionDiagnostics = TextCompositionDiagnostics.Empty;
     private readonly TextBoxController _humanPlayerNameTextBox = new(80);
     private KeyboardState _previousHumanPlayerNameKeyboard;
     private KeyboardState _previousCgosConnectionKeyboard;
@@ -151,6 +152,7 @@ public class Game1 : Game
         _clipboardService = clipboardService;
         _textCompositionService = textCompositionService;
         _textCompositionService.CompositionChanged += OnTextCompositionChanged;
+        _textCompositionService.DiagnosticsChanged += OnTextCompositionDiagnosticsChanged;
         _messageDialogService = messageDialogService;
         _fileDialogService = fileDialogService;
         _desktopLauncher = desktopLauncher;
@@ -772,7 +774,8 @@ public class Game1 : Game
                 _gtpEngineStringOptionTextBox.SelectionLength,
                 _gtpEngineStringInputMessage,
                 showDefaultButton: true,
-                composition: _gtpEngineStringComposition);
+                composition: _gtpEngineStringComposition,
+                compositionDiagnostics: _textCompositionDiagnostics);
 
         _renderer?.DrawBreadcrumb(GetScreenBreadcrumb());
 
@@ -3335,6 +3338,9 @@ public class Game1 : Game
             : composition;
     }
 
+    private void OnTextCompositionDiagnosticsChanged(TextCompositionDiagnostics diagnostics) =>
+        _textCompositionDiagnostics = diagnostics;
+
     private bool TryInputCgosCredentialCharacter(char character)
     {
         if (_session.CgosConnectionFlowKind != CgosConnectionFlowKind.ConnectionStart ||
@@ -4877,7 +4883,7 @@ public class Game1 : Game
         if (current == _lastScreenState)
             return;
 
-        GuiOperationLog.App("Screen changed", $"from={_lastScreenState} to={current}");
+        GuiOperationLog.App("Screen changed", $"from={_lastScreenState} to={current}; breadcrumb={GetScreenBreadcrumb()}");
         // Board Lens の案内は操作した画面だけで表示し、画面遷移先へ持ち越さない。
         _boardLensBannerStartedAt = double.NegativeInfinity;
         _lastScreenState = current;
@@ -4974,6 +4980,7 @@ public class Game1 : Game
         {
             Window.TextInput -= OnTextInput;
             _textCompositionService.CompositionChanged -= OnTextCompositionChanged;
+            _textCompositionService.DiagnosticsChanged -= OnTextCompositionDiagnosticsChanged;
             Window.ClientSizeChanged -= OnWindowClientSizeChanged;
             Deactivated -= OnGameDeactivated;
             _cgosBlackConnectionProcess.Dispose();

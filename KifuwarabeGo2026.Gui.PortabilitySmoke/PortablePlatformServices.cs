@@ -26,6 +26,12 @@ internal sealed class PortablePlatformServices :
         remove { }
     }
 
+    public event Action<TextCompositionDiagnostics>? DiagnosticsChanged
+    {
+        add { }
+        remove { }
+    }
+
     private static readonly byte[] TransparentPixelPng =
         Convert.FromBase64String(
             "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M/wHwAF/gL+X2NDNwAAAABJRU5ErkJggg==");

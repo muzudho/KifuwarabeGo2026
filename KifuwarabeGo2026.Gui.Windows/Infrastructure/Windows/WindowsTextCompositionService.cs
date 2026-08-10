@@ -1,6 +1,7 @@
 namespace KifuwarabeGo2026.Gui.Infrastructure.Windows;
 
 using KifuwarabeGo2026.Gui.Application;
+using KifuwarabeGo2026.Gui.Infrastructure.Logging;
 using System;
 using System.Runtime.InteropServices;
 
@@ -19,30 +20,45 @@ public sealed class WindowsTextCompositionService : ITextCompositionService, IDi
     private WindowProcedureCallback? _windowProcedure;
     private nint _windowHandle;
     private nint _previousWindowProcedure;
+    private TextCompositionDiagnostics _diagnostics;
 
     public event Action<TextCompositionState>? CompositionChanged;
+    public event Action<TextCompositionDiagnostics>? DiagnosticsChanged;
 
     public void Attach(nint windowHandle)
     {
         // DesktopGL の GameWindow.Handle は HWND ではなく SDL_Window* である。
         // SDL_GetWindowWMInfo で Win32 HWND に変換しないと、WM_IME_COMPOSITION は受け取れない。
         var nativeWindowHandle = GetWindowsWindowHandle(windowHandle);
+        _diagnostics = _diagnostics with { IsSdlWindowResolved = nativeWindowHandle != 0 };
+        PublishDiagnostics();
         if (nativeWindowHandle == 0 || nativeWindowHandle == _windowHandle)
+        {
+            if (nativeWindowHandle == 0)
+                GuiOperationLog.App("IME composition unavailable", "SDL_GetWindowWMInfo did not return a Win32 HWND.");
             return;
+        }
 
         Detach();
         _windowHandle = nativeWindowHandle;
         _windowProcedure = WindowProcedure;
         _previousWindowProcedure = SetWindowLongPtr(
-            windowHandle,
+            _windowHandle,
             GwlpWndProc,
             Marshal.GetFunctionPointerForDelegate(_windowProcedure));
 
         if (_previousWindowProcedure == 0)
         {
+            GuiOperationLog.App("IME composition unavailable", $"SetWindowLongPtrW failed; error={Marshal.GetLastWin32Error()}.");
             _windowProcedure = null;
             _windowHandle = 0;
         }
+        else
+        {
+            GuiOperationLog.App("IME composition attached", $"SDL window converted to HWND 0x{_windowHandle:X}.");
+        }
+        _diagnostics = _diagnostics with { IsWindowProcedureAttached = _previousWindowProcedure != 0 };
+        PublishDiagnostics();
     }
 
     public void Dispose()
@@ -59,6 +75,8 @@ public sealed class WindowsTextCompositionService : ITextCompositionService, IDi
         _windowHandle = 0;
         _previousWindowProcedure = 0;
         _windowProcedure = null;
+        _diagnostics = TextCompositionDiagnostics.Empty;
+        PublishDiagnostics();
     }
 
     private nint WindowProcedure(nint windowHandle, uint message, nint wParam, nint lParam)
@@ -68,6 +86,7 @@ public sealed class WindowsTextCompositionService : ITextCompositionService, IDi
             switch (message)
             {
                 case WmImeStartComposition:
+                    GuiOperationLog.App("IME composition started");
                     Publish(TextCompositionState.Empty with { IsActive = true });
                     break;
                 case WmImeComposition:
@@ -105,6 +124,7 @@ public sealed class WindowsTextCompositionService : ITextCompositionService, IDi
                 ? Math.Clamp(ImmGetCompositionString(inputContext, GcsCursorPos, nint.Zero, 0), 0, text.Length)
                 : text.Length;
             Publish(new TextCompositionState(text, caretIndex, true));
+            GuiOperationLog.App("IME composition updated", $"characters={text.Length}; caret={caretIndex}.");
         }
         finally
         {
@@ -127,6 +147,8 @@ public sealed class WindowsTextCompositionService : ITextCompositionService, IDi
     }
 
     private void Publish(TextCompositionState state) => CompositionChanged?.Invoke(state);
+
+    private void PublishDiagnostics() => DiagnosticsChanged?.Invoke(_diagnostics);
 
     private static nint GetWindowsWindowHandle(nint sdlWindowHandle)
     {

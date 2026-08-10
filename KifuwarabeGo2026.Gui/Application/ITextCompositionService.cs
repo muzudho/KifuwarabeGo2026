@@ -8,9 +8,16 @@ using System;
 public interface ITextCompositionService
 {
     event Action<TextCompositionState>? CompositionChanged;
+
+    event Action<TextCompositionDiagnostics>? DiagnosticsChanged;
 }
 
 public readonly record struct TextCompositionState(string Text, int CaretIndex, bool IsActive)
 {
     public static TextCompositionState Empty { get; } = new("", 0, false);
+}
+
+public readonly record struct TextCompositionDiagnostics(bool IsSdlWindowResolved, bool IsWindowProcedureAttached)
+{
+    public static TextCompositionDiagnostics Empty { get; } = new(false, false);
 }
