@@ -24,7 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="GoApps\Play.GtpExtensions\Player\" />
+    <Folder Include="GoStandard\CgosMatch\" />
   </ItemGroup>
 
 </Project>
