@@ -88,6 +88,9 @@ public sealed partial class GoScreenRenderer
     public static bool GetReviewBoardLensFamilyButtonHit(Point point, bool enabled) =>
         enabled && ReviewBoardLensFamilyButtonBounds.Contains(point);
 
+    public static bool GetReviewBoardLensExitButtonHit(Point point, bool enabled) =>
+        enabled && ReviewBoardLensExitButtonBounds.Contains(point);
+
     private void DrawBoardEditingSidePanel(GoAppSession session, Point mousePoint)
     {
         DrawText("BOARD EDIT", new Vector2(1144, 136), new Color(255, 230, 160), 0.72f);
@@ -233,6 +236,7 @@ public sealed partial class GoScreenRenderer
             session.IsRenParseDisplayEnabled,
             session.IsMeasureBoardLens,
             mousePoint);
+        DrawReviewBoardLensExitButton(session.IsRenParseDisplayEnabled, mousePoint);
         DrawReviewBoardLensButton(session.IsRenParseDisplayEnabled, mousePoint);
         DrawMoveNavigationButtons(
             session.ReviewMoveIndex,
@@ -405,6 +409,40 @@ public sealed partial class GoScreenRenderer
     private static Rectangle ReviewBoardLensButtonBounds => new(1724, 858, 60, 60);
 
     private static Rectangle ReviewBoardLensFamilyButtonBounds => new(1652, 858, 60, 60);
+
+    private static Rectangle ReviewBoardLensExitButtonBounds => new(1580, 858, 60, 60);
+
+
+    private void DrawReviewBoardLensExitButton(bool enabled, Point mousePoint)
+    {
+        var bounds = ReviewBoardLensExitButtonBounds;
+        var hovered = enabled && bounds.Contains(mousePoint);
+        var fill = !enabled
+            ? new Color(24, 27, 31)
+            : hovered
+                ? new Color(104, 56, 56)
+                : new Color(67, 39, 43);
+        var border = !enabled
+            ? new Color(43, 50, 56)
+            : hovered
+                ? new Color(255, 196, 186)
+                : new Color(192, 119, 119);
+        FillRect(new Rectangle(bounds.X + 4, bounds.Y + 5, bounds.Width, bounds.Height), new Color(0, 0, 0, enabled ? 95 : 28));
+        FillRect(bounds, fill);
+        DrawRect(bounds, 2, border);
+
+        var textColor = enabled ? new Color(255, 226, 220) : new Color(91, 100, 106);
+        DrawCenteredText("OFF", new Vector2(bounds.Center.X, bounds.Y + 23), textColor, 0.22f);
+        DrawCenteredText("1", new Vector2(bounds.Center.X, bounds.Y + 44), enabled ? new Color(255, 220, 128) : textColor, 0.19f);
+
+        if (hovered)
+        {
+            var tooltip = new Rectangle(bounds.Right - 208, bounds.Y - 38, 208, 32);
+            FillRect(tooltip, new Color(15, 24, 30, 245));
+            DrawRect(tooltip, 1, new Color(255, 180, 170));
+            DrawFittedText("EXIT BOARD LENS  [1]", new Rectangle(tooltip.X + 10, tooltip.Y + 4, tooltip.Width - 20, tooltip.Height - 8), Color.White, 0.25f);
+        }
+    }
 
 
     private void DrawReviewBoardLensFamilyButton(bool enabled, bool selected, Point mousePoint)

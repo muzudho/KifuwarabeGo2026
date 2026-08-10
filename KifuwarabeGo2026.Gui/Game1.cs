@@ -745,7 +745,9 @@ public class Game1 : Game
             GoScreenRenderer.GetReviewBoardLensButtonHit(point);
         var boardLensFamilyButtonHovered = _session.CurrentMode.Kind == GoAppModeKind.Reviewing &&
             GoScreenRenderer.GetReviewBoardLensFamilyButtonHit(point, _session.IsRenParseDisplayEnabled);
-        Mouse.SetCursor(engineErrorLogHovered || boardLensButtonHovered || boardLensFamilyButtonHovered
+        var boardLensExitButtonHovered = _session.CurrentMode.Kind == GoAppModeKind.Reviewing &&
+            GoScreenRenderer.GetReviewBoardLensExitButtonHit(point, _session.IsRenParseDisplayEnabled);
+        Mouse.SetCursor(engineErrorLogHovered || boardLensButtonHovered || boardLensFamilyButtonHovered || boardLensExitButtonHovered
             ? MouseCursor.Hand
             : MouseCursor.Arrow);
         if (_variationSession is null)
@@ -1861,6 +1863,12 @@ public class Game1 : Game
         if (GoScreenRenderer.GetReviewBoardLensFamilyButtonHit(point, _session.IsRenParseDisplayEnabled))
         {
             TrySwitchBoardLensFamily();
+            return true;
+        }
+
+        if (GoScreenRenderer.GetReviewBoardLensExitButtonHit(point, _session.IsRenParseDisplayEnabled))
+        {
+            TryDeactivateBoardLens();
             return true;
         }
 
