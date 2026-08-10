@@ -139,72 +139,15 @@ public sealed partial class GoScreenRenderer
     /// <param name="session"></param>
     /// <param name="start"></param>
     /// <param name="cell"></param>
-    private void DrawRenGraphCells(GoAppSession session, Vector2 start, float cell)
-    {
-        DrawRenGraphCells(session.BoardSize, session.GetStone, start, cell);
-    }
-
     /// <summary>
     /// 盤面の供給元に依存せず［連グラフ・セル］を描画します。
     /// </summary>
-    private void DrawRenGraphCells(int boardSize, Func<int, int, GoStone> getStone, Vector2 start, float cell)
-    {
-        var halfCell = cell * 0.5f;
-        for (var y = 0; y < boardSize; y++)
-        {
-            for (var x = 0; x < boardSize; x++)
-            {
-                var center = BoardPoint(start, cell, x, y);
-                var rect = new Rectangle(
-                    (int)MathF.Round(center.X - halfCell),
-                    (int)MathF.Round(center.Y - halfCell),
-                    (int)MathF.Ceiling(cell),
-                    (int)MathF.Ceiling(cell));
-                FillRect(rect, RenGraphCellColor(getStone(x, y)));
-            }
-        }
-    }
-
-
     /// <summary>
     /// ［連グラフ・エッジ］描画
     /// </summary>
     /// <param name="nodes"></param>
     /// <param name="edges"></param>
     /// <param name="cell"></param>
-    private void DrawRenGraphEdges(RenGraphNode[] nodes, IReadOnlyList<GoRenGraphEdge> edges, float cell)
-    {
-        var thickness = MathHelper.Clamp(cell * 0.08f, 4f, 8f);
-        foreach (var edge in edges)
-        {
-            if (!nodes[edge.From].IsVisible || !nodes[edge.To].IsVisible)
-            {
-                continue;
-            }
-
-            var from = nodes[edge.From];
-            var to = nodes[edge.To];
-            DrawLine(
-                from.Center,
-                to.Center,
-                thickness,
-                RenNetworkEdgeColor(from.Stone, to.Stone));
-        }
-    }
-
-
-    private static Color RenNetworkEdgeColor(GoStone from, GoStone to)
-    {
-        if (from == GoStone.Empty)
-            return RenGraphCellColor(to);
-
-        if (to == GoStone.Empty)
-            return RenGraphCellColor(from);
-
-        return new Color(66, 119, 145, 205);
-    }
-
-
     /// <summary>
     /// ［連グラフ・ノード］描画
     /// </summary>

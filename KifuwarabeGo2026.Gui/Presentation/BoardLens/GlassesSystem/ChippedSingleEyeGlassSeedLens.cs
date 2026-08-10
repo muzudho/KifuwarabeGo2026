@@ -9,7 +9,9 @@ public sealed partial class GoScreenRenderer
     /// <summary>CHIPPED SINGLE EYE GLASS SEED LENS の候補点を描画します。</summary>
     private void DrawGlassesLens(GoAppSession session, Vector2 start, float cell)
     {
+        // エメラルド色
         var emerald = new Color(126, 255, 188, 180);
+
         var size = session.BoardSize;
         // 各段
         for (var y = 0; y < size; y++)
@@ -63,7 +65,14 @@ public sealed partial class GoScreenRenderer
                 if (pattern1 || pattern2 || pattern3)
                 {
                     var center = BoardPoint(start, cell, x, y);
-                    FillRect(new Rectangle((int)(center.X - cell * .28f), (int)(center.Y - cell * .28f), (int)(cell * .56f), (int)(cell * .56f)), emerald);
+
+                    // エメラルドの正方形を描画する。
+                    FillRect(new Rectangle(
+                        (int)(center.X - cell * .28f),
+                        (int)(center.Y - cell * .28f),
+                        (int)(cell * .56f),
+                        (int)(cell * .56f)),
+                        emerald);
                 }
             }
     }

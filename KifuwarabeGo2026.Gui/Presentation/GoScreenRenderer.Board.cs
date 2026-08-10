@@ -52,8 +52,10 @@ public sealed partial class GoScreenRenderer
             cell);
         if (session.RenParseDisplayMode == RenParseDisplayMode.Nobi)
             DrawNobiLens(session, start, cell);
+
         if (session.IsGlassesBoardLens)
             DrawGlassesLens(session, start, cell);
+
         if (!session.IsRenParseDisplayEnabled)
             DrawLastMoveMarker(GetLocalDisplayLastMove(session), start, cell);
 

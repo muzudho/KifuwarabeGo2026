@@ -1,11 +1,28 @@
 namespace KifuwarabeGo2026.Gui.Presentation;
 
+using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Shared.Domain;
 using Microsoft.Xna.Framework;
+using System;
 using System.Collections.Generic;
 
 public sealed partial class GoScreenRenderer
 {
+    private void DrawRenGraphCells(GoAppSession session, Vector2 start, float cell) =>
+        DrawRenGraphCells(session.BoardSize, session.GetStone, start, cell);
+
+    private void DrawRenGraphCells(int boardSize, Func<int, int, GoStone> getStone, Vector2 start, float cell)
+    {
+        var halfCell = cell * 0.5f;
+        for (var y = 0; y < boardSize; y++)
+        for (var x = 0; x < boardSize; x++)
+        {
+            var center = BoardPoint(start, cell, x, y);
+            var rect = new Rectangle((int)MathF.Round(center.X - halfCell), (int)MathF.Round(center.Y - halfCell), (int)MathF.Ceiling(cell), (int)MathF.Ceiling(cell));
+            FillRect(rect, RenGraphCellColor(getStone(x, y)));
+        }
+    }
+
     /// <summary>REN NETWORKのノードを生成します。</summary>
     private RenGraphNode[] CreateRenGraphNodes(GoRenParseResult renParse, Vector2 start, float cell, bool applyEyeJudgement)
     {
@@ -41,5 +58,27 @@ public sealed partial class GoScreenRenderer
             DrawRenNumber(node.Number, node.Center, scale);
             DrawRenGraphEyeMarkers(node, radius, scale);
         }
+    }
+
+    /// <summary>REN NETWORK BASIC LENS の接続線を描画します。</summary>
+    private void DrawRenGraphEdges(RenGraphNode[] nodes, IReadOnlyList<GoRenGraphEdge> edges, float cell)
+    {
+        var thickness = MathHelper.Clamp(cell * 0.08f, 4f, 8f);
+        foreach (var edge in edges)
+        {
+            if (!nodes[edge.From].IsVisible || !nodes[edge.To].IsVisible)
+                continue;
+
+            var from = nodes[edge.From];
+            var to = nodes[edge.To];
+            DrawLine(from.Center, to.Center, thickness, RenNetworkEdgeColor(from.Stone, to.Stone));
+        }
+    }
+
+    private static Color RenNetworkEdgeColor(GoStone from, GoStone to)
+    {
+        if (from == GoStone.Empty) return RenGraphCellColor(to);
+        if (to == GoStone.Empty) return RenGraphCellColor(from);
+        return new Color(66, 119, 145, 205);
     }
 }
