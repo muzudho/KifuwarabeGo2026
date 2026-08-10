@@ -630,14 +630,17 @@ public class Game1 : Game
     protected override void Draw(GameTime gameTime)
     {
         GraphicsDevice.Clear(new Color(11, 13, 18));
+        var backgroundMousePosition = _activeGtpEngineIntegerOption is not null || _activeGtpEngineStringOption is not null
+            ? new Point(-1, -1)
+            : Mouse.GetState().Position;
         if (_session.UseKind is null)
         {
             if (_renderer is not null)
             {
                 if (_isApplicationSettingsOpen)
-                    _renderer.DrawApplicationSettings(Mouse.GetState().Position, _applicationSettingsPage, ApplicationSettings.Current.LogRootDirectory, ApplicationSettings.Current.SgfSaveDirectory, ApplicationSettings.Current.ScreenshotSaveDirectory, ApplicationSettings.FilePath, _gtpEngineCatalog.ListPath, _guiLogFiles, _selectedGuiLogIndex, _applicationSettingsMessage);
+                    _renderer.DrawApplicationSettings(backgroundMousePosition, _applicationSettingsPage, ApplicationSettings.Current.LogRootDirectory, ApplicationSettings.Current.SgfSaveDirectory, ApplicationSettings.Current.ScreenshotSaveDirectory, ApplicationSettings.FilePath, _gtpEngineCatalog.ListPath, _guiLogFiles, _selectedGuiLogIndex, _applicationSettingsMessage);
                 else
-                    TitleRenderer.Draw(_renderer, _session, Mouse.GetState().Position, _titleMenuPage, _appProviderTabIndex, _appProviderSelectionLoadTask is not null);
+                    TitleRenderer.Draw(_renderer, _session, backgroundMousePosition, _titleMenuPage, _appProviderTabIndex, _appProviderSelectionLoadTask is not null);
             }
         }
         else if (_variationSession is not null)
@@ -647,7 +650,7 @@ public class Game1 : Game
                 LocalIntermissionRenderer.Draw(
                     _renderer,
                     _variationSession,
-                    Mouse.GetState().Position,
+                    backgroundMousePosition,
                     CreateLiveBoardPreview());
             }
         }
@@ -657,19 +660,19 @@ public class Game1 : Game
             {
                 if (_session.CurrentMode.Kind == GoAppModeKind.Reviewing)
                 {
-                    LocalIntermissionRenderer.Draw(_renderer, _session, Mouse.GetState().Position);
+                LocalIntermissionRenderer.Draw(_renderer, _session, backgroundMousePosition);
                 }
                 else if (_session.CgosConnectionFlowKind is CgosConnectionFlowKind.Watching or CgosConnectionFlowKind.Result)
                 {
-                    CgosWatchingRenderer.Draw(_renderer, _session, _cgosGameObservation, Mouse.GetState().Position);
+                CgosWatchingRenderer.Draw(_renderer, _session, _cgosGameObservation, backgroundMousePosition);
                 }
                 else if (_session.CgosConnectionFlowKind == CgosConnectionFlowKind.ConnectionStart)
                 {
-                    CgosConnectRenderer.Draw(_renderer, _session, Mouse.GetState().Position);
+                CgosConnectRenderer.Draw(_renderer, _session, backgroundMousePosition);
                 }
                 else
                 {
-                    CgosConnectionTargetRenderer.Draw(_renderer, _session, Mouse.GetState().Position);
+                CgosConnectionTargetRenderer.Draw(_renderer, _session, backgroundMousePosition);
                 }
             }
         }
@@ -680,7 +683,7 @@ public class Game1 : Game
                 LocalIntermissionRenderer.Draw(
                     _renderer,
                     _session,
-                    Mouse.GetState().Position,
+                    backgroundMousePosition,
                     initialPositionConcierge: _playingScene.InitialPositionConciergeView);
             }
         }
@@ -744,7 +747,7 @@ public class Game1 : Game
 
         if (_renderer is not null && _activeGtpEngineIntegerOption is { } integerOption)
             _renderer.DrawIntegerInputDialog(
-                Mouse.GetState().Position,
+                backgroundMousePosition,
                 integerOption.Label,
                 _gtpEngineIntegerOptionTextBox.Text,
                 _gtpEngineIntegerOptionTextBox.CaretIndex,
@@ -760,7 +763,8 @@ public class Game1 : Game
                 _gtpEngineStringOptionTextBox.CaretIndex,
                 _gtpEngineStringOptionTextBox.SelectionStart,
                 _gtpEngineStringOptionTextBox.SelectionLength,
-                _gtpEngineStringInputMessage);
+                _gtpEngineStringInputMessage,
+                showDefaultButton: true);
 
         _renderer?.DrawBreadcrumb(GetScreenBreadcrumb());
 
@@ -774,7 +778,16 @@ public class Game1 : Game
         var mouse = Mouse.GetState();
         var point = VirtualScreen.ToVirtualPoint(GraphicsDevice.Viewport, mouse.Position);
         UpdateTextBoxMouseDrag(mouse, point);
-        UpdateCatalogOrderDrag(mouse, point);
+        var isGtpEngineOptionInputPopupOpen =
+            _activeGtpEngineIntegerOption is not null ||
+            _activeGtpEngineStringOption is not null;
+        if (isGtpEngineOptionInputPopupOpen)
+        {
+            Mouse.SetCursor(MouseCursor.Arrow);
+        }
+        else
+        {
+            UpdateCatalogOrderDrag(mouse, point);
         var engineErrorLogHovered = _session.UseKind == GoAppUseKind.LocalPlay &&
             GoScreenRenderer.GetEngineErrorLogHit(point, _session);
         var boardLensButtonHovered = _session.CurrentMode.Kind == GoAppModeKind.Reviewing &&
@@ -792,6 +805,7 @@ public class Game1 : Game
         {
             UpdateReviewMouseRepeat(mouse, point);
             UpdateReviewPopupSeekDrag(mouse, point);
+        }
         }
 
         if (_previousMouse.LeftButton == ButtonState.Released && mouse.LeftButton == ButtonState.Pressed)
@@ -820,6 +834,8 @@ public class Game1 : Game
                         _renderer.GetTextInputDialogCaretIndex(point, _gtpEngineStringOptionTextBox.Text),
                         IsShiftDown());
                 }
+                else if (GoScreenRenderer.GetTextInputDialogDefaultButtonHit(point))
+                    RestoreGtpEngineStringInputDefault();
                 else if (GoScreenRenderer.GetTextInputDialogOkButtonHit(point))
                     CommitGtpEngineStringInput();
                 else if (GoScreenRenderer.GetTextInputDialogCancelButtonHit(point))
@@ -1494,17 +1510,25 @@ public class Game1 : Game
 
         if (_renderer is null || _previousMouse.LeftButton != ButtonState.Pressed) return;
 
-        if (_activeGtpEngineIntegerOption is not null && _gtpEngineIntegerOptionTextBox.IsMouseSelecting)
+        if (_activeGtpEngineIntegerOption is not null)
         {
-            _gtpEngineIntegerOptionTextBox.UpdateMouseSelection(
-                _renderer.GetIntegerInputDialogCaretIndex(point, _gtpEngineIntegerOptionTextBox.Text));
+            if (_gtpEngineIntegerOptionTextBox.IsMouseSelecting)
+            {
+                _gtpEngineIntegerOptionTextBox.UpdateMouseSelection(
+                    _renderer.GetIntegerInputDialogCaretIndex(point, _gtpEngineIntegerOptionTextBox.Text));
+            }
+            return;
         }
-        else if (_activeGtpEngineStringOption is not null && _gtpEngineStringOptionTextBox.IsMouseSelecting)
+        if (_activeGtpEngineStringOption is not null)
         {
-            _gtpEngineStringOptionTextBox.UpdateMouseSelection(
-                _renderer.GetTextInputDialogCaretIndex(point, _gtpEngineStringOptionTextBox.Text));
+            if (_gtpEngineStringOptionTextBox.IsMouseSelecting)
+            {
+                _gtpEngineStringOptionTextBox.UpdateMouseSelection(
+                    _renderer.GetTextInputDialogCaretIndex(point, _gtpEngineStringOptionTextBox.Text));
+            }
+            return;
         }
-        else if (_cgosConnectionEditTextBox.IsMouseSelecting &&
+        if (_cgosConnectionEditTextBox.IsMouseSelecting &&
             _session.ActiveCgosConnectionEditField is { } connectionField)
         {
             _cgosConnectionEditTextBox.UpdateMouseSelection(
@@ -4416,6 +4440,15 @@ public class Game1 : Game
         if (_session.IsAppProviderGameSettingsDialogOpen)
             QueueAppProviderSettingsEvaluation();
         CancelGtpEngineStringInput();
+    }
+
+    private void RestoreGtpEngineStringInputDefault()
+    {
+        if (_activeGtpEngineStringOption is not { } option)
+            return;
+
+        _gtpEngineStringOptionTextBox.Begin(option.DefaultValue);
+        _gtpEngineStringInputMessage = "DEFAULT VALUE (PRESS OK TO APPLY)";
     }
 
     private void CancelGtpEngineStringInput()

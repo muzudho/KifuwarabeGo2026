@@ -6,16 +6,20 @@ using System;
 
 public sealed partial class GoScreenRenderer
 {
-    private static Rectangle TextInputDialogBounds => new(510, 260, 900, 470);
-    private static Rectangle TextInputTextBounds => new(590, 434, 740, 150);
-    private static Rectangle TextInputCancelButtonBounds => new(990, 644, 150, 54);
-    private static Rectangle TextInputOkButtonBounds => new(1160, 644, 150, 54);
+    private static Rectangle TextInputDialogBounds => new(510, 310, 900, 400);
+    private static Rectangle TextInputTextBounds => new(590, 455, 740, 70);
+    private static Rectangle TextInputDefaultButtonBounds => new(820, 590, 150, 54);
+    private static Rectangle TextInputCancelButtonBounds => new(990, 590, 150, 54);
+    private static Rectangle TextInputOkButtonBounds => new(1160, 590, 150, 54);
 
     public static bool GetTextInputDialogCancelButtonHit(Point point) =>
         TextInputCancelButtonBounds.Contains(point);
 
     public static bool GetTextInputDialogOkButtonHit(Point point) =>
         TextInputOkButtonBounds.Contains(point);
+
+    public static bool GetTextInputDialogDefaultButtonHit(Point point) =>
+        TextInputDefaultButtonBounds.Contains(point);
 
     public static bool IsTextInputDialogTextBoxHit(Point point) =>
         TextInputTextBounds.Contains(point);
@@ -30,7 +34,8 @@ public sealed partial class GoScreenRenderer
         int caretIndex,
         int selectionStart,
         int selectionLength,
-        string message)
+        string message,
+        bool showDefaultButton = false)
     {
         var mousePoint = VirtualScreen.ToVirtualPoint(_graphicsDevice.Viewport, mousePosition);
         _spriteBatch.Begin(
@@ -54,7 +59,9 @@ public sealed partial class GoScreenRenderer
         var caretX = TextInputTextContentBounds.X + (int)(_font.MeasureString(prefix).X * 0.55f);
         FillRect(new Rectangle(Math.Min(caretX, TextInputTextBounds.Right - 24), TextInputTextBounds.Y + 14, 2, TextInputTextBounds.Height - 28), new Color(147, 244, 200));
 
-        DrawFittedText(message, new Rectangle(TextInputDialogBounds.X + 80, 604, TextInputDialogBounds.Width - 160, 32), new Color(180, 195, 195), 0.32f);
+        DrawFittedText(message, new Rectangle(TextInputDialogBounds.X + 80, 544, TextInputDialogBounds.Width - 160, 32), new Color(180, 195, 195), 0.32f);
+        if (showDefaultButton)
+            DrawCommandButton(TextInputDefaultButtonBounds, "DEFAULT", false, mousePoint, scale: 0.30f);
         DrawCommandButton(TextInputCancelButtonBounds, "CANCEL", false, mousePoint, scale: 0.34f);
         DrawCommandButton(TextInputOkButtonBounds, "OK", false, mousePoint, scale: 0.42f);
         _spriteBatch.End();

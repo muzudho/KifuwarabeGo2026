@@ -103,7 +103,7 @@ public sealed partial class GoScreenRenderer
             var index = start + slot;
             if (index >= session.ActiveGtpEngineGuiOptionSpecs.Count) break;
             var option = session.ActiveGtpEngineGuiOptionSpecs[index];
-            if (option.Type != "button" && GtpEngineGuiOptionDefaultButtonBounds(slot).Contains(point)) return (index, 3);
+            if (option.Type is not ("button" or "string") && GtpEngineGuiOptionDefaultButtonBounds(slot).Contains(point)) return (index, 3);
             var primaryBounds = option.Type == "spin" ? GtpEngineGuiOptionPrimaryButtonBounds(slot) : GtpEngineGuiOptionWideButtonBounds(slot);
             if (primaryBounds.Contains(point)) return (index, 0);
             if (GtpEngineGuiOptionSecondaryButtonBounds(slot).Contains(point)) return (index, 1);
@@ -408,7 +408,7 @@ public sealed partial class GoScreenRenderer
         DrawDynamicOptionText(string.IsNullOrEmpty(rowValue) ? "<empty>" : rowValue, valueBounds, Color.White, 0.34f);
         if (option.Type == "spin" && option.Min is { } min && option.Max is { } max)
             DrawFittedText($"{min} .. {max}", GtpEngineGuiOptionRangeBounds(slot), new Color(118, 139, 143), 0.24f);
-        if (option.Type != "button")
+        if (option.Type is not ("button" or "string"))
             DrawCommandButton(GtpEngineGuiOptionDefaultButtonBounds(slot), "DEFAULT", false, mousePoint, scale: 0.3f);
         switch (option.Type)
         {
