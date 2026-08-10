@@ -318,11 +318,11 @@ public sealed class GoAppSession
     public int NextMoveNumber => PlayedMoveCount + 1;
 
     private const int RenBoardLensCount = 4;
-    private const int MeasureBoardLensCount = 6;
+    private const int MeasureBoardLensCount = 7;
     // Keep the shared step within the least common multiple of both families.
     // This preserves each family's modulo position when switching families and
     // prevents the counter from ever growing towards an integer overflow.
-    private const int BoardLensStepCycleLength = 12;
+    private const int BoardLensStepCycleLength = 28;
 
     private int _boardLensStep;
     private bool _measureBoardLensFamily;
@@ -337,7 +337,8 @@ public sealed class GoAppSession
         RenParseDisplayMode.BoundaryEmptyCount or
         RenParseDisplayMode.BoundaryOpponentCount or
         RenParseDisplayMode.AdjacentEmptyArea or
-        RenParseDisplayMode.AdjacentOpponentArea;
+        RenParseDisplayMode.AdjacentOpponentArea or
+        RenParseDisplayMode.Nobi;
 
     public string BoardLensDisplayName => RenParseDisplayMode switch
     {
@@ -346,12 +347,13 @@ public sealed class GoAppSession
         RenParseDisplayMode.Graph => "REN RECTANGLE LENS  2/4",
         RenParseDisplayMode.GraphStep2 => "REN NETWORK LENS - BASIC  3/4",
         RenParseDisplayMode.Eye => "REN NETWORK LENS - EYE MODE  4/4",
-        RenParseDisplayMode.RenArea => "REN AREA LENS  1/6",
-        RenParseDisplayMode.BoundaryCount => "BOUNDARY COUNT LENS  2/6",
-        RenParseDisplayMode.BoundaryEmptyCount => "BOUNDARY EMPTY COUNT LENS  3/6",
-        RenParseDisplayMode.BoundaryOpponentCount => "BOUNDARY OPPONENT COUNT LENS  4/6",
-        RenParseDisplayMode.AdjacentEmptyArea => "ADJACENT EMPTY AREA LENS  5/6",
-        RenParseDisplayMode.AdjacentOpponentArea => "ADJACENT OPPONENT AREA LENS  6/6",
+        RenParseDisplayMode.RenArea => "REN AREA LENS  1/7",
+        RenParseDisplayMode.BoundaryCount => "BOUNDARY COUNT LENS  2/7",
+        RenParseDisplayMode.BoundaryEmptyCount => "BOUNDARY EMPTY COUNT LENS  3/7",
+        RenParseDisplayMode.BoundaryOpponentCount => "BOUNDARY OPPONENT COUNT LENS  4/7",
+        RenParseDisplayMode.AdjacentEmptyArea => "ADJACENT EMPTY AREA LENS  5/7",
+        RenParseDisplayMode.AdjacentOpponentArea => "ADJACENT OPPONENT AREA LENS  6/7",
+        RenParseDisplayMode.Nobi => "NOBI LENS  7/7",
         _ => RenParseDisplayMode.ToString().ToUpperInvariant(),
     };
 
@@ -363,7 +365,8 @@ public sealed class GoAppSession
         RenParseDisplayMode.BoundaryEmptyCount or
         RenParseDisplayMode.BoundaryOpponentCount or
         RenParseDisplayMode.AdjacentEmptyArea or
-        RenParseDisplayMode.AdjacentOpponentArea => "[L] NEXT    [K] REN ANALYSIS    [1] EXIT",
+        RenParseDisplayMode.AdjacentOpponentArea or
+        RenParseDisplayMode.Nobi => "[L] NEXT    [K] REN ANALYSIS    [1] EXIT",
         _ => "[L] NEXT    [K] MEASURE    [1] EXIT",
     };
 
@@ -1215,7 +1218,8 @@ public sealed class GoAppSession
                 2 => RenParseDisplayMode.BoundaryEmptyCount,
                 3 => RenParseDisplayMode.BoundaryOpponentCount,
                 4 => RenParseDisplayMode.AdjacentEmptyArea,
-                _ => RenParseDisplayMode.AdjacentOpponentArea,
+                5 => RenParseDisplayMode.AdjacentOpponentArea,
+                _ => RenParseDisplayMode.Nobi,
             }
             : (_boardLensStep % RenBoardLensCount) switch
             {
@@ -2987,6 +2991,16 @@ public sealed class GoAppSession
         var trialBoard = _board.Clone();
         return trialBoard.TryPlaceStone(x, y, CurrentTurn, KoPoint, out _, out _) &&
             _positionHashes.Contains(trialBoard.CurrentHash);
+    }
+
+    public bool IsNobiCandidate(int x, int y)
+    {
+        if (_board.GetStone(x, y) != GoStone.Empty ||
+            (KoPoint is { } ko && ko.X == x && ko.Y == y) ||
+            IsSuperKoPoint(x, y))
+            return false;
+
+        return !_board.IsEyeFor(x, y, CurrentTurn);
     }
 
     public IEnumerable<GoPoint> EnumerateSuperKoPoints()

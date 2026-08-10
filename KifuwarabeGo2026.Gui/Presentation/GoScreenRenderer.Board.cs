@@ -50,6 +50,8 @@ public sealed partial class GoScreenRenderer
             () => DrawPlacedStones(session, start, cell),
             start,
             cell);
+        if (session.RenParseDisplayMode == RenParseDisplayMode.Nobi)
+            DrawNobiLens(session, start, cell);
         if (!session.IsRenParseDisplayEnabled)
             DrawLastMoveMarker(GetLocalDisplayLastMove(session), start, cell);
 

@@ -58,14 +58,21 @@ internal static class PonnukiMovePrioritizer
 
 internal readonly record struct PonnukiMoveCandidate(GoPoint Move, PonnukiMovePriority Priority);
 
+/// <summary>
+/// 優先順位を表す構造体です。捕獲石数と接触優先度の2つの要素で比較されます。
+/// </summary>
+/// <param name="CapturedStones"></param>
+/// <param name="ContactPriority"></param>
 internal readonly record struct PonnukiMovePriority(int CapturedStones, int ContactPriority)
     : IComparable<PonnukiMovePriority>
 {
     public int CompareTo(PonnukiMovePriority other)
     {
+        // （１）取った石の数の差
         var captureComparison = CapturedStones.CompareTo(other.CapturedStones);
         return captureComparison != 0
             ? captureComparison
+            // （２）接触優先度の差
             : ContactPriority.CompareTo(other.ContactPriority);
     }
 }
