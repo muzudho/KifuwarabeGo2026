@@ -105,15 +105,6 @@ public sealed partial class GoScreenRenderer
     /// <param name="session"></param>
     /// <param name="start"></param>
     /// <param name="cell"></param>
-    private void DrawRenGraphStep1Overlay(GoAppSession session, Vector2 start, float cell)
-    {
-        var renParse = session.ParseRens();
-        DrawRenGraphCells(session, start, cell);
-        DrawRenBoundaries(renParse, start, cell);
-        DrawRenRepresentativeNumbers(renParse, start, cell);
-    }
-
-
     /// <summary>
     /// ［連グラフ・オーバレイ］描画
     /// </summary>
@@ -121,17 +112,6 @@ public sealed partial class GoScreenRenderer
     /// <param name="start"></param>
     /// <param name="cell"></param>
     /// <param name="applyEyeJudgement"></param>
-
-    private void DrawRenGraphOverlay(GoAppSession session, Vector2 start, float cell, bool applyEyeJudgement)
-    {
-        var renParse = session.ParseRens();
-        var nodes = CreateRenGraphNodes(renParse, start, cell, applyEyeJudgement);
-
-        FillRect(BoardBounds, new Color(56, 145, 129));
-        DrawRenGraphEdges(nodes, renParse.Edges, cell);
-        DrawRenGraphNodes(nodes, cell);
-    }
-
 
     /// <summary>
     /// ［連グラフ・セル］描画

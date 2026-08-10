@@ -11,6 +11,15 @@ public sealed partial class GoScreenRenderer
     private void DrawRenGraphCells(GoAppSession session, Vector2 start, float cell) =>
         DrawRenGraphCells(session.BoardSize, session.GetStone, start, cell);
 
+    private void DrawRenGraphOverlay(GoAppSession session, Vector2 start, float cell, bool applyEyeJudgement)
+    {
+        var renParse = session.ParseRens();
+        var nodes = CreateRenGraphNodes(renParse, start, cell, applyEyeJudgement);
+        FillRect(BoardBounds, new Color(56, 145, 129));
+        DrawRenGraphEdges(nodes, renParse.Edges, cell);
+        DrawRenGraphNodes(nodes, cell);
+    }
+
     private void DrawRenGraphCells(int boardSize, Func<int, int, GoStone> getStone, Vector2 start, float cell)
     {
         var halfCell = cell * 0.5f;

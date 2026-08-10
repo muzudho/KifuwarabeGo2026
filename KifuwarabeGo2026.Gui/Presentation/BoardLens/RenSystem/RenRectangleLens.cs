@@ -1,11 +1,20 @@
 namespace KifuwarabeGo2026.Gui.Presentation;
 
+using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Shared.Domain;
 using Microsoft.Xna.Framework;
 using System;
 
 public sealed partial class GoScreenRenderer
 {
+    private void DrawRenGraphStep1Overlay(GoAppSession session, Vector2 start, float cell)
+    {
+        var renParse = session.ParseRens();
+        DrawRenGraphCells(session, start, cell);
+        DrawRenBoundaries(renParse, start, cell);
+        DrawRenRepresentativeNumbers(renParse, start, cell);
+    }
+
     /// <summary>REN RECTANGLE LENS の代表連番号描画です。</summary>
     private void DrawRenRepresentativeNumbers(GoRenParseResult renParse, Vector2 start, float cell)
     {
