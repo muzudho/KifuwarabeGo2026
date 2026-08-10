@@ -357,26 +357,6 @@ public sealed partial class GoScreenRenderer
     /// <param name="renParse"></param>
     /// <param name="start"></param>
     /// <param name="cell"></param>
-    private void DrawRenRepresentativeNumbers(GoRenParseResult renParse, Vector2 start, float cell)
-    {
-        var scale = RenNumberScale(cell);
-        var drawn = new bool[renParse.Count + 1];
-        for (var y = 0; y < renParse.Size; y++)
-        {
-            for (var x = 0; x < renParse.Size; x++)
-            {
-                var renNumber = renParse.GetRenNumber(x, y);
-                if (drawn[renNumber])
-                {
-                    continue;
-                }
-
-                drawn[renNumber] = true;
-                var center = BoardPoint(start, cell, x, y);
-                DrawRenNumber(renNumber, center, scale);
-            }
-        }
-    }
 
 
     private void DrawRenAreaNumbers(GoRenParseResult renParse, Vector2 start, float cell)
