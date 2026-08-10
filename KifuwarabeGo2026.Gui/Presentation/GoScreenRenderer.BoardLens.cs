@@ -210,25 +210,6 @@ public sealed partial class GoScreenRenderer
     /// </summary>
     /// <param name="nodes"></param>
     /// <param name="cell"></param>
-    private void DrawRenGraphNodes(RenGraphNode[] nodes, float cell)
-    {
-        var radius = MathHelper.Clamp(cell * 0.45f, 22f, 46f);
-        var scale = RenNumberScale(cell);
-        for (var renNumber = 1; renNumber < nodes.Length; renNumber++)
-        {
-            var node = nodes[renNumber];
-            if (!node.IsVisible)
-            {
-                continue;
-            }
-
-            DrawCircle(node.Center, radius, RenGraphNodeColor(node.Stone));
-            DrawRenNumber(node.Number, node.Center, scale);
-            DrawRenGraphEyeMarkers(node, radius, scale);
-        }
-    }
-
-
     /// <summary>
     /// ［連グラフ・目マーカー］描画
     /// </summary>

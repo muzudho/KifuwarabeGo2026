@@ -23,8 +23,12 @@ public sealed partial class GoScreenRenderer
                 bool Z(int px, int py) => px >= 0 && px < size && py >= 0 && py < size &&
                     (session.GetDisplayStone(px, py) == GoStone.Empty || session.GetDisplayStone(px, py) == session.CurrentTurn);
 
+                // (1)
+                // zzz
+                // z.z
+                //  zz
                 var pattern1 =
-                    Z(x - 1, y - 1) &&  // 左下
+                    //Z(x - 1, y - 1) &&  // 左下
                     Z(x, y - 1) &&      // 下
                     Z(x + 1, y - 1) &&  // 右下
                     Z(x - 1, y) &&      // 左
@@ -32,8 +36,30 @@ public sealed partial class GoScreenRenderer
                     Z(x - 1, y + 1) &&  // 左上
                     Z(x, y + 1) &&      // 上
                     Z(x + 1, y + 1);    // 右上
-                var pattern2 = y == size - 1 && Z(x - 1, y - 1) && Z(x, y - 1) && Z(x + 1, y - 1) && Z(x - 1, y) && Z(x + 1, y);
-                var pattern3 = x == 0 && y == size - 2 && Z(x, y - 1) && Z(x + 1, y - 1) && Z(x + 1, y);
+
+                // (2)
+                // zzz
+                // z.z
+                // ---
+                var pattern2 =
+                    y == size - 1 &&
+                    Z(x - 1, y - 1) &&
+                    Z(x, y - 1) &&
+                    Z(x + 1, y - 1) &&
+                    Z(x - 1, y) &&
+                    Z(x + 1, y);
+
+                // (3)
+                // | zz
+                // |.z
+                // + --
+                var pattern3 =
+                    x == 0 &&
+                    y == size - 2 &&
+                    Z(x, y - 1) &&
+                    Z(x + 1, y - 1) &&
+                    Z(x + 1, y);
+
                 if (pattern1 || pattern2 || pattern3)
                 {
                     var center = BoardPoint(start, cell, x, y);

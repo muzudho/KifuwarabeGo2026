@@ -25,4 +25,21 @@ public sealed partial class GoScreenRenderer
         }
         return nodes;
     }
+
+    /// <summary>REN NETWORK BASIC LENS のノードを描画します。</summary>
+    private void DrawRenGraphNodes(RenGraphNode[] nodes, float cell)
+    {
+        var radius = MathHelper.Clamp(cell * 0.45f, 22f, 46f);
+        var scale = RenNumberScale(cell);
+        for (var renNumber = 1; renNumber < nodes.Length; renNumber++)
+        {
+            var node = nodes[renNumber];
+            if (!node.IsVisible)
+                continue;
+
+            DrawCircle(node.Center, radius, RenGraphNodeColor(node.Stone));
+            DrawRenNumber(node.Number, node.Center, scale);
+            DrawRenGraphEyeMarkers(node, radius, scale);
+        }
+    }
 }
