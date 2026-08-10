@@ -4696,6 +4696,8 @@ public class Game1 : Game
             return;
 
         GuiOperationLog.App("Screen changed", $"from={_lastScreenState} to={current}");
+        // Board Lens の案内は操作した画面だけで表示し、画面遷移先へ持ち越さない。
+        _boardLensBannerStartedAt = double.NegativeInfinity;
         _lastScreenState = current;
     }
 
