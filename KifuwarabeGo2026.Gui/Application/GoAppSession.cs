@@ -56,7 +56,7 @@ public sealed class GoAppSession
         CurrentMode = _modes[GoAppModeKind.Resting];
         _board = new GoBoard(BoardSize);
         _gtpEngineProfiles.Add(new GtpEngineProfile());
-        _gtpEngineAppCompatibilities.Add(new(GtpEngineAppCompatibilityKind.LegacyPlay, "LEGACY GO PLAY"));
+        _gtpEngineAppCompatibilities.Add(new(GtpEngineAppCompatibilityKind.LegacyPlay, "LEGACY FORMAL APP"));
         ResetPositionHistory();
     }
 
@@ -2088,7 +2088,7 @@ public sealed class GoAppSession
         SelectedCgosWhiteGtpEngineIndex = 0;
         _gtpEngineAppCompatibilities.Clear();
         _gtpEngineAppCompatibilities.AddRange(_gtpEngineProfiles.Select(
-            _ => new GtpEngineAppCompatibility(GtpEngineAppCompatibilityKind.LegacyPlay, "LEGACY GO PLAY")));
+            _ => new GtpEngineAppCompatibility(GtpEngineAppCompatibilityKind.LegacyPlay, "LEGACY FORMAL APP")));
         SetCgosPlayerCredentials(GoStone.Black, _gtpEngineProfiles[0].DefaultCgosLoginName, _gtpEngineProfiles[0].DefaultCgosPlainTextPassword);
         SetCgosPlayerCredentials(GoStone.White, _gtpEngineProfiles[0].DefaultCgosLoginName, _gtpEngineProfiles[0].DefaultCgosPlainTextPassword);
     }

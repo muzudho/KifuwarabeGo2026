@@ -40,7 +40,7 @@ public static class GtpEngineAppCompatibilityProbe
             {
                 return appId.Equals("play", StringComparison.Ordinal) &&
                     role.Equals("player", StringComparison.Ordinal)
-                    ? new(GtpEngineAppCompatibilityKind.LegacyPlay, "LEGACY GO PLAY")
+                    ? new(GtpEngineAppCompatibilityKind.LegacyPlay, "LEGACY FORMAL APP")
                     : new(GtpEngineAppCompatibilityKind.Unsupported, $"{appId} NOT SUPPORTED");
             }
 

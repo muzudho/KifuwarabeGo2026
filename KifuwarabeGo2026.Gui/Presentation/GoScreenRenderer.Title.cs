@@ -30,8 +30,8 @@ public sealed partial class GoScreenRenderer
         switch (page)
         {
             case TitleMenuPage.Home:
-                DrawText("GO PLAY", new Vector2(500, 338), new Color(99, 223, 185), 0.58f);
-                DrawText("GO APPS", new Vector2(950, 338), new Color(255, 190, 92), 0.58f);
+                DrawText("FORMAL APPS", new Vector2(500, 338), new Color(99, 223, 185), 0.48f);
+                DrawText("CASUAL APPS", new Vector2(950, 338), new Color(255, 190, 92), 0.48f);
                 DrawHomeServiceChoice(TitleHomeLocalButtonBounds, "Local", "PLAY / REVIEW", new Color(99, 223, 185), mousePoint);
                 DrawHomeServiceChoice(TitleHomeCgosButtonBounds, "Connect To CGOS", "WATCH / CONNECT", new Color(99, 223, 185), mousePoint);
                 DrawAppChoice(TitleAppBounds(0), "ポン抜きゲーム", "CAPTURE GAME", mousePoint);
@@ -122,7 +122,7 @@ public sealed partial class GoScreenRenderer
             TitleMenuPage.Tsumego => ("詰碁", "LIFE & DEATH"),
             _ => ("次の一手問題", "NEXT MOVE"),
         };
-        DrawTitleBreadcrumb($"HOME  >  GO APPS  >  {caption}", panel);
+        DrawTitleBreadcrumb($"HOME  >  CASUAL APPS  >  {caption}", panel);
         DrawDynamicOptionText(title, new Rectangle(panel.X + 150, panel.Y + 280, panel.Width - 300, 92), Color.White, 0.84f);
         DrawFittedText("COMING SOON", new Rectangle(panel.X + 250, panel.Y + 430, panel.Width - 500, 70), new Color(99, 223, 185), 0.72f);
         DrawDynamicOptionText("問題集と問題一覧は、ここからディレクトリーのように開いていく予定です。", new Rectangle(panel.X + 150, panel.Y + 530, panel.Width - 300, 54), new Color(180, 195, 195), 0.38f);
@@ -131,7 +131,7 @@ public sealed partial class GoScreenRenderer
 
     private void DrawPonnukiProviderSelection(GoAppSession session, Rectangle panel, Point mousePoint, int appProviderTabIndex, bool isAppProviderLoading)
     {
-        DrawTitleBreadcrumb("HOME  >  GO APPS  >  PONNUKI", panel);
+        DrawTitleBreadcrumb("HOME  >  CASUAL APPS  >  PONNUKI", panel);
         DrawDynamicOptionText("ポン抜きゲーム", new Rectangle(500, 350, 500, 54), Color.White, 0.62f);
         DrawText("APP PROVIDER ENGINE", new Vector2(530, 416), new Color(255, 190, 92), 0.42f);
         DrawDynamicOptionText("アプリ提供エンジン", new Rectangle(950, 414, 330, 34), new Color(210, 214, 207), 0.32f);

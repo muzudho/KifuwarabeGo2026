@@ -5,7 +5,7 @@ using System.Security.Cryptography;
 using System.Text.Json;
 
 /// <summary>
-/// ポン抜き Go App の局面生成、進行、および終局判定を担当します。
+/// Casual App であるポン抜きの局面生成、進行、および終局判定を担当します。
 /// </summary>
 internal sealed partial class GtpEngine
 {

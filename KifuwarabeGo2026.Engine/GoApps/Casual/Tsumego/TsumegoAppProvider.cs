@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Engine.GoApps.Tsumego;
+namespace KifuwarabeGo2026.Engine.GoApps.Casual.Tsumego;
 
 using KifuwarabeGo2026.Engine.GoApps;
 

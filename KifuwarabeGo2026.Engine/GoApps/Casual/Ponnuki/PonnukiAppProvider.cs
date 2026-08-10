@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Engine.GoApps.Ponnuki;
+namespace KifuwarabeGo2026.Engine.GoApps.Casual.Ponnuki;
 
 using KifuwarabeGo2026.Engine.GoApps;
 

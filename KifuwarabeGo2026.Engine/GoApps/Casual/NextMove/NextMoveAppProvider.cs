@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Engine.GoApps.NextMove;
+namespace KifuwarabeGo2026.Engine.GoApps.Casual.NextMove;
 
 using KifuwarabeGo2026.Engine.GoApps;
 

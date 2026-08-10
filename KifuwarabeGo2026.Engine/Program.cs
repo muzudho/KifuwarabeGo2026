@@ -1,7 +1,7 @@
 namespace KifuwarabeGo2026.Engine;
 
 using KifuwarabeGo2026.Shared.Domain;
-using KifuwarabeGo2026.Engine.GoApps.Ponnuki;
+using KifuwarabeGo2026.Engine.GoApps.Casual.Ponnuki;
 using KifuwarabeGo2026.Engine.Shared;
 using System.Reflection;
 using System.Text.Json;

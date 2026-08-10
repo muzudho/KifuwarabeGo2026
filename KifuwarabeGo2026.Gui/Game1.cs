@@ -1679,7 +1679,7 @@ public class Game1 : Game
                     1 => TitleMenuPage.Tsumego,
                     _ => TitleMenuPage.NextMove,
                 };
-                GuiOperationLog.User("Opened Go Apps entry", $"page={_titleMenuPage}");
+                GuiOperationLog.User("Opened Casual Apps entry", $"page={_titleMenuPage}");
                 return true;
             }
         }
@@ -4675,9 +4675,9 @@ public class Game1 : Game
             return _titleMenuPage switch
             {
                 TitleMenuPage.Home => "TITLE",
-                TitleMenuPage.CaptureGame => "TITLE  >  APPS",
-                TitleMenuPage.Tsumego => "TITLE  >  APPS  >  TSUMEGO",
-                TitleMenuPage.NextMove => "TITLE  >  APPS  >  NEXT MOVE",
+                TitleMenuPage.CaptureGame => "TITLE  >  CASUAL APPS  >  PONNUKI",
+                TitleMenuPage.Tsumego => "TITLE  >  CASUAL APPS  >  TSUMEGO",
+                TitleMenuPage.NextMove => "TITLE  >  CASUAL APPS  >  NEXT MOVE",
                 _ => "TITLE",
             };
         }
@@ -4685,9 +4685,9 @@ public class Game1 : Game
         var breadcrumb = _session.UseKind switch
         {
             GoAppUseKind.LocalPlay => GetLocalPlayBreadcrumb(),
-            GoAppUseKind.LocalApps => "APPS  >  LOCAL APPS",
+            GoAppUseKind.LocalApps => "CASUAL APPS  >  LOCAL APPS",
             GoAppUseKind.CgosClient => GetCgosBreadcrumb(),
-            _ => "APPS",
+            _ => "FORMAL APPS",
         };
 
         if (_session.IsReviewChartPopupOpen)
@@ -4709,28 +4709,28 @@ public class Game1 : Game
     private string GetLocalPlayBreadcrumb()
     {
         if (_playingScene.IsInitialPositionConciergeVisible)
-            return "APPS  >  LOCAL PLAY  >  PLAY  >  INITIAL POSITION";
+            return "FORMAL APPS  >  LOCAL PLAY  >  PLAY  >  INITIAL POSITION";
 
         return _session.CurrentMode.Kind switch
         {
-            GoAppModeKind.Resting => "APPS  >  LOCAL PLAY  >  INTERVAL",
-            GoAppModeKind.Playing => "APPS  >  LOCAL PLAY  >  PLAY",
-            GoAppModeKind.GameOver => "APPS  >  LOCAL PLAY  >  PLAY  >  RESULT",
-            GoAppModeKind.BoardEditing => "APPS  >  LOCAL PLAY  >  PLAY  >  EDIT BOARD",
-            GoAppModeKind.VariationEditing => "APPS  >  LOCAL PLAY  >  PLAY  >  EDIT BOARD",
-            GoAppModeKind.Reviewing => "APPS  >  LOCAL PLAY  >  PLAY  >  REVIEW",
-            _ => "APPS  >  LOCAL PLAY",
+            GoAppModeKind.Resting => "FORMAL APPS  >  LOCAL PLAY  >  INTERVAL",
+            GoAppModeKind.Playing => "FORMAL APPS  >  LOCAL PLAY  >  PLAY",
+            GoAppModeKind.GameOver => "FORMAL APPS  >  LOCAL PLAY  >  PLAY  >  RESULT",
+            GoAppModeKind.BoardEditing => "FORMAL APPS  >  LOCAL PLAY  >  PLAY  >  EDIT BOARD",
+            GoAppModeKind.VariationEditing => "FORMAL APPS  >  LOCAL PLAY  >  PLAY  >  EDIT BOARD",
+            GoAppModeKind.Reviewing => "FORMAL APPS  >  LOCAL PLAY  >  PLAY  >  REVIEW",
+            _ => "FORMAL APPS  >  LOCAL PLAY",
         };
     }
 
     private string GetCgosBreadcrumb() =>
         _session.CgosConnectionFlowKind switch
         {
-            CgosConnectionFlowKind.ProfileSelection => "APPS  >  CGOS  >  PROFILE SELECT",
-            CgosConnectionFlowKind.ConnectionStart => "APPS  >  CGOS  >  CONNECT",
-            CgosConnectionFlowKind.Watching => "APPS  >  CGOS  >  WATCH",
-            CgosConnectionFlowKind.Result => "APPS  >  CGOS  >  WATCH  >  RESULT",
-            _ => "APPS  >  CGOS",
+            CgosConnectionFlowKind.ProfileSelection => "FORMAL APPS  >  CGOS  >  PROFILE SELECT",
+            CgosConnectionFlowKind.ConnectionStart => "FORMAL APPS  >  CGOS  >  CONNECT",
+            CgosConnectionFlowKind.Watching => "FORMAL APPS  >  CGOS  >  WATCH",
+            CgosConnectionFlowKind.Result => "FORMAL APPS  >  CGOS  >  WATCH  >  RESULT",
+            _ => "FORMAL APPS  >  CGOS",
         };
 
     protected override void Dispose(bool disposing)
