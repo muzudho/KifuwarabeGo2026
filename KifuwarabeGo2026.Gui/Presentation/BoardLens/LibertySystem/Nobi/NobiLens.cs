@@ -16,6 +16,7 @@ public sealed partial class GoScreenRenderer
         var legThickness = MathHelper.Clamp(cell * 0.045f, 2f, 5f);
         var markerRadius = MathHelper.Clamp(cell * 0.13f, 5f, 11f);
 
+        // 手番の各自連について、上下左右に接するノビ候補を調べます。
         for (var renNumber = 1; renNumber <= renParse.Count; renNumber++)
         {
             var ren = renParse.GetRen(renNumber);
@@ -31,6 +32,7 @@ public sealed partial class GoScreenRenderer
                 AddCandidate(point, point.X, point.Y + 1);
             }
 
+            // 連から候補点へ足を伸ばし、同じ候補点は丸印を一つだけ描きます。
             var markers = new HashSet<GoPoint>();
             foreach (var contact in contacts)
             {
