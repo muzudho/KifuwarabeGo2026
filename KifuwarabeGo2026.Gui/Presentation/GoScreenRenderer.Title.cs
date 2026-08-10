@@ -139,7 +139,7 @@ public sealed partial class GoScreenRenderer
         var bounds = TitleAppProviderEngineDisplayBounds;
         FillRect(bounds, new Color(24, 31, 37));
         DrawRect(bounds, 2, new Color(88, 102, 112));
-        DrawFittedText(session.SelectedAppProviderEngineDisplayName, new Rectangle(bounds.X + 18, bounds.Y + 13, 560, 30), Color.White, 0.34f);
+        DrawDynamicOptionText(session.SelectedAppProviderEngineDisplayName, new Rectangle(bounds.X + 18, bounds.Y + 13, 560, 30), Color.White, 0.34f);
         DrawFittedText("SELECTED ENGINE", new Rectangle(bounds.Right - 190, bounds.Y + 14, 164, 28), new Color(180, 195, 195), 0.24f);
         DrawCommandButton(
             TitleAppProviderEngineSelectButtonBounds,
