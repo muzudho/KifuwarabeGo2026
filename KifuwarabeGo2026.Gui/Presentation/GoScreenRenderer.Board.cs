@@ -369,6 +369,7 @@ public sealed partial class GoScreenRenderer
     /// <param name="y"></param>
     /// <returns></returns>
 
+    // 内部・画面描画座標は左上原点です。人向け／外部の囲碁座標は、入出力境界で左下原点へ変換します。
     private static Vector2 BoardPoint(Vector2 start, float cell, int x, int y) => new(start.X + cell * x, start.Y + cell * y);
 
 
