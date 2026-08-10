@@ -86,19 +86,6 @@ public sealed partial class GoScreenRenderer
     /// <param name="session"></param>
     /// <param name="start"></param>
     /// <param name="cell"></param>
-    private void DrawRenParseOverlay(GoAppSession session, Vector2 start, float cell)
-    {
-        if (session.RenParseDisplayMode != RenParseDisplayMode.RenArea)
-        {
-            return;
-        }
-
-        var renParse = session.ParseRens();
-        DrawRenBoundaries(renParse, start, cell);
-        DrawRenNumbers(renParse, start, cell);
-    }
-
-
     /// <summary>
     /// ［連グラフ・ステップ１・オーバレイ］描画
     /// </summary>
@@ -350,26 +337,5 @@ public sealed partial class GoScreenRenderer
     /// <summary>
     /// ［連グラフノード］
     /// </summary>
-    private sealed class RenGraphNode
-    {
-        public RenGraphNode(int number, GoStone stone, Vector2 center, bool isVisible, List<int> eyeNumbers)
-        {
-            Number = number;
-            Stone = stone;
-            Center = center;
-            IsVisible = isVisible;
-            EyeNumbers = eyeNumbers;
-        }
-
-        public int Number { get; }
-
-        public GoStone Stone { get; }
-
-        public Vector2 Center { get; }
-
-        public bool IsVisible { get; set; }
-
-        public List<int> EyeNumbers { get; }
-    }
 }
 

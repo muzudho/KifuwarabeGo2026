@@ -90,4 +90,22 @@ public sealed partial class GoScreenRenderer
         if (to == GoStone.Empty) return RenGraphCellColor(from);
         return new Color(66, 119, 145, 205);
     }
+
+    private sealed class RenGraphNode
+    {
+        public RenGraphNode(int number, GoStone stone, Vector2 center, bool isVisible, List<int> eyeNumbers)
+        {
+            Number = number;
+            Stone = stone;
+            Center = center;
+            IsVisible = isVisible;
+            EyeNumbers = eyeNumbers;
+        }
+
+        public int Number { get; }
+        public GoStone Stone { get; }
+        public Vector2 Center { get; }
+        public bool IsVisible { get; set; }
+        public List<int> EyeNumbers { get; }
+    }
 }

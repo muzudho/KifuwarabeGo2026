@@ -62,6 +62,7 @@ public sealed partial class GoScreenRenderer
                     Z(x + 1, y - 1) &&
                     Z(x + 1, y);
 
+                // ［欠けている片眼鏡の種］の候補点をハイライトします。
                 if (pattern1 || pattern2 || pattern3)
                 {
                     var center = BoardPoint(start, cell, x, y);
