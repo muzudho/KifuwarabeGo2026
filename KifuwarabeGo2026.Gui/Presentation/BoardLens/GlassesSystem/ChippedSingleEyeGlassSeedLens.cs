@@ -32,19 +32,11 @@ public sealed partial class GoScreenRenderer
                 var center = BoardPoint(start, cell, x, y);
 
                 // エメラルドの枠と、手番の石色の内側を持つ正方形を描画する。
-                var bounds = new Rectangle(
-                    (int)(center.X - cell * .28f),
-                    (int)(center.Y - cell * .28f),
-                    (int)(cell * .56f),
-                    (int)(cell * .56f));
-                var border = Math.Max(2, (int)MathF.Round(cell * .07f));
-                var innerBounds = new Rectangle(
-                    bounds.X + border,
-                    bounds.Y + border,
-                    Math.Max(1, bounds.Width - (border * 2)),
-                    Math.Max(1, bounds.Height - (border * 2)));
-                FillRect(bounds, emerald);
-                FillRect(innerBounds, RenGraphCellColor(session.CurrentTurn));
+                // 眼の外周はエメラルドの楕円、瞳はエメラルドで縁取った手番色の丸で描く。
+                var wireThickness = Math.Max(2, (int)MathF.Round(cell * .045f));
+                DrawEllipseWire(center, cell * .58f, cell * .36f, emerald, wireThickness, 0f);
+                DrawCircle(center, cell * .19f, emerald);
+                DrawCircle(center, cell * .14f, RenGraphCellColor(session.CurrentTurn));
             }
         }
 
