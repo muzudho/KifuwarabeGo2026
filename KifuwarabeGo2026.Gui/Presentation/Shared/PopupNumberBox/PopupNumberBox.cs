@@ -6,6 +6,7 @@ using System;
 
 public sealed partial class GoScreenRenderer
 {
+    // GTP engine spin-option editor popup.
     private static Rectangle IntegerInputDialogBounds => new(610, 300, 700, 390);
     private static Rectangle IntegerInputTextBounds => new(690, 454, 540, 70);
     private static Rectangle IntegerInputCancelButtonBounds => new(910, 594, 150, 54);

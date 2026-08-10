@@ -29,5 +29,6 @@
     <Folder Include="Presentation\BoardLens\Shared\" />
     <Folder Include="Presentation\Shared\PlayerSelector\" />
     <Folder Include="Presentation\Shared\TextBox\" />
+    <Folder Include="Presentation\Shared\PopupNumberBox\" />
   </ItemGroup>
 </Project>
