@@ -20,6 +20,7 @@ public sealed partial class GoScreenRenderer
     private const int GameOverValueX = 1328;
     private const int GameOverSecondValueX = 1560;
     private const int PlayingPlayersY = 140;
+    private const float MinimumTextScale = 0.32f;
 
     private readonly GraphicsDevice _graphicsDevice;
     private readonly SpriteBatch _spriteBatch;
@@ -780,14 +781,15 @@ public sealed partial class GoScreenRenderer
             return;
         }
         var hintText = isPrevious ? "SHIFT + TAB" : "TAB";
-        var hintWidth = isPrevious ? 104 : 48;
-        var hintBounds = new Rectangle(bounds.X - hintWidth - 6, bounds.Y + 2, hintWidth, 20);
+        var hintWidth = isPrevious ? 132 : 56;
+        var hintHeight = 28;
+        var hintBounds = new Rectangle(bounds.X - hintWidth - 6, bounds.Y - hintHeight - 6, hintWidth, hintHeight);
         DrawRoundedFill(hintBounds, 6, new Color(4, 6, 8, 235));
         DrawFittedText(
             hintText,
             new Rectangle(hintBounds.X + 4, hintBounds.Y + 2, hintBounds.Width - 8, hintBounds.Height - 4),
             Color.White,
-            0.24f);
+            MinimumTextScale);
     }
 
     private void DrawTournamentRulesTextInputSurface(Rectangle bounds, bool active, bool hovered)
