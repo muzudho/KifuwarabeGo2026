@@ -241,7 +241,7 @@ public sealed partial class GoScreenRenderer
         var closeLabel = session.IsGtpEngineSelectionForAppProvider ? "CLOSE" : "CANCEL";
         var useLabel = session.IsGtpEngineSelectionForAppProvider ? "USE" : "SELECT";
         DrawCommandButton(GtpEngineSelectionDialogCancelButtonBounds, closeLabel, false, mousePoint, scale: 0.34f);
-        DrawCommandButton(GtpEngineSelectionDialogOkButtonBounds, useLabel, false, mousePoint, enabled: session.CanCommitGtpEngineSelection, scale: 0.34f);
+        DrawCommandButton(GtpEngineSelectionDialogOkButtonBounds, useLabel, false, mousePoint, enabled: !session.IsGtpEngineCompatibilityLoading && session.CanCommitGtpEngineSelection, scale: 0.34f);
 
         DrawText("LIST", new Vector2(GtpEngineSelectionDialogListBounds.X, GtpEngineSelectionDialogListBounds.Y - 34), new Color(180, 195, 195), 0.46f);
         DrawText("PROPERTIES", new Vector2(GtpEngineSelectionDialogPropertyBounds.X, GtpEngineSelectionDialogPropertyBounds.Y - 34), new Color(180, 195, 195), 0.46f);
@@ -249,29 +249,39 @@ public sealed partial class GoScreenRenderer
         FillRect(GtpEngineSelectionDialogListBounds, new Color(15, 20, 26));
         DrawRect(GtpEngineSelectionDialogListBounds, 1, new Color(67, 84, 92));
 
-        var startIndex = session.GtpEngineSelectionPageIndex * GoAppSession.GtpEngineSelectionPageSize;
-        for (var i = 0; i < GoAppSession.GtpEngineSelectionPageSize; i++)
+        if (session.IsGtpEngineCompatibilityLoading)
         {
-            var index = startIndex + i;
-            if (index >= session.GtpEngineProfiles.Count)
+            DrawGtpEngineSelectionLoadingSkeleton();
+        }
+        else
+        {
+            var startIndex = session.GtpEngineSelectionPageIndex * GoAppSession.GtpEngineSelectionPageSize;
+            for (var i = 0; i < GoAppSession.GtpEngineSelectionPageSize; i++)
             {
-                break;
-            }
+                var index = startIndex + i;
+                if (index >= session.GtpEngineProfiles.Count)
+                {
+                    break;
+                }
 
-            DrawGtpEngineSelectionListItem(GtpEngineSelectionDialogListItemBounds(i), session, index, mousePoint);
+                DrawGtpEngineSelectionListItem(GtpEngineSelectionDialogListItemBounds(i), session, index, mousePoint);
+            }
         }
 
-        DrawGtpEngineSelectionProperties(session, mousePoint);
+        if (!session.IsGtpEngineCompatibilityLoading)
+            DrawGtpEngineSelectionProperties(session, mousePoint);
+        else
+            DrawGtpEngineSelectionPropertiesSkeleton();
 
         var pageCount = Math.Max(1, (int)Math.Ceiling(session.GtpEngineProfiles.Count / (double)GoAppSession.GtpEngineSelectionPageSize));
-        DrawCommandButton(GtpEngineSelectionDialogPreviousPageButtonBounds, "PREV", false, mousePoint, enabled: session.GtpEngineSelectionPageIndex > 0, scale: 0.42f);
+        DrawCommandButton(GtpEngineSelectionDialogPreviousPageButtonBounds, "PREV", false, mousePoint, enabled: !session.IsGtpEngineCompatibilityLoading && session.GtpEngineSelectionPageIndex > 0, scale: 0.42f);
         DrawText($"PAGE {session.GtpEngineSelectionPageIndex + 1} / {pageCount}", new Vector2(600, 817), new Color(227, 224, 210), 0.42f);
-        DrawCommandButton(GtpEngineSelectionDialogNextPageButtonBounds, "NEXT", false, mousePoint, enabled: session.GtpEngineSelectionPageIndex < pageCount - 1, scale: 0.42f);
-        DrawCommandButton(GtpEngineSelectionDialogAddButtonBounds, "ADD", false, mousePoint, scale: 0.42f);
-        DrawCommandButton(GtpEngineSelectionDialogEditButtonBounds, "EDIT", false, mousePoint, enabled: session.GtpEngineProfiles.Count > 0, scale: 0.42f);
-        DrawCommandButton(GtpEngineSelectionDialogDuplicateButtonBounds, "DUPLICATE", false, mousePoint, enabled: session.GtpEngineProfiles.Count > 0, scale: 0.32f);
-        DrawCommandButton(GtpEngineSelectionDialogDeleteButtonBounds, "DELETE", false, mousePoint, enabled: session.CanDeleteSelectedGtpEngine, scale: 0.42f);
-        DrawCommandButton(GtpEngineSelectionDialogOrderButtonBounds, "ORDER", false, mousePoint, enabled: session.GtpEngineProfiles.Count > 1, scale: 0.38f);
+        DrawCommandButton(GtpEngineSelectionDialogNextPageButtonBounds, "NEXT", false, mousePoint, enabled: !session.IsGtpEngineCompatibilityLoading && session.GtpEngineSelectionPageIndex < pageCount - 1, scale: 0.42f);
+        DrawCommandButton(GtpEngineSelectionDialogAddButtonBounds, "ADD", false, mousePoint, enabled: !session.IsGtpEngineCompatibilityLoading, scale: 0.42f);
+        DrawCommandButton(GtpEngineSelectionDialogEditButtonBounds, "EDIT", false, mousePoint, enabled: !session.IsGtpEngineCompatibilityLoading && session.GtpEngineProfiles.Count > 0, scale: 0.42f);
+        DrawCommandButton(GtpEngineSelectionDialogDuplicateButtonBounds, "DUPLICATE", false, mousePoint, enabled: !session.IsGtpEngineCompatibilityLoading && session.GtpEngineProfiles.Count > 0, scale: 0.32f);
+        DrawCommandButton(GtpEngineSelectionDialogDeleteButtonBounds, "DELETE", false, mousePoint, enabled: !session.IsGtpEngineCompatibilityLoading && session.CanDeleteSelectedGtpEngine, scale: 0.42f);
+        DrawCommandButton(GtpEngineSelectionDialogOrderButtonBounds, "ORDER", false, mousePoint, enabled: !session.IsGtpEngineCompatibilityLoading && session.GtpEngineProfiles.Count > 1, scale: 0.38f);
         DrawGtpEngineDeleteConfirmation(session, mousePoint);
         DrawCatalogOrderEditor(
             session.GtpEngineOrderEditor,
@@ -279,6 +289,40 @@ public sealed partial class GoScreenRenderer
             mousePoint,
             profile => profile.DisplayName,
             profile => string.IsNullOrWhiteSpace(profile.ExecutablePath) ? "EXECUTABLE NOT SET" : Path.GetFileName(profile.ExecutablePath));
+    }
+
+    private void DrawGtpEngineSelectionLoadingSkeleton()
+    {
+        var phase = (float)(DateTime.UtcNow.TimeOfDay.TotalSeconds * 2.4d);
+        for (var slot = 0; slot < GoAppSession.GtpEngineSelectionPageSize; slot++)
+        {
+            var bounds = GtpEngineSelectionDialogListItemBounds(slot);
+            var highlight = (MathF.Sin(phase - slot * 0.75f) + 1f) * 0.5f;
+            FillRect(bounds, new Color(29, 35, 42));
+            FillRect(new Rectangle(bounds.X + 18, bounds.Y + 13, 210, 18), Color.Lerp(new Color(48, 56, 64), new Color(86, 96, 106), highlight));
+            FillRect(new Rectangle(bounds.X + 18, bounds.Y + 42, 300, 12), Color.Lerp(new Color(39, 46, 53), new Color(72, 81, 90), highlight));
+        }
+
+        var spinnerCenter = new Vector2(GtpEngineSelectionDialogListBounds.Center.X, GtpEngineSelectionDialogListBounds.Center.Y);
+        for (var index = 0; index < 8; index++)
+        {
+            var angle = phase * 4f + MathF.Tau * index / 8f;
+            var opacity = 0.22f + 0.78f * index / 8f;
+            DrawCircle(spinnerCenter + new Vector2(MathF.Cos(angle), MathF.Sin(angle)) * 28f, 5, new Color(147, 244, 200) * opacity);
+        }
+        DrawText("CHECKING ENGINES...", spinnerCenter + new Vector2(-130, 56), new Color(180, 195, 195), 0.38f);
+    }
+
+    private void DrawGtpEngineSelectionPropertiesSkeleton()
+    {
+        FillRect(GtpEngineSelectionDialogPropertyBounds, new Color(15, 20, 26));
+        DrawRect(GtpEngineSelectionDialogPropertyBounds, 1, new Color(67, 84, 92));
+        for (var row = 0; row < 5; row++)
+        {
+            var y = GtpEngineSelectionDialogPropertyBounds.Y + 20 + row * 68;
+            FillRect(new Rectangle(GtpEngineSelectionDialogPropertyBounds.X + 22, y, 150, 14), new Color(48, 56, 64));
+            FillRect(new Rectangle(GtpEngineSelectionDialogPropertyBounds.X + 190, y, GtpEngineSelectionDialogPropertyBounds.Width - 220, 14), new Color(39, 46, 53));
+        }
     }
 
 

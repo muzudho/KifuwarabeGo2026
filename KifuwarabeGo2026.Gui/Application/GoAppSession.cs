@@ -2235,6 +2235,18 @@ public sealed class GoAppSession
         OpenGtpEngineSelectionDialogCore(stone);
     }
 
+    public bool IsGtpEngineCompatibilityLoading { get; private set; }
+
+    public void BeginGtpEngineCompatibilityLoading()
+    {
+        IsGtpEngineCompatibilityLoading = true;
+        _gtpEngineAppCompatibilities.Clear();
+        _gtpEngineAppCompatibilities.AddRange(
+            _gtpEngineProfiles.Select(_ => new GtpEngineAppCompatibility(
+                GtpEngineAppCompatibilityKind.CheckFailed,
+                "CHECKING...")));
+    }
+
     /// <summary>
     /// CGOSプレイヤー用の共通GTPエンジン選択ダイアログを開きます。
     /// </summary>
@@ -2437,6 +2449,7 @@ public sealed class GoAppSession
 
     public void SetGtpEngineAppCompatibilities(IEnumerable<GtpEngineAppCompatibility> compatibilities)
     {
+        IsGtpEngineCompatibilityLoading = false;
         _gtpEngineAppCompatibilities.Clear();
         _gtpEngineAppCompatibilities.AddRange(compatibilities);
     }

@@ -24,11 +24,14 @@ public sealed class WindowsTextCompositionService : ITextCompositionService, IDi
 
     public void Attach(nint windowHandle)
     {
-        if (windowHandle == 0 || windowHandle == _windowHandle)
+        // DesktopGL の GameWindow.Handle は HWND ではなく SDL_Window* である。
+        // SDL_GetWindowWMInfo で Win32 HWND に変換しないと、WM_IME_COMPOSITION は受け取れない。
+        var nativeWindowHandle = GetWindowsWindowHandle(windowHandle);
+        if (nativeWindowHandle == 0 || nativeWindowHandle == _windowHandle)
             return;
 
         Detach();
-        _windowHandle = windowHandle;
+        _windowHandle = nativeWindowHandle;
         _windowProcedure = WindowProcedure;
         _previousWindowProcedure = SetWindowLongPtr(
             windowHandle,
@@ -125,8 +128,51 @@ public sealed class WindowsTextCompositionService : ITextCompositionService, IDi
 
     private void Publish(TextCompositionState state) => CompositionChanged?.Invoke(state);
 
+    private static nint GetWindowsWindowHandle(nint sdlWindowHandle)
+    {
+        if (sdlWindowHandle == 0)
+            return 0;
+
+        // SDL_SysWMinfo は SDL_version (3 bytes)、SDL_SYSWM_TYPE (4 bytes)、
+        // その後にポインター境界で配置される union から成る。64-bit Windows では
+        // union の先頭（offset 8）が SDL_SysWMinfo.info.win.window (HWND) である。
+        const int sysWmInfoSize = 128;
+        const int windowsWindowHandleOffset = 8;
+        var info = Marshal.AllocHGlobal(sysWmInfoSize);
+        try
+        {
+            for (var index = 0; index < sysWmInfoSize; index++)
+                Marshal.WriteByte(info, index, 0);
+
+            SdlGetVersion(out var version);
+            Marshal.StructureToPtr(version, info, false);
+            return SdlGetWindowWMInfo(sdlWindowHandle, info)
+                ? Marshal.ReadIntPtr(info, windowsWindowHandleOffset)
+                : 0;
+        }
+        finally
+        {
+            Marshal.FreeHGlobal(info);
+        }
+    }
+
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
     private delegate nint WindowProcedureCallback(nint windowHandle, uint message, nint wParam, nint lParam);
+
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    private struct SdlVersion
+    {
+        public byte Major;
+        public byte Minor;
+        public byte Patch;
+    }
+
+    [DllImport("SDL2.dll", EntryPoint = "SDL_GetVersion")]
+    private static extern void SdlGetVersion(out SdlVersion version);
+
+    [DllImport("SDL2.dll", EntryPoint = "SDL_GetWindowWMInfo")]
+    [return: MarshalAs(UnmanagedType.I1)]
+    private static extern bool SdlGetWindowWMInfo(nint window, nint info);
 
     [DllImport("user32.dll", EntryPoint = "SetWindowLongPtrW", SetLastError = true)]
     private static extern nint SetWindowLongPtr(nint windowHandle, int index, nint newValue);

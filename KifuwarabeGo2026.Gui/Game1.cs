@@ -115,6 +115,7 @@ public class Game1 : Game
     private PonnukiProviderGameSession? _ponnukiProviderGameSession;
     private int _ponnukiProviderObservedMoveCount;
     private Task<GtpEngineAppCompatibility[]>? _appProviderSelectionLoadTask;
+    private Task<GtpEngineAppCompatibility[]>? _gtpEngineSelectionLoadTask;
     private string _appProviderSelectionLoadAppId = "";
     private Task<(bool IsSupported, string Message)>? _restoredAppProviderCheckTask;
     private string _restoredAppProviderCheckPath = "";
@@ -227,6 +228,7 @@ public class Game1 : Game
         LogWindowPositionChange();
         _inputClockSeconds = gameTime.TotalGameTime.TotalSeconds;
         CompleteAppProviderSelectionLoading();
+        CompleteGtpEngineSelectionLoading();
         CompleteRestoredAppProviderCheck();
         CompleteAppProviderSettingsEvaluation();
         var keyboard = Keyboard.GetState();
@@ -3715,14 +3717,14 @@ public class Game1 : Game
     private void OpenGtpEngineSelectionDialog(GoStone stone)
     {
         var appId = _session.UseKind == GoAppUseKind.LocalApps ? "ponnuki" : "play";
-        RefreshGtpEngineAppCompatibilities(appId, "player");
         _session.OpenGtpEngineSelectionDialog(stone, appId);
+        BeginGtpEngineSelectionLoading(appId, "player");
     }
 
     private void OpenCgosGtpEngineSelectionDialog(GoStone stone)
     {
-        RefreshGtpEngineAppCompatibilities("play", "player");
         _session.OpenCgosGtpEngineSelectionDialog(stone);
+        BeginGtpEngineSelectionLoading("play", "player");
     }
 
     private void OpenAppProviderGtpEngineSelectionDialog(string appId)
@@ -3794,6 +3796,40 @@ public class Game1 : Game
         _session.SetGtpEngineAppCompatibilities(results);
     }
 
+    private void BeginGtpEngineSelectionLoading(string appId, string role)
+    {
+        if (_gtpEngineSelectionLoadTask is not null)
+            return;
+
+        _session.BeginGtpEngineCompatibilityLoading();
+        var checks = _session.GtpEngineProfiles
+            .Select(profile => GtpEngineAppCompatibilityProbe.CheckAsync(profile, appId, role))
+            .ToArray();
+        _gtpEngineSelectionLoadTask = Task.WhenAll(checks);
+        GuiOperationLog.User("Loading selectable GTP engines", $"app={appId}; role={role}; engines={checks.Length}");
+    }
+
+    private void CompleteGtpEngineSelectionLoading()
+    {
+        var task = _gtpEngineSelectionLoadTask;
+        if (task is null || !task.IsCompleted)
+            return;
+
+        _gtpEngineSelectionLoadTask = null;
+        try
+        {
+            _session.SetGtpEngineAppCompatibilities(task.GetAwaiter().GetResult());
+        }
+        catch (Exception ex)
+        {
+            ApplicationErrorLog.Write("GTP ENGINE SELECTION", "Could not inspect selectable GTP engines.", ex);
+            _session.SetGtpEngineAppCompatibilities(
+                _session.GtpEngineProfiles.Select(_ => new GtpEngineAppCompatibility(
+                    GtpEngineAppCompatibilityKind.CheckFailed,
+                    $"CHECK FAILED: {ex.Message}")));
+        }
+    }
+
     private void RefreshCurrentGtpEngineAppCompatibilities() =>
         RefreshGtpEngineAppCompatibilities(
             _session.GtpEngineSelectionAppId,
@@ -3827,6 +3863,9 @@ public class Game1 : Game
             _session.CancelGtpEngineSelectionDialog();
             return true;
         }
+
+        if (_session.IsGtpEngineCompatibilityLoading)
+            return true;
 
         if (GoScreenRenderer.GetGtpEngineSelectionDialogOkButtonHit(point))
         {
