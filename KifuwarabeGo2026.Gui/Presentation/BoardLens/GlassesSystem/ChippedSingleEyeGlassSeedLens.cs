@@ -31,13 +31,20 @@ public sealed partial class GoScreenRenderer
 
                 var center = BoardPoint(start, cell, x, y);
 
-                // エメラルドの正方形を描画する。
-                FillRect(new Rectangle(
+                // エメラルドの枠と、手番の石色の内側を持つ正方形を描画する。
+                var bounds = new Rectangle(
                     (int)(center.X - cell * .28f),
                     (int)(center.Y - cell * .28f),
                     (int)(cell * .56f),
-                    (int)(cell * .56f)),
-                    emerald);
+                    (int)(cell * .56f));
+                var border = Math.Max(2, (int)MathF.Round(cell * .07f));
+                var innerBounds = new Rectangle(
+                    bounds.X + border,
+                    bounds.Y + border,
+                    Math.Max(1, bounds.Width - (border * 2)),
+                    Math.Max(1, bounds.Height - (border * 2)));
+                FillRect(bounds, emerald);
+                FillRect(innerBounds, RenGraphCellColor(session.CurrentTurn));
             }
         }
 
