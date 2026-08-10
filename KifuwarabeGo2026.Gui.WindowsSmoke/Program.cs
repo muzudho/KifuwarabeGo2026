@@ -66,13 +66,13 @@ internal static class Program
 
         var contactBoard = new GoBoard(9);
         PlaceSetup(contactBoard, GoStone.Black, (1, 1), (1, 2));
-        PlaceSetup(contactBoard, GoStone.White, (3, 1), (5, 5), (5, 6));
-        var strongContact = EvaluatePonnukiCandidate(contactBoard, new GoPoint(2, 1), GoStone.Black);
+        PlaceSetup(contactBoard, GoStone.White, (3, 1), (3, 2), (4, 1), (5, 5), (5, 6));
+        var equalAreaContact = EvaluatePonnukiCandidate(contactBoard, new GoPoint(2, 1), GoStone.Black);
         var neutralMove = EvaluatePonnukiCandidate(contactBoard, new GoPoint(8, 8), GoStone.Black);
-        var weakContact = EvaluatePonnukiCandidate(contactBoard, new GoPoint(6, 5), GoStone.Black);
-        var selectedContacts = PonnukiMovePrioritizer.SelectBest([weakContact, neutralMove, strongContact]);
-        Require(selectedContacts.Count == 1 && selectedContacts[0] == strongContact.Move,
-            "The ponnuki player did not apply the Board Lens ren-area contact priority.");
+        var unequalAreaContact = EvaluatePonnukiCandidate(contactBoard, new GoPoint(6, 5), GoStone.Black);
+        var selectedContacts = PonnukiMovePrioritizer.SelectBest([unequalAreaContact, neutralMove, equalAreaContact]);
+        Require(selectedContacts.Count == 1 && selectedContacts[0] == equalAreaContact.Move,
+            "The ponnuki player did not apply the Board Lens equal-area evacuation-nobi priority.");
     }
 
     private static void VerifyBoardLensStepCycle()
@@ -100,7 +100,7 @@ internal static class Program
             "A ponnuki priority smoke-test move was unexpectedly illegal.");
         return new PonnukiMoveCandidate(
             move,
-            PonnukiMovePrioritizer.Evaluate(trial, move, color, capturedStones));
+            PonnukiMovePrioritizer.Evaluate(trial, move, capturedStones));
     }
 
     private static void PlaceSetup(GoBoard board, GoStone color, params (int X, int Y)[] points)
