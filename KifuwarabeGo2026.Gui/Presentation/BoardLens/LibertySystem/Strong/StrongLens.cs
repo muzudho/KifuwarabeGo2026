@@ -6,6 +6,10 @@ using System.Collections.Generic;
 
 public sealed partial class GoScreenRenderer
 {
+    /// <summary>STRONG LENS の評価値を計算します。</summary>
+    private static int GetStrongValue(GoRen ren, int adjacentOpponentArea) =>
+        ren.Points.Count - adjacentOpponentArea;
+
     /// <summary>STRONG LENS の評価値を、足とマーカーの前景に描画します。</summary>
     private void DrawDeferredStrongMetrics(
         GoRenParseResult renParse,

@@ -47,7 +47,7 @@ public sealed partial class GoScreenRenderer
             {
                 DrawAdjacentRenRelationships(renParse, contacts, adjacentRenNumbers, legColor, legThickness, start, cell);
                 var adjacentArea = SumAdjacentRenAreas(renParse, adjacentRenNumbers);
-                var value = displayMode == RenParseDisplayMode.Strong ? ren.Points.Count - adjacentArea : adjacentArea;
+                var value = displayMode == RenParseDisplayMode.Strong ? GetStrongValue(ren, adjacentArea) : adjacentArea;
                 if (displayMode == RenParseDisplayMode.Strong)
                 {
                     deferredStrongMetrics.Add((ren.Number, value, legColor, RenGraphCellColor(OpponentOf(ren.Stone))));
