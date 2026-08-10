@@ -226,6 +226,7 @@ public class Game1 : Game
 
     protected override void Update(GameTime gameTime)
     {
+        _textCompositionService.Update();
         ApplyInitialWindowLayout();
         LogWindowPositionChange();
         _inputClockSeconds = gameTime.TotalGameTime.TotalSeconds;

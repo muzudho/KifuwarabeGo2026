@@ -3,6 +3,7 @@ namespace KifuwarabeGo2026.Gui.Infrastructure.Windows;
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Infrastructure.Logging;
 using System;
+using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 
 /// <summary>
@@ -16,11 +17,18 @@ public sealed class WindowsTextCompositionService : ITextCompositionService, IDi
     private const int GwlpWndProc = -4;
     private const int GcsCompStr = 0x0008;
     private const int GcsCursorPos = 0x0080;
+    private const uint SdlTextEditing = 0x302;
+    private const uint SdlTextInput = 0x303;
+    private const int SdlTextEditingTextOffset = 12;
+    private const int SdlTextEditingStartOffset = 44;
 
     private WindowProcedureCallback? _windowProcedure;
     private nint _windowHandle;
     private nint _previousWindowProcedure;
     private TextCompositionDiagnostics _diagnostics;
+    private readonly ConcurrentQueue<TextCompositionState> _pendingCompositionStates = new();
+    private SdlEventFilterCallback? _sdlEventWatch;
+    private bool _isSdlEventWatchAttached;
 
     public event Action<TextCompositionState>? CompositionChanged;
     public event Action<TextCompositionDiagnostics>? DiagnosticsChanged;
@@ -62,6 +70,13 @@ public sealed class WindowsTextCompositionService : ITextCompositionService, IDi
         }
         _diagnostics = _diagnostics with { IsWindowProcedureAttached = _previousWindowProcedure != 0 };
         PublishDiagnostics();
+        AttachSdlEventWatch();
+    }
+
+    public void Update()
+    {
+        while (_pendingCompositionStates.TryDequeue(out var state))
+            CompositionChanged?.Invoke(state);
     }
 
     public void Dispose()
@@ -72,6 +87,7 @@ public sealed class WindowsTextCompositionService : ITextCompositionService, IDi
 
     public void Detach()
     {
+        DetachSdlEventWatch();
         if (_windowHandle != 0 && _previousWindowProcedure != 0)
             SetWindowLongPtr(_windowHandle, GwlpWndProc, _previousWindowProcedure);
 
@@ -106,6 +122,59 @@ public sealed class WindowsTextCompositionService : ITextCompositionService, IDi
         }
 
         return CallWindowProc(_previousWindowProcedure, windowHandle, message, wParam, lParam);
+    }
+
+    private void AttachSdlEventWatch()
+    {
+        if (_isSdlEventWatchAttached)
+            return;
+
+        // DesktopGL は Win32 のウィンドウプロシージャへ WM_IME_* を配送しない場合がある。
+        // 一方で SDL_TEXTEDITING は SDL が IME から受け取った変換中文字列そのものである。
+        // SDL_AddEventWatch のコールバックは別スレッドで呼ばれ得るため、ここではキューに積み、
+        // Update() で GUI スレッドへ通知する。
+        _sdlEventWatch = SdlEventWatch;
+        SdlAddEventWatch(_sdlEventWatch, nint.Zero);
+        _isSdlEventWatchAttached = true;
+        GuiOperationLog.App("IME SDL event watch attached", "Listening for SDL_TEXTEDITING events.");
+    }
+
+    private void DetachSdlEventWatch()
+    {
+        if (!_isSdlEventWatchAttached || _sdlEventWatch is null)
+            return;
+
+        SdlDelEventWatch(_sdlEventWatch, nint.Zero);
+        _isSdlEventWatchAttached = false;
+        _sdlEventWatch = null;
+        while (_pendingCompositionStates.TryDequeue(out _))
+        {
+        }
+    }
+
+    private int SdlEventWatch(nint userData, nint sdlEvent)
+    {
+        try
+        {
+            var eventType = unchecked((uint)Marshal.ReadInt32(sdlEvent));
+            if (eventType == SdlTextEditing)
+            {
+                var text = Marshal.PtrToStringUTF8(sdlEvent + SdlTextEditingTextOffset, 32)?.TrimEnd('\0') ?? "";
+                var caretIndex = Math.Clamp(Marshal.ReadInt32(sdlEvent, SdlTextEditingStartOffset), 0, text.Length);
+                _pendingCompositionStates.Enqueue(new TextCompositionState(text, caretIndex, true));
+                GuiOperationLog.App("IME SDL composition updated", $"characters={text.Length}; caret={caretIndex}.");
+            }
+            else if (eventType == SdlTextInput)
+            {
+                _pendingCompositionStates.Enqueue(TextCompositionState.Empty);
+            }
+        }
+        catch (Exception ex)
+        {
+            GuiOperationLog.App("IME SDL event watch failed", ex.Message);
+        }
+
+        return 0;
     }
 
     private void UpdateComposition(nint windowHandle, nint lParam)
@@ -149,7 +218,7 @@ public sealed class WindowsTextCompositionService : ITextCompositionService, IDi
         }
     }
 
-    private void Publish(TextCompositionState state) => CompositionChanged?.Invoke(state);
+    private void Publish(TextCompositionState state) => _pendingCompositionStates.Enqueue(state);
 
     private void PublishDiagnostics() => DiagnosticsChanged?.Invoke(_diagnostics);
 
@@ -184,6 +253,9 @@ public sealed class WindowsTextCompositionService : ITextCompositionService, IDi
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
     private delegate nint WindowProcedureCallback(nint windowHandle, uint message, nint wParam, nint lParam);
 
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+    private delegate int SdlEventFilterCallback(nint userData, nint sdlEvent);
+
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     private struct SdlVersion
     {
@@ -198,6 +270,12 @@ public sealed class WindowsTextCompositionService : ITextCompositionService, IDi
     [DllImport("SDL2.dll", EntryPoint = "SDL_GetWindowWMInfo")]
     [return: MarshalAs(UnmanagedType.I1)]
     private static extern bool SdlGetWindowWMInfo(nint window, nint info);
+
+    [DllImport("SDL2.dll", EntryPoint = "SDL_AddEventWatch", CallingConvention = CallingConvention.Cdecl)]
+    private static extern void SdlAddEventWatch(SdlEventFilterCallback filter, nint userData);
+
+    [DllImport("SDL2.dll", EntryPoint = "SDL_DelEventWatch", CallingConvention = CallingConvention.Cdecl)]
+    private static extern void SdlDelEventWatch(SdlEventFilterCallback filter, nint userData);
 
     [DllImport("user32.dll", EntryPoint = "SetWindowLongPtrW", SetLastError = true)]
     private static extern nint SetWindowLongPtr(nint windowHandle, int index, nint newValue);

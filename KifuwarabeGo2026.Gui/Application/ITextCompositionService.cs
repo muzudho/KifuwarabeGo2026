@@ -10,6 +10,11 @@ public interface ITextCompositionService
     event Action<TextCompositionState>? CompositionChanged;
 
     event Action<TextCompositionDiagnostics>? DiagnosticsChanged;
+
+    /// <summary>
+    /// プラットフォーム側から届いた変換中テキストを、GUI スレッドで通知する。
+    /// </summary>
+    void Update();
 }
 
 public readonly record struct TextCompositionState(string Text, int CaretIndex, bool IsActive)

@@ -32,6 +32,10 @@ internal sealed class PortablePlatformServices :
         remove { }
     }
 
+    public void Update()
+    {
+    }
+
     private static readonly byte[] TransparentPixelPng =
         Convert.FromBase64String(
             "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M/wHwAF/gL+X2NDNwAAAABJRU5ErkJggg==");
