@@ -14,7 +14,8 @@ public sealed partial class GoScreenRenderer
     private void DrawGlassesLens(GoAppSession session, Vector2 start, float cell)
     {
         // エメラルド色
-        var emerald = new Color(126, 255, 188, 180);
+        // 盤の空点色と同系統で、白い瞳とも区別しやすい濃いオレンジ。
+        var eyeOutline = new Color(180, 94, 0);
 
         var size = session.BoardSize;
         // 各段（数字が大きくなるほど下の段）
@@ -37,12 +38,12 @@ public sealed partial class GoScreenRenderer
                 // エメラルドの枠と、手番の石色の内側を持つ正方形を描画する。
                 // 眼の外周はエメラルドの楕円、瞳はエメラルドで縁取った手番色の丸で描く。
                 var wireThickness = Math.Max(2, (int)MathF.Round(cell * .045f));
-                DrawEllipseWire(center, cell * .58f, cell * .36f, emerald, wireThickness, 0f);
+                DrawEllipseWire(center, cell * .58f, cell * .36f, eyeOutline, wireThickness, 0f);
                 if (!isBlackEye || !isWhiteEye)
                 {
                     // 黒眼・白眼は、エメラルドで縁取った瞳を持つ。
                     var pupilColor = isBlackEye ? RenGraphCellColor(GoStone.Black) : RenGraphCellColor(GoStone.White);
-                    DrawCircle(center, cell * .19f, emerald);
+                    DrawCircle(center, cell * .19f, eyeOutline);
                     DrawCircle(center, cell * .14f, pupilColor);
                 }
                 // 両者の候補地は瞳を描かず、エメラルドの眼の外周だけで示す。
