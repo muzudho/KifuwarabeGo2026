@@ -15,4 +15,5 @@ public enum RenParseDisplayMode
     AdjacentOpponentArea,
     Strong,
     Nobi,
+    Glasses,
 }

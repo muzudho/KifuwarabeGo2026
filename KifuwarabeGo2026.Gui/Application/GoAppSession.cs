@@ -325,7 +325,7 @@ public sealed class GoAppSession
     private const int BoardLensStepCycleLength = 28;
 
     private int _boardLensStep;
-    private bool _measureBoardLensFamily;
+    private int _boardLensFamily;
 
     public RenParseDisplayMode RenParseDisplayMode { get; private set; }
 
@@ -340,6 +340,8 @@ public sealed class GoAppSession
         RenParseDisplayMode.AdjacentOpponentArea or
         RenParseDisplayMode.Strong or
         RenParseDisplayMode.Nobi;
+
+    public bool IsGlassesBoardLens => RenParseDisplayMode == RenParseDisplayMode.Glasses;
 
     public string BoardLensDisplayName => RenParseDisplayMode switch
     {
@@ -356,6 +358,7 @@ public sealed class GoAppSession
         RenParseDisplayMode.AdjacentOpponentArea => "ADJACENT OPPONENT AREA LENS  6/8",
         RenParseDisplayMode.Strong => "STRONG LENS  7/8",
         RenParseDisplayMode.Nobi => "NOBI LENS  8/8",
+        RenParseDisplayMode.Glasses => "CHIPPED SINGLE EYE GLASS SEED LENS  1/1",
         _ => RenParseDisplayMode.ToString().ToUpperInvariant(),
     };
 
@@ -1191,12 +1194,12 @@ public sealed class GoAppSession
     {
         if (RenParseDisplayMode == RenParseDisplayMode.Off)
         {
-            _measureBoardLensFamily = false;
+            _boardLensFamily = 0;
             _boardLensStep = 0;
         }
-        else if (!_measureBoardLensFamily)
+        else if (_boardLensFamily < 2)
         {
-            _measureBoardLensFamily = true;
+            _boardLensFamily++;
             _boardLensStep = 0;
         }
         else { RenParseDisplayMode = RenParseDisplayMode.Off; return; }
@@ -1209,14 +1212,14 @@ public sealed class GoAppSession
         if (RenParseDisplayMode == RenParseDisplayMode.Off)
             return false;
 
-        _measureBoardLensFamily = !_measureBoardLensFamily;
+        _boardLensFamily = (_boardLensFamily + 1) % 3;
         ApplyBoardLensStep();
         return true;
     }
 
     private void ApplyBoardLensStep()
     {
-        RenParseDisplayMode = _measureBoardLensFamily
+        RenParseDisplayMode = _boardLensFamily == 1
             ? (_boardLensStep % MeasureBoardLensCount) switch
             {
                 0 => RenParseDisplayMode.RenArea,
@@ -1228,7 +1231,9 @@ public sealed class GoAppSession
                 6 => RenParseDisplayMode.Strong,
                 _ => RenParseDisplayMode.Nobi,
             }
-            : (_boardLensStep % RenBoardLensCount) switch
+            : _boardLensFamily == 2
+                ? RenParseDisplayMode.Glasses
+                : (_boardLensStep % RenBoardLensCount) switch
             {
                 0 => RenParseDisplayMode.Overlay,
                 1 => RenParseDisplayMode.Graph,
@@ -3003,7 +3008,7 @@ public sealed class GoAppSession
     public bool TryStepBoardLens(int direction)
     {
         if (RenParseDisplayMode == RenParseDisplayMode.Off) return false;
-        var count = _measureBoardLensFamily ? MeasureBoardLensCount : RenBoardLensCount;
+        var count = _boardLensFamily == 1 ? MeasureBoardLensCount : RenBoardLensCount;
         _boardLensStep = (_boardLensStep + direction % count + count) % count;
         ApplyBoardLensStep();
         return true;
