@@ -212,7 +212,7 @@ kfw-get-option RandomMove
 
 エンジン側では、主に [Program.cs](./Program.cs) の次の箇所を変更します。
 
-1. `RandomMoveKind` に値を追加する。
+1. `MoveSelectionMode` に値を追加する。
 2. `CreateGuiOptionsJson()` の `vars` に同じ文字列を追加する。
 3. `ExecuteGuiSetOption()` で値を検証・反映する。
 4. `ExecuteGenMove()` などで新しい値の動作を実装する。

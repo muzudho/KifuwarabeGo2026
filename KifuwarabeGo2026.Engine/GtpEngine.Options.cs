@@ -1,5 +1,6 @@
 namespace KifuwarabeGo2026.Engine;
 
+using KifuwarabeGo2026.Engine.Shared;
 using System.Text.Json;
 
 internal sealed partial class GtpEngine
@@ -118,8 +119,8 @@ internal sealed partial class GtpEngine
                 {
                     case "randommove":
                         if (property.Value.ValueKind != JsonValueKind.String ||
-                            !Enum.TryParse(property.Value.GetString(), true, out RandomMoveKind parsedRandomMove) ||
-                            parsedRandomMove is not (RandomMoveKind.Normal or RandomMoveKind.ChebyshevDistanceFromStar))
+                            !Enum.TryParse(property.Value.GetString(), true, out MoveSelectionMode parsedRandomMove) ||
+                            parsedRandomMove is not (MoveSelectionMode.Normal or MoveSelectionMode.ChebyshevDistanceFromStar))
                             validationErrors.Add(new { id = property.Name, message = "must be Normal or ChebyshevDistanceFromStar" });
                         else
                         {

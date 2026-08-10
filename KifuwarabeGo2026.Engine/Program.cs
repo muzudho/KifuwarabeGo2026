@@ -2,6 +2,7 @@ namespace KifuwarabeGo2026.Engine;
 
 using KifuwarabeGo2026.Shared.Domain;
 using KifuwarabeGo2026.Engine.GoApps.Casual.Ponnuki;
+using KifuwarabeGo2026.Engine.GoApps.Formal.Play;
 using KifuwarabeGo2026.Engine.Shared;
 using System.Reflection;
 using System.Text.Json;
@@ -23,6 +24,8 @@ internal static class Program
 /// </summary>
 internal sealed partial class GtpEngine
 {
+    private static readonly IGenerateMoveStrategy _playStrategy = new PlayStrategy();
+    private static readonly IGenerateMoveStrategy _ponnukiStrategy = new PonnukiStrategy();
     private static readonly string[] SupportedAppIds = ["play", "ponnuki"];
     private static readonly string[] SupportedPlayerAppIds = ["play", "ponnuki"];
     private static readonly string[] SupportedProviderAppIds = ["ponnuki"];
@@ -43,7 +46,7 @@ internal sealed partial class GtpEngine
     private GoStone _sideToPlay = GoStone.Black;
     private readonly AtomicPositionSetup _positionSetup = new();
     private decimal _komi = 6.5m;
-    private RandomMoveKind _randomMove = RandomMoveKind.ChebyshevDistanceFromStar;
+    private MoveSelectionMode _randomMove = MoveSelectionMode.ChebyshevDistanceFromStar;
     private bool _avoidEyes = true;
     private int _randomSeed;
     private string _engineTag = "";
@@ -290,32 +293,15 @@ internal sealed partial class GtpEngine
             return;
         }
 
-        var renParse = _board.ParseRens();
-        var legalMoves = new List<GoPoint>();
-        var ponnukiCandidates = IsPonnukiCasualPlayerActive
-            ? new List<PonnukiMoveCandidate>()
-            : null;
-        for (var y = 0; y < _board.Size; y++)
-        {
-            for (var x = 0; x < _board.Size; x++)
-            {
-                var trial = _board.Clone();
-                if (trial.TryPlaceStone(x, y, color, _koPoint, out var capturedStones, out _) &&
-                    (!_avoidEyes || !_board.IsEyeFor(renParse, x, y, color)))
-                {
-                    var point = new GoPoint(x, y);
-                    legalMoves.Add(point);
-                    if (ponnukiCandidates is not null)
-                    {
-                        ponnukiCandidates.Add(new PonnukiMoveCandidate(
-                            point,
-                            PonnukiMovePrioritizer.Evaluate(trial, point, color, capturedStones)));
-                    }
-                }
-            }
-        }
-
-        if (legalMoves.Count == 0)
+        var strategy = IsPonnukiCasualPlayerActive ? _ponnukiStrategy : _playStrategy;
+        var move = strategy.GenerateMove(new GenerateMoveRequest(
+            _board,
+            color,
+            _koPoint,
+            _avoidEyes,
+            _randomMove,
+            _random));
+        if (move is null)
         {
             _koPoint = null;
             _sideToPlay = Opponent(color);
@@ -323,15 +309,9 @@ internal sealed partial class GtpEngine
             return;
         }
 
-        var preferredMoves = ponnukiCandidates is null
-            ? legalMoves
-            : PonnukiMovePrioritizer.SelectBest(ponnukiCandidates);
-        var move = _randomMove == RandomMoveKind.Normal
-            ? preferredMoves[_random.Next(preferredMoves.Count)]
-            : StarRegionRandomMoveSelector.Select(preferredMoves, _board.Size, _random);
-        _board.TryPlaceStone(move.X, move.Y, color, _koPoint, out _, out _koPoint);
+        _board.TryPlaceStone(move.Value.X, move.Value.Y, color, _koPoint, out _, out _koPoint);
         _sideToPlay = Opponent(color);
-        response = FormatVertex(move, _board.Size);
+        response = FormatVertex(move.Value, _board.Size);
     }
 
     private bool RejectWhilePositionSetupActive(out string? error)
@@ -549,7 +529,7 @@ internal sealed partial class GtpEngine
         var value = tokens.Length >= 3 ? string.Join(' ', tokens[2..]) : "";
         if (tokens[1].Equals("RandomMove", StringComparison.OrdinalIgnoreCase))
         {
-            if (!Enum.TryParse(value, true, out RandomMoveKind randomMove)) error = "option RandomMove must be Normal or ChebyshevDistanceFromStar";
+            if (!Enum.TryParse(value, true, out MoveSelectionMode randomMove)) error = "option RandomMove must be Normal or ChebyshevDistanceFromStar";
             else _randomMove = randomMove;
             return;
         }
@@ -660,9 +640,4 @@ internal sealed partial class GtpEngine
 
     private static bool IsPass(string text) => text.Equals("pass", StringComparison.OrdinalIgnoreCase);
 
-    private enum RandomMoveKind
-    {
-        Normal,
-        ChebyshevDistanceFromStar,
-    }
 }
