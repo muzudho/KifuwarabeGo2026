@@ -349,19 +349,6 @@ public sealed partial class GoScreenRenderer
     /// <param name="renParse"></param>
     /// <param name="start"></param>
     /// <param name="cell"></param>
-    private void DrawRenNumbers(GoRenParseResult renParse, Vector2 start, float cell)
-    {
-        var scale = RenNumberScale(cell);
-        for (var y = 0; y < renParse.Size; y++)
-        {
-            for (var x = 0; x < renParse.Size; x++)
-            {
-                var renNumber = renParse.GetRenNumber(x, y);
-                var center = BoardPoint(start, cell, x, y);
-                DrawRenNumber(renNumber, center, scale);
-            }
-        }
-    }
 
 
     /// <summary>
@@ -587,19 +574,6 @@ public sealed partial class GoScreenRenderer
         Vector2 start,
         float cell)
     {
-        var context = new BoardLensRenderContext(displayMode, boardSize, getStone, parseRens, drawPlacedStones, start, cell);
-        DrawBoardRenAnalysis(context);
-    }
-
-    private void DrawBoardRenAnalysis(BoardLensRenderContext context)
-    {
-        var displayMode = context.DisplayMode;
-        var boardSize = context.BoardSize;
-        var getStone = context.GetStone;
-        var parseRens = context.ParseRens;
-        var drawPlacedStones = context.DrawPlacedStones;
-        var start = context.Start;
-        var cell = context.Cell;
         foreach (var metric in metrics)
             DrawRenMetricNumber(renParse.GetRen(metric.RenNumber), metric.Value, RenMetricUnit.PointCount, metric.Color, start, cell, metric.Outline);
     }
