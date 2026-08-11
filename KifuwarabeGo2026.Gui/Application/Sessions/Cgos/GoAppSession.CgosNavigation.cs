@@ -1,6 +1,7 @@
 namespace KifuwarabeGo2026.Gui.Application;
 
 using System;
+using System.Collections.Generic;
 using CgosFlowKind = KifuwarabeGo2026.Gui.Application.Cgos.ConnectionTarget.CgosConnectionFlowKind;
 
 /// <summary>CGOSの接続プロファイル選択、画面遷移、接続開始要求を管理します。</summary>
