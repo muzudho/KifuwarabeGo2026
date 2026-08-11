@@ -85,6 +85,7 @@ public class Game1 : Game
     private GoAppSession? _commentEditorSession;
     private KeyboardState _previousCommentEditorKeyboard;
     private TextCompositionState _commentEditorComposition = TextCompositionState.Empty;
+    private string? _reviewSgfFilePath;
     private bool _isReviewUnsavedChangesConfirmationOpen;
     private ReviewExitAction? _pendingReviewExitAction;
     private readonly TextBoxController _humanPlayerNameTextBox = new(80);
@@ -2326,11 +2327,15 @@ public class Game1 : Game
     /// <summary>
     /// 指定された棋譜を共通の棋譜レビューフローで開きます。
     /// </summary>
-    private void StartReviewingGameRecord(GoGameRecord record, string messageTitle)
+    private void StartReviewingGameRecord(GoGameRecord record, string messageTitle, string? sourceFilePath = null)
     {
         if (!_session.StartReviewingGameRecord(record, out var warning) && !string.IsNullOrWhiteSpace(warning))
         {
             ShowMessage(warning, messageTitle);
+        }
+        else if (_session.CurrentMode.Kind == GoAppModeKind.Reviewing)
+        {
+            _reviewSgfFilePath = sourceFilePath;
         }
     }
 
@@ -3485,7 +3490,7 @@ public class Game1 : Game
         {
             GuiOperationLog.User("Applied SGF comment", $"move={_commentEditorMoveIndex}; characters={_commentTextArea.Text.Length}");
             if (saveToFile && _commentEditorSession is not null &&
-                ExportSgf(_commentEditorSession.CurrentGameRecord, $"kifuwarabe-go-commented-{DateTime.Now:yyyyMMdd-HHmmss}.sgf") &&
+                SaveReviewSgf() &&
                 _commentEditorSession.CurrentMode.Kind == GoAppModeKind.Reviewing)
                 _commentEditorSession.MarkReviewCommentsSaved();
         }
@@ -3514,7 +3519,7 @@ public class Game1 : Game
 
     private void SavePendingReviewExit()
     {
-        if (ExportSgf(_session.CurrentGameRecord, $"kifuwarabe-go-commented-{DateTime.Now:yyyyMMdd-HHmmss}.sgf"))
+        if (SaveReviewSgf())
         {
             _session.MarkReviewCommentsSaved();
             CompletePendingReviewExit(discardChanges: false);
@@ -3744,7 +3749,7 @@ public class Game1 : Game
         {
             var record = SgfGameRecordConverter.FromSgf(File.ReadAllText(fileName, Encoding.UTF8));
             RememberSgfDirectory(fileName);
-            StartReviewingGameRecord(record, "SGF input");
+            StartReviewingGameRecord(record, "SGF input", fileName);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or SgfParseException or ArgumentOutOfRangeException)
         {
@@ -3761,7 +3766,8 @@ public class Game1 : Game
     private bool ExportSgf(
         GoGameRecord record,
         string fileName,
-        bool markCurrentResultSaved = true)
+        bool markCurrentResultSaved = true,
+        Action<string>? onSaved = null)
     {
         var selectedFileName = _fileDialogService.SaveFile(new SaveFileDialogOptions
         {
@@ -3792,6 +3798,7 @@ public class Game1 : Game
             RefreshSgfAutoSaveState();
             if (markCurrentResultSaved)
                 MarkCurrentResultSgfSaved();
+            onSaved?.Invoke(selectedFileName);
             return true;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
@@ -4041,6 +4048,31 @@ public class Game1 : Game
                 _session.GtpEngineProfiles.Select(_ => new GtpEngineAppCompatibility(
                     GtpEngineAppCompatibilityKind.CheckFailed,
                     $"CHECK FAILED: {ex.Message}")));
+        }
+    }
+
+    private bool SaveReviewSgf()
+    {
+        if (string.IsNullOrWhiteSpace(_reviewSgfFilePath))
+        {
+            return ExportSgf(
+                _session.CurrentGameRecord,
+                $"kifuwarabe-go-commented-{DateTime.Now:yyyyMMdd-HHmmss}.sgf",
+                onSaved: path => _reviewSgfFilePath = path);
+        }
+
+        try
+        {
+            File.WriteAllText(_reviewSgfFilePath, SgfGameRecordConverter.ToSgf(_session.CurrentGameRecord), Encoding.UTF8);
+            RememberSgfDirectory(_reviewSgfFilePath);
+            RefreshSgfAutoSaveState();
+            GuiOperationLog.User("Overwrote reviewed SGF", _reviewSgfFilePath);
+            return true;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            ShowMessage(ex.Message, "SGF output");
+            return false;
         }
     }
 

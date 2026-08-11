@@ -1644,10 +1644,12 @@ public sealed class GoAppSession
 
         var reviewRecord = _reviewGameRecord.Clone();
         var reviewMoveIndex = ReviewMoveIndex;
-        if (_beforeReviewGameRecord is { } beforeReviewRecord &&
-            LoadGameRecordAsInitialPosition(beforeReviewRecord, out _))
+        // コメントを編集したレビュー棋譜を次回の REVIEW にも引き継ぐ。
+        // 従来はレビュー開始前のレコードへ戻していたため、SGF への保存は成功していても
+        // 直後に REVIEW を開き直すと、保存前のメモリ上の棋譜が表示されてしまっていた。
+        if (LoadGameRecordAsInitialPosition(reviewRecord, out _))
         {
-            CurrentGameRecord = beforeReviewRecord.Clone();
+            CurrentGameRecord = reviewRecord.Clone();
         }
         else
         {
