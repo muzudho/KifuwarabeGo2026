@@ -19,7 +19,7 @@ public sealed partial class GoAppSession
     {
         if (PlayerEditProfileIndex < 0 || PlayerEditProfileIndex >= _playerProfiles.Count) return false;
         IsTargetProfileEditPanelOpen = true;
-        TargetProfileEditIndex = 0;
+        TargetProfileEditIndex = Math.Max(0, GetTargetEditOwner().TargetProfileIds.FindIndex(id => string.Equals(id, PlayerEditDraft.TargetProfileIds.FirstOrDefault(), StringComparison.Ordinal)));
         return LoadTargetProfileEditDraft();
     }
 
@@ -64,6 +64,24 @@ public sealed partial class GoAppSession
         TargetProfileEditIndex = Math.Clamp(TargetProfileEditIndex, 0, owner.TargetProfileIds.Count - 1);
         return LoadTargetProfileEditDraft();
     }
+
+    /// <summary>選択 Target をこの Player の既定の使用先として先頭へ移動する。</summary>
+    public bool UseTargetProfile()
+    {
+        var owner = GetTargetEditOwner();
+        if (TargetProfileEditIndex < 0 || TargetProfileEditIndex >= owner.TargetProfileIds.Count)
+            return false;
+
+        var id = owner.TargetProfileIds[TargetProfileEditIndex];
+        owner.TargetProfileIds.RemoveAt(TargetProfileEditIndex);
+        owner.TargetProfileIds.Insert(0, id);
+        PlayerEditDraft.TargetProfileIds = owner.TargetProfileIds.ToList();
+        TargetProfileEditIndex = 0;
+        return LoadTargetProfileEditDraft();
+    }
+
+    public bool IsTargetProfileInUse(int index) =>
+        index == 0 && GetTargetEditOwner().TargetProfileIds.Count > 0;
 
     public void SetTargetProfileEditField(TargetProfileEditField field, string value)
     {

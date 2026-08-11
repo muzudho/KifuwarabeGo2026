@@ -2,6 +2,7 @@ namespace KifuwarabeGo2026.Gui.Application;
 
 using KifuwarabeGo2026.Shared.Domain;
 using System;
+using System.Linq;
 
 /// <summary>
 /// PlayerProfile 編集の下書き。UI はこの下書きだけを変更し、SAVE 時にのみ一覧へ反映する。
@@ -128,6 +129,16 @@ public sealed partial class GoAppSession
         {
             var index = FindGtpEngineIndex(PlayerEditDraft.EngineProfileId);
             return index >= 0 ? _gtpEngineProfiles[index].DisplayName : "ENGINE NOT FOUND";
+        }
+    }
+
+    public string PlayerEditTargetDisplayName
+    {
+        get
+        {
+            var targetId = PlayerEditDraft.TargetProfileIds.FirstOrDefault();
+            var target = _targetProfiles.FirstOrDefault(item => string.Equals(item.Id, targetId, StringComparison.Ordinal));
+            return target?.DisplayName ?? "NO TARGET";
         }
     }
 

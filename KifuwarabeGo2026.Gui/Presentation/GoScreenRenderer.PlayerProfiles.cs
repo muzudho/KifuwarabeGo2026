@@ -26,10 +26,12 @@ public sealed partial class GoScreenRenderer
     private static readonly Rectangle PlayerEditPanelNextEngineButtonBounds = new(834, 560, 62, 46);
     private static readonly Rectangle PlayerEditPanelEngineOptionsButtonBounds = new(908, 560, 220, 46);
     private static readonly Rectangle PlayerEditPanelTargetsButtonBounds = new(1140, 560, 220, 46);
+    private static readonly Rectangle PlayerEditPanelSelectTargetButtonBounds = new(1140, 439, 220, 46);
     private static readonly Rectangle TargetProfileEditCloseButtonBounds = new(1320, 182, 150, 48);
     private static readonly Rectangle TargetProfileEditAddCgosButtonBounds = new(466, 820, 150, 48);
     private static readonly Rectangle TargetProfileEditAddLocalButtonBounds = new(628, 820, 160, 48);
     private static readonly Rectangle TargetProfileEditRemoveButtonBounds = new(800, 820, 140, 48);
+    private static readonly Rectangle TargetProfileEditUseButtonBounds = new(960, 820, 138, 48);
     private static readonly Rectangle TargetProfileEditConnectionPreviousButtonBounds = new(1110, 820, 90, 48);
     private static readonly Rectangle TargetProfileEditConnectionNextButtonBounds = new(1212, 820, 90, 48);
 
@@ -52,10 +54,12 @@ public sealed partial class GoScreenRenderer
     public static bool GetPlayerEditPanelNextEngineButtonHit(Point point) => PlayerEditPanelNextEngineButtonBounds.Contains(point);
     public static bool GetPlayerEditPanelEngineOptionsButtonHit(Point point) => PlayerEditPanelEngineOptionsButtonBounds.Contains(point);
     public static bool GetPlayerEditPanelTargetsButtonHit(Point point) => PlayerEditPanelTargetsButtonBounds.Contains(point);
+    public static bool GetPlayerEditPanelSelectTargetButtonHit(Point point) => PlayerEditPanelSelectTargetButtonBounds.Contains(point);
     public static bool GetTargetProfileEditCloseButtonHit(Point point) => TargetProfileEditCloseButtonBounds.Contains(point);
     public static bool GetTargetProfileEditAddCgosButtonHit(Point point) => TargetProfileEditAddCgosButtonBounds.Contains(point);
     public static bool GetTargetProfileEditAddLocalButtonHit(Point point) => TargetProfileEditAddLocalButtonBounds.Contains(point);
     public static bool GetTargetProfileEditRemoveButtonHit(Point point) => TargetProfileEditRemoveButtonBounds.Contains(point);
+    public static bool GetTargetProfileEditUseButtonHit(Point point) => TargetProfileEditUseButtonBounds.Contains(point);
     public static bool GetTargetProfileEditConnectionPreviousButtonHit(Point point) => TargetProfileEditConnectionPreviousButtonBounds.Contains(point);
     public static bool GetTargetProfileEditConnectionNextButtonHit(Point point) => TargetProfileEditConnectionNextButtonBounds.Contains(point);
     public static TargetProfileEditField? GetTargetProfileEditFieldHit(Point point, GoAppSession session)
@@ -159,6 +163,9 @@ public sealed partial class GoScreenRenderer
         DrawRect(bounds, 2, new Color(116, 145, 146));
         DrawText("EDIT PLAYER", new Vector2(bounds.X + 34, bounds.Y + 28), new Color(244, 238, 218), 0.68f);
         DrawPlayerEditField(session, PlayerProfileEditField.DisplayName, "DISPLAY NAME", mousePoint);
+        DrawText("TARGET", new Vector2(552, 446), new Color(180, 195, 195), 0.36f);
+        DrawFittedText(session.PlayerEditTargetDisplayName, new Rectangle(760, 439, 360, 42), Color.White, 0.42f);
+        DrawCommandButton(PlayerEditPanelSelectTargetButtonBounds, "SELECT TARGET", false, mousePoint, scale: 0.27f);
         if (session.PlayerEditDraft.Kind == PlayerProfileKind.Computer)
         {
             DrawText("ENGINE", new Vector2(552, 510), new Color(180, 195, 195), 0.36f);
@@ -166,7 +173,7 @@ public sealed partial class GoScreenRenderer
             DrawFittedText(session.PlayerEditEngineDisplayName, engineTextBounds, Color.White, 0.42f);
             DrawCommandButton(PlayerEditPanelEngineOptionsButtonBounds, "CHANGE ENGINE", false, mousePoint, scale: 0.28f);
         }
-        DrawCommandButton(PlayerEditPanelTargetsButtonBounds, "TARGETS...", false, mousePoint, scale: 0.32f);
+        DrawCommandButton(PlayerEditPanelTargetsButtonBounds, "EDIT TARGETS", false, mousePoint, scale: 0.28f);
         DrawText("Click a field to edit.  Enter: finish  Escape: cancel  Tab: next field", new Vector2(bounds.X + 42, bounds.Y + 360), new Color(180, 195, 195), 0.28f);
         DrawCommandButton(PlayerEditPanelCancelButtonBounds, "CANCEL", false, mousePoint, scale: 0.34f);
         DrawCommandButton(PlayerEditPanelSaveButtonBounds, "SAVE", false, mousePoint, scale: 0.40f);
@@ -202,6 +209,8 @@ public sealed partial class GoScreenRenderer
                 if (!isLocalMatch)
                     DrawTargetProfileEditField(session, index, TargetProfileEditField.LoginPass, "LOGIN PASS", mousePoint, false);
                 DrawFittedText($"CONNECTION: {session.TargetProfileEditConnectionDisplayName}", new Rectangle(row.X + 18, row.Y + 47, 920, 22), new Color(147, 244, 200), 0.28f);
+                if (session.IsTargetProfileInUse(index))
+                    DrawFittedText("IN USE", new Rectangle(row.Right - 130, row.Y + 45, 110, 22), new Color(147, 244, 200), 0.28f);
             }
             else
             {
@@ -213,6 +222,7 @@ public sealed partial class GoScreenRenderer
         DrawCommandButton(TargetProfileEditAddCgosButtonBounds, "ADD CGOS", false, mousePoint, enabled: targets.Count < 5, scale: 0.32f);
         DrawCommandButton(TargetProfileEditAddLocalButtonBounds, "ADD LOCAL", false, mousePoint, enabled: targets.Count < 5, scale: 0.32f);
         DrawCommandButton(TargetProfileEditRemoveButtonBounds, "REMOVE", false, mousePoint, enabled: targets.Count > 1, scale: 0.32f);
+        DrawCommandButton(TargetProfileEditUseButtonBounds, "USE", false, mousePoint, enabled: targets.Count > 0 && !session.IsTargetProfileInUse(session.TargetProfileEditIndex), scale: 0.34f);
         var selected = session.TargetProfileEditDraft;
         DrawFittedText($"CONNECTION: {session.TargetProfileEditConnectionDisplayName}", new Rectangle(960, 766, 470, 32), new Color(147, 244, 200), 0.34f);
         var canChangeConnection = !string.IsNullOrEmpty(selected.ConnectionProfileId);

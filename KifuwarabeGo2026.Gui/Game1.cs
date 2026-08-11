@@ -1679,6 +1679,11 @@ public class Game1 : Game
             else if (GoScreenRenderer.GetTargetProfileEditAddCgosButtonHit(point) && _session.AddTargetProfile(true)) _targetCatalog.Save(_session.TargetProfiles);
             else if (GoScreenRenderer.GetTargetProfileEditAddLocalButtonHit(point) && _session.AddTargetProfile(false)) _targetCatalog.Save(_session.TargetProfiles);
             else if (GoScreenRenderer.GetTargetProfileEditRemoveButtonHit(point) && _session.RemoveTargetProfile()) _targetCatalog.Save(_session.TargetProfiles);
+            else if (GoScreenRenderer.GetTargetProfileEditUseButtonHit(point) && _session.UseTargetProfile())
+            {
+                _playerCatalog.Save(_session.PlayerProfiles);
+                _targetCatalog.Save(_session.TargetProfiles);
+            }
             else if (GoScreenRenderer.GetTargetProfileEditConnectionPreviousButtonHit(point)) { _session.CycleTargetProfileConnection(-1); _session.SaveTargetProfileEditDraft(); _targetCatalog.Save(_session.TargetProfiles); }
             else if (GoScreenRenderer.GetTargetProfileEditConnectionNextButtonHit(point)) { _session.CycleTargetProfileConnection(1); _session.SaveTargetProfileEditDraft(); _targetCatalog.Save(_session.TargetProfiles); }
             else if (GoScreenRenderer.GetTargetProfileEditFieldHit(point, _session) is { } field)
@@ -1703,7 +1708,7 @@ public class Game1 : Game
         }
         if (_session.IsPlayerEditPanelOpen)
         {
-            if (GoScreenRenderer.GetPlayerEditPanelTargetsButtonHit(point))
+            if (GoScreenRenderer.GetPlayerEditPanelSelectTargetButtonHit(point) || GoScreenRenderer.GetPlayerEditPanelTargetsButtonHit(point))
                 _session.OpenTargetProfileEditPanel();
             else if (GoScreenRenderer.GetPlayerEditPanelCancelButtonHit(point))
                 _session.CancelPlayerEditPanel();
