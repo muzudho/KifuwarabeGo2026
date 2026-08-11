@@ -276,14 +276,6 @@ public sealed partial class GoAppSession
 
     public GtpEngineProfile WhiteGtpEngineProfile => GetGtpEngineProfile(GoStone.White);
 
-    public void SetCgosConnectionProcessStatus(string statusMessage, bool isRunning, string logDirectory, IReadOnlyList<string> recentOutput)
-    {
-        CgosConnectionStatusMessage = statusMessage;
-        IsCgosConnectionRunning = isRunning;
-        CgosConnectionLogDirectory = logDirectory;
-        CgosConnectionRecentOutput = recentOutput;
-    }
-
     public void SetCgosBlackConnectionProcessStatus(string statusMessage, bool isRunning, string logDirectory, IReadOnlyList<string> recentOutput, string gtpResponseWaitDisplay = "")
     {
         if (isRunning && !IsCgosBlackConnectionRunning)

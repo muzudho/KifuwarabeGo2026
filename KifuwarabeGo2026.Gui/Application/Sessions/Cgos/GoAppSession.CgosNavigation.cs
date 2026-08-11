@@ -55,4 +55,12 @@ public sealed partial class GoAppSession
         if (CgosConnectionFlowKind == CgosFlowKind.ConnectionStart)
             CgosConnectionStatusMessage = "CONNECT REQUESTED";
     }
+
+    public void SetCgosConnectionProcessStatus(string statusMessage, bool isRunning, string logDirectory, IReadOnlyList<string> recentOutput)
+    {
+        CgosConnectionStatusMessage = statusMessage;
+        IsCgosConnectionRunning = isRunning;
+        CgosConnectionLogDirectory = logDirectory;
+        CgosConnectionRecentOutput = recentOutput;
+    }
 }
