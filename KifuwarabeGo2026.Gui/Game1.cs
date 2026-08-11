@@ -1666,6 +1666,8 @@ public class Game1 : Game
                 _session.CyclePlayerEditEngine(-1);
             else if (GoScreenRenderer.GetPlayerEditPanelNextEngineButtonHit(point))
                 _session.CyclePlayerEditEngine(1);
+            else if (GoScreenRenderer.GetPlayerEditPanelEngineOptionsButtonHit(point))
+                _session.OpenGtpEngineEditPanelForProfileId(_session.PlayerEditDraft.EngineProfileId);
             return;
         }
 

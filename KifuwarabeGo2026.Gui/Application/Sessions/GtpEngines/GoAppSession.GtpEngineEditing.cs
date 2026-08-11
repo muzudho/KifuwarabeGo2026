@@ -176,6 +176,18 @@ public sealed partial class GoAppSession
         GtpEngineEditSaveMessage = "";
     }
 
+    /// <summary>Player 編集から、紐付けられたエンジン設定を直接開く。</summary>
+    public bool OpenGtpEngineEditPanelForProfileId(string engineProfileId)
+    {
+        var index = _gtpEngineProfiles.FindIndex(profile => string.Equals(profile.Id, engineProfileId, StringComparison.Ordinal));
+        if (index < 0)
+            return false;
+
+        GtpEngineDialogSelectionIndex = index;
+        OpenGtpEngineEditPanel();
+        return true;
+    }
+
     public void OpenGtpEngineAddPanel()
     {
         IsTournamentRulesSelectionDialogOpen = false;

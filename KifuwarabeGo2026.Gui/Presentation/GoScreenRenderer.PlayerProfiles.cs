@@ -24,6 +24,7 @@ public sealed partial class GoScreenRenderer
     private static readonly Rectangle PlayerEditPanelSaveButtonBounds = new(1190, 624, 170, 52);
     private static readonly Rectangle PlayerEditPanelPreviousEngineButtonBounds = new(1030, 528, 110, 42);
     private static readonly Rectangle PlayerEditPanelNextEngineButtonBounds = new(1150, 528, 110, 42);
+    private static readonly Rectangle PlayerEditPanelEngineOptionsButtonBounds = new(1270, 528, 110, 42);
 
     public static bool GetBlackPlayerSelectButtonHit(Point point) => PlayerSelectorLayout.CreatePlayerSelector(BlackPlayerKindButtonY).ContainsBrowseButton(point);
     public static bool GetWhitePlayerSelectButtonHit(Point point) => PlayerSelectorLayout.CreatePlayerSelector(WhitePlayerKindButtonY).ContainsBrowseButton(point);
@@ -42,6 +43,7 @@ public sealed partial class GoScreenRenderer
     public static bool GetPlayerEditPanelSaveButtonHit(Point point) => PlayerEditPanelSaveButtonBounds.Contains(point);
     public static bool GetPlayerEditPanelPreviousEngineButtonHit(Point point) => PlayerEditPanelPreviousEngineButtonBounds.Contains(point);
     public static bool GetPlayerEditPanelNextEngineButtonHit(Point point) => PlayerEditPanelNextEngineButtonBounds.Contains(point);
+    public static bool GetPlayerEditPanelEngineOptionsButtonHit(Point point) => PlayerEditPanelEngineOptionsButtonBounds.Contains(point);
 
     public static int? GetPlayerSelectionDialogItemHit(Point point, GoAppSession session)
     {
@@ -124,6 +126,7 @@ public sealed partial class GoScreenRenderer
         {
             DrawCommandButton(PlayerEditPanelPreviousEngineButtonBounds, "PREV", false, mousePoint, scale: 0.32f);
             DrawCommandButton(PlayerEditPanelNextEngineButtonBounds, "NEXT", false, mousePoint, scale: 0.32f);
+            DrawCommandButton(PlayerEditPanelEngineOptionsButtonBounds, "OPTIONS", false, mousePoint, scale: 0.24f);
         }
         DrawText("DISPLAY NAME / IDENTIFIER editing is being connected to PopupTextBox.", new Vector2(bounds.X + 42, bounds.Y + 320), new Color(255, 225, 128), 0.28f);
         DrawCommandButton(PlayerEditPanelCancelButtonBounds, "CANCEL", false, mousePoint, scale: 0.34f);
