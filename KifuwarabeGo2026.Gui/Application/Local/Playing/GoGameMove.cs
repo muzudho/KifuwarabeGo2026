@@ -47,4 +47,7 @@ public readonly record struct GoGameMove
     public string? LegacyKifuwarabeAnalysisJson { get; }
 
     public bool IsPass => Point is null;
+
+    public GoGameMove WithComment(string comment) =>
+        new(Stone, Point, comment, Analysis, CommonAnalysisJson, LegacyKifuwarabeAnalysisJson);
 }

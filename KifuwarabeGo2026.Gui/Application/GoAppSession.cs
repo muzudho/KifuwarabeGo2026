@@ -1571,6 +1571,36 @@ public sealed class GoAppSession
         return moved;
     }
 
+    /// <summary>
+    /// 読み込み済み棋譜の、ルートまたは着手ノードのコメントを置換します。
+    /// 進行中対局では使用できません。
+    /// </summary>
+    public bool TrySetReviewComment(int moveIndex, string comment)
+    {
+        if (CurrentMode.Kind != GoAppModeKind.Reviewing || _reviewGameRecord is null)
+            return false;
+
+        if (!_reviewGameRecord.TrySetComment(moveIndex, comment))
+            return false;
+
+        CurrentGameRecord.TrySetComment(moveIndex, comment);
+        ResetCommentPage();
+        return true;
+    }
+
+    /// <summary>変化図編集盤の出力対象棋譜にコメントを設定します。</summary>
+    public bool TrySetVariationComment(int moveIndex, string comment)
+    {
+        if (CurrentMode.Kind != GoAppModeKind.VariationEditing)
+            return false;
+
+        if (!CurrentGameRecord.TrySetComment(moveIndex, comment))
+            return false;
+
+        ResetCommentPage();
+        return true;
+    }
+
     public bool StartReviewingStoredGameRecord(out string warning)
     {
         warning = "";

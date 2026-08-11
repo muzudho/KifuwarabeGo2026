@@ -161,7 +161,8 @@ public sealed class TextBoxController
         GameTime gameTime,
         IClipboardService clipboardService,
         bool allowClipboardExport = true,
-        Func<char, bool>? pasteCharacterFilter = null)
+        Func<char, bool>? pasteCharacterFilter = null,
+        bool multiline = false)
     {
         IsCaretNavigationKeyHeld = keyboard.IsKeyDown(Keys.Left) || keyboard.IsKeyDown(Keys.Right);
         var control = keyboard.IsKeyDown(Keys.LeftControl) || keyboard.IsKeyDown(Keys.RightControl);
@@ -212,12 +213,15 @@ public sealed class TextBoxController
         if (control && IsNewKeyPress(keyboard, previousKeyboard, Keys.V) &&
             clipboardService.TryGetText(out var clipboardText))
         {
-            InsertText(clipboardText, pasteCharacterFilter);
+            InsertText(clipboardText, pasteCharacterFilter, multiline);
         }
 
         if (IsNewKeyPress(keyboard, previousKeyboard, Keys.Enter))
         {
-            return TextBoxKeyboardAction.Commit;
+            if (!multiline || control)
+                return TextBoxKeyboardAction.Commit;
+
+            InsertText("\n", null, allowNewLines: true);
         }
 
         if (IsNewKeyPress(keyboard, previousKeyboard, Keys.Escape))
@@ -277,9 +281,11 @@ public sealed class TextBoxController
         return TextBoxKeyboardAction.None;
     }
 
-    private void InsertText(string value, Func<char, bool>? characterFilter)
+    private void InsertText(string value, Func<char, bool>? characterFilter, bool allowNewLines = false)
     {
-        value = value.Replace("\r", "").Replace("\n", "");
+        value = value.Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n');
+        if (!allowNewLines)
+            value = value.Replace("\n", "");
         if (characterFilter is not null)
             value = new string(value.Where(characterFilter).ToArray());
         var available = _maxLength - (Text.Length - SelectionLength);

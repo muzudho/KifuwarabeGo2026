@@ -53,6 +53,7 @@ internal static class PortabilityChecks
         VerifyStandardHandicapStrategies();
         VerifyLoadSgfStrategyAndTemporaryFile();
         VerifyKfaToKfwConversion();
+        VerifySgfCommentEditing();
         VerifyInitialPositionConcierge();
         VerifyInitialPositionConciergeGuiModel();
         VerifyInitialPositionEngineProfiles();
@@ -1666,6 +1667,18 @@ internal static class PortabilityChecks
             platform,
             platform,
             platform);
+    }
+
+    private static void VerifySgfCommentEditing()
+    {
+        var record = SgfGameRecordConverter.FromSgf("(;GM[1]SZ[9]C[root\r\ncomment];B[aa]C[move\rcomment])");
+        Require(record.RootComment == "root\ncomment", "Root C[] must normalize CRLF to LF.");
+        Require(record.Moves[0].Comment == "move\ncomment", "Move C[] must normalize CR to LF.");
+        Require(record.TrySetComment(0, "edited\r\nroot"), "Root comment must be editable.");
+        Require(record.TrySetComment(1, "edited ] \\ move"), "Move comment must be editable.");
+        var roundTrip = SgfGameRecordConverter.FromSgf(SgfGameRecordConverter.ToSgf(record));
+        Require(roundTrip.RootComment == "edited\nroot", "Root comment must survive SGF round-trip.");
+        Require(roundTrip.Moves[0].Comment == "edited ] \\ move", "Escaped move comment must survive SGF round-trip.");
     }
 
     private static void VerifyInitialWindowLayout()

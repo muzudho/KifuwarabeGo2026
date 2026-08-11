@@ -79,6 +79,12 @@ public class Game1 : Game
     private string _gtpEngineStringInputMessage = "";
     private TextCompositionState _gtpEngineStringComposition = TextCompositionState.Empty;
     private TextCompositionDiagnostics _textCompositionDiagnostics = TextCompositionDiagnostics.Empty;
+    private readonly TextBoxController _commentTextArea = new(50_000);
+    private bool _isCommentEditorOpen;
+    private int _commentEditorMoveIndex;
+    private GoAppSession? _commentEditorSession;
+    private KeyboardState _previousCommentEditorKeyboard;
+    private TextCompositionState _commentEditorComposition = TextCompositionState.Empty;
     private readonly TextBoxController _humanPlayerNameTextBox = new(80);
     private KeyboardState _previousHumanPlayerNameKeyboard;
     private KeyboardState _previousCgosConnectionKeyboard;
@@ -258,6 +264,14 @@ public class Game1 : Game
         if (acceptsInput && _activeGtpEngineStringOption is not null)
         {
             UpdateGtpEngineStringInputKeyboard(keyboard, gameTime);
+            UpdateMouseInput();
+            base.Update(gameTime);
+            return;
+        }
+
+        if (acceptsInput && _isCommentEditorOpen)
+        {
+            UpdateCommentEditorKeyboard(keyboard, gameTime);
             UpdateMouseInput();
             base.Update(gameTime);
             return;
@@ -779,6 +793,17 @@ public class Game1 : Game
                 compositionDiagnostics: _textCompositionDiagnostics,
                 showCompositionDiagnostics: _textCompositionService.SupportsDiagnosticAdornment);
 
+        if (_renderer is not null && _isCommentEditorOpen)
+            _renderer.DrawTextAreaDialog(
+                Mouse.GetState().Position,
+                _commentEditorMoveIndex == 0 ? "ROOT COMMENT (INITIAL POSITION)" : $"MOVE {_commentEditorMoveIndex} COMMENT",
+                _commentTextArea.Text,
+                _commentTextArea.CaretIndex,
+                "COMMENT IS SAVED AS STANDARD SGF C[] TEXT.",
+                _commentEditorComposition,
+                _textCompositionDiagnostics,
+                _textCompositionService.SupportsDiagnosticAdornment);
+
         _renderer?.DrawBreadcrumb(GetScreenBreadcrumb());
 
         base.Draw(gameTime);
@@ -790,6 +815,19 @@ public class Game1 : Game
 
         var mouse = Mouse.GetState();
         var point = VirtualScreen.ToVirtualPoint(GraphicsDevice.Viewport, mouse.Position);
+        if (_isCommentEditorOpen)
+        {
+            Mouse.SetCursor(MouseCursor.Arrow);
+            if (_previousMouse.LeftButton == ButtonState.Released && mouse.LeftButton == ButtonState.Pressed)
+            {
+                if (GoScreenRenderer.GetTextAreaDialogApplyButtonHit(point))
+                    CommitCommentEditor();
+                else if (GoScreenRenderer.GetTextAreaDialogCancelButtonHit(point))
+                    CancelCommentEditor();
+            }
+            _previousMouse = mouse;
+            return;
+        }
         UpdateTextBoxMouseDrag(mouse, point);
         var isGtpEngineOptionInputPopupOpen =
             _activeGtpEngineIntegerOption is not null ||
@@ -2008,6 +2046,20 @@ public class Game1 : Game
             return true;
         }
 
+        if (_session.MoveInformationDisplayMode == MoveInformationDisplayMode.Comment &&
+            GoScreenRenderer.GetReviewRootCommentEditButtonHit(point))
+        {
+            OpenCommentEditor(_session, 0);
+            return true;
+        }
+
+        if (_session.MoveInformationDisplayMode == MoveInformationDisplayMode.Comment &&
+            GoScreenRenderer.GetReviewCommentEditButtonHit(point))
+        {
+            OpenCommentEditor(_session, _session.ReviewMoveIndex);
+            return true;
+        }
+
         if (GoScreenRenderer.GetReviewMoveInformationDisplayModeButtonHit(point) is { } reviewInformationMode)
         {
             _session.SetMoveInformationDisplayMode(reviewInformationMode);
@@ -2135,6 +2187,12 @@ public class Game1 : Game
                 variationSession.CurrentGameRecord,
                 $"kifuwarabe-analysis-{DateTime.Now:yyyyMMdd-HHmmss}.sgf",
                 markCurrentResultSaved: false);
+            return true;
+        }
+
+        if (GoScreenRenderer.GetVariationEditingCommentButtonHit(point))
+        {
+            OpenCommentEditor(variationSession, variationSession.CurrentGameRecord.Moves.Count);
             return true;
         }
 
@@ -3296,6 +3354,11 @@ public class Game1 : Game
 
     private void OnTextInput(object? sender, TextInputEventArgs e)
     {
+        if (_isCommentEditorOpen)
+        {
+            _commentTextArea.TryInputCharacter(e.Character);
+            return;
+        }
         if (_activeGtpEngineIntegerOption is not null)
         {
             if (char.IsDigit(e.Character) || (e.Character == '-' && _gtpEngineIntegerOptionTextBox.CaretIndex == 0))
@@ -3335,6 +3398,11 @@ public class Game1 : Game
 
     private void OnTextCompositionChanged(TextCompositionState composition)
     {
+        if (_isCommentEditorOpen)
+        {
+            _commentEditorComposition = composition;
+            return;
+        }
         _gtpEngineStringComposition = _activeGtpEngineStringOption is null
             ? TextCompositionState.Empty
             : composition;
@@ -3342,6 +3410,58 @@ public class Game1 : Game
 
     private void OnTextCompositionDiagnosticsChanged(TextCompositionDiagnostics diagnostics) =>
         _textCompositionDiagnostics = diagnostics;
+
+    private void OpenCommentEditor(GoAppSession session, int moveIndex)
+    {
+        if (session.CurrentMode.Kind == GoAppModeKind.Reviewing && !session.HasReviewGameRecord)
+            return;
+        if (session.CurrentMode.Kind is not (GoAppModeKind.Reviewing or GoAppModeKind.VariationEditing))
+            return;
+
+        _commentEditorSession = session;
+        _commentEditorMoveIndex = Math.Clamp(moveIndex, 0, session.CurrentGameRecord.Moves.Count);
+        _commentTextArea.Begin(session.CurrentGameRecord.GetComment(_commentEditorMoveIndex));
+        _commentEditorComposition = TextCompositionState.Empty;
+        _previousCommentEditorKeyboard = Keyboard.GetState();
+        _isCommentEditorOpen = true;
+    }
+
+    private void UpdateCommentEditorKeyboard(KeyboardState keyboard, GameTime gameTime)
+    {
+        var action = _commentTextArea.HandleKeyboard(
+            keyboard,
+            _previousCommentEditorKeyboard,
+            gameTime,
+            _clipboardService,
+            multiline: true);
+        if (action == TextBoxKeyboardAction.Commit)
+            CommitCommentEditor();
+        else if (action == TextBoxKeyboardAction.Cancel)
+            CancelCommentEditor();
+        _previousCommentEditorKeyboard = keyboard;
+    }
+
+    private void CommitCommentEditor()
+    {
+        var saved = _commentEditorSession?.CurrentMode.Kind switch
+        {
+            GoAppModeKind.Reviewing => _commentEditorSession.TrySetReviewComment(_commentEditorMoveIndex, _commentTextArea.Text),
+            GoAppModeKind.VariationEditing => _commentEditorSession.TrySetVariationComment(_commentEditorMoveIndex, _commentTextArea.Text),
+            _ => false,
+        };
+        if (saved)
+            GuiOperationLog.User("Applied SGF comment", $"move={_commentEditorMoveIndex}; characters={_commentTextArea.Text.Length}");
+        CancelCommentEditor();
+    }
+
+    private void CancelCommentEditor()
+    {
+        _isCommentEditorOpen = false;
+        _commentEditorMoveIndex = 0;
+        _commentEditorSession = null;
+        _commentEditorComposition = TextCompositionState.Empty;
+        _commentTextArea.Clear();
+    }
 
     private bool TryInputCgosCredentialCharacter(char character)
     {

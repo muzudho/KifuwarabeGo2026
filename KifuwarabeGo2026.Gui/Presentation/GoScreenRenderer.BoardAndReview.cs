@@ -49,6 +49,9 @@ public sealed partial class GoScreenRenderer
     public static bool GetVariationEditingExportSgfButtonHit(Point point) =>
         VariationEditingExportSgfButtonBounds.Contains(point);
 
+    public static bool GetVariationEditingCommentButtonHit(Point point) =>
+        VariationEditingCommentButtonBounds.Contains(point);
+
     public static bool GetVariationEditingPassButtonHit(Point point) => VariationEditingPassButtonBounds.Contains(point);
 
     public static bool GetVariationEditingUndoButtonHit(Point point) => VariationEditingUndoButtonBounds.Contains(point);
@@ -203,7 +206,8 @@ public sealed partial class GoScreenRenderer
         DrawCommandButton(VariationEditingBoardLensExitButtonBounds, "OFF/1", false, mousePoint, enabled: session.IsRenParseDisplayEnabled, scale: 0.22f);
 
         DrawVerticalResultSection(new Rectangle(1144, 916, 668, 76), "ACTION", new Color(91, 82, 105));
-        DrawCommandButton(VariationEditingExportSgfButtonBounds, "KIFU OUTPUT (SGF)", false, mousePoint, scale: 0.22f);
+        DrawCommandButton(VariationEditingExportSgfButtonBounds, "KIFU OUTPUT (SGF)", false, mousePoint, scale: 0.20f);
+        DrawCommandButton(VariationEditingCommentButtonBounds, "COMMENT", false, mousePoint, scale: 0.30f);
         DrawCommandButton(
             VariationEditingUndoButtonBounds,
             "UNDO",
@@ -298,9 +302,10 @@ public sealed partial class GoScreenRenderer
     private static Rectangle VariationEditingDiscardButtonBounds => new(1684, 120, 128, 52);
     private static Rectangle VariationEditingLiveBoardBounds => new(1540, 188, 252, 252);
     private static Rectangle VariationEditingAdoptButtonBounds => new(1396, 120, 128, 52);
-    private static Rectangle VariationEditingExportSgfButtonBounds => new(1164, 924, 196, 56);
-    private static Rectangle VariationEditingUndoButtonBounds => new(1374, 924, 196, 56);
-    private static Rectangle VariationEditingPassButtonBounds => new(1584, 924, 196, 56);
+    private static Rectangle VariationEditingExportSgfButtonBounds => new(1164, 924, 145, 56);
+    private static Rectangle VariationEditingCommentButtonBounds => new(1321, 924, 145, 56);
+    private static Rectangle VariationEditingUndoButtonBounds => new(1478, 924, 145, 56);
+    private static Rectangle VariationEditingPassButtonBounds => new(1635, 924, 145, 56);
     private static Rectangle VariationEditingPlayButtonBounds => new(1164, 584, 140, 56);
     private static Rectangle VariationEditingBlackButtonBounds => new(1320, 584, 140, 56);
     private static Rectangle VariationEditingWhiteButtonBounds => new(1476, 584, 140, 56);

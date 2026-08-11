@@ -134,6 +134,10 @@ public static class SgfGameRecordConverter
 
         AppendSetupStones(builder, record.SetupStones, GoStone.Black, "AB", record.BoardSize);
         AppendSetupStones(builder, record.SetupStones, GoStone.White, "AW", record.BoardSize);
+        if (!string.IsNullOrWhiteSpace(record.RootComment))
+        {
+            AppendCommentProperty(builder, record.RootComment);
+        }
 
         foreach (var move in record.Moves)
         {
@@ -141,7 +145,7 @@ public static class SgfGameRecordConverter
             AppendProperty(builder, move.Stone == GoStone.Black ? "B" : "W", SgfCoordinate.FormatPoint(move.Point, record.BoardSize));
             if (!string.IsNullOrWhiteSpace(move.Comment))
             {
-                AppendProperty(builder, "C", move.Comment);
+                AppendCommentProperty(builder, move.Comment);
             }
             if (move.CommonAnalysisJson is not null)
             {
@@ -286,6 +290,10 @@ public static class SgfGameRecordConverter
         {
             record.Result = result;
         }
+        if (TryGetSingleValue(root, "C", out var rootComment))
+        {
+            record.RootComment = NormalizeCommentLineEndings(rootComment);
+        }
     }
 
     private static void ApplySetupStones(GoGameRecord record, Dictionary<string, List<string>> node, string propertyName, GoStone stone)
@@ -328,7 +336,7 @@ public static class SgfGameRecordConverter
             throw new SgfParseException($"Invalid SGF move point {propertyName}[{values[0]}].");
         }
 
-        var comment = TryGetSingleValue(node, "C", out var nodeComment) ? nodeComment : "";
+        var comment = TryGetSingleValue(node, "C", out var nodeComment) ? NormalizeCommentLineEndings(nodeComment) : "";
         var playedVertex = point is { } playedPoint ? GtpCoordinate.FormatVertex(playedPoint, record.BoardSize) : "pass";
         GoMoveAnalysis? analysis = null;
         string? commonAnalysisJson = null;
@@ -431,6 +439,12 @@ public static class SgfGameRecordConverter
     {
         builder.Append(name).Append('[').Append(EscapeValue(value)).Append(']');
     }
+
+    private static void AppendCommentProperty(StringBuilder builder, string value) =>
+        AppendProperty(builder, "C", NormalizeCommentLineEndings(value));
+
+    private static string NormalizeCommentLineEndings(string? value) =>
+        (value ?? "").Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n');
 
     private static string EscapeValue(string value)
     {

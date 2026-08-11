@@ -25,6 +25,9 @@ public sealed class GoGameRecord
 
     public string Place { get; set; } = "";
 
+    /// <summary>初期局面（SGF ルートノード）の C[] コメントです。</summary>
+    public string RootComment { get; set; } = "";
+
     public int BoardSize
     {
         get => _boardSize;
@@ -61,6 +64,7 @@ public sealed class GoGameRecord
             PlayedDate = PlayedDate,
             Result = Result,
             Place = Place,
+            RootComment = RootComment,
             BoardSize = BoardSize,
             Komi = Komi,
             TimeLimit = TimeLimit,
@@ -70,4 +74,28 @@ public sealed class GoGameRecord
         clone.Moves.AddRange(Moves);
         return clone;
     }
+
+    public string GetComment(int moveIndex) =>
+        moveIndex == 0
+            ? RootComment
+            : moveIndex > 0 && moveIndex <= Moves.Count ? Moves[moveIndex - 1].Comment : "";
+
+    public bool TrySetComment(int moveIndex, string comment)
+    {
+        comment = NormalizeCommentLineEndings(comment);
+        if (moveIndex == 0)
+        {
+            RootComment = comment;
+            return true;
+        }
+
+        if (moveIndex < 1 || moveIndex > Moves.Count)
+            return false;
+
+        Moves[moveIndex - 1] = Moves[moveIndex - 1].WithComment(comment);
+        return true;
+    }
+
+    private static string NormalizeCommentLineEndings(string? comment) =>
+        (comment ?? "").Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n');
 }
