@@ -223,9 +223,9 @@ public sealed partial class GoScreenRenderer
 
     public static GoPlayerKind? GetWhitePlayerKindButtonHit(Point point) => GetPlayerKindButtonHit(point, WhitePlayerKindButtonY);
 
-    public static GoPlayerKind? GetPonnukiBlackPlayerKindButtonHit(Point point) => GetPlayerKindButtonHit(point, 646);
+    public static GoPlayerKind? GetPonnukiBlackPlayerKindButtonHit(Point point) => GetPlayerKindButtonHit(point, PonnukiBlackPlayerKindButtonY);
 
-    public static GoPlayerKind? GetPonnukiWhitePlayerKindButtonHit(Point point) => GetPlayerKindButtonHit(point, 750);
+    public static GoPlayerKind? GetPonnukiWhitePlayerKindButtonHit(Point point) => GetPlayerKindButtonHit(point, PonnukiWhitePlayerKindButtonY);
 
     public static GoStone? GetHumanPlayerNameTextBoxHit(Point point, GoAppSession session)
     {
@@ -897,6 +897,10 @@ public sealed partial class GoScreenRenderer
     private const int BlackEngineButtonY = 768;
 
     private const int WhiteEngineButtonY = 872;
+    private const int PonnukiBlackPlayerKindButtonY = 646;
+    private const int PonnukiBlackEngineButtonY = 704;
+    private const int PonnukiWhitePlayerKindButtonY = 750;
+    private const int PonnukiWhiteEngineButtonY = 808;
 
     private static Rectangle BoardSizeButtonBounds(int index, int y) => new(AddPanelControlX + 132 + index * 180, y, 164, 50);
     private static Rectangle PathTooltipBounds(Rectangle rowBounds)
@@ -997,10 +1001,10 @@ public sealed partial class GoScreenRenderer
         DrawCommandButton(AppProviderGameSettingsButtonBounds, "GAME SETTINGS", false, mousePoint, scale: 0.32f);
         DrawCommandButton(ChangeAppProviderButtonBounds, "CHANGE", false, mousePoint, scale: 0.28f);
         DrawVerticalResultSection(new Rectangle(1144, 632, 668, 216), "PLAYERS", new Color(76, 91, 126));
-        DrawSetupPlayerKindRow(GoStone.Black, session.BlackPlayerKind, mousePoint, 646, "COMPUTER1");
-        DrawSetupPlayerSelector(session, GoStone.Black, mousePoint, 704);
-        DrawSetupPlayerKindRow(GoStone.White, session.WhitePlayerKind, mousePoint, 750, "COMPUTER2");
-        DrawSetupPlayerSelector(session, GoStone.White, mousePoint, 808);
+        DrawSetupPlayerKindRow(GoStone.Black, session.BlackPlayerKind, mousePoint, PonnukiBlackPlayerKindButtonY, "COMPUTER1");
+        DrawSetupPlayerSelector(session, GoStone.Black, mousePoint, PonnukiBlackEngineButtonY);
+        DrawSetupPlayerKindRow(GoStone.White, session.WhitePlayerKind, mousePoint, PonnukiWhitePlayerKindButtonY, "COMPUTER2");
+        DrawSetupPlayerSelector(session, GoStone.White, mousePoint, PonnukiWhiteEngineButtonY);
 
         DrawVerticalResultSection(new Rectangle(1144, 856, 668, 52), "SEED AUTO", new Color(112, 76, 48), labelWidth: 56);
         DrawCommandButton(PonnukiProviderSeedAutoChangeBounds, session.PonnukiProviderSeedAutoChange ? "[x] PROVIDER" : "[ ] PROVIDER", session.PonnukiProviderSeedAutoChange, mousePoint, scale: 0.22f);

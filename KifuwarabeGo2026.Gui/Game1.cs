@@ -1778,9 +1778,9 @@ public class Game1 : Game
             StopPonnukiProviderGame();
             _ponnukiProviderGameSession = new PonnukiProviderGameSession(provider);
             var record = _ponnukiProviderGameSession.StartAsync().GetAwaiter().GetResult();
+            record.RootComment = $"PONNUKI RANDOM SEEDS\nProvider: {seeds.Provider}\nPlayer1: {seeds.Player1}\nPlayer2: {seeds.Player2}";
             if (!_session.LoadGameRecordAsInitialPosition(record, out var warning))
                 throw new InvalidOperationException(warning);
-            record.RootComment = $"PONNUKI RANDOM SEEDS\nProvider: {seeds.Provider}\nPlayer1: {seeds.Player1}\nPlayer2: {seeds.Player2}";
             _ponnukiProviderObservedMoveCount = 0;
 
             GuiOperationLog.User(
