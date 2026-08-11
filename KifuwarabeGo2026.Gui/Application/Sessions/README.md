@@ -15,6 +15,7 @@
 - `BoardEditing/GoAppSession.EditingHistory.cs`: 盤面編集と変化図編集で共有する編集履歴
 - `GameRecords/Current/GoAppSession.CurrentGameRecord.cs`: 現在盤面からの棋譜レコード生成とメタデータ転記
 - `Game/GoAppSession.MatchBackedGame.cs`: MatchSession に委譲する着手・パス・終局反映
+- `Game/GoAppSession.LocalGame.cs`: 通常対局の着手・パス・投了・終局判定
 - `GameRecords/Go`: `GoGameRecord` など棋譜モデルの配置候補
 - `VariationSession`: 変化図編集状態の配置候補
 
