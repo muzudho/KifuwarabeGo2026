@@ -1343,14 +1343,6 @@ public sealed partial class GoAppSession
         _ => throw new ArgumentOutOfRangeException(nameof(field), field, "GTP engine edit field is out of range."),
     };
 
-    private void ApplyTournamentRules(TournamentRules rules)
-    {
-        _currentTournamentRules = rules.Clone();
-        BoardSize = _currentTournamentRules.BoardSize is 9 or 13 or 19 ? _currentTournamentRules.BoardSize : 19;
-        _currentTournamentRules.BoardSize = BoardSize;
-        ClearBoard();
-    }
-
     public const int TournamentRulesSelectionPageSize = 6;
 
     public const int GtpEngineSelectionPageSize = 6;

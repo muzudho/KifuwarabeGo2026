@@ -1,11 +1,20 @@
 namespace KifuwarabeGo2026.Gui.Application;
 
+using KifuwarabeGo2026.Gui.Application.Local.Resting.TournamentRule;
 using KifuwarabeGo2026.Shared.Domain;
 using System;
 
 /// <summary>大会規定の盤サイズ、ルール、コミ、持ち時間、手数制限を変更します。</summary>
 public sealed partial class GoAppSession
 {
+    private void ApplyTournamentRules(TournamentRules rules)
+    {
+        _currentTournamentRules = rules.Clone();
+        BoardSize = _currentTournamentRules.BoardSize is 9 or 13 or 19 ? _currentTournamentRules.BoardSize : 19;
+        _currentTournamentRules.BoardSize = BoardSize;
+        ClearBoard();
+    }
+
     public void ChangeBoardSize(int boardSize)
     {
         if (boardSize is not (9 or 13 or 19))
