@@ -15,15 +15,6 @@ using System.Linq;
 
 public sealed partial class GoAppSession
 {
-    public GoAppSession()
-    {
-        CurrentMode = _modes[GoAppModeKind.Resting];
-        _board = new GoBoard(BoardSize);
-        _gtpEngineProfiles.Add(new GtpEngineProfile());
-        _gtpEngineAppCompatibilities.Add(new(GtpEngineAppCompatibilityKind.LegacyPlay, "LEGACY FORMAL APP"));
-        ResetPositionHistory();
-    }
-
     public void SetCgosConnectionProfiles(IEnumerable<CgosConnectionProfile> profiles)
     {
         _cgosConnectionProfiles.Clear();
