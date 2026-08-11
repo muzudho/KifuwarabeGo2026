@@ -177,7 +177,13 @@ public sealed partial class GoScreenRenderer
         {
             var target = targets[index];
             var row = new Rectangle(bounds.X + 36, bounds.Y + 140 + index * 92, bounds.Width - 72, 78);
-            DrawDataRowFrame(row, active: index == session.TargetProfileEditIndex);
+            var isSelectedTarget = index == session.TargetProfileEditIndex;
+            DrawDataRowFrame(row, active: isSelectedTarget, hovered: row.Contains(mousePoint));
+            if (isSelectedTarget)
+            {
+                DrawText("▶", new Vector2(row.X + 4, row.Y + 25), new Color(147, 244, 200), 0.34f);
+                DrawRect(row, 2, new Color(147, 244, 200));
+            }
             DrawFittedText(target.DisplayName, new Rectangle(row.X + 18, row.Y + 10, 240, 28), Color.White, 0.46f);
             DrawFittedText($"LOGIN NAME: {target.LoginName}", new Rectangle(row.X + 280, row.Y + 10, 390, 28), new Color(180, 195, 195), 0.34f);
             DrawFittedText(session.GetTargetProfileConnectionDisplayName(target), new Rectangle(row.X + 280, row.Y + 42, 520, 24), new Color(147, 244, 200), 0.30f);
