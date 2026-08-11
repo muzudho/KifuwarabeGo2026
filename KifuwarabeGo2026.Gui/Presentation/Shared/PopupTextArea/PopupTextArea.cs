@@ -11,10 +11,11 @@ public sealed partial class GoScreenRenderer
 {
     private static Rectangle TextAreaDialogBounds => new(320, 150, 1280, 780);
     private static Rectangle TextAreaTextBounds => new(390, 330, 1140, 400);
-    private static Rectangle TextAreaCancelButtonBounds => new(1120, 810, 170, 58);
-    private static Rectangle TextAreaApplyButtonBounds => new(1320, 810, 170, 58);
+    // ポップアップ共通の慣例に合わせ、閉じる・反映する操作は見出し右上へまとめる。
+    private static Rectangle TextAreaCloseButtonBounds => new(1230, 172, 150, 54);
+    private static Rectangle TextAreaApplyButtonBounds => new(1410, 172, 150, 54);
 
-    public static bool GetTextAreaDialogCancelButtonHit(Point point) => TextAreaCancelButtonBounds.Contains(point);
+    public static bool GetTextAreaDialogCancelButtonHit(Point point) => TextAreaCloseButtonBounds.Contains(point);
     public static bool GetTextAreaDialogApplyButtonHit(Point point) => TextAreaApplyButtonBounds.Contains(point);
 
     public void DrawTextAreaDialog(
@@ -38,9 +39,10 @@ public sealed partial class GoScreenRenderer
         DrawDynamicOptionText(title, new Rectangle(TextAreaDialogBounds.X + 36, TextAreaDialogBounds.Y + 96, TextAreaDialogBounds.Width - 72, 40), new Color(180, 195, 195), 0.42f);
         if (showCompositionDiagnostics)
         {
-            DrawCompositionLamp(TextAreaDialogBounds, "SDL", TextAreaDialogBounds.Right - 120, compositionDiagnostics.IsSdlWindowResolved, new Color(99, 223, 185));
-            DrawCompositionLamp(TextAreaDialogBounds, "HOOK", TextAreaDialogBounds.Right - 76, compositionDiagnostics.IsWindowProcedureAttached, new Color(99, 223, 185));
-            DrawCompositionLamp(TextAreaDialogBounds, "IME", TextAreaDialogBounds.Right - 30, composition.IsActive, new Color(255, 225, 128));
+            // Windows 版だけの診断ランプ。右上の CLOSE ボタンの左に集め、本文の場所を取らない。
+            DrawCompositionLamp(TextAreaDialogBounds, "SDL", 1100, compositionDiagnostics.IsSdlWindowResolved, new Color(99, 223, 185));
+            DrawCompositionLamp(TextAreaDialogBounds, "HOOK", 1146, compositionDiagnostics.IsWindowProcedureAttached, new Color(99, 223, 185));
+            DrawCompositionLamp(TextAreaDialogBounds, "IME", 1192, composition.IsActive, new Color(255, 225, 128));
         }
         FillRect(TextAreaTextBounds, new Color(15, 20, 26));
         DrawRect(TextAreaTextBounds, 2, new Color(99, 223, 185));
@@ -53,8 +55,8 @@ public sealed partial class GoScreenRenderer
         }
         FillRect(new Rectangle((int)caret.X, (int)caret.Y, 2, 29), composition.IsActive ? new Color(255, 225, 128) : new Color(147, 244, 200));
         DrawDynamicOptionText(message, new Rectangle(TextAreaDialogBounds.X + 70, 752, 820, 34), new Color(180, 195, 195), 0.34f);
-        DrawFittedText("ENTER: NEW LINE   CTRL+ENTER: APPLY   ESC: CANCEL", new Rectangle(TextAreaDialogBounds.X + 70, 786, 800, 28), new Color(147, 201, 190), 0.29f);
-        DrawCommandButton(TextAreaCancelButtonBounds, "CANCEL", false, mousePoint, scale: 0.38f);
+        DrawFittedText("ENTER: NEW LINE   CTRL+ENTER: APPLY   ESC: CLOSE WITHOUT APPLY", new Rectangle(TextAreaDialogBounds.X + 70, 786, 800, 28), new Color(147, 201, 190), 0.27f);
+        DrawCommandButton(TextAreaCloseButtonBounds, "CLOSE", false, mousePoint, scale: 0.38f);
         DrawCommandButton(TextAreaApplyButtonBounds, "APPLY", false, mousePoint, scale: 0.40f);
         _spriteBatch.End();
     }
