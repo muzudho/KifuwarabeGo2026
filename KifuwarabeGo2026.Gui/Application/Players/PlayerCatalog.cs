@@ -57,6 +57,23 @@ public sealed class PlayerCatalog
                 continue;
             }
 
+            // 初期導入版では EngineProfileId が起動ごとに変わってしまった。
+            // 自動生成 Player は表示名と Identifier がエンジン表示名そのものなので、
+            // その形だけを旧 ID から現行 ID へ移し、同じエンジンの重複を統合する。
+            var legacyMatches = profiles
+                .Where(profile =>
+                    profile.Kind == PlayerProfileKind.Computer &&
+                    string.Equals(profile.DisplayName, engine.DisplayName, StringComparison.Ordinal) &&
+                    string.Equals(profile.Identifier, engine.DisplayName, StringComparison.Ordinal))
+                .ToList();
+            if (legacyMatches.Count > 0)
+            {
+                legacyMatches[0].EngineProfileId = engine.Id;
+                foreach (var duplicate in legacyMatches.Skip(1))
+                    profiles.Remove(duplicate);
+                continue;
+            }
+
             profiles.Add(new PlayerProfile
             {
                 DisplayName = engine.DisplayName,
