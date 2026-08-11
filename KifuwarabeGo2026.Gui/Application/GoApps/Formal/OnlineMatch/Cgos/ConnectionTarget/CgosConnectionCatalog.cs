@@ -45,6 +45,8 @@ public sealed class CgosConnectionCatalog
         return profile with
         {
             Id = string.IsNullOrWhiteSpace(profile.Id) ? Guid.NewGuid().ToString("N") : profile.Id,
+            Kind = ConnectionProfileKind.Cgos,
+            EndpointKey = CreateEndpointKey(host, profile.Port),
             DisplayName = displayName,
             Host = host,
             Port = Math.Clamp(profile.Port, 1, 65535),
@@ -53,4 +55,7 @@ public sealed class CgosConnectionCatalog
             Note = profile.Note?.Trim() ?? "",
         };
     }
+
+    private static string CreateEndpointKey(string host, int port) =>
+        $"cgos://{host.Trim().TrimEnd('.').ToLowerInvariant()}:{Math.Clamp(port, 1, 65535)}";
 }

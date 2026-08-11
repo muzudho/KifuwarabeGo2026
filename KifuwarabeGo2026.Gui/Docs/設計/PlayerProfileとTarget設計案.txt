@@ -71,6 +71,10 @@ Target Profile の DisplayName は画面表示用の任意文字列である。
 CGOS の Host、Port、イベント、ラウンド等は、既存の CGOS Connection Profile 側で管理する。
 Target Profile は ConnectionProfileId によりそれを参照する。将来の接続先カタログでは、安定した ID を必須にする。
 
+接続先カタログは、現在は「接続先（CGOS）」である。将来は他サービスも扱えるよう、ConnectionProfile は接続種別（現在は Cgos）を持つものとして一般化する。
+TargetProfile が保持するのは Host / Port を連結した接続文字列ではなく ConnectionProfile の不変 Id である。接続文字列は編集・表記揺れ・TLS 等の接続オプション追加で変化し得るため、参照キーにしない。
+接続種別と正規化済み Host / Port から作る EndpointKey（例: cgos://uec-go.com:6809）は、重複候補の検出・警告・初期候補の決定に使う。同一 Endpoint でもイベント、ラウンド、接続オプションが異なる複数 ConnectionProfile は許可する。
+
 
 4. Target のサンプル
 

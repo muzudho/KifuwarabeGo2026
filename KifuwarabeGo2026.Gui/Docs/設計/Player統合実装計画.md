@@ -34,6 +34,7 @@ Local Match と Ponnuki は、対局者を共通に扱う `PLAYER` 選択へ移�
 - `TargetProfile` は「Player がどの用途・接続先へ、どの Login Name で参加するか」を表す。
 - コンピューター Player は、1 個の `GtpEngineProfile` を参照する。
 - Player は、使用可能な複数の `TargetProfile` を一方向に参照する。Engine Profile と Target Profile は独立したカタログであり、Player を逆参照しない。
+- `TargetProfile.ConnectionProfileId` は接続先（現時点では CGOS）の不変 ID を参照する。正規化済み接続文字列は重複検出・候補選択用であり、参照キーにはしない。
 - 同じエンジンを参照しても、表示名・識別子の異なる複数 Player を作れる。
 - 対局設定は黒白とも `PlayerProfile` の ID を持つ。
 - SGF の `PB` / `PW` には Player の表示名を保存する。
@@ -137,6 +138,7 @@ WHITE PLAYER   [表示名 / 種別]                 [SELECT]
 6. [完了] Local Match と Ponnuki の設定画面を、新しい `PLAYER SELECT` UI へ置換する。
 7. [未着手] CGOS と大会ルールで必要な Player 選択・Identifier の送信規則を個別に追加する。
 8. [未着手] 移行猶予後、旧 `BlackPlayerKind` / `WhitePlayerKind` とエンジン選択インデックスを削除する。
+9. [未着手] CGOS 固有の接続先カタログを一般化する。現在の表示名は「接続先（CGOS）」とし、将来の ConnectionProfile には接続種別と EndpointKey を追加する。
 
 ## 完了条件
 
