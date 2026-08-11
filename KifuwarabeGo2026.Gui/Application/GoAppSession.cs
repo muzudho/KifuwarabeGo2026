@@ -180,9 +180,6 @@ public sealed partial class GoAppSession
     public string SgfAutoSaveStatus { get; private set; } = "";
     public bool IsLocalResultSgfSaved { get; private set; }
     public bool IsCgosResultSgfSaved { get; private set; }
-    /// <summary>レビュー中にコメントを変更し、まだ SGF 出力していない状態です。</summary>
-    public bool HasUnsavedReviewCommentChanges { get; private set; }
-
     public bool CanOpenLocalChartPopup =>
         CurrentMode.Kind is GoAppModeKind.Playing or GoAppModeKind.GameOver;
 

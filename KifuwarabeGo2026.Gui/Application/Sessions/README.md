@@ -7,3 +7,15 @@
 - `VariationSession`: 変化図編集状態の配置候補
 
 `Current` や `BeforeReview` はインスタンス名であり、型の分類ではないため、個別フォルダーにはしません。
+
+## レビュー棋譜の所有者と同期規則
+
+| データ | 所有者 | 用途 |
+| --- | --- | --- |
+| `CurrentGameRecord` | `GoAppSession` | 現在の盤面を描画・操作するための棋譜 |
+| `_reviewGameRecord` | `GoAppSession.Review` | SGF 全体、全手順、ルートコメントの正本 |
+| `_beforeReviewGameRecord` | `GoAppSession.Review` | レビュー開始前の状態を退避するコピー |
+
+- レビュー中のコメント更新は、まず `_reviewGameRecord` を更新する。
+- 表示と編集の 0 手目コメントは `ReviewRootComment` を経由し、常に `_reviewGameRecord` を正本にする。
+- `CurrentGameRecord` は盤面復元で作り直されることがあるため、レビューSGFの全情報を持つ前提にしない。

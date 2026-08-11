@@ -11,6 +11,8 @@ public sealed partial class GoAppSession
     // 盤面そのものとは別に、棋譜の履歴・コメントを失わず扱うために保持します。
     private GoGameRecord? _reviewGameRecord;
     private GoGameRecord? _beforeReviewGameRecord;
+    /// <summary>レビュー中にコメントを変更し、まだ SGF 出力していない状態です。</summary>
+    public bool HasUnsavedReviewCommentChanges { get; private set; }
 
     public bool HasReviewGameRecord => _reviewGameRecord is not null;
     public int ReviewMoveIndex { get; private set; }
