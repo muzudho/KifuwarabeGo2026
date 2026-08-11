@@ -13,12 +13,12 @@ public sealed partial class GoScreenRenderer
     private static readonly Rectangle PlayerSelectionListBounds = new(438, 270, 1044, 510);
     private static readonly Rectangle PlayerSelectionCancelButtonBounds = new(1116, 180, 156, 50);
     private static readonly Rectangle PlayerSelectionOkButtonBounds = new(1302, 180, 180, 50);
-    private static readonly Rectangle PlayerSelectionPreviousButtonBounds = new(438, 806, 138, 48);
-    private static readonly Rectangle PlayerSelectionNextButtonBounds = new(1344, 806, 138, 48);
-    private static readonly Rectangle PlayerSelectionAddHumanButtonBounds = new(630, 806, 190, 48);
-    private static readonly Rectangle PlayerSelectionAddComputerButtonBounds = new(838, 806, 220, 48);
-    private static readonly Rectangle PlayerSelectionDeleteButtonBounds = new(1076, 806, 150, 48);
-    private static readonly Rectangle PlayerSelectionEditButtonBounds = new(1076, 750, 150, 42);
+    private static readonly Rectangle PlayerSelectionPreviousButtonBounds = new(1212, 806, 104, 48);
+    private static readonly Rectangle PlayerSelectionNextButtonBounds = new(1328, 806, 116, 48);
+    private static readonly Rectangle PlayerSelectionAddHumanButtonBounds = new(438, 806, 116, 48);
+    private static readonly Rectangle PlayerSelectionAddComputerButtonBounds = new(566, 806, 162, 48);
+    private static readonly Rectangle PlayerSelectionEditButtonBounds = new(742, 806, 144, 48);
+    private static readonly Rectangle PlayerSelectionDeleteButtonBounds = new(900, 806, 144, 48);
     private static readonly Rectangle PlayerEditPanelCloseButtonBounds = new(1190, 624, 170, 52);
 
     public static bool GetBlackPlayerSelectButtonHit(Point point) => PlayerSelectorLayout.CreatePlayerSelector(BlackPlayerKindButtonY).ContainsBrowseButton(point);
@@ -85,12 +85,16 @@ public sealed partial class GoScreenRenderer
         }
 
         var pageCount = Math.Max(1, (int)Math.Ceiling(session.PlayerProfiles.Count / (double)GoAppSession.PlayerSelectionPageSize));
-        DrawCommandButton(PlayerSelectionPreviousButtonBounds, "PREV", false, mousePoint, enabled: session.PlayerSelectionPageIndex > 0, scale: 0.42f);
-        DrawCommandButton(PlayerSelectionAddHumanButtonBounds, "ADD HUMAN", false, mousePoint, scale: 0.32f);
-        DrawCommandButton(PlayerSelectionAddComputerButtonBounds, "ADD COMPUTER", false, mousePoint, enabled: session.GtpEngineProfiles.Count > 0, scale: 0.30f);
-        DrawCommandButton(PlayerSelectionDeleteButtonBounds, "DELETE", false, mousePoint, enabled: session.CanDeleteSelectedPlayerProfile, scale: 0.36f);
+        var addHeaderBounds = new Rectangle(438, 764, 290, 30);
+        FillRect(addHeaderBounds, new Color(87, 82, 134));
+        DrawRect(addHeaderBounds, 1, new Color(177, 169, 232));
+        DrawFittedText("ADD", addHeaderBounds, Color.White, 0.34f);
+        DrawCommandButton(PlayerSelectionAddHumanButtonBounds, "HUMAN", false, mousePoint, scale: 0.34f);
+        DrawCommandButton(PlayerSelectionAddComputerButtonBounds, "COMPUTER", false, mousePoint, enabled: session.GtpEngineProfiles.Count > 0, scale: 0.30f);
         DrawCommandButton(PlayerSelectionEditButtonBounds, "EDIT", false, mousePoint, enabled: session.PlayerDialogSelectionIndex >= 0, scale: 0.42f);
-        DrawFittedText($"PAGE {session.PlayerSelectionPageIndex + 1} / {pageCount}", new Rectangle(1240, 814, 92, 32), new Color(227, 224, 210), 0.25f);
+        DrawCommandButton(PlayerSelectionDeleteButtonBounds, "DELETE", false, mousePoint, enabled: session.CanDeleteSelectedPlayerProfile, scale: 0.32f);
+        DrawCommandButton(PlayerSelectionPreviousButtonBounds, "PREV", false, mousePoint, enabled: session.PlayerSelectionPageIndex > 0, scale: 0.34f);
+        DrawFittedText($"{session.PlayerSelectionPageIndex + 1} / {pageCount}", new Rectangle(1152, 814, 52, 32), new Color(227, 224, 210), 0.22f);
         DrawCommandButton(PlayerSelectionNextButtonBounds, "NEXT", false, mousePoint, enabled: session.PlayerSelectionPageIndex < pageCount - 1, scale: 0.42f);
     }
 
