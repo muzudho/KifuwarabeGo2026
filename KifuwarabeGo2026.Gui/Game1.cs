@@ -1674,11 +1674,14 @@ public class Game1 : Game
                 _session.CancelPlayerEditPanel();
             else if (GoScreenRenderer.GetPlayerEditPanelSaveButtonHit(point) && _session.SavePlayerEditDraft())
                 _playerCatalog.Save(_session.PlayerProfiles);
-            else if (GoScreenRenderer.GetPlayerEditPanelPreviousEngineButtonHit(point))
+            else if (_session.PlayerEditDraft.Kind == PlayerProfileKind.Computer &&
+                     GoScreenRenderer.GetPlayerEditPanelPreviousEngineButtonHit(point))
                 _session.CyclePlayerEditEngine(-1);
-            else if (GoScreenRenderer.GetPlayerEditPanelNextEngineButtonHit(point))
+            else if (_session.PlayerEditDraft.Kind == PlayerProfileKind.Computer &&
+                     GoScreenRenderer.GetPlayerEditPanelNextEngineButtonHit(point))
                 _session.CyclePlayerEditEngine(1);
-            else if (GoScreenRenderer.GetPlayerEditPanelEngineOptionsButtonHit(point))
+            else if (_session.PlayerEditDraft.Kind == PlayerProfileKind.Computer &&
+                     GoScreenRenderer.GetPlayerEditPanelEngineOptionsButtonHit(point))
                 _session.OpenGtpEngineEditPanelForProfileId(_session.PlayerEditDraft.EngineProfileId);
             else if (GoScreenRenderer.GetPlayerEditPanelFieldHit(point) is { } field)
                 BeginOrMovePlayerEditField(point, field);
