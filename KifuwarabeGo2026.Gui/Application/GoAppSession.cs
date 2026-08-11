@@ -348,16 +348,6 @@ public sealed partial class GoAppSession
 
     public GoStone? Winner { get; private set; }
 
-    public bool IsEngineThinking { get; private set; }
-
-    public bool IsEngineReady { get; private set; } = true;
-
-    public string EngineErrorMessage { get; private set; } = "";
-
-    private GoStone? _engineErrorStone;
-
-    public GoStone? EngineErrorStone => string.IsNullOrWhiteSpace(EngineErrorMessage) ? null : _engineErrorStone;
-
     public GoGameRecord CurrentGameRecord { get; private set; } = new();
 
     public GoGameMove? LatestGameMove =>
@@ -1901,29 +1891,6 @@ public sealed partial class GoAppSession
         {
             return false;
         }
-    }
-
-    public void SetEngineThinking(bool isThinking)
-    {
-        IsEngineThinking = isThinking;
-    }
-
-    public void SetEngineReady(bool isReady)
-    {
-        IsEngineReady = isReady;
-    }
-
-    public void ClearEngineError()
-    {
-        EngineErrorMessage = "";
-        _engineErrorStone = null;
-    }
-
-    public void SetEngineError(string message, GoStone stone)
-    {
-        EngineErrorMessage = message;
-        _engineErrorStone = stone;
-        IsEngineThinking = false;
     }
 
     public void AddCurrentTurnElapsedTime(TimeSpan elapsed)

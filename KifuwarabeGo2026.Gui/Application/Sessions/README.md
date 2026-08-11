@@ -21,6 +21,7 @@
 - `Game/GoAppSession.GameLifecycle.cs`: ローカル対局の開始・中断
 - `Game/GoAppSession.LocalReplay.cs`: 対局中・終局後のローカル棋譜シーク表示
 - `Game/GoAppSession.GamePlayers.cs`: 黒白のプレイヤー種別、人間名、名前編集状態
+- `Game/GoAppSession.EngineState.cs`: GTPエンジンの準備・思考・エラー状態
 - `MoveInformation/GoAppSession.MoveInformation.cs`: 着手情報、コメント、チャートの表示状態
 - `BoardLens/GoAppSession.RenParser.cs`: 盤面レンズの切替状態と連解析キャッシュ
 - `BoardState/GoAppSession.BoardState.cs`: 全モードで共有する盤面・手番・局面履歴の初期化
