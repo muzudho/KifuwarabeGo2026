@@ -35,6 +35,8 @@ public sealed partial class GoScreenRenderer
             case TitleMenuPage.Home:
                 var formalAppsHovered = TitleFormalAppsLabelBounds.Contains(mousePoint);
                 var casualAppsHovered = TitleCasualAppsLabelBounds.Contains(mousePoint);
+                var localMatchHovered = TitleHomeLocalButtonBounds.Contains(mousePoint);
+                var onlineMatchHovered = TitleHomeCgosButtonBounds.Contains(mousePoint);
                 var settingsHovered = SettingsButtonBounds.Contains(mousePoint);
                 DrawText("FORMAL APPS", new Vector2(500, 338), new Color(99, 223, 185), 0.48f);
                 DrawText("CASUAL APPS", new Vector2(950, 338), new Color(255, 190, 92), 0.48f);
@@ -48,6 +50,10 @@ public sealed partial class GoScreenRenderer
                     DrawTitleHomeHint("CASUAL APPS", "独自実装で機能追加を進めます！", new Color(255, 190, 92));
                 else if (settingsHovered)
                     DrawTitleHomeHint("SETTINGS", "アプリケーションを設定します！", new Color(147, 201, 190));
+                else if (localMatchHovered)
+                    DrawTitleHomeHint("LOCAL MATCH", "ローカルPCで、人間や碁エンジンが対局！ など。", new Color(99, 223, 185));
+                else if (onlineMatchHovered)
+                    DrawTitleHomeHint("ONLINE MATCH", "インターネット上の碁サーバーにお邪魔して碁エンジンが対局！", new Color(99, 223, 185));
                 else if (TitleAppBounds(0).Contains(mousePoint))
                 {
                     DrawCaptureGamePreview();
@@ -140,6 +146,10 @@ public sealed partial class GoScreenRenderer
                 (new Rectangle(70, 270, 390, 190), GetTitleSectionLabelConnectorTarget("FORMAL APPS", new Vector2(500, 338), connectsToRight: false)),
             "CASUAL APPS" =>
                 (new Rectangle(1412, 270, 420, 190), GetTitleSectionLabelConnectorTarget("CASUAL APPS", new Vector2(950, 338), connectsToRight: true)),
+            "LOCAL MATCH" =>
+                (new Rectangle(930, 390, 520, 174), new Vector2(TitleHomeLocalButtonBounds.Right, TitleHomeLocalButtonBounds.Center.Y)),
+            "ONLINE MATCH" =>
+                (new Rectangle(930, 536, 620, 174), new Vector2(TitleHomeCgosButtonBounds.Right, TitleHomeCgosButtonBounds.Center.Y)),
             _ =>
                 (new Rectangle(1360, 780, 390, 160), new Vector2(SettingsButtonBounds.Left - 14, SettingsButtonBounds.Center.Y)),
         };
@@ -147,6 +157,8 @@ public sealed partial class GoScreenRenderer
         {
             "FORMAL APPS" => new[] { "他のコンピュータ碁ソフトと", "できるだけ連携します！" },
             "CASUAL APPS" => new[] { "独自実装で", "機能追加を進めます！" },
+            "LOCAL MATCH" => new[] { "ローカルPCで、人間や碁エンジンが", "対局！ など。" },
+            "ONLINE MATCH" => new[] { "インターネット上の碁サーバーにお邪魔して", "碁エンジンが対局！" },
             _ => new[] { message },
         };
         DrawStickyNote(
