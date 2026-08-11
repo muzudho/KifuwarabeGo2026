@@ -30,9 +30,10 @@ public sealed partial class GoAppSession
         return LoadTargetProfileEditDraft();
     }
 
-    public void AddTargetProfile(bool cgos)
+    public bool AddTargetProfile(bool cgos)
     {
         var owner = GetTargetEditOwner();
+        if (owner.TargetProfileIds.Count >= 5) return false;
         var target = new TargetProfile
         {
             DisplayName = cgos ? "CGOS" : "LocalMatch",
@@ -44,6 +45,7 @@ public sealed partial class GoAppSession
         PlayerEditDraft.TargetProfileIds = owner.TargetProfileIds.ToList();
         TargetProfileEditIndex = owner.TargetProfileIds.Count - 1;
         LoadTargetProfileEditDraft();
+        return true;
     }
 
     public bool RemoveTargetProfile()

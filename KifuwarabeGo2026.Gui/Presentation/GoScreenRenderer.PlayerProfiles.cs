@@ -25,6 +25,7 @@ public sealed partial class GoScreenRenderer
     private static readonly Rectangle PlayerEditPanelPreviousEngineButtonBounds = new(760, 560, 62, 46);
     private static readonly Rectangle PlayerEditPanelNextEngineButtonBounds = new(834, 560, 62, 46);
     private static readonly Rectangle PlayerEditPanelEngineOptionsButtonBounds = new(908, 560, 220, 46);
+    private static readonly Rectangle PlayerEditPanelTargetsButtonBounds = new(1140, 560, 220, 46);
 
     public static bool GetBlackPlayerSelectButtonHit(Point point) => PlayerSelectorLayout.CreatePlayerSelector(BlackPlayerKindButtonY).ContainsBrowseButton(point);
     public static bool GetWhitePlayerSelectButtonHit(Point point) => PlayerSelectorLayout.CreatePlayerSelector(WhitePlayerKindButtonY).ContainsBrowseButton(point);
@@ -44,6 +45,7 @@ public sealed partial class GoScreenRenderer
     public static bool GetPlayerEditPanelPreviousEngineButtonHit(Point point) => PlayerEditPanelPreviousEngineButtonBounds.Contains(point);
     public static bool GetPlayerEditPanelNextEngineButtonHit(Point point) => PlayerEditPanelNextEngineButtonBounds.Contains(point);
     public static bool GetPlayerEditPanelEngineOptionsButtonHit(Point point) => PlayerEditPanelEngineOptionsButtonBounds.Contains(point);
+    public static bool GetPlayerEditPanelTargetsButtonHit(Point point) => PlayerEditPanelTargetsButtonBounds.Contains(point);
 
     public static PlayerProfileEditField? GetPlayerEditPanelFieldHit(Point point) =>
         PlayerEditPanelFieldTextBounds(PlayerProfileEditField.DisplayName).Contains(point) ? PlayerProfileEditField.DisplayName :
@@ -135,6 +137,7 @@ public sealed partial class GoScreenRenderer
             DrawFittedText(session.PlayerEditEngineDisplayName, engineTextBounds, Color.White, 0.42f);
             DrawCommandButton(PlayerEditPanelEngineOptionsButtonBounds, "CHANGE ENGINE", false, mousePoint, scale: 0.28f);
         }
+        DrawCommandButton(PlayerEditPanelTargetsButtonBounds, "TARGETS...", false, mousePoint, scale: 0.32f);
         DrawText("Click a field to edit.  Enter: finish  Escape: cancel  Tab: next field", new Vector2(bounds.X + 42, bounds.Y + 360), new Color(180, 195, 195), 0.28f);
         DrawCommandButton(PlayerEditPanelCancelButtonBounds, "CANCEL", false, mousePoint, scale: 0.34f);
         DrawCommandButton(PlayerEditPanelSaveButtonBounds, "SAVE", false, mousePoint, scale: 0.40f);

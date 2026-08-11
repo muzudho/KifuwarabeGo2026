@@ -1678,7 +1678,9 @@ public class Game1 : Game
         }
         if (_session.IsPlayerEditPanelOpen)
         {
-            if (GoScreenRenderer.GetPlayerEditPanelCancelButtonHit(point))
+            if (GoScreenRenderer.GetPlayerEditPanelTargetsButtonHit(point))
+                _session.OpenTargetProfileEditPanel();
+            else if (GoScreenRenderer.GetPlayerEditPanelCancelButtonHit(point))
                 _session.CancelPlayerEditPanel();
             else if (GoScreenRenderer.GetPlayerEditPanelSaveButtonHit(point) && _session.SavePlayerEditDraft())
                 _playerCatalog.Save(_session.PlayerProfiles);
