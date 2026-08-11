@@ -29,6 +29,7 @@
 - `BoardState/GoAppSession.PositionRules.cs`: アゲハマ、コウ、勝敗、スーパーコウなどの局面規則
 - `Cgos/GoAppSession.CgosCredentials.cs`: CGOSのログイン情報とポップアップ編集状態
 - `Mode/GoAppSession.Mode.cs`: 盤面モード遷移と遷移時の共通後始末
+- `TournamentRules/GoAppSession.TournamentRules.Core.cs`: 盤サイズ・ルール・コミ・持ち時間・手数制限
 - `GameRecords/Go`: `GoGameRecord` など棋譜モデルの配置候補
 - `VariationSession`: 変化図編集状態の配置候補
 

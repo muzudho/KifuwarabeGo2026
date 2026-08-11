@@ -823,24 +823,6 @@ public sealed partial class GoAppSession
         ChangeMode(GoAppModeKind.Resting);
     }
 
-    public void ChangeBoardSize(int boardSize)
-    {
-        if (boardSize is not (9 or 13 or 19))
-        {
-            throw new ArgumentOutOfRangeException(nameof(boardSize), boardSize, "Board size must be 9, 13, or 19.");
-        }
-
-        if (BoardSize == boardSize)
-        {
-            return;
-        }
-
-        BoardSize = boardSize;
-        _currentTournamentRules.BoardSize = boardSize;
-        TournamentRulesSaveMessage = "UNSAVED";
-        ClearBoard();
-    }
-
     public void SetTournamentRules(IEnumerable<TournamentRules> rules)
     {
         _tournamentRules.Clear();
@@ -987,46 +969,6 @@ public sealed partial class GoAppSession
     {
         var pageCount = Math.Max(1, (int)Math.Ceiling(_tournamentRules.Count / (double)TournamentRulesSelectionPageSize));
         TournamentRulesSelectionPageIndex = Math.Clamp(TournamentRulesSelectionPageIndex + step, 0, pageCount - 1);
-    }
-
-    public void ChangeRuleKind(GoRuleKind ruleKind)
-    {
-        _currentTournamentRules.Rule = ruleKind;
-        TournamentRulesSaveMessage = "UNSAVED";
-    }
-
-    public void ChangeKomi(decimal step)
-    {
-        _currentTournamentRules.Komi = Math.Clamp(_currentTournamentRules.Komi + step, -99.5m, 99.5m);
-        TournamentRulesSaveMessage = "UNSAVED";
-    }
-
-    public void ChangeMainTime(TimeSpan step)
-    {
-        var totalSeconds = Math.Clamp(
-            (int)(_currentTournamentRules.MainTime + step).TotalSeconds,
-            0,
-            999 * 3600 + 59 * 60 + 59);
-        SetMainTime(totalSeconds);
-    }
-
-    public void SetMainTime(int totalSeconds)
-    {
-        totalSeconds = Math.Clamp(totalSeconds, 0, 999 * 3600 + 59 * 60 + 59);
-        _currentTournamentRules.MainTimeMinutes = totalSeconds / 60;
-        _currentTournamentRules.MainTimeSeconds = totalSeconds % 60;
-        TournamentRulesSaveMessage = "UNSAVED";
-    }
-
-    public void ChangeMoveLimit(int step)
-    {
-        SetMoveLimit(_currentTournamentRules.MoveLimit + step);
-    }
-
-    public void SetMoveLimit(int moveLimit)
-    {
-        _currentTournamentRules.MoveLimit = Math.Clamp(moveLimit, 0, 9999);
-        TournamentRulesSaveMessage = "UNSAVED";
     }
 
     public void BeginTournamentRulesNumericEdit(TournamentRulesNumericField field, string draft, int caretIndex)
