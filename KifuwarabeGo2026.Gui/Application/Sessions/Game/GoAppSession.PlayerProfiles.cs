@@ -15,6 +15,8 @@ public sealed partial class GoAppSession
 
     public IReadOnlyList<PlayerProfile> PlayerProfiles => _playerProfiles;
 
+    public CatalogOrderEditor<PlayerProfile> PlayerOrderEditor { get; } = new();
+
     public string BlackPlayerProfileId { get; private set; } = "";
 
     public string WhitePlayerProfileId { get; private set; } = "";
@@ -105,4 +107,18 @@ public sealed partial class GoAppSession
 
     private int FindGtpEngineIndex(string engineProfileId) =>
         _gtpEngineProfiles.FindIndex(profile => string.Equals(profile.Id, engineProfileId, StringComparison.Ordinal));
+
+    public void OpenPlayerOrderEditor() =>
+        PlayerOrderEditor.Open(_playerProfiles, PlayerDialogSelectionIndex, PlayerSelectionPageSize);
+
+    public void CancelPlayerOrderEditor() => PlayerOrderEditor.Cancel();
+
+    public IReadOnlyList<PlayerProfile> CommitPlayerOrderEditor()
+    {
+        var ordered = PlayerOrderEditor.Commit();
+        _playerProfiles.Clear();
+        _playerProfiles.AddRange(ordered.Select(profile => profile.Clone()));
+        PlayerDialogSelectionIndex = Math.Clamp(PlayerDialogSelectionIndex, 0, _playerProfiles.Count - 1);
+        return _playerProfiles;
+    }
 }

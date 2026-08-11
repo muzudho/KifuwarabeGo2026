@@ -1645,6 +1645,17 @@ public class Game1 : Game
 
     private void TryHandlePlayerSelectionDialogClick(Point point)
     {
+        if (_session.PlayerOrderEditor.IsOpen)
+        {
+            var editor = _session.PlayerOrderEditor;
+            if (GoScreenRenderer.GetCatalogOrderCancelButtonHit(point)) _session.CancelPlayerOrderEditor();
+            else if (GoScreenRenderer.GetCatalogOrderSaveButtonHit(point)) _playerCatalog.Save(_session.CommitPlayerOrderEditor());
+            else if (GoScreenRenderer.GetCatalogOrderMoveStep(point, editor.PageSize) is var step && step == int.MinValue) editor.MoveSelectedToTop();
+            else if (step != 0) editor.MoveSelected(step);
+            else if (GoScreenRenderer.GetCatalogOrderPagePairStep(point) is var pageStep && pageStep != 0) editor.MovePagePair(pageStep);
+            else if (GoScreenRenderer.GetCatalogOrderCardHit(point, editor) is { } orderIndex) editor.BeginDrag(orderIndex);
+            return;
+        }
         if (_session.IsPlayerEditPanelOpen)
         {
             if (GoScreenRenderer.GetPlayerEditPanelCancelButtonHit(point))
@@ -1706,6 +1717,12 @@ public class Game1 : Game
         if (GoScreenRenderer.GetPlayerSelectionDialogEditButtonHit(point))
         {
             _session.OpenSelectedPlayerEditPanel();
+            return;
+        }
+
+        if (GoScreenRenderer.GetPlayerSelectionDialogOrderButtonHit(point))
+        {
+            _session.OpenPlayerOrderEditor();
             return;
         }
 
@@ -1829,6 +1846,7 @@ public class Game1 : Game
         UpdateCatalogOrderDrag(_session.TournamentRulesOrderEditor, mouse, point);
         UpdateCatalogOrderDrag(_session.GtpEngineOrderEditor, mouse, point);
         UpdateCatalogOrderDrag(_session.CgosConnectionOrderEditor, mouse, point);
+        UpdateCatalogOrderDrag(_session.PlayerOrderEditor, mouse, point);
     }
 
     private void UpdateCatalogOrderDrag<T>(CatalogOrderEditor<T> editor, MouseState mouse, Point point)

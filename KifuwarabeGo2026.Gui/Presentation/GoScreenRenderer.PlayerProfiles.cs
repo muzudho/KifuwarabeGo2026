@@ -19,6 +19,7 @@ public sealed partial class GoScreenRenderer
     private static readonly Rectangle PlayerSelectionAddComputerButtonBounds = new(566, 816, 162, 48);
     private static readonly Rectangle PlayerSelectionEditButtonBounds = new(742, 816, 144, 48);
     private static readonly Rectangle PlayerSelectionDeleteButtonBounds = new(900, 816, 144, 48);
+    private static readonly Rectangle PlayerSelectionOrderButtonBounds = new(1056, 816, 72, 48);
     private static readonly Rectangle PlayerEditPanelCancelButtonBounds = new(1010, 624, 170, 52);
     private static readonly Rectangle PlayerEditPanelSaveButtonBounds = new(1190, 624, 170, 52);
     private static readonly Rectangle PlayerEditPanelPreviousEngineButtonBounds = new(1030, 528, 110, 42);
@@ -36,6 +37,7 @@ public sealed partial class GoScreenRenderer
     public static bool GetPlayerSelectionDialogAddComputerButtonHit(Point point) => PlayerSelectionAddComputerButtonBounds.Contains(point);
     public static bool GetPlayerSelectionDialogDeleteButtonHit(Point point) => PlayerSelectionDeleteButtonBounds.Contains(point);
     public static bool GetPlayerSelectionDialogEditButtonHit(Point point) => PlayerSelectionEditButtonBounds.Contains(point);
+    public static bool GetPlayerSelectionDialogOrderButtonHit(Point point) => PlayerSelectionOrderButtonBounds.Contains(point);
     public static bool GetPlayerEditPanelCancelButtonHit(Point point) => PlayerEditPanelCancelButtonBounds.Contains(point);
     public static bool GetPlayerEditPanelSaveButtonHit(Point point) => PlayerEditPanelSaveButtonBounds.Contains(point);
     public static bool GetPlayerEditPanelPreviousEngineButtonHit(Point point) => PlayerEditPanelPreviousEngineButtonBounds.Contains(point);
@@ -100,9 +102,11 @@ public sealed partial class GoScreenRenderer
         DrawCommandButton(PlayerSelectionAddComputerButtonBounds, "COMPUTER", false, mousePoint, enabled: session.GtpEngineProfiles.Count > 0, scale: 0.34f);
         DrawCommandButton(PlayerSelectionEditButtonBounds, "EDIT", false, mousePoint, enabled: session.PlayerDialogSelectionIndex >= 0, scale: 0.34f);
         DrawCommandButton(PlayerSelectionDeleteButtonBounds, "DELETE", false, mousePoint, enabled: session.CanDeleteSelectedPlayerProfile, scale: 0.34f);
+        DrawCommandButton(PlayerSelectionOrderButtonBounds, "ORDER", false, mousePoint, enabled: session.PlayerProfiles.Count > 1, scale: 0.26f);
         DrawCommandButton(PlayerSelectionPreviousButtonBounds, "PREV", false, mousePoint, enabled: session.PlayerSelectionPageIndex > 0, scale: 0.34f);
         DrawFittedText($"{session.PlayerSelectionPageIndex + 1} / {pageCount}", new Rectangle(1140, 824, 64, 32), new Color(227, 224, 210), 0.44f);
         DrawCommandButton(PlayerSelectionNextButtonBounds, "NEXT", false, mousePoint, enabled: session.PlayerSelectionPageIndex < pageCount - 1, scale: 0.42f);
+        DrawCatalogOrderEditor(session.PlayerOrderEditor, "PLAYERS", mousePoint, player => player.DisplayName, player => player.Kind == PlayerProfileKind.Human ? "HUMAN" : "COMPUTER");
     }
 
     private void DrawPlayerEditPanel(GoAppSession session, Point mousePoint)
