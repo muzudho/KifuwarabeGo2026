@@ -23,6 +23,12 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="Application\Sessions\GameRecords\Current\" />
+    <Folder Include="Application\Sessions\GameRecords\Review\" />
+    <Folder Include="Application\Sessions\GameRecords\BeforeReview\" />
+    <Folder Include="Application\Sessions\VariationSession\" />
+    <Folder Include="Application\Sessions\GameRecords\Go\" />
+    <Folder Include="Application\Sessions\GameRecords\" />
     <Folder Include="Presentation\BoardLens\RenSystem\" />
     <Folder Include="Presentation\BoardLens\LibertySystem\" />
     <Folder Include="Presentation\BoardLens\GlassesSystem\" />

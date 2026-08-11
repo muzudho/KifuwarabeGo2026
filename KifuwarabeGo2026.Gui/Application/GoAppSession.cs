@@ -14,7 +14,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-public sealed class GoAppSession
+public sealed partial class GoAppSession
 {
     private GoBoard _board;
     private MatchSession? _matchSession;
@@ -36,8 +36,6 @@ public sealed class GoAppSession
     private GoGameRecord? _variationSourceRecord;
     private int _variationSourceMoveIndex;
     private GoAppModeKind _variationReturnMode = GoAppModeKind.Resting;
-    private GoGameRecord? _reviewGameRecord;
-    private GoGameRecord? _beforeReviewGameRecord;
     private DateTime? _cgosBlackConnectionStartedAt;
     private DateTime? _cgosWhiteConnectionStartedAt;
 
