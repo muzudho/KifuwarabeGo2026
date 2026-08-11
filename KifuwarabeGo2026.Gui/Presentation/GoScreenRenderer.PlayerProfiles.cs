@@ -20,11 +20,11 @@ public sealed partial class GoScreenRenderer
     private static readonly Rectangle PlayerSelectionEditButtonBounds = new(742, 816, 144, 48);
     private static readonly Rectangle PlayerSelectionDeleteButtonBounds = new(900, 816, 144, 48);
     private static readonly Rectangle PlayerSelectionOrderButtonBounds = new(1056, 816, 72, 48);
-    private static readonly Rectangle PlayerEditPanelCancelButtonBounds = new(1010, 624, 170, 52);
-    private static readonly Rectangle PlayerEditPanelSaveButtonBounds = new(1190, 624, 170, 52);
-    private static readonly Rectangle PlayerEditPanelPreviousEngineButtonBounds = new(1030, 528, 110, 42);
-    private static readonly Rectangle PlayerEditPanelNextEngineButtonBounds = new(1150, 528, 110, 42);
-    private static readonly Rectangle PlayerEditPanelEngineOptionsButtonBounds = new(1270, 528, 110, 42);
+    private static readonly Rectangle PlayerEditPanelCancelButtonBounds = new(1010, 670, 170, 52);
+    private static readonly Rectangle PlayerEditPanelSaveButtonBounds = new(1190, 670, 170, 52);
+    private static readonly Rectangle PlayerEditPanelPreviousEngineButtonBounds = new(760, 560, 62, 46);
+    private static readonly Rectangle PlayerEditPanelNextEngineButtonBounds = new(834, 560, 62, 46);
+    private static readonly Rectangle PlayerEditPanelEngineOptionsButtonBounds = new(908, 560, 220, 46);
 
     public static bool GetBlackPlayerSelectButtonHit(Point point) => PlayerSelectorLayout.CreatePlayerSelector(BlackPlayerKindButtonY).ContainsBrowseButton(point);
     public static bool GetWhitePlayerSelectButtonHit(Point point) => PlayerSelectorLayout.CreatePlayerSelector(WhitePlayerKindButtonY).ContainsBrowseButton(point);
@@ -121,21 +121,28 @@ public sealed partial class GoScreenRenderer
     private void DrawPlayerEditPanel(GoAppSession session, Point mousePoint)
     {
         if (!session.IsPlayerEditPanelOpen) return;
-        var bounds = new Rectangle(510, 290, 900, 430);
+        var bounds = new Rectangle(510, 270, 900, 480);
         FillRect(new Rectangle(0, 0, VirtualScreen.Width, VirtualScreen.Height), new Color(0, 0, 0, 140));
         FillRect(bounds, new Color(24, 29, 36, 252));
         DrawRect(bounds, 2, new Color(116, 145, 146));
         DrawText("EDIT PLAYER", new Vector2(bounds.X + 34, bounds.Y + 28), new Color(244, 238, 218), 0.68f);
         DrawPlayerEditField(session, PlayerProfileEditField.DisplayName, "DISPLAY NAME", mousePoint);
         DrawPlayerEditField(session, PlayerProfileEditField.Identifier, "IDENTIFIER", mousePoint);
-        DrawFittedText(session.PlayerEditDraft.Kind == PlayerProfileKind.Computer ? $"ENGINE  {session.PlayerEditEngineDisplayName}" : "HUMAN PLAYER", new Rectangle(bounds.X + 42, bounds.Y + 238, 816, 42), new Color(180, 195, 195), 0.38f);
+        DrawText("ENGINE", new Vector2(552, 510), new Color(180, 195, 195), 0.36f);
+        var engineTextBounds = new Rectangle(760, 503, 600, 42);
+        DrawTournamentRulesTextInputSurface(engineTextBounds, false, engineTextBounds.Contains(mousePoint));
+        DrawFittedText(
+            session.PlayerEditDraft.Kind == PlayerProfileKind.Computer ? session.PlayerEditEngineDisplayName : "HUMAN PLAYER",
+            engineTextBounds,
+            session.PlayerEditDraft.Kind == PlayerProfileKind.Computer ? Color.White : new Color(180, 195, 195),
+            0.42f);
         if (session.PlayerEditDraft.Kind == PlayerProfileKind.Computer)
         {
-            DrawCommandButton(PlayerEditPanelPreviousEngineButtonBounds, "PREV", false, mousePoint, scale: 0.32f);
-            DrawCommandButton(PlayerEditPanelNextEngineButtonBounds, "NEXT", false, mousePoint, scale: 0.32f);
-            DrawCommandButton(PlayerEditPanelEngineOptionsButtonBounds, "OPTIONS", false, mousePoint, scale: 0.24f);
+            DrawPlayerEngineCycleButton(PlayerEditPanelPreviousEngineButtonBounds, pointsRight: false, mousePoint);
+            DrawPlayerEngineCycleButton(PlayerEditPanelNextEngineButtonBounds, pointsRight: true, mousePoint);
+            DrawCommandButton(PlayerEditPanelEngineOptionsButtonBounds, "EDIT PROFILE", false, mousePoint, scale: 0.30f);
         }
-        DrawText("Click a field to edit.  Enter: finish  Escape: cancel  Tab: next field", new Vector2(bounds.X + 42, bounds.Y + 320), new Color(180, 195, 195), 0.28f);
+        DrawText("Click a field to edit.  Enter: finish  Escape: cancel  Tab: next field", new Vector2(bounds.X + 42, bounds.Y + 360), new Color(180, 195, 195), 0.28f);
         DrawCommandButton(PlayerEditPanelCancelButtonBounds, "CANCEL", false, mousePoint, scale: 0.34f);
         DrawCommandButton(PlayerEditPanelSaveButtonBounds, "SAVE", false, mousePoint, scale: 0.40f);
     }
@@ -144,8 +151,8 @@ public sealed partial class GoScreenRenderer
 
     private static Rectangle PlayerEditPanelFieldTextBounds(PlayerProfileEditField field) => field switch
     {
-        PlayerProfileEditField.DisplayName => new(760, 395, 600, 42),
-        PlayerProfileEditField.Identifier => new(760, 459, 600, 42),
+        PlayerProfileEditField.DisplayName => new(760, 375, 600, 42),
+        PlayerProfileEditField.Identifier => new(760, 439, 600, 42),
         _ => throw new ArgumentOutOfRangeException(nameof(field), field, "Unknown player edit field."),
     };
 
@@ -161,5 +168,25 @@ public sealed partial class GoScreenRenderer
         DrawFittedText(string.IsNullOrEmpty(text) ? "-" : text, textBounds, Color.White, 0.42f);
         if (active)
             DrawTextBoxCaret(text, session.PlayerEditCaretIndex, textBounds, 0.42f);
+    }
+
+    private void DrawPlayerEngineCycleButton(Rectangle bounds, bool pointsRight, Point mousePoint)
+    {
+        var hovered = bounds.Contains(mousePoint);
+        FillRect(bounds, hovered ? new Color(53, 66, 75) : new Color(31, 40, 47));
+        DrawRect(bounds, 2, new Color(105, 127, 134));
+
+        var centerX = bounds.Center.X;
+        var centerY = bounds.Center.Y;
+        var size = 14;
+        for (var offset = -size; offset <= size; offset++)
+        {
+            var distanceFromTip = pointsRight ? size - offset : size + offset;
+            var halfHeight = distanceFromTip * size / (size * 2);
+            var x = centerX + offset;
+            FillRect(
+                new Rectangle(x, centerY - halfHeight, 1, halfHeight * 2 + 1),
+                new Color(220, 234, 230));
+        }
     }
 }
