@@ -67,4 +67,10 @@ public sealed partial class GoAppSession
 
         ChangeMode(GoAppModeKind.Resting);
     }
+
+    private bool LoadRecordPosition(GoGameRecord record, int moveIndex, out string warning)
+    {
+        ArgumentNullException.ThrowIfNull(record);
+        return ApplyRecordPosition(record, moveIndex, out warning);
+    }
 }

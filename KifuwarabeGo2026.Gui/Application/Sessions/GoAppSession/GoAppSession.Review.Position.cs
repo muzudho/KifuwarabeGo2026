@@ -15,7 +15,15 @@ public sealed partial class GoAppSession
             return false;
         }
 
-        var record = _reviewGameRecord;
+        return ApplyRecordPosition(_reviewGameRecord, moveCount, out warning);
+    }
+
+    /// <summary>
+    /// 指定した棋譜を指定手数まで再生し、現在の盤面・表示レコードを更新します。
+    /// レビュー用正本を差し替えず、変化図編集からも安全に利用できます。
+    /// </summary>
+    private bool ApplyRecordPosition(GoGameRecord record, int moveCount, out string warning)
+    {
         var loadedBoard = new GoBoard(record.BoardSize);
         foreach (var setupStone in record.SetupStones)
         {

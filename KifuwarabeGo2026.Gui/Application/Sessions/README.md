@@ -8,6 +8,8 @@
 - `GoAppSession/GoAppSession.Review.Comments.cs`: ルート・着手コメントの変更
 - `GoAppSession/GoAppSession.Review.Exit.cs`: レビュー完了、破棄、休憩盤への復帰
 - `VariationSession/GoAppSession.Variation.cs`: 変化図編集の開始位置と編集状態
+- `VariationSession/GoAppSession.Variation.Lifecycle.cs`: 開始、採用用レコード作成、破棄
+- `VariationSession/GoAppSession.Variation.Editing.cs`: 着手、盤面編集、アンドゥ、コメント編集
 - `GameRecords/Go`: `GoGameRecord` など棋譜モデルの配置候補
 - `VariationSession`: 変化図編集状態の配置候補
 
@@ -24,3 +26,4 @@
 - レビュー中のコメント更新は、まず `_reviewGameRecord` を更新する。
 - 表示と編集の 0 手目コメントは `ReviewRootComment` を経由し、常に `_reviewGameRecord` を正本にする。
 - `CurrentGameRecord` は盤面復元で作り直されることがあるため、レビューSGFの全情報を持つ前提にしない。
+- 変化図編集で棋譜を再生するときは `ApplyRecordPosition` を使い、`_reviewGameRecord` を一時的にも差し替えない。
