@@ -92,6 +92,8 @@ public class Game1 : Game
     private ReviewExitAction? _pendingReviewExitAction;
     private readonly TextBoxController _humanPlayerNameTextBox = new(80);
     private KeyboardState _previousHumanPlayerNameKeyboard;
+    private readonly TextBoxController _playerEditTextBox = new(240);
+    private KeyboardState _previousPlayerEditKeyboard;
     private KeyboardState _previousCgosConnectionKeyboard;
     private readonly TextBoxController _cgosConnectionEditTextBox = new(240);
     private KeyboardState _previousCgosCredentialKeyboard;
@@ -326,6 +328,7 @@ public class Game1 : Game
         UpdatePonnukiProviderGame();
         _session.AddCurrentTurnElapsedTime(gameTime.ElapsedGameTime);
         UpdateGlobalKeyboardInput(keyboard);
+        UpdatePlayerEditTextBox(keyboard, gameTime);
         UpdateHumanPlayerNameTextBox(keyboard, gameTime);
 
         if (acceptsInput && _session.CurrentMode.Kind != GoAppModeKind.Playing)
@@ -1670,6 +1673,8 @@ public class Game1 : Game
                 _session.CyclePlayerEditEngine(1);
             else if (GoScreenRenderer.GetPlayerEditPanelEngineOptionsButtonHit(point))
                 _session.OpenGtpEngineEditPanelForProfileId(_session.PlayerEditDraft.EngineProfileId);
+            else if (GoScreenRenderer.GetPlayerEditPanelFieldHit(point) is { } field)
+                BeginOrMovePlayerEditField(point, field);
             return;
         }
 
@@ -1741,6 +1746,7 @@ public class Game1 : Game
             _cgosConnectionEditTextBox.EndMouseSelection();
             _cgosCredentialTextBox.EndMouseSelection();
             _humanPlayerNameTextBox.EndMouseSelection();
+            _playerEditTextBox.EndMouseSelection();
             _gtpEngineEditTextBox.EndMouseSelection();
             _gtpEngineIntegerOptionTextBox.EndMouseSelection();
             _gtpEngineStringOptionTextBox.EndMouseSelection();
@@ -1791,6 +1797,12 @@ public class Game1 : Game
                 _renderer.GetHumanPlayerNameCaretIndex(point, humanStone, _humanPlayerNameTextBox.Text));
             _session.SetHumanPlayerNameDraft(_humanPlayerNameTextBox.Text, _humanPlayerNameTextBox.CaretIndex);
             _session.SetHumanPlayerNameSelection(_humanPlayerNameTextBox.SelectionStart, _humanPlayerNameTextBox.SelectionLength);
+        }
+        else if (_playerEditTextBox.IsMouseSelecting && _session.ActivePlayerEditField is { } playerField)
+        {
+            _playerEditTextBox.UpdateMouseSelection(
+                _renderer.GetPlayerEditPanelCaretIndex(point, playerField, _playerEditTextBox.Text));
+            SyncPlayerEditField(playerField);
         }
         else if (_gtpEngineEditTextBox.IsMouseSelecting &&
                  _session.ActiveGtpEngineEditField is { } engineField)
@@ -3583,6 +3595,8 @@ public class Game1 : Game
             return;
         }
 
+        if (TryInputPlayerEditCharacter(e.Character)) return;
+
         if (TryInputHumanPlayerNameCharacter(e.Character)) return;
 
         if (TryInputCgosCredentialCharacter(e.Character)) return;
@@ -3885,6 +3899,84 @@ public class Game1 : Game
         _session.SetHumanPlayerNameSelection(_humanPlayerNameTextBox.SelectionStart, _humanPlayerNameTextBox.SelectionLength);
         return true;
     }
+
+    private void BeginOrMovePlayerEditField(Point point, PlayerProfileEditField field)
+    {
+        var text = _session.ActivePlayerEditField == field
+            ? _playerEditTextBox.Text
+            : _session.GetPlayerEditFieldText(field);
+        var caretIndex = _renderer?.GetPlayerEditPanelCaretIndex(point, field, text) ?? text.Length;
+        if (_session.ActivePlayerEditField == field)
+        {
+            _playerEditTextBox.BeginMouseSelection(caretIndex, IsShiftDown());
+            SyncPlayerEditField(field);
+            return;
+        }
+
+        _playerEditTextBox.Begin(text, caretIndex);
+        _playerEditTextBox.BeginMouseSelection(caretIndex, extendSelection: false);
+        _session.BeginPlayerEditField(field, _playerEditTextBox.CaretIndex);
+    }
+
+    private void UpdatePlayerEditTextBox(KeyboardState keyboard, GameTime gameTime)
+    {
+        if (!IsActive || !_inputArmed) return;
+        if (!_session.IsPlayerEditPanelOpen || _session.ActivePlayerEditField is not { } field)
+        {
+            _previousPlayerEditKeyboard = keyboard;
+            return;
+        }
+
+        if (keyboard.IsKeyDown(Keys.Tab) && _previousPlayerEditKeyboard.IsKeyUp(Keys.Tab))
+        {
+            MovePlayerEditFocus(field, IsShiftDown(keyboard) ? -1 : 1);
+            _previousPlayerEditKeyboard = keyboard;
+            return;
+        }
+
+        switch (_playerEditTextBox.HandleKeyboard(keyboard, _previousPlayerEditKeyboard, gameTime, _clipboardService))
+        {
+            case TextBoxKeyboardAction.Commit:
+                _session.EndPlayerEditField();
+                _playerEditTextBox.Clear();
+                break;
+            case TextBoxKeyboardAction.Cancel:
+                _session.CancelPlayerEditField();
+                _playerEditTextBox.Clear();
+                break;
+            default:
+                SyncPlayerEditField(field);
+                break;
+        }
+        _previousPlayerEditKeyboard = keyboard;
+    }
+
+    private void MovePlayerEditFocus(PlayerProfileEditField field, int step)
+    {
+        var fields = new[] { PlayerProfileEditField.DisplayName, PlayerProfileEditField.Identifier };
+        var index = Array.IndexOf(fields, field);
+        var next = fields[(index + step + fields.Length) % fields.Length];
+        var text = _session.GetPlayerEditFieldText(next);
+        _playerEditTextBox.Begin(text);
+        _session.BeginPlayerEditField(next, _playerEditTextBox.CaretIndex);
+    }
+
+    private bool TryInputPlayerEditCharacter(char character)
+    {
+        if (!_session.IsPlayerEditPanelOpen || _session.ActivePlayerEditField is not { } field)
+            return false;
+        if (_playerEditTextBox.TryInputCharacter(character))
+            SyncPlayerEditField(field);
+        return true;
+    }
+
+    private void SyncPlayerEditField(PlayerProfileEditField field) =>
+        _session.SetPlayerEditFieldText(
+            field,
+            _playerEditTextBox.Text,
+            _playerEditTextBox.CaretIndex,
+            _playerEditTextBox.SelectionStart,
+            _playerEditTextBox.SelectionLength);
 
     private void EndHumanPlayerNameEdit(bool commit)
     {

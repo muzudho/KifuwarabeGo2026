@@ -13,6 +13,11 @@ public sealed partial class GoAppSession
     public int PlayerEditProfileIndex { get; private set; } = -1;
     public PlayerProfile PlayerEditDraft { get; private set; } = new();
     public bool IsPlayerEditDirty { get; private set; }
+    public PlayerProfileEditField? ActivePlayerEditField { get; private set; }
+    public int PlayerEditCaretIndex { get; private set; }
+    public int PlayerEditSelectionStart { get; private set; }
+    public int PlayerEditSelectionLength { get; private set; }
+    private string PlayerEditOriginalFieldText { get; set; } = "";
 
     public bool OpenSelectedPlayerEditPanel()
     {
@@ -22,6 +27,7 @@ public sealed partial class GoAppSession
         PlayerEditProfileIndex = PlayerDialogSelectionIndex;
         PlayerEditDraft = _playerProfiles[PlayerEditProfileIndex].Clone();
         IsPlayerEditDirty = false;
+        ActivePlayerEditField = null;
         IsPlayerEditPanelOpen = true;
         return true;
     }
@@ -36,6 +42,48 @@ public sealed partial class GoAppSession
     {
         PlayerEditDraft.Identifier = value;
         IsPlayerEditDirty = true;
+    }
+
+    public void BeginPlayerEditField(PlayerProfileEditField field, int caretIndex)
+    {
+        ActivePlayerEditField = field;
+        PlayerEditOriginalFieldText = GetPlayerEditFieldText(field);
+        PlayerEditCaretIndex = Math.Clamp(caretIndex, 0, GetPlayerEditFieldText(field).Length);
+        PlayerEditSelectionStart = PlayerEditCaretIndex;
+        PlayerEditSelectionLength = 0;
+    }
+
+    public void SetPlayerEditFieldText(PlayerProfileEditField field, string value, int caretIndex, int selectionStart, int selectionLength)
+    {
+        if (field == PlayerProfileEditField.DisplayName)
+            SetPlayerEditDisplayName(value);
+        else
+            SetPlayerEditIdentifier(value);
+
+        PlayerEditCaretIndex = Math.Clamp(caretIndex, 0, value.Length);
+        PlayerEditSelectionStart = Math.Clamp(selectionStart, 0, value.Length);
+        PlayerEditSelectionLength = Math.Clamp(selectionLength, 0, value.Length - PlayerEditSelectionStart);
+    }
+
+    public string GetPlayerEditFieldText(PlayerProfileEditField field) => field switch
+    {
+        PlayerProfileEditField.DisplayName => PlayerEditDraft.DisplayName,
+        PlayerProfileEditField.Identifier => PlayerEditDraft.Identifier,
+        _ => throw new ArgumentOutOfRangeException(nameof(field), field, "Unknown player edit field."),
+    };
+
+    public void EndPlayerEditField() => ActivePlayerEditField = null;
+
+    public void CancelPlayerEditField()
+    {
+        if (ActivePlayerEditField is { } field)
+        {
+            if (field == PlayerProfileEditField.DisplayName)
+                PlayerEditDraft.DisplayName = PlayerEditOriginalFieldText;
+            else
+                PlayerEditDraft.Identifier = PlayerEditOriginalFieldText;
+        }
+        ActivePlayerEditField = null;
     }
 
     public bool SetPlayerEditEngineProfile(string engineProfileId)
@@ -80,6 +128,7 @@ public sealed partial class GoAppSession
         _playerProfiles[PlayerEditProfileIndex] = draft;
         IsPlayerEditDirty = false;
         IsPlayerEditPanelOpen = false;
+        ActivePlayerEditField = null;
         ApplySelectedPlayerProfile(GoStone.Black);
         ApplySelectedPlayerProfile(GoStone.White);
         return true;
@@ -89,5 +138,12 @@ public sealed partial class GoAppSession
     {
         IsPlayerEditPanelOpen = false;
         IsPlayerEditDirty = false;
+        ActivePlayerEditField = null;
     }
+}
+
+public enum PlayerProfileEditField
+{
+    DisplayName,
+    Identifier,
 }

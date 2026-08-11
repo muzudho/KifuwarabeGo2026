@@ -45,6 +45,13 @@ public sealed partial class GoScreenRenderer
     public static bool GetPlayerEditPanelNextEngineButtonHit(Point point) => PlayerEditPanelNextEngineButtonBounds.Contains(point);
     public static bool GetPlayerEditPanelEngineOptionsButtonHit(Point point) => PlayerEditPanelEngineOptionsButtonBounds.Contains(point);
 
+    public static PlayerProfileEditField? GetPlayerEditPanelFieldHit(Point point) =>
+        PlayerEditPanelFieldTextBounds(PlayerProfileEditField.DisplayName).Contains(point) ? PlayerProfileEditField.DisplayName :
+        PlayerEditPanelFieldTextBounds(PlayerProfileEditField.Identifier).Contains(point) ? PlayerProfileEditField.Identifier : null;
+
+    public int GetPlayerEditPanelCaretIndex(Point point, PlayerProfileEditField field, string text) =>
+        GetTextBoxCaretIndex(point.X, text, PlayerEditPanelFieldTextBounds(field), 0.42f);
+
     public static int? GetPlayerSelectionDialogItemHit(Point point, GoAppSession session)
     {
         var start = session.PlayerSelectionPageIndex * GoAppSession.PlayerSelectionPageSize;
@@ -119,8 +126,8 @@ public sealed partial class GoScreenRenderer
         FillRect(bounds, new Color(24, 29, 36, 252));
         DrawRect(bounds, 2, new Color(116, 145, 146));
         DrawText("EDIT PLAYER", new Vector2(bounds.X + 34, bounds.Y + 28), new Color(244, 238, 218), 0.68f);
-        DrawFittedText($"DISPLAY NAME  {session.PlayerEditDraft.DisplayName}", new Rectangle(bounds.X + 42, bounds.Y + 110, 816, 42), Color.White, 0.42f);
-        DrawFittedText($"IDENTIFIER  {session.PlayerEditDraft.Identifier}", new Rectangle(bounds.X + 42, bounds.Y + 174, 816, 42), Color.White, 0.42f);
+        DrawPlayerEditField(session, PlayerProfileEditField.DisplayName, "DISPLAY NAME", mousePoint);
+        DrawPlayerEditField(session, PlayerProfileEditField.Identifier, "IDENTIFIER", mousePoint);
         DrawFittedText(session.PlayerEditDraft.Kind == PlayerProfileKind.Computer ? $"ENGINE  {session.PlayerEditEngineDisplayName}" : "HUMAN PLAYER", new Rectangle(bounds.X + 42, bounds.Y + 238, 816, 42), new Color(180, 195, 195), 0.38f);
         if (session.PlayerEditDraft.Kind == PlayerProfileKind.Computer)
         {
@@ -128,10 +135,31 @@ public sealed partial class GoScreenRenderer
             DrawCommandButton(PlayerEditPanelNextEngineButtonBounds, "NEXT", false, mousePoint, scale: 0.32f);
             DrawCommandButton(PlayerEditPanelEngineOptionsButtonBounds, "OPTIONS", false, mousePoint, scale: 0.24f);
         }
-        DrawText("DISPLAY NAME / IDENTIFIER editing is being connected to PopupTextBox.", new Vector2(bounds.X + 42, bounds.Y + 320), new Color(255, 225, 128), 0.28f);
+        DrawText("Click a field to edit.  Enter: finish  Escape: cancel  Tab: next field", new Vector2(bounds.X + 42, bounds.Y + 320), new Color(180, 195, 195), 0.28f);
         DrawCommandButton(PlayerEditPanelCancelButtonBounds, "CANCEL", false, mousePoint, scale: 0.34f);
         DrawCommandButton(PlayerEditPanelSaveButtonBounds, "SAVE", false, mousePoint, scale: 0.40f);
     }
 
     private static Rectangle PlayerSelectionItemBounds(int slot) => new(PlayerSelectionListBounds.X + 16, PlayerSelectionListBounds.Y + 14 + slot * 82, PlayerSelectionListBounds.Width - 32, 72);
+
+    private static Rectangle PlayerEditPanelFieldTextBounds(PlayerProfileEditField field) => field switch
+    {
+        PlayerProfileEditField.DisplayName => new(760, 395, 600, 42),
+        PlayerProfileEditField.Identifier => new(760, 459, 600, 42),
+        _ => throw new ArgumentOutOfRangeException(nameof(field), field, "Unknown player edit field."),
+    };
+
+    private void DrawPlayerEditField(GoAppSession session, PlayerProfileEditField field, string label, Point mousePoint)
+    {
+        var textBounds = PlayerEditPanelFieldTextBounds(field);
+        var active = session.ActivePlayerEditField == field;
+        DrawText(label, new Vector2(552, textBounds.Y + 7), new Color(180, 195, 195), 0.36f);
+        DrawTournamentRulesTextInputSurface(textBounds, active, textBounds.Contains(mousePoint));
+        var text = session.GetPlayerEditFieldText(field);
+        if (active)
+            DrawTextBoxSelection(text, session.PlayerEditSelectionStart, session.PlayerEditSelectionLength, textBounds, 0.42f);
+        DrawFittedText(string.IsNullOrEmpty(text) ? "-" : text, textBounds, Color.White, 0.42f);
+        if (active)
+            DrawTextBoxCaret(text, session.PlayerEditCaretIndex, textBounds, 0.42f);
+    }
 }
