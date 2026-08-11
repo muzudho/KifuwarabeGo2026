@@ -332,10 +332,6 @@ public sealed partial class GoAppSession
 
     public int WhiteAgehama { get; private set; }
 
-    public TimeSpan BlackElapsedTime { get; private set; }
-
-    public TimeSpan WhiteElapsedTime { get; private set; }
-
     public int BlackStoneCount => _board.CountStones(GoStone.Black);
 
     public int WhiteStoneCount => _board.CountStones(GoStone.White);
@@ -1891,24 +1887,6 @@ public sealed partial class GoAppSession
         {
             return false;
         }
-    }
-
-    public void AddCurrentTurnElapsedTime(TimeSpan elapsed)
-    {
-        if (CurrentMode.Kind != GoAppModeKind.Playing ||
-            !IsEngineReady ||
-            !string.IsNullOrWhiteSpace(EngineErrorMessage))
-        {
-            return;
-        }
-
-        if (CurrentTurn == GoStone.Black)
-        {
-            BlackElapsedTime += elapsed;
-            return;
-        }
-
-        WhiteElapsedTime += elapsed;
     }
 
     public GoStone GetStone(int x, int y)
