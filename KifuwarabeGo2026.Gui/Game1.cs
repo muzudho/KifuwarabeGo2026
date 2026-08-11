@@ -3810,11 +3810,13 @@ public class Game1 : Game
             return;
 
         _session.BeginGtpEngineCompatibilityLoading();
-        var checks = _session.GtpEngineProfiles
-            .Select(profile => GtpEngineAppCompatibilityProbe.CheckAsync(profile, appId, role))
-            .ToArray();
-        _gtpEngineSelectionLoadTask = Task.WhenAll(checks);
-        GuiOperationLog.User("Loading selectable GTP engines", $"app={appId}; role={role}; engines={checks.Length}");
+        var profiles = _session.GtpEngineProfiles.ToArray();
+        // CheckAsync は Process.Start などを最初の await より前で実行し得ます。
+        // ここで直接呼ぶとクリック処理が止まり、ダイアログの最初の一枚を描けません。
+        // ワーカースレッドへ渡すことで、先にスケルトンとスピナーを表示します。
+        _gtpEngineSelectionLoadTask = Task.Run(async () =>
+            await Task.WhenAll(profiles.Select(profile => GtpEngineAppCompatibilityProbe.CheckAsync(profile, appId, role))));
+        GuiOperationLog.User("Loading selectable GTP engines", $"app={appId}; role={role}; engines={profiles.Length}");
     }
 
     private void CompleteGtpEngineSelectionLoading()
