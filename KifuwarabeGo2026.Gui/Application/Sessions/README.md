@@ -3,6 +3,11 @@
 `GoAppSession` はアプリ全体の状態を統括します。責務ごとに partial class をこの配下へ分割します。
 
 - `GoAppSession/GoAppSession.Review.cs`: SGF レビュー用レコードとレビュー復帰用コピー
+- `GoAppSession/GoAppSession.Review.Start.cs`: 新規レビュー開始と保持済み棋譜の再開
+- `GoAppSession/GoAppSession.Review.Position.cs`: 指定手数までの再生と表示用レコードの作成
+- `GoAppSession/GoAppSession.Review.Comments.cs`: ルート・着手コメントの変更
+- `GoAppSession/GoAppSession.Review.Exit.cs`: レビュー完了、破棄、休憩盤への復帰
+- `VariationSession/GoAppSession.Variation.cs`: 変化図編集の開始位置と編集状態
 - `GameRecords/Go`: `GoGameRecord` など棋譜モデルの配置候補
 - `VariationSession`: 変化図編集状態の配置候補
 

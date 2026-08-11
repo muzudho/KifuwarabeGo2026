@@ -33,9 +33,6 @@ public sealed partial class GoAppSession
     private readonly Stack<BoardEditingChange[]> _boardEditingUndoHistory = new();
     private readonly Stack<BoardEditingChange[]> _boardEditingRedoHistory = new();
     private GoGameRecord? _beforeBoardEditingRecord;
-    private GoGameRecord? _variationSourceRecord;
-    private int _variationSourceMoveIndex;
-    private GoAppModeKind _variationReturnMode = GoAppModeKind.Resting;
     private DateTime? _cgosBlackConnectionStartedAt;
     private DateTime? _cgosWhiteConnectionStartedAt;
 
@@ -301,15 +298,6 @@ public sealed partial class GoAppSession
     public bool CanUndoBoardEditing => _boardEditingUndoHistory.Count > 0;
 
     public bool CanRedoBoardEditing => _boardEditingRedoHistory.Count > 0;
-    public int VariationSourceMoveIndex => _variationSourceMoveIndex;
-    public int VariationMoveCount => Math.Max(0, CurrentGameRecord.Moves.Count - _variationSourceMoveIndex);
-    public bool CanUndoVariation =>
-        CurrentMode.Kind == GoAppModeKind.VariationEditing &&
-        (VariationMoveCount > 0 || _boardEditingUndoHistory.Count > 0);
-    public GoStone? VariationEditingStone { get; private set; }
-    public bool HasVariationCustomPosition { get; private set; }
-    public bool CanAdoptVariationPosition { get; private set; }
-
     public int PlayedMoveCount { get; private set; }
 
     public int NextMoveNumber => PlayedMoveCount + 1;
@@ -1296,70 +1284,6 @@ public sealed partial class GoAppSession
         LoadGameRecordAsInitialPosition(record, out _);
     }
 
-    public bool StartVariationEditing(
-        GoGameRecord sourceRecord,
-        int sourceMoveIndex,
-        GoAppModeKind returnMode,
-        out string warning)
-    {
-        ArgumentNullException.ThrowIfNull(sourceRecord);
-        var clampedMoveIndex = Math.Clamp(sourceMoveIndex, 0, sourceRecord.Moves.Count);
-        if (!LoadRecordPosition(sourceRecord, clampedMoveIndex, out warning))
-            return false;
-
-        _variationSourceRecord = sourceRecord.Clone();
-        _variationSourceMoveIndex = clampedMoveIndex;
-        _variationReturnMode = returnMode;
-        VariationEditingStone = null;
-        HasVariationCustomPosition = false;
-        CanAdoptVariationPosition = false;
-        ClearBoardEditingHistory();
-        CurrentGameRecord.Result = "";
-        Winner = null;
-        GameOverReason = "";
-        ChangeMode(GoAppModeKind.VariationEditing);
-        return true;
-    }
-
-    public void EnableVariationPositionAdoption()
-    {
-        if (CurrentMode.Kind == GoAppModeKind.VariationEditing)
-            CanAdoptVariationPosition = true;
-    }
-
-    public GoGameRecord CreateCurrentPositionAsSetupRecord()
-    {
-        var metadata = CurrentGameRecord.Clone();
-        var record = CreateGameRecordFromCurrentPosition();
-        CopyGameRecordMetadata(metadata, record);
-        record.Result = "";
-        return record;
-    }
-
-    public void DiscardVariationEditing()
-    {
-        if (CurrentMode.Kind != GoAppModeKind.VariationEditing)
-            return;
-
-        var sourceRecord = _variationSourceRecord;
-        var sourceMoveIndex = _variationSourceMoveIndex;
-        var returnMode = _variationReturnMode;
-        _variationSourceRecord = null;
-
-        if (UseKind == GoAppUseKind.LocalPlay && sourceRecord is not null)
-        {
-            if (LoadRecordPosition(sourceRecord, sourceRecord.Moves.Count, out _))
-            {
-                CurrentGameRecord = sourceRecord.Clone();
-                ChangeMode(returnMode);
-                SeekLocalReplay(sourceMoveIndex);
-                return;
-            }
-        }
-
-        ChangeMode(GoAppModeKind.Resting);
-    }
-
     public bool TryPlaceVariationStone(int x, int y)
     {
         if (CurrentMode.Kind != GoAppModeKind.VariationEditing ||
@@ -1504,42 +1428,6 @@ public sealed partial class GoAppSession
         return loaded;
     }
 
-    public bool StartReviewingGameRecord(GoGameRecord record, out string warning)
-    {
-        ArgumentNullException.ThrowIfNull(record);
-
-        _beforeReviewGameRecord = CurrentGameRecord.Clone();
-        _reviewGameRecord = record.Clone();
-        HasUnsavedReviewCommentChanges = false;
-        ReviewMoveIndex = 0;
-        if (!ApplyReviewPosition(record.Moves.Count, out warning))
-        {
-            _beforeReviewGameRecord = null;
-            _reviewGameRecord = null;
-            ReviewMoveIndex = 0;
-            return false;
-        }
-
-        if (!ApplyReviewPosition(0, out warning))
-        {
-            _beforeReviewGameRecord = null;
-            _reviewGameRecord = null;
-            ReviewMoveIndex = 0;
-            return false;
-        }
-
-        // ルートコメントがある棋譜は、最初にその解説を見せる。
-        MoveInformationDisplayMode = string.IsNullOrWhiteSpace(_reviewGameRecord.RootComment)
-            ? MoveInformationDisplayMode.Trend
-            : MoveInformationDisplayMode.Comment;
-        ChangeMode(GoAppModeKind.Reviewing);
-        return true;
-    }
-
-    /// <summary>
-    /// 読み込み済み棋譜の、ルートまたは着手ノードのコメントを置換します。
-    /// 進行中対局では使用できません。
-    /// </summary>
     /// <summary>変化図編集盤の出力対象棋譜にコメントを設定します。</summary>
     public bool TrySetVariationComment(int moveIndex, string comment)
     {
@@ -1551,32 +1439,6 @@ public sealed partial class GoAppSession
 
         ResetCommentPage();
         return true;
-    }
-
-    /// <summary>
-    /// レビュー位置を採用せず、レビュー開始前の休憩画面へ戻ります。
-    /// </summary>
-    public void ReturnFromReviewingToResting()
-    {
-        if (CurrentMode.Kind != GoAppModeKind.Reviewing || _reviewGameRecord is null) return;
-
-        var reviewRecord = _reviewGameRecord.Clone();
-        var reviewMoveIndex = ReviewMoveIndex;
-        // コメントを編集したレビュー棋譜を次回の REVIEW にも引き継ぐ。
-        // 従来はレビュー開始前のレコードへ戻していたため、SGF への保存は成功していても
-        // 直後に REVIEW を開き直すと、保存前のメモリ上の棋譜が表示されてしまっていた。
-        if (LoadGameRecordAsInitialPosition(reviewRecord, out _))
-        {
-            CurrentGameRecord = reviewRecord.Clone();
-        }
-        else
-        {
-            ChangeMode(GoAppModeKind.Resting);
-        }
-
-        _reviewGameRecord = reviewRecord;
-        ReviewMoveIndex = reviewMoveIndex;
-        _beforeReviewGameRecord = null;
     }
 
     public void SetBoardEditingStone(GoStone stone)
@@ -1680,14 +1542,6 @@ public sealed partial class GoAppSession
 
     public void ReturnToSetup()
     {
-        ClearBoard();
-        ChangeMode(GoAppModeKind.Resting);
-    }
-
-    public void ClearSgfGameRecord()
-    {
-        _reviewGameRecord = null;
-        ReviewMoveIndex = 0;
         ClearBoard();
         ChangeMode(GoAppModeKind.Resting);
     }
@@ -3233,88 +3087,6 @@ public sealed partial class GoAppSession
         return true;
     }
 
-    private bool ApplyReviewPosition(int moveCount, out string warning)
-    {
-        if (_reviewGameRecord is null)
-        {
-            warning = "No SGF game record is loaded.";
-            return false;
-        }
-
-        var record = _reviewGameRecord;
-        var loadedBoard = new GoBoard(record.BoardSize);
-        foreach (var setupStone in record.SetupStones)
-        {
-            if (!loadedBoard.TrySetSetupStone(setupStone.Point.X, setupStone.Point.Y, setupStone.Stone))
-            {
-                warning = $"Invalid SGF setup stone at {setupStone.Point.X + 1},{setupStone.Point.Y + 1}.";
-                return false;
-            }
-        }
-
-        var blackAgehama = 0;
-        var whiteAgehama = 0;
-        var consecutivePasses = 0;
-        GoPoint? replayKoPoint = null;
-        GoPoint? currentKoPoint = null;
-        var clampedMoveCount = Math.Clamp(moveCount, 0, record.Moves.Count);
-        for (var i = 0; i < clampedMoveCount; i++)
-        {
-            var move = record.Moves[i];
-            if (move.Point is not { } point)
-            {
-                replayKoPoint = null;
-                currentKoPoint = null;
-                consecutivePasses++;
-                continue;
-            }
-
-            if (!loadedBoard.TryPlaceStone(point.X, point.Y, move.Stone, replayKoPoint, out var capturedStones, out var nextKoPoint))
-            {
-                warning = $"Illegal SGF move at {point.X + 1},{point.Y + 1}.";
-                return false;
-            }
-
-            if (move.Stone == GoStone.Black)
-            {
-                blackAgehama += capturedStones;
-            }
-            else
-            {
-                whiteAgehama += capturedStones;
-            }
-
-            replayKoPoint = nextKoPoint;
-            currentKoPoint = nextKoPoint;
-            consecutivePasses = 0;
-        }
-
-        BoardSize = record.BoardSize;
-        _currentTournamentRules.BoardSize = BoardSize;
-        _currentTournamentRules.Komi = record.Komi;
-        TournamentRulesSaveMessage = "UNSAVED";
-        _board = loadedBoard;
-        CurrentTurn = GetReviewCurrentTurn(record, clampedMoveCount);
-        BlackAgehama = blackAgehama;
-        WhiteAgehama = whiteAgehama;
-        BlackElapsedTime = TimeSpan.Zero;
-        WhiteElapsedTime = TimeSpan.Zero;
-        KoPoint = currentKoPoint;
-        ConsecutivePasses = consecutivePasses;
-        PlayedMoveCount = clampedMoveCount;
-        ReviewMoveIndex = clampedMoveCount;
-        Winner = null;
-        GameOverReason = "";
-        IsEngineReady = true;
-        IsEngineThinking = false;
-        EngineErrorMessage = "";
-        CurrentGameRecord = CreateReviewGameRecord(record, clampedMoveCount);
-        ResetPositionHistory();
-        ClearBoardEditingHistory();
-        warning = "";
-        return true;
-    }
-
     private void ClearBoard()
     {
         _matchSession = null;
@@ -3584,49 +3356,6 @@ public sealed partial class GoAppSession
         destination.Place = source.Place;
         destination.Komi = source.Komi;
         destination.TimeLimit = source.TimeLimit;
-    }
-
-    private static GoGameRecord CreateReviewGameRecord(GoGameRecord source, int moveCount)
-    {
-        var record = new GoGameRecord
-        {
-            GameName = source.GameName,
-            RuleName = source.RuleName,
-            BlackPlayerName = source.BlackPlayerName,
-            WhitePlayerName = source.WhitePlayerName,
-            BlackRank = source.BlackRank,
-            WhiteRank = source.WhiteRank,
-            PlayedDate = source.PlayedDate,
-            Result = source.Result,
-            Place = source.Place,
-            BoardSize = source.BoardSize,
-            Komi = source.Komi,
-            TimeLimit = source.TimeLimit,
-        };
-
-        record.SetupStones.AddRange(source.SetupStones);
-        for (var i = 0; i < Math.Clamp(moveCount, 0, source.Moves.Count); i++)
-        {
-            record.Moves.Add(source.Moves[i]);
-        }
-
-        return record;
-    }
-
-    private static GoStone GetReviewCurrentTurn(GoGameRecord record, int moveCount)
-    {
-        if (moveCount < record.Moves.Count)
-        {
-            return record.Moves[moveCount].Stone;
-        }
-
-        if (moveCount > 0)
-        {
-            var lastStone = record.Moves[moveCount - 1].Stone;
-            return lastStone == GoStone.Black ? GoStone.White : GoStone.Black;
-        }
-
-        return GoStone.Black;
     }
 
     private void DecidePureGoResult()
