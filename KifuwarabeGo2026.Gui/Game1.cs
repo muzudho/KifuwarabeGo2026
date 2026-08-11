@@ -1669,6 +1669,27 @@ public class Game1 : Game
             return;
         }
 
+        if (GoScreenRenderer.GetPlayerSelectionDialogAddHumanButtonHit(point))
+        {
+            if (_session.AddPlayerProfile(PlayerProfileKind.Human))
+                _playerCatalog.Save(_session.PlayerProfiles);
+            return;
+        }
+
+        if (GoScreenRenderer.GetPlayerSelectionDialogAddComputerButtonHit(point))
+        {
+            if (_session.AddPlayerProfile(PlayerProfileKind.Computer))
+                _playerCatalog.Save(_session.PlayerProfiles);
+            return;
+        }
+
+        if (GoScreenRenderer.GetPlayerSelectionDialogDeleteButtonHit(point))
+        {
+            if (_session.DeleteSelectedPlayerProfile())
+                _playerCatalog.Save(_session.PlayerProfiles);
+            return;
+        }
+
         if (GoScreenRenderer.GetPlayerSelectionDialogItemHit(point, _session) is { } index)
             _session.SelectPlayerDialogItem(index);
     }

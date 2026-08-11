@@ -2,6 +2,7 @@ namespace KifuwarabeGo2026.Gui.Application;
 
 using KifuwarabeGo2026.Shared.Domain;
 using System;
+using System.Linq;
 
 /// <summary>ローカル対局の Player 選択ダイアログの状態と操作。</summary>
 public sealed partial class GoAppSession
@@ -49,6 +50,51 @@ public sealed partial class GoAppSession
         var pageCount = Math.Max(1, (int)Math.Ceiling(_playerProfiles.Count / (double)PlayerSelectionPageSize));
         PlayerSelectionPageIndex = Math.Clamp(PlayerSelectionPageIndex + step, 0, pageCount - 1);
     }
+
+    public bool AddPlayerProfile(PlayerProfileKind kind)
+    {
+        var engineId = "";
+        if (kind == PlayerProfileKind.Computer)
+        {
+            if (_gtpEngineProfiles.Count == 0) return false;
+            engineId = _gtpEngineProfiles[0].Id;
+        }
+
+        var ordinal = _playerProfiles.Count(profile => profile.Kind == kind) + 1;
+        _playerProfiles.Add(new PlayerProfile
+        {
+            DisplayName = kind == PlayerProfileKind.Human ? $"New Human {ordinal}" : $"New Computer {ordinal}",
+            Identifier = "",
+            Kind = kind,
+            EngineProfileId = engineId,
+        });
+        PlayerDialogSelectionIndex = _playerProfiles.Count - 1;
+        PlayerSelectionPageIndex = PlayerDialogSelectionIndex / PlayerSelectionPageSize;
+        return true;
+    }
+
+    public bool DeleteSelectedPlayerProfile()
+    {
+        if (PlayerDialogSelectionIndex < 0 || PlayerDialogSelectionIndex >= _playerProfiles.Count)
+            return false;
+
+        var removed = _playerProfiles[PlayerDialogSelectionIndex];
+        if (string.Equals(removed.Id, BlackPlayerProfileId, StringComparison.Ordinal) ||
+            string.Equals(removed.Id, WhitePlayerProfileId, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        _playerProfiles.RemoveAt(PlayerDialogSelectionIndex);
+        PlayerDialogSelectionIndex = Math.Min(PlayerDialogSelectionIndex, _playerProfiles.Count - 1);
+        PlayerSelectionPageIndex = Math.Max(0, PlayerDialogSelectionIndex) / PlayerSelectionPageSize;
+        return true;
+    }
+
+    public bool CanDeleteSelectedPlayerProfile =>
+        PlayerDialogSelectionIndex >= 0 && PlayerDialogSelectionIndex < _playerProfiles.Count &&
+        !string.Equals(_playerProfiles[PlayerDialogSelectionIndex].Id, BlackPlayerProfileId, StringComparison.Ordinal) &&
+        !string.Equals(_playerProfiles[PlayerDialogSelectionIndex].Id, WhitePlayerProfileId, StringComparison.Ordinal);
 
     public string GetPlayerSelectionDetail(int index)
     {
