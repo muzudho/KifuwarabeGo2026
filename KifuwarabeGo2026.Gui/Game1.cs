@@ -1645,6 +1645,13 @@ public class Game1 : Game
 
     private void TryHandlePlayerSelectionDialogClick(Point point)
     {
+        if (_session.IsPlayerEditPanelOpen)
+        {
+            if (GoScreenRenderer.GetPlayerEditPanelCloseButtonHit(point))
+                _session.CancelPlayerEditPanel();
+            return;
+        }
+
         if (GoScreenRenderer.GetPlayerSelectionDialogCancelButtonHit(point))
         {
             _session.CancelPlayerSelectionDialog();
@@ -1687,6 +1694,12 @@ public class Game1 : Game
         {
             if (_session.DeleteSelectedPlayerProfile())
                 _playerCatalog.Save(_session.PlayerProfiles);
+            return;
+        }
+
+        if (GoScreenRenderer.GetPlayerSelectionDialogEditButtonHit(point))
+        {
+            _session.OpenSelectedPlayerEditPanel();
             return;
         }
 

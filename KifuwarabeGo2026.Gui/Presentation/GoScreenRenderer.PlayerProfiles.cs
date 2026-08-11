@@ -18,6 +18,8 @@ public sealed partial class GoScreenRenderer
     private static readonly Rectangle PlayerSelectionAddHumanButtonBounds = new(630, 806, 190, 48);
     private static readonly Rectangle PlayerSelectionAddComputerButtonBounds = new(838, 806, 220, 48);
     private static readonly Rectangle PlayerSelectionDeleteButtonBounds = new(1076, 806, 150, 48);
+    private static readonly Rectangle PlayerSelectionEditButtonBounds = new(1076, 750, 150, 42);
+    private static readonly Rectangle PlayerEditPanelCloseButtonBounds = new(1190, 624, 170, 52);
 
     public static bool GetBlackPlayerSelectButtonHit(Point point) => PlayerSelectorLayout.CreatePlayerSelector(BlackPlayerKindButtonY).ContainsBrowseButton(point);
     public static bool GetWhitePlayerSelectButtonHit(Point point) => PlayerSelectorLayout.CreatePlayerSelector(WhitePlayerKindButtonY).ContainsBrowseButton(point);
@@ -30,6 +32,8 @@ public sealed partial class GoScreenRenderer
     public static bool GetPlayerSelectionDialogAddHumanButtonHit(Point point) => PlayerSelectionAddHumanButtonBounds.Contains(point);
     public static bool GetPlayerSelectionDialogAddComputerButtonHit(Point point) => PlayerSelectionAddComputerButtonBounds.Contains(point);
     public static bool GetPlayerSelectionDialogDeleteButtonHit(Point point) => PlayerSelectionDeleteButtonBounds.Contains(point);
+    public static bool GetPlayerSelectionDialogEditButtonHit(Point point) => PlayerSelectionEditButtonBounds.Contains(point);
+    public static bool GetPlayerEditPanelCloseButtonHit(Point point) => PlayerEditPanelCloseButtonBounds.Contains(point);
 
     public static int? GetPlayerSelectionDialogItemHit(Point point, GoAppSession session)
     {
@@ -85,8 +89,24 @@ public sealed partial class GoScreenRenderer
         DrawCommandButton(PlayerSelectionAddHumanButtonBounds, "ADD HUMAN", false, mousePoint, scale: 0.32f);
         DrawCommandButton(PlayerSelectionAddComputerButtonBounds, "ADD COMPUTER", false, mousePoint, enabled: session.GtpEngineProfiles.Count > 0, scale: 0.30f);
         DrawCommandButton(PlayerSelectionDeleteButtonBounds, "DELETE", false, mousePoint, enabled: session.CanDeleteSelectedPlayerProfile, scale: 0.36f);
+        DrawCommandButton(PlayerSelectionEditButtonBounds, "EDIT", false, mousePoint, enabled: session.PlayerDialogSelectionIndex >= 0, scale: 0.42f);
         DrawFittedText($"PAGE {session.PlayerSelectionPageIndex + 1} / {pageCount}", new Rectangle(1240, 814, 92, 32), new Color(227, 224, 210), 0.25f);
         DrawCommandButton(PlayerSelectionNextButtonBounds, "NEXT", false, mousePoint, enabled: session.PlayerSelectionPageIndex < pageCount - 1, scale: 0.42f);
+    }
+
+    private void DrawPlayerEditPanel(GoAppSession session, Point mousePoint)
+    {
+        if (!session.IsPlayerEditPanelOpen) return;
+        var bounds = new Rectangle(510, 290, 900, 430);
+        FillRect(new Rectangle(0, 0, VirtualScreen.Width, VirtualScreen.Height), new Color(0, 0, 0, 140));
+        FillRect(bounds, new Color(24, 29, 36, 252));
+        DrawRect(bounds, 2, new Color(116, 145, 146));
+        DrawText("EDIT PLAYER", new Vector2(bounds.X + 34, bounds.Y + 28), new Color(244, 238, 218), 0.68f);
+        DrawFittedText($"DISPLAY NAME  {session.PlayerEditDraft.DisplayName}", new Rectangle(bounds.X + 42, bounds.Y + 110, 816, 42), Color.White, 0.42f);
+        DrawFittedText($"IDENTIFIER  {session.PlayerEditDraft.Identifier}", new Rectangle(bounds.X + 42, bounds.Y + 174, 816, 42), Color.White, 0.42f);
+        DrawFittedText(session.PlayerEditDraft.Kind == PlayerProfileKind.Computer ? $"ENGINE  {session.PlayerEditEngineDisplayName}" : "HUMAN PLAYER", new Rectangle(bounds.X + 42, bounds.Y + 238, 816, 42), new Color(180, 195, 195), 0.38f);
+        DrawText("DISPLAY NAME / IDENTIFIER editing is being connected to PopupTextBox.", new Vector2(bounds.X + 42, bounds.Y + 320), new Color(255, 225, 128), 0.28f);
+        DrawCommandButton(PlayerEditPanelCloseButtonBounds, "CLOSE", false, mousePoint, scale: 0.40f);
     }
 
     private static Rectangle PlayerSelectionItemBounds(int slot) => new(PlayerSelectionListBounds.X + 16, PlayerSelectionListBounds.Y + 14 + slot * 82, PlayerSelectionListBounds.Width - 32, 72);

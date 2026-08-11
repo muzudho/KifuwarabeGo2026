@@ -89,6 +89,7 @@ public sealed partial class GoScreenRenderer
             DrawTournamentRulesSelectionDialog(session, mousePoint);
             DrawTournamentRulesAddPanel(session, mousePoint);
             DrawPlayerSelectionDialog(session, mousePoint);
+            DrawPlayerEditPanel(session, mousePoint);
             DrawGtpEngineSelectionDialog(session, mousePoint);
             DrawGtpEngineEditPanel(session, mousePoint);
             if (session.IsAppProviderGameSettingsDialogOpen)
