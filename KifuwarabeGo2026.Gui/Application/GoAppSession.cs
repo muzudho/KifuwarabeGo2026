@@ -650,12 +650,6 @@ public sealed partial class GoAppSession
         }
     }
 
-    public void ReturnToSetup()
-    {
-        ClearBoard();
-        ChangeMode(GoAppModeKind.Resting);
-    }
-
     public void OpenGtpEngineSelectionDialog(GoStone stone, string appId = "play")
     {
         IsGtpEngineSelectionForCgos = false;

@@ -33,6 +33,13 @@ public sealed partial class GoAppSession
         ClearBoardEditingHistory();
     }
 
+    /// <summary>空の休憩盤へ戻します。</summary>
+    public void ReturnToSetup()
+    {
+        ClearBoard();
+        ChangeMode(GoAppModeKind.Resting);
+    }
+
     private void PassTurn() =>
         CurrentTurn = CurrentTurn == GoStone.Black ? GoStone.White : GoStone.Black;
 
