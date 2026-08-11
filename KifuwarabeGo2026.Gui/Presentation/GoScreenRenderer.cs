@@ -61,7 +61,12 @@ public sealed partial class GoScreenRenderer
             transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));
 
         DrawBackground();
-        DrawBoard(session, mousePoint);
+        var modalOpen = session.IsTournamentRulesSelectionDialogOpen || session.IsTournamentRulesAddPanelOpen ||
+                        session.IsPlayerSelectionDialogOpen || session.IsPlayerEditPanelOpen ||
+                        session.IsGtpEngineSelectionDialogOpen || session.IsGtpEngineEditPanelOpen ||
+                        session.IsAppProviderGameSettingsDialogOpen;
+        var backgroundMousePoint = modalOpen ? new Point(-1, -1) : mousePoint;
+        DrawBoard(session, backgroundMousePoint);
         if (session.CurrentMode.Kind == GoAppModeKind.Playing &&
             session.CanOpenLocalChartPopup)
         {
@@ -71,20 +76,20 @@ public sealed partial class GoScreenRenderer
         }
         if (!session.IsReviewChartPopupOpen)
         {
-            DrawSidePanel(session, mousePoint, liveBoardPreview, initialPositionConcierge);
+            DrawSidePanel(session, backgroundMousePoint, liveBoardPreview, initialPositionConcierge);
             if (session.IsLocalReplayMode)
             {
                 DrawReplayNavigationControls(
                     session.LocalDisplayMoveIndex,
                     session.CurrentGameRecord.Moves.Count,
-                    mousePoint,
+                    backgroundMousePoint,
                     showBackToLive: session.CurrentMode.Kind == GoAppModeKind.Playing,
                     backToLiveLabel: "BACK TO CURRENT");
             }
             else if (session.CanOpenLocalChartPopup ||
                      session.CurrentMode.Kind == GoAppModeKind.Reviewing)
             {
-                DrawReplayEditIconButton(mousePoint);
+                DrawReplayEditIconButton(backgroundMousePoint);
             }
             DrawTournamentRulesSelectionDialog(session, mousePoint);
             DrawTournamentRulesAddPanel(session, mousePoint);

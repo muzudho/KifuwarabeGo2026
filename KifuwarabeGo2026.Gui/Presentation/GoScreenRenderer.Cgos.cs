@@ -21,7 +21,10 @@ public sealed partial class GoScreenRenderer
             transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));
 
         DrawBackground();
-        DrawCgosClientTopPanel(session, mousePoint);
+        var modalOpen = session.IsPlayerSelectionDialogOpen || session.IsPlayerEditPanelOpen ||
+                        session.IsGtpEngineSelectionDialogOpen || session.IsGtpEngineEditPanelOpen ||
+                        session.IsCgosConnectionEditPanelOpen || session.IsCgosAdminPlayerSelectionDialogOpen;
+        DrawCgosClientTopPanel(session, modalOpen ? new Point(-1, -1) : mousePoint);
         DrawPlayerSelectionDialog(session, mousePoint);
         DrawPlayerEditPanel(session, mousePoint);
         DrawGtpEngineSelectionDialog(session, mousePoint);

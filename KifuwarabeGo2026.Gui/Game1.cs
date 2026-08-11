@@ -4924,7 +4924,13 @@ public class Game1 : Game
 
     private void MoveGtpEngineEditFocus(int step)
     {
-        var fields = Enum.GetValues<GtpEngineProfileEditField>();
+        var fields = new[]
+        {
+            GtpEngineProfileEditField.DisplayName,
+            GtpEngineProfileEditField.ExecutablePath,
+            GtpEngineProfileEditField.WorkingDirectory,
+            GtpEngineProfileEditField.Arguments,
+        };
         var currentIndex = _session.ActiveGtpEngineEditField is { } current
             ? Array.IndexOf(fields, current)
             : step > 0 ? -1 : 0;

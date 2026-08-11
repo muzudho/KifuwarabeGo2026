@@ -351,8 +351,6 @@ public sealed partial class GoScreenRenderer
         DrawRect(GtpEngineEditPanelEditorBounds, 1, new Color(67, 84, 92));
 
         DrawGtpEngineEditField(session, GtpEngineProfileEditField.DisplayName, "DISPLAY", mousePoint);
-        DrawGtpEngineEditField(session, GtpEngineProfileEditField.DefaultCgosLoginName, "CGOS LOGIN", mousePoint);
-        DrawGtpEngineEditField(session, GtpEngineProfileEditField.DefaultCgosPlainTextPassword, "CGOS PASS", mousePoint);
         DrawGtpEngineEditField(session, GtpEngineProfileEditField.ExecutablePath, "EXE", mousePoint);
         DrawGtpEngineEditField(session, GtpEngineProfileEditField.WorkingDirectory, "WORKDIR", mousePoint);
         DrawGtpEngineEditField(session, GtpEngineProfileEditField.Arguments, "ARGS", mousePoint);
@@ -860,8 +858,6 @@ public sealed partial class GoScreenRenderer
     private static readonly GtpEngineProfileEditField[] GtpEngineEditFields =
     {
         GtpEngineProfileEditField.DisplayName,
-        GtpEngineProfileEditField.DefaultCgosLoginName,
-        GtpEngineProfileEditField.DefaultCgosPlainTextPassword,
         GtpEngineProfileEditField.ExecutablePath,
         GtpEngineProfileEditField.WorkingDirectory,
         GtpEngineProfileEditField.Arguments,
