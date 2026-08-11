@@ -47,6 +47,25 @@ public sealed partial class GoAppSession
         return true;
     }
 
+    public void CyclePlayerEditEngine(int step)
+    {
+        if (PlayerEditDraft.Kind != PlayerProfileKind.Computer || _gtpEngineProfiles.Count == 0)
+            return;
+
+        var current = FindGtpEngineIndex(PlayerEditDraft.EngineProfileId);
+        var next = (Math.Max(0, current) + step + _gtpEngineProfiles.Count) % _gtpEngineProfiles.Count;
+        SetPlayerEditEngineProfile(_gtpEngineProfiles[next].Id);
+    }
+
+    public string PlayerEditEngineDisplayName
+    {
+        get
+        {
+            var index = FindGtpEngineIndex(PlayerEditDraft.EngineProfileId);
+            return index >= 0 ? _gtpEngineProfiles[index].DisplayName : "ENGINE NOT FOUND";
+        }
+    }
+
     public bool SavePlayerEditDraft()
     {
         if (PlayerEditProfileIndex < 0 || PlayerEditProfileIndex >= _playerProfiles.Count)
