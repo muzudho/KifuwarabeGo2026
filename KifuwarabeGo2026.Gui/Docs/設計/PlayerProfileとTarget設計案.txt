@@ -28,7 +28,7 @@ Target Profile は、ある用途・接続先において、その Player をど
 
 - TARGET
   Player が利用する用途または接続先ごとの設定。
-  表示名、LOGIN NAME、LOGIN PASS を持つ。
+  表示名、LOGIN NAME、LOGIN PASS を持つ。Player の TargetProfileIds の先頭を既定 Target とする。
 
 - LOGIN NAME
   システムへのログインや、ファイル名など機械的な用途に使う識別子。
@@ -36,6 +36,10 @@ Target Profile は、ある用途・接続先において、その Player をど
 
 - LOGIN PASS
   システムへの接続に使うパスワード。画面上は伏せ字で扱う。
+
+- OUTPUT NAME
+  LocalMatch Target における LOGIN NAME の画面上の呼称。ログインはしないため、出力ファイル名などの材料を表す。
+  LocalMatch では LOGIN PASS を表示・使用しない。
 
 
 3. 独立カタログと参照の構造
@@ -89,8 +93,7 @@ Computer Player: 「きふわらべ」
     CONNECTION PROFILE: CGOS Server 9-ro
 
   TARGET PROFILE: LocalMatch
-    LOGIN NAME: kifuwarabe-local
-    LOGIN PASS: 空欄
+    OUTPUT NAME: kifuwarabe-local
     CONNECTION PROFILE: なし
 
 Human Player: 「山田太郎」
@@ -98,8 +101,7 @@ Human Player: 「山田太郎」
   DISPLAY: 山田太郎
 
   TARGET PROFILE: LocalMatch
-    LOGIN NAME: yamada-taro
-    LOGIN PASS: 空欄
+    OUTPUT NAME: yamada-taro
     CONNECTION PROFILE: なし
 
 同一 Player が CGOS 用と LocalMatch 用で異なる LOGIN NAME を持てる。
@@ -137,12 +139,14 @@ LOGIN NAME が空欄の場合は、ファイル保存時に DISPLAY を代替値
 
 EDIT PLAYER PROFILE
   DISPLAY
+  TARGET               既定 Target の表示
+    [SELECT TARGET]    Target 一覧を開く
   KIND
   ENGINE PROFILE       Computer の場合だけ。EDIT ENGINE PROFILE を開く
   TARGET PROFILES
     [CGOS]        LOGIN NAME / LOGIN PASS / 接続先
     [LocalMatch]  LOGIN NAME
-    [SELECT TARGET] [CREATE TARGET] [EDIT TARGET] [REMOVE TARGET]
+    [USE] [CREATE TARGET] [EDIT TARGET] [REMOVE TARGET]
 
 EDIT ENGINE PROFILE
   ENGINE DISPLAY
@@ -225,11 +229,16 @@ CGOS 接続画面は黒白の Player Profile と CGOS Target を選び、その 
 
 完了:
 - Player / Engine / Target の責務分離、Target の JSON 保存、CGOS 実行時の Target 認証情報参照。
-- Player 編集画面の TARGETS...、Target 一覧、最大5件の追加、削除、選択、CGOS 接続先の前後切替。
+- Player 編集画面の Target 表示、`SELECT TARGET`、`EDIT TARGETS`、Target 一覧、最大5件の追加、削除、選択、CGOS 接続先の前後切替。
+- Target の DISPLAY / LOGIN NAME / LOGIN PASS のテキスト編集。パスワードは非編集中に伏せ字で表示する。
+- LocalMatch Target の画面では LOGIN NAME を OUTPUT NAME と表示し、LOGIN PASS を表示しない。
+- `USE` で選択 Target を Player の既定 Target（TargetProfileIds の先頭）へ設定する。
 
-実装途中:
-- 選択中 Target の DISPLAY / LOGIN NAME / LOGIN PASS のテキスト編集。
-- CGOS 接続先を水色枠、指アイコン、USE ボタンで選ぶ既存 UI との統合。
+残作業:
+- LocalMatch 開始設定で黒白それぞれの LocalMatch Target を明示選択し、OUTPUT NAME を出力ファイル名へ使用する。
+- CGOS で接続先ごとに複数 Target がある場合の選択画面・既定選択規則を明示する。
+- Target の CGOS Connection Profile 選択 UI を接続先一覧と統合する。
+- LOGIN PASS の OS 保護ストア移行。
 
 運用方針:
 - Target は Player ごとに1～5件の少数を前提とする。ORDER とページ送りは作らない。

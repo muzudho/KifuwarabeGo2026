@@ -1,6 +1,6 @@
 # PLAYER 統合実装計画
 
-最終更新: 2026-08-11
+最終更新: 2026-08-12
 
 ## 目的
 
@@ -53,6 +53,7 @@ Local Match と Ponnuki は、対局者を共通に扱う `PLAYER` 選択へ移�
 | `Identifier` | ログイン名・ログ名・ファイル名など外部用途の識別子。文字種・文字数は検査しない。 |
 | `Kind` | `Human` または `Computer`。 |
 | `EngineProfileId` | `Computer` のときに参照する GTP エンジンプロファイル ID。Human は空。 |
+| `TargetProfileIds` | Player が利用可能な Target の ID 一覧。先頭を既定の使用先とする。 |
 
 `Identifier` の妥当性確認は、このアプリでは実施しません。CGOS など各接続先が必要とする検査は、その接続機能が送信直前に行います。
 
@@ -102,6 +103,8 @@ WHITE PLAYER   [表示名 / 種別]                 [SELECT]
 
 - Human: 表示名と識別子を編集する。
 - Computer: 表示名、識別子、参照エンジンを編集する。
+- 表示名と Engine の間に、既定 Target の表示欄と `SELECT TARGET` を置く。
+- `EDIT TARGETS` では Target を編集し、`USE` で既定 Target を選ぶ。
 - エンジン固有の設定は既存の Engine Settings 画面を開く。
 - Identifier にはアプリ独自の文字種・文字数制限を置かない。空欄だけは許可しないか、保存時にユーザーへ分かる警告を出すかを実装時に決める。
 
@@ -157,14 +160,19 @@ WHITE PLAYER   [表示名 / 種別]                 [SELECT]
 - TargetProfile / TargetCatalog、Player からの Target 参照、CGOS Connection Profile の不変 ID 参照。
 - CGOS 実行時の Target 認証情報参照。
 - TARGETS ダイアログの表示、最大5件までの CGOS / LocalMatch Target 追加、削除、行選択、CGOS 接続先の前後切替。
+- Target の `DISPLAY`、`LOGIN NAME`、`LOGIN PASS` をクリック、貼り付け、IME、Enter/Escape、Tab で編集・保存できる。非編集中のパスワードは伏せ字にする。
+- LocalMatch Target では `LOGIN NAME` を `OUTPUT NAME` として表示し、パスワード欄を表示しない。
+- `USE` により選択 Target を Player の既定使用先にできる。Player 編集画面では既定 Target を表示し、`SELECT TARGET` / `EDIT TARGETS` から選択・編集できる。
 
-### 実装途中
+### 残作業
 
-- Target の DISPLAY / LOGIN NAME / LOGIN PASS の入力欄。
-- 接続先選択を既存の「現在値 + USE」選択 UI に統合すること。
-- Target 編集画面の表示・操作の仕上げ。
+- Local Match の開始設定で、黒白それぞれの LocalMatch Target を明示選択し、実際の出力ファイル名へ `OUTPUT NAME` を反映する。
+- CGOS で同じ接続先に複数 Target がある場合、既定 Target の選択規則を接続・対局開始の画面へ明示表示する。
+- CGOS 接続先の選択 UI を、Target 編集の現在値・前後切替から、接続先一覧を選ぶ一貫した UI へ整理する。
+- Player Catalog と Target Catalog をまたぐ追加・削除・既定変更の保存を、ひとまとまりの操作として整理する。
 
 ### 後続
 
 - Target の並べ替え・ページ送りは、最大5件の少数運用のため当面不要。
 - LOGIN PASS の OS 保護ストア移行。
+- CGOS／大会ルールへの Player 統合、旧 PlayerKind／エンジン選択状態の削除、ConnectionProfile の一般化は、本計画の従来どおりの後続課題。
