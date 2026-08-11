@@ -7,6 +7,10 @@ using System;
 /// <summary>全モードで共有する盤面、手番、局面履歴の基本状態を管理します。</summary>
 public sealed partial class GoAppSession
 {
+    public GoStone CurrentTurn { get; private set; } = GoStone.Black;
+    public int PlayedMoveCount { get; private set; }
+    public int NextMoveNumber => PlayedMoveCount + 1;
+
     private void ClearBoard()
     {
         _matchSession = null;

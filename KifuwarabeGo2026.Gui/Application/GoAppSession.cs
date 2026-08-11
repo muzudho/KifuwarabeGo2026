@@ -203,12 +203,6 @@ public sealed partial class GoAppSession
 
     public TournamentRules CurrentTournamentRules => _currentTournamentRules.Clone();
 
-    public GoStone CurrentTurn { get; private set; } = GoStone.Black;
-
-    public int PlayedMoveCount { get; private set; }
-
-    public int NextMoveNumber => PlayedMoveCount + 1;
-
     public IReadOnlyList<GtpEngineProfile> GtpEngineProfiles => _gtpEngineProfiles;
 
     public CatalogOrderEditor<GtpEngineProfile> GtpEngineOrderEditor { get; } = new();
