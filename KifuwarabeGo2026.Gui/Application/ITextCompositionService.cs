@@ -7,6 +7,11 @@ using System;
 /// </summary>
 public interface ITextCompositionService
 {
+    /// <summary>
+    /// Windows 専用の IME 診断ランプを表示できるかどうか。
+    /// </summary>
+    bool SupportsDiagnosticAdornment { get; }
+
     event Action<TextCompositionState>? CompositionChanged;
 
     event Action<TextCompositionDiagnostics>? DiagnosticsChanged;

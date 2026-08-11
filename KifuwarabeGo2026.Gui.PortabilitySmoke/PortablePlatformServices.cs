@@ -20,6 +20,8 @@ internal sealed class PortablePlatformServices :
     IPlatformExecutableService,
     IWindowScreenshotService
 {
+    public bool SupportsDiagnosticAdornment => false;
+
     public event Action<TextCompositionState>? CompositionChanged
     {
         add { }

@@ -30,6 +30,8 @@ public sealed class WindowsTextCompositionService : ITextCompositionService, IDi
     private SdlEventFilterCallback? _sdlEventWatch;
     private bool _isSdlEventWatchAttached;
 
+    public bool SupportsDiagnosticAdornment => true;
+
     public event Action<TextCompositionState>? CompositionChanged;
     public event Action<TextCompositionDiagnostics>? DiagnosticsChanged;
 

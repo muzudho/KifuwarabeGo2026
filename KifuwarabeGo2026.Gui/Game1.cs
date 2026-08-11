@@ -776,7 +776,8 @@ public class Game1 : Game
                 _gtpEngineStringInputMessage,
                 showDefaultButton: true,
                 composition: _gtpEngineStringComposition,
-                compositionDiagnostics: _textCompositionDiagnostics);
+                compositionDiagnostics: _textCompositionDiagnostics,
+                showCompositionDiagnostics: _textCompositionService.SupportsDiagnosticAdornment);
 
         _renderer?.DrawBreadcrumb(GetScreenBreadcrumb());
 
