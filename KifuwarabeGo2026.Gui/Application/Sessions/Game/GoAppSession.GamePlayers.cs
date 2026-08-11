@@ -77,6 +77,10 @@ public sealed partial class GoAppSession
     /// <summary>対局画面と棋譜へ表示する対局者名を取得します。</summary>
     public string GetLocalPlayerName(GoStone stone)
     {
+        var selectedPlayer = GetSelectedPlayerProfile(stone);
+        if (selectedPlayer?.Kind == PlayerProfileKind.Computer)
+            return selectedPlayer.DisplayName;
+
         if (GetPlayerKind(stone) == GoPlayerKind.Human)
             return GetHumanPlayerName(stone);
 

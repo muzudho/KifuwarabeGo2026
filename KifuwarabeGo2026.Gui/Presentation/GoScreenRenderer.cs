@@ -88,6 +88,7 @@ public sealed partial class GoScreenRenderer
             }
             DrawTournamentRulesSelectionDialog(session, mousePoint);
             DrawTournamentRulesAddPanel(session, mousePoint);
+            DrawPlayerSelectionDialog(session, mousePoint);
             DrawGtpEngineSelectionDialog(session, mousePoint);
             DrawGtpEngineEditPanel(session, mousePoint);
             if (session.IsAppProviderGameSettingsDialogOpen)
@@ -115,6 +116,7 @@ public sealed partial class GoScreenRenderer
 
         DrawBackground();
         DrawUseSelectionPanel(session, mousePoint, page, appProviderTabIndex, isAppProviderLoading);
+        DrawPlayerSelectionDialog(session, mousePoint);
         DrawGtpEngineSelectionDialog(session, mousePoint);
         DrawGtpEngineEditPanel(session, mousePoint);
 
@@ -391,10 +393,8 @@ public sealed partial class GoScreenRenderer
         DrawInfoStrip(1144, 600, "MOVES", FormatMoveLimit(session.MoveLimit));
 
         DrawVerticalResultSection(new Rectangle(1144, 696, 668, 216), "PLAYERS", new Color(76, 91, 126));
-        DrawSetupPlayerKindRow(GoStone.Black, session.BlackPlayerKind, mousePoint, BlackPlayerKindButtonY);
-        DrawSetupPlayerSelector(session, GoStone.Black, mousePoint, BlackEngineButtonY);
-        DrawSetupPlayerKindRow(GoStone.White, session.WhitePlayerKind, mousePoint, WhitePlayerKindButtonY);
-        DrawSetupPlayerSelector(session, GoStone.White, mousePoint, WhiteEngineButtonY);
+        DrawSetupPlayerRow(session, GoStone.Black, mousePoint, BlackPlayerKindButtonY);
+        DrawSetupPlayerRow(session, GoStone.White, mousePoint, WhitePlayerKindButtonY);
 
         DrawVerticalResultSection(new Rectangle(1144, 916, 668, 76), "ACTION", new Color(91, 82, 105));
         DrawCommandButton(StartReviewingButtonBounds, "KIFU REVIEW", false, mousePoint, enabled: session.HasReviewGameRecord, scale: 0.32f);
@@ -1001,10 +1001,8 @@ public sealed partial class GoScreenRenderer
         DrawCommandButton(AppProviderGameSettingsButtonBounds, "GAME SETTINGS", false, mousePoint, scale: 0.32f);
         DrawCommandButton(ChangeAppProviderButtonBounds, "CHANGE", false, mousePoint, scale: 0.28f);
         DrawVerticalResultSection(new Rectangle(1144, 632, 668, 216), "PLAYERS", new Color(76, 91, 126));
-        DrawSetupPlayerKindRow(GoStone.Black, session.BlackPlayerKind, mousePoint, PonnukiBlackPlayerKindButtonY, "COMPUTER1");
-        DrawSetupPlayerSelector(session, GoStone.Black, mousePoint, PonnukiBlackEngineButtonY);
-        DrawSetupPlayerKindRow(GoStone.White, session.WhitePlayerKind, mousePoint, PonnukiWhitePlayerKindButtonY, "COMPUTER2");
-        DrawSetupPlayerSelector(session, GoStone.White, mousePoint, PonnukiWhiteEngineButtonY);
+        DrawSetupPlayerRow(session, GoStone.Black, mousePoint, PonnukiBlackPlayerKindButtonY);
+        DrawSetupPlayerRow(session, GoStone.White, mousePoint, PonnukiWhitePlayerKindButtonY);
 
         DrawVerticalResultSection(new Rectangle(1144, 856, 668, 52), "SEED AUTO", new Color(112, 76, 48), labelWidth: 56);
         DrawCommandButton(PonnukiProviderSeedAutoChangeBounds, session.PonnukiProviderSeedAutoChange ? "[x] PROVIDER" : "[ ] PROVIDER", session.PonnukiProviderSeedAutoChange, mousePoint, scale: 0.22f);

@@ -22,15 +22,19 @@ public sealed class GtpEngineCatalog
         Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
     };
 
-    private GtpEngineCatalog(string listPath, IReadOnlyList<GtpEngineProfile> profiles)
+    private GtpEngineCatalog(string listPath, IReadOnlyList<GtpEngineProfile> profiles, bool requiresSave = false)
     {
         ListPath = listPath;
         Profiles = profiles;
+        RequiresSave = requiresSave;
     }
 
     public string ListPath { get; }
 
     public IReadOnlyList<GtpEngineProfile> Profiles { get; }
+
+    /// <summary>旧形式の設定を読み込んだため、次回保存時に永続 ID を書き戻す必要があるか。</summary>
+    public bool RequiresSave { get; }
 
     public static GtpEngineCatalog LoadFromDefaultLocation()
     {
@@ -50,6 +54,11 @@ public sealed class GtpEngineCatalog
         }
 
         var catalog = Load(listPath);
+        if (catalog.RequiresSave)
+        {
+            catalog.Save(catalog.Profiles);
+            catalog = Load(listPath);
+        }
         var developmentListPath = FindDevelopmentListPath();
         if (developmentListPath is null) return catalog;
 
@@ -101,12 +110,13 @@ public sealed class GtpEngineCatalog
 
         var listDirectory = Path.GetDirectoryName(listPath) ?? AppContext.BaseDirectory;
         var profiles = JsonSerializer.Deserialize<GtpEngineProfileList>(File.ReadAllText(listPath), JsonOptions)?.GtpEngines ?? new();
+        var requiresSave = profiles.Any(profile => string.IsNullOrWhiteSpace(profile.Id));
         var normalizedProfiles = profiles
             .Where(profile => !string.IsNullOrWhiteSpace(profile.ExecutablePath))
             .Select(profile => Normalize(profile, listDirectory))
             .ToList();
 
-        return new GtpEngineCatalog(listPath, normalizedProfiles);
+        return new GtpEngineCatalog(listPath, normalizedProfiles, requiresSave);
     }
 
     public void Save(IEnumerable<GtpEngineProfile> profiles)
@@ -126,6 +136,9 @@ public sealed class GtpEngineCatalog
     private static GtpEngineProfile Normalize(GtpEngineProfile profile, string baseDirectory)
     {
         var normalized = profile.Clone();
+        normalized.Id = string.IsNullOrWhiteSpace(normalized.Id)
+            ? Guid.NewGuid().ToString("N")
+            : normalized.Id;
         normalized.DisplayName = string.IsNullOrWhiteSpace(normalized.DisplayName)
             ? "Unnamed GTP Engine"
             : normalized.DisplayName.Trim();

@@ -50,6 +50,7 @@ public class Game1 : Game
     private readonly GoAppSession _session = new();
     private readonly TournamentRulesCatalog _tournamentRulesCatalog;
     private readonly GtpEngineCatalog _gtpEngineCatalog;
+    private readonly PlayerCatalog _playerCatalog;
     private readonly CgosConnectionCatalog _cgosConnectionCatalog;
     private readonly TournamentRulesSetting _tournamentRulesSetting;
     private readonly PlayingScene _playingScene;
@@ -176,9 +177,11 @@ public class Game1 : Game
         _cgosAdminProcess = new CgosConnectionProcess(_desktopLauncher, _platformExecutableService, "Admin");
         _tournamentRulesCatalog = TournamentRulesCatalog.LoadFromDefaultLocation();
         _gtpEngineCatalog = GtpEngineCatalog.LoadFromDefaultLocation();
+        _playerCatalog = PlayerCatalog.LoadFromDefaultLocation(_gtpEngineCatalog.Profiles);
         _cgosConnectionCatalog = CgosConnectionCatalog.LoadFromDefaultLocation();
         _session.SetTournamentRules(_tournamentRulesCatalog.Rules);
         _session.SetGtpEngineProfiles(_gtpEngineCatalog.Profiles);
+        _session.SetPlayerProfiles(_playerCatalog.Profiles);
         ApplicationSettings.Current.LastSelectedAppProviderEnginePaths.TryGetValue("ponnuki", out var lastPonnukiProviderPath);
         if (_session.RestoreAppProviderEngine(lastPonnukiProviderPath) && _session.CanUseSelectedAppProvider)
         {
@@ -1348,6 +1351,12 @@ public class Game1 : Game
             var isLocalAppsIntermission = isIntermissionMode && _session.UseKind == GoAppUseKind.LocalApps;
             var isPlayerSelectionIntermission = isSetupMode || isLocalAppsIntermission;
             var isBoardEditing = _session.CurrentMode.Kind == GoAppModeKind.BoardEditing;
+            if (_session.IsPlayerSelectionDialogOpen)
+            {
+                TryHandlePlayerSelectionDialogClick(point);
+                _previousMouse = mouse;
+                return;
+            }
             var humanPlayerNameHit = isPlayerSelectionIntermission ? GoScreenRenderer.GetHumanPlayerNameTextBoxHit(point, _session) : null;
             if (_session.ActiveHumanPlayerNameStone is not null && humanPlayerNameHit is null)
                 EndHumanPlayerNameEdit(commit: true);
@@ -1573,6 +1582,22 @@ public class Game1 : Game
             }
             else if (isPlayerSelectionIntermission &&
                      (isLocalAppsIntermission
+                         ? GoScreenRenderer.GetPonnukiBlackPlayerSelectButtonHit(point)
+                         : GoScreenRenderer.GetBlackPlayerSelectButtonHit(point)))
+            {
+                EndHumanPlayerNameEdit(commit: true);
+                _session.OpenPlayerSelectionDialog(GoStone.Black);
+            }
+            else if (isPlayerSelectionIntermission &&
+                     (isLocalAppsIntermission
+                         ? GoScreenRenderer.GetPonnukiWhitePlayerSelectButtonHit(point)
+                         : GoScreenRenderer.GetWhitePlayerSelectButtonHit(point)))
+            {
+                EndHumanPlayerNameEdit(commit: true);
+                _session.OpenPlayerSelectionDialog(GoStone.White);
+            }
+            else if (isPlayerSelectionIntermission &&
+                     (isLocalAppsIntermission
                          ? GoScreenRenderer.GetPonnukiBlackPlayerKindButtonHit(point)
                          : GoScreenRenderer.GetBlackPlayerKindButtonHit(point)) is { } blackPlayerKind)
             {
@@ -1616,6 +1641,36 @@ public class Game1 : Game
         }
 
         _previousMouse = mouse;
+    }
+
+    private void TryHandlePlayerSelectionDialogClick(Point point)
+    {
+        if (GoScreenRenderer.GetPlayerSelectionDialogCancelButtonHit(point))
+        {
+            _session.CancelPlayerSelectionDialog();
+            return;
+        }
+
+        if (GoScreenRenderer.GetPlayerSelectionDialogOkButtonHit(point))
+        {
+            _session.CommitPlayerSelectionDialog();
+            return;
+        }
+
+        if (GoScreenRenderer.GetPlayerSelectionDialogPreviousPageButtonHit(point))
+        {
+            _session.MovePlayerSelectionPage(-1);
+            return;
+        }
+
+        if (GoScreenRenderer.GetPlayerSelectionDialogNextPageButtonHit(point))
+        {
+            _session.MovePlayerSelectionPage(1);
+            return;
+        }
+
+        if (GoScreenRenderer.GetPlayerSelectionDialogItemHit(point, _session) is { } index)
+            _session.SelectPlayerDialogItem(index);
     }
 
     private void UpdateTextBoxMouseDrag(MouseState mouse, Point point)

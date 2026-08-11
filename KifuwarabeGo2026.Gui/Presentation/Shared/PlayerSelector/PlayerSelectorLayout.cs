@@ -15,4 +15,7 @@ public static class PlayerSelectorLayout
 
     public static PlayerSelector CreateComputerEngineSelector(int y) =>
         new(new Rectangle(1144, y - 4, 668, 44), "NAME", "", "SELECT");
+
+    public static PlayerSelector CreatePlayerSelector(int y) =>
+        new(new Rectangle(1144, y - 4, 668, 56), "PLAYER", "", "SELECT", LabelWidth: 168);
 }

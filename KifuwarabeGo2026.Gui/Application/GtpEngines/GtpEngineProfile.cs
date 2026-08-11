@@ -3,6 +3,7 @@ namespace KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Domain;
 using KifuwarabeGo2026.GtpExtensions.InitialPosition;
 using KifuwarabeGo2026.Shared.Domain;
+using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
@@ -11,6 +12,11 @@ using System.Text.Json.Serialization;
 /// </summary>
 public sealed class GtpEngineProfile
 {
+    /// <summary>
+    /// 永続的なエンジン設定の識別子。表示順や表示名が変わっても PlayerProfile から参照できる。
+    /// </summary>
+    public string Id { get; set; } = Guid.NewGuid().ToString("N");
+
     public string DisplayName { get; set; } = "Kifuwarabe Star Random GTP";
 
     /// <summary>CGOS 接続画面へ初期表示するログイン名です。</summary>
@@ -62,6 +68,7 @@ public sealed class GtpEngineProfile
 
     public GtpEngineProfile Clone() => new()
     {
+        Id = Id,
         DisplayName = DisplayName,
         DefaultCgosLoginName = DefaultCgosLoginName,
         DefaultCgosPlainTextPassword = DefaultCgosPlainTextPassword,
