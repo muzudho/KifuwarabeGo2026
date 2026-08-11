@@ -33,6 +33,7 @@
 - `TournamentRules/GoAppSession.TournamentRules.Catalog.cs`: 規定セットの読込・選択・追加・並び替え
 - `TournamentRules/GoAppSession.TournamentRules.Dialogs.cs`: 規定の選択・追加・削除ダイアログ
 - `TournamentRules/GoAppSession.TournamentRules.Editing.cs`: 数値・表示名の編集と保存済み化
+- `AppProvider/GoAppSession.AppProvider.cs`: フォーマルアプリ連携用エンジンの選択・互換性状態
 - `GameRecords/Go`: `GoGameRecord` など棋譜モデルの配置候補
 - `VariationSession`: 変化図編集状態の配置候補
 
