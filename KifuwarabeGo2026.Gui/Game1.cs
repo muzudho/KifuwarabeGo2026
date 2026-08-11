@@ -1647,8 +1647,14 @@ public class Game1 : Game
     {
         if (_session.IsPlayerEditPanelOpen)
         {
-            if (GoScreenRenderer.GetPlayerEditPanelCloseButtonHit(point))
+            if (GoScreenRenderer.GetPlayerEditPanelCancelButtonHit(point))
                 _session.CancelPlayerEditPanel();
+            else if (GoScreenRenderer.GetPlayerEditPanelSaveButtonHit(point) && _session.SavePlayerEditDraft())
+                _playerCatalog.Save(_session.PlayerProfiles);
+            else if (GoScreenRenderer.GetPlayerEditPanelPreviousEngineButtonHit(point))
+                _session.CyclePlayerEditEngine(-1);
+            else if (GoScreenRenderer.GetPlayerEditPanelNextEngineButtonHit(point))
+                _session.CyclePlayerEditEngine(1);
             return;
         }
 

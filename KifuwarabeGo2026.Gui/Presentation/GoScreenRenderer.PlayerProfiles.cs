@@ -19,7 +19,10 @@ public sealed partial class GoScreenRenderer
     private static readonly Rectangle PlayerSelectionAddComputerButtonBounds = new(566, 816, 162, 48);
     private static readonly Rectangle PlayerSelectionEditButtonBounds = new(742, 816, 144, 48);
     private static readonly Rectangle PlayerSelectionDeleteButtonBounds = new(900, 816, 144, 48);
-    private static readonly Rectangle PlayerEditPanelCloseButtonBounds = new(1190, 624, 170, 52);
+    private static readonly Rectangle PlayerEditPanelCancelButtonBounds = new(1010, 624, 170, 52);
+    private static readonly Rectangle PlayerEditPanelSaveButtonBounds = new(1190, 624, 170, 52);
+    private static readonly Rectangle PlayerEditPanelPreviousEngineButtonBounds = new(1030, 528, 110, 42);
+    private static readonly Rectangle PlayerEditPanelNextEngineButtonBounds = new(1150, 528, 110, 42);
 
     public static bool GetBlackPlayerSelectButtonHit(Point point) => PlayerSelectorLayout.CreatePlayerSelector(BlackPlayerKindButtonY).ContainsBrowseButton(point);
     public static bool GetWhitePlayerSelectButtonHit(Point point) => PlayerSelectorLayout.CreatePlayerSelector(WhitePlayerKindButtonY).ContainsBrowseButton(point);
@@ -33,7 +36,10 @@ public sealed partial class GoScreenRenderer
     public static bool GetPlayerSelectionDialogAddComputerButtonHit(Point point) => PlayerSelectionAddComputerButtonBounds.Contains(point);
     public static bool GetPlayerSelectionDialogDeleteButtonHit(Point point) => PlayerSelectionDeleteButtonBounds.Contains(point);
     public static bool GetPlayerSelectionDialogEditButtonHit(Point point) => PlayerSelectionEditButtonBounds.Contains(point);
-    public static bool GetPlayerEditPanelCloseButtonHit(Point point) => PlayerEditPanelCloseButtonBounds.Contains(point);
+    public static bool GetPlayerEditPanelCancelButtonHit(Point point) => PlayerEditPanelCancelButtonBounds.Contains(point);
+    public static bool GetPlayerEditPanelSaveButtonHit(Point point) => PlayerEditPanelSaveButtonBounds.Contains(point);
+    public static bool GetPlayerEditPanelPreviousEngineButtonHit(Point point) => PlayerEditPanelPreviousEngineButtonBounds.Contains(point);
+    public static bool GetPlayerEditPanelNextEngineButtonHit(Point point) => PlayerEditPanelNextEngineButtonBounds.Contains(point);
 
     public static int? GetPlayerSelectionDialogItemHit(Point point, GoAppSession session)
     {
@@ -110,8 +116,14 @@ public sealed partial class GoScreenRenderer
         DrawFittedText($"DISPLAY NAME  {session.PlayerEditDraft.DisplayName}", new Rectangle(bounds.X + 42, bounds.Y + 110, 816, 42), Color.White, 0.42f);
         DrawFittedText($"IDENTIFIER  {session.PlayerEditDraft.Identifier}", new Rectangle(bounds.X + 42, bounds.Y + 174, 816, 42), Color.White, 0.42f);
         DrawFittedText(session.PlayerEditDraft.Kind == PlayerProfileKind.Computer ? $"ENGINE  {session.PlayerEditEngineDisplayName}" : "HUMAN PLAYER", new Rectangle(bounds.X + 42, bounds.Y + 238, 816, 42), new Color(180, 195, 195), 0.38f);
+        if (session.PlayerEditDraft.Kind == PlayerProfileKind.Computer)
+        {
+            DrawCommandButton(PlayerEditPanelPreviousEngineButtonBounds, "PREV", false, mousePoint, scale: 0.32f);
+            DrawCommandButton(PlayerEditPanelNextEngineButtonBounds, "NEXT", false, mousePoint, scale: 0.32f);
+        }
         DrawText("DISPLAY NAME / IDENTIFIER editing is being connected to PopupTextBox.", new Vector2(bounds.X + 42, bounds.Y + 320), new Color(255, 225, 128), 0.28f);
-        DrawCommandButton(PlayerEditPanelCloseButtonBounds, "CLOSE", false, mousePoint, scale: 0.40f);
+        DrawCommandButton(PlayerEditPanelCancelButtonBounds, "CANCEL", false, mousePoint, scale: 0.34f);
+        DrawCommandButton(PlayerEditPanelSaveButtonBounds, "SAVE", false, mousePoint, scale: 0.40f);
     }
 
     private static Rectangle PlayerSelectionItemBounds(int slot) => new(PlayerSelectionListBounds.X + 16, PlayerSelectionListBounds.Y + 14 + slot * 82, PlayerSelectionListBounds.Width - 32, 72);
