@@ -176,7 +176,7 @@ public sealed partial class GoScreenRenderer
             DrawDataRowFrame(row, active: index == session.TargetProfileEditIndex);
             DrawFittedText(target.DisplayName, new Rectangle(row.X + 18, row.Y + 10, 240, 28), Color.White, 0.46f);
             DrawFittedText($"LOGIN NAME: {target.LoginName}", new Rectangle(row.X + 280, row.Y + 10, 390, 28), new Color(180, 195, 195), 0.34f);
-            DrawFittedText(string.IsNullOrEmpty(target.ConnectionProfileId) ? "LOCAL MATCH" : session.TargetProfileEditConnectionDisplayName, new Rectangle(row.X + 280, row.Y + 42, 520, 24), new Color(147, 244, 200), 0.30f);
+            DrawFittedText(session.GetTargetProfileConnectionDisplayName(target), new Rectangle(row.X + 280, row.Y + 42, 520, 24), new Color(147, 244, 200), 0.30f);
         }
         DrawCommandButton(TargetProfileEditAddCgosButtonBounds, "ADD CGOS", false, mousePoint, enabled: targets.Count < 5, scale: 0.32f);
         DrawCommandButton(TargetProfileEditAddLocalButtonBounds, "ADD LOCAL", false, mousePoint, enabled: targets.Count < 5, scale: 0.32f);

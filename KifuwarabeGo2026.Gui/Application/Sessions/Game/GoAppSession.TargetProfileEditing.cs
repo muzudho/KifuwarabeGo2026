@@ -92,7 +92,10 @@ public sealed partial class GoAppSession
     }
 
     public string TargetProfileEditConnectionDisplayName =>
-        _cgosConnectionProfiles.FirstOrDefault(profile => string.Equals(profile.Id, TargetProfileEditDraft.ConnectionProfileId, StringComparison.Ordinal))?.DisplayName ?? "LOCAL MATCH";
+        GetTargetProfileConnectionDisplayName(TargetProfileEditDraft);
+
+    public string GetTargetProfileConnectionDisplayName(TargetProfile target) =>
+        _cgosConnectionProfiles.FirstOrDefault(profile => string.Equals(profile.Id, target.ConnectionProfileId, StringComparison.Ordinal))?.DisplayName ?? "LOCAL MATCH";
 
     private PlayerProfile GetTargetEditOwner() => _playerProfiles[PlayerEditProfileIndex];
 
