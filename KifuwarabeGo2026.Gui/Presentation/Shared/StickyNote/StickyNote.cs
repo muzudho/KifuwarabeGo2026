@@ -19,7 +19,8 @@ public sealed partial class GoScreenRenderer
         Color accent,
         Color borderColor,
         string heading,
-        IReadOnlyList<string> bodyLines)
+        IReadOnlyList<string> bodyLines,
+        int bodyLineSpacing = 40)
     {
         DrawLine(connectorStart, connectorEnd, 2, accent);
         FillRect(new Rectangle(bounds.X + 9, bounds.Y + 11, bounds.Width, bounds.Height), new Color(0, 0, 0, 115));
@@ -32,7 +33,7 @@ public sealed partial class GoScreenRenderer
         {
             DrawDynamicOptionText(
                 bodyLines[index],
-                new Rectangle(bounds.X + 26, bounds.Y + 73 + index * 40, bounds.Width - 52, 32),
+                new Rectangle(bounds.X + 26, bounds.Y + 68 + index * bodyLineSpacing, bounds.Width - 52, 28),
                 Color.White,
                 0.38f);
         }
