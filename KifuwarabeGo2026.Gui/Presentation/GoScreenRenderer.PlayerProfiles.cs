@@ -85,10 +85,11 @@ public sealed partial class GoScreenRenderer
         }
 
         var pageCount = Math.Max(1, (int)Math.Ceiling(session.PlayerProfiles.Count / (double)GoAppSession.PlayerSelectionPageSize));
-        var addHeaderBounds = new Rectangle(438, 774, 290, 30);
+        var addHeaderBounds = new Rectangle(438, 782, 290, 26);
         FillRect(addHeaderBounds, new Color(56, 54, 84));
         DrawRect(addHeaderBounds, 1, new Color(133, 128, 177));
-        DrawFittedText("ADD", addHeaderBounds, Color.White, 0.34f);
+        var addLabelSize = _font.MeasureString("ADD") * 0.34f;
+        DrawText("ADD", new Vector2(addHeaderBounds.Center.X - addLabelSize.X / 2f, addHeaderBounds.Center.Y - addLabelSize.Y / 2f), Color.White, 0.34f);
         DrawCommandButton(PlayerSelectionAddHumanButtonBounds, "HUMAN", false, mousePoint, scale: 0.34f);
         DrawCommandButton(PlayerSelectionAddComputerButtonBounds, "COMPUTER", false, mousePoint, enabled: session.GtpEngineProfiles.Count > 0, scale: 0.34f);
         DrawCommandButton(PlayerSelectionEditButtonBounds, "EDIT", false, mousePoint, enabled: session.PlayerDialogSelectionIndex >= 0, scale: 0.34f);
