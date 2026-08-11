@@ -15,9 +15,6 @@ using System.Linq;
 
 public sealed partial class GoAppSession
 {
-    private GoBoard _board;
-    private readonly HashSet<ulong> _positionHashes = new();
-
     public GoAppSession()
     {
         CurrentMode = _modes[GoAppModeKind.Resting];

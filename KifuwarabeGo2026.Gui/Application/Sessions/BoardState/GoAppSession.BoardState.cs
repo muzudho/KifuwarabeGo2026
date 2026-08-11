@@ -3,10 +3,14 @@ namespace KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.Shared.Domain;
 using System;
+using System.Collections.Generic;
 
 /// <summary>全モードで共有する盤面、手番、局面履歴の基本状態を管理します。</summary>
 public sealed partial class GoAppSession
 {
+    private GoBoard _board;
+    private readonly HashSet<ulong> _positionHashes = new();
+
     public GoStone CurrentTurn { get; private set; } = GoStone.Black;
     public int PlayedMoveCount { get; private set; }
     public int NextMoveNumber => PlayedMoveCount + 1;
