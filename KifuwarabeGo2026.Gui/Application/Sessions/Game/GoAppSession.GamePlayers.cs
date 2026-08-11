@@ -2,6 +2,7 @@ namespace KifuwarabeGo2026.Gui.Application;
 
 using KifuwarabeGo2026.Shared.Domain;
 using System;
+using System.IO;
 
 /// <summary>ローカル対局のプレイヤー種別、人間名、名前編集状態を管理します。</summary>
 public sealed partial class GoAppSession
@@ -94,4 +95,37 @@ public sealed partial class GoAppSession
 
     public void SetHumanPlayerNameSelection(int start, int length) =>
         (HumanPlayerNameSelectionStart, HumanPlayerNameSelectionLength) = (start, length);
+
+    public bool CanStartPlaying =>
+        IsPlayerLaunchConfigurationValid(GoStone.Black) &&
+        IsPlayerLaunchConfigurationValid(GoStone.White);
+
+    private bool IsPlayerLaunchConfigurationValid(GoStone stone)
+    {
+        if (GetPlayerKind(stone) == GoPlayerKind.Human)
+            return true;
+
+        var selectedIndex = stone == GoStone.Black ? SelectedBlackGtpEngineIndex : SelectedWhiteGtpEngineIndex;
+        if (selectedIndex < 0 || selectedIndex >= _gtpEngineProfiles.Count)
+            return false;
+
+        var profile = GetGtpEngineProfile(stone);
+        if (string.IsNullOrWhiteSpace(profile.ExecutablePath) ||
+            (Path.IsPathFullyQualified(profile.ExecutablePath) && !File.Exists(profile.ExecutablePath)))
+        {
+            return false;
+        }
+
+        try
+        {
+            var selectedExecutable = Path.GetFullPath(profile.ExecutablePath);
+            var applicationExecutable = Environment.ProcessPath;
+            return string.IsNullOrWhiteSpace(applicationExecutable) ||
+                   !selectedExecutable.Equals(Path.GetFullPath(applicationExecutable), StringComparison.OrdinalIgnoreCase);
+        }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            return false;
+        }
+    }
 }
