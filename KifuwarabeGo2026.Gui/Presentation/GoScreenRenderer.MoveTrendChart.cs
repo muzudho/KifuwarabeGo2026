@@ -12,7 +12,7 @@ using System.Globalization;
 public sealed partial class GoScreenRenderer
 {
     private static readonly Rectangle CgosTrendChartBounds = new(1144, 498, 668, 342);
-    private static readonly Rectangle LocalTrendChartBounds = new(1144, 466, 668, 424);
+    private static readonly Rectangle LocalTrendChartBounds = new(1144, 532, 668, 358);
     private static readonly Rectangle LocalGameOverTrendChartBounds = new(1144, 376, 668, 466);
     private static readonly Rectangle LocalAppsGameOverTrendChartBounds = new(1144, 376, 668, 280);
     private static readonly Rectangle ReviewTrendChartBounds = new(1144, 548, 668, 290);

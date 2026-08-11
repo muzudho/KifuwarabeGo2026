@@ -13,6 +13,7 @@ using KifuwarabeGo2026.Gui.Infrastructure.FileSystem;
 using KifuwarabeGo2026.Gui.Infrastructure.Logging;
 using KifuwarabeGo2026.Gui.Infrastructure;
 using KifuwarabeGo2026.Gui.Presentation;
+using KifuwarabeGo2026.Gui.Presentation.BoardLens;
 using KifuwarabeGo2026.Gui.Presentation.GoApps.Formal.OnlineMatch.Connect;
 using KifuwarabeGo2026.Gui.Presentation.GoApps.Formal.OnlineMatch.ProfileSelect;
 using KifuwarabeGo2026.Gui.Presentation.GoApps.Formal.OnlineMatch.Watch;
@@ -1415,6 +1416,29 @@ public class Game1 : Game
                 localCommentPageStep is { } selectedLocalCommentPageStep)
             {
                 _session.ChangeCommentPage(selectedLocalCommentPageStep);
+                _previousMouse = mouse;
+                return;
+            }
+
+            if (_session.CurrentMode.Kind == GoAppModeKind.Playing &&
+                GoScreenRenderer.GetLocalPlayingBoardLensButtonHit(point, _session.IsRenParseDisplayEnabled) is { } boardLensButton)
+            {
+                switch (boardLensButton)
+                {
+                    case BoardLensButton.Toggle:
+                        ToggleBoardLens();
+                        break;
+                    case BoardLensButton.Previous:
+                        TryStepBoardLens(-1);
+                        break;
+                    case BoardLensButton.Next:
+                        TryStepBoardLens(1);
+                        break;
+                    case BoardLensButton.Exit:
+                        TryDeactivateBoardLens();
+                        break;
+                }
+
                 _previousMouse = mouse;
                 return;
             }
