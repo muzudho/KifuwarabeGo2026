@@ -128,12 +128,12 @@ public sealed partial class GoScreenRenderer
         DrawRect(bounds, 2, new Color(116, 145, 146));
         DrawText("EDIT PLAYER", new Vector2(bounds.X + 34, bounds.Y + 28), new Color(244, 238, 218), 0.68f);
         DrawPlayerEditField(session, PlayerProfileEditField.DisplayName, "DISPLAY NAME", mousePoint);
-        DrawPlayerEditField(session, PlayerProfileEditField.Identifier, "IDENTIFIER", mousePoint);
+        DrawPlayerEditField(session, PlayerProfileEditField.Identifier, "LOGIN / FILE NAME", mousePoint);
+        DrawText("Used for log and file naming.  Server login names belong to Target Profiles.", new Vector2(760, 481), new Color(146, 161, 164), 0.24f);
         if (session.PlayerEditDraft.Kind == PlayerProfileKind.Computer)
         {
             DrawText("ENGINE", new Vector2(552, 510), new Color(180, 195, 195), 0.36f);
             var engineTextBounds = new Rectangle(760, 503, 600, 42);
-            DrawTournamentRulesTextInputSurface(engineTextBounds, false, engineTextBounds.Contains(mousePoint));
             DrawFittedText(session.PlayerEditEngineDisplayName, engineTextBounds, Color.White, 0.42f);
             DrawPlayerEngineCycleButton(PlayerEditPanelPreviousEngineButtonBounds, pointsRight: false, mousePoint);
             DrawPlayerEngineCycleButton(PlayerEditPanelNextEngineButtonBounds, pointsRight: true, mousePoint);
