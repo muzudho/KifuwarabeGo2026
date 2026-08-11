@@ -10,6 +10,10 @@
 - `VariationSession/GoAppSession.Variation.cs`: 変化図編集の開始位置と編集状態
 - `VariationSession/GoAppSession.Variation.Lifecycle.cs`: 開始、採用用レコード作成、破棄
 - `VariationSession/GoAppSession.Variation.Editing.cs`: 着手、盤面編集、アンドゥ、コメント編集
+- `BoardEditing/GoAppSession.BoardEditing.cs`: 通常の盤面編集の開始・確定・取消
+- `BoardEditing/GoAppSession.BoardEditing.Operations.cs`: 石の配置、全消去、アンドゥ／リドゥ
+- `BoardEditing/GoAppSession.EditingHistory.cs`: 盤面編集と変化図編集で共有する編集履歴
+- `GameRecords/Current/GoAppSession.CurrentGameRecord.cs`: 現在盤面からの棋譜レコード生成とメタデータ転記
 - `GameRecords/Go`: `GoGameRecord` など棋譜モデルの配置候補
 - `VariationSession`: 変化図編集状態の配置候補
 

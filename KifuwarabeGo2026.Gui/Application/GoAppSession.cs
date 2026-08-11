@@ -30,9 +30,6 @@ public sealed partial class GoAppSession
     private GoRenParseResult? _cachedRenParseResult;
     private int _cachedRenParseBoardSize;
     private ulong _cachedRenParseHash;
-    private readonly Stack<BoardEditingChange[]> _boardEditingUndoHistory = new();
-    private readonly Stack<BoardEditingChange[]> _boardEditingRedoHistory = new();
-    private GoGameRecord? _beforeBoardEditingRecord;
     private DateTime? _cgosBlackConnectionStartedAt;
     private DateTime? _cgosWhiteConnectionStartedAt;
 
@@ -293,11 +290,6 @@ public sealed partial class GoAppSession
 
     public MatchSnapshot? CurrentMatchSnapshot => _matchSession?.Snapshot;
 
-    public GoStone BoardEditingStone { get; private set; } = GoStone.Black;
-
-    public bool CanUndoBoardEditing => _boardEditingUndoHistory.Count > 0;
-
-    public bool CanRedoBoardEditing => _boardEditingRedoHistory.Count > 0;
     public int PlayedMoveCount { get; private set; }
 
     public int NextMoveNumber => PlayedMoveCount + 1;
@@ -1245,134 +1237,6 @@ public sealed partial class GoAppSession
         WhiteElapsedTime = TimeSpan.Zero;
         _matchSession = new MatchSession(CreateMatchConfiguration());
         ChangeMode(GoAppModeKind.Playing);
-    }
-
-    public void StartBoardEditing()
-    {
-        _beforeBoardEditingRecord = CurrentGameRecord.Clone();
-        KoPoint = null;
-        ConsecutivePasses = 0;
-        PlayedMoveCount = 0;
-        Winner = null;
-        GameOverReason = "";
-        IsEngineReady = true;
-        IsEngineThinking = false;
-        EngineErrorMessage = "";
-        CurrentGameRecord = CreateGameRecordFromCurrentPosition();
-        ResetPositionHistory();
-        ClearBoardEditingHistory();
-        ChangeMode(GoAppModeKind.BoardEditing);
-    }
-
-    public void FinishBoardEditing()
-    {
-        _beforeBoardEditingRecord = null;
-        CurrentGameRecord = CreateGameRecordFromCurrentPosition();
-        ResetPositionHistory();
-        ChangeMode(GoAppModeKind.Resting);
-    }
-
-    public void CancelBoardEditing()
-    {
-        if (CurrentMode.Kind != GoAppModeKind.BoardEditing ||
-            _beforeBoardEditingRecord is not { } record)
-        {
-            return;
-        }
-
-        _beforeBoardEditingRecord = null;
-        LoadGameRecordAsInitialPosition(record, out _);
-    }
-
-    public void SetBoardEditingStone(GoStone stone)
-    {
-        if (stone is not (GoStone.Empty or GoStone.Black or GoStone.White))
-        {
-            throw new ArgumentOutOfRangeException(nameof(stone), stone, "Board editing stone is out of range.");
-        }
-
-        BoardEditingStone = stone;
-    }
-
-    public bool TryEditBoardStone(int x, int y)
-    {
-        if (CurrentMode.Kind != GoAppModeKind.BoardEditing)
-        {
-            return false;
-        }
-
-        var oldStone = _board.GetStone(x, y);
-        if (oldStone == BoardEditingStone || !_board.TrySetEditedStone(x, y, BoardEditingStone))
-        {
-            return false;
-        }
-
-        _boardEditingUndoHistory.Push([new BoardEditingChange(x, y, oldStone, BoardEditingStone)]);
-        _boardEditingRedoHistory.Clear();
-        ResetEditedPositionState();
-        return true;
-    }
-
-    public bool ClearBoardEditing()
-    {
-        if (CurrentMode.Kind != GoAppModeKind.BoardEditing)
-            return false;
-
-        var changes = new List<BoardEditingChange>();
-        for (var y = 0; y < BoardSize; y++)
-        {
-            for (var x = 0; x < BoardSize; x++)
-            {
-                var stone = _board.GetStone(x, y);
-                if (stone == GoStone.Empty)
-                    continue;
-
-                changes.Add(new BoardEditingChange(x, y, stone, GoStone.Empty));
-            }
-        }
-
-        if (changes.Count == 0)
-            return false;
-
-        foreach (var change in changes)
-            _board.TrySetEditedStone(change.X, change.Y, GoStone.Empty);
-
-        _boardEditingUndoHistory.Push(changes.ToArray());
-        _boardEditingRedoHistory.Clear();
-        ResetEditedPositionState();
-        return true;
-    }
-
-    public bool UndoBoardEditing()
-    {
-        if (CurrentMode.Kind != GoAppModeKind.BoardEditing || _boardEditingUndoHistory.Count == 0)
-        {
-            return false;
-        }
-
-        var changes = _boardEditingUndoHistory.Pop();
-        foreach (var change in changes)
-            _board.TrySetEditedStone(change.X, change.Y, change.OldStone);
-
-        _boardEditingRedoHistory.Push(changes);
-        ResetEditedPositionState();
-        return true;
-    }
-
-    public bool RedoBoardEditing()
-    {
-        if (CurrentMode.Kind != GoAppModeKind.BoardEditing || _boardEditingRedoHistory.Count == 0)
-        {
-            return false;
-        }
-
-        var changes = _boardEditingRedoHistory.Pop();
-        foreach (var change in changes)
-            _board.TrySetEditedStone(change.X, change.Y, change.NewStone);
-
-        _boardEditingUndoHistory.Push(changes);
-        ResetEditedPositionState();
-        return true;
     }
 
     public void CancelPlaying()
@@ -3140,67 +3004,6 @@ public sealed partial class GoAppSession
         _positionHashes.Add(_board.CurrentHash);
     }
 
-    private void ResetEditedPositionState()
-    {
-        KoPoint = null;
-        ConsecutivePasses = 0;
-        PlayedMoveCount = 0;
-        CurrentTurn = GoStone.Black;
-        BlackAgehama = 0;
-        WhiteAgehama = 0;
-        CurrentGameRecord = CreateGameRecordFromCurrentPosition();
-        ResetPositionHistory();
-    }
-
-    private void ClearBoardEditingHistory()
-    {
-        _boardEditingUndoHistory.Clear();
-        _boardEditingRedoHistory.Clear();
-    }
-
-    private GoGameRecord CreateGameRecordFromCurrentPosition()
-    {
-        var record = new GoGameRecord
-        {
-            GameName = "Kifuwarabe Go 2026",
-            RuleName = RuleKind.ToString(),
-            BlackPlayerName = GetLocalPlayerName(GoStone.Black),
-            WhitePlayerName = GetLocalPlayerName(GoStone.White),
-            BoardSize = BoardSize,
-            Komi = Komi,
-            TimeLimit = MainTime,
-        };
-
-        for (var y = 0; y < BoardSize; y++)
-        {
-            for (var x = 0; x < BoardSize; x++)
-            {
-                var stone = _board.GetStone(x, y);
-                if (stone != GoStone.Empty)
-                {
-                    record.SetupStones.Add(new GoGameSetupStone(stone, new GoPoint(x, y)));
-                }
-            }
-        }
-
-        return record;
-    }
-
-    private static void CopyGameRecordMetadata(GoGameRecord source, GoGameRecord destination)
-    {
-        destination.GameName = source.GameName;
-        destination.RuleName = source.RuleName;
-        destination.BlackPlayerName = source.BlackPlayerName;
-        destination.WhitePlayerName = source.WhitePlayerName;
-        destination.BlackRank = source.BlackRank;
-        destination.WhiteRank = source.WhiteRank;
-        destination.PlayedDate = source.PlayedDate;
-        destination.Result = source.Result;
-        destination.Place = source.Place;
-        destination.Komi = source.Komi;
-        destination.TimeLimit = source.TimeLimit;
-    }
-
     private void DecidePureGoResult()
     {
         var blackStones = BlackStoneCount;
@@ -3244,5 +3047,4 @@ public sealed partial class GoAppSession
         return selectedIndex > removedIndex ? selectedIndex - 1 : selectedIndex;
     }
 
-    private readonly record struct BoardEditingChange(int X, int Y, GoStone OldStone, GoStone NewStone);
 }
