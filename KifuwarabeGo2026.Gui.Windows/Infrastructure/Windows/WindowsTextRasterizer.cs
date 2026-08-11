@@ -51,6 +51,25 @@ public sealed class WindowsTextRasterizer : ITextRasterizer
         return stream.ToArray();
     }
 
+    public float MeasureTextWidth(string text, int pixelHeight, bool bold)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        if (pixelHeight <= 0)
+            throw new ArgumentOutOfRangeException(nameof(pixelHeight));
+        if (text.Length == 0)
+            return 0;
+
+        using var font = CreateFont(pixelHeight, bold);
+        using var measurementBitmap = new System.Drawing.Bitmap(1, 1);
+        using var graphics = System.Drawing.Graphics.FromImage(measurementBitmap);
+        graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
+        return graphics.MeasureString(
+            text,
+            font,
+            int.MaxValue,
+            System.Drawing.StringFormat.GenericTypographic).Width;
+    }
+
     public int GetWrappedPageCount(
         string text,
         int width,

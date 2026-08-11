@@ -87,6 +87,8 @@ internal sealed class PortablePlatformServices :
     public byte[] RasterizePng(string text, int pixelHeight, bool bold) =>
         (byte[])TransparentPixelPng.Clone();
 
+    public float MeasureTextWidth(string text, int pixelHeight, bool bold) => 0;
+
     public int GetWrappedPageCount(
         string text,
         int width,

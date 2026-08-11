@@ -89,9 +89,10 @@ public sealed partial class GoScreenRenderer
             if (character == '\n') lineNumber++;
         }
 
-        // 描画本文と同じ左上余白を基準にする。折り返しの細かな位置はラスタライザー側に委ねるため、
-        // 長い行では行末に寄せて、キャレットが画面外へ消えないようにする。
-        var x = TextAreaTextBounds.X + 18 + (int)(_font.MeasureString(lineText).X * 0.52f);
+        // 本文を描く WindowsTextRasterizer と同じ Meiryo の字幅を使う。SpriteFont で別に
+        // 測ると「～」など全角文字の幅が異なり、キャレットだけが横にずれてしまう。
+        var x = TextAreaTextBounds.X + 18 +
+            (int)MathF.Round(_textRasterizer.MeasureTextWidth(lineText, pixelHeight: 26, bold: false));
         var y = TextAreaTextBounds.Y + 18 + lineNumber * 31;
         return new Vector2(
             Math.Clamp(x, TextAreaTextBounds.X + 18, TextAreaTextBounds.Right - 22),
