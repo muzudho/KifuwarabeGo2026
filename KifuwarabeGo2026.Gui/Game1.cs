@@ -1671,6 +1671,8 @@ public class Game1 : Game
             else if (GoScreenRenderer.GetTargetProfileEditAddCgosButtonHit(point) && _session.AddTargetProfile(true)) _targetCatalog.Save(_session.TargetProfiles);
             else if (GoScreenRenderer.GetTargetProfileEditAddLocalButtonHit(point) && _session.AddTargetProfile(false)) _targetCatalog.Save(_session.TargetProfiles);
             else if (GoScreenRenderer.GetTargetProfileEditRemoveButtonHit(point) && _session.RemoveTargetProfile()) _targetCatalog.Save(_session.TargetProfiles);
+            else if (GoScreenRenderer.GetTargetProfileEditConnectionPreviousButtonHit(point)) { _session.CycleTargetProfileConnection(-1); _session.SaveTargetProfileEditDraft(); _targetCatalog.Save(_session.TargetProfiles); }
+            else if (GoScreenRenderer.GetTargetProfileEditConnectionNextButtonHit(point)) { _session.CycleTargetProfileConnection(1); _session.SaveTargetProfileEditDraft(); _targetCatalog.Save(_session.TargetProfiles); }
             else if (GoScreenRenderer.GetTargetProfileEditItemHit(point, _session) is { } targetIndex)
                 _session.MoveTargetProfileEditSelection(targetIndex - _session.TargetProfileEditIndex);
             return;
