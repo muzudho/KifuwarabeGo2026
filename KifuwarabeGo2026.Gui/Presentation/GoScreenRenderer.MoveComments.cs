@@ -40,9 +40,6 @@ public sealed partial class GoScreenRenderer
     public static bool GetReviewCommentEditButtonHit(Point point) =>
         CommentEditButtonBounds(ReviewTrendChartBounds).Contains(point);
 
-    public static bool GetReviewRootCommentEditButtonHit(Point point) =>
-        CommentRootEditButtonBounds(ReviewTrendChartBounds).Contains(point);
-
     private static bool HasMoveComment(IReadOnlyList<GoGameMove> moves, string rootComment = "")
     {
         if (!string.IsNullOrWhiteSpace(rootComment)) return true;
@@ -106,12 +103,6 @@ public sealed partial class GoScreenRenderer
             scale: expanded ? 0.28f : 0.19f);
         if (session.CurrentMode.Kind == GoAppModeKind.Reviewing)
         {
-            DrawCommandButton(
-                CommentRootEditButtonBounds(bounds),
-                "EDIT ROOT",
-                false,
-                mousePoint,
-                scale: expanded ? 0.22f : 0.145f);
             DrawCommandButton(
                 CommentEditButtonBounds(bounds),
                 "EDIT",
@@ -237,11 +228,6 @@ public sealed partial class GoScreenRenderer
         bounds.Width > 1000 || bounds.Height > 600
             ? new(bounds.Right - 478, bounds.Y + 78, 140, 56)
             : new(bounds.Right - 308, bounds.Y + 58, 92, 36);
-
-    private static Rectangle CommentRootEditButtonBounds(Rectangle bounds) =>
-        bounds.Width > 1000 || bounds.Height > 600
-            ? new(bounds.Right - 630, bounds.Y + 78, 140, 56)
-            : new(bounds.Right - 410, bounds.Y + 58, 92, 36);
 
     private static Rectangle CommentPreviousPageButtonBounds(Rectangle bounds) =>
         bounds.Width > 1000 || bounds.Height > 600

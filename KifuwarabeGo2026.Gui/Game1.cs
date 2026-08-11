@@ -2074,13 +2074,6 @@ public class Game1 : Game
         }
 
         if (_session.MoveInformationDisplayMode == MoveInformationDisplayMode.Comment &&
-            GoScreenRenderer.GetReviewRootCommentEditButtonHit(point))
-        {
-            OpenCommentEditor(_session, 0);
-            return true;
-        }
-
-        if (_session.MoveInformationDisplayMode == MoveInformationDisplayMode.Comment &&
             GoScreenRenderer.GetReviewCommentEditButtonHit(point))
         {
             OpenCommentEditor(_session, _session.ReviewMoveIndex);
@@ -2676,13 +2669,6 @@ public class Game1 : Game
             GoScreenRenderer.GetReviewChartPopupCommentPageStepButtonHit(point) is { } commentPageStep)
         {
             _session.ChangeCommentPage(commentPageStep);
-            return;
-        }
-
-        if (_session.IsPopupCommentVisible &&
-            GoScreenRenderer.GetReviewChartPopupRootCommentEditButtonHit(point))
-        {
-            OpenCommentEditor(_session, 0);
             return;
         }
 
