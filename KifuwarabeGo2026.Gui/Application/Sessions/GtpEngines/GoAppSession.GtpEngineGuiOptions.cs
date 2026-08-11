@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using KifuwarabeGo2026.GtpExtensions.Engines;
+using KifuwarabeGo2026.Shared.Domain;
 
 /// <summary>GTP エンジンの GUI オプション編集ダイアログを管理します。</summary>
 public sealed partial class GoAppSession
@@ -67,6 +68,23 @@ public sealed partial class GoAppSession
     {
         var queued = bool.TryParse(GetGtpEngineGuiOptionDraft(option), out var value) && value;
         GtpEngineGuiOptionsDialogDraft[option.Id] = (!queued).ToString().ToLowerInvariant();
+    }
+
+    public bool ConsumeQueuedGtpEngineButtonsForComputerPlayers()
+    {
+        var consumed = false;
+        foreach (var stone in new[] { GoStone.Black, GoStone.White })
+        {
+            if (GetPlayerKind(stone) != GoPlayerKind.Computer) continue;
+            var profile = GetGtpEngineProfile(stone);
+            foreach (var option in GtpEngineGuiOptions.Specs.Where(option => option.Type == "button"))
+            {
+                consumed |= bool.TryParse(profile.GuiOptions.GetValueOrDefault(option.Id), out var queued) && queued;
+                profile.GuiOptions[option.Id] = "false";
+            }
+        }
+
+        return consumed;
     }
     public void OpenGtpEngineGuiOptionsDialog()
     {

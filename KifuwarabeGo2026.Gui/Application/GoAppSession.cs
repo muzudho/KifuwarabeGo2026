@@ -302,23 +302,6 @@ public sealed partial class GoAppSession
     /// GUIオプションダイアログの編集内容をエンジン設定へ反映します。
     /// </summary>
     /// <summary>次回対局用button予約を、使用したエンジンプロファイルから取り除きます。</summary>
-    public bool ConsumeQueuedGtpEngineButtonsForComputerPlayers()
-    {
-        var consumed = false;
-        foreach (var stone in new[] { GoStone.Black, GoStone.White })
-        {
-            if (GetPlayerKind(stone) != GoPlayerKind.Computer) continue;
-            var profile = GetGtpEngineProfile(stone);
-            foreach (var option in GtpEngineGuiOptions.Specs.Where(option => option.Type == "button"))
-            {
-                consumed |= bool.TryParse(profile.GuiOptions.GetValueOrDefault(option.Id), out var queued) && queued;
-                profile.GuiOptions[option.Id] = "false";
-            }
-        }
-
-        return consumed;
-    }
-
     public const int TournamentRulesSelectionPageSize = 6;
 
     public const int GtpEngineSelectionPageSize = 6;
@@ -329,24 +312,5 @@ public sealed partial class GoAppSession
 
     private static CgosConnectionProfile CreateDefaultCgosConnectionProfile() =>
         new("New CGOS Connection", "uec-go.com", 6809, "PRACTICE", "CGOS practice server") { Event = "PRACTICE" };
-
-    public void SetTournamentRulesNumericSelection(int start, int length) =>
-        (TournamentRulesNumericSelectionStart, TournamentRulesNumericSelectionLength) = (start, length);
-
-    public void SetTournamentRulesDisplayNameSelection(int start, int length) =>
-        (TournamentRulesDisplayNameSelectionStart, TournamentRulesDisplayNameSelectionLength) = (start, length);
-
-    public void SetGtpEngineEditSelection(int start, int length) =>
-        (GtpEngineEditSelectionStart, GtpEngineEditSelectionLength) = (start, length);
-
-    private static int AdjustGtpEngineSelectionAfterDelete(int selectedIndex, int removedIndex, int fallbackIndex)
-    {
-        if (selectedIndex == removedIndex)
-        {
-            return fallbackIndex;
-        }
-
-        return selectedIndex > removedIndex ? selectedIndex - 1 : selectedIndex;
-    }
 
 }

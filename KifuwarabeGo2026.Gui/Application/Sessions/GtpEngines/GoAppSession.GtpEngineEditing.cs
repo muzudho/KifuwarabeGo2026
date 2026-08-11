@@ -9,6 +9,17 @@ using System.IO;
 /// <summary>GTP エンジン編集パネルの開始・終了を管理します。</summary>
 public sealed partial class GoAppSession
 {
+    public void SetGtpEngineEditSelection(int start, int length) =>
+        (GtpEngineEditSelectionStart, GtpEngineEditSelectionLength) = (start, length);
+
+    private static int AdjustGtpEngineSelectionAfterDelete(int selectedIndex, int removedIndex, int fallbackIndex)
+    {
+        if (selectedIndex == removedIndex)
+            return fallbackIndex;
+
+        return selectedIndex > removedIndex ? selectedIndex - 1 : selectedIndex;
+    }
+
     public void ReplaceSelectedGtpEngine(GtpEngineProfile profile)
     {
         var index = GtpEngineEditProfileIndex;

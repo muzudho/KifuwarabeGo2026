@@ -6,6 +6,12 @@ using System;
 /// <summary>大会規定の数値・表示名のポップアップ編集と保存済み化を管理します。</summary>
 public sealed partial class GoAppSession
 {
+    public void SetTournamentRulesNumericSelection(int start, int length) =>
+        (TournamentRulesNumericSelectionStart, TournamentRulesNumericSelectionLength) = (start, length);
+
+    public void SetTournamentRulesDisplayNameSelection(int start, int length) =>
+        (TournamentRulesDisplayNameSelectionStart, TournamentRulesDisplayNameSelectionLength) = (start, length);
+
     public void BeginTournamentRulesNumericEdit(TournamentRulesNumericField field, string draft, int caretIndex)
     {
         ActiveTournamentRulesNumericField = field;
