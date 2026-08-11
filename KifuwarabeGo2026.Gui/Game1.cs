@@ -1491,6 +1491,15 @@ public class Game1 : Game
                 _previousMouse = mouse;
                 return;
             }
+            if (isLocalAppsIntermission &&
+                GoScreenRenderer.GetPonnukiRandomSeedAutoChangeHit(point) is { } seedRole &&
+                (seedRole != PonnukiRandomSeedRole.Player1 || _session.CanAutoChangePonnukiPlayer1Seed) &&
+                (seedRole != PonnukiRandomSeedRole.Player2 || _session.CanAutoChangePonnukiPlayer2Seed))
+            {
+                _session.TogglePonnukiRandomSeedAutoChange(seedRole);
+                _previousMouse = mouse;
+                return;
+            }
             if ((isSetupMode || isLocalAppsIntermission) && GoScreenRenderer.GetSetupBackToTitleButtonHit(point))
             {
                 _session.ReturnToUseSelection();
@@ -1562,21 +1571,33 @@ public class Game1 : Game
             {
                 _playingScene.StartPlaying();
             }
-            else if (isPlayerSelectionIntermission && GoScreenRenderer.GetBlackPlayerKindButtonHit(point) is { } blackPlayerKind)
+            else if (isPlayerSelectionIntermission &&
+                     (isLocalAppsIntermission
+                         ? GoScreenRenderer.GetPonnukiBlackPlayerKindButtonHit(point)
+                         : GoScreenRenderer.GetBlackPlayerKindButtonHit(point)) is { } blackPlayerKind)
             {
                 EndHumanPlayerNameEdit(commit: true);
                 _session.SetPlayerKind(GoStone.Black, blackPlayerKind);
             }
-            else if (isPlayerSelectionIntermission && _session.BlackPlayerKind == GoPlayerKind.Computer && GoScreenRenderer.GetBlackGtpEngineBrowseButtonHit(point))
+            else if (isPlayerSelectionIntermission && _session.BlackPlayerKind == GoPlayerKind.Computer &&
+                     (isLocalAppsIntermission
+                         ? GoScreenRenderer.GetPonnukiBlackGtpEngineBrowseButtonHit(point)
+                         : GoScreenRenderer.GetBlackGtpEngineBrowseButtonHit(point)))
             {
                 OpenGtpEngineSelectionDialog(GoStone.Black);
             }
-            else if (isPlayerSelectionIntermission && GoScreenRenderer.GetWhitePlayerKindButtonHit(point) is { } whitePlayerKind)
+            else if (isPlayerSelectionIntermission &&
+                     (isLocalAppsIntermission
+                         ? GoScreenRenderer.GetPonnukiWhitePlayerKindButtonHit(point)
+                         : GoScreenRenderer.GetWhitePlayerKindButtonHit(point)) is { } whitePlayerKind)
             {
                 EndHumanPlayerNameEdit(commit: true);
                 _session.SetPlayerKind(GoStone.White, whitePlayerKind);
             }
-            else if (isPlayerSelectionIntermission && _session.WhitePlayerKind == GoPlayerKind.Computer && GoScreenRenderer.GetWhiteGtpEngineBrowseButtonHit(point))
+            else if (isPlayerSelectionIntermission && _session.WhitePlayerKind == GoPlayerKind.Computer &&
+                     (isLocalAppsIntermission
+                         ? GoScreenRenderer.GetPonnukiWhiteGtpEngineBrowseButtonHit(point)
+                         : GoScreenRenderer.GetWhiteGtpEngineBrowseButtonHit(point)))
             {
                 OpenGtpEngineSelectionDialog(GoStone.White);
             }
@@ -1751,12 +1772,15 @@ public class Game1 : Game
         _session.ClearLocalAppsError();
         try
         {
+            var seeds = _session.ApplyPonnukiRandomSeedsAtStart();
+            _gtpEngineCatalog.Save(_session.GtpEngineProfiles);
             var provider = _session.SelectedAppProviderEngine;
             StopPonnukiProviderGame();
             _ponnukiProviderGameSession = new PonnukiProviderGameSession(provider);
             var record = _ponnukiProviderGameSession.StartAsync().GetAwaiter().GetResult();
             if (!_session.LoadGameRecordAsInitialPosition(record, out var warning))
                 throw new InvalidOperationException(warning);
+            record.RootComment = $"PONNUKI RANDOM SEEDS\nProvider: {seeds.Provider}\nPlayer1: {seeds.Player1}\nPlayer2: {seeds.Player2}";
             _ponnukiProviderObservedMoveCount = 0;
 
             GuiOperationLog.User(

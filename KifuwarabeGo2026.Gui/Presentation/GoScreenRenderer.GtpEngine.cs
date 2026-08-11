@@ -219,6 +219,12 @@ public sealed partial class GoScreenRenderer
     public static bool GetWhiteGtpEngineBrowseButtonHit(Point point) =>
         PlayerSelectorLayout.CreateComputerEngineSelector(WhiteEngineButtonY).ContainsBrowseButton(point);
 
+    public static bool GetPonnukiBlackGtpEngineBrowseButtonHit(Point point) =>
+        PlayerSelectorLayout.CreateComputerEngineSelector(704).ContainsBrowseButton(point);
+
+    public static bool GetPonnukiWhiteGtpEngineBrowseButtonHit(Point point) =>
+        PlayerSelectorLayout.CreateComputerEngineSelector(808).ContainsBrowseButton(point);
+
 
     private void DrawGtpEngineSelectionDialog(GoAppSession session, Point mousePoint)
     {
