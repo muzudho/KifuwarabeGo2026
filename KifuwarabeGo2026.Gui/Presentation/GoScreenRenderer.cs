@@ -63,7 +63,7 @@ public sealed partial class GoScreenRenderer
 
         DrawBackground();
         var modalOpen = session.IsTournamentRulesSelectionDialogOpen || session.IsTournamentRulesAddPanelOpen ||
-                        session.IsPlayerSelectionDialogOpen || session.IsPlayerEditPanelOpen ||
+                        session.IsPlayerSelectionDialogOpen || session.IsPlayerEditPanelOpen || session.IsTargetProfileEditPanelOpen ||
                         session.IsGtpEngineSelectionDialogOpen || session.IsGtpEngineEditPanelOpen ||
                         session.IsAppProviderGameSettingsDialogOpen;
         var backgroundMousePoint = modalOpen ? new Point(-1, -1) : mousePoint;
@@ -96,6 +96,7 @@ public sealed partial class GoScreenRenderer
             DrawTournamentRulesAddPanel(session, mousePoint);
             DrawPlayerSelectionDialog(session, mousePoint);
             DrawPlayerEditPanel(session, mousePoint);
+            DrawTargetProfileEditPanel(session, mousePoint);
             DrawGtpEngineSelectionDialog(session, mousePoint);
             DrawGtpEngineEditPanel(session, mousePoint);
             if (session.IsAppProviderGameSettingsDialogOpen)

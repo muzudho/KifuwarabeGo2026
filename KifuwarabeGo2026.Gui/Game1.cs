@@ -1665,6 +1665,16 @@ public class Game1 : Game
 
     private void TryHandlePlayerSelectionDialogClick(Point point)
     {
+        if (_session.IsTargetProfileEditPanelOpen)
+        {
+            if (GoScreenRenderer.GetTargetProfileEditCloseButtonHit(point)) _session.CloseTargetProfileEditPanel();
+            else if (GoScreenRenderer.GetTargetProfileEditAddCgosButtonHit(point) && _session.AddTargetProfile(true)) _targetCatalog.Save(_session.TargetProfiles);
+            else if (GoScreenRenderer.GetTargetProfileEditAddLocalButtonHit(point) && _session.AddTargetProfile(false)) _targetCatalog.Save(_session.TargetProfiles);
+            else if (GoScreenRenderer.GetTargetProfileEditRemoveButtonHit(point) && _session.RemoveTargetProfile()) _targetCatalog.Save(_session.TargetProfiles);
+            else if (GoScreenRenderer.GetTargetProfileEditItemHit(point, _session) is { } targetIndex)
+                _session.MoveTargetProfileEditSelection(targetIndex - _session.TargetProfileEditIndex);
+            return;
+        }
         if (_session.PlayerOrderEditor.IsOpen)
         {
             var editor = _session.PlayerOrderEditor;
