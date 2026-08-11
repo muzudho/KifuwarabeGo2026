@@ -16,8 +16,10 @@ public sealed partial class GoScreenRenderer
     /// <summary>
     /// 仮想画面の左下に、現在の画面階層を常時表示します。
     /// </summary>
-    public void DrawBreadcrumb(string path)
+    public void DrawBreadcrumb(string path, bool visible = true)
     {
+        if (!visible) return;
+
         _spriteBatch.Begin(
             samplerState: SamplerState.LinearClamp,
             transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));

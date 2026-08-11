@@ -804,7 +804,11 @@ public class Game1 : Game
                 _textCompositionDiagnostics,
                 _textCompositionService.SupportsDiagnosticAdornment);
 
-        _renderer?.DrawBreadcrumb(GetScreenBreadcrumb());
+        var virtualMousePosition = VirtualScreen.ToVirtualPoint(GraphicsDevice.Viewport, Mouse.GetState().Position);
+        var hideBreadcrumbForReviewControls =
+            _session.CurrentMode.Kind == GoAppModeKind.Reviewing &&
+            GoScreenRenderer.IsBottomNavigationControlsNearby(virtualMousePosition);
+        _renderer?.DrawBreadcrumb(GetScreenBreadcrumb(), visible: !hideBreadcrumbForReviewControls);
 
         base.Draw(gameTime);
     }

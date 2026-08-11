@@ -43,8 +43,10 @@ public sealed partial class GoScreenRenderer
     public static bool GetReviewRootCommentEditButtonHit(Point point) =>
         CommentRootEditButtonBounds(ReviewTrendChartBounds).Contains(point);
 
-    private static bool HasMoveComment(IReadOnlyList<GoGameMove> moves)
+    private static bool HasMoveComment(IReadOnlyList<GoGameMove> moves, string rootComment = "")
     {
+        if (!string.IsNullOrWhiteSpace(rootComment)) return true;
+
         foreach (var move in moves)
         {
             if (!string.IsNullOrWhiteSpace(move.Comment)) return true;
@@ -66,25 +68,24 @@ public sealed partial class GoScreenRenderer
         var commentOrdinal = moveNumber is { } selectedMoveNumber
             ? MoveCommentNavigator.GetOrdinal(moves, selectedMoveNumber)
             : 0;
-        var hasSelectedComment =
-            moveNumber is { } validMoveNumber
-            && validMoveNumber > 0
-            && validMoveNumber <= moves.Count
-            && !string.IsNullOrWhiteSpace(moves[validMoveNumber - 1].Comment);
+        var isRootComment = preferredMoveNumber == 0;
+        var displayedComment = isRootComment
+            ? session.CurrentGameRecord.RootComment
+            : moveNumber is { } validMoveNumber && validMoveNumber > 0 && validMoveNumber <= moves.Count
+                ? moves[validMoveNumber - 1].Comment
+                : "";
+        var hasSelectedComment = !string.IsNullOrWhiteSpace(displayedComment);
         var expanded = bounds.Width > 1000 || bounds.Height > 600;
 
         DrawFittedText(
-            commentOrdinal > 0
+            isRootComment
+                ? "ROOT COMMENT"
+                : commentOrdinal > 0
                 ? $"COMMENT {commentOrdinal} / {commentCount}   MOVE {moveNumber}"
                 : $"COMMENT - / {commentCount}   MOVE {moveNumber ?? 0}",
             CommentHeadingBounds(bounds),
             new Color(255, 215, 92),
             expanded ? 0.46f : 0.27f);
-        DrawFittedText(
-            "COMMENT",
-            CommentSectionLabelBounds(bounds),
-            new Color(174, 198, 198),
-            expanded ? 0.30f : 0.19f);
         DrawCommandButton(
             CommentPreviousMoveButtonBounds(bounds),
             "< PREV",
@@ -122,7 +123,7 @@ public sealed partial class GoScreenRenderer
         if (!hasSelectedComment)
         {
             DrawFittedText(
-                commentCount == 0 ? "NO COMMENT" : "NO COMMENT ON THIS MOVE",
+                isRootComment ? "NO ROOT COMMENT" : commentCount == 0 ? "NO COMMENT" : "NO COMMENT ON THIS MOVE",
                 CommentBodyBounds(bounds),
                 new Color(142, 163, 164),
                 0.34f);
@@ -131,7 +132,7 @@ public sealed partial class GoScreenRenderer
         }
 
         var pageCount = DrawDynamicCommentText(
-            moves[moveNumber!.Value - 1].Comment,
+            displayedComment,
             CommentBodyBounds(bounds),
             session.CommentPageIndex);
         session.UpdateCommentPageCount(pageCount);
@@ -241,11 +242,6 @@ public sealed partial class GoScreenRenderer
         bounds.Width > 1000 || bounds.Height > 600
             ? new(bounds.Right - 630, bounds.Y + 78, 140, 56)
             : new(bounds.Right - 410, bounds.Y + 58, 92, 36);
-
-    private static Rectangle CommentSectionLabelBounds(Rectangle bounds) =>
-        bounds.Width > 1000 || bounds.Height > 600
-            ? new(bounds.X + 24, bounds.Y + 28, 210, 36)
-            : new(bounds.X + 20, bounds.Y + 22, 180, 26);
 
     private static Rectangle CommentPreviousPageButtonBounds(Rectangle bounds) =>
         bounds.Width > 1000 || bounds.Height > 600

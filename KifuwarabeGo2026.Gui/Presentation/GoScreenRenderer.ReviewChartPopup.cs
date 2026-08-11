@@ -15,6 +15,8 @@ public sealed partial class GoScreenRenderer
     private static readonly Rectangle ReviewChartPopupBackToLiveButtonBounds = new(1026, 55, 216, 48);
     private static readonly Rectangle ReviewChartPopupAutoUpdateBounds = new(1260, 55, 300, 48);
     private static readonly Rectangle ReviewChartPopupSeekBounds = new(180, 994, 1560, 28);
+    // シークバーと手順ボタンの少し外側までを含める。ここではパンくずを一時退避する。
+    private static readonly Rectangle BottomNavigationControlsProximityBounds = new(150, 952, 1600, 126);
     private static readonly Rectangle ReviewChartPopupPlotBounds = new(
         ReviewChartPopupChartBounds.X + 72,
         ReviewChartPopupChartBounds.Y + 92,
@@ -35,6 +37,9 @@ public sealed partial class GoScreenRenderer
 
     public static bool GetReviewChartPopupCloseHit(Point point) =>
         ReviewChartPopupCloseButtonBounds.Contains(point);
+
+    public static bool IsBottomNavigationControlsNearby(Point point) =>
+        BottomNavigationControlsProximityBounds.Contains(point);
 
     public static bool GetReviewChartPopupBackToLiveHit(Point point) =>
         ReviewChartPopupBackToLiveButtonBounds.Contains(point);

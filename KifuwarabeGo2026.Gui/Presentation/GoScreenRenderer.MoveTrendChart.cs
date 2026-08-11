@@ -430,7 +430,7 @@ public sealed partial class GoScreenRenderer
             "TREND",
             session.MoveInformationDisplayMode == MoveInformationDisplayMode.Trend,
             mousePoint);
-        var hasComment = HasMoveComment(moves);
+        var hasComment = HasMoveComment(moves, session.CurrentGameRecord.RootComment);
         DrawCgosTrendModeButton(
             MoveInformationCommentButtonBounds(bounds),
             hasComment ? "COMMENT *" : "COMMENT",
