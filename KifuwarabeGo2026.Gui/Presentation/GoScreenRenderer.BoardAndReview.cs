@@ -222,6 +222,14 @@ public sealed partial class GoScreenRenderer
     private void DrawReviewingSidePanel(GoAppSession session, Point mousePoint)
     {
         DrawText("KIFU REVIEW", new Vector2(1144, 136), new Color(255, 230, 160), 0.72f);
+        if (session.HasUnsavedReviewCommentChanges)
+        {
+            DrawFittedText(
+                "COMMENTS NOT SAVED TO FILE",
+                ReviewUnsavedCommentsNoticeBounds,
+                new Color(255, 205, 112),
+                0.26f);
+        }
         DrawCommandButton(ReviewBackToRestButtonBounds, "BACK TO HOME", false, mousePoint, scale: 0.32f);
         if (session.UseKind == GoAppUseKind.LocalPlay)
         {
@@ -432,6 +440,9 @@ public sealed partial class GoScreenRenderer
 
 
     private static Rectangle ReviewBackToRestButtonBounds => new(1480, 120, 156, 52);
+
+
+    private static Rectangle ReviewUnsavedCommentsNoticeBounds => new(1334, 165, 430, 24);
 
 
     private static Rectangle ReviewBoardLensButtonBounds => new(1508, 858, 60, 60);

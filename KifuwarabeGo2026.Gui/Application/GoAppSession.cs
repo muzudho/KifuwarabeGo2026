@@ -182,6 +182,8 @@ public sealed class GoAppSession
     public string SgfAutoSaveStatus { get; private set; } = "";
     public bool IsLocalResultSgfSaved { get; private set; }
     public bool IsCgosResultSgfSaved { get; private set; }
+    /// <summary>レビュー中にコメントを変更し、まだ SGF 出力していない状態です。</summary>
+    public bool HasUnsavedReviewCommentChanges { get; private set; }
 
     public bool CanOpenLocalChartPopup =>
         CurrentMode.Kind is GoAppModeKind.Playing or GoAppModeKind.GameOver;
@@ -1533,6 +1535,7 @@ public sealed class GoAppSession
 
         _beforeReviewGameRecord = CurrentGameRecord.Clone();
         _reviewGameRecord = record.Clone();
+        HasUnsavedReviewCommentChanges = false;
         ReviewMoveIndex = 0;
         if (!ApplyReviewPosition(record.Moves.Count, out warning))
         {
@@ -1584,9 +1587,12 @@ public sealed class GoAppSession
             return false;
 
         CurrentGameRecord.TrySetComment(moveIndex, comment);
+        HasUnsavedReviewCommentChanges = true;
         ResetCommentPage();
         return true;
     }
+
+    public void MarkReviewCommentsSaved() => HasUnsavedReviewCommentChanges = false;
 
     /// <summary>変化図編集盤の出力対象棋譜にコメントを設定します。</summary>
     public bool TrySetVariationComment(int moveIndex, string comment)

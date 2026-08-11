@@ -85,6 +85,8 @@ public class Game1 : Game
     private GoAppSession? _commentEditorSession;
     private KeyboardState _previousCommentEditorKeyboard;
     private TextCompositionState _commentEditorComposition = TextCompositionState.Empty;
+    private bool _isReviewUnsavedChangesConfirmationOpen;
+    private ReviewExitAction? _pendingReviewExitAction;
     private readonly TextBoxController _humanPlayerNameTextBox = new(80);
     private KeyboardState _previousHumanPlayerNameKeyboard;
     private KeyboardState _previousCgosConnectionKeyboard;
@@ -272,6 +274,13 @@ public class Game1 : Game
         if (acceptsInput && _isCommentEditorOpen)
         {
             UpdateCommentEditorKeyboard(keyboard, gameTime);
+            UpdateMouseInput();
+            base.Update(gameTime);
+            return;
+        }
+
+        if (acceptsInput && _isReviewUnsavedChangesConfirmationOpen)
+        {
             UpdateMouseInput();
             base.Update(gameTime);
             return;
@@ -804,6 +813,9 @@ public class Game1 : Game
                 _textCompositionDiagnostics,
                 _textCompositionService.SupportsDiagnosticAdornment);
 
+        if (_renderer is not null && _isReviewUnsavedChangesConfirmationOpen)
+            _renderer.DrawReviewUnsavedChangesConfirmation(Mouse.GetState().Position);
+
         var virtualMousePosition = VirtualScreen.ToVirtualPoint(GraphicsDevice.Viewport, Mouse.GetState().Position);
         var hideBreadcrumbForReviewControls =
             _session.CurrentMode.Kind == GoAppModeKind.Reviewing &&
@@ -825,9 +837,20 @@ public class Game1 : Game
             if (_previousMouse.LeftButton == ButtonState.Released && mouse.LeftButton == ButtonState.Pressed)
             {
                 if (GoScreenRenderer.GetTextAreaDialogApplyButtonHit(point))
-                    CommitCommentEditor();
+                    CommitCommentEditor(saveToFile: true);
                 else if (GoScreenRenderer.GetTextAreaDialogCancelButtonHit(point))
                     CancelCommentEditor();
+            }
+            _previousMouse = mouse;
+            return;
+        }
+        if (_isReviewUnsavedChangesConfirmationOpen)
+        {
+            if (_previousMouse.LeftButton == ButtonState.Released && mouse.LeftButton == ButtonState.Pressed)
+            {
+                if (GoScreenRenderer.GetReviewUnsavedChangesSaveButtonHit(point)) SavePendingReviewExit();
+                else if (GoScreenRenderer.GetReviewUnsavedChangesDiscardButtonHit(point)) CompletePendingReviewExit(discardChanges: true);
+                else if (GoScreenRenderer.GetReviewUnsavedChangesCancelButtonHit(point)) CancelPendingReviewExit();
             }
             _previousMouse = mouse;
             return;
@@ -2085,13 +2108,13 @@ public class Game1 : Game
 
         if (_session.UseKind == GoAppUseKind.LocalPlay && GoScreenRenderer.GetReviewDoneButtonHit(point))
         {
-            _session.FinishReviewing();
+            BeginReviewExit(ReviewExitAction.UsePosition);
             return true;
         }
 
         if (GoScreenRenderer.GetReviewBackToRestButtonHit(point))
         {
-            _session.ReturnFromReviewingToResting();
+            BeginReviewExit(ReviewExitAction.BackToHome);
             return true;
         }
 
@@ -3460,13 +3483,11 @@ public class Game1 : Game
             _clipboardService,
             multiline: true);
         if (action == TextBoxKeyboardAction.Commit)
-            CommitCommentEditor();
-        else if (action == TextBoxKeyboardAction.Cancel)
-            CancelCommentEditor();
+            CommitCommentEditor(saveToFile: true);
         _previousCommentEditorKeyboard = keyboard;
     }
 
-    private void CommitCommentEditor()
+    private void CommitCommentEditor(bool saveToFile = false)
     {
         var saved = _commentEditorSession?.CurrentMode.Kind switch
         {
@@ -3475,7 +3496,13 @@ public class Game1 : Game
             _ => false,
         };
         if (saved)
+        {
             GuiOperationLog.User("Applied SGF comment", $"move={_commentEditorMoveIndex}; characters={_commentTextArea.Text.Length}");
+            if (saveToFile && _commentEditorSession is not null &&
+                ExportSgf(_commentEditorSession.CurrentGameRecord, $"kifuwarabe-go-commented-{DateTime.Now:yyyyMMdd-HHmmss}.sgf") &&
+                _commentEditorSession.CurrentMode.Kind == GoAppModeKind.Reviewing)
+                _commentEditorSession.MarkReviewCommentsSaved();
+        }
         CancelCommentEditor();
     }
 
@@ -3487,6 +3514,50 @@ public class Game1 : Game
         _commentEditorComposition = TextCompositionState.Empty;
         _commentTextArea.Clear();
     }
+
+    private void BeginReviewExit(ReviewExitAction action)
+    {
+        if (_session.HasUnsavedReviewCommentChanges)
+        {
+            _pendingReviewExitAction = action;
+            _isReviewUnsavedChangesConfirmationOpen = true;
+            return;
+        }
+        CompleteReviewExit(action);
+    }
+
+    private void SavePendingReviewExit()
+    {
+        if (ExportSgf(_session.CurrentGameRecord, $"kifuwarabe-go-commented-{DateTime.Now:yyyyMMdd-HHmmss}.sgf"))
+        {
+            _session.MarkReviewCommentsSaved();
+            CompletePendingReviewExit(discardChanges: false);
+        }
+    }
+
+    private void CompletePendingReviewExit(bool discardChanges)
+    {
+        if (discardChanges) _session.MarkReviewCommentsSaved();
+        var action = _pendingReviewExitAction;
+        CancelPendingReviewExit();
+        if (action is { } value) CompleteReviewExit(value);
+    }
+
+    private void CancelPendingReviewExit()
+    {
+        _isReviewUnsavedChangesConfirmationOpen = false;
+        _pendingReviewExitAction = null;
+    }
+
+    private void CompleteReviewExit(ReviewExitAction action)
+    {
+        if (action == ReviewExitAction.UsePosition)
+            _session.FinishReviewing();
+        else
+            _session.ReturnFromReviewingToResting();
+    }
+
+    private enum ReviewExitAction { BackToHome, UsePosition }
 
     private bool TryInputCgosCredentialCharacter(char character)
     {
@@ -3701,7 +3772,7 @@ public class Game1 : Game
     /// <summary>
     /// 指定された棋譜を Local と共通の保存フローで SGF 出力します。
     /// </summary>
-    private void ExportSgf(
+    private bool ExportSgf(
         GoGameRecord record,
         string fileName,
         bool markCurrentResultSaved = true)
@@ -3724,7 +3795,7 @@ public class Game1 : Game
 
         if (selectedFileName is null)
         {
-            return;
+            return false;
         }
 
         try
@@ -3735,10 +3806,12 @@ public class Game1 : Game
             RefreshSgfAutoSaveState();
             if (markCurrentResultSaved)
                 MarkCurrentResultSgfSaved();
+            return true;
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             ShowMessage(ex.Message, "SGF output");
+            return false;
         }
     }
 
