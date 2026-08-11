@@ -14,6 +14,7 @@
 - `BoardEditing/GoAppSession.BoardEditing.Operations.cs`: 石の配置、全消去、アンドゥ／リドゥ
 - `BoardEditing/GoAppSession.EditingHistory.cs`: 盤面編集と変化図編集で共有する編集履歴
 - `GameRecords/Current/GoAppSession.CurrentGameRecord.cs`: 現在盤面からの棋譜レコード生成とメタデータ転記
+- `Game/GoAppSession.MatchBackedGame.cs`: MatchSession に委譲する着手・パス・終局反映
 - `GameRecords/Go`: `GoGameRecord` など棋譜モデルの配置候補
 - `VariationSession`: 変化図編集状態の配置候補
 
