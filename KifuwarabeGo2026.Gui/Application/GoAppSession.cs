@@ -1579,14 +1579,6 @@ public sealed partial class GoAppSession
         return true;
     }
 
-    public void FinishReviewing()
-    {
-        _beforeReviewGameRecord = null;
-        CurrentGameRecord = CreateGameRecordFromCurrentPosition();
-        ResetPositionHistory();
-        ChangeMode(GoAppModeKind.Resting);
-    }
-
     /// <summary>
     /// レビュー位置を採用せず、レビュー開始前の休憩画面へ戻ります。
     /// </summary>
