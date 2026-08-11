@@ -191,6 +191,7 @@ public class Game1 : Game
         _session.SetTournamentRules(_tournamentRulesCatalog.Rules);
         _session.SetGtpEngineProfiles(_gtpEngineCatalog.Profiles);
         _session.SetPlayerProfiles(_targetCatalog.PlayerProfiles);
+        _session.SetTargetProfiles(_targetCatalog.Profiles);
         ApplicationSettings.Current.LastSelectedAppProviderEnginePaths.TryGetValue("ponnuki", out var lastPonnukiProviderPath);
         if (_session.RestoreAppProviderEngine(lastPonnukiProviderPath) && _session.CanUseSelectedAppProvider)
         {
@@ -1049,6 +1050,13 @@ public class Game1 : Game
                     return;
                 }
 
+                if (_session.IsPlayerSelectionDialogOpen)
+                {
+                    TryHandlePlayerSelectionDialogClick(point);
+                    _previousMouse = mouse;
+                    return;
+                }
+
                 if (_session.IsCgosAdminPlayerSelectionDialogOpen)
                 {
                     if (GoScreenRenderer.GetCgosAdminPlayerDialogCancelButtonHit(point))
@@ -1212,7 +1220,7 @@ public class Game1 : Game
                         }
                         else if (GoScreenRenderer.GetCgosConnectionEngineSelectButtonHit(point, _session) is { } engineStone)
                         {
-                            OpenCgosGtpEngineSelectionDialog(engineStone);
+                            _session.OpenCgosPlayerSelectionDialog(engineStone);
                         }
                         else if (GoScreenRenderer.GetCgosAdminButtonHit(
                                      point,
@@ -1715,21 +1723,30 @@ public class Game1 : Game
         if (GoScreenRenderer.GetPlayerSelectionDialogAddHumanButtonHit(point))
         {
             if (_session.AddPlayerProfile(PlayerProfileKind.Human))
+            {
                 _playerCatalog.Save(_session.PlayerProfiles);
+                _targetCatalog.Save(_session.TargetProfiles);
+            }
             return;
         }
 
         if (GoScreenRenderer.GetPlayerSelectionDialogAddComputerButtonHit(point))
         {
             if (_session.AddPlayerProfile(PlayerProfileKind.Computer))
+            {
                 _playerCatalog.Save(_session.PlayerProfiles);
+                _targetCatalog.Save(_session.TargetProfiles);
+            }
             return;
         }
 
         if (GoScreenRenderer.GetPlayerSelectionDialogDeleteButtonHit(point))
         {
             if (_session.DeleteSelectedPlayerProfile())
+            {
                 _playerCatalog.Save(_session.PlayerProfiles);
+                _targetCatalog.Save(_session.TargetProfiles);
+            }
             return;
         }
 
@@ -1917,7 +1934,7 @@ public class Game1 : Game
             StopPonnukiProviderGame();
             _ponnukiProviderGameSession = new PonnukiProviderGameSession(provider);
             var record = _ponnukiProviderGameSession.StartAsync().GetAwaiter().GetResult();
-            record.RootComment = $"PONNUKI RANDOM SEEDS\nProvider: {seeds.Provider}\nPlayer1: {seeds.Player1}\nPlayer2: {seeds.Player2}";
+            record.RootComment = $"PONNUKI RANDOM SEEDS\nProvider: {seeds.Provider}\nBlack Player: {_session.GetPonnukiPlayerSeedLabel(GoStone.Black)} / {seeds.Player1}\nWhite Player: {_session.GetPonnukiPlayerSeedLabel(GoStone.White)} / {seeds.Player2}";
             if (!_session.LoadGameRecordAsInitialPosition(record, out var warning))
                 throw new InvalidOperationException(warning);
             _ponnukiProviderObservedMoveCount = 0;

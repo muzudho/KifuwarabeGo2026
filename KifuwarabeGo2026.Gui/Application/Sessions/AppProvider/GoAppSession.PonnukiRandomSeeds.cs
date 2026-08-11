@@ -9,8 +9,8 @@ public sealed partial class GoAppSession
     public bool PonnukiProviderSeedAutoChange { get; private set; }
     public bool PonnukiBlackPlayerSeedAutoChange { get; private set; }
     public bool PonnukiWhitePlayerSeedAutoChange { get; private set; }
-    public bool CanAutoChangePonnukiPlayer1Seed => BlackPlayerKind == GoPlayerKind.Computer;
-    public bool CanAutoChangePonnukiPlayer2Seed => WhitePlayerKind == GoPlayerKind.Computer;
+    public bool CanAutoChangePonnukiPlayer1Seed => GetSelectedPlayerProfile(GoStone.Black)?.Kind == PlayerProfileKind.Computer;
+    public bool CanAutoChangePonnukiPlayer2Seed => GetSelectedPlayerProfile(GoStone.White)?.Kind == PlayerProfileKind.Computer;
 
     public void TogglePonnukiRandomSeedAutoChange(PonnukiRandomSeedRole role)
     {
@@ -39,6 +39,15 @@ public sealed partial class GoAppSession
     private static int NextSeed() => RandomNumberGenerator.GetInt32(1, int.MaxValue);
     private static int ReadSeed(GtpEngineProfile profile) =>
         profile.GuiOptions.TryGetValue("RandomSeed", out var text) && int.TryParse(text, out var value) ? value : 0;
+
+    public string GetPonnukiPlayerSeedLabel(GoStone stone)
+    {
+        var player = GetSelectedPlayerProfile(stone);
+        if (player is null) return stone == GoStone.Black ? "Black Player" : "White Player";
+        return string.IsNullOrWhiteSpace(player.Identifier)
+            ? player.DisplayName
+            : $"{player.DisplayName} ({player.Identifier})";
+    }
 }
 
 public enum PonnukiRandomSeedRole { Provider, Player1, Player2 }

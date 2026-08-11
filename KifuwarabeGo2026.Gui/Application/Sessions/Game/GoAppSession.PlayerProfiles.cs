@@ -12,8 +12,11 @@ using System.Linq;
 public sealed partial class GoAppSession
 {
     private readonly List<PlayerProfile> _playerProfiles = [];
+    private readonly List<TargetProfile> _targetProfiles = [];
 
     public IReadOnlyList<PlayerProfile> PlayerProfiles => _playerProfiles;
+
+    public IReadOnlyList<TargetProfile> TargetProfiles => _targetProfiles;
 
     public CatalogOrderEditor<PlayerProfile> PlayerOrderEditor { get; } = new();
 
@@ -30,6 +33,46 @@ public sealed partial class GoAppSession
         WhitePlayerProfileId = FindCompatiblePlayerId(GoStone.White, GoPlayerKind.Computer);
         ApplySelectedPlayerProfile(GoStone.Black);
         ApplySelectedPlayerProfile(GoStone.White);
+    }
+
+    public void SetTargetProfiles(IEnumerable<TargetProfile> profiles)
+    {
+        _targetProfiles.Clear();
+        _targetProfiles.AddRange(profiles.Select(profile => profile.Clone()));
+        ApplyCgosTargetCredentials(GoStone.Black);
+        ApplyCgosTargetCredentials(GoStone.White);
+    }
+
+    public IReadOnlyList<TargetProfile> GetPlayerTargetProfiles(string playerProfileId) =>
+        FindPlayerProfile(playerProfileId) is not { } player
+            ? Array.Empty<TargetProfile>()
+            : _targetProfiles
+                .Where(target => player.TargetProfileIds.Contains(target.Id, StringComparer.Ordinal))
+                .Select(target => target.Clone())
+                .ToArray();
+
+    public TargetProfile? GetSelectedCgosTargetProfile(GoStone stone)
+    {
+        var engine = stone == GoStone.Black ? SelectedCgosBlackGtpEngineProfile : SelectedCgosWhiteGtpEngineProfile;
+        if (engine is null || _cgosConnectionProfiles.Count == 0)
+            return null;
+
+        var connectionId = SelectedCgosConnectionProfile.Id;
+        var selectedPlayerId = stone == GoStone.Black ? CgosBlackPlayerProfileId : CgosWhitePlayerProfileId;
+        var players = FindPlayerProfile(selectedPlayerId) is { } selectedPlayer
+            ? new[] { selectedPlayer }
+            : _playerProfiles.Where(player => player.Kind == PlayerProfileKind.Computer &&
+                                               string.Equals(player.EngineProfileId, engine.Id, StringComparison.Ordinal));
+        return players
+            .SelectMany(player => GetPlayerTargetProfiles(player.Id))
+            .FirstOrDefault(target => string.Equals(target.ConnectionProfileId, connectionId, StringComparison.Ordinal));
+    }
+
+    public void ApplyCgosTargetCredentials(GoStone stone)
+    {
+        var target = GetSelectedCgosTargetProfile(stone);
+        if (target is not null)
+            SetCgosPlayerCredentials(stone, target.LoginName, target.LoginPass);
     }
 
     public PlayerProfile? GetSelectedPlayerProfile(GoStone stone) =>

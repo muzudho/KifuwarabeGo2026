@@ -180,10 +180,11 @@ public sealed partial class GoAppSession
         if (IsGtpEngineSelectionForCgos)
         {
             SetSelectedCgosGtpEngineIndex(stone, index);
+            var target = GetSelectedCgosTargetProfile(stone);
             SetCgosPlayerCredentials(
                 stone,
-                _gtpEngineProfiles[index].DefaultCgosLoginName,
-                _gtpEngineProfiles[index].DefaultCgosPlainTextPassword);
+                target?.LoginName ?? _gtpEngineProfiles[index].DefaultCgosLoginName,
+                target?.LoginPass ?? _gtpEngineProfiles[index].DefaultCgosPlainTextPassword);
             return;
         }
 

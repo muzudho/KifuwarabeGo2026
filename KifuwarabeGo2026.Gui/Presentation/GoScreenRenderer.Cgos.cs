@@ -22,6 +22,8 @@ public sealed partial class GoScreenRenderer
 
         DrawBackground();
         DrawCgosClientTopPanel(session, mousePoint);
+        DrawPlayerSelectionDialog(session, mousePoint);
+        DrawPlayerEditPanel(session, mousePoint);
         DrawGtpEngineSelectionDialog(session, mousePoint);
         DrawGtpEngineEditPanel(session, mousePoint);
         DrawCgosAdminPlayerSelectionDialog(session, mousePoint);
@@ -416,7 +418,7 @@ public sealed partial class GoScreenRenderer
             CgosBlackProcessPanelBounds,
             "PLAYER 1",
             session.CgosBlackConnectionStatusMessage,
-            session.SelectedCgosBlackGtpEngineProfile?.DisplayName,
+            session.SelectedCgosBlackPlayerProfile?.DisplayName ?? session.SelectedCgosBlackGtpEngineProfile?.DisplayName,
             CgosBlackEngineSelector with { Enabled = !session.IsCgosBlackConnectionRunning },
             string.IsNullOrWhiteSpace(session.CgosBlackGtpResponseWaitDisplay)
                 ? session.CgosBlackConnectionElapsedDisplay
@@ -440,7 +442,7 @@ public sealed partial class GoScreenRenderer
             CgosWhiteProcessPanelBounds,
             "PLAYER 2",
             session.CgosWhiteConnectionStatusMessage,
-            session.SelectedCgosWhiteGtpEngineProfile?.DisplayName,
+            session.SelectedCgosWhitePlayerProfile?.DisplayName ?? session.SelectedCgosWhiteGtpEngineProfile?.DisplayName,
             CgosWhiteEngineSelector with { Enabled = session.IsCgosPlayer2InputEnabled && !session.IsCgosWhiteConnectionRunning },
             string.IsNullOrWhiteSpace(session.CgosWhiteGtpResponseWaitDisplay)
                 ? session.CgosWhiteConnectionElapsedDisplay
@@ -1028,7 +1030,7 @@ public sealed partial class GoScreenRenderer
 
     private static PlayerSelector CgosBlackEngineSelector => new(
         new Rectangle(CgosBlackProcessPanelBounds.X + 16, CgosBlackProcessPanelBounds.Y + 120, CgosBlackProcessPanelBounds.Width - 32, 48),
-        "ENGINE",
+        "PLAYER",
         "",
         "SELECT",
         58,
@@ -1037,7 +1039,7 @@ public sealed partial class GoScreenRenderer
 
     private static PlayerSelector CgosWhiteEngineSelector => new(
         new Rectangle(CgosWhiteProcessPanelBounds.X + 16, CgosWhiteProcessPanelBounds.Y + 120, CgosWhiteProcessPanelBounds.Width - 32, 48),
-        "ENGINE",
+        "PLAYER",
         "",
         "SELECT",
         58,

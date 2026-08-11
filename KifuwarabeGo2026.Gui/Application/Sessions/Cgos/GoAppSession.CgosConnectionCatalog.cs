@@ -2,7 +2,9 @@ namespace KifuwarabeGo2026.Gui.Application;
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using KifuwarabeGo2026.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.ConnectionTarget;
+using KifuwarabeGo2026.Shared.Domain;
 
 /// <summary>CGOS 接続プロファイルのカタログ操作を管理します。</summary>
 public sealed partial class GoAppSession
@@ -18,6 +20,10 @@ public sealed partial class GoAppSession
 
         SelectedCgosConnectionProfileIndex = Math.Clamp(SelectedCgosConnectionProfileIndex, 0, _cgosConnectionProfiles.Count - 1);
         CgosConnectionSelectionPageIndex = SelectedCgosConnectionProfileIndex / CgosConnectionSelectionPageSize;
+        SelectDefaultCgosPlayerIfNeeded(GoStone.Black);
+        SelectDefaultCgosPlayerIfNeeded(GoStone.White);
+        ApplyCgosTargetCredentials(GoStone.Black);
+        ApplyCgosTargetCredentials(GoStone.White);
     }
 
     public void MoveCgosConnectionSelectionPage(int step)
@@ -34,7 +40,8 @@ public sealed partial class GoAppSession
     public bool CanDeleteSelectedCgosConnectionProfile =>
         _cgosConnectionProfiles.Count > 1 &&
         SelectedCgosConnectionProfileIndex >= 0 &&
-        SelectedCgosConnectionProfileIndex < _cgosConnectionProfiles.Count;
+        SelectedCgosConnectionProfileIndex < _cgosConnectionProfiles.Count &&
+        !_targetProfiles.Any(target => string.Equals(target.ConnectionProfileId, SelectedCgosConnectionProfile.Id, StringComparison.Ordinal));
 
     public bool CanMoveCgosConnectionSelectionPage(int step) =>
         Math.Clamp(CgosConnectionSelectionPageIndex + step, 0, GetCgosConnectionSelectionPageCount() - 1) != CgosConnectionSelectionPageIndex;
@@ -84,5 +91,18 @@ public sealed partial class GoAppSession
         CgosConnectionSelectionPageIndex =
             SelectedCgosConnectionProfileIndex / CgosConnectionSelectionPageSize;
         return _cgosConnectionProfiles.ToArray();
+    }
+
+    private void SelectDefaultCgosPlayerIfNeeded(GoStone stone)
+    {
+        var selectedId = stone == GoStone.Black ? CgosBlackPlayerProfileId : CgosWhitePlayerProfileId;
+        if (TrySelectCgosPlayerProfile(stone, selectedId)) return;
+
+        var player = _playerProfiles.FirstOrDefault(candidate =>
+            candidate.Kind == PlayerProfileKind.Computer &&
+            GetPlayerTargetProfiles(candidate.Id).Any(target =>
+                string.Equals(target.ConnectionProfileId, SelectedCgosConnectionProfile.Id, StringComparison.Ordinal)));
+        if (player is not null)
+            TrySelectCgosPlayerProfile(stone, player.Id);
     }
 }

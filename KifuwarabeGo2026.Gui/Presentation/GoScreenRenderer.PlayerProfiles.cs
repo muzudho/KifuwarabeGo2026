@@ -80,10 +80,11 @@ public sealed partial class GoScreenRenderer
         DrawRect(PlayerSelectionDialogBounds, 2, new Color(116, 145, 146));
 
         var target = session.PlayerSelectionTargetStone == GoStone.Black ? "BLACK" : "WHITE";
-        DrawText($"PLAYER SELECT  {target}", new Vector2(PlayerSelectionDialogBounds.X + 34, PlayerSelectionDialogBounds.Y + 28), new Color(244, 238, 218), 0.78f);
-        DrawText("Human and computer players are selected from one list.", new Vector2(PlayerSelectionDialogBounds.X + 36, PlayerSelectionDialogBounds.Y + 88), new Color(180, 195, 195), 0.38f);
+        var cgos = session.PlayerSelectionPurpose == PlayerSelectionPurpose.Cgos;
+        DrawText($"{(cgos ? "CGOS PLAYER" : "PLAYER")} SELECT  {target}", new Vector2(PlayerSelectionDialogBounds.X + 34, PlayerSelectionDialogBounds.Y + 28), new Color(244, 238, 218), 0.78f);
+        DrawText(cgos ? "Choose a computer player with a CGOS target for this connection." : "Human and computer players are selected from one list.", new Vector2(PlayerSelectionDialogBounds.X + 36, PlayerSelectionDialogBounds.Y + 88), new Color(180, 195, 195), 0.38f);
         DrawCommandButton(PlayerSelectionCancelButtonBounds, "CANCEL", false, mousePoint, scale: 0.34f);
-        DrawCommandButton(PlayerSelectionOkButtonBounds, "SELECT", false, mousePoint, enabled: session.PlayerDialogSelectionIndex >= 0, scale: 0.34f);
+        DrawCommandButton(PlayerSelectionOkButtonBounds, "SELECT", false, mousePoint, enabled: session.CanCommitPlayerSelection, scale: 0.34f);
 
         FillRect(PlayerSelectionListBounds, new Color(15, 20, 26));
         DrawRect(PlayerSelectionListBounds, 1, new Color(67, 84, 92));

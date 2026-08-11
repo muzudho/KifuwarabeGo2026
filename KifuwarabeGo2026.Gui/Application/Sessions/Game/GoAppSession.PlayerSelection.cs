@@ -9,6 +9,7 @@ public sealed partial class GoAppSession
 {
     public const int PlayerSelectionPageSize = 6;
     public bool IsPlayerSelectionDialogOpen { get; private set; }
+    public PlayerSelectionPurpose PlayerSelectionPurpose { get; private set; }
     public GoStone PlayerSelectionTargetStone { get; private set; } = GoStone.Black;
     public int PlayerDialogSelectionIndex { get; private set; } = -1;
     public int PlayerSelectionPageIndex { get; private set; }
@@ -19,9 +20,23 @@ public sealed partial class GoAppSession
             throw new ArgumentOutOfRangeException(nameof(stone), stone, "Player can be selected only for black or white.");
 
         IsPlayerSelectionDialogOpen = true;
+        PlayerSelectionPurpose = PlayerSelectionPurpose.LocalMatch;
         PlayerSelectionTargetStone = stone;
         PlayerDialogSelectionIndex = _playerProfiles.FindIndex(profile =>
             string.Equals(profile.Id, stone == GoStone.Black ? BlackPlayerProfileId : WhitePlayerProfileId, StringComparison.Ordinal));
+        PlayerSelectionPageIndex = Math.Max(0, PlayerDialogSelectionIndex) / PlayerSelectionPageSize;
+    }
+
+    public void OpenCgosPlayerSelectionDialog(GoStone stone)
+    {
+        if (stone is not (GoStone.Black or GoStone.White))
+            throw new ArgumentOutOfRangeException(nameof(stone), stone, "CGOS player can be selected only for black or white.");
+
+        IsPlayerSelectionDialogOpen = true;
+        PlayerSelectionPurpose = PlayerSelectionPurpose.Cgos;
+        PlayerSelectionTargetStone = stone;
+        var currentId = stone == GoStone.Black ? CgosBlackPlayerProfileId : CgosWhitePlayerProfileId;
+        PlayerDialogSelectionIndex = _playerProfiles.FindIndex(profile => string.Equals(profile.Id, currentId, StringComparison.Ordinal));
         PlayerSelectionPageIndex = Math.Max(0, PlayerDialogSelectionIndex) / PlayerSelectionPageSize;
     }
 
@@ -36,7 +51,11 @@ public sealed partial class GoAppSession
     {
         if (PlayerDialogSelectionIndex < 0 || PlayerDialogSelectionIndex >= _playerProfiles.Count)
             return false;
-        if (!TrySelectPlayerProfile(PlayerSelectionTargetStone, _playerProfiles[PlayerDialogSelectionIndex].Id))
+        var playerId = _playerProfiles[PlayerDialogSelectionIndex].Id;
+        var selected = PlayerSelectionPurpose == PlayerSelectionPurpose.Cgos
+            ? TrySelectCgosPlayerProfile(PlayerSelectionTargetStone, playerId)
+            : TrySelectPlayerProfile(PlayerSelectionTargetStone, playerId);
+        if (!selected)
             return false;
 
         IsPlayerSelectionDialogOpen = false;
@@ -44,6 +63,11 @@ public sealed partial class GoAppSession
     }
 
     public void CancelPlayerSelectionDialog() => IsPlayerSelectionDialogOpen = false;
+
+    public bool CanCommitPlayerSelection =>
+        PlayerDialogSelectionIndex >= 0 &&
+        PlayerDialogSelectionIndex < _playerProfiles.Count &&
+        (PlayerSelectionPurpose != PlayerSelectionPurpose.Cgos || CanSelectPlayerForCgos(_playerProfiles[PlayerDialogSelectionIndex]));
 
     public void MovePlayerSelectionPage(int step)
     {
@@ -61,13 +85,15 @@ public sealed partial class GoAppSession
         }
 
         var ordinal = _playerProfiles.Count(profile => profile.Kind == kind) + 1;
-        _playerProfiles.Add(new PlayerProfile
+        var player = new PlayerProfile
         {
             DisplayName = kind == PlayerProfileKind.Human ? $"New Human {ordinal}" : $"New Computer {ordinal}",
             Identifier = "",
             Kind = kind,
             EngineProfileId = engineId,
-        });
+        };
+        _playerProfiles.Add(player);
+        AddDefaultTargetProfiles(player);
         PlayerDialogSelectionIndex = _playerProfiles.Count - 1;
         PlayerSelectionPageIndex = PlayerDialogSelectionIndex / PlayerSelectionPageSize;
         return true;
@@ -86,6 +112,8 @@ public sealed partial class GoAppSession
         }
 
         _playerProfiles.RemoveAt(PlayerDialogSelectionIndex);
+        var stillReferencedTargetIds = _playerProfiles.SelectMany(profile => profile.TargetProfileIds).ToHashSet(StringComparer.Ordinal);
+        _targetProfiles.RemoveAll(target => removed.TargetProfileIds.Contains(target.Id, StringComparer.Ordinal) && !stillReferencedTargetIds.Contains(target.Id));
         PlayerDialogSelectionIndex = Math.Min(PlayerDialogSelectionIndex, _playerProfiles.Count - 1);
         PlayerSelectionPageIndex = Math.Max(0, PlayerDialogSelectionIndex) / PlayerSelectionPageSize;
         return true;
@@ -108,4 +136,39 @@ public sealed partial class GoAppSession
         var engineIndex = FindGtpEngineIndex(player.EngineProfileId);
         return engineIndex >= 0 ? $"COMPUTER  /  {_gtpEngineProfiles[engineIndex].DisplayName}" : "COMPUTER  /  ENGINE NOT FOUND";
     }
+
+    private bool CanSelectPlayerForCgos(PlayerProfile player) =>
+        player.Kind == PlayerProfileKind.Computer &&
+        FindGtpEngineIndex(player.EngineProfileId) >= 0 &&
+        GetPlayerTargetProfiles(player.Id).Any(target =>
+            string.Equals(target.ConnectionProfileId, SelectedCgosConnectionProfile.Id, StringComparison.Ordinal));
+
+    private void AddDefaultTargetProfiles(PlayerProfile player)
+    {
+        var localMatch = new TargetProfile { DisplayName = "LocalMatch", LoginName = player.Identifier };
+        _targetProfiles.Add(localMatch);
+        player.TargetProfileIds.Add(localMatch.Id);
+
+        if (player.Kind != PlayerProfileKind.Computer || _cgosConnectionProfiles.Count == 0)
+            return;
+
+        var engineIndex = FindGtpEngineIndex(player.EngineProfileId);
+        if (engineIndex < 0) return;
+        var engine = _gtpEngineProfiles[engineIndex];
+        var cgos = new TargetProfile
+        {
+            DisplayName = "CGOS",
+            ConnectionProfileId = SelectedCgosConnectionProfile.Id,
+            LoginName = engine.DefaultCgosLoginName,
+            LoginPass = engine.DefaultCgosPlainTextPassword,
+        };
+        _targetProfiles.Add(cgos);
+        player.TargetProfileIds.Add(cgos.Id);
+    }
+}
+
+public enum PlayerSelectionPurpose
+{
+    LocalMatch,
+    Cgos,
 }
