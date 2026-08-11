@@ -2196,28 +2196,6 @@ public sealed partial class GoAppSession
         }
     }
 
-    private void ClearBoard()
-    {
-        _matchSession = null;
-        _board = new GoBoard(BoardSize);
-        CurrentTurn = GoStone.Black;
-        BlackAgehama = 0;
-        WhiteAgehama = 0;
-        BlackElapsedTime = TimeSpan.Zero;
-        WhiteElapsedTime = TimeSpan.Zero;
-        KoPoint = null;
-        ConsecutivePasses = 0;
-        PlayedMoveCount = 0;
-        Winner = null;
-        GameOverReason = "";
-        IsEngineReady = true;
-        IsEngineThinking = false;
-        EngineErrorMessage = "";
-        CurrentGameRecord = CreateGameRecordFromCurrentPosition();
-        ResetPositionHistory();
-        ClearBoardEditingHistory();
-    }
-
     private void ApplyTournamentRules(TournamentRules rules)
     {
         _currentTournamentRules = rules.Clone();
@@ -2233,21 +2211,6 @@ public sealed partial class GoAppSession
     public const int CgosConnectionSelectionPageSize = 5;
 
     public const int CgosAdminPlayerSelectionPageSize = 6;
-
-    private void PassTurn()
-    {
-        CurrentTurn = CurrentTurn == GoStone.Black ? GoStone.White : GoStone.Black;
-    }
-
-    private void ResetPositionHistory()
-    {
-        _positionHashes.Clear();
-        _positionHashes.Add(_board.CurrentHash);
-    }
-
-    private static GoStone OppositeOf(GoStone stone) => stone == GoStone.Black ? GoStone.White : GoStone.Black;
-
-    private static string StoneName(GoStone stone) => stone == GoStone.Black ? "BLACK" : "WHITE";
 
     private static CgosConnectionProfile CreateDefaultCgosConnectionProfile() =>
         new("New CGOS Connection", "uec-go.com", 6809, "PRACTICE", "CGOS practice server") { Event = "PRACTICE" };

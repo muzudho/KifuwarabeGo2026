@@ -21,6 +21,7 @@
 - `Game/GoAppSession.LocalReplay.cs`: 対局中・終局後のローカル棋譜シーク表示
 - `MoveInformation/GoAppSession.MoveInformation.cs`: 着手情報、コメント、チャートの表示状態
 - `BoardLens/GoAppSession.RenParser.cs`: 盤面レンズの切替状態と連解析キャッシュ
+- `BoardState/GoAppSession.BoardState.cs`: 全モードで共有する盤面・手番・局面履歴の初期化
 - `GameRecords/Go`: `GoGameRecord` など棋譜モデルの配置候補
 - `VariationSession`: 変化図編集状態の配置候補
 
