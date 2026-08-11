@@ -137,11 +137,11 @@ public sealed partial class GoScreenRenderer
         var (bounds, target) = heading switch
         {
             "FORMAL APPS" =>
-                (new Rectangle(70, 270, 390, 190), new Vector2(TitleFormalAppsLabelBounds.Left, TitleFormalAppsLabelBounds.Center.Y)),
+                (new Rectangle(70, 270, 390, 190), GetTitleSectionLabelConnectorTarget("FORMAL APPS", new Vector2(500, 338), connectsToRight: false)),
             "CASUAL APPS" =>
-                (new Rectangle(1412, 270, 420, 190), new Vector2(TitleCasualAppsLabelBounds.Right, TitleCasualAppsLabelBounds.Center.Y)),
+                (new Rectangle(1412, 270, 420, 190), GetTitleSectionLabelConnectorTarget("CASUAL APPS", new Vector2(950, 338), connectsToRight: true)),
             _ =>
-                (new Rectangle(1360, 780, 390, 160), new Vector2(SettingsButtonBounds.Left, SettingsButtonBounds.Center.Y)),
+                (new Rectangle(1360, 780, 390, 160), new Vector2(SettingsButtonBounds.Left - 14, SettingsButtonBounds.Center.Y)),
         };
         var bodyLines = heading switch
         {
@@ -168,6 +168,16 @@ public sealed partial class GoScreenRenderer
         return target.Y <= bounds.Top
             ? new Vector2(bounds.Center.X, bounds.Top)
             : new Vector2(bounds.Center.X, bounds.Bottom);
+    }
+
+    private Vector2 GetTitleSectionLabelConnectorTarget(string label, Vector2 labelPosition, bool connectsToRight)
+    {
+        const float labelScale = 0.48f;
+        const int gap = 14;
+        var x = connectsToRight
+            ? labelPosition.X + _font.MeasureString(label).X * labelScale + gap
+            : labelPosition.X - gap;
+        return new Vector2(x, labelPosition.Y + 15);
     }
 
     private void DrawAppPage(GoAppSession session, TitleMenuPage page, Rectangle panel, Point mousePoint, int appProviderTabIndex, bool isAppProviderLoading)
