@@ -7,7 +7,6 @@ using KifuwarabeGo2026.Gui.Application.Local.Resting.TournamentRule;
 using KifuwarabeGo2026.Gui.Domain;
 using KifuwarabeGo2026.GtpExtensions.Engines;
 using KifuwarabeGo2026.GtpExtensions.InitialPosition;
-using KifuwarabeGo2026.Match;
 using KifuwarabeGo2026.Shared.Domain;
 using System;
 using System.Collections.Generic;
@@ -17,8 +16,6 @@ using System.Linq;
 public sealed partial class GoAppSession
 {
     private GoBoard _board;
-    private GoBoard? _localReplayBoard;
-    private int? _localReplayMoveIndex;
     private readonly HashSet<ulong> _positionHashes = new();
     private readonly List<TournamentRules> _tournamentRules = new();
     private readonly List<GtpEngineProfile> _gtpEngineProfiles = new();
@@ -176,13 +173,6 @@ public sealed partial class GoAppSession
     public bool CanOpenLocalChartPopup =>
         CurrentMode.Kind is GoAppModeKind.Playing or GoAppModeKind.GameOver;
 
-    public bool IsLocalReplayMode =>
-        CurrentMode.Kind is GoAppModeKind.Playing or GoAppModeKind.GameOver &&
-        _localReplayMoveIndex is not null;
-
-    public int LocalDisplayMoveIndex =>
-        _localReplayMoveIndex ?? CurrentGameRecord.Moves.Count;
-
     public void SetSgfAutoSaveAvailability(bool available)
     {
         IsSgfAutoSaveAvailable = available;
@@ -284,10 +274,6 @@ public sealed partial class GoAppSession
     public TournamentRules CurrentTournamentRules => _currentTournamentRules.Clone();
 
     public GoStone CurrentTurn { get; private set; } = GoStone.Black;
-
-    public bool IsMatchBackedLocalGame => _matchSession is not null;
-
-    public MatchSnapshot? CurrentMatchSnapshot => _matchSession?.Snapshot;
 
     public int PlayedMoveCount { get; private set; }
 
@@ -630,31 +616,6 @@ public sealed partial class GoAppSession
     {
         IsLiveChartAutoUpdateEnabled = true;
         _liveChartFrozenMoveCount = null;
-    }
-
-    public void SeekLocalReplay(int moveIndex)
-    {
-        if (CurrentMode.Kind is not (GoAppModeKind.Playing or GoAppModeKind.GameOver) ||
-            !CanOpenLocalChartPopup)
-        {
-            return;
-        }
-
-        var clampedMoveIndex = Math.Clamp(moveIndex, 0, CurrentGameRecord.Moves.Count);
-        if (clampedMoveIndex == CurrentGameRecord.Moves.Count)
-        {
-            ReturnLocalReplayToLive();
-            return;
-        }
-
-        _localReplayMoveIndex = clampedMoveIndex;
-        _localReplayBoard = BuildLocalReplayBoard(clampedMoveIndex);
-    }
-
-    public void ReturnLocalReplayToLive()
-    {
-        _localReplayMoveIndex = null;
-        _localReplayBoard = null;
     }
 
     public void OpenCgosLiveChartPopup()
@@ -1220,30 +1181,6 @@ public sealed partial class GoAppSession
         _cachedRenParseBoardSize = BoardSize;
         _cachedRenParseHash = _board.CurrentHash;
         return _cachedRenParseResult;
-    }
-
-    public void StartPlaying()
-    {
-        ResetLiveChartAutoUpdate();
-        IsLocalResultSgfSaved = false;
-        if (CurrentMode.Kind == GoAppModeKind.GameOver)
-        {
-            ClearBoard();
-        }
-
-        CurrentGameRecord = CreateGameRecordFromCurrentPosition();
-        BlackElapsedTime = TimeSpan.Zero;
-        WhiteElapsedTime = TimeSpan.Zero;
-        _matchSession = new MatchSession(CreateMatchConfiguration());
-        ChangeMode(GoAppModeKind.Playing);
-    }
-
-    public void CancelPlaying()
-    {
-        ChangeMode(GoAppModeKind.Resting);
-        IsEngineReady = true;
-        IsEngineThinking = false;
-        EngineErrorMessage = "";
     }
 
     public void ReturnToSetup()
@@ -2474,52 +2411,6 @@ public sealed partial class GoAppSession
     public GoStone GetStone(int x, int y)
     {
         return _board.GetStone(x, y);
-    }
-
-    public GoStone GetDisplayStone(int x, int y)
-    {
-        return (_localReplayBoard ?? _board).GetStone(x, y);
-    }
-
-    public GoRenParseResult ParseDisplayRens()
-    {
-        return _localReplayBoard?.ParseRens() ?? ParseRens();
-    }
-
-    private GoBoard BuildLocalReplayBoard(int moveIndex)
-    {
-        var board = new GoBoard(CurrentGameRecord.BoardSize);
-        foreach (var setupStone in CurrentGameRecord.SetupStones)
-        {
-            board.TrySetSetupStone(
-                setupStone.Point.X,
-                setupStone.Point.Y,
-                setupStone.Stone);
-        }
-
-        GoPoint? koPoint = null;
-        for (var index = 0; index < moveIndex; index++)
-        {
-            var move = CurrentGameRecord.Moves[index];
-            if (move.Point is not { } point)
-            {
-                koPoint = null;
-                continue;
-            }
-
-            if (board.TryPlaceStone(
-                    point.X,
-                    point.Y,
-                    move.Stone,
-                    koPoint,
-                    out _,
-                    out var nextKoPoint))
-            {
-                koPoint = nextKoPoint;
-            }
-        }
-
-        return board;
     }
 
     public bool IsSuperKoPoint(int x, int y)

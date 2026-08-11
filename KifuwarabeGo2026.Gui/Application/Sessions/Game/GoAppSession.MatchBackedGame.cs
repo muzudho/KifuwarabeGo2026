@@ -10,6 +10,9 @@ public sealed partial class GoAppSession
 {
     private MatchSession? _matchSession;
 
+    public bool IsMatchBackedLocalGame => _matchSession is not null;
+    public MatchSnapshot? CurrentMatchSnapshot => _matchSession?.Snapshot;
+
     private MatchConfiguration CreateMatchConfiguration()
     {
         var setupStones = new List<MatchSetupStone>();
