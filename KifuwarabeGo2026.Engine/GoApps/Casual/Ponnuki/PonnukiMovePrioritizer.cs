@@ -16,9 +16,9 @@ internal static class PonnukiMovePrioritizer
         var renParse = boardAfterMove.ParseRens();
         var placedRen = renParse.GetRen(renParse.GetRenNumber(move.X, move.Y));
         var strong = StrongAnalyzer.Analyze(renParse, placedRen.Number);
-        // 自連と隣接相手連の面積がちょうど拮抗した接触点を、逃げノビとして優先する。
-        var evacuationNobiPriority = strong.TouchesOpponent && strong.Value == 0 ? 1 : 0;
-        return new PonnukiMovePriority(capturedStones, evacuationNobiPriority);
+        // 自連と隣接相手連の面積がちょうど拮抗した接触点を優先する。
+        var contestedContactPriority = strong.TouchesOpponent && strong.Value == 0 ? 1 : 0;
+        return new PonnukiMovePriority(capturedStones, contestedContactPriority);
     }
 
     public static List<GoPoint> SelectBest(IReadOnlyList<PonnukiMoveCandidate> candidates)
@@ -47,11 +47,11 @@ internal static class PonnukiMovePrioritizer
 internal readonly record struct PonnukiMoveCandidate(GoPoint Move, PonnukiMovePriority Priority);
 
 /// <summary>
-/// 優先順位を表す構造体です。捕獲石数と逃げノビ優先度の2つの要素で比較されます。
+/// 優先順位を表す構造体です。捕獲石数と拮抗接触優先度の2つの要素で比較されます。
 /// </summary>
 /// <param name="CapturedStones"></param>
-/// <param name="EvacuationNobiPriority"></param>
-internal readonly record struct PonnukiMovePriority(int CapturedStones, int EvacuationNobiPriority)
+/// <param name="ContestedContactPriority"></param>
+internal readonly record struct PonnukiMovePriority(int CapturedStones, int ContestedContactPriority)
     : IComparable<PonnukiMovePriority>
 {
     public int CompareTo(PonnukiMovePriority other)
@@ -60,7 +60,7 @@ internal readonly record struct PonnukiMovePriority(int CapturedStones, int Evac
         var captureComparison = CapturedStones.CompareTo(other.CapturedStones);
         return captureComparison != 0
             ? captureComparison
-            // （２）逃げノビ優先度の差
-            : EvacuationNobiPriority.CompareTo(other.EvacuationNobiPriority);
+            // （２）拮抗接触優先度の差
+            : ContestedContactPriority.CompareTo(other.ContestedContactPriority);
     }
 }

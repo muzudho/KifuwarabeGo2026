@@ -43,8 +43,8 @@ internal readonly record struct PonnukiMoveDecision(
     {
         var priority = Priority.CapturedStones > 0
             ? $"{Priority.CapturedStones}子を取りにいく"
-            : Priority.EvacuationNobiPriority > 0
-                ? "逃げるためのノビ"
+            : Priority.ContestedContactPriority > 0
+                ? "相手に接する拮抗連を優先"
                 : "優先条件なし";
         var selection = SamePriorityCandidateCount == 1
             ? "最優先候補が1手"
