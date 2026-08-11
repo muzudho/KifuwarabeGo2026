@@ -284,15 +284,6 @@ public sealed partial class GoAppSession
 
     public GtpEngineProfile WhiteGtpEngineProfile => GetGtpEngineProfile(GoStone.White);
 
-    public bool CanAcceptHumanMove =>
-        CurrentMode.Kind == GoAppModeKind.VariationEditing ||
-        (CurrentMode.Kind == GoAppModeKind.Playing &&
-         !IsLocalReplayMode &&
-         IsEngineReady &&
-         !IsEngineThinking &&
-         string.IsNullOrWhiteSpace(EngineErrorMessage) &&
-         GetPlayerKind(CurrentTurn) == GoPlayerKind.Human);
-
     public void SelectUseKind(GoAppUseKind useKind)
     {
         UseKind = useKind;

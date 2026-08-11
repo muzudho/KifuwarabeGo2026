@@ -100,6 +100,15 @@ public sealed partial class GoAppSession
         IsPlayerLaunchConfigurationValid(GoStone.Black) &&
         IsPlayerLaunchConfigurationValid(GoStone.White);
 
+    public bool CanAcceptHumanMove =>
+        CurrentMode.Kind == GoAppModeKind.VariationEditing ||
+        (CurrentMode.Kind == GoAppModeKind.Playing &&
+         !IsLocalReplayMode &&
+         IsEngineReady &&
+         !IsEngineThinking &&
+         string.IsNullOrWhiteSpace(EngineErrorMessage) &&
+         GetPlayerKind(CurrentTurn) == GoPlayerKind.Human);
+
     private bool IsPlayerLaunchConfigurationValid(GoStone stone)
     {
         if (GetPlayerKind(stone) == GoPlayerKind.Human)
