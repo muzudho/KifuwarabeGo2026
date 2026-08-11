@@ -2,7 +2,7 @@ namespace KifuwarabeGo2026.Gui.Application;
 
 using System;
 using System.Collections.Generic;
-using KifuwarabeGo2026.Gui.Application.Cgos.ConnectionTarget;
+using KifuwarabeGo2026.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.ConnectionTarget;
 
 /// <summary>CGOS 接続プロファイルのカタログ操作を管理します。</summary>
 public sealed partial class GoAppSession

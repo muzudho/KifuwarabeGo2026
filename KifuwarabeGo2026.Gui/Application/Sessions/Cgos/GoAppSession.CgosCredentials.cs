@@ -1,6 +1,6 @@
 namespace KifuwarabeGo2026.Gui.Application;
 
-using KifuwarabeGo2026.Gui.Application.Cgos.ConnectionTarget;
+using KifuwarabeGo2026.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.ConnectionTarget;
 using KifuwarabeGo2026.Shared.Domain;
 using System;
 

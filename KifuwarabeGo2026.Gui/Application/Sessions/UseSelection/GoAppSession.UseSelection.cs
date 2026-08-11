@@ -1,7 +1,7 @@
 namespace KifuwarabeGo2026.Gui.Application;
 
 using System;
-using CgosFlowKind = KifuwarabeGo2026.Gui.Application.Cgos.ConnectionTarget.CgosConnectionFlowKind;
+using CgosFlowKind = KifuwarabeGo2026.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.ConnectionTarget.CgosConnectionFlowKind;
 
 /// <summary>アプリ用途の選択と、用途選択へ戻る際の接続状態リセットを管理します。</summary>
 public sealed partial class GoAppSession

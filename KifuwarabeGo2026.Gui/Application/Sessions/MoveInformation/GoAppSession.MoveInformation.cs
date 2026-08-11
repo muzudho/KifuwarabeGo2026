@@ -2,7 +2,7 @@ namespace KifuwarabeGo2026.Gui.Application;
 
 using KifuwarabeGo2026.Gui.Application.Local.Playing;
 using System;
-using CgosFlowKind = KifuwarabeGo2026.Gui.Application.Cgos.ConnectionTarget.CgosConnectionFlowKind;
+using CgosFlowKind = KifuwarabeGo2026.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.ConnectionTarget.CgosConnectionFlowKind;
 
 /// <summary>着手情報、コメント、チャートの表示状態を管理します。</summary>
 public sealed partial class GoAppSession

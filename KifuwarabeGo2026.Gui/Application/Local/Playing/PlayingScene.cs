@@ -3,7 +3,7 @@ namespace KifuwarabeGo2026.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.GtpExtensions.Capabilities;
 using KifuwarabeGo2026.GtpExtensions.Engines;
 using KifuwarabeGo2026.GtpExtensions.InitialPosition;
-using KifuwarabeGo2026.Gui.Application.Cgos.Watching;
+using KifuwarabeGo2026.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.Watching;
 using KifuwarabeGo2026.Gui.Domain;
 using KifuwarabeGo2026.Shared.Domain;
 using KifuwarabeGo2026.Gui.Gtp;

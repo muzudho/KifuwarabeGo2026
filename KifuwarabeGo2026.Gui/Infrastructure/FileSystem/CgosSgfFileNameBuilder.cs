@@ -1,7 +1,7 @@
 namespace KifuwarabeGo2026.Gui.Infrastructure.FileSystem;
 
-using KifuwarabeGo2026.Gui.Application.Cgos.ConnectionTarget;
-using KifuwarabeGo2026.Gui.Application.Cgos.Watching;
+using KifuwarabeGo2026.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.ConnectionTarget;
+using KifuwarabeGo2026.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.Watching;
 using System;
 using System.IO;
 using System.Text;

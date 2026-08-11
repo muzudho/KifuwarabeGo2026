@@ -1,7 +1,7 @@
 namespace KifuwarabeGo2026.Gui.Sgf;
 
 using KifuwarabeGo2026.Gui.Application.Local.Playing;
-using KifuwarabeGo2026.Gui.Application.Cgos.Watching;
+using KifuwarabeGo2026.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.Watching;
 using KifuwarabeGo2026.Gui.Gtp;
 using KifuwarabeGo2026.Shared.Domain;
 using System;

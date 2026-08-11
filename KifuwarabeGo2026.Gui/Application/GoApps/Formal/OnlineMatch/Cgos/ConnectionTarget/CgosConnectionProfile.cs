@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Gui.Application.Cgos.ConnectionTarget;
+namespace KifuwarabeGo2026.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.ConnectionTarget;
 
 public sealed record CgosConnectionProfile(
     string DisplayName,
