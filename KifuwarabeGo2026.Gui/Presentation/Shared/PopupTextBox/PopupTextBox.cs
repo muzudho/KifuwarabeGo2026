@@ -4,6 +4,7 @@ using KifuwarabeGo2026.Gui.Application;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
+using System.Linq;
 
 public sealed partial class GoScreenRenderer
 {
@@ -67,8 +68,13 @@ public sealed partial class GoScreenRenderer
         if (composition.IsActive)
         {
             var compositionText = composition.Text ?? "";
-            DrawText(compositionText, new Vector2(caretX, TextInputTextContentBounds.Y + 2), new Color(255, 225, 128), 0.55f);
-            var compositionWidth = _font.MeasureString(compositionText).X * 0.55f;
+            // SpriteFont にない日本語などは * で代替されるため、通常の文字列オプション表示と同じ
+            // Windows ラスタライザーを使います。これにより変換中の日本語も実際の字形で見えます。
+            var compositionWidth = DrawDynamicCompositionText(
+                compositionText,
+                new Vector2(caretX, TextInputTextContentBounds.Y + 2),
+                new Color(255, 225, 128),
+                0.55f);
             DrawLine(
                 new Vector2(caretX, TextInputTextContentBounds.Bottom - 4),
                 new Vector2(caretX + compositionWidth, TextInputTextContentBounds.Bottom - 4),
@@ -99,5 +105,28 @@ public sealed partial class GoScreenRenderer
         var center = new Vector2(x, TextInputDialogBounds.Y + 47);
         DrawCircle(center, 8, enabled ? activeColor : new Color(79, 89, 98));
         DrawText(label, new Vector2(center.X - _font.MeasureString(label).X * 0.11f, TextInputDialogBounds.Y + 66), new Color(180, 195, 195), 0.22f);
+    }
+
+    private float DrawDynamicCompositionText(string text, Vector2 position, Color color, float scale)
+    {
+        if (text.All(character => _font.Characters.Contains(character)))
+        {
+            DrawText(text, position, color, scale);
+            return _font.MeasureString(text).X * scale;
+        }
+
+        if (!_dynamicOptionTextTextures.TryGetValue(text, out var texture))
+        {
+            var png = _textRasterizer.RasterizePng(text, pixelHeight: 28, bold: true);
+            using var stream = new System.IO.MemoryStream(png, writable: false);
+            texture = Texture2D.FromStream(_graphicsDevice, stream);
+            _dynamicOptionTextTextures[text] = texture;
+        }
+
+        var targetHeight = _font.LineSpacing * scale;
+        var textureScale = targetHeight / texture.Height;
+        var width = texture.Width * textureScale;
+        _spriteBatch.Draw(texture, new Rectangle((int)position.X, (int)position.Y, (int)width, (int)targetHeight), color);
+        return width;
     }
 }

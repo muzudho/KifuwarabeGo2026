@@ -159,7 +159,7 @@ public sealed class WindowsTextCompositionService : ITextCompositionService, IDi
             var eventType = unchecked((uint)Marshal.ReadInt32(sdlEvent));
             if (eventType == SdlTextEditing)
             {
-                var text = Marshal.PtrToStringUTF8(sdlEvent + SdlTextEditingTextOffset, 32)?.TrimEnd('\0') ?? "";
+                var text = ReadSdlUtf8Text(sdlEvent + SdlTextEditingTextOffset, 32);
                 var caretIndex = Math.Clamp(Marshal.ReadInt32(sdlEvent, SdlTextEditingStartOffset), 0, text.Length);
                 _pendingCompositionStates.Enqueue(new TextCompositionState(text, caretIndex, true));
                 GuiOperationLog.App("IME SDL composition updated", $"characters={text.Length}; caret={caretIndex}.");
@@ -175,6 +175,15 @@ public sealed class WindowsTextCompositionService : ITextCompositionService, IDi
         }
 
         return 0;
+    }
+
+    private static string ReadSdlUtf8Text(nint textBuffer, int capacity)
+    {
+        var byteCount = 0;
+        while (byteCount < capacity && Marshal.ReadByte(textBuffer, byteCount) != 0)
+            byteCount++;
+
+        return byteCount == 0 ? "" : Marshal.PtrToStringUTF8(textBuffer, byteCount) ?? "";
     }
 
     private void UpdateComposition(nint windowHandle, nint lParam)
