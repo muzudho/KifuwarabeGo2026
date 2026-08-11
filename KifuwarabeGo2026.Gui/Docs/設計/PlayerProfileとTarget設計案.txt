@@ -220,3 +220,17 @@ CGOS 接続画面は黒白の Player Profile と CGOS Target を選び、その 
 既存の GTP Engine JSON はパスワードを平文保存している。
 移行だけなら平文値を PlayerTarget.LoginPass へ移せるが、新規設計では OS の保護ストア（Windows では DPAPI など）を使うことを推奨する。
 少なくとも、画面は伏せ字、コピーを抑制し、ログ・SGF・ファイル名へ LOGIN PASS を出力しない。
+
+9. 最新実装ステータス（2026-08-12）
+
+完了:
+- Player / Engine / Target の責務分離、Target の JSON 保存、CGOS 実行時の Target 認証情報参照。
+- Player 編集画面の TARGETS...、Target 一覧、最大5件の追加、削除、選択、CGOS 接続先の前後切替。
+
+実装途中:
+- 選択中 Target の DISPLAY / LOGIN NAME / LOGIN PASS のテキスト編集。
+- CGOS 接続先を水色枠、指アイコン、USE ボタンで選ぶ既存 UI との統合。
+
+運用方針:
+- Target は Player ごとに1～5件の少数を前提とする。ORDER とページ送りは作らない。
+- LocalMatch Target の接続先は LOCAL MATCH 固定。CGOS Target は ConnectionProfile の ID を参照する。

@@ -148,3 +148,23 @@ WHITE PLAYER   [表示名 / 種別]                 [SELECT]
 - [完了] Identifier はアプリ側で文字種・文字数を制限しない。
 - [一部完了] 既存設定を持つ利用者が起動しても、対局できる Player が失われない。初期 Player とエンジン対応 Player は補うが、旧黒白選択の完全な永続移行が残る。
 - [未完了] SGF、ログ、Random Seed の表示先が Player 情報と矛盾しない。SGF 名は完了、ログ・Random Seed の Player 名／Identifier 記録と CGOS 連携が残る。
+
+## 最新実装ステータス（2026-08-12）
+
+### 完了
+
+- Human / Computer の Player 統合選択、GTP Engine の選択、Local Match / Ponnuki、SGF 表示名出力。
+- TargetProfile / TargetCatalog、Player からの Target 参照、CGOS Connection Profile の不変 ID 参照。
+- CGOS 実行時の Target 認証情報参照。
+- TARGETS ダイアログの表示、最大5件までの CGOS / LocalMatch Target 追加、削除、行選択、CGOS 接続先の前後切替。
+
+### 実装途中
+
+- Target の DISPLAY / LOGIN NAME / LOGIN PASS の入力欄。
+- 接続先選択を既存の「現在値 + USE」選択 UI に統合すること。
+- Target 編集画面の表示・操作の仕上げ。
+
+### 後続
+
+- Target の並べ替え・ページ送りは、最大5件の少数運用のため当面不要。
+- LOGIN PASS の OS 保護ストア移行。
