@@ -80,9 +80,14 @@ public sealed partial class GoScreenRenderer
             CommentHeadingBounds(bounds),
             new Color(255, 215, 92),
             expanded ? 0.46f : 0.27f);
+        DrawFittedText(
+            "COMMENT",
+            CommentSectionLabelBounds(bounds),
+            new Color(174, 198, 198),
+            expanded ? 0.30f : 0.19f);
         DrawCommandButton(
             CommentPreviousMoveButtonBounds(bounds),
-            "|< COMMENT",
+            "< PREV",
             false,
             mousePoint,
             enabled:
@@ -91,7 +96,7 @@ public sealed partial class GoScreenRenderer
             scale: expanded ? 0.28f : 0.19f);
         DrawCommandButton(
             CommentNextMoveButtonBounds(bounds),
-            "COMMENT >|",
+            "NEXT >",
             false,
             mousePoint,
             enabled:
@@ -102,13 +107,13 @@ public sealed partial class GoScreenRenderer
         {
             DrawCommandButton(
                 CommentRootEditButtonBounds(bounds),
-                "ROOT COMMENT",
+                "EDIT ROOT",
                 false,
                 mousePoint,
                 scale: expanded ? 0.22f : 0.145f);
             DrawCommandButton(
                 CommentEditButtonBounds(bounds),
-                "EDIT COMMENT",
+                "EDIT",
                 false,
                 mousePoint,
                 scale: expanded ? 0.25f : 0.17f);
@@ -202,8 +207,8 @@ public sealed partial class GoScreenRenderer
 
     private static Rectangle CommentHeadingBounds(Rectangle bounds) =>
         bounds.Width > 1000 || bounds.Height > 600
-            ? new(bounds.X + 24, bounds.Y + 82, bounds.Width - 390, 52)
-            : new(bounds.X + 20, bounds.Y + 58, bounds.Width - 250, 36);
+            ? new(bounds.X + 24, bounds.Y + 82, bounds.Width - 650, 52)
+            : new(bounds.X + 20, bounds.Y + 58, bounds.Width - 440, 36);
 
     private static Rectangle CommentBodyBounds(Rectangle bounds)
     {
@@ -219,23 +224,28 @@ public sealed partial class GoScreenRenderer
 
     private static Rectangle CommentPreviousMoveButtonBounds(Rectangle bounds) =>
         bounds.Width > 1000 || bounds.Height > 600
-            ? new(bounds.Right - 350, bounds.Y + 78, 156, 56)
-            : new(bounds.Right - 228, bounds.Y + 58, 104, 36);
+            ? new(bounds.Right - 326, bounds.Y + 78, 140, 56)
+            : new(bounds.Right - 206, bounds.Y + 58, 92, 36);
 
     private static Rectangle CommentNextMoveButtonBounds(Rectangle bounds) =>
         bounds.Width > 1000 || bounds.Height > 600
-            ? new(bounds.Right - 182, bounds.Y + 78, 156, 56)
-            : new(bounds.Right - 116, bounds.Y + 58, 104, 36);
+            ? new(bounds.Right - 174, bounds.Y + 78, 140, 56)
+            : new(bounds.Right - 104, bounds.Y + 58, 92, 36);
 
     private static Rectangle CommentEditButtonBounds(Rectangle bounds) =>
         bounds.Width > 1000 || bounds.Height > 600
-            ? new(bounds.Right - 530, bounds.Y + 78, 168, 56)
-            : new(bounds.Right - 348, bounds.Y + 58, 108, 36);
+            ? new(bounds.Right - 478, bounds.Y + 78, 140, 56)
+            : new(bounds.Right - 308, bounds.Y + 58, 92, 36);
 
     private static Rectangle CommentRootEditButtonBounds(Rectangle bounds) =>
         bounds.Width > 1000 || bounds.Height > 600
-            ? new(bounds.Right - 710, bounds.Y + 78, 168, 56)
-            : new(bounds.Right - 468, bounds.Y + 58, 108, 36);
+            ? new(bounds.Right - 630, bounds.Y + 78, 140, 56)
+            : new(bounds.Right - 410, bounds.Y + 58, 92, 36);
+
+    private static Rectangle CommentSectionLabelBounds(Rectangle bounds) =>
+        bounds.Width > 1000 || bounds.Height > 600
+            ? new(bounds.X + 24, bounds.Y + 28, 210, 36)
+            : new(bounds.X + 20, bounds.Y + 22, 180, 26);
 
     private static Rectangle CommentPreviousPageButtonBounds(Rectangle bounds) =>
         bounds.Width > 1000 || bounds.Height > 600

@@ -62,6 +62,15 @@ public sealed partial class GoScreenRenderer
     public static int? GetReviewChartPopupCommentMoveStepButtonHit(Point point) =>
         GetCommentMoveStepButtonHit(point, ReviewChartPopupCommentOverlayBounds);
 
+    public static bool GetReviewChartPopupRootCommentEditButtonHit(Point point) =>
+        CommentRootEditButtonBounds(ReviewChartPopupCommentOverlayBounds).Contains(point);
+
+    public static bool GetReviewChartPopupCommentEditButtonHit(Point point) =>
+        CommentEditButtonBounds(ReviewChartPopupCommentOverlayBounds).Contains(point);
+
+    public static bool IsReviewChartPopupCommentOverlayHit(Point point) =>
+        ReviewChartPopupCommentOverlayBounds.Contains(point);
+
     private static Rectangle ReviewChartPopupCommentOverlayBounds =>
         new(1060, 205, 680, 740);
 

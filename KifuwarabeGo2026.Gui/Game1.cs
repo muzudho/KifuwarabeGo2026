@@ -2652,6 +2652,27 @@ public class Game1 : Game
             return;
         }
 
+        if (_session.IsPopupCommentVisible &&
+            GoScreenRenderer.GetReviewChartPopupRootCommentEditButtonHit(point))
+        {
+            OpenCommentEditor(_session, 0);
+            return;
+        }
+
+        if (_session.IsPopupCommentVisible &&
+            GoScreenRenderer.GetReviewChartPopupCommentEditButtonHit(point))
+        {
+            OpenCommentEditor(_session, _session.ReviewMoveIndex);
+            return;
+        }
+
+        // コメントの半透明パネルは前面要素。余白を押しても背面グラフへ入力を通さない。
+        if (_session.IsPopupCommentVisible &&
+            GoScreenRenderer.IsReviewChartPopupCommentOverlayHit(point))
+        {
+            return;
+        }
+
         if (GoScreenRenderer.GetReviewChartPopupStepButtonHit(point) is { } popupStep)
         {
             ExecuteReviewNavigation(popupStep);
