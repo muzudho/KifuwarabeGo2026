@@ -51,6 +51,7 @@ public class Game1 : Game
     private readonly TournamentRulesCatalog _tournamentRulesCatalog;
     private readonly GtpEngineCatalog _gtpEngineCatalog;
     private readonly PlayerCatalog _playerCatalog;
+    private readonly TargetCatalog _targetCatalog;
     private readonly CgosConnectionCatalog _cgosConnectionCatalog;
     private readonly TournamentRulesSetting _tournamentRulesSetting;
     private readonly PlayingScene _playingScene;
@@ -179,11 +180,17 @@ public class Game1 : Game
         _cgosAdminProcess = new CgosConnectionProcess(_desktopLauncher, _platformExecutableService, "Admin");
         _tournamentRulesCatalog = TournamentRulesCatalog.LoadFromDefaultLocation();
         _gtpEngineCatalog = GtpEngineCatalog.LoadFromDefaultLocation();
-        _playerCatalog = PlayerCatalog.LoadFromDefaultLocation(_gtpEngineCatalog.Profiles);
         _cgosConnectionCatalog = CgosConnectionCatalog.LoadFromDefaultLocation();
+        _playerCatalog = PlayerCatalog.LoadFromDefaultLocation(_gtpEngineCatalog.Profiles);
+        _targetCatalog = TargetCatalog.LoadFromDefaultLocation(
+            _playerCatalog.Profiles,
+            _gtpEngineCatalog.Profiles,
+            _cgosConnectionCatalog.Profiles);
+        if (_targetCatalog.PlayerProfilesChanged)
+            _playerCatalog.Save(_targetCatalog.PlayerProfiles);
         _session.SetTournamentRules(_tournamentRulesCatalog.Rules);
         _session.SetGtpEngineProfiles(_gtpEngineCatalog.Profiles);
-        _session.SetPlayerProfiles(_playerCatalog.Profiles);
+        _session.SetPlayerProfiles(_targetCatalog.PlayerProfiles);
         ApplicationSettings.Current.LastSelectedAppProviderEnginePaths.TryGetValue("ponnuki", out var lastPonnukiProviderPath);
         if (_session.RestoreAppProviderEngine(lastPonnukiProviderPath) && _session.CanUseSelectedAppProvider)
         {

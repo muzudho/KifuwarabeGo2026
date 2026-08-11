@@ -113,6 +113,10 @@ public sealed class PlayerCatalog
         normalized.DisplayName = string.IsNullOrWhiteSpace(normalized.DisplayName) ? "New Player" : normalized.DisplayName.Trim();
         normalized.Identifier ??= "";
         normalized.EngineProfileId ??= "";
+        normalized.TargetProfileIds = (normalized.TargetProfileIds ?? [])
+            .Where(id => !string.IsNullOrWhiteSpace(id))
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
         if (normalized.Kind == PlayerProfileKind.Human)
             normalized.EngineProfileId = "";
         return normalized;
@@ -125,7 +129,8 @@ public sealed class PlayerCatalog
             pair.First.DisplayName == pair.Second.DisplayName &&
             pair.First.Identifier == pair.Second.Identifier &&
             pair.First.Kind == pair.Second.Kind &&
-            pair.First.EngineProfileId == pair.Second.EngineProfileId);
+            pair.First.EngineProfileId == pair.Second.EngineProfileId &&
+            pair.First.TargetProfileIds.SequenceEqual(pair.Second.TargetProfileIds, StringComparer.Ordinal));
 
     private sealed class PlayerProfileList
     {

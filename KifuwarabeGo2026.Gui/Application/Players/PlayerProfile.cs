@@ -1,6 +1,7 @@
 namespace KifuwarabeGo2026.Gui.Application;
 
 using System;
+using System.Collections.Generic;
 
 /// <summary>
 /// 対局者として選択できる登録項目。
@@ -25,6 +26,9 @@ public sealed class PlayerProfile
     /// <summary>Kind が Computer のときに参照する GTP エンジン設定の ID。</summary>
     public string EngineProfileId { get; set; } = "";
 
+    /// <summary>この Player が利用できる TargetProfile の ID。一つの Target は Player を逆参照しない。</summary>
+    public List<string> TargetProfileIds { get; set; } = new();
+
     public PlayerProfile Clone() => new()
     {
         Id = Id,
@@ -32,6 +36,7 @@ public sealed class PlayerProfile
         Identifier = Identifier,
         Kind = Kind,
         EngineProfileId = EngineProfileId,
+        TargetProfileIds = new List<string>(TargetProfileIds ?? []),
     };
 }
 

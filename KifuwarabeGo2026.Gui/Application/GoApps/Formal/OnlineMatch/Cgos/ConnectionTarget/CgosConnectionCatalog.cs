@@ -17,10 +17,14 @@ public sealed class CgosConnectionCatalog
 
     public static CgosConnectionCatalog LoadFromDefaultLocation()
     {
-        var profiles = ApplicationSettings.Current.CgosConnections
+        var sourceProfiles = ApplicationSettings.Current.CgosConnections
             .Where(profile => !string.IsNullOrWhiteSpace(profile.Host))
+            .ToList();
+        var profiles = sourceProfiles
             .Select(Normalize)
             .ToList();
+        if (sourceProfiles.Count != profiles.Count || sourceProfiles.Zip(profiles).Any(pair => pair.First != pair.Second))
+            ApplicationSettings.SaveCgosConnections(profiles);
         return new CgosConnectionCatalog(profiles);
     }
 
@@ -40,6 +44,7 @@ public sealed class CgosConnectionCatalog
             : profile.Round.Trim();
         return profile with
         {
+            Id = string.IsNullOrWhiteSpace(profile.Id) ? Guid.NewGuid().ToString("N") : profile.Id,
             DisplayName = displayName,
             Host = host,
             Port = Math.Clamp(profile.Port, 1, 65535),

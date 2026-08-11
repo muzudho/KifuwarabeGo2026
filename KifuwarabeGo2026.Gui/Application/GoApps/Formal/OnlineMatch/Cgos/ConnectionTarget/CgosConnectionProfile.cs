@@ -7,6 +7,9 @@ public sealed record CgosConnectionProfile(
     string Round,
     string Note)
 {
+    /// <summary>TargetProfile から参照するための不変 ID。</summary>
+    public string Id { get; init; } = "";
+
     /// <summary>
     /// 接続先で開催される大会などのイベント名です。
     /// </summary>
