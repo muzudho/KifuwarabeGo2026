@@ -95,6 +95,8 @@ public class Game1 : Game
     private KeyboardState _previousHumanPlayerNameKeyboard;
     private readonly TextBoxController _playerEditTextBox = new(240);
     private KeyboardState _previousPlayerEditKeyboard;
+    private readonly TextBoxController _targetProfileEditTextBox = new(240);
+    private KeyboardState _previousTargetProfileEditKeyboard;
     private KeyboardState _previousCgosConnectionKeyboard;
     private readonly TextBoxController _cgosConnectionEditTextBox = new(240);
     private KeyboardState _previousCgosCredentialKeyboard;
@@ -324,6 +326,7 @@ public class Game1 : Game
 
                 UpdateCgosConnectionEditPanelByKeyboard(keyboard, gameTime);
                 UpdateCgosCredentialByKeyboard(keyboard, gameTime);
+                UpdateTargetProfileEditTextBox(keyboard, gameTime);
                 UpdateGtpEngineEditPanelByKeyboard(keyboard, gameTime);
             }
 
@@ -337,6 +340,7 @@ public class Game1 : Game
         _session.AddCurrentTurnElapsedTime(gameTime.ElapsedGameTime);
         UpdateGlobalKeyboardInput(keyboard);
         UpdatePlayerEditTextBox(keyboard, gameTime);
+        UpdateTargetProfileEditTextBox(keyboard, gameTime);
         UpdateHumanPlayerNameTextBox(keyboard, gameTime);
 
         if (acceptsInput && _session.CurrentMode.Kind != GoAppModeKind.Playing)
@@ -1667,14 +1671,23 @@ public class Game1 : Game
     {
         if (_session.IsTargetProfileEditPanelOpen)
         {
-            if (GoScreenRenderer.GetTargetProfileEditCloseButtonHit(point)) _session.CloseTargetProfileEditPanel();
+            if (GoScreenRenderer.GetTargetProfileEditCloseButtonHit(point))
+            {
+                SaveTargetProfileEditDraft();
+                _session.CloseTargetProfileEditPanel();
+            }
             else if (GoScreenRenderer.GetTargetProfileEditAddCgosButtonHit(point) && _session.AddTargetProfile(true)) _targetCatalog.Save(_session.TargetProfiles);
             else if (GoScreenRenderer.GetTargetProfileEditAddLocalButtonHit(point) && _session.AddTargetProfile(false)) _targetCatalog.Save(_session.TargetProfiles);
             else if (GoScreenRenderer.GetTargetProfileEditRemoveButtonHit(point) && _session.RemoveTargetProfile()) _targetCatalog.Save(_session.TargetProfiles);
             else if (GoScreenRenderer.GetTargetProfileEditConnectionPreviousButtonHit(point)) { _session.CycleTargetProfileConnection(-1); _session.SaveTargetProfileEditDraft(); _targetCatalog.Save(_session.TargetProfiles); }
             else if (GoScreenRenderer.GetTargetProfileEditConnectionNextButtonHit(point)) { _session.CycleTargetProfileConnection(1); _session.SaveTargetProfileEditDraft(); _targetCatalog.Save(_session.TargetProfiles); }
+            else if (GoScreenRenderer.GetTargetProfileEditFieldHit(point, _session) is { } field)
+                BeginOrMoveTargetProfileEditField(point, field);
             else if (GoScreenRenderer.GetTargetProfileEditItemHit(point, _session) is { } targetIndex)
+            {
+                SaveTargetProfileEditDraft();
                 _session.MoveTargetProfileEditSelection(targetIndex - _session.TargetProfileEditIndex);
+            }
             return;
         }
         if (_session.PlayerOrderEditor.IsOpen)
@@ -1788,6 +1801,7 @@ public class Game1 : Game
             _cgosCredentialTextBox.EndMouseSelection();
             _humanPlayerNameTextBox.EndMouseSelection();
             _playerEditTextBox.EndMouseSelection();
+            _targetProfileEditTextBox.EndMouseSelection();
             _gtpEngineEditTextBox.EndMouseSelection();
             _gtpEngineIntegerOptionTextBox.EndMouseSelection();
             _gtpEngineStringOptionTextBox.EndMouseSelection();
@@ -1844,6 +1858,12 @@ public class Game1 : Game
             _playerEditTextBox.UpdateMouseSelection(
                 _renderer.GetPlayerEditPanelCaretIndex(point, playerField, _playerEditTextBox.Text));
             SyncPlayerEditField(playerField);
+        }
+        else if (_targetProfileEditTextBox.IsMouseSelecting && _session.ActiveTargetProfileEditField is { } targetField)
+        {
+            _targetProfileEditTextBox.UpdateMouseSelection(
+                _renderer.GetTargetProfileEditCaretIndex(point, _session.TargetProfileEditIndex, targetField, _targetProfileEditTextBox.Text, string.IsNullOrEmpty(_session.TargetProfileEditDraft.ConnectionProfileId)));
+            SyncTargetProfileEditField(targetField);
         }
         else if (_gtpEngineEditTextBox.IsMouseSelecting &&
                  _session.ActiveGtpEngineEditField is { } engineField)
@@ -3638,6 +3658,8 @@ public class Game1 : Game
 
         if (TryInputPlayerEditCharacter(e.Character)) return;
 
+        if (TryInputTargetProfileEditCharacter(e.Character)) return;
+
         if (TryInputHumanPlayerNameCharacter(e.Character)) return;
 
         if (TryInputCgosCredentialCharacter(e.Character)) return;
@@ -4018,6 +4040,97 @@ public class Game1 : Game
             _playerEditTextBox.CaretIndex,
             _playerEditTextBox.SelectionStart,
             _playerEditTextBox.SelectionLength);
+
+    private void BeginOrMoveTargetProfileEditField(Point point, TargetProfileEditField field)
+    {
+        var text = _session.ActiveTargetProfileEditField == field
+            ? _targetProfileEditTextBox.Text
+            : _session.GetTargetProfileEditField(field);
+        var caretIndex = _renderer?.GetTargetProfileEditCaretIndex(point, _session.TargetProfileEditIndex, field, text, string.IsNullOrEmpty(_session.TargetProfileEditDraft.ConnectionProfileId)) ?? text.Length;
+        if (_session.ActiveTargetProfileEditField == field)
+        {
+            _targetProfileEditTextBox.BeginMouseSelection(caretIndex, IsShiftDown());
+            SyncTargetProfileEditField(field);
+            return;
+        }
+
+        SaveTargetProfileEditDraft();
+        _targetProfileEditTextBox.Begin(text, caretIndex);
+        _targetProfileEditTextBox.BeginMouseSelection(caretIndex, extendSelection: false);
+        _session.BeginTargetProfileEditField(field, _targetProfileEditTextBox.CaretIndex);
+    }
+
+    private void UpdateTargetProfileEditTextBox(KeyboardState keyboard, GameTime gameTime)
+    {
+        if (!IsActive || !_inputArmed) return;
+        if (!_session.IsTargetProfileEditPanelOpen || _session.ActiveTargetProfileEditField is not { } field)
+        {
+            _previousTargetProfileEditKeyboard = keyboard;
+            return;
+        }
+
+        if (keyboard.IsKeyDown(Keys.Tab) && _previousTargetProfileEditKeyboard.IsKeyUp(Keys.Tab))
+        {
+            MoveTargetProfileEditFocus(field, IsShiftDown(keyboard) ? -1 : 1);
+            _previousTargetProfileEditKeyboard = keyboard;
+            return;
+        }
+
+        switch (_targetProfileEditTextBox.HandleKeyboard(keyboard, _previousTargetProfileEditKeyboard, gameTime, _clipboardService))
+        {
+            case TextBoxKeyboardAction.Commit:
+                SyncTargetProfileEditField(field);
+                SaveTargetProfileEditDraft();
+                _session.EndTargetProfileEditField();
+                _targetProfileEditTextBox.Clear();
+                break;
+            case TextBoxKeyboardAction.Cancel:
+                _session.CancelTargetProfileEditField();
+                _targetProfileEditTextBox.Clear();
+                break;
+            default:
+                SyncTargetProfileEditField(field);
+                break;
+        }
+        _previousTargetProfileEditKeyboard = keyboard;
+    }
+
+    private void MoveTargetProfileEditFocus(TargetProfileEditField field, int step)
+    {
+        SyncTargetProfileEditField(field);
+        SaveTargetProfileEditDraft();
+        var fields = string.IsNullOrEmpty(_session.TargetProfileEditDraft.ConnectionProfileId)
+            ? new[] { TargetProfileEditField.DisplayName, TargetProfileEditField.LoginName }
+            : new[] { TargetProfileEditField.DisplayName, TargetProfileEditField.LoginName, TargetProfileEditField.LoginPass };
+        var index = Array.IndexOf(fields, field);
+        var next = fields[(index + step + fields.Length) % fields.Length];
+        var text = _session.GetTargetProfileEditField(next);
+        _targetProfileEditTextBox.Begin(text);
+        _session.BeginTargetProfileEditField(next, _targetProfileEditTextBox.CaretIndex);
+    }
+
+    private bool TryInputTargetProfileEditCharacter(char character)
+    {
+        if (!_session.IsTargetProfileEditPanelOpen || _session.ActiveTargetProfileEditField is not { } field)
+            return false;
+        if (_targetProfileEditTextBox.TryInputCharacter(character))
+            SyncTargetProfileEditField(field);
+        return true;
+    }
+
+    private void SyncTargetProfileEditField(TargetProfileEditField field) =>
+        _session.SetTargetProfileEditFieldText(
+            field,
+            _targetProfileEditTextBox.Text,
+            _targetProfileEditTextBox.CaretIndex,
+            _targetProfileEditTextBox.SelectionStart,
+            _targetProfileEditTextBox.SelectionLength);
+
+    private void SaveTargetProfileEditDraft()
+    {
+        _session.SaveTargetProfileEditDraft();
+        _targetCatalog.Save(_session.TargetProfiles);
+    }
 
     private void EndHumanPlayerNameEdit(bool commit)
     {

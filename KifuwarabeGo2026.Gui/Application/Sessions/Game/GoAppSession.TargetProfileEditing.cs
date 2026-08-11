@@ -10,6 +10,10 @@ public sealed partial class GoAppSession
     public int TargetProfileEditIndex { get; private set; }
     public TargetProfile TargetProfileEditDraft { get; private set; } = new();
     public TargetProfileEditField? ActiveTargetProfileEditField { get; private set; }
+    public int TargetProfileEditCaretIndex { get; private set; }
+    public int TargetProfileEditSelectionStart { get; private set; }
+    public int TargetProfileEditSelectionLength { get; private set; }
+    private string TargetProfileEditOriginalFieldText { get; set; } = "";
 
     public bool OpenTargetProfileEditPanel()
     {
@@ -75,6 +79,32 @@ public sealed partial class GoAppSession
         TargetProfileEditField.LoginPass => TargetProfileEditDraft.LoginPass,
         _ => "",
     };
+
+    public void BeginTargetProfileEditField(TargetProfileEditField field, int caretIndex)
+    {
+        ActiveTargetProfileEditField = field;
+        TargetProfileEditOriginalFieldText = GetTargetProfileEditField(field);
+        TargetProfileEditCaretIndex = Math.Clamp(caretIndex, 0, TargetProfileEditOriginalFieldText.Length);
+        TargetProfileEditSelectionStart = TargetProfileEditCaretIndex;
+        TargetProfileEditSelectionLength = 0;
+    }
+
+    public void SetTargetProfileEditFieldText(TargetProfileEditField field, string value, int caretIndex, int selectionStart, int selectionLength)
+    {
+        SetTargetProfileEditField(field, value);
+        TargetProfileEditCaretIndex = Math.Clamp(caretIndex, 0, value.Length);
+        TargetProfileEditSelectionStart = Math.Clamp(selectionStart, 0, value.Length);
+        TargetProfileEditSelectionLength = Math.Clamp(selectionLength, 0, value.Length - TargetProfileEditSelectionStart);
+    }
+
+    public void EndTargetProfileEditField() => ActiveTargetProfileEditField = null;
+
+    public void CancelTargetProfileEditField()
+    {
+        if (ActiveTargetProfileEditField is { } field)
+            SetTargetProfileEditField(field, TargetProfileEditOriginalFieldText);
+        ActiveTargetProfileEditField = null;
+    }
 
     public void SaveTargetProfileEditDraft()
     {

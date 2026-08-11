@@ -58,6 +58,16 @@ public sealed partial class GoScreenRenderer
     public static bool GetTargetProfileEditRemoveButtonHit(Point point) => TargetProfileEditRemoveButtonBounds.Contains(point);
     public static bool GetTargetProfileEditConnectionPreviousButtonHit(Point point) => TargetProfileEditConnectionPreviousButtonBounds.Contains(point);
     public static bool GetTargetProfileEditConnectionNextButtonHit(Point point) => TargetProfileEditConnectionNextButtonBounds.Contains(point);
+    public static TargetProfileEditField? GetTargetProfileEditFieldHit(Point point, GoAppSession session)
+    {
+        var index = session.TargetProfileEditIndex;
+        var isLocalMatch = string.IsNullOrEmpty(session.TargetProfileEditDraft.ConnectionProfileId);
+        return TargetProfileEditFieldTextBounds(index, TargetProfileEditField.DisplayName, isLocalMatch).Contains(point) ? TargetProfileEditField.DisplayName :
+            TargetProfileEditFieldTextBounds(index, TargetProfileEditField.LoginName, isLocalMatch).Contains(point) ? TargetProfileEditField.LoginName :
+            !isLocalMatch && TargetProfileEditFieldTextBounds(index, TargetProfileEditField.LoginPass, false).Contains(point) ? TargetProfileEditField.LoginPass : null;
+    }
+    public int GetTargetProfileEditCaretIndex(Point point, int index, TargetProfileEditField field, string text, bool isLocalMatch) =>
+        GetTextBoxCaretIndex(point.X, text, TargetProfileEditFieldTextBounds(index, field, isLocalMatch), 0.34f);
     public static int? GetTargetProfileEditItemHit(Point point, GoAppSession session)
     {
         var count = session.GetPlayerTargetProfiles(session.PlayerEditDraft.Id).Count;
@@ -184,9 +194,21 @@ public sealed partial class GoScreenRenderer
                 DrawText("▶", new Vector2(row.X + 4, row.Y + 25), new Color(147, 244, 200), 0.34f);
                 DrawRect(row, 2, new Color(147, 244, 200));
             }
-            DrawFittedText(target.DisplayName, new Rectangle(row.X + 18, row.Y + 10, 240, 28), Color.White, 0.46f);
-            DrawFittedText($"LOGIN NAME: {target.LoginName}", new Rectangle(row.X + 280, row.Y + 10, 390, 28), new Color(180, 195, 195), 0.34f);
-            DrawFittedText(session.GetTargetProfileConnectionDisplayName(target), new Rectangle(row.X + 280, row.Y + 42, 520, 24), new Color(147, 244, 200), 0.30f);
+            if (isSelectedTarget)
+            {
+                var isLocalMatch = string.IsNullOrEmpty(target.ConnectionProfileId);
+                DrawTargetProfileEditField(session, index, TargetProfileEditField.DisplayName, "DISPLAY", mousePoint, isLocalMatch);
+                DrawTargetProfileEditField(session, index, TargetProfileEditField.LoginName, isLocalMatch ? "OUTPUT NAME" : "LOGIN NAME", mousePoint, isLocalMatch);
+                if (!isLocalMatch)
+                    DrawTargetProfileEditField(session, index, TargetProfileEditField.LoginPass, "LOGIN PASS", mousePoint, false);
+                DrawFittedText($"CONNECTION: {session.TargetProfileEditConnectionDisplayName}", new Rectangle(row.X + 18, row.Y + 47, 920, 22), new Color(147, 244, 200), 0.28f);
+            }
+            else
+            {
+                DrawFittedText(target.DisplayName, new Rectangle(row.X + 18, row.Y + 10, 240, 28), Color.White, 0.46f);
+                DrawFittedText($"LOGIN NAME: {target.LoginName}", new Rectangle(row.X + 280, row.Y + 10, 390, 28), new Color(180, 195, 195), 0.34f);
+                DrawFittedText(session.GetTargetProfileConnectionDisplayName(target), new Rectangle(row.X + 280, row.Y + 42, 520, 24), new Color(147, 244, 200), 0.30f);
+            }
         }
         DrawCommandButton(TargetProfileEditAddCgosButtonBounds, "ADD CGOS", false, mousePoint, enabled: targets.Count < 5, scale: 0.32f);
         DrawCommandButton(TargetProfileEditAddLocalButtonBounds, "ADD LOCAL", false, mousePoint, enabled: targets.Count < 5, scale: 0.32f);
@@ -199,6 +221,33 @@ public sealed partial class GoScreenRenderer
     }
 
     private static Rectangle PlayerSelectionItemBounds(int slot) => new(PlayerSelectionListBounds.X + 16, PlayerSelectionListBounds.Y + 14 + slot * 82, PlayerSelectionListBounds.Width - 32, 72);
+
+    private static Rectangle TargetProfileEditFieldTextBounds(int index, TargetProfileEditField field, bool isLocalMatch)
+    {
+        var rowY = 290 + index * 92;
+        return field switch
+        {
+            TargetProfileEditField.DisplayName => new Rectangle(560, rowY + 7, 190, 30),
+            TargetProfileEditField.LoginName => new Rectangle(920, rowY + 7, isLocalMatch ? 520 : 230, 30),
+            TargetProfileEditField.LoginPass => new Rectangle(1290, rowY + 7, 150, 30),
+            _ => throw new ArgumentOutOfRangeException(nameof(field), field, "Unknown target edit field."),
+        };
+    }
+
+    private void DrawTargetProfileEditField(GoAppSession session, int index, TargetProfileEditField field, string label, Point mousePoint, bool isLocalMatch)
+    {
+        var textBounds = TargetProfileEditFieldTextBounds(index, field, isLocalMatch);
+        var active = session.ActiveTargetProfileEditField == field;
+        DrawText(label, new Vector2(textBounds.X - (field == TargetProfileEditField.LoginPass ? 116 : 100), textBounds.Y + 4), new Color(180, 195, 195), 0.28f);
+        DrawTournamentRulesTextInputSurface(textBounds, active, textBounds.Contains(mousePoint));
+        var text = session.GetTargetProfileEditField(field);
+        var displayText = field == TargetProfileEditField.LoginPass && !active ? new string('*', text.Length) : text;
+        if (active)
+            DrawTextBoxSelection(text, session.TargetProfileEditSelectionStart, session.TargetProfileEditSelectionLength, textBounds, 0.34f);
+        DrawFittedText(string.IsNullOrEmpty(displayText) ? "-" : displayText, textBounds, Color.White, 0.34f);
+        if (active)
+            DrawTextBoxCaret(text, session.TargetProfileEditCaretIndex, textBounds, 0.34f);
+    }
 
     private static Rectangle PlayerEditPanelFieldTextBounds(PlayerProfileEditField field) => field switch
     {
