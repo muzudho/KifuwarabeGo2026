@@ -7,6 +7,8 @@ using KifuwarabeGo2026.Shared.Domain;
 /// <summary>GTP エンジンのカタログ、選択、編集画面の状態を保持します。</summary>
 public sealed partial class GoAppSession
 {
+    public const int GtpEngineSelectionPageSize = 6;
+
     private readonly List<GtpEngineProfile> _gtpEngineProfiles = new();
     private readonly List<GtpEngineAppCompatibility> _gtpEngineAppCompatibilities = new();
 

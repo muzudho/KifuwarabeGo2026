@@ -6,6 +6,9 @@ using KifuwarabeGo2026.Gui.Application.Cgos.ConnectionTarget;
 /// <summary>CGOS 接続プロファイルの編集パネルを管理します。</summary>
 public sealed partial class GoAppSession
 {
+    private static CgosConnectionProfile CreateDefaultCgosConnectionProfile() =>
+        new("New CGOS Connection", "uec-go.com", 6809, "PRACTICE", "CGOS practice server") { Event = "PRACTICE" };
+
     public void OpenCgosConnectionEditPanel() => OpenCgosConnectionEditPanelCore(false, SelectedCgosConnectionProfile);
 
     public void OpenCgosConnectionAddPanel() => OpenCgosConnectionEditPanelCore(true, CreateDefaultCgosConnectionProfile());

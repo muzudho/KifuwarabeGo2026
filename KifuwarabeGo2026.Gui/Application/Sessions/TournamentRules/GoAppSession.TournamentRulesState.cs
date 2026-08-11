@@ -8,6 +8,9 @@ using KifuwarabeGo2026.Shared.Domain;
 /// <summary>大会ルール選択・編集画面の状態を保持します。</summary>
 public sealed partial class GoAppSession
 {
+    public int BoardSize { get; private set; } = 19;
+    public const int TournamentRulesSelectionPageSize = 6;
+
     private readonly List<TournamentRules> _tournamentRules = new();
     private TournamentRules _currentTournamentRules = new();
 

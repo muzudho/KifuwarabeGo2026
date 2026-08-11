@@ -9,6 +9,9 @@ using KifuwarabeGo2026.Shared.Domain;
 /// <summary>CGOS 接続・管理・編集画面の状態を保持します。</summary>
 public sealed partial class GoAppSession
 {
+    public const int CgosConnectionSelectionPageSize = 5;
+    public const int CgosAdminPlayerSelectionPageSize = 6;
+
     private readonly List<CgosConnectionProfile> _cgosConnectionProfiles = new();
     private CgosConnectionProfile _cgosConnectionEditSource = CreateDefaultCgosConnectionProfile();
     private DateTime? _cgosBlackConnectionStartedAt;
