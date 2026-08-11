@@ -1211,10 +1211,9 @@ public sealed partial class GoScreenRenderer
         if (selector.Bounds.X == 1144 && selector.Bounds.Width == 668)
         {
             // Player 行は値欄の左端を全行で GameOverValueX に揃える。
-            // 従来の DrawResultLabel はラベル領域が値欄まで伸び、BLACK/WHITE PLAYER が重なっていた。
+            // 石アイコンが黒白を示し、セクション名も PLAYERS なので行内ラベルは重複表示しない。
             var isBlack = selector.Label.StartsWith("BLACK", StringComparison.Ordinal);
             DrawIconStone(new Vector2(selector.Bounds.X + 34, selector.Bounds.Center.Y), 13, isBlack);
-            DrawFittedText(selector.Label, new Rectangle(selector.Bounds.X + 58, selector.Bounds.Y + 10, GameOverValueX - selector.Bounds.X - 72, selector.Bounds.Height - 20), new Color(158, 178, 178), 0.32f);
             DrawFittedText(selector.Value, new Rectangle(GameOverValueX, selector.Bounds.Y + 6, selector.BrowseButtonBounds.X - GameOverValueX - 12, selector.Bounds.Height - 12), Color.White, 0.42f);
             DrawCommandButton(selector.BrowseButtonBounds, selector.ButtonLabel, false, mousePoint, enabled: selector.Enabled, scale: PlayerSelectorLayout.SelectButtonLabelScale);
             return;
