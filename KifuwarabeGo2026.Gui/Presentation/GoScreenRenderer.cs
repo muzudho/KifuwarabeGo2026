@@ -10,6 +10,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 /// <summary>
@@ -616,17 +617,13 @@ public sealed partial class GoScreenRenderer
 
     private void DrawPathTooltipIfHovered(Rectangle rowBounds, string fullPath, Point mousePoint)
     {
-        if (string.IsNullOrWhiteSpace(fullPath) || fullPath == "-")
-        {
-            return;
-        }
-
-        var popupBounds = PathTooltipBounds(rowBounds);
-        if (rowBounds.Contains(mousePoint) || popupBounds.Contains(mousePoint))
-        {
-            DrawPathTooltip(popupBounds, fullPath, mousePoint);
-        }
+        if (IsPathTooltipHovered(rowBounds, fullPath, mousePoint))
+            DrawPathTooltip(rowBounds, fullPath, mousePoint, "FILE とは？", ["対局ルールで利用するファイルの場所です。"]);
     }
+
+    private static bool IsPathTooltipHovered(Rectangle rowBounds, string fullPath, Point mousePoint) =>
+        !string.IsNullOrWhiteSpace(fullPath) && fullPath != "-" &&
+        (rowBounds.Contains(mousePoint) || PathTooltipBounds(rowBounds).Contains(mousePoint));
 
     private void DrawBoardSizeButtons(int boardSize, Point mousePoint, int y)
     {
@@ -911,13 +908,14 @@ public sealed partial class GoScreenRenderer
     private static Rectangle BoardSizeButtonBounds(int index, int y) => new(AddPanelControlX + 132 + index * 180, y, 164, 50);
     private static Rectangle PathTooltipBounds(Rectangle rowBounds)
     {
-        var y = rowBounds.Y - 102;
-        if (y < 140)
-        {
-            y = rowBounds.Bottom - 2;
-        }
-
-        return new Rectangle(rowBounds.X, y, rowBounds.Width, 104);
+        const int height = 276;
+        // 行と同じ横幅に制限する。エンジン一覧には決して重ねない。
+        // 画面下端へ出すことで、EXE と WORKDIR の各行も覆わない。
+        return new Rectangle(
+            rowBounds.X,
+            VirtualScreen.Height - height - 20,
+            rowBounds.Width,
+            height);
     }
 
     private static Rectangle PathTooltipCopyButtonBounds(Rectangle rowBounds)
@@ -926,7 +924,7 @@ public sealed partial class GoScreenRenderer
     }
 
     private static Rectangle PathTooltipCopyButtonBoundsFromPopup(Rectangle popupBounds) =>
-        new(popupBounds.Right - 124, popupBounds.Y + 56, 100, 34);
+        new(popupBounds.Right - 132, popupBounds.Bottom - 48, 108, 34);
 
     private static Rectangle RuleKindButtonBounds(int index) => new(AddPanelControlX + 132 + index * 180, 319, 164, 50);
 
@@ -1201,14 +1199,36 @@ public sealed partial class GoScreenRenderer
 
         _spriteBatch.End();
     }
-    private void DrawPathTooltip(Rectangle bounds, string fullPath, Point mousePoint)
+    private void DrawPathTooltip(
+        Rectangle rowBounds,
+        string fullPath,
+        Point mousePoint,
+        string heading,
+        IReadOnlyList<string> descriptionLines)
     {
-        FillRect(new Rectangle(bounds.X + 8, bounds.Y + 10, bounds.Width, bounds.Height), new Color(0, 0, 0, 150));
-        FillRect(bounds, new Color(30, 36, 43, 252));
-        DrawRect(bounds, 2, new Color(147, 244, 200));
-        DrawText("FULL PATH", new Vector2(bounds.X + 18, bounds.Y + 12), new Color(180, 195, 195), 0.34f);
-        DrawFittedText(fullPath, new Rectangle(bounds.X + 18, bounds.Y + 38, bounds.Width - 150, 44), Color.White, 0.42f);
+        var bounds = PathTooltipBounds(rowBounds);
+        var lines = descriptionLines.Concat(WrapPathForTooltip(fullPath, 72).Take(2)).ToArray();
+        DrawStickyNote(
+            bounds,
+            new Vector2(rowBounds.Center.X, rowBounds.Bottom),
+            new Vector2(bounds.Center.X, bounds.Y),
+            new Color(147, 244, 200),
+            new Color(87, 157, 128),
+            heading,
+            lines);
         DrawCommandButton(PathTooltipCopyButtonBoundsFromPopup(bounds), "COPY", false, mousePoint, scale: 0.34f);
+    }
+
+    private static IEnumerable<string> WrapPathForTooltip(string path, int maximumLength)
+    {
+        while (path.Length > maximumLength)
+        {
+            var split = path.LastIndexOfAny(['\\', '/'], Math.Min(maximumLength, path.Length - 1));
+            if (split <= 0) split = maximumLength;
+            yield return path[..(split + (path[split] is '\\' or '/' ? 1 : 0))];
+            path = path[(split + (path[split] is '\\' or '/' ? 1 : 0))..];
+        }
+        yield return path;
     }
 
     private void DrawPlayerSelector(PlayerSelector selector, Point mousePoint)

@@ -714,8 +714,22 @@ public sealed partial class GoScreenRenderer
         DrawGtpEnginePropertyRow(y + 280, "GTP LOG", profile.EnableGtpLog ? "ON" : "OFF");
         DrawGtpEnginePropertyRow(y + 350, "APP", session.GetGtpEngineAppCompatibility(selectedIndex).Message);
 
-        DrawPathTooltipIfHovered(executablePathRowBounds, executablePath, mousePoint);
-        DrawPathTooltipIfHovered(workingDirectoryRowBounds, displayWorkingDirectory, mousePoint);
+        // パス用ポップアップは一度に一つだけ表示する。二つのポップアップが重なると、
+        // 後から描いた方が別行のホバー判定に見えてしまう。
+        if (IsPathTooltipHovered(executablePathRowBounds, executablePath, mousePoint))
+            DrawPathTooltip(
+                executablePathRowBounds,
+                executablePath,
+                mousePoint,
+                "EXE とは？",
+                ["コンピュータ碁の実行ファイルです。", "GTP プロトコルに対応している必要があります。"]);
+        else if (IsPathTooltipHovered(workingDirectoryRowBounds, displayWorkingDirectory, mousePoint))
+            DrawPathTooltip(
+                workingDirectoryRowBounds,
+                displayWorkingDirectory,
+                mousePoint,
+                "WORKDIR とは？",
+                ["実行ファイルから見たカレントディレクトリーです。", "詳しくは「ワーキングディレクトリー」で調べてください。"]);
     }
 
 
