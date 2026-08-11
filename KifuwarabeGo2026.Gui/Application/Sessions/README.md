@@ -14,6 +14,7 @@
 - `BoardEditing/GoAppSession.BoardEditing.Operations.cs`: 石の配置、全消去、アンドゥ／リドゥ
 - `BoardEditing/GoAppSession.EditingHistory.cs`: 盤面編集と変化図編集で共有する編集履歴
 - `GameRecords/Current/GoAppSession.CurrentGameRecord.cs`: 現在盤面からの棋譜レコード生成とメタデータ転記
+- `GameRecords/Go/GoAppSession.GameRecordPosition.cs`: 棋譜を初期局面として盤面へ適用
 - `Game/GoAppSession.MatchBackedGame.cs`: MatchSession に委譲する着手・パス・終局反映
 - `Game/GoAppSession.LocalGame.cs`: 通常対局の着手・パス・投了・終局判定
 - `Game/GoAppSession.GameLifecycle.cs`: ローカル対局の開始・中断
