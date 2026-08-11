@@ -18,6 +18,7 @@
 - `Game/GoAppSession.LocalGame.cs`: 通常対局の着手・パス・投了・終局判定
 - `Game/GoAppSession.GameLifecycle.cs`: ローカル対局の開始・中断
 - `Game/GoAppSession.LocalReplay.cs`: 対局中・終局後のローカル棋譜シーク表示
+- `MoveInformation/GoAppSession.MoveInformation.cs`: 着手情報、コメント、チャートの表示状態
 - `GameRecords/Go`: `GoGameRecord` など棋譜モデルの配置候補
 - `VariationSession`: 変化図編集状態の配置候補
 
