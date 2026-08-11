@@ -34,6 +34,7 @@
 - `TournamentRules/GoAppSession.TournamentRules.Dialogs.cs`: 規定の選択・追加・削除ダイアログ
 - `TournamentRules/GoAppSession.TournamentRules.Editing.cs`: 数値・表示名の編集と保存済み化
 - `AppProvider/GoAppSession.AppProvider.cs`: フォーマルアプリ連携用エンジンの選択・互換性状態
+- `GtpEngines/GoAppSession.GtpEngineCatalog.cs`: 共用GTPエンジン一覧の読込・並び替え
 - `GameRecords/Go`: `GoGameRecord` など棋譜モデルの配置候補
 - `VariationSession`: 変化図編集状態の配置候補
 
