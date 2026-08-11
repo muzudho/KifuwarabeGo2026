@@ -1351,7 +1351,9 @@ public class Game1 : Game
             var isLocalAppsIntermission = isIntermissionMode && _session.UseKind == GoAppUseKind.LocalApps;
             var isPlayerSelectionIntermission = isSetupMode || isLocalAppsIntermission;
             var isBoardEditing = _session.CurrentMode.Kind == GoAppModeKind.BoardEditing;
-            if (_session.IsPlayerSelectionDialogOpen)
+            if (_session.IsPlayerSelectionDialogOpen &&
+                !_session.IsGtpEngineEditPanelOpen &&
+                !_session.IsGtpEngineSelectionDialogOpen)
             {
                 TryHandlePlayerSelectionDialogClick(point);
                 _previousMouse = mouse;
