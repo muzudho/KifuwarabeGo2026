@@ -4,12 +4,28 @@
 
 ## 目的
 
-現在の対局設定は、黒白それぞれについて次の 2 段階です。
+従来の対局設定は、黒白それぞれについて次の 2 段階でした。
 
 1. `HUMAN` または `COMPUTER` を選ぶ。
 2. `COMPUTER` のときだけ GTP エンジンを選ぶ。
 
-これを、対局者を共通に扱う `PLAYER` の選択へ統合します。人間とコンピューターを同じ一覧から選べるようにし、表示名と外部連携用の識別子をあらかじめ登録できるようにします。
+Local Match と Ponnuki は、対局者を共通に扱う `PLAYER` 選択へ移行済みです。人間とコンピューターを同じ一覧から選べ、表示名と外部連携用の識別子を登録できます。
+
+ただし、CGOS と大会ルールへの適用、および旧来の `BlackPlayerKind` / エンジン選択インデックスの完全削除は未完了です。この文書は、残った移行作業を明確にする実装計画として維持します。
+
+## 実装状況（2026-08-11）
+
+| 区分 | 状態 | 現在の実装・残作業 |
+| --- | --- | --- |
+| Player データと永続化 | 完了 | `PlayerProfile` と `PlayerCatalog` を追加済み。`player-list.json` へ ID、表示名、識別子、種別、参照エンジン ID を保存・再読込する。 |
+| 既存設定からの初期移行 | 一部完了 | Player 未登録時に Black/White の Human と、各 GTP エンジンに対応する Computer Player を生成する。旧エンジン ID の再生成による自動 Player の参照切れも表示名ベースで補正する。旧 UI の人間名・黒白エンジン選択を完全に引き継ぐ永続移行は未実装。 |
+| 対局セッション | 完了（旧状態併存） | `BlackPlayerProfileId` / `WhitePlayerProfileId` を保持し、選択 Player から Human/Computer と参照エンジンを解決する。互換のため旧 `BlackPlayerKind` / `WhitePlayerKind` とエンジン選択インデックスも同時に更新している。 |
+| Local Match / Ponnuki の選択 UI | 完了 | 黒白とも同じ Player 一覧から選択する `PLAYER SELECT` UI を使用する。 |
+| Player 一覧・編集 | 完了 | Human/Computer の追加、編集、削除保護、並べ替え、ページ送りを実装。表示名・Identifier はクリック編集、貼り付け、IME、Enter/Escape、Tab に対応する。Computer は参照エンジンを切替え、`EDIT PROFILE` でエンジン設定を開ける。 |
+| SGF の対局者名 | 完了 | ローカル棋譜の `PB` / `PW` には選択 Player の `DisplayName` を保存する。 |
+| Random Seed | 一部完了 | Human/Computer 判定に追従して自動変更を有効・無効化する。ただし表示とルートコメントはまだ `Player1` / `Player2` で、Player の表示名・Identifier は記録していない。 |
+| CGOS と大会ルール | 未着手 | CGOS は GTP エンジン選択と個別ログイン認証のままで、Player の `Identifier` を送信していない。大会ルールにも Player 選択は未接続。 |
+| 旧状態の削除 | 未着手 | `BlackPlayerKind` / `WhitePlayerKind` と黒白の GTP エンジン選択インデックスは、互換アダプターとして残っている。 |
 
 ## 方針
 
@@ -111,20 +127,20 @@ WHITE PLAYER   [表示名 / 種別]                 [SELECT]
 
 ## 段階的な実装手順
 
-1. `PlayerProfile`、永続化 DTO、Player Catalog を追加する。
-2. 起動時に既存の人間名・黒白エンジン選択から互換 Player を生成する移行処理を追加する。
-3. 対局セッションに黒白 Player ID を追加し、Player から Human / Computer とエンジンを解決するアダプターを実装する。
-4. GTP 起動、Player 名、SGF `PB` / `PW`、Random Seed 記録を Player 経由へ切り替える。
-5. Player 一覧・編集・選択ダイアログを実装する。
-6. Local Match と Ponnuki の設定画面を、新しい `PLAYER SELECT` UI へ置換する。
-7. CGOS と大会ルールで必要な Player 選択・Identifier の送信規則を個別に追加する。
-8. 旧 `BlackPlayerKind` / `WhitePlayerKind` とエンジン選択インデックスを、移行猶予後に削除する。
+1. [完了] `PlayerProfile`、永続化 DTO、Player Catalog を追加する。
+2. [一部完了] 起動時に互換 Player を生成する。現在は初期 Player とエンジン対応 Player の生成・旧エンジン ID 補正まで実装済み。旧人間名と黒白エンジン選択の完全移行を追加する。
+3. [完了（旧状態併存）] 対局セッションに黒白 Player ID を追加し、Player から Human / Computer とエンジンを解決するアダプターを実装する。
+4. [一部完了] Player 名と SGF `PB` / `PW` は切替済み。GTP 起動と Random Seed 記録を Player の参照だけで完結させ、ルートコメントを Black/White Player 名へ更新する。
+5. [完了] Player 一覧・編集・選択ダイアログを実装する。
+6. [完了] Local Match と Ponnuki の設定画面を、新しい `PLAYER SELECT` UI へ置換する。
+7. [未着手] CGOS と大会ルールで必要な Player 選択・Identifier の送信規則を個別に追加する。
+8. [未着手] 移行猶予後、旧 `BlackPlayerKind` / `WhitePlayerKind` とエンジン選択インデックスを削除する。
 
 ## 完了条件
 
-- Human と Computer を同じ Player 一覧から黒白へ選択できる。
-- Computer Player が別 Engine を参照できる。
-- 表示名と Identifier が保存・再読込できる。
-- Identifier はアプリ側で文字種・文字数を制限しない。
-- 既存設定を持つ利用者が起動しても、対局できる Player が失われない。
-- SGF、ログ、Random Seed の表示先が Player 情報と矛盾しない。
+- [完了] Human と Computer を同じ Player 一覧から黒白へ選択できる。
+- [完了] Computer Player が別 Engine を参照できる。
+- [完了] 表示名と Identifier が保存・再読込できる。
+- [完了] Identifier はアプリ側で文字種・文字数を制限しない。
+- [一部完了] 既存設定を持つ利用者が起動しても、対局できる Player が失われない。初期 Player とエンジン対応 Player は補うが、旧黒白選択の完全な永続移行が残る。
+- [未完了] SGF、ログ、Random Seed の表示先が Player 情報と矛盾しない。SGF 名は完了、ログ・Random Seed の Player 名／Identifier 記録と CGOS 連携が残る。
