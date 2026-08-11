@@ -908,7 +908,7 @@ public sealed partial class GoScreenRenderer
     private static Rectangle BoardSizeButtonBounds(int index, int y) => new(AddPanelControlX + 132 + index * 180, y, 164, 50);
     private static Rectangle PathTooltipBounds(Rectangle rowBounds)
     {
-        const int height = 276;
+        const int height = 450;
         // 行と同じ横幅に制限する。エンジン一覧には決して重ねない。
         // 画面下端へ出すことで、EXE と WORKDIR の各行も覆わない。
         return new Rectangle(
@@ -1207,7 +1207,8 @@ public sealed partial class GoScreenRenderer
         IReadOnlyList<string> descriptionLines)
     {
         var bounds = PathTooltipBounds(rowBounds);
-        var lines = descriptionLines.Concat(WrapPathForTooltip(fullPath, 72).Take(2)).ToArray();
+        // 長いパスは表示幅を超えたために縮小せず、区切り文字で改行する。
+        var lines = descriptionLines.Concat(WrapPathForTooltip(fullPath, 72).Take(3)).ToArray();
         DrawStickyNote(
             bounds,
             new Vector2(rowBounds.Center.X, rowBounds.Bottom),

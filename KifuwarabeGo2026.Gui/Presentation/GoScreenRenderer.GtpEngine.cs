@@ -722,14 +722,25 @@ public sealed partial class GoScreenRenderer
                 executablePath,
                 mousePoint,
                 "EXE とは？",
-                ["コンピュータ碁の実行ファイルです。", "GTP プロトコルに対応している必要があります。"]);
+                [
+                    "コンピュータ碁の実行ファイルです。",
+                    "いわゆる思考エンジンです。",
+                    "GTP プロトコルに対応している",
+                    "必要があります。",
+                ]);
         else if (IsPathTooltipHovered(workingDirectoryRowBounds, displayWorkingDirectory, mousePoint))
             DrawPathTooltip(
                 workingDirectoryRowBounds,
                 displayWorkingDirectory,
                 mousePoint,
                 "WORKDIR とは？",
-                ["実行ファイルから見たカレントディレクトリーです。", "詳しくは「ワーキングディレクトリー」で調べてください。"]);
+                [
+                    "この GUI ではなく、思考エンジンの",
+                    "実行ファイルから見たカレント",
+                    "ディレクトリーです。詳しくは",
+                    "「ワーキングディレクトリー」で",
+                    "調べてください。",
+                ]);
     }
 
 
