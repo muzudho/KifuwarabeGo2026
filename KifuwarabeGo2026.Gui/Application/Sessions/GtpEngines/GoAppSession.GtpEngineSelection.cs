@@ -3,6 +3,7 @@ namespace KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.GtpExtensions.Engines;
 using KifuwarabeGo2026.Shared.Domain;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 /// <summary>ローカル対局・CGOSに割り当てるGTPエンジンを選択します。</summary>
@@ -102,6 +103,44 @@ public sealed partial class GoAppSession
     {
         IsGtpEngineSelectionDialogOpen = false;
         CloseGtpEngineDeleteConfirmation();
+    }
+
+    public void MoveGtpEngineSelectionPage(int step)
+    {
+        var pageCount = Math.Max(1, (int)Math.Ceiling(_gtpEngineProfiles.Count / (double)GtpEngineSelectionPageSize));
+        GtpEngineSelectionPageIndex = Math.Clamp(GtpEngineSelectionPageIndex + step, 0, pageCount - 1);
+    }
+
+    public bool CanDeleteSelectedGtpEngine =>
+        _gtpEngineProfiles.Count > 1 &&
+        GtpEngineDialogSelectionIndex >= 0 &&
+        GtpEngineDialogSelectionIndex < _gtpEngineProfiles.Count;
+
+    public int SelectedGtpEngineIndex => EngineSelectionPurpose switch
+    {
+        GtpEngineSelectionPurpose.AppProvider => SelectedAppProviderEngineIndex,
+        GtpEngineSelectionPurpose.CgosPlayer => GetSelectedCgosGtpEngineIndex(GtpEngineSelectionTargetStone) ?? -1,
+        _ => GtpEngineSelectionTargetStone == GoStone.Black ? SelectedBlackGtpEngineIndex : SelectedWhiteGtpEngineIndex,
+    };
+
+    public bool CanCommitGtpEngineSelection => CanSelectGtpEngineForCurrentApp(GtpEngineDialogSelectionIndex);
+
+    public bool CanSelectGtpEngineForCurrentApp(int index) =>
+        index >= 0 &&
+        index < _gtpEngineProfiles.Count &&
+        index < _gtpEngineAppCompatibilities.Count &&
+        _gtpEngineAppCompatibilities[index].CanSelect;
+
+    public GtpEngineAppCompatibility GetGtpEngineAppCompatibility(int index) =>
+        index >= 0 && index < _gtpEngineAppCompatibilities.Count
+            ? _gtpEngineAppCompatibilities[index]
+            : new(GtpEngineAppCompatibilityKind.CheckFailed, "NOT CHECKED");
+
+    public void SetGtpEngineAppCompatibilities(IEnumerable<GtpEngineAppCompatibility> compatibilities)
+    {
+        IsGtpEngineCompatibilityLoading = false;
+        _gtpEngineAppCompatibilities.Clear();
+        _gtpEngineAppCompatibilities.AddRange(compatibilities);
     }
 
     private GtpEngineProfile? GetCgosGtpEngineProfile(int? index) =>
