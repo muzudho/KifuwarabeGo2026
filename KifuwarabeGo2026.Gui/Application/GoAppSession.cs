@@ -35,8 +35,6 @@ public sealed partial class GoAppSession
         ResetPositionHistory();
     }
 
-    public GoAppUseKind? UseKind { get; private set; }
-
     public IReadOnlyList<CgosConnectionProfile> CgosConnectionProfiles => _cgosConnectionProfiles;
 
     public CatalogOrderEditor<CgosConnectionProfile> CgosConnectionOrderEditor { get; } = new();
@@ -277,35 +275,6 @@ public sealed partial class GoAppSession
     public GtpEngineProfile BlackGtpEngineProfile => GetGtpEngineProfile(GoStone.Black);
 
     public GtpEngineProfile WhiteGtpEngineProfile => GetGtpEngineProfile(GoStone.White);
-
-    public void SelectUseKind(GoAppUseKind useKind)
-    {
-        UseKind = useKind;
-    }
-
-    public void ReturnToUseSelection()
-    {
-        UseKind = null;
-        CgosConnectionFlowKind = CgosConnectionFlowKind.ProfileSelection;
-        CgosConnectionStatusMessage = "READY";
-        CgosConnectionLogDirectory = "";
-        CgosConnectionRecentOutput = Array.Empty<string>();
-        IsCgosConnectionRunning = false;
-        CgosBlackConnectionStatusMessage = "READY";
-        CgosBlackConnectionLogDirectory = "";
-        CgosBlackConnectionRecentOutput = Array.Empty<string>();
-        IsCgosBlackConnectionRunning = false;
-        CgosWhiteConnectionStatusMessage = "READY";
-        CgosWhiteConnectionLogDirectory = "";
-        CgosWhiteConnectionRecentOutput = Array.Empty<string>();
-        IsCgosWhiteConnectionRunning = false;
-        CgosAdminStatusMessage = "ADMIN READY";
-        CgosAdminLogDirectory = "";
-        CgosAdminRecentOutput = Array.Empty<string>();
-        CgosAdminWaitingPlayers = Array.Empty<string>();
-        IsCgosAdminRunning = false;
-        CloseCgosConnectionEditPanel();
-    }
 
     public void SelectCgosConnectionProfile(int index)
     {
