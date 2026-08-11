@@ -3980,7 +3980,7 @@ public class Game1 : Game
 
     private void MovePlayerEditFocus(PlayerProfileEditField field, int step)
     {
-        var fields = new[] { PlayerProfileEditField.DisplayName, PlayerProfileEditField.Identifier };
+        var fields = new[] { PlayerProfileEditField.DisplayName };
         var index = Array.IndexOf(fields, field);
         var next = fields[(index + step + fields.Length) % fields.Length];
         var text = _session.GetPlayerEditFieldText(next);

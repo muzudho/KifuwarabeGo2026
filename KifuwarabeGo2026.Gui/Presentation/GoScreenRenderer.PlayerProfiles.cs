@@ -47,7 +47,7 @@ public sealed partial class GoScreenRenderer
 
     public static PlayerProfileEditField? GetPlayerEditPanelFieldHit(Point point) =>
         PlayerEditPanelFieldTextBounds(PlayerProfileEditField.DisplayName).Contains(point) ? PlayerProfileEditField.DisplayName :
-        PlayerEditPanelFieldTextBounds(PlayerProfileEditField.Identifier).Contains(point) ? PlayerProfileEditField.Identifier : null;
+        null;
 
     public int GetPlayerEditPanelCaretIndex(Point point, PlayerProfileEditField field, string text) =>
         GetTextBoxCaretIndex(point.X, text, PlayerEditPanelFieldTextBounds(field), 0.42f);
@@ -128,8 +128,6 @@ public sealed partial class GoScreenRenderer
         DrawRect(bounds, 2, new Color(116, 145, 146));
         DrawText("EDIT PLAYER", new Vector2(bounds.X + 34, bounds.Y + 28), new Color(244, 238, 218), 0.68f);
         DrawPlayerEditField(session, PlayerProfileEditField.DisplayName, "DISPLAY NAME", mousePoint);
-        DrawPlayerEditField(session, PlayerProfileEditField.Identifier, "FILE NAME", mousePoint);
-        DrawText("Optional name used when creating files.  Server login names belong to Target Profiles.", new Vector2(760, 481), new Color(146, 161, 164), 0.24f);
         if (session.PlayerEditDraft.Kind == PlayerProfileKind.Computer)
         {
             DrawText("ENGINE", new Vector2(552, 510), new Color(180, 195, 195), 0.36f);
