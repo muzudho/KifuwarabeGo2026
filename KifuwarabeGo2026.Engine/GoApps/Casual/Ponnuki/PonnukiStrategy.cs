@@ -15,25 +15,52 @@ internal sealed class PonnukiStrategy : IGenerateMoveStrategy
         if (legalMoves.Count == 0)
             return null;
 
-        var priorityOneCandidates = PonnukiMovePrioritizer.SelectMaximumBoundaryEmpty(
-            PonnukiMovePrioritizer.CollectPriorityOneNobiCandidates(request.Board, request.Color, legalMoves));
-        if (priorityOneCandidates.Count == 1)
+        // Priority. 1: Boundary Empty Count が 1 の相手連へアタリを打ちます。
+        var atariCandidates = PonnukiMovePrioritizer.CollectPriorityOneAtariCandidates(
+            request.Board,
+            request.Color,
+            legalMoves);
+        if (atariCandidates.Count == 1)
         {
-            var selected = priorityOneCandidates[0];
+            return new PonnukiMoveDecision(
+                atariCandidates[0].Move,
+                default,
+                1,
+                request.SelectionMode,
+                PonnukiDecisionReason.PriorityOneAtari,
+                null);
+        }
+
+        // アタリが複数なら、その候補だけを Priority. 2 以下で絞り込みます。
+        var candidatesAfterPriorityOne = atariCandidates.Count > 0
+            ? atariCandidates
+            : legalMoves;
+
+        // Priority. 2: Boundary Empty Count が拮抗する自連のノビを選びます。
+        var priorityTwoCandidates = PonnukiMovePrioritizer.SelectMaximumBoundaryEmpty(
+            PonnukiMovePrioritizer.CollectPriorityOneNobiCandidates(
+                request.Board,
+                request.Color,
+                candidatesAfterPriorityOne));
+        if (priorityTwoCandidates.Count == 1)
+        {
+            var selected = priorityTwoCandidates[0];
             return new PonnukiMoveDecision(
                 selected.LegalMove.Move,
                 default,
                 1,
                 request.SelectionMode,
-                PonnukiDecisionReason.PriorityOneNobi,
+                atariCandidates.Count > 0
+                    ? PonnukiDecisionReason.PriorityOneAtariThenPriorityTwoNobi
+                    : PonnukiDecisionReason.PriorityTwoNobi,
                 selected.BoundaryEmptyCountAfterMove);
         }
 
-        // Priority. 1 の最大候補が複数なら、その候補だけを既存優先順位で絞ります。
-        // 候補が無いときだけ、全合法手へ既存優先順位を適用します。
-        var candidatesForOtherPriorities = priorityOneCandidates.Count > 0
-            ? priorityOneCandidates.Select(candidate => candidate.LegalMove).ToList()
-            : legalMoves;
+        // Priority. 2 が同点ならその候補だけ、無ければ直前段階の候補へ
+        // Other Priorities を適用します。
+        var candidatesForOtherPriorities = priorityTwoCandidates.Count > 0
+            ? priorityTwoCandidates.Select(candidate => candidate.LegalMove).ToList()
+            : candidatesAfterPriorityOne;
         var prioritizedMoves = new List<PonnukiMoveCandidate>(candidatesForOtherPriorities.Count);
         foreach (var candidate in candidatesForOtherPriorities)
         {
@@ -48,25 +75,34 @@ internal sealed class PonnukiStrategy : IGenerateMoveStrategy
         var bestMoves = PonnukiMovePrioritizer.SelectBest(prioritizedMoves);
         var move = MoveSelector.Select(bestMoves, request);
         var selectedPriority = prioritizedMoves.Find(candidate => candidate.Move == move);
-        int? priorityOneBoundaryEmptyCount = priorityOneCandidates.Count > 0
-            ? priorityOneCandidates[0].BoundaryEmptyCountAfterMove
+        int? priorityTwoBoundaryEmptyCount = priorityTwoCandidates.Count > 0
+            ? priorityTwoCandidates[0].BoundaryEmptyCountAfterMove
             : null;
+        var reason = atariCandidates.Count > 0
+            ? priorityTwoCandidates.Count > 0
+                ? PonnukiDecisionReason.PriorityOneAtariThenPriorityTwoNobiThenOtherPriorities
+                : PonnukiDecisionReason.PriorityOneAtariThenOtherPriorities
+            : priorityTwoCandidates.Count > 0
+                ? PonnukiDecisionReason.PriorityTwoNobiThenOtherPriorities
+                : PonnukiDecisionReason.OtherPriorities;
         return new PonnukiMoveDecision(
             move,
             selectedPriority.Priority,
             bestMoves.Count,
             request.SelectionMode,
-            priorityOneCandidates.Count > 0
-                ? PonnukiDecisionReason.PriorityOneNobiThenOtherPriorities
-                : PonnukiDecisionReason.OtherPriorities,
-            priorityOneBoundaryEmptyCount);
+            reason,
+            priorityTwoBoundaryEmptyCount);
     }
 }
 
 internal enum PonnukiDecisionReason
 {
-    PriorityOneNobi,
-    PriorityOneNobiThenOtherPriorities,
+    PriorityOneAtari,
+    PriorityOneAtariThenPriorityTwoNobi,
+    PriorityOneAtariThenPriorityTwoNobiThenOtherPriorities,
+    PriorityOneAtariThenOtherPriorities,
+    PriorityTwoNobi,
+    PriorityTwoNobiThenOtherPriorities,
     OtherPriorities,
 }
 
@@ -76,16 +112,22 @@ internal readonly record struct PonnukiMoveDecision(
     int SamePriorityCandidateCount,
     MoveSelectionMode SelectionMode,
     PonnukiDecisionReason Reason,
-    int? PriorityOneBoundaryEmptyCount)
+    int? PriorityTwoBoundaryEmptyCount)
 {
     public string ToComment()
     {
         var reason = Reason switch
         {
-            PonnukiDecisionReason.PriorityOneNobi =>
-                $"Priority.1 のノビ（着手後の Boundary Empty Count: {PriorityOneBoundaryEmptyCount}）",
-            PonnukiDecisionReason.PriorityOneNobiThenOtherPriorities =>
-                $"Priority.1 のノビで同点（Boundary Empty Count: {PriorityOneBoundaryEmptyCount}）",
+            PonnukiDecisionReason.PriorityOneAtari => "Priority.1 のアタリ",
+            PonnukiDecisionReason.PriorityOneAtariThenPriorityTwoNobi =>
+                $"Priority.1 のアタリで同点 → Priority.2 のノビ（着手後の Boundary Empty Count: {PriorityTwoBoundaryEmptyCount}）",
+            PonnukiDecisionReason.PriorityOneAtariThenPriorityTwoNobiThenOtherPriorities =>
+                $"Priority.1 のアタリ・Priority.2 のノビで同点（Boundary Empty Count: {PriorityTwoBoundaryEmptyCount}）",
+            PonnukiDecisionReason.PriorityOneAtariThenOtherPriorities => "Priority.1 のアタリで同点",
+            PonnukiDecisionReason.PriorityTwoNobi =>
+                $"Priority.2 のノビ（着手後の Boundary Empty Count: {PriorityTwoBoundaryEmptyCount}）",
+            PonnukiDecisionReason.PriorityTwoNobiThenOtherPriorities =>
+                $"Priority.2 のノビで同点（Boundary Empty Count: {PriorityTwoBoundaryEmptyCount}）",
             _ => DescribeOtherPriority(Priority),
         };
         var selection = SamePriorityCandidateCount == 1
@@ -93,7 +135,9 @@ internal readonly record struct PonnukiMoveDecision(
             : SelectionMode == MoveSelectionMode.ChebyshevDistanceFromStar
                 ? $"同順位{SamePriorityCandidateCount}手から星域距離を考慮して選択"
                 : $"同順位{SamePriorityCandidateCount}手からランダム選択";
-        var fallback = Reason == PonnukiDecisionReason.PriorityOneNobiThenOtherPriorities
+        var fallback = Reason is PonnukiDecisionReason.PriorityOneAtariThenPriorityTwoNobiThenOtherPriorities
+            or PonnukiDecisionReason.PriorityOneAtariThenOtherPriorities
+            or PonnukiDecisionReason.PriorityTwoNobiThenOtherPriorities
             ? $"\n同点のため Other Priorities: {DescribeOtherPriority(Priority)}"
             : "";
         return $"ポン抜きエンジン\n理由: {reason}{fallback}\n選択: {selection}";

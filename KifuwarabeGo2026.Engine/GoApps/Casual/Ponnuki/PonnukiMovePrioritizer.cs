@@ -66,6 +66,33 @@ internal static class PonnukiMovePrioritizer
         return result;
     }
 
+    /// <summary>
+    /// Priority. 1 のアタリ候補を集めます。
+    /// 相手連の Boundary Empty Count が 1 のとき、その唯一の空点へ着手します。
+    /// </summary>
+    public static List<LegalMoveCandidate> CollectPriorityOneAtariCandidates(
+        GoBoard boardBeforeMove,
+        GoStone color,
+        IReadOnlyList<LegalMoveCandidate> legalMoves)
+    {
+        var renParse = boardBeforeMove.ParseRens();
+        var atariPoints = new HashSet<GoPoint>();
+        for (var renNumber = 1; renNumber <= renParse.Count; renNumber++)
+        {
+            var ren = renParse.GetRen(renNumber);
+            if (ren.Stone is GoStone.Empty || ren.Stone == color)
+                continue;
+
+            var boundaryEmptyPoints = CollectBoundaryEmptyPoints(renParse, ren);
+            if (boundaryEmptyPoints.Count == 1)
+                atariPoints.UnionWith(boundaryEmptyPoints);
+        }
+
+        return legalMoves
+            .Where(candidate => atariPoints.Contains(candidate.Move))
+            .ToList();
+    }
+
     public static List<PonnukiNobiCandidate> SelectMaximumBoundaryEmpty(
         IReadOnlyList<PonnukiNobiCandidate> candidates)
     {
