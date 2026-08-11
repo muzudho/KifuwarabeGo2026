@@ -3459,7 +3459,13 @@ public class Game1 : Game
 
         _commentEditorSession = session;
         _commentEditorMoveIndex = Math.Clamp(moveIndex, 0, session.CurrentGameRecord.Moves.Count);
-        _commentTextArea.Begin(session.CurrentGameRecord.GetComment(_commentEditorMoveIndex));
+        // レビューの 0 手目は、盤面復元用の CurrentGameRecord ではなく、SGF 全体を保持する
+        // レビュー用レコードから読む。表示と編集ダイアログで参照先を一致させる。
+        var initialComment =
+            session.CurrentMode.Kind == GoAppModeKind.Reviewing && _commentEditorMoveIndex == 0
+                ? session.ReviewRootComment
+                : session.CurrentGameRecord.GetComment(_commentEditorMoveIndex);
+        _commentTextArea.Begin(initialComment);
         _commentEditorComposition = TextCompositionState.Empty;
         _previousCommentEditorKeyboard = Keyboard.GetState();
         _isCommentEditorOpen = true;

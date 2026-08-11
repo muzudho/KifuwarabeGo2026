@@ -561,6 +561,9 @@ public sealed class GoAppSession
     public IReadOnlyList<GoGameMove> ReviewMoves =>
         _reviewGameRecord is null ? Array.Empty<GoGameMove>() : _reviewGameRecord.Moves;
 
+    /// <summary>レビュー対象 SGF のルートコメントです。</summary>
+    public string ReviewRootComment => _reviewGameRecord?.RootComment ?? CurrentGameRecord.RootComment;
+
     public GoGameMove? ReviewCurrentMove =>
         _reviewGameRecord is not null && ReviewMoveIndex > 0 && ReviewMoveIndex <= _reviewGameRecord.Moves.Count
             ? _reviewGameRecord.Moves[ReviewMoveIndex - 1]
@@ -1553,6 +1556,10 @@ public sealed class GoAppSession
             return false;
         }
 
+        // ルートコメントがある棋譜は、最初にその解説を見せる。
+        MoveInformationDisplayMode = string.IsNullOrWhiteSpace(_reviewGameRecord.RootComment)
+            ? MoveInformationDisplayMode.Trend
+            : MoveInformationDisplayMode.Comment;
         ChangeMode(GoAppModeKind.Reviewing);
         return true;
     }

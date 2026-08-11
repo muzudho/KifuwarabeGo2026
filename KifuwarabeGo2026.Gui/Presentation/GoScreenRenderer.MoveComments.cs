@@ -67,7 +67,9 @@ public sealed partial class GoScreenRenderer
             : 0;
         var isRootComment = preferredMoveNumber == 0;
         var displayedComment = isRootComment
-            ? session.CurrentGameRecord.RootComment
+            ? session.CurrentMode.Kind == GoAppModeKind.Reviewing
+                ? session.ReviewRootComment
+                : session.CurrentGameRecord.RootComment
             : moveNumber is { } validMoveNumber && validMoveNumber > 0 && validMoveNumber <= moves.Count
                 ? moves[validMoveNumber - 1].Comment
                 : "";
