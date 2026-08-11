@@ -7,6 +7,19 @@ using KifuwarabeGo2026.Gui.Application.Cgos.ConnectionTarget;
 /// <summary>CGOS 接続プロファイルのカタログ操作を管理します。</summary>
 public sealed partial class GoAppSession
 {
+    public void SetCgosConnectionProfiles(IEnumerable<CgosConnectionProfile> profiles)
+    {
+        _cgosConnectionProfiles.Clear();
+        _cgosConnectionProfiles.AddRange(profiles);
+        if (_cgosConnectionProfiles.Count == 0)
+        {
+            _cgosConnectionProfiles.Add(new CgosConnectionProfile("\u90B1\uFF74\u9119\u30FB", "uec-go.com", 6809, "PRACTICE", "CGOS practice server"));
+        }
+
+        SelectedCgosConnectionProfileIndex = Math.Clamp(SelectedCgosConnectionProfileIndex, 0, _cgosConnectionProfiles.Count - 1);
+        CgosConnectionSelectionPageIndex = SelectedCgosConnectionProfileIndex / CgosConnectionSelectionPageSize;
+    }
+
     public void MoveCgosConnectionSelectionPage(int step)
     {
         CgosConnectionSelectionPageIndex = Math.Clamp(
