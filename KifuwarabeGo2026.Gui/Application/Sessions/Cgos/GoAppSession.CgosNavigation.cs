@@ -63,4 +63,15 @@ public sealed partial class GoAppSession
         CgosConnectionLogDirectory = logDirectory;
         CgosConnectionRecentOutput = recentOutput;
     }
+
+    public void SetCgosBlackConnectionProcessStatus(string statusMessage, bool isRunning, string logDirectory, IReadOnlyList<string> recentOutput, string gtpResponseWaitDisplay = "")
+    {
+        if (isRunning && !IsCgosBlackConnectionRunning)
+            _cgosBlackConnectionStartedAt = DateTime.Now;
+        CgosBlackConnectionStatusMessage = statusMessage;
+        IsCgosBlackConnectionRunning = isRunning;
+        CgosBlackConnectionLogDirectory = logDirectory;
+        CgosBlackConnectionRecentOutput = recentOutput;
+        CgosBlackGtpResponseWaitDisplay = gtpResponseWaitDisplay;
+    }
 }
