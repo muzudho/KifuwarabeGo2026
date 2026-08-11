@@ -2,6 +2,7 @@ namespace KifuwarabeGo2026.Gui.Application;
 
 using KifuwarabeGo2026.Gui.Application.Local.Playing;
 using System;
+using System.Collections.Generic;
 
 /// <summary>GoAppSession の SGF 棋譜レビュー責務をまとめます。</summary>
 public sealed partial class GoAppSession
@@ -10,6 +11,19 @@ public sealed partial class GoAppSession
     // 盤面そのものとは別に、棋譜の履歴・コメントを失わず扱うために保持します。
     private GoGameRecord? _reviewGameRecord;
     private GoGameRecord? _beforeReviewGameRecord;
+
+    public bool HasReviewGameRecord => _reviewGameRecord is not null;
+    public int ReviewMoveIndex { get; private set; }
+    public int ReviewMoveCount => _reviewGameRecord?.Moves.Count ?? 0;
+    public IReadOnlyList<GoGameMove> ReviewMoves =>
+        _reviewGameRecord is null ? Array.Empty<GoGameMove>() : _reviewGameRecord.Moves;
+    public GoGameMove? ReviewCurrentMove =>
+        _reviewGameRecord is not null && ReviewMoveIndex > 0 && ReviewMoveIndex <= _reviewGameRecord.Moves.Count
+            ? _reviewGameRecord.Moves[ReviewMoveIndex - 1] : null;
+    public string ReviewBlackPlayerName =>
+        string.IsNullOrWhiteSpace(_reviewGameRecord?.BlackPlayerName) ? "BLACK" : _reviewGameRecord.BlackPlayerName;
+    public string ReviewWhitePlayerName =>
+        string.IsNullOrWhiteSpace(_reviewGameRecord?.WhitePlayerName) ? "WHITE" : _reviewGameRecord.WhitePlayerName;
 
     public bool MoveReview(int step, out string warning)
     {

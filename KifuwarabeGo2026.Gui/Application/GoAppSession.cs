@@ -550,28 +550,8 @@ public sealed partial class GoAppSession
     public GoGameMove? LatestGameMove =>
         CurrentGameRecord.Moves.Count == 0 ? null : CurrentGameRecord.Moves[^1];
 
-    public bool HasReviewGameRecord => _reviewGameRecord is not null;
-
-    public int ReviewMoveIndex { get; private set; }
-
-    public int ReviewMoveCount => _reviewGameRecord?.Moves.Count ?? 0;
-
-    public IReadOnlyList<GoGameMove> ReviewMoves =>
-        _reviewGameRecord is null ? Array.Empty<GoGameMove>() : _reviewGameRecord.Moves;
-
     /// <summary>レビュー対象 SGF のルートコメントです。</summary>
     public string ReviewRootComment => _reviewGameRecord?.RootComment ?? CurrentGameRecord.RootComment;
-
-    public GoGameMove? ReviewCurrentMove =>
-        _reviewGameRecord is not null && ReviewMoveIndex > 0 && ReviewMoveIndex <= _reviewGameRecord.Moves.Count
-            ? _reviewGameRecord.Moves[ReviewMoveIndex - 1]
-            : null;
-
-    public string ReviewBlackPlayerName =>
-        string.IsNullOrWhiteSpace(_reviewGameRecord?.BlackPlayerName) ? "BLACK" : _reviewGameRecord.BlackPlayerName;
-
-    public string ReviewWhitePlayerName =>
-        string.IsNullOrWhiteSpace(_reviewGameRecord?.WhitePlayerName) ? "WHITE" : _reviewGameRecord.WhitePlayerName;
 
     public bool CanAcceptHumanMove =>
         CurrentMode.Kind == GoAppModeKind.VariationEditing ||
