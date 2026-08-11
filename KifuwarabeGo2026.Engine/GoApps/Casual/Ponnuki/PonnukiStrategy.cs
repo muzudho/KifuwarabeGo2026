@@ -7,6 +7,9 @@ using KifuwarabeGo2026.Shared.Domain;
 internal sealed class PonnukiStrategy : IGenerateMoveStrategy
 {
     public GoPoint? GenerateMove(GenerateMoveRequest request)
+        => GenerateMoveWithDecision(request)?.Move;
+
+    public PonnukiMoveDecision? GenerateMoveWithDecision(GenerateMoveRequest request)
     {
         var legalMoves = LegalMoveCandidates.Collect(request);
         if (legalMoves.Count == 0)
@@ -23,6 +26,31 @@ internal sealed class PonnukiStrategy : IGenerateMoveStrategy
                     candidate.CapturedStones)));
         }
 
-        return MoveSelector.Select(PonnukiMovePrioritizer.SelectBest(prioritizedMoves), request);
+        var bestMoves = PonnukiMovePrioritizer.SelectBest(prioritizedMoves);
+        var move = MoveSelector.Select(bestMoves, request);
+        var selected = prioritizedMoves.Find(candidate => candidate.Move == move);
+        return new PonnukiMoveDecision(move, selected.Priority, bestMoves.Count, request.SelectionMode);
+    }
+}
+
+internal readonly record struct PonnukiMoveDecision(
+    GoPoint Move,
+    PonnukiMovePriority Priority,
+    int SamePriorityCandidateCount,
+    MoveSelectionMode SelectionMode)
+{
+    public string ToComment()
+    {
+        var priority = Priority.CapturedStones > 0
+            ? $"{Priority.CapturedStones}子を取りにいく"
+            : Priority.EvacuationNobiPriority > 0
+                ? "逃げるためのノビ"
+                : "優先条件なし";
+        var selection = SamePriorityCandidateCount == 1
+            ? "最優先候補が1手"
+            : SelectionMode == MoveSelectionMode.ChebyshevDistanceFromStar
+                ? $"同順位{SamePriorityCandidateCount}手から星周辺を意識して抽選"
+                : $"同順位{SamePriorityCandidateCount}手からランダム抽選";
+        return $"ポン抜きエンジン\n理由: {priority}\n選択: {selection}";
     }
 }

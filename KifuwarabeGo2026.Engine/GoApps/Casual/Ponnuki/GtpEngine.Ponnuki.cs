@@ -17,6 +17,7 @@ internal sealed partial class GtpEngine
     private string? _activeCasualPlayerAppId;
     private int _ponnukiBlackCaptures;
     private int _ponnukiWhiteCaptures;
+    private string _lastPonnukiMoveComment = "";
 
     private bool IsPonnukiCasualPlayerActive =>
         string.Equals(_activeCasualPlayerAppId, "ponnuki", StringComparison.OrdinalIgnoreCase);

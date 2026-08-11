@@ -25,7 +25,7 @@ internal static class Program
 internal sealed partial class GtpEngine
 {
     private static readonly IGenerateMoveStrategy _playStrategy = new PlayStrategy();
-    private static readonly IGenerateMoveStrategy _ponnukiStrategy = new PonnukiStrategy();
+    private static readonly PonnukiStrategy _ponnukiStrategy = new();
     private static readonly string[] SupportedAppIds = ["play", "ponnuki"];
     private static readonly string[] SupportedPlayerAppIds = ["play", "ponnuki"];
     private static readonly string[] SupportedProviderAppIds = ["ponnuki"];
@@ -293,14 +293,19 @@ internal sealed partial class GtpEngine
             return;
         }
 
-        var strategy = IsPonnukiCasualPlayerActive ? _ponnukiStrategy : _playStrategy;
-        var move = strategy.GenerateMove(new GenerateMoveRequest(
+        var request = new GenerateMoveRequest(
             _board,
             color,
             _koPoint,
             _avoidEyes,
             _randomMove,
-            _random));
+            _random);
+        _lastPonnukiMoveComment = "";
+        var move = IsPonnukiCasualPlayerActive
+            ? _ponnukiStrategy.GenerateMoveWithDecision(request) is { } decision
+                ? SetPonnukiMoveDecision(decision)
+                : null
+            : _playStrategy.GenerateMove(request);
         if (move is null)
         {
             _koPoint = null;
@@ -312,6 +317,12 @@ internal sealed partial class GtpEngine
         _board.TryPlaceStone(move.Value.X, move.Value.Y, color, _koPoint, out _, out _koPoint);
         _sideToPlay = Opponent(color);
         response = FormatVertex(move.Value, _board.Size);
+    }
+
+    private GoPoint SetPonnukiMoveDecision(PonnukiMoveDecision decision)
+    {
+        _lastPonnukiMoveComment = decision.ToComment();
+        return decision.Move;
     }
 
     private bool RejectWhilePositionSetupActive(out string? error)
@@ -407,7 +418,9 @@ internal sealed partial class GtpEngine
         var winrate = 1.0 / (1.0 + Math.Exp(-perspectiveLead / 5.0));
         var json = JsonSerializer.Serialize(new
         {
-            comment = move.Equals("pass", StringComparison.OrdinalIgnoreCase)
+            comment = !string.IsNullOrWhiteSpace(_lastPonnukiMoveComment)
+                ? _lastPonnukiMoveComment
+                : move.Equals("pass", StringComparison.OrdinalIgnoreCase)
                 ? "パスしたぜ（＾～＾）"
                 : $"{move.ToUpperInvariant()}に打ったぜ（＾～＾）",
             moves = new[]
