@@ -7,6 +7,15 @@ using CgosFlowKind = KifuwarabeGo2026.Gui.Application.Cgos.ConnectionTarget.Cgos
 /// <summary>CGOSの接続プロファイル選択、画面遷移、接続開始要求を管理します。</summary>
 public sealed partial class GoAppSession
 {
+    private static string FormatCgosConnectionElapsedDisplay(DateTime? startedAt, bool isRunning)
+    {
+        if (!isRunning || startedAt is null)
+            return "";
+
+        var elapsedSeconds = Math.Max(0, (int)(DateTime.Now - startedAt.Value).TotalSeconds);
+        return $"RUN {elapsedSeconds / 60:00}:{elapsedSeconds % 60:00}";
+    }
+
     public void SelectCgosConnectionProfile(int index)
     {
         if (index < 0 || index >= _cgosConnectionProfiles.Count)
@@ -74,5 +83,24 @@ public sealed partial class GoAppSession
         CgosBlackConnectionLogDirectory = logDirectory;
         CgosBlackConnectionRecentOutput = recentOutput;
         CgosBlackGtpResponseWaitDisplay = gtpResponseWaitDisplay;
+    }
+
+    public void SetCgosWhiteConnectionProcessStatus(string statusMessage, bool isRunning, string logDirectory, IReadOnlyList<string> recentOutput, string gtpResponseWaitDisplay = "")
+    {
+        if (isRunning && !IsCgosWhiteConnectionRunning)
+            _cgosWhiteConnectionStartedAt = DateTime.Now;
+        CgosWhiteConnectionStatusMessage = statusMessage;
+        IsCgosWhiteConnectionRunning = isRunning;
+        CgosWhiteConnectionLogDirectory = logDirectory;
+        CgosWhiteConnectionRecentOutput = recentOutput;
+        CgosWhiteGtpResponseWaitDisplay = gtpResponseWaitDisplay;
+    }
+
+    public void SetCgosAdminProcessStatus(string statusMessage, bool isRunning, string logDirectory, IReadOnlyList<string> recentOutput)
+    {
+        CgosAdminStatusMessage = statusMessage;
+        IsCgosAdminRunning = isRunning;
+        CgosAdminLogDirectory = logDirectory;
+        CgosAdminRecentOutput = recentOutput;
     }
 }
