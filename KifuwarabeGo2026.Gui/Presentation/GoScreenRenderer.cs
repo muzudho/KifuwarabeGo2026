@@ -418,11 +418,13 @@ public sealed partial class GoScreenRenderer
             mousePoint,
             minimal: true);
 
-        DrawVerticalResultSection(new Rectangle(1144, 344, 668, 176), "FACTS", new Color(66, 104, 116));
+        DrawVerticalResultSection(new Rectangle(1144, 344, 668, 110), "FACTS", new Color(66, 104, 116));
         DrawInfoStrip(1144, 363, "NEXT", GetMoveThinkingText(session));
-        DrawLocalPlayingBoardLensButtonStrip(session.IsRenParseDisplayEnabled, mousePoint);
 
         DrawLocalTrendChart(session, mousePoint);
+
+        DrawVerticalResultSection(new Rectangle(1144, 780, 668, 120), "REVIEW", new Color(76, 91, 126));
+        DrawLocalPlayingBoardLensButtonStrip(session.IsRenParseDisplayEnabled, mousePoint);
 
         DrawVerticalResultSection(new Rectangle(1144, 916, 668, 76), "ACTION", new Color(91, 82, 105));
 

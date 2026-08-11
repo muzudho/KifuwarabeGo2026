@@ -5,7 +5,7 @@ using Microsoft.Xna.Framework;
 
 public sealed partial class GoScreenRenderer
 {
-    private static readonly BoardLensButtonStrip LocalPlayingBoardLensButtons = new(1576, 456, 48, 8);
+    private static readonly BoardLensButtonStrip LocalPlayingBoardLensButtons = new(1516, 800);
 
     /// <summary>Local Match の Board Lens 操作ボタンの押下を取得します。</summary>
     internal static BoardLensButton? GetLocalPlayingBoardLensButtonHit(Point point, bool isLensEnabled) =>
@@ -14,11 +14,11 @@ public sealed partial class GoScreenRenderer
     private void DrawLocalPlayingBoardLensButtonStrip(bool isLensEnabled, Point mousePoint)
     {
         DrawFittedText(
-            "BOARD LENS  [L]",
-            new Rectangle(1144, 464, 392, 32),
+            "BOARD LENS  [L] / [J] / [K] / [1]",
+            new Rectangle(1164, 812, 316, 36),
             new Color(147, 201, 190),
-            0.30f);
-        DrawBoardLensButtonStrip(LocalPlayingBoardLensButtons, isLensEnabled, mousePoint, 0.26f);
+            0.26f);
+        DrawBoardLensButtonStrip(LocalPlayingBoardLensButtons, isLensEnabled, mousePoint, 0.32f);
     }
 
     /// <summary>各画面で再利用する Board Lens 操作ボタンの描画です。</summary>
