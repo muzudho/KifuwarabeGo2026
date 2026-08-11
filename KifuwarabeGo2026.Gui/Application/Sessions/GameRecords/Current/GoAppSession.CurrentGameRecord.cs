@@ -6,6 +6,12 @@ using KifuwarabeGo2026.Shared.Domain;
 /// <summary>現在の盤面から表示・操作用の棋譜レコードを組み立てます。</summary>
 public sealed partial class GoAppSession
 {
+    /// <summary>現在の盤面表示・操作に対応する棋譜レコードです。</summary>
+    public GoGameRecord CurrentGameRecord { get; private set; } = new();
+
+    public GoGameMove? LatestGameMove =>
+        CurrentGameRecord.Moves.Count == 0 ? null : CurrentGameRecord.Moves[^1];
+
     private GoGameRecord CreateGameRecordFromCurrentPosition()
     {
         var record = new GoGameRecord

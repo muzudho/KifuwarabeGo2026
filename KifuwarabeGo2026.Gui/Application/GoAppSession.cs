@@ -284,11 +284,6 @@ public sealed partial class GoAppSession
 
     public GtpEngineProfile WhiteGtpEngineProfile => GetGtpEngineProfile(GoStone.White);
 
-    public GoGameRecord CurrentGameRecord { get; private set; } = new();
-
-    public GoGameMove? LatestGameMove =>
-        CurrentGameRecord.Moves.Count == 0 ? null : CurrentGameRecord.Moves[^1];
-
     public bool CanAcceptHumanMove =>
         CurrentMode.Kind == GoAppModeKind.VariationEditing ||
         (CurrentMode.Kind == GoAppModeKind.Playing &&
