@@ -37,6 +37,14 @@ public sealed partial class GoAppSession
         OpenGtpEngineSelectionDialogCore(stone);
     }
 
+    public void OpenPlayerEditGtpEngineSelectionDialog()
+    {
+        IsGtpEngineSelectionForCgos = false;
+        EngineSelectionPurpose = GtpEngineSelectionPurpose.PlayerEdit;
+        GtpEngineSelectionAppId = "play";
+        OpenGtpEngineSelectionDialogCore(GoStone.Black);
+    }
+
     public void OpenAppProviderGtpEngineSelectionDialog(string appId)
     {
         IsGtpEngineSelectionForCgos = false;
@@ -47,7 +55,7 @@ public sealed partial class GoAppSession
 
     private void OpenGtpEngineSelectionDialogCore(GoStone stone)
     {
-        if (EngineSelectionPurpose != GtpEngineSelectionPurpose.AppProvider &&
+        if (EngineSelectionPurpose is not (GtpEngineSelectionPurpose.AppProvider or GtpEngineSelectionPurpose.PlayerEdit) &&
             stone is not (GoStone.Black or GoStone.White))
         {
             throw new ArgumentOutOfRangeException(nameof(stone), stone, "GTP engine can be selected only for black or white.");
@@ -72,7 +80,7 @@ public sealed partial class GoAppSession
             selectedIndex = -1;
         }
 
-        GtpEngineDialogSelectionIndex = EngineSelectionPurpose == GtpEngineSelectionPurpose.AppProvider
+        GtpEngineDialogSelectionIndex = EngineSelectionPurpose is GtpEngineSelectionPurpose.AppProvider or GtpEngineSelectionPurpose.PlayerEdit
             ? selectedIndex >= 0 && selectedIndex < _gtpEngineProfiles.Count ? selectedIndex : -1
             : CanSelectGtpEngineForCurrentApp(selectedIndex) ? selectedIndex : -1;
         GtpEngineSelectionPageIndex = Math.Max(0, selectedIndex) / GtpEngineSelectionPageSize;
@@ -93,6 +101,8 @@ public sealed partial class GoAppSession
 
         if (EngineSelectionPurpose == GtpEngineSelectionPurpose.AppProvider)
             SelectAppProviderEngine(GtpEngineDialogSelectionIndex);
+        else if (EngineSelectionPurpose == GtpEngineSelectionPurpose.PlayerEdit)
+            SetPlayerEditEngineProfile(_gtpEngineProfiles[GtpEngineDialogSelectionIndex].Id);
         else
             SelectGtpEngine(GtpEngineSelectionTargetStone, GtpEngineDialogSelectionIndex);
         IsGtpEngineSelectionDialogOpen = false;
@@ -120,6 +130,7 @@ public sealed partial class GoAppSession
     {
         GtpEngineSelectionPurpose.AppProvider => SelectedAppProviderEngineIndex,
         GtpEngineSelectionPurpose.CgosPlayer => GetSelectedCgosGtpEngineIndex(GtpEngineSelectionTargetStone) ?? -1,
+        GtpEngineSelectionPurpose.PlayerEdit => FindGtpEngineIndex(PlayerEditDraft.EngineProfileId),
         _ => GtpEngineSelectionTargetStone == GoStone.Black ? SelectedBlackGtpEngineIndex : SelectedWhiteGtpEngineIndex,
     };
 

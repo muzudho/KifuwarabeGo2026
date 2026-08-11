@@ -241,6 +241,10 @@ public sealed partial class GoAppSession
         GtpEngineEditSaveMessage = "";
         if (EngineSelectionPurpose == GtpEngineSelectionPurpose.AppProvider)
             OpenAppProviderGtpEngineSelectionDialog(GtpEngineSelectionAppId);
+        else if (EngineSelectionPurpose == GtpEngineSelectionPurpose.PlayerEdit)
+        {
+            // Player 編集モーダルはそのまま背後に残る。
+        }
         else if (IsGtpEngineSelectionForCgos)
             OpenCgosGtpEngineSelectionDialog(GtpEngineSelectionTargetStone);
         else

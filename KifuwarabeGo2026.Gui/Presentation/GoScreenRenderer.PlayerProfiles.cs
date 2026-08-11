@@ -133,9 +133,7 @@ public sealed partial class GoScreenRenderer
             DrawText("ENGINE", new Vector2(552, 510), new Color(180, 195, 195), 0.36f);
             var engineTextBounds = new Rectangle(760, 503, 600, 42);
             DrawFittedText(session.PlayerEditEngineDisplayName, engineTextBounds, Color.White, 0.42f);
-            DrawPlayerEngineCycleButton(PlayerEditPanelPreviousEngineButtonBounds, pointsRight: false, mousePoint);
-            DrawPlayerEngineCycleButton(PlayerEditPanelNextEngineButtonBounds, pointsRight: true, mousePoint);
-            DrawCommandButton(PlayerEditPanelEngineOptionsButtonBounds, "EDIT PROFILE", false, mousePoint, scale: 0.30f);
+            DrawCommandButton(PlayerEditPanelEngineOptionsButtonBounds, "CHANGE ENGINE", false, mousePoint, scale: 0.28f);
         }
         DrawText("Click a field to edit.  Enter: finish  Escape: cancel  Tab: next field", new Vector2(bounds.X + 42, bounds.Y + 360), new Color(180, 195, 195), 0.28f);
         DrawCommandButton(PlayerEditPanelCancelButtonBounds, "CANCEL", false, mousePoint, scale: 0.34f);

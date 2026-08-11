@@ -1690,7 +1690,7 @@ public class Game1 : Game
                 _session.CyclePlayerEditEngine(1);
             else if (_session.PlayerEditDraft.Kind == PlayerProfileKind.Computer &&
                      GoScreenRenderer.GetPlayerEditPanelEngineOptionsButtonHit(point))
-                _session.OpenGtpEngineEditPanelForProfileId(_session.PlayerEditDraft.EngineProfileId);
+                _session.OpenPlayerEditGtpEngineSelectionDialog();
             else if (GoScreenRenderer.GetPlayerEditPanelFieldHit(point) is { } field)
                 BeginOrMovePlayerEditField(point, field);
             return;
@@ -4633,6 +4633,7 @@ public class Game1 : Game
             EndGtpEngineEditField();
             _gtpEngineEditTextBox.Clear();
             RefreshCurrentGtpEngineAppCompatibilities();
+            _session.CancelNewEngineProfileForPlayerEdit();
             _session.CloseGtpEngineEditPanel();
             return true;
         }
@@ -5153,6 +5154,7 @@ public class Game1 : Game
         }
 
         _session.SaveGtpEngineEditDraft(profile);
+        _session.CompleteNewEngineProfileForPlayerEdit(profile.Id);
         _gtpEngineCatalog.Save(_session.GtpEngineProfiles);
     }
 

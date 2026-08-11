@@ -240,6 +240,8 @@ public sealed partial class GoScreenRenderer
 
         var target = session.IsGtpEngineSelectionForAppProvider
             ? $"{session.GtpEngineSelectionAppId} PROVIDER"
+            : session.EngineSelectionPurpose == GtpEngineSelectionPurpose.PlayerEdit
+                ? "PLAYER"
             : session.IsGtpEngineSelectionForCgos
                 ? session.GtpEngineSelectionTargetStone == GoStone.Black ? "CGOS PLAYER 1" : "CGOS PLAYER 2"
                 : session.GtpEngineSelectionTargetStone == GoStone.Black ? "BLACK" : "WHITE";

@@ -13,6 +13,7 @@ public sealed partial class GoAppSession
     public int PlayerEditProfileIndex { get; private set; } = -1;
     public PlayerProfile PlayerEditDraft { get; private set; } = new();
     public bool IsPlayerEditDirty { get; private set; }
+    public bool IsCreatingEngineProfileForPlayerEdit { get; private set; }
     public PlayerProfileEditField? ActivePlayerEditField { get; private set; }
     public int PlayerEditCaretIndex { get; private set; }
     public int PlayerEditSelectionStart { get; private set; }
@@ -95,6 +96,22 @@ public sealed partial class GoAppSession
         return true;
     }
 
+    public void OpenNewEngineProfileForPlayerEdit()
+    {
+        if (PlayerEditDraft.Kind != PlayerProfileKind.Computer) return;
+        IsCreatingEngineProfileForPlayerEdit = true;
+        OpenGtpEngineAddPanel();
+    }
+
+    public void CompleteNewEngineProfileForPlayerEdit(string engineProfileId)
+    {
+        if (!IsCreatingEngineProfileForPlayerEdit) return;
+        IsCreatingEngineProfileForPlayerEdit = false;
+        SetPlayerEditEngineProfile(engineProfileId);
+    }
+
+    public void CancelNewEngineProfileForPlayerEdit() => IsCreatingEngineProfileForPlayerEdit = false;
+
     public void CyclePlayerEditEngine(int step)
     {
         if (PlayerEditDraft.Kind != PlayerProfileKind.Computer || _gtpEngineProfiles.Count == 0)
@@ -128,6 +145,7 @@ public sealed partial class GoAppSession
         _playerProfiles[PlayerEditProfileIndex] = draft;
         IsPlayerEditDirty = false;
         IsPlayerEditPanelOpen = false;
+        IsCreatingEngineProfileForPlayerEdit = false;
         ActivePlayerEditField = null;
         ApplySelectedPlayerProfile(GoStone.Black);
         ApplySelectedPlayerProfile(GoStone.White);
@@ -138,6 +156,7 @@ public sealed partial class GoAppSession
     {
         IsPlayerEditPanelOpen = false;
         IsPlayerEditDirty = false;
+        IsCreatingEngineProfileForPlayerEdit = false;
         ActivePlayerEditField = null;
     }
 }
