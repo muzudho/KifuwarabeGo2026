@@ -1,17 +1,8 @@
 namespace KifuwarabeGo2026.Gui.Application;
 
 using KifuwarabeGo2026.Gui.Application.Cgos.ConnectionTarget;
-using KifuwarabeGo2026.Gui.Application.Local.Playing;
-using KifuwarabeGo2026.Gui.Application.Local.Resting;
-using KifuwarabeGo2026.Gui.Application.Local.Resting.TournamentRule;
-using KifuwarabeGo2026.Gui.Domain;
-using KifuwarabeGo2026.GtpExtensions.Engines;
-using KifuwarabeGo2026.GtpExtensions.InitialPosition;
-using KifuwarabeGo2026.Shared.Domain;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 
 public sealed partial class GoAppSession
 {
