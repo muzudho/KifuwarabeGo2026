@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace KifuwarabeGo2026.Gui.Application.Local.Apps.Ponnuki;
+namespace KifuwarabeGo2026.Gui.Application.GoApps.Casual.Ponnuki;
 
 public static class PonnukiPositionProvider
 {
@@ -153,7 +153,7 @@ public static class PonnukiPositionProvider
 
     public static async Task<GoGameRecord> MakePositionAsync(GtpEngineProfile profile)
     {
-        var app = LocalAppCatalog.Ponnuki;
+        var app = CasualAppCatalog.Ponnuki;
         var settings = CreateSettings(profile);
 
         await using var client = new GtpEngineClient(settings, TimeSpan.FromSeconds(10));
@@ -167,7 +167,7 @@ public static class PonnukiPositionProvider
 
     internal static GoGameRecord ParsePosition(string payload)
     {
-        var app = LocalAppCatalog.Ponnuki;
+        var app = CasualAppCatalog.Ponnuki;
         var document = JsonSerializer.Deserialize<PonnukiPositionDocument>(
             payload,
             new JsonSerializerOptions { PropertyNameCaseInsensitive = true })

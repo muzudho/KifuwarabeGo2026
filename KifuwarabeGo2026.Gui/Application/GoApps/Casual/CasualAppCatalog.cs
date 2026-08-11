@@ -1,15 +1,15 @@
-namespace KifuwarabeGo2026.Gui.Application.Local.Apps;
+namespace KifuwarabeGo2026.Gui.Application.GoApps.Casual;
 
-public sealed record LocalAppDescriptor(
+public sealed record CasualAppDescriptor(
     string Id,
     int Version,
     int BoardSize,
     bool RequiresBlackAndWhitePlayers,
     int InitialRandomMoveCount);
 
-public static class LocalAppCatalog
+public static class CasualAppCatalog
 {
-    public static LocalAppDescriptor Ponnuki { get; } = new(
+    public static CasualAppDescriptor Ponnuki { get; } = new(
         "ponnuki",
         Version: 1,
         BoardSize: 9,

@@ -5,7 +5,7 @@ using KifuwarabeGo2026.Gui.Application.Cgos.Connect;
 using KifuwarabeGo2026.Gui.Application.Cgos.ConnectionTarget;
 using KifuwarabeGo2026.Gui.Application.Cgos.Watching;
 using KifuwarabeGo2026.Gui.Application.Local.Playing;
-using KifuwarabeGo2026.Gui.Application.Local.Apps.Ponnuki;
+using KifuwarabeGo2026.Gui.Application.GoApps.Casual.Ponnuki;
 using KifuwarabeGo2026.Gui.Application.Local.Resting.TournamentRule;
 using KifuwarabeGo2026.Gui.Domain;
 using KifuwarabeGo2026.Shared.Domain;

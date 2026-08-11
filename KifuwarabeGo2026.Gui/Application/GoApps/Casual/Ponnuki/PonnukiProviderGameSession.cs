@@ -5,7 +5,7 @@ using System;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace KifuwarabeGo2026.Gui.Application.Local.Apps.Ponnuki;
+namespace KifuwarabeGo2026.Gui.Application.GoApps.Casual.Ponnuki;
 
 public sealed class PonnukiProviderGameSession : IAsyncDisposable
 {
@@ -22,7 +22,7 @@ public sealed class PonnukiProviderGameSession : IAsyncDisposable
 
     public async Task<GoGameRecord> StartAsync()
     {
-        var app = LocalAppCatalog.Ponnuki;
+        var app = CasualAppCatalog.Ponnuki;
         await _client.StartAsync();
         var startSupported = await IsCommandSupportedAsync("kfw-start-app");
         var endSupported = await IsCommandSupportedAsync("kfw-end-app");
