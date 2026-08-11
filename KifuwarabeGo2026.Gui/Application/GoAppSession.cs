@@ -550,9 +550,6 @@ public sealed partial class GoAppSession
     public GoGameMove? LatestGameMove =>
         CurrentGameRecord.Moves.Count == 0 ? null : CurrentGameRecord.Moves[^1];
 
-    /// <summary>レビュー対象 SGF のルートコメントです。</summary>
-    public string ReviewRootComment => _reviewGameRecord?.RootComment ?? CurrentGameRecord.RootComment;
-
     public bool CanAcceptHumanMove =>
         CurrentMode.Kind == GoAppModeKind.VariationEditing ||
         (CurrentMode.Kind == GoAppModeKind.Playing &&

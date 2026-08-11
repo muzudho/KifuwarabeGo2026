@@ -17,6 +17,8 @@ public sealed partial class GoAppSession
     public int ReviewMoveCount => _reviewGameRecord?.Moves.Count ?? 0;
     public IReadOnlyList<GoGameMove> ReviewMoves =>
         _reviewGameRecord is null ? Array.Empty<GoGameMove>() : _reviewGameRecord.Moves;
+    /// <summary>レビュー対象 SGF の 0 手目コメントです。</summary>
+    public string ReviewRootComment => _reviewGameRecord?.RootComment ?? CurrentGameRecord.RootComment;
     public GoGameMove? ReviewCurrentMove =>
         _reviewGameRecord is not null && ReviewMoveIndex > 0 && ReviewMoveIndex <= _reviewGameRecord.Moves.Count
             ? _reviewGameRecord.Moves[ReviewMoveIndex - 1] : null;
