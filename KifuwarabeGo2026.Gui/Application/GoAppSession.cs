@@ -26,16 +26,6 @@ public sealed partial class GoAppSession
     private DateTime? _cgosBlackConnectionStartedAt;
     private DateTime? _cgosWhiteConnectionStartedAt;
 
-    private readonly Dictionary<GoAppModeKind, GoAppMode> _modes = new()
-    {
-        [GoAppModeKind.Playing] = new PlayingMode(),
-        [GoAppModeKind.GameOver] = new GameOverMode(),
-        [GoAppModeKind.BoardEditing] = new BoardEditingMode(),
-        [GoAppModeKind.VariationEditing] = new VariationEditingMode(),
-        [GoAppModeKind.Reviewing] = new ReviewingMode(),
-        [GoAppModeKind.Resting] = new RestingMode(),
-    };
-
     public GoAppSession()
     {
         CurrentMode = _modes[GoAppModeKind.Resting];
@@ -44,8 +34,6 @@ public sealed partial class GoAppSession
         _gtpEngineAppCompatibilities.Add(new(GtpEngineAppCompatibilityKind.LegacyPlay, "LEGACY FORMAL APP"));
         ResetPositionHistory();
     }
-
-    public GoAppMode CurrentMode { get; private set; }
 
     public GoAppUseKind? UseKind { get; private set; }
 
@@ -383,19 +371,6 @@ public sealed partial class GoAppSession
          !IsEngineThinking &&
          string.IsNullOrWhiteSpace(EngineErrorMessage) &&
          GetPlayerKind(CurrentTurn) == GoPlayerKind.Human);
-
-    public void ChangeMode(GoAppModeKind modeKind)
-    {
-        CurrentMode = _modes[modeKind];
-        if (modeKind != GoAppModeKind.Playing)
-        {
-            ReturnLocalReplayToLive();
-        }
-        if (modeKind != GoAppModeKind.Reviewing)
-        {
-            IsReviewChartPopupOpen = false;
-        }
-    }
 
     public void SelectUseKind(GoAppUseKind useKind)
     {
