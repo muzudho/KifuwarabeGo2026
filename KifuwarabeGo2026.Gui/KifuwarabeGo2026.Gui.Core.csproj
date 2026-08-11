@@ -30,5 +30,6 @@
     <Folder Include="Presentation\Shared\PlayerSelector\" />
     <Folder Include="Presentation\Shared\TextBox\" />
     <Folder Include="Presentation\Shared\PopupNumberBox\" />
+    <Folder Include="Presentation\Shared\StickyNote\" />
   </ItemGroup>
 </Project>

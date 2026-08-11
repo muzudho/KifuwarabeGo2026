@@ -8,6 +8,9 @@ using System.Linq;
 
 public sealed partial class GoScreenRenderer
 {
+    private static Rectangle TitleFormalAppsLabelBounds => new(480, 322, 310, 62);
+    private static Rectangle TitleCasualAppsLabelBounds => new(930, 322, 310, 62);
+
     private void DrawUseSelectionPanel(GoAppSession session, Point mousePoint, TitleMenuPage page, int appProviderTabIndex, bool isAppProviderLoading)
     {
         // タイトル画面の囲碁用具ワイヤー装飾。
@@ -30,13 +33,22 @@ public sealed partial class GoScreenRenderer
         switch (page)
         {
             case TitleMenuPage.Home:
+                var formalAppsHovered = TitleFormalAppsLabelBounds.Contains(mousePoint);
+                var casualAppsHovered = TitleCasualAppsLabelBounds.Contains(mousePoint);
+                var settingsHovered = SettingsButtonBounds.Contains(mousePoint);
                 DrawText("FORMAL APPS", new Vector2(500, 338), new Color(99, 223, 185), 0.48f);
                 DrawText("CASUAL APPS", new Vector2(950, 338), new Color(255, 190, 92), 0.48f);
                 DrawHomeServiceChoice(TitleHomeLocalButtonBounds, "Local Match", "PLAY / REVIEW", new Color(99, 223, 185), mousePoint);
                 DrawHomeServiceChoice(TitleHomeCgosButtonBounds, "Online Match (CGOS)", "WATCH / CONNECT", new Color(99, 223, 185), mousePoint);
                 DrawAppChoice(TitleAppBounds(0), "ポン抜きゲーム", "CAPTURE GAME", mousePoint);
                 DrawDynamicOptionText("対局、観戦、問題演習をここから直接選べます。", new Rectangle(500, 700, 890, 38), new Color(180, 195, 195), 0.34f);
-                if (TitleAppBounds(0).Contains(mousePoint))
+                if (formalAppsHovered)
+                    DrawTitleHomeHint("FORMAL APPS", "他のコンピュータ碁ソフトとできるだけ連携します！", new Color(99, 223, 185));
+                else if (casualAppsHovered)
+                    DrawTitleHomeHint("CASUAL APPS", "独自実装で機能追加を進めます！", new Color(255, 190, 92));
+                else if (settingsHovered)
+                    DrawTitleHomeHint("SETTINGS", "アプリケーションを設定します！", new Color(147, 201, 190));
+                else if (TitleAppBounds(0).Contains(mousePoint))
                 {
                     DrawCaptureGamePreview();
                 }
@@ -84,6 +96,17 @@ public sealed partial class GoScreenRenderer
     {
         var bounds = new Rectangle(1412, 390, 420, 174);
         var accent = new Color(255, 190, 92);
+        DrawStickyNote(
+            bounds,
+            new Vector2(1390, 432),
+            new Vector2(bounds.X, 432),
+            accent,
+            new Color(142, 105, 57),
+            "ポン抜きゲームとは？",
+            ["とにかく相手よりアゲハマを", "多く取った方が勝ち！"]);
+#if false
+        var bounds = new Rectangle(1412, 390, 420, 174);
+        var accent = new Color(255, 190, 92);
 
         FillRect(new Rectangle(bounds.X + 9, bounds.Y + 11, bounds.Width, bounds.Height), new Color(0, 0, 0, 115));
         FillRect(bounds, new Color(19, 25, 30, 248));
@@ -106,6 +129,45 @@ public sealed partial class GoScreenRenderer
             new Rectangle(bounds.X + 26, bounds.Y + 113, bounds.Width - 52, 32),
             Color.White,
             0.38f);
+#endif
+    }
+
+    private void DrawTitleHomeHint(string heading, string message, Color accent)
+    {
+        var (bounds, target) = heading switch
+        {
+            "FORMAL APPS" =>
+                (new Rectangle(70, 270, 390, 190), new Vector2(TitleFormalAppsLabelBounds.Left, TitleFormalAppsLabelBounds.Center.Y)),
+            "CASUAL APPS" =>
+                (new Rectangle(1412, 270, 420, 190), new Vector2(TitleCasualAppsLabelBounds.Right, TitleCasualAppsLabelBounds.Center.Y)),
+            _ =>
+                (new Rectangle(1360, 780, 390, 160), new Vector2(SettingsButtonBounds.Left, SettingsButtonBounds.Center.Y)),
+        };
+        var bodyLines = heading switch
+        {
+            "FORMAL APPS" => new[] { "他のコンピュータ碁ソフトと", "できるだけ連携します！" },
+            "CASUAL APPS" => new[] { "独自実装で", "機能追加を進めます！" },
+            _ => new[] { message },
+        };
+        DrawStickyNote(
+            bounds,
+            target,
+            GetTitleHomeHintConnectorEnd(bounds, target),
+            accent,
+            new Color(accent.R, accent.G, accent.B, (byte)190),
+            $"{heading} とは？",
+            bodyLines);
+    }
+
+    private static Vector2 GetTitleHomeHintConnectorEnd(Rectangle bounds, Vector2 target)
+    {
+        if (target.X <= bounds.Left)
+            return new Vector2(bounds.Left, bounds.Center.Y);
+        if (target.X >= bounds.Right)
+            return new Vector2(bounds.Right, bounds.Center.Y);
+        return target.Y <= bounds.Top
+            ? new Vector2(bounds.Center.X, bounds.Top)
+            : new Vector2(bounds.Center.X, bounds.Bottom);
     }
 
     private void DrawAppPage(GoAppSession session, TitleMenuPage page, Rectangle panel, Point mousePoint, int appProviderTabIndex, bool isAppProviderLoading)
