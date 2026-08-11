@@ -7,8 +7,9 @@ Player Profile は「誰として対局するか」を表す。
 Engine Profile は「どの GTP エンジン実行ファイルを、どの引数で起動するか」を表す。
 両者は別の責務であり、同じ Engine Profile を、表示名や接続先の異なる複数の Player Profile から参照できる。
 
-Player Profile は、複数の Target を持てる。
-Target は、ある用途・接続先において、その Player をどう識別するかを表す。
+Player Profile、Engine Profile、Target Profile は、それぞれ独立して登録する。
+Player Profile は Engine Profile と Target Profile を一方向に参照する。
+Target Profile は、ある用途・接続先において、その Player をどう識別するかを表す。
 
 
 2. 用語と画面名
@@ -37,25 +38,38 @@ Target は、ある用途・接続先において、その Player をどう識�
   システムへの接続に使うパスワード。画面上は伏せ字で扱う。
 
 
-3. Player Profile の構造
+3. 独立カタログと参照の構造
 
 PlayerProfile
   Id
   DisplayName
   Kind                 Human / Computer
-  EngineProfileId      Computer の場合だけ使用
-  Targets[]
+  EngineProfileId      Computer の場合だけ使用する Engine Profile への参照
+  TargetProfileIds[]   使用可能な Target Profile への参照
 
-PlayerTarget
-  Id                   Player 内でも不変の ID
+EngineProfile
+  Id
+  DisplayName          エンジン設定を識別する表示名
+  ExecutablePath
+  WorkingDirectory
+  Arguments
+  GuiOptions
+  GtpLog など
+
+TargetProfile
+  Id
   DisplayName          例: CGOS / LocalMatch / Test Server
-  ConnectionProfileId  接続先の Host / Port 等を持つカタログ項目への参照。LocalMatch では空でよい
+  ConnectionProfileId  接続先の Host / Port 等を持つカタログ項目への参照。LocalMatch では空
   LoginName
   LoginPass
 
-Target の DisplayName は画面表示用の任意文字列である。
+Player Profile は Engine Profile と Target Profile を逆参照しない。
+Engine Profile と Target Profile は、どの Player から参照されているかを保存しない。
+削除時だけ Player Catalog を検索し、参照中なら削除を拒否するか、利用者へ参照先の差し替えを求める。
+
+Target Profile の DisplayName は画面表示用の任意文字列である。
 CGOS の Host、Port、イベント、ラウンド等は、既存の CGOS Connection Profile 側で管理する。
-PlayerTarget は ConnectionProfileId によりそれを参照する。将来の接続先カタログでは、安定した ID を必須にする。
+Target Profile は ConnectionProfileId によりそれを参照する。将来の接続先カタログでは、安定した ID を必須にする。
 
 
 4. Target のサンプル
@@ -65,12 +79,12 @@ Computer Player: 「きふわらべ」
   DISPLAY: きふわらべ
   ENGINE PROFILE: Kifuwarabe Go 2026
 
-  TARGET: CGOS
+  TARGET PROFILE: CGOS
     LOGIN NAME: kifuwarabe
     LOGIN PASS: (秘密情報)
     CONNECTION PROFILE: CGOS Server 9-ro
 
-  TARGET: LocalMatch
+  TARGET PROFILE: LocalMatch
     LOGIN NAME: kifuwarabe-local
     LOGIN PASS: 空欄
     CONNECTION PROFILE: なし
@@ -79,13 +93,14 @@ Human Player: 「山田太郎」
 
   DISPLAY: 山田太郎
 
-  TARGET: LocalMatch
+  TARGET PROFILE: LocalMatch
     LOGIN NAME: yamada-taro
     LOGIN PASS: 空欄
     CONNECTION PROFILE: なし
 
 同一 Player が CGOS 用と LocalMatch 用で異なる LOGIN NAME を持てる。
-同じ Engine Profile を参照する別 Player にも、それぞれ独立した Target を設定できる。
+同じ Engine Profile を参照する別 Player にも、それぞれ独立した Target Profile を設定できる。
+LOGIN NAME と LOGIN PASS は参加者固有の情報なので、通常は別 Player 間で同じ Target Profile を共有しない。
 
 
 5. LocalMatch の利用規則
@@ -95,9 +110,9 @@ LocalMatch のインターバル画面では、黒白それぞれについて次
   1. PLAYER PROFILE
   2. TARGET
 
-Target 候補は、選択した Player Profile が持つものだけを表示する。
-LocalMatch 開始時は、黒白とも LocalMatch 用 Target を選択する。
-将来、Player ごとに複数の LocalMatch Target を持つことも許可する。
+Target 候補は、選択した Player Profile が参照するものだけを表示する。
+LocalMatch 開始時は、黒白とも LocalMatch 用 Target Profile を選択する。
+将来、Player ごとに複数の LocalMatch Target Profile を参照することも許可する。
 その場合は利用者が明示選択する。候補が一つだけでも自動選択せず、画面に選択結果を表示する。
 
 棋譜の内容とファイル名の責務は次のように分ける。
@@ -120,10 +135,10 @@ EDIT PLAYER PROFILE
   DISPLAY
   KIND
   ENGINE PROFILE       Computer の場合だけ。EDIT ENGINE PROFILE を開く
-  TARGETS
+  TARGET PROFILES
     [CGOS]        LOGIN NAME / LOGIN PASS / 接続先
     [LocalMatch]  LOGIN NAME
-    [ADD TARGET] [EDIT TARGET] [DELETE TARGET]
+    [SELECT TARGET] [CREATE TARGET] [EDIT TARGET] [REMOVE TARGET]
 
 EDIT ENGINE PROFILE
   ENGINE DISPLAY
@@ -160,33 +175,39 @@ CGOS 接続画面は黒白の Player Profile と CGOS Target を選び、その 
       "displayName": "きふわらべ",
       "kind": "computer",
       "engineProfileId": "engine-kifuwarabe",
-      "targets": [
-        {
-          "id": "target-cgos",
-          "displayName": "CGOS",
-          "connectionProfileId": "cgos-9ro",
-          "loginName": "kifuwarabe",
-          "loginPass": "..."
-        },
-        {
-          "id": "target-localmatch",
-          "displayName": "LocalMatch",
-          "connectionProfileId": "",
-          "loginName": "kifuwarabe-local",
-          "loginPass": ""
-        }
-      ]
+      "targetProfileIds": ["target-cgos-kifuwarabe", "target-localmatch-kifuwarabe"]
+    }
+  ]
+}
+
+目標の target-list.json 例:
+
+{
+  "targets": [
+    {
+      "id": "target-cgos-kifuwarabe",
+      "displayName": "CGOS",
+      "connectionProfileId": "cgos-9ro",
+      "loginName": "kifuwarabe",
+      "loginPass": "..."
+    },
+    {
+      "id": "target-localmatch-kifuwarabe",
+      "displayName": "LocalMatch",
+      "connectionProfileId": "",
+      "loginName": "kifuwarabe-local",
+      "loginPass": ""
     }
   ]
 }
 
 移行手順:
 
-1. PlayerProfile に Targets を追加し、既存 Player は空リストとして読めるようにする。
-2. GtpEngineProfile の defaultCgosLoginName / defaultCgosPlainTextPassword を読み取り、対応する Computer Player へ CGOS Target として一度だけ移す。
-3. 各既存 Player に LocalMatch Target を追加する。LOGIN NAME は旧 Identifier を最初の候補として使う。
-4. CGOS Connection Profile に不変 ID を追加し、PlayerTarget.ConnectionProfileId から参照できるようにする。
-5. CGOS の実行時認証情報を PlayerTarget から解決する。
+1. TargetProfile と Target Catalog を追加し、既存 Player は空の TargetProfileIds として読めるようにする。
+2. GtpEngineProfile の defaultCgosLoginName / defaultCgosPlainTextPassword を読み取り、対応する Computer Player ごとに独立した CGOS Target Profile を一度だけ生成して参照させる。
+3. 各既存 Player に独立した LocalMatch Target Profile を生成して参照させる。LOGIN NAME は旧 Identifier を最初の候補として使う。
+4. CGOS Connection Profile に不変 ID を追加し、TargetProfile.ConnectionProfileId から参照できるようにする。
+5. CGOS の実行時認証情報を、選択 Player が参照する Target Profile から解決する。
 6. 移行猶予後に Engine Profile の旧 CGOS 認証項目と、CGOS 接続画面の黒白一時認証編集を削除する。
 
 
@@ -195,4 +216,3 @@ CGOS 接続画面は黒白の Player Profile と CGOS Target を選び、その 
 既存の GTP Engine JSON はパスワードを平文保存している。
 移行だけなら平文値を PlayerTarget.LoginPass へ移せるが、新規設計では OS の保護ストア（Windows では DPAPI など）を使うことを推奨する。
 少なくとも、画面は伏せ字、コピーを抑制し、ログ・SGF・ファイル名へ LOGIN PASS を出力しない。
-

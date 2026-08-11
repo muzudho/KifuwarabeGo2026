@@ -31,7 +31,9 @@ Local Match と Ponnuki は、対局者を共通に扱う `PLAYER` 選択へ移�
 
 - `PlayerProfile` は「誰が打つか」を表す。
 - `GtpEngineProfile` は「どの実行可能な碁エンジンをどう起動するか」を表す。
+- `TargetProfile` は「Player がどの用途・接続先へ、どの Login Name で参加するか」を表す。
 - コンピューター Player は、1 個の `GtpEngineProfile` を参照する。
+- Player は、使用可能な複数の `TargetProfile` を一方向に参照する。Engine Profile と Target Profile は独立したカタログであり、Player を逆参照しない。
 - 同じエンジンを参照しても、表示名・識別子の異なる複数 Player を作れる。
 - 対局設定は黒白とも `PlayerProfile` の ID を持つ。
 - SGF の `PB` / `PW` には Player の表示名を保存する。
