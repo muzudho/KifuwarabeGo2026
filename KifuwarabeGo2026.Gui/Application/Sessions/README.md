@@ -32,6 +32,7 @@
 - `TournamentRules/GoAppSession.TournamentRules.Core.cs`: 盤サイズ・ルール・コミ・持ち時間・手数制限
 - `TournamentRules/GoAppSession.TournamentRules.Catalog.cs`: 規定セットの読込・選択・追加・並び替え
 - `TournamentRules/GoAppSession.TournamentRules.Dialogs.cs`: 規定の選択・追加・削除ダイアログ
+- `TournamentRules/GoAppSession.TournamentRules.Editing.cs`: 数値・表示名の編集と保存済み化
 - `GameRecords/Go`: `GoGameRecord` など棋譜モデルの配置候補
 - `VariationSession`: 変化図編集状態の配置候補
 
