@@ -499,19 +499,20 @@ public class Game1 : Game
             }
         }
 
-        if (CanHandleGlobalRenParseToggle() && keyboard.IsKeyDown(Keys.L) && _previousKeyboard.IsKeyUp(Keys.L))
+        var canHandleBoardLens = CanHandleBoardLensShortcut(_session.CurrentMode.Kind is GoAppModeKind.Playing or GoAppModeKind.Reviewing);
+        if (canHandleBoardLens && keyboard.IsKeyDown(Keys.L) && _previousKeyboard.IsKeyUp(Keys.L))
         {
             ToggleBoardLens();
         }
-        else if (CanHandleGlobalRenParseToggle() && IsNewBoardLensNextKeyPress(keyboard))
+        else if (canHandleBoardLens && IsNewBoardLensNextKeyPress(keyboard))
         {
             TryStepBoardLens(1);
         }
-        else if (CanHandleGlobalRenParseToggle() && IsNewBoardLensPreviousKeyPress(keyboard))
+        else if (canHandleBoardLens && IsNewBoardLensPreviousKeyPress(keyboard))
         {
             TryStepBoardLens(-1);
         }
-        else if (CanHandleGlobalRenParseToggle() && IsNewBoardLensExitKeyPress(keyboard))
+        else if (canHandleBoardLens && IsNewBoardLensExitKeyPress(keyboard))
         {
             TryDeactivateBoardLens();
         }
@@ -536,13 +537,14 @@ public class Game1 : Game
         }
 
         var canToggle = _session.CgosConnectionFlowKind is CgosConnectionFlowKind.Watching or CgosConnectionFlowKind.Result;
-        if (canToggle && keyboard.IsKeyDown(Keys.L) && _previousKeyboard.IsKeyUp(Keys.L))
+        var canHandleBoardLens = CanHandleBoardLensShortcut(canToggle);
+        if (canHandleBoardLens && keyboard.IsKeyDown(Keys.L) && _previousKeyboard.IsKeyUp(Keys.L))
             ToggleBoardLens();
-        else if (canToggle && IsNewBoardLensNextKeyPress(keyboard))
+        else if (canHandleBoardLens && IsNewBoardLensNextKeyPress(keyboard))
             TryStepBoardLens(1);
-        else if (canToggle && IsNewBoardLensPreviousKeyPress(keyboard))
+        else if (canHandleBoardLens && IsNewBoardLensPreviousKeyPress(keyboard))
             TryStepBoardLens(-1);
-        else if (canToggle && IsNewBoardLensExitKeyPress(keyboard))
+        else if (canHandleBoardLens && IsNewBoardLensExitKeyPress(keyboard))
             TryDeactivateBoardLens();
 
         _previousKeyboard = keyboard;
@@ -662,9 +664,27 @@ public class Game1 : Game
         }
     }
 
-    private bool CanHandleGlobalRenParseToggle() =>
+    /// <summary>
+    /// Board Lens のショートカットを盤面を扱う画面だけへ限定する。
+    /// テキスト入力中は、文字キーを UI の入力戦略へ完全に委譲する。
+    /// </summary>
+    private bool CanHandleBoardLensShortcut(bool isBoardInteractionScreen) =>
+        isBoardInteractionScreen &&
+        !_session.IsPlayerSelectionDialogOpen &&
+        !_session.IsPlayerEditPanelOpen &&
+        !_session.IsClientIdentityProfileSelectionPanelOpen &&
+        !_session.IsClientIdentityProfileEditPanelOpen &&
+        !_session.IsGtpEngineEditPanelOpen &&
+        !_session.IsCgosConnectionEditPanelOpen &&
         _session.ActiveGtpEngineEditField is null &&
-        !_session.IsTournamentRulesDisplayNameEditing;
+        _session.ActivePlayerEditField is null &&
+        _session.ActiveClientIdentityProfileEditField is null &&
+        _session.ActiveCgosConnectionEditField is null &&
+        _session.ActiveCgosCredentialStone is null &&
+        _session.ActiveHumanPlayerNameStone is null &&
+        _session.ActiveLocalMatchHandleStone is null &&
+        !_session.IsTournamentRulesDisplayNameEditing &&
+        _session.ActiveTournamentRulesNumericField is null;
 
     private void ToggleBoardLens()
     {
