@@ -70,11 +70,13 @@ public sealed partial class GoAppSession
 
         TournamentRulesDeleteConfirmationFileName = _tournamentRules[TournamentRulesDialogSelectionIndex].DisplayName;
         IsTournamentRulesDeleteConfirmationOpen = true;
+        ActivateWindow(ActiveWindowId.TournamentRulesDeleteConfirmation);
     }
 
     public void CloseTournamentRulesDeleteConfirmation()
     {
         IsTournamentRulesDeleteConfirmationOpen = false;
+        DeactivateWindow(ActiveWindowId.TournamentRulesDeleteConfirmation);
         TournamentRulesDeleteConfirmationFileName = "";
     }
 

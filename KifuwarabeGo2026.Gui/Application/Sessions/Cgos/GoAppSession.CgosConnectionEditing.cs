@@ -27,6 +27,7 @@ public sealed partial class GoAppSession
     private void OpenCgosConnectionEditPanelCore(bool isAdd, CgosConnectionProfile draft)
     {
         IsCgosConnectionEditPanelOpen = true;
+        ActivateWindow(ActiveWindowId.CgosConnectionEdit);
         IsCgosConnectionAddPanelMode = isAdd;
         ActiveCgosConnectionEditField = null;
         _cgosConnectionEditSource = draft;
@@ -40,6 +41,7 @@ public sealed partial class GoAppSession
     public void CloseCgosConnectionEditPanel()
     {
         IsCgosConnectionEditPanelOpen = false;
+        DeactivateWindow(ActiveWindowId.CgosConnectionEdit);
         IsCgosConnectionAddPanelMode = false;
         ActiveCgosConnectionEditField = null;
         CgosConnectionEditWarning = "";

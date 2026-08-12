@@ -119,11 +119,13 @@ public sealed partial class GoAppSession
 
         GtpEngineDeleteConfirmationName = _gtpEngineProfiles[GtpEngineDialogSelectionIndex].DisplayName;
         IsGtpEngineDeleteConfirmationOpen = true;
+        ActivateWindow(ActiveWindowId.GtpEngineDeleteConfirmation);
     }
 
     public void CloseGtpEngineDeleteConfirmation()
     {
         IsGtpEngineDeleteConfirmationOpen = false;
+        DeactivateWindow(ActiveWindowId.GtpEngineDeleteConfirmation);
         GtpEngineDeleteConfirmationName = "";
     }
 

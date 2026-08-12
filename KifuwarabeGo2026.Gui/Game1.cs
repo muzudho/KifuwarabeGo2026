@@ -1747,14 +1747,20 @@ public class Game1 : Game
                 else
                     TryHandleGtpEngineEditPanelClick(point);
                 return true;
+            case ActiveWindowId.GtpEngineDeleteConfirmation:
+                return TryHandleGtpEngineDeleteConfirmationClick(point);
             case ActiveWindowId.TournamentRulesSelection:
             case ActiveWindowId.TournamentRulesEdit:
                 return _tournamentRulesSetting.TryHandleMouseClick(
                     point,
                     _renderer is null ? null : (caretPoint, text) => TournamentRuleRenderer.GetDisplayNameCaretIndex(_renderer, caretPoint, text),
                     _renderer is null ? null : (caretPoint, field, text) => _renderer.GetTournamentRulesNumericCaretIndex(caretPoint, field, text));
+            case ActiveWindowId.TournamentRulesDeleteConfirmation:
+                return _tournamentRulesSetting.TryHandleMouseClick(point);
             case ActiveWindowId.CgosAdminPlayerSelection:
                 return TryHandleCgosAdminPlayerSelectionDialogClick(point);
+            case ActiveWindowId.CgosConnectionEdit:
+                return TryHandleCgosConnectionEditPanelClick(point);
             default:
                 return false;
         }
