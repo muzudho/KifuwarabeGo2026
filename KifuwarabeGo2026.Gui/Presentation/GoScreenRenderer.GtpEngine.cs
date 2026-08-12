@@ -147,7 +147,7 @@ public sealed partial class GoScreenRenderer
 
     public static GtpEngineProfileEditField? GetGtpEngineEditPanelFieldHit(Point point)
     {
-        foreach (var field in GtpEngineEditFields)
+        foreach (var field in GtpEngineEditableTextFields)
         {
             if (GtpEngineEditPanelFieldRowBounds(field).Contains(point))
             {
@@ -347,11 +347,9 @@ public sealed partial class GoScreenRenderer
         FillRect(GtpEngineEditPanelBounds, new Color(19, 24, 31, 248));
         DrawRect(GtpEngineEditPanelBounds, 2, new Color(116, 145, 146));
 
-        DrawText(session.IsGtpEngineAddPanelMode ? "ADD GTP ENGINE" : "EDIT GTP ENGINE", new Vector2(GtpEngineEditPanelBounds.X + 30, GtpEngineEditPanelBounds.Y + 24), new Color(244, 238, 218), 0.78f);
-        DrawCommandButton(GtpEngineEditPanelCloseButtonBounds, "BACK", false, mousePoint, scale: 0.42f);
-
-        FillRect(GtpEngineEditPanelEditorBounds, new Color(15, 20, 26));
-        DrawRect(GtpEngineEditPanelEditorBounds, 1, new Color(67, 84, 92));
+        DrawText(session.IsGtpEngineAddPanelMode ? "ADD ENGINE (GTP)" : "EDIT ENGINE (GTP)", new Vector2(GtpEngineEditPanelBounds.X + 30, GtpEngineEditPanelBounds.Y + 24), new Color(244, 238, 218), 0.78f);
+        DrawCommandButton(GtpEngineEditPanelCloseButtonBounds, "CANCEL", false, mousePoint, scale: 0.36f);
+        DrawCommandButton(GtpEngineEditPanelSaveButtonBounds, "SAVE", false, mousePoint, scale: 0.42f);
 
         DrawGtpEngineEditField(session, GtpEngineProfileEditField.DisplayName, "DISPLAY", mousePoint);
         DrawGtpEngineEditField(session, GtpEngineProfileEditField.ExecutablePath, "EXE", mousePoint);
@@ -383,10 +381,9 @@ public sealed partial class GoScreenRenderer
 
         if (!string.IsNullOrWhiteSpace(session.GtpEngineEditWarning))
         {
-            DrawFittedText(session.GtpEngineEditWarning, new Rectangle(GtpEngineEditPanelEditorBounds.X + 48, GtpEngineEditPanelEditorBounds.Bottom - 36, GtpEngineEditPanelEditorBounds.Width - 96, 28), new Color(255, 183, 146), 0.32f);
+            DrawFittedText(session.GtpEngineEditWarning, new Rectangle(GtpEngineEditPanelBounds.X + 90, GtpEngineEditPanelBounds.Bottom - 76, GtpEngineEditPanelBounds.Width - 180, 28), new Color(255, 183, 146), 0.32f);
         }
 
-        DrawCommandButton(GtpEngineEditPanelSaveButtonBounds, SaveGtpEngineLabel(session), false, mousePoint);
         DrawGtpEngineGuiOptionsDialog(session, mousePoint);
     }
 
@@ -586,15 +583,16 @@ public sealed partial class GoScreenRenderer
         var active = session.ActiveGtpEngineEditField == field;
         var hovered = bounds.Contains(mousePoint);
         var text = session.GetGtpEngineEditFieldText(field);
-        DrawUiLabel(UiLabel.InCompactRow(label, bounds));
 
         var textBounds = GtpEngineEditPanelFieldTextBounds(field);
-        DrawTournamentRulesTextInputSurface(textBounds, active, hovered);
-        DrawTabNavigationHint(
-            bounds,
-            Array.IndexOf(GtpEngineEditFields, field),
-            session.ActiveGtpEngineEditField is { } activeField ? Array.IndexOf(GtpEngineEditFields, activeField) : -1,
-            GtpEngineEditFields.Length);
+        DrawText(label, new Vector2(bounds.X + 16, textBounds.Y + 7), new Color(180, 195, 195), 0.36f);
+        DrawRoundedFill(new Rectangle(textBounds.X, textBounds.Bottom + 2, textBounds.Width, 5), 2, active ? new Color(147, 244, 200) : hovered ? new Color(185, 196, 255) : new Color(100, 110, 145));
+        if (GtpEngineEditableTextFields.Contains(field))
+            DrawTabNavigationHint(
+                bounds,
+                Array.IndexOf(GtpEngineEditableTextFields, field),
+                session.ActiveGtpEngineEditField is { } activeField ? Array.IndexOf(GtpEngineEditableTextFields, activeField) : -1,
+                GtpEngineEditableTextFields.Length);
         if (active)
             DrawTextBoxSelection(text, session.GtpEngineEditSelectionStart, session.GtpEngineEditSelectionLength, textBounds, 0.42f);
         DrawFittedText(string.IsNullOrEmpty(text) ? "-" : text, textBounds, Color.White, 0.42f);
@@ -605,12 +603,12 @@ public sealed partial class GoScreenRenderer
 
         if (field == GtpEngineProfileEditField.ExecutablePath)
         {
-            DrawCommandButton(GtpEngineEditPanelFileBrowseButtonBounds, "REF", false, mousePoint, scale: 0.34f);
+            DrawCommandButton(GtpEngineEditPanelFileBrowseButtonBounds, "CHANGE", false, mousePoint, scale: 0.27f);
         }
 
         if (field == GtpEngineProfileEditField.WorkingDirectory)
         {
-            DrawCommandButton(GtpEngineEditPanelWorkingDirectoryBrowseButtonBounds, "REF", false, mousePoint, scale: 0.34f);
+            DrawCommandButton(GtpEngineEditPanelWorkingDirectoryBrowseButtonBounds, "CHANGE", false, mousePoint, scale: 0.27f);
         }
     }
 
@@ -803,13 +801,10 @@ public sealed partial class GoScreenRenderer
     private static Rectangle GtpEngineEditPanelBounds => new(430, 126, 1060, 820);
 
 
-    private static Rectangle GtpEngineEditPanelEditorBounds => new(520, 228, 880, 590);
+    private static Rectangle GtpEngineEditPanelCloseButtonBounds => new(1144, 156, 132, 48);
 
 
-    private static Rectangle GtpEngineEditPanelCloseButtonBounds => new(1318, 156, 132, 48);
-
-
-    private static Rectangle GtpEngineEditPanelSaveButtonBounds => new(1080, 840, 320, 58);
+    private static Rectangle GtpEngineEditPanelSaveButtonBounds => new(1288, 156, 162, 48);
 
 
     private static Rectangle GtpEngineEditPanelFileBrowseButtonBounds => new(
@@ -885,23 +880,21 @@ public sealed partial class GoScreenRenderer
     private static Rectangle GtpEngineRandomMoveSelectionDialogSelectButtonBounds => new(GtpEngineRandomMoveSelectionDialogBounds.Right - 170, GtpEngineRandomMoveSelectionDialogBounds.Y + 20, 140, 52);
 
 
-    private static readonly GtpEngineProfileEditField[] GtpEngineEditFields =
+    private static readonly GtpEngineProfileEditField[] GtpEngineEditableTextFields =
     {
         GtpEngineProfileEditField.DisplayName,
-        GtpEngineProfileEditField.ExecutablePath,
-        GtpEngineProfileEditField.WorkingDirectory,
         GtpEngineProfileEditField.Arguments,
     };
 
 
     private static Rectangle GtpEngineEditPanelFieldRowBounds(GtpEngineProfileEditField field) => field switch
     {
-        GtpEngineProfileEditField.DisplayName => new Rectangle(AddPanelControlX, 248, 668, 48),
+        GtpEngineProfileEditField.DisplayName => new Rectangle(AddPanelControlX, 272, 668, 48),
         GtpEngineProfileEditField.DefaultCgosLoginName => new Rectangle(AddPanelControlX, 304, 668, 48),
         GtpEngineProfileEditField.DefaultCgosPlainTextPassword => new Rectangle(AddPanelControlX, 360, 668, 48),
-        GtpEngineProfileEditField.ExecutablePath => new Rectangle(AddPanelControlX, 416, 668, 48),
-        GtpEngineProfileEditField.WorkingDirectory => new Rectangle(AddPanelControlX, 472, 668, 48),
-        GtpEngineProfileEditField.Arguments => new Rectangle(AddPanelControlX, 528, 668, 48),
+        GtpEngineProfileEditField.ExecutablePath => new Rectangle(AddPanelControlX, 352, 668, 48),
+        GtpEngineProfileEditField.WorkingDirectory => new Rectangle(AddPanelControlX, 432, 668, 48),
+        GtpEngineProfileEditField.Arguments => new Rectangle(AddPanelControlX, 512, 668, 48),
         _ => Rectangle.Empty,
     };
 
@@ -922,8 +915,4 @@ public sealed partial class GoScreenRenderer
         new(GtpEngineSelectionDialogPropertyBounds.X + 18, GtpEngineSelectionDialogPropertyBounds.Y + 22 + index * 70, GtpEngineSelectionDialogPropertyBounds.Width - 36, 52);
 
 
-    private static string SaveGtpEngineLabel(GoAppSession session) =>
-        string.IsNullOrWhiteSpace(session.GtpEngineEditSaveMessage)
-            ? "SAVE ENGINE"
-            : $"SAVE ENGINE {session.GtpEngineEditSaveMessage}";
 }
