@@ -1248,8 +1248,12 @@ public sealed partial class GoScreenRenderer
             DrawFittedText(selector.Value, valueBounds, Color.White, 0.42f);
             DrawRoundedFill(new Rectangle(valueBounds.X, valueBounds.Bottom + 2, valueBounds.Width, 5), 2, hovered ? new Color(185, 196, 255) : new Color(100, 110, 145));
             if (hovered)
-                // 操作ヒントはアンダーラインの終端へ寄せ、ホバーの強調色と統一する。
-                DrawFittedText("CHANGE", new Rectangle(valueBounds.Right - 96, valueBounds.Bottom - 22, 88, 20), new Color(185, 196, 255), 0.30f);
+            {
+                // 操作ヒントはアンダーライン終端の近くに、読みやすい反転プレートで表示する。
+                var hintBounds = new Rectangle(valueBounds.Right - 108, valueBounds.Bottom - 28, 100, 26);
+                DrawRoundedFill(hintBounds, 6, new Color(185, 196, 255));
+                DrawFittedText("CHANGE", hintBounds, new Color(25, 31, 48), 0.34f);
+            }
             return;
         }
 
