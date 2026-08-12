@@ -269,7 +269,6 @@ public sealed partial class GoScreenRenderer
         DrawPlayerEditPopupField("HANDLE", session.PlayerEditClientIdentityHandle, PlayerEditPanelClientIdentityTextBounds, mousePoint);
         if (session.PlayerEditDraft.Kind == EntryProfileKind.Computer)
             DrawPlayerEditPopupField("ENGINE", session.PlayerEditEngineDisplayName, PlayerEditPanelEngineTextBounds, mousePoint);
-        DrawText("DISPLAY NAME を直接編集できます。  HANDLE と ENGINE は CHANGE から選択します。", new Vector2(bounds.X + 42, bounds.Bottom - 54), new Color(180, 195, 195), 0.28f);
         DrawPlayerEditStickyNote(session, mousePoint);
     }
 

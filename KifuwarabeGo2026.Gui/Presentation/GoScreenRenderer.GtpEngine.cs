@@ -243,11 +243,10 @@ public sealed partial class GoScreenRenderer
             : session.IsGtpEngineSelectionForCgos
                 ? session.GtpEngineSelectionTargetStone == GoStone.Black ? "CGOS PLAYER 1" : "CGOS PLAYER 2"
                 : session.GtpEngineSelectionTargetStone == GoStone.Black ? "BLACK" : "WHITE";
-        DrawText($"GTP ENGINE SELECT  {target}", new Vector2(GtpEngineSelectionDialogBounds.X + 30, GtpEngineSelectionDialogBounds.Y + 24), new Color(244, 238, 218), 0.78f);
+        DrawText($"SELECT ENGINE (GTP)  {target}", new Vector2(GtpEngineSelectionDialogBounds.X + 30, GtpEngineSelectionDialogBounds.Y + 24), new Color(244, 238, 218), 0.78f);
         var closeLabel = session.IsGtpEngineSelectionForAppProvider ? "CLOSE" : "CANCEL";
-        var useLabel = session.IsGtpEngineSelectionForAppProvider ? "USE" : "SELECT";
         DrawCommandButton(GtpEngineSelectionDialogCancelButtonBounds, closeLabel, false, mousePoint, scale: 0.34f);
-        DrawCommandButton(GtpEngineSelectionDialogOkButtonBounds, useLabel, false, mousePoint, enabled: !session.IsGtpEngineCompatibilityLoading && session.CanCommitGtpEngineSelection, scale: 0.34f);
+        DrawCommandButton(GtpEngineSelectionDialogOkButtonBounds, "USE", false, mousePoint, enabled: !session.IsGtpEngineCompatibilityLoading && session.CanCommitGtpEngineSelection, scale: 0.34f);
 
         DrawText("LIST", new Vector2(GtpEngineSelectionDialogListBounds.X, GtpEngineSelectionDialogListBounds.Y - 34), new Color(180, 195, 195), 0.46f);
         DrawText("PROPERTIES", new Vector2(GtpEngineSelectionDialogPropertyBounds.X, GtpEngineSelectionDialogPropertyBounds.Y - 34), new Color(180, 195, 195), 0.46f);
@@ -641,11 +640,12 @@ public sealed partial class GoScreenRenderer
         DrawText($"{index + 1:00}", new Vector2(bounds.X + 14, bounds.Y + 16), inUse ? new Color(177, 255, 215) : new Color(180, 195, 195), 0.4f);
         if (inspected)
             DrawSelectionFingerMark(new Vector2(bounds.X - 55, bounds.Center.Y - 13), 1.65f);
-        var nameWidth = inUse ? bounds.Width - 172 : bounds.Width - 82;
-        DrawFittedText(profile.DisplayName, new Rectangle(bounds.X + 62, bounds.Y + 6, nameWidth, 30), enabled ? Color.White : new Color(145, 145, 145), 0.5f);
+        DrawPlayerRoleFaceIcon(new Vector2(bounds.X + 72, bounds.Y + 22), isComputer: true);
+        var nameWidth = inUse ? bounds.Width - 196 : bounds.Width - 106;
+        DrawFittedText(profile.DisplayName, new Rectangle(bounds.X + 86, bounds.Y + 6, nameWidth, 30), enabled ? Color.White : new Color(145, 145, 145), 0.5f);
         if (inUse)
             DrawText("IN USE", new Vector2(bounds.Right - 82, bounds.Y + 12), new Color(177, 255, 215), 0.27f);
-        DrawFittedText(compatibility.Message, new Rectangle(bounds.X + 62, bounds.Y + 39, bounds.Width - 82, 24), enabled ? new Color(99, 223, 185) : new Color(255, 145, 151), 0.29f);
+        DrawFittedText(compatibility.Message, new Rectangle(bounds.X + 86, bounds.Y + 39, bounds.Width - 106, 24), enabled ? new Color(99, 223, 185) : new Color(255, 145, 151), 0.29f);
     }
 
     private void DrawSelectionFingerMark(Vector2 origin, float scale)
