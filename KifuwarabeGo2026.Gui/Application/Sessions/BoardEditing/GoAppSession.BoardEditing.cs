@@ -27,6 +27,7 @@ public sealed partial class GoAppSession
         ResetPositionHistory();
         ClearBoardEditingHistory();
         ChangeMode(GoAppModeKind.BoardEditing);
+        ActivateWindow(ActiveWindowId.BoardEditing);
     }
 
     public void FinishBoardEditing()
@@ -35,6 +36,7 @@ public sealed partial class GoAppSession
         CurrentGameRecord = CreateGameRecordFromCurrentPosition();
         ResetPositionHistory();
         ChangeMode(GoAppModeKind.Resting);
+        DeactivateWindow(ActiveWindowId.BoardEditing);
     }
 
     public void CancelBoardEditing()
@@ -47,5 +49,6 @@ public sealed partial class GoAppSession
 
         _beforeBoardEditingRecord = null;
         LoadGameRecordAsInitialPosition(record, out _);
+        DeactivateWindow(ActiveWindowId.BoardEditing);
     }
 }

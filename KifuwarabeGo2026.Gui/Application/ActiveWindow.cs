@@ -30,6 +30,8 @@ public enum ActiveWindowId
     ReviewChartPopup,
     InitialPositionConcierge,
     ApplicationSettings,
+    BoardEditing,
+    VariationEditing,
 }
 
 /// <summary>

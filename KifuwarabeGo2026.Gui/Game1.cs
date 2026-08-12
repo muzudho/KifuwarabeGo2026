@@ -1794,6 +1794,10 @@ public class Game1 : Game
             case ActiveWindowId.ApplicationSettings:
                 HandleApplicationSettingsClick(point);
                 return true;
+            case ActiveWindowId.BoardEditing:
+                return TryHandleBoardEditingClick(point);
+            case ActiveWindowId.VariationEditing:
+                return TryHandleVariationEditingClick(point);
             default:
                 return false;
         }
@@ -2637,6 +2641,7 @@ public class Game1 : Game
         }
 
         _variationSession = variationSession;
+        _session.ActivateModalWindow(ActiveWindowId.VariationEditing);
     }
 
     private void StartWhiteboardFromLocalSetup()
@@ -2657,6 +2662,7 @@ public class Game1 : Game
 
         variationSession.EnableVariationPositionAdoption();
         _variationSession = variationSession;
+        _session.ActivateModalWindow(ActiveWindowId.VariationEditing);
     }
 
     private bool TryHandleVariationEditingClick(Point point)
@@ -2669,6 +2675,7 @@ public class Game1 : Game
         if (GoScreenRenderer.GetVariationEditingDiscardButtonHit(point))
         {
             _variationSession = null;
+            _session.DeactivateModalWindow(ActiveWindowId.VariationEditing);
             BeginDiscardTransition();
             return true;
         }
@@ -2680,6 +2687,7 @@ public class Game1 : Game
             if (_session.LoadGameRecordAsInitialPosition(adoptedRecord, out var warning))
             {
                 _variationSession = null;
+                _session.DeactivateModalWindow(ActiveWindowId.VariationEditing);
             }
             else if (!string.IsNullOrWhiteSpace(warning))
             {
