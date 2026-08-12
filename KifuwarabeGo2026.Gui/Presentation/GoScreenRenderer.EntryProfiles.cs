@@ -241,6 +241,7 @@ public sealed partial class GoScreenRenderer
         if (session.PlayerEditDraft.Kind == EntryProfileKind.Computer)
             DrawPlayerEditPopupField("ENGINE", session.PlayerEditEngineDisplayName, PlayerEditPanelEngineTextBounds, mousePoint);
         DrawText("DISPLAY NAME を直接編集できます。  HANDLE と ENGINE は CHANGE から選択します。", new Vector2(bounds.X + 42, bounds.Bottom - 54), new Color(180, 195, 195), 0.28f);
+        DrawPlayerEditStickyNote(session, mousePoint);
     }
 
     private void DrawClientIdentityProfileEditPanel(GoAppSession session, Point mousePoint)
@@ -406,6 +407,9 @@ public sealed partial class GoScreenRenderer
     private static readonly Rectangle PlayerEditPanelClientIdentityTextBounds = new(760, 439, 600, 42);
     private static readonly Rectangle PlayerEditPanelEngineTextBounds = new(760, 503, 600, 42);
 
+    private static Rectangle PlayerEditFieldHoverBounds(Rectangle textBounds) =>
+        new(552, textBounds.Y, textBounds.Right - 552, textBounds.Height);
+
     private void DrawPlayerEditField(GoAppSession session, EntryProfileEditField field, string label, Point mousePoint)
     {
         var textBounds = PlayerEditPanelFieldTextBounds(field);
@@ -440,6 +444,47 @@ public sealed partial class GoScreenRenderer
             : new Rectangle(textBounds.Right - 108, textBounds.Bottom - 28, 100, 26);
         DrawRoundedFill(hintBounds, 6, new Color(185, 196, 255));
         DrawSharpCenteredFittedText(text, hintBounds, new Color(15, 20, 31), 0.34f);
+    }
+
+    private void DrawPlayerEditStickyNote(GoAppSession session, Point mousePoint)
+    {
+        var displayNameBounds = PlayerEditPanelFieldTextBounds(EntryProfileEditField.DisplayName);
+        var handleBounds = PlayerEditPanelClientIdentityTextBounds;
+        var engineBounds = PlayerEditPanelEngineTextBounds;
+        var noteBounds = new Rectangle(552, 574, 806, 122);
+        string? heading = null;
+        string[]? bodyLines = null;
+        Vector2 connectorStart = default;
+
+        if (PlayerEditFieldHoverBounds(displayNameBounds).Contains(mousePoint))
+        {
+            heading = "DISPLAY NAME とは？";
+            bodyLines = ["画面に表示され、棋譜に書き込まれる、プレイヤーの呼び名。"];
+            connectorStart = new Vector2(displayNameBounds.Center.X, displayNameBounds.Bottom);
+        }
+        else if (PlayerEditFieldHoverBounds(handleBounds).Contains(mousePoint))
+        {
+            heading = "HANDLE とは？";
+            bodyLines = ["対局サービスにログインするときの、プレイヤー固有の名前。", "接続する相手の機械に入力できるフォーマットに合わせます。"];
+            connectorStart = new Vector2(handleBounds.Center.X, handleBounds.Bottom);
+        }
+        else if (session.PlayerEditDraft.Kind == EntryProfileKind.Computer && PlayerEditFieldHoverBounds(engineBounds).Contains(mousePoint))
+        {
+            heading = "ENGINE とは？";
+            bodyLines = ["コンピューターとして着手するための GTP エンジン。", "CHANGE から、使うエンジンを選びます。"];
+            connectorStart = new Vector2(engineBounds.Center.X, engineBounds.Bottom);
+        }
+
+        if (heading is null || bodyLines is null) return;
+        DrawStickyNote(
+            noteBounds,
+            connectorStart,
+            new Vector2(noteBounds.Center.X, noteBounds.Y),
+            new Color(185, 196, 255),
+            new Color(116, 145, 178),
+            heading,
+            bodyLines,
+            bodyLineSpacing: 26);
     }
 
     private void DrawPlayerEngineCycleButton(Rectangle bounds, bool pointsRight, Point mousePoint)
