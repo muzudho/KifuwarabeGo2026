@@ -1,5 +1,6 @@
 namespace KifuwarabeGo2026.Gui.Presentation;
 
+using KifuwarabeGo2026.Gui.Presentation.Shared.StickyNote;
 using Microsoft.Xna.Framework;
 using System.Collections.Generic;
 
@@ -8,21 +9,34 @@ using System.Collections.Generic;
 /// </summary>
 public sealed partial class GoScreenRenderer
 {
+    private StickyNoteScreenId _stickyNoteScreen = StickyNoteScreenId.Unknown;
+
+    /// <summary>現在のパンくずに対応する画面文脈を設定します。</summary>
+    public void SetStickyNoteScreen(StickyNoteScreenId screen) => _stickyNoteScreen = screen;
+
     /// <summary>
     /// 見出しと本文を共通の大きさ・余白で描く案内付箋です。
     /// 本文は呼び出し側で行ごとに渡し、狭い欄でも文字を縮小しません。
     /// </summary>
     private void DrawStickyNote(
-        Rectangle bounds,
+        StickyNoteKind kind,
         Vector2 connectorStart,
-        Vector2 connectorEnd,
         Color accent,
         Color borderColor,
         string heading,
         IReadOnlyList<string> bodyLines,
-        int bodyLineSpacing = 40)
+        int bodyLineSpacing = 40,
+        Rectangle? anchorBounds = null)
     {
-        DrawLine(connectorStart, connectorEnd, 2, accent);
+        if (!StickyNotePlacementStrategies.TryGetPlacement(
+                _stickyNoteScreen,
+                kind,
+                new StickyNotePlacementContext(connectorStart, anchorBounds),
+                out var placement))
+            return;
+
+        var bounds = placement.Bounds;
+        DrawLine(connectorStart, placement.ConnectorEnd, 2, accent);
         FillRect(new Rectangle(bounds.X + 9, bounds.Y + 11, bounds.Width, bounds.Height), new Color(0, 0, 0, 115));
         FillRect(bounds, new Color(19, 25, 30, 248));
         DrawRect(bounds, 2, borderColor);

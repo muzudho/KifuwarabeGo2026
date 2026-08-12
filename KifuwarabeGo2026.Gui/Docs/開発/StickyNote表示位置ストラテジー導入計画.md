@@ -44,3 +44,10 @@ placement
 - 新しい画面を追加しただけではStickyNoteが誤って表示されない。
 - StickyNoteを表示する画面では、表示位置の決定元を対応するストラテジーへ一本化できている。
 - サブ画面を含む全画面で、表示・非表示の意図を対応表から追跡できる。
+
+## 実装状況（2026-08-12）
+
+- `StickyNoteScreenId` と `StickyNoteKind` を導入し、画面文脈と案内を安定したIDで表せるようにした。
+- `StickyNotePlacementStrategies` が `(画面ID, 案内ID)` ごとの配置ストラテジーを解決する。未登録の組み合わせは非表示となる。
+- タイトル、Entry Profile編集、Client Identity編集、一時HANDLE選択、GTPエンジン選択、対局ルール選択の既存StickyNoteをこの入口へ移行した。
+- Entry Profile編集の子画面を開いている間に付箋を隠す個別条件分岐を撤去した。子画面の画面IDには親画面用ストラテジーが登録されていないため、自動的に非表示となる。

@@ -1,6 +1,7 @@
 namespace KifuwarabeGo2026.Gui.Presentation;
 
 using KifuwarabeGo2026.Gui.Application;
+using KifuwarabeGo2026.Gui.Presentation.Shared.StickyNote;
 using KifuwarabeGo2026.Gui.Presentation.Shared.PlayerSelector;
 using KifuwarabeGo2026.Shared.Domain;
 using Microsoft.Xna.Framework;
@@ -249,9 +250,7 @@ public sealed partial class GoScreenRenderer
         if (session.PlayerEditDraft.Kind == EntryProfileKind.Computer)
             DrawPlayerEditPopupField("ENGINE", session.PlayerEditEngineDisplayName, PlayerEditPanelEngineTextBounds, mousePoint);
         DrawText("DISPLAY NAME を直接編集できます。  HANDLE と ENGINE は CHANGE から選択します。", new Vector2(bounds.X + 42, bounds.Bottom - 54), new Color(180, 195, 195), 0.28f);
-        // 子ダイアログを開いている間は、背後の Entry Profile 用 StickyNote を出さない。
-        if (!session.IsClientIdentityProfileSelectionPanelOpen && !session.IsClientIdentityProfileEditPanelOpen)
-            DrawPlayerEditStickyNote(session, mousePoint);
+        DrawPlayerEditStickyNote(session, mousePoint);
     }
 
     private void DrawClientIdentityProfileEditPanel(GoAppSession session, Point mousePoint)
@@ -383,9 +382,8 @@ public sealed partial class GoScreenRenderer
         var service = session.QuickClientIdentitySelectionIsCgos ? "ONLINE MATCH (CGOS)" : "LOCAL MATCH";
         DrawText("SELECT TEMPORARY HANDLE", new Vector2(590, 277), new Color(244, 238, 218), 0.56f);
         DrawStickyNote(
-            new Rectangle(560, 824, 800, 130),
+            StickyNoteKind.QuickClientIdentityHandleHint,
             new Vector2(960, 805),
-            new Vector2(960, 824),
             new Color(147, 244, 200),
             new Color(116, 145, 146),
             "HANDLE とは？",
@@ -452,8 +450,7 @@ public sealed partial class GoScreenRenderer
 
     private void DrawClientIdentityHandleStickyNote(Rectangle textBounds)
     {
-        var noteBounds = new Rectangle(1452, 418, 408, 122);
-        DrawStickyNote(noteBounds, PlayerEditUnderlineConnectorStart(textBounds), new Vector2(noteBounds.X, noteBounds.Center.Y), new Color(185, 196, 255), new Color(116, 145, 178), "HANDLE とは？", ["対局サービスにログインするときの、プレイヤー固有の名前。", "接続する相手の機械に入力できるフォーマットに合わせます。"], bodyLineSpacing: 26);
+        DrawStickyNote(StickyNoteKind.ClientIdentityHandleHint, PlayerEditUnderlineConnectorStart(textBounds), new Color(185, 196, 255), new Color(116, 145, 178), "HANDLE とは？", ["対局サービスにログインするときの、プレイヤー固有の名前。", "接続する相手の機械に入力できるフォーマットに合わせます。"], bodyLineSpacing: 26);
     }
 
     private static Rectangle PlayerEditPanelFieldTextBounds(EntryProfileEditField field) => field switch
@@ -510,9 +507,6 @@ public sealed partial class GoScreenRenderer
         var displayNameBounds = PlayerEditPanelFieldTextBounds(EntryProfileEditField.DisplayName);
         var handleBounds = PlayerEditPanelClientIdentityTextBounds;
         var engineBounds = PlayerEditPanelEngineTextBounds;
-        // モーダルの外、画面右端に余白を残して配置する。
-        // 接続線があるので対象欄と離れていても関係を追いやすい。
-        var noteBounds = new Rectangle(1452, 418, 408, 122);
         string? heading = null;
         string[]? bodyLines = null;
         Vector2 connectorStart = default;
@@ -538,9 +532,8 @@ public sealed partial class GoScreenRenderer
 
         if (heading is null || bodyLines is null) return;
         DrawStickyNote(
-            noteBounds,
+            StickyNoteKind.EntryProfileFieldHint,
             connectorStart,
-            new Vector2(noteBounds.X, noteBounds.Center.Y),
             new Color(185, 196, 255),
             new Color(116, 145, 178),
             heading,

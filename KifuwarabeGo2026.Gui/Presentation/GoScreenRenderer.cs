@@ -5,6 +5,7 @@ using KifuwarabeGo2026.Gui.Application.Local.Resting.TournamentRule;
 using KifuwarabeGo2026.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.Shared.Domain;
 using KifuwarabeGo2026.Gui.Presentation.Shared.PlayerSelector;
+using KifuwarabeGo2026.Gui.Presentation.Shared.StickyNote;
 using KifuwarabeGo2026.Gui.Presentation.Title;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -620,7 +621,7 @@ public sealed partial class GoScreenRenderer
     private void DrawPathTooltipIfHovered(Rectangle rowBounds, string fullPath, Point mousePoint)
     {
         if (IsPathTooltipHovered(rowBounds, fullPath, mousePoint))
-            DrawPathTooltip(rowBounds, fullPath, mousePoint, "FILE とは？", ["対局ルールで利用するファイルの場所です。"]);
+            DrawPathTooltip(StickyNoteKind.TournamentRulesPathHint, rowBounds, fullPath, mousePoint, "FILE とは？", ["対局ルールで利用するファイルの場所です。"]);
     }
 
     private static bool IsPathTooltipHovered(Rectangle rowBounds, string fullPath, Point mousePoint) =>
@@ -1202,25 +1203,30 @@ public sealed partial class GoScreenRenderer
         _spriteBatch.End();
     }
     private void DrawPathTooltip(
+        StickyNoteKind kind,
         Rectangle rowBounds,
         string fullPath,
         Point mousePoint,
         string heading,
         IReadOnlyList<string> descriptionLines)
     {
-        var bounds = PathTooltipBounds(rowBounds);
         // 長いパスは表示幅を超えたために縮小せず、区切り文字で改行する。
         var lines = descriptionLines.Concat(WrapPathForTooltip(fullPath, 72).Take(2)).ToArray();
         DrawStickyNote(
-            bounds,
+            kind,
             new Vector2(rowBounds.Center.X, rowBounds.Bottom),
-            new Vector2(bounds.Center.X, bounds.Y),
             new Color(147, 244, 200),
             new Color(87, 157, 128),
             heading,
             lines,
-            bodyLineSpacing: 32);
-        DrawCommandButton(PathTooltipCopyButtonBoundsFromPopup(bounds), "COPY", false, mousePoint, scale: 0.34f);
+            bodyLineSpacing: 32,
+            anchorBounds: rowBounds);
+        if (StickyNotePlacementStrategies.TryGetPlacement(
+                _stickyNoteScreen,
+                kind,
+                new StickyNotePlacementContext(Vector2.Zero, rowBounds),
+                out var placement))
+            DrawCommandButton(PathTooltipCopyButtonBoundsFromPopup(placement.Bounds), "COPY", false, mousePoint, scale: 0.34f);
     }
 
     private static IEnumerable<string> WrapPathForTooltip(string path, int maximumLength)

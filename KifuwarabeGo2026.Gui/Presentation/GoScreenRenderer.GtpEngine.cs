@@ -4,6 +4,7 @@ using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.GtpExtensions.InitialPosition;
 using KifuwarabeGo2026.Shared.Domain;
 using KifuwarabeGo2026.Gui.Presentation.Shared.PlayerSelector;
+using KifuwarabeGo2026.Gui.Presentation.Shared.StickyNote;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -718,6 +719,7 @@ public sealed partial class GoScreenRenderer
         // 後から描いた方が別行のホバー判定に見えてしまう。
         if (IsPathTooltipHovered(executablePathRowBounds, executablePath, mousePoint))
             DrawPathTooltip(
+                StickyNoteKind.GtpEnginePathHint,
                 executablePathRowBounds,
                 executablePath,
                 mousePoint,
@@ -730,6 +732,7 @@ public sealed partial class GoScreenRenderer
                 ]);
         else if (IsPathTooltipHovered(workingDirectoryRowBounds, displayWorkingDirectory, mousePoint))
             DrawPathTooltip(
+                StickyNoteKind.GtpEnginePathHint,
                 workingDirectoryRowBounds,
                 displayWorkingDirectory,
                 mousePoint,

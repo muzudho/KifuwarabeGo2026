@@ -1,6 +1,7 @@
 namespace KifuwarabeGo2026.Gui.Presentation;
 
 using KifuwarabeGo2026.Gui.Application;
+using KifuwarabeGo2026.Gui.Presentation.Shared.StickyNote;
 using KifuwarabeGo2026.Gui.Presentation.Title;
 using Microsoft.Xna.Framework;
 using System;
@@ -100,12 +101,10 @@ public sealed partial class GoScreenRenderer
     /// </summary>
     private void DrawCaptureGamePreview()
     {
-        var bounds = new Rectangle(1412, 390, 420, 174);
         var accent = new Color(255, 190, 92);
         DrawStickyNote(
-            bounds,
+            StickyNoteKind.TitlePonnukiPreview,
             new Vector2(1390, 432),
-            new Vector2(bounds.X, 432),
             accent,
             new Color(142, 105, 57),
             "ポン抜きゲームとは？",
@@ -140,18 +139,18 @@ public sealed partial class GoScreenRenderer
 
     private void DrawTitleHomeHint(string heading, string message, Color accent)
     {
-        var (bounds, target) = heading switch
+        var (kind, target) = heading switch
         {
             "FORMAL APPS" =>
-                (new Rectangle(70, 270, 390, 190), GetTitleSectionLabelConnectorTarget("FORMAL APPS", new Vector2(500, 338), connectsToRight: false)),
+                (StickyNoteKind.TitleFormalAppsHint, GetTitleSectionLabelConnectorTarget("FORMAL APPS", new Vector2(500, 338), connectsToRight: false)),
             "CASUAL APPS" =>
-                (new Rectangle(1412, 270, 420, 190), GetTitleSectionLabelConnectorTarget("CASUAL APPS", new Vector2(950, 338), connectsToRight: true)),
+                (StickyNoteKind.TitleCasualAppsHint, GetTitleSectionLabelConnectorTarget("CASUAL APPS", new Vector2(950, 338), connectsToRight: true)),
             "LOCAL MATCH" =>
-                (new Rectangle(70, 370, 400, 174), new Vector2(TitleHomeLocalButtonBounds.Left, TitleHomeLocalButtonBounds.Center.Y)),
+                (StickyNoteKind.TitleLocalMatchHint, new Vector2(TitleHomeLocalButtonBounds.Left, TitleHomeLocalButtonBounds.Center.Y)),
             "ONLINE MATCH" =>
-                (new Rectangle(70, 554, 400, 174), new Vector2(TitleHomeCgosButtonBounds.Left, TitleHomeCgosButtonBounds.Center.Y)),
+                (StickyNoteKind.TitleOnlineMatchHint, new Vector2(TitleHomeCgosButtonBounds.Left, TitleHomeCgosButtonBounds.Center.Y)),
             _ =>
-                (new Rectangle(1412, 760, 400, 160), new Vector2(SettingsButtonBounds.Left - 14, SettingsButtonBounds.Center.Y)),
+                (StickyNoteKind.TitleSettingsHint, new Vector2(SettingsButtonBounds.Left - 14, SettingsButtonBounds.Center.Y)),
         };
         var bodyLines = heading switch
         {
@@ -162,24 +161,12 @@ public sealed partial class GoScreenRenderer
             _ => new[] { message },
         };
         DrawStickyNote(
-            bounds,
+            kind,
             target,
-            GetTitleHomeHintConnectorEnd(bounds, target),
             accent,
             new Color(accent.R, accent.G, accent.B, (byte)190),
             $"{heading} とは？",
             bodyLines);
-    }
-
-    private static Vector2 GetTitleHomeHintConnectorEnd(Rectangle bounds, Vector2 target)
-    {
-        if (target.X <= bounds.Left)
-            return new Vector2(bounds.Left, bounds.Center.Y);
-        if (target.X >= bounds.Right)
-            return new Vector2(bounds.Right, bounds.Center.Y);
-        return target.Y <= bounds.Top
-            ? new Vector2(bounds.Center.X, bounds.Top)
-            : new Vector2(bounds.Center.X, bounds.Bottom);
     }
 
     private Vector2 GetTitleSectionLabelConnectorTarget(string label, Vector2 labelPosition, bool connectsToRight)

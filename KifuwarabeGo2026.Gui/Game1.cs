@@ -21,6 +21,7 @@ using KifuwarabeGo2026.Gui.Presentation.GoApps.Formal.LocalMatch.Interval;
 using KifuwarabeGo2026.Gui.Presentation.GoApps.Formal.LocalMatch.Interval.TournamentRules;
 using KifuwarabeGo2026.Gui.Presentation.Title;
 using KifuwarabeGo2026.Gui.Presentation.Shared.TextBox;
+using KifuwarabeGo2026.Gui.Presentation.Shared.StickyNote;
 using KifuwarabeGo2026.Gui.Sgf;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
@@ -707,6 +708,7 @@ public class Game1 : Game
     protected override void Draw(GameTime gameTime)
     {
         GraphicsDevice.Clear(new Color(11, 13, 18));
+        _renderer?.SetStickyNoteScreen(GetStickyNoteScreen());
         var backgroundMousePosition = _activeGtpEngineIntegerOption is not null || _activeGtpEngineStringOption is not null
             ? new Point(-1, -1)
             : Mouse.GetState().Position;
@@ -5685,6 +5687,24 @@ public class Game1 : Game
                         ? "Formal/LocalMatch/InitialPositionConcierge"
                         : $"Formal/LocalMatch/{_session.CurrentMode.Kind}"
                     : $"Formal/OnlineMatch.Cgos/{_session.CgosConnectionFlowKind}/{_session.CurrentMode.Kind}";
+
+    private StickyNoteScreenId GetStickyNoteScreen()
+    {
+        if (_session.IsGtpEngineSelectionDialogOpen)
+            return StickyNoteScreenId.GtpEngineSelection;
+        if (_session.IsTournamentRulesSelectionDialogOpen)
+            return StickyNoteScreenId.TournamentRulesSelection;
+        if (_session.IsQuickClientIdentitySelectionPanelOpen)
+            return StickyNoteScreenId.QuickClientIdentitySelection;
+        if (_session.IsClientIdentityProfileEditPanelOpen)
+            return StickyNoteScreenId.ClientIdentityEdit;
+        if (_session.IsPlayerEditPanelOpen)
+            return StickyNoteScreenId.EntryProfileEdit;
+
+        return _session.UseKind is null && !_isApplicationSettingsOpen && _titleMenuPage == TitleMenuPage.Home
+            ? StickyNoteScreenId.TitleHome
+            : StickyNoteScreenId.Unknown;
+    }
 
     private string GetScreenBreadcrumb()
     {
