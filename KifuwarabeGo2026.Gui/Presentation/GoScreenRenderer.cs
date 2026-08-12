@@ -957,9 +957,9 @@ public sealed partial class GoScreenRenderer
     private static Rectangle StartPlayingButtonBounds => new(1658, 920, 154, 56);
     private static Rectangle ChangeAppProviderButtonBounds => new(1658, 556, 154, 52);
     private static Rectangle AppProviderGameSettingsButtonBounds => new(1328, 556, 320, 52);
-    private static Rectangle PonnukiProviderSeedAutoChangeBounds => new(1164, 870, 196, 32);
-    private static Rectangle PonnukiPlayer1SeedAutoChangeBounds => new(1380, 870, 196, 32);
-    private static Rectangle PonnukiPlayer2SeedAutoChangeBounds => new(1596, 870, 196, 32);
+    private static Rectangle PonnukiProviderSeedAutoChangeBounds => new(1164, 870, 200, 32);
+    private static Rectangle PonnukiPlayer1SeedAutoChangeBounds => new(1378, 870, 200, 32);
+    private static Rectangle PonnukiPlayer2SeedAutoChangeBounds => new(1592, 870, 200, 32);
 
     private static Rectangle ImportSgfButtonBounds => new(1492, 184, 320, 56);
 
@@ -1021,8 +1021,8 @@ public sealed partial class GoScreenRenderer
 
         DrawVerticalResultSection(new Rectangle(1144, 856, 668, 52), "SEED AUTO", new Color(112, 76, 48), labelWidth: 56);
         DrawCommandButton(PonnukiProviderSeedAutoChangeBounds, session.PonnukiProviderSeedAutoChange ? "[x] PROVIDER" : "[ ] PROVIDER", session.PonnukiProviderSeedAutoChange, mousePoint, scale: 0.22f);
-        DrawCommandButton(PonnukiPlayer1SeedAutoChangeBounds, session.PonnukiBlackPlayerSeedAutoChange ? "[x] COMPUTER1" : "[ ] COMPUTER1", session.PonnukiBlackPlayerSeedAutoChange, mousePoint, enabled: session.CanAutoChangePonnukiPlayer1Seed, scale: 0.22f);
-        DrawCommandButton(PonnukiPlayer2SeedAutoChangeBounds, session.PonnukiWhitePlayerSeedAutoChange ? "[x] COMPUTER2" : "[ ] COMPUTER2", session.PonnukiWhitePlayerSeedAutoChange, mousePoint, enabled: session.CanAutoChangePonnukiPlayer2Seed, scale: 0.22f);
+        DrawCommandButton(PonnukiPlayer1SeedAutoChangeBounds, session.PonnukiBlackPlayerSeedAutoChange ? "[x] BLACK" : "[ ] BLACK", session.PonnukiBlackPlayerSeedAutoChange, mousePoint, enabled: session.CanAutoChangePonnukiPlayer1Seed, scale: 0.22f);
+        DrawCommandButton(PonnukiPlayer2SeedAutoChangeBounds, session.PonnukiWhitePlayerSeedAutoChange ? "[x] WHITE" : "[ ] WHITE", session.PonnukiWhitePlayerSeedAutoChange, mousePoint, enabled: session.CanAutoChangePonnukiPlayer2Seed, scale: 0.22f);
 
         DrawVerticalResultSection(new Rectangle(1144, 916, 668, 76), "ACTION", new Color(91, 82, 105));
         DrawCommandButton(
@@ -1259,14 +1259,17 @@ public sealed partial class GoScreenRenderer
             DrawIconStone(new Vector2(selector.Bounds.X + 34, selector.Bounds.Center.Y), 13, isBlack);
             if (selector.IsComputer is { } isComputer)
                 DrawPlayerRoleFaceIcon(new Vector2(selector.Bounds.X + 76, selector.Bounds.Center.Y), isComputer);
-            var valueBounds = new Rectangle(GameOverValueX, selector.Bounds.Y + 6, selector.Bounds.Right - GameOverValueX - 34, selector.Bounds.Height - 12);
+            var fieldBounds = new Rectangle(GameOverValueX, selector.Bounds.Y + 6, selector.Bounds.Right - GameOverValueX - 34, selector.Bounds.Height - 12);
             var hovered = selector.Enabled && selector.Bounds.Contains(mousePoint);
+            var valueBounds = hovered
+                ? new Rectangle(fieldBounds.X, fieldBounds.Y, fieldBounds.Width - 122, fieldBounds.Height)
+                : fieldBounds;
             DrawFittedText(selector.Value, valueBounds, Color.White, 0.42f);
-            DrawRoundedFill(new Rectangle(valueBounds.X, valueBounds.Bottom + 2, valueBounds.Width, 5), 2, hovered ? new Color(185, 196, 255) : new Color(100, 110, 145));
+            DrawRoundedFill(new Rectangle(fieldBounds.X, fieldBounds.Bottom + 2, fieldBounds.Width, 5), 2, hovered ? new Color(185, 196, 255) : new Color(100, 110, 145));
             if (hovered)
             {
                 // 操作ヒントはアンダーライン終端の近くに、読みやすい反転プレートで表示する。
-                var hintBounds = new Rectangle(valueBounds.Right - 108, valueBounds.Bottom - 28, 100, 26);
+                var hintBounds = new Rectangle(fieldBounds.Right - 108, fieldBounds.Bottom - 28, 100, 26);
                 DrawRoundedFill(hintBounds, 6, new Color(185, 196, 255));
                 DrawSharpCenteredFittedText("CHANGE", hintBounds, new Color(15, 20, 31), 0.34f);
             }

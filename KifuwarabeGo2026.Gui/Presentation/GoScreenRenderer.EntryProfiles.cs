@@ -46,13 +46,15 @@ public sealed partial class GoScreenRenderer
     public static bool GetWhitePlayerSelectButtonHit(Point point) => PlayerSelectorLayout.CreatePlayerSelector(WhitePlayerKindButtonY).Bounds.Contains(point);
     public static bool GetPonnukiBlackPlayerSelectButtonHit(Point point) => PlayerSelectorLayout.CreatePlayerSelector(PonnukiBlackPlayerKindButtonY).Bounds.Contains(point);
     public static bool GetPonnukiWhitePlayerSelectButtonHit(Point point) => PlayerSelectorLayout.CreatePlayerSelector(PonnukiWhitePlayerKindButtonY).Bounds.Contains(point);
-    public static GoStone? GetLocalMatchHandleHit(Point point)
+    public static GoStone? GetLocalMatchHandleHit(Point point, bool isPonnuki)
     {
-        if (LocalMatchHandleBounds(BlackPlayerKindButtonY).Contains(point)) return GoStone.Black;
-        return LocalMatchHandleBounds(WhitePlayerKindButtonY).Contains(point) ? GoStone.White : null;
+        var blackPlayerY = isPonnuki ? PonnukiBlackPlayerKindButtonY : BlackPlayerKindButtonY;
+        var whitePlayerY = isPonnuki ? PonnukiWhitePlayerKindButtonY : WhitePlayerKindButtonY;
+        if (LocalMatchHandleBounds(blackPlayerY).Contains(point)) return GoStone.Black;
+        return LocalMatchHandleBounds(whitePlayerY).Contains(point) ? GoStone.White : null;
     }
-    public int GetLocalMatchHandleCaretIndex(Point point, GoStone stone, string text) =>
-        GetTextBoxCaretIndex(point.X, text, LocalMatchHandleTextBounds(stone), 0.32f);
+    public int GetLocalMatchHandleCaretIndex(Point point, GoStone stone, string text, bool isPonnuki) =>
+        GetTextBoxCaretIndex(point.X, text, LocalMatchHandleTextBounds(stone, isPonnuki), 0.32f);
     public static bool GetPlayerSelectionDialogCancelButtonHit(Point point) => PlayerSelectionCancelButtonBounds.Contains(point);
     public static bool GetPlayerSelectionDialogOkButtonHit(Point point) => PlayerSelectionOkButtonBounds.Contains(point);
     public static bool GetPlayerSelectionDialogPreviousPageButtonHit(Point point) => PlayerSelectionPreviousButtonBounds.Contains(point);
@@ -159,7 +161,7 @@ public sealed partial class GoScreenRenderer
             mousePoint);
         var handleBounds = LocalMatchHandleBounds(y);
         DrawFittedText("HANDLE", new Rectangle(1156, handleBounds.Y + 4, 118, 32), UiLabel.TextColor, 0.34f);
-        var textBounds = LocalMatchHandleTextBounds(stone);
+        var textBounds = LocalMatchHandleTextBounds(y);
         var active = session.ActiveLocalMatchHandleStone == stone;
         var hovered = textBounds.Contains(mousePoint);
         var text = session.GetLocalMatchHandleDraft(stone);
@@ -430,9 +432,14 @@ public sealed partial class GoScreenRenderer
 
     private static Rectangle LocalMatchHandleBounds(int y) => new(1144, y + 48, 668, 40);
 
-    private static Rectangle LocalMatchHandleTextBounds(GoStone stone)
+    private static Rectangle LocalMatchHandleTextBounds(GoStone stone, bool isPonnuki) =>
+        LocalMatchHandleTextBounds(stone == GoStone.Black
+            ? (isPonnuki ? PonnukiBlackPlayerKindButtonY : BlackPlayerKindButtonY)
+            : (isPonnuki ? PonnukiWhitePlayerKindButtonY : WhitePlayerKindButtonY));
+
+    private static Rectangle LocalMatchHandleTextBounds(int playerY)
     {
-        var bounds = LocalMatchHandleBounds(stone == GoStone.Black ? BlackPlayerKindButtonY : WhitePlayerKindButtonY);
+        var bounds = LocalMatchHandleBounds(playerY);
         return new Rectangle(GameOverValueX, bounds.Y + 4, 410, 30);
     }
 

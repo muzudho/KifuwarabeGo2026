@@ -1637,7 +1637,7 @@ public class Game1 : Game
                 _playingScene.StartPlaying();
             }
             else if (isPlayerSelectionIntermission &&
-                     GoScreenRenderer.GetLocalMatchHandleHit(point) is { } handleStone)
+                     GoScreenRenderer.GetLocalMatchHandleHit(point, _session.UseKind == GoAppUseKind.LocalApps) is { } handleStone)
             {
                 BeginOrMoveLocalMatchHandleEdit(point, handleStone);
             }
@@ -1906,7 +1906,7 @@ public class Game1 : Game
                  _session.ActiveLocalMatchHandleStone is { } localHandleStone)
         {
             _localMatchHandleTextBox.UpdateMouseSelection(
-                _renderer.GetLocalMatchHandleCaretIndex(point, localHandleStone, _localMatchHandleTextBox.Text));
+                _renderer.GetLocalMatchHandleCaretIndex(point, localHandleStone, _localMatchHandleTextBox.Text, _session.UseKind == GoAppUseKind.LocalApps));
             _session.SetLocalMatchHandleDraft(
                 _localMatchHandleTextBox.Text,
                 _localMatchHandleTextBox.CaretIndex,
@@ -4030,7 +4030,7 @@ public class Game1 : Game
         var text = _session.ActiveLocalMatchHandleStone == stone
             ? _localMatchHandleTextBox.Text
             : _session.GetLocalMatchHandleDraft(stone);
-        var caretIndex = _renderer?.GetLocalMatchHandleCaretIndex(point, stone, text) ?? text.Length;
+        var caretIndex = _renderer?.GetLocalMatchHandleCaretIndex(point, stone, text, _session.UseKind == GoAppUseKind.LocalApps) ?? text.Length;
         if (_session.ActiveLocalMatchHandleStone != stone)
             _localMatchHandleTextBox.Begin(text, caretIndex);
         _localMatchHandleTextBox.BeginMouseSelection(caretIndex, IsShiftDown());
