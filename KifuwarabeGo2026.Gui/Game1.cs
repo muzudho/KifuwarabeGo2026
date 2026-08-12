@@ -960,6 +960,12 @@ public class Game1 : Game
         if (_previousMouse.LeftButton == ButtonState.Released && mouse.LeftButton == ButtonState.Pressed)
         {
             GuiOperationLog.User("Mouse click", $"screen={GetCurrentScreenState()} x={point.X} y={point.Y}");
+            if (TryHandleActiveWindowClick(point))
+            {
+                _previousMouse = mouse;
+                return;
+            }
+
             if (_activeGtpEngineIntegerOption is not null)
             {
                 if (_renderer is not null && GoScreenRenderer.IsIntegerInputDialogTextBoxHit(point))
@@ -992,18 +998,6 @@ public class Game1 : Game
                 _previousMouse = mouse;
                 return;
             }
-            if (TryHandleCgosMatchNotificationClick(point))
-            {
-                _previousMouse = mouse;
-                return;
-            }
-
-            if (TryHandleActiveWindowClick(point))
-            {
-                _previousMouse = mouse;
-                return;
-            }
-
             if (_session.UseKind is null)
             {
                 if (_isApplicationSettingsOpen)
@@ -1798,6 +1792,8 @@ public class Game1 : Game
                 return TryHandleBoardEditingClick(point);
             case ActiveWindowId.VariationEditing:
                 return TryHandleVariationEditingClick(point);
+            case ActiveWindowId.CgosMatchNotification:
+                return TryHandleCgosMatchNotificationClick(point);
             default:
                 return false;
         }
@@ -3577,6 +3573,7 @@ public class Game1 : Game
         _cgosMatchNotificationMode = IsCgosConnectionWaitingScreen()
             ? CgosMatchNotificationMode.Countdown
             : CgosMatchNotificationMode.Deferred;
+        _session.ActivateModalWindow(ActiveWindowId.CgosMatchNotification);
         PlayUpcomingMatchChime();
         GuiOperationLog.App(
             "CGOS match notification opened",
@@ -3591,14 +3588,14 @@ public class Game1 : Game
         if (_session.CgosConnectionFlowKind == CgosConnectionFlowKind.Watching &&
             _cgosMatchNotificationGameId == _cgosGameObservation.GameId)
         {
-            _cgosMatchNotificationMode = CgosMatchNotificationMode.None;
+            CloseCgosMatchNotification();
             return;
         }
 
         if (_cgosGameObservation.IsFinished &&
             _session.CgosConnectionFlowKind is CgosConnectionFlowKind.Watching or CgosConnectionFlowKind.Result)
         {
-            _cgosMatchNotificationMode = CgosMatchNotificationMode.None;
+            CloseCgosMatchNotification();
             return;
         }
 
@@ -3656,7 +3653,7 @@ public class Game1 : Game
         GuiOperationLog.User(
             _cgosGameObservation.IsFinished ? "Opened notified CGOS result" : "Opened notified CGOS match",
             $"gameId={_cgosGameObservation.GameId} reason={reason}");
-        _cgosMatchNotificationMode = CgosMatchNotificationMode.None;
+        CloseCgosMatchNotification();
         if (_session.CurrentMode.Kind == GoAppModeKind.Reviewing)
             _session.ReturnFromReviewingToResting();
         if (_cgosGameObservation.IsFinished)
@@ -3677,6 +3674,12 @@ public class Game1 : Game
             $"gameId={_cgosGameObservation.GameId} reason={reason}");
     }
 
+    private void CloseCgosMatchNotification()
+    {
+        _cgosMatchNotificationMode = CgosMatchNotificationMode.None;
+        _session.DeactivateModalWindow(ActiveWindowId.CgosMatchNotification);
+    }
+
     private void RestoreCgosMatchNotificationAfterLeavingView()
     {
         if (!_cgosGameObservation.IsStarted || _cgosGameObservation.IsFinished)
@@ -3684,6 +3687,7 @@ public class Game1 : Game
 
         _cgosMatchNotificationGameId = _cgosGameObservation.GameId;
         _cgosMatchNotificationMode = CgosMatchNotificationMode.Deferred;
+        _session.ActivateModalWindow(ActiveWindowId.CgosMatchNotification);
         _cgosMatchNotificationStartedAt = DateTimeOffset.UtcNow;
         GuiOperationLog.User(
             "Restored CGOS match notification after leaving view",

@@ -32,6 +32,7 @@ public enum ActiveWindowId
     ApplicationSettings,
     BoardEditing,
     VariationEditing,
+    CgosMatchNotification,
 }
 
 /// <summary>
