@@ -18,6 +18,7 @@ public sealed class TournamentRulesSetting
     private readonly GoAppSession _session;
     private readonly TournamentRulesCatalog _catalog;
     private readonly Action _browseTournamentRules;
+    private readonly Action _beginDiscardTransition;
     private readonly IClipboardService _clipboardService;
     private readonly TextBoxController _displayNameTextBox = new(MaxDisplayNameLength);
     private readonly TextBoxController _mainTimeHoursTextBox = new(3);
@@ -30,11 +31,13 @@ public sealed class TournamentRulesSetting
         GoAppSession session,
         TournamentRulesCatalog catalog,
         Action browseTournamentRules,
+        Action beginDiscardTransition,
         IClipboardService clipboardService)
     {
         _session = session;
         _catalog = catalog;
         _browseTournamentRules = browseTournamentRules;
+        _beginDiscardTransition = beginDiscardTransition;
         _clipboardService = clipboardService;
     }
 
@@ -151,6 +154,7 @@ public sealed class TournamentRulesSetting
             CommitNumericEdit();
             CancelDisplayNameEdit();
             _session.CloseTournamentRulesAddPanel();
+            _beginDiscardTransition();
             return true;
         }
 
@@ -304,6 +308,7 @@ public sealed class TournamentRulesSetting
         if (GoScreenRenderer.GetCatalogOrderCancelButtonHit(point))
         {
             _session.CancelTournamentRulesOrderEditor();
+            _beginDiscardTransition();
             return true;
         }
 

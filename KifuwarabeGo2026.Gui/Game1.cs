@@ -68,6 +68,8 @@ public class Game1 : Game
     private SoundEffectInstance? _upcomingMatchChimeInstance;
     private SoundEffect? _screenshotShutterSound;
     private SoundEffectInstance? _screenshotShutterSoundInstance;
+    private SoundEffect? _screenTransitionSound;
+    private SoundEffectInstance? _screenTransitionSoundInstance;
     private MouseState _previousMouse;
     private KeyboardState _previousKeyboard;
     private KeyboardState _previousScreenshotKeyboard;
@@ -118,6 +120,7 @@ public class Game1 : Game
     private int _cgosMatchNotificationGameId;
     private double _inputClockSeconds;
     private double _screenshotEffectStartedAt = double.NegativeInfinity;
+    private double _screenTransitionStartedAt = double.NegativeInfinity;
     private double _boardLensBannerStartedAt = double.NegativeInfinity;
     private bool _initialWindowLayoutPending = true;
     private WindowClientSize _lastLoggedWindowClientSize = new(-1, -1);
@@ -154,9 +157,13 @@ public class Game1 : Game
     private const double ReviewPopupDoubleClickSeconds = 0.36d;
     private const int ReviewPopupDoubleClickDistance = 18;
     private const double ScreenshotEffectDurationSeconds = 0.42d;
+    private const double ScreenTransitionDurationSeconds = 1.5d;
     private const double BoardLensBannerDurationSeconds = 2.2d;
     private const double BoardLensBannerCompactStartSeconds = 1.35d;
     private const double BoardLensBannerCompactDurationSeconds = 0.55d;
+
+    private bool IsScreenTransitionActive =>
+        _inputClockSeconds - _screenTransitionStartedAt is >= 0d and < ScreenTransitionDurationSeconds;
 
     public Game1(
         IClipboardService clipboardService,
@@ -212,6 +219,7 @@ public class Game1 : Game
             _session,
             _tournamentRulesCatalog,
             OpenTournamentRulesSelectionDialog,
+            BeginDiscardTransition,
             _clipboardService);
         _playingScene = new PlayingScene(
             _session,
@@ -252,6 +260,8 @@ public class Game1 : Game
         _upcomingMatchChimeInstance = _upcomingMatchChime.CreateInstance();
         _screenshotShutterSound = CreateScreenshotShutterSound();
         _screenshotShutterSoundInstance = _screenshotShutterSound.CreateInstance();
+        _screenTransitionSound = CreateScreenTransitionSound();
+        _screenTransitionSoundInstance = _screenTransitionSound.CreateInstance();
     }
 
     protected override void Update(GameTime gameTime)
@@ -270,6 +280,8 @@ public class Game1 : Game
         SynchronizeOrArmWindowInput(keyboard, mouse);
         var acceptsInput = IsActive && _inputArmed;
         LogAutomaticScreenTransition();
+        if (IsScreenTransitionActive)
+            acceptsInput = false;
         if (acceptsInput && GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed)
         {
             Exit();
@@ -825,6 +837,10 @@ public class Game1 : Game
             var screenshotEffectAge = _inputClockSeconds - _screenshotEffectStartedAt;
             if (screenshotEffectAge >= 0d && screenshotEffectAge < ScreenshotEffectDurationSeconds)
                 _renderer.DrawScreenshotCaptureEffect((float)(screenshotEffectAge / ScreenshotEffectDurationSeconds));
+
+            var screenTransitionAge = _inputClockSeconds - _screenTransitionStartedAt;
+            if (screenTransitionAge >= 0d && screenTransitionAge < ScreenTransitionDurationSeconds)
+                _renderer.DrawLightningScreenTransition((float)(screenTransitionAge / ScreenTransitionDurationSeconds));
         }
 
         if (_renderer is not null && _activeGtpEngineIntegerOption is { } integerOption)
@@ -891,7 +907,10 @@ public class Game1 : Game
                 if (GoScreenRenderer.GetTextAreaDialogApplyButtonHit(point))
                     CommitCommentEditor(saveToFile: true);
                 else if (GoScreenRenderer.GetTextAreaDialogCancelButtonHit(point))
+                {
                     CancelCommentEditor();
+                    BeginDiscardTransition();
+                }
             }
             _previousMouse = mouse;
             return;
@@ -1889,6 +1908,7 @@ public class Game1 : Game
             {
                 _session.CancelClientIdentityProfileEdit();
                 SavePlayerAndClientIdentityCatalogs();
+                BeginDiscardTransition();
             }
             else if (GoScreenRenderer.GetClientIdentityProfileEditSaveButtonHit(point))
             {
@@ -1902,7 +1922,11 @@ public class Game1 : Game
         if (_session.PlayerOrderEditor.IsOpen)
         {
             var editor = _session.PlayerOrderEditor;
-            if (GoScreenRenderer.GetCatalogOrderCancelButtonHit(point)) _session.CancelPlayerOrderEditor();
+            if (GoScreenRenderer.GetCatalogOrderCancelButtonHit(point))
+            {
+                _session.CancelPlayerOrderEditor();
+                BeginDiscardTransition();
+            }
             else if (GoScreenRenderer.GetCatalogOrderSaveButtonHit(point)) SavePlayerCatalog(_session.CommitPlayerOrderEditor());
             else if (GoScreenRenderer.GetCatalogOrderMoveStep(point, editor.PageSize) is var step && step == int.MinValue) editor.MoveSelectedToTop();
             else if (step != 0) editor.MoveSelected(step);
@@ -1915,7 +1939,10 @@ public class Game1 : Game
             if (GoScreenRenderer.GetPlayerEditPanelClientIdentityChangeHit(point))
                 _session.OpenClientIdentityProfileSelectionPanel();
             else if (GoScreenRenderer.GetPlayerEditPanelCancelButtonHit(point))
+            {
                 _session.CancelPlayerEditPanel();
+                BeginDiscardTransition();
+            }
             else if (GoScreenRenderer.GetPlayerEditPanelSaveButtonHit(point) && _session.SavePlayerEditDraft())
                 SavePlayerCatalog(_session.EntryProfiles);
             else if (_session.PlayerEditDraft.Kind == EntryProfileKind.Computer &&
@@ -2450,6 +2477,7 @@ public class Game1 : Game
         if (GoScreenRenderer.GetBoardEditingCancelButtonHit(point))
         {
             _session.CancelBoardEditing();
+            BeginDiscardTransition();
             return true;
         }
 
@@ -2641,6 +2669,7 @@ public class Game1 : Game
         if (GoScreenRenderer.GetVariationEditingDiscardButtonHit(point))
         {
             _variationSession = null;
+            BeginDiscardTransition();
             return true;
         }
 
@@ -2813,6 +2842,7 @@ public class Game1 : Game
             EndCgosConnectionEditField();
             _cgosConnectionEditTextBox.Clear();
             _session.CloseCgosConnectionEditPanel();
+            BeginDiscardTransition();
             return true;
         }
 
@@ -4943,6 +4973,7 @@ public class Game1 : Game
         if (GoScreenRenderer.GetCatalogOrderCancelButtonHit(point))
         {
             _session.CancelCgosConnectionOrderEditor();
+            BeginDiscardTransition();
             return true;
         }
 
@@ -4972,6 +5003,7 @@ public class Game1 : Game
         if (GoScreenRenderer.GetCatalogOrderCancelButtonHit(point))
         {
             _session.CancelGtpEngineOrderEditor();
+            BeginDiscardTransition();
             return true;
         }
 
@@ -5047,6 +5079,7 @@ public class Game1 : Game
             if (GoScreenRenderer.GetGtpEngineGuiOptionsDialogCancelButtonHit(point))
             {
                 _session.CancelGtpEngineGuiOptionsDialog();
+                BeginDiscardTransition();
                 return true;
             }
 
@@ -5101,6 +5134,7 @@ public class Game1 : Game
             RefreshCurrentGtpEngineAppCompatibilities();
             _session.CancelNewEngineProfileForPlayerEdit();
             _session.CloseGtpEngineEditPanel();
+            BeginDiscardTransition();
             return true;
         }
 
@@ -5283,6 +5317,7 @@ public class Game1 : Game
         {
             _appProviderSettingsEvaluationGeneration++;
             _session.CancelAppProviderGameSettingsDialog();
+            BeginDiscardTransition();
             GuiOperationLog.User("Cancelled App Provider game settings", "app=ponnuki; role=provider");
             return;
         }
@@ -5908,6 +5943,12 @@ public class Game1 : Game
         _lastScreenState = current;
     }
 
+    private void BeginDiscardTransition()
+    {
+        _screenTransitionStartedAt = _inputClockSeconds;
+        PlayScreenTransitionSound();
+    }
+
     private string GetCurrentScreenState() =>
         _isApplicationSettingsOpen
             ? "Application settings"
@@ -6041,6 +6082,8 @@ public class Game1 : Game
             _upcomingMatchChime?.Dispose();
             _screenshotShutterSoundInstance?.Dispose();
             _screenshotShutterSound?.Dispose();
+            _screenTransitionSoundInstance?.Dispose();
+            _screenTransitionSound?.Dispose();
             _placeStoneSoundInstance?.Dispose();
             _placeStoneSound?.Dispose();
         }
@@ -6087,6 +6130,45 @@ public class Game1 : Game
 
         _screenshotShutterSoundInstance.Volume = 0.72f;
         _screenshotShutterSoundInstance.Play();
+    }
+
+    private void PlayScreenTransitionSound()
+    {
+        if (_screenTransitionSoundInstance is null)
+            return;
+
+        if (_screenTransitionSoundInstance.State == SoundState.Playing)
+            _screenTransitionSoundInstance.Stop();
+
+        _screenTransitionSoundInstance.Volume = 0.38f;
+        _screenTransitionSoundInstance.Play();
+    }
+
+    private static SoundEffect CreateScreenTransitionSound()
+    {
+        const int sampleRate = 44100;
+        const float duration = 1.5f;
+        var sampleCount = (int)(sampleRate * duration);
+        var buffer = new byte[sampleCount * sizeof(short)];
+        uint noiseState = 0xB16B00B5;
+
+        for (var i = 0; i < sampleCount; i++)
+        {
+            var time = i / (float)sampleRate;
+            noiseState = noiseState * 1664525u + 1013904223u;
+            var noise = ((noiseState >> 8) / 8388607.5f) - 1f;
+            var crackle = MathF.Sign(noise) * MathF.Pow(MathF.Abs(noise), 4.2f);
+            var buzzFrequency = 72f + time * 94f;
+            var buzz = MathF.Sin(MathF.Tau * buzzFrequency * time) * 0.15f;
+            var pulse = 0.42f + 0.58f * MathF.Pow(MathF.Abs(MathF.Sin(MathF.Tau * (6f + time * 4f) * time)), 6f);
+            var envelope = Math.Clamp(time / 0.035f, 0f, 1f) * Math.Clamp((duration - time) / 0.18f, 0f, 1f);
+            var wave = (crackle * 0.72f * pulse + buzz) * envelope;
+            var sample = (short)(Math.Clamp(wave, -1f, 1f) * short.MaxValue * 0.68f);
+            buffer[i * 2] = (byte)(sample & 0xff);
+            buffer[i * 2 + 1] = (byte)((sample >> 8) & 0xff);
+        }
+
+        return new SoundEffect(buffer, sampleRate, AudioChannels.Mono);
     }
 
     private static SoundEffect CreateScreenshotShutterSound()
