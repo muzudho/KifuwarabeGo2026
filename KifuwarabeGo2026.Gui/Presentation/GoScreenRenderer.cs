@@ -1249,6 +1249,8 @@ public sealed partial class GoScreenRenderer
             // 石アイコンが黒白を示し、セクション名も PLAYERS なので行内ラベルは重複表示しない。
             var isBlack = selector.Label.StartsWith("BLACK", StringComparison.Ordinal);
             DrawIconStone(new Vector2(selector.Bounds.X + 34, selector.Bounds.Center.Y), 13, isBlack);
+            if (selector.IsComputer is { } isComputer)
+                DrawPlayerRoleFaceIcon(new Vector2(selector.Bounds.X + 76, selector.Bounds.Center.Y), isComputer);
             var valueBounds = new Rectangle(GameOverValueX, selector.Bounds.Y + 6, selector.Bounds.Right - GameOverValueX - 34, selector.Bounds.Height - 12);
             var hovered = selector.Enabled && selector.Bounds.Contains(mousePoint);
             DrawFittedText(selector.Value, valueBounds, Color.White, 0.42f);
@@ -1268,6 +1270,47 @@ public sealed partial class GoScreenRenderer
         DrawFittedText(selector.Label, selector.LabelBounds, new Color(158, 178, 178), 0.36f);
         DrawFittedText(selector.Value, selector.ValueBounds, Color.White, 0.52f);
         DrawCommandButton(selector.BrowseButtonBounds, selector.ButtonLabel, false, mousePoint, enabled: selector.Enabled, scale: PlayerSelectorLayout.SelectButtonLabelScale);
+    }
+
+    /// <summary>石の右側に、人間またはコンピューターの操作主体を示す顔アイコンを描きます。</summary>
+    private void DrawPlayerRoleFaceIcon(Vector2 center, bool isComputer)
+    {
+        var color = isComputer ? new Color(125, 225, 255) : new Color(255, 211, 138);
+        if (isComputer)
+        {
+            var head = new Rectangle((int)center.X - 10, (int)center.Y - 10, 20, 20);
+            FillRect(head, new Color(28, 49, 61));
+            DrawRect(head, 2, color);
+            DrawCircle(center + new Vector2(-4, -2), 2, color);
+            DrawCircle(center + new Vector2(4, -2), 2, color);
+            DrawLine(center + new Vector2(-5, 5), center + new Vector2(5, 5), 2, color);
+            DrawLine(center + new Vector2(0, -10), center + new Vector2(0, -14), 2, color);
+            DrawCircle(center + new Vector2(0, -15), 2, color);
+            return;
+        }
+
+        DrawCrispCircleOutline(center + new Vector2(0, -2), 12, 2, color);
+        // （＾～＾）を20px級に収めた、山形の目と波形の口。
+        DrawLine(center + new Vector2(-6, -4), center + new Vector2(-4, -7), 2, color);
+        DrawLine(center + new Vector2(-4, -7), center + new Vector2(-2, -4), 2, color);
+        DrawLine(center + new Vector2(2, -4), center + new Vector2(4, -7), 2, color);
+        DrawLine(center + new Vector2(4, -7), center + new Vector2(6, -4), 2, color);
+        DrawLine(center + new Vector2(-6, 3), center + new Vector2(-2, 1), 2, color);
+        DrawLine(center + new Vector2(-2, 1), center + new Vector2(2, 4), 2, color);
+        DrawLine(center + new Vector2(2, 4), center + new Vector2(6, 1), 2, color);
+    }
+
+    private void DrawCrispCircleOutline(Vector2 center, float radius, int thickness, Color color)
+    {
+        const int segmentCount = 24;
+        var previous = center + new Vector2(radius, 0);
+        for (var index = 1; index <= segmentCount; index++)
+        {
+            var angle = MathHelper.TwoPi * index / segmentCount;
+            var current = center + new Vector2(MathF.Cos(angle) * radius, MathF.Sin(angle) * radius);
+            DrawLine(previous, current, thickness, color);
+            previous = current;
+        }
     }
 
     private void DrawDataRowFrame(Rectangle bounds, bool active = false, bool hovered = false)

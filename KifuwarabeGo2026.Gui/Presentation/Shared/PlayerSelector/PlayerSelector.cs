@@ -13,7 +13,8 @@ public readonly record struct PlayerSelector(
     int LabelWidth = 126,
     int ButtonWidth = 112,
     int ButtonHeight = PlayerSelectorLayout.SelectButtonHeight,
-    bool Enabled = true)
+    bool Enabled = true,
+    bool? IsComputer = null)
 {
     public Rectangle LabelBounds => new(Bounds.X + 14, Bounds.Y + 10, LabelWidth, Bounds.Height - 20);
 

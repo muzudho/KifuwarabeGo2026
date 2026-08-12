@@ -149,7 +149,14 @@ public sealed partial class GoScreenRenderer
     {
         var player = session.GetSelectedEntryProfile(stone);
         var label = stone == GoStone.Black ? "BLACK PLAYER" : "WHITE PLAYER";
-        DrawPlayerSelector(PlayerSelectorLayout.CreatePlayerSelector(y) with { Label = label, Value = player?.DisplayName ?? "SELECT PLAYER" }, mousePoint);
+        DrawPlayerSelector(
+            PlayerSelectorLayout.CreatePlayerSelector(y) with
+            {
+                Label = label,
+                Value = player?.DisplayName ?? "SELECT PLAYER",
+                IsComputer = player is null ? null : player.Kind == EntryProfileKind.Computer,
+            },
+            mousePoint);
         var handleBounds = LocalMatchHandleBounds(y);
         DrawFittedText("HANDLE", new Rectangle(1156, handleBounds.Y + 4, 118, 32), UiLabel.TextColor, 0.34f);
         var textBounds = LocalMatchHandleTextBounds(stone);
