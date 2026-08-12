@@ -208,19 +208,30 @@ public sealed partial class GoScreenRenderer
         DrawDynamicOptionText("アプリ提供エンジン", new Rectangle(950, 414, 330, 34), new Color(210, 214, 207), 0.32f);
 
         var bounds = TitleAppProviderEngineDisplayBounds;
-        FillRect(bounds, new Color(24, 31, 37));
-        DrawRect(bounds, 2, new Color(88, 102, 112));
-        DrawDynamicOptionText(session.SelectedAppProviderEngineDisplayName, new Rectangle(bounds.X + 18, bounds.Y + 13, 520, 30), Color.White, 0.34f);
-        DrawFittedText("SELECTED ENGINE", new Rectangle(bounds.Right - 238, bounds.Y + 11, 220, 34), new Color(180, 195, 195), MinimumTextScale);
-        DrawCommandButton(
-            TitleAppProviderEngineSelectButtonBounds,
-            isAppProviderLoading ? "LOADING PROVIDERS" : "SELECT PROVIDER ENGINE",
-            appProviderTabIndex == 0,
-            mousePoint,
-            enabled: !isAppProviderLoading,
-            scale: isAppProviderLoading ? 0.27f : 0.31f);
+        var textBounds = TitleAppProviderEngineTextBounds;
+        var hovered = !isAppProviderLoading && textBounds.Contains(mousePoint);
+        DrawText("PROVIDER", new Vector2(bounds.X + 16, textBounds.Y + 7), new Color(180, 195, 195), 0.36f);
+        DrawDynamicOptionText(session.SelectedAppProviderEngineDisplayName, textBounds, Color.White, 0.34f);
+        DrawRoundedFill(
+            new Rectangle(textBounds.X, textBounds.Bottom + 2, textBounds.Width, 5),
+            2,
+            hovered ? new Color(185, 196, 255) : new Color(100, 110, 145));
+        if (hovered)
+        {
+            DrawPlayerEditHint("CHANGE", textBounds);
+            DrawStickyNote(
+                StickyNoteKind.AppProviderEngineHint,
+                new Vector2(textBounds.Right, textBounds.Center.Y),
+                new Color(185, 196, 255),
+                new Color(116, 145, 178),
+                "APP PROVIDER ENGINE とは？",
+                ["このＧＵＩの代わりにアプリ実行を", "担当してくれるエンジンです。"]);
+        }
         if (isAppProviderLoading)
-            DrawAppProviderLoadingSpinner(new Vector2(872, 604));
+        {
+            DrawFittedText("LOADING PROVIDERS", textBounds, new Color(255, 210, 128), 0.30f);
+            DrawAppProviderLoadingSpinner(new Vector2(textBounds.Right - 22, textBounds.Center.Y));
+        }
 
         var capabilityColor = session.IsAppProviderCapabilityConfirmed
             ? new Color(99, 223, 185)
@@ -271,7 +282,7 @@ public sealed partial class GoScreenRenderer
     {
         var stops = new[]
         {
-            (Index: 0, Bounds: TitleAppProviderEngineSelectButtonBounds, Enabled: !isAppProviderLoading),
+            (Index: 0, Bounds: TitleAppProviderEngineDisplayBounds, Enabled: !isAppProviderLoading),
             (Index: 1, Bounds: TitleAppProviderRecheckButtonBounds, Enabled: session.CanUseSelectedAppProvider && !session.IsAppProviderCapabilityCheckRunning),
             (Index: 2, Bounds: TitleAppProviderStartButtonBounds, Enabled: session.CanStartSelectedAppProvider),
             (Index: 3, Bounds: TitleMenuBackButtonBounds, Enabled: true),

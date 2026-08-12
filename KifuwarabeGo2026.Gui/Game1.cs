@@ -5705,9 +5705,15 @@ public class Game1 : Game
         if (_session.IsPlayerEditPanelOpen)
             return StickyNoteScreenId.EntryProfileEdit;
 
-        return _session.UseKind is null && !_isApplicationSettingsOpen && _titleMenuPage == TitleMenuPage.Home
-            ? StickyNoteScreenId.TitleHome
-            : StickyNoteScreenId.Unknown;
+        if (_session.UseKind is not null || _isApplicationSettingsOpen)
+            return StickyNoteScreenId.Unknown;
+
+        return _titleMenuPage switch
+        {
+            TitleMenuPage.Home => StickyNoteScreenId.TitleHome,
+            TitleMenuPage.CaptureGame => StickyNoteScreenId.TitlePonnukiProviderSelection,
+            _ => StickyNoteScreenId.Unknown,
+        };
     }
 
     private string GetScreenBreadcrumb()

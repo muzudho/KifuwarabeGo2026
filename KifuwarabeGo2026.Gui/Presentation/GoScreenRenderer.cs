@@ -967,7 +967,11 @@ public sealed partial class GoScreenRenderer
     private static Rectangle LocalUseButtonBounds => new(508, 404, 438, 300);
     private static Rectangle TitleMenuBackButtonBounds => new(1260, 316, 152, 54);
     private static Rectangle TitleAppProviderEngineDisplayBounds => new(570, 466, 780, 56);
-    private static Rectangle TitleAppProviderEngineSelectButtonBounds => new(850, 548, 500, 54);
+    private static Rectangle TitleAppProviderEngineTextBounds => new(
+        TitleAppProviderEngineDisplayBounds.X + 142,
+        TitleAppProviderEngineDisplayBounds.Y + 7,
+        TitleAppProviderEngineDisplayBounds.Width - 142,
+        42);
     private static Rectangle TitleAppProviderStartButtonBounds => new(1198, 826, 152, 54);
     private static Rectangle TitleAppProviderRecheckButtonBounds => new(828, 826, 340, 54);
     private static Rectangle TitleHomeLocalButtonBounds => new(500, 390, 400, 126);
@@ -979,7 +983,7 @@ public sealed partial class GoScreenRenderer
     public static bool GetTitleAppProviderRecheckButtonHit(Point point) => TitleAppProviderRecheckButtonBounds.Contains(point);
 
     public static bool GetTitleAppProviderEngineSelectButtonHit(Point point) =>
-        TitleAppProviderEngineSelectButtonBounds.Contains(point);
+        TitleAppProviderEngineTextBounds.Contains(point);
 
     private void DrawLocalAppsIntermissionSidePanel(GoAppSession session, Point mousePoint)
     {

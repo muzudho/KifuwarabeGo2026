@@ -9,6 +9,7 @@ public enum StickyNoteScreenId
 {
     Unknown,
     TitleHome,
+    TitlePonnukiProviderSelection,
     EntryProfileEdit,
     ClientIdentitySelection,
     ClientIdentityEdit,
@@ -27,6 +28,7 @@ public enum StickyNoteKind
     TitleOnlineMatchHint,
     TitleSettingsHint,
     TitlePonnukiPreview,
+    AppProviderEngineHint,
     EntryProfileFieldHint,
     ClientIdentityHandleHint,
     QuickClientIdentityHandleHint,
@@ -58,6 +60,7 @@ public static class StickyNotePlacementStrategies
             [(StickyNoteScreenId.TitleHome, StickyNoteKind.TitleOnlineMatchHint)] = Fixed(new Rectangle(70, 554, 400, 174), bounds => new Vector2(bounds.Right, bounds.Center.Y)),
             [(StickyNoteScreenId.TitleHome, StickyNoteKind.TitleSettingsHint)] = Fixed(new Rectangle(1412, 760, 400, 160), bounds => new Vector2(bounds.Left, bounds.Center.Y)),
             [(StickyNoteScreenId.TitleHome, StickyNoteKind.TitlePonnukiPreview)] = Fixed(new Rectangle(1412, 390, 420, 174), bounds => new Vector2(bounds.Left, bounds.Center.Y)),
+            [(StickyNoteScreenId.TitlePonnukiProviderSelection, StickyNoteKind.AppProviderEngineHint)] = Fixed(new Rectangle(1412, 420, 420, 146), bounds => new Vector2(bounds.Left, bounds.Center.Y)),
             [(StickyNoteScreenId.EntryProfileEdit, StickyNoteKind.EntryProfileFieldHint)] = Fixed(new Rectangle(1452, 418, 408, 122), bounds => new Vector2(bounds.Left, bounds.Center.Y)),
             [(StickyNoteScreenId.ClientIdentityEdit, StickyNoteKind.ClientIdentityHandleHint)] = Fixed(new Rectangle(1452, 418, 408, 122), bounds => new Vector2(bounds.Left, bounds.Center.Y)),
             [(StickyNoteScreenId.QuickClientIdentitySelection, StickyNoteKind.QuickClientIdentityHandleHint)] = Fixed(new Rectangle(560, 824, 800, 130), bounds => new Vector2(bounds.Center.X, bounds.Top)),
