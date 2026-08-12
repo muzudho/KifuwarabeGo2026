@@ -29,6 +29,7 @@ public enum ActiveWindowId
     ReviewUnsavedChangesConfirmation,
     ReviewChartPopup,
     InitialPositionConcierge,
+    ApplicationSettings,
 }
 
 /// <summary>

@@ -1006,6 +1006,7 @@ public class Game1 : Game
                 {
                     GuiOperationLog.User("Pressed Settings button");
                     _isApplicationSettingsOpen = true;
+                    _session.ActivateModalWindow(ActiveWindowId.ApplicationSettings);
                     RefreshGuiLogFiles();
                 }
 
@@ -1771,6 +1772,9 @@ public class Game1 : Game
                 return true;
             case ActiveWindowId.InitialPositionConcierge:
                 return _playingScene.TryHandleMouseClick(point);
+            case ActiveWindowId.ApplicationSettings:
+                HandleApplicationSettingsClick(point);
+                return true;
             default:
                 return false;
         }
@@ -5722,6 +5726,7 @@ public class Game1 : Game
         {
             GuiOperationLog.User("Pressed settings Back button");
             _isApplicationSettingsOpen = false;
+            _session.DeactivateModalWindow(ActiveWindowId.ApplicationSettings);
             return;
         }
 
