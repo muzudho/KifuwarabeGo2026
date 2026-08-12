@@ -451,7 +451,9 @@ public sealed partial class GoScreenRenderer
         var displayNameBounds = PlayerEditPanelFieldTextBounds(EntryProfileEditField.DisplayName);
         var handleBounds = PlayerEditPanelClientIdentityTextBounds;
         var engineBounds = PlayerEditPanelEngineTextBounds;
-        var noteBounds = new Rectangle(552, 574, 806, 122);
+        // モーダルの外、画面右端に余白を残して配置する。
+        // 接続線があるので対象欄と離れていても関係を追いやすい。
+        var noteBounds = new Rectangle(1452, 418, 408, 122);
         string? heading = null;
         string[]? bodyLines = null;
         Vector2 connectorStart = default;
@@ -460,32 +462,36 @@ public sealed partial class GoScreenRenderer
         {
             heading = "DISPLAY NAME とは？";
             bodyLines = ["画面に表示され、棋譜に書き込まれる、プレイヤーの呼び名。"];
-            connectorStart = new Vector2(displayNameBounds.Center.X, displayNameBounds.Bottom);
+            connectorStart = PlayerEditUnderlineConnectorStart(displayNameBounds);
         }
         else if (PlayerEditFieldHoverBounds(handleBounds).Contains(mousePoint))
         {
             heading = "HANDLE とは？";
             bodyLines = ["対局サービスにログインするときの、プレイヤー固有の名前。", "接続する相手の機械に入力できるフォーマットに合わせます。"];
-            connectorStart = new Vector2(handleBounds.Center.X, handleBounds.Bottom);
+            connectorStart = PlayerEditUnderlineConnectorStart(handleBounds);
         }
         else if (session.PlayerEditDraft.Kind == EntryProfileKind.Computer && PlayerEditFieldHoverBounds(engineBounds).Contains(mousePoint))
         {
             heading = "ENGINE とは？";
-            bodyLines = ["コンピューターとして着手するための GTP エンジン。", "CHANGE から、使うエンジンを選びます。"];
-            connectorStart = new Vector2(engineBounds.Center.X, engineBounds.Bottom);
+            bodyLines = ["コンピューターとして着手するための GTP エンジン。"];
+            connectorStart = PlayerEditUnderlineConnectorStart(engineBounds);
         }
 
         if (heading is null || bodyLines is null) return;
         DrawStickyNote(
             noteBounds,
             connectorStart,
-            new Vector2(noteBounds.Center.X, noteBounds.Y),
+            new Vector2(noteBounds.X, noteBounds.Center.Y),
             new Color(185, 196, 255),
             new Color(116, 145, 178),
             heading,
             bodyLines,
             bodyLineSpacing: 26);
     }
+
+    private static Vector2 PlayerEditUnderlineConnectorStart(Rectangle textBounds) =>
+        // アンダーラインの中心線へ、右端から少し内側で接続する。
+        new(textBounds.Right - 24, textBounds.Bottom + 4);
 
     private void DrawPlayerEngineCycleButton(Rectangle bounds, bool pointsRight, Point mousePoint)
     {
