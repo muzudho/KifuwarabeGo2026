@@ -236,14 +236,7 @@ public sealed partial class GoScreenRenderer
         FillRect(GtpEngineSelectionDialogBounds, new Color(19, 24, 31, 248));
         DrawRect(GtpEngineSelectionDialogBounds, 2, new Color(116, 145, 146));
 
-        var target = session.IsGtpEngineSelectionForAppProvider
-            ? $"{session.GtpEngineSelectionAppId} PROVIDER"
-            : session.EngineSelectionPurpose == GtpEngineSelectionPurpose.PlayerEdit
-                ? "PLAYER"
-            : session.IsGtpEngineSelectionForCgos
-                ? session.GtpEngineSelectionTargetStone == GoStone.Black ? "CGOS PLAYER 1" : "CGOS PLAYER 2"
-                : session.GtpEngineSelectionTargetStone == GoStone.Black ? "BLACK" : "WHITE";
-        DrawText($"SELECT ENGINE (GTP)  {target}", new Vector2(GtpEngineSelectionDialogBounds.X + 30, GtpEngineSelectionDialogBounds.Y + 24), new Color(244, 238, 218), 0.78f);
+        DrawText("SELECT ENGINE (GTP)", new Vector2(GtpEngineSelectionDialogBounds.X + 30, GtpEngineSelectionDialogBounds.Y + 24), new Color(244, 238, 218), 0.78f);
         var closeLabel = session.IsGtpEngineSelectionForAppProvider ? "CLOSE" : "CANCEL";
         DrawCommandButton(GtpEngineSelectionDialogCancelButtonBounds, closeLabel, false, mousePoint, scale: 0.34f);
         DrawCommandButton(GtpEngineSelectionDialogOkButtonBounds, "USE", false, mousePoint, enabled: !session.IsGtpEngineCompatibilityLoading && session.CanCommitGtpEngineSelection, scale: 0.34f);
@@ -293,7 +286,8 @@ public sealed partial class GoScreenRenderer
             "GTP ENGINES",
             mousePoint,
             profile => profile.DisplayName,
-            profile => string.IsNullOrWhiteSpace(profile.ExecutablePath) ? "EXECUTABLE NOT SET" : Path.GetFileName(profile.ExecutablePath));
+            profile => string.IsNullOrWhiteSpace(profile.ExecutablePath) ? "EXECUTABLE NOT SET" : Path.GetFileName(profile.ExecutablePath),
+            _ => true);
     }
 
     private void DrawGtpEngineSelectionLoadingSkeleton()
