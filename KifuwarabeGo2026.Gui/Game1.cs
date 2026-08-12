@@ -1763,6 +1763,12 @@ public class Game1 : Game
                 return TryHandleCgosConnectionEditPanelClick(point);
             case ActiveWindowId.CatalogOrderEditor:
                 return TryHandleCatalogOrderEditorClick(point);
+            case ActiveWindowId.ReviewChartPopup:
+                if (_session.CurrentMode.Kind == GoAppModeKind.Reviewing)
+                    HandleReviewChartPopupClick(point);
+                else
+                    HandleReadOnlyChartPopupClick(point);
+                return true;
             default:
                 return false;
         }

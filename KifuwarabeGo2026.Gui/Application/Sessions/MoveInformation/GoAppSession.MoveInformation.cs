@@ -57,13 +57,19 @@ public sealed partial class GoAppSession
     public void OpenReviewChartPopup()
     {
         if (CurrentMode.Kind == GoAppModeKind.Reviewing)
+        {
             IsReviewChartPopupOpen = true;
+            ActivateWindow(ActiveWindowId.ReviewChartPopup);
+        }
     }
 
     public void OpenLocalChartPopup()
     {
         if (CanOpenLocalChartPopup)
+        {
             IsReviewChartPopupOpen = true;
+            ActivateWindow(ActiveWindowId.ReviewChartPopup);
+        }
     }
 
     public int GetLiveChartVisibleMoveCount(int currentMoveCount) =>
@@ -89,8 +95,13 @@ public sealed partial class GoAppSession
             CgosConnectionFlowKind is CgosFlowKind.Watching or CgosFlowKind.Result)
         {
             IsReviewChartPopupOpen = true;
+            ActivateWindow(ActiveWindowId.ReviewChartPopup);
         }
     }
 
-    public void CloseReviewChartPopup() => IsReviewChartPopupOpen = false;
+    public void CloseReviewChartPopup()
+    {
+        IsReviewChartPopupOpen = false;
+        DeactivateWindow(ActiveWindowId.ReviewChartPopup);
+    }
 }

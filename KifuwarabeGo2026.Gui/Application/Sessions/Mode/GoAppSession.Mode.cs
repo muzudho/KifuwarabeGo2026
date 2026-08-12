@@ -26,6 +26,6 @@ public sealed partial class GoAppSession
             ReturnLocalReplayToLive();
 
         if (modeKind != GoAppModeKind.Reviewing)
-            IsReviewChartPopupOpen = false;
+            CloseReviewChartPopup();
     }
 }

@@ -27,6 +27,7 @@ public enum ActiveWindowId
     IntegerInput,
     CommentEditor,
     ReviewUnsavedChangesConfirmation,
+    ReviewChartPopup,
 }
 
 /// <summary>
