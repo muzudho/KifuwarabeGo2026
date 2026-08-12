@@ -5,9 +5,11 @@ using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.ConnectionTarget;
 using KifuwarabeGo2026.Shared.Domain;
 using KifuwarabeGo2026.Gui.Presentation.Shared.PlayerSelector;
+using KifuwarabeGo2026.Gui.Presentation.Shared.StickyNote;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
+using System.Linq;
 
 public sealed partial class GoScreenRenderer
 {
@@ -702,8 +704,8 @@ public sealed partial class GoScreenRenderer
     {
         if (CgosBlackEngineSelector.ValueBounds.Contains(mousePoint) && session.SelectedCgosBlackGtpEngineProfile is { } blackProfile)
         {
-            DrawCgosTextTooltip(
-                CgosConnectionEngineTooltipBounds,
+            DrawCgosEngineCommandStickyNote(
+                CgosBlackEngineSelector.ValueBounds,
                 "BLACK ENGINE COMMAND",
                 FormatCgosEngineCommand(blackProfile));
             return;
@@ -711,8 +713,8 @@ public sealed partial class GoScreenRenderer
 
         if (CgosWhiteEngineSelector.ValueBounds.Contains(mousePoint) && session.SelectedCgosWhiteGtpEngineProfile is { } whiteProfile)
         {
-            DrawCgosTextTooltip(
-                CgosConnectionEngineTooltipBounds,
+            DrawCgosEngineCommandStickyNote(
+                CgosWhiteEngineSelector.ValueBounds,
                 "WHITE ENGINE COMMAND",
                 FormatCgosEngineCommand(whiteProfile));
             return;
@@ -750,13 +752,17 @@ public sealed partial class GoScreenRenderer
     }
 
 
-    private void DrawCgosTextTooltip(Rectangle bounds, string title, string text)
+    private void DrawCgosEngineCommandStickyNote(Rectangle targetBounds, string title, string command)
     {
-        FillRect(new Rectangle(bounds.X + 8, bounds.Y + 10, bounds.Width, bounds.Height), new Color(0, 0, 0, 150));
-        FillRect(bounds, new Color(30, 36, 43, 252));
-        DrawRect(bounds, 2, new Color(147, 244, 200));
-        DrawText(title, new Vector2(bounds.X + 18, bounds.Y + 12), new Color(180, 195, 195), 0.34f);
-        DrawFittedText(text, new Rectangle(bounds.X + 18, bounds.Y + 42, bounds.Width - 36, bounds.Height - 54), Color.White, 0.42f);
+        DrawStickyNote(
+            StickyNoteKind.CgosEngineCommandHint,
+            new Vector2(targetBounds.Right, targetBounds.Center.Y),
+            new Color(147, 244, 200),
+            new Color(87, 157, 128),
+            title,
+            WrapPathForTooltip(command, 28).Take(4).ToArray(),
+            bodyLineSpacing: 28,
+            anchorBounds: targetBounds);
     }
 
 
@@ -1087,10 +1093,6 @@ public sealed partial class GoScreenRenderer
 
     private static Rectangle CgosConnectionOutputLineBounds(int index) =>
         new(CgosConnectionOutputBounds.X + 16, CgosConnectionOutputBounds.Y + 10 + index * 23, CgosConnectionOutputBounds.Width - 32, 21);
-
-
-    private static Rectangle CgosConnectionEngineTooltipBounds => new(500, 594, 1040, 100);
-
 
     private static Rectangle CgosConnectionMessageTooltipBounds => new(500, 674, 1040, 106);
 

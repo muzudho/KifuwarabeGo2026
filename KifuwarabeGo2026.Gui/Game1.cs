@@ -5704,6 +5704,9 @@ public class Game1 : Game
             return StickyNoteScreenId.ClientIdentityEdit;
         if (_session.IsPlayerEditPanelOpen)
             return StickyNoteScreenId.EntryProfileEdit;
+        if (_session.UseKind == GoAppUseKind.CgosClient &&
+            _session.CgosConnectionFlowKind == CgosConnectionFlowKind.ConnectionStart)
+            return StickyNoteScreenId.CgosConnection;
 
         if (_session.UseKind is not null || _isApplicationSettingsOpen)
             return StickyNoteScreenId.Unknown;
