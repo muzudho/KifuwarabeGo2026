@@ -65,8 +65,10 @@ public sealed partial class GoAppSession
         IsTournamentRulesAddPanelOpen = false;
         IsTournamentRulesDeleteConfirmationOpen = false;
         IsGtpEngineEditPanelOpen = false;
+        DeactivateWindow(ActiveWindowId.GtpEngineEdit);
         IsGtpEngineAddPanelMode = false;
         IsGtpEngineSelectionDialogOpen = true;
+        ActivateWindow(ActiveWindowId.GtpEngineSelection);
         IsGtpEngineDeleteConfirmationOpen = false;
         GtpEngineSelectionTargetStone = stone;
         var selectedIndex = SelectedGtpEngineIndex;
@@ -106,12 +108,14 @@ public sealed partial class GoAppSession
         else
             SelectGtpEngine(GtpEngineSelectionTargetStone, GtpEngineDialogSelectionIndex);
         IsGtpEngineSelectionDialogOpen = false;
+        DeactivateWindow(ActiveWindowId.GtpEngineSelection);
         CloseGtpEngineDeleteConfirmation();
     }
 
     public void CancelGtpEngineSelectionDialog()
     {
         IsGtpEngineSelectionDialogOpen = false;
+        DeactivateWindow(ActiveWindowId.GtpEngineSelection);
         CloseGtpEngineDeleteConfirmation();
     }
 

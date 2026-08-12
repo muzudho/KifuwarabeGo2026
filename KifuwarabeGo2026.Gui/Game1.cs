@@ -979,6 +979,12 @@ public class Game1 : Game
                 return;
             }
 
+            if (TryHandleActiveWindowClick(point))
+            {
+                _previousMouse = mouse;
+                return;
+            }
+
             if (_session.UseKind is null)
             {
                 if (_isApplicationSettingsOpen)
@@ -1710,6 +1716,26 @@ public class Game1 : Game
         }
 
         _previousMouse = mouse;
+    }
+
+    /// <summary>
+    /// モーダル入力は最前面のアクティブウィンドウだけに渡します。
+    /// 未移行の画面は従来の分岐へフォールバックします。
+    /// </summary>
+    private bool TryHandleActiveWindowClick(Point point)
+    {
+        switch (_session.ActiveWindowId)
+        {
+            case ActiveWindowId.GtpEngineEdit:
+                return TryHandleGtpEngineEditPanelClick(point);
+            case ActiveWindowId.GtpEngineSelection:
+                return TryHandleGtpEngineSelectionDialogClick(point);
+            case ActiveWindowId.PlayerSelection:
+                TryHandlePlayerSelectionDialogClick(point);
+                return true;
+            default:
+                return false;
+        }
     }
 
     private void TryHandlePlayerSelectionDialogClick(Point point)

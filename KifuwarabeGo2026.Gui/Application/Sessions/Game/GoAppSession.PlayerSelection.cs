@@ -22,6 +22,7 @@ public sealed partial class GoAppSession
             throw new ArgumentOutOfRangeException(nameof(stone), stone, "Player can be selected only for black or white.");
 
         IsPlayerSelectionDialogOpen = true;
+        ActivateWindow(ActiveWindowId.PlayerSelection);
         PlayerSelectionPurpose = PlayerSelectionPurpose.LocalMatch;
         PlayerSelectionTargetStone = stone;
         PlayerDialogSelectionIndex = _playerProfiles.FindIndex(profile =>
@@ -36,6 +37,7 @@ public sealed partial class GoAppSession
             throw new ArgumentOutOfRangeException(nameof(stone), stone, "CGOS player can be selected only for black or white.");
 
         IsPlayerSelectionDialogOpen = true;
+        ActivateWindow(ActiveWindowId.PlayerSelection);
         PlayerSelectionPurpose = PlayerSelectionPurpose.Cgos;
         PlayerSelectionTargetStone = stone;
         var currentId = stone == GoStone.Black ? CgosBlackEntryProfileId : CgosWhiteEntryProfileId;
@@ -88,10 +90,15 @@ public sealed partial class GoAppSession
             return false;
 
         IsPlayerSelectionDialogOpen = false;
+        DeactivateWindow(ActiveWindowId.PlayerSelection);
         return true;
     }
 
-    public void CancelPlayerSelectionDialog() => IsPlayerSelectionDialogOpen = false;
+    public void CancelPlayerSelectionDialog()
+    {
+        IsPlayerSelectionDialogOpen = false;
+        DeactivateWindow(ActiveWindowId.PlayerSelection);
+    }
 
     public bool CanCommitPlayerSelection =>
         PlayerDialogSelectionIndex >= 0 &&

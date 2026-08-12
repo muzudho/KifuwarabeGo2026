@@ -165,7 +165,9 @@ public sealed partial class GoAppSession
         IsTournamentRulesAddPanelOpen = false;
         IsTournamentRulesDeleteConfirmationOpen = false;
         IsGtpEngineSelectionDialogOpen = false;
+        DeactivateWindow(ActiveWindowId.GtpEngineSelection);
         IsGtpEngineEditPanelOpen = true;
+        ActivateWindow(ActiveWindowId.GtpEngineEdit);
         IsGtpEngineAddPanelMode = false;
         GtpEngineEditProfileIndex = index;
         CloseGtpEngineDeleteConfirmation();
@@ -194,7 +196,9 @@ public sealed partial class GoAppSession
         IsTournamentRulesAddPanelOpen = false;
         IsTournamentRulesDeleteConfirmationOpen = false;
         IsGtpEngineSelectionDialogOpen = false;
+        DeactivateWindow(ActiveWindowId.GtpEngineSelection);
         IsGtpEngineEditPanelOpen = true;
+        ActivateWindow(ActiveWindowId.GtpEngineEdit);
         IsGtpEngineAddPanelMode = true;
         CloseGtpEngineDeleteConfirmation();
         GtpEngineEditDraft = new GtpEngineProfile { DisplayName = "New GTP Engine" };
@@ -214,7 +218,9 @@ public sealed partial class GoAppSession
         IsTournamentRulesAddPanelOpen = false;
         IsTournamentRulesDeleteConfirmationOpen = false;
         IsGtpEngineSelectionDialogOpen = false;
+        DeactivateWindow(ActiveWindowId.GtpEngineSelection);
         IsGtpEngineEditPanelOpen = true;
+        ActivateWindow(ActiveWindowId.GtpEngineEdit);
         IsGtpEngineAddPanelMode = true;
         GtpEngineEditProfileIndex = index;
         CloseGtpEngineDeleteConfirmation();
@@ -235,6 +241,7 @@ public sealed partial class GoAppSession
         IsGtpEngineGuiOptionsDialogOpen = false;
         GtpEngineGuiOptionsDialogDraft.Clear();
         IsGtpEngineEditPanelOpen = false;
+        DeactivateWindow(ActiveWindowId.GtpEngineEdit);
         IsGtpEngineAddPanelMode = false;
         ActiveGtpEngineEditField = null;
         GtpEngineEditWarning = "";
