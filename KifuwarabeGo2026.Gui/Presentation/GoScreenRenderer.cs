@@ -63,7 +63,7 @@ public sealed partial class GoScreenRenderer
 
         DrawBackground();
         var modalOpen = session.IsTournamentRulesSelectionDialogOpen || session.IsTournamentRulesAddPanelOpen ||
-                        session.IsPlayerSelectionDialogOpen || session.IsPlayerEditPanelOpen || session.IsClientIdentityProfileEditPanelOpen ||
+                        session.IsPlayerSelectionDialogOpen || session.IsPlayerEditPanelOpen || session.IsClientIdentityProfileSelectionPanelOpen || session.IsClientIdentityProfileEditPanelOpen ||
                         session.IsGtpEngineSelectionDialogOpen || session.IsGtpEngineEditPanelOpen ||
                         session.IsAppProviderGameSettingsDialogOpen;
         var backgroundMousePoint = modalOpen ? new Point(-1, -1) : mousePoint;

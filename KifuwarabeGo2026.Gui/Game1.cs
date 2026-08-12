@@ -1691,6 +1691,18 @@ public class Game1 : Game
             else if (GoScreenRenderer.GetQuickClientIdentitySelectionItemHit(point, _session) is { } targetIndex) _session.SelectQuickClientIdentity(targetIndex);
             return;
         }
+        if (_session.IsClientIdentityProfileSelectionPanelOpen)
+        {
+            if (GoScreenRenderer.GetClientIdentityProfileSelectionCloseButtonHit(point))
+                _session.CloseClientIdentityProfileSelectionPanel();
+            else if (GoScreenRenderer.GetClientIdentityProfileSelectionUseButtonHit(point) && _session.CommitClientIdentityProfileSelection())
+                SavePlayerAndClientIdentityCatalogs();
+            else if (GoScreenRenderer.GetClientIdentityProfileSelectionEditButtonHit(point))
+                _session.OpenClientIdentityProfileEditPanel();
+            else if (GoScreenRenderer.GetClientIdentityProfileSelectionItemHit(point, _session) is { } targetIndex)
+                _session.SelectClientIdentityProfile(targetIndex);
+            return;
+        }
         if (_session.IsClientIdentityProfileEditPanelOpen)
         {
             if (_session.IsClientIdentityProfileConnectionSelectionPanelOpen)
@@ -1713,23 +1725,14 @@ public class Game1 : Game
             if (GoScreenRenderer.GetClientIdentityProfileEditCloseButtonHit(point))
             {
                 SaveClientIdentityProfileEditDraft();
-                _session.CloseClientIdentityProfileEditPanel();
+                _session.ReturnToClientIdentityProfileSelectionPanel();
             }
             else if (GoScreenRenderer.GetClientIdentityProfileEditAddCgosButtonHit(point) && _session.AddClientIdentityProfile(true)) SavePlayerAndClientIdentityCatalogs();
             else if (GoScreenRenderer.GetClientIdentityProfileEditAddLocalButtonHit(point) && _session.AddClientIdentityProfile(false)) SavePlayerAndClientIdentityCatalogs();
             else if (GoScreenRenderer.GetClientIdentityProfileEditRemoveButtonHit(point) && _session.RemoveClientIdentityProfile()) SavePlayerAndClientIdentityCatalogs();
-            else if (GoScreenRenderer.GetClientIdentityProfileEditUseButtonHit(point) && _session.UseClientIdentityProfile())
-            {
-                SavePlayerAndClientIdentityCatalogs();
-            }
             else if (GoScreenRenderer.GetClientIdentityProfileEditSelectConnectionButtonHit(point)) _session.OpenClientIdentityProfileConnectionSelectionPanel();
             else if (GoScreenRenderer.GetClientIdentityProfileEditFieldHit(point, _session) is { } field)
                 BeginOrMoveClientIdentityProfileEditField(point, field);
-            else if (GoScreenRenderer.GetClientIdentityProfileEditItemHit(point, _session) is { } targetIndex)
-            {
-                SaveClientIdentityProfileEditDraft();
-                _session.MoveClientIdentityProfileEditSelection(targetIndex - _session.ClientIdentityProfileEditIndex);
-            }
             return;
         }
         if (_session.PlayerOrderEditor.IsOpen)
@@ -1746,7 +1749,7 @@ public class Game1 : Game
         if (_session.IsPlayerEditPanelOpen)
         {
             if (GoScreenRenderer.GetPlayerEditPanelClientIdentityChangeHit(point))
-                _session.OpenClientIdentityProfileEditPanel();
+                _session.OpenClientIdentityProfileSelectionPanel();
             else if (GoScreenRenderer.GetPlayerEditPanelCancelButtonHit(point))
                 _session.CancelPlayerEditPanel();
             else if (GoScreenRenderer.GetPlayerEditPanelSaveButtonHit(point) && _session.SavePlayerEditDraft())

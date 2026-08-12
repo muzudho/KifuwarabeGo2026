@@ -23,6 +23,9 @@ public sealed partial class GoScreenRenderer
     private static readonly Rectangle PlayerSelectionOrderButtonBounds = new(1056, 816, 72, 48);
     private static readonly Rectangle PlayerEditPanelCancelButtonBounds = new(1080, 288, 132, 42);
     private static readonly Rectangle PlayerEditPanelSaveButtonBounds = new(1224, 288, 148, 42);
+    private static readonly Rectangle ClientIdentityProfileSelectionCloseButtonBounds = new(1320, 182, 150, 48);
+    private static readonly Rectangle ClientIdentityProfileSelectionUseButtonBounds = new(1158, 182, 150, 48);
+    private static readonly Rectangle ClientIdentityProfileSelectionEditButtonBounds = new(466, 820, 150, 48);
     private static readonly Rectangle ClientIdentityProfileEditCloseButtonBounds = new(1320, 182, 150, 48);
     private static readonly Rectangle ClientIdentityProfileEditUseButtonBounds = new(1158, 182, 150, 48);
     private static readonly Rectangle ClientIdentityProfileEditAddCgosButtonBounds = new(466, 820, 150, 48);
@@ -62,6 +65,9 @@ public sealed partial class GoScreenRenderer
     public static bool GetPlayerEditPanelSaveButtonHit(Point point) => PlayerEditPanelSaveButtonBounds.Contains(point);
     public static bool GetPlayerEditPanelClientIdentityChangeHit(Point point) => PlayerEditPanelClientIdentityTextBounds.Contains(point);
     public static bool GetPlayerEditPanelEngineChangeHit(Point point) => PlayerEditPanelEngineTextBounds.Contains(point);
+    public static bool GetClientIdentityProfileSelectionCloseButtonHit(Point point) => ClientIdentityProfileSelectionCloseButtonBounds.Contains(point);
+    public static bool GetClientIdentityProfileSelectionUseButtonHit(Point point) => ClientIdentityProfileSelectionUseButtonBounds.Contains(point);
+    public static bool GetClientIdentityProfileSelectionEditButtonHit(Point point) => ClientIdentityProfileSelectionEditButtonBounds.Contains(point);
     public static bool GetClientIdentityProfileEditCloseButtonHit(Point point) => ClientIdentityProfileEditCloseButtonBounds.Contains(point);
     public static bool GetClientIdentityProfileEditAddCgosButtonHit(Point point) => ClientIdentityProfileEditAddCgosButtonBounds.Contains(point);
     public static bool GetClientIdentityProfileEditAddLocalButtonHit(Point point) => ClientIdentityProfileEditAddLocalButtonBounds.Contains(point);
@@ -109,6 +115,9 @@ public sealed partial class GoScreenRenderer
             if (new Rectangle(466, 290 + index * 92, 1008, 78).Contains(point)) return index;
         return null;
     }
+
+    public static int? GetClientIdentityProfileSelectionItemHit(Point point, GoAppSession session) =>
+        GetClientIdentityProfileEditItemHit(point, session);
 
     public static EntryProfileEditField? GetPlayerEditPanelFieldHit(Point point) =>
         PlayerEditPanelFieldTextBounds(EntryProfileEditField.DisplayName).Contains(point) ? EntryProfileEditField.DisplayName :
@@ -246,18 +255,24 @@ public sealed partial class GoScreenRenderer
 
     private void DrawClientIdentityProfileEditPanel(GoAppSession session, Point mousePoint)
     {
+        if (session.IsClientIdentityProfileSelectionPanelOpen)
+        {
+            DrawClientIdentityProfileSelectionPanel(session, mousePoint);
+            return;
+        }
         if (!session.IsClientIdentityProfileEditPanelOpen) return;
         var bounds = new Rectangle(430, 150, 1080, 760);
         FillRect(new Rectangle(0, 0, VirtualScreen.Width, VirtualScreen.Height), new Color(0, 0, 0, 150));
         FillRect(bounds, new Color(24, 29, 36, 252));
         DrawRect(bounds, 2, new Color(116, 145, 146));
-        DrawText("EDIT CLIENT IDENTITIES", new Vector2(bounds.X + 34, bounds.Y + 28), new Color(244, 238, 218), 0.68f);
+        DrawText("EDIT CLIENT IDENTITY", new Vector2(bounds.X + 34, bounds.Y + 28), new Color(244, 238, 218), 0.68f);
         DrawDynamicOptionText("この Player 専用の接続先です（最大 5 件）。", new Rectangle(bounds.X + 36, bounds.Y + 82, 700, 32), new Color(180, 195, 195), 0.34f);
         var targets = session.GetPlayerClientIdentityProfiles(session.PlayerEditDraft.Id);
-        DrawCommandButton(ClientIdentityProfileEditUseButtonBounds, "USE", false, mousePoint, enabled: targets.Count > 0 && !session.IsClientIdentityProfileInUse(session.ClientIdentityProfileEditIndex), scale: 0.34f);
-        DrawCommandButton(ClientIdentityProfileEditCloseButtonBounds, "CLOSE", false, mousePoint, scale: 0.34f);
+        DrawCommandButton(ClientIdentityProfileEditCloseButtonBounds, "BACK", false, mousePoint, scale: 0.34f);
         for (var index = 0; index < targets.Count; index++)
         {
+            // 編集画面には、操作対象の一件だけを表示する。選択リストは別画面へ分離する。
+            if (index != session.ClientIdentityProfileEditIndex) continue;
             var target = targets[index];
             var row = new Rectangle(bounds.X + 36, bounds.Y + 140 + index * 92, bounds.Width - 72, 78);
             var isSelectedClientIdentity = index == session.ClientIdentityProfileEditIndex;
@@ -293,6 +308,35 @@ public sealed partial class GoScreenRenderer
         var canSelectConnection = !string.IsNullOrEmpty(selected.ConnectionProfileId) && session.CgosConnectionProfiles.Count > 0;
         DrawCommandButton(ClientIdentityProfileEditSelectConnectionButtonBounds, "SELECT ONLINE MATCH SERVER", false, mousePoint, enabled: canSelectConnection, scale: 0.20f);
         DrawClientIdentityProfileConnectionSelectionPanel(session, mousePoint);
+    }
+
+    private void DrawClientIdentityProfileSelectionPanel(GoAppSession session, Point mousePoint)
+    {
+        var bounds = new Rectangle(430, 150, 1080, 760);
+        FillRect(new Rectangle(0, 0, VirtualScreen.Width, VirtualScreen.Height), new Color(0, 0, 0, 150));
+        FillRect(bounds, new Color(24, 29, 36, 252));
+        DrawRect(bounds, 2, new Color(116, 145, 146));
+        DrawText("USE CLIENT IDENTITY", new Vector2(bounds.X + 34, bounds.Y + 28), new Color(244, 238, 218), 0.68f);
+        DrawFittedText("GREEN: selected     BLUE: current operation", new Rectangle(bounds.X + 36, bounds.Y + 82, 500, 26), new Color(180, 210, 215), 0.31f);
+        var targets = session.GetPlayerClientIdentityProfiles(session.PlayerEditDraft.Id);
+        DrawCommandButton(ClientIdentityProfileSelectionEditButtonBounds, "EDIT", false, mousePoint, enabled: targets.Count > 0, scale: 0.34f);
+        DrawCommandButton(ClientIdentityProfileSelectionUseButtonBounds, "USE", false, mousePoint, enabled: targets.Count > 0 && !session.IsClientIdentityProfileInUse(session.ClientIdentityProfileSelectionIndex), scale: 0.34f);
+        DrawCommandButton(ClientIdentityProfileSelectionCloseButtonBounds, "CLOSE", false, mousePoint, scale: 0.34f);
+
+        for (var index = 0; index < targets.Count; index++)
+        {
+            var target = targets[index];
+            var row = new Rectangle(bounds.X + 36, bounds.Y + 140 + index * 92, bounds.Width - 72, 78);
+            var selected = session.IsClientIdentityProfileInUse(index);
+            var operated = index == session.ClientIdentityProfileSelectionIndex;
+            FillRect(row, selected ? new Color(38, 103, 86) : row.Contains(mousePoint) ? new Color(43, 52, 62) : new Color(24, 31, 37));
+            DrawRect(row, operated ? 3 : selected ? 2 : 1, operated ? new Color(125, 225, 255) : selected ? new Color(147, 244, 200) : new Color(70, 85, 94));
+            if (operated) DrawSelectionFingerMark(new Vector2(row.X - 55, row.Center.Y - 13), 1.65f);
+            DrawFittedText(target.DisplayName, new Rectangle(row.X + 18, row.Y + 9, 250, 28), Color.White, 0.42f);
+            DrawFittedText($"HANDLE: {target.LoginName}", new Rectangle(row.X + 288, row.Y + 9, 430, 28), Color.White, 0.38f);
+            DrawFittedText(session.GetClientIdentityProfileConnectionDisplayName(target), new Rectangle(row.X + 288, row.Y + 43, 520, 22), new Color(180, 195, 195), 0.28f);
+            if (selected) DrawFittedText("IN USE", new Rectangle(row.Right - 150, row.Y + 27, 128, 24), new Color(177, 255, 215), 0.29f);
+        }
     }
 
     private void DrawClientIdentityProfileConnectionSelectionPanel(GoAppSession session, Point mousePoint)

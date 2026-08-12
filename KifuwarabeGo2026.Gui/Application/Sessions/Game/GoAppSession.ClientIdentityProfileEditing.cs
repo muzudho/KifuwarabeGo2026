@@ -9,6 +9,7 @@ using System.Linq;
 public sealed partial class GoAppSession
 {
     public const int ClientIdentityProfileConnectionSelectionPageSize = 5;
+    public bool IsClientIdentityProfileSelectionPanelOpen { get; private set; }
     public bool IsClientIdentityProfileEditPanelOpen { get; private set; }
     public bool IsClientIdentityProfileConnectionSelectionPanelOpen { get; private set; }
     public int ClientIdentityProfileConnectionSelectionIndex { get; private set; }
@@ -18,6 +19,7 @@ public sealed partial class GoAppSession
     public bool QuickClientIdentitySelectionIsCgos { get; private set; }
     public int QuickClientIdentitySelectionIndex { get; private set; }
     public int ClientIdentityProfileEditIndex { get; private set; }
+    public int ClientIdentityProfileSelectionIndex { get; private set; }
     public ClientIdentityProfile ClientIdentityProfileEditDraft { get; private set; } = new();
     public ClientIdentityProfileEditField? ActiveClientIdentityProfileEditField { get; private set; }
     public int ClientIdentityProfileEditCaretIndex { get; private set; }
@@ -25,16 +27,53 @@ public sealed partial class GoAppSession
     public int ClientIdentityProfileEditSelectionLength { get; private set; }
     private string ClientIdentityProfileEditOriginalFieldText { get; set; } = "";
 
+    public bool OpenClientIdentityProfileSelectionPanel()
+    {
+        if (PlayerEditProfileIndex < 0 || PlayerEditProfileIndex >= _playerProfiles.Count) return false;
+        var ids = GetClientIdentityEditOwner().ClientIdentityProfileIds;
+        if (ids.Count == 0) return false;
+        ClientIdentityProfileSelectionIndex = Math.Clamp(ClientIdentityProfileEditIndex, 0, ids.Count - 1);
+        IsClientIdentityProfileSelectionPanelOpen = true;
+        return true;
+    }
+
+    public void CloseClientIdentityProfileSelectionPanel() => IsClientIdentityProfileSelectionPanelOpen = false;
+
+    public void SelectClientIdentityProfile(int index)
+    {
+        var count = GetClientIdentityEditOwner().ClientIdentityProfileIds.Count;
+        if (index < 0 || index >= count) throw new ArgumentOutOfRangeException(nameof(index));
+        ClientIdentityProfileSelectionIndex = index;
+    }
+
+    public bool CommitClientIdentityProfileSelection()
+    {
+        ClientIdentityProfileEditIndex = ClientIdentityProfileSelectionIndex;
+        if (!UseClientIdentityProfile()) return false;
+        IsClientIdentityProfileSelectionPanelOpen = false;
+        return true;
+    }
+
     public bool OpenClientIdentityProfileEditPanel()
     {
         if (PlayerEditProfileIndex < 0 || PlayerEditProfileIndex >= _playerProfiles.Count) return false;
+        ClientIdentityProfileEditIndex = ClientIdentityProfileSelectionIndex;
+        IsClientIdentityProfileSelectionPanelOpen = false;
         IsClientIdentityProfileEditPanelOpen = true;
-        ClientIdentityProfileEditIndex = Math.Max(0, GetClientIdentityEditOwner().ClientIdentityProfileIds.FindIndex(id => string.Equals(id, PlayerEditDraft.ClientIdentityProfileIds.FirstOrDefault(), StringComparison.Ordinal)));
         return LoadClientIdentityProfileEditDraft();
     }
 
     public void CloseClientIdentityProfileEditPanel() =>
         (IsClientIdentityProfileEditPanelOpen, IsClientIdentityProfileConnectionSelectionPanelOpen, ActiveClientIdentityProfileEditField) = (false, false, null);
+
+    public bool ReturnToClientIdentityProfileSelectionPanel()
+    {
+        SaveClientIdentityProfileEditDraft();
+        ClientIdentityProfileSelectionIndex = ClientIdentityProfileEditIndex;
+        IsClientIdentityProfileEditPanelOpen = false;
+        IsClientIdentityProfileSelectionPanelOpen = true;
+        return true;
+    }
 
     public bool OpenQuickClientIdentitySelectionPanel(GoStone stone, bool cgos)
     {
@@ -104,6 +143,7 @@ public sealed partial class GoAppSession
         owner.ClientIdentityProfileIds.Add(target.Id);
         PlayerEditDraft.ClientIdentityProfileIds = owner.ClientIdentityProfileIds.ToList();
         ClientIdentityProfileEditIndex = owner.ClientIdentityProfileIds.Count - 1;
+        ClientIdentityProfileSelectionIndex = ClientIdentityProfileEditIndex;
         LoadClientIdentityProfileEditDraft();
         return true;
     }
@@ -118,6 +158,7 @@ public sealed partial class GoAppSession
             _clientIdentityProfiles.RemoveAll(target => string.Equals(target.Id, id, StringComparison.Ordinal));
         PlayerEditDraft.ClientIdentityProfileIds = owner.ClientIdentityProfileIds.ToList();
         ClientIdentityProfileEditIndex = Math.Clamp(ClientIdentityProfileEditIndex, 0, owner.ClientIdentityProfileIds.Count - 1);
+        ClientIdentityProfileSelectionIndex = ClientIdentityProfileEditIndex;
         return LoadClientIdentityProfileEditDraft();
     }
 
@@ -133,6 +174,7 @@ public sealed partial class GoAppSession
         owner.ClientIdentityProfileIds.Insert(0, id);
         PlayerEditDraft.ClientIdentityProfileIds = owner.ClientIdentityProfileIds.ToList();
         ClientIdentityProfileEditIndex = 0;
+        ClientIdentityProfileSelectionIndex = 0;
         return LoadClientIdentityProfileEditDraft();
     }
 

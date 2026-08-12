@@ -21,7 +21,7 @@ public sealed partial class GoScreenRenderer
             transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));
 
         DrawBackground();
-        var modalOpen = session.IsPlayerSelectionDialogOpen || session.IsPlayerEditPanelOpen || session.IsClientIdentityProfileEditPanelOpen || session.IsQuickClientIdentitySelectionPanelOpen ||
+        var modalOpen = session.IsPlayerSelectionDialogOpen || session.IsPlayerEditPanelOpen || session.IsClientIdentityProfileSelectionPanelOpen || session.IsClientIdentityProfileEditPanelOpen || session.IsQuickClientIdentitySelectionPanelOpen ||
                         session.IsGtpEngineSelectionDialogOpen || session.IsGtpEngineEditPanelOpen ||
                         session.IsCgosConnectionEditPanelOpen || session.IsCgosAdminPlayerSelectionDialogOpen;
         DrawCgosClientTopPanel(session, modalOpen ? new Point(-1, -1) : mousePoint);
