@@ -1400,7 +1400,7 @@ internal static class PortabilityChecks
         var source = new[] { "A", "B", "C", "D", "E", "F", "G" };
         var editor = new CatalogOrderEditor<string>();
         editor.Open(source, 6, 3);
-        Require(editor.PagePairIndex == 1, "Order editor must open the page pair containing the selection.");
+        Require(editor.FirstVisiblePageIndex == 2, "Order editor must open with the selected page on the left.");
 
         editor.MoveSelected(-3);
         Require(editor.SelectedIndex == 3, "Page move must update the selected index.");
