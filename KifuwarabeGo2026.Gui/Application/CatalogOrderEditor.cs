@@ -20,11 +20,10 @@ public sealed class CatalogOrderEditor<T>
 
     public int PageSize { get; private set; } = 1;
 
-    public int PagePairIndex { get; private set; }
+    /// <summary>見開きの左側に表示するページ番号（0 始まり）。</summary>
+    public int FirstVisiblePageIndex { get; private set; }
 
     public int PageCount => Math.Max(1, (int)Math.Ceiling(_items.Count / (double)PageSize));
-
-    public int PagePairCount => Math.Max(1, (int)Math.Ceiling(PageCount / 2d));
 
     public void Open(IEnumerable<T> items, int selectedIndex, int pageSize)
     {
@@ -33,7 +32,7 @@ public sealed class CatalogOrderEditor<T>
         _items.AddRange(items);
         PageSize = Math.Max(1, pageSize);
         SelectedIndex = _items.Count == 0 ? -1 : Math.Clamp(selectedIndex, 0, _items.Count - 1);
-        PagePairIndex = SelectedIndex < 0 ? 0 : SelectedIndex / (PageSize * 2);
+        FirstVisiblePageIndex = SelectedIndex < 0 ? 0 : SelectedIndex / PageSize;
         DraggedIndex = -1;
         IsOpen = true;
     }
@@ -95,8 +94,9 @@ public sealed class CatalogOrderEditor<T>
 
     public void MoveSelectedToTop() => MoveSelectedTo(0);
 
-    public void MovePagePair(int offset) =>
-        PagePairIndex = Math.Clamp(PagePairIndex + offset, 0, PagePairCount - 1);
+    /// <summary>見開きを半ページずつスライドします。</summary>
+    public void MoveVisiblePages(int offset) =>
+        FirstVisiblePageIndex = Math.Clamp(FirstVisiblePageIndex + offset, 0, PageCount - 1);
 
     private void MoveSelectedTo(int destination)
     {
@@ -109,6 +109,6 @@ public sealed class CatalogOrderEditor<T>
         _items.RemoveAt(SelectedIndex);
         _items.Insert(destination, item);
         SelectedIndex = destination;
-        PagePairIndex = SelectedIndex / (PageSize * 2);
+        FirstVisiblePageIndex = SelectedIndex / PageSize;
     }
 }

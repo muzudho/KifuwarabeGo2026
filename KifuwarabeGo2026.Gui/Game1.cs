@@ -1756,7 +1756,7 @@ public class Game1 : Game
             else if (GoScreenRenderer.GetCatalogOrderSaveButtonHit(point)) _playerCatalog.Save(_session.CommitPlayerOrderEditor());
             else if (GoScreenRenderer.GetCatalogOrderMoveStep(point, editor.PageSize) is var step && step == int.MinValue) editor.MoveSelectedToTop();
             else if (step != 0) editor.MoveSelected(step);
-            else if (GoScreenRenderer.GetCatalogOrderPagePairStep(point) is var pageStep && pageStep != 0) editor.MovePagePair(pageStep);
+            else if (GoScreenRenderer.GetCatalogOrderPageStep(point) is var pageStep && pageStep != 0) editor.MoveVisiblePages(pageStep);
             else if (GoScreenRenderer.GetCatalogOrderCardHit(point, editor) is { } orderIndex) editor.BeginDrag(orderIndex);
             return;
         }
@@ -4751,8 +4751,8 @@ public class Game1 : Game
             editor.MoveSelectedToTop();
         else if (moveStep != 0)
             editor.MoveSelected(moveStep);
-        else if (GoScreenRenderer.GetCatalogOrderPagePairStep(point) is var pageStep && pageStep != 0)
-            editor.MovePagePair(pageStep);
+        else if (GoScreenRenderer.GetCatalogOrderPageStep(point) is var pageStep && pageStep != 0)
+            editor.MoveVisiblePages(pageStep);
         else if (GoScreenRenderer.GetCatalogOrderCardHit(point, editor) is { } index)
             editor.BeginDrag(index);
 
@@ -4781,8 +4781,8 @@ public class Game1 : Game
             editor.MoveSelectedToTop();
         else if (moveStep != 0)
             editor.MoveSelected(moveStep);
-        else if (GoScreenRenderer.GetCatalogOrderPagePairStep(point) is var pageStep && pageStep != 0)
-            editor.MovePagePair(pageStep);
+        else if (GoScreenRenderer.GetCatalogOrderPageStep(point) is var pageStep && pageStep != 0)
+            editor.MoveVisiblePages(pageStep);
         else if (GoScreenRenderer.GetCatalogOrderCardHit(point, editor) is { } index)
             editor.BeginDrag(index);
 

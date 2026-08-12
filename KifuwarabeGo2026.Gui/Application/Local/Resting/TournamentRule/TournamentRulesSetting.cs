@@ -316,8 +316,8 @@ public sealed class TournamentRulesSetting
             editor.MoveSelectedToTop();
         else if (moveStep != 0)
             editor.MoveSelected(moveStep);
-        else if (GoScreenRenderer.GetCatalogOrderPagePairStep(point) is var pageStep && pageStep != 0)
-            editor.MovePagePair(pageStep);
+        else if (GoScreenRenderer.GetCatalogOrderPageStep(point) is var pageStep && pageStep != 0)
+            editor.MoveVisiblePages(pageStep);
         else if (GoScreenRenderer.GetCatalogOrderCardHit(point, editor) is { } index)
             editor.BeginDrag(index);
 

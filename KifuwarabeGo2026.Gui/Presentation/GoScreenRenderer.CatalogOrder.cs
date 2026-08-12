@@ -20,14 +20,14 @@ public sealed partial class GoScreenRenderer
         CatalogOrderEditorLayout.PageDownButtonBounds.Contains(point) ? pageSize :
         0;
 
-    public static int GetCatalogOrderPagePairStep(Point point) =>
+    public static int GetCatalogOrderPageStep(Point point) =>
         CatalogOrderEditorLayout.PreviousPairButtonBounds.Contains(point) ? -1 :
         CatalogOrderEditorLayout.NextPairButtonBounds.Contains(point) ? 1 :
         0;
 
     public static int? GetCatalogOrderCardHit<T>(Point point, CatalogOrderEditor<T> editor)
     {
-        var startIndex = editor.PagePairIndex * editor.PageSize * 2;
+        var startIndex = editor.FirstVisiblePageIndex * editor.PageSize;
         for (var visibleIndex = 0; visibleIndex < editor.PageSize * 2; visibleIndex++)
         {
             if (!CatalogOrderEditorLayout.CardBounds(visibleIndex, editor.PageSize).Contains(point))
@@ -69,7 +69,7 @@ public sealed partial class GoScreenRenderer
         FillRect(CatalogOrderEditorLayout.PropertyBounds, new Color(15, 20, 26));
         DrawRect(CatalogOrderEditorLayout.PropertyBounds, 1, new Color(67, 84, 92));
 
-        var firstPage = editor.PagePairIndex * 2;
+        var firstPage = editor.FirstVisiblePageIndex;
         DrawText($"PAGE {firstPage + 1}", new Vector2(CatalogOrderEditorLayout.BoardBounds.X + 16, CatalogOrderEditorLayout.BoardBounds.Y + 12), new Color(99, 223, 185), 0.38f);
         if (firstPage + 1 < editor.PageCount)
             DrawText($"PAGE {firstPage + 2}", new Vector2(CatalogOrderEditorLayout.BoardBounds.X + 528, CatalogOrderEditorLayout.BoardBounds.Y + 12), new Color(99, 223, 185), 0.38f);
@@ -79,7 +79,7 @@ public sealed partial class GoScreenRenderer
             2,
             new Color(50, 91, 89));
 
-        var startIndex = editor.PagePairIndex * editor.PageSize * 2;
+        var startIndex = editor.FirstVisiblePageIndex * editor.PageSize;
         for (var visibleIndex = 0; visibleIndex < editor.PageSize * 2; visibleIndex++)
         {
             var index = startIndex + visibleIndex;
@@ -108,8 +108,8 @@ public sealed partial class GoScreenRenderer
         }
 
         DrawText($"PAGES {firstPage + 1}-{Math.Min(editor.PageCount, firstPage + 2)} / {editor.PageCount}", new Vector2(804, 837), new Color(227, 224, 210), 0.36f);
-        DrawCommandButton(CatalogOrderEditorLayout.PreviousPairButtonBounds, "PREV", false, mousePoint, enabled: editor.PagePairIndex > 0, scale: 0.36f);
-        DrawCommandButton(CatalogOrderEditorLayout.NextPairButtonBounds, "NEXT", false, mousePoint, enabled: editor.PagePairIndex < editor.PagePairCount - 1, scale: 0.36f);
+        DrawCommandButton(CatalogOrderEditorLayout.PreviousPairButtonBounds, "PREV", false, mousePoint, enabled: editor.FirstVisiblePageIndex > 0, scale: 0.36f);
+        DrawCommandButton(CatalogOrderEditorLayout.NextPairButtonBounds, "NEXT", false, mousePoint, enabled: editor.FirstVisiblePageIndex < editor.PageCount - 1, scale: 0.36f);
 
         DrawText("SELECTED", new Vector2(1370, 270), new Color(180, 195, 195), 0.36f);
         if (editor.SelectedIndex >= 0 && editor.SelectedIndex < editor.Items.Count)
