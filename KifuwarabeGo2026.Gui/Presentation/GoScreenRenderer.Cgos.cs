@@ -50,7 +50,7 @@ public sealed partial class GoScreenRenderer
     {
         foreach (var stone in new[] { GoStone.Black, GoStone.White })
         foreach (var field in new[] { CgosPlayerCredentialField.LoginName, CgosPlayerCredentialField.Password })
-            if (CgosCredentialRowBounds(stone, field).Contains(point)) return (stone, field);
+            if (CgosCredentialTextBounds(stone, field).Contains(point)) return (stone, field);
         return null;
     }
 
@@ -79,10 +79,10 @@ public sealed partial class GoScreenRenderer
         enabled && CgosAdminWhoButtonBounds.Contains(point);
 
 
-    public static bool GetCgosAdminWhitePlayerSelectButtonHit(Point point) => CgosAdminWhitePlayerSelectButtonBounds.Contains(point);
+    public static bool GetCgosAdminWhitePlayerSelectButtonHit(Point point) => CgosAdminPlayerValueBounds(CgosAdminWhitePlayerRowBounds).Contains(point);
 
 
-    public static bool GetCgosAdminBlackPlayerSelectButtonHit(Point point) => CgosAdminBlackPlayerSelectButtonBounds.Contains(point);
+    public static bool GetCgosAdminBlackPlayerSelectButtonHit(Point point) => CgosAdminPlayerValueBounds(CgosAdminBlackPlayerRowBounds).Contains(point);
 
 
     public static bool GetCgosAdminPlayerDialogCancelButtonHit(Point point) => CgosAdminPlayerDialogCancelButtonBounds.Contains(point);
@@ -194,10 +194,10 @@ public sealed partial class GoScreenRenderer
 
     public static GoStone? GetCgosConnectionEngineSelectButtonHit(Point point, GoAppSession session)
     {
-        if (!session.IsCgosBlackConnectionRunning && CgosBlackEngineSelector.ContainsBrowseButton(point)) return GoStone.Black;
+        if (!session.IsCgosBlackConnectionRunning && CgosBlackEngineSelector.ValueBounds.Contains(point)) return GoStone.Black;
         return session.IsCgosPlayer2InputEnabled &&
                !session.IsCgosWhiteConnectionRunning &&
-               CgosWhiteEngineSelector.ContainsBrowseButton(point)
+               CgosWhiteEngineSelector.ValueBounds.Contains(point)
             ? GoStone.White
             : null;
     }
@@ -408,8 +408,8 @@ public sealed partial class GoScreenRenderer
             session.IsCgosAdminInputEnabled && !string.IsNullOrWhiteSpace(session.CgosAdminLogDirectory),
             mousePoint);
         DrawCommandButton(CgosAdminWhoButtonBounds, "WHO", false, mousePoint, enabled: session.IsCgosAdminInputEnabled && session.IsCgosAdminRunning, scale: 0.28f);
-        DrawCgosAdminPlayerSelector(CgosAdminWhitePlayerRowBounds, "WHITE", session.CgosAdminWhitePlayerName, CgosAdminWhitePlayerSelectButtonBounds, mousePoint);
-        DrawCgosAdminPlayerSelector(CgosAdminBlackPlayerRowBounds, "BLACK", session.CgosAdminBlackPlayerName, CgosAdminBlackPlayerSelectButtonBounds, mousePoint);
+        DrawCgosAdminPlayerSelector(CgosAdminWhitePlayerRowBounds, "WHITE", session.CgosAdminWhitePlayerName, mousePoint);
+        DrawCgosAdminPlayerSelector(CgosAdminBlackPlayerRowBounds, "BLACK", session.CgosAdminBlackPlayerName, mousePoint);
         DrawCommandButton(CgosAdminMatchButtonBounds, "MATCH", false, mousePoint, enabled: session.IsCgosAdminInputEnabled && session.CanSendCgosAdminMatch, scale: 0.22f);
         DrawCommandButton(CgosAdminSwapButtonBounds, "SWAP", false, mousePoint, enabled: session.IsCgosAdminInputEnabled && session.CanSendCgosAdminMatch, scale: 0.22f);
         if (!session.IsCgosAdminInputEnabled)
@@ -504,13 +504,14 @@ public sealed partial class GoScreenRenderer
     }
 
 
-    private void DrawCgosAdminPlayerSelector(Rectangle bounds, string label, string playerName, Rectangle selectBounds, Point mousePoint)
+    private void DrawCgosAdminPlayerSelector(Rectangle bounds, string label, string playerName, Point mousePoint)
     {
-        FillRect(bounds, new Color(11, 15, 20));
-        DrawRect(bounds, 1, new Color(67, 84, 92));
         DrawText(label, new Vector2(bounds.X + 6, bounds.Y + 9), new Color(180, 195, 195), 0.22f);
-        DrawFittedText(playerName, new Rectangle(bounds.X + 62, bounds.Y + 5, bounds.Width - 154, bounds.Height - 10), Color.White, 0.25f);
-        DrawCommandButton(selectBounds, "SELECT", false, mousePoint, scale: 0.2f);
+        var valueBounds = CgosAdminPlayerValueBounds(bounds);
+        var hovered = valueBounds.Contains(mousePoint);
+        DrawFittedText(string.IsNullOrEmpty(playerName) ? "-" : playerName, valueBounds, Color.White, 0.25f);
+        DrawRoundedFill(new Rectangle(valueBounds.X, valueBounds.Bottom + 1, valueBounds.Width, 3), 1, hovered ? new Color(185, 196, 255) : new Color(100, 110, 145));
+        if (hovered) DrawPlayerEditHint("CHANGE", valueBounds);
     }
 
     private void DrawCgosCredentialFields(GoAppSession session, GoStone stone, Point mousePoint)
@@ -519,9 +520,10 @@ public sealed partial class GoScreenRenderer
         {
             var bounds = CgosCredentialRowBounds(stone, field);
             var active = session.ActiveCgosCredentialStone == stone && session.ActiveCgosCredentialField == field;
-            DrawUiLabel(UiLabel.InCompactRow(field == CgosPlayerCredentialField.LoginName ? "HANDLE" : "PASSWORD", bounds));
             var textBounds = CgosCredentialTextBounds(stone, field);
-            DrawTournamentRulesTextInputSurface(textBounds, active, bounds.Contains(mousePoint));
+            var hovered = textBounds.Contains(mousePoint);
+            DrawText(field == CgosPlayerCredentialField.LoginName ? "HANDLE" : "PASSWORD", new Vector2(bounds.X + 16, textBounds.Y + 7), new Color(180, 195, 195), 0.28f);
+            DrawRoundedFill(new Rectangle(textBounds.X, textBounds.Bottom + 2, textBounds.Width, 4), 2, active ? new Color(147, 244, 200) : hovered ? new Color(185, 196, 255) : new Color(100, 110, 145));
             var tabIndex = (stone == GoStone.Black ? 0 : 2) + (field == CgosPlayerCredentialField.LoginName ? 0 : 1);
             var activeTabIndex = session.ActiveCgosCredentialStone is { } activeStone &&
                 session.ActiveCgosCredentialField is { } activeField
@@ -533,6 +535,7 @@ public sealed partial class GoScreenRenderer
                 DrawTextBoxSelection(text, session.CgosCredentialSelectionStart, session.CgosCredentialSelectionLength, textBounds, 0.32f);
             DrawFittedText(string.IsNullOrEmpty(text) ? "-" : text, textBounds, Color.White, 0.32f);
             if (active) DrawTextBoxCaret(text, session.CgosCredentialCaretIndex, textBounds, 0.32f);
+            DrawEditableTextEditHint(active, hovered, textBounds);
         }
     }
 
@@ -646,13 +649,23 @@ public sealed partial class GoScreenRenderer
 
         if (engineSelector is { } selector)
         {
-            DrawPlayerSelector(selector with { Value = engineName ?? "-" }, mousePoint);
+            DrawCgosPlayerSelector(selector with { Value = engineName ?? "-" }, mousePoint);
         }
 
         DrawCommandButton(startButtonBounds, startLabel, false, mousePoint, enabled: startEnabled, scale: 0.36f);
         DrawText("LOG:", new Vector2(bounds.X + 18, tailButtonBounds.Y + 15), new Color(180, 195, 195), 0.22f);
         DrawCommandButton(tailButtonBounds, "VIEW", false, mousePoint, enabled: logToolsEnabled, scale: 0.24f);
         DrawCommandButton(codeButtonBounds, "EDIT", false, mousePoint, enabled: logToolsEnabled, scale: 0.24f);
+    }
+
+    private void DrawCgosPlayerSelector(PlayerSelector selector, Point mousePoint)
+    {
+        var valueBounds = selector.ValueBounds;
+        var hovered = selector.Enabled && valueBounds.Contains(mousePoint);
+        DrawText(selector.Label, new Vector2(selector.Bounds.X + 12, valueBounds.Y + 7), new Color(180, 195, 195), 0.28f);
+        DrawFittedText(selector.Value, valueBounds, selector.Enabled ? Color.White : new Color(91, 100, 106), 0.32f);
+        DrawRoundedFill(new Rectangle(valueBounds.X, valueBounds.Bottom + 2, valueBounds.Width, 4), 2, hovered ? new Color(185, 196, 255) : new Color(100, 110, 145));
+        if (hovered) DrawPlayerEditHint("CHANGE", valueBounds);
     }
 
 
@@ -912,10 +925,8 @@ public sealed partial class GoScreenRenderer
     private static Rectangle CgosAdminBlackPlayerRowBounds => new(CgosAdminProcessPanelBounds.X + 16, CgosAdminProcessPanelBounds.Y + 376, CgosAdminProcessPanelBounds.Width - 32, 36);
 
 
-    private static Rectangle CgosAdminWhitePlayerSelectButtonBounds => new(CgosAdminWhitePlayerRowBounds.Right - 104, CgosAdminWhitePlayerRowBounds.Y + 3, 100, 32);
-
-
-    private static Rectangle CgosAdminBlackPlayerSelectButtonBounds => new(CgosAdminBlackPlayerRowBounds.Right - 104, CgosAdminBlackPlayerRowBounds.Y + 3, 100, 32);
+    private static Rectangle CgosAdminPlayerValueBounds(Rectangle bounds) =>
+        new(bounds.X + 62, bounds.Y + 3, bounds.Width - 70, bounds.Height - 8);
 
 
     private static Rectangle CgosAdminPlayerDialogBounds => new(510, 170, 900, 740);

@@ -189,9 +189,12 @@ public sealed partial class GoScreenRenderer
         FillRect(PlayerSelectionDialogBounds, new Color(19, 24, 31, 250));
         DrawRect(PlayerSelectionDialogBounds, 2, new Color(116, 145, 146));
 
-        var target = session.PlayerSelectionTargetStone == GoStone.Black ? "BLACK" : "WHITE";
         var cgos = session.PlayerSelectionPurpose == PlayerSelectionPurpose.Cgos;
-        DrawText($"{(cgos ? "ONLINE MATCH PLAYER" : "PLAYER")} SELECT  {target}", new Vector2(PlayerSelectionDialogBounds.X + 34, PlayerSelectionDialogBounds.Y + 28), new Color(244, 238, 218), 0.78f);
+        var target = cgos
+            ? session.PlayerSelectionTargetStone == GoStone.Black ? "PLAYER 1" : "PLAYER 2"
+            : session.PlayerSelectionTargetStone == GoStone.Black ? "BLACK" : "WHITE";
+        var title = cgos ? $"SELECT ONLINE MATCH {target}" : $"PLAYER SELECT  {target}";
+        DrawText(title, new Vector2(PlayerSelectionDialogBounds.X + 34, PlayerSelectionDialogBounds.Y + 28), new Color(244, 238, 218), 0.78f);
         DrawText("Select an Entry Profile on the left, then a Client Identity on the right.", new Vector2(PlayerSelectionDialogBounds.X + 36, PlayerSelectionDialogBounds.Y + 88), new Color(180, 195, 195), 0.38f);
         DrawCommandButton(PlayerSelectionCancelButtonBounds, "CANCEL", false, mousePoint, scale: 0.34f);
         DrawCommandButton(PlayerSelectionOkButtonBounds, "SELECT", false, mousePoint, enabled: session.CanCommitPlayerSelection, scale: 0.34f);
