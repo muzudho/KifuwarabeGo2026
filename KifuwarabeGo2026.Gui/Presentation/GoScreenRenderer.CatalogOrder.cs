@@ -47,7 +47,8 @@ public sealed partial class GoScreenRenderer
         string title,
         Point mousePoint,
         Func<T, string> getName,
-        Func<T, string> getSummary)
+        Func<T, string> getSummary,
+        Func<T, bool?>? getComputerRole = null)
     {
         if (!editor.IsOpen)
         {
@@ -96,7 +97,14 @@ public sealed partial class GoScreenRenderer
             DrawRect(cardBounds, dragged ? 3 : 1, dragged ? new Color(176, 194, 242) : selected ? new Color(147, 244, 200) : new Color(70, 85, 94));
             DrawText($"{index + 1:00}", new Vector2(cardBounds.X + 12, cardBounds.Y + 14), selected ? new Color(177, 255, 215) : new Color(180, 195, 195), 0.36f);
             DrawFittedText(getName(item), new Rectangle(cardBounds.X + 58, cardBounds.Y + 4, cardBounds.Width - 70, 30), Color.White, 0.39f);
-            DrawFittedText(getSummary(item), new Rectangle(cardBounds.X + 58, cardBounds.Y + 36, cardBounds.Width - 70, 24), new Color(204, 211, 206), 0.28f);
+            var isComputer = getComputerRole?.Invoke(item);
+            if (isComputer is { } computer)
+            {
+                DrawPlayerRoleFaceIcon(new Vector2(cardBounds.X + 72, cardBounds.Y + 49), computer);
+                DrawFittedText(getSummary(item), new Rectangle(cardBounds.X + 94, cardBounds.Y + 36, cardBounds.Width - 106, 24), new Color(204, 211, 206), 0.28f);
+            }
+            else
+                DrawFittedText(getSummary(item), new Rectangle(cardBounds.X + 58, cardBounds.Y + 36, cardBounds.Width - 70, 24), new Color(204, 211, 206), 0.28f);
         }
 
         DrawText($"PAGES {firstPage + 1}-{Math.Min(editor.PageCount, firstPage + 2)} / {editor.PageCount}", new Vector2(804, 837), new Color(227, 224, 210), 0.36f);

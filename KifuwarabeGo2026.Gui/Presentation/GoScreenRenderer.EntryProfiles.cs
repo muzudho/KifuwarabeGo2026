@@ -244,7 +244,15 @@ public sealed partial class GoScreenRenderer
         DrawCommandButton(PlayerSelectionPreviousButtonBounds, "PREV", false, mousePoint, enabled: session.PlayerSelectionPageIndex > 0, scale: 0.34f);
         DrawFittedText($"{session.PlayerSelectionPageIndex + 1} / {pageCount}", new Rectangle(1140, 824, 64, 32), new Color(227, 224, 210), 0.44f);
         DrawCommandButton(PlayerSelectionNextButtonBounds, "NEXT", false, mousePoint, enabled: session.PlayerSelectionPageIndex < pageCount - 1, scale: 0.42f);
-        DrawCatalogOrderEditor(session.PlayerOrderEditor, "PLAYERS", mousePoint, player => player.DisplayName, player => player.Kind == EntryProfileKind.Human ? "HUMAN" : "COMPUTER");
+        DrawCatalogOrderEditor(
+            session.PlayerOrderEditor,
+            "PLAYERS",
+            mousePoint,
+            player => player.DisplayName,
+            player => player.Kind == EntryProfileKind.Computer
+                ? $"ENGINE: {session.GetEntryProfileSummary(player)}"
+                : session.GetEntryProfileSummary(player),
+            player => player.Kind == EntryProfileKind.Computer);
     }
 
     private void DrawPlayerEditPanel(GoAppSession session, Point mousePoint)

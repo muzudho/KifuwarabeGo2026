@@ -169,7 +169,11 @@ public sealed partial class GoAppSession
         if (index < 0 || index >= _playerProfiles.Count)
             return "";
 
-        var player = _playerProfiles[index];
+        return GetEntryProfileSummary(_playerProfiles[index]);
+    }
+
+    public string GetEntryProfileSummary(EntryProfile player)
+    {
         if (player.Kind == EntryProfileKind.Human)
             return "HUMAN";
 
