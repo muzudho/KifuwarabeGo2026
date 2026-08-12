@@ -308,9 +308,9 @@ public sealed partial class GoScreenRenderer
 
     private static Rectangle BoardEditingAdoptButtonBounds => new(1648, 120, 164, 52);
 
-    private static Rectangle VariationEditingDiscardButtonBounds => new(1684, 120, 128, 52);
+    private static Rectangle VariationEditingDiscardButtonBounds => new(1480, 120, 156, 52);
     private static Rectangle VariationEditingLiveBoardBounds => new(1540, 188, 252, 252);
-    private static Rectangle VariationEditingAdoptButtonBounds => new(1396, 120, 128, 52);
+    private static Rectangle VariationEditingAdoptButtonBounds => new(1648, 120, 164, 52);
     private static Rectangle VariationEditingExportSgfButtonBounds => new(1164, 924, 145, 56);
     private static Rectangle VariationEditingCommentButtonBounds => new(1321, 924, 145, 56);
     private static Rectangle VariationEditingUndoButtonBounds => new(1478, 924, 145, 56);
