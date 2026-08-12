@@ -147,11 +147,11 @@ public sealed partial class GoScreenRenderer
             "CASUAL APPS" =>
                 (new Rectangle(1412, 270, 420, 190), GetTitleSectionLabelConnectorTarget("CASUAL APPS", new Vector2(950, 338), connectsToRight: true)),
             "LOCAL MATCH" =>
-                (new Rectangle(930, 390, 520, 174), new Vector2(TitleHomeLocalButtonBounds.Right, TitleHomeLocalButtonBounds.Center.Y)),
+                (new Rectangle(70, 370, 400, 174), new Vector2(TitleHomeLocalButtonBounds.Left, TitleHomeLocalButtonBounds.Center.Y)),
             "ONLINE MATCH" =>
-                (new Rectangle(930, 536, 620, 174), new Vector2(TitleHomeCgosButtonBounds.Right, TitleHomeCgosButtonBounds.Center.Y)),
+                (new Rectangle(70, 554, 400, 174), new Vector2(TitleHomeCgosButtonBounds.Left, TitleHomeCgosButtonBounds.Center.Y)),
             _ =>
-                (new Rectangle(1360, 780, 390, 160), new Vector2(SettingsButtonBounds.Left - 14, SettingsButtonBounds.Center.Y)),
+                (new Rectangle(1412, 760, 400, 160), new Vector2(SettingsButtonBounds.Left - 14, SettingsButtonBounds.Center.Y)),
         };
         var bodyLines = heading switch
         {
