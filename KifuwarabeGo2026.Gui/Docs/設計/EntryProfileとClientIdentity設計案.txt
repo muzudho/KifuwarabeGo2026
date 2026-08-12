@@ -26,6 +26,11 @@ Player = Entry Profile + Client Identity
 
 したがって Player 選択画面は、Entry Profile の選択後に、その Entry Profile が利用できる Client Identity を選ぶ二段階の操作とする。既定 Client Identity を候補として初期選択してよいが、今回使う Client Identity は Player の構成要素として明示する。
 
+Player 選択画面は大きな左右二ペインにする。左半分へ Entry Profile 一覧、右半分へ左で選択中の Entry Profile に紐づく Client Identity 一覧を出し、同じ `SELECT` 操作で両方を確定する。
+
+- OnlineMatch (CGOS): 確定した Client Identity の Handle / Password を接続開始画面の入力欄へコピーする。入力欄での直接編集は今回の接続だけに使う一時ドラフトであり、Client Identity には保存しない。
+- LocalMatch: 確定した Client Identity の Handle を設定画面へコピーする。入力欄での直接編集は今回の対局と棋譜ファイル名だけに使う一時ドラフトであり、Client Identity には保存しない。Password は表示も使用もしない。
+
 
 2. 用語と画面名
 

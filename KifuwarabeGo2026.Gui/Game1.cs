@@ -1210,10 +1210,7 @@ public class Game1 : Game
                     else if (GoScreenRenderer.GetCgosCredentialFieldHit(point) is { } credential &&
                         (credential.Stone == GoStone.Black || _session.IsCgosPlayer2InputEnabled))
                     {
-                        if (credential.Field == CgosPlayerCredentialField.LoginName)
-                            _session.OpenQuickClientIdentitySelectionPanel(credential.Stone, cgos: true);
-                        else
-                            BeginOrMoveCgosCredentialEdit(point, credential.Stone, credential.Field);
+                        BeginOrMoveCgosCredentialEdit(point, credential.Stone, credential.Field);
                     }
                     else
                     {
@@ -1818,6 +1815,12 @@ public class Game1 : Game
         if (GoScreenRenderer.GetPlayerSelectionDialogOrderButtonHit(point))
         {
             _session.OpenPlayerOrderEditor();
+            return;
+        }
+
+        if (GoScreenRenderer.GetPlayerSelectionClientIdentityItemHit(point, _session) is { } clientIdentityIndex)
+        {
+            _session.SelectPlayerSelectionClientIdentity(clientIdentityIndex);
             return;
         }
 

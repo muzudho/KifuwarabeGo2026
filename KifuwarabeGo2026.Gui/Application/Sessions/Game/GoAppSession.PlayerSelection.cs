@@ -2,6 +2,7 @@ namespace KifuwarabeGo2026.Gui.Application;
 
 using KifuwarabeGo2026.Shared.Domain;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 /// <summary>ローカル対局の Player 選択ダイアログの状態と操作。</summary>
@@ -12,6 +13,7 @@ public sealed partial class GoAppSession
     public PlayerSelectionPurpose PlayerSelectionPurpose { get; private set; }
     public GoStone PlayerSelectionTargetStone { get; private set; } = GoStone.Black;
     public int PlayerDialogSelectionIndex { get; private set; } = -1;
+    public int ClientIdentityDialogSelectionIndex { get; private set; } = -1;
     public int PlayerSelectionPageIndex { get; private set; }
 
     public void OpenPlayerSelectionDialog(GoStone stone)
@@ -25,6 +27,7 @@ public sealed partial class GoAppSession
         PlayerDialogSelectionIndex = _playerProfiles.FindIndex(profile =>
             string.Equals(profile.Id, stone == GoStone.Black ? BlackEntryProfileId : WhiteEntryProfileId, StringComparison.Ordinal));
         PlayerSelectionPageIndex = Math.Max(0, PlayerDialogSelectionIndex) / PlayerSelectionPageSize;
+        SelectDialogDefaultClientIdentity();
     }
 
     public void OpenCgosPlayerSelectionDialog(GoStone stone)
@@ -38,6 +41,7 @@ public sealed partial class GoAppSession
         var currentId = stone == GoStone.Black ? CgosBlackEntryProfileId : CgosWhiteEntryProfileId;
         PlayerDialogSelectionIndex = _playerProfiles.FindIndex(profile => string.Equals(profile.Id, currentId, StringComparison.Ordinal));
         PlayerSelectionPageIndex = Math.Max(0, PlayerDialogSelectionIndex) / PlayerSelectionPageSize;
+        SelectDialogDefaultClientIdentity();
     }
 
     public void SelectPlayerDialogItem(int index)
@@ -45,6 +49,25 @@ public sealed partial class GoAppSession
         if (index < 0 || index >= _playerProfiles.Count)
             throw new ArgumentOutOfRangeException(nameof(index), index, "Player index is out of range.");
         PlayerDialogSelectionIndex = index;
+        SelectDialogDefaultClientIdentity();
+    }
+
+    public IReadOnlyList<ClientIdentityProfile> GetPlayerSelectionClientIdentities()
+    {
+        if (PlayerDialogSelectionIndex < 0 || PlayerDialogSelectionIndex >= _playerProfiles.Count)
+            return Array.Empty<ClientIdentityProfile>();
+
+        var identities = GetPlayerClientIdentityProfiles(_playerProfiles[PlayerDialogSelectionIndex].Id);
+        return PlayerSelectionPurpose == PlayerSelectionPurpose.Cgos
+            ? identities.Where(identity => string.Equals(identity.ConnectionProfileId, SelectedCgosConnectionProfile.Id, StringComparison.Ordinal)).ToArray()
+            : identities.Where(identity => string.IsNullOrEmpty(identity.ConnectionProfileId)).ToArray();
+    }
+
+    public void SelectPlayerSelectionClientIdentity(int index)
+    {
+        if (index < 0 || index >= GetPlayerSelectionClientIdentities().Count)
+            throw new ArgumentOutOfRangeException(nameof(index));
+        ClientIdentityDialogSelectionIndex = index;
     }
 
     public bool CommitPlayerSelectionDialog()
@@ -52,9 +75,15 @@ public sealed partial class GoAppSession
         if (PlayerDialogSelectionIndex < 0 || PlayerDialogSelectionIndex >= _playerProfiles.Count)
             return false;
         var playerId = _playerProfiles[PlayerDialogSelectionIndex].Id;
+        var identities = GetPlayerSelectionClientIdentities();
+        if (ClientIdentityDialogSelectionIndex < 0 || ClientIdentityDialogSelectionIndex >= identities.Count)
+            return false;
+
         var selected = PlayerSelectionPurpose == PlayerSelectionPurpose.Cgos
-            ? TrySelectCgosEntryProfile(PlayerSelectionTargetStone, playerId)
-            : TrySelectEntryProfile(PlayerSelectionTargetStone, playerId);
+            ? TrySelectCgosEntryProfile(PlayerSelectionTargetStone, playerId) &&
+              TrySelectCgosClientIdentityProfile(PlayerSelectionTargetStone, identities[ClientIdentityDialogSelectionIndex].Id)
+            : TrySelectEntryProfile(PlayerSelectionTargetStone, playerId) &&
+              TrySelectLocalMatchClientIdentityProfile(PlayerSelectionTargetStone, identities[ClientIdentityDialogSelectionIndex].Id);
         if (!selected)
             return false;
 
@@ -67,7 +96,18 @@ public sealed partial class GoAppSession
     public bool CanCommitPlayerSelection =>
         PlayerDialogSelectionIndex >= 0 &&
         PlayerDialogSelectionIndex < _playerProfiles.Count &&
-        (PlayerSelectionPurpose != PlayerSelectionPurpose.Cgos || CanSelectPlayerForCgos(_playerProfiles[PlayerDialogSelectionIndex]));
+        GetPlayerSelectionClientIdentities().Count > 0 &&
+        ClientIdentityDialogSelectionIndex >= 0 &&
+        ClientIdentityDialogSelectionIndex < GetPlayerSelectionClientIdentities().Count;
+
+    private void SelectDialogDefaultClientIdentity()
+    {
+        var identities = GetPlayerSelectionClientIdentities();
+        var selectedId = PlayerSelectionPurpose == PlayerSelectionPurpose.Cgos
+            ? PlayerSelectionTargetStone == GoStone.Black ? CgosBlackClientIdentityProfileId : CgosWhiteClientIdentityProfileId
+            : PlayerSelectionTargetStone == GoStone.Black ? BlackLocalMatchClientIdentityProfileId : WhiteLocalMatchClientIdentityProfileId;
+        ClientIdentityDialogSelectionIndex = Math.Max(0, identities.ToList().FindIndex(identity => string.Equals(identity.Id, selectedId, StringComparison.Ordinal)));
+    }
 
     public void MovePlayerSelectionPage(int step)
     {

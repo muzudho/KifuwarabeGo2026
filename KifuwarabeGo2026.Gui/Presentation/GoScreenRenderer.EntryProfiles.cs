@@ -9,8 +9,9 @@ using System;
 /// <summary>Player 選択欄と選択ダイアログの描画・当たり判定。</summary>
 public sealed partial class GoScreenRenderer
 {
-    private static readonly Rectangle PlayerSelectionDialogBounds = new(398, 150, 1124, 760);
-    private static readonly Rectangle PlayerSelectionListBounds = new(438, 270, 1044, 510);
+    private static readonly Rectangle PlayerSelectionDialogBounds = new(210, 120, 1500, 840);
+    private static readonly Rectangle PlayerSelectionListBounds = new(250, 270, 660, 510);
+    private static readonly Rectangle PlayerSelectionClientIdentityListBounds = new(970, 270, 700, 510);
     private static readonly Rectangle PlayerSelectionCancelButtonBounds = new(1116, 180, 156, 50);
     private static readonly Rectangle PlayerSelectionOkButtonBounds = new(1302, 180, 180, 50);
     private static readonly Rectangle PlayerSelectionPreviousButtonBounds = new(1212, 816, 104, 48);
@@ -133,6 +134,13 @@ public sealed partial class GoScreenRenderer
         }
         return null;
     }
+    public static int? GetPlayerSelectionClientIdentityItemHit(Point point, GoAppSession session)
+    {
+        var identities = session.GetPlayerSelectionClientIdentities();
+        for (var index = 0; index < identities.Count; index++)
+            if (PlayerSelectionClientIdentityItemBounds(index).Contains(point)) return index;
+        return null;
+    }
 
     private void DrawSetupPlayerRow(GoAppSession session, GoStone stone, Point mousePoint, int y)
     {
@@ -156,12 +164,13 @@ public sealed partial class GoScreenRenderer
         var target = session.PlayerSelectionTargetStone == GoStone.Black ? "BLACK" : "WHITE";
         var cgos = session.PlayerSelectionPurpose == PlayerSelectionPurpose.Cgos;
         DrawText($"{(cgos ? "ONLINE MATCH PLAYER" : "PLAYER")} SELECT  {target}", new Vector2(PlayerSelectionDialogBounds.X + 34, PlayerSelectionDialogBounds.Y + 28), new Color(244, 238, 218), 0.78f);
-        DrawText(cgos ? "Choose a computer player with an OnlineMatch (CGOS) Client Identity for this connection." : "Human and computer players are selected from one list.", new Vector2(PlayerSelectionDialogBounds.X + 36, PlayerSelectionDialogBounds.Y + 88), new Color(180, 195, 195), 0.38f);
+        DrawText("Select an Entry Profile on the left, then a Client Identity on the right.", new Vector2(PlayerSelectionDialogBounds.X + 36, PlayerSelectionDialogBounds.Y + 88), new Color(180, 195, 195), 0.38f);
         DrawCommandButton(PlayerSelectionCancelButtonBounds, "CANCEL", false, mousePoint, scale: 0.34f);
         DrawCommandButton(PlayerSelectionOkButtonBounds, "SELECT", false, mousePoint, enabled: session.CanCommitPlayerSelection, scale: 0.34f);
 
         FillRect(PlayerSelectionListBounds, new Color(15, 20, 26));
         DrawRect(PlayerSelectionListBounds, 1, new Color(67, 84, 92));
+        DrawText("ENTRY PROFILES", new Vector2(PlayerSelectionListBounds.X, PlayerSelectionListBounds.Y - 34), new Color(147, 244, 200), 0.34f);
         var start = session.PlayerSelectionPageIndex * GoAppSession.PlayerSelectionPageSize;
         for (var slot = 0; slot < GoAppSession.PlayerSelectionPageSize; slot++)
         {
@@ -174,6 +183,20 @@ public sealed partial class GoScreenRenderer
             DrawRect(bounds, selected ? 2 : 1, selected ? new Color(190, 255, 229) : new Color(73, 91, 98));
             DrawFittedText(session.EntryProfiles[index].DisplayName, new Rectangle(bounds.X + 20, bounds.Y + 12, bounds.Width - 40, 30), Color.White, 0.48f);
             DrawFittedText(session.GetPlayerSelectionDetail(index), new Rectangle(bounds.X + 20, bounds.Y + 52, bounds.Width - 40, 24), new Color(180, 195, 195), 0.30f);
+        }
+
+        FillRect(PlayerSelectionClientIdentityListBounds, new Color(15, 20, 26));
+        DrawRect(PlayerSelectionClientIdentityListBounds, 1, new Color(67, 84, 92));
+        DrawText("CLIENT IDENTITIES", new Vector2(PlayerSelectionClientIdentityListBounds.X, PlayerSelectionClientIdentityListBounds.Y - 34), new Color(147, 244, 200), 0.34f);
+        var identities = session.GetPlayerSelectionClientIdentities();
+        for (var index = 0; index < identities.Count; index++)
+        {
+            var identity = identities[index];
+            var bounds = PlayerSelectionClientIdentityItemBounds(index);
+            var selected = index == session.ClientIdentityDialogSelectionIndex;
+            DrawDataRowFrame(bounds, active: selected, hovered: bounds.Contains(mousePoint));
+            DrawFittedText(identity.DisplayName, new Rectangle(bounds.X + 18, bounds.Y + 8, bounds.Width - 36, 28), Color.White, 0.40f);
+            DrawFittedText($"HANDLE: {identity.LoginName}", new Rectangle(bounds.X + 18, bounds.Y + 39, bounds.Width - 36, 22), new Color(180, 195, 195), 0.27f);
         }
 
         var pageCount = Math.Max(1, (int)Math.Ceiling(session.EntryProfiles.Count / (double)GoAppSession.PlayerSelectionPageSize));
@@ -329,6 +352,8 @@ public sealed partial class GoScreenRenderer
     }
 
     private static Rectangle PlayerSelectionItemBounds(int slot) => new(PlayerSelectionListBounds.X + 16, PlayerSelectionListBounds.Y + 14 + slot * 82, PlayerSelectionListBounds.Width - 32, 72);
+
+    private static Rectangle PlayerSelectionClientIdentityItemBounds(int index) => new(PlayerSelectionClientIdentityListBounds.X + 16, PlayerSelectionClientIdentityListBounds.Y + 14 + index * 82, PlayerSelectionClientIdentityListBounds.Width - 32, 72);
 
     private static Rectangle LocalMatchHandleBounds(int y) => new(1144, y + 48, 668, 40);
 
