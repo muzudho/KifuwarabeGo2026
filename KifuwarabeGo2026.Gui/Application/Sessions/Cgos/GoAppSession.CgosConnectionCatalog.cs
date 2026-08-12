@@ -65,13 +65,20 @@ public sealed partial class GoAppSession
             yield return i;
     }
 
-    public void OpenCgosConnectionOrderEditor() =>
+    public void OpenCgosConnectionOrderEditor()
+    {
         CgosConnectionOrderEditor.Open(
             _cgosConnectionProfiles,
             SelectedCgosConnectionProfileIndex,
             CgosConnectionSelectionPageSize);
+        ActivateWindow(ActiveWindowId.CatalogOrderEditor);
+    }
 
-    public void CancelCgosConnectionOrderEditor() => CgosConnectionOrderEditor.Cancel();
+    public void CancelCgosConnectionOrderEditor()
+    {
+        CgosConnectionOrderEditor.Cancel();
+        DeactivateWindow(ActiveWindowId.CatalogOrderEditor);
+    }
 
     public IReadOnlyList<CgosConnectionProfile> CommitCgosConnectionOrderEditor()
     {
@@ -81,6 +88,7 @@ public sealed partial class GoAppSession
                 ? _cgosConnectionProfiles[SelectedCgosConnectionProfileIndex]
                 : null;
         var orderedProfiles = CgosConnectionOrderEditor.Commit();
+        DeactivateWindow(ActiveWindowId.CatalogOrderEditor);
         _cgosConnectionProfiles.Clear();
         _cgosConnectionProfiles.AddRange(orderedProfiles);
         var selectedIndex = selectedProfile is null

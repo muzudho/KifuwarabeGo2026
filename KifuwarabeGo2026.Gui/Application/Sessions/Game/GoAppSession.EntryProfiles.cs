@@ -269,14 +269,22 @@ public sealed partial class GoAppSession
     private int FindGtpEngineIndex(string engineProfileId) =>
         _gtpEngineProfiles.FindIndex(profile => string.Equals(profile.Id, engineProfileId, StringComparison.Ordinal));
 
-    public void OpenPlayerOrderEditor() =>
+    public void OpenPlayerOrderEditor()
+    {
         PlayerOrderEditor.Open(_playerProfiles, PlayerDialogSelectionIndex, PlayerSelectionPageSize);
+        ActivateWindow(ActiveWindowId.CatalogOrderEditor);
+    }
 
-    public void CancelPlayerOrderEditor() => PlayerOrderEditor.Cancel();
+    public void CancelPlayerOrderEditor()
+    {
+        PlayerOrderEditor.Cancel();
+        DeactivateWindow(ActiveWindowId.CatalogOrderEditor);
+    }
 
     public IReadOnlyList<EntryProfile> CommitPlayerOrderEditor()
     {
         var ordered = PlayerOrderEditor.Commit();
+        DeactivateWindow(ActiveWindowId.CatalogOrderEditor);
         _playerProfiles.Clear();
         _playerProfiles.AddRange(ordered.Select(profile => profile.Clone()));
         PlayerDialogSelectionIndex = Math.Clamp(PlayerDialogSelectionIndex, 0, _playerProfiles.Count - 1);

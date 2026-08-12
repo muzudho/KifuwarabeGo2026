@@ -1761,6 +1761,8 @@ public class Game1 : Game
                 return TryHandleCgosAdminPlayerSelectionDialogClick(point);
             case ActiveWindowId.CgosConnectionEdit:
                 return TryHandleCgosConnectionEditPanelClick(point);
+            case ActiveWindowId.CatalogOrderEditor:
+                return TryHandleCatalogOrderEditorClick(point);
             default:
                 return false;
         }
@@ -1783,6 +1785,29 @@ public class Game1 : Game
             _session.SelectCgosAdminPlayerDialogItem(playerIndex);
 
         return true;
+    }
+
+    private bool TryHandleCatalogOrderEditorClick(Point point)
+    {
+        if (_session.PlayerOrderEditor.IsOpen)
+        {
+            TryHandlePlayerSelectionDialogClick(point);
+            return true;
+        }
+
+        if (_session.GtpEngineOrderEditor.IsOpen)
+            return TryHandleGtpEngineSelectionDialogClick(point);
+
+        if (_session.TournamentRulesOrderEditor.IsOpen)
+            return _tournamentRulesSetting.TryHandleMouseClick(point);
+
+        if (_session.CgosConnectionOrderEditor.IsOpen)
+        {
+            TryHandleCgosConnectionOrderEditorClick(point);
+            return true;
+        }
+
+        return false;
     }
 
     private bool TryHandleQuickClientIdentitySelectionClick(Point point)

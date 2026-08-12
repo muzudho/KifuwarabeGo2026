@@ -22,6 +22,7 @@ public enum ActiveWindowId
     TournamentRulesDeleteConfirmation,
     CgosAdminPlayerSelection,
     CgosConnectionEdit,
+    CatalogOrderEditor,
     TextInput,
     IntegerInput,
     CommentEditor,

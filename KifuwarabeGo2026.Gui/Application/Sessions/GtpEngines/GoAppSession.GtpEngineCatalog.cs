@@ -36,10 +36,17 @@ public sealed partial class GoAppSession
         SetCgosPlayerCredentials(GoStone.White, _gtpEngineProfiles[0].DefaultCgosLoginName, _gtpEngineProfiles[0].DefaultCgosPlainTextPassword);
     }
 
-    public void OpenGtpEngineOrderEditor() =>
+    public void OpenGtpEngineOrderEditor()
+    {
         GtpEngineOrderEditor.Open(_gtpEngineProfiles, GtpEngineDialogSelectionIndex, GtpEngineSelectionPageSize);
+        ActivateWindow(ActiveWindowId.CatalogOrderEditor);
+    }
 
-    public void CancelGtpEngineOrderEditor() => GtpEngineOrderEditor.Cancel();
+    public void CancelGtpEngineOrderEditor()
+    {
+        GtpEngineOrderEditor.Cancel();
+        DeactivateWindow(ActiveWindowId.CatalogOrderEditor);
+    }
 
     public IReadOnlyList<GtpEngineProfile> CommitGtpEngineOrderEditor()
     {
@@ -49,6 +56,7 @@ public sealed partial class GoAppSession
         var cgosWhite = GetGtpEngineProfileOrNull(SelectedCgosWhiteGtpEngineIndex);
         var dialog = GetGtpEngineProfileOrNull(GtpEngineDialogSelectionIndex);
         var orderedProfiles = GtpEngineOrderEditor.Commit();
+        DeactivateWindow(ActiveWindowId.CatalogOrderEditor);
         _gtpEngineProfiles.Clear();
         _gtpEngineProfiles.AddRange(orderedProfiles);
         SelectedBlackGtpEngineIndex = GetReorderedGtpEngineIndex(black);

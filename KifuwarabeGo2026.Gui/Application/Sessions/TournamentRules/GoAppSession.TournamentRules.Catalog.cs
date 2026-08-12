@@ -18,10 +18,17 @@ public sealed partial class GoAppSession
         SelectTournamentRules(0);
     }
 
-    public void OpenTournamentRulesOrderEditor() =>
+    public void OpenTournamentRulesOrderEditor()
+    {
         TournamentRulesOrderEditor.Open(_tournamentRules, TournamentRulesDialogSelectionIndex, TournamentRulesSelectionPageSize);
+        ActivateWindow(ActiveWindowId.CatalogOrderEditor);
+    }
 
-    public void CancelTournamentRulesOrderEditor() => TournamentRulesOrderEditor.Cancel();
+    public void CancelTournamentRulesOrderEditor()
+    {
+        TournamentRulesOrderEditor.Cancel();
+        DeactivateWindow(ActiveWindowId.CatalogOrderEditor);
+    }
 
     public IReadOnlyList<TournamentRules> CommitTournamentRulesOrderEditor()
     {
@@ -32,6 +39,7 @@ public sealed partial class GoAppSession
             ? _tournamentRules[TournamentRulesDialogSelectionIndex]
             : null;
         var orderedRules = TournamentRulesOrderEditor.Commit();
+        DeactivateWindow(ActiveWindowId.CatalogOrderEditor);
         _tournamentRules.Clear();
         _tournamentRules.AddRange(orderedRules);
         SelectedTournamentRulesIndex = selectedRules is null ? 0 : Math.Max(0, _tournamentRules.IndexOf(selectedRules));
