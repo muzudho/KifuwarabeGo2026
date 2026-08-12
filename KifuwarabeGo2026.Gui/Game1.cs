@@ -1731,8 +1731,17 @@ public class Game1 : Game
             case ActiveWindowId.GtpEngineSelection:
                 return TryHandleGtpEngineSelectionDialogClick(point);
             case ActiveWindowId.PlayerSelection:
+            case ActiveWindowId.PlayerEdit:
+            case ActiveWindowId.ClientIdentitySelection:
+            case ActiveWindowId.ClientIdentityEdit:
                 TryHandlePlayerSelectionDialogClick(point);
                 return true;
+            case ActiveWindowId.TournamentRulesSelection:
+            case ActiveWindowId.TournamentRulesEdit:
+                return _tournamentRulesSetting.TryHandleMouseClick(
+                    point,
+                    _renderer is null ? null : (caretPoint, text) => TournamentRuleRenderer.GetDisplayNameCaretIndex(_renderer, caretPoint, text),
+                    _renderer is null ? null : (caretPoint, field, text) => _renderer.GetTournamentRulesNumericCaretIndex(caretPoint, field, text));
             default:
                 return false;
         }

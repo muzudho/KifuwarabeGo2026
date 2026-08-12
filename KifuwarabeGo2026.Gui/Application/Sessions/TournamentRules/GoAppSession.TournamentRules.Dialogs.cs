@@ -11,6 +11,7 @@ public sealed partial class GoAppSession
         IsGtpEngineEditPanelOpen = false;
         IsTournamentRulesAddPanelOpen = false;
         IsTournamentRulesSelectionDialogOpen = true;
+        ActivateWindow(ActiveWindowId.TournamentRulesSelection);
         TournamentRulesDialogSelectionIndex = SelectedTournamentRulesIndex;
         TournamentRulesSelectionPageIndex = TournamentRulesDialogSelectionIndex / TournamentRulesSelectionPageSize;
     }
@@ -27,12 +28,14 @@ public sealed partial class GoAppSession
     {
         SelectTournamentRules(TournamentRulesDialogSelectionIndex);
         IsTournamentRulesSelectionDialogOpen = false;
+        DeactivateWindow(ActiveWindowId.TournamentRulesSelection);
     }
 
     public void CancelTournamentRulesSelectionDialog()
     {
         TournamentRulesDialogSelectionIndex = SelectedTournamentRulesIndex;
         IsTournamentRulesSelectionDialogOpen = false;
+        DeactivateWindow(ActiveWindowId.TournamentRulesSelection);
     }
 
     public void OpenTournamentRulesAddPanel(bool editExisting)
@@ -40,7 +43,9 @@ public sealed partial class GoAppSession
         IsGtpEngineSelectionDialogOpen = false;
         IsGtpEngineEditPanelOpen = false;
         IsTournamentRulesSelectionDialogOpen = false;
+        DeactivateWindow(ActiveWindowId.TournamentRulesSelection);
         IsTournamentRulesAddPanelOpen = true;
+        ActivateWindow(ActiveWindowId.TournamentRulesEdit);
         IsTournamentRulesEditPanelMode = editExisting;
         IsTournamentRulesDeleteConfirmationOpen = false;
     }
@@ -48,6 +53,7 @@ public sealed partial class GoAppSession
     public void CloseTournamentRulesAddPanel()
     {
         IsTournamentRulesAddPanelOpen = false;
+        DeactivateWindow(ActiveWindowId.TournamentRulesEdit);
         IsTournamentRulesEditPanelMode = false;
         OpenTournamentRulesSelectionDialog();
     }

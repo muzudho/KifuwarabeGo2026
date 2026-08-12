@@ -31,6 +31,7 @@ public sealed partial class GoAppSession
         IsPlayerEditDirty = false;
         ActivePlayerEditField = null;
         IsPlayerEditPanelOpen = true;
+        ActivateWindow(ActiveWindowId.PlayerEdit);
         return true;
     }
 
@@ -156,6 +157,7 @@ public sealed partial class GoAppSession
         _playerProfiles[PlayerEditProfileIndex] = draft;
         IsPlayerEditDirty = false;
         IsPlayerEditPanelOpen = false;
+        DeactivateWindow(ActiveWindowId.PlayerEdit);
         IsCreatingEngineProfileForPlayerEdit = false;
         ActivePlayerEditField = null;
         ApplySelectedEntryProfile(GoStone.Black);
@@ -166,6 +168,7 @@ public sealed partial class GoAppSession
     public void CancelPlayerEditPanel()
     {
         IsPlayerEditPanelOpen = false;
+        DeactivateWindow(ActiveWindowId.PlayerEdit);
         IsPlayerEditDirty = false;
         IsCreatingEngineProfileForPlayerEdit = false;
         ActivePlayerEditField = null;

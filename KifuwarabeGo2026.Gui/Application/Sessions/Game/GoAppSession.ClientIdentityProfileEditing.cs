@@ -35,10 +35,15 @@ public sealed partial class GoAppSession
         if (ids.Count == 0) return false;
         ClientIdentityProfileSelectionIndex = Math.Clamp(ClientIdentityProfileEditIndex, 0, ids.Count - 1);
         IsClientIdentityProfileSelectionPanelOpen = true;
+        ActivateWindow(ActiveWindowId.ClientIdentitySelection);
         return true;
     }
 
-    public void CloseClientIdentityProfileSelectionPanel() => IsClientIdentityProfileSelectionPanelOpen = false;
+    public void CloseClientIdentityProfileSelectionPanel()
+    {
+        IsClientIdentityProfileSelectionPanelOpen = false;
+        DeactivateWindow(ActiveWindowId.ClientIdentitySelection);
+    }
 
     public void SelectClientIdentityProfile(int index)
     {
@@ -52,6 +57,7 @@ public sealed partial class GoAppSession
         ClientIdentityProfileEditIndex = ClientIdentityProfileSelectionIndex;
         if (!UseClientIdentityProfile()) return false;
         IsClientIdentityProfileSelectionPanelOpen = false;
+        DeactivateWindow(ActiveWindowId.ClientIdentitySelection);
         return true;
     }
 
@@ -60,21 +66,28 @@ public sealed partial class GoAppSession
         if (PlayerEditProfileIndex < 0 || PlayerEditProfileIndex >= _playerProfiles.Count) return false;
         ClientIdentityProfileEditIndex = ClientIdentityProfileSelectionIndex;
         IsClientIdentityProfileSelectionPanelOpen = false;
+        DeactivateWindow(ActiveWindowId.ClientIdentitySelection);
         IsClientIdentityProfileEditPanelOpen = true;
+        ActivateWindow(ActiveWindowId.ClientIdentityEdit);
         var opened = LoadClientIdentityProfileEditDraft();
         if (opened) ClientIdentityProfileEditOriginalProfile = ClientIdentityProfileEditDraft.Clone();
         return opened;
     }
 
-    public void CloseClientIdentityProfileEditPanel() =>
+    public void CloseClientIdentityProfileEditPanel()
+    {
         (IsClientIdentityProfileEditPanelOpen, IsClientIdentityProfileConnectionSelectionPanelOpen, ActiveClientIdentityProfileEditField) = (false, false, null);
+        DeactivateWindow(ActiveWindowId.ClientIdentityEdit);
+    }
 
     public bool ReturnToClientIdentityProfileSelectionPanel()
     {
         SaveClientIdentityProfileEditDraft();
         ClientIdentityProfileSelectionIndex = ClientIdentityProfileEditIndex;
         IsClientIdentityProfileEditPanelOpen = false;
+        DeactivateWindow(ActiveWindowId.ClientIdentityEdit);
         IsClientIdentityProfileSelectionPanelOpen = true;
+        ActivateWindow(ActiveWindowId.ClientIdentitySelection);
         return true;
     }
 
@@ -86,7 +99,9 @@ public sealed partial class GoAppSession
         ActiveClientIdentityProfileEditField = null;
         ClientIdentityProfileSelectionIndex = ClientIdentityProfileEditIndex;
         IsClientIdentityProfileEditPanelOpen = false;
+        DeactivateWindow(ActiveWindowId.ClientIdentityEdit);
         IsClientIdentityProfileSelectionPanelOpen = true;
+        ActivateWindow(ActiveWindowId.ClientIdentitySelection);
     }
 
     public bool OpenQuickClientIdentitySelectionPanel(GoStone stone, bool cgos)
