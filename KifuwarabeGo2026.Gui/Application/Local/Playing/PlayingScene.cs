@@ -106,6 +106,7 @@ public sealed class PlayingScene : IDisposable
             else if (GoScreenRenderer.GetInitialPositionCancelButtonHit(point))
             {
                 CancelGtpGame();
+                _session.DeactivateModalWindow(ActiveWindowId.InitialPositionConcierge);
                 _session.CancelPlaying();
             }
             else if (GoScreenRenderer.GetInitialPositionEngineCardHit(point) is { } selectedStone)
@@ -200,6 +201,7 @@ public sealed class PlayingScene : IDisposable
         }
 
         CancelGtpGame();
+        _session.DeactivateModalWindow(ActiveWindowId.InitialPositionConcierge);
         _session.CancelPlaying();
     }
 
@@ -284,6 +286,7 @@ public sealed class PlayingScene : IDisposable
         KifuwarabeGo2026.Match.MatchSnapshot matchSnapshot)
     {
         _isInitialPositionConciergeActive = true;
+        _session.ActivateModalWindow(ActiveWindowId.InitialPositionConcierge);
         _initialPositionStates.Clear();
         foreach (var engine in engines)
         {
@@ -703,6 +706,7 @@ public sealed class PlayingScene : IDisposable
         if (result.MakesEngineReady)
         {
             _isInitialPositionConciergeActive = false;
+            _session.DeactivateModalWindow(ActiveWindowId.InitialPositionConcierge);
             _initialPositionStates.Clear();
             _selectedInitialPositionEngine = null;
             _session.SetEngineReady(true);
@@ -864,6 +868,7 @@ public sealed class PlayingScene : IDisposable
         _analysisEngines.Clear();
         _initialPositionStates.Clear();
         _isInitialPositionConciergeActive = false;
+        _session.DeactivateModalWindow(ActiveWindowId.InitialPositionConcierge);
         _selectedInitialPositionEngine = null;
         foreach (var engine in engines)
         {

@@ -1769,6 +1769,8 @@ public class Game1 : Game
                 else
                     HandleReadOnlyChartPopupClick(point);
                 return true;
+            case ActiveWindowId.InitialPositionConcierge:
+                return _playingScene.TryHandleMouseClick(point);
             default:
                 return false;
         }

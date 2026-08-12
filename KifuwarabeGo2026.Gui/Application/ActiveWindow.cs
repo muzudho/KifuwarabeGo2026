@@ -28,6 +28,7 @@ public enum ActiveWindowId
     CommentEditor,
     ReviewUnsavedChangesConfirmation,
     ReviewChartPopup,
+    InitialPositionConcierge,
 }
 
 /// <summary>
