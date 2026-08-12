@@ -327,6 +327,11 @@ public sealed partial class GoScreenRenderer
         DrawCommandButton(ClientIdentityProfileSelectionEditButtonBounds, "EDIT", false, mousePoint, enabled: targets.Count > 0, scale: 0.34f);
         DrawCommandButton(ClientIdentityProfileEditRemoveButtonBounds, "REMOVE", false, mousePoint, enabled: targets.Count > 1, scale: 0.30f);
 
+        var firstRow = new Rectangle(bounds.X + 36, bounds.Y + 140, bounds.Width - 72, 78);
+        DrawFittedText("HANDLE", new Rectangle(firstRow.X + 18, firstRow.Y - 27, 410, 24), new Color(180, 210, 215), 0.30f);
+        DrawFittedText("PASSWORD", new Rectangle(firstRow.X + 460, firstRow.Y - 27, 180, 24), new Color(180, 210, 215), 0.30f);
+        DrawFittedText("SERVICE", new Rectangle(firstRow.X + 680, firstRow.Y - 27, 260, 24), new Color(180, 210, 215), 0.30f);
+
         for (var index = 0; index < targets.Count; index++)
         {
             var target = targets[index];
@@ -336,10 +341,9 @@ public sealed partial class GoScreenRenderer
             FillRect(row, selected ? new Color(38, 103, 86) : row.Contains(mousePoint) ? new Color(43, 52, 62) : new Color(24, 31, 37));
             DrawRect(row, operated ? 3 : selected ? 2 : 1, operated ? new Color(125, 225, 255) : selected ? new Color(147, 244, 200) : new Color(70, 85, 94));
             if (operated) DrawSelectionFingerMark(new Vector2(row.X - 55, row.Center.Y - 13), 1.65f);
-            DrawFittedText(target.DisplayName, new Rectangle(row.X + 18, row.Y + 9, 250, 28), Color.White, 0.42f);
-            DrawFittedText($"HANDLE: {target.LoginName}", new Rectangle(row.X + 288, row.Y + 9, 430, 28), Color.White, 0.38f);
-            DrawFittedText(session.GetClientIdentityProfileConnectionDisplayName(target), new Rectangle(row.X + 288, row.Y + 43, 520, 22), new Color(180, 195, 195), 0.28f);
-            if (selected) DrawFittedText("IN USE", new Rectangle(row.Right - 150, row.Y + 27, 128, 24), new Color(177, 255, 215), 0.29f);
+            DrawFittedText(target.LoginName, new Rectangle(row.X + 18, row.Y + 25, 410, 30), Color.White, 0.42f);
+            DrawFittedText(string.IsNullOrEmpty(target.LoginPass) ? "NONE" : "SET", new Rectangle(row.X + 460, row.Y + 25, 180, 30), Color.White, 0.34f);
+            DrawFittedText(string.IsNullOrEmpty(target.ConnectionProfileId) ? "LOCAL MATCH" : "ONLINE MATCH", new Rectangle(row.X + 680, row.Y + 25, 260, 30), Color.White, 0.34f);
         }
     }
 

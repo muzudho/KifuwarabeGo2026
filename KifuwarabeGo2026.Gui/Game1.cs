@@ -5696,6 +5696,8 @@ public class Game1 : Game
             return StickyNoteScreenId.TournamentRulesSelection;
         if (_session.IsQuickClientIdentitySelectionPanelOpen)
             return StickyNoteScreenId.QuickClientIdentitySelection;
+        if (_session.IsClientIdentityProfileSelectionPanelOpen)
+            return StickyNoteScreenId.ClientIdentitySelection;
         if (_session.IsClientIdentityProfileEditPanelOpen)
             return StickyNoteScreenId.ClientIdentityEdit;
         if (_session.IsPlayerEditPanelOpen)

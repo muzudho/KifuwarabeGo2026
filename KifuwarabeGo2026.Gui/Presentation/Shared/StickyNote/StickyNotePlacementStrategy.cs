@@ -10,6 +10,7 @@ public enum StickyNoteScreenId
     Unknown,
     TitleHome,
     EntryProfileEdit,
+    ClientIdentitySelection,
     ClientIdentityEdit,
     QuickClientIdentitySelection,
     GtpEngineSelection,
