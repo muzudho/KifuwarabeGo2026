@@ -90,7 +90,7 @@ public sealed class ClientIdentityCatalog
         var target = new ClientIdentityProfile
         {
             DisplayName = "LocalMatch",
-            LoginName = player.Identifier,
+            LoginName = new string(player.Identifier.Where(character => !char.IsWhiteSpace(character)).ToArray()),
         };
         targets.Add(target);
         player.ClientIdentityProfileIds.Add(target.Id);

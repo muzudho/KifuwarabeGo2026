@@ -185,7 +185,7 @@ public sealed partial class GoAppSession
 
     private void AddDefaultClientIdentityProfiles(EntryProfile player)
     {
-        var localMatch = new ClientIdentityProfile { DisplayName = "LocalMatch", LoginName = player.Identifier };
+        var localMatch = new ClientIdentityProfile { DisplayName = "LocalMatch", LoginName = new string(player.Identifier.Where(character => !char.IsWhiteSpace(character)).ToArray()) };
         _clientIdentityProfiles.Add(localMatch);
         player.ClientIdentityProfileIds.Add(localMatch.Id);
 

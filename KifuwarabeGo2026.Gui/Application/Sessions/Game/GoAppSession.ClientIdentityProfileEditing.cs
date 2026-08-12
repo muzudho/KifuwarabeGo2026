@@ -151,7 +151,7 @@ public sealed partial class GoAppSession
         {
             DisplayName = cgos ? "OnlineMatch (CGOS)" : "LocalMatch",
             ConnectionProfileId = cgos ? _cgosConnectionProfiles.ElementAtOrDefault(SelectedCgosConnectionProfileIndex)?.Id ?? "" : "",
-            LoginName = owner.Identifier,
+            LoginName = new string(owner.Identifier.Where(character => !char.IsWhiteSpace(character)).ToArray()),
         };
         _clientIdentityProfiles.Add(target);
         owner.ClientIdentityProfileIds.Add(target.Id);

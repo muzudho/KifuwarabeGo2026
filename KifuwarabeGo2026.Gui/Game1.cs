@@ -1711,23 +1711,6 @@ public class Game1 : Game
         }
         if (_session.IsClientIdentityProfileEditPanelOpen)
         {
-            if (_session.IsClientIdentityProfileConnectionSelectionPanelOpen)
-            {
-                if (GoScreenRenderer.GetClientIdentityProfileConnectionSelectionCancelButtonHit(point))
-                    _session.CancelClientIdentityProfileConnectionSelectionPanel();
-                else if (GoScreenRenderer.GetClientIdentityProfileConnectionSelectionSelectButtonHit(point) && _session.CommitClientIdentityProfileConnectionSelection())
-                {
-                    _session.SaveClientIdentityProfileEditDraft();
-                    SavePlayerAndClientIdentityCatalogs();
-                }
-                else if (GoScreenRenderer.GetClientIdentityProfileConnectionSelectionPreviousButtonHit(point))
-                    _session.MoveClientIdentityProfileConnectionSelectionPage(-1);
-                else if (GoScreenRenderer.GetClientIdentityProfileConnectionSelectionNextButtonHit(point))
-                    _session.MoveClientIdentityProfileConnectionSelectionPage(1);
-                else if (GoScreenRenderer.GetClientIdentityProfileConnectionSelectionItemHit(point, _session) is { } connectionIndex)
-                    _session.SelectClientIdentityProfileConnection(connectionIndex);
-                return;
-            }
             if (GoScreenRenderer.GetClientIdentityProfileEditCancelButtonHit(point))
             {
                 _session.CancelClientIdentityProfileEdit();
@@ -1738,7 +1721,6 @@ public class Game1 : Game
                 SaveClientIdentityProfileEditDraft();
                 _session.ReturnToClientIdentityProfileSelectionPanel();
             }
-            else if (GoScreenRenderer.GetClientIdentityProfileEditSelectConnectionButtonHit(point)) _session.OpenClientIdentityProfileConnectionSelectionPanel();
             else if (GoScreenRenderer.GetClientIdentityProfileEditFieldHit(point, _session) is { } field)
                 BeginOrMoveClientIdentityProfileEditField(point, field);
             return;
