@@ -28,12 +28,16 @@ public sealed partial class GoScreenRenderer
     private static readonly Rectangle PlayerEditPanelTargetsButtonBounds = new(1140, 560, 220, 46);
     private static readonly Rectangle PlayerEditPanelSelectTargetButtonBounds = new(1140, 439, 220, 46);
     private static readonly Rectangle TargetProfileEditCloseButtonBounds = new(1320, 182, 150, 48);
+    private static readonly Rectangle TargetProfileEditUseButtonBounds = new(1158, 182, 150, 48);
     private static readonly Rectangle TargetProfileEditAddCgosButtonBounds = new(466, 820, 150, 48);
     private static readonly Rectangle TargetProfileEditAddLocalButtonBounds = new(628, 820, 160, 48);
     private static readonly Rectangle TargetProfileEditRemoveButtonBounds = new(800, 820, 140, 48);
-    private static readonly Rectangle TargetProfileEditUseButtonBounds = new(960, 820, 138, 48);
-    private static readonly Rectangle TargetProfileEditConnectionPreviousButtonBounds = new(1110, 820, 90, 48);
-    private static readonly Rectangle TargetProfileEditConnectionNextButtonBounds = new(1212, 820, 90, 48);
+    private static readonly Rectangle TargetProfileEditSelectConnectionButtonBounds = new(1110, 820, 260, 48);
+    private static readonly Rectangle TargetProfileConnectionSelectionPanelBounds = new(510, 210, 900, 660);
+    private static readonly Rectangle TargetProfileConnectionSelectionCancelButtonBounds = new(1050, 236, 140, 48);
+    private static readonly Rectangle TargetProfileConnectionSelectionSelectButtonBounds = new(1202, 236, 170, 48);
+    private static readonly Rectangle TargetProfileConnectionSelectionPreviousButtonBounds = new(1060, 798, 120, 44);
+    private static readonly Rectangle TargetProfileConnectionSelectionNextButtonBounds = new(1192, 798, 120, 44);
 
     public static bool GetBlackPlayerSelectButtonHit(Point point) => PlayerSelectorLayout.CreatePlayerSelector(BlackPlayerKindButtonY).ContainsBrowseButton(point);
     public static bool GetWhitePlayerSelectButtonHit(Point point) => PlayerSelectorLayout.CreatePlayerSelector(WhitePlayerKindButtonY).ContainsBrowseButton(point);
@@ -60,8 +64,22 @@ public sealed partial class GoScreenRenderer
     public static bool GetTargetProfileEditAddLocalButtonHit(Point point) => TargetProfileEditAddLocalButtonBounds.Contains(point);
     public static bool GetTargetProfileEditRemoveButtonHit(Point point) => TargetProfileEditRemoveButtonBounds.Contains(point);
     public static bool GetTargetProfileEditUseButtonHit(Point point) => TargetProfileEditUseButtonBounds.Contains(point);
-    public static bool GetTargetProfileEditConnectionPreviousButtonHit(Point point) => TargetProfileEditConnectionPreviousButtonBounds.Contains(point);
-    public static bool GetTargetProfileEditConnectionNextButtonHit(Point point) => TargetProfileEditConnectionNextButtonBounds.Contains(point);
+    public static bool GetTargetProfileEditSelectConnectionButtonHit(Point point) => TargetProfileEditSelectConnectionButtonBounds.Contains(point);
+    public static bool GetTargetProfileConnectionSelectionCancelButtonHit(Point point) => TargetProfileConnectionSelectionCancelButtonBounds.Contains(point);
+    public static bool GetTargetProfileConnectionSelectionSelectButtonHit(Point point) => TargetProfileConnectionSelectionSelectButtonBounds.Contains(point);
+    public static bool GetTargetProfileConnectionSelectionPreviousButtonHit(Point point) => TargetProfileConnectionSelectionPreviousButtonBounds.Contains(point);
+    public static bool GetTargetProfileConnectionSelectionNextButtonHit(Point point) => TargetProfileConnectionSelectionNextButtonBounds.Contains(point);
+    public static int? GetTargetProfileConnectionSelectionItemHit(Point point, GoAppSession session)
+    {
+        var start = session.TargetProfileConnectionSelectionPageIndex * GoAppSession.TargetProfileConnectionSelectionPageSize;
+        for (var slot = 0; slot < GoAppSession.TargetProfileConnectionSelectionPageSize; slot++)
+        {
+            var index = start + slot;
+            if (index >= session.CgosConnectionProfiles.Count) break;
+            if (TargetProfileConnectionSelectionItemBounds(slot).Contains(point)) return index;
+        }
+        return null;
+    }
     public static TargetProfileEditField? GetTargetProfileEditFieldHit(Point point, GoAppSession session)
     {
         var index = session.TargetProfileEditIndex;
@@ -188,8 +206,9 @@ public sealed partial class GoScreenRenderer
         DrawRect(bounds, 2, new Color(116, 145, 146));
         DrawText("EDIT TARGETS", new Vector2(bounds.X + 34, bounds.Y + 28), new Color(244, 238, 218), 0.68f);
         DrawDynamicOptionText("この Player 専用の接続先です（最大 5 件）。", new Rectangle(bounds.X + 36, bounds.Y + 82, 700, 32), new Color(180, 195, 195), 0.34f);
-        DrawCommandButton(TargetProfileEditCloseButtonBounds, "CLOSE", false, mousePoint, scale: 0.34f);
         var targets = session.GetPlayerTargetProfiles(session.PlayerEditDraft.Id);
+        DrawCommandButton(TargetProfileEditUseButtonBounds, "USE", false, mousePoint, enabled: targets.Count > 0 && !session.IsTargetProfileInUse(session.TargetProfileEditIndex), scale: 0.34f);
+        DrawCommandButton(TargetProfileEditCloseButtonBounds, "CLOSE", false, mousePoint, scale: 0.34f);
         for (var index = 0; index < targets.Count; index++)
         {
             var target = targets[index];
@@ -223,15 +242,45 @@ public sealed partial class GoScreenRenderer
         DrawCommandButton(TargetProfileEditAddCgosButtonBounds, "ADD CGOS", false, mousePoint, enabled: targets.Count < 5, scale: 0.32f);
         DrawCommandButton(TargetProfileEditAddLocalButtonBounds, "ADD LOCAL", false, mousePoint, enabled: targets.Count < 5, scale: 0.32f);
         DrawCommandButton(TargetProfileEditRemoveButtonBounds, "REMOVE", false, mousePoint, enabled: targets.Count > 1, scale: 0.32f);
-        DrawCommandButton(TargetProfileEditUseButtonBounds, "USE", false, mousePoint, enabled: targets.Count > 0 && !session.IsTargetProfileInUse(session.TargetProfileEditIndex), scale: 0.34f);
         var selected = session.TargetProfileEditDraft;
         DrawFittedText($"CONNECTION: {session.TargetProfileEditConnectionDisplayName}", new Rectangle(960, 766, 470, 32), new Color(147, 244, 200), 0.34f);
-        var canChangeConnection = !string.IsNullOrEmpty(selected.ConnectionProfileId);
-        DrawCommandButton(TargetProfileEditConnectionPreviousButtonBounds, "PREV", false, mousePoint, enabled: canChangeConnection, scale: 0.32f);
-        DrawCommandButton(TargetProfileEditConnectionNextButtonBounds, "NEXT", false, mousePoint, enabled: canChangeConnection, scale: 0.32f);
+        var canSelectConnection = !string.IsNullOrEmpty(selected.ConnectionProfileId) && session.CgosConnectionProfiles.Count > 0;
+        DrawCommandButton(TargetProfileEditSelectConnectionButtonBounds, "SELECT CGOS SERVER", false, mousePoint, enabled: canSelectConnection, scale: 0.24f);
+        DrawTargetProfileConnectionSelectionPanel(session, mousePoint);
+    }
+
+    private void DrawTargetProfileConnectionSelectionPanel(GoAppSession session, Point mousePoint)
+    {
+        if (!session.IsTargetProfileConnectionSelectionPanelOpen) return;
+
+        FillRect(new Rectangle(0, 0, VirtualScreen.Width, VirtualScreen.Height), new Color(0, 0, 0, 105));
+        FillRect(TargetProfileConnectionSelectionPanelBounds, new Color(19, 24, 31, 252));
+        DrawRect(TargetProfileConnectionSelectionPanelBounds, 2, new Color(116, 145, 146));
+        DrawText("SELECT CGOS CONNECTION", new Vector2(542, 240), new Color(244, 238, 218), 0.62f);
+        DrawText("Choose the server for this Target.", new Vector2(544, 294), new Color(180, 195, 195), 0.32f);
+        DrawCommandButton(TargetProfileConnectionSelectionCancelButtonBounds, "CANCEL", false, mousePoint, scale: 0.30f);
+        DrawCommandButton(TargetProfileConnectionSelectionSelectButtonBounds, "SELECT", false, mousePoint, scale: 0.34f);
+
+        for (var slot = 0; slot < GoAppSession.TargetProfileConnectionSelectionPageSize; slot++)
+        {
+            var index = session.TargetProfileConnectionSelectionPageIndex * GoAppSession.TargetProfileConnectionSelectionPageSize + slot;
+            if (index >= session.CgosConnectionProfiles.Count) break;
+            var connection = session.CgosConnectionProfiles[index];
+            var bounds = TargetProfileConnectionSelectionItemBounds(slot);
+            var selected = index == session.TargetProfileConnectionSelectionIndex;
+            DrawDataRowFrame(bounds, active: selected, hovered: bounds.Contains(mousePoint));
+            DrawFittedText(connection.DisplayName, new Rectangle(bounds.X + 20, bounds.Y + 10, bounds.Width - 40, 28), Color.White, 0.40f);
+            DrawFittedText($"{connection.Host}:{connection.Port}  /  {connection.Event}  /  {connection.Round}".Trim(), new Rectangle(bounds.X + 20, bounds.Y + 43, bounds.Width - 40, 22), new Color(180, 195, 195), 0.26f);
+        }
+
+        DrawFittedText($"PAGE {session.TargetProfileConnectionSelectionPageIndex + 1} / {session.TargetProfileConnectionSelectionPageCount}", new Rectangle(872, 805, 168, 30), new Color(227, 224, 210), 0.34f);
+        DrawCommandButton(TargetProfileConnectionSelectionPreviousButtonBounds, "PREV", false, mousePoint, enabled: session.TargetProfileConnectionSelectionPageIndex > 0, scale: 0.32f);
+        DrawCommandButton(TargetProfileConnectionSelectionNextButtonBounds, "NEXT", false, mousePoint, enabled: session.TargetProfileConnectionSelectionPageIndex < session.TargetProfileConnectionSelectionPageCount - 1, scale: 0.32f);
     }
 
     private static Rectangle PlayerSelectionItemBounds(int slot) => new(PlayerSelectionListBounds.X + 16, PlayerSelectionListBounds.Y + 14 + slot * 82, PlayerSelectionListBounds.Width - 32, 72);
+
+    private static Rectangle TargetProfileConnectionSelectionItemBounds(int slot) => new(544, 332 + slot * 82, 832, 70);
 
     private static Rectangle TargetProfileEditFieldTextBounds(int index, TargetProfileEditField field, bool isLocalMatch)
     {

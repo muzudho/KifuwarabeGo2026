@@ -1671,6 +1671,23 @@ public class Game1 : Game
     {
         if (_session.IsTargetProfileEditPanelOpen)
         {
+            if (_session.IsTargetProfileConnectionSelectionPanelOpen)
+            {
+                if (GoScreenRenderer.GetTargetProfileConnectionSelectionCancelButtonHit(point))
+                    _session.CancelTargetProfileConnectionSelectionPanel();
+                else if (GoScreenRenderer.GetTargetProfileConnectionSelectionSelectButtonHit(point) && _session.CommitTargetProfileConnectionSelection())
+                {
+                    _session.SaveTargetProfileEditDraft();
+                    _targetCatalog.Save(_session.TargetProfiles);
+                }
+                else if (GoScreenRenderer.GetTargetProfileConnectionSelectionPreviousButtonHit(point))
+                    _session.MoveTargetProfileConnectionSelectionPage(-1);
+                else if (GoScreenRenderer.GetTargetProfileConnectionSelectionNextButtonHit(point))
+                    _session.MoveTargetProfileConnectionSelectionPage(1);
+                else if (GoScreenRenderer.GetTargetProfileConnectionSelectionItemHit(point, _session) is { } connectionIndex)
+                    _session.SelectTargetProfileConnection(connectionIndex);
+                return;
+            }
             if (GoScreenRenderer.GetTargetProfileEditCloseButtonHit(point))
             {
                 SaveTargetProfileEditDraft();
@@ -1684,8 +1701,7 @@ public class Game1 : Game
                 _playerCatalog.Save(_session.PlayerProfiles);
                 _targetCatalog.Save(_session.TargetProfiles);
             }
-            else if (GoScreenRenderer.GetTargetProfileEditConnectionPreviousButtonHit(point)) { _session.CycleTargetProfileConnection(-1); _session.SaveTargetProfileEditDraft(); _targetCatalog.Save(_session.TargetProfiles); }
-            else if (GoScreenRenderer.GetTargetProfileEditConnectionNextButtonHit(point)) { _session.CycleTargetProfileConnection(1); _session.SaveTargetProfileEditDraft(); _targetCatalog.Save(_session.TargetProfiles); }
+            else if (GoScreenRenderer.GetTargetProfileEditSelectConnectionButtonHit(point)) _session.OpenTargetProfileConnectionSelectionPanel();
             else if (GoScreenRenderer.GetTargetProfileEditFieldHit(point, _session) is { } field)
                 BeginOrMoveTargetProfileEditField(point, field);
             else if (GoScreenRenderer.GetTargetProfileEditItemHit(point, _session) is { } targetIndex)

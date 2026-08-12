@@ -6,7 +6,11 @@ using System.Linq;
 /// <summary>Player が参照する TargetProfile の編集状態。</summary>
 public sealed partial class GoAppSession
 {
+    public const int TargetProfileConnectionSelectionPageSize = 5;
     public bool IsTargetProfileEditPanelOpen { get; private set; }
+    public bool IsTargetProfileConnectionSelectionPanelOpen { get; private set; }
+    public int TargetProfileConnectionSelectionIndex { get; private set; }
+    public int TargetProfileConnectionSelectionPageIndex { get; private set; }
     public int TargetProfileEditIndex { get; private set; }
     public TargetProfile TargetProfileEditDraft { get; private set; } = new();
     public TargetProfileEditField? ActiveTargetProfileEditField { get; private set; }
@@ -24,7 +28,7 @@ public sealed partial class GoAppSession
     }
 
     public void CloseTargetProfileEditPanel() =>
-        (IsTargetProfileEditPanelOpen, ActiveTargetProfileEditField) = (false, null);
+        (IsTargetProfileEditPanelOpen, IsTargetProfileConnectionSelectionPanelOpen, ActiveTargetProfileEditField) = (false, false, null);
 
     public bool MoveTargetProfileEditSelection(int step)
     {
@@ -132,12 +136,44 @@ public sealed partial class GoAppSession
         _targetProfiles[index] = TargetProfileEditDraft.Clone();
     }
 
-    public void CycleTargetProfileConnection(int step)
+    public bool OpenTargetProfileConnectionSelectionPanel()
     {
-        if (_cgosConnectionProfiles.Count == 0 || string.IsNullOrEmpty(TargetProfileEditDraft.ConnectionProfileId)) return;
-        var index = _cgosConnectionProfiles.FindIndex(profile => string.Equals(profile.Id, TargetProfileEditDraft.ConnectionProfileId, StringComparison.Ordinal));
-        TargetProfileEditDraft.ConnectionProfileId = _cgosConnectionProfiles[(Math.Max(0, index) + step + _cgosConnectionProfiles.Count) % _cgosConnectionProfiles.Count].Id;
+        if (_cgosConnectionProfiles.Count == 0 || string.IsNullOrEmpty(TargetProfileEditDraft.ConnectionProfileId))
+            return false;
+
+        TargetProfileConnectionSelectionIndex = Math.Max(0, _cgosConnectionProfiles.FindIndex(profile =>
+            string.Equals(profile.Id, TargetProfileEditDraft.ConnectionProfileId, StringComparison.Ordinal)));
+        TargetProfileConnectionSelectionPageIndex = TargetProfileConnectionSelectionIndex / TargetProfileConnectionSelectionPageSize;
+        IsTargetProfileConnectionSelectionPanelOpen = true;
+        return true;
     }
+
+    public void CancelTargetProfileConnectionSelectionPanel() => IsTargetProfileConnectionSelectionPanelOpen = false;
+
+    public void SelectTargetProfileConnection(int index)
+    {
+        if (index < 0 || index >= _cgosConnectionProfiles.Count)
+            throw new ArgumentOutOfRangeException(nameof(index));
+        TargetProfileConnectionSelectionIndex = index;
+    }
+
+    public bool CommitTargetProfileConnectionSelection()
+    {
+        if (TargetProfileConnectionSelectionIndex < 0 || TargetProfileConnectionSelectionIndex >= _cgosConnectionProfiles.Count)
+            return false;
+        TargetProfileEditDraft.ConnectionProfileId = _cgosConnectionProfiles[TargetProfileConnectionSelectionIndex].Id;
+        IsTargetProfileConnectionSelectionPanelOpen = false;
+        return true;
+    }
+
+    public void MoveTargetProfileConnectionSelectionPage(int step)
+    {
+        var pageCount = Math.Max(1, (int)Math.Ceiling(_cgosConnectionProfiles.Count / (double)TargetProfileConnectionSelectionPageSize));
+        TargetProfileConnectionSelectionPageIndex = Math.Clamp(TargetProfileConnectionSelectionPageIndex + step, 0, pageCount - 1);
+    }
+
+    public int TargetProfileConnectionSelectionPageCount =>
+        Math.Max(1, (int)Math.Ceiling(_cgosConnectionProfiles.Count / (double)TargetProfileConnectionSelectionPageSize));
 
     public string TargetProfileEditConnectionDisplayName =>
         GetTargetProfileConnectionDisplayName(TargetProfileEditDraft);
