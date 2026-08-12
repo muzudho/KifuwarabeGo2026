@@ -1080,6 +1080,14 @@ public class Game1 : Game
                     return;
                 }
 
+                // 前面の GTP ダイアログは、背後に残る PLAYER SELECT より先に入力を受け取る。
+                // PLAYER 編集からエンジン選択を開くと、背後のダイアログの状態は意図的に保持される。
+                if (TryHandleGtpEngineEditPanelClick(point) || TryHandleGtpEngineSelectionDialogClick(point))
+                {
+                    _previousMouse = mouse;
+                    return;
+                }
+
                 if (_session.IsPlayerSelectionDialogOpen)
                 {
                     TryHandlePlayerSelectionDialogClick(point);
@@ -1110,12 +1118,6 @@ public class Game1 : Game
                         _session.SelectCgosAdminPlayerDialogItem(playerIndex);
                     }
 
-                    _previousMouse = mouse;
-                    return;
-                }
-
-                if (TryHandleGtpEngineEditPanelClick(point) || TryHandleGtpEngineSelectionDialogClick(point))
-                {
                     _previousMouse = mouse;
                     return;
                 }
