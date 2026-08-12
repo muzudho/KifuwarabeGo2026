@@ -473,7 +473,7 @@ public sealed partial class GoScreenRenderer
         DrawFittedText(string.IsNullOrEmpty(displayText) ? "-" : displayText, textBounds, Color.White, 0.42f);
         if (active)
             DrawTextBoxCaret(text, session.ClientIdentityProfileEditCaretIndex, textBounds, 0.42f);
-        if (hovered && !active) DrawPlayerEditHint("EDIT", textBounds);
+        DrawEditableTextEditHint(active, hovered, textBounds);
         if (field == ClientIdentityProfileEditField.LoginName && PlayerEditFieldHoverBounds(textBounds).Contains(mousePoint))
             DrawClientIdentityHandleStickyNote(textBounds);
     }
@@ -509,8 +509,7 @@ public sealed partial class GoScreenRenderer
         DrawFittedText(string.IsNullOrEmpty(text) ? "-" : text, textBounds, Color.White, 0.42f);
         if (active)
             DrawTextBoxCaret(text, session.PlayerEditCaretIndex, textBounds, 0.42f);
-        if (hovered && !active)
-            DrawPlayerEditHint("EDIT", textBounds);
+        DrawEditableTextEditHint(active, hovered, textBounds);
     }
 
     private void DrawPlayerEditPopupField(string label, string value, Rectangle textBounds, Point mousePoint)
@@ -530,6 +529,13 @@ public sealed partial class GoScreenRenderer
             : new Rectangle(textBounds.Right - 108, textBounds.Bottom - 28, 100, 26);
         DrawRoundedFill(hintBounds, 6, new Color(185, 196, 255));
         DrawSharpCenteredFittedText(text, hintBounds, new Color(15, 20, 31), 0.34f);
+    }
+
+    /// <summary>未編集のテキスト項目へホバーしたときだけ、共通の EDIT バッジを表示します。</summary>
+    private void DrawEditableTextEditHint(bool isEditing, bool isHovered, Rectangle textBounds)
+    {
+        if (!isEditing && isHovered)
+            DrawPlayerEditHint("EDIT", textBounds);
     }
 
     private void DrawPlayerEditStickyNote(GoAppSession session, Point mousePoint)

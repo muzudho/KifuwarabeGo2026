@@ -537,10 +537,7 @@ public sealed partial class GoScreenRenderer
         {
             DrawTextBoxCaret(displayName, session.TournamentRulesDisplayNameCaretIndex, textBounds, 0.46f);
         }
-        else if (hovered)
-        {
-            DrawPlayerEditHint("EDIT", textBounds);
-        }
+        DrawEditableTextEditHint(active, hovered, textBounds);
 
         if (!string.IsNullOrWhiteSpace(session.TournamentRulesDisplayNameWarning))
         {

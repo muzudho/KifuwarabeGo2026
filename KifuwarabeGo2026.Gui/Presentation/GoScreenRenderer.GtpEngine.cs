@@ -595,8 +595,10 @@ public sealed partial class GoScreenRenderer
             DrawTextBoxCaret(text, session.GtpEngineEditCaretIndex, textBounds, 0.42f);
         }
 
-        if (hovered && !active)
-            DrawPlayerEditHint(GtpEngineEditableTextFields.Contains(field) ? "EDIT" : "CHANGE", textBounds);
+        if (GtpEngineEditableTextFields.Contains(field))
+            DrawEditableTextEditHint(active, hovered, textBounds);
+        else if (hovered && !active)
+            DrawPlayerEditHint("CHANGE", textBounds);
     }
 
 

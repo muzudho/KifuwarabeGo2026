@@ -31,6 +31,7 @@ public sealed partial class GoScreenRenderer
         DrawQuickClientIdentitySelectionPanel(session, mousePoint);
         DrawGtpEngineSelectionDialog(session, mousePoint);
         DrawGtpEngineEditPanel(session, mousePoint);
+        DrawCgosConnectionEditPanel(session, mousePoint);
         DrawCgosAdminPlayerSelectionDialog(session, mousePoint);
 
         _spriteBatch.End();
@@ -250,7 +251,7 @@ public sealed partial class GoScreenRenderer
     {
         foreach (var field in CgosConnectionEditFields)
         {
-            if (CgosConnectionEditPanelFieldRowBounds(field).Contains(point))
+            if (CgosConnectionEditPanelFieldTextBounds(field).Contains(point))
             {
                 return field;
             }
@@ -369,7 +370,6 @@ public sealed partial class GoScreenRenderer
         DrawCommandButton(CgosOrderButtonBounds, "ORDER", false, mousePoint, enabled: session.CgosConnectionProfiles.Count > 1, scale: 0.34f);
         DrawCommandButton(CgosUseSelectedProfileButtonBounds, "SELECT", false, mousePoint, enabled: session.CgosConnectionProfiles.Count > 0, scale: 0.34f);
         DrawCommandButton(CgosBackButtonBounds, "CANCEL", false, mousePoint, scale: 0.34f);
-        DrawCgosConnectionEditPanel(session, mousePoint);
         DrawCatalogOrderEditor(
             session.CgosConnectionOrderEditor,
             "CGOS CONNECTIONS",
@@ -794,11 +794,9 @@ public sealed partial class GoScreenRenderer
         FillRect(CgosConnectionEditPanelBounds, new Color(19, 24, 31, 250));
         DrawRect(CgosConnectionEditPanelBounds, 2, new Color(116, 145, 146));
 
-        DrawText(session.IsCgosConnectionAddPanelMode ? "ADD CGOS PROFILE" : "EDIT CGOS PROFILE", new Vector2(CgosConnectionEditPanelBounds.X + 28, CgosConnectionEditPanelBounds.Y + 24), new Color(244, 238, 218), 0.68f);
-        DrawCommandButton(CgosConnectionEditPanelCloseButtonBounds, "BACK", false, mousePoint, scale: 0.42f);
-
-        FillRect(CgosConnectionEditPanelEditorBounds, new Color(15, 20, 26));
-        DrawRect(CgosConnectionEditPanelEditorBounds, 1, new Color(67, 84, 92));
+        DrawText(session.IsCgosConnectionAddPanelMode ? "ADD SERVICE PROFILE" : "EDIT SERVICE PROFILE", new Vector2(CgosConnectionEditPanelBounds.X + 28, CgosConnectionEditPanelBounds.Y + 24), new Color(244, 238, 218), 0.68f);
+        DrawCommandButton(CgosConnectionEditPanelCloseButtonBounds, "CANCEL", false, mousePoint, scale: 0.36f);
+        DrawCommandButton(CgosConnectionEditPanelSaveButtonBounds, "SAVE", false, mousePoint, scale: 0.42f);
 
         DrawCgosConnectionEditField(session, CgosConnectionProfileEditField.DisplayName, "DISPLAY", mousePoint);
         DrawCgosConnectionEditField(session, CgosConnectionProfileEditField.Host, "HOST", mousePoint);
@@ -812,7 +810,6 @@ public sealed partial class GoScreenRenderer
             DrawFittedText(session.CgosConnectionEditWarning, new Rectangle(CgosConnectionEditPanelEditorBounds.X + 40, CgosConnectionEditPanelEditorBounds.Bottom - 70, CgosConnectionEditPanelEditorBounds.Width - 80, 34), new Color(255, 183, 146), 0.38f);
         }
 
-        DrawCommandButton(CgosConnectionEditPanelSaveButtonBounds, SaveCgosConnectionLabel(session), false, mousePoint, scale: 0.46f);
     }
 
 
@@ -821,10 +818,13 @@ public sealed partial class GoScreenRenderer
         var bounds = CgosConnectionEditPanelFieldRowBounds(field);
         var active = session.ActiveCgosConnectionEditField == field;
         var text = session.GetCgosConnectionEditFieldText(field);
-        DrawUiLabel(UiLabel.InCompactRow(label, bounds));
-
         var textBounds = CgosConnectionEditPanelFieldTextBounds(field);
-        DrawTournamentRulesTextInputSurface(textBounds, active, bounds.Contains(mousePoint));
+        var hovered = textBounds.Contains(mousePoint);
+        DrawText(label, new Vector2(bounds.X + 16, textBounds.Y + 7), new Color(180, 195, 195), 0.36f);
+        DrawRoundedFill(
+            new Rectangle(textBounds.X, textBounds.Bottom + 2, textBounds.Width, 5),
+            2,
+            active ? new Color(147, 244, 200) : hovered ? new Color(185, 196, 255) : new Color(100, 110, 145));
         DrawTabNavigationHint(
             bounds,
             Array.IndexOf(CgosConnectionEditFields, field),
@@ -837,6 +837,7 @@ public sealed partial class GoScreenRenderer
         {
             DrawTextBoxCaret(text, session.CgosConnectionEditCaretIndex, textBounds, 0.42f);
         }
+        DrawEditableTextEditHint(active, hovered, textBounds);
     }
 
 
@@ -1100,10 +1101,10 @@ public sealed partial class GoScreenRenderer
     private static Rectangle CgosConnectionEditPanelEditorBounds => new(520, 228, 880, 590);
 
 
-    private static Rectangle CgosConnectionEditPanelCloseButtonBounds => new(1318, 156, 132, 48);
+    private static Rectangle CgosConnectionEditPanelCloseButtonBounds => new(1144, 156, 132, 48);
 
 
-    private static Rectangle CgosConnectionEditPanelSaveButtonBounds => new(1080, 840, 320, 58);
+    private static Rectangle CgosConnectionEditPanelSaveButtonBounds => new(1288, 156, 162, 48);
 
 
     private static readonly CgosConnectionProfileEditField[] CgosConnectionEditFields =
@@ -1139,9 +1140,4 @@ public sealed partial class GoScreenRenderer
     private static Rectangle CgosConnectionProfileBounds(int index) =>
         new(CgosConnectionListBounds.X + 16, CgosConnectionListBounds.Y + 16 + index * 104, CgosConnectionListBounds.Width - 32, 86);
 
-
-    private static string SaveCgosConnectionLabel(GoAppSession session) =>
-        string.IsNullOrWhiteSpace(session.CgosConnectionEditSaveMessage)
-            ? "SAVE PROFILE"
-            : $"SAVE PROFILE {session.CgosConnectionEditSaveMessage}";
 }
