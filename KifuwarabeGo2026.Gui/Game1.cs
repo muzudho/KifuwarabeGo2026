@@ -1699,6 +1699,12 @@ public class Game1 : Game
                 SavePlayerAndClientIdentityCatalogs();
             else if (GoScreenRenderer.GetClientIdentityProfileSelectionEditButtonHit(point))
                 _session.OpenClientIdentityProfileEditPanel();
+            else if (GoScreenRenderer.GetClientIdentityProfileEditAddLocalButtonHit(point) && _session.AddClientIdentityProfile(false))
+                SavePlayerAndClientIdentityCatalogs();
+            else if (GoScreenRenderer.GetClientIdentityProfileEditAddCgosButtonHit(point) && _session.AddClientIdentityProfile(true))
+                SavePlayerAndClientIdentityCatalogs();
+            else if (GoScreenRenderer.GetClientIdentityProfileEditRemoveButtonHit(point) && _session.RemoveSelectedClientIdentityProfile())
+                SavePlayerAndClientIdentityCatalogs();
             else if (GoScreenRenderer.GetClientIdentityProfileSelectionItemHit(point, _session) is { } targetIndex)
                 _session.SelectClientIdentityProfile(targetIndex);
             return;
@@ -1727,9 +1733,6 @@ public class Game1 : Game
                 SaveClientIdentityProfileEditDraft();
                 _session.ReturnToClientIdentityProfileSelectionPanel();
             }
-            else if (GoScreenRenderer.GetClientIdentityProfileEditAddCgosButtonHit(point) && _session.AddClientIdentityProfile(true)) SavePlayerAndClientIdentityCatalogs();
-            else if (GoScreenRenderer.GetClientIdentityProfileEditAddLocalButtonHit(point) && _session.AddClientIdentityProfile(false)) SavePlayerAndClientIdentityCatalogs();
-            else if (GoScreenRenderer.GetClientIdentityProfileEditRemoveButtonHit(point) && _session.RemoveClientIdentityProfile()) SavePlayerAndClientIdentityCatalogs();
             else if (GoScreenRenderer.GetClientIdentityProfileEditSelectConnectionButtonHit(point)) _session.OpenClientIdentityProfileConnectionSelectionPanel();
             else if (GoScreenRenderer.GetClientIdentityProfileEditFieldHit(point, _session) is { } field)
                 BeginOrMoveClientIdentityProfileEditField(point, field);

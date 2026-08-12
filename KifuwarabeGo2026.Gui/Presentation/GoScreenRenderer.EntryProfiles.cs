@@ -25,12 +25,12 @@ public sealed partial class GoScreenRenderer
     private static readonly Rectangle PlayerEditPanelSaveButtonBounds = new(1224, 288, 148, 42);
     private static readonly Rectangle ClientIdentityProfileSelectionCloseButtonBounds = new(1320, 182, 150, 48);
     private static readonly Rectangle ClientIdentityProfileSelectionUseButtonBounds = new(1158, 182, 150, 48);
-    private static readonly Rectangle ClientIdentityProfileSelectionEditButtonBounds = new(466, 820, 150, 48);
+    private static readonly Rectangle ClientIdentityProfileSelectionEditButtonBounds = new(800, 820, 150, 48);
     private static readonly Rectangle ClientIdentityProfileEditCloseButtonBounds = new(1320, 182, 150, 48);
     private static readonly Rectangle ClientIdentityProfileEditUseButtonBounds = new(1158, 182, 150, 48);
-    private static readonly Rectangle ClientIdentityProfileEditAddCgosButtonBounds = new(466, 820, 150, 48);
-    private static readonly Rectangle ClientIdentityProfileEditAddLocalButtonBounds = new(628, 820, 160, 48);
-    private static readonly Rectangle ClientIdentityProfileEditRemoveButtonBounds = new(800, 820, 140, 48);
+    private static readonly Rectangle ClientIdentityProfileEditAddCgosButtonBounds = new(628, 820, 160, 48);
+    private static readonly Rectangle ClientIdentityProfileEditAddLocalButtonBounds = new(466, 820, 150, 48);
+    private static readonly Rectangle ClientIdentityProfileEditRemoveButtonBounds = new(962, 820, 150, 48);
     private static readonly Rectangle ClientIdentityProfileEditSelectConnectionButtonBounds = new(1110, 820, 260, 48);
     private static readonly Rectangle ClientIdentityProfileConnectionSelectionPanelBounds = new(510, 210, 900, 660);
     private static readonly Rectangle ClientIdentityProfileConnectionSelectionCancelButtonBounds = new(1050, 236, 140, 48);
@@ -102,8 +102,7 @@ public sealed partial class GoScreenRenderer
     {
         var index = session.ClientIdentityProfileEditIndex;
         var isLocalMatch = string.IsNullOrEmpty(session.ClientIdentityProfileEditDraft.ConnectionProfileId);
-        return ClientIdentityProfileEditFieldTextBounds(index, ClientIdentityProfileEditField.DisplayName, isLocalMatch).Contains(point) ? ClientIdentityProfileEditField.DisplayName :
-            ClientIdentityProfileEditFieldTextBounds(index, ClientIdentityProfileEditField.LoginName, isLocalMatch).Contains(point) ? ClientIdentityProfileEditField.LoginName :
+        return ClientIdentityProfileEditFieldTextBounds(index, ClientIdentityProfileEditField.LoginName, isLocalMatch).Contains(point) ? ClientIdentityProfileEditField.LoginName :
             !isLocalMatch && ClientIdentityProfileEditFieldTextBounds(index, ClientIdentityProfileEditField.LoginPass, false).Contains(point) ? ClientIdentityProfileEditField.LoginPass : null;
     }
     public int GetClientIdentityProfileEditCaretIndex(Point point, int index, ClientIdentityProfileEditField field, string text, bool isLocalMatch) =>
@@ -276,7 +275,6 @@ public sealed partial class GoScreenRenderer
             var target = targets[index];
             var row = new Rectangle(bounds.X + 36, bounds.Y + 140 + index * 92, bounds.Width - 72, 78);
             var isSelectedClientIdentity = index == session.ClientIdentityProfileEditIndex;
-            DrawDataRowFrame(row, active: isSelectedClientIdentity, hovered: row.Contains(mousePoint));
             if (isSelectedClientIdentity)
             {
                 DrawText("▶", new Vector2(row.X + 4, row.Y + 25), new Color(147, 244, 200), 0.34f);
@@ -285,10 +283,9 @@ public sealed partial class GoScreenRenderer
             if (isSelectedClientIdentity)
             {
                 var isLocalMatch = string.IsNullOrEmpty(target.ConnectionProfileId);
-                DrawClientIdentityProfileEditField(session, index, ClientIdentityProfileEditField.DisplayName, "DISPLAY", mousePoint, isLocalMatch);
                 DrawClientIdentityProfileEditField(session, index, ClientIdentityProfileEditField.LoginName, "HANDLE", mousePoint, isLocalMatch);
                 if (!isLocalMatch)
-                    DrawClientIdentityProfileEditField(session, index, ClientIdentityProfileEditField.LoginPass, "LOGIN PASS", mousePoint, false);
+                    DrawClientIdentityProfileEditField(session, index, ClientIdentityProfileEditField.LoginPass, "PASSWORD", mousePoint, false);
                 DrawFittedText($"CONNECTION: {session.ClientIdentityProfileEditConnectionDisplayName}", new Rectangle(row.X + 18, row.Y + 47, 920, 22), new Color(147, 244, 200), 0.28f);
                 if (session.IsClientIdentityProfileInUse(index))
                     DrawFittedText("IN USE", new Rectangle(row.Right - 130, row.Y + 45, 110, 22), new Color(147, 244, 200), 0.28f);
@@ -300,9 +297,6 @@ public sealed partial class GoScreenRenderer
                 DrawFittedText(session.GetClientIdentityProfileConnectionDisplayName(target), new Rectangle(row.X + 280, row.Y + 42, 520, 24), new Color(147, 244, 200), 0.30f);
             }
         }
-        DrawCommandButton(ClientIdentityProfileEditAddCgosButtonBounds, "ADD ONLINE MATCH", false, mousePoint, enabled: targets.Count < 5, scale: 0.23f);
-        DrawCommandButton(ClientIdentityProfileEditAddLocalButtonBounds, "ADD LOCAL", false, mousePoint, enabled: targets.Count < 5, scale: 0.32f);
-        DrawCommandButton(ClientIdentityProfileEditRemoveButtonBounds, "REMOVE", false, mousePoint, enabled: targets.Count > 1, scale: 0.32f);
         var selected = session.ClientIdentityProfileEditDraft;
         DrawFittedText($"CONNECTION: {session.ClientIdentityProfileEditConnectionDisplayName}", new Rectangle(960, 766, 470, 32), new Color(147, 244, 200), 0.34f);
         var canSelectConnection = !string.IsNullOrEmpty(selected.ConnectionProfileId) && session.CgosConnectionProfiles.Count > 0;
@@ -319,9 +313,16 @@ public sealed partial class GoScreenRenderer
         DrawText("USE CLIENT IDENTITY", new Vector2(bounds.X + 34, bounds.Y + 28), new Color(244, 238, 218), 0.68f);
         DrawFittedText("GREEN: selected     BLUE: current operation", new Rectangle(bounds.X + 36, bounds.Y + 82, 500, 26), new Color(180, 210, 215), 0.31f);
         var targets = session.GetPlayerClientIdentityProfiles(session.PlayerEditDraft.Id);
-        DrawCommandButton(ClientIdentityProfileSelectionEditButtonBounds, "EDIT", false, mousePoint, enabled: targets.Count > 0, scale: 0.34f);
         DrawCommandButton(ClientIdentityProfileSelectionUseButtonBounds, "USE", false, mousePoint, enabled: targets.Count > 0 && !session.IsClientIdentityProfileInUse(session.ClientIdentityProfileSelectionIndex), scale: 0.34f);
         DrawCommandButton(ClientIdentityProfileSelectionCloseButtonBounds, "CLOSE", false, mousePoint, scale: 0.34f);
+        var addBounds = new Rectangle(ClientIdentityProfileEditAddLocalButtonBounds.X, 786, ClientIdentityProfileEditAddCgosButtonBounds.Right - ClientIdentityProfileEditAddLocalButtonBounds.X, 24);
+        FillRect(addBounds, new Color(56, 54, 84));
+        DrawRect(addBounds, 1, new Color(133, 128, 177));
+        DrawCenteredText("ADD", new Vector2(addBounds.Center.X, addBounds.Center.Y), Color.White, 0.34f);
+        DrawCommandButton(ClientIdentityProfileEditAddLocalButtonBounds, "LOCAL MATCH", false, mousePoint, enabled: targets.Count < 5, scale: 0.25f);
+        DrawCommandButton(ClientIdentityProfileEditAddCgosButtonBounds, "ONLINE MATCH", false, mousePoint, enabled: targets.Count < 5, scale: 0.22f);
+        DrawCommandButton(ClientIdentityProfileSelectionEditButtonBounds, "EDIT", false, mousePoint, enabled: targets.Count > 0, scale: 0.34f);
+        DrawCommandButton(ClientIdentityProfileEditRemoveButtonBounds, "REMOVE", false, mousePoint, enabled: targets.Count > 1, scale: 0.30f);
 
         for (var index = 0; index < targets.Count; index++)
         {
@@ -416,12 +417,12 @@ public sealed partial class GoScreenRenderer
 
     private static Rectangle ClientIdentityProfileEditFieldTextBounds(int index, ClientIdentityProfileEditField field, bool isLocalMatch)
     {
-        var rowY = 290 + index * 92;
+        var rowY = 358;
         return field switch
         {
-            ClientIdentityProfileEditField.DisplayName => new Rectangle(560, rowY + 7, 190, 30),
-            ClientIdentityProfileEditField.LoginName => new Rectangle(920, rowY + 7, isLocalMatch ? 520 : 230, 30),
-            ClientIdentityProfileEditField.LoginPass => new Rectangle(1290, rowY + 7, 150, 30),
+            ClientIdentityProfileEditField.DisplayName => new Rectangle(760, rowY + 7, 600, 42),
+            ClientIdentityProfileEditField.LoginName => new Rectangle(760, rowY + 7, 600, 42),
+            ClientIdentityProfileEditField.LoginPass => new Rectangle(760, rowY + 71, 600, 42),
             _ => throw new ArgumentOutOfRangeException(nameof(field), field, "Unknown target edit field."),
         };
     }
@@ -430,15 +431,25 @@ public sealed partial class GoScreenRenderer
     {
         var textBounds = ClientIdentityProfileEditFieldTextBounds(index, field, isLocalMatch);
         var active = session.ActiveClientIdentityProfileEditField == field;
-        DrawText(label, new Vector2(textBounds.X - (field == ClientIdentityProfileEditField.LoginPass ? 116 : 100), textBounds.Y + 4), new Color(180, 195, 195), 0.28f);
-        DrawTournamentRulesTextInputSurface(textBounds, active, textBounds.Contains(mousePoint));
+        DrawText(label, new Vector2(552, textBounds.Y + 7), new Color(180, 195, 195), 0.36f);
+        var hovered = textBounds.Contains(mousePoint);
+        DrawRoundedFill(new Rectangle(textBounds.X, textBounds.Bottom + 2, textBounds.Width, 5), 2, active ? new Color(147, 244, 200) : hovered ? new Color(185, 196, 255) : new Color(100, 110, 145));
         var text = session.GetClientIdentityProfileEditField(field);
         var displayText = field == ClientIdentityProfileEditField.LoginPass && !active ? new string('*', text.Length) : text;
         if (active)
-            DrawTextBoxSelection(text, session.ClientIdentityProfileEditSelectionStart, session.ClientIdentityProfileEditSelectionLength, textBounds, 0.34f);
-        DrawFittedText(string.IsNullOrEmpty(displayText) ? "-" : displayText, textBounds, Color.White, 0.34f);
+            DrawTextBoxSelection(text, session.ClientIdentityProfileEditSelectionStart, session.ClientIdentityProfileEditSelectionLength, textBounds, 0.42f);
+        DrawFittedText(string.IsNullOrEmpty(displayText) ? "-" : displayText, textBounds, Color.White, 0.42f);
         if (active)
-            DrawTextBoxCaret(text, session.ClientIdentityProfileEditCaretIndex, textBounds, 0.34f);
+            DrawTextBoxCaret(text, session.ClientIdentityProfileEditCaretIndex, textBounds, 0.42f);
+        if (hovered && !active) DrawPlayerEditHint("EDIT", textBounds);
+        if (field == ClientIdentityProfileEditField.LoginName && PlayerEditFieldHoverBounds(textBounds).Contains(mousePoint))
+            DrawClientIdentityHandleStickyNote(textBounds);
+    }
+
+    private void DrawClientIdentityHandleStickyNote(Rectangle textBounds)
+    {
+        var noteBounds = new Rectangle(1452, 418, 408, 122);
+        DrawStickyNote(noteBounds, PlayerEditUnderlineConnectorStart(textBounds), new Vector2(noteBounds.X, noteBounds.Center.Y), new Color(185, 196, 255), new Color(116, 145, 178), "HANDLE とは？", ["対局サービスにログインするときの、プレイヤー固有の名前。", "接続する相手の機械に入力できるフォーマットに合わせます。"], bodyLineSpacing: 26);
     }
 
     private static Rectangle PlayerEditPanelFieldTextBounds(EntryProfileEditField field) => field switch

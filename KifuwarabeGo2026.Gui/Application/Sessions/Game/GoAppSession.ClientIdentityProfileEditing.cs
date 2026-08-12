@@ -162,6 +162,12 @@ public sealed partial class GoAppSession
         return LoadClientIdentityProfileEditDraft();
     }
 
+    public bool RemoveSelectedClientIdentityProfile()
+    {
+        ClientIdentityProfileEditIndex = ClientIdentityProfileSelectionIndex;
+        return RemoveClientIdentityProfile();
+    }
+
     /// <summary>選択 Target をこの Player の既定の使用先として先頭へ移動する。</summary>
     public bool UseClientIdentityProfile()
     {
