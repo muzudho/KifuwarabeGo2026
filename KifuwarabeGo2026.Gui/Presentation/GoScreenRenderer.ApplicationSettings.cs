@@ -15,31 +15,36 @@ public enum ApplicationSettingsPage
 public sealed partial class GoScreenRenderer
 {
     private static Rectangle SettingsButtonBounds => new(1780, 972, 70, 62);
-    private static Rectangle SettingsBackButtonBounds => new(1328, 178, 132, 48);
-    private static Rectangle SettingsBrowseButtonBounds => new(1290, 370, 170, 58);
-    private static Rectangle SettingsSgfBrowseButtonBounds => new(1290, 342, 170, 58);
-    private static Rectangle SettingsScreenshotBrowseButtonBounds => new(1290, 502, 170, 58);
-    private static Rectangle SettingsEditButtonBounds => new(1240, 820, 220, 58);
-    private static Rectangle SettingsOpenApplicationSettingsFolderButtonBounds => new(1290, 342, 170, 46);
-    private static Rectangle SettingsOpenEngineSettingsFolderButtonBounds => new(1290, 462, 170, 46);
-    private static Rectangle SettingsLogItemBounds(int index) => new(470, 520 + index * 52, 990, 44);
+    private static Rectangle SettingsBackButtonBounds => new(1390, 138, 140, 52);
+    private static Rectangle SettingsLogRootFieldBounds => new(440, 374, 1070, 70);
+    private static Rectangle SettingsSgfFieldBounds => new(440, 374, 1070, 70);
+    private static Rectangle SettingsScreenshotFieldBounds => new(440, 564, 1070, 70);
+    private static Rectangle SettingsApplicationSettingsFileFieldBounds => new(440, 374, 1070, 70);
+    private static Rectangle SettingsEngineSettingsFileFieldBounds => new(440, 564, 1070, 70);
+    private static Rectangle SettingsLogItemBounds(int index) => new(440, 600 + index * 58, 1070, 48);
+    private static Rectangle SettingsLogItemActionBadgeBounds(int index)
+    {
+        var bounds = SettingsLogItemBounds(index);
+        return new Rectangle(bounds.Right - 78, bounds.Bottom - 28, 70, 23);
+    }
     private static Rectangle SettingsTabBounds(ApplicationSettingsPage page) => page switch
     {
-        ApplicationSettingsPage.Log => new Rectangle(470, 250, 260, 48),
-        ApplicationSettingsPage.OtherFolders => new Rectangle(738, 250, 360, 48),
-        _ => new Rectangle(1106, 250, 260, 48),
+        ApplicationSettingsPage.Log => new Rectangle(440, 242, 250, 52),
+        ApplicationSettingsPage.OtherFolders => new Rectangle(702, 242, 360, 52),
+        _ => new Rectangle(1074, 242, 250, 52),
     };
 
     public static bool GetSettingsButtonHit(Point point) => SettingsButtonBounds.Contains(point);
     public static bool GetSettingsBackButtonHit(Point point) => SettingsBackButtonBounds.Contains(point);
-    public static bool GetSettingsBrowseButtonHit(Point point) => SettingsBrowseButtonBounds.Contains(point);
-    public static bool GetSettingsSgfBrowseButtonHit(Point point) => SettingsSgfBrowseButtonBounds.Contains(point);
-    public static bool GetSettingsScreenshotBrowseButtonHit(Point point) => SettingsScreenshotBrowseButtonBounds.Contains(point);
-    public static bool GetSettingsEditButtonHit(Point point, bool enabled) => enabled && SettingsEditButtonBounds.Contains(point);
+    public static bool GetSettingsBrowseButtonHit(Point point) => SettingsLogRootFieldBounds.Contains(point);
+    public static bool GetSettingsSgfBrowseButtonHit(Point point) => SettingsSgfFieldBounds.Contains(point);
+    public static bool GetSettingsScreenshotBrowseButtonHit(Point point) => SettingsScreenshotFieldBounds.Contains(point);
+    public static bool GetSettingsEditButtonHit(Point point, int selectedIndex) =>
+        selectedIndex >= 0 && SettingsLogItemActionBadgeBounds(selectedIndex).Contains(point);
     public static bool GetSettingsOpenApplicationSettingsFolderButtonHit(Point point) =>
-        SettingsOpenApplicationSettingsFolderButtonBounds.Contains(point);
+        SettingsApplicationSettingsFileFieldBounds.Contains(point);
     public static bool GetSettingsOpenEngineSettingsFolderButtonHit(Point point) =>
-        SettingsOpenEngineSettingsFolderButtonBounds.Contains(point);
+        SettingsEngineSettingsFileFieldBounds.Contains(point);
 
     public static ApplicationSettingsPage? GetSettingsTabHit(Point point)
     {
@@ -61,55 +66,49 @@ public sealed partial class GoScreenRenderer
         _spriteBatch.Begin(samplerState: Microsoft.Xna.Framework.Graphics.SamplerState.LinearClamp,
             transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));
         DrawBackground();
-        var panel = new Rectangle(420, 150, 1080, 758);
+        var panel = new Rectangle(390, 100, 1180, 860);
         FillRect(new Rectangle(panel.X + 18, panel.Y + 20, panel.Width, panel.Height), new Color(0, 0, 0, 130));
         FillRect(panel, new Color(21, 25, 32, 246));
         DrawRect(panel, 2, new Color(82, 111, 114));
-        DrawText("APPLICATION SETTINGS", new Vector2(468, 196), new Color(244, 238, 218), 0.82f);
+        DrawText("APPLICATION SETTINGS", new Vector2(440, 148), new Color(244, 238, 218), 0.78f);
         DrawCommandButton(SettingsBackButtonBounds, "BACK", false, mousePoint, scale: 0.32f);
         DrawSettingsTabs(page, mousePoint);
         if (page == ApplicationSettingsPage.Log)
         {
-            DrawText("LOG ROOT FOLDER", new Vector2(470, 326), new Color(180, 195, 195), 0.42f);
-            DrawDataRowFrame(new Rectangle(470, 370, 800, 58));
-            DrawFittedText(logRoot, new Rectangle(490, 380, 760, 38), Color.White, 0.40f);
-            DrawCommandButton(SettingsBrowseButtonBounds, "BROWSE", false, mousePoint, scale: 0.34f);
-            DrawFittedText("GUI   " + Path.Combine(logRoot, "Gui"), new Rectangle(470, 438, 970, 26), new Color(180, 195, 195), 0.32f);
-            DrawFittedText("CGOS  " + Path.Combine(logRoot, "Cgos"), new Rectangle(470, 464, 970, 26), new Color(180, 195, 195), 0.32f);
-            DrawText("RECENT GUI LOGS", new Vector2(470, 500), new Color(180, 195, 195), 0.38f);
+            DrawSettingsSection(new Rectangle(420, 330, 1110, 190), "LOG ROOT", new Color(67, 112, 118));
+            DrawSettingsValueField("LOG ROOT FOLDER", logRoot, SettingsLogRootFieldBounds, "BROWSE", mousePoint);
+            DrawFittedText("GUI   " + Path.Combine(logRoot, "Gui"), new Rectangle(440, 458, 1050, 24), new Color(180, 195, 195), 0.30f);
+            DrawFittedText("CGOS  " + Path.Combine(logRoot, "Cgos"), new Rectangle(440, 484, 1050, 24), new Color(180, 195, 195), 0.30f);
+            DrawSettingsSection(new Rectangle(420, 542, 1110, 272), "RECENT GUI LOGS", new Color(76, 91, 126));
             for (var index = 0; index < logFiles.Count; index++)
             {
                 var bounds = SettingsLogItemBounds(index);
                 var selected = index == selectedIndex;
-                FillRect(bounds, selected ? new Color(46, 77, 72) : bounds.Contains(mousePoint) ? new Color(36, 50, 58) : new Color(24, 31, 37));
-                DrawRect(bounds, selected ? 2 : 1, selected ? new Color(99, 223, 185) : new Color(82, 111, 114));
-                DrawFittedText(Path.GetFileName(logFiles[index]), new Rectangle(bounds.X + 16, bounds.Y + 8, bounds.Width - 32, 28), Color.White, 0.31f);
+                var hovered = bounds.Contains(mousePoint);
+                DrawFittedText(Path.GetFileName(logFiles[index]), new Rectangle(bounds.X + 8, bounds.Y + 6, bounds.Width - 16, 28), Color.White, 0.31f);
+                DrawRoundedFill(new Rectangle(bounds.X + 8, bounds.Bottom - 6, bounds.Width - 16, 5), 2,
+                    selected ? new Color(147, 244, 200) : hovered ? new Color(185, 196, 255) : new Color(100, 110, 145));
+                if (selected && hovered)
+                    DrawSettingsHoverBadge("EDIT", SettingsLogItemActionBadgeBounds(index));
             }
-            DrawCommandButton(SettingsEditButtonBounds, "EDIT IN CODE", false, mousePoint, enabled: selectedIndex >= 0, scale: 0.34f);
         }
         else if (page == ApplicationSettingsPage.OtherFolders)
         {
-            DrawText("SGF SAVE FOLDER", new Vector2(470, 326), new Color(180, 195, 195), 0.38f);
-            DrawDataRowFrame(new Rectangle(470, 342, 800, 58));
-            DrawFittedText(string.IsNullOrWhiteSpace(sgfSaveDirectory) ? "(NOT SET - FIRST SAVE WILL BE REMEMBERED)" : sgfSaveDirectory, new Rectangle(490, 352, 760, 38), Color.White, 0.36f);
-            DrawCommandButton(SettingsSgfBrowseButtonBounds, "BROWSE", false, mousePoint, scale: 0.34f);
-            DrawText("SCREENSHOT SAVE FOLDER", new Vector2(470, 468), new Color(180, 195, 195), 0.38f);
-            DrawDataRowFrame(new Rectangle(470, 502, 800, 58));
-            DrawFittedText(screenshotSaveDirectory, new Rectangle(490, 512, 760, 38), Color.White, 0.36f);
-            DrawCommandButton(SettingsScreenshotBrowseButtonBounds, "BROWSE", false, mousePoint, scale: 0.34f);
-            DrawText("Ctrl + P captures the whole game window, including its frame.", new Vector2(470, 590), new Color(180, 195, 195), 0.34f);
+            DrawSettingsSection(new Rectangle(420, 330, 1110, 176), "SGF", new Color(67, 112, 118));
+            DrawSettingsValueField("SGF SAVE FOLDER", string.IsNullOrWhiteSpace(sgfSaveDirectory) ? "(NOT SET - FIRST SAVE WILL BE REMEMBERED)" : sgfSaveDirectory, SettingsSgfFieldBounds, "BROWSE", mousePoint);
+            DrawSettingsSection(new Rectangle(420, 520, 1110, 202), "SCREENSHOT", new Color(76, 91, 126));
+            DrawSettingsValueField("SCREENSHOT SAVE FOLDER", screenshotSaveDirectory, SettingsScreenshotFieldBounds, "BROWSE", mousePoint);
+            DrawFittedText("Ctrl + P captures the whole game window, including its frame.", new Rectangle(440, 656, 1020, 28), new Color(180, 195, 195), 0.30f);
         }
         else
         {
-            DrawText("APPLICATION SETTINGS FILE", new Vector2(470, 326), new Color(180, 195, 195), 0.34f);
-            DrawFittedText(applicationSettingsPath, new Rectangle(470, 356, 800, 24), Color.White, 0.30f);
-            DrawCommandButton(SettingsOpenApplicationSettingsFolderButtonBounds, "OPEN FOLDER", false, mousePoint, scale: 0.28f);
-            DrawText("ENGINE SETTINGS FILE", new Vector2(470, 446), new Color(180, 195, 195), 0.34f);
-            DrawFittedText(engineSettingsPath, new Rectangle(470, 476, 800, 24), Color.White, 0.30f);
-            DrawCommandButton(SettingsOpenEngineSettingsFolderButtonBounds, "OPEN FOLDER", false, mousePoint, scale: 0.28f);
+            DrawSettingsSection(new Rectangle(420, 330, 1110, 176), "APPLICATION", new Color(67, 112, 118));
+            DrawSettingsValueField("APPLICATION SETTINGS FILE", applicationSettingsPath, SettingsApplicationSettingsFileFieldBounds, "OPEN", mousePoint);
+            DrawSettingsSection(new Rectangle(420, 520, 1110, 176), "ENGINE", new Color(76, 91, 126));
+            DrawSettingsValueField("ENGINE SETTINGS FILE", engineSettingsPath, SettingsEngineSettingsFileFieldBounds, "OPEN", mousePoint);
         }
         if (!string.IsNullOrWhiteSpace(message))
-            DrawFittedText(message, new Rectangle(470, 862, 720, 20), new Color(255, 205, 140), 0.28f);
+            DrawFittedText(message, new Rectangle(440, 910, 780, 24), new Color(255, 205, 140), 0.28f);
         _spriteBatch.End();
     }
 
@@ -119,8 +118,7 @@ public sealed partial class GoScreenRenderer
         {
             var bounds = SettingsTabBounds(page);
             var selected = page == selectedPage;
-            FillRect(bounds, selected ? new Color(46, 77, 72) : bounds.Contains(mousePoint) ? new Color(36, 50, 58) : new Color(24, 31, 37));
-            DrawRect(bounds, selected ? 2 : 1, selected ? new Color(99, 223, 185) : new Color(82, 111, 114));
+            FillRect(bounds, selected ? new Color(31, 49, 49) : bounds.Contains(mousePoint) ? new Color(29, 39, 46) : new Color(21, 28, 34));
             var label = page switch
             {
                 ApplicationSettingsPage.Log => "LOG",
@@ -128,7 +126,44 @@ public sealed partial class GoScreenRenderer
                 _ => "OTHER",
             };
             DrawFittedText(label, new Rectangle(bounds.X + 18, bounds.Y + 9, bounds.Width - 36, 30), Color.White, 0.34f);
+            DrawRoundedFill(new Rectangle(bounds.X + 10, bounds.Bottom - 7, bounds.Width - 20, 5), 2,
+                selected ? new Color(99, 223, 185) : bounds.Contains(mousePoint) ? new Color(185, 196, 255) : new Color(58, 78, 86));
         }
+    }
+
+    private void DrawSettingsValueField(
+        string label,
+        string value,
+        Rectangle bounds,
+        string action,
+        Point mousePoint)
+    {
+        var hovered = bounds.Contains(mousePoint);
+        DrawText(label, new Vector2(bounds.X + 8, bounds.Y), new Color(180, 195, 195), 0.34f);
+        DrawFittedText(value, new Rectangle(bounds.X + 8, bounds.Y + 30, bounds.Width - (hovered ? 132 : 16), 28), Color.White, 0.32f);
+        DrawRoundedFill(new Rectangle(bounds.X + 8, bounds.Bottom - 7, bounds.Width - 16, 6), 3,
+            hovered ? new Color(185, 196, 255) : new Color(100, 110, 145));
+        if (hovered)
+            DrawSettingsHoverBadge(action, new Rectangle(bounds.Right - 108, bounds.Bottom - 28, 100, 26));
+    }
+
+    private void DrawSettingsHoverBadge(string label, Rectangle bounds)
+    {
+        DrawRoundedFill(bounds, 6, new Color(185, 196, 255));
+        DrawSharpCenteredFittedText(label, bounds, new Color(15, 20, 31), 0.30f);
+    }
+
+    private void DrawSettingsSection(Rectangle bounds, string title, Color accentColor)
+    {
+        FillRect(bounds, new Color(15, 20, 26, 230));
+        DrawRect(bounds, 1, new Color(58, 78, 86));
+        FillRect(new Rectangle(bounds.X, bounds.Y, 8, bounds.Height), accentColor);
+        DrawText(title, new Vector2(bounds.X + 28, bounds.Y + 14), new Color(205, 218, 218), 0.34f);
+        DrawLine(
+            new Vector2(bounds.X + 28, bounds.Y + 46),
+            new Vector2(bounds.Right - 20, bounds.Y + 46),
+            1f,
+            new Color(58, 78, 86));
     }
 
     private void DrawSettingsButton(Point mousePoint)

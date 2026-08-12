@@ -5892,18 +5892,10 @@ public class Game1 : Game
             return;
         }
 
-        if (_applicationSettingsPage == ApplicationSettingsPage.Log && GoScreenRenderer.GetSettingsLogItemHit(point, _guiLogFiles.Count) is { } index)
-        {
-            _selectedGuiLogIndex = index;
-            _applicationSettingsMessage = Path.GetFileName(_guiLogFiles[index]);
-            GuiOperationLog.User("Selected GUI log", _applicationSettingsMessage);
-            return;
-        }
-
-        if (_applicationSettingsPage == ApplicationSettingsPage.Log && GoScreenRenderer.GetSettingsEditButtonHit(point, _selectedGuiLogIndex >= 0))
+        if (_applicationSettingsPage == ApplicationSettingsPage.Log && GoScreenRenderer.GetSettingsEditButtonHit(point, _selectedGuiLogIndex))
         {
             var path = _guiLogFiles[_selectedGuiLogIndex];
-            GuiOperationLog.User("Pressed Edit in Code button", Path.GetFileName(path));
+            GuiOperationLog.User("Pressed Edit log badge", Path.GetFileName(path));
             try
             {
                 var result = _desktopLauncher.OpenFileWithPreferredApplication(path, "code");
@@ -5916,6 +5908,15 @@ public class Game1 : Game
                 _applicationSettingsMessage = "ERROR: " + ex.Message;
                 ApplicationErrorLog.Write("OPEN GUI LOG", "Could not open the selected GUI log.", ex);
             }
+            return;
+        }
+
+        if (_applicationSettingsPage == ApplicationSettingsPage.Log && GoScreenRenderer.GetSettingsLogItemHit(point, _guiLogFiles.Count) is { } index)
+        {
+            _selectedGuiLogIndex = index;
+            _applicationSettingsMessage = Path.GetFileName(_guiLogFiles[index]);
+            GuiOperationLog.User("Selected GUI log", _applicationSettingsMessage);
+            return;
         }
     }
 
