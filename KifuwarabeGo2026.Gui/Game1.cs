@@ -1699,7 +1699,7 @@ public class Game1 : Game
                 else if (GoScreenRenderer.GetTargetProfileConnectionSelectionSelectButtonHit(point) && _session.CommitTargetProfileConnectionSelection())
                 {
                     _session.SaveTargetProfileEditDraft();
-                    _targetCatalog.Save(_session.TargetProfiles);
+                    SavePlayerAndTargetCatalogs();
                 }
                 else if (GoScreenRenderer.GetTargetProfileConnectionSelectionPreviousButtonHit(point))
                     _session.MoveTargetProfileConnectionSelectionPage(-1);
@@ -1714,13 +1714,12 @@ public class Game1 : Game
                 SaveTargetProfileEditDraft();
                 _session.CloseTargetProfileEditPanel();
             }
-            else if (GoScreenRenderer.GetTargetProfileEditAddCgosButtonHit(point) && _session.AddTargetProfile(true)) _targetCatalog.Save(_session.TargetProfiles);
-            else if (GoScreenRenderer.GetTargetProfileEditAddLocalButtonHit(point) && _session.AddTargetProfile(false)) _targetCatalog.Save(_session.TargetProfiles);
-            else if (GoScreenRenderer.GetTargetProfileEditRemoveButtonHit(point) && _session.RemoveTargetProfile()) _targetCatalog.Save(_session.TargetProfiles);
+            else if (GoScreenRenderer.GetTargetProfileEditAddCgosButtonHit(point) && _session.AddTargetProfile(true)) SavePlayerAndTargetCatalogs();
+            else if (GoScreenRenderer.GetTargetProfileEditAddLocalButtonHit(point) && _session.AddTargetProfile(false)) SavePlayerAndTargetCatalogs();
+            else if (GoScreenRenderer.GetTargetProfileEditRemoveButtonHit(point) && _session.RemoveTargetProfile()) SavePlayerAndTargetCatalogs();
             else if (GoScreenRenderer.GetTargetProfileEditUseButtonHit(point) && _session.UseTargetProfile())
             {
-                _playerCatalog.Save(_session.PlayerProfiles);
-                _targetCatalog.Save(_session.TargetProfiles);
+                SavePlayerAndTargetCatalogs();
             }
             else if (GoScreenRenderer.GetTargetProfileEditSelectConnectionButtonHit(point)) _session.OpenTargetProfileConnectionSelectionPanel();
             else if (GoScreenRenderer.GetTargetProfileEditFieldHit(point, _session) is { } field)
@@ -1792,30 +1791,21 @@ public class Game1 : Game
         if (GoScreenRenderer.GetPlayerSelectionDialogAddHumanButtonHit(point))
         {
             if (_session.AddPlayerProfile(PlayerProfileKind.Human))
-            {
-                _playerCatalog.Save(_session.PlayerProfiles);
-                _targetCatalog.Save(_session.TargetProfiles);
-            }
+                SavePlayerAndTargetCatalogs();
             return;
         }
 
         if (GoScreenRenderer.GetPlayerSelectionDialogAddComputerButtonHit(point))
         {
             if (_session.AddPlayerProfile(PlayerProfileKind.Computer))
-            {
-                _playerCatalog.Save(_session.PlayerProfiles);
-                _targetCatalog.Save(_session.TargetProfiles);
-            }
+                SavePlayerAndTargetCatalogs();
             return;
         }
 
         if (GoScreenRenderer.GetPlayerSelectionDialogDeleteButtonHit(point))
         {
             if (_session.DeleteSelectedPlayerProfile())
-            {
-                _playerCatalog.Save(_session.PlayerProfiles);
-                _targetCatalog.Save(_session.TargetProfiles);
-            }
+                SavePlayerAndTargetCatalogs();
             return;
         }
 
@@ -4172,6 +4162,16 @@ public class Game1 : Game
     {
         _session.SaveTargetProfileEditDraft();
         _targetCatalog.Save(_session.TargetProfiles);
+    }
+
+    /// <summary>
+    /// Player の Target 参照と Target 本体を同じ UI 操作で保存する。
+    /// Target を先に書くことで、追加時に Player が未保存の Target を参照する状態を避ける。
+    /// </summary>
+    private void SavePlayerAndTargetCatalogs()
+    {
+        _targetCatalog.Save(_session.TargetProfiles);
+        _playerCatalog.Save(_session.PlayerProfiles);
     }
 
     private void EndHumanPlayerNameEdit(bool commit)
