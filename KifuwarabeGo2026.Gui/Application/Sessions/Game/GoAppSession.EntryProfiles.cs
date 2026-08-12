@@ -28,6 +28,14 @@ public sealed partial class GoAppSession
 
     public string WhiteLocalMatchClientIdentityProfileId { get; private set; } = "";
 
+    /// <summary>今回の LocalMatch だけで使う Handle。Client Identity には保存しない。</summary>
+    public string BlackLocalMatchHandleDraft { get; private set; } = "";
+    public string WhiteLocalMatchHandleDraft { get; private set; } = "";
+    public GoStone? ActiveLocalMatchHandleStone { get; private set; }
+    public int LocalMatchHandleCaretIndex { get; private set; }
+    public int LocalMatchHandleSelectionStart { get; private set; }
+    public int LocalMatchHandleSelectionLength { get; private set; }
+
     public void SetEntryProfiles(IEnumerable<EntryProfile> profiles)
     {
         _playerProfiles.Clear();
@@ -43,6 +51,8 @@ public sealed partial class GoAppSession
     {
         _clientIdentityProfiles.Clear();
         _clientIdentityProfiles.AddRange(profiles.Select(profile => profile.Clone()));
+        ResetLocalMatchHandleDraft(GoStone.Black);
+        ResetLocalMatchHandleDraft(GoStone.White);
         ApplyCgosClientIdentityCredentials(GoStone.Black);
         ApplyCgosClientIdentityCredentials(GoStone.White);
     }
@@ -102,6 +112,10 @@ public sealed partial class GoAppSession
     /// <summary>LocalMatch のファイル名など、外部へ提示する名前を返す。</summary>
     public string GetLocalMatchPresentedName(GoStone stone)
     {
+        var draft = GetLocalMatchHandleDraft(stone);
+        if (!string.IsNullOrWhiteSpace(draft))
+            return draft;
+
         var targetName = GetSelectedLocalMatchClientIdentityProfile(stone)?.LoginName;
         if (!string.IsNullOrWhiteSpace(targetName))
             return targetName;
@@ -186,6 +200,7 @@ public sealed partial class GoAppSession
         if (stone == GoStone.Black) BlackLocalMatchClientIdentityProfileId = targetProfileId;
         else if (stone == GoStone.White) WhiteLocalMatchClientIdentityProfileId = targetProfileId;
         else return false;
+        ResetLocalMatchHandleDraft(stone);
         return true;
     }
 
@@ -195,6 +210,42 @@ public sealed partial class GoAppSession
             .FirstOrDefault(target => string.IsNullOrEmpty(target.ConnectionProfileId))?.Id ?? "";
         if (stone == GoStone.Black) BlackLocalMatchClientIdentityProfileId = targetId;
         else WhiteLocalMatchClientIdentityProfileId = targetId;
+        ResetLocalMatchHandleDraft(stone);
+    }
+
+    public string GetLocalMatchHandleDraft(GoStone stone) => stone switch
+    {
+        GoStone.Black => BlackLocalMatchHandleDraft,
+        GoStone.White => WhiteLocalMatchHandleDraft,
+        _ => throw new ArgumentOutOfRangeException(nameof(stone), stone, "LocalMatch handle can be read only for black or white."),
+    };
+
+    public void BeginLocalMatchHandleEdit(GoStone stone, int caretIndex)
+    {
+        ActiveLocalMatchHandleStone = stone;
+        LocalMatchHandleCaretIndex = Math.Clamp(caretIndex, 0, GetLocalMatchHandleDraft(stone).Length);
+        LocalMatchHandleSelectionStart = LocalMatchHandleCaretIndex;
+        LocalMatchHandleSelectionLength = 0;
+    }
+
+    public void SetLocalMatchHandleDraft(string value, int caretIndex, int selectionStart, int selectionLength)
+    {
+        if (ActiveLocalMatchHandleStone is not { } stone) return;
+        if (stone == GoStone.Black) BlackLocalMatchHandleDraft = value;
+        else WhiteLocalMatchHandleDraft = value;
+        LocalMatchHandleCaretIndex = Math.Clamp(caretIndex, 0, value.Length);
+        LocalMatchHandleSelectionStart = Math.Clamp(selectionStart, 0, value.Length);
+        LocalMatchHandleSelectionLength = Math.Clamp(selectionLength, 0, value.Length - LocalMatchHandleSelectionStart);
+    }
+
+    public void EndLocalMatchHandleEdit() => ActiveLocalMatchHandleStone = null;
+
+    private void ResetLocalMatchHandleDraft(GoStone stone)
+    {
+        var identity = GetSelectedLocalMatchClientIdentityProfile(stone);
+        var value = identity?.LoginName ?? "";
+        if (stone == GoStone.Black) BlackLocalMatchHandleDraft = value;
+        else WhiteLocalMatchHandleDraft = value;
     }
 
     private string FindCompatiblePlayerId(GoStone stone, GoPlayerKind fallbackKind)

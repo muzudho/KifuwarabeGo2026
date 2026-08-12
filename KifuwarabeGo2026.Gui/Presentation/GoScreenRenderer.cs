@@ -1243,8 +1243,12 @@ public sealed partial class GoScreenRenderer
             // 石アイコンが黒白を示し、セクション名も PLAYERS なので行内ラベルは重複表示しない。
             var isBlack = selector.Label.StartsWith("BLACK", StringComparison.Ordinal);
             DrawIconStone(new Vector2(selector.Bounds.X + 34, selector.Bounds.Center.Y), 13, isBlack);
-            DrawFittedText(selector.Value, new Rectangle(GameOverValueX, selector.Bounds.Y + 6, selector.BrowseButtonBounds.X - GameOverValueX - 12, selector.Bounds.Height - 12), Color.White, 0.42f);
-            DrawCommandButton(selector.BrowseButtonBounds, selector.ButtonLabel, false, mousePoint, enabled: selector.Enabled, scale: PlayerSelectorLayout.SelectButtonLabelScale);
+            var valueBounds = new Rectangle(GameOverValueX, selector.Bounds.Y + 6, selector.Bounds.Right - GameOverValueX - 34, selector.Bounds.Height - 12);
+            var hovered = selector.Enabled && selector.Bounds.Contains(mousePoint);
+            DrawFittedText(selector.Value, valueBounds, Color.White, 0.42f);
+            DrawRoundedFill(new Rectangle(valueBounds.X, valueBounds.Bottom + 2, valueBounds.Width, 5), 2, hovered ? new Color(185, 196, 255) : new Color(100, 110, 145));
+            if (hovered)
+                DrawFittedText("CHANGE", new Rectangle(valueBounds.Right - 128, valueBounds.Y + 2, 120, 28), new Color(185, 196, 255), 0.30f);
             return;
         }
 

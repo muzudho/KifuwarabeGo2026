@@ -43,15 +43,17 @@ public sealed partial class GoScreenRenderer
     private static readonly Rectangle QuickClientIdentitySelectionCancelButtonBounds = new(1030, 272, 140, 48);
     private static readonly Rectangle QuickClientIdentitySelectionSelectButtonBounds = new(1182, 272, 140, 48);
 
-    public static bool GetBlackPlayerSelectButtonHit(Point point) => PlayerSelectorLayout.CreatePlayerSelector(BlackPlayerKindButtonY).ContainsBrowseButton(point);
-    public static bool GetWhitePlayerSelectButtonHit(Point point) => PlayerSelectorLayout.CreatePlayerSelector(WhitePlayerKindButtonY).ContainsBrowseButton(point);
-    public static bool GetPonnukiBlackPlayerSelectButtonHit(Point point) => PlayerSelectorLayout.CreatePlayerSelector(PonnukiBlackPlayerKindButtonY).ContainsBrowseButton(point);
-    public static bool GetPonnukiWhitePlayerSelectButtonHit(Point point) => PlayerSelectorLayout.CreatePlayerSelector(PonnukiWhitePlayerKindButtonY).ContainsBrowseButton(point);
+    public static bool GetBlackPlayerSelectButtonHit(Point point) => PlayerSelectorLayout.CreatePlayerSelector(BlackPlayerKindButtonY).Bounds.Contains(point);
+    public static bool GetWhitePlayerSelectButtonHit(Point point) => PlayerSelectorLayout.CreatePlayerSelector(WhitePlayerKindButtonY).Bounds.Contains(point);
+    public static bool GetPonnukiBlackPlayerSelectButtonHit(Point point) => PlayerSelectorLayout.CreatePlayerSelector(PonnukiBlackPlayerKindButtonY).Bounds.Contains(point);
+    public static bool GetPonnukiWhitePlayerSelectButtonHit(Point point) => PlayerSelectorLayout.CreatePlayerSelector(PonnukiWhitePlayerKindButtonY).Bounds.Contains(point);
     public static GoStone? GetLocalMatchHandleHit(Point point)
     {
         if (LocalMatchHandleBounds(BlackPlayerKindButtonY).Contains(point)) return GoStone.Black;
         return LocalMatchHandleBounds(WhitePlayerKindButtonY).Contains(point) ? GoStone.White : null;
     }
+    public int GetLocalMatchHandleCaretIndex(Point point, GoStone stone, string text) =>
+        GetTextBoxCaretIndex(point.X, text, LocalMatchHandleTextBounds(stone), 0.32f);
     public static bool GetPlayerSelectionDialogCancelButtonHit(Point point) => PlayerSelectionCancelButtonBounds.Contains(point);
     public static bool GetPlayerSelectionDialogOkButtonHit(Point point) => PlayerSelectionOkButtonBounds.Contains(point);
     public static bool GetPlayerSelectionDialogPreviousPageButtonHit(Point point) => PlayerSelectionPreviousButtonBounds.Contains(point);
@@ -148,9 +150,20 @@ public sealed partial class GoScreenRenderer
         var label = stone == GoStone.Black ? "BLACK PLAYER" : "WHITE PLAYER";
         DrawPlayerSelector(PlayerSelectorLayout.CreatePlayerSelector(y) with { Label = label, Value = player?.DisplayName ?? "SELECT PLAYER" }, mousePoint);
         var handleBounds = LocalMatchHandleBounds(y);
-        DrawDataRowFrame(handleBounds, hovered: handleBounds.Contains(mousePoint));
         DrawUiLabel(UiLabel.InCompactRow("HANDLE", handleBounds));
-        DrawFittedText(session.GetLocalMatchPresentedName(stone), new Rectangle(handleBounds.X + 152, handleBounds.Y + 7, handleBounds.Width - 168, 30), Color.White, 0.32f);
+        var textBounds = LocalMatchHandleTextBounds(stone);
+        var active = session.ActiveLocalMatchHandleStone == stone;
+        var hovered = textBounds.Contains(mousePoint);
+        var text = session.GetLocalMatchHandleDraft(stone);
+        DrawFittedText(text, textBounds, Color.White, 0.32f);
+        DrawRoundedFill(new Rectangle(textBounds.X, textBounds.Bottom + 2, textBounds.Width, 5), 2, active ? new Color(147, 244, 200) : hovered ? new Color(185, 196, 255) : new Color(100, 110, 145));
+        if (active)
+        {
+            DrawTextBoxSelection(text, session.LocalMatchHandleSelectionStart, session.LocalMatchHandleSelectionLength, textBounds, 0.32f);
+            DrawTextBoxCaret(text, session.LocalMatchHandleCaretIndex, textBounds, 0.32f);
+        }
+        if (hovered && !active)
+            DrawFittedText("EDIT", new Rectangle(textBounds.Right + 18, textBounds.Y + 2, 72, 26), new Color(185, 196, 255), 0.30f);
     }
 
     private void DrawPlayerSelectionDialog(GoAppSession session, Point mousePoint)
@@ -356,6 +369,12 @@ public sealed partial class GoScreenRenderer
     private static Rectangle PlayerSelectionClientIdentityItemBounds(int index) => new(PlayerSelectionClientIdentityListBounds.X + 16, PlayerSelectionClientIdentityListBounds.Y + 14 + index * 82, PlayerSelectionClientIdentityListBounds.Width - 32, 72);
 
     private static Rectangle LocalMatchHandleBounds(int y) => new(1144, y + 48, 668, 40);
+
+    private static Rectangle LocalMatchHandleTextBounds(GoStone stone)
+    {
+        var bounds = LocalMatchHandleBounds(stone == GoStone.Black ? BlackPlayerKindButtonY : WhitePlayerKindButtonY);
+        return new Rectangle(1296, bounds.Y + 4, 410, 30);
+    }
 
     private static Rectangle ClientIdentityProfileConnectionSelectionItemBounds(int slot) => new(544, 332 + slot * 82, 832, 70);
 

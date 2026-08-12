@@ -93,6 +93,8 @@ public class Game1 : Game
     private ReviewExitAction? _pendingReviewExitAction;
     private readonly TextBoxController _humanPlayerNameTextBox = new(80);
     private KeyboardState _previousHumanPlayerNameKeyboard;
+    private readonly TextBoxController _localMatchHandleTextBox = new(240);
+    private KeyboardState _previousLocalMatchHandleKeyboard;
     private readonly TextBoxController _playerEditTextBox = new(240);
     private KeyboardState _previousPlayerEditKeyboard;
     private readonly TextBoxController _targetProfileEditTextBox = new(240);
@@ -342,6 +344,7 @@ public class Game1 : Game
         UpdatePlayerEditTextBox(keyboard, gameTime);
         UpdateClientIdentityProfileEditTextBox(keyboard, gameTime);
         UpdateHumanPlayerNameTextBox(keyboard, gameTime);
+        UpdateLocalMatchHandleTextBox(keyboard, gameTime);
 
         if (acceptsInput && _session.CurrentMode.Kind != GoAppModeKind.Playing)
         {
@@ -412,6 +415,7 @@ public class Game1 : Game
             _previousGtpEngineIntegerKeyboard = keyboard;
             _previousGtpEngineKeyboard = keyboard;
             _previousHumanPlayerNameKeyboard = keyboard;
+            _previousLocalMatchHandleKeyboard = keyboard;
             _previousCgosConnectionKeyboard = keyboard;
             _previousCgosCredentialKeyboard = keyboard;
             _tournamentRulesSetting.SynchronizeKeyboardState(keyboard);
@@ -1613,7 +1617,7 @@ public class Game1 : Game
             else if (isPlayerSelectionIntermission &&
                      GoScreenRenderer.GetLocalMatchHandleHit(point) is { } handleStone)
             {
-                _session.OpenQuickClientIdentitySelectionPanel(handleStone, cgos: false);
+                BeginOrMoveLocalMatchHandleEdit(point, handleStone);
             }
             else if (isPlayerSelectionIntermission &&
                      (isLocalAppsIntermission
@@ -1835,6 +1839,7 @@ public class Game1 : Game
             _cgosConnectionEditTextBox.EndMouseSelection();
             _cgosCredentialTextBox.EndMouseSelection();
             _humanPlayerNameTextBox.EndMouseSelection();
+            _localMatchHandleTextBox.EndMouseSelection();
             _playerEditTextBox.EndMouseSelection();
             _targetProfileEditTextBox.EndMouseSelection();
             _gtpEngineEditTextBox.EndMouseSelection();
@@ -1887,6 +1892,17 @@ public class Game1 : Game
                 _renderer.GetHumanPlayerNameCaretIndex(point, humanStone, _humanPlayerNameTextBox.Text));
             _session.SetHumanPlayerNameDraft(_humanPlayerNameTextBox.Text, _humanPlayerNameTextBox.CaretIndex);
             _session.SetHumanPlayerNameSelection(_humanPlayerNameTextBox.SelectionStart, _humanPlayerNameTextBox.SelectionLength);
+        }
+        else if (_localMatchHandleTextBox.IsMouseSelecting &&
+                 _session.ActiveLocalMatchHandleStone is { } localHandleStone)
+        {
+            _localMatchHandleTextBox.UpdateMouseSelection(
+                _renderer.GetLocalMatchHandleCaretIndex(point, localHandleStone, _localMatchHandleTextBox.Text));
+            _session.SetLocalMatchHandleDraft(
+                _localMatchHandleTextBox.Text,
+                _localMatchHandleTextBox.CaretIndex,
+                _localMatchHandleTextBox.SelectionStart,
+                _localMatchHandleTextBox.SelectionLength);
         }
         else if (_playerEditTextBox.IsMouseSelecting && _session.ActivePlayerEditField is { } playerField)
         {
@@ -3697,6 +3713,8 @@ public class Game1 : Game
 
         if (TryInputHumanPlayerNameCharacter(e.Character)) return;
 
+        if (TryInputLocalMatchHandleCharacter(e.Character)) return;
+
         if (TryInputCgosCredentialCharacter(e.Character)) return;
 
         if (TryInputCgosConnectionEditCharacter(e.Character))
@@ -3997,6 +4015,57 @@ public class Game1 : Game
         _session.SetHumanPlayerNameSelection(_humanPlayerNameTextBox.SelectionStart, _humanPlayerNameTextBox.SelectionLength);
         return true;
     }
+
+    private void BeginOrMoveLocalMatchHandleEdit(Point point, GoStone stone)
+    {
+        var text = _session.ActiveLocalMatchHandleStone == stone
+            ? _localMatchHandleTextBox.Text
+            : _session.GetLocalMatchHandleDraft(stone);
+        var caretIndex = _renderer?.GetLocalMatchHandleCaretIndex(point, stone, text) ?? text.Length;
+        if (_session.ActiveLocalMatchHandleStone != stone)
+            _localMatchHandleTextBox.Begin(text, caretIndex);
+        _localMatchHandleTextBox.BeginMouseSelection(caretIndex, IsShiftDown());
+        _session.BeginLocalMatchHandleEdit(stone, _localMatchHandleTextBox.CaretIndex);
+        SyncLocalMatchHandleDraft();
+    }
+
+    private void UpdateLocalMatchHandleTextBox(KeyboardState keyboard, GameTime gameTime)
+    {
+        if (!IsActive || !_inputArmed) return;
+        if (_session.ActiveLocalMatchHandleStone is null)
+        {
+            _previousLocalMatchHandleKeyboard = keyboard;
+            return;
+        }
+
+        var action = _localMatchHandleTextBox.HandleKeyboard(
+            keyboard,
+            _previousLocalMatchHandleKeyboard,
+            gameTime,
+            _clipboardService);
+        SyncLocalMatchHandleDraft();
+        if (action is TextBoxKeyboardAction.Commit or TextBoxKeyboardAction.Cancel)
+        {
+            _session.EndLocalMatchHandleEdit();
+            _localMatchHandleTextBox.Clear();
+        }
+        _previousLocalMatchHandleKeyboard = keyboard;
+    }
+
+    private bool TryInputLocalMatchHandleCharacter(char character)
+    {
+        if (_session.ActiveLocalMatchHandleStone is null) return false;
+        if (_localMatchHandleTextBox.TryInputCharacter(character))
+            SyncLocalMatchHandleDraft();
+        return true;
+    }
+
+    private void SyncLocalMatchHandleDraft() =>
+        _session.SetLocalMatchHandleDraft(
+            _localMatchHandleTextBox.Text,
+            _localMatchHandleTextBox.CaretIndex,
+            _localMatchHandleTextBox.SelectionStart,
+            _localMatchHandleTextBox.SelectionLength);
 
     private void BeginOrMovePlayerEditField(Point point, EntryProfileEditField field)
     {
