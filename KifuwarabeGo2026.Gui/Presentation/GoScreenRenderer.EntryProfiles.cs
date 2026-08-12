@@ -163,7 +163,8 @@ public sealed partial class GoScreenRenderer
             DrawTextBoxCaret(text, session.LocalMatchHandleCaretIndex, textBounds, 0.32f);
         }
         if (hovered && !active)
-            DrawFittedText("EDIT", new Rectangle(textBounds.Right + 18, textBounds.Y + 2, 72, 26), new Color(185, 196, 255), 0.30f);
+            // 入力欄のアンダーライン終端の近くに、同じ強調色で操作ヒントを表示する。
+            DrawFittedText("EDIT", new Rectangle(textBounds.Right - 62, textBounds.Bottom - 19, 56, 18), new Color(185, 196, 255), 0.30f);
     }
 
     private void DrawPlayerSelectionDialog(GoAppSession session, Point mousePoint)
