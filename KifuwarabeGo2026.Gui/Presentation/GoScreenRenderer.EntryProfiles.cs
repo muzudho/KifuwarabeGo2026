@@ -21,13 +21,8 @@ public sealed partial class GoScreenRenderer
     private static readonly Rectangle PlayerSelectionEditButtonBounds = new(742, 816, 144, 48);
     private static readonly Rectangle PlayerSelectionDeleteButtonBounds = new(900, 816, 144, 48);
     private static readonly Rectangle PlayerSelectionOrderButtonBounds = new(1056, 816, 72, 48);
-    private static readonly Rectangle PlayerEditPanelCancelButtonBounds = new(1010, 670, 170, 52);
-    private static readonly Rectangle PlayerEditPanelSaveButtonBounds = new(1190, 670, 170, 52);
-    private static readonly Rectangle PlayerEditPanelPreviousEngineButtonBounds = new(760, 560, 62, 46);
-    private static readonly Rectangle PlayerEditPanelNextEngineButtonBounds = new(834, 560, 62, 46);
-    private static readonly Rectangle PlayerEditPanelEngineOptionsButtonBounds = new(908, 560, 220, 46);
-    private static readonly Rectangle PlayerEditPanelClientIdentitiesButtonBounds = new(1140, 560, 220, 46);
-    private static readonly Rectangle PlayerEditPanelSelectClientIdentityButtonBounds = new(1140, 439, 220, 46);
+    private static readonly Rectangle PlayerEditPanelCancelButtonBounds = new(1080, 288, 132, 42);
+    private static readonly Rectangle PlayerEditPanelSaveButtonBounds = new(1224, 288, 148, 42);
     private static readonly Rectangle ClientIdentityProfileEditCloseButtonBounds = new(1320, 182, 150, 48);
     private static readonly Rectangle ClientIdentityProfileEditUseButtonBounds = new(1158, 182, 150, 48);
     private static readonly Rectangle ClientIdentityProfileEditAddCgosButtonBounds = new(466, 820, 150, 48);
@@ -65,11 +60,8 @@ public sealed partial class GoScreenRenderer
     public static bool GetPlayerSelectionDialogOrderButtonHit(Point point) => PlayerSelectionOrderButtonBounds.Contains(point);
     public static bool GetPlayerEditPanelCancelButtonHit(Point point) => PlayerEditPanelCancelButtonBounds.Contains(point);
     public static bool GetPlayerEditPanelSaveButtonHit(Point point) => PlayerEditPanelSaveButtonBounds.Contains(point);
-    public static bool GetPlayerEditPanelPreviousEngineButtonHit(Point point) => PlayerEditPanelPreviousEngineButtonBounds.Contains(point);
-    public static bool GetPlayerEditPanelNextEngineButtonHit(Point point) => PlayerEditPanelNextEngineButtonBounds.Contains(point);
-    public static bool GetPlayerEditPanelEngineOptionsButtonHit(Point point) => PlayerEditPanelEngineOptionsButtonBounds.Contains(point);
-    public static bool GetPlayerEditPanelClientIdentitiesButtonHit(Point point) => PlayerEditPanelClientIdentitiesButtonBounds.Contains(point);
-    public static bool GetPlayerEditPanelSelectClientIdentityButtonHit(Point point) => PlayerEditPanelSelectClientIdentityButtonBounds.Contains(point);
+    public static bool GetPlayerEditPanelClientIdentityChangeHit(Point point) => PlayerEditPanelClientIdentityTextBounds.Contains(point);
+    public static bool GetPlayerEditPanelEngineChangeHit(Point point) => PlayerEditPanelEngineTextBounds.Contains(point);
     public static bool GetClientIdentityProfileEditCloseButtonHit(Point point) => ClientIdentityProfileEditCloseButtonBounds.Contains(point);
     public static bool GetClientIdentityProfileEditAddCgosButtonHit(Point point) => ClientIdentityProfileEditAddCgosButtonBounds.Contains(point);
     public static bool GetClientIdentityProfileEditAddLocalButtonHit(Point point) => ClientIdentityProfileEditAddLocalButtonBounds.Contains(point);
@@ -242,21 +234,13 @@ public sealed partial class GoScreenRenderer
         FillRect(bounds, new Color(24, 29, 36, 252));
         DrawRect(bounds, 2, new Color(116, 145, 146));
         DrawText("EDIT ENTRY PROFILE", new Vector2(bounds.X + 34, bounds.Y + 28), new Color(244, 238, 218), 0.68f);
+        DrawCommandButton(PlayerEditPanelCancelButtonBounds, "CANCEL", false, mousePoint, scale: 0.30f);
+        DrawCommandButton(PlayerEditPanelSaveButtonBounds, "SAVE", false, mousePoint, scale: 0.36f);
         DrawPlayerEditField(session, EntryProfileEditField.DisplayName, "DISPLAY NAME", mousePoint);
-        DrawText("CLIENT IDENTITY", new Vector2(552, 446), new Color(180, 195, 195), 0.36f);
-        DrawFittedText(session.PlayerEditClientIdentityDisplayName, new Rectangle(760, 439, 360, 42), Color.White, 0.42f);
-        DrawCommandButton(PlayerEditPanelSelectClientIdentityButtonBounds, "SELECT IDENTITY", false, mousePoint, scale: 0.27f);
+        DrawPlayerEditPopupField("HANDLE", session.PlayerEditClientIdentityHandle, PlayerEditPanelClientIdentityTextBounds, mousePoint);
         if (session.PlayerEditDraft.Kind == EntryProfileKind.Computer)
-        {
-            DrawText("ENGINE", new Vector2(552, 510), new Color(180, 195, 195), 0.36f);
-            var engineTextBounds = new Rectangle(760, 503, 600, 42);
-            DrawFittedText(session.PlayerEditEngineDisplayName, engineTextBounds, Color.White, 0.42f);
-            DrawCommandButton(PlayerEditPanelEngineOptionsButtonBounds, "CHANGE ENGINE", false, mousePoint, scale: 0.28f);
-        }
-        DrawCommandButton(PlayerEditPanelClientIdentitiesButtonBounds, "EDIT CLIENT IDENTITIES", false, mousePoint, scale: 0.28f);
-        DrawText("Click a field to edit.  Enter: finish  Escape: cancel  Tab: next field", new Vector2(bounds.X + 42, bounds.Y + 360), new Color(180, 195, 195), 0.28f);
-        DrawCommandButton(PlayerEditPanelCancelButtonBounds, "CANCEL", false, mousePoint, scale: 0.34f);
-        DrawCommandButton(PlayerEditPanelSaveButtonBounds, "SAVE", false, mousePoint, scale: 0.40f);
+            DrawPlayerEditPopupField("ENGINE", session.PlayerEditEngineDisplayName, PlayerEditPanelEngineTextBounds, mousePoint);
+        DrawText("DISPLAY NAME を直接編集できます。  HANDLE と ENGINE は CHANGE から選択します。", new Vector2(bounds.X + 42, bounds.Bottom - 54), new Color(180, 195, 195), 0.28f);
     }
 
     private void DrawClientIdentityProfileEditPanel(GoAppSession session, Point mousePoint)
@@ -419,18 +403,43 @@ public sealed partial class GoScreenRenderer
         _ => throw new ArgumentOutOfRangeException(nameof(field), field, "Unknown player edit field."),
     };
 
+    private static readonly Rectangle PlayerEditPanelClientIdentityTextBounds = new(760, 439, 600, 42);
+    private static readonly Rectangle PlayerEditPanelEngineTextBounds = new(760, 503, 600, 42);
+
     private void DrawPlayerEditField(GoAppSession session, EntryProfileEditField field, string label, Point mousePoint)
     {
         var textBounds = PlayerEditPanelFieldTextBounds(field);
         var active = session.ActivePlayerEditField == field;
         DrawText(label, new Vector2(552, textBounds.Y + 7), new Color(180, 195, 195), 0.36f);
-        DrawTournamentRulesTextInputSurface(textBounds, active, textBounds.Contains(mousePoint));
+        var hovered = textBounds.Contains(mousePoint);
+        DrawRoundedFill(new Rectangle(textBounds.X, textBounds.Bottom + 2, textBounds.Width, 5), 2, active ? new Color(147, 244, 200) : hovered ? new Color(185, 196, 255) : new Color(100, 110, 145));
         var text = session.GetPlayerEditFieldText(field);
         if (active)
             DrawTextBoxSelection(text, session.PlayerEditSelectionStart, session.PlayerEditSelectionLength, textBounds, 0.42f);
         DrawFittedText(string.IsNullOrEmpty(text) ? "-" : text, textBounds, Color.White, 0.42f);
         if (active)
             DrawTextBoxCaret(text, session.PlayerEditCaretIndex, textBounds, 0.42f);
+        if (hovered && !active)
+            DrawPlayerEditHint("EDIT", textBounds);
+    }
+
+    private void DrawPlayerEditPopupField(string label, string value, Rectangle textBounds, Point mousePoint)
+    {
+        var hovered = textBounds.Contains(mousePoint);
+        DrawText(label, new Vector2(552, textBounds.Y + 7), new Color(180, 195, 195), 0.36f);
+        DrawFittedText(value, textBounds, Color.White, 0.42f);
+        DrawRoundedFill(new Rectangle(textBounds.X, textBounds.Bottom + 2, textBounds.Width, 5), 2, hovered ? new Color(185, 196, 255) : new Color(100, 110, 145));
+        if (hovered)
+            DrawPlayerEditHint("CHANGE", textBounds);
+    }
+
+    private void DrawPlayerEditHint(string text, Rectangle textBounds)
+    {
+        var hintBounds = text == "EDIT"
+            ? new Rectangle(textBounds.Right - 76, textBounds.Bottom - 25, 70, 23)
+            : new Rectangle(textBounds.Right - 108, textBounds.Bottom - 28, 100, 26);
+        DrawRoundedFill(hintBounds, 6, new Color(185, 196, 255));
+        DrawSharpCenteredFittedText(text, hintBounds, new Color(15, 20, 31), 0.34f);
     }
 
     private void DrawPlayerEngineCycleButton(Rectangle bounds, bool pointsRight, Point mousePoint)

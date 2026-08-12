@@ -132,13 +132,13 @@ public sealed partial class GoAppSession
         }
     }
 
-    public string PlayerEditClientIdentityDisplayName
+    public string PlayerEditClientIdentityHandle
     {
         get
         {
             var targetId = PlayerEditDraft.ClientIdentityProfileIds.FirstOrDefault();
             var target = _clientIdentityProfiles.FirstOrDefault(item => string.Equals(item.Id, targetId, StringComparison.Ordinal));
-            return target?.DisplayName ?? "NO TARGET";
+            return target?.LoginName ?? "NO HANDLE";
         }
     }
 
