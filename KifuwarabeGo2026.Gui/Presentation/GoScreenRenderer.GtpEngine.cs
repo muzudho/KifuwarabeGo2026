@@ -105,10 +105,7 @@ public sealed partial class GoScreenRenderer
             if (index >= session.ActiveGtpEngineGuiOptionSpecs.Count) break;
             var option = session.ActiveGtpEngineGuiOptionSpecs[index];
             if (option.Type is not ("button" or "string") && GtpEngineGuiOptionDefaultButtonBounds(slot).Contains(point)) return (index, 3);
-            var primaryBounds = option.Type == "spin" ? GtpEngineGuiOptionPrimaryButtonBounds(slot) : GtpEngineGuiOptionWideButtonBounds(slot);
-            if (primaryBounds.Contains(point)) return (index, 0);
-            if (GtpEngineGuiOptionSecondaryButtonBounds(slot).Contains(point)) return (index, 1);
-            if (option.Type == "spin" && GtpEngineGuiOptionValueBounds(slot).Contains(point)) return (index, 2);
+            if (GtpEngineGuiOptionValueBounds(slot).Contains(point)) return (index, option.Type == "spin" ? 2 : 0);
         }
         return null;
     }
@@ -356,7 +353,7 @@ public sealed partial class GoScreenRenderer
         DrawGtpEngineEditField(session, GtpEngineProfileEditField.WorkingDirectory, "WORKDIR", mousePoint);
         DrawGtpEngineEditField(session, GtpEngineProfileEditField.Arguments, "ARGS", mousePoint);
 
-        DrawCommandButton(GtpEngineEditPanelGuiOptionsButtonBounds, "GUI OPTIONS", false, mousePoint, scale: 0.42f);
+        DrawCommandButton(GtpEngineEditPanelGuiOptionsButtonBounds, "ENGINE OPTIONS", false, mousePoint, scale: 0.32f);
 
         var initialPositionBounds = GtpEngineEditPanelInitialPositionRowBounds;
         DrawDataRowFrame(initialPositionBounds);
@@ -414,7 +411,7 @@ public sealed partial class GoScreenRenderer
         FillRect(GtpEngineGuiOptionsDialogBounds, new Color(24, 29, 36, 252));
         DrawRect(GtpEngineGuiOptionsDialogBounds, 2, new Color(116, 145, 146));
 
-        DrawText(session.IsAppProviderGameSettingsDialogOpen ? "GAME SETTINGS" : "GUI OPTIONS", new Vector2(GtpEngineGuiOptionsDialogBounds.X + 30, GtpEngineGuiOptionsDialogBounds.Y + 24), new Color(244, 238, 218), 0.72f);
+        DrawText(session.IsAppProviderGameSettingsDialogOpen ? "GAME SETTINGS" : "ENGINE OPTIONS", new Vector2(GtpEngineGuiOptionsDialogBounds.X + 30, GtpEngineGuiOptionsDialogBounds.Y + 24), new Color(244, 238, 218), 0.72f);
         DrawText(session.IsAppProviderGameSettingsDialogOpen ? "PONNUKI / PROVIDER settings are sent when the game starts." : "Settings are sent when the engine starts.", new Vector2(GtpEngineGuiOptionsDialogBounds.X + 32, GtpEngineGuiOptionsDialogBounds.Y + 82), new Color(180, 195, 195), 0.4f);
         DrawText("Text values (max 10000 characters)", new Vector2(GtpEngineGuiOptionsDialogBounds.X + 32, GtpEngineGuiOptionsDialogBounds.Y + 116), new Color(118, 139, 143), 0.3f);
 
@@ -444,43 +441,47 @@ public sealed partial class GoScreenRenderer
     {
         var row = GtpEngineGuiOptionRowBounds(slot);
         var value = session.GetGtpEngineGuiOptionDraft(option);
-        DrawDataRowFrame(row);
-        DrawUiLabel(UiLabel.InCompactRow(option.Label, row));
-        var valueBounds = option.Type == "spin" ? GtpEngineGuiOptionSpinValueBounds(slot) : GtpEngineGuiOptionValueBounds(slot);
+        var valueBounds = GtpEngineGuiOptionValueBounds(slot);
+        var hovered = valueBounds.Contains(mousePoint);
+        DrawText(option.Label, new Vector2(row.X + 16, row.Y + 17), new Color(180, 195, 195), 0.36f);
+        if (option.Type == "button")
+        {
+            var queued = bool.TryParse(value, out var isQueued) && isQueued;
+            DrawCommandButton(valueBounds, queued ? "QUEUED" : "EXECUTE", queued, mousePoint, scale: queued ? 0.27f : 0.25f);
+            return;
+        }
+
         var rowValue = option.Type switch
         {
-            "button" => "Runs before next game",
             "string" or "filename" => AbbreviateOptionValue(value, 28),
             _ => value,
         };
         DrawDynamicOptionText(string.IsNullOrEmpty(rowValue) ? "<empty>" : rowValue, valueBounds, Color.White, 0.34f);
+        DrawRoundedFill(new Rectangle(valueBounds.X, valueBounds.Bottom - 4, valueBounds.Width, 4), 2, hovered ? new Color(185, 196, 255) : new Color(100, 110, 145));
         if (option.Type == "spin" && option.Min is { } min && option.Max is { } max)
-            DrawFittedText($"{min} .. {max}", GtpEngineGuiOptionRangeBounds(slot), new Color(118, 139, 143), 0.24f);
-        if (option.Type is not ("button" or "string"))
+            DrawFittedText($"{min} .. {max}", new Rectangle(valueBounds.Right + 12, valueBounds.Y + 10, 126, 28), new Color(118, 139, 143), 0.24f);
+        if (hovered)
+            DrawGtpEngineOptionActionHint(GetGtpEngineOptionActionLabel(option), valueBounds);
+        if (option.Type is not ("button" or "string") && row.Contains(mousePoint))
             DrawCommandButton(GtpEngineGuiOptionDefaultButtonBounds(slot), "DEFAULT", false, mousePoint, scale: 0.3f);
-        switch (option.Type)
-        {
-            case "check":
-                DrawCommandButton(GtpEngineGuiOptionWideButtonBounds(slot), bool.TryParse(value, out var enabled) && enabled ? "ON" : "OFF", enabled, mousePoint, scale: 0.34f);
-                break;
-            case "spin":
-                DrawCommandButton(GtpEngineGuiOptionPrimaryButtonBounds(slot), "-", false, mousePoint, scale: 0.42f);
-                DrawCommandButton(GtpEngineGuiOptionSecondaryButtonBounds(slot), "+", false, mousePoint, scale: 0.42f);
-                break;
-            case "combo":
-                DrawCommandButton(GtpEngineGuiOptionWideButtonBounds(slot), "SELECT", false, mousePoint, scale: 0.28f);
-                break;
-            case "string":
-                DrawCommandButton(GtpEngineGuiOptionWideButtonBounds(slot), "EDIT", false, mousePoint, scale: 0.3f);
-                break;
-            case "filename":
-                DrawCommandButton(GtpEngineGuiOptionWideButtonBounds(slot), "REF", false, mousePoint, scale: 0.3f);
-                break;
-            case "button":
-                var queued = bool.TryParse(value, out var isQueued) && isQueued;
-                DrawCommandButton(GtpEngineGuiOptionWideButtonBounds(slot), queued ? "QUEUED" : "EXECUTE", queued, mousePoint, scale: queued ? 0.27f : 0.25f);
-                break;
-        }
+    }
+
+    private static string GetGtpEngineOptionActionLabel(GtpEngineGuiOptionSpec option) => option.Type switch
+    {
+        "check" => "TOGGLE",
+        "spin" or "string" => "EDIT",
+        "combo" => "SELECT",
+        "filename" => "CHANGE",
+        "button" => "EXECUTE",
+        _ => "EDIT",
+    };
+
+    private void DrawGtpEngineOptionActionHint(string label, Rectangle valueBounds)
+    {
+        var width = label is "EDIT" ? 70 : label is "SELECT" or "TOGGLE" ? 88 : 100;
+        var hintBounds = new Rectangle(valueBounds.Right - width - 6, valueBounds.Bottom - 28, width, 25);
+        DrawRoundedFill(hintBounds, 6, new Color(185, 196, 255));
+        DrawSharpCenteredFittedText(label, hintBounds, new Color(15, 20, 31), 0.30f);
     }
 
     private void DrawGtpEngineGuiOptionValueTooltip(GoAppSession session, Point mousePoint)
