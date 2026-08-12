@@ -1201,10 +1201,19 @@ public class Game1 : Game
 
                 if (_session.CgosConnectionFlowKind == CgosConnectionFlowKind.ConnectionStart)
                 {
-                    if (GoScreenRenderer.GetCgosCredentialFieldHit(point) is { } credential &&
+                    if (_session.IsQuickTargetSelectionPanelOpen)
+                    {
+                        if (GoScreenRenderer.GetQuickTargetSelectionCancelButtonHit(point)) _session.CancelQuickTargetSelectionPanel();
+                        else if (GoScreenRenderer.GetQuickTargetSelectionSelectButtonHit(point)) _session.CommitQuickTargetSelection();
+                        else if (GoScreenRenderer.GetQuickTargetSelectionItemHit(point, _session) is { } targetIndex) _session.SelectQuickTarget(targetIndex);
+                    }
+                    else if (GoScreenRenderer.GetCgosCredentialFieldHit(point) is { } credential &&
                         (credential.Stone == GoStone.Black || _session.IsCgosPlayer2InputEnabled))
                     {
-                        BeginOrMoveCgosCredentialEdit(point, credential.Stone, credential.Field);
+                        if (credential.Field == CgosPlayerCredentialField.LoginName)
+                            _session.OpenQuickTargetSelectionPanel(credential.Stone, cgos: true);
+                        else
+                            BeginOrMoveCgosCredentialEdit(point, credential.Stone, credential.Field);
                     }
                     else
                     {
@@ -1373,7 +1382,7 @@ public class Game1 : Game
             var isLocalAppsIntermission = isIntermissionMode && _session.UseKind == GoAppUseKind.LocalApps;
             var isPlayerSelectionIntermission = isSetupMode || isLocalAppsIntermission;
             var isBoardEditing = _session.CurrentMode.Kind == GoAppModeKind.BoardEditing;
-            if (_session.IsPlayerSelectionDialogOpen &&
+            if ((_session.IsPlayerSelectionDialogOpen || _session.IsQuickTargetSelectionPanelOpen) &&
                 !_session.IsGtpEngineEditPanelOpen &&
                 !_session.IsGtpEngineSelectionDialogOpen)
             {
@@ -1605,6 +1614,11 @@ public class Game1 : Game
                 _playingScene.StartPlaying();
             }
             else if (isPlayerSelectionIntermission &&
+                     GoScreenRenderer.GetLocalMatchHandleHit(point) is { } handleStone)
+            {
+                _session.OpenQuickTargetSelectionPanel(handleStone, cgos: false);
+            }
+            else if (isPlayerSelectionIntermission &&
                      (isLocalAppsIntermission
                          ? GoScreenRenderer.GetPonnukiBlackPlayerSelectButtonHit(point)
                          : GoScreenRenderer.GetBlackPlayerSelectButtonHit(point)))
@@ -1669,6 +1683,13 @@ public class Game1 : Game
 
     private void TryHandlePlayerSelectionDialogClick(Point point)
     {
+        if (_session.IsQuickTargetSelectionPanelOpen)
+        {
+            if (GoScreenRenderer.GetQuickTargetSelectionCancelButtonHit(point)) _session.CancelQuickTargetSelectionPanel();
+            else if (GoScreenRenderer.GetQuickTargetSelectionSelectButtonHit(point)) _session.CommitQuickTargetSelection();
+            else if (GoScreenRenderer.GetQuickTargetSelectionItemHit(point, _session) is { } targetIndex) _session.SelectQuickTarget(targetIndex);
+            return;
+        }
         if (_session.IsTargetProfileEditPanelOpen)
         {
             if (_session.IsTargetProfileConnectionSelectionPanelOpen)

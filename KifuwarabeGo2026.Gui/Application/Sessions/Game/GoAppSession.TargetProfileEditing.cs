@@ -1,6 +1,8 @@
 namespace KifuwarabeGo2026.Gui.Application;
 
+using KifuwarabeGo2026.Shared.Domain;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 /// <summary>Player が参照する TargetProfile の編集状態。</summary>
@@ -11,6 +13,10 @@ public sealed partial class GoAppSession
     public bool IsTargetProfileConnectionSelectionPanelOpen { get; private set; }
     public int TargetProfileConnectionSelectionIndex { get; private set; }
     public int TargetProfileConnectionSelectionPageIndex { get; private set; }
+    public bool IsQuickTargetSelectionPanelOpen { get; private set; }
+    public GoStone QuickTargetSelectionStone { get; private set; }
+    public bool QuickTargetSelectionIsCgos { get; private set; }
+    public int QuickTargetSelectionIndex { get; private set; }
     public int TargetProfileEditIndex { get; private set; }
     public TargetProfile TargetProfileEditDraft { get; private set; } = new();
     public TargetProfileEditField? ActiveTargetProfileEditField { get; private set; }
@@ -29,6 +35,52 @@ public sealed partial class GoAppSession
 
     public void CloseTargetProfileEditPanel() =>
         (IsTargetProfileEditPanelOpen, IsTargetProfileConnectionSelectionPanelOpen, ActiveTargetProfileEditField) = (false, false, null);
+
+    public bool OpenQuickTargetSelectionPanel(GoStone stone, bool cgos)
+    {
+        var targets = GetQuickTargetSelectionTargets(stone, cgos);
+        if (targets.Count == 0) return false;
+        QuickTargetSelectionStone = stone;
+        QuickTargetSelectionIsCgos = cgos;
+        var current = cgos ? GetSelectedCgosTargetProfile(stone)?.Id : GetSelectedLocalMatchTargetProfile(stone)?.Id;
+        QuickTargetSelectionIndex = Math.Max(0, targets.FindIndex(target => string.Equals(target.Id, current, StringComparison.Ordinal)));
+        IsQuickTargetSelectionPanelOpen = true;
+        return true;
+    }
+
+    public void CancelQuickTargetSelectionPanel() => IsQuickTargetSelectionPanelOpen = false;
+
+    public void SelectQuickTarget(int index)
+    {
+        if (index < 0 || index >= GetQuickTargetSelectionTargets(QuickTargetSelectionStone, QuickTargetSelectionIsCgos).Count)
+            throw new ArgumentOutOfRangeException(nameof(index));
+        QuickTargetSelectionIndex = index;
+    }
+
+    public bool CommitQuickTargetSelection()
+    {
+        var targets = GetQuickTargetSelectionTargets(QuickTargetSelectionStone, QuickTargetSelectionIsCgos);
+        if (QuickTargetSelectionIndex < 0 || QuickTargetSelectionIndex >= targets.Count) return false;
+        var selected = QuickTargetSelectionIsCgos
+            ? TrySelectCgosTargetProfile(QuickTargetSelectionStone, targets[QuickTargetSelectionIndex].Id)
+            : TrySelectLocalMatchTargetProfile(QuickTargetSelectionStone, targets[QuickTargetSelectionIndex].Id);
+        if (selected) IsQuickTargetSelectionPanelOpen = false;
+        return selected;
+    }
+
+    public List<TargetProfile> GetQuickTargetSelectionTargets(GoStone stone, bool cgos)
+    {
+        var player = cgos
+            ? stone == GoStone.Black ? SelectedCgosBlackPlayerProfile : SelectedCgosWhitePlayerProfile
+            : GetSelectedPlayerProfile(stone);
+        if (player is null) return [];
+        var connectionId = cgos ? SelectedCgosConnectionProfile.Id : "";
+        return GetPlayerTargetProfiles(player.Id)
+            .Where(target => cgos
+                ? string.Equals(target.ConnectionProfileId, connectionId, StringComparison.Ordinal)
+                : string.IsNullOrEmpty(target.ConnectionProfileId))
+            .ToList();
+    }
 
     public bool MoveTargetProfileEditSelection(int step)
     {

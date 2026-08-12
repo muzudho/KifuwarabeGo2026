@@ -56,6 +56,8 @@ public sealed partial class GoAppSession
     public int? SelectedCgosWhiteGtpEngineIndex { get; private set; } = 0;
     public string CgosBlackPlayerProfileId { get; private set; } = "";
     public string CgosWhitePlayerProfileId { get; private set; } = "";
+    public string CgosBlackTargetProfileId { get; private set; } = "";
+    public string CgosWhiteTargetProfileId { get; private set; } = "";
     public PlayerProfile? SelectedCgosBlackPlayerProfile => FindPlayerProfile(CgosBlackPlayerProfileId);
     public PlayerProfile? SelectedCgosWhitePlayerProfile => FindPlayerProfile(CgosWhitePlayerProfileId);
     public GtpEngineProfile? SelectedCgosBlackGtpEngineProfile => GetCgosGtpEngineProfile(SelectedCgosBlackGtpEngineIndex);
@@ -102,7 +104,32 @@ public sealed partial class GoAppSession
         }
         else throw new ArgumentOutOfRangeException(nameof(stone), stone, "CGOS player can be selected only for black or white.");
 
+        SetDefaultCgosTarget(stone, player, connection.Id);
         ApplyCgosTargetCredentials(stone);
         return true;
+    }
+
+    public bool TrySelectCgosTargetProfile(GoStone stone, string targetProfileId)
+    {
+        var player = stone == GoStone.Black ? SelectedCgosBlackPlayerProfile : SelectedCgosWhitePlayerProfile;
+        var connection = _cgosConnectionProfiles.ElementAtOrDefault(SelectedCgosConnectionProfileIndex);
+        if (player is null || connection is null || !GetPlayerTargetProfiles(player.Id).Any(target =>
+                string.Equals(target.Id, targetProfileId, StringComparison.Ordinal) &&
+                string.Equals(target.ConnectionProfileId, connection.Id, StringComparison.Ordinal)))
+            return false;
+
+        if (stone == GoStone.Black) CgosBlackTargetProfileId = targetProfileId;
+        else if (stone == GoStone.White) CgosWhiteTargetProfileId = targetProfileId;
+        else return false;
+        ApplyCgosTargetCredentials(stone);
+        return true;
+    }
+
+    private void SetDefaultCgosTarget(GoStone stone, PlayerProfile player, string connectionId)
+    {
+        var targetId = GetPlayerTargetProfiles(player.Id)
+            .FirstOrDefault(target => string.Equals(target.ConnectionProfileId, connectionId, StringComparison.Ordinal))?.Id ?? "";
+        if (stone == GoStone.Black) CgosBlackTargetProfileId = targetId;
+        else CgosWhiteTargetProfileId = targetId;
     }
 }

@@ -171,6 +171,13 @@ WHITE PLAYER   [表示名 / 種別]                 [SELECT]
 - [完了] CGOS 接続先の選択 UI を、Target 編集の現在値・前後切替から、接続先一覧を選ぶ一貫した UI へ整理する。
 - Player Catalog と Target Catalog をまたぐ追加・削除・既定変更の保存を、ひとまとまりの操作として整理する。
 
+### 操作上の補足（2026-08-12）
+
+- LocalMatch / CGOS ともに、Player Profile を選ぶと、そのサービス向けの既定 Target を採用する。
+- 画面には Target の `HANDLE` を表示する。`HANDLE` をクリックすると、選択中 Player が持つ当該サービス用 Target だけの一覧を開き、今回の対局・接続に限って切り替えられる。
+- この一時切替は Player 内の Target 順序を変更しない。恒久的な既定変更には Target 編集画面の `USE` を使う。
+- `HANDLE` は「機械に入力できる書式に従った、Player の Entry 名」。CGOS ではログイン名、LocalMatch では棋譜ファイル名に使う。
+
 ### 後続
 
 - Target の並べ替え・ページ送りは、最大5件の少数運用のため当面不要。

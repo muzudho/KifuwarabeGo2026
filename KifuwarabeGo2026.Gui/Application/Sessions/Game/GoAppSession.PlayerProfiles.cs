@@ -24,6 +24,10 @@ public sealed partial class GoAppSession
 
     public string WhitePlayerProfileId { get; private set; } = "";
 
+    public string BlackLocalMatchTargetProfileId { get; private set; } = "";
+
+    public string WhiteLocalMatchTargetProfileId { get; private set; } = "";
+
     public void SetPlayerProfiles(IEnumerable<PlayerProfile> profiles)
     {
         _playerProfiles.Clear();
@@ -64,7 +68,12 @@ public sealed partial class GoAppSession
             ? new[] { selectedPlayer }
             : _playerProfiles.Where(player => player.Kind == PlayerProfileKind.Computer &&
                                                string.Equals(player.EngineProfileId, engine.Id, StringComparison.Ordinal));
-        return players
+        var selectedTargetId = stone == GoStone.Black ? CgosBlackTargetProfileId : CgosWhiteTargetProfileId;
+        var selectedTarget = players
+            .SelectMany(player => GetPlayerTargetProfiles(player.Id))
+            .FirstOrDefault(target => string.Equals(target.Id, selectedTargetId, StringComparison.Ordinal) &&
+                                      string.Equals(target.ConnectionProfileId, connectionId, StringComparison.Ordinal));
+        return selectedTarget ?? players
             .SelectMany(player => GetPlayerTargetProfiles(player.Id))
             .FirstOrDefault(target => string.Equals(target.ConnectionProfileId, connectionId, StringComparison.Ordinal));
     }
@@ -85,8 +94,10 @@ public sealed partial class GoAppSession
     public TargetProfile? GetSelectedLocalMatchTargetProfile(GoStone stone) =>
         GetSelectedPlayerProfile(stone) is not { } player
             ? null
-            : GetPlayerTargetProfiles(player.Id)
-                .FirstOrDefault(target => string.IsNullOrEmpty(target.ConnectionProfileId));
+            : GetPlayerTargetProfiles(player.Id).FirstOrDefault(target =>
+                  string.Equals(target.Id, stone == GoStone.Black ? BlackLocalMatchTargetProfileId : WhiteLocalMatchTargetProfileId, StringComparison.Ordinal))
+              ?? GetPlayerTargetProfiles(player.Id)
+                  .FirstOrDefault(target => string.IsNullOrEmpty(target.ConnectionProfileId));
 
     /// <summary>LocalMatch のファイル名など、外部へ提示する名前を返す。</summary>
     public string GetLocalMatchPresentedName(GoStone stone)
@@ -128,6 +139,7 @@ public sealed partial class GoAppSession
         else
             WhitePlayerProfileId = profile.Id;
 
+        SetDefaultLocalMatchTarget(stone, profile);
         ApplySelectedPlayerProfile(stone);
         return true;
     }
@@ -161,6 +173,28 @@ public sealed partial class GoAppSession
         var engineIndex = FindGtpEngineIndex(profile.EngineProfileId);
         if (engineIndex >= 0)
             SelectGtpEngine(stone, engineIndex);
+    }
+
+    public bool TrySelectLocalMatchTargetProfile(GoStone stone, string targetProfileId)
+    {
+        var player = GetSelectedPlayerProfile(stone);
+        if (player is null || !GetPlayerTargetProfiles(player.Id).Any(target =>
+                string.Equals(target.Id, targetProfileId, StringComparison.Ordinal) &&
+                string.IsNullOrEmpty(target.ConnectionProfileId)))
+            return false;
+
+        if (stone == GoStone.Black) BlackLocalMatchTargetProfileId = targetProfileId;
+        else if (stone == GoStone.White) WhiteLocalMatchTargetProfileId = targetProfileId;
+        else return false;
+        return true;
+    }
+
+    private void SetDefaultLocalMatchTarget(GoStone stone, PlayerProfile profile)
+    {
+        var targetId = GetPlayerTargetProfiles(profile.Id)
+            .FirstOrDefault(target => string.IsNullOrEmpty(target.ConnectionProfileId))?.Id ?? "";
+        if (stone == GoStone.Black) BlackLocalMatchTargetProfileId = targetId;
+        else WhiteLocalMatchTargetProfileId = targetId;
     }
 
     private string FindCompatiblePlayerId(GoStone stone, GoPlayerKind fallbackKind)

@@ -21,13 +21,14 @@ public sealed partial class GoScreenRenderer
             transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));
 
         DrawBackground();
-        var modalOpen = session.IsPlayerSelectionDialogOpen || session.IsPlayerEditPanelOpen || session.IsTargetProfileEditPanelOpen ||
+        var modalOpen = session.IsPlayerSelectionDialogOpen || session.IsPlayerEditPanelOpen || session.IsTargetProfileEditPanelOpen || session.IsQuickTargetSelectionPanelOpen ||
                         session.IsGtpEngineSelectionDialogOpen || session.IsGtpEngineEditPanelOpen ||
                         session.IsCgosConnectionEditPanelOpen || session.IsCgosAdminPlayerSelectionDialogOpen;
         DrawCgosClientTopPanel(session, modalOpen ? new Point(-1, -1) : mousePoint);
         DrawPlayerSelectionDialog(session, mousePoint);
         DrawPlayerEditPanel(session, mousePoint);
         DrawTargetProfileEditPanel(session, mousePoint);
+        DrawQuickTargetSelectionPanel(session, mousePoint);
         DrawGtpEngineSelectionDialog(session, mousePoint);
         DrawGtpEngineEditPanel(session, mousePoint);
         DrawCgosAdminPlayerSelectionDialog(session, mousePoint);
@@ -516,7 +517,7 @@ public sealed partial class GoScreenRenderer
         {
             var bounds = CgosCredentialRowBounds(stone, field);
             var active = session.ActiveCgosCredentialStone == stone && session.ActiveCgosCredentialField == field;
-            DrawUiLabel(UiLabel.InCompactRow(field == CgosPlayerCredentialField.LoginName ? "LOGIN" : "PASSWORD", bounds));
+            DrawUiLabel(UiLabel.InCompactRow(field == CgosPlayerCredentialField.LoginName ? "HANDLE" : "PASSWORD", bounds));
             var textBounds = CgosCredentialTextBounds(stone, field);
             DrawTournamentRulesTextInputSurface(textBounds, active, bounds.Contains(mousePoint));
             var tabIndex = (stone == GoStone.Black ? 0 : 2) + (field == CgosPlayerCredentialField.LoginName ? 0 : 1);

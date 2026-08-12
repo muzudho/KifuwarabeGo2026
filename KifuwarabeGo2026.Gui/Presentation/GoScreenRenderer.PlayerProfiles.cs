@@ -38,11 +38,19 @@ public sealed partial class GoScreenRenderer
     private static readonly Rectangle TargetProfileConnectionSelectionSelectButtonBounds = new(1202, 236, 170, 48);
     private static readonly Rectangle TargetProfileConnectionSelectionPreviousButtonBounds = new(1060, 798, 120, 44);
     private static readonly Rectangle TargetProfileConnectionSelectionNextButtonBounds = new(1192, 798, 120, 44);
+    private static readonly Rectangle QuickTargetSelectionPanelBounds = new(560, 245, 800, 560);
+    private static readonly Rectangle QuickTargetSelectionCancelButtonBounds = new(1030, 272, 140, 48);
+    private static readonly Rectangle QuickTargetSelectionSelectButtonBounds = new(1182, 272, 140, 48);
 
     public static bool GetBlackPlayerSelectButtonHit(Point point) => PlayerSelectorLayout.CreatePlayerSelector(BlackPlayerKindButtonY).ContainsBrowseButton(point);
     public static bool GetWhitePlayerSelectButtonHit(Point point) => PlayerSelectorLayout.CreatePlayerSelector(WhitePlayerKindButtonY).ContainsBrowseButton(point);
     public static bool GetPonnukiBlackPlayerSelectButtonHit(Point point) => PlayerSelectorLayout.CreatePlayerSelector(PonnukiBlackPlayerKindButtonY).ContainsBrowseButton(point);
     public static bool GetPonnukiWhitePlayerSelectButtonHit(Point point) => PlayerSelectorLayout.CreatePlayerSelector(PonnukiWhitePlayerKindButtonY).ContainsBrowseButton(point);
+    public static GoStone? GetLocalMatchHandleHit(Point point)
+    {
+        if (LocalMatchHandleBounds(BlackPlayerKindButtonY).Contains(point)) return GoStone.Black;
+        return LocalMatchHandleBounds(WhitePlayerKindButtonY).Contains(point) ? GoStone.White : null;
+    }
     public static bool GetPlayerSelectionDialogCancelButtonHit(Point point) => PlayerSelectionCancelButtonBounds.Contains(point);
     public static bool GetPlayerSelectionDialogOkButtonHit(Point point) => PlayerSelectionOkButtonBounds.Contains(point);
     public static bool GetPlayerSelectionDialogPreviousPageButtonHit(Point point) => PlayerSelectionPreviousButtonBounds.Contains(point);
@@ -78,6 +86,15 @@ public sealed partial class GoScreenRenderer
             if (index >= session.CgosConnectionProfiles.Count) break;
             if (TargetProfileConnectionSelectionItemBounds(slot).Contains(point)) return index;
         }
+        return null;
+    }
+    public static bool GetQuickTargetSelectionCancelButtonHit(Point point) => QuickTargetSelectionCancelButtonBounds.Contains(point);
+    public static bool GetQuickTargetSelectionSelectButtonHit(Point point) => QuickTargetSelectionSelectButtonBounds.Contains(point);
+    public static int? GetQuickTargetSelectionItemHit(Point point, GoAppSession session)
+    {
+        var targets = session.GetQuickTargetSelectionTargets(session.QuickTargetSelectionStone, session.QuickTargetSelectionIsCgos);
+        for (var index = 0; index < targets.Count; index++)
+            if (QuickTargetSelectionItemBounds(index).Contains(point)) return index;
         return null;
     }
     public static TargetProfileEditField? GetTargetProfileEditFieldHit(Point point, GoAppSession session)
@@ -122,6 +139,10 @@ public sealed partial class GoScreenRenderer
         var player = session.GetSelectedPlayerProfile(stone);
         var label = stone == GoStone.Black ? "BLACK PLAYER" : "WHITE PLAYER";
         DrawPlayerSelector(PlayerSelectorLayout.CreatePlayerSelector(y) with { Label = label, Value = player?.DisplayName ?? "SELECT PLAYER" }, mousePoint);
+        var handleBounds = LocalMatchHandleBounds(y);
+        DrawDataRowFrame(handleBounds, hovered: handleBounds.Contains(mousePoint));
+        DrawUiLabel(UiLabel.InCompactRow("HANDLE", handleBounds));
+        DrawFittedText(session.GetLocalMatchPresentedName(stone), new Rectangle(handleBounds.X + 152, handleBounds.Y + 7, handleBounds.Width - 168, 30), Color.White, 0.32f);
     }
 
     private void DrawPlayerSelectionDialog(GoAppSession session, Point mousePoint)
@@ -224,7 +245,7 @@ public sealed partial class GoScreenRenderer
             {
                 var isLocalMatch = string.IsNullOrEmpty(target.ConnectionProfileId);
                 DrawTargetProfileEditField(session, index, TargetProfileEditField.DisplayName, "DISPLAY", mousePoint, isLocalMatch);
-                DrawTargetProfileEditField(session, index, TargetProfileEditField.LoginName, isLocalMatch ? "NAMELY KEY" : "LOGIN NAME", mousePoint, isLocalMatch);
+                DrawTargetProfileEditField(session, index, TargetProfileEditField.LoginName, "HANDLE", mousePoint, isLocalMatch);
                 if (!isLocalMatch)
                     DrawTargetProfileEditField(session, index, TargetProfileEditField.LoginPass, "LOGIN PASS", mousePoint, false);
                 DrawFittedText($"CONNECTION: {session.TargetProfileEditConnectionDisplayName}", new Rectangle(row.X + 18, row.Y + 47, 920, 22), new Color(147, 244, 200), 0.28f);
@@ -234,8 +255,7 @@ public sealed partial class GoScreenRenderer
             else
             {
                 DrawFittedText(target.DisplayName, new Rectangle(row.X + 18, row.Y + 10, 240, 28), Color.White, 0.46f);
-                var presentedNameLabel = string.IsNullOrEmpty(target.ConnectionProfileId) ? "NAMELY KEY" : "LOGIN NAME";
-                DrawFittedText($"{presentedNameLabel}: {target.LoginName}", new Rectangle(row.X + 280, row.Y + 10, 390, 28), new Color(180, 195, 195), 0.34f);
+                DrawFittedText($"HANDLE: {target.LoginName}", new Rectangle(row.X + 280, row.Y + 10, 390, 28), new Color(180, 195, 195), 0.34f);
                 DrawFittedText(session.GetTargetProfileConnectionDisplayName(target), new Rectangle(row.X + 280, row.Y + 42, 520, 24), new Color(147, 244, 200), 0.30f);
             }
         }
@@ -278,9 +298,43 @@ public sealed partial class GoScreenRenderer
         DrawCommandButton(TargetProfileConnectionSelectionNextButtonBounds, "NEXT", false, mousePoint, enabled: session.TargetProfileConnectionSelectionPageIndex < session.TargetProfileConnectionSelectionPageCount - 1, scale: 0.32f);
     }
 
+    private void DrawQuickTargetSelectionPanel(GoAppSession session, Point mousePoint)
+    {
+        if (!session.IsQuickTargetSelectionPanelOpen) return;
+        var targets = session.GetQuickTargetSelectionTargets(session.QuickTargetSelectionStone, session.QuickTargetSelectionIsCgos);
+        FillRect(new Rectangle(0, 0, VirtualScreen.Width, VirtualScreen.Height), new Color(0, 0, 0, 125));
+        FillRect(QuickTargetSelectionPanelBounds, new Color(19, 24, 31, 252));
+        DrawRect(QuickTargetSelectionPanelBounds, 2, new Color(116, 145, 146));
+        var service = session.QuickTargetSelectionIsCgos ? "CGOS" : "LOCAL MATCH";
+        DrawText("SELECT TEMPORARY HANDLE", new Vector2(590, 277), new Color(244, 238, 218), 0.56f);
+        DrawStickyNote(
+            new Rectangle(560, 824, 800, 130),
+            new Vector2(960, 805),
+            new Vector2(960, 824),
+            new Color(147, 244, 200),
+            new Color(116, 145, 146),
+            "HANDLE とは？",
+            ["機械に入力できる書式に従った、Player の Entry 名です。", $"この一覧は {service} 用です。選択は今回だけに適用されます。"],
+            bodyLineSpacing: 30);
+        DrawCommandButton(QuickTargetSelectionCancelButtonBounds, "CANCEL", false, mousePoint, scale: 0.30f);
+        DrawCommandButton(QuickTargetSelectionSelectButtonBounds, "SELECT", false, mousePoint, scale: 0.30f);
+        for (var index = 0; index < targets.Count; index++)
+        {
+            var target = targets[index];
+            var bounds = QuickTargetSelectionItemBounds(index);
+            DrawDataRowFrame(bounds, active: index == session.QuickTargetSelectionIndex, hovered: bounds.Contains(mousePoint));
+            DrawFittedText(target.LoginName, new Rectangle(bounds.X + 18, bounds.Y + 9, 420, 28), Color.White, 0.42f);
+            DrawFittedText(target.DisplayName, new Rectangle(bounds.X + 18, bounds.Y + 43, 420, 20), new Color(180, 195, 195), 0.27f);
+        }
+    }
+
     private static Rectangle PlayerSelectionItemBounds(int slot) => new(PlayerSelectionListBounds.X + 16, PlayerSelectionListBounds.Y + 14 + slot * 82, PlayerSelectionListBounds.Width - 32, 72);
 
+    private static Rectangle LocalMatchHandleBounds(int y) => new(1144, y + 48, 668, 40);
+
     private static Rectangle TargetProfileConnectionSelectionItemBounds(int slot) => new(544, 332 + slot * 82, 832, 70);
+
+    private static Rectangle QuickTargetSelectionItemBounds(int index) => new(592, 392 + index * 72, 736, 62);
 
     private static Rectangle TargetProfileEditFieldTextBounds(int index, TargetProfileEditField field, bool isLocalMatch)
     {
