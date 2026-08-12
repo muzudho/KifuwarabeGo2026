@@ -26,6 +26,7 @@ public sealed partial class GoAppSession
     public int ClientIdentityProfileEditSelectionStart { get; private set; }
     public int ClientIdentityProfileEditSelectionLength { get; private set; }
     private string ClientIdentityProfileEditOriginalFieldText { get; set; } = "";
+    private ClientIdentityProfile ClientIdentityProfileEditOriginalProfile { get; set; } = new();
 
     public bool OpenClientIdentityProfileSelectionPanel()
     {
@@ -60,7 +61,9 @@ public sealed partial class GoAppSession
         ClientIdentityProfileEditIndex = ClientIdentityProfileSelectionIndex;
         IsClientIdentityProfileSelectionPanelOpen = false;
         IsClientIdentityProfileEditPanelOpen = true;
-        return LoadClientIdentityProfileEditDraft();
+        var opened = LoadClientIdentityProfileEditDraft();
+        if (opened) ClientIdentityProfileEditOriginalProfile = ClientIdentityProfileEditDraft.Clone();
+        return opened;
     }
 
     public void CloseClientIdentityProfileEditPanel() =>
@@ -73,6 +76,17 @@ public sealed partial class GoAppSession
         IsClientIdentityProfileEditPanelOpen = false;
         IsClientIdentityProfileSelectionPanelOpen = true;
         return true;
+    }
+
+    public void CancelClientIdentityProfileEdit()
+    {
+        var index = _clientIdentityProfiles.FindIndex(profile => string.Equals(profile.Id, ClientIdentityProfileEditOriginalProfile.Id, StringComparison.Ordinal));
+        if (index >= 0) _clientIdentityProfiles[index] = ClientIdentityProfileEditOriginalProfile.Clone();
+        ClientIdentityProfileEditDraft = ClientIdentityProfileEditOriginalProfile.Clone();
+        ActiveClientIdentityProfileEditField = null;
+        ClientIdentityProfileSelectionIndex = ClientIdentityProfileEditIndex;
+        IsClientIdentityProfileEditPanelOpen = false;
+        IsClientIdentityProfileSelectionPanelOpen = true;
     }
 
     public bool OpenQuickClientIdentitySelectionPanel(GoStone stone, bool cgos)

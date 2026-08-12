@@ -1728,7 +1728,12 @@ public class Game1 : Game
                     _session.SelectClientIdentityProfileConnection(connectionIndex);
                 return;
             }
-            if (GoScreenRenderer.GetClientIdentityProfileEditCloseButtonHit(point))
+            if (GoScreenRenderer.GetClientIdentityProfileEditCancelButtonHit(point))
+            {
+                _session.CancelClientIdentityProfileEdit();
+                SavePlayerAndClientIdentityCatalogs();
+            }
+            else if (GoScreenRenderer.GetClientIdentityProfileEditSaveButtonHit(point))
             {
                 SaveClientIdentityProfileEditDraft();
                 _session.ReturnToClientIdentityProfileSelectionPanel();

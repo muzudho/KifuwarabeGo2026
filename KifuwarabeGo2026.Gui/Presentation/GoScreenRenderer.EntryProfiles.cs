@@ -26,12 +26,13 @@ public sealed partial class GoScreenRenderer
     private static readonly Rectangle ClientIdentityProfileSelectionCloseButtonBounds = new(1320, 182, 150, 48);
     private static readonly Rectangle ClientIdentityProfileSelectionUseButtonBounds = new(1158, 182, 150, 48);
     private static readonly Rectangle ClientIdentityProfileSelectionEditButtonBounds = new(800, 820, 150, 48);
-    private static readonly Rectangle ClientIdentityProfileEditCloseButtonBounds = new(1320, 182, 150, 48);
+    private static readonly Rectangle ClientIdentityProfileEditCancelButtonBounds = new(1158, 182, 150, 48);
+    private static readonly Rectangle ClientIdentityProfileEditSaveButtonBounds = new(1320, 182, 150, 48);
     private static readonly Rectangle ClientIdentityProfileEditUseButtonBounds = new(1158, 182, 150, 48);
     private static readonly Rectangle ClientIdentityProfileEditAddCgosButtonBounds = new(628, 820, 160, 48);
     private static readonly Rectangle ClientIdentityProfileEditAddLocalButtonBounds = new(466, 820, 150, 48);
     private static readonly Rectangle ClientIdentityProfileEditRemoveButtonBounds = new(962, 820, 150, 48);
-    private static readonly Rectangle ClientIdentityProfileEditSelectConnectionButtonBounds = new(1110, 820, 260, 48);
+    private static readonly Rectangle ClientIdentityProfileEditSelectConnectionButtonBounds = new(1110, 544, 260, 48);
     private static readonly Rectangle ClientIdentityProfileConnectionSelectionPanelBounds = new(510, 210, 900, 660);
     private static readonly Rectangle ClientIdentityProfileConnectionSelectionCancelButtonBounds = new(1050, 236, 140, 48);
     private static readonly Rectangle ClientIdentityProfileConnectionSelectionSelectButtonBounds = new(1202, 236, 170, 48);
@@ -68,7 +69,8 @@ public sealed partial class GoScreenRenderer
     public static bool GetClientIdentityProfileSelectionCloseButtonHit(Point point) => ClientIdentityProfileSelectionCloseButtonBounds.Contains(point);
     public static bool GetClientIdentityProfileSelectionUseButtonHit(Point point) => ClientIdentityProfileSelectionUseButtonBounds.Contains(point);
     public static bool GetClientIdentityProfileSelectionEditButtonHit(Point point) => ClientIdentityProfileSelectionEditButtonBounds.Contains(point);
-    public static bool GetClientIdentityProfileEditCloseButtonHit(Point point) => ClientIdentityProfileEditCloseButtonBounds.Contains(point);
+    public static bool GetClientIdentityProfileEditCancelButtonHit(Point point) => ClientIdentityProfileEditCancelButtonBounds.Contains(point);
+    public static bool GetClientIdentityProfileEditSaveButtonHit(Point point) => ClientIdentityProfileEditSaveButtonBounds.Contains(point);
     public static bool GetClientIdentityProfileEditAddCgosButtonHit(Point point) => ClientIdentityProfileEditAddCgosButtonBounds.Contains(point);
     public static bool GetClientIdentityProfileEditAddLocalButtonHit(Point point) => ClientIdentityProfileEditAddLocalButtonBounds.Contains(point);
     public static bool GetClientIdentityProfileEditRemoveButtonHit(Point point) => ClientIdentityProfileEditRemoveButtonBounds.Contains(point);
@@ -265,9 +267,19 @@ public sealed partial class GoScreenRenderer
         FillRect(bounds, new Color(24, 29, 36, 252));
         DrawRect(bounds, 2, new Color(116, 145, 146));
         DrawText("EDIT CLIENT IDENTITY", new Vector2(bounds.X + 34, bounds.Y + 28), new Color(244, 238, 218), 0.68f);
-        DrawDynamicOptionText("この Player 専用の接続先です（最大 5 件）。", new Rectangle(bounds.X + 36, bounds.Y + 82, 700, 32), new Color(180, 195, 195), 0.34f);
+        DrawDynamicOptionText("接続用の名前とパスワードを、1 エントリーにつき 5 つまで保存できます。", new Rectangle(bounds.X + 36, bounds.Y + 82, 860, 32), new Color(180, 195, 195), 0.34f);
         var targets = session.GetPlayerClientIdentityProfiles(session.PlayerEditDraft.Id);
-        DrawCommandButton(ClientIdentityProfileEditCloseButtonBounds, "BACK", false, mousePoint, scale: 0.34f);
+        DrawCommandButton(ClientIdentityProfileEditCancelButtonBounds, "CANCEL", false, mousePoint, scale: 0.30f);
+        DrawCommandButton(ClientIdentityProfileEditSaveButtonBounds, "SAVE", false, mousePoint, scale: 0.36f);
+        var edited = session.ClientIdentityProfileEditDraft;
+        var isLocalMatch = string.IsNullOrEmpty(edited.ConnectionProfileId);
+        DrawClientIdentityProfileEditField(session, 0, ClientIdentityProfileEditField.LoginName, "HANDLE", mousePoint, isLocalMatch);
+        if (!isLocalMatch)
+            DrawClientIdentityProfileEditField(session, 0, ClientIdentityProfileEditField.LoginPass, "PASSWORD", mousePoint, false);
+        DrawFittedText($"CONNECTION: {session.ClientIdentityProfileEditConnectionDisplayName}", new Rectangle(760, 546, 330, 32), new Color(147, 244, 200), 0.34f);
+        DrawCommandButton(ClientIdentityProfileEditSelectConnectionButtonBounds, "SELECT ONLINE MATCH SERVER", false, mousePoint, enabled: !isLocalMatch && session.CgosConnectionProfiles.Count > 0, scale: 0.20f);
+        DrawClientIdentityProfileConnectionSelectionPanel(session, mousePoint);
+        if (!session.IsClientIdentityProfileConnectionSelectionPanelOpen) return;
         for (var index = 0; index < targets.Count; index++)
         {
             // 編集画面には、操作対象の一件だけを表示する。選択リストは別画面へ分離する。
@@ -282,9 +294,9 @@ public sealed partial class GoScreenRenderer
             }
             if (isSelectedClientIdentity)
             {
-                var isLocalMatch = string.IsNullOrEmpty(target.ConnectionProfileId);
-                DrawClientIdentityProfileEditField(session, index, ClientIdentityProfileEditField.LoginName, "HANDLE", mousePoint, isLocalMatch);
-                if (!isLocalMatch)
+                var isLocalMatchForLegacy = string.IsNullOrEmpty(target.ConnectionProfileId);
+                DrawClientIdentityProfileEditField(session, index, ClientIdentityProfileEditField.LoginName, "HANDLE", mousePoint, isLocalMatchForLegacy);
+                if (!isLocalMatchForLegacy)
                     DrawClientIdentityProfileEditField(session, index, ClientIdentityProfileEditField.LoginPass, "PASSWORD", mousePoint, false);
                 DrawFittedText($"CONNECTION: {session.ClientIdentityProfileEditConnectionDisplayName}", new Rectangle(row.X + 18, row.Y + 47, 920, 22), new Color(147, 244, 200), 0.28f);
                 if (session.IsClientIdentityProfileInUse(index))
