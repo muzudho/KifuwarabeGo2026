@@ -24,8 +24,8 @@ public sealed partial class GoAppSession
 
         SelectedCgosConnectionProfileIndex = index;
         CgosConnectionSelectionPageIndex = index / CgosConnectionSelectionPageSize;
-        ApplyCgosTargetCredentials(GoStone.Black);
-        ApplyCgosTargetCredentials(GoStone.White);
+        ApplyCgosClientIdentityCredentials(GoStone.Black);
+        ApplyCgosClientIdentityCredentials(GoStone.White);
         CgosConnectionStatusMessage = "READY";
     }
 

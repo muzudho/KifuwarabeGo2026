@@ -21,14 +21,14 @@ public sealed partial class GoScreenRenderer
             transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));
 
         DrawBackground();
-        var modalOpen = session.IsPlayerSelectionDialogOpen || session.IsPlayerEditPanelOpen || session.IsTargetProfileEditPanelOpen || session.IsQuickTargetSelectionPanelOpen ||
+        var modalOpen = session.IsPlayerSelectionDialogOpen || session.IsPlayerEditPanelOpen || session.IsClientIdentityProfileEditPanelOpen || session.IsQuickClientIdentitySelectionPanelOpen ||
                         session.IsGtpEngineSelectionDialogOpen || session.IsGtpEngineEditPanelOpen ||
                         session.IsCgosConnectionEditPanelOpen || session.IsCgosAdminPlayerSelectionDialogOpen;
         DrawCgosClientTopPanel(session, modalOpen ? new Point(-1, -1) : mousePoint);
         DrawPlayerSelectionDialog(session, mousePoint);
         DrawPlayerEditPanel(session, mousePoint);
-        DrawTargetProfileEditPanel(session, mousePoint);
-        DrawQuickTargetSelectionPanel(session, mousePoint);
+        DrawClientIdentityProfileEditPanel(session, mousePoint);
+        DrawQuickClientIdentitySelectionPanel(session, mousePoint);
         DrawGtpEngineSelectionDialog(session, mousePoint);
         DrawGtpEngineEditPanel(session, mousePoint);
         DrawCgosAdminPlayerSelectionDialog(session, mousePoint);
@@ -423,10 +423,10 @@ public sealed partial class GoScreenRenderer
             CgosBlackProcessPanelBounds,
             "PLAYER 1",
             session.CgosBlackConnectionStatusMessage,
-            FormatCgosPlayerTarget(
+            FormatCgosPlayerClientIdentity(
                 session,
                 GoStone.Black,
-                session.SelectedCgosBlackPlayerProfile?.DisplayName ?? session.SelectedCgosBlackGtpEngineProfile?.DisplayName),
+                session.SelectedCgosBlackEntryProfile?.DisplayName ?? session.SelectedCgosBlackGtpEngineProfile?.DisplayName),
             CgosBlackEngineSelector with { Enabled = !session.IsCgosBlackConnectionRunning },
             string.IsNullOrWhiteSpace(session.CgosBlackGtpResponseWaitDisplay)
                 ? session.CgosBlackConnectionElapsedDisplay
@@ -450,10 +450,10 @@ public sealed partial class GoScreenRenderer
             CgosWhiteProcessPanelBounds,
             "PLAYER 2",
             session.CgosWhiteConnectionStatusMessage,
-            FormatCgosPlayerTarget(
+            FormatCgosPlayerClientIdentity(
                 session,
                 GoStone.White,
-                session.SelectedCgosWhitePlayerProfile?.DisplayName ?? session.SelectedCgosWhiteGtpEngineProfile?.DisplayName),
+                session.SelectedCgosWhiteEntryProfile?.DisplayName ?? session.SelectedCgosWhiteGtpEngineProfile?.DisplayName),
             CgosWhiteEngineSelector with { Enabled = session.IsCgosPlayer2InputEnabled && !session.IsCgosWhiteConnectionRunning },
             string.IsNullOrWhiteSpace(session.CgosWhiteGtpResponseWaitDisplay)
                 ? session.CgosWhiteConnectionElapsedDisplay
@@ -490,15 +490,15 @@ public sealed partial class GoScreenRenderer
     {
         FillRect(CgosSelectedProfileBarBounds, new Color(15, 20, 26));
         DrawRect(CgosSelectedProfileBarBounds, 1, new Color(67, 84, 92));
-        DrawUiLabel(UiLabel.InCompactRow("TARGET", CgosSelectedProfileBarBounds));
+        DrawUiLabel(UiLabel.InCompactRow("CLIENT IDENTITY", CgosSelectedProfileBarBounds));
         var text = $"{profile.DisplayName} / {profile.Host}:{profile.Port} / {profile.Event} / {profile.Round}";
         DrawFittedText(text, new Rectangle(CgosSelectedProfileBarBounds.X + 152, CgosSelectedProfileBarBounds.Y + 7, CgosSelectedProfileBarBounds.Width - 168, 38), Color.White, 0.42f);
     }
 
-    private static string FormatCgosPlayerTarget(GoAppSession session, GoStone stone, string? playerDisplayName)
+    private static string FormatCgosPlayerClientIdentity(GoAppSession session, GoStone stone, string? playerDisplayName)
     {
         var player = string.IsNullOrWhiteSpace(playerDisplayName) ? "-" : playerDisplayName;
-        return $"{player}  /  {session.GetSelectedCgosTargetSummary(stone)}";
+        return $"{player}  /  {session.GetSelectedCgosClientIdentitySummary(stone)}";
     }
 
 

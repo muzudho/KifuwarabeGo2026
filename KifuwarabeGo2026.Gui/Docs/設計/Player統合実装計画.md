@@ -17,9 +17,9 @@ Local Match と Ponnuki は、対局者を共通に扱う `PLAYER` 選択へ移�
 
 | 区分 | 状態 | 現在の実装・残作業 |
 | --- | --- | --- |
-| Player データと永続化 | 完了 | `PlayerProfile` と `PlayerCatalog` を追加済み。`player-list.json` へ ID、表示名、識別子、種別、参照エンジン ID を保存・再読込する。 |
+| Player データと永続化 | 完了 | `EntryProfile` と `EntryCatalog` を追加済み。`player-list.json` へ ID、表示名、識別子、種別、参照エンジン ID を保存・再読込する。 |
 | 既存設定からの初期移行 | 一部完了 | Player 未登録時に Black/White の Human と、各 GTP エンジンに対応する Computer Player を生成する。旧エンジン ID の再生成による自動 Player の参照切れも表示名ベースで補正する。旧 UI の人間名・黒白エンジン選択を完全に引き継ぐ永続移行は未実装。 |
-| 対局セッション | 完了（旧状態併存） | `BlackPlayerProfileId` / `WhitePlayerProfileId` を保持し、選択 Player から Human/Computer と参照エンジンを解決する。互換のため旧 `BlackPlayerKind` / `WhitePlayerKind` とエンジン選択インデックスも同時に更新している。 |
+| 対局セッション | 完了（旧状態併存） | `BlackEntryProfileId` / `WhiteEntryProfileId` を保持し、選択 Player から Human/Computer と参照エンジンを解決する。互換のため旧 `BlackPlayerKind` / `WhitePlayerKind` とエンジン選択インデックスも同時に更新している。 |
 | Local Match / Ponnuki の選択 UI | 完了 | 黒白とも同じ Player 一覧から選択する `PLAYER SELECT` UI を使用する。 |
 | Player 一覧・編集 | 完了 | Human/Computer の追加、編集、削除保護、並べ替え、ページ送りを実装。表示名・Identifier はクリック編集、貼り付け、IME、Enter/Escape、Tab に対応する。Computer は参照エンジンを切替え、`EDIT PROFILE` でエンジン設定を開ける。 |
 | SGF の対局者名 | 完了 | ローカル棋譜の `PB` / `PW` には選択 Player の `DisplayName` を保存する。 |
@@ -29,20 +29,33 @@ Local Match と Ponnuki は、対局者を共通に扱う `PLAYER` 選択へ移�
 
 ## 方針
 
-- `PlayerProfile` は「誰が打つか」を表す。
+- `EntryProfile` は「誰が打つか」を表す。
 - `GtpEngineProfile` は「どの実行可能な碁エンジンをどう起動するか」を表す。
-- `TargetProfile` は「Player がどの用途・接続先へ、どの Login Name で参加するか」を表す。
+- `ClientIdentityProfile` は「Player がどの用途・接続先へ、どの Login Name で参加するか」を表す。
 - コンピューター Player は、1 個の `GtpEngineProfile` を参照する。
-- Player は、使用可能な複数の `TargetProfile` を一方向に参照する。Engine Profile と Target Profile は独立したカタログであり、Player を逆参照しない。
-- `TargetProfile.ConnectionProfileId` は接続先（現時点では CGOS）の不変 ID を参照する。正規化済み接続文字列は重複検出・候補選択用であり、参照キーにはしない。
+- Player は、使用可能な複数の `ClientIdentityProfile` を一方向に参照する。Engine Profile と Client Identity Profile は独立したカタログであり、Player を逆参照しない。
+- `ClientIdentityProfile.ConnectionProfileId` は接続先（現時点では CGOS）の不変 ID を参照する。正規化済み接続文字列は重複検出・候補選択用であり、参照キーにはしない。
 - 同じエンジンを参照しても、表示名・識別子の異なる複数 Player を作れる。
-- 対局設定は黒白とも `PlayerProfile` の ID を持つ。
+- 対局設定は黒白とも `EntryProfile` の ID を持つ。
 - SGF の `PB` / `PW` には Player の表示名を保存する。
 - 識別子はログ、ファイル名、サーバー連携などで使うために保存する。ただし、相手先ごとの制約が異なるため、このアプリは文字種・文字数を独自に制限しない。
 
+### Player の成立条件（2026-08-12 追記）
+
+この計画でいう **Player** は、`EntryProfile` と `ClientIdentityProfile` の組です。どちらか片方だけでは Player として成立しません。
+
+```text
+Player = Entry Profile + Client Identity
+```
+
+- Entry Profile: 対局者、Human / Computer、Computer の参照 Engine を決める。
+- Client Identity: 今回のサービスでの HANDLE と認証情報を決める。
+- Client Identity は、選択した Entry Profile が参照し、かつ LocalMatch または選択中の OnlineMatch (CGOS) 接続先に適合するものだけを選択できる。
+- Player 選択 UI は黒白それぞれで Entry Profile と Client Identity の両方を選び、両方の選択結果を表示する。既定 Client Identity は初期候補であり、Player を構成する選択そのものを省略しない。
+
 ## データモデル
 
-### PlayerProfile
+### EntryProfile
 
 新設する Player の登録情報です。
 
@@ -53,7 +66,7 @@ Local Match と Ponnuki は、対局者を共通に扱う `PLAYER` 選択へ移�
 | `Identifier` | ログイン名・ログ名・ファイル名など外部用途の識別子。文字種・文字数は検査しない。 |
 | `Kind` | `Human` または `Computer`。 |
 | `EngineProfileId` | `Computer` のときに参照する GTP エンジンプロファイル ID。Human は空。 |
-| `TargetProfileIds` | Player が利用可能な Target の ID 一覧。先頭を既定の使用先とする。 |
+| `ClientIdentityProfileIds` | Player が利用可能な Client Identity の ID 一覧。先頭を既定の使用先とする。 |
 
 `Identifier` の妥当性確認は、このアプリでは実施しません。CGOS など各接続先が必要とする検査は、その接続機能が送信直前に行います。
 
@@ -73,8 +86,8 @@ Player の表示名やログイン識別子を `GtpEngineProfile` へ追加し�
 既存の `BlackPlayerKind` / `WhitePlayerKind` と黒白のエンジン選択インデックスを、次の参照へ段階的に置き換えます。
 
 ```text
-BlackPlayerProfileId
-WhitePlayerProfileId
+BlackEntryProfileId
+WhiteEntryProfileId
 ```
 
 実行時は Player を解決し、Computer の場合だけ `EngineProfileId` から GTP クライアントを生成します。
@@ -103,8 +116,8 @@ WHITE PLAYER   [表示名 / 種別]                 [SELECT]
 
 - Human: 表示名と識別子を編集する。
 - Computer: 表示名、識別子、参照エンジンを編集する。
-- 表示名と Engine の間に、既定 Target の表示欄と `SELECT TARGET` を置く。
-- `EDIT TARGETS` では Target を編集し、`USE` で既定 Target を選ぶ。
+- 表示名と Engine の間に、既定 Client Identity の表示欄と `SELECT CLIENT IDENTITY` を置く。
+- `EDIT CLIENT IDENTITIES` では Client Identity を編集し、`USE` で既定 Client Identity を選ぶ。
 - エンジン固有の設定は既存の Engine Settings 画面を開く。
 - Identifier にはアプリ独自の文字種・文字数制限を置かない。空欄だけは許可しないか、保存時にユーザーへ分かる警告を出すかを実装時に決める。
 
@@ -133,12 +146,12 @@ WHITE PLAYER   [表示名 / 種別]                 [SELECT]
 
 ## 段階的な実装手順
 
-1. [完了] `PlayerProfile`、永続化 DTO、Player Catalog を追加する。
+1. [完了] `EntryProfile`、永続化 DTO、Entry Catalog を追加する。
 2. [一部完了] 起動時に互換 Player を生成する。現在は初期 Player とエンジン対応 Player の生成・旧エンジン ID 補正まで実装済み。旧人間名と黒白エンジン選択の完全移行を追加する。
 3. [完了（旧状態併存）] 対局セッションに黒白 Player ID を追加し、Player から Human / Computer とエンジンを解決するアダプターを実装する。
 4. [一部完了] Player 名と SGF `PB` / `PW` は切替済み。GTP 起動と Random Seed 記録を Player の参照だけで完結させ、ルートコメントを Black/White Player 名へ更新する。
 5. [完了] Player 一覧・編集・選択ダイアログを実装する。
-6. [完了] Local Match と Ponnuki の設定画面を、新しい `PLAYER SELECT` UI へ置換する。
+6. [一部完了] Local Match と Ponnuki の設定画面を、新しい `PLAYER SELECT` UI へ置換する。Entry Profile の選択は実装済み。Player を成立させる Client Identity の明示選択は未実装。
 7. [未着手] CGOS と大会ルールで必要な Player 選択・Identifier の送信規則を個別に追加する。
 8. [未着手] 移行猶予後、旧 `BlackPlayerKind` / `WhitePlayerKind` とエンジン選択インデックスを削除する。
 9. [未着手] CGOS 固有の接続先カタログを一般化する。現在の表示名は「接続先（CGOS）」とし、将来の ConnectionProfile には接続種別と EndpointKey を追加する。
@@ -146,6 +159,7 @@ WHITE PLAYER   [表示名 / 種別]                 [SELECT]
 ## 完了条件
 
 - [完了] Human と Computer を同じ Player 一覧から黒白へ選択できる。
+- [未完了] 黒白それぞれについて、選択済み Entry Profile が利用できる Client Identity を選択し、両者を Player の構成要素として表示できる。
 - [完了] Computer Player が別 Engine を参照できる。
 - [完了] 表示名と Identifier が保存・再読込できる。
 - [完了] Identifier はアプリ側で文字種・文字数を制限しない。
@@ -157,44 +171,45 @@ WHITE PLAYER   [表示名 / 種別]                 [SELECT]
 ### 完了
 
 - Human / Computer の Player 統合選択、GTP Engine の選択、Local Match / Ponnuki、SGF 表示名出力。
-- TargetProfile / TargetCatalog、Player からの Target 参照、CGOS Connection Profile の不変 ID 参照。
-- CGOS 実行時の Target 認証情報参照。
-- TARGETS ダイアログの表示、最大5件までの OnlineMatch (CGOS) / LocalMatch Target 追加、削除、行選択、接続先選択。
-- Target の `DISPLAY`、`LOGIN NAME`、`LOGIN PASS` をクリック、貼り付け、IME、Enter/Escape、Tab で編集・保存できる。非編集中のパスワードは伏せ字にする。
-- LocalMatch Target では `LOGIN NAME` を `OUTPUT NAME` として表示し、パスワード欄を表示しない。
-- `USE` により選択 Target を Player の既定使用先にできる。Player 編集画面では既定 Target を表示し、`SELECT TARGET` / `EDIT TARGETS` から選択・編集できる。
+- ClientIdentityProfile / ClientIdentityCatalog、Player からの Client Identity 参照、CGOS Connection Profile の不変 ID 参照。
+- CGOS 実行時の Client Identity 認証情報参照。
+- CLIENT IDENTITIES ダイアログの表示、最大5件までの OnlineMatch (CGOS) / LocalMatch Client Identity 追加、削除、行選択、接続先選択。
+- Client Identity の `DISPLAY`、`LOGIN NAME`、`LOGIN PASS` をクリック、貼り付け、IME、Enter/Escape、Tab で編集・保存できる。非編集中のパスワードは伏せ字にする。
+- LocalMatch Client Identity では `LOGIN NAME` を `OUTPUT NAME` として表示し、パスワード欄を表示しない。
+- `USE` により選択 Client Identity を Player の既定使用先にできる。Player 編集画面では既定 Client Identity を表示し、`SELECT CLIENT IDENTITY` / `EDIT CLIENT IDENTITIES` から選択・編集できる。
 
 ### 残作業
 
-- [完了] Local Match の開始時に、黒白それぞれの既定 LocalMatch Target の `NAMELY KEY`（旧 OUTPUT NAME）を固定し、手動保存・自動保存する棋譜ファイル名へ反映する。空欄または旧データでは Player の Identifier、表示名の順に補う。
-- [完了] OnlineMatch (CGOS) で同じ接続先に複数 Target がある場合、Player 内の並び順で最初の Target を既定として使う。接続・対局開始画面には、その Target の Display と HANDLE を `DEFAULT TARGET` として表示する。
-- [完了] OnlineMatch (CGOS) 接続先の選択 UI を、Target 編集の現在値・前後切替から、接続先一覧を選ぶ一貫した UI へ整理する。
-- [完了] Player Catalog と Target Catalog をまたぐ追加・削除・既定変更の保存を、ひとまとまりの操作として整理する。Target を先に保存し、その後 Player の Target 参照を保存する。
+- [未着手] Player 選択画面を二段階化する。Entry Profile の選択後、その Entry Profile が現在のサービスで使える Client Identity を選び、黒白それぞれの Player を `Entry Profile + Client Identity` として確定する。
+- [完了] Local Match の開始時に、黒白それぞれの既定 LocalMatch Client Identity の `NAMELY KEY`（旧 OUTPUT NAME）を固定し、手動保存・自動保存する棋譜ファイル名へ反映する。空欄または旧データでは Player の Identifier、表示名の順に補う。
+- [完了] OnlineMatch (CGOS) で同じ接続先に複数 Client Identity がある場合、Player 内の並び順で最初の Client Identity を既定として使う。接続・対局開始画面には、その Client Identity の Display と HANDLE を `DEFAULT CLIENT IDENTITY` として表示する。
+- [完了] OnlineMatch (CGOS) 接続先の選択 UI を、Client Identity 編集の現在値・前後切替から、接続先一覧を選ぶ一貫した UI へ整理する。
+- [完了] Entry Catalog と Client Identity Catalog をまたぐ追加・削除・既定変更の保存を、ひとまとまりの操作として整理する。Client Identity を先に保存し、その後 Player の Client Identity 参照を保存する。
 
 ### 操作上の補足（2026-08-12）
 
-- LocalMatch / OnlineMatch (CGOS) ともに、Player Profile を選ぶと、そのサービス向けの既定 Target を採用する。
-- 画面には Target の `HANDLE` を表示する。`HANDLE` をクリックすると、選択中 Player が持つ当該サービス用 Target だけの一覧を開き、今回の対局・接続に限って切り替えられる。
-- この一時切替は Player 内の Target 順序を変更しない。恒久的な既定変更には Target 編集画面の `USE` を使う。
+- LocalMatch / OnlineMatch (CGOS) ともに、Entry Profile を選ぶと、そのサービス向けの既定 Client Identity を採用する。
+- 画面には Client Identity の `HANDLE` を表示する。`HANDLE` をクリックすると、選択中 Player が持つ当該サービス用 Client Identity だけの一覧を開き、今回の対局・接続に限って切り替えられる。
+- この一時切替は Player 内の Client Identity 順序を変更しない。恒久的な既定変更には Client Identity 編集画面の `USE` を使う。
 - `HANDLE` は「機械に入力できる書式に従った、Player の Entry 名」。CGOS ではログイン名、LocalMatch では棋譜ファイル名に使う。
 
 ### 後続
 
-- Target の並べ替え・ページ送りは、最大5件の少数運用のため当面不要。
+- Client Identity の並べ替え・ページ送りは、最大5件の少数運用のため当面不要。
 - LOGIN PASS の OS 保護ストア移行。
 - CGOS／大会ルールへの Player 統合、旧 PlayerKind／エンジン選択状態の削除、ConnectionProfile の一般化は、本計画の従来どおりの後続課題。
 
 ## 将来の用語整理案（本計画の完了後）
 
-現在の `PlayerProfile` / `TargetProfile` / `GtpEngineProfile` は、互換性を保ちながら本計画を完了するための名称として維持する。本計画の完了後、責務を次のように再編・改名する。
+現在の `EntryProfile` / `ClientIdentityProfile` / `GtpEngineProfile` は、互換性を保ちながら本計画を完了するための名称として維持する。本計画の完了後、責務を次のように再編・改名する。
 
 | 将来の名前 | 責務 | 現在の主な対応物 |
 | --- | --- | --- |
-| `EntryProfile` | 対局に参加する一席。`HumanProfile` または `EngineProfile` のどちらかを参照する。自分同士の対局では二つの Entry を作れる。 | `PlayerProfile` |
-| `HumanProfile` | 人間一人と一対一のプロフィール。紹介・表示など、人そのものの情報を持つ。 | `PlayerProfile` の Human 部分 |
+| `EntryProfile` | 対局に参加する一席。`HumanProfile` または `EngineProfile` のどちらかを参照する。自分同士の対局では二つの Entry を作れる。 | `EntryProfile` |
+| `HumanProfile` | 人間一人と一対一のプロフィール。紹介・表示など、人そのものの情報を持つ。 | `EntryProfile` の Human 部分 |
 | `EngineProfile` | 思考エンジン一つの起動方法。実行ファイル、作業ディレクトリ、引数、GUI/GTP 設定を持つ。 | `GtpEngineProfile` |
 | `ServiceProfile` | CGOS、野良対局、大会各日、LocalMatch など、接続先サービス一つの接続情報。 | `CgosConnectionProfile` と LocalMatch の種別 |
-| `ClientIdentity` | 一つの `EntryProfile` が一つの `ServiceProfile` で名乗る身元。 | `TargetProfile` |
+| `ClientIdentity` | 一つの `EntryProfile` が一つの `ServiceProfile` で名乗る身元。 | `ClientIdentityProfile` |
 
 `ClientIdentity` は次の項目を中心にする。`Handle` は、機械に入力できる書式に従った Player の Entry 名である。プロトコルに応じて CGOS ではログイン名、LocalMatch では出力ファイル名として使う。人に見せる `DisplayName` とは別の値であり、UI では原則 `HANDLE` と表示する。
 
@@ -206,4 +221,4 @@ ClientIdentity
   SecretReference        // OS の安全な資格情報ストアを参照する。秘密そのものは JSON に保存しない。
 ```
 
-この改名は保存 JSON の移行を伴うため、Player/Target を利用する現在の UI・CGOS 接続・LocalMatch が一通り安定した後に、一回の移行として実施する。
+この改名は保存 JSON の移行を伴うため、Player/Client Identity を利用する現在の UI・CGOS 接続・LocalMatch が一通り安定した後に、一回の移行として実施する。

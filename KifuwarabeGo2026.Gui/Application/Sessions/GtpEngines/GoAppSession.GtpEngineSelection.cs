@@ -191,7 +191,7 @@ public sealed partial class GoAppSession
         if (IsGtpEngineSelectionForCgos)
         {
             SetSelectedCgosGtpEngineIndex(stone, index);
-            var target = GetSelectedCgosTargetProfile(stone);
+            var target = GetSelectedCgosClientIdentityProfile(stone);
             SetCgosPlayerCredentials(
                 stone,
                 target?.LoginName ?? _gtpEngineProfiles[index].DefaultCgosLoginName,

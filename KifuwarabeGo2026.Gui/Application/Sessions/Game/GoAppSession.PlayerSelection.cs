@@ -23,7 +23,7 @@ public sealed partial class GoAppSession
         PlayerSelectionPurpose = PlayerSelectionPurpose.LocalMatch;
         PlayerSelectionTargetStone = stone;
         PlayerDialogSelectionIndex = _playerProfiles.FindIndex(profile =>
-            string.Equals(profile.Id, stone == GoStone.Black ? BlackPlayerProfileId : WhitePlayerProfileId, StringComparison.Ordinal));
+            string.Equals(profile.Id, stone == GoStone.Black ? BlackEntryProfileId : WhiteEntryProfileId, StringComparison.Ordinal));
         PlayerSelectionPageIndex = Math.Max(0, PlayerDialogSelectionIndex) / PlayerSelectionPageSize;
     }
 
@@ -35,7 +35,7 @@ public sealed partial class GoAppSession
         IsPlayerSelectionDialogOpen = true;
         PlayerSelectionPurpose = PlayerSelectionPurpose.Cgos;
         PlayerSelectionTargetStone = stone;
-        var currentId = stone == GoStone.Black ? CgosBlackPlayerProfileId : CgosWhitePlayerProfileId;
+        var currentId = stone == GoStone.Black ? CgosBlackEntryProfileId : CgosWhiteEntryProfileId;
         PlayerDialogSelectionIndex = _playerProfiles.FindIndex(profile => string.Equals(profile.Id, currentId, StringComparison.Ordinal));
         PlayerSelectionPageIndex = Math.Max(0, PlayerDialogSelectionIndex) / PlayerSelectionPageSize;
     }
@@ -53,8 +53,8 @@ public sealed partial class GoAppSession
             return false;
         var playerId = _playerProfiles[PlayerDialogSelectionIndex].Id;
         var selected = PlayerSelectionPurpose == PlayerSelectionPurpose.Cgos
-            ? TrySelectCgosPlayerProfile(PlayerSelectionTargetStone, playerId)
-            : TrySelectPlayerProfile(PlayerSelectionTargetStone, playerId);
+            ? TrySelectCgosEntryProfile(PlayerSelectionTargetStone, playerId)
+            : TrySelectEntryProfile(PlayerSelectionTargetStone, playerId);
         if (!selected)
             return false;
 
@@ -75,54 +75,54 @@ public sealed partial class GoAppSession
         PlayerSelectionPageIndex = Math.Clamp(PlayerSelectionPageIndex + step, 0, pageCount - 1);
     }
 
-    public bool AddPlayerProfile(PlayerProfileKind kind)
+    public bool AddEntryProfile(EntryProfileKind kind)
     {
         var engineId = "";
-        if (kind == PlayerProfileKind.Computer)
+        if (kind == EntryProfileKind.Computer)
         {
             if (_gtpEngineProfiles.Count == 0) return false;
             engineId = _gtpEngineProfiles[0].Id;
         }
 
         var ordinal = _playerProfiles.Count(profile => profile.Kind == kind) + 1;
-        var player = new PlayerProfile
+        var player = new EntryProfile
         {
-            DisplayName = kind == PlayerProfileKind.Human ? $"New Human {ordinal}" : $"New Computer {ordinal}",
+            DisplayName = kind == EntryProfileKind.Human ? $"New Human {ordinal}" : $"New Computer {ordinal}",
             Identifier = "",
             Kind = kind,
             EngineProfileId = engineId,
         };
         _playerProfiles.Add(player);
-        AddDefaultTargetProfiles(player);
+        AddDefaultClientIdentityProfiles(player);
         PlayerDialogSelectionIndex = _playerProfiles.Count - 1;
         PlayerSelectionPageIndex = PlayerDialogSelectionIndex / PlayerSelectionPageSize;
         return true;
     }
 
-    public bool DeleteSelectedPlayerProfile()
+    public bool DeleteSelectedEntryProfile()
     {
         if (PlayerDialogSelectionIndex < 0 || PlayerDialogSelectionIndex >= _playerProfiles.Count)
             return false;
 
         var removed = _playerProfiles[PlayerDialogSelectionIndex];
-        if (string.Equals(removed.Id, BlackPlayerProfileId, StringComparison.Ordinal) ||
-            string.Equals(removed.Id, WhitePlayerProfileId, StringComparison.Ordinal))
+        if (string.Equals(removed.Id, BlackEntryProfileId, StringComparison.Ordinal) ||
+            string.Equals(removed.Id, WhiteEntryProfileId, StringComparison.Ordinal))
         {
             return false;
         }
 
         _playerProfiles.RemoveAt(PlayerDialogSelectionIndex);
-        var stillReferencedTargetIds = _playerProfiles.SelectMany(profile => profile.TargetProfileIds).ToHashSet(StringComparer.Ordinal);
-        _targetProfiles.RemoveAll(target => removed.TargetProfileIds.Contains(target.Id, StringComparer.Ordinal) && !stillReferencedTargetIds.Contains(target.Id));
+        var stillReferencedTargetIds = _playerProfiles.SelectMany(profile => profile.ClientIdentityProfileIds).ToHashSet(StringComparer.Ordinal);
+        _clientIdentityProfiles.RemoveAll(target => removed.ClientIdentityProfileIds.Contains(target.Id, StringComparer.Ordinal) && !stillReferencedTargetIds.Contains(target.Id));
         PlayerDialogSelectionIndex = Math.Min(PlayerDialogSelectionIndex, _playerProfiles.Count - 1);
         PlayerSelectionPageIndex = Math.Max(0, PlayerDialogSelectionIndex) / PlayerSelectionPageSize;
         return true;
     }
 
-    public bool CanDeleteSelectedPlayerProfile =>
+    public bool CanDeleteSelectedEntryProfile =>
         PlayerDialogSelectionIndex >= 0 && PlayerDialogSelectionIndex < _playerProfiles.Count &&
-        !string.Equals(_playerProfiles[PlayerDialogSelectionIndex].Id, BlackPlayerProfileId, StringComparison.Ordinal) &&
-        !string.Equals(_playerProfiles[PlayerDialogSelectionIndex].Id, WhitePlayerProfileId, StringComparison.Ordinal);
+        !string.Equals(_playerProfiles[PlayerDialogSelectionIndex].Id, BlackEntryProfileId, StringComparison.Ordinal) &&
+        !string.Equals(_playerProfiles[PlayerDialogSelectionIndex].Id, WhiteEntryProfileId, StringComparison.Ordinal);
 
     public string GetPlayerSelectionDetail(int index)
     {
@@ -130,40 +130,40 @@ public sealed partial class GoAppSession
             return "";
 
         var player = _playerProfiles[index];
-        if (player.Kind == PlayerProfileKind.Human)
+        if (player.Kind == EntryProfileKind.Human)
             return "HUMAN";
 
         var engineIndex = FindGtpEngineIndex(player.EngineProfileId);
         return engineIndex >= 0 ? $"COMPUTER  /  {_gtpEngineProfiles[engineIndex].DisplayName}" : "COMPUTER  /  ENGINE NOT FOUND";
     }
 
-    private bool CanSelectPlayerForCgos(PlayerProfile player) =>
-        player.Kind == PlayerProfileKind.Computer &&
+    private bool CanSelectPlayerForCgos(EntryProfile player) =>
+        player.Kind == EntryProfileKind.Computer &&
         FindGtpEngineIndex(player.EngineProfileId) >= 0 &&
-        GetPlayerTargetProfiles(player.Id).Any(target =>
+        GetPlayerClientIdentityProfiles(player.Id).Any(target =>
             string.Equals(target.ConnectionProfileId, SelectedCgosConnectionProfile.Id, StringComparison.Ordinal));
 
-    private void AddDefaultTargetProfiles(PlayerProfile player)
+    private void AddDefaultClientIdentityProfiles(EntryProfile player)
     {
-        var localMatch = new TargetProfile { DisplayName = "LocalMatch", LoginName = player.Identifier };
-        _targetProfiles.Add(localMatch);
-        player.TargetProfileIds.Add(localMatch.Id);
+        var localMatch = new ClientIdentityProfile { DisplayName = "LocalMatch", LoginName = player.Identifier };
+        _clientIdentityProfiles.Add(localMatch);
+        player.ClientIdentityProfileIds.Add(localMatch.Id);
 
-        if (player.Kind != PlayerProfileKind.Computer || _cgosConnectionProfiles.Count == 0)
+        if (player.Kind != EntryProfileKind.Computer || _cgosConnectionProfiles.Count == 0)
             return;
 
         var engineIndex = FindGtpEngineIndex(player.EngineProfileId);
         if (engineIndex < 0) return;
         var engine = _gtpEngineProfiles[engineIndex];
-        var cgos = new TargetProfile
+        var cgos = new ClientIdentityProfile
         {
             DisplayName = "OnlineMatch (CGOS)",
             ConnectionProfileId = SelectedCgosConnectionProfile.Id,
             LoginName = engine.DefaultCgosLoginName,
             LoginPass = engine.DefaultCgosPlainTextPassword,
         };
-        _targetProfiles.Add(cgos);
-        player.TargetProfileIds.Add(cgos.Id);
+        _clientIdentityProfiles.Add(cgos);
+        player.ClientIdentityProfileIds.Add(cgos.Id);
     }
 }
 

@@ -22,8 +22,8 @@ public sealed partial class GoAppSession
         CgosConnectionSelectionPageIndex = SelectedCgosConnectionProfileIndex / CgosConnectionSelectionPageSize;
         SelectDefaultCgosPlayerIfNeeded(GoStone.Black);
         SelectDefaultCgosPlayerIfNeeded(GoStone.White);
-        ApplyCgosTargetCredentials(GoStone.Black);
-        ApplyCgosTargetCredentials(GoStone.White);
+        ApplyCgosClientIdentityCredentials(GoStone.Black);
+        ApplyCgosClientIdentityCredentials(GoStone.White);
     }
 
     public void MoveCgosConnectionSelectionPage(int step)
@@ -41,7 +41,7 @@ public sealed partial class GoAppSession
         _cgosConnectionProfiles.Count > 1 &&
         SelectedCgosConnectionProfileIndex >= 0 &&
         SelectedCgosConnectionProfileIndex < _cgosConnectionProfiles.Count &&
-        !_targetProfiles.Any(target => string.Equals(target.ConnectionProfileId, SelectedCgosConnectionProfile.Id, StringComparison.Ordinal));
+        !_clientIdentityProfiles.Any(target => string.Equals(target.ConnectionProfileId, SelectedCgosConnectionProfile.Id, StringComparison.Ordinal));
 
     public bool CanMoveCgosConnectionSelectionPage(int step) =>
         Math.Clamp(CgosConnectionSelectionPageIndex + step, 0, GetCgosConnectionSelectionPageCount() - 1) != CgosConnectionSelectionPageIndex;
@@ -95,14 +95,14 @@ public sealed partial class GoAppSession
 
     private void SelectDefaultCgosPlayerIfNeeded(GoStone stone)
     {
-        var selectedId = stone == GoStone.Black ? CgosBlackPlayerProfileId : CgosWhitePlayerProfileId;
-        if (TrySelectCgosPlayerProfile(stone, selectedId)) return;
+        var selectedId = stone == GoStone.Black ? CgosBlackEntryProfileId : CgosWhiteEntryProfileId;
+        if (TrySelectCgosEntryProfile(stone, selectedId)) return;
 
         var player = _playerProfiles.FirstOrDefault(candidate =>
-            candidate.Kind == PlayerProfileKind.Computer &&
-            GetPlayerTargetProfiles(candidate.Id).Any(target =>
+            candidate.Kind == EntryProfileKind.Computer &&
+            GetPlayerClientIdentityProfiles(candidate.Id).Any(target =>
                 string.Equals(target.ConnectionProfileId, SelectedCgosConnectionProfile.Id, StringComparison.Ordinal)));
         if (player is not null)
-            TrySelectCgosPlayerProfile(stone, player.Id);
+            TrySelectCgosEntryProfile(stone, player.Id);
     }
 }

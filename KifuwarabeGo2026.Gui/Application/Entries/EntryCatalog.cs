@@ -8,10 +8,10 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 
 /// <summary>
-/// 人間・コンピューターをまとめた PlayerProfile の永続カタログ。
+/// 人間・コンピューターをまとめた EntryProfile の永続カタログ。
 /// エンジン設定の追加時には対応するコンピューター Player を補うが、既存 Player は自動削除しない。
 /// </summary>
-public sealed class PlayerCatalog
+public sealed class EntryCatalog
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -21,7 +21,7 @@ public sealed class PlayerCatalog
         Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
     };
 
-    private PlayerCatalog(string listPath, IReadOnlyList<PlayerProfile> profiles)
+    private EntryCatalog(string listPath, IReadOnlyList<EntryProfile> profiles)
     {
         ListPath = listPath;
         Profiles = profiles;
@@ -29,9 +29,9 @@ public sealed class PlayerCatalog
 
     public string ListPath { get; }
 
-    public IReadOnlyList<PlayerProfile> Profiles { get; }
+    public IReadOnlyList<EntryProfile> Profiles { get; }
 
-    public static PlayerCatalog LoadFromDefaultLocation(IEnumerable<GtpEngineProfile> engines)
+    public static EntryCatalog LoadFromDefaultLocation(IEnumerable<GtpEngineProfile> engines)
     {
         var directory = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -44,14 +44,14 @@ public sealed class PlayerCatalog
         if (profiles.Count == 0)
         {
             // 旧 UI の黒白の初期人間名を失わない、最初の二つの互換 Player。
-            profiles.Add(new PlayerProfile { DisplayName = "Black Player", Identifier = "Black Player" });
-            profiles.Add(new PlayerProfile { DisplayName = "White Player", Identifier = "White Player" });
+            profiles.Add(new EntryProfile { DisplayName = "Black Player", Identifier = "Black Player" });
+            profiles.Add(new EntryProfile { DisplayName = "White Player", Identifier = "White Player" });
         }
 
         foreach (var engine in engines)
         {
             if (profiles.Any(profile =>
-                    profile.Kind == PlayerProfileKind.Computer &&
+                    profile.Kind == EntryProfileKind.Computer &&
                     string.Equals(profile.EngineProfileId, engine.Id, StringComparison.Ordinal)))
             {
                 continue;
@@ -62,7 +62,7 @@ public sealed class PlayerCatalog
             // その形だけを旧 ID から現行 ID へ移し、同じエンジンの重複を統合する。
             var legacyMatches = profiles
                 .Where(profile =>
-                    profile.Kind == PlayerProfileKind.Computer &&
+                    profile.Kind == EntryProfileKind.Computer &&
                     string.Equals(profile.DisplayName, engine.DisplayName, StringComparison.Ordinal) &&
                     string.Equals(profile.Identifier, engine.DisplayName, StringComparison.Ordinal))
                 .ToList();
@@ -74,55 +74,55 @@ public sealed class PlayerCatalog
                 continue;
             }
 
-            profiles.Add(new PlayerProfile
+            profiles.Add(new EntryProfile
             {
                 DisplayName = engine.DisplayName,
                 Identifier = engine.DisplayName,
-                Kind = PlayerProfileKind.Computer,
+                Kind = EntryProfileKind.Computer,
                 EngineProfileId = engine.Id,
             });
         }
 
         var changed = !ProfileListsAreEqual(catalog.Profiles, profiles);
-        var result = new PlayerCatalog(listPath, profiles);
+        var result = new EntryCatalog(listPath, profiles);
         if (changed)
             result.Save(profiles);
         return result;
     }
 
-    public static PlayerCatalog Load(string listPath)
+    public static EntryCatalog Load(string listPath)
     {
         if (!File.Exists(listPath))
-            return new PlayerCatalog(listPath, Array.Empty<PlayerProfile>());
+            return new EntryCatalog(listPath, Array.Empty<EntryProfile>());
 
-        var profiles = JsonSerializer.Deserialize<PlayerProfileList>(File.ReadAllText(listPath), JsonOptions)?.Players ?? [];
-        return new PlayerCatalog(listPath, profiles.Select(Normalize).ToList());
+        var profiles = JsonSerializer.Deserialize<EntryProfileList>(File.ReadAllText(listPath), JsonOptions)?.Players ?? [];
+        return new EntryCatalog(listPath, profiles.Select(Normalize).ToList());
     }
 
-    public void Save(IEnumerable<PlayerProfile> profiles)
+    public void Save(IEnumerable<EntryProfile> profiles)
     {
         var list = profiles.Select(Normalize).ToList();
         Directory.CreateDirectory(Path.GetDirectoryName(ListPath) ?? AppContext.BaseDirectory);
-        File.WriteAllText(ListPath, JsonSerializer.Serialize(new PlayerProfileList { Players = list }, JsonOptions));
+        File.WriteAllText(ListPath, JsonSerializer.Serialize(new EntryProfileList { Players = list }, JsonOptions));
     }
 
-    private static PlayerProfile Normalize(PlayerProfile profile)
+    private static EntryProfile Normalize(EntryProfile profile)
     {
         var normalized = profile.Clone();
         normalized.Id = string.IsNullOrWhiteSpace(normalized.Id) ? Guid.NewGuid().ToString("N") : normalized.Id;
         normalized.DisplayName = string.IsNullOrWhiteSpace(normalized.DisplayName) ? "New Player" : normalized.DisplayName.Trim();
         normalized.Identifier ??= "";
         normalized.EngineProfileId ??= "";
-        normalized.TargetProfileIds = (normalized.TargetProfileIds ?? [])
+        normalized.ClientIdentityProfileIds = (normalized.ClientIdentityProfileIds ?? [])
             .Where(id => !string.IsNullOrWhiteSpace(id))
             .Distinct(StringComparer.Ordinal)
             .ToList();
-        if (normalized.Kind == PlayerProfileKind.Human)
+        if (normalized.Kind == EntryProfileKind.Human)
             normalized.EngineProfileId = "";
         return normalized;
     }
 
-    private static bool ProfileListsAreEqual(IReadOnlyList<PlayerProfile> left, IReadOnlyList<PlayerProfile> right) =>
+    private static bool ProfileListsAreEqual(IReadOnlyList<EntryProfile> left, IReadOnlyList<EntryProfile> right) =>
         left.Count == right.Count &&
         left.Zip(right).All(pair =>
             pair.First.Id == pair.Second.Id &&
@@ -130,10 +130,10 @@ public sealed class PlayerCatalog
             pair.First.Identifier == pair.Second.Identifier &&
             pair.First.Kind == pair.Second.Kind &&
             pair.First.EngineProfileId == pair.Second.EngineProfileId &&
-            pair.First.TargetProfileIds.SequenceEqual(pair.Second.TargetProfileIds, StringComparer.Ordinal));
+            pair.First.ClientIdentityProfileIds.SequenceEqual(pair.Second.ClientIdentityProfileIds, StringComparer.Ordinal));
 
-    private sealed class PlayerProfileList
+    private sealed class EntryProfileList
     {
-        public List<PlayerProfile> Players { get; set; } = new();
+        public List<EntryProfile> Players { get; set; } = new();
     }
 }

@@ -7,7 +7,7 @@ public sealed record CgosConnectionProfile(
     string Round,
     string Note)
 {
-    /// <summary>TargetProfile から参照するための不変 ID。</summary>
+    /// <summary>ClientIdentityProfile から参照するための不変 ID。</summary>
     public string Id { get; init; } = "";
 
     /// <summary>接続先のプロトコル種別。現状は CGOS だけだが、永続形式は将来の拡張に備える。</summary>

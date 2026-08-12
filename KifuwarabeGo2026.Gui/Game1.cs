@@ -50,8 +50,8 @@ public class Game1 : Game
     private readonly GoAppSession _session = new();
     private readonly TournamentRulesCatalog _tournamentRulesCatalog;
     private readonly GtpEngineCatalog _gtpEngineCatalog;
-    private readonly PlayerCatalog _playerCatalog;
-    private readonly TargetCatalog _targetCatalog;
+    private readonly EntryCatalog _playerCatalog;
+    private readonly ClientIdentityCatalog _targetCatalog;
     private readonly CgosConnectionCatalog _cgosConnectionCatalog;
     private readonly TournamentRulesSetting _tournamentRulesSetting;
     private readonly PlayingScene _playingScene;
@@ -96,7 +96,7 @@ public class Game1 : Game
     private readonly TextBoxController _playerEditTextBox = new(240);
     private KeyboardState _previousPlayerEditKeyboard;
     private readonly TextBoxController _targetProfileEditTextBox = new(240);
-    private KeyboardState _previousTargetProfileEditKeyboard;
+    private KeyboardState _previousClientIdentityProfileEditKeyboard;
     private KeyboardState _previousCgosConnectionKeyboard;
     private readonly TextBoxController _cgosConnectionEditTextBox = new(240);
     private KeyboardState _previousCgosCredentialKeyboard;
@@ -183,17 +183,17 @@ public class Game1 : Game
         _tournamentRulesCatalog = TournamentRulesCatalog.LoadFromDefaultLocation();
         _gtpEngineCatalog = GtpEngineCatalog.LoadFromDefaultLocation();
         _cgosConnectionCatalog = CgosConnectionCatalog.LoadFromDefaultLocation();
-        _playerCatalog = PlayerCatalog.LoadFromDefaultLocation(_gtpEngineCatalog.Profiles);
-        _targetCatalog = TargetCatalog.LoadFromDefaultLocation(
+        _playerCatalog = EntryCatalog.LoadFromDefaultLocation(_gtpEngineCatalog.Profiles);
+        _targetCatalog = ClientIdentityCatalog.LoadFromDefaultLocation(
             _playerCatalog.Profiles,
             _gtpEngineCatalog.Profiles,
             _cgosConnectionCatalog.Profiles);
-        if (_targetCatalog.PlayerProfilesChanged)
-            _playerCatalog.Save(_targetCatalog.PlayerProfiles);
+        if (_targetCatalog.EntryProfilesChanged)
+            _playerCatalog.Save(_targetCatalog.EntryProfiles);
         _session.SetTournamentRules(_tournamentRulesCatalog.Rules);
         _session.SetGtpEngineProfiles(_gtpEngineCatalog.Profiles);
-        _session.SetPlayerProfiles(_targetCatalog.PlayerProfiles);
-        _session.SetTargetProfiles(_targetCatalog.Profiles);
+        _session.SetEntryProfiles(_targetCatalog.EntryProfiles);
+        _session.SetClientIdentityProfiles(_targetCatalog.Profiles);
         ApplicationSettings.Current.LastSelectedAppProviderEnginePaths.TryGetValue("ponnuki", out var lastPonnukiProviderPath);
         if (_session.RestoreAppProviderEngine(lastPonnukiProviderPath) && _session.CanUseSelectedAppProvider)
         {
@@ -326,7 +326,7 @@ public class Game1 : Game
 
                 UpdateCgosConnectionEditPanelByKeyboard(keyboard, gameTime);
                 UpdateCgosCredentialByKeyboard(keyboard, gameTime);
-                UpdateTargetProfileEditTextBox(keyboard, gameTime);
+                UpdateClientIdentityProfileEditTextBox(keyboard, gameTime);
                 UpdateGtpEngineEditPanelByKeyboard(keyboard, gameTime);
             }
 
@@ -340,7 +340,7 @@ public class Game1 : Game
         _session.AddCurrentTurnElapsedTime(gameTime.ElapsedGameTime);
         UpdateGlobalKeyboardInput(keyboard);
         UpdatePlayerEditTextBox(keyboard, gameTime);
-        UpdateTargetProfileEditTextBox(keyboard, gameTime);
+        UpdateClientIdentityProfileEditTextBox(keyboard, gameTime);
         UpdateHumanPlayerNameTextBox(keyboard, gameTime);
 
         if (acceptsInput && _session.CurrentMode.Kind != GoAppModeKind.Playing)
@@ -1201,17 +1201,17 @@ public class Game1 : Game
 
                 if (_session.CgosConnectionFlowKind == CgosConnectionFlowKind.ConnectionStart)
                 {
-                    if (_session.IsQuickTargetSelectionPanelOpen)
+                    if (_session.IsQuickClientIdentitySelectionPanelOpen)
                     {
-                        if (GoScreenRenderer.GetQuickTargetSelectionCancelButtonHit(point)) _session.CancelQuickTargetSelectionPanel();
-                        else if (GoScreenRenderer.GetQuickTargetSelectionSelectButtonHit(point)) _session.CommitQuickTargetSelection();
-                        else if (GoScreenRenderer.GetQuickTargetSelectionItemHit(point, _session) is { } targetIndex) _session.SelectQuickTarget(targetIndex);
+                        if (GoScreenRenderer.GetQuickClientIdentitySelectionCancelButtonHit(point)) _session.CancelQuickClientIdentitySelectionPanel();
+                        else if (GoScreenRenderer.GetQuickClientIdentitySelectionSelectButtonHit(point)) _session.CommitQuickClientIdentitySelection();
+                        else if (GoScreenRenderer.GetQuickClientIdentitySelectionItemHit(point, _session) is { } targetIndex) _session.SelectQuickClientIdentity(targetIndex);
                     }
                     else if (GoScreenRenderer.GetCgosCredentialFieldHit(point) is { } credential &&
                         (credential.Stone == GoStone.Black || _session.IsCgosPlayer2InputEnabled))
                     {
                         if (credential.Field == CgosPlayerCredentialField.LoginName)
-                            _session.OpenQuickTargetSelectionPanel(credential.Stone, cgos: true);
+                            _session.OpenQuickClientIdentitySelectionPanel(credential.Stone, cgos: true);
                         else
                             BeginOrMoveCgosCredentialEdit(point, credential.Stone, credential.Field);
                     }
@@ -1382,7 +1382,7 @@ public class Game1 : Game
             var isLocalAppsIntermission = isIntermissionMode && _session.UseKind == GoAppUseKind.LocalApps;
             var isPlayerSelectionIntermission = isSetupMode || isLocalAppsIntermission;
             var isBoardEditing = _session.CurrentMode.Kind == GoAppModeKind.BoardEditing;
-            if ((_session.IsPlayerSelectionDialogOpen || _session.IsQuickTargetSelectionPanelOpen) &&
+            if ((_session.IsPlayerSelectionDialogOpen || _session.IsQuickClientIdentitySelectionPanelOpen) &&
                 !_session.IsGtpEngineEditPanelOpen &&
                 !_session.IsGtpEngineSelectionDialogOpen)
             {
@@ -1616,7 +1616,7 @@ public class Game1 : Game
             else if (isPlayerSelectionIntermission &&
                      GoScreenRenderer.GetLocalMatchHandleHit(point) is { } handleStone)
             {
-                _session.OpenQuickTargetSelectionPanel(handleStone, cgos: false);
+                _session.OpenQuickClientIdentitySelectionPanel(handleStone, cgos: false);
             }
             else if (isPlayerSelectionIntermission &&
                      (isLocalAppsIntermission
@@ -1683,51 +1683,51 @@ public class Game1 : Game
 
     private void TryHandlePlayerSelectionDialogClick(Point point)
     {
-        if (_session.IsQuickTargetSelectionPanelOpen)
+        if (_session.IsQuickClientIdentitySelectionPanelOpen)
         {
-            if (GoScreenRenderer.GetQuickTargetSelectionCancelButtonHit(point)) _session.CancelQuickTargetSelectionPanel();
-            else if (GoScreenRenderer.GetQuickTargetSelectionSelectButtonHit(point)) _session.CommitQuickTargetSelection();
-            else if (GoScreenRenderer.GetQuickTargetSelectionItemHit(point, _session) is { } targetIndex) _session.SelectQuickTarget(targetIndex);
+            if (GoScreenRenderer.GetQuickClientIdentitySelectionCancelButtonHit(point)) _session.CancelQuickClientIdentitySelectionPanel();
+            else if (GoScreenRenderer.GetQuickClientIdentitySelectionSelectButtonHit(point)) _session.CommitQuickClientIdentitySelection();
+            else if (GoScreenRenderer.GetQuickClientIdentitySelectionItemHit(point, _session) is { } targetIndex) _session.SelectQuickClientIdentity(targetIndex);
             return;
         }
-        if (_session.IsTargetProfileEditPanelOpen)
+        if (_session.IsClientIdentityProfileEditPanelOpen)
         {
-            if (_session.IsTargetProfileConnectionSelectionPanelOpen)
+            if (_session.IsClientIdentityProfileConnectionSelectionPanelOpen)
             {
-                if (GoScreenRenderer.GetTargetProfileConnectionSelectionCancelButtonHit(point))
-                    _session.CancelTargetProfileConnectionSelectionPanel();
-                else if (GoScreenRenderer.GetTargetProfileConnectionSelectionSelectButtonHit(point) && _session.CommitTargetProfileConnectionSelection())
+                if (GoScreenRenderer.GetClientIdentityProfileConnectionSelectionCancelButtonHit(point))
+                    _session.CancelClientIdentityProfileConnectionSelectionPanel();
+                else if (GoScreenRenderer.GetClientIdentityProfileConnectionSelectionSelectButtonHit(point) && _session.CommitClientIdentityProfileConnectionSelection())
                 {
-                    _session.SaveTargetProfileEditDraft();
-                    SavePlayerAndTargetCatalogs();
+                    _session.SaveClientIdentityProfileEditDraft();
+                    SavePlayerAndClientIdentityCatalogs();
                 }
-                else if (GoScreenRenderer.GetTargetProfileConnectionSelectionPreviousButtonHit(point))
-                    _session.MoveTargetProfileConnectionSelectionPage(-1);
-                else if (GoScreenRenderer.GetTargetProfileConnectionSelectionNextButtonHit(point))
-                    _session.MoveTargetProfileConnectionSelectionPage(1);
-                else if (GoScreenRenderer.GetTargetProfileConnectionSelectionItemHit(point, _session) is { } connectionIndex)
-                    _session.SelectTargetProfileConnection(connectionIndex);
+                else if (GoScreenRenderer.GetClientIdentityProfileConnectionSelectionPreviousButtonHit(point))
+                    _session.MoveClientIdentityProfileConnectionSelectionPage(-1);
+                else if (GoScreenRenderer.GetClientIdentityProfileConnectionSelectionNextButtonHit(point))
+                    _session.MoveClientIdentityProfileConnectionSelectionPage(1);
+                else if (GoScreenRenderer.GetClientIdentityProfileConnectionSelectionItemHit(point, _session) is { } connectionIndex)
+                    _session.SelectClientIdentityProfileConnection(connectionIndex);
                 return;
             }
-            if (GoScreenRenderer.GetTargetProfileEditCloseButtonHit(point))
+            if (GoScreenRenderer.GetClientIdentityProfileEditCloseButtonHit(point))
             {
-                SaveTargetProfileEditDraft();
-                _session.CloseTargetProfileEditPanel();
+                SaveClientIdentityProfileEditDraft();
+                _session.CloseClientIdentityProfileEditPanel();
             }
-            else if (GoScreenRenderer.GetTargetProfileEditAddCgosButtonHit(point) && _session.AddTargetProfile(true)) SavePlayerAndTargetCatalogs();
-            else if (GoScreenRenderer.GetTargetProfileEditAddLocalButtonHit(point) && _session.AddTargetProfile(false)) SavePlayerAndTargetCatalogs();
-            else if (GoScreenRenderer.GetTargetProfileEditRemoveButtonHit(point) && _session.RemoveTargetProfile()) SavePlayerAndTargetCatalogs();
-            else if (GoScreenRenderer.GetTargetProfileEditUseButtonHit(point) && _session.UseTargetProfile())
+            else if (GoScreenRenderer.GetClientIdentityProfileEditAddCgosButtonHit(point) && _session.AddClientIdentityProfile(true)) SavePlayerAndClientIdentityCatalogs();
+            else if (GoScreenRenderer.GetClientIdentityProfileEditAddLocalButtonHit(point) && _session.AddClientIdentityProfile(false)) SavePlayerAndClientIdentityCatalogs();
+            else if (GoScreenRenderer.GetClientIdentityProfileEditRemoveButtonHit(point) && _session.RemoveClientIdentityProfile()) SavePlayerAndClientIdentityCatalogs();
+            else if (GoScreenRenderer.GetClientIdentityProfileEditUseButtonHit(point) && _session.UseClientIdentityProfile())
             {
-                SavePlayerAndTargetCatalogs();
+                SavePlayerAndClientIdentityCatalogs();
             }
-            else if (GoScreenRenderer.GetTargetProfileEditSelectConnectionButtonHit(point)) _session.OpenTargetProfileConnectionSelectionPanel();
-            else if (GoScreenRenderer.GetTargetProfileEditFieldHit(point, _session) is { } field)
-                BeginOrMoveTargetProfileEditField(point, field);
-            else if (GoScreenRenderer.GetTargetProfileEditItemHit(point, _session) is { } targetIndex)
+            else if (GoScreenRenderer.GetClientIdentityProfileEditSelectConnectionButtonHit(point)) _session.OpenClientIdentityProfileConnectionSelectionPanel();
+            else if (GoScreenRenderer.GetClientIdentityProfileEditFieldHit(point, _session) is { } field)
+                BeginOrMoveClientIdentityProfileEditField(point, field);
+            else if (GoScreenRenderer.GetClientIdentityProfileEditItemHit(point, _session) is { } targetIndex)
             {
-                SaveTargetProfileEditDraft();
-                _session.MoveTargetProfileEditSelection(targetIndex - _session.TargetProfileEditIndex);
+                SaveClientIdentityProfileEditDraft();
+                _session.MoveClientIdentityProfileEditSelection(targetIndex - _session.ClientIdentityProfileEditIndex);
             }
             return;
         }
@@ -1744,19 +1744,19 @@ public class Game1 : Game
         }
         if (_session.IsPlayerEditPanelOpen)
         {
-            if (GoScreenRenderer.GetPlayerEditPanelSelectTargetButtonHit(point) || GoScreenRenderer.GetPlayerEditPanelTargetsButtonHit(point))
-                _session.OpenTargetProfileEditPanel();
+            if (GoScreenRenderer.GetPlayerEditPanelSelectClientIdentityButtonHit(point) || GoScreenRenderer.GetPlayerEditPanelClientIdentitiesButtonHit(point))
+                _session.OpenClientIdentityProfileEditPanel();
             else if (GoScreenRenderer.GetPlayerEditPanelCancelButtonHit(point))
                 _session.CancelPlayerEditPanel();
             else if (GoScreenRenderer.GetPlayerEditPanelSaveButtonHit(point) && _session.SavePlayerEditDraft())
-                _playerCatalog.Save(_session.PlayerProfiles);
-            else if (_session.PlayerEditDraft.Kind == PlayerProfileKind.Computer &&
+                _playerCatalog.Save(_session.EntryProfiles);
+            else if (_session.PlayerEditDraft.Kind == EntryProfileKind.Computer &&
                      GoScreenRenderer.GetPlayerEditPanelPreviousEngineButtonHit(point))
                 _session.CyclePlayerEditEngine(-1);
-            else if (_session.PlayerEditDraft.Kind == PlayerProfileKind.Computer &&
+            else if (_session.PlayerEditDraft.Kind == EntryProfileKind.Computer &&
                      GoScreenRenderer.GetPlayerEditPanelNextEngineButtonHit(point))
                 _session.CyclePlayerEditEngine(1);
-            else if (_session.PlayerEditDraft.Kind == PlayerProfileKind.Computer &&
+            else if (_session.PlayerEditDraft.Kind == EntryProfileKind.Computer &&
                      GoScreenRenderer.GetPlayerEditPanelEngineOptionsButtonHit(point))
                 _session.OpenPlayerEditGtpEngineSelectionDialog();
             else if (GoScreenRenderer.GetPlayerEditPanelFieldHit(point) is { } field)
@@ -1790,22 +1790,22 @@ public class Game1 : Game
 
         if (GoScreenRenderer.GetPlayerSelectionDialogAddHumanButtonHit(point))
         {
-            if (_session.AddPlayerProfile(PlayerProfileKind.Human))
-                SavePlayerAndTargetCatalogs();
+            if (_session.AddEntryProfile(EntryProfileKind.Human))
+                SavePlayerAndClientIdentityCatalogs();
             return;
         }
 
         if (GoScreenRenderer.GetPlayerSelectionDialogAddComputerButtonHit(point))
         {
-            if (_session.AddPlayerProfile(PlayerProfileKind.Computer))
-                SavePlayerAndTargetCatalogs();
+            if (_session.AddEntryProfile(EntryProfileKind.Computer))
+                SavePlayerAndClientIdentityCatalogs();
             return;
         }
 
         if (GoScreenRenderer.GetPlayerSelectionDialogDeleteButtonHit(point))
         {
-            if (_session.DeleteSelectedPlayerProfile())
-                SavePlayerAndTargetCatalogs();
+            if (_session.DeleteSelectedEntryProfile())
+                SavePlayerAndClientIdentityCatalogs();
             return;
         }
 
@@ -1891,11 +1891,11 @@ public class Game1 : Game
                 _renderer.GetPlayerEditPanelCaretIndex(point, playerField, _playerEditTextBox.Text));
             SyncPlayerEditField(playerField);
         }
-        else if (_targetProfileEditTextBox.IsMouseSelecting && _session.ActiveTargetProfileEditField is { } targetField)
+        else if (_targetProfileEditTextBox.IsMouseSelecting && _session.ActiveClientIdentityProfileEditField is { } targetField)
         {
             _targetProfileEditTextBox.UpdateMouseSelection(
-                _renderer.GetTargetProfileEditCaretIndex(point, _session.TargetProfileEditIndex, targetField, _targetProfileEditTextBox.Text, string.IsNullOrEmpty(_session.TargetProfileEditDraft.ConnectionProfileId)));
-            SyncTargetProfileEditField(targetField);
+                _renderer.GetClientIdentityProfileEditCaretIndex(point, _session.ClientIdentityProfileEditIndex, targetField, _targetProfileEditTextBox.Text, string.IsNullOrEmpty(_session.ClientIdentityProfileEditDraft.ConnectionProfileId)));
+            SyncClientIdentityProfileEditField(targetField);
         }
         else if (_gtpEngineEditTextBox.IsMouseSelecting &&
                  _session.ActiveGtpEngineEditField is { } engineField)
@@ -3690,7 +3690,7 @@ public class Game1 : Game
 
         if (TryInputPlayerEditCharacter(e.Character)) return;
 
-        if (TryInputTargetProfileEditCharacter(e.Character)) return;
+        if (TryInputClientIdentityProfileEditCharacter(e.Character)) return;
 
         if (TryInputHumanPlayerNameCharacter(e.Character)) return;
 
@@ -3995,7 +3995,7 @@ public class Game1 : Game
         return true;
     }
 
-    private void BeginOrMovePlayerEditField(Point point, PlayerProfileEditField field)
+    private void BeginOrMovePlayerEditField(Point point, EntryProfileEditField field)
     {
         var text = _session.ActivePlayerEditField == field
             ? _playerEditTextBox.Text
@@ -4046,9 +4046,9 @@ public class Game1 : Game
         _previousPlayerEditKeyboard = keyboard;
     }
 
-    private void MovePlayerEditFocus(PlayerProfileEditField field, int step)
+    private void MovePlayerEditFocus(EntryProfileEditField field, int step)
     {
-        var fields = new[] { PlayerProfileEditField.DisplayName };
+        var fields = new[] { EntryProfileEditField.DisplayName };
         var index = Array.IndexOf(fields, field);
         var next = fields[(index + step + fields.Length) % fields.Length];
         var text = _session.GetPlayerEditFieldText(next);
@@ -4065,7 +4065,7 @@ public class Game1 : Game
         return true;
     }
 
-    private void SyncPlayerEditField(PlayerProfileEditField field) =>
+    private void SyncPlayerEditField(EntryProfileEditField field) =>
         _session.SetPlayerEditFieldText(
             field,
             _playerEditTextBox.Text,
@@ -4073,105 +4073,105 @@ public class Game1 : Game
             _playerEditTextBox.SelectionStart,
             _playerEditTextBox.SelectionLength);
 
-    private void BeginOrMoveTargetProfileEditField(Point point, TargetProfileEditField field)
+    private void BeginOrMoveClientIdentityProfileEditField(Point point, ClientIdentityProfileEditField field)
     {
-        var text = _session.ActiveTargetProfileEditField == field
+        var text = _session.ActiveClientIdentityProfileEditField == field
             ? _targetProfileEditTextBox.Text
-            : _session.GetTargetProfileEditField(field);
-        var caretIndex = _renderer?.GetTargetProfileEditCaretIndex(point, _session.TargetProfileEditIndex, field, text, string.IsNullOrEmpty(_session.TargetProfileEditDraft.ConnectionProfileId)) ?? text.Length;
-        if (_session.ActiveTargetProfileEditField == field)
+            : _session.GetClientIdentityProfileEditField(field);
+        var caretIndex = _renderer?.GetClientIdentityProfileEditCaretIndex(point, _session.ClientIdentityProfileEditIndex, field, text, string.IsNullOrEmpty(_session.ClientIdentityProfileEditDraft.ConnectionProfileId)) ?? text.Length;
+        if (_session.ActiveClientIdentityProfileEditField == field)
         {
             _targetProfileEditTextBox.BeginMouseSelection(caretIndex, IsShiftDown());
-            SyncTargetProfileEditField(field);
+            SyncClientIdentityProfileEditField(field);
             return;
         }
 
-        SaveTargetProfileEditDraft();
+        SaveClientIdentityProfileEditDraft();
         _targetProfileEditTextBox.Begin(text, caretIndex);
         _targetProfileEditTextBox.BeginMouseSelection(caretIndex, extendSelection: false);
-        _session.BeginTargetProfileEditField(field, _targetProfileEditTextBox.CaretIndex);
+        _session.BeginClientIdentityProfileEditField(field, _targetProfileEditTextBox.CaretIndex);
     }
 
-    private void UpdateTargetProfileEditTextBox(KeyboardState keyboard, GameTime gameTime)
+    private void UpdateClientIdentityProfileEditTextBox(KeyboardState keyboard, GameTime gameTime)
     {
         if (!IsActive || !_inputArmed) return;
-        if (!_session.IsTargetProfileEditPanelOpen || _session.ActiveTargetProfileEditField is not { } field)
+        if (!_session.IsClientIdentityProfileEditPanelOpen || _session.ActiveClientIdentityProfileEditField is not { } field)
         {
-            _previousTargetProfileEditKeyboard = keyboard;
+            _previousClientIdentityProfileEditKeyboard = keyboard;
             return;
         }
 
-        if (keyboard.IsKeyDown(Keys.Tab) && _previousTargetProfileEditKeyboard.IsKeyUp(Keys.Tab))
+        if (keyboard.IsKeyDown(Keys.Tab) && _previousClientIdentityProfileEditKeyboard.IsKeyUp(Keys.Tab))
         {
-            MoveTargetProfileEditFocus(field, IsShiftDown(keyboard) ? -1 : 1);
-            _previousTargetProfileEditKeyboard = keyboard;
+            MoveClientIdentityProfileEditFocus(field, IsShiftDown(keyboard) ? -1 : 1);
+            _previousClientIdentityProfileEditKeyboard = keyboard;
             return;
         }
 
-        switch (_targetProfileEditTextBox.HandleKeyboard(keyboard, _previousTargetProfileEditKeyboard, gameTime, _clipboardService))
+        switch (_targetProfileEditTextBox.HandleKeyboard(keyboard, _previousClientIdentityProfileEditKeyboard, gameTime, _clipboardService))
         {
             case TextBoxKeyboardAction.Commit:
-                SyncTargetProfileEditField(field);
-                SaveTargetProfileEditDraft();
-                _session.EndTargetProfileEditField();
+                SyncClientIdentityProfileEditField(field);
+                SaveClientIdentityProfileEditDraft();
+                _session.EndClientIdentityProfileEditField();
                 _targetProfileEditTextBox.Clear();
                 break;
             case TextBoxKeyboardAction.Cancel:
-                _session.CancelTargetProfileEditField();
+                _session.CancelClientIdentityProfileEditField();
                 _targetProfileEditTextBox.Clear();
                 break;
             default:
-                SyncTargetProfileEditField(field);
+                SyncClientIdentityProfileEditField(field);
                 break;
         }
-        _previousTargetProfileEditKeyboard = keyboard;
+        _previousClientIdentityProfileEditKeyboard = keyboard;
     }
 
-    private void MoveTargetProfileEditFocus(TargetProfileEditField field, int step)
+    private void MoveClientIdentityProfileEditFocus(ClientIdentityProfileEditField field, int step)
     {
-        SyncTargetProfileEditField(field);
-        SaveTargetProfileEditDraft();
-        var fields = string.IsNullOrEmpty(_session.TargetProfileEditDraft.ConnectionProfileId)
-            ? new[] { TargetProfileEditField.DisplayName, TargetProfileEditField.LoginName }
-            : new[] { TargetProfileEditField.DisplayName, TargetProfileEditField.LoginName, TargetProfileEditField.LoginPass };
+        SyncClientIdentityProfileEditField(field);
+        SaveClientIdentityProfileEditDraft();
+        var fields = string.IsNullOrEmpty(_session.ClientIdentityProfileEditDraft.ConnectionProfileId)
+            ? new[] { ClientIdentityProfileEditField.DisplayName, ClientIdentityProfileEditField.LoginName }
+            : new[] { ClientIdentityProfileEditField.DisplayName, ClientIdentityProfileEditField.LoginName, ClientIdentityProfileEditField.LoginPass };
         var index = Array.IndexOf(fields, field);
         var next = fields[(index + step + fields.Length) % fields.Length];
-        var text = _session.GetTargetProfileEditField(next);
+        var text = _session.GetClientIdentityProfileEditField(next);
         _targetProfileEditTextBox.Begin(text);
-        _session.BeginTargetProfileEditField(next, _targetProfileEditTextBox.CaretIndex);
+        _session.BeginClientIdentityProfileEditField(next, _targetProfileEditTextBox.CaretIndex);
     }
 
-    private bool TryInputTargetProfileEditCharacter(char character)
+    private bool TryInputClientIdentityProfileEditCharacter(char character)
     {
-        if (!_session.IsTargetProfileEditPanelOpen || _session.ActiveTargetProfileEditField is not { } field)
+        if (!_session.IsClientIdentityProfileEditPanelOpen || _session.ActiveClientIdentityProfileEditField is not { } field)
             return false;
         if (_targetProfileEditTextBox.TryInputCharacter(character))
-            SyncTargetProfileEditField(field);
+            SyncClientIdentityProfileEditField(field);
         return true;
     }
 
-    private void SyncTargetProfileEditField(TargetProfileEditField field) =>
-        _session.SetTargetProfileEditFieldText(
+    private void SyncClientIdentityProfileEditField(ClientIdentityProfileEditField field) =>
+        _session.SetClientIdentityProfileEditFieldText(
             field,
             _targetProfileEditTextBox.Text,
             _targetProfileEditTextBox.CaretIndex,
             _targetProfileEditTextBox.SelectionStart,
             _targetProfileEditTextBox.SelectionLength);
 
-    private void SaveTargetProfileEditDraft()
+    private void SaveClientIdentityProfileEditDraft()
     {
-        _session.SaveTargetProfileEditDraft();
-        _targetCatalog.Save(_session.TargetProfiles);
+        _session.SaveClientIdentityProfileEditDraft();
+        _targetCatalog.Save(_session.ClientIdentityProfiles);
     }
 
     /// <summary>
     /// Player の Target 参照と Target 本体を同じ UI 操作で保存する。
     /// Target を先に書くことで、追加時に Player が未保存の Target を参照する状態を避ける。
     /// </summary>
-    private void SavePlayerAndTargetCatalogs()
+    private void SavePlayerAndClientIdentityCatalogs()
     {
-        _targetCatalog.Save(_session.TargetProfiles);
-        _playerCatalog.Save(_session.PlayerProfiles);
+        _targetCatalog.Save(_session.ClientIdentityProfiles);
+        _playerCatalog.Save(_session.EntryProfiles);
     }
 
     private void EndHumanPlayerNameEdit(bool commit)

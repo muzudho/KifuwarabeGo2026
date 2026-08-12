@@ -13,7 +13,7 @@ using System.Text.Json.Serialization;
 public sealed class GtpEngineProfile
 {
     /// <summary>
-    /// 永続的なエンジン設定の識別子。表示順や表示名が変わっても PlayerProfile から参照できる。
+    /// 永続的なエンジン設定の識別子。表示順や表示名が変わっても EntryProfile から参照できる。
     /// </summary>
     public string Id { get; set; } = Guid.NewGuid().ToString("N");
 

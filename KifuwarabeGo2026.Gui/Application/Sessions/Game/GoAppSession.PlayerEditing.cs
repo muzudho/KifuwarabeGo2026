@@ -5,17 +5,17 @@ using System;
 using System.Linq;
 
 /// <summary>
-/// PlayerProfile 編集の下書き。UI はこの下書きだけを変更し、SAVE 時にのみ一覧へ反映する。
+/// EntryProfile 編集の下書き。UI はこの下書きだけを変更し、SAVE 時にのみ一覧へ反映する。
 /// Identifier はアプリ側で文字種・文字数を検査しない。
 /// </summary>
 public sealed partial class GoAppSession
 {
     public bool IsPlayerEditPanelOpen { get; private set; }
     public int PlayerEditProfileIndex { get; private set; } = -1;
-    public PlayerProfile PlayerEditDraft { get; private set; } = new();
+    public EntryProfile PlayerEditDraft { get; private set; } = new();
     public bool IsPlayerEditDirty { get; private set; }
     public bool IsCreatingEngineProfileForPlayerEdit { get; private set; }
-    public PlayerProfileEditField? ActivePlayerEditField { get; private set; }
+    public EntryProfileEditField? ActivePlayerEditField { get; private set; }
     public int PlayerEditCaretIndex { get; private set; }
     public int PlayerEditSelectionStart { get; private set; }
     public int PlayerEditSelectionLength { get; private set; }
@@ -46,7 +46,7 @@ public sealed partial class GoAppSession
         IsPlayerEditDirty = true;
     }
 
-    public void BeginPlayerEditField(PlayerProfileEditField field, int caretIndex)
+    public void BeginPlayerEditField(EntryProfileEditField field, int caretIndex)
     {
         ActivePlayerEditField = field;
         PlayerEditOriginalFieldText = GetPlayerEditFieldText(field);
@@ -55,9 +55,9 @@ public sealed partial class GoAppSession
         PlayerEditSelectionLength = 0;
     }
 
-    public void SetPlayerEditFieldText(PlayerProfileEditField field, string value, int caretIndex, int selectionStart, int selectionLength)
+    public void SetPlayerEditFieldText(EntryProfileEditField field, string value, int caretIndex, int selectionStart, int selectionLength)
     {
-        if (field == PlayerProfileEditField.DisplayName)
+        if (field == EntryProfileEditField.DisplayName)
             SetPlayerEditDisplayName(value);
         else
             SetPlayerEditIdentifier(value);
@@ -67,10 +67,10 @@ public sealed partial class GoAppSession
         PlayerEditSelectionLength = Math.Clamp(selectionLength, 0, value.Length - PlayerEditSelectionStart);
     }
 
-    public string GetPlayerEditFieldText(PlayerProfileEditField field) => field switch
+    public string GetPlayerEditFieldText(EntryProfileEditField field) => field switch
     {
-        PlayerProfileEditField.DisplayName => PlayerEditDraft.DisplayName,
-        PlayerProfileEditField.Identifier => PlayerEditDraft.Identifier,
+        EntryProfileEditField.DisplayName => PlayerEditDraft.DisplayName,
+        EntryProfileEditField.Identifier => PlayerEditDraft.Identifier,
         _ => throw new ArgumentOutOfRangeException(nameof(field), field, "Unknown player edit field."),
     };
 
@@ -80,7 +80,7 @@ public sealed partial class GoAppSession
     {
         if (ActivePlayerEditField is { } field)
         {
-            if (field == PlayerProfileEditField.DisplayName)
+            if (field == EntryProfileEditField.DisplayName)
                 PlayerEditDraft.DisplayName = PlayerEditOriginalFieldText;
             else
                 PlayerEditDraft.Identifier = PlayerEditOriginalFieldText;
@@ -90,7 +90,7 @@ public sealed partial class GoAppSession
 
     public bool SetPlayerEditEngineProfile(string engineProfileId)
     {
-        if (PlayerEditDraft.Kind != PlayerProfileKind.Computer || FindGtpEngineIndex(engineProfileId) < 0)
+        if (PlayerEditDraft.Kind != EntryProfileKind.Computer || FindGtpEngineIndex(engineProfileId) < 0)
             return false;
         PlayerEditDraft.EngineProfileId = engineProfileId;
         IsPlayerEditDirty = true;
@@ -99,7 +99,7 @@ public sealed partial class GoAppSession
 
     public void OpenNewEngineProfileForPlayerEdit()
     {
-        if (PlayerEditDraft.Kind != PlayerProfileKind.Computer) return;
+        if (PlayerEditDraft.Kind != EntryProfileKind.Computer) return;
         IsCreatingEngineProfileForPlayerEdit = true;
         OpenGtpEngineAddPanel();
     }
@@ -115,7 +115,7 @@ public sealed partial class GoAppSession
 
     public void CyclePlayerEditEngine(int step)
     {
-        if (PlayerEditDraft.Kind != PlayerProfileKind.Computer || _gtpEngineProfiles.Count == 0)
+        if (PlayerEditDraft.Kind != EntryProfileKind.Computer || _gtpEngineProfiles.Count == 0)
             return;
 
         var current = FindGtpEngineIndex(PlayerEditDraft.EngineProfileId);
@@ -132,12 +132,12 @@ public sealed partial class GoAppSession
         }
     }
 
-    public string PlayerEditTargetDisplayName
+    public string PlayerEditClientIdentityDisplayName
     {
         get
         {
-            var targetId = PlayerEditDraft.TargetProfileIds.FirstOrDefault();
-            var target = _targetProfiles.FirstOrDefault(item => string.Equals(item.Id, targetId, StringComparison.Ordinal));
+            var targetId = PlayerEditDraft.ClientIdentityProfileIds.FirstOrDefault();
+            var target = _clientIdentityProfiles.FirstOrDefault(item => string.Equals(item.Id, targetId, StringComparison.Ordinal));
             return target?.DisplayName ?? "NO TARGET";
         }
     }
@@ -150,7 +150,7 @@ public sealed partial class GoAppSession
         var draft = PlayerEditDraft.Clone();
         draft.DisplayName = string.IsNullOrWhiteSpace(draft.DisplayName) ? "New Player" : draft.DisplayName.Trim();
         draft.Identifier ??= "";
-        if (draft.Kind == PlayerProfileKind.Computer && FindGtpEngineIndex(draft.EngineProfileId) < 0)
+        if (draft.Kind == EntryProfileKind.Computer && FindGtpEngineIndex(draft.EngineProfileId) < 0)
             return false;
 
         _playerProfiles[PlayerEditProfileIndex] = draft;
@@ -158,8 +158,8 @@ public sealed partial class GoAppSession
         IsPlayerEditPanelOpen = false;
         IsCreatingEngineProfileForPlayerEdit = false;
         ActivePlayerEditField = null;
-        ApplySelectedPlayerProfile(GoStone.Black);
-        ApplySelectedPlayerProfile(GoStone.White);
+        ApplySelectedEntryProfile(GoStone.Black);
+        ApplySelectedEntryProfile(GoStone.White);
         return true;
     }
 
@@ -172,7 +172,7 @@ public sealed partial class GoAppSession
     }
 }
 
-public enum PlayerProfileEditField
+public enum EntryProfileEditField
 {
     DisplayName,
     Identifier,

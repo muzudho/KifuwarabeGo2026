@@ -2,12 +2,13 @@ namespace KifuwarabeGo2026.Gui.Application;
 
 using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 /// <summary>
 /// 対局者として選択できる登録項目。
 /// 人間とコンピューターを同じリストで扱い、コンピューターだけが GTP エンジン設定を参照する。
 /// </summary>
-public sealed class PlayerProfile
+public sealed class EntryProfile
 {
     /// <summary>アプリ内部でのみ用いる不変の識別子。</summary>
     public string Id { get; set; } = Guid.NewGuid().ToString("N");
@@ -21,26 +22,28 @@ public sealed class PlayerProfile
     /// </summary>
     public string Identifier { get; set; } = "";
 
-    public PlayerProfileKind Kind { get; set; } = PlayerProfileKind.Human;
+    public EntryProfileKind Kind { get; set; } = EntryProfileKind.Human;
 
     /// <summary>Kind が Computer のときに参照する GTP エンジン設定の ID。</summary>
     public string EngineProfileId { get; set; } = "";
 
-    /// <summary>この Player が利用できる TargetProfile の ID。一つの Target は Player を逆参照しない。</summary>
-    public List<string> TargetProfileIds { get; set; } = new();
+    /// <summary>この Player が利用できる ClientIdentityProfile の ID。一つの Target は Player を逆参照しない。</summary>
+    // Keep the persisted key stable so existing player-list.json files remain readable.
+    [JsonPropertyName("targetProfileIds")]
+    public List<string> ClientIdentityProfileIds { get; set; } = new();
 
-    public PlayerProfile Clone() => new()
+    public EntryProfile Clone() => new()
     {
         Id = Id,
         DisplayName = DisplayName,
         Identifier = Identifier,
         Kind = Kind,
         EngineProfileId = EngineProfileId,
-        TargetProfileIds = new List<string>(TargetProfileIds ?? []),
+        ClientIdentityProfileIds = new List<string>(ClientIdentityProfileIds ?? []),
     };
 }
 
-public enum PlayerProfileKind
+public enum EntryProfileKind
 {
     Human,
     Computer,
