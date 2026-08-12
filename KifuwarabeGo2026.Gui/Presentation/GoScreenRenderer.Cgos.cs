@@ -194,10 +194,10 @@ public sealed partial class GoScreenRenderer
 
     public static GoStone? GetCgosConnectionEngineSelectButtonHit(Point point, GoAppSession session)
     {
-        if (!session.IsCgosBlackConnectionRunning && CgosBlackEngineSelector.ValueBounds.Contains(point)) return GoStone.Black;
+        if (!session.IsCgosBlackConnectionRunning && CgosPlayerSelectorValueBounds(CgosBlackEngineSelector).Contains(point)) return GoStone.Black;
         return session.IsCgosPlayer2InputEnabled &&
                !session.IsCgosWhiteConnectionRunning &&
-               CgosWhiteEngineSelector.ValueBounds.Contains(point)
+               CgosPlayerSelectorValueBounds(CgosWhiteEngineSelector).Contains(point)
             ? GoStone.White
             : null;
     }
@@ -425,10 +425,7 @@ public sealed partial class GoScreenRenderer
             CgosBlackProcessPanelBounds,
             "PLAYER 1",
             session.CgosBlackConnectionStatusMessage,
-            FormatCgosPlayerClientIdentity(
-                session,
-                GoStone.Black,
-                session.SelectedCgosBlackEntryProfile?.DisplayName ?? session.SelectedCgosBlackGtpEngineProfile?.DisplayName),
+            session.SelectedCgosBlackEntryProfile?.DisplayName ?? session.SelectedCgosBlackGtpEngineProfile?.DisplayName,
             CgosBlackEngineSelector with { Enabled = !session.IsCgosBlackConnectionRunning },
             string.IsNullOrWhiteSpace(session.CgosBlackGtpResponseWaitDisplay)
                 ? session.CgosBlackConnectionElapsedDisplay
@@ -452,10 +449,7 @@ public sealed partial class GoScreenRenderer
             CgosWhiteProcessPanelBounds,
             "PLAYER 2",
             session.CgosWhiteConnectionStatusMessage,
-            FormatCgosPlayerClientIdentity(
-                session,
-                GoStone.White,
-                session.SelectedCgosWhiteEntryProfile?.DisplayName ?? session.SelectedCgosWhiteGtpEngineProfile?.DisplayName),
+            session.SelectedCgosWhiteEntryProfile?.DisplayName ?? session.SelectedCgosWhiteGtpEngineProfile?.DisplayName,
             CgosWhiteEngineSelector with { Enabled = session.IsCgosPlayer2InputEnabled && !session.IsCgosWhiteConnectionRunning },
             string.IsNullOrWhiteSpace(session.CgosWhiteGtpResponseWaitDisplay)
                 ? session.CgosWhiteConnectionElapsedDisplay
@@ -496,13 +490,6 @@ public sealed partial class GoScreenRenderer
         var text = $"{profile.DisplayName} / {profile.Host}:{profile.Port} / {profile.Event} / {profile.Round}";
         DrawFittedText(text, new Rectangle(CgosSelectedProfileBarBounds.X + 152, CgosSelectedProfileBarBounds.Y + 7, CgosSelectedProfileBarBounds.Width - 168, 38), Color.White, 0.42f);
     }
-
-    private static string FormatCgosPlayerClientIdentity(GoAppSession session, GoStone stone, string? playerDisplayName)
-    {
-        var player = string.IsNullOrWhiteSpace(playerDisplayName) ? "-" : playerDisplayName;
-        return $"{player}  /  {session.GetSelectedCgosClientIdentitySummary(stone)}";
-    }
-
 
     private void DrawCgosAdminPlayerSelector(Rectangle bounds, string label, string playerName, Point mousePoint)
     {
@@ -660,12 +647,15 @@ public sealed partial class GoScreenRenderer
 
     private void DrawCgosPlayerSelector(PlayerSelector selector, Point mousePoint)
     {
-        var valueBounds = selector.ValueBounds;
-        var hovered = selector.Enabled && valueBounds.Contains(mousePoint);
-        DrawText(selector.Label, new Vector2(selector.Bounds.X + 12, valueBounds.Y + 7), new Color(180, 195, 195), 0.28f);
-        DrawFittedText(selector.Value, valueBounds, selector.Enabled ? Color.White : new Color(91, 100, 106), 0.32f);
-        DrawRoundedFill(new Rectangle(valueBounds.X, valueBounds.Bottom + 2, valueBounds.Width, 4), 2, hovered ? new Color(185, 196, 255) : new Color(100, 110, 145));
-        if (hovered) DrawPlayerEditHint("CHANGE", valueBounds);
+        var fieldBounds = CgosPlayerSelectorValueBounds(selector);
+        var hovered = selector.Enabled && fieldBounds.Contains(mousePoint);
+        var textBounds = hovered
+            ? new Rectangle(fieldBounds.X, fieldBounds.Y, fieldBounds.Width - 122, fieldBounds.Height)
+            : fieldBounds;
+        DrawText(selector.Label, new Vector2(selector.Bounds.X + 12, fieldBounds.Y + 7), new Color(180, 195, 195), 0.28f);
+        DrawFittedText(selector.Value, textBounds, selector.Enabled ? Color.White : new Color(91, 100, 106), 0.46f);
+        DrawRoundedFill(new Rectangle(fieldBounds.X, fieldBounds.Bottom + 2, fieldBounds.Width, 4), 2, hovered ? new Color(185, 196, 255) : new Color(100, 110, 145));
+        if (hovered) DrawPlayerEditHint("CHANGE", fieldBounds);
     }
 
 
@@ -715,19 +705,19 @@ public sealed partial class GoScreenRenderer
 
     private void DrawCgosConnectionTooltips(GoAppSession session, Point mousePoint)
     {
-        if (CgosBlackEngineSelector.ValueBounds.Contains(mousePoint) && session.SelectedCgosBlackGtpEngineProfile is { } blackProfile)
+        if (CgosPlayerSelectorValueBounds(CgosBlackEngineSelector).Contains(mousePoint) && session.SelectedCgosBlackGtpEngineProfile is { } blackProfile)
         {
             DrawCgosEngineCommandStickyNote(
-                CgosBlackEngineSelector.ValueBounds,
+                CgosPlayerSelectorValueBounds(CgosBlackEngineSelector),
                 "BLACK ENGINE COMMAND",
                 FormatCgosEngineCommand(blackProfile));
             return;
         }
 
-        if (CgosWhiteEngineSelector.ValueBounds.Contains(mousePoint) && session.SelectedCgosWhiteGtpEngineProfile is { } whiteProfile)
+        if (CgosPlayerSelectorValueBounds(CgosWhiteEngineSelector).Contains(mousePoint) && session.SelectedCgosWhiteGtpEngineProfile is { } whiteProfile)
         {
             DrawCgosEngineCommandStickyNote(
-                CgosWhiteEngineSelector.ValueBounds,
+                CgosPlayerSelectorValueBounds(CgosWhiteEngineSelector),
                 "WHITE ENGINE COMMAND",
                 FormatCgosEngineCommand(whiteProfile));
             return;
@@ -1079,6 +1069,9 @@ public sealed partial class GoScreenRenderer
         "SELECT",
         58,
         88);
+
+    private static Rectangle CgosPlayerSelectorValueBounds(PlayerSelector selector) =>
+        new(selector.Bounds.X + 84, selector.Bounds.Y + 4, selector.Bounds.Width - 96, selector.Bounds.Height - 8);
 
     private static Rectangle CgosCredentialRowBounds(GoStone stone, CgosPlayerCredentialField field)
     {
