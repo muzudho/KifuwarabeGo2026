@@ -162,6 +162,37 @@ public sealed partial class GoAppSession
         return true;
     }
 
+    /// <summary>選択中の Client Identity を独立した設定として複製します。</summary>
+    public bool DuplicateSelectedClientIdentityProfile()
+    {
+        var owner = GetClientIdentityEditOwner();
+        if (ClientIdentityProfileSelectionIndex < 0 ||
+            ClientIdentityProfileSelectionIndex >= owner.ClientIdentityProfileIds.Count ||
+            owner.ClientIdentityProfileIds.Count >= 5)
+        {
+            return false;
+        }
+
+        var sourceId = owner.ClientIdentityProfileIds[ClientIdentityProfileSelectionIndex];
+        var source = _clientIdentityProfiles.FirstOrDefault(profile =>
+            string.Equals(profile.Id, sourceId, StringComparison.Ordinal));
+        if (source is null)
+            return false;
+
+        var duplicate = source.Clone();
+        duplicate.Id = Guid.NewGuid().ToString("N");
+        duplicate.DisplayName = string.IsNullOrWhiteSpace(source.DisplayName)
+            ? "Client Identity Copy"
+            : $"{source.DisplayName.Trim()} Copy";
+        _clientIdentityProfiles.Add(duplicate);
+        var duplicateIndex = ClientIdentityProfileSelectionIndex + 1;
+        owner.ClientIdentityProfileIds.Insert(duplicateIndex, duplicate.Id);
+        PlayerEditDraft.ClientIdentityProfileIds = owner.ClientIdentityProfileIds.ToList();
+        ClientIdentityProfileEditIndex = duplicateIndex;
+        ClientIdentityProfileSelectionIndex = duplicateIndex;
+        return LoadClientIdentityProfileEditDraft();
+    }
+
     public bool RemoveClientIdentityProfile()
     {
         var owner = GetClientIdentityEditOwner();

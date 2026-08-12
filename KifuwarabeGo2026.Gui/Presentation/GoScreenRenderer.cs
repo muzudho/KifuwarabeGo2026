@@ -132,6 +132,32 @@ public sealed partial class GoScreenRenderer
 
         _spriteBatch.End();
     }
+
+    /// <summary>バックグラウンドで設定ファイルを保存している間の入力遮断表示です。</summary>
+    public void DrawSavingOverlay(string message)
+    {
+        _spriteBatch.Begin(
+            samplerState: SamplerState.LinearClamp,
+            transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));
+
+        FillRect(new Rectangle(0, 0, VirtualScreen.Width, VirtualScreen.Height), new Color(0, 0, 0, 145));
+        var panel = new Rectangle(690, 470, 540, 150);
+        FillRect(panel, new Color(24, 29, 36, 250));
+        DrawRect(panel, 2, new Color(147, 244, 200));
+        DrawFittedText(string.IsNullOrWhiteSpace(message) ? "SAVING..." : message, new Rectangle(panel.X + 40, panel.Y + 34, panel.Width - 80, 34), Color.White, 0.46f);
+
+        var center = new Vector2(panel.Center.X, panel.Y + 108);
+        var phase = (float)(Environment.TickCount64 % 900L) / 900f * MathF.PI * 2f;
+        for (var index = 0; index < 12; index++)
+        {
+            var angle = phase + index * MathF.PI * 2f / 12f;
+            var opacity = (index + 1) / 12f;
+            var direction = new Vector2(MathF.Cos(angle), MathF.Sin(angle));
+            DrawLine(center + direction * 15f, center + direction * 27f, 4, new Color(147, 244, 200) * opacity);
+        }
+
+        _spriteBatch.End();
+    }
     public static int? GetBoardSizeButtonHit(Point point, GoAppModeKind modeKind)
     {
         if (modeKind == GoAppModeKind.GameOver)

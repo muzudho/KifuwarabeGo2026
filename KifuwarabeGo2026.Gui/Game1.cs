@@ -143,6 +143,8 @@ public class Game1 : Game
     private int _appProviderSettingsEvaluationGeneration;
     private int _appProviderSettingsEvaluationTaskGeneration;
     private string _appProviderSettingsEvaluationPath = "";
+    private Task? _catalogSaveTask;
+    private string _catalogSaveMessage = "";
 
     private const double CgosMatchCountdownSeconds = 10d;
     private const double CgosMatchFadeSeconds = 1.2d;
@@ -262,6 +264,7 @@ public class Game1 : Game
         CompleteGtpEngineSelectionLoading();
         CompleteRestoredAppProviderCheck();
         CompleteAppProviderSettingsEvaluation();
+        CompleteCatalogSave();
         var keyboard = Keyboard.GetState();
         var mouse = Mouse.GetState();
         SynchronizeOrArmWindowInput(keyboard, mouse);
@@ -862,6 +865,9 @@ public class Game1 : Game
         if (_renderer is not null && _isReviewUnsavedChangesConfirmationOpen)
             _renderer.DrawReviewUnsavedChangesConfirmation(Mouse.GetState().Position);
 
+        if (_renderer is not null && IsCatalogSaveInProgress)
+            _renderer.DrawSavingOverlay(_catalogSaveMessage);
+
         var virtualMousePosition = VirtualScreen.ToVirtualPoint(GraphicsDevice.Viewport, Mouse.GetState().Position);
         var hideBreadcrumbForReviewControls =
             _session.CurrentMode.Kind == GoAppModeKind.Reviewing &&
@@ -873,7 +879,7 @@ public class Game1 : Game
 
     private void UpdateMouseInput()
     {
-        if (!IsActive || !_inputArmed) return;
+        if (!IsActive || !_inputArmed || IsCatalogSaveInProgress) return;
 
         var mouse = Mouse.GetState();
         var point = VirtualScreen.ToVirtualPoint(GraphicsDevice.Viewport, mouse.Position);
@@ -1723,6 +1729,8 @@ public class Game1 : Game
                 SavePlayerAndClientIdentityCatalogs();
             else if (GoScreenRenderer.GetClientIdentityProfileSelectionEditButtonHit(point))
                 _session.OpenClientIdentityProfileEditPanel();
+            else if (GoScreenRenderer.GetClientIdentityProfileSelectionDuplicateButtonHit(point) && _session.DuplicateSelectedClientIdentityProfile())
+                SavePlayerAndClientIdentityCatalogs();
             else if (GoScreenRenderer.GetClientIdentityProfileEditAddLocalButtonHit(point) && _session.AddClientIdentityProfile(false))
                 SavePlayerAndClientIdentityCatalogs();
             else if (GoScreenRenderer.GetClientIdentityProfileEditAddCgosButtonHit(point) && _session.AddClientIdentityProfile(true))
@@ -1753,7 +1761,7 @@ public class Game1 : Game
         {
             var editor = _session.PlayerOrderEditor;
             if (GoScreenRenderer.GetCatalogOrderCancelButtonHit(point)) _session.CancelPlayerOrderEditor();
-            else if (GoScreenRenderer.GetCatalogOrderSaveButtonHit(point)) _playerCatalog.Save(_session.CommitPlayerOrderEditor());
+            else if (GoScreenRenderer.GetCatalogOrderSaveButtonHit(point)) SavePlayerCatalog(_session.CommitPlayerOrderEditor());
             else if (GoScreenRenderer.GetCatalogOrderMoveStep(point, editor.PageSize) is var step && step == int.MinValue) editor.MoveSelectedToTop();
             else if (step != 0) editor.MoveSelected(step);
             else if (GoScreenRenderer.GetCatalogOrderPageStep(point) is var pageStep && pageStep != 0) editor.MoveVisiblePages(pageStep);
@@ -1767,7 +1775,7 @@ public class Game1 : Game
             else if (GoScreenRenderer.GetPlayerEditPanelCancelButtonHit(point))
                 _session.CancelPlayerEditPanel();
             else if (GoScreenRenderer.GetPlayerEditPanelSaveButtonHit(point) && _session.SavePlayerEditDraft())
-                _playerCatalog.Save(_session.EntryProfiles);
+                SavePlayerCatalog(_session.EntryProfiles);
             else if (_session.PlayerEditDraft.Kind == EntryProfileKind.Computer &&
                      GoScreenRenderer.GetPlayerEditPanelEngineChangeHit(point))
                 _session.OpenPlayerEditGtpEngineSelectionDialog();
@@ -4251,7 +4259,8 @@ public class Game1 : Game
     private void SaveClientIdentityProfileEditDraft()
     {
         _session.SaveClientIdentityProfileEditDraft();
-        _targetCatalog.Save(_session.ClientIdentityProfiles);
+        var profiles = _session.ClientIdentityProfiles.Select(profile => profile.Clone()).ToArray();
+        BeginCatalogSave("SAVING CLIENT IDENTITIES...", () => _targetCatalog.Save(profiles));
     }
 
     /// <summary>
@@ -4260,8 +4269,51 @@ public class Game1 : Game
     /// </summary>
     private void SavePlayerAndClientIdentityCatalogs()
     {
-        _targetCatalog.Save(_session.ClientIdentityProfiles);
-        _playerCatalog.Save(_session.EntryProfiles);
+        var clientIdentities = _session.ClientIdentityProfiles.Select(profile => profile.Clone()).ToArray();
+        var players = _session.EntryProfiles.Select(profile => profile.Clone()).ToArray();
+        BeginCatalogSave("SAVING PLAYER SETTINGS...", () =>
+        {
+            _targetCatalog.Save(clientIdentities);
+            _playerCatalog.Save(players);
+        });
+    }
+
+    private void SavePlayerCatalog(IEnumerable<EntryProfile> profiles)
+    {
+        var snapshot = profiles.Select(profile => profile.Clone()).ToArray();
+        BeginCatalogSave("SAVING PLAYER SETTINGS...", () => _playerCatalog.Save(snapshot));
+    }
+
+    private bool IsCatalogSaveInProgress => _catalogSaveTask is { IsCompleted: false };
+
+    private void BeginCatalogSave(string message, Action save)
+    {
+        if (IsCatalogSaveInProgress)
+            return;
+
+        _catalogSaveMessage = message;
+        _catalogSaveTask = Task.Run(save);
+    }
+
+    private void CompleteCatalogSave()
+    {
+        if (_catalogSaveTask is not { IsCompleted: true } saveTask)
+            return;
+
+        try
+        {
+            saveTask.GetAwaiter().GetResult();
+            GuiOperationLog.App("Saved catalog", _catalogSaveMessage);
+        }
+        catch (Exception ex)
+        {
+            ApplicationErrorLog.Write("CATALOG SAVE", "Could not save catalog settings.", ex);
+        }
+        finally
+        {
+            _catalogSaveTask = null;
+            _catalogSaveMessage = "";
+        }
     }
 
     private void EndHumanPlayerNameEdit(bool commit)

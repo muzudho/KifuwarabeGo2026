@@ -29,6 +29,7 @@ public sealed partial class GoScreenRenderer
     private static readonly Rectangle ClientIdentityProfileSelectionCloseButtonBounds = new(1158, 182, 150, 48);
     private static readonly Rectangle ClientIdentityProfileSelectionUseButtonBounds = new(1320, 182, 150, 48);
     private static readonly Rectangle ClientIdentityProfileSelectionEditButtonBounds = new(800, 820, 150, 48);
+    private static readonly Rectangle ClientIdentityProfileSelectionDuplicateButtonBounds = new(1110, 820, 150, 48);
     private static readonly Rectangle ClientIdentityProfileEditCancelButtonBounds = new(1158, 182, 150, 48);
     private static readonly Rectangle ClientIdentityProfileEditSaveButtonBounds = new(1320, 182, 150, 48);
     private static readonly Rectangle ClientIdentityProfileEditUseButtonBounds = new(1158, 182, 150, 48);
@@ -74,6 +75,7 @@ public sealed partial class GoScreenRenderer
     public static bool GetClientIdentityProfileSelectionCloseButtonHit(Point point) => ClientIdentityProfileSelectionCloseButtonBounds.Contains(point);
     public static bool GetClientIdentityProfileSelectionUseButtonHit(Point point) => ClientIdentityProfileSelectionUseButtonBounds.Contains(point);
     public static bool GetClientIdentityProfileSelectionEditButtonHit(Point point) => ClientIdentityProfileSelectionEditButtonBounds.Contains(point);
+    public static bool GetClientIdentityProfileSelectionDuplicateButtonHit(Point point) => ClientIdentityProfileSelectionDuplicateButtonBounds.Contains(point);
     public static bool GetClientIdentityProfileEditCancelButtonHit(Point point) => ClientIdentityProfileEditCancelButtonBounds.Contains(point);
     public static bool GetClientIdentityProfileEditSaveButtonHit(Point point) => ClientIdentityProfileEditSaveButtonBounds.Contains(point);
     public static bool GetClientIdentityProfileEditAddCgosButtonHit(Point point) => ClientIdentityProfileEditAddCgosButtonBounds.Contains(point);
@@ -354,6 +356,7 @@ public sealed partial class GoScreenRenderer
         DrawCommandButton(ClientIdentityProfileEditAddCgosButtonBounds, "ONLINE MATCH", false, mousePoint, enabled: targets.Count < 5, scale: 0.22f);
         DrawCommandButton(ClientIdentityProfileSelectionEditButtonBounds, "EDIT", false, mousePoint, enabled: targets.Count > 0, scale: 0.34f);
         DrawCommandButton(ClientIdentityProfileEditRemoveButtonBounds, "REMOVE", false, mousePoint, enabled: targets.Count > 1, scale: 0.30f);
+        DrawCommandButton(ClientIdentityProfileSelectionDuplicateButtonBounds, "DUPLICATE", false, mousePoint, enabled: targets.Count > 0 && targets.Count < 5, scale: 0.29f);
 
         var firstRow = new Rectangle(bounds.X + 36, bounds.Y + 140, bounds.Width - 72, 78);
         DrawFittedText("HANDLE", new Rectangle(firstRow.X + 18, firstRow.Y - 27, 410, 24), new Color(180, 210, 215), 0.30f);
