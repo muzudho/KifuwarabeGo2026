@@ -171,10 +171,10 @@ public sealed partial class GoAppSession
 
         var player = _playerProfiles[index];
         if (player.Kind == EntryProfileKind.Human)
-            return "HUMAN";
+            return "";
 
         var engineIndex = FindGtpEngineIndex(player.EngineProfileId);
-        return engineIndex >= 0 ? $"COMPUTER  /  {_gtpEngineProfiles[engineIndex].DisplayName}" : "COMPUTER  /  ENGINE NOT FOUND";
+        return engineIndex >= 0 ? _gtpEngineProfiles[engineIndex].DisplayName : "ENGINE NOT FOUND";
     }
 
     private bool CanSelectPlayerForCgos(EntryProfile player) =>
