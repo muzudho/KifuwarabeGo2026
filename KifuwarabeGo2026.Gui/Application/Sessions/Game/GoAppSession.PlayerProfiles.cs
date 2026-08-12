@@ -46,8 +46,9 @@ public sealed partial class GoAppSession
     public IReadOnlyList<TargetProfile> GetPlayerTargetProfiles(string playerProfileId) =>
         FindPlayerProfile(playerProfileId) is not { } player
             ? Array.Empty<TargetProfile>()
-            : _targetProfiles
-                .Where(target => player.TargetProfileIds.Contains(target.Id, StringComparer.Ordinal))
+            : player.TargetProfileIds
+                .Select(id => _targetProfiles.FirstOrDefault(target => string.Equals(target.Id, id, StringComparison.Ordinal)))
+                .OfType<TargetProfile>()
                 .Select(target => target.Clone())
                 .ToArray();
 

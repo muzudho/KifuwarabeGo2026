@@ -2,7 +2,7 @@ namespace KifuwarabeGo2026.Gui.PortabilitySmoke;
 
 using KifuwarabeGo2026.Gui;
 using KifuwarabeGo2026.Gui.Application;
-using KifuwarabeGo2026.Gui.Application.Cgos.ConnectionTarget;
+using KifuwarabeGo2026.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.ConnectionTarget;
 using KifuwarabeGo2026.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.Gui.Application.Local.Resting.TournamentRule;
 using KifuwarabeGo2026.Gui.Gtp;

@@ -176,3 +176,27 @@ WHITE PLAYER   [表示名 / 種別]                 [SELECT]
 - Target の並べ替え・ページ送りは、最大5件の少数運用のため当面不要。
 - LOGIN PASS の OS 保護ストア移行。
 - CGOS／大会ルールへの Player 統合、旧 PlayerKind／エンジン選択状態の削除、ConnectionProfile の一般化は、本計画の従来どおりの後続課題。
+
+## 将来の用語整理案（本計画の完了後）
+
+現在の `PlayerProfile` / `TargetProfile` / `GtpEngineProfile` は、互換性を保ちながら本計画を完了するための名称として維持する。本計画の完了後、責務を次のように再編・改名する。
+
+| 将来の名前 | 責務 | 現在の主な対応物 |
+| --- | --- | --- |
+| `EntryProfile` | 対局に参加する一席。`HumanProfile` または `EngineProfile` のどちらかを参照する。自分同士の対局では二つの Entry を作れる。 | `PlayerProfile` |
+| `HumanProfile` | 人間一人と一対一のプロフィール。紹介・表示など、人そのものの情報を持つ。 | `PlayerProfile` の Human 部分 |
+| `EngineProfile` | 思考エンジン一つの起動方法。実行ファイル、作業ディレクトリ、引数、GUI/GTP 設定を持つ。 | `GtpEngineProfile` |
+| `ServiceProfile` | CGOS、野良対局、大会各日、LocalMatch など、接続先サービス一つの接続情報。 | `CgosConnectionProfile` と LocalMatch の種別 |
+| `ClientIdentity` | 一つの `EntryProfile` が一つの `ServiceProfile` で名乗る身元。 | `TargetProfile` |
+
+`ClientIdentity` は次の項目を中心にする。`PresentedName` はプロトコルに応じて CGOS ではログイン名、LocalMatch では出力ファイル名として使う。UI 表示だけはサービスに応じて `LOGIN NAME` / `OUTPUT NAME` とする。
+
+```text
+ClientIdentity
+  EntryProfileId
+  ServiceProfileId       // LocalMatch 等、接続先を持たない形はサービス種別で表す
+  PresentedName
+  SecretReference        // OS の安全な資格情報ストアを参照する。秘密そのものは JSON に保存しない。
+```
+
+この改名は保存 JSON の移行を伴うため、Player/Target を利用する現在の UI・CGOS 接続・LocalMatch が一通り安定した後に、一回の移行として実施する。
