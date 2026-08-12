@@ -167,7 +167,7 @@ public sealed partial class GoScreenRenderer
             // 入力欄のアンダーライン終端の近くに、読みやすい反転プレートで表示する。
             var hintBounds = new Rectangle(textBounds.Right - 76, textBounds.Bottom - 25, 70, 23);
             DrawRoundedFill(hintBounds, 6, new Color(185, 196, 255));
-            DrawFittedText("EDIT", hintBounds, new Color(25, 31, 48), 0.34f);
+            DrawSharpCenteredFittedText("EDIT", hintBounds, new Color(15, 20, 31), 0.34f);
         }
     }
 

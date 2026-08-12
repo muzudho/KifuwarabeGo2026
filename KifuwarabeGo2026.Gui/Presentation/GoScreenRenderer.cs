@@ -1252,7 +1252,7 @@ public sealed partial class GoScreenRenderer
                 // 操作ヒントはアンダーライン終端の近くに、読みやすい反転プレートで表示する。
                 var hintBounds = new Rectangle(valueBounds.Right - 108, valueBounds.Bottom - 28, 100, 26);
                 DrawRoundedFill(hintBounds, 6, new Color(185, 196, 255));
-                DrawFittedText("CHANGE", hintBounds, new Color(25, 31, 48), 0.34f);
+                DrawSharpCenteredFittedText("CHANGE", hintBounds, new Color(15, 20, 31), 0.34f);
             }
             return;
         }
@@ -1539,6 +1539,17 @@ public sealed partial class GoScreenRenderer
         var fittedScale = MathF.Min(scale, MathF.Min(bounds.Width / Math.Max(1f, measured.X), bounds.Height / Math.Max(1f, measured.Y)));
         var size = measured * fittedScale;
         DrawText(text, new Vector2(bounds.X, bounds.Center.Y - size.Y / 2), color, fittedScale);
+    }
+
+    private void DrawSharpCenteredFittedText(string text, Rectangle bounds, Color color, float scale)
+    {
+        var measured = _font.MeasureString(text);
+        var fittedScale = MathF.Min(scale, MathF.Min(bounds.Width / Math.Max(1f, measured.X), bounds.Height / Math.Max(1f, measured.Y)));
+        var size = measured * fittedScale;
+        var position = new Vector2(bounds.Center.X - size.X / 2, bounds.Center.Y - size.Y / 2);
+
+        // 操作ラベルは影も重ね描きもしない。プレートを切り抜いたような、くっきりした表示にする。
+        _spriteBatch.DrawString(_font, text, position, color, 0f, Vector2.Zero, fittedScale, SpriteEffects.None, 0f);
     }
 
     private Texture2D CreateTexture(int width, int height, Func<int, int, Color> colorFactory)
