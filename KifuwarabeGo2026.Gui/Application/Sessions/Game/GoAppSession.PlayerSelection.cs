@@ -139,6 +139,41 @@ public sealed partial class GoAppSession
         return true;
     }
 
+    /// <summary>
+    /// 選択中の Player と、その Player 専用の Client Identity を複製します。
+    /// 複製後の各項目には新しい ID を割り当てるため、編集内容は元の Player に影響しません。
+    /// </summary>
+    public bool DuplicateSelectedEntryProfile()
+    {
+        if (PlayerDialogSelectionIndex < 0 || PlayerDialogSelectionIndex >= _playerProfiles.Count)
+            return false;
+
+        var source = _playerProfiles[PlayerDialogSelectionIndex];
+        var duplicate = source.Clone();
+        duplicate.Id = Guid.NewGuid().ToString("N");
+        duplicate.DisplayName = $"{source.DisplayName} Copy";
+        duplicate.ClientIdentityProfileIds.Clear();
+
+        foreach (var clientIdentityId in source.ClientIdentityProfileIds)
+        {
+            var sourceIdentity = _clientIdentityProfiles.FirstOrDefault(identity =>
+                string.Equals(identity.Id, clientIdentityId, StringComparison.Ordinal));
+            if (sourceIdentity is null)
+                continue;
+
+            var duplicateIdentity = sourceIdentity.Clone();
+            duplicateIdentity.Id = Guid.NewGuid().ToString("N");
+            _clientIdentityProfiles.Add(duplicateIdentity);
+            duplicate.ClientIdentityProfileIds.Add(duplicateIdentity.Id);
+        }
+
+        _playerProfiles.Add(duplicate);
+        PlayerDialogSelectionIndex = _playerProfiles.Count - 1;
+        PlayerSelectionPageIndex = PlayerDialogSelectionIndex / PlayerSelectionPageSize;
+        SelectDialogDefaultClientIdentity();
+        return true;
+    }
+
     public bool DeleteSelectedEntryProfile()
     {
         if (PlayerDialogSelectionIndex < 0 || PlayerDialogSelectionIndex >= _playerProfiles.Count)

@@ -1814,6 +1814,13 @@ public class Game1 : Game
             return;
         }
 
+        if (GoScreenRenderer.GetPlayerSelectionDialogDuplicateButtonHit(point))
+        {
+            if (_session.DuplicateSelectedEntryProfile())
+                SavePlayerAndClientIdentityCatalogs();
+            return;
+        }
+
         if (GoScreenRenderer.GetPlayerSelectionDialogDeleteButtonHit(point))
         {
             if (_session.DeleteSelectedEntryProfile())
