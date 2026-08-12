@@ -71,6 +71,7 @@ internal static class PortabilityChecks
         VerifyTextBoxEditing();
         VerifyInitialWindowLayout();
         VerifyDefaultCgosConnection();
+        VerifyLocalMatchSgfFileName();
         VerifyTournamentRulesJsonCompatibility();
         VerifyComposition();
     }
@@ -1667,6 +1668,17 @@ internal static class PortabilityChecks
             platform,
             platform,
             platform);
+    }
+
+    private static void VerifyLocalMatchSgfFileName()
+    {
+        var fileName = LocalMatchSgfFileNameBuilder.Create(
+            "black:engine",
+            "white/player",
+            new DateTime(2026, 8, 12, 9, 30, 45));
+        Require(
+            fileName == "kifuwarabe-go-black_engine-vs-white_player-20260812-093045.sgf",
+            "LocalMatch SGF file names must use the two presented names and be safe file names.");
     }
 
     private static void VerifySgfCommentEditing()

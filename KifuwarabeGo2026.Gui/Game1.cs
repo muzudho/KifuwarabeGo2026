@@ -4180,7 +4180,7 @@ public class Game1 : Game
     }
 
     private void ExportSgf() =>
-        ExportSgf(_session.CurrentGameRecord, $"kifuwarabe-go-{DateTime.Now:yyyyMMdd-HHmmss}.sgf");
+        ExportSgf(_session.CurrentGameRecord, _session.LocalMatchSgfFileName);
 
     /// <summary>
     /// 指定された棋譜を Local と共通の保存フローで SGF 出力します。
@@ -4264,7 +4264,7 @@ public class Game1 : Game
         _lastAutoSavedLocalGameRecord = _session.CurrentGameRecord;
         if (AutoSaveSgf(
             _session.CurrentGameRecord,
-            $"kifuwarabe-go-{DateTime.Now:yyyyMMdd-HHmmss}.sgf"))
+            _session.LocalMatchSgfFileName))
         {
             _session.SetLocalResultSgfSaved(true);
         }

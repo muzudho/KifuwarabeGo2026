@@ -205,7 +205,7 @@ public sealed partial class GoScreenRenderer
             {
                 var isLocalMatch = string.IsNullOrEmpty(target.ConnectionProfileId);
                 DrawTargetProfileEditField(session, index, TargetProfileEditField.DisplayName, "DISPLAY", mousePoint, isLocalMatch);
-                DrawTargetProfileEditField(session, index, TargetProfileEditField.LoginName, isLocalMatch ? "OUTPUT NAME" : "LOGIN NAME", mousePoint, isLocalMatch);
+                DrawTargetProfileEditField(session, index, TargetProfileEditField.LoginName, isLocalMatch ? "NAMELY KEY" : "LOGIN NAME", mousePoint, isLocalMatch);
                 if (!isLocalMatch)
                     DrawTargetProfileEditField(session, index, TargetProfileEditField.LoginPass, "LOGIN PASS", mousePoint, false);
                 DrawFittedText($"CONNECTION: {session.TargetProfileEditConnectionDisplayName}", new Rectangle(row.X + 18, row.Y + 47, 920, 22), new Color(147, 244, 200), 0.28f);
@@ -215,7 +215,8 @@ public sealed partial class GoScreenRenderer
             else
             {
                 DrawFittedText(target.DisplayName, new Rectangle(row.X + 18, row.Y + 10, 240, 28), Color.White, 0.46f);
-                DrawFittedText($"LOGIN NAME: {target.LoginName}", new Rectangle(row.X + 280, row.Y + 10, 390, 28), new Color(180, 195, 195), 0.34f);
+                var presentedNameLabel = string.IsNullOrEmpty(target.ConnectionProfileId) ? "NAMELY KEY" : "LOGIN NAME";
+                DrawFittedText($"{presentedNameLabel}: {target.LoginName}", new Rectangle(row.X + 280, row.Y + 10, 390, 28), new Color(180, 195, 195), 0.34f);
                 DrawFittedText(session.GetTargetProfileConnectionDisplayName(target), new Rectangle(row.X + 280, row.Y + 42, 520, 24), new Color(147, 244, 200), 0.30f);
             }
         }

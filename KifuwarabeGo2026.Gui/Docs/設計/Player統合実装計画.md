@@ -166,7 +166,7 @@ WHITE PLAYER   [表示名 / 種別]                 [SELECT]
 
 ### 残作業
 
-- Local Match の開始設定で、黒白それぞれの LocalMatch Target を明示選択し、実際の出力ファイル名へ `OUTPUT NAME` を反映する。
+- [完了] Local Match の開始時に、黒白それぞれの既定 LocalMatch Target の `NAMELY KEY`（旧 OUTPUT NAME）を固定し、手動保存・自動保存する棋譜ファイル名へ反映する。空欄または旧データでは Player の Identifier、表示名の順に補う。
 - CGOS で同じ接続先に複数 Target がある場合、既定 Target の選択規則を接続・対局開始の画面へ明示表示する。
 - CGOS 接続先の選択 UI を、Target 編集の現在値・前後切替から、接続先一覧を選ぶ一貫した UI へ整理する。
 - Player Catalog と Target Catalog をまたぐ追加・削除・既定変更の保存を、ひとまとまりの操作として整理する。
@@ -189,13 +189,13 @@ WHITE PLAYER   [表示名 / 種別]                 [SELECT]
 | `ServiceProfile` | CGOS、野良対局、大会各日、LocalMatch など、接続先サービス一つの接続情報。 | `CgosConnectionProfile` と LocalMatch の種別 |
 | `ClientIdentity` | 一つの `EntryProfile` が一つの `ServiceProfile` で名乗る身元。 | `TargetProfile` |
 
-`ClientIdentity` は次の項目を中心にする。`PresentedName` はプロトコルに応じて CGOS ではログイン名、LocalMatch では出力ファイル名として使う。UI 表示だけはサービスに応じて `LOGIN NAME` / `OUTPUT NAME` とする。
+`ClientIdentity` は次の項目を中心にする。`Handle` は、機械に入力できる書式に従った Player の Entry 名である。プロトコルに応じて CGOS ではログイン名、LocalMatch では出力ファイル名として使う。人に見せる `DisplayName` とは別の値であり、UI では原則 `HANDLE` と表示する。
 
 ```text
 ClientIdentity
   EntryProfileId
   ServiceProfileId       // LocalMatch 等、接続先を持たない形はサービス種別で表す
-  PresentedName
+  Handle
   SecretReference        // OS の安全な資格情報ストアを参照する。秘密そのものは JSON に保存しない。
 ```
 

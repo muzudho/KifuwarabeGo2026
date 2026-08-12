@@ -69,6 +69,26 @@ public sealed partial class GoAppSession
             .FirstOrDefault(target => string.Equals(target.ConnectionProfileId, connectionId, StringComparison.Ordinal));
     }
 
+    /// <summary>LocalMatch 用に既定となる Target。Player 内の先頭の LocalMatch Target を使う。</summary>
+    public TargetProfile? GetSelectedLocalMatchTargetProfile(GoStone stone) =>
+        GetSelectedPlayerProfile(stone) is not { } player
+            ? null
+            : GetPlayerTargetProfiles(player.Id)
+                .FirstOrDefault(target => string.IsNullOrEmpty(target.ConnectionProfileId));
+
+    /// <summary>LocalMatch のファイル名など、外部へ提示する名前を返す。</summary>
+    public string GetLocalMatchPresentedName(GoStone stone)
+    {
+        var targetName = GetSelectedLocalMatchTargetProfile(stone)?.LoginName;
+        if (!string.IsNullOrWhiteSpace(targetName))
+            return targetName;
+
+        var player = GetSelectedPlayerProfile(stone);
+        return !string.IsNullOrWhiteSpace(player?.Identifier)
+            ? player.Identifier
+            : player?.DisplayName ?? GetLocalPlayerName(stone);
+    }
+
     public void ApplyCgosTargetCredentials(GoStone stone)
     {
         var target = GetSelectedCgosTargetProfile(stone);

@@ -1,11 +1,16 @@
 namespace KifuwarabeGo2026.Gui.Application;
 
+using KifuwarabeGo2026.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.Match;
+using KifuwarabeGo2026.Shared.Domain;
 using System;
 
 /// <summary>ローカル対局の開始と中断を担当します。</summary>
 public sealed partial class GoAppSession
 {
+    /// <summary>対局開始時に固定する LocalMatch 棋譜の初期ファイル名。</summary>
+    public string LocalMatchSgfFileName { get; private set; } = "kifuwarabe-go.sgf";
+
     public void StartPlaying()
     {
         ResetLiveChartAutoUpdate();
@@ -14,6 +19,10 @@ public sealed partial class GoAppSession
             ClearBoard();
 
         CurrentGameRecord = CreateGameRecordFromCurrentPosition();
+        LocalMatchSgfFileName = LocalMatchSgfFileNameBuilder.Create(
+            GetLocalMatchPresentedName(GoStone.Black),
+            GetLocalMatchPresentedName(GoStone.White),
+            DateTime.Now);
         BlackElapsedTime = TimeSpan.Zero;
         WhiteElapsedTime = TimeSpan.Zero;
         _matchSession = new MatchSession(CreateMatchConfiguration());
