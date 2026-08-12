@@ -149,7 +149,7 @@ public sealed partial class GoScreenRenderer
     {
         foreach (var field in GtpEngineEditableTextFields)
         {
-            if (GtpEngineEditPanelFieldRowBounds(field).Contains(point))
+            if (GtpEngineEditPanelFieldTextBounds(field).Contains(point))
             {
                 return field;
             }
@@ -581,10 +581,10 @@ public sealed partial class GoScreenRenderer
     {
         var bounds = GtpEngineEditPanelFieldRowBounds(field);
         var active = session.ActiveGtpEngineEditField == field;
-        var hovered = bounds.Contains(mousePoint);
         var text = session.GetGtpEngineEditFieldText(field);
 
         var textBounds = GtpEngineEditPanelFieldTextBounds(field);
+        var hovered = textBounds.Contains(mousePoint);
         DrawText(label, new Vector2(bounds.X + 16, textBounds.Y + 7), new Color(180, 195, 195), 0.36f);
         DrawRoundedFill(new Rectangle(textBounds.X, textBounds.Bottom + 2, textBounds.Width, 5), 2, active ? new Color(147, 244, 200) : hovered ? new Color(185, 196, 255) : new Color(100, 110, 145));
         if (GtpEngineEditableTextFields.Contains(field))
@@ -601,15 +601,8 @@ public sealed partial class GoScreenRenderer
             DrawTextBoxCaret(text, session.GtpEngineEditCaretIndex, textBounds, 0.42f);
         }
 
-        if (field == GtpEngineProfileEditField.ExecutablePath)
-        {
-            DrawCommandButton(GtpEngineEditPanelFileBrowseButtonBounds, "CHANGE", false, mousePoint, scale: 0.27f);
-        }
-
-        if (field == GtpEngineProfileEditField.WorkingDirectory)
-        {
-            DrawCommandButton(GtpEngineEditPanelWorkingDirectoryBrowseButtonBounds, "CHANGE", false, mousePoint, scale: 0.27f);
-        }
+        if (hovered && !active)
+            DrawPlayerEditHint(GtpEngineEditableTextFields.Contains(field) ? "EDIT" : "CHANGE", textBounds);
     }
 
 
@@ -808,17 +801,17 @@ public sealed partial class GoScreenRenderer
 
 
     private static Rectangle GtpEngineEditPanelFileBrowseButtonBounds => new(
-        GtpEngineEditPanelFieldRowBounds(GtpEngineProfileEditField.ExecutablePath).Right - 112,
-        GtpEngineEditPanelFieldRowBounds(GtpEngineProfileEditField.ExecutablePath).Y + 8,
-        96,
-        40);
+        GtpEngineEditPanelFieldTextBounds(GtpEngineProfileEditField.ExecutablePath).X,
+        GtpEngineEditPanelFieldTextBounds(GtpEngineProfileEditField.ExecutablePath).Y,
+        GtpEngineEditPanelFieldTextBounds(GtpEngineProfileEditField.ExecutablePath).Width,
+        GtpEngineEditPanelFieldTextBounds(GtpEngineProfileEditField.ExecutablePath).Height);
 
 
     private static Rectangle GtpEngineEditPanelWorkingDirectoryBrowseButtonBounds => new(
-        GtpEngineEditPanelFieldRowBounds(GtpEngineProfileEditField.WorkingDirectory).Right - 112,
-        GtpEngineEditPanelFieldRowBounds(GtpEngineProfileEditField.WorkingDirectory).Y + 8,
-        96,
-        40);
+        GtpEngineEditPanelFieldTextBounds(GtpEngineProfileEditField.WorkingDirectory).X,
+        GtpEngineEditPanelFieldTextBounds(GtpEngineProfileEditField.WorkingDirectory).Y,
+        GtpEngineEditPanelFieldTextBounds(GtpEngineProfileEditField.WorkingDirectory).Width,
+        GtpEngineEditPanelFieldTextBounds(GtpEngineProfileEditField.WorkingDirectory).Height);
 
 
     private static Rectangle GtpEngineEditPanelGuiOptionsButtonBounds => new(AddPanelControlX, 590, 300, 56);

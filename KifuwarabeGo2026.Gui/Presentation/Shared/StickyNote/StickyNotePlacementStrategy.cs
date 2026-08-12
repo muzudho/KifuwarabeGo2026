@@ -13,6 +13,7 @@ public enum StickyNoteScreenId
     ClientIdentitySelection,
     ClientIdentityEdit,
     QuickClientIdentitySelection,
+    GtpEngineEdit,
     GtpEngineSelection,
     TournamentRulesSelection,
 }
