@@ -521,21 +521,25 @@ public sealed partial class GoScreenRenderer
     private void DrawDisplayNameTextBox(GoAppSession session, Point mousePoint)
     {
         var bounds = TournamentRulesAddPanelDisplayNameRowBounds;
-        var hovered = bounds.Contains(mousePoint);
         var active = session.IsTournamentRulesDisplayNameEditing;
         var displayName = active ? session.TournamentRulesDisplayNameDraft : session.TournamentDisplayName;
-
-        DrawTournamentRulesTabNavigationHint(bounds, session, 0);
-        DrawTournamentRulesFieldLabel("DISPLAY", bounds);
-
         var textBounds = TournamentRulesAddPanelDisplayNameTextBounds;
-        DrawTournamentRulesTextInputSurface(textBounds, active, hovered);
+        var hovered = textBounds.Contains(mousePoint);
+        DrawText("DISPLAY", new Vector2(bounds.X + 16, textBounds.Y + 7), new Color(180, 195, 195), 0.36f);
+        DrawRoundedFill(
+            new Rectangle(textBounds.X, textBounds.Bottom + 2, textBounds.Width, 5),
+            2,
+            active ? new Color(147, 244, 200) : hovered ? new Color(185, 196, 255) : new Color(100, 110, 145));
         if (active)
             DrawTextBoxSelection(displayName, session.TournamentRulesDisplayNameSelectionStart, session.TournamentRulesDisplayNameSelectionLength, textBounds, 0.46f);
-        DrawFittedText(displayName, textBounds, Color.White, 0.46f);
+        DrawFittedText(string.IsNullOrEmpty(displayName) ? "-" : displayName, textBounds, Color.White, 0.46f);
         if (active)
         {
             DrawTextBoxCaret(displayName, session.TournamentRulesDisplayNameCaretIndex, textBounds, 0.46f);
+        }
+        else if (hovered)
+        {
+            DrawPlayerEditHint("EDIT", textBounds);
         }
 
         if (!string.IsNullOrWhiteSpace(session.TournamentRulesDisplayNameWarning))

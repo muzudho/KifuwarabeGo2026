@@ -56,7 +56,7 @@ public sealed partial class GoScreenRenderer
 
 
     public static bool GetTournamentRulesAddPanelDisplayNameBoxHit(Point point) =>
-        TournamentRulesAddPanelDisplayNameRowBounds.Contains(point);
+        TournamentRulesAddPanelDisplayNameTextBounds.Contains(point);
 
 
     public int GetTournamentRulesAddPanelDisplayNameCaretIndex(Point point, string text) =>
@@ -178,7 +178,8 @@ public sealed partial class GoScreenRenderer
         DrawRect(TournamentRulesAddPanelBounds, 2, new Color(116, 145, 146));
 
         DrawText(session.IsTournamentRulesEditPanelMode ? "EDIT TOURNAMENT RULES" : "ADD TOURNAMENT RULES", new Vector2(TournamentRulesAddPanelBounds.X + 30, TournamentRulesAddPanelBounds.Y + 24), new Color(244, 238, 218), 0.78f);
-        DrawCommandButton(TournamentRulesAddPanelCloseButtonBounds, "BACK", false, mousePoint, scale: 0.42f);
+        DrawCommandButton(TournamentRulesAddPanelCloseButtonBounds, "CANCEL", false, mousePoint, scale: 0.36f);
+        DrawCommandButton(SaveTournamentRulesButtonBounds, "SAVE", false, mousePoint, scale: 0.42f);
 
         FillRect(TournamentRulesAddPanelEditorBounds, new Color(15, 20, 26));
         DrawRect(TournamentRulesAddPanelEditorBounds, 1, new Color(67, 84, 92));
@@ -194,7 +195,6 @@ public sealed partial class GoScreenRenderer
         DrawTournamentRulesTimeStrip(session, mousePoint);
         DrawTournamentRulesMoveLimitStrip(session, mousePoint);
         DrawFilePathSelector(session, mousePoint);
-        DrawCommandButton(SaveTournamentRulesButtonBounds, SaveTournamentRulesLabel(session), false, mousePoint);
     }
 
 
@@ -320,7 +320,7 @@ public sealed partial class GoScreenRenderer
     private static Rectangle TournamentRulesAddPanelEditorBounds => new(520, 228, 880, 590);
 
 
-    private static Rectangle TournamentRulesAddPanelCloseButtonBounds => new(1318, 156, 132, 48);
+    private static Rectangle TournamentRulesAddPanelCloseButtonBounds => new(1144, 156, 132, 48);
 
 
     private static Rectangle TournamentRulesAddPanelDisplayNameRowBounds => new(AddPanelControlX, 244, 668, 56);
@@ -334,11 +334,5 @@ public sealed partial class GoScreenRenderer
 
 
 
-    private static Rectangle SaveTournamentRulesButtonBounds => new(974, 836, 320, 56);
-
-
-    private static string SaveTournamentRulesLabel(GoAppSession session) =>
-        string.IsNullOrWhiteSpace(session.TournamentRulesSaveMessage)
-            ? "SAVE RULES"
-            : $"SAVE RULES {session.TournamentRulesSaveMessage}";
+    private static Rectangle SaveTournamentRulesButtonBounds => new(1288, 156, 162, 48);
 }
