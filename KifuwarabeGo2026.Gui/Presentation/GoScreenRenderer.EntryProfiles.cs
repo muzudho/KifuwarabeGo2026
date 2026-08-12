@@ -24,8 +24,8 @@ public sealed partial class GoScreenRenderer
     private static readonly Rectangle PlayerSelectionOrderButtonBounds = new(1056, 816, 72, 48);
     private static readonly Rectangle PlayerEditPanelCancelButtonBounds = new(1080, 288, 132, 42);
     private static readonly Rectangle PlayerEditPanelSaveButtonBounds = new(1224, 288, 148, 42);
-    private static readonly Rectangle ClientIdentityProfileSelectionCloseButtonBounds = new(1320, 182, 150, 48);
-    private static readonly Rectangle ClientIdentityProfileSelectionUseButtonBounds = new(1158, 182, 150, 48);
+    private static readonly Rectangle ClientIdentityProfileSelectionCloseButtonBounds = new(1158, 182, 150, 48);
+    private static readonly Rectangle ClientIdentityProfileSelectionUseButtonBounds = new(1320, 182, 150, 48);
     private static readonly Rectangle ClientIdentityProfileSelectionEditButtonBounds = new(800, 820, 150, 48);
     private static readonly Rectangle ClientIdentityProfileEditCancelButtonBounds = new(1158, 182, 150, 48);
     private static readonly Rectangle ClientIdentityProfileEditSaveButtonBounds = new(1320, 182, 150, 48);
@@ -341,7 +341,7 @@ public sealed partial class GoScreenRenderer
         DrawFittedText("GREEN: selected     BLUE: current operation", new Rectangle(bounds.X + 36, bounds.Y + 82, 500, 26), new Color(180, 210, 215), 0.31f);
         var targets = session.GetPlayerClientIdentityProfiles(session.PlayerEditDraft.Id);
         DrawCommandButton(ClientIdentityProfileSelectionUseButtonBounds, "USE", false, mousePoint, enabled: targets.Count > 0 && !session.IsClientIdentityProfileInUse(session.ClientIdentityProfileSelectionIndex), scale: 0.34f);
-        DrawCommandButton(ClientIdentityProfileSelectionCloseButtonBounds, "CLOSE", false, mousePoint, scale: 0.34f);
+        DrawCommandButton(ClientIdentityProfileSelectionCloseButtonBounds, "CANCEL", false, mousePoint, scale: 0.30f);
         var addBounds = new Rectangle(ClientIdentityProfileEditAddLocalButtonBounds.X, 786, ClientIdentityProfileEditAddCgosButtonBounds.Right - ClientIdentityProfileEditAddLocalButtonBounds.X, 24);
         FillRect(addBounds, new Color(56, 54, 84));
         DrawRect(addBounds, 1, new Color(133, 128, 177));
