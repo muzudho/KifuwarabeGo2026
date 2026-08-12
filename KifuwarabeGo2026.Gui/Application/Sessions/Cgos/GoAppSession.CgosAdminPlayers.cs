@@ -40,6 +40,7 @@ public sealed partial class GoAppSession
             : CgosAdminBlackPlayerIndex;
         CgosAdminPlayerSelectionPageIndex = CgosAdminPlayerDialogSelectionIndex / CgosAdminPlayerSelectionPageSize;
         IsCgosAdminPlayerSelectionDialogOpen = true;
+        ActivateWindow(ActiveWindowId.CgosAdminPlayerSelection);
     }
 
     public void SelectCgosAdminPlayerDialogItem(int index)
@@ -59,10 +60,14 @@ public sealed partial class GoAppSession
         }
 
         IsCgosAdminPlayerSelectionDialogOpen = false;
+        DeactivateWindow(ActiveWindowId.CgosAdminPlayerSelection);
     }
 
-    public void CancelCgosAdminPlayerSelectionDialog() =>
+    public void CancelCgosAdminPlayerSelectionDialog()
+    {
         IsCgosAdminPlayerSelectionDialogOpen = false;
+        DeactivateWindow(ActiveWindowId.CgosAdminPlayerSelection);
+    }
 
     public int GetCgosAdminPlayerSelectionPageCount() =>
         Math.Max(1, (int)Math.Ceiling(CgosAdminWaitingPlayers.Count / (double)CgosAdminPlayerSelectionPageSize));

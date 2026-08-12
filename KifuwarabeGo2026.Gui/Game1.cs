@@ -1742,9 +1742,30 @@ public class Game1 : Game
                     point,
                     _renderer is null ? null : (caretPoint, text) => TournamentRuleRenderer.GetDisplayNameCaretIndex(_renderer, caretPoint, text),
                     _renderer is null ? null : (caretPoint, field, text) => _renderer.GetTournamentRulesNumericCaretIndex(caretPoint, field, text));
+            case ActiveWindowId.CgosAdminPlayerSelection:
+                return TryHandleCgosAdminPlayerSelectionDialogClick(point);
             default:
                 return false;
         }
+    }
+
+    private bool TryHandleCgosAdminPlayerSelectionDialogClick(Point point)
+    {
+        if (!_session.IsCgosAdminPlayerSelectionDialogOpen)
+            return false;
+
+        if (GoScreenRenderer.GetCgosAdminPlayerDialogCancelButtonHit(point))
+            _session.CancelCgosAdminPlayerSelectionDialog();
+        else if (GoScreenRenderer.GetCgosAdminPlayerDialogSelectButtonHit(point))
+            _session.CommitCgosAdminPlayerSelectionDialog();
+        else if (GoScreenRenderer.GetCgosAdminPlayerDialogPreviousPageButtonHit(point))
+            _session.MoveCgosAdminPlayerSelectionPage(-1);
+        else if (GoScreenRenderer.GetCgosAdminPlayerDialogNextPageButtonHit(point))
+            _session.MoveCgosAdminPlayerSelectionPage(1);
+        else if (GoScreenRenderer.GetCgosAdminPlayerDialogItemHit(point, _session) is { } playerIndex)
+            _session.SelectCgosAdminPlayerDialogItem(playerIndex);
+
+        return true;
     }
 
     private void TryHandlePlayerSelectionDialogClick(Point point)
@@ -3825,6 +3846,7 @@ public class Game1 : Game
         _commentEditorComposition = TextCompositionState.Empty;
         _previousCommentEditorKeyboard = Keyboard.GetState();
         _isCommentEditorOpen = true;
+        _session.ActivateModalWindow(ActiveWindowId.CommentEditor);
     }
 
     private void UpdateCommentEditorKeyboard(KeyboardState keyboard, GameTime gameTime)
@@ -3862,6 +3884,7 @@ public class Game1 : Game
     private void CancelCommentEditor()
     {
         _isCommentEditorOpen = false;
+        _session.DeactivateModalWindow(ActiveWindowId.CommentEditor);
         _commentEditorMoveIndex = 0;
         _commentEditorSession = null;
         _commentEditorComposition = TextCompositionState.Empty;
@@ -3874,6 +3897,7 @@ public class Game1 : Game
         {
             _pendingReviewExitAction = action;
             _isReviewUnsavedChangesConfirmationOpen = true;
+            _session.ActivateModalWindow(ActiveWindowId.ReviewUnsavedChangesConfirmation);
             return;
         }
         CompleteReviewExit(action);
@@ -3899,6 +3923,7 @@ public class Game1 : Game
     private void CancelPendingReviewExit()
     {
         _isReviewUnsavedChangesConfirmationOpen = false;
+        _session.DeactivateModalWindow(ActiveWindowId.ReviewUnsavedChangesConfirmation);
         _pendingReviewExitAction = null;
     }
 
@@ -5353,6 +5378,7 @@ public class Game1 : Game
     private void EditGtpEngineStringOption(GtpEngineGuiOptionSpec option)
     {
         _activeGtpEngineStringOption = option;
+        _session.ActivateModalWindow(ActiveWindowId.TextInput);
         _gtpEngineStringOptionTextBox.Begin(_session.GetGtpEngineGuiOptionDraft(option));
         _gtpEngineStringComposition = TextCompositionState.Empty;
         _previousGtpEngineStringKeyboard = Keyboard.GetState();
@@ -5396,6 +5422,7 @@ public class Game1 : Game
     private void CancelGtpEngineStringInput()
     {
         _activeGtpEngineStringOption = null;
+        _session.DeactivateModalWindow(ActiveWindowId.TextInput);
         _gtpEngineStringOptionTextBox.Clear();
         _gtpEngineStringComposition = TextCompositionState.Empty;
         _gtpEngineStringInputMessage = "";
@@ -5405,6 +5432,7 @@ public class Game1 : Game
     private void EditGtpEngineSpinOption(GtpEngineGuiOptionSpec option)
     {
         _activeGtpEngineIntegerOption = option;
+        _session.ActivateModalWindow(ActiveWindowId.IntegerInput);
         _gtpEngineIntegerOptionTextBox.Begin(_session.GetGtpEngineGuiOptionDraft(option));
         _previousGtpEngineIntegerKeyboard = Keyboard.GetState();
         _gtpEngineIntegerInputMessage = $"RANGE  {option.Min ?? int.MinValue} .. {option.Max ?? int.MaxValue}";
@@ -5450,6 +5478,7 @@ public class Game1 : Game
     private void CancelGtpEngineIntegerInput()
     {
         _activeGtpEngineIntegerOption = null;
+        _session.DeactivateModalWindow(ActiveWindowId.IntegerInput);
         _gtpEngineIntegerOptionTextBox.Clear();
         _gtpEngineIntegerInputMessage = "";
     }

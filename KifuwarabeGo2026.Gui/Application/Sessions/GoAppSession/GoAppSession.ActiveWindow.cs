@@ -9,5 +9,9 @@ public sealed partial class GoAppSession
 
     private void ActivateWindow(ActiveWindowId windowId) => ActiveWindows.Activate(windowId);
 
+    public void ActivateModalWindow(ActiveWindowId windowId) => ActivateWindow(windowId);
+
     private void DeactivateWindow(ActiveWindowId windowId) => ActiveWindows.Deactivate(windowId);
+
+    public void DeactivateModalWindow(ActiveWindowId windowId) => DeactivateWindow(windowId);
 }
