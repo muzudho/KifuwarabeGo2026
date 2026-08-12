@@ -155,8 +155,8 @@ public sealed partial class GoScreenRenderer
 
         var target = session.PlayerSelectionTargetStone == GoStone.Black ? "BLACK" : "WHITE";
         var cgos = session.PlayerSelectionPurpose == PlayerSelectionPurpose.Cgos;
-        DrawText($"{(cgos ? "CGOS PLAYER" : "PLAYER")} SELECT  {target}", new Vector2(PlayerSelectionDialogBounds.X + 34, PlayerSelectionDialogBounds.Y + 28), new Color(244, 238, 218), 0.78f);
-        DrawText(cgos ? "Choose a computer player with a CGOS target for this connection." : "Human and computer players are selected from one list.", new Vector2(PlayerSelectionDialogBounds.X + 36, PlayerSelectionDialogBounds.Y + 88), new Color(180, 195, 195), 0.38f);
+        DrawText($"{(cgos ? "ONLINE MATCH PLAYER" : "PLAYER")} SELECT  {target}", new Vector2(PlayerSelectionDialogBounds.X + 34, PlayerSelectionDialogBounds.Y + 28), new Color(244, 238, 218), 0.78f);
+        DrawText(cgos ? "Choose a computer player with an OnlineMatch (CGOS) Target for this connection." : "Human and computer players are selected from one list.", new Vector2(PlayerSelectionDialogBounds.X + 36, PlayerSelectionDialogBounds.Y + 88), new Color(180, 195, 195), 0.38f);
         DrawCommandButton(PlayerSelectionCancelButtonBounds, "CANCEL", false, mousePoint, scale: 0.34f);
         DrawCommandButton(PlayerSelectionOkButtonBounds, "SELECT", false, mousePoint, enabled: session.CanCommitPlayerSelection, scale: 0.34f);
 
@@ -259,13 +259,13 @@ public sealed partial class GoScreenRenderer
                 DrawFittedText(session.GetTargetProfileConnectionDisplayName(target), new Rectangle(row.X + 280, row.Y + 42, 520, 24), new Color(147, 244, 200), 0.30f);
             }
         }
-        DrawCommandButton(TargetProfileEditAddCgosButtonBounds, "ADD CGOS", false, mousePoint, enabled: targets.Count < 5, scale: 0.32f);
+        DrawCommandButton(TargetProfileEditAddCgosButtonBounds, "ADD ONLINE MATCH", false, mousePoint, enabled: targets.Count < 5, scale: 0.23f);
         DrawCommandButton(TargetProfileEditAddLocalButtonBounds, "ADD LOCAL", false, mousePoint, enabled: targets.Count < 5, scale: 0.32f);
         DrawCommandButton(TargetProfileEditRemoveButtonBounds, "REMOVE", false, mousePoint, enabled: targets.Count > 1, scale: 0.32f);
         var selected = session.TargetProfileEditDraft;
         DrawFittedText($"CONNECTION: {session.TargetProfileEditConnectionDisplayName}", new Rectangle(960, 766, 470, 32), new Color(147, 244, 200), 0.34f);
         var canSelectConnection = !string.IsNullOrEmpty(selected.ConnectionProfileId) && session.CgosConnectionProfiles.Count > 0;
-        DrawCommandButton(TargetProfileEditSelectConnectionButtonBounds, "SELECT CGOS SERVER", false, mousePoint, enabled: canSelectConnection, scale: 0.24f);
+        DrawCommandButton(TargetProfileEditSelectConnectionButtonBounds, "SELECT ONLINE MATCH SERVER", false, mousePoint, enabled: canSelectConnection, scale: 0.20f);
         DrawTargetProfileConnectionSelectionPanel(session, mousePoint);
     }
 
@@ -276,8 +276,8 @@ public sealed partial class GoScreenRenderer
         FillRect(new Rectangle(0, 0, VirtualScreen.Width, VirtualScreen.Height), new Color(0, 0, 0, 105));
         FillRect(TargetProfileConnectionSelectionPanelBounds, new Color(19, 24, 31, 252));
         DrawRect(TargetProfileConnectionSelectionPanelBounds, 2, new Color(116, 145, 146));
-        DrawText("SELECT CGOS CONNECTION", new Vector2(542, 240), new Color(244, 238, 218), 0.62f);
-        DrawText("Choose the server for this Target.", new Vector2(544, 294), new Color(180, 195, 195), 0.32f);
+        DrawText("SELECT ONLINE MATCH SERVER", new Vector2(542, 240), new Color(244, 238, 218), 0.50f);
+        DrawText("Choose the OnlineMatch (CGOS) server for this Target.", new Vector2(544, 294), new Color(180, 195, 195), 0.28f);
         DrawCommandButton(TargetProfileConnectionSelectionCancelButtonBounds, "CANCEL", false, mousePoint, scale: 0.30f);
         DrawCommandButton(TargetProfileConnectionSelectionSelectButtonBounds, "SELECT", false, mousePoint, scale: 0.34f);
 
@@ -305,7 +305,7 @@ public sealed partial class GoScreenRenderer
         FillRect(new Rectangle(0, 0, VirtualScreen.Width, VirtualScreen.Height), new Color(0, 0, 0, 125));
         FillRect(QuickTargetSelectionPanelBounds, new Color(19, 24, 31, 252));
         DrawRect(QuickTargetSelectionPanelBounds, 2, new Color(116, 145, 146));
-        var service = session.QuickTargetSelectionIsCgos ? "CGOS" : "LOCAL MATCH";
+        var service = session.QuickTargetSelectionIsCgos ? "ONLINE MATCH (CGOS)" : "LOCAL MATCH";
         DrawText("SELECT TEMPORARY HANDLE", new Vector2(590, 277), new Color(244, 238, 218), 0.56f);
         DrawStickyNote(
             new Rectangle(560, 824, 800, 130),

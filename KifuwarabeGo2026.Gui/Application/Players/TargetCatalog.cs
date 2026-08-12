@@ -104,7 +104,7 @@ public sealed class TargetCatalog
 
         var target = new TargetProfile
         {
-            DisplayName = "CGOS",
+            DisplayName = "OnlineMatch (CGOS)",
             ConnectionProfileId = connectionProfileId,
             LoginName = engine.DefaultCgosLoginName,
             LoginPass = engine.DefaultCgosPlainTextPassword,
@@ -121,6 +121,10 @@ public sealed class TargetCatalog
         var normalized = profile.Clone();
         normalized.Id = string.IsNullOrWhiteSpace(normalized.Id) ? Guid.NewGuid().ToString("N") : normalized.Id;
         normalized.DisplayName = string.IsNullOrWhiteSpace(normalized.DisplayName) ? "New Target" : normalized.DisplayName.Trim();
+        // 旧 UI では用途分類とプロトコル名を同一視して "CGOS" と表示していた。
+        // Target の分類は OnlineMatch、詳細な実装は CGOS として表示する。
+        if (string.Equals(normalized.DisplayName, "CGOS", StringComparison.Ordinal))
+            normalized.DisplayName = "OnlineMatch (CGOS)";
         normalized.ConnectionProfileId ??= "";
         normalized.LoginName ??= "";
         normalized.LoginPass ??= "";

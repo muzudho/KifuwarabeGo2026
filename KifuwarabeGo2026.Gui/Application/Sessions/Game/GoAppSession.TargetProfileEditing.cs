@@ -96,7 +96,7 @@ public sealed partial class GoAppSession
         if (owner.TargetProfileIds.Count >= 5) return false;
         var target = new TargetProfile
         {
-            DisplayName = cgos ? "CGOS" : "LocalMatch",
+            DisplayName = cgos ? "OnlineMatch (CGOS)" : "LocalMatch",
             ConnectionProfileId = cgos ? _cgosConnectionProfiles.ElementAtOrDefault(SelectedCgosConnectionProfileIndex)?.Id ?? "" : "",
             LoginName = owner.Identifier,
         };

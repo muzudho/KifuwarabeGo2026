@@ -159,7 +159,7 @@ WHITE PLAYER   [表示名 / 種別]                 [SELECT]
 - Human / Computer の Player 統合選択、GTP Engine の選択、Local Match / Ponnuki、SGF 表示名出力。
 - TargetProfile / TargetCatalog、Player からの Target 参照、CGOS Connection Profile の不変 ID 参照。
 - CGOS 実行時の Target 認証情報参照。
-- TARGETS ダイアログの表示、最大5件までの CGOS / LocalMatch Target 追加、削除、行選択、CGOS 接続先の前後切替。
+- TARGETS ダイアログの表示、最大5件までの OnlineMatch (CGOS) / LocalMatch Target 追加、削除、行選択、接続先選択。
 - Target の `DISPLAY`、`LOGIN NAME`、`LOGIN PASS` をクリック、貼り付け、IME、Enter/Escape、Tab で編集・保存できる。非編集中のパスワードは伏せ字にする。
 - LocalMatch Target では `LOGIN NAME` を `OUTPUT NAME` として表示し、パスワード欄を表示しない。
 - `USE` により選択 Target を Player の既定使用先にできる。Player 編集画面では既定 Target を表示し、`SELECT TARGET` / `EDIT TARGETS` から選択・編集できる。
@@ -167,13 +167,13 @@ WHITE PLAYER   [表示名 / 種別]                 [SELECT]
 ### 残作業
 
 - [完了] Local Match の開始時に、黒白それぞれの既定 LocalMatch Target の `NAMELY KEY`（旧 OUTPUT NAME）を固定し、手動保存・自動保存する棋譜ファイル名へ反映する。空欄または旧データでは Player の Identifier、表示名の順に補う。
-- [完了] CGOS で同じ接続先に複数 Target がある場合、Player 内の並び順で最初の Target を既定として使う。接続・対局開始画面には、その Target の Display と LOGIN NAME を `DEFAULT TARGET` として表示する。
-- [完了] CGOS 接続先の選択 UI を、Target 編集の現在値・前後切替から、接続先一覧を選ぶ一貫した UI へ整理する。
+- [完了] OnlineMatch (CGOS) で同じ接続先に複数 Target がある場合、Player 内の並び順で最初の Target を既定として使う。接続・対局開始画面には、その Target の Display と HANDLE を `DEFAULT TARGET` として表示する。
+- [完了] OnlineMatch (CGOS) 接続先の選択 UI を、Target 編集の現在値・前後切替から、接続先一覧を選ぶ一貫した UI へ整理する。
 - Player Catalog と Target Catalog をまたぐ追加・削除・既定変更の保存を、ひとまとまりの操作として整理する。
 
 ### 操作上の補足（2026-08-12）
 
-- LocalMatch / CGOS ともに、Player Profile を選ぶと、そのサービス向けの既定 Target を採用する。
+- LocalMatch / OnlineMatch (CGOS) ともに、Player Profile を選ぶと、そのサービス向けの既定 Target を採用する。
 - 画面には Target の `HANDLE` を表示する。`HANDLE` をクリックすると、選択中 Player が持つ当該サービス用 Target だけの一覧を開き、今回の対局・接続に限って切り替えられる。
 - この一時切替は Player 内の Target 順序を変更しない。恒久的な既定変更には Target 編集画面の `USE` を使う。
 - `HANDLE` は「機械に入力できる書式に従った、Player の Entry 名」。CGOS ではログイン名、LocalMatch では棋譜ファイル名に使う。

@@ -157,7 +157,7 @@ public sealed partial class GoAppSession
         var engine = _gtpEngineProfiles[engineIndex];
         var cgos = new TargetProfile
         {
-            DisplayName = "CGOS",
+            DisplayName = "OnlineMatch (CGOS)",
             ConnectionProfileId = SelectedCgosConnectionProfile.Id,
             LoginName = engine.DefaultCgosLoginName,
             LoginPass = engine.DefaultCgosPlainTextPassword,

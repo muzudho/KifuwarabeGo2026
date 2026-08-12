@@ -87,7 +87,7 @@ Computer Player: 「きふわらべ」
   DISPLAY: きふわらべ
   ENGINE PROFILE: Kifuwarabe Go 2026
 
-  TARGET PROFILE: CGOS
+  TARGET PROFILE: OnlineMatch (CGOS)
     LOGIN NAME: kifuwarabe
     LOGIN PASS: (秘密情報)
     CONNECTION PROFILE: CGOS Server 9-ro
@@ -158,7 +158,7 @@ EDIT ENGINE PROFILE
   GTP LOG
 
 Engine Profile 編集画面から CGOS LOGIN / CGOS PASS を削除する。
-CGOS 接続画面は黒白の Player Profile と CGOS Target を選び、その Target の認証情報を接続プロセスへ渡す。
+OnlineMatch (CGOS) 接続画面は黒白の Player Profile と OnlineMatch (CGOS) Target を選び、その Target の認証情報を接続プロセスへ渡す。
 
 
 7. JSON 保存と移行
@@ -212,10 +212,10 @@ CGOS 接続画面は黒白の Player Profile と CGOS Target を選び、その 
 移行手順:
 
 1. TargetProfile と Target Catalog を追加し、既存 Player は空の TargetProfileIds として読めるようにする。
-2. GtpEngineProfile の defaultCgosLoginName / defaultCgosPlainTextPassword を読み取り、対応する Computer Player ごとに独立した CGOS Target Profile を一度だけ生成して参照させる。
+2. GtpEngineProfile の defaultCgosLoginName / defaultCgosPlainTextPassword を読み取り、対応する Computer Player ごとに独立した OnlineMatch (CGOS) Target Profile を一度だけ生成して参照させる。
 3. 各既存 Player に独立した LocalMatch Target Profile を生成して参照させる。LOGIN NAME は旧 Identifier を最初の候補として使う。
 4. CGOS Connection Profile に不変 ID を追加し、TargetProfile.ConnectionProfileId から参照できるようにする。
-5. CGOS の実行時認証情報を、選択 Player が参照する Target Profile から解決する。
+5. OnlineMatch (CGOS) の実行時認証情報を、選択 Player が参照する Target Profile から解決する。
 6. 移行猶予後に Engine Profile の旧 CGOS 認証項目と、CGOS 接続画面の黒白一時認証編集を削除する。
 
 
@@ -228,18 +228,18 @@ CGOS 接続画面は黒白の Player Profile と CGOS Target を選び、その 
 9. 最新実装ステータス（2026-08-12）
 
 完了:
-- Player / Engine / Target の責務分離、Target の JSON 保存、CGOS 実行時の Target 認証情報参照。
-- Player 編集画面の Target 表示、`SELECT TARGET`、`EDIT TARGETS`、Target 一覧、最大5件の追加、削除、選択、CGOS 接続先の前後切替。
+- Player / Engine / Target の責務分離、Target の JSON 保存、OnlineMatch (CGOS) 実行時の Target 認証情報参照。
+- Player 編集画面の Target 表示、`SELECT TARGET`、`EDIT TARGETS`、Target 一覧、最大5件の追加、削除、選択、OnlineMatch (CGOS) 接続先の選択。
 - Target の DISPLAY / LOGIN NAME / LOGIN PASS のテキスト編集。パスワードは非編集中に伏せ字で表示する。
 - LocalMatch Target の画面では LOGIN NAME を OUTPUT NAME と表示し、LOGIN PASS を表示しない。
 - `USE` で選択 Target を Player の既定 Target（TargetProfileIds の先頭）へ設定する。
 
 残作業:
 - LocalMatch 開始設定で黒白それぞれの LocalMatch Target を明示選択し、OUTPUT NAME を出力ファイル名へ使用する。
-- CGOS で接続先ごとに複数 Target がある場合の選択画面・既定選択規則を明示する。
-- Target の CGOS Connection Profile 選択 UI を接続先一覧と統合する。
+- OnlineMatch (CGOS) で接続先ごとに複数 Target がある場合の選択画面・既定選択規則を明示する。
+- Target の OnlineMatch (CGOS) Connection Profile 選択 UI を接続先一覧と統合する。
 - LOGIN PASS の OS 保護ストア移行。
 
 運用方針:
 - Target は Player ごとに1～5件の少数を前提とする。ORDER とページ送りは作らない。
-- LocalMatch Target の接続先は LOCAL MATCH 固定。CGOS Target は ConnectionProfile の ID を参照する。
+- LocalMatch Target の接続先は LOCAL MATCH 固定。OnlineMatch (CGOS) Target は ConnectionProfile の ID を参照する。
