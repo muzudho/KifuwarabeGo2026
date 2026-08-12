@@ -184,6 +184,7 @@ WHITE PLAYER   [表示名 / 種別]                 [SELECT]
 - [未着手] Player 選択画面は大きな左右二ペインとする。左半分に Entry Profile 一覧、右半分に左で選択中の Entry Profile が参照する Client Identity 一覧を表示し、同一ダイアログ内で両方を選択・確定する。
 - [未着手] OnlineMatch (CGOS) では、ダイアログで確定した Client Identity の Handle と Password を接続開始画面の入力欄へコピーする。元画面での直接編集は今回の接続だけに使う一時ドラフトであり、Client Identity には保存しない。
 - [未着手] LocalMatch では、ダイアログで確定した Client Identity の Handle を設定画面へコピーする。設定画面での直接編集は今回の対局・棋譜ファイル名だけに使う一時ドラフトであり、Client Identity には保存しない。Password は扱わない。
+- [未着手] Player 関連 UI の操作要素は、常設の `SELECT` / `CHANGE` ボタンを原則置かない。選択リンクと直接編集欄は角丸の太いアンダーラインで表示し、マウスホバーまたは Tab フォーカス時だけ、クリック結果を `CHANGE`（選択ダイアログ）または `EDIT`（直接編集）として示す。START 等の主要アクションボタンは常設して目立たせる。
 - [完了] Local Match の開始時に、黒白それぞれの既定 LocalMatch Client Identity の `NAMELY KEY`（旧 OUTPUT NAME）を固定し、手動保存・自動保存する棋譜ファイル名へ反映する。空欄または旧データでは Player の Identifier、表示名の順に補う。
 - [完了] OnlineMatch (CGOS) で同じ接続先に複数 Client Identity がある場合、Player 内の並び順で最初の Client Identity を既定として使う。接続・対局開始画面には、その Client Identity の Display と HANDLE を `DEFAULT CLIENT IDENTITY` として表示する。
 - [完了] OnlineMatch (CGOS) 接続先の選択 UI を、Client Identity 編集の現在値・前後切替から、接続先一覧を選ぶ一貫した UI へ整理する。
