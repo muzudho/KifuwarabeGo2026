@@ -1331,8 +1331,9 @@ public sealed partial class GoScreenRenderer
     private void DrawResultLabel(Rectangle bounds, string label, Color accentColor)
     {
         const int accentHeight = 28;
-        FillRect(new Rectangle(bounds.X + 14, bounds.Center.Y - accentHeight / 2, 3, accentHeight), accentColor);
-        DrawText(label, new Vector2(bounds.X + 30, bounds.Y + 14), new Color(180, 195, 195), 0.38f);
+        // Intermission のラベル列は、section 内の行種別に関係なく同じグリッドへそろえる。
+        FillRect(new Rectangle(bounds.X - 22, bounds.Center.Y - accentHeight / 2, 3, accentHeight), accentColor);
+        DrawText(label, new Vector2(bounds.X - 8, bounds.Y + 14), new Color(180, 195, 195), 0.38f);
     }
 
     private void DrawCalculationResultRow(Rectangle bounds, GoAppSession session)

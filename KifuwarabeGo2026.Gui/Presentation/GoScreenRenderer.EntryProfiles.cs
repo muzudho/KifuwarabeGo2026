@@ -150,7 +150,7 @@ public sealed partial class GoScreenRenderer
         var label = stone == GoStone.Black ? "BLACK PLAYER" : "WHITE PLAYER";
         DrawPlayerSelector(PlayerSelectorLayout.CreatePlayerSelector(y) with { Label = label, Value = player?.DisplayName ?? "SELECT PLAYER" }, mousePoint);
         var handleBounds = LocalMatchHandleBounds(y);
-        DrawUiLabel(UiLabel.InCompactRow("HANDLE", handleBounds));
+        DrawFittedText("HANDLE", new Rectangle(1156, handleBounds.Y + 4, 118, 32), UiLabel.TextColor, 0.34f);
         var textBounds = LocalMatchHandleTextBounds(stone);
         var active = session.ActiveLocalMatchHandleStone == stone;
         var hovered = textBounds.Contains(mousePoint);
@@ -373,7 +373,7 @@ public sealed partial class GoScreenRenderer
     private static Rectangle LocalMatchHandleTextBounds(GoStone stone)
     {
         var bounds = LocalMatchHandleBounds(stone == GoStone.Black ? BlackPlayerKindButtonY : WhitePlayerKindButtonY);
-        return new Rectangle(1296, bounds.Y + 4, 410, 30);
+        return new Rectangle(GameOverValueX, bounds.Y + 4, 410, 30);
     }
 
     private static Rectangle ClientIdentityProfileConnectionSelectionItemBounds(int slot) => new(544, 332 + slot * 82, 832, 70);
