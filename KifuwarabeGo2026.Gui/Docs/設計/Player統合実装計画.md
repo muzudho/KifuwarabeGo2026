@@ -167,7 +167,7 @@ WHITE PLAYER   [表示名 / 種別]                 [SELECT]
 ### 残作業
 
 - [完了] Local Match の開始時に、黒白それぞれの既定 LocalMatch Target の `NAMELY KEY`（旧 OUTPUT NAME）を固定し、手動保存・自動保存する棋譜ファイル名へ反映する。空欄または旧データでは Player の Identifier、表示名の順に補う。
-- CGOS で同じ接続先に複数 Target がある場合、既定 Target の選択規則を接続・対局開始の画面へ明示表示する。
+- [完了] CGOS で同じ接続先に複数 Target がある場合、Player 内の並び順で最初の Target を既定として使う。接続・対局開始画面には、その Target の Display と LOGIN NAME を `DEFAULT TARGET` として表示する。
 - CGOS 接続先の選択 UI を、Target 編集の現在値・前後切替から、接続先一覧を選ぶ一貫した UI へ整理する。
 - Player Catalog と Target Catalog をまたぐ追加・削除・既定変更の保存を、ひとまとまりの操作として整理する。
 

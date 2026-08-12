@@ -422,7 +422,10 @@ public sealed partial class GoScreenRenderer
             CgosBlackProcessPanelBounds,
             "PLAYER 1",
             session.CgosBlackConnectionStatusMessage,
-            session.SelectedCgosBlackPlayerProfile?.DisplayName ?? session.SelectedCgosBlackGtpEngineProfile?.DisplayName,
+            FormatCgosPlayerTarget(
+                session,
+                GoStone.Black,
+                session.SelectedCgosBlackPlayerProfile?.DisplayName ?? session.SelectedCgosBlackGtpEngineProfile?.DisplayName),
             CgosBlackEngineSelector with { Enabled = !session.IsCgosBlackConnectionRunning },
             string.IsNullOrWhiteSpace(session.CgosBlackGtpResponseWaitDisplay)
                 ? session.CgosBlackConnectionElapsedDisplay
@@ -446,7 +449,10 @@ public sealed partial class GoScreenRenderer
             CgosWhiteProcessPanelBounds,
             "PLAYER 2",
             session.CgosWhiteConnectionStatusMessage,
-            session.SelectedCgosWhitePlayerProfile?.DisplayName ?? session.SelectedCgosWhiteGtpEngineProfile?.DisplayName,
+            FormatCgosPlayerTarget(
+                session,
+                GoStone.White,
+                session.SelectedCgosWhitePlayerProfile?.DisplayName ?? session.SelectedCgosWhiteGtpEngineProfile?.DisplayName),
             CgosWhiteEngineSelector with { Enabled = session.IsCgosPlayer2InputEnabled && !session.IsCgosWhiteConnectionRunning },
             string.IsNullOrWhiteSpace(session.CgosWhiteGtpResponseWaitDisplay)
                 ? session.CgosWhiteConnectionElapsedDisplay
@@ -486,6 +492,12 @@ public sealed partial class GoScreenRenderer
         DrawUiLabel(UiLabel.InCompactRow("TARGET", CgosSelectedProfileBarBounds));
         var text = $"{profile.DisplayName} / {profile.Host}:{profile.Port} / {profile.Event} / {profile.Round}";
         DrawFittedText(text, new Rectangle(CgosSelectedProfileBarBounds.X + 152, CgosSelectedProfileBarBounds.Y + 7, CgosSelectedProfileBarBounds.Width - 168, 38), Color.White, 0.42f);
+    }
+
+    private static string FormatCgosPlayerTarget(GoAppSession session, GoStone stone, string? playerDisplayName)
+    {
+        var player = string.IsNullOrWhiteSpace(playerDisplayName) ? "-" : playerDisplayName;
+        return $"{player}  /  {session.GetSelectedCgosTargetSummary(stone)}";
     }
 
 

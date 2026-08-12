@@ -69,6 +69,18 @@ public sealed partial class GoAppSession
             .FirstOrDefault(target => string.Equals(target.ConnectionProfileId, connectionId, StringComparison.Ordinal));
     }
 
+    /// <summary>
+    /// 現在の CGOS 接続先で使う既定 Target を表示用に返す。
+    /// 同じ接続先の Target が複数ある場合も、Player 内の並び順で最初のものが既定となる。
+    /// </summary>
+    public string GetSelectedCgosTargetSummary(GoStone stone)
+    {
+        var target = GetSelectedCgosTargetProfile(stone);
+        return target is null
+            ? "NO DEFAULT TARGET"
+            : $"DEFAULT TARGET: {target.DisplayName} / {target.LoginName}";
+    }
+
     /// <summary>LocalMatch 用に既定となる Target。Player 内の先頭の LocalMatch Target を使う。</summary>
     public TargetProfile? GetSelectedLocalMatchTargetProfile(GoStone stone) =>
         GetSelectedPlayerProfile(stone) is not { } player
