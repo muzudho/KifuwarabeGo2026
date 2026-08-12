@@ -113,10 +113,15 @@ public sealed partial class GoAppSession
         var current = cgos ? GetSelectedCgosClientIdentityProfile(stone)?.Id : GetSelectedLocalMatchClientIdentityProfile(stone)?.Id;
         QuickClientIdentitySelectionIndex = Math.Max(0, targets.FindIndex(target => string.Equals(target.Id, current, StringComparison.Ordinal)));
         IsQuickClientIdentitySelectionPanelOpen = true;
+        ActivateWindow(ActiveWindowId.QuickClientIdentitySelection);
         return true;
     }
 
-    public void CancelQuickClientIdentitySelectionPanel() => IsQuickClientIdentitySelectionPanelOpen = false;
+    public void CancelQuickClientIdentitySelectionPanel()
+    {
+        IsQuickClientIdentitySelectionPanelOpen = false;
+        DeactivateWindow(ActiveWindowId.QuickClientIdentitySelection);
+    }
 
     public void SelectQuickClientIdentity(int index)
     {
@@ -132,7 +137,11 @@ public sealed partial class GoAppSession
         var selected = QuickClientIdentitySelectionIsCgos
             ? TrySelectCgosClientIdentityProfile(QuickClientIdentitySelectionStone, targets[QuickClientIdentitySelectionIndex].Id)
             : TrySelectLocalMatchClientIdentityProfile(QuickClientIdentitySelectionStone, targets[QuickClientIdentitySelectionIndex].Id);
-        if (selected) IsQuickClientIdentitySelectionPanelOpen = false;
+        if (selected)
+        {
+            IsQuickClientIdentitySelectionPanelOpen = false;
+            DeactivateWindow(ActiveWindowId.QuickClientIdentitySelection);
+        }
         return selected;
     }
 
@@ -305,10 +314,15 @@ public sealed partial class GoAppSession
             string.Equals(profile.Id, ClientIdentityProfileEditDraft.ConnectionProfileId, StringComparison.Ordinal)));
         ClientIdentityProfileConnectionSelectionPageIndex = ClientIdentityProfileConnectionSelectionIndex / ClientIdentityProfileConnectionSelectionPageSize;
         IsClientIdentityProfileConnectionSelectionPanelOpen = true;
+        ActivateWindow(ActiveWindowId.ClientIdentityConnectionSelection);
         return true;
     }
 
-    public void CancelClientIdentityProfileConnectionSelectionPanel() => IsClientIdentityProfileConnectionSelectionPanelOpen = false;
+    public void CancelClientIdentityProfileConnectionSelectionPanel()
+    {
+        IsClientIdentityProfileConnectionSelectionPanelOpen = false;
+        DeactivateWindow(ActiveWindowId.ClientIdentityConnectionSelection);
+    }
 
     public void SelectClientIdentityProfileConnection(int index)
     {
@@ -323,6 +337,7 @@ public sealed partial class GoAppSession
             return false;
         ClientIdentityProfileEditDraft.ConnectionProfileId = _cgosConnectionProfiles[ClientIdentityProfileConnectionSelectionIndex].Id;
         IsClientIdentityProfileConnectionSelectionPanelOpen = false;
+        DeactivateWindow(ActiveWindowId.ClientIdentityConnectionSelection);
         return true;
     }
 

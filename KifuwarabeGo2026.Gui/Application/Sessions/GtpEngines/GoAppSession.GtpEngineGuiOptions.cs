@@ -18,6 +18,7 @@ public sealed partial class GoAppSession
         GtpEngineRandomMoveSelectionIndex = currentIndex >= 0 ? currentIndex : Math.Max(0, choices.ToList().FindIndex(choice => choice.IsEnabled));
         GtpEngineRandomMoveSelectionPageIndex = GtpEngineRandomMoveSelectionIndex / GtpEngineComboSelectionPageSize;
         IsGtpEngineRandomMoveSelectionDialogOpen = true;
+        ActivateWindow(ActiveWindowId.GtpEngineComboSelection);
     }
 
     public void SelectGtpEngineRandomMoveItem(int index)
@@ -31,7 +32,11 @@ public sealed partial class GoAppSession
     public void MoveGtpEngineGuiOptionsPage(int step) => GtpEngineGuiOptionsPageIndex = Math.Clamp(GtpEngineGuiOptionsPageIndex + step, 0, GetGtpEngineGuiOptionsPageCount() - 1);
     public int GetGtpEngineRandomMoveSelectionPageCount() => Math.Max(1, (GetActiveGtpEngineComboChoices().Count + GtpEngineComboSelectionPageSize - 1) / GtpEngineComboSelectionPageSize);
     public void MoveGtpEngineRandomMoveSelectionPage(int step) => GtpEngineRandomMoveSelectionPageIndex = Math.Clamp(GtpEngineRandomMoveSelectionPageIndex + step, 0, GetGtpEngineRandomMoveSelectionPageCount() - 1);
-    public void CancelGtpEngineRandomMoveSelectionDialog() => IsGtpEngineRandomMoveSelectionDialogOpen = false;
+    public void CancelGtpEngineRandomMoveSelectionDialog()
+    {
+        IsGtpEngineRandomMoveSelectionDialogOpen = false;
+        DeactivateWindow(ActiveWindowId.GtpEngineComboSelection);
+    }
 
     public void CommitGtpEngineRandomMoveSelectionDialog()
     {
@@ -39,6 +44,7 @@ public sealed partial class GoAppSession
         if (ActiveGtpEngineComboOption is { } option && GtpEngineRandomMoveSelectionIndex >= 0 && GtpEngineRandomMoveSelectionIndex < choices.Count && choices[GtpEngineRandomMoveSelectionIndex].IsEnabled)
             GtpEngineGuiOptionsDialogDraft[option.Id] = choices[GtpEngineRandomMoveSelectionIndex].Value;
         IsGtpEngineRandomMoveSelectionDialogOpen = false;
+        DeactivateWindow(ActiveWindowId.GtpEngineComboSelection);
     }
 
     public IReadOnlyList<GtpEngineGuiOptionChoice> GetActiveGtpEngineComboChoices()
@@ -94,6 +100,7 @@ public sealed partial class GoAppSession
         IsGtpEngineRandomMoveSelectionDialogOpen = false;
         GtpEngineGuiOptionsPageIndex = 0;
         IsGtpEngineGuiOptionsDialogOpen = true;
+        ActivateWindow(ActiveWindowId.GtpEngineGuiOptions);
         ActiveGtpEngineEditField = null;
     }
 
@@ -132,7 +139,9 @@ public sealed partial class GoAppSession
     public void CancelGtpEngineGuiOptionsDialog()
     {
         IsGtpEngineRandomMoveSelectionDialogOpen = false;
+        DeactivateWindow(ActiveWindowId.GtpEngineComboSelection);
         IsGtpEngineGuiOptionsDialogOpen = false;
+        DeactivateWindow(ActiveWindowId.GtpEngineGuiOptions);
         GtpEngineGuiOptionsDialogDraft.Clear();
     }
 
@@ -140,7 +149,9 @@ public sealed partial class GoAppSession
     {
         GtpEngineEditDraft.GuiOptions = new Dictionary<string, string>(GtpEngineGuiOptionsDialogDraft);
         IsGtpEngineRandomMoveSelectionDialogOpen = false;
+        DeactivateWindow(ActiveWindowId.GtpEngineComboSelection);
         IsGtpEngineGuiOptionsDialogOpen = false;
+        DeactivateWindow(ActiveWindowId.GtpEngineGuiOptions);
         GtpEngineGuiOptionsDialogDraft.Clear();
         GtpEngineEditSaveMessage = "UNSAVED";
     }

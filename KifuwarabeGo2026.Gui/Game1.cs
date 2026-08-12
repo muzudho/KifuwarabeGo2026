@@ -1736,6 +1736,17 @@ public class Game1 : Game
             case ActiveWindowId.ClientIdentityEdit:
                 TryHandlePlayerSelectionDialogClick(point);
                 return true;
+            case ActiveWindowId.ClientIdentityConnectionSelection:
+                return TryHandleClientIdentityConnectionSelectionClick(point);
+            case ActiveWindowId.QuickClientIdentitySelection:
+                return TryHandleQuickClientIdentitySelectionClick(point);
+            case ActiveWindowId.GtpEngineGuiOptions:
+            case ActiveWindowId.GtpEngineComboSelection:
+                if (_session.IsAppProviderGameSettingsDialogOpen)
+                    TryHandleAppProviderGameSettingsClick(point);
+                else
+                    TryHandleGtpEngineEditPanelClick(point);
+                return true;
             case ActiveWindowId.TournamentRulesSelection:
             case ActiveWindowId.TournamentRulesEdit:
                 return _tournamentRulesSetting.TryHandleMouseClick(
@@ -1765,6 +1776,38 @@ public class Game1 : Game
         else if (GoScreenRenderer.GetCgosAdminPlayerDialogItemHit(point, _session) is { } playerIndex)
             _session.SelectCgosAdminPlayerDialogItem(playerIndex);
 
+        return true;
+    }
+
+    private bool TryHandleQuickClientIdentitySelectionClick(Point point)
+    {
+        if (!_session.IsQuickClientIdentitySelectionPanelOpen)
+            return false;
+
+        if (GoScreenRenderer.GetQuickClientIdentitySelectionCancelButtonHit(point))
+            _session.CancelQuickClientIdentitySelectionPanel();
+        else if (GoScreenRenderer.GetQuickClientIdentitySelectionSelectButtonHit(point))
+            _session.CommitQuickClientIdentitySelection();
+        else if (GoScreenRenderer.GetQuickClientIdentitySelectionItemHit(point, _session) is { } index)
+            _session.SelectQuickClientIdentity(index);
+        return true;
+    }
+
+    private bool TryHandleClientIdentityConnectionSelectionClick(Point point)
+    {
+        if (!_session.IsClientIdentityProfileConnectionSelectionPanelOpen)
+            return false;
+
+        if (GoScreenRenderer.GetClientIdentityProfileConnectionSelectionCancelButtonHit(point))
+            _session.CancelClientIdentityProfileConnectionSelectionPanel();
+        else if (GoScreenRenderer.GetClientIdentityProfileConnectionSelectionSelectButtonHit(point))
+            _session.CommitClientIdentityProfileConnectionSelection();
+        else if (GoScreenRenderer.GetClientIdentityProfileConnectionSelectionPreviousButtonHit(point))
+            _session.MoveClientIdentityProfileConnectionSelectionPage(-1);
+        else if (GoScreenRenderer.GetClientIdentityProfileConnectionSelectionNextButtonHit(point))
+            _session.MoveClientIdentityProfileConnectionSelectionPage(1);
+        else if (GoScreenRenderer.GetClientIdentityProfileConnectionSelectionItemHit(point, _session) is { } index)
+            _session.SelectClientIdentityProfileConnection(index);
         return true;
     }
 
