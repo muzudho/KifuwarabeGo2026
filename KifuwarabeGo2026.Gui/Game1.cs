@@ -2048,7 +2048,7 @@ public class Game1 : Game
             return;
         }
 
-        if (_renderer is null || _previousMouse.LeftButton != ButtonState.Pressed) return;
+        if (_renderer is null || _previousMouse.LeftButton != ButtonState.Pressed || !CanUpdateTextBoxMouseDrag()) return;
 
         if (_activeGtpEngineIntegerOption is not null)
         {
@@ -2135,6 +2135,16 @@ public class Game1 : Game
         return keyboard.IsKeyDown(Keys.LeftShift) || keyboard.IsKeyDown(Keys.RightShift);
     }
 
+    private bool CanUpdateTextBoxMouseDrag() => _session.ActiveWindowId is
+        ActiveWindowId.None or
+        ActiveWindowId.PlayerEdit or
+        ActiveWindowId.ClientIdentityEdit or
+        ActiveWindowId.CgosConnectionEdit or
+        ActiveWindowId.GtpEngineEdit or
+        ActiveWindowId.TournamentRulesEdit or
+        ActiveWindowId.TextInput or
+        ActiveWindowId.IntegerInput;
+
     private void UpdateScreenshotKeyboardInput(KeyboardState keyboard)
     {
         var controlDown = keyboard.IsKeyDown(Keys.LeftControl) || keyboard.IsKeyDown(Keys.RightControl);
@@ -2170,6 +2180,9 @@ public class Game1 : Game
 
     private void UpdateCatalogOrderDrag(MouseState mouse, Point point)
     {
+        if (_session.ActiveWindowId != ActiveWindowId.CatalogOrderEditor)
+            return;
+
         UpdateCatalogOrderDrag(_session.TournamentRulesOrderEditor, mouse, point);
         UpdateCatalogOrderDrag(_session.GtpEngineOrderEditor, mouse, point);
         UpdateCatalogOrderDrag(_session.CgosConnectionOrderEditor, mouse, point);
@@ -3505,7 +3518,8 @@ public class Game1 : Game
 
     private void UpdateReviewPopupSeekDrag(MouseState mouse, Point point)
     {
-        if (!_session.IsReviewChartPopupOpen || mouse.LeftButton != ButtonState.Pressed)
+        if (_session.ActiveWindowId != ActiveWindowId.ReviewChartPopup ||
+            !_session.IsReviewChartPopupOpen || mouse.LeftButton != ButtonState.Pressed)
         {
             _reviewPopupSeekDragging = false;
             return;
