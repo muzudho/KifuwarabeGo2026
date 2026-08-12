@@ -8,7 +8,9 @@ public sealed partial class GoAppSession
     public void OpenTournamentRulesSelectionDialog()
     {
         IsGtpEngineSelectionDialogOpen = false;
+        DeactivateWindow(ActiveWindowId.GtpEngineSelection);
         IsGtpEngineEditPanelOpen = false;
+        DeactivateWindow(ActiveWindowId.GtpEngineEdit);
         IsTournamentRulesAddPanelOpen = false;
         IsTournamentRulesSelectionDialogOpen = true;
         ActivateWindow(ActiveWindowId.TournamentRulesSelection);
@@ -41,7 +43,9 @@ public sealed partial class GoAppSession
     public void OpenTournamentRulesAddPanel(bool editExisting)
     {
         IsGtpEngineSelectionDialogOpen = false;
+        DeactivateWindow(ActiveWindowId.GtpEngineSelection);
         IsGtpEngineEditPanelOpen = false;
+        DeactivateWindow(ActiveWindowId.GtpEngineEdit);
         IsTournamentRulesSelectionDialogOpen = false;
         DeactivateWindow(ActiveWindowId.TournamentRulesSelection);
         IsTournamentRulesAddPanelOpen = true;

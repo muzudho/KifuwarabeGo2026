@@ -62,8 +62,11 @@ public sealed partial class GoAppSession
         }
 
         IsTournamentRulesSelectionDialogOpen = false;
+        DeactivateWindow(ActiveWindowId.TournamentRulesSelection);
         IsTournamentRulesAddPanelOpen = false;
+        DeactivateWindow(ActiveWindowId.TournamentRulesEdit);
         IsTournamentRulesDeleteConfirmationOpen = false;
+        DeactivateWindow(ActiveWindowId.TournamentRulesDeleteConfirmation);
         IsGtpEngineEditPanelOpen = false;
         DeactivateWindow(ActiveWindowId.GtpEngineEdit);
         IsGtpEngineAddPanelMode = false;

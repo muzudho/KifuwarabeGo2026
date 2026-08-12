@@ -61,8 +61,8 @@ public sealed partial class GoScreenRenderer
         FillRect(bounds, new Color(19, 24, 31, 252));
         DrawRect(bounds, 2, new Color(116, 145, 146));
         DrawText($"{title} - EDIT ORDER", new Vector2(bounds.X + 30, bounds.Y + 24), new Color(244, 238, 218), 0.68f);
-        DrawCommandButton(CatalogOrderEditorLayout.CancelButtonBounds, "CANCEL", false, mousePoint, scale: 0.34f);
-        DrawCommandButton(CatalogOrderEditorLayout.SaveButtonBounds, "SAVE", false, mousePoint, scale: 0.38f);
+        DrawCommandButton(CatalogOrderEditorLayout.CancelButtonBounds, "DISCARD", false, mousePoint, scale: 0.28f);
+        DrawCommandButton(CatalogOrderEditorLayout.SaveButtonBounds, "SAVE & CLOSE", false, mousePoint, scale: 0.23f);
 
         FillRect(CatalogOrderEditorLayout.BoardBounds, new Color(15, 20, 26));
         DrawRect(CatalogOrderEditorLayout.BoardBounds, 1, new Color(67, 84, 92));

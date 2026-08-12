@@ -57,7 +57,7 @@ public sealed partial class GoScreenRenderer
         DrawDynamicOptionText(message, new Rectangle(TextAreaDialogBounds.X + 70, 752, 820, 34), new Color(180, 195, 195), 0.34f);
         DrawFittedText("ENTER: NEW LINE   CTRL+ENTER: SAVE SGF", new Rectangle(TextAreaDialogBounds.X + 70, 786, 800, 28), new Color(147, 201, 190), 0.29f);
         DrawCommandButton(TextAreaDiscardButtonBounds, "DISCARD", false, mousePoint, scale: 0.30f);
-        DrawCommandButton(TextAreaApplyButtonBounds, "SAVE", false, mousePoint, scale: 0.40f);
+        DrawCommandButton(TextAreaApplyButtonBounds, "SAVE & CLOSE", false, mousePoint, scale: 0.25f);
         _spriteBatch.End();
     }
 

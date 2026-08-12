@@ -164,8 +164,11 @@ public sealed partial class GoAppSession
             return;
 
         IsTournamentRulesSelectionDialogOpen = false;
+        DeactivateWindow(ActiveWindowId.TournamentRulesSelection);
         IsTournamentRulesAddPanelOpen = false;
+        DeactivateWindow(ActiveWindowId.TournamentRulesEdit);
         IsTournamentRulesDeleteConfirmationOpen = false;
+        DeactivateWindow(ActiveWindowId.TournamentRulesDeleteConfirmation);
         IsGtpEngineSelectionDialogOpen = false;
         DeactivateWindow(ActiveWindowId.GtpEngineSelection);
         IsGtpEngineEditPanelOpen = true;
@@ -195,8 +198,11 @@ public sealed partial class GoAppSession
     public void OpenGtpEngineAddPanel()
     {
         IsTournamentRulesSelectionDialogOpen = false;
+        DeactivateWindow(ActiveWindowId.TournamentRulesSelection);
         IsTournamentRulesAddPanelOpen = false;
+        DeactivateWindow(ActiveWindowId.TournamentRulesEdit);
         IsTournamentRulesDeleteConfirmationOpen = false;
+        DeactivateWindow(ActiveWindowId.TournamentRulesDeleteConfirmation);
         IsGtpEngineSelectionDialogOpen = false;
         DeactivateWindow(ActiveWindowId.GtpEngineSelection);
         IsGtpEngineEditPanelOpen = true;
@@ -217,8 +223,11 @@ public sealed partial class GoAppSession
             return;
 
         IsTournamentRulesSelectionDialogOpen = false;
+        DeactivateWindow(ActiveWindowId.TournamentRulesSelection);
         IsTournamentRulesAddPanelOpen = false;
+        DeactivateWindow(ActiveWindowId.TournamentRulesEdit);
         IsTournamentRulesDeleteConfirmationOpen = false;
+        DeactivateWindow(ActiveWindowId.TournamentRulesDeleteConfirmation);
         IsGtpEngineSelectionDialogOpen = false;
         DeactivateWindow(ActiveWindowId.GtpEngineSelection);
         IsGtpEngineEditPanelOpen = true;
@@ -240,7 +249,9 @@ public sealed partial class GoAppSession
     {
         var dialogSelectionIndex = GtpEngineEditProfileIndex;
         IsGtpEngineRandomMoveSelectionDialogOpen = false;
+        DeactivateWindow(ActiveWindowId.GtpEngineComboSelection);
         IsGtpEngineGuiOptionsDialogOpen = false;
+        DeactivateWindow(ActiveWindowId.GtpEngineGuiOptions);
         GtpEngineGuiOptionsDialogDraft.Clear();
         IsGtpEngineEditPanelOpen = false;
         DeactivateWindow(ActiveWindowId.GtpEngineEdit);

@@ -1,6 +1,7 @@
 namespace KifuwarabeGo2026.Gui.Application.Local.Resting.TournamentRule;
 
 using KifuwarabeGo2026.Gui.Application;
+using KifuwarabeGo2026.Gui.Infrastructure.Logging;
 using KifuwarabeGo2026.Gui.Presentation;
 using KifuwarabeGo2026.Gui.Presentation.Shared.TextBox;
 using Microsoft.Xna.Framework;
@@ -70,7 +71,8 @@ public sealed class TournamentRulesSetting
 
         if (IsNewKeyPress(keyboard, Keys.F5))
         {
-            SaveCurrentTournamentRules();
+            if (SaveCurrentTournamentRules())
+                _session.CloseTournamentRulesAddPanel();
         }
 
         _previousKeyboard = keyboard;
@@ -206,7 +208,8 @@ public sealed class TournamentRulesSetting
 
         if (GoScreenRenderer.GetSaveTournamentRulesButtonHit(point))
         {
-            SaveCurrentTournamentRules();
+            if (SaveCurrentTournamentRules())
+                _session.CloseTournamentRulesAddPanel();
             return true;
         }
 
@@ -508,20 +511,22 @@ public sealed class TournamentRulesSetting
         }
     }
 
-    private void SaveCurrentTournamentRules()
+    private bool SaveCurrentTournamentRules()
     {
         if (!CommitNumericEdit())
         {
-            return;
+            return false;
         }
 
         if (_session.IsTournamentRulesDisplayNameEditing && !TryApplyDisplayName())
         {
-            return;
+            return false;
         }
 
         _catalog.Save(_session.CurrentTournamentRules);
         _session.MarkTournamentRulesSaved();
+        GuiOperationLog.User("Saved tournament rules", $"name={_session.CurrentTournamentRules.DisplayName}; path={_catalog.ListPath}");
+        return true;
     }
 
     private void BeginNumericEdit(TournamentRulesNumericField field)

@@ -274,8 +274,8 @@ public sealed partial class GoScreenRenderer
         FillRect(bounds, new Color(24, 29, 36, 252));
         DrawRect(bounds, 2, new Color(116, 145, 146));
         DrawText("EDIT ENTRY PROFILE", new Vector2(bounds.X + 34, bounds.Y + 28), new Color(244, 238, 218), 0.68f);
-        DrawCommandButton(PlayerEditPanelCancelButtonBounds, "CANCEL", false, mousePoint, scale: 0.30f);
-        DrawCommandButton(PlayerEditPanelSaveButtonBounds, "SAVE", false, mousePoint, scale: 0.36f);
+        DrawCommandButton(PlayerEditPanelCancelButtonBounds, "DISCARD", false, mousePoint, scale: 0.30f);
+        DrawCommandButton(PlayerEditPanelSaveButtonBounds, "SAVE & CLOSE", false, mousePoint, scale: 0.26f);
         DrawPlayerEditField(session, EntryProfileEditField.DisplayName, "DISPLAY NAME", mousePoint);
         DrawPlayerEditPopupField("HANDLE", session.PlayerEditClientIdentityHandle, PlayerEditPanelClientIdentityTextBounds, mousePoint);
         if (session.PlayerEditDraft.Kind == EntryProfileKind.Computer)
@@ -298,8 +298,8 @@ public sealed partial class GoScreenRenderer
         DrawText("EDIT CLIENT IDENTITY", new Vector2(bounds.X + 34, bounds.Y + 28), new Color(244, 238, 218), 0.68f);
         DrawDynamicOptionText("機械で扱えるフォーマットのプレイヤー情報を設定できます。", new Rectangle(bounds.X + 36, bounds.Y + 82, 860, 32), new Color(180, 195, 195), 0.34f);
         var targets = session.GetPlayerClientIdentityProfiles(session.PlayerEditDraft.Id);
-        DrawCommandButton(ClientIdentityProfileEditCancelButtonBounds, "CANCEL", false, mousePoint, scale: 0.30f);
-        DrawCommandButton(ClientIdentityProfileEditSaveButtonBounds, "SAVE", false, mousePoint, scale: 0.36f);
+        DrawCommandButton(ClientIdentityProfileEditCancelButtonBounds, "DISCARD", false, mousePoint, scale: 0.30f);
+        DrawCommandButton(ClientIdentityProfileEditSaveButtonBounds, "SAVE & CLOSE", false, mousePoint, scale: 0.26f);
         var edited = session.ClientIdentityProfileEditDraft;
         var isLocalMatch = string.IsNullOrEmpty(edited.ConnectionProfileId);
         DrawClientIdentityProfileEditField(session, 0, ClientIdentityProfileEditField.LoginName, "HANDLE", mousePoint, isLocalMatch);

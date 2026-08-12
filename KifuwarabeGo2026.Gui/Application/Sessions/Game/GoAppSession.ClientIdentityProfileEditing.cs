@@ -78,6 +78,7 @@ public sealed partial class GoAppSession
     {
         (IsClientIdentityProfileEditPanelOpen, IsClientIdentityProfileConnectionSelectionPanelOpen, ActiveClientIdentityProfileEditField) = (false, false, null);
         DeactivateWindow(ActiveWindowId.ClientIdentityEdit);
+        DeactivateWindow(ActiveWindowId.ClientIdentityConnectionSelection);
     }
 
     public bool ReturnToClientIdentityProfileSelectionPanel()

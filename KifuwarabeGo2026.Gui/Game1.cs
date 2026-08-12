@@ -2806,7 +2806,8 @@ public class Game1 : Game
 
         if (GoScreenRenderer.GetCgosConnectionEditPanelSaveButtonHit(point))
         {
-            SaveCgosConnectionEditDraft();
+            if (SaveCgosConnectionEditDraft())
+                CloseCgosConnectionEditPanel();
             return true;
         }
 
@@ -2858,7 +2859,8 @@ public class Game1 : Game
 
         if (keyboard.IsKeyDown(Keys.F5) && _previousCgosConnectionKeyboard.IsKeyUp(Keys.F5))
         {
-            SaveCgosConnectionEditDraft();
+            if (SaveCgosConnectionEditDraft())
+                CloseCgosConnectionEditPanel();
         }
 
         _previousCgosConnectionKeyboard = keyboard;
@@ -3765,17 +3767,24 @@ public class Game1 : Game
         _cgosConnectionEditTextBox.Clear();
     }
 
-    private void SaveCgosConnectionEditDraft()
+    private bool SaveCgosConnectionEditDraft()
     {
         EndCgosConnectionEditField();
         if (!ValidateCgosConnectionEditDraft(out var profile, out var warning))
         {
             _session.SetCgosConnectionEditWarning(warning);
-            return;
+            return false;
         }
 
         _session.SaveCgosConnectionEditDraft(profile);
         _cgosConnectionCatalog.Save(_session.CgosConnectionProfiles);
+        return true;
+    }
+
+    private void CloseCgosConnectionEditPanel()
+    {
+        _cgosConnectionEditTextBox.Clear();
+        _session.CloseCgosConnectionEditPanel();
     }
 
     private bool ValidateCgosConnectionEditDraft(out CgosConnectionProfile profile, out string warning)
@@ -5125,7 +5134,8 @@ public class Game1 : Game
 
         if (GoScreenRenderer.GetGtpEngineEditPanelSaveButtonHit(point))
         {
-            SaveGtpEngineEditDraft();
+            if (SaveGtpEngineEditDraft())
+                CloseGtpEngineEditPanel();
             return true;
         }
 
@@ -5187,7 +5197,8 @@ public class Game1 : Game
 
         if (IsNewGtpEngineKeyPress(keyboard, Keys.F5))
         {
-            SaveGtpEngineEditDraft();
+            if (SaveGtpEngineEditDraft())
+                CloseGtpEngineEditPanel();
         }
 
         _previousGtpEngineKeyboard = keyboard;
@@ -5593,18 +5604,26 @@ public class Game1 : Game
         _session.SetGtpEngineWorkingDirectoryDraft(WorkingDirectoryModel.FromString(selectedPath));
     }
 
-    private void SaveGtpEngineEditDraft()
+    private bool SaveGtpEngineEditDraft()
     {
         EndGtpEngineEditField();
         if (!ValidateGtpEngineEditDraft(out var profile, out var warning))
         {
             _session.SetGtpEngineEditWarning(warning);
-            return;
+            return false;
         }
 
         _session.SaveGtpEngineEditDraft(profile);
         _session.CompleteNewEngineProfileForPlayerEdit(profile.Id);
         _gtpEngineCatalog.Save(_session.GtpEngineProfiles);
+        return true;
+    }
+
+    private void CloseGtpEngineEditPanel()
+    {
+        _gtpEngineEditTextBox.Clear();
+        RefreshCurrentGtpEngineAppCompatibilities();
+        _session.CloseGtpEngineEditPanel();
     }
 
     private bool ValidateGtpEngineEditDraft(out GtpEngineProfile profile, out string warning)
