@@ -249,7 +249,9 @@ public sealed partial class GoScreenRenderer
         if (session.PlayerEditDraft.Kind == EntryProfileKind.Computer)
             DrawPlayerEditPopupField("ENGINE", session.PlayerEditEngineDisplayName, PlayerEditPanelEngineTextBounds, mousePoint);
         DrawText("DISPLAY NAME を直接編集できます。  HANDLE と ENGINE は CHANGE から選択します。", new Vector2(bounds.X + 42, bounds.Bottom - 54), new Color(180, 195, 195), 0.28f);
-        DrawPlayerEditStickyNote(session, mousePoint);
+        // 子ダイアログを開いている間は、背後の Entry Profile 用 StickyNote を出さない。
+        if (!session.IsClientIdentityProfileSelectionPanelOpen && !session.IsClientIdentityProfileEditPanelOpen)
+            DrawPlayerEditStickyNote(session, mousePoint);
     }
 
     private void DrawClientIdentityProfileEditPanel(GoAppSession session, Point mousePoint)
