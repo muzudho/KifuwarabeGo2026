@@ -1,22 +1,42 @@
-namespace KifuwarabeGo2026.Gui.Presentation;
+namespace KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.LinkUnderline;
 
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.LinkUnderline;
 using Microsoft.Xna.Framework;
 using System;
 
-public sealed partial class GoScreenRenderer
+/// <summary>
+/// 非同期アクションへ接続する文房具 UI のリンクアンダーラインです。
+/// 描画方法はホストがコールバックで渡すため、GoScreenRenderer には依存しません。
+/// </summary>
+public sealed class LinkUnderline
 {
-    public static bool IsLinkUnderlineHit(Rectangle bounds, Point point) => bounds.Contains(point);
+    private readonly Action<Rectangle, string, Color, Color> _drawUnderline;
+    private readonly Action<Vector2, Color> _drawSpinner;
 
-    /// <summary>Link Underline と、その非同期実行状態を描画します。SpriteBatch 開始中に呼び出してください。</summary>
-    public void DrawLinkUnderline(
+    /// <param name="drawUnderline">
+    /// ラベル、下線色、文字色を描画します。日本語描画と座標変換はホスト側で担当します。
+    /// </param>
+    /// <param name="drawSpinner">指定位置にスピナーを描画します。</param>
+    public LinkUnderline(
+        Action<Rectangle, string, Color, Color> drawUnderline,
+        Action<Vector2, Color> drawSpinner)
+    {
+        _drawUnderline = drawUnderline ?? throw new ArgumentNullException(nameof(drawUnderline));
+        _drawSpinner = drawSpinner ?? throw new ArgumentNullException(nameof(drawSpinner));
+    }
+
+    public bool IsHit(Rectangle bounds, Point point) => bounds.Contains(point);
+
+    /// <summary>状態に応じた色を決め、下線と必要ならスピナーを描画します。</summary>
+    public void Draw(
         Rectangle bounds,
         string label,
         Point mousePoint,
         LinkUnderlineController controller,
         double nowSeconds)
     {
-        var hovered = controller.CanActivate && bounds.Contains(mousePoint);
+        ArgumentNullException.ThrowIfNull(controller);
+
+        var hovered = controller.CanActivate && IsHit(bounds, mousePoint);
         var underlineColor = controller.State switch
         {
             LinkUnderlineState.Executing => new Color(255, 210, 128),
@@ -26,33 +46,8 @@ public sealed partial class GoScreenRenderer
         };
         var textColor = controller.IsExecuting ? new Color(255, 225, 160) : Color.White;
 
-        DrawDynamicOptionText(label, bounds, textColor, 0.34f);
-        DrawRoundedFill(new Rectangle(bounds.X, bounds.Bottom + 2, bounds.Width, 4), 2, underlineColor);
-
+        _drawUnderline(bounds, label, underlineColor, textColor);
         if (controller.IsSpinnerVisible(nowSeconds))
-            DrawLinkUnderlineSpinner(new Vector2(bounds.Right - 14, bounds.Center.Y), underlineColor);
-
-        if (!string.IsNullOrEmpty(controller.Message))
-        {
-            DrawDynamicOptionText(
-                controller.Message,
-                new Rectangle(bounds.X, bounds.Bottom + 12, bounds.Width, 28),
-                underlineColor,
-                0.25f);
-        }
-    }
-
-    private void DrawLinkUnderlineSpinner(Vector2 center, Color color)
-    {
-        const int segmentCount = 10;
-        var head = (int)(System.Environment.TickCount64 / 70 % segmentCount);
-        for (var index = 0; index < segmentCount; index++)
-        {
-            var angle = MathF.Tau * index / segmentCount;
-            var direction = new Vector2(MathF.Cos(angle), MathF.Sin(angle));
-            var distance = (head - index + segmentCount) % segmentCount;
-            var opacity = (byte)System.Math.Clamp(235 - distance * 18, 60, 235);
-            DrawLine(center + direction * 7, center + direction * 13, 3, new Color(color.R, color.G, color.B, opacity));
-        }
+            _drawSpinner(new Vector2(bounds.Right - 14, bounds.Center.Y), underlineColor);
     }
 }
