@@ -92,7 +92,6 @@ public sealed partial class GoScreenRenderer
                 _settingsLogLinkUnderline.UpdatePointer(mousePoint);
                 _settingsLogLinkUnderline.SetSelected(selected);
                 _settingsLogLinkUnderline.Draw(
-                    new Color(147, 244, 200),
                     this);
                 if (selected && hovered)
                     DrawSettingsHoverBadge("EDIT", SettingsLogItemActionBadgeBounds(index));

@@ -29,6 +29,8 @@ public sealed class LinkUnderline
     /// <summary>このリンクが選択状態かを示します。</summary>
     public bool IsSelected { get; private set; }
 
+    public Color SelectedColor { get; set; } = new(147, 244, 200);
+
     /// <summary>指定座標がこのリンク領域内か判定します。</summary>
     public bool IsHit(Point point) => Bounds.Contains(point);
 
@@ -54,22 +56,13 @@ public sealed class LinkUnderline
     public void Draw(IUnderlineDrawingSurface surface)
     {
         Underline.ContentBounds = Bounds;
-        Underline.Color = IsHovered ? new Color(185, 196, 255) : new Color(100, 110, 145);
-        Underline.Draw(surface);
-    }
-
-    /// <summary>選択済みのリンクを、ホバー色より優先する色で描画します。</summary>
-    public void Draw(
-        Color selectedColor,
-        IUnderlineDrawingSurface surface)
-    {
-        Underline.ContentBounds = Bounds;
         Underline.Color = IsSelected
-            ? selectedColor
+            ? SelectedColor
             : IsHovered ? new Color(185, 196, 255) : new Color(100, 110, 145);
         Underline.Draw(surface);
     }
 
+    /// <summary>選択済みのリンクを、ホバー色より優先する色で描画します。</summary>
     /// <summary>状態に応じた色を決め、下線と必要ならスピナーを描画します。</summary>
     /// <param name="drawUnderline">日本語ラベルと下線を描画する処理です。</param>
     /// <param name="drawSpinner">指定位置にスピナーを描画する処理です。</param>
