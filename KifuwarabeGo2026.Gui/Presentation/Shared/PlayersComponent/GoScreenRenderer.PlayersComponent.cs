@@ -1,6 +1,7 @@
 namespace KifuwarabeGo2026.Gui.Presentation;
 
 using KifuwarabeGo2026.Gui.Application;
+using KifuwarabeGo2026.Gui.Presentation.Shared.PlayersComponent;
 using KifuwarabeGo2026.Shared.Domain;
 using Microsoft.Xna.Framework;
 using System;
@@ -10,6 +11,7 @@ using System;
 /// </summary>
 public sealed partial class GoScreenRenderer
 {
+    private static readonly PlayerEngineErrorButton PlayerEngineErrorButton = new();
     public static bool GetEngineErrorLogHit(Point point, GoAppSession session)
     {
         if (session.CurrentMode.Kind != GoAppModeKind.Playing || session.EngineErrorStone is not { } errorStone)
@@ -20,7 +22,7 @@ public sealed partial class GoScreenRenderer
         var playerBounds = errorStone == GoStone.Black
             ? new Rectangle(1144, PlayingPlayersY, 668, 88)
             : new Rectangle(1144, PlayingPlayersY + 96, 668, 88);
-        return PlayerEngineErrorBounds(playerBounds).Contains(point);
+        return PlayerEngineErrorButton.GetBounds(playerBounds).Contains(point);
     }
 
     /// <summary>
@@ -93,11 +95,8 @@ public sealed partial class GoScreenRenderer
         }
         if (engineError)
         {
-            var errorLogBounds = PlayerEngineErrorBounds(bounds);
-            var hovered = mousePoint is { } point && errorLogBounds.Contains(point);
-            FillRect(errorLogBounds, hovered ? new Color(104, 34, 38, 220) : new Color(57, 29, 34, 210));
-            DrawRect(errorLogBounds, 1, new Color(255, 96, 96));
-            DrawFittedText("ERROR LOG", new Rectangle(errorLogBounds.X + 10, errorLogBounds.Y + 4, errorLogBounds.Width - 20, errorLogBounds.Height - 8), new Color(255, 126, 126), 0.34f);
+            PlayerEngineErrorButton.Draw(bounds, mousePoint,
+                new PlayerEngineErrorButtonDrawingCallbacks(FillRect, DrawRect, DrawFittedText));
         }
     }
 
@@ -129,6 +128,4 @@ public sealed partial class GoScreenRenderer
         DrawAgehamaPlate(new Rectangle(bounds.Right - 144, bounds.Y + 10, 126, 40), agehama, capturedBlack);
     }
 
-    private static Rectangle PlayerEngineErrorBounds(Rectangle playerBounds) =>
-        new(playerBounds.Right - 190, playerBounds.Y + 48, 172, 30);
 }
