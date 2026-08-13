@@ -14,6 +14,7 @@ public sealed partial class GoScreenRenderer
     private static readonly PlayerEngineErrorButton PlayerEngineErrorButton = new();
     private readonly AgehamaPlate _agehamaPlate = new();
     private readonly PlayerTimeStatus _playerTimeStatus = new();
+    private readonly PlayerTurnIndicator _playerTurnIndicator = new();
     public static bool GetEngineErrorLogHit(Point point, GoAppSession session)
     {
         if (session.CurrentMode.Kind != GoAppModeKind.Playing || session.EngineErrorStone is not { } errorStone)
@@ -67,7 +68,7 @@ public sealed partial class GoScreenRenderer
     {
         if (!minimal) DrawDataRowFrame(bounds);
         var layout = PlayerRowLayouts.Create(bounds, minimal, liveElapsed is not null, GameOverValueX);
-        if (active) FillRect(new Rectangle(layout.ActiveIndicatorX, bounds.Y + 2, 4, bounds.Height - 4), new Color(99, 223, 185));
+        _playerTurnIndicator.Draw(layout.ActiveIndicatorX, bounds, active, FillRect);
         if (minimal) DrawIconStone(new Vector2(layout.StoneCenterX, bounds.Y + 23), 16, black);
         else DrawStone(new Vector2(layout.StoneCenterX, bounds.Y + 23), 16, black);
         DrawFittedText(playerName, layout.NameBounds, Color.White, 0.5f);
