@@ -2,6 +2,7 @@ namespace KifuwarabeGo2026.Gui.Presentation;
 
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.StickyNote;
+using KifuwarabeGo2026.Gui.Presentation.Shared.TitleBackground;
 using KifuwarabeGo2026.Gui.Presentation.Title;
 using Microsoft.Xna.Framework;
 using System;
@@ -9,13 +10,14 @@ using System.Linq;
 
 public sealed partial class GoScreenRenderer
 {
+    private readonly TitleGoEquipment _titleGoEquipment = new();
     private static Rectangle TitleFormalAppsLabelBounds => new(480, 322, 310, 62);
     private static Rectangle TitleCasualAppsLabelBounds => new(930, 322, 310, 62);
 
     private void DrawUseSelectionPanel(GoAppSession session, Point mousePoint, TitleMenuPage page, int appProviderTabIndex, bool isAppProviderLoading)
     {
         // タイトル画面の囲碁用具ワイヤー装飾。
-        DrawTitleGoEquipment();
+        _titleGoEquipment.Draw(new TitleGoEquipmentDrawingCallbacks(DrawEllipseWire, DrawCircumscribedCircleArc));
 
         var panel = new Rectangle(420, 172, 1080, 736);
         FillRect(new Rectangle(panel.X + 18, panel.Y + 20, panel.Width, panel.Height), new Color(0, 0, 0, 130));

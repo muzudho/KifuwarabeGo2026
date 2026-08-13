@@ -5,7 +5,11 @@ using KifuwarabeGo2026.Gui.Application.Local.Resting.TournamentRule;
 using KifuwarabeGo2026.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.Shared.Domain;
 using KifuwarabeGo2026.Gui.Presentation.Shared.SelectEntry;
+using KifuwarabeGo2026.Gui.Presentation.Shared.Breadcrumb;
+using KifuwarabeGo2026.Gui.Presentation.Shared.SpinBox;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.StickyNote;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.VerticalSectionLabel;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.SinglelineTextUnderline;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.LinkUnderline;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.MultilineTextUnderline;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
@@ -52,6 +56,10 @@ public sealed partial class GoScreenRenderer
         new RoundUnderline { TopOffset = -7, Thickness = 5, Radius = 2 });
     private readonly LinkUnderline _settingsValueLinkUnderline = new(
         new RoundUnderline { TopOffset = -7, Thickness = 6, Radius = 3 });
+    private readonly Breadcrumb _breadcrumb = new();
+    private readonly SpinBox _spinBox = new();
+    private readonly VerticalSectionLabel _verticalSectionLabel = new();
+    private readonly TextInputDialog _textInputDialog = new();
 
     public GoScreenRenderer(
         GraphicsDevice graphicsDevice,
@@ -1665,5 +1673,133 @@ public sealed partial class GoScreenRenderer
             var alpha = softEdge ? MathHelper.Clamp((radius - distance) / (radius * 0.45f), 0f, 1f) : 1f;
             return color * alpha;
         });
+    }
+
+    private void DrawEllipseWire(Vector2 center, float width, float height, Color color, int thickness, float rotation) =>
+        DrawInscribedEllipseArc(center, width, height, color, thickness, rotation, 0f, MathHelper.TwoPi);
+
+    private void DrawCircumscribedCircleArc(Vector2 center, float width, float height, Color color, int thickness,
+        float rotation, float startAngle, float endAngle)
+    {
+        var diameter = MathF.Sqrt(width * width + height * height);
+        DrawInscribedEllipseArc(center, diameter, diameter, color, thickness, rotation, startAngle, endAngle);
+    }
+
+    private void DrawInscribedEllipseArc(Vector2 center, float width, float height, Color color, int thickness,
+        float rotation, float startAngle, float endAngle)
+    {
+        const int segments = 128;
+        var cosRotation = MathF.Cos(rotation);
+        var sinRotation = MathF.Sin(rotation);
+        Vector2 Transform(float angle)
+        {
+            var x = MathF.Cos(angle) * width * 0.5f;
+            var y = MathF.Sin(angle) * height * 0.5f;
+            return center + new Vector2(x * cosRotation - y * sinRotation, x * sinRotation + y * cosRotation);
+        }
+        var drawWholeEllipse = MathF.Abs(endAngle - startAngle) >= MathHelper.TwoPi - 0.0001f;
+        var normalizedStart = NormalizeEllipseAngle(startAngle);
+        var normalizedEnd = NormalizeEllipseAngle(endAngle);
+        for (var i = 0; i < segments; i++)
+        {
+            var segmentStart = MathHelper.TwoPi * i / segments;
+            var segmentEnd = MathHelper.TwoPi * (i + 1) / segments;
+            var segmentMiddle = (segmentStart + segmentEnd) * 0.5f;
+            if (!drawWholeEllipse && !IsEllipseAngleVisible(segmentMiddle, normalizedStart, normalizedEnd)) continue;
+            DrawLine(Transform(segmentStart), Transform(segmentEnd), thickness, color);
+        }
+    }
+
+    private static float NormalizeEllipseAngle(float angle)
+    {
+        angle %= MathHelper.TwoPi;
+        return angle < 0f ? angle + MathHelper.TwoPi : angle;
+    }
+
+    private static bool IsEllipseAngleVisible(float angle, float startAngle, float endAngle)
+    {
+        angle = NormalizeEllipseAngle(angle);
+        return startAngle <= endAngle ? angle >= startAngle && angle <= endAngle : angle >= startAngle || angle <= endAngle;
+    }
+
+    public void DrawBreadcrumb(string path, bool visible = true)
+    {
+        if (!visible) return;
+        _spriteBatch.Begin(samplerState: SamplerState.LinearClamp, transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));
+        _breadcrumb.Draw(path, VirtualScreen.Width, _font.MeasureString, new BreadcrumbDrawingCallbacks(FillRect, DrawFittedText));
+        _spriteBatch.End();
+    }
+
+    private void DrawSpinBox(Rectangle upBounds, Rectangle downBounds, string amountLabel, Point mousePoint) =>
+        _spinBox.Draw(upBounds, downBounds, amountLabel, mousePoint, new SpinBoxDrawingCallbacks(FillRect, DrawCenteredFittedText));
+
+    private void DrawCenteredFittedText(string text, Rectangle bounds, Color color, float preferredScale)
+    {
+        var measured = _font.MeasureString(text);
+        var scale = MathF.Min(preferredScale, MathF.Min(bounds.Width / Math.Max(1f, measured.X), bounds.Height / Math.Max(1f, measured.Y)));
+        var size = measured * scale;
+        DrawText(text, new Vector2(bounds.Center.X - size.X / 2, bounds.Center.Y - size.Y / 2), color, scale);
+    }
+
+    private void DrawVerticalResultSection(Rectangle bounds, string title, Color accentColor,
+        Color? textColor = null, int labelWidth = 38, int labelGap = 8)
+    {
+        DrawLine(new Vector2(bounds.X, bounds.Y), new Vector2(bounds.Right, bounds.Y), 1, new Color(58, 78, 86));
+        _verticalSectionLabel.Draw(bounds, title, accentColor, textColor ?? new Color(205, 218, 218), labelWidth, labelGap,
+            new VerticalSectionLabelDrawingCallbacks(_font.MeasureString, DrawRotatedCenteredText, FillRect, DrawRect, DrawFittedText));
+    }
+
+    private void DrawRotatedCenteredText(string text, Vector2 center, Color color, float scale) =>
+        _spriteBatch.DrawString(_font, text, center, color, -MathHelper.PiOver2, _font.MeasureString(text) / 2f, scale, SpriteEffects.None, 0f);
+
+    public static bool GetTextInputDialogCancelButtonHit(Point point) => TextInputDialog.IsCancelButtonHit(point);
+    public static bool GetTextInputDialogOkButtonHit(Point point) => TextInputDialog.IsOkButtonHit(point);
+    public static bool GetTextInputDialogDefaultButtonHit(Point point) => TextInputDialog.IsDefaultButtonHit(point);
+    public static bool IsTextInputDialogTextBoxHit(Point point) => TextInputDialog.IsTextBoxHit(point);
+    public int GetTextInputDialogCaretIndex(Point point, string text) => GetTextBoxCaretIndex(point.X, text, TextInputDialog.TextContentBounds, 0.55f);
+
+    public void DrawTextInputDialog(Point mousePosition, string title, string text, int caretIndex, int selectionStart,
+        int selectionLength, string message, bool showDefaultButton = false, TextCompositionState composition = default,
+        TextCompositionDiagnostics compositionDiagnostics = default, bool showCompositionDiagnostics = false)
+    {
+        var mousePoint = VirtualScreen.ToVirtualPoint(_graphicsDevice.Viewport, mousePosition);
+        _spriteBatch.Begin(blendState: BlendState.AlphaBlend, samplerState: SamplerState.LinearClamp,
+            transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));
+        _textInputDialog.Draw(mousePoint, title, text, caretIndex, selectionStart, selectionLength, message, showDefaultButton,
+            composition, compositionDiagnostics, showCompositionDiagnostics,
+            new TextInputDialogDrawingCallbacks(FillRect, DrawRect, DrawText, DrawFittedText, DrawTextBoxSelection,
+                DrawDynamicCompositionText, _font.MeasureString, DrawLine, DrawCompositionLamp, DrawCommandButton));
+        _spriteBatch.End();
+    }
+
+    private void DrawCompositionLamp(string label, int x, bool enabled, Color activeColor) =>
+        DrawCompositionLamp(TextInputDialog.Bounds, label, x, enabled, activeColor);
+
+    private void DrawCompositionLamp(Rectangle dialogBounds, string label, int x, bool enabled, Color activeColor)
+    {
+        var center = new Vector2(x, dialogBounds.Y + 47);
+        DrawCircle(center, 8, enabled ? activeColor : new Color(79, 89, 98));
+        DrawText(label, new Vector2(center.X - _font.MeasureString(label).X * 0.11f, dialogBounds.Y + 66), new Color(180, 195, 195), 0.22f);
+    }
+
+    private float DrawDynamicCompositionText(string text, Vector2 position, Color color, float scale)
+    {
+        if (text.All(character => _font.Characters.Contains(character)))
+        {
+            DrawText(text, position, color, scale);
+            return _font.MeasureString(text).X * scale;
+        }
+        if (!_dynamicOptionTextTextures.TryGetValue(text, out var texture))
+        {
+            var png = _textRasterizer.RasterizePng(text, pixelHeight: 28, bold: true);
+            using var stream = new System.IO.MemoryStream(png, writable: false);
+            texture = Texture2D.FromStream(_graphicsDevice, stream);
+            _dynamicOptionTextTextures[text] = texture;
+        }
+        var targetHeight = _font.LineSpacing * scale;
+        var textureScale = targetHeight / texture.Height;
+        var width = texture.Width * textureScale;
+        _spriteBatch.Draw(texture, new Rectangle((int)position.X, (int)position.Y, (int)width, (int)targetHeight), color);
+        return width;
     }
 }
