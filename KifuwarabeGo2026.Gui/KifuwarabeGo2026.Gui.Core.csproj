@@ -34,8 +34,9 @@
     <Folder Include="Presentation\BoardLens\GlassesSystem\" />
     <Folder Include="Presentation\BoardLens\Shared\" />
     <Folder Include="Presentation\Shared\PlayerSelector\" />
-    <Folder Include="Presentation\Shared\TextBox\" />
     <Folder Include="Presentation\Shared\PopupNumberBox\" />
     <Folder Include="Presentation\Shared\StickyNote\" />
+    <Folder Include="Presentation\StationeryUI\Controls\MultilineTextUnderline\" />
+    <Folder Include="Presentation\StationeryUI\Controls\SinglelineTextUnderline\" />
   </ItemGroup>
 </Project>

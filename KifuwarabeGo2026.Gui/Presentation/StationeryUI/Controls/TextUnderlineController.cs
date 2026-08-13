@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Gui.Presentation.Shared.TextBox;
+namespace KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls;
 
 using KifuwarabeGo2026.Gui.Application;
 using Microsoft.Xna.Framework;

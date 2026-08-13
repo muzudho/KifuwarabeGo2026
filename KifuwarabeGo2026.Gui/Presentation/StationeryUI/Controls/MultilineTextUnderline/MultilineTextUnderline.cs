@@ -44,8 +44,7 @@ public sealed partial class GoScreenRenderer
             DrawCompositionLamp(TextAreaDialogBounds, "HOOK", 1146, compositionDiagnostics.IsWindowProcedureAttached, new Color(99, 223, 185));
             DrawCompositionLamp(TextAreaDialogBounds, "IME", 1192, composition.IsActive, new Color(255, 225, 128));
         }
-        FillRect(TextAreaTextBounds, new Color(15, 20, 26));
-        DrawRect(TextAreaTextBounds, 2, new Color(99, 223, 185));
+        DrawTextAreaUnderlines(TextAreaTextBounds);
         DrawTextAreaContent(text, TextAreaTextBounds);
         var caret = GetTextAreaCaretPosition(text, caretIndex);
         if (composition.IsActive && !string.IsNullOrEmpty(composition.Text))
@@ -77,6 +76,20 @@ public sealed partial class GoScreenRenderer
             _dynamicOptionTextTextures[key] = texture;
         }
         _spriteBatch.Draw(texture, new Rectangle(bounds.X + 18, bounds.Y + 18, bounds.Width - 36, bounds.Height - 36), new Color(226, 232, 225));
+    }
+
+    private void DrawTextAreaUnderlines(Rectangle bounds)
+    {
+        const int lineHeight = 31;
+        var underlineColor = new Color(99, 223, 185, 180);
+        for (var y = bounds.Y + 18 + lineHeight - 3; y < bounds.Bottom - 18; y += lineHeight)
+        {
+            DrawLine(
+                new Vector2(bounds.X + 18, y),
+                new Vector2(bounds.Right - 18, y),
+                1,
+                underlineColor);
+        }
     }
 
     private Vector2 GetTextAreaCaretPosition(string text, int caretIndex)

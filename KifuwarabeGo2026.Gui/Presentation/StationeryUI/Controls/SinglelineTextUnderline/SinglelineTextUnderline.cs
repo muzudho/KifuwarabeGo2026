@@ -64,8 +64,11 @@ public sealed partial class GoScreenRenderer
             DrawCompositionLamp("IME", TextInputDialogBounds.Right - 30, composition.IsActive, new Color(255, 225, 128));
         }
 
-        FillRect(TextInputTextBounds, new Color(15, 20, 26));
-        DrawRect(TextInputTextBounds, 2, new Color(99, 223, 185));
+        DrawLine(
+            new Vector2(TextInputTextBounds.X, TextInputTextBounds.Bottom - 6),
+            new Vector2(TextInputTextBounds.Right, TextInputTextBounds.Bottom - 6),
+            2,
+            new Color(99, 223, 185));
         DrawTextBoxSelection(text, selectionStart, selectionLength, TextInputTextContentBounds, 0.55f);
         var displayText = string.IsNullOrEmpty(text) ? " " : text;
         DrawFittedText(displayText, TextInputTextContentBounds, Color.White, 0.55f);
