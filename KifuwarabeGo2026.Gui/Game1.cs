@@ -1960,7 +1960,9 @@ public class Game1 : Game
         }
         if (_session.IsPlayerEditPanelOpen)
         {
-            if (_renderer?.EditEntryProfile.IsClientIdentityChangeHit(point) == true)
+            if (_renderer?.EditEntryProfile.TryToggleClientIdentityPasswordVisibility(point, !_session.IsPlayerEditClientIdentityPasswordDisabled) == true)
+                return;
+            else if (_renderer?.EditEntryProfile.IsClientIdentityChangeHit(point) == true)
                 _session.OpenClientIdentityProfileSelectionPanel();
             else if (_renderer?.EditEntryProfile.DiscardButton.IsHit(point) == true)
             {

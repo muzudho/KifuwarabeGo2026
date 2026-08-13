@@ -29,6 +29,7 @@ public sealed class EditEntryProfile
     private const int ClientIdentityValueWidth = 470;
     private static readonly Rectangle ClientIdentityHandleTextBounds = new(ClientIdentityValueX, FieldRowTop + FieldRowPitch, ClientIdentityValueWidth, 36);
     private static readonly Rectangle ClientIdentityPasswordTextBounds = new(ClientIdentityValueX, FieldRowTop + FieldRowPitch * 2, ClientIdentityValueWidth, 36);
+    private static readonly Rectangle ClientIdentityPasswordVisibilityButtonBounds = new(ClientIdentityPasswordTextBounds.Right - 46, ClientIdentityPasswordTextBounds.Y, 42, 36);
     private static readonly Rectangle ClientIdentityListButtonBounds = new(1270, FieldRowTop + FieldRowPitch + 29, 58, 58);
     private static readonly Rectangle EngineTextBounds = new(FieldValueX, FieldRowTop + FieldRowPitch * 3, FieldValueWidth, 42);
 
@@ -92,12 +93,24 @@ public sealed class EditEntryProfile
     /// <summary>登録済みクライアント ID を選ぶリストボタンです。</summary>
     Button ClientIdentityListButton { get; } = new(ClientIdentityListButtonBounds, string.Empty, 0.1f);
 
+    /// <summary>PASSWORD の平文表示を切り替える目アイコンです。</summary>
+    Button ClientIdentityPasswordVisibilityButton { get; } = new(ClientIdentityPasswordVisibilityButtonBounds, string.Empty, 0.1f);
+    bool IsClientIdentityPasswordVisible { get; set; }
+
     #endregion
 
     #region Hit testing and caret
 
     /// <summary>HANDLE の変更リンクがクリックされたかを判定します。</summary>
     public bool IsClientIdentityChangeHit(Point point) => ClientIdentityListButton.IsHit(point);
+
+    /// <summary>目アイコンのクリックで PASSWORD の表示方法を切り替えます。</summary>
+    public bool TryToggleClientIdentityPasswordVisibility(Point point, bool passwordEnabled)
+    {
+        if (!passwordEnabled || !ClientIdentityPasswordVisibilityButton.IsHit(point)) return false;
+        IsClientIdentityPasswordVisible = !IsClientIdentityPasswordVisible;
+        return true;
+    }
 
     /// <summary>ENGINE の変更リンクがクリックされたかを判定します。</summary>
     public bool IsEngineChangeHit(Point point) => EngineTextBounds.Contains(point);
@@ -121,7 +134,11 @@ public sealed class EditEntryProfile
     {
         ArgumentNullException.ThrowIfNull(session);
         ArgumentNullException.ThrowIfNull(draw);
-        if (!session.IsPlayerEditPanelOpen) return;
+        if (!session.IsPlayerEditPanelOpen)
+        {
+            IsClientIdentityPasswordVisible = false;
+            return;
+        }
 
         var bounds = new Rectangle(510, 270, 900, 528);
         draw.FillRectangle(new Rectangle(0, 0, draw.VirtualScreenWidth, draw.VirtualScreenHeight), new Color(0, 0, 0, 140));
@@ -180,7 +197,8 @@ public sealed class EditEntryProfile
         DrawVerticalSectionLabel(sectionBounds, "CLIENT IDENTITY", new Color(66, 104, 116), draw);
         DrawEditableIdentityField(HandleLabel, EntryProfileEditField.ClientIdentityHandle, session, ClientIdentityHandleTextBounds, mousePoint, draw, mask: false);
         DrawEditableIdentityField(PasswordLabel, EntryProfileEditField.ClientIdentityPassword, session, ClientIdentityPasswordTextBounds, mousePoint, draw,
-            mask: true, enabled: !session.IsPlayerEditClientIdentityPasswordDisabled);
+            mask: !IsClientIdentityPasswordVisible, enabled: !session.IsPlayerEditClientIdentityPasswordDisabled);
+        DrawClientIdentityPasswordVisibilityButton(mousePoint, !session.IsPlayerEditClientIdentityPasswordDisabled, draw);
         DrawClientIdentityListButton(mousePoint, draw);
     }
 
@@ -227,6 +245,35 @@ public sealed class EditEntryProfile
             var y = paper.Y + 10 + row * 7;
             draw.FillRectangle(new Rectangle(paper.X + 4, y, 3, 3), color);
             draw.DrawLine(new Vector2(paper.X + 10, y + 1), new Vector2(paper.Right - 4, y + 1), 1, color);
+        }
+    }
+
+    private void DrawClientIdentityPasswordVisibilityButton(Point mousePoint, bool enabled, EditEntryProfileDrawingCallbacks draw)
+    {
+        var button = ClientIdentityPasswordVisibilityButton;
+        button.IsEnabled = enabled;
+        button.Draw(mousePoint, draw.DrawButton);
+        var bounds = button.Bounds;
+        var color = !enabled ? new Color(76, 88, 92) : bounds.Contains(mousePoint) ? new Color(222, 243, 246) : new Color(178, 219, 226);
+        var center = new Vector2(bounds.Center.X, bounds.Center.Y);
+
+        if (IsClientIdentityPasswordVisible)
+        {
+            // 開いた目: 菱形のまぶたと瞳。
+            draw.DrawLine(new Vector2(bounds.X + 7, center.Y), new Vector2(center.X, bounds.Y + 8), 2, color);
+            draw.DrawLine(new Vector2(center.X, bounds.Y + 8), new Vector2(bounds.Right - 7, center.Y), 2, color);
+            draw.DrawLine(new Vector2(bounds.Right - 7, center.Y), new Vector2(center.X, bounds.Bottom - 8), 2, color);
+            draw.DrawLine(new Vector2(center.X, bounds.Bottom - 8), new Vector2(bounds.X + 7, center.Y), 2, color);
+            draw.FillRectangle(new Rectangle(bounds.Center.X - 3, bounds.Center.Y - 3, 6, 6), color);
+        }
+        else
+        {
+            // 閉じた目: まぶたと短いまつ毛で、伏せ字表示を示します。
+            draw.DrawLine(new Vector2(bounds.X + 7, center.Y + 3), new Vector2(center.X, center.Y - 2), 2, color);
+            draw.DrawLine(new Vector2(center.X, center.Y - 2), new Vector2(bounds.Right - 7, center.Y + 3), 2, color);
+            draw.DrawLine(new Vector2(bounds.X + 11, center.Y + 1), new Vector2(bounds.X + 9, center.Y - 4), 1, color);
+            draw.DrawLine(new Vector2(center.X, center.Y - 3), new Vector2(center.X, center.Y - 8), 1, color);
+            draw.DrawLine(new Vector2(bounds.Right - 11, center.Y + 1), new Vector2(bounds.Right - 9, center.Y - 4), 1, color);
         }
     }
 
