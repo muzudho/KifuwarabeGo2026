@@ -6,7 +6,7 @@ using System;
 /// <summary>カタログ順序編集モーダルの幕、見出し、編集領域の枠を所有します。</summary>
 public sealed class CatalogOrderEditorFrame
 {
-    public void Draw(string title, Point mousePoint, CatalogOrderEditorFrameDrawingCallbacks draw)
+    public void Draw(string title, bool hasChanges, Point mousePoint, CatalogOrderEditorFrameDrawingCallbacks draw)
     {
         ArgumentNullException.ThrowIfNull(draw);
         var bounds = CatalogOrderEditorLayout.Bounds;
@@ -15,8 +15,9 @@ public sealed class CatalogOrderEditorFrame
         draw.FillRectangle(bounds, new Color(19, 24, 31, 252));
         draw.DrawRectangle(bounds, 2, new Color(116, 145, 146));
         draw.DrawText($"{title} - EDIT ORDER", new Vector2(bounds.X + 30, bounds.Y + 24), new Color(244, 238, 218), 0.68f);
-        draw.DrawCommandButton(CatalogOrderEditorLayout.CancelButtonBounds, "DISCARD", false, mousePoint, true, 0.28f);
-        draw.DrawCommandButton(CatalogOrderEditorLayout.SaveButtonBounds, "SAVE & CLOSE", false, mousePoint, true, 0.23f);
+        draw.DrawCommandButton(CatalogOrderEditorLayout.CancelButtonBounds, "DISCARD", false, mousePoint, hasChanges, 0.28f);
+        draw.DrawCommandButton(CatalogOrderEditorLayout.SaveButtonBounds, hasChanges ? "SAVE & CLOSE" : "CLOSE", false, mousePoint, true,
+            hasChanges ? 0.23f : 0.31f);
         draw.FillRectangle(CatalogOrderEditorLayout.BoardBounds, new Color(15, 20, 26));
         draw.DrawRectangle(CatalogOrderEditorLayout.BoardBounds, 1, new Color(67, 84, 92));
         draw.FillRectangle(CatalogOrderEditorLayout.PropertyBounds, new Color(15, 20, 26));

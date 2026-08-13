@@ -149,7 +149,7 @@ public sealed class TournamentRulesSetting
         Func<Point, string, int>? getDisplayNameCaretIndex,
         Func<Point, TournamentRulesNumericField, string, int>? getNumericCaretIndex)
     {
-        if (GoScreenRenderer.GetTournamentRulesAddPanelCloseButtonHit(point))
+        if (GoScreenRenderer.GetTournamentRulesAddPanelCloseButtonHit(point) && _session.IsTournamentRulesDirty)
         {
             CommitNumericEdit();
             CancelDisplayNameEdit();
@@ -212,8 +212,11 @@ public sealed class TournamentRulesSetting
 
         if (GoScreenRenderer.GetSaveTournamentRulesButtonHit(point))
         {
-            if (SaveCurrentTournamentRules())
-                _session.CloseTournamentRulesAddPanel();
+            if (_session.IsTournamentRulesDirty)
+            {
+                if (SaveCurrentTournamentRules()) _session.CloseTournamentRulesAddPanel();
+            }
+            else _session.CloseTournamentRulesAddPanel();
             return true;
         }
 
@@ -305,7 +308,7 @@ public sealed class TournamentRulesSetting
     private bool TryHandleTournamentRulesOrderEditorClick(Point point)
     {
         var editor = _session.TournamentRulesOrderEditor;
-        if (GoScreenRenderer.GetCatalogOrderCancelButtonHit(point))
+        if (GoScreenRenderer.GetCatalogOrderCancelButtonHit(point) && editor.HasChanges)
         {
             _session.CancelTournamentRulesOrderEditor();
             _beginDiscardTransition();
@@ -314,8 +317,12 @@ public sealed class TournamentRulesSetting
 
         if (GoScreenRenderer.GetCatalogOrderSaveButtonHit(point))
         {
-            var rules = _session.CommitTournamentRulesOrderEditor();
-            _catalog.SaveOrder(rules);
+            if (editor.HasChanges)
+            {
+                var rules = _session.CommitTournamentRulesOrderEditor();
+                _catalog.SaveOrder(rules);
+            }
+            else _session.CancelTournamentRulesOrderEditor();
             return true;
         }
 

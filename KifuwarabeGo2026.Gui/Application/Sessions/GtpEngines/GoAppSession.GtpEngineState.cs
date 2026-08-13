@@ -1,6 +1,7 @@
 namespace KifuwarabeGo2026.Gui.Application;
 
 using System.Collections.Generic;
+using System.Linq;
 using KifuwarabeGo2026.GtpExtensions.Engines;
 using KifuwarabeGo2026.Shared.Domain;
 
@@ -34,10 +35,15 @@ public sealed partial class GoAppSession
     public int GtpEngineEditSelectionLength { get; private set; }
     public string GtpEngineEditWarning { get; private set; } = "";
     public string GtpEngineEditSaveMessage { get; private set; } = "";
+    public bool IsGtpEngineEditDirty { get; private set; }
     public GtpEngineProfile GtpEngineEditDraft { get; private set; } = new();
     public bool IsGtpEngineGuiOptionsDialogOpen { get; private set; }
     public bool IsAppProviderGameSettingsDialogOpen { get; private set; }
     public Dictionary<string, string> GtpEngineGuiOptionsDialogDraft { get; private set; } = [];
+    private Dictionary<string, string> GtpEngineGuiOptionsDialogOriginalDraft { get; set; } = [];
+    public bool IsGtpEngineGuiOptionsDialogDirty =>
+        GtpEngineGuiOptionsDialogDraft.Count != GtpEngineGuiOptionsDialogOriginalDraft.Count ||
+        GtpEngineGuiOptionsDialogDraft.Any(pair => !GtpEngineGuiOptionsDialogOriginalDraft.TryGetValue(pair.Key, out var value) || value != pair.Value);
     public bool IsGtpEngineRandomMoveSelectionDialogOpen { get; private set; }
     public int GtpEngineRandomMoveSelectionIndex { get; private set; }
     public GtpEngineGuiOptionSpec? ActiveGtpEngineComboOption { get; private set; }

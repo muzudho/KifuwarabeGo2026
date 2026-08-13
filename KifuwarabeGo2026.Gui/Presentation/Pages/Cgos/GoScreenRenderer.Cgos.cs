@@ -804,8 +804,9 @@ public sealed partial class GoScreenRenderer
         DrawRect(CgosConnectionEditPanelBounds, 2, new Color(116, 145, 146));
 
         DrawText(session.IsCgosConnectionAddPanelMode ? "ADD SERVICE PROFILE" : "EDIT SERVICE PROFILE", new Vector2(CgosConnectionEditPanelBounds.X + 28, CgosConnectionEditPanelBounds.Y + 24), new Color(244, 238, 218), 0.68f);
-        DrawCommandButton(CgosConnectionEditPanelCloseButtonBounds, "DISCARD", false, mousePoint, scale: 0.30f);
-        DrawCommandButton(CgosConnectionEditPanelSaveButtonBounds, "SAVE & CLOSE", false, mousePoint, scale: 0.27f);
+        DrawCommandButton(CgosConnectionEditPanelCloseButtonBounds, "DISCARD", false, mousePoint, enabled: session.IsCgosConnectionEditDirty, scale: 0.30f);
+        DrawCommandButton(CgosConnectionEditPanelSaveButtonBounds, session.IsCgosConnectionEditDirty ? "SAVE & CLOSE" : "CLOSE", false, mousePoint,
+            scale: session.IsCgosConnectionEditDirty ? 0.27f : 0.34f);
 
         DrawCgosConnectionEditField(session, CgosConnectionProfileEditField.DisplayName, "DISPLAY", mousePoint);
         DrawCgosConnectionEditField(session, CgosConnectionProfileEditField.Host, "HOST", mousePoint);

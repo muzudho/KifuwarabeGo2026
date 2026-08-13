@@ -87,6 +87,7 @@ public class Game1 : Game
     private TextCompositionState _gtpEngineStringComposition = TextCompositionState.Empty;
     private TextCompositionDiagnostics _textCompositionDiagnostics = TextCompositionDiagnostics.Empty;
     private readonly TextBoxController _commentTextArea = new(50_000);
+    private string _commentEditorInitialText = "";
     private bool _isCommentEditorOpen;
     private int _commentEditorMoveIndex;
     private GoAppSession? _commentEditorSession;
@@ -877,6 +878,7 @@ public class Game1 : Game
                 _commentTextArea.Text,
                 _commentTextArea.CaretIndex,
                 "COMMENT IS SAVED AS STANDARD SGF C[] TEXT.",
+                _commentTextArea.Text != _commentEditorInitialText,
                 _commentEditorComposition,
                 _textCompositionDiagnostics,
                 _textCompositionService.SupportsDiagnosticAdornment);
@@ -921,8 +923,11 @@ public class Game1 : Game
             if (_previousMouse.LeftButton == ButtonState.Released && mouse.LeftButton == ButtonState.Pressed)
             {
                 if (GoScreenRenderer.GetTextAreaDialogApplyButtonHit(point))
-                    CommitCommentEditor(saveToFile: true);
-                else if (GoScreenRenderer.GetTextAreaDialogCancelButtonHit(point))
+                {
+                    if (_commentTextArea.Text != _commentEditorInitialText) CommitCommentEditor(saveToFile: true);
+                    else CancelCommentEditor();
+                }
+                else if (GoScreenRenderer.GetTextAreaDialogCancelButtonHit(point) && _commentTextArea.Text != _commentEditorInitialText)
                 {
                     CancelCommentEditor();
                     BeginDiscardTransition();
@@ -1936,8 +1941,12 @@ public class Game1 : Game
             }
             else if (GoScreenRenderer.GetClientIdentityProfileEditSaveButtonHit(point))
             {
-                SaveClientIdentityProfileEditDraft();
-                _session.ReturnToClientIdentityProfileSelectionPanel();
+                if (_session.IsClientIdentityProfileEditDirty)
+                {
+                    SaveClientIdentityProfileEditDraft();
+                    _session.ReturnToClientIdentityProfileSelectionPanel();
+                }
+                else _session.ReturnToClientIdentityProfileSelectionPanelWithoutSaving();
             }
             else if (GoScreenRenderer.GetClientIdentityProfileEditFieldHit(point, _session) is { } field)
                 BeginOrMoveClientIdentityProfileEditField(point, field);
@@ -1946,12 +1955,16 @@ public class Game1 : Game
         if (_session.PlayerOrderEditor.IsOpen)
         {
             var editor = _session.PlayerOrderEditor;
-            if (GoScreenRenderer.GetCatalogOrderCancelButtonHit(point))
+            if (GoScreenRenderer.GetCatalogOrderCancelButtonHit(point) && editor.HasChanges)
             {
                 _session.CancelPlayerOrderEditor();
                 BeginDiscardTransition();
             }
-            else if (GoScreenRenderer.GetCatalogOrderSaveButtonHit(point)) SavePlayerCatalog(_session.CommitPlayerOrderEditor());
+            else if (GoScreenRenderer.GetCatalogOrderSaveButtonHit(point))
+            {
+                if (editor.HasChanges) SavePlayerCatalog(_session.CommitPlayerOrderEditor());
+                else _session.CancelPlayerOrderEditor();
+            }
             else if (GoScreenRenderer.GetCatalogOrderMoveStep(point, editor.PageSize) is var step && step == int.MinValue) editor.MoveSelectedToTop();
             else if (step != 0) editor.MoveSelected(step);
             else if (GoScreenRenderer.GetCatalogOrderPageStep(point) is var pageStep && pageStep != 0) editor.MoveVisiblePages(pageStep);
@@ -1969,8 +1982,14 @@ public class Game1 : Game
                 _session.CancelPlayerEditPanel();
                 BeginDiscardTransition();
             }
-            else if (_renderer?.EditEntryProfile.SaveAndCloseButton.IsHit(point) == true && _session.SavePlayerEditDraft())
-                SavePlayerAndClientIdentityCatalogs();
+            else if (_renderer?.EditEntryProfile.SaveAndCloseButton.IsHit(point) == true)
+            {
+                if (_session.HasPlayerEditChanges)
+                {
+                    if (_session.SavePlayerEditDraft()) SavePlayerAndClientIdentityCatalogs();
+                }
+                else _session.CancelPlayerEditPanel();
+            }
             else if (_session.PlayerEditDraft.Kind == EntryProfileKind.Computer &&
                       _renderer?.EditEntryProfile.IsEngineChangeHit(point) == true)
                 _session.OpenPlayerEditGtpEngineSelectionDialog();
@@ -2906,7 +2925,7 @@ public class Game1 : Game
             return false;
         }
 
-        if (GoScreenRenderer.GetCgosConnectionEditPanelCloseButtonHit(point))
+        if (GoScreenRenderer.GetCgosConnectionEditPanelCloseButtonHit(point) && _session.IsCgosConnectionEditDirty)
         {
             EndCgosConnectionEditField();
             _cgosConnectionEditTextBox.Clear();
@@ -2917,8 +2936,11 @@ public class Game1 : Game
 
         if (GoScreenRenderer.GetCgosConnectionEditPanelSaveButtonHit(point))
         {
-            if (SaveCgosConnectionEditDraft())
-                CloseCgosConnectionEditPanel();
+            if (_session.IsCgosConnectionEditDirty)
+            {
+                if (SaveCgosConnectionEditDraft()) CloseCgosConnectionEditPanel();
+            }
+            else CloseCgosConnectionEditPanel();
             return true;
         }
 
@@ -4050,6 +4072,7 @@ public class Game1 : Game
                 ? session.ReviewRootComment
                 : session.CurrentGameRecord.GetComment(_commentEditorMoveIndex);
         _commentTextArea.Begin(initialComment);
+        _commentEditorInitialText = initialComment;
         _commentEditorComposition = TextCompositionState.Empty;
         _previousCommentEditorKeyboard = Keyboard.GetState();
         _isCommentEditorOpen = true;
@@ -4095,6 +4118,7 @@ public class Game1 : Game
         _commentEditorMoveIndex = 0;
         _commentEditorSession = null;
         _commentEditorComposition = TextCompositionState.Empty;
+        _commentEditorInitialText = "";
         _commentTextArea.Clear();
     }
 
@@ -5087,7 +5111,7 @@ public class Game1 : Game
     private bool TryHandleCgosConnectionOrderEditorClick(Point point)
     {
         var editor = _session.CgosConnectionOrderEditor;
-        if (GoScreenRenderer.GetCatalogOrderCancelButtonHit(point))
+        if (GoScreenRenderer.GetCatalogOrderCancelButtonHit(point) && editor.HasChanges)
         {
             _session.CancelCgosConnectionOrderEditor();
             BeginDiscardTransition();
@@ -5096,8 +5120,12 @@ public class Game1 : Game
 
         if (GoScreenRenderer.GetCatalogOrderSaveButtonHit(point))
         {
-            var profiles = _session.CommitCgosConnectionOrderEditor();
-            _cgosConnectionCatalog.Save(profiles);
+            if (editor.HasChanges)
+            {
+                var profiles = _session.CommitCgosConnectionOrderEditor();
+                _cgosConnectionCatalog.Save(profiles);
+            }
+            else _session.CancelCgosConnectionOrderEditor();
             return true;
         }
 
@@ -5117,7 +5145,7 @@ public class Game1 : Game
     private bool TryHandleGtpEngineOrderEditorClick(Point point)
     {
         var editor = _session.GtpEngineOrderEditor;
-        if (GoScreenRenderer.GetCatalogOrderCancelButtonHit(point))
+        if (GoScreenRenderer.GetCatalogOrderCancelButtonHit(point) && editor.HasChanges)
         {
             _session.CancelGtpEngineOrderEditor();
             BeginDiscardTransition();
@@ -5126,9 +5154,13 @@ public class Game1 : Game
 
         if (GoScreenRenderer.GetCatalogOrderSaveButtonHit(point))
         {
-            var profiles = _session.CommitGtpEngineOrderEditor();
-            _gtpEngineCatalog.Save(profiles);
-            RefreshCurrentGtpEngineAppCompatibilities();
+            if (editor.HasChanges)
+            {
+                var profiles = _session.CommitGtpEngineOrderEditor();
+                _gtpEngineCatalog.Save(profiles);
+                RefreshCurrentGtpEngineAppCompatibilities();
+            }
+            else _session.CancelGtpEngineOrderEditor();
             return true;
         }
 
@@ -5193,7 +5225,7 @@ public class Game1 : Game
                 return true;
             }
 
-            if (GoScreenRenderer.GetGtpEngineGuiOptionsDialogCancelButtonHit(point))
+            if (GoScreenRenderer.GetGtpEngineGuiOptionsDialogCancelButtonHit(point) && _session.IsGtpEngineGuiOptionsDialogDirty)
             {
                 _session.CancelGtpEngineGuiOptionsDialog();
                 BeginDiscardTransition();
@@ -5202,7 +5234,8 @@ public class Game1 : Game
 
             if (GoScreenRenderer.GetGtpEngineGuiOptionsDialogOkButtonHit(point))
             {
-                _session.CommitGtpEngineGuiOptionsDialog();
+                if (_session.IsGtpEngineGuiOptionsDialogDirty) _session.CommitGtpEngineGuiOptionsDialog();
+                else _session.CancelGtpEngineGuiOptionsDialog();
                 return true;
             }
 
@@ -5244,7 +5277,7 @@ public class Game1 : Game
             return true;
         }
 
-        if (GoScreenRenderer.GetGtpEngineEditPanelCloseButtonHit(point))
+        if (GoScreenRenderer.GetGtpEngineEditPanelCloseButtonHit(point) && _session.IsGtpEngineEditDirty)
         {
             EndGtpEngineEditField();
             _gtpEngineEditTextBox.Clear();
@@ -5297,8 +5330,11 @@ public class Game1 : Game
 
         if (GoScreenRenderer.GetGtpEngineEditPanelSaveButtonHit(point))
         {
-            if (SaveGtpEngineEditDraft())
-                CloseGtpEngineEditPanel();
+            if (_session.IsGtpEngineEditDirty)
+            {
+                if (SaveGtpEngineEditDraft()) CloseGtpEngineEditPanel();
+            }
+            else CloseGtpEngineEditPanel();
             return true;
         }
 
@@ -5430,7 +5466,7 @@ public class Game1 : Game
             return;
         }
 
-        if (GoScreenRenderer.GetGtpEngineGuiOptionsDialogCancelButtonHit(point))
+        if (GoScreenRenderer.GetGtpEngineGuiOptionsDialogCancelButtonHit(point) && _session.IsGtpEngineGuiOptionsDialogDirty)
         {
             _appProviderSettingsEvaluationGeneration++;
             _session.CancelAppProviderGameSettingsDialog();
@@ -5441,9 +5477,13 @@ public class Game1 : Game
 
         if (GoScreenRenderer.GetGtpEngineGuiOptionsDialogOkButtonHit(point))
         {
-            var profiles = _session.CommitAppProviderGameSettingsDialog();
-            _gtpEngineCatalog.Save(profiles);
-            GuiOperationLog.User("Saved App Provider game settings", "app=ponnuki; role=provider");
+            if (_session.IsGtpEngineGuiOptionsDialogDirty)
+            {
+                var profiles = _session.CommitAppProviderGameSettingsDialog();
+                _gtpEngineCatalog.Save(profiles);
+                GuiOperationLog.User("Saved App Provider game settings", "app=ponnuki; role=provider");
+            }
+            else _session.CancelAppProviderGameSettingsDialog();
             return;
         }
 

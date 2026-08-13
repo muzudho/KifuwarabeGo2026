@@ -25,6 +25,7 @@ public sealed partial class GoAppSession
     public string TournamentRulesDeleteConfirmationFileName { get; private set; } = "";
     public int TournamentRulesSelectionPageIndex { get; private set; }
     public string TournamentRulesSaveMessage { get; private set; } = "";
+    public bool IsTournamentRulesDirty => TournamentRulesSaveMessage == "UNSAVED";
     public string TournamentRulesDisplayNameDraft { get; private set; } = "";
     public bool IsTournamentRulesDisplayNameEditing { get; private set; }
     public int TournamentRulesDisplayNameCaretIndex { get; private set; }

@@ -2,6 +2,7 @@ namespace KifuwarabeGo2026.Gui.Application;
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 /// <summary>
 /// カタログ形式の一覧で共用する、保存前の順序編集状態です。
@@ -9,10 +10,13 @@ using System.Collections.Generic;
 public sealed class CatalogOrderEditor<T>
 {
     private readonly List<T> _items = [];
+    private readonly List<T> _originalItems = [];
 
     public bool IsOpen { get; private set; }
 
     public IReadOnlyList<T> Items => _items;
+
+    public bool HasChanges => !_items.SequenceEqual(_originalItems);
 
     public int SelectedIndex { get; private set; } = -1;
 
@@ -30,6 +34,8 @@ public sealed class CatalogOrderEditor<T>
         ArgumentNullException.ThrowIfNull(items);
         _items.Clear();
         _items.AddRange(items);
+        _originalItems.Clear();
+        _originalItems.AddRange(_items);
         PageSize = Math.Max(1, pageSize);
         SelectedIndex = _items.Count == 0 ? -1 : Math.Clamp(selectedIndex, 0, _items.Count - 1);
         FirstVisiblePageIndex = SelectedIndex < 0 ? 0 : SelectedIndex / PageSize;

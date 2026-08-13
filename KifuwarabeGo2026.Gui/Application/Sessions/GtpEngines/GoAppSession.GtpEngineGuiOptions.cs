@@ -97,6 +97,7 @@ public sealed partial class GoAppSession
         GtpEngineGuiOptionsDialogDraft = new Dictionary<string, string>(GtpEngineEditDraft.GuiOptions);
         foreach (var option in ActiveGtpEngineGuiOptionSpecs)
             GtpEngineGuiOptionsDialogDraft.TryAdd(option.Id, option.DefaultValue);
+        GtpEngineGuiOptionsDialogOriginalDraft = new Dictionary<string, string>(GtpEngineGuiOptionsDialogDraft);
         IsGtpEngineRandomMoveSelectionDialogOpen = false;
         GtpEngineGuiOptionsPageIndex = 0;
         IsGtpEngineGuiOptionsDialogOpen = true;
@@ -143,6 +144,7 @@ public sealed partial class GoAppSession
         IsGtpEngineGuiOptionsDialogOpen = false;
         DeactivateWindow(ActiveWindowId.GtpEngineGuiOptions);
         GtpEngineGuiOptionsDialogDraft.Clear();
+        GtpEngineGuiOptionsDialogOriginalDraft.Clear();
     }
 
     public void CommitGtpEngineGuiOptionsDialog()
@@ -153,6 +155,8 @@ public sealed partial class GoAppSession
         IsGtpEngineGuiOptionsDialogOpen = false;
         DeactivateWindow(ActiveWindowId.GtpEngineGuiOptions);
         GtpEngineGuiOptionsDialogDraft.Clear();
+        GtpEngineGuiOptionsDialogOriginalDraft.Clear();
         GtpEngineEditSaveMessage = "UNSAVED";
+        IsGtpEngineEditDirty = true;
     }
 }

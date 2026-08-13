@@ -338,8 +338,9 @@ public sealed partial class GoScreenRenderer
         DrawRect(GtpEngineEditPanelBounds, 2, new Color(116, 145, 146));
 
         DrawText(session.IsGtpEngineAddPanelMode ? "ADD ENGINE (GTP)" : "EDIT ENGINE (GTP)", new Vector2(GtpEngineEditPanelBounds.X + 30, GtpEngineEditPanelBounds.Y + 24), new Color(244, 238, 218), 0.78f);
-        DrawCommandButton(GtpEngineEditPanelCloseButtonBounds, "DISCARD", false, mousePoint, scale: 0.30f);
-        DrawCommandButton(GtpEngineEditPanelSaveButtonBounds, "SAVE & CLOSE", false, mousePoint, scale: 0.27f);
+        DrawCommandButton(GtpEngineEditPanelCloseButtonBounds, "DISCARD", false, mousePoint, enabled: session.IsGtpEngineEditDirty, scale: 0.30f);
+        DrawCommandButton(GtpEngineEditPanelSaveButtonBounds, session.IsGtpEngineEditDirty ? "SAVE & CLOSE" : "CLOSE", false, mousePoint,
+            scale: session.IsGtpEngineEditDirty ? 0.27f : 0.34f);
 
         DrawGtpEngineEditField(session, GtpEngineProfileEditField.DisplayName, "DISPLAY", mousePoint);
         DrawGtpEngineEditField(session, GtpEngineProfileEditField.ExecutablePath, "EXE", mousePoint);
@@ -424,8 +425,9 @@ public sealed partial class GoScreenRenderer
             GtpEngineGuiOptionsPageLabelBounds,
             mousePoint);
 
-        DrawCommandButton(GtpEngineGuiOptionsDialogCancelButtonBounds, "DISCARD", false, mousePoint, scale: 0.30f);
-        DrawCommandButton(GtpEngineGuiOptionsDialogOkButtonBounds, "SAVE & CLOSE", false, mousePoint, scale: 0.25f);
+        DrawCommandButton(GtpEngineGuiOptionsDialogCancelButtonBounds, "DISCARD", false, mousePoint, enabled: session.IsGtpEngineGuiOptionsDialogDirty, scale: 0.30f);
+        DrawCommandButton(GtpEngineGuiOptionsDialogOkButtonBounds, session.IsGtpEngineGuiOptionsDialogDirty ? "SAVE & CLOSE" : "CLOSE", false, mousePoint,
+            scale: session.IsGtpEngineGuiOptionsDialogDirty ? 0.25f : 0.34f);
         DrawGtpEngineGuiOptionValueTooltip(session, mousePoint);
         DrawGtpEngineRandomMoveSelectionDialog(session, mousePoint);
     }

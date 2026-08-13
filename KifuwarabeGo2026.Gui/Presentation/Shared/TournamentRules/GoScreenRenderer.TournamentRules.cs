@@ -178,8 +178,9 @@ public sealed partial class GoScreenRenderer
         DrawRect(TournamentRulesAddPanelBounds, 2, new Color(116, 145, 146));
 
         DrawText(session.IsTournamentRulesEditPanelMode ? "EDIT TOURNAMENT RULES" : "ADD TOURNAMENT RULES", new Vector2(TournamentRulesAddPanelBounds.X + 30, TournamentRulesAddPanelBounds.Y + 24), new Color(244, 238, 218), 0.78f);
-        DrawCommandButton(TournamentRulesAddPanelCloseButtonBounds, "DISCARD", false, mousePoint, scale: 0.30f);
-        DrawCommandButton(SaveTournamentRulesButtonBounds, "SAVE & CLOSE", false, mousePoint, scale: 0.27f);
+        DrawCommandButton(TournamentRulesAddPanelCloseButtonBounds, "DISCARD", false, mousePoint, enabled: session.IsTournamentRulesDirty, scale: 0.30f);
+        DrawCommandButton(SaveTournamentRulesButtonBounds, session.IsTournamentRulesDirty ? "SAVE & CLOSE" : "CLOSE", false, mousePoint,
+            scale: session.IsTournamentRulesDirty ? 0.27f : 0.34f);
 
         FillRect(TournamentRulesAddPanelEditorBounds, new Color(15, 20, 26));
         DrawRect(TournamentRulesAddPanelEditorBounds, 1, new Color(67, 84, 92));

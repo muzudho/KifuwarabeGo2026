@@ -51,6 +51,7 @@ public sealed partial class GoAppSession
         IsTournamentRulesAddPanelOpen = true;
         ActivateWindow(ActiveWindowId.TournamentRulesEdit);
         IsTournamentRulesEditPanelMode = editExisting;
+        TournamentRulesSaveMessage = "";
         IsTournamentRulesDeleteConfirmationOpen = false;
     }
 

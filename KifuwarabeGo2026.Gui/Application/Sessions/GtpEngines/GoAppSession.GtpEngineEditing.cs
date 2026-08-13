@@ -43,6 +43,7 @@ public sealed partial class GoAppSession
         ActiveGtpEngineEditField = field;
         GtpEngineEditCaretIndex = Math.Clamp(caretIndex, 0, text.Length);
         GtpEngineEditSaveMessage = "UNSAVED";
+        IsGtpEngineEditDirty = true;
     }
 
     public void BeginGtpEngineEditField(GtpEngineProfileEditField field, int caretIndex)
@@ -63,18 +64,21 @@ public sealed partial class GoAppSession
             ? GtpEngineEditDraft.WorkingDirectoryModel
             : WorkingDirectoryModel.FromString(executeDirectoryName);
         GtpEngineEditSaveMessage = "UNSAVED";
+        IsGtpEngineEditDirty = true;
     }
 
     public void SetGtpEngineWorkingDirectoryDraft(WorkingDirectoryModel workingDirectory)
     {
         GtpEngineEditDraft.WorkingDirectoryModel = workingDirectory;
         GtpEngineEditSaveMessage = "UNSAVED";
+        IsGtpEngineEditDirty = true;
     }
 
     public void ToggleGtpEngineEditLog()
     {
         GtpEngineEditDraft.EnableGtpLog = !GtpEngineEditDraft.EnableGtpLog;
         GtpEngineEditSaveMessage = "UNSAVED";
+        IsGtpEngineEditDirty = true;
     }
 
     public void CycleGtpEngineInitialPositionProfile()
@@ -83,6 +87,7 @@ public sealed partial class GoAppSession
         var current = Array.FindIndex(ids, id => id.Equals(GtpEngineEditDraft.InitialPositionProfileId, StringComparison.OrdinalIgnoreCase));
         GtpEngineEditDraft.InitialPositionProfileId = ids[(current + 1 + ids.Length) % ids.Length];
         GtpEngineEditSaveMessage = "UNSAVED";
+        IsGtpEngineEditDirty = true;
     }
 
     public void CycleGtpEngineInitialPositionPreferredMethod()
@@ -91,6 +96,7 @@ public sealed partial class GoAppSession
         var current = Array.FindIndex(methods, method => method == GtpEngineEditDraft.InitialPositionManualPreferredMethod);
         GtpEngineEditDraft.InitialPositionManualPreferredMethod = methods[(current + 1 + methods.Length) % methods.Length];
         GtpEngineEditSaveMessage = "UNSAVED";
+        IsGtpEngineEditDirty = true;
     }
 
     public void SaveGtpEngineEditDraft(GtpEngineProfile profile)
@@ -109,6 +115,7 @@ public sealed partial class GoAppSession
 
         GtpEngineEditDraft = _gtpEngineProfiles[GtpEngineEditProfileIndex].Clone();
         GtpEngineEditSaveMessage = "SAVED";
+        IsGtpEngineEditDirty = false;
         GtpEngineEditWarning = "";
     }
 
@@ -181,6 +188,7 @@ public sealed partial class GoAppSession
         GtpEngineEditCaretIndex = 0;
         GtpEngineEditWarning = "";
         GtpEngineEditSaveMessage = "";
+        IsGtpEngineEditDirty = false;
     }
 
     /// <summary>Player 編集から、紐付けられたエンジン設定を直接開く。</summary>
@@ -214,6 +222,7 @@ public sealed partial class GoAppSession
         GtpEngineEditCaretIndex = 0;
         GtpEngineEditWarning = "";
         GtpEngineEditSaveMessage = "";
+        IsGtpEngineEditDirty = false;
     }
 
     public void OpenGtpEngineDuplicatePanel()
@@ -243,6 +252,7 @@ public sealed partial class GoAppSession
         GtpEngineEditCaretIndex = 0;
         GtpEngineEditWarning = "";
         GtpEngineEditSaveMessage = "";
+        IsGtpEngineEditDirty = false;
     }
 
     public void CloseGtpEngineEditPanel()
@@ -259,6 +269,7 @@ public sealed partial class GoAppSession
         ActiveGtpEngineEditField = null;
         GtpEngineEditWarning = "";
         GtpEngineEditSaveMessage = "";
+        IsGtpEngineEditDirty = false;
         if (EngineSelectionPurpose == GtpEngineSelectionPurpose.AppProvider)
             OpenAppProviderGtpEngineSelectionDialog(GtpEngineSelectionAppId);
         else if (EngineSelectionPurpose == GtpEngineSelectionPurpose.PlayerEdit)

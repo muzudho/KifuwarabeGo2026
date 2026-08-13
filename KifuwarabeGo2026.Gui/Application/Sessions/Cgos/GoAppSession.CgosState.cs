@@ -78,6 +78,9 @@ public sealed partial class GoAppSession
     public string CgosConnectionPortDraft { get; private set; } = "6809";
     public string CgosConnectionEditWarning { get; private set; } = "";
     public string CgosConnectionEditSaveMessage { get; private set; } = "";
+    public bool IsCgosConnectionEditDirty =>
+        CgosConnectionEditDraft != _cgosConnectionEditSource ||
+        CgosConnectionPortDraft != _cgosConnectionEditSource.Port.ToString();
     public int CgosConnectionSelectionPageIndex { get; private set; }
 
     public bool TrySelectCgosEntryProfile(GoStone stone, string playerProfileId)

@@ -100,6 +100,11 @@ public sealed partial class GoAppSession
     public bool ReturnToClientIdentityProfileSelectionPanel()
     {
         SaveClientIdentityProfileEditDraft();
+        return ReturnToClientIdentityProfileSelectionPanelWithoutSaving();
+    }
+
+    public bool ReturnToClientIdentityProfileSelectionPanelWithoutSaving()
+    {
         ClientIdentityProfileSelectionIndex = ClientIdentityProfileEditIndex;
         IsClientIdentityProfileEditPanelOpen = false;
         DeactivateWindow(ActiveWindowId.ClientIdentityEdit);

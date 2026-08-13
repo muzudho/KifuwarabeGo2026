@@ -1909,7 +1909,7 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IGoScre
     public static bool GetTextAreaDialogCancelButtonHit(Point point) => TextAreaDiscardButtonBounds.Contains(point);
     public static bool GetTextAreaDialogApplyButtonHit(Point point) => TextAreaApplyButtonBounds.Contains(point);
 
-    public void DrawTextAreaDialog(Point mousePosition, string title, string text, int caretIndex, string message,
+    public void DrawTextAreaDialog(Point mousePosition, string title, string text, int caretIndex, string message, bool hasChanges,
         TextCompositionState composition = default, TextCompositionDiagnostics compositionDiagnostics = default,
         bool showCompositionDiagnostics = false)
     {
@@ -1939,8 +1939,9 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IGoScre
         FillRect(new Rectangle((int)caret.X, (int)caret.Y, 2, 29), composition.IsActive ? new Color(255, 225, 128) : new Color(147, 244, 200));
         DrawDynamicOptionText(message, new Rectangle(TextAreaDialogBounds.X + 70, 752, 820, 34), new Color(180, 195, 195), 0.34f);
         DrawFittedText("ENTER: NEW LINE   CTRL+ENTER: SAVE SGF", new Rectangle(TextAreaDialogBounds.X + 70, 786, 800, 28), new Color(147, 201, 190), 0.29f);
-        DrawCommandButton(TextAreaDiscardButtonBounds, "DISCARD", false, mousePoint, scale: 0.30f);
-        DrawCommandButton(TextAreaApplyButtonBounds, "SAVE & CLOSE", false, mousePoint, scale: 0.25f);
+        DrawCommandButton(TextAreaDiscardButtonBounds, "DISCARD", false, mousePoint, enabled: hasChanges, scale: 0.30f);
+        DrawCommandButton(TextAreaApplyButtonBounds, hasChanges ? "SAVE & CLOSE" : "CLOSE", false, mousePoint,
+            scale: hasChanges ? 0.25f : 0.34f);
         _spriteBatch.End();
     }
 

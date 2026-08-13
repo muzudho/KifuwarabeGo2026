@@ -43,7 +43,7 @@ public sealed partial class GoScreenRenderer
             return;
         }
 
-        _catalogOrderEditorFrame.Draw(title, mousePoint,
+        _catalogOrderEditorFrame.Draw(title, editor.HasChanges, mousePoint,
             new CatalogOrderEditorFrameDrawingCallbacks(FillRect, DrawRect, DrawText, DrawCommandButton));
 
         var firstPage = editor.FirstVisiblePageIndex;
