@@ -78,7 +78,7 @@ public sealed class EditEntryProfile
     #region Shared field components
 
     /// <summary>HANDLE と ENGINE の選択式フィールドで共用するリンクアンダーラインです。</summary>
-    private readonly LinkUnderline _popupFieldUnderline = new(new RoundUnderline { TopOffset = 2, Thickness = 5, Radius = 2 });
+    LinkUnderline PopupFieldUnderline { get; init; } = new(new RoundUnderline { TopOffset = 2, Thickness = 5, Radius = 2 });
 
     #endregion
 
@@ -121,6 +121,7 @@ public sealed class EditEntryProfile
         if (session.PlayerEditDraft.Kind == EntryProfileKind.Computer)
             DrawPopupField(EngineLabel, session.PlayerEditEngineDisplayName, EngineTextBounds, mousePoint, FieldIcon.Engine, draw);
 
+        // 付箋（一番前景に描画するために、最後に描画します）
         var stickyNote = FieldHoverBounds(PlayerFieldTextBounds(EntryProfileEditField.DisplayName)).Contains(mousePoint)
             ? PlayerNameStickyNote
             : FieldHoverBounds(ClientIdentityTextBounds).Contains(mousePoint)
@@ -131,18 +132,29 @@ public sealed class EditEntryProfile
             stickyNote.Draw(new StickyNoteDrawingCallbacks(draw.DrawLine, draw.FillRectangle, draw.DrawRectangle, draw.DrawDynamicText));
     }
 
-    /// <summary>PLAYER NAME の編集可能なテキスト入力欄を描画します。</summary>
+    /// <summary>［PLAYER NAME］欄を描画します。</summary>
     private void DrawPlayerNameField(GoAppSession session, Point mousePoint, EditEntryProfileDrawingCallbacks draw)
     {
+        // ラベル
+        PlayerNameLabel.Draw(draw.DrawText);
+
+        // 下線
         var field = EntryProfileEditField.DisplayName;
         var textBounds = PlayerFieldTextBounds(field);
         var active = session.ActivePlayerEditField == field;
-        PlayerNameLabel.Draw(draw.DrawText);
         PlayerNameTextUnderline.Draw(textBounds, active, textBounds.Contains(mousePoint), new UnderlineDrawingSurface(draw));
+
+        // 選択範囲
         var text = session.GetPlayerEditFieldText(field);
         if (active) draw.DrawTextSelection(text, session.PlayerEditSelectionStart, session.PlayerEditSelectionLength, textBounds, 0.42f);
+
+        // テキスト
         draw.DrawFittedText(string.IsNullOrEmpty(text) ? "-" : text, textBounds, Color.White, 0.42f);
+
+        // キャレット
         if (active) draw.DrawTextCaret(text, session.PlayerEditCaretIndex, textBounds, 0.42f);
+
+        // アイコン
         DrawIcon(FieldIcon.PlayerName, IconBounds(textBounds), draw);
         draw.DrawEditHint(active, textBounds.Contains(mousePoint), textBounds);
     }
@@ -153,7 +165,7 @@ public sealed class EditEntryProfile
         var hovered = textBounds.Contains(mousePoint);
         label.Draw(draw.DrawText);
         draw.DrawFittedText(value, textBounds, Color.White, 0.42f);
-        _popupFieldUnderline.Draw(textBounds, hovered, new UnderlineDrawingSurface(draw));
+        PopupFieldUnderline.Draw(textBounds, hovered, new UnderlineDrawingSurface(draw));
         if (icon != FieldIcon.None) DrawIcon(icon, IconBounds(textBounds), draw);
         if (hovered) draw.DrawChangeHint(textBounds);
     }
