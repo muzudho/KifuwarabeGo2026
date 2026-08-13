@@ -2192,7 +2192,7 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IGoScre
             new EditEntryProfileDrawingCallbacks(VirtualScreen.Width, VirtualScreen.Height, FillRect, DrawRoundedFill,
                 DrawRect, DrawText, DrawFittedText, DrawCommandButton, DrawIconStone, DrawPlayerRoleFaceIcon,
                 DrawTextBoxSelection, DrawTextBoxCaret, DrawEditableTextEditHint, bounds => DrawPlayerEditHint("CHANGE", bounds),
-                DrawLine, DrawDynamicOptionText));
+                DrawLine, DrawDynamicOptionText, DrawRotatedCenteredText));
 
     void IUnderlineDrawingSurface.FillRectangle(Rectangle bounds, Color color) => FillRect(bounds, color);
     void IUnderlineDrawingSurface.FillRoundedRectangle(Rectangle bounds, int radius, Color color) => DrawRoundedFill(bounds, radius, color);

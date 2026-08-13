@@ -20,6 +20,7 @@ public sealed partial class GoAppSession
     public int PlayerEditSelectionStart { get; private set; }
     public int PlayerEditSelectionLength { get; private set; }
     private string PlayerEditOriginalFieldText { get; set; } = "";
+    public ClientIdentityProfile PlayerEditClientIdentityDraft { get; private set; } = new();
 
     public bool OpenSelectedPlayerEditPanel()
     {
@@ -30,6 +31,8 @@ public sealed partial class GoAppSession
         PlayerEditDraft = _playerProfiles[PlayerEditProfileIndex].Clone();
         IsPlayerEditDirty = false;
         ActivePlayerEditField = null;
+        ClientIdentityProfileEditIndex = 0;
+        LoadPlayerEditClientIdentityDraft();
         IsPlayerEditPanelOpen = true;
         ActivateWindow(ActiveWindowId.PlayerEdit);
         return true;
@@ -58,10 +61,10 @@ public sealed partial class GoAppSession
 
     public void SetPlayerEditFieldText(EntryProfileEditField field, string value, int caretIndex, int selectionStart, int selectionLength)
     {
-        if (field == EntryProfileEditField.DisplayName)
-            SetPlayerEditDisplayName(value);
-        else
-            SetPlayerEditIdentifier(value);
+        if (field == EntryProfileEditField.DisplayName) SetPlayerEditDisplayName(value);
+        else if (field == EntryProfileEditField.Identifier) SetPlayerEditIdentifier(value);
+        else if (field == EntryProfileEditField.ClientIdentityHandle) PlayerEditClientIdentityDraft.LoginName = value;
+        else PlayerEditClientIdentityDraft.LoginPass = value;
 
         PlayerEditCaretIndex = Math.Clamp(caretIndex, 0, value.Length);
         PlayerEditSelectionStart = Math.Clamp(selectionStart, 0, value.Length);
@@ -72,6 +75,8 @@ public sealed partial class GoAppSession
     {
         EntryProfileEditField.DisplayName => PlayerEditDraft.DisplayName,
         EntryProfileEditField.Identifier => PlayerEditDraft.Identifier,
+        EntryProfileEditField.ClientIdentityHandle => PlayerEditClientIdentityDraft.LoginName,
+        EntryProfileEditField.ClientIdentityPassword => PlayerEditClientIdentityDraft.LoginPass,
         _ => throw new ArgumentOutOfRangeException(nameof(field), field, "Unknown player edit field."),
     };
 
@@ -81,10 +86,10 @@ public sealed partial class GoAppSession
     {
         if (ActivePlayerEditField is { } field)
         {
-            if (field == EntryProfileEditField.DisplayName)
-                PlayerEditDraft.DisplayName = PlayerEditOriginalFieldText;
-            else
-                PlayerEditDraft.Identifier = PlayerEditOriginalFieldText;
+            if (field == EntryProfileEditField.DisplayName) PlayerEditDraft.DisplayName = PlayerEditOriginalFieldText;
+            else if (field == EntryProfileEditField.Identifier) PlayerEditDraft.Identifier = PlayerEditOriginalFieldText;
+            else if (field == EntryProfileEditField.ClientIdentityHandle) PlayerEditClientIdentityDraft.LoginName = PlayerEditOriginalFieldText;
+            else PlayerEditClientIdentityDraft.LoginPass = PlayerEditOriginalFieldText;
         }
         ActivePlayerEditField = null;
     }
@@ -143,6 +148,10 @@ public sealed partial class GoAppSession
         }
     }
 
+    public string PlayerEditClientIdentityPassword => PlayerEditClientIdentityDraft.LoginPass;
+
+    public void ReloadPlayerEditClientIdentityDraft() => LoadPlayerEditClientIdentityDraft();
+
     public bool SavePlayerEditDraft()
     {
         if (PlayerEditProfileIndex < 0 || PlayerEditProfileIndex >= _playerProfiles.Count)
@@ -154,6 +163,8 @@ public sealed partial class GoAppSession
         if (draft.Kind == EntryProfileKind.Computer && FindGtpEngineIndex(draft.EngineProfileId) < 0)
             return false;
 
+        var identityIndex = _clientIdentityProfiles.FindIndex(profile => string.Equals(profile.Id, PlayerEditClientIdentityDraft.Id, StringComparison.Ordinal));
+        if (identityIndex >= 0) _clientIdentityProfiles[identityIndex] = PlayerEditClientIdentityDraft.Clone();
         _playerProfiles[PlayerEditProfileIndex] = draft;
         IsPlayerEditDirty = false;
         IsPlayerEditPanelOpen = false;
@@ -173,10 +184,22 @@ public sealed partial class GoAppSession
         IsCreatingEngineProfileForPlayerEdit = false;
         ActivePlayerEditField = null;
     }
+
+    private bool LoadPlayerEditClientIdentityDraft()
+    {
+        if (ClientIdentityProfileEditIndex < 0 || ClientIdentityProfileEditIndex >= PlayerEditDraft.ClientIdentityProfileIds.Count) return false;
+        var id = PlayerEditDraft.ClientIdentityProfileIds[ClientIdentityProfileEditIndex];
+        var profile = _clientIdentityProfiles.FirstOrDefault(item => string.Equals(item.Id, id, StringComparison.Ordinal));
+        if (profile is null) return false;
+        PlayerEditClientIdentityDraft = profile.Clone();
+        return true;
+    }
 }
 
 public enum EntryProfileEditField
 {
     DisplayName,
     Identifier,
+    ClientIdentityHandle,
+    ClientIdentityPassword,
 }

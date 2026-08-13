@@ -16,13 +16,21 @@ public sealed class EditEntryProfile
     #region レイアウト
 
     /// <summary>表のラベル、アイコン、値をそろえるための基準位置です。</summary>
-    private const int FieldLabelX = 536;
+    // 4 項目を 80px ピッチの見えない行グリッドへそろえます。
+    private const int FieldLabelX = 548;
     private const int FieldIconX = 742;
     private const int FieldValueX = 785;
     private const int FieldValueWidth = 575;
+    private const int FieldRowTop = 375;
+    private const int FieldRowPitch = 80;
 
-    private static readonly Rectangle ClientIdentityTextBounds = new(FieldValueX, 439, FieldValueWidth, 42);
-    private static readonly Rectangle EngineTextBounds = new(FieldValueX, 503, FieldValueWidth, 42);
+    private const int ClientIdentityLabelX = FieldLabelX;
+    private const int ClientIdentityValueX = 785;
+    private const int ClientIdentityValueWidth = 470;
+    private static readonly Rectangle ClientIdentityHandleTextBounds = new(ClientIdentityValueX, FieldRowTop + FieldRowPitch, ClientIdentityValueWidth, 36);
+    private static readonly Rectangle ClientIdentityPasswordTextBounds = new(ClientIdentityValueX, FieldRowTop + FieldRowPitch * 2, ClientIdentityValueWidth, 36);
+    private static readonly Rectangle ClientIdentityListButtonBounds = new(1270, FieldRowTop + FieldRowPitch + 29, 58, 58);
+    private static readonly Rectangle EngineTextBounds = new(FieldValueX, FieldRowTop + FieldRowPitch * 3, FieldValueWidth, 42);
 
     #endregion
 
@@ -43,7 +51,7 @@ public sealed class EditEntryProfile
     #region ［Table　＞　PLAYER NAME］
 
     /// <summary>［PLAYER NAME］のラベル</summary>
-    TableRowLabel PlayerNameLabel { get; init; } = new("PLAYER NAME", new Rectangle(FieldLabelX, 382, 180, 32), new Color(180, 195, 195));
+    TableRowLabel PlayerNameLabel { get; init; } = new("PLAYER NAME", new Rectangle(FieldLabelX, FieldRowTop + 7, 180, 32), new Color(180, 195, 195));
 
     /// <summary>［PLAYER NAME］の単一行テキスト入力用アンダーラインです。</summary>
     
@@ -51,27 +59,28 @@ public sealed class EditEntryProfile
 
     /// <summary>［PLAYER NAME］の付箋</summary>
     
-    StickyNote PlayerNameStickyNote { get; init; } = new(StickyNoteKind.EntryProfileFieldHint, new Vector2(FieldValueX + FieldValueWidth - 24, 421), new Color(185, 196, 255), new Color(116, 145, 178), "PLAYER NAME とは？", ["画面に表示され、対局者に識別されるプレイヤーの呼び名です。"], 26);
+    StickyNote PlayerNameStickyNote { get; init; } = new(StickyNoteKind.EntryProfileFieldHint, new Vector2(FieldValueX + FieldValueWidth - 24, FieldRowTop + 46), new Color(185, 196, 255), new Color(116, 145, 178), "PLAYER NAME とは？", ["画面に表示され、対局者に識別されるプレイヤーの呼び名です。"], 26);
 
     #endregion
 
     #region ［Table　＞　HANDLE］
 
     /// <summary>［HANDLE］のラベル</summary>
-    TableRowLabel HandleLabel { get; init; } = new("HANDLE", new Rectangle(FieldLabelX, 446, 180, 32), new Color(180, 195, 195));
+    TableRowLabel HandleLabel { get; init; } = new("HANDLE", new Rectangle(ClientIdentityLabelX, ClientIdentityHandleTextBounds.Y + 7, 180, 32), new Color(180, 195, 195));
+    TableRowLabel PasswordLabel { get; init; } = new("PASSWORD", new Rectangle(ClientIdentityLabelX, ClientIdentityPasswordTextBounds.Y + 7, 180, 32), new Color(180, 195, 195));
 
     /// <summary>［HANDLE］の付箋</summary>
-    StickyNote HandleStickyNote { get; init; } = new(StickyNoteKind.EntryProfileFieldHint, new Vector2(FieldValueX + FieldValueWidth - 24, 485), new Color(185, 196, 255), new Color(116, 145, 178), "HANDLE とは？", ["対局サーバーにログインするときのプレイヤー名です。", "接続する環境ごとにプロフィールへ設定できます。"], 26);
+    StickyNote HandleStickyNote { get; init; } = new(StickyNoteKind.EntryProfileFieldHint, new Vector2(FieldValueX + FieldValueWidth - 24, ClientIdentityPasswordTextBounds.Y + 46), new Color(185, 196, 255), new Color(116, 145, 178), "HANDLE とは？", ["対局サーバーにログインするときのプレイヤー名です。", "接続する環境ごとにプロフィールへ設定できます。"], 26);
 
     #endregion
 
     #region ［Table　＞　ENGINE］
 
     /// <summary>［ENGINE］のラベル</summary>
-    TableRowLabel EngineLabel { get; init; } = new("ENGINE", new Rectangle(FieldLabelX, 510, 180, 32), new Color(180, 195, 195));
+    TableRowLabel EngineLabel { get; init; } = new("ENGINE", new Rectangle(FieldLabelX, EngineTextBounds.Y + 7, 180, 32), new Color(180, 195, 195));
 
     /// <summary>［ENGINE］の付箋</summary>
-    StickyNote EngineStickyNote { get; init; } = new(StickyNoteKind.EntryProfileFieldHint, new Vector2(FieldValueX + FieldValueWidth - 24, 549), new Color(185, 196, 255), new Color(116, 145, 178), "ENGINE とは？", ["コンピューター対局に使用する GTP エンジンです。"], 26);
+    StickyNote EngineStickyNote { get; init; } = new(StickyNoteKind.EntryProfileFieldHint, new Vector2(FieldValueX + FieldValueWidth - 24, EngineTextBounds.Y + 46), new Color(185, 196, 255), new Color(116, 145, 178), "ENGINE とは？", ["コンピューター対局に使用する GTP エンジンです。"], 26);
 
     #endregion
 
@@ -80,19 +89,24 @@ public sealed class EditEntryProfile
     /// <summary>HANDLE と ENGINE の選択式フィールドで共用するリンクアンダーラインです。</summary>
     LinkUnderline PopupFieldUnderline { get; init; } = new(new RoundUnderline { TopOffset = 2, Thickness = 5, Radius = 2 });
 
+    /// <summary>登録済みクライアント ID を選ぶリストボタンです。</summary>
+    Button ClientIdentityListButton { get; } = new(ClientIdentityListButtonBounds, string.Empty, 0.1f);
+
     #endregion
 
     #region Hit testing and caret
 
     /// <summary>HANDLE の変更リンクがクリックされたかを判定します。</summary>
-    public bool IsClientIdentityChangeHit(Point point) => ClientIdentityTextBounds.Contains(point);
+    public bool IsClientIdentityChangeHit(Point point) => ClientIdentityListButton.IsHit(point);
 
     /// <summary>ENGINE の変更リンクがクリックされたかを判定します。</summary>
     public bool IsEngineChangeHit(Point point) => EngineTextBounds.Contains(point);
 
     /// <summary>入力編集を開始するフィールドを取得します。</summary>
     public EntryProfileEditField? GetFieldHit(Point point) =>
-        PlayerFieldTextBounds(EntryProfileEditField.DisplayName).Contains(point) ? EntryProfileEditField.DisplayName : null;
+        PlayerFieldTextBounds(EntryProfileEditField.DisplayName).Contains(point) ? EntryProfileEditField.DisplayName :
+        ClientIdentityHandleTextBounds.Contains(point) ? EntryProfileEditField.ClientIdentityHandle :
+        ClientIdentityPasswordTextBounds.Contains(point) ? EntryProfileEditField.ClientIdentityPassword : null;
 
     /// <summary>外部から渡された文字幅計算を使ってキャレット位置を求めます。</summary>
     public int GetCaretIndex(Point point, EntryProfileEditField field, string text, Func<int, string, Rectangle, float, int> getCaretIndex) =>
@@ -109,7 +123,7 @@ public sealed class EditEntryProfile
         ArgumentNullException.ThrowIfNull(draw);
         if (!session.IsPlayerEditPanelOpen) return;
 
-        var bounds = new Rectangle(510, 270, 900, 480);
+        var bounds = new Rectangle(510, 270, 900, 528);
         draw.FillRectangle(new Rectangle(0, 0, draw.VirtualScreenWidth, draw.VirtualScreenHeight), new Color(0, 0, 0, 140));
         draw.FillRectangle(bounds, new Color(24, 29, 36, 252));
         draw.DrawRectangle(bounds, 2, new Color(116, 145, 146));
@@ -117,14 +131,14 @@ public sealed class EditEntryProfile
         DiscardButton.Draw(mousePoint, draw.DrawButton);
         SaveAndCloseButton.Draw(mousePoint, draw.DrawButton);
         DrawPlayerNameField(session, mousePoint, draw);
-        DrawPopupField(HandleLabel, session.PlayerEditClientIdentityHandle, ClientIdentityTextBounds, mousePoint, FieldIcon.None, draw);
+        DrawClientIdentitySection(session, mousePoint, draw);
         if (session.PlayerEditDraft.Kind == EntryProfileKind.Computer)
             DrawPopupField(EngineLabel, session.PlayerEditEngineDisplayName, EngineTextBounds, mousePoint, FieldIcon.Engine, draw);
 
         // 付箋（一番前景に描画するために、最後に描画します）
         var stickyNote = FieldHoverBounds(PlayerFieldTextBounds(EntryProfileEditField.DisplayName)).Contains(mousePoint)
             ? PlayerNameStickyNote
-            : FieldHoverBounds(ClientIdentityTextBounds).Contains(mousePoint)
+            : FieldHoverBounds(ClientIdentityHandleTextBounds).Contains(mousePoint) || FieldHoverBounds(ClientIdentityPasswordTextBounds).Contains(mousePoint)
                 ? HandleStickyNote
                 : session.PlayerEditDraft.Kind == EntryProfileKind.Computer && FieldHoverBounds(EngineTextBounds).Contains(mousePoint)
                     ? EngineStickyNote : null;
@@ -159,6 +173,55 @@ public sealed class EditEntryProfile
         draw.DrawEditHint(active, textBounds.Contains(mousePoint), textBounds);
     }
 
+    private void DrawClientIdentitySection(GoAppSession session, Point mousePoint, EditEntryProfileDrawingCallbacks draw)
+    {
+        var sectionBounds = new Rectangle(ClientIdentityLabelX - 24, ClientIdentityHandleTextBounds.Y - 9, 804, 138);
+        draw.DrawLine(new Vector2(sectionBounds.X, sectionBounds.Y), new Vector2(sectionBounds.Right, sectionBounds.Y), 1, new Color(58, 78, 86));
+        DrawVerticalSectionLabel(sectionBounds, "CLIENT IDENTITY", new Color(66, 104, 116), draw);
+        DrawEditableIdentityField(HandleLabel, EntryProfileEditField.ClientIdentityHandle, session, ClientIdentityHandleTextBounds, mousePoint, draw, mask: false);
+        DrawEditableIdentityField(PasswordLabel, EntryProfileEditField.ClientIdentityPassword, session, ClientIdentityPasswordTextBounds, mousePoint, draw, mask: true);
+        DrawClientIdentityListButton(mousePoint, draw);
+    }
+
+    private static void DrawVerticalSectionLabel(Rectangle sectionBounds, string title, Color accent, EditEntryProfileDrawingCallbacks draw)
+    {
+        var labelBounds = new Rectangle(sectionBounds.X - 48, sectionBounds.Y, 40, sectionBounds.Height);
+        draw.FillRectangle(labelBounds, new Color(accent, 150)); draw.DrawRectangle(labelBounds, 1, new Color(accent, 230));
+        draw.DrawVerticalText(title, new Vector2(labelBounds.Center.X, labelBounds.Center.Y), new Color(205, 218, 218), 0.30f);
+    }
+
+    private void DrawEditableIdentityField(TableRowLabel label, EntryProfileEditField field, GoAppSession session,
+        Rectangle bounds, Point mousePoint, EditEntryProfileDrawingCallbacks draw, bool mask)
+    {
+        label.Draw(draw.DrawText);
+        var active = session.ActivePlayerEditField == field;
+        PlayerNameTextUnderline.Draw(bounds, active, bounds.Contains(mousePoint), new UnderlineDrawingSurface(draw));
+        var text = session.GetPlayerEditFieldText(field);
+        if (active) draw.DrawTextSelection(text, session.PlayerEditSelectionStart, session.PlayerEditSelectionLength, bounds, 0.42f);
+        draw.DrawFittedText(mask ? new string('●', text.Length) : text, bounds, Color.White, 0.42f);
+        if (active) draw.DrawTextCaret(text, session.PlayerEditCaretIndex, bounds, 0.42f);
+    }
+
+    private void DrawClientIdentityListButton(Point mousePoint, EditEntryProfileDrawingCallbacks draw)
+    {
+        ClientIdentityListButton.Draw(mousePoint, draw.DrawButton);
+        var bounds = ClientIdentityListButton.Bounds;
+        var color = bounds.Contains(mousePoint) ? new Color(222, 243, 246) : new Color(178, 219, 226);
+
+        // 箇条書きの紙。既存のワイヤーフレーム調に合わせ、塗りを最小限にします。
+        var paper = new Rectangle(bounds.X + 16, bounds.Y + 12, 26, 32);
+        draw.DrawRectangle(paper, 2, color);
+        draw.DrawLine(new Vector2(paper.Right - 8, paper.Y), new Vector2(paper.Right, paper.Y + 8), 1, color);
+        draw.DrawLine(new Vector2(paper.Right - 8, paper.Y), new Vector2(paper.Right - 8, paper.Y + 8), 1, color);
+        draw.DrawLine(new Vector2(paper.Right - 8, paper.Y + 8), new Vector2(paper.Right, paper.Y + 8), 1, color);
+        for (var row = 0; row < 3; row++)
+        {
+            var y = paper.Y + 10 + row * 7;
+            draw.FillRectangle(new Rectangle(paper.X + 4, y, 3, 3), color);
+            draw.DrawLine(new Vector2(paper.X + 10, y + 1), new Vector2(paper.Right - 4, y + 1), 1, color);
+        }
+    }
+
     /// <summary>HANDLE と ENGINE の、選択画面へ接続するフィールドを描画します。</summary>
     private void DrawPopupField(TableRowLabel label, string value, Rectangle textBounds, Point mousePoint, FieldIcon icon, EditEntryProfileDrawingCallbacks draw)
     {
@@ -176,8 +239,10 @@ public sealed class EditEntryProfile
 
     private static Rectangle PlayerFieldTextBounds(EntryProfileEditField field) => field switch
     {
-        EntryProfileEditField.DisplayName => new(FieldValueX, 375, FieldValueWidth, 42),
+        EntryProfileEditField.DisplayName => new(FieldValueX, FieldRowTop, FieldValueWidth, 42),
         EntryProfileEditField.Identifier => new(FieldValueX, 439, FieldValueWidth, 42),
+        EntryProfileEditField.ClientIdentityHandle => ClientIdentityHandleTextBounds,
+        EntryProfileEditField.ClientIdentityPassword => ClientIdentityPasswordTextBounds,
         _ => throw new ArgumentOutOfRangeException(nameof(field), field, "Unknown player edit field."),
     };
 
@@ -228,4 +293,5 @@ public sealed record EditEntryProfileDrawingCallbacks(
     Action<bool, bool, Rectangle> DrawEditHint,
     Action<Rectangle> DrawChangeHint,
     Action<Vector2, Vector2, float, Color> DrawLine,
-    Action<string, Rectangle, Color, float> DrawDynamicText);
+    Action<string, Rectangle, Color, float> DrawDynamicText,
+    Action<string, Vector2, Color, float> DrawVerticalText);

@@ -1907,7 +1907,10 @@ public class Game1 : Game
             if (GoScreenRenderer.GetClientIdentityProfileSelectionCloseButtonHit(point))
                 _session.CloseClientIdentityProfileSelectionPanel();
             else if (GoScreenRenderer.GetClientIdentityProfileSelectionUseButtonHit(point) && _session.CommitClientIdentityProfileSelection())
+            {
+                _session.ReloadPlayerEditClientIdentityDraft();
                 SavePlayerAndClientIdentityCatalogs();
+            }
             else if (GoScreenRenderer.GetClientIdentityProfileSelectionEditButtonHit(point))
                 _session.OpenClientIdentityProfileEditPanel();
             else if (GoScreenRenderer.GetClientIdentityProfileSelectionDuplicateButtonHit(point) && _session.DuplicateSelectedClientIdentityProfile())
@@ -1964,7 +1967,7 @@ public class Game1 : Game
                 BeginDiscardTransition();
             }
             else if (_renderer?.EditEntryProfile.SaveAndCloseButton.IsHit(point) == true && _session.SavePlayerEditDraft())
-                SavePlayerCatalog(_session.EntryProfiles);
+                SavePlayerAndClientIdentityCatalogs();
             else if (_session.PlayerEditDraft.Kind == EntryProfileKind.Computer &&
                       _renderer?.EditEntryProfile.IsEngineChangeHit(point) == true)
                 _session.OpenPlayerEditGtpEngineSelectionDialog();
@@ -4407,7 +4410,7 @@ public class Game1 : Game
 
     private void MovePlayerEditFocus(EntryProfileEditField field, int step)
     {
-        var fields = new[] { EntryProfileEditField.DisplayName };
+        var fields = new[] { EntryProfileEditField.DisplayName, EntryProfileEditField.ClientIdentityHandle, EntryProfileEditField.ClientIdentityPassword };
         var index = Array.IndexOf(fields, field);
         var next = fields[(index + step + fields.Length) % fields.Length];
         var text = _session.GetPlayerEditFieldText(next);
