@@ -67,8 +67,6 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IGoScre
         new RoundUnderline { TopOffset = -7, Thickness = 5, Radius = 2 });
     private readonly LinkUnderline _settingsValueLinkUnderline = new(
         new RoundUnderline { TopOffset = -7, Thickness = 6, Radius = 3 });
-    private readonly ActionBadge _actionBadge = new();
-    private readonly ActionBadge _gtpEngineOptionActionBadge = new() { TextScale = 0.30f };
     private readonly Breadcrumb _breadcrumb = new();
     private readonly SpinBox _spinBox = new();
     
@@ -87,14 +85,14 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IGoScre
     private static readonly BoardLensButtonStrip LocalPlayingBoardLensButtons = new(1516, 800);
     public EditEntryProfile EditEntryProfile { get; } = new();
 
-    private void DrawActionBadge(ActionBadge badge, string label, Rectangle anchorBounds)
+    private void DrawActionBadge(ActionBadge badge)
     {
-        badge.Show(label, anchorBounds);
+        badge.Show();
         badge.Draw(new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText));
     }
 
     private void DrawActionBadge(string label, Rectangle anchorBounds) =>
-        DrawActionBadge(_actionBadge, label, anchorBounds);
+        DrawActionBadge(ActionBadge.Create(label, anchorBounds));
 
     public GoScreenRenderer(
         GraphicsDevice graphicsDevice,

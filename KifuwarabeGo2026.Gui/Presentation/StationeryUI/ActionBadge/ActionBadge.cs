@@ -8,23 +8,33 @@ using System;
 /// </summary>
 public sealed class ActionBadge
 {
-    public string Label { get; private set; } = string.Empty;
+    private ActionBadge(string label, Rectangle anchorBounds, float textScale)
+    {
+        Label = label;
+        AnchorBounds = anchorBounds;
+        Bounds = CalculateBounds(label, anchorBounds);
+        TextScale = textScale;
+    }
 
-    public Rectangle Bounds { get; private set; }
+    public string Label { get; }
+
+    public Rectangle AnchorBounds { get; }
+
+    public Rectangle Bounds { get; }
 
     public bool IsVisible { get; private set; }
 
     /// <summary>バッジ内ラベルの文字倍率です。</summary>
-    public float TextScale { get; set; } = 0.34f;
+    public float TextScale { get; }
 
     /// <summary>項目の右端に合わせた標準位置でバッジを表示します。</summary>
-    public void Show(string label, Rectangle anchorBounds)
+    public static ActionBadge Create(string label, Rectangle anchorBounds, float textScale = 0.34f)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(label);
-        Label = label;
-        Bounds = GetBounds(label, anchorBounds);
-        IsVisible = true;
+        return new ActionBadge(label, anchorBounds, textScale);
     }
+
+    public void Show() => IsVisible = true;
 
     public void Hide() => IsVisible = false;
 
@@ -38,7 +48,7 @@ public sealed class ActionBadge
     }
 
     /// <summary>標準バッジの大きさと、アンダーライン右端に対する配置を返します。</summary>
-    public static Rectangle GetBounds(string label, Rectangle anchorBounds)
+    private static Rectangle CalculateBounds(string label, Rectangle anchorBounds)
     {
         var width = label switch
         {

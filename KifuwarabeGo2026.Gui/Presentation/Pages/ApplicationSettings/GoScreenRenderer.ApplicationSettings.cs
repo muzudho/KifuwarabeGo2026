@@ -17,10 +17,12 @@ public sealed partial class GoScreenRenderer
 {
     private readonly ActionBadge[] _settingsLogActionBadges =
     [
-        new() { TextScale = 0.30f }, new() { TextScale = 0.30f }, new() { TextScale = 0.30f },
-        new() { TextScale = 0.30f }, new() { TextScale = 0.30f },
+        ActionBadge.Create("EDIT", SettingsLogItemBounds(0), 0.30f),
+        ActionBadge.Create("EDIT", SettingsLogItemBounds(1), 0.30f),
+        ActionBadge.Create("EDIT", SettingsLogItemBounds(2), 0.30f),
+        ActionBadge.Create("EDIT", SettingsLogItemBounds(3), 0.30f),
+        ActionBadge.Create("EDIT", SettingsLogItemBounds(4), 0.30f),
     ];
-    private readonly ActionBadge _settingsValueActionBadge = new() { TextScale = 0.30f };
 
     private static Rectangle SettingsButtonBounds => new(1780, 972, 70, 62);
     private static Rectangle UpdateButtonBounds => new(1698, 972, 70, 62);
@@ -105,7 +107,7 @@ public sealed partial class GoScreenRenderer
                 if (selected && hovered && index < _settingsLogActionBadges.Length)
                 {
                     var badge = _settingsLogActionBadges[index];
-                    badge.Show("EDIT", bounds);
+                    badge.Show();
                     badge.Draw(new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText));
                 }
             }
@@ -164,7 +166,7 @@ public sealed partial class GoScreenRenderer
         _settingsValueLinkUnderline.Draw(
             this);
         if (hovered)
-            DrawActionBadge(_settingsValueActionBadge, action, bounds);
+            DrawActionBadge(ActionBadge.Create(action, bounds, 0.30f));
     }
 
     private void DrawSettingsSection(Rectangle bounds, string title, Color accentColor)

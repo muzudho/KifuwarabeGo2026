@@ -4,6 +4,7 @@ using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.GtpExtensions.InitialPosition;
 using KifuwarabeGo2026.Shared.Domain;
 using KifuwarabeGo2026.Gui.Presentation.Shared.SelectEntry;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.ActionBadge;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.StickyNote;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -458,7 +459,7 @@ public sealed partial class GoScreenRenderer
         if (option.Type == "spin" && option.Min is { } min && option.Max is { } max)
             DrawFittedText($"{min} .. {max}", new Rectangle(valueBounds.Right + 12, valueBounds.Y + 10, 126, 28), new Color(118, 139, 143), 0.24f);
         if (hovered)
-            DrawActionBadge(_gtpEngineOptionActionBadge, GetGtpEngineOptionActionLabel(option), valueBounds);
+            DrawActionBadge(ActionBadge.Create(GetGtpEngineOptionActionLabel(option), valueBounds, 0.30f));
         if (option.Type is not ("button" or "string") && row.Contains(mousePoint))
             DrawCommandButton(GtpEngineGuiOptionDefaultButtonBounds(slot), "DEFAULT", false, mousePoint, scale: 0.3f);
     }
