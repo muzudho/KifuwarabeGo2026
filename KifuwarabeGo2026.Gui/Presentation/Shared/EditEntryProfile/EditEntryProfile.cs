@@ -70,7 +70,7 @@ public sealed class EditEntryProfile
     TableRowLabel PasswordLabel { get; init; } = new("PASSWORD", new Rectangle(ClientIdentityLabelX, ClientIdentityPasswordTextBounds.Y + 7, 180, 32), new Color(180, 195, 195));
 
     /// <summary>［HANDLE］の付箋</summary>
-    StickyNote HandleStickyNote { get; init; } = new(StickyNoteKind.EntryProfileFieldHint, new Vector2(FieldValueX + FieldValueWidth - 24, ClientIdentityPasswordTextBounds.Y + 46), new Color(185, 196, 255), new Color(116, 145, 178), "HANDLE とは？", ["対局サーバーにログインするときのプレイヤー名です。", "接続する環境ごとにプロフィールへ設定できます。"], 26);
+    StickyNote HandleStickyNote { get; init; } = new(StickyNoteKind.EntryProfileFieldHint, new Vector2(ClientIdentityHandleTextBounds.Right, ClientIdentityHandleTextBounds.Bottom + 2), new Color(185, 196, 255), new Color(116, 145, 178), "HANDLE とは？", ["対局サーバーにログインするときのプレイヤー名です。", "接続する環境ごとにプロフィールへ設定できます。"], 26);
 
     #endregion
 
