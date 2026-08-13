@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Gui.Presentation.Shared.PlayerSelector;
+namespace KifuwarabeGo2026.Gui.Presentation.Shared.SelectEntry;
 
 using Microsoft.Xna.Framework;
 

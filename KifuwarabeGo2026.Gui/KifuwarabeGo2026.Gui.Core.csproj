@@ -33,7 +33,7 @@
     <Folder Include="Presentation\BoardLens\LibertySystem\" />
     <Folder Include="Presentation\BoardLens\GlassesSystem\" />
     <Folder Include="Presentation\BoardLens\Shared\" />
-    <Folder Include="Presentation\Shared\PlayerSelector\" />
+    <Folder Include="Presentation\Shared\SelectEntry\" />
     <Folder Include="Presentation\Shared\EditEntryProfile\" />
     <Folder Include="Presentation\Shared\EditEntryProfile\" />
     <Folder Include="Presentation\StationeryUI\Controls\PopupNumberUnderline\" />
