@@ -8,9 +8,9 @@ using System;
 /// 非同期アクションへ接続する文房具 UI のリンクアンダーラインです。
 /// 描画方法はホストがコールバックで渡すため、GoScreenRenderer には依存しません。
 /// </summary>
-public sealed class LinkUnderlineRenderer
+public sealed class LinkUnderline
 {
-    public LinkUnderlineRenderer(IUnderline underline)
+    public LinkUnderline(IUnderline underline)
     {
         Underline = underline ?? throw new ArgumentNullException(nameof(underline));
     }

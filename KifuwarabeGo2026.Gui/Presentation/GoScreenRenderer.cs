@@ -35,9 +35,9 @@ public sealed partial class GoScreenRenderer
     private readonly Texture2D _softCircle;
     private readonly Texture2D _stoneLight;
     private readonly Texture2D _stoneDark;
-    private readonly LinkUnderlineRenderer _titleAppProviderLinkUnderline = new(
+    private readonly LinkUnderline _titleAppProviderLinkUnderline = new(
         new RoundUnderline { TopOffset = 2, Thickness = 5, Radius = 2 });
-    private readonly LinkUnderlineRenderer _gtpEngineOptionLinkUnderline = new(
+    private readonly LinkUnderline _gtpEngineOptionLinkUnderline = new(
         new RoundUnderline { TopOffset = -4, Thickness = 4, Radius = 2 });
     private readonly SquareUnderline _multilineTextUnderline = new() { Thickness = 1 };
 
