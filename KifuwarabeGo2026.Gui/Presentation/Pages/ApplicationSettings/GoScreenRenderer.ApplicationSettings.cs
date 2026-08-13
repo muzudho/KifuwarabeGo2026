@@ -1,5 +1,6 @@
 namespace KifuwarabeGo2026.Gui.Presentation;
 
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.ActionBadge;
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
@@ -14,6 +15,11 @@ public enum ApplicationSettingsPage
 
 public sealed partial class GoScreenRenderer
 {
+    private readonly ActionBadge[] _settingsLogActionBadges =
+    [
+        new(), new(), new(), new(), new(),
+    ];
+
     private static Rectangle SettingsButtonBounds => new(1780, 972, 70, 62);
     private static Rectangle UpdateButtonBounds => new(1698, 972, 70, 62);
     private static Rectangle SettingsBackButtonBounds => new(1390, 138, 140, 52);
@@ -23,11 +29,6 @@ public sealed partial class GoScreenRenderer
     private static Rectangle SettingsApplicationSettingsFileFieldBounds => new(440, 374, 1070, 70);
     private static Rectangle SettingsEngineSettingsFileFieldBounds => new(440, 564, 1070, 70);
     private static Rectangle SettingsLogItemBounds(int index) => new(440, 600 + index * 58, 1070, 48);
-    private static Rectangle SettingsLogItemActionBadgeBounds(int index)
-    {
-        var bounds = SettingsLogItemBounds(index);
-        return new Rectangle(bounds.Right - 78, bounds.Bottom - 28, 70, 23);
-    }
     private static Rectangle SettingsTabBounds(ApplicationSettingsPage page) => page switch
     {
         ApplicationSettingsPage.Log => new Rectangle(440, 242, 250, 52),
@@ -41,8 +42,11 @@ public sealed partial class GoScreenRenderer
     public static bool GetSettingsBrowseButtonHit(Point point) => SettingsLogRootFieldBounds.Contains(point);
     public static bool GetSettingsSgfBrowseButtonHit(Point point) => SettingsSgfFieldBounds.Contains(point);
     public static bool GetSettingsScreenshotBrowseButtonHit(Point point) => SettingsScreenshotFieldBounds.Contains(point);
-    public static bool GetSettingsEditButtonHit(Point point, int selectedIndex) =>
-        selectedIndex >= 0 && SettingsLogItemActionBadgeBounds(selectedIndex).Contains(point);
+    public bool GetSettingsEditButtonHit(Point point, int selectedIndex) =>
+        selectedIndex >= 0 &&
+        selectedIndex < _settingsLogActionBadges.Length &&
+        _settingsLogActionBadges[selectedIndex].IsVisible &&
+        _settingsLogActionBadges[selectedIndex].Bounds.Contains(point);
     public static bool GetSettingsOpenApplicationSettingsFolderButtonHit(Point point) =>
         SettingsApplicationSettingsFileFieldBounds.Contains(point);
     public static bool GetSettingsOpenEngineSettingsFolderButtonHit(Point point) =>
@@ -77,6 +81,9 @@ public sealed partial class GoScreenRenderer
         DrawSettingsTabs(page, mousePoint);
         if (page == ApplicationSettingsPage.Log)
         {
+            foreach (var badge in _settingsLogActionBadges)
+                badge.Hide();
+
             DrawSettingsSection(new Rectangle(420, 330, 1110, 190), "LOG ROOT", new Color(67, 112, 118));
             DrawSettingsValueField("LOG ROOT FOLDER", logRoot, SettingsLogRootFieldBounds, "BROWSE", mousePoint);
             DrawFittedText("GUI   " + Path.Combine(logRoot, "Gui"), new Rectangle(440, 458, 1050, 24), new Color(180, 195, 195), 0.30f);
@@ -93,8 +100,12 @@ public sealed partial class GoScreenRenderer
                 _settingsLogLinkUnderline.SetSelected(selected);
                 _settingsLogLinkUnderline.Draw(
                     this);
-                if (selected && hovered)
-                    DrawActionBadgeAt("EDIT", SettingsLogItemActionBadgeBounds(index), 0.30f);
+                if (selected && hovered && index < _settingsLogActionBadges.Length)
+                {
+                    var badge = _settingsLogActionBadges[index];
+                    badge.Show("EDIT", bounds);
+                    badge.Draw(new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText), 0.30f);
+                }
             }
         }
         else if (page == ApplicationSettingsPage.OtherFolders)

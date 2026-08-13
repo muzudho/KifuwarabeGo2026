@@ -6057,7 +6057,7 @@ public class Game1 : Game
             return;
         }
 
-        if (_applicationSettingsPage == ApplicationSettingsPage.Log && GoScreenRenderer.GetSettingsEditButtonHit(point, _selectedGuiLogIndex))
+        if (_applicationSettingsPage == ApplicationSettingsPage.Log && _renderer is not null && _renderer.GetSettingsEditButtonHit(point, _selectedGuiLogIndex))
         {
             var path = _guiLogFiles[_selectedGuiLogIndex];
             GuiOperationLog.User("Pressed Edit log badge", Path.GetFileName(path));

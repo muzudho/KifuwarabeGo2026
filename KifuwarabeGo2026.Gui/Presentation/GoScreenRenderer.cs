@@ -92,12 +92,6 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IGoScre
         _actionBadge.Draw(new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText), textScale);
     }
 
-    private void DrawActionBadgeAt(string label, Rectangle bounds, float textScale = 0.34f)
-    {
-        _actionBadge.ShowAt(label, bounds);
-        _actionBadge.Draw(new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText), textScale);
-    }
-
     public GoScreenRenderer(
         GraphicsDevice graphicsDevice,
         ContentManager content,
