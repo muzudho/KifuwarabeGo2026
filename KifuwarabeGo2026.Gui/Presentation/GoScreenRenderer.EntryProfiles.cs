@@ -493,27 +493,33 @@ public sealed partial class GoScreenRenderer
         DrawStickyNote(StickyNoteKind.ClientIdentityHandleHint, PlayerEditUnderlineConnectorStart(textBounds), new Color(185, 196, 255), new Color(116, 145, 178), "HANDLE とは？", ["対局サービスにログインするときの、プレイヤー固有の名前。", "接続する相手の機械に入力できるフォーマットに合わせます。"], bodyLineSpacing: 26);
     }
 
+    // Entry Profile editor のキーレーン: ラベル、意味アイコン、値、下線を列として共有する。
+    private const int PlayerEditFieldLabelX = 536;
+    private const int PlayerEditFieldIconX = 742;
+    private const int PlayerEditFieldValueX = 785;
+    private const int PlayerEditFieldValueWidth = 575;
+
     private static Rectangle PlayerEditPanelFieldTextBounds(EntryProfileEditField field) => field switch
     {
-        EntryProfileEditField.DisplayName => new(810, 375, 550, 42),
-        EntryProfileEditField.Identifier => new(760, 439, 600, 42),
+        EntryProfileEditField.DisplayName => new(PlayerEditFieldValueX, 375, PlayerEditFieldValueWidth, 42),
+        EntryProfileEditField.Identifier => new(PlayerEditFieldValueX, 439, PlayerEditFieldValueWidth, 42),
         _ => throw new ArgumentOutOfRangeException(nameof(field), field, "Unknown player edit field."),
     };
 
-    private static readonly Rectangle PlayerEditPanelClientIdentityTextBounds = new(760, 439, 600, 42);
-    private static readonly Rectangle PlayerEditPanelEngineTextBounds = new(810, 503, 550, 42);
+    private static readonly Rectangle PlayerEditPanelClientIdentityTextBounds = new(PlayerEditFieldValueX, 439, PlayerEditFieldValueWidth, 42);
+    private static readonly Rectangle PlayerEditPanelEngineTextBounds = new(PlayerEditFieldValueX, 503, PlayerEditFieldValueWidth, 42);
 
     private static Rectangle PlayerEditFieldIconBounds(Rectangle textBounds) =>
-        new(textBounds.X - 46, textBounds.Y + 4, 34, 34);
+        new(PlayerEditFieldIconX, textBounds.Y + 4, 34, 34);
 
     private static Rectangle PlayerEditFieldHoverBounds(Rectangle textBounds) =>
-        new(552, textBounds.Y, textBounds.Right - 552, textBounds.Height);
+        new(PlayerEditFieldLabelX, textBounds.Y, textBounds.Right - PlayerEditFieldLabelX, textBounds.Height);
 
     private void DrawPlayerEditField(GoAppSession session, EntryProfileEditField field, string label, Point mousePoint)
     {
         var textBounds = PlayerEditPanelFieldTextBounds(field);
         var active = session.ActivePlayerEditField == field;
-        DrawText(label, new Vector2(552, textBounds.Y + 7), new Color(180, 195, 195), 0.36f);
+        DrawText(label, new Vector2(PlayerEditFieldLabelX, textBounds.Y + 7), new Color(180, 195, 195), 0.36f);
         var hovered = textBounds.Contains(mousePoint);
         DrawRoundedFill(new Rectangle(textBounds.X, textBounds.Bottom + 2, textBounds.Width, 5), 2, active ? new Color(147, 244, 200) : hovered ? new Color(185, 196, 255) : new Color(100, 110, 145));
         var text = session.GetPlayerEditFieldText(field);
@@ -535,7 +541,7 @@ public sealed partial class GoScreenRenderer
         PlayerEditFieldIconKind iconKind = PlayerEditFieldIconKind.None)
     {
         var hovered = textBounds.Contains(mousePoint);
-        DrawText(label, new Vector2(552, textBounds.Y + 7), new Color(180, 195, 195), 0.36f);
+        DrawText(label, new Vector2(PlayerEditFieldLabelX, textBounds.Y + 7), new Color(180, 195, 195), 0.36f);
         DrawFittedText(value, textBounds, Color.White, 0.42f);
         _wideLinkUnderline.Draw(textBounds, hovered, this);
         if (iconKind != PlayerEditFieldIconKind.None)
