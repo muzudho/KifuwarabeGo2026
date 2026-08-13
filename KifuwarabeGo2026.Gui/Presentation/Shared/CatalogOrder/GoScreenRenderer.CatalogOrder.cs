@@ -9,6 +9,7 @@ public sealed partial class GoScreenRenderer
 {
     private static readonly CatalogOrder CatalogOrderControl = new();
     private readonly CatalogOrderCard _catalogOrderCard = new();
+    private readonly CatalogOrderEditorFrame _catalogOrderEditorFrame = new();
 
     public static bool GetCatalogOrderCancelButtonHit(Point point) =>
         CatalogOrderControl.IsCancelButtonHit(point);
@@ -40,19 +41,8 @@ public sealed partial class GoScreenRenderer
             return;
         }
 
-        var bounds = CatalogOrderEditorLayout.Bounds;
-        FillRect(new Rectangle(0, 0, VirtualScreen.Width, VirtualScreen.Height), new Color(0, 0, 0, 150));
-        FillRect(new Rectangle(bounds.X + 18, bounds.Y + 20, bounds.Width, bounds.Height), new Color(0, 0, 0, 155));
-        FillRect(bounds, new Color(19, 24, 31, 252));
-        DrawRect(bounds, 2, new Color(116, 145, 146));
-        DrawText($"{title} - EDIT ORDER", new Vector2(bounds.X + 30, bounds.Y + 24), new Color(244, 238, 218), 0.68f);
-        DrawCommandButton(CatalogOrderEditorLayout.CancelButtonBounds, "DISCARD", false, mousePoint, scale: 0.28f);
-        DrawCommandButton(CatalogOrderEditorLayout.SaveButtonBounds, "SAVE & CLOSE", false, mousePoint, scale: 0.23f);
-
-        FillRect(CatalogOrderEditorLayout.BoardBounds, new Color(15, 20, 26));
-        DrawRect(CatalogOrderEditorLayout.BoardBounds, 1, new Color(67, 84, 92));
-        FillRect(CatalogOrderEditorLayout.PropertyBounds, new Color(15, 20, 26));
-        DrawRect(CatalogOrderEditorLayout.PropertyBounds, 1, new Color(67, 84, 92));
+        _catalogOrderEditorFrame.Draw(title, mousePoint,
+            new CatalogOrderEditorFrameDrawingCallbacks(FillRect, DrawRect, DrawText, DrawCommandButton));
 
         var firstPage = editor.FirstVisiblePageIndex;
         DrawText($"PAGE {firstPage + 1}", new Vector2(CatalogOrderEditorLayout.BoardBounds.X + 16, CatalogOrderEditorLayout.BoardBounds.Y + 12), new Color(99, 223, 185), 0.38f);
