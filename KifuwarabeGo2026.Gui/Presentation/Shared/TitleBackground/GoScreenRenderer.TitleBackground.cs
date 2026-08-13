@@ -1,6 +1,7 @@
 namespace KifuwarabeGo2026.Gui.Presentation;
 
 using Microsoft.Xna.Framework;
+using KifuwarabeGo2026.Gui.Presentation.Shared.TitleBackground;
 using System;
 
 /// <summary>
@@ -8,6 +9,7 @@ using System;
 /// </summary>
 public sealed partial class GoScreenRenderer
 {
+    private readonly TitleGoEquipment _titleGoEquipment = new();
     // SpriteBatchのAlphaBlendはプリマルチプライドAlphaを前提とするため、
     // RGBもAlphaに合わせて変換してから渡す。
     private static readonly Color TitleGoEquipmentThinColor = Color.FromNonPremultiplied(112, 231, 235, 140);
@@ -18,35 +20,7 @@ public sealed partial class GoScreenRenderer
     /// </summary>
     private void DrawTitleGoEquipment()
     {
-        // 左の碁笥の蓋の描画
-        DrawLeftGoBowlLid();
-
-        // 左の石１の描画
-        DrawLeftStone1();
-
-        // 左の石２の描画
-        DrawLeftStone2();
-
-        // 左の石３の描画
-        DrawLeftStone3();
-
-        // 左の碁笥の本体の描画
-        DrawLeftGoBowlBody();
-
-        //// 右の碁笥の蓋の描画
-        //DrawRightGoBowlLid();
-
-        //// 右の石１の描画
-        //DrawRightStone1();
-
-        //// 右の石２の描画
-        //DrawRightStone2();
-
-        //// 右の石３の描画
-        //DrawRightStone3();
-
-        //// 右の碁笥の本体の描画
-        //DrawRightGoBowlBody();
+        _titleGoEquipment.Draw(new TitleGoEquipmentDrawingCallbacks(DrawEllipseWire, DrawCircumscribedCircleArc));
     }
 
     /// <summary>
