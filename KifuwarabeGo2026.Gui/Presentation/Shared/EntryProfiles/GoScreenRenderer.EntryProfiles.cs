@@ -14,6 +14,7 @@ public sealed partial class GoScreenRenderer
     private static readonly Rectangle ClientIdentityProfileSelectionUseButtonBounds = new(1320, 182, 150, 48);
     private static readonly Rectangle ClientIdentityProfileSelectionEditButtonBounds = new(800, 820, 150, 48);
     private static readonly Rectangle ClientIdentityProfileSelectionDuplicateButtonBounds = new(1110, 820, 150, 48);
+    private static readonly Rectangle ClientIdentityProfileSelectionSetDefaultButtonBounds = new(1272, 820, 190, 48);
     private static readonly Rectangle ClientIdentityProfileEditCancelButtonBounds = new(1158, 182, 150, 48);
     private static readonly Rectangle ClientIdentityProfileEditSaveButtonBounds = new(1320, 182, 150, 48);
     private static readonly Rectangle ClientIdentityProfileEditUseButtonBounds = new(1158, 182, 150, 48);
@@ -46,6 +47,7 @@ public sealed partial class GoScreenRenderer
     public static bool GetClientIdentityProfileSelectionUseButtonHit(Point point) => ClientIdentityProfileSelectionUseButtonBounds.Contains(point);
     public static bool GetClientIdentityProfileSelectionEditButtonHit(Point point) => ClientIdentityProfileSelectionEditButtonBounds.Contains(point);
     public static bool GetClientIdentityProfileSelectionDuplicateButtonHit(Point point) => ClientIdentityProfileSelectionDuplicateButtonBounds.Contains(point);
+    public static bool GetClientIdentityProfileSelectionSetDefaultButtonHit(Point point) => ClientIdentityProfileSelectionSetDefaultButtonBounds.Contains(point);
     public static bool GetClientIdentityProfileEditCancelButtonHit(Point point) => ClientIdentityProfileEditCancelButtonBounds.Contains(point);
     public static bool GetClientIdentityProfileEditSaveButtonHit(Point point) => ClientIdentityProfileEditSaveButtonBounds.Contains(point);
     public static bool GetClientIdentityProfileEditAddCgosButtonHit(Point point) => ClientIdentityProfileEditAddCgosButtonBounds.Contains(point);
@@ -172,8 +174,8 @@ public sealed partial class GoScreenRenderer
                 if (!isLocalMatchForLegacy)
                     DrawClientIdentityProfileEditField(session, index, ClientIdentityProfileEditField.LoginPass, "PASSWORD", mousePoint, false);
                 DrawFittedText($"CONNECTION: {session.ClientIdentityProfileEditConnectionDisplayName}", new Rectangle(row.X + 18, row.Y + 47, 920, 22), new Color(147, 244, 200), 0.28f);
-                if (session.IsClientIdentityProfileInUse(index))
-                    DrawFittedText("IN USE", new Rectangle(row.Right - 130, row.Y + 45, 110, 22), new Color(147, 244, 200), 0.28f);
+                if (session.IsClientIdentityProfileDefault(index))
+                    DrawFittedText("IN DEFAULT", new Rectangle(row.Right - 130, row.Y + 45, 110, 22), new Color(147, 244, 200), 0.28f);
             }
             else
             {
@@ -191,7 +193,7 @@ public sealed partial class GoScreenRenderer
         FillRect(bounds, new Color(24, 29, 36, 252));
         DrawRect(bounds, 2, new Color(116, 145, 146));
         DrawText("INPUT CLIENT IDENTITY", new Vector2(bounds.X + 34, bounds.Y + 28), new Color(244, 238, 218), 0.68f);
-        DrawFittedText("GREEN: active profile     BLUE: input source", new Rectangle(bounds.X + 36, bounds.Y + 82, 500, 26), new Color(180, 210, 215), 0.31f);
+        DrawFittedText("GREEN: default input     BLUE: input source", new Rectangle(bounds.X + 36, bounds.Y + 82, 500, 26), new Color(180, 210, 215), 0.31f);
         var targets = session.GetPlayerClientIdentityProfiles(session.PlayerEditDraft.Id);
         DrawCommandButton(ClientIdentityProfileSelectionUseButtonBounds, "INPUT", false, mousePoint, enabled: targets.Count > 0, scale: 0.34f);
         DrawCommandButton(ClientIdentityProfileSelectionCloseButtonBounds, "CANCEL", false, mousePoint, scale: 0.30f);
@@ -204,6 +206,8 @@ public sealed partial class GoScreenRenderer
         DrawCommandButton(ClientIdentityProfileSelectionEditButtonBounds, "EDIT", false, mousePoint, enabled: targets.Count > 0, scale: 0.34f);
         DrawCommandButton(ClientIdentityProfileEditRemoveButtonBounds, "REMOVE", false, mousePoint, enabled: targets.Count > 1, scale: 0.30f);
         DrawCommandButton(ClientIdentityProfileSelectionDuplicateButtonBounds, "DUPLICATE", false, mousePoint, enabled: targets.Count > 0 && targets.Count < 5, scale: 0.29f);
+        DrawCommandButton(ClientIdentityProfileSelectionSetDefaultButtonBounds, "SET AS DEFAULT", false, mousePoint,
+            enabled: targets.Count > 0 && !session.IsClientIdentityProfileDefault(session.ClientIdentityProfileSelectionIndex), scale: 0.22f);
 
         var firstRow = new Rectangle(bounds.X + 36, bounds.Y + 140, bounds.Width - 72, 78);
         DrawFittedText("HANDLE", new Rectangle(firstRow.X + 18, firstRow.Y - 27, 410, 24), new Color(180, 210, 215), 0.30f);
@@ -214,7 +218,7 @@ public sealed partial class GoScreenRenderer
         {
             var target = targets[index];
             var row = new Rectangle(bounds.X + 36, bounds.Y + 140 + index * 92, bounds.Width - 72, 78);
-            var selected = session.IsClientIdentityProfileInUse(index);
+            var selected = session.IsClientIdentityProfileDefault(index);
             var operated = index == session.ClientIdentityProfileSelectionIndex;
             FillRect(row, selected ? new Color(38, 103, 86) : row.Contains(mousePoint) ? new Color(43, 52, 62) : new Color(24, 31, 37));
             DrawRect(row, operated ? 3 : selected ? 2 : 1, operated ? new Color(125, 225, 255) : selected ? new Color(147, 244, 200) : new Color(70, 85, 94));
@@ -222,6 +226,8 @@ public sealed partial class GoScreenRenderer
             DrawFittedText(target.LoginName, new Rectangle(row.X + 18, row.Y + 25, 410, 30), Color.White, 0.42f);
             DrawFittedText(string.IsNullOrEmpty(target.LoginPass) ? "NONE" : "SET", new Rectangle(row.X + 460, row.Y + 25, 180, 30), Color.White, 0.34f);
             DrawFittedText(string.IsNullOrEmpty(target.ConnectionProfileId) ? "LOCAL MATCH" : "ONLINE MATCH", new Rectangle(row.X + 680, row.Y + 25, 260, 30), Color.White, 0.34f);
+            if (selected)
+                DrawFittedText("IN DEFAULT", new Rectangle(row.Right - 138, row.Y + 51, 120, 20), new Color(147, 244, 200), 0.24f);
         }
     }
 

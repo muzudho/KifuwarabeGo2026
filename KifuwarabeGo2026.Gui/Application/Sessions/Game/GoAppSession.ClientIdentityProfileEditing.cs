@@ -247,10 +247,11 @@ public sealed partial class GoAppSession
         return RemoveClientIdentityProfile();
     }
 
-    /// <summary>選択 Target をこの Player の既定の使用先として先頭へ移動する。</summary>
-    public bool UseClientIdentityProfile()
+    /// <summary>選択した Client Identity を、この Player の既定入力値として先頭へ移動します。</summary>
+    public bool SetSelectedClientIdentityProfileAsDefault()
     {
         var owner = GetClientIdentityEditOwner();
+        ClientIdentityProfileEditIndex = ClientIdentityProfileSelectionIndex;
         if (ClientIdentityProfileEditIndex < 0 || ClientIdentityProfileEditIndex >= owner.ClientIdentityProfileIds.Count)
             return false;
 
@@ -263,7 +264,8 @@ public sealed partial class GoAppSession
         return LoadClientIdentityProfileEditDraft();
     }
 
-    public bool IsClientIdentityProfileInUse(int index) =>
+    /// <summary>編集画面を開いたときに最初に入力する Client Identity かを判定します。</summary>
+    public bool IsClientIdentityProfileDefault(int index) =>
         index == 0 && GetClientIdentityEditOwner().ClientIdentityProfileIds.Count > 0;
 
     public void SetClientIdentityProfileEditField(ClientIdentityProfileEditField field, string value)
