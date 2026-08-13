@@ -18,10 +18,10 @@ public sealed class PopupNumberUnderline
     #region Buttons
 
     /// <summary>入力を取り消します。</summary>
-    public Button CancelButton { get; } = new(new Rectangle(910, 594, 150, 54), "CANCEL", 0.34f);
+    public Button CancelButton { get; } = new(new Rectangle(DialogBounds.Right - 360, DialogBounds.Y + 22, 150, 54), "CANCEL", 0.34f);
 
     /// <summary>入力した数値を確定します。</summary>
-    public Button OkButton { get; } = new(new Rectangle(1080, 594, 150, 54), "OK", 0.42f);
+    public Button OkButton { get; } = new(new Rectangle(DialogBounds.Right - 190, DialogBounds.Y + 22, 150, 54), "OK", 0.42f);
 
     /// <summary>
     /// 下げるボタン

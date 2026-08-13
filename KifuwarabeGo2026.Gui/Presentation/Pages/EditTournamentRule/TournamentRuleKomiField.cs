@@ -10,7 +10,6 @@ using System;
 public sealed class TournamentRuleKomiField
 {
     private const int ControlX = 626;
-    private static readonly Rectangle RowBounds = new(ControlX, 460, 668, 56);
     private static readonly Rectangle ValueBounds = new(ControlX + 132, 466, 176, 38);
     private readonly SinglelineTextUnderline _underline = new(
         new RoundUnderline { TopOffset = 2, Thickness = 5, Radius = 2 }, "EDIT");
@@ -20,8 +19,7 @@ public sealed class TournamentRuleKomiField
     public void Draw(decimal komi, Point mousePoint, TournamentRuleKomiFieldDrawingCallbacks draw)
     {
         ArgumentNullException.ThrowIfNull(draw);
-        draw.DrawDataRowFrame(RowBounds);
-        draw.DrawFieldLabel("KOMI", RowBounds);
+        draw.DrawFieldLabel("KOMI", new Rectangle(ControlX, 460, 668, 56));
         draw.DrawFittedText(komi.ToString("0.0"), ValueBounds, Color.White, 0.52f);
         _underline.Bounds = ValueBounds;
         _underline.SetEditing(false);
@@ -31,7 +29,6 @@ public sealed class TournamentRuleKomiField
 }
 
 public sealed record TournamentRuleKomiFieldDrawingCallbacks(
-    Action<Rectangle> DrawDataRowFrame,
     Action<string, Rectangle> DrawFieldLabel,
     Action<string, Rectangle, Color, float> DrawFittedText,
     IUnderlineDrawingSurface UnderlineSurface,

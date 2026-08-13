@@ -195,7 +195,7 @@ public sealed partial class GoScreenRenderer
             new Rectangle(AddPanelControlX, AddPanelBoardSizeButtonY, 668, 50));
         DrawBoardSizeButtons(session.BoardSize, mousePoint, AddPanelBoardSizeButtonY);
         _tournamentRuleKomiField.Draw(session.Komi, mousePoint,
-            new TournamentRuleKomiFieldDrawingCallbacks(bounds => DrawDataRowFrame(bounds), DrawTournamentRulesFieldLabel, DrawFittedText, this,
+            new TournamentRuleKomiFieldDrawingCallbacks(DrawTournamentRulesFieldLabel, DrawFittedText, this,
                 new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText)));
         DrawTournamentRulesTimeStrip(session, mousePoint);
         DrawTournamentRulesMoveLimitStrip(session, mousePoint);
