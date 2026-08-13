@@ -13,6 +13,7 @@ public sealed partial class GoScreenRenderer
 {
     private static readonly PlayerEngineErrorButton PlayerEngineErrorButton = new();
     private readonly AgehamaPlate _agehamaPlate = new();
+    private readonly PlayerTimeStatus _playerTimeStatus = new();
     public static bool GetEngineErrorLogHit(Point point, GoAppSession session)
     {
         if (session.CurrentMode.Kind != GoAppModeKind.Playing || session.EngineErrorStone is not { } errorStone)
@@ -76,16 +77,12 @@ public sealed partial class GoScreenRenderer
         else DrawStone(new Vector2(bounds.X + 31, bounds.Y + 23), 16, black);
         DrawFittedText(playerName, nameBounds, Color.White, 0.5f);
 
-        var elapsedText = elapsed is { } used ? FormatElapsedTime(used) : "--:--";
-        var mainTimeText = mainTime is { } limit ? FormatElapsedTime(limit) : "--:--";
-        var statusText = minimal
-            ? $"USED {elapsedText} / LIMIT {mainTimeText}"
-            : $"USED {elapsedText} / LIMIT {mainTimeText}    AGEHAMA {agehama}";
+        var statusText = _playerTimeStatus.Build(elapsed, mainTime, agehama, minimal, FormatElapsedTime);
         DrawFittedText(statusText, statusBounds, new Color(204, 211, 206), 0.34f);
         if (liveElapsed is { } currentElapsed)
         {
             DrawFittedText(
-                $"NOW  {FormatElapsedTime(currentElapsed)}",
+                _playerTimeStatus.BuildLive(currentElapsed, FormatElapsedTime),
                 new Rectangle(statusX, bounds.Y + 65, statusWidth, 18),
                 active ? new Color(147, 244, 200) : new Color(158, 178, 178),
                 0.30f);
