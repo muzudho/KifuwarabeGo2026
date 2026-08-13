@@ -197,8 +197,9 @@ public sealed partial class GoScreenRenderer
         FillRect(new Rectangle(0, 0, VirtualScreen.Width, VirtualScreen.Height), new Color(0, 0, 0, 150));
         FillRect(bounds, new Color(24, 29, 36, 252));
         DrawRect(bounds, 2, new Color(116, 145, 146));
-        DrawText("INPUT CLIENT IDENTITY", new Vector2(bounds.X + 34, bounds.Y + 28), new Color(244, 238, 218), 0.68f);
-        DrawFittedText("GREEN: default input     BLUE: input source", new Rectangle(bounds.X + 36, bounds.Y + 82, 500, 26), new Color(180, 210, 215), 0.31f);
+        DrawText("FAVORITE CLIENT IDENTITIES", new Vector2(bounds.X + 34, bounds.Y + 28), new Color(244, 238, 218), 0.58f);
+        DrawFittedText("UP TO FIVE IDENTITIES CAN BE SAVED.", new Rectangle(bounds.X + 36, bounds.Y + 65, 500, 22), new Color(180, 195, 195), 0.28f);
+        DrawFittedText("GREEN: default input     BLUE: input source", new Rectangle(bounds.X + 36, bounds.Y + 87, 500, 22), new Color(180, 210, 215), 0.29f);
         var targets = session.GetPlayerClientIdentityProfiles(session.PlayerEditDraft.Id);
         DrawCommandButton(ClientIdentityProfileSelectionUseButtonBounds, "INPUT", false, mousePoint, enabled: targets.Count > 0, scale: 0.34f);
         DrawCommandButton(ClientIdentityProfileSelectionCloseButtonBounds, "CANCEL", false, mousePoint, scale: 0.30f);
