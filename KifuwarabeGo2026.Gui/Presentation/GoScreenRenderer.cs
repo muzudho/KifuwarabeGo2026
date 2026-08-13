@@ -17,9 +17,10 @@ using KifuwarabeGo2026.Gui.Presentation.Pages.ReviewUnsavedChangesConfirmation;
 using KifuwarabeGo2026.Gui.Presentation.Pages.InitialPositionConcierge;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.PopupNumberUnderline;
 using KifuwarabeGo2026.Gui.Presentation.Shared.CgosMatchNotification;
+using KifuwarabeGo2026.Gui.Presentation.Shared.EditEntryProfile;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.LinkUnderline;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.MultilineTextUnderline;
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
 using KifuwarabeGo2026.Gui.Presentation.Title;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -31,7 +32,7 @@ using System.Linq;
 /// <summary>
 /// ［画面描画］の共通処理
 /// </summary>
-public sealed partial class GoScreenRenderer
+public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface
 {
     private const int GameOverValueX = 1328;
     private const int GameOverSecondValueX = 1560;
@@ -74,6 +75,7 @@ public sealed partial class GoScreenRenderer
     public PopupNumberUnderline PopupNumberUnderline { get; } = new();
     private StickyNoteScreenId _stickyNoteScreen = StickyNoteScreenId.Unknown;
     private readonly CgosMatchNotification _cgosMatchNotification = new();
+    public EditEntryProfile EditEntryProfile { get; } = new();
 
     public GoScreenRenderer(
         GraphicsDevice graphicsDevice,
@@ -1965,4 +1967,18 @@ public sealed partial class GoScreenRenderer
         var y = TextAreaTextBounds.Y + 18 + lineNumber * 31;
         return new Vector2(Math.Clamp(x, TextAreaTextBounds.X + 18, TextAreaTextBounds.Right - 22), Math.Clamp(y, TextAreaTextBounds.Y + 18, TextAreaTextBounds.Bottom - 48));
     }
+
+    public int GetPlayerEditPanelCaretIndex(Point point, EntryProfileEditField field, string text) =>
+        EditEntryProfile.GetCaretIndex(point, field, text, GetTextBoxCaretIndex);
+
+    private void DrawPlayerEditPanel(GoAppSession session, Point mousePoint) =>
+        EditEntryProfile.Draw(session, mousePoint, _stickyNoteScreen,
+            new EditEntryProfileDrawingCallbacks(VirtualScreen.Width, VirtualScreen.Height, FillRect, DrawRoundedFill,
+                DrawRect, DrawText, DrawFittedText, DrawCommandButton, DrawIconStone, DrawPlayerRoleFaceIcon,
+                DrawTextBoxSelection, DrawTextBoxCaret, DrawEditableTextEditHint, bounds => DrawPlayerEditHint("CHANGE", bounds),
+                DrawLine, DrawDynamicOptionText));
+
+    void IUnderlineDrawingSurface.FillRectangle(Rectangle bounds, Color color) => FillRect(bounds, color);
+    void IUnderlineDrawingSurface.FillRoundedRectangle(Rectangle bounds, int radius, Color color) => DrawRoundedFill(bounds, radius, color);
+    void IUnderlineDrawingSurface.DrawLine(Vector2 start, Vector2 end, float thickness, Color color) => DrawLine(start, end, thickness, color);
 }
