@@ -150,8 +150,11 @@ public sealed partial class GoAppSession
 
     public string PlayerEditClientIdentityPassword => PlayerEditClientIdentityDraft.LoginPass;
 
-    /// <summary>Local Match はパスワードを送らないため、入力欄では利用しません。</summary>
-    public bool IsPlayerEditClientIdentityLocalMatch => string.IsNullOrEmpty(PlayerEditClientIdentityDraft.ConnectionProfileId);
+    /// <summary>Local Match で空のパスワードだけは、未使用欄として表示します。</summary>
+    /// <remarks>お気に入りからコピーした値は、接続種別にかかわらず確認・編集できます。</remarks>
+    public bool IsPlayerEditClientIdentityPasswordDisabled =>
+        string.IsNullOrEmpty(PlayerEditClientIdentityDraft.ConnectionProfileId) &&
+        string.IsNullOrEmpty(PlayerEditClientIdentityDraft.LoginPass);
 
     public void ReloadPlayerEditClientIdentityDraft() => LoadPlayerEditClientIdentityDraft();
 

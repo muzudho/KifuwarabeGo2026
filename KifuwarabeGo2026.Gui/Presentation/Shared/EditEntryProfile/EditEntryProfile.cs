@@ -180,7 +180,7 @@ public sealed class EditEntryProfile
         DrawVerticalSectionLabel(sectionBounds, "CLIENT IDENTITY", new Color(66, 104, 116), draw);
         DrawEditableIdentityField(HandleLabel, EntryProfileEditField.ClientIdentityHandle, session, ClientIdentityHandleTextBounds, mousePoint, draw, mask: false);
         DrawEditableIdentityField(PasswordLabel, EntryProfileEditField.ClientIdentityPassword, session, ClientIdentityPasswordTextBounds, mousePoint, draw,
-            mask: true, enabled: !session.IsPlayerEditClientIdentityLocalMatch);
+            mask: true, enabled: !session.IsPlayerEditClientIdentityPasswordDisabled);
         DrawClientIdentityListButton(mousePoint, draw);
     }
 
