@@ -52,10 +52,19 @@ public sealed partial class GoAppSession
         ClientIdentityProfileSelectionIndex = index;
     }
 
-    public bool CommitClientIdentityProfileSelection()
+    /// <summary>選択したプロフィールの認証情報を、Entry Profile の入力欄へコピーします。</summary>
+    public bool InputSelectedClientIdentityProfileToPlayerEditDraft()
     {
-        ClientIdentityProfileEditIndex = ClientIdentityProfileSelectionIndex;
-        if (!UseClientIdentityProfile()) return false;
+        var owner = GetClientIdentityEditOwner();
+        if (ClientIdentityProfileSelectionIndex < 0 || ClientIdentityProfileSelectionIndex >= owner.ClientIdentityProfileIds.Count)
+            return false;
+
+        var selectedId = owner.ClientIdentityProfileIds[ClientIdentityProfileSelectionIndex];
+        var selected = _clientIdentityProfiles.FirstOrDefault(profile => string.Equals(profile.Id, selectedId, StringComparison.Ordinal));
+        if (selected is null) return false;
+
+        PlayerEditClientIdentityDraft.LoginName = selected.LoginName;
+        PlayerEditClientIdentityDraft.LoginPass = selected.LoginPass;
         IsClientIdentityProfileSelectionPanelOpen = false;
         DeactivateWindow(ActiveWindowId.ClientIdentitySelection);
         return true;

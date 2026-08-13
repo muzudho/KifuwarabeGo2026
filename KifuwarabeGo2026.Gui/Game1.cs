@@ -1906,11 +1906,8 @@ public class Game1 : Game
         {
             if (GoScreenRenderer.GetClientIdentityProfileSelectionCloseButtonHit(point))
                 _session.CloseClientIdentityProfileSelectionPanel();
-            else if (GoScreenRenderer.GetClientIdentityProfileSelectionUseButtonHit(point) && _session.CommitClientIdentityProfileSelection())
-            {
-                _session.ReloadPlayerEditClientIdentityDraft();
-                SavePlayerAndClientIdentityCatalogs();
-            }
+            else if (GoScreenRenderer.GetClientIdentityProfileSelectionUseButtonHit(point))
+                _session.InputSelectedClientIdentityProfileToPlayerEditDraft();
             else if (GoScreenRenderer.GetClientIdentityProfileSelectionEditButtonHit(point))
                 _session.OpenClientIdentityProfileEditPanel();
             else if (GoScreenRenderer.GetClientIdentityProfileSelectionDuplicateButtonHit(point) && _session.DuplicateSelectedClientIdentityProfile())

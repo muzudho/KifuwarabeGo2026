@@ -190,10 +190,10 @@ public sealed partial class GoScreenRenderer
         FillRect(new Rectangle(0, 0, VirtualScreen.Width, VirtualScreen.Height), new Color(0, 0, 0, 150));
         FillRect(bounds, new Color(24, 29, 36, 252));
         DrawRect(bounds, 2, new Color(116, 145, 146));
-        DrawText("USE CLIENT IDENTITY", new Vector2(bounds.X + 34, bounds.Y + 28), new Color(244, 238, 218), 0.68f);
-        DrawFittedText("GREEN: selected     BLUE: current operation", new Rectangle(bounds.X + 36, bounds.Y + 82, 500, 26), new Color(180, 210, 215), 0.31f);
+        DrawText("INPUT CLIENT IDENTITY", new Vector2(bounds.X + 34, bounds.Y + 28), new Color(244, 238, 218), 0.68f);
+        DrawFittedText("GREEN: active profile     BLUE: input source", new Rectangle(bounds.X + 36, bounds.Y + 82, 500, 26), new Color(180, 210, 215), 0.31f);
         var targets = session.GetPlayerClientIdentityProfiles(session.PlayerEditDraft.Id);
-        DrawCommandButton(ClientIdentityProfileSelectionUseButtonBounds, "USE", false, mousePoint, enabled: targets.Count > 0 && !session.IsClientIdentityProfileInUse(session.ClientIdentityProfileSelectionIndex), scale: 0.34f);
+        DrawCommandButton(ClientIdentityProfileSelectionUseButtonBounds, "INPUT", false, mousePoint, enabled: targets.Count > 0, scale: 0.34f);
         DrawCommandButton(ClientIdentityProfileSelectionCloseButtonBounds, "CANCEL", false, mousePoint, scale: 0.30f);
         var addBounds = new Rectangle(ClientIdentityProfileEditAddLocalButtonBounds.X, 786, ClientIdentityProfileEditAddCgosButtonBounds.Right - ClientIdentityProfileEditAddLocalButtonBounds.X, 24);
         FillRect(addBounds, new Color(56, 54, 84));

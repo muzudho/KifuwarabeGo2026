@@ -138,7 +138,7 @@ public sealed class EditEntryProfile
         // 付箋（一番前景に描画するために、最後に描画します）
         var stickyNote = FieldHoverBounds(PlayerFieldTextBounds(EntryProfileEditField.DisplayName)).Contains(mousePoint)
             ? PlayerNameStickyNote
-            : FieldHoverBounds(ClientIdentityHandleTextBounds).Contains(mousePoint) || FieldHoverBounds(ClientIdentityPasswordTextBounds).Contains(mousePoint)
+            : FieldHoverBounds(ClientIdentityHandleTextBounds).Contains(mousePoint)
                 ? HandleStickyNote
                 : session.PlayerEditDraft.Kind == EntryProfileKind.Computer && FieldHoverBounds(EngineTextBounds).Contains(mousePoint)
                     ? EngineStickyNote : null;
