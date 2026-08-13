@@ -102,6 +102,7 @@ public class Game1 : Game
     private KeyboardState _previousPlayerEditKeyboard;
     private readonly TextBoxController _targetProfileEditTextBox = new(240);
     private KeyboardState _previousClientIdentityProfileEditKeyboard;
+    private bool _receivedClientIdentityTextInput;
     private KeyboardState _previousCgosConnectionKeyboard;
     private readonly TextBoxController _cgosConnectionEditTextBox = new(240);
     private KeyboardState _previousCgosCredentialKeyboard;
@@ -3942,7 +3943,11 @@ public class Game1 : Game
 
         if (TryInputPlayerEditCharacter(e.Character)) return;
 
-        if (TryInputClientIdentityProfileEditCharacter(e.Character)) return;
+        if (TryInputClientIdentityProfileEditCharacter(e.Character))
+        {
+            _receivedClientIdentityTextInput = true;
+            return;
+        }
 
         if (TryInputHumanPlayerNameCharacter(e.Character)) return;
 
@@ -4407,6 +4412,7 @@ public class Game1 : Game
         if (!_session.IsClientIdentityProfileEditPanelOpen || _session.ActiveClientIdentityProfileEditField is not { } field)
         {
             _previousClientIdentityProfileEditKeyboard = keyboard;
+            _receivedClientIdentityTextInput = false;
             return;
         }
 
@@ -4431,9 +4437,42 @@ public class Game1 : Game
                 break;
             default:
                 SyncClientIdentityProfileEditField(field);
+                if (!_receivedClientIdentityTextInput &&
+                    TryGetKeyboardTextInputFallback(keyboard, _previousClientIdentityProfileEditKeyboard, out var character))
+                {
+                    TryInputClientIdentityProfileEditCharacter(character);
+                    GuiOperationLog.App("Text input fallback", $"field={field}; character={character}");
+                }
                 break;
         }
+        _receivedClientIdentityTextInput = false;
         _previousClientIdentityProfileEditKeyboard = keyboard;
+    }
+
+    /// <summary>
+    /// SDL/MonoGame の TextInput イベントが届かない環境でも、英数字のプロフィール入力を継続できるようにします。
+    /// 文字イベントを受信したフレームでは呼び出されないため、通常環境での二重入力は防止されます。
+    /// </summary>
+    private static bool TryGetKeyboardTextInputFallback(KeyboardState keyboard, KeyboardState previousKeyboard, out char character)
+    {
+        var shift = keyboard.IsKeyDown(Keys.LeftShift) || keyboard.IsKeyDown(Keys.RightShift);
+        for (var key = Keys.A; key <= Keys.Z; key++)
+        {
+            if (keyboard.IsKeyDown(key) && previousKeyboard.IsKeyUp(key))
+            {
+                character = (char)((shift ? 'A' : 'a') + (key - Keys.A));
+                return true;
+            }
+        }
+
+        if (keyboard.IsKeyDown(Keys.Space) && previousKeyboard.IsKeyUp(Keys.Space))
+        {
+            character = ' ';
+            return true;
+        }
+
+        character = default;
+        return false;
     }
 
     private void MoveClientIdentityProfileEditFocus(ClientIdentityProfileEditField field, int step)
