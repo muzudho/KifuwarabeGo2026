@@ -22,7 +22,7 @@ internal sealed class PlayStrategy : IGenerateMoveStrategy
         if (atariCaptureCandidates.Count > 0)
             return CreateDecision(atariCaptureCandidates, request, PlayDecisionReason.CaptureAtari);
 
-        // Priority 2: 自分のアタリを防ぐ。ただし、着手後に二眼になる候補はここでは選ばない。
+        // Priority 2: 自分のアタリを防ぐ。着手後に呼吸点が 2 未満の候補は守りとみなさない。
         var defenseCandidates = PlayMovePrioritizer.CollectThreatenedRenDefenseCandidates(request.Board, request.Color, legalMoves);
         if (defenseCandidates.Count > 0)
             return CreateDecision(defenseCandidates, request, PlayDecisionReason.DefendThreatenedRen);
@@ -61,7 +61,7 @@ internal readonly record struct PlayMoveDecision(
         var reason = Reason switch
         {
             PlayDecisionReason.CaptureAtari => "相手のアタリを取る",
-            PlayDecisionReason.DefendThreatenedRen => "自分のアタリの連を守る（二眼になる候補は除外）",
+            PlayDecisionReason.DefendThreatenedRen => "自分のアタリの連を守る（着手後の呼吸点が 2 以上）",
             _ => "優先手なし。合法手から選ぶ",
         };
         var selection = CandidateCount == 1

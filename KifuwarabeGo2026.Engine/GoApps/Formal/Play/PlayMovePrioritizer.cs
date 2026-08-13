@@ -32,7 +32,7 @@ internal static class PlayMovePrioritizer
 
     /// <summary>
     /// 自分の連がアタリのとき、その唯一の呼吸点へ打つ防御候補を返します。
-    /// 着手後にその連が二眼にならない候補だけを対象にします。
+    /// 着手後にその連の呼吸点が 2 以上になる候補だけを対象にします。
     /// </summary>
     public static List<LegalMoveCandidate> CollectThreatenedRenDefenseCandidates(
         GoBoard boardBeforeMove,
@@ -54,15 +54,15 @@ internal static class PlayMovePrioritizer
 
         return legalMoves
             .Where(candidate => defensePoints.Contains(candidate.Move))
-            .Where(candidate => CountPlacedRenEyes(candidate) != 2)
+            .Where(candidate => CountPlacedRenLiberties(candidate) >= 2)
             .ToList();
     }
 
-    private static int CountPlacedRenEyes(LegalMoveCandidate candidate)
+    private static int CountPlacedRenLiberties(LegalMoveCandidate candidate)
     {
         var afterParse = candidate.BoardAfterMove.ParseRens();
         var placedRen = afterParse.GetRen(afterParse.GetRenNumber(candidate.Move.X, candidate.Move.Y));
-        return placedRen.EyeRenNumbers.Count;
+        return CollectLiberties(afterParse, placedRen).Count;
     }
 
     private static HashSet<GoPoint> CollectLiberties(GoRenParseResult renParse, GoRen ren)
