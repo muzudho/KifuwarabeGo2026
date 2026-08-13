@@ -1,55 +1,82 @@
-namespace KifuwarabeGo2026.Gui.Presentation;
+namespace KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.StickyNote;
 
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.StickyNote;
 using Microsoft.Xna.Framework;
+using System;
 using System.Collections.Generic;
 
 /// <summary>
-/// 対象へ線で結ぶ、タイトル画面用の案内付箋を描画します。
+/// 文房具 UI の付箋です。配置、コネクター、見出し、本文、配色を所有し、
+/// 実際の描画だけをホストのコールバックへ委譲します。
 /// </summary>
-public sealed partial class GoScreenRenderer
+public sealed class StickyNote
 {
-    private StickyNoteScreenId _stickyNoteScreen = StickyNoteScreenId.Unknown;
-
-    /// <summary>現在のパンくずに対応する画面文脈を設定します。</summary>
-    public void SetStickyNoteScreen(StickyNoteScreenId screen) => _stickyNoteScreen = screen;
-
-    /// <summary>
-    /// 見出しと本文を共通の大きさ・余白で描く案内付箋です。
-    /// 本文は呼び出し側で行ごとに渡し、狭い欄でも文字を縮小しません。
-    /// </summary>
-    private void DrawStickyNote(
+    public StickyNote(
         StickyNoteKind kind,
         Vector2 connectorStart,
-        Color accent,
+        Color accentColor,
         Color borderColor,
         string heading,
         IReadOnlyList<string> bodyLines,
         int bodyLineSpacing = 40,
         Rectangle? anchorBounds = null)
     {
+        Kind = kind;
+        ConnectorStart = connectorStart;
+        AccentColor = accentColor;
+        BorderColor = borderColor;
+        Heading = heading ?? throw new ArgumentNullException(nameof(heading));
+        BodyLines = bodyLines ?? throw new ArgumentNullException(nameof(bodyLines));
+        BodyLineSpacing = bodyLineSpacing;
+        AnchorBounds = anchorBounds;
+    }
+
+    public StickyNoteKind Kind { get; }
+    public Vector2 ConnectorStart { get; }
+    public Color AccentColor { get; }
+    public Color BorderColor { get; }
+    public string Heading { get; }
+    public IReadOnlyList<string> BodyLines { get; }
+    public int BodyLineSpacing { get; }
+    public Rectangle? AnchorBounds { get; }
+    public Rectangle Bounds { get; private set; }
+    public Vector2 ConnectorEnd { get; private set; }
+
+    public bool TryPlace(StickyNoteScreenId screen)
+    {
         if (!StickyNotePlacementStrategies.TryGetPlacement(
-                _stickyNoteScreen,
-                kind,
-                new StickyNotePlacementContext(connectorStart, anchorBounds),
+                screen,
+                Kind,
+                new StickyNotePlacementContext(ConnectorStart, AnchorBounds),
                 out var placement))
-            return;
+            return false;
 
-        var bounds = placement.Bounds;
-        DrawLine(connectorStart, placement.ConnectorEnd, 2, accent);
-        FillRect(new Rectangle(bounds.X + 9, bounds.Y + 11, bounds.Width, bounds.Height), new Color(0, 0, 0, 115));
-        FillRect(bounds, new Color(19, 25, 30, 248));
-        DrawRect(bounds, 2, borderColor);
-        FillRect(new Rectangle(bounds.X, bounds.Y, 7, bounds.Height), accent);
-        DrawDynamicOptionText(heading, new Rectangle(bounds.X + 26, bounds.Y + 20, bounds.Width - 52, 38), accent, 0.40f);
+        Bounds = placement.Bounds;
+        ConnectorEnd = placement.ConnectorEnd;
+        return true;
+    }
 
-        for (var index = 0; index < bodyLines.Count; index++)
+    public void Draw(StickyNoteDrawingCallbacks draw)
+    {
+        ArgumentNullException.ThrowIfNull(draw);
+        draw.DrawLine(ConnectorStart, ConnectorEnd, 2, AccentColor);
+        draw.FillRectangle(new Rectangle(Bounds.X + 9, Bounds.Y + 11, Bounds.Width, Bounds.Height), new Color(0, 0, 0, 115));
+        draw.FillRectangle(Bounds, new Color(19, 25, 30, 248));
+        draw.DrawRectangle(Bounds, 2, BorderColor);
+        draw.FillRectangle(new Rectangle(Bounds.X, Bounds.Y, 7, Bounds.Height), AccentColor);
+        draw.DrawText(Heading, new Rectangle(Bounds.X + 26, Bounds.Y + 20, Bounds.Width - 52, 38), AccentColor, 0.40f);
+        for (var index = 0; index < BodyLines.Count; index++)
         {
-            DrawDynamicOptionText(
-                bodyLines[index],
-                new Rectangle(bounds.X + 26, bounds.Y + 68 + index * bodyLineSpacing, bounds.Width - 52, 28),
+            draw.DrawText(
+                BodyLines[index],
+                new Rectangle(Bounds.X + 26, Bounds.Y + 68 + index * BodyLineSpacing, Bounds.Width - 52, 28),
                 Color.White,
                 0.38f);
         }
     }
 }
+
+public sealed record StickyNoteDrawingCallbacks(
+    Action<Vector2, Vector2, float, Color> DrawLine,
+    Action<Rectangle, Color> FillRectangle,
+    Action<Rectangle, int, Color> DrawRectangle,
+    Action<string, Rectangle, Color, float> DrawText);
