@@ -7,6 +7,7 @@ using KifuwarabeGo2026.Shared.Domain;
 using KifuwarabeGo2026.Gui.Presentation.Shared.SelectEntry;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.StickyNote;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.LinkUnderline;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.MultilineTextUnderline;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
 using KifuwarabeGo2026.Gui.Presentation.Title;
 using Microsoft.Xna.Framework;
@@ -39,7 +40,8 @@ public sealed partial class GoScreenRenderer
         new RoundUnderline { TopOffset = 2, Thickness = 5, Radius = 2 });
     private readonly LinkUnderline _gtpEngineOptionLinkUnderline = new(
         new RoundUnderline { TopOffset = -4, Thickness = 4, Radius = 2 });
-    private readonly SquareUnderline _multilineTextUnderline = new() { Thickness = 1 };
+    private readonly MultilineTextUnderline _multilineTextUnderline = new(
+        new SquareUnderline { Thickness = 1 });
     private readonly LinkUnderline _compactLinkUnderline = new(
         new RoundUnderline { TopOffset = 1, Thickness = 3, Radius = 1 });
     private readonly LinkUnderline _selectorLinkUnderline = new(
