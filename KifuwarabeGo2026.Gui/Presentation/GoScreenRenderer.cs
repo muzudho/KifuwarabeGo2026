@@ -18,6 +18,7 @@ using KifuwarabeGo2026.Gui.Presentation.Pages.InitialPositionConcierge;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.PopupNumberUnderline;
 using KifuwarabeGo2026.Gui.Presentation.Shared.CgosMatchNotification;
 using KifuwarabeGo2026.Gui.Presentation.Shared.EditEntryProfile;
+using KifuwarabeGo2026.Gui.Presentation.BoardLens;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.LinkUnderline;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.MultilineTextUnderline;
@@ -75,6 +76,7 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface
     public PopupNumberUnderline PopupNumberUnderline { get; } = new();
     private StickyNoteScreenId _stickyNoteScreen = StickyNoteScreenId.Unknown;
     private readonly CgosMatchNotification _cgosMatchNotification = new();
+    private static readonly BoardLensButtonStrip LocalPlayingBoardLensButtons = new(1516, 800);
     public EditEntryProfile EditEntryProfile { get; } = new();
 
     public GoScreenRenderer(
@@ -1974,6 +1976,47 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface
         for (var y = 0; y < renParse.Size; y++)
         for (var x = 0; x < renParse.Size; x++)
             DrawRenNumber(renParse.GetRenNumber(x, y), BoardPoint(start, cell, x, y), scale);
+    }
+
+    internal static BoardLensButton? GetLocalPlayingBoardLensButtonHit(Point point, bool isLensEnabled) =>
+        LocalPlayingBoardLensButtons.GetHit(point, isLensEnabled);
+
+    private void DrawLocalPlayingBoardLensButtonStrip(bool isLensEnabled, Point mousePoint)
+    {
+        DrawFittedText("BOARD LENS  [L] / [J] / [K] / [1]", new Rectangle(1164, 812, 316, 36), new Color(147, 201, 190), 0.26f);
+        DrawBoardLensButtonStrip(LocalPlayingBoardLensButtons, isLensEnabled, mousePoint, 0.32f);
+    }
+
+    private void DrawBoardLensButtonStrip(BoardLensButtonStrip buttons, bool isLensEnabled, Point mousePoint, float scale = 0.32f)
+    {
+        DrawCommandButton(buttons.ToggleBounds, "L", isLensEnabled, mousePoint, scale: scale);
+        DrawCommandButton(buttons.PreviousBounds, "<J", false, mousePoint, enabled: isLensEnabled, scale: scale * 0.82f);
+        DrawCommandButton(buttons.NextBounds, "K>", false, mousePoint, enabled: isLensEnabled, scale: scale * 0.82f);
+        DrawCommandButton(buttons.ExitBounds, "OFF/1", false, mousePoint, enabled: isLensEnabled, scale: scale * 0.66f);
+    }
+
+    private void DrawBoardRenAnalysis(RenParseDisplayMode displayMode, int boardSize, Func<int, int, GoStone> getStone,
+        Func<GoRenParseResult> parseRens, Action drawPlacedStones, Vector2 start, float cell)
+    {
+        if (displayMode == RenParseDisplayMode.Off) { drawPlacedStones(); return; }
+        var renParse = parseRens();
+        if (displayMode == RenParseDisplayMode.Overlay)
+        {
+            drawPlacedStones(); DrawRenBoundaries(renParse, start, cell); DrawRenNumbers(renParse, start, cell); return;
+        }
+        if (displayMode == RenParseDisplayMode.Graph)
+        {
+            DrawRenGraphCells(boardSize, getStone, start, cell); DrawRenBoundaries(renParse, start, cell);
+            DrawRenRepresentativeNumbers(renParse, start, cell); return;
+        }
+        if (displayMode is RenParseDisplayMode.GraphStep2 or RenParseDisplayMode.Eye)
+        {
+            var nodes = CreateRenGraphNodes(renParse, start, cell, displayMode == RenParseDisplayMode.Eye);
+            FillRect(BoardBounds, new Color(56, 145, 129)); DrawRenGraphEdges(nodes, renParse.Edges, cell); DrawRenGraphNodes(nodes, cell); return;
+        }
+        DrawRenGraphCells(boardSize, getStone, start, cell); DrawRenBoundaries(renParse, start, cell);
+        if (displayMode == RenParseDisplayMode.RenArea) { DrawRenAreaNumbers(renParse, start, cell); return; }
+        DrawRenBoundaryLens(renParse, displayMode, start, cell);
     }
 
     private void DrawRenAreaNumbers(GoRenParseResult renParse, Vector2 start, float cell)
