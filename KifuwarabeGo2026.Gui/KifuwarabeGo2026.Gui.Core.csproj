@@ -38,6 +38,7 @@
     <Folder Include="Presentation\Shared\EditEntryProfile\" />
     <Folder Include="Presentation\StationeryUI\Controls\PopupNumberUnderline\" />
     <Folder Include="Presentation\StationeryUI\Controls\StickyNote\" />
+    <Folder Include="Presentation\StationeryUI\Controls\TableRowLabel\" />
     <Folder Include="Presentation\StationeryUI\Controls\MultilineTextUnderline\" />
     <Folder Include="Presentation\StationeryUI\Controls\SinglelineTextUnderline\" />
     <Folder Include="Presentation\StationeryUI\Controls\Shared\Underline\" />
