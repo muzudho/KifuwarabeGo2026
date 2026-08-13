@@ -1920,7 +1920,7 @@ public class Game1 : Game
                 SavePlayerAndClientIdentityCatalogs();
             else if (GoScreenRenderer.GetClientIdentityProfileEditAddCgosButtonHit(point) && _session.AddClientIdentityProfile(true))
                 SavePlayerAndClientIdentityCatalogs();
-            else if (GoScreenRenderer.GetClientIdentityProfileEditRemoveButtonHit(point) && _session.RemoveSelectedClientIdentityProfile())
+            else if (GoScreenRenderer.GetClientIdentityProfileSelectionDeleteButtonHit(point) && _session.RemoveSelectedClientIdentityProfile())
                 SavePlayerAndClientIdentityCatalogs();
             else if (GoScreenRenderer.GetClientIdentityProfileSelectionItemHit(point, _session) is { } targetIndex)
                 _session.SelectClientIdentityProfile(targetIndex);
