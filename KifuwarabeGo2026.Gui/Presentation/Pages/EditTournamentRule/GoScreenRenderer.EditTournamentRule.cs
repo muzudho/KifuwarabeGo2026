@@ -14,6 +14,7 @@ public sealed partial class GoScreenRenderer
 {
     private readonly TournamentRuleKomiField _tournamentRuleKomiField = new();
     private readonly TournamentRuleMoveLimitField _tournamentRuleMoveLimitField = new();
+    private readonly TournamentRuleTimeField _tournamentRuleTimeField = new();
 
     public static bool GetTournamentRulesBrowseButtonHit(Point point) =>
         TournamentRulesSelectButtonBounds.Contains(point);
@@ -198,7 +199,9 @@ public sealed partial class GoScreenRenderer
         _tournamentRuleKomiField.Draw(session.Komi, mousePoint,
             new TournamentRuleKomiFieldDrawingCallbacks(DrawTournamentRulesFieldLabel, DrawFittedText, this,
                 new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText)));
-        DrawTournamentRulesTimeStrip(session, mousePoint);
+        _tournamentRuleTimeField.Draw(session.MainTime, mousePoint,
+            new TournamentRuleTimeFieldDrawingCallbacks(DrawTournamentRulesFieldLabel, DrawFittedText, this,
+                new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText)));
         _tournamentRuleMoveLimitField.Draw(session.MoveLimit, mousePoint,
             new TournamentRuleMoveLimitFieldDrawingCallbacks(DrawTournamentRulesFieldLabel, DrawFittedText, this,
                 new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText)));

@@ -8,6 +8,7 @@ using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using System;
+using System.Linq;
 
 /// <summary>
 /// ［大会ルール設定］画面の処理
@@ -32,6 +33,7 @@ public sealed class TournamentRulesSetting
     /// </summary>
     private readonly TextBoxController _komiTextBox = new(5);
     private readonly TextBoxController _moveLimitInputTextBox = new(4);
+    private readonly TextBoxController[] _timeInputTextBoxes = [new(3), new(2), new(2)];
     private KeyboardState _previousKeyboard;
 
     public bool IsKomiInputOpen { get; private set; }
@@ -46,6 +48,11 @@ public sealed class TournamentRulesSetting
     public int MoveLimitInputSelectionStart => _moveLimitInputTextBox.SelectionStart;
     public int MoveLimitInputSelectionLength => _moveLimitInputTextBox.SelectionLength;
     public string MoveLimitInputMessage { get; private set; } = "RANGE  0 .. 9999";
+    public bool IsTimeInputOpen { get; private set; }
+    public int ActiveTimeInputPart { get; private set; }
+    public string[] TimeInputTexts => _timeInputTextBoxes.Select(box => box.Text).ToArray();
+    public int[] TimeInputCaretIndices => _timeInputTextBoxes.Select(box => box.CaretIndex).ToArray();
+    public string TimeInputMessage { get; private set; } = "HOURS 0..999     MINUTES / SECONDS 0..59";
 
     public TournamentRulesSetting(
         GoAppSession session,
@@ -65,6 +72,16 @@ public sealed class TournamentRulesSetting
     {
         if (!_session.IsTournamentRulesAddPanelOpen)
         {
+            _previousKeyboard = keyboard;
+            return;
+        }
+
+        if (IsTimeInputOpen)
+        {
+            var action = _timeInputTextBoxes[ActiveTimeInputPart].HandleKeyboard(keyboard, _previousKeyboard, gameTime, _clipboardService,
+                pasteCharacterFilter: char.IsAsciiDigit);
+            if (action == TextBoxKeyboardAction.Commit) CommitTimeInput();
+            else if (action == TextBoxKeyboardAction.Cancel) CancelTimeInput();
             _previousKeyboard = keyboard;
             return;
         }
@@ -129,6 +146,12 @@ public sealed class TournamentRulesSetting
         if (!_session.IsTournamentRulesAddPanelOpen)
         {
             return false;
+        }
+
+        if (IsTimeInputOpen)
+        {
+            if (char.IsAsciiDigit(character)) _timeInputTextBoxes[ActiveTimeInputPart].TryInputCharacter(character);
+            return true;
         }
 
         if (IsKomiInputOpen)
@@ -268,6 +291,55 @@ public sealed class TournamentRulesSetting
         _session.DeactivateModalWindow(ActiveWindowId.IntegerInput);
     }
 
+    public void OpenTimeInput()
+    {
+        CommitNumericEdit();
+        var time = _session.MainTime;
+        _timeInputTextBoxes[0].Begin(((int)time.TotalHours).ToString("00"));
+        _timeInputTextBoxes[1].Begin(time.Minutes.ToString("00"));
+        _timeInputTextBoxes[2].Begin(time.Seconds.ToString("00"));
+        ActiveTimeInputPart = 0;
+        TimeInputMessage = "HOURS 0..999     MINUTES / SECONDS 0..59";
+        IsTimeInputOpen = true;
+        _session.ActivateModalWindow(ActiveWindowId.IntegerInput);
+    }
+
+    public void BeginTimeInputSelection(int part, int caretIndex)
+    {
+        ActiveTimeInputPart = Math.Clamp(part, 0, 2);
+        _timeInputTextBoxes[ActiveTimeInputPart].BeginMouseSelection(caretIndex, IsShiftDown());
+    }
+
+    public void ChangeTimeInput(int part, int step)
+    {
+        part = Math.Clamp(part, 0, 2);
+        var current = int.TryParse(_timeInputTextBoxes[part].Text, out var value) ? value : 0;
+        var maximum = part == 0 ? 999 : 59;
+        _timeInputTextBoxes[part].Begin(Math.Clamp(current + step, 0, maximum).ToString("00"));
+        ActiveTimeInputPart = part;
+    }
+
+    public void CommitTimeInput()
+    {
+        if (!int.TryParse(_timeInputTextBoxes[0].Text, out var hours) || hours is < 0 or > 999 ||
+            !int.TryParse(_timeInputTextBoxes[1].Text, out var minutes) || minutes is < 0 or > 59 ||
+            !int.TryParse(_timeInputTextBoxes[2].Text, out var seconds) || seconds is < 0 or > 59)
+        {
+            TimeInputMessage = "ENTER hhh:mm:ss  (HOURS 0..999, MINUTES / SECONDS 0..59)";
+            return;
+        }
+        _session.SetMainTime(hours * 3600 + minutes * 60 + seconds);
+        CancelTimeInput();
+    }
+
+    public void CancelTimeInput()
+    {
+        IsTimeInputOpen = false;
+        foreach (var textBox in _timeInputTextBoxes) textBox.Clear();
+        TimeInputMessage = "HOURS 0..999     MINUTES / SECONDS 0..59";
+        _session.DeactivateModalWindow(ActiveWindowId.IntegerInput);
+    }
+
     private bool TryHandleTournamentRulesAddPanelClick(
         Point point,
         Func<Point, string, int>? getDisplayNameCaretIndex,
@@ -286,12 +358,6 @@ public sealed class TournamentRulesSetting
         {
             CommitNumericEdit();
             MoveOrBeginDisplayNameEdit(point, getDisplayNameCaretIndex);
-            return true;
-        }
-
-        if (TournamentRuleEditorLayout.GetMainTimeTextBoxHit(point) is { } mainTimeField)
-        {
-            BeginOrMoveNumericEdit(point, mainTimeField, getNumericCaretIndex);
             return true;
         }
 
@@ -314,16 +380,15 @@ public sealed class TournamentRulesSetting
             return true;
         }
 
-        if (TournamentRuleEditorLayout.IsMoveLimitTextBoxHit(point))
+        if (TournamentRuleEditorLayout.IsTimeTextBoxHit(point))
         {
-            OpenMoveLimitInput();
+            OpenTimeInput();
             return true;
         }
 
-        if (TournamentRuleEditorLayout.GetMainTimeStepButtonHit(point) is { } mainTimeStep)
+        if (TournamentRuleEditorLayout.IsMoveLimitTextBoxHit(point))
         {
-            CommitNumericEdit();
-            _session.ChangeMainTime(mainTimeStep);
+            OpenMoveLimitInput();
             return true;
         }
 

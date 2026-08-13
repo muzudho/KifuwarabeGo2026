@@ -27,24 +27,7 @@ public static class TournamentRuleEditorLayout
         return RuleKindButtonBounds(2).Contains(point) ? GoRuleKind.Chinese : null;
     }
 
-    public static TimeSpan? GetMainTimeStepButtonHit(Point point)
-    {
-        int[] steps = [3600, 60, 1];
-        for (var index = 0; index < steps.Length; index++)
-        {
-            if (MainTimeSpinButtonBounds(index, true).Contains(point)) return TimeSpan.FromSeconds(steps[index]);
-            if (MainTimeSpinButtonBounds(index, false).Contains(point)) return TimeSpan.FromSeconds(-steps[index]);
-        }
-        return null;
-    }
-
-    public static TournamentRulesNumericField? GetMainTimeTextBoxHit(Point point)
-    {
-        for (var index = 0; index < 3; index++)
-            if (MainTimePartTextBounds(index).Contains(point))
-                return (TournamentRulesNumericField)((int)TournamentRulesNumericField.MainTimeHours + index);
-        return null;
-    }
+    public static bool IsTimeTextBoxHit(Point point) => TimeTextBounds.Contains(point);
 
     public static bool IsMoveLimitTextBoxHit(Point point) => MoveLimitTextBounds.Contains(point);
 
@@ -54,9 +37,7 @@ public static class TournamentRuleEditorLayout
         ArgumentNullException.ThrowIfNull(getCaretIndex);
         var bounds = field switch
         {
-            TournamentRulesNumericField.MainTimeHours => MainTimePartTextBounds(0),
-            TournamentRulesNumericField.MainTimeMinutes => MainTimePartTextBounds(1),
-            TournamentRulesNumericField.MainTimeSeconds => MainTimePartTextBounds(2),
+            TournamentRulesNumericField.MainTimeHours or TournamentRulesNumericField.MainTimeMinutes or TournamentRulesNumericField.MainTimeSeconds => TimeTextBounds,
             _ => MoveLimitTextBounds,
         };
         return getCaretIndex(point.X, text, new Rectangle(bounds.X + 8, bounds.Y + 4, bounds.Width - 16, bounds.Height - 8), 0.42f);
@@ -64,8 +45,6 @@ public static class TournamentRuleEditorLayout
 
     public static Rectangle BoardSizeButtonBounds(int index) => new(ControlX + 132 + index * 180, BoardSizeButtonY, 164, 50);
     public static Rectangle RuleKindButtonBounds(int index) => new(ControlX + 132 + index * 180, 319, 164, 50);
-    public static Rectangle MainTimePartTextBounds(int index) => new(ControlX + 132 + index * 112, 540, 52, 40);
-    public static Rectangle MainTimeColonBounds(int index) => new(ControlX + 230 + index * 112, 544, 14, 28);
+    public static Rectangle TimeTextBounds => new(ControlX + 132, 540, 308, 40);
     public static Rectangle MoveLimitTextBounds => new(ControlX + 132, 612, 176, 40);
-    public static Rectangle MainTimeSpinButtonBounds(int index, bool up) => new(ControlX + 188 + index * 112, up ? 534 : 570, 40, 14);
 }

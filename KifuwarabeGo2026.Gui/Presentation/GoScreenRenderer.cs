@@ -16,6 +16,7 @@ using KifuwarabeGo2026.Gui.Presentation.Pages.ScreenshotEffect;
 using KifuwarabeGo2026.Gui.Presentation.Pages.ReviewUnsavedChangesConfirmation;
 using KifuwarabeGo2026.Gui.Presentation.Pages.InitialPositionConcierge;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.PopupNumberUnderline;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.PopupTimeUnderline;
 using KifuwarabeGo2026.Gui.Presentation.Shared.CgosMatchNotification;
 using KifuwarabeGo2026.Gui.Presentation.Shared.EditEntryProfile;
 using KifuwarabeGo2026.Gui.Presentation.BoardLens;
@@ -80,6 +81,7 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IGoScre
     public ReviewUnsavedChangesConfirmation ReviewUnsavedChangesConfirmation { get; } = new();
     public InitialPositionConcierge InitialPositionConcierge { get; } = new();
     public PopupNumberUnderline PopupNumberUnderline { get; } = new();
+    public PopupTimeUnderline PopupTimeUnderline { get; } = new();
     private StickyNoteScreenId _stickyNoteScreen = StickyNoteScreenId.Unknown;
     private readonly CgosMatchNotification _cgosMatchNotification = new();
     private static readonly BoardLensButtonStrip LocalPlayingBoardLensButtons = new(1516, 800);
@@ -657,25 +659,6 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IGoScre
         DrawTournamentRulesChoiceButton(RuleKindButtonBounds(2), "CHINESE", selectedKind == GoRuleKind.Chinese, mousePoint, 0.44f);
     }
 
-    private void DrawTournamentRulesTimeStrip(GoAppSession session, Point mousePoint)
-    {
-        var bounds = new Rectangle(AddPanelControlX, 532, 668, 56);
-        DrawTournamentRulesFieldLabel("TIME", bounds);
-        var values = new[] { ((int)session.MainTime.TotalHours).ToString("00"), session.MainTime.Minutes.ToString("00"), session.MainTime.Seconds.ToString("00") };
-        var units = new[] { "h", "m", "s" };
-        for (var index = 0; index < 3; index++)
-        {
-            var field = (TournamentRulesNumericField)((int)TournamentRulesNumericField.MainTimeHours + index);
-            DrawTournamentRulesNumericTextBox(session, field, values[index], TournamentRulesMainTimePartTextBounds(index), mousePoint, index + 1);
-            DrawSpinBox(MainTimeSpinButtonBounds(index, true), MainTimeSpinButtonBounds(index, false), units[index], mousePoint);
-            if (index < 2)
-            {
-                var colonBounds = TournamentRulesMainTimeColonBounds(index);
-                DrawFittedText(":", colonBounds, new Color(210, 218, 214), 0.46f);
-            }
-        }
-    }
-
     private void DrawTournamentRulesNumericTextBox(GoAppSession session, TournamentRulesNumericField field, string value, Rectangle textBounds, Point mousePoint, int tabIndex)
     {
         var active = session.ActiveTournamentRulesNumericField == field;
@@ -920,13 +903,7 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IGoScre
 
     private static Rectangle RuleKindButtonBounds(int index) => new(AddPanelControlX + 132 + index * 180, 319, 164, 50);
 
-    private static Rectangle TournamentRulesMainTimePartTextBounds(int index) => new(AddPanelControlX + 132 + index * 112, 540, 52, 40);
-
-    private static Rectangle TournamentRulesMainTimeColonBounds(int index) => new(AddPanelControlX + 230 + index * 112, 544, 14, 28);
-
     private static Rectangle TournamentRulesMoveLimitTextBounds => new(AddPanelControlX + 132, 612, 176, 40);
-
-    private static Rectangle MainTimeSpinButtonBounds(int index, bool up) => new(AddPanelControlX + 188 + index * 112, up ? 534 : 570, 40, 14);
 
 
     private static Rectangle PlayerKindButtonBounds(int index, int y) => new(GameOverValueX + index * 236, y, 236, 52);
@@ -1786,6 +1763,20 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IGoScre
 
     public int GetPopupNumberUnderlineCaretIndex(Point point, string text) =>
         PopupNumberUnderline.GetCaretIndex(point, text, GetTextBoxCaretIndex);
+
+    public void DrawPopupTimeUnderline(Point mousePosition, string[] values, int[] carets, int activePart, string message)
+    {
+        var mousePoint = VirtualScreen.ToVirtualPoint(_graphicsDevice.Viewport, mousePosition);
+        _spriteBatch.Begin(blendState: BlendState.AlphaBlend, samplerState: SamplerState.LinearClamp,
+            transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));
+        PopupTimeUnderline.Draw(mousePoint, values, carets, activePart, message,
+            new PopupTimeUnderlineDrawingCallbacks(VirtualScreen.Width, VirtualScreen.Height, FillRect, DrawRect,
+                DrawText, DrawFittedText, value => _font.MeasureString(value).X, DrawCommandButton, DrawLine, DrawSharpCenteredFittedText));
+        _spriteBatch.End();
+    }
+
+    public int GetPopupTimeUnderlineCaretIndex(int part, Point point, string text) =>
+        PopupTimeUnderline.GetCaretIndex(part, point, text, GetTextBoxCaretIndex);
 
     public void SetStickyNoteScreen(StickyNoteScreenId screen) => _stickyNoteScreen = screen;
 

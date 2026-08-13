@@ -878,6 +878,14 @@ public class Game1 : Game
                         new SpinButton(new Rectangle(924, 516, 82, 100), "1"),
                     ]));
 
+        if (_renderer is not null && _tournamentRulesSetting.IsTimeInputOpen)
+            _renderer.DrawPopupTimeUnderline(
+                backgroundMousePosition,
+                _tournamentRulesSetting.TimeInputTexts,
+                _tournamentRulesSetting.TimeInputCaretIndices,
+                _tournamentRulesSetting.ActiveTimeInputPart,
+                _tournamentRulesSetting.TimeInputMessage);
+
         if (_renderer is not null && _tournamentRulesSetting.IsKomiInputOpen)
             _renderer.DrawPopupNumberUnderline(
                 backgroundMousePosition,
@@ -1016,6 +1024,33 @@ public class Game1 : Game
             GuiOperationLog.User("Mouse click", $"screen={GetCurrentScreenState()} x={point.X} y={point.Y}");
             if (TryHandleActiveWindowClick(point))
             {
+                _previousMouse = mouse;
+                return;
+            }
+
+            if (_tournamentRulesSetting.IsTimeInputOpen)
+            {
+                if (_renderer?.PopupTimeUnderline.IsTextBoxHit(point, out var part) == true)
+                    _tournamentRulesSetting.BeginTimeInputSelection(part,
+                        _renderer.GetPopupTimeUnderlineCaretIndex(part, point, _tournamentRulesSetting.TimeInputTexts[part]));
+                else
+                {
+                    var spinHandled = false;
+                    if (_renderer is not null)
+                    {
+                        for (var index = 0; index < 3; index++)
+                        {
+                            var spin = _renderer.PopupTimeUnderline.SpinButtons[index];
+                            var step = index == 0 ? 1 : 1;
+                            if (spin.UpButton.IsHit(point)) { _tournamentRulesSetting.ChangeTimeInput(index, step); spinHandled = true; break; }
+                            if (spin.DownButton.IsHit(point)) { _tournamentRulesSetting.ChangeTimeInput(index, -step); spinHandled = true; break; }
+                        }
+                    }
+                    if (!spinHandled && _renderer?.PopupTimeUnderline.OkButton.IsHit(point) == true)
+                        _tournamentRulesSetting.CommitTimeInput();
+                    else if (!spinHandled && _renderer?.PopupTimeUnderline.CancelButton.IsHit(point) == true)
+                        _tournamentRulesSetting.CancelTimeInput();
+                }
                 _previousMouse = mouse;
                 return;
             }
