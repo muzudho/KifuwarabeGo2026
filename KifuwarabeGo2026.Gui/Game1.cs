@@ -1938,12 +1938,12 @@ public class Game1 : Game
         {
             if (GoScreenRenderer.GetPlayerEditPanelClientIdentityChangeHit(point))
                 _session.OpenClientIdentityProfileSelectionPanel();
-            else if (GoScreenRenderer.GetPlayerEditPanelCancelButtonHit(point))
+            else if (_renderer?.GetPlayerEditPanelCancelButtonHit(point) == true)
             {
                 _session.CancelPlayerEditPanel();
                 BeginDiscardTransition();
             }
-            else if (GoScreenRenderer.GetPlayerEditPanelSaveButtonHit(point) && _session.SavePlayerEditDraft())
+            else if (_renderer?.GetPlayerEditPanelSaveButtonHit(point) == true && _session.SavePlayerEditDraft())
                 SavePlayerCatalog(_session.EntryProfiles);
             else if (_session.PlayerEditDraft.Kind == EntryProfileKind.Computer &&
                      GoScreenRenderer.GetPlayerEditPanelEngineChangeHit(point))

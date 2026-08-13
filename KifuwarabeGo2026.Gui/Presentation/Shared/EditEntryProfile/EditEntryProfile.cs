@@ -5,6 +5,7 @@ using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.SinglelineTextUnderline;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.StickyNote;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.TableRowLabel;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Button;
 using Microsoft.Xna.Framework;
 using System;
 
@@ -13,17 +14,17 @@ public sealed partial class GoScreenRenderer
 {
     #region ［CANCEL］
 
-    private static readonly Rectangle PlayerEditPanelCancelButtonBounds = new(1080, 288, 132, 42);
+    private readonly Button _discardButton = new(new Rectangle(1080, 288, 132, 42), "DISCARD", 0.30f);
 
-    public static bool GetPlayerEditPanelCancelButtonHit(Point point) => PlayerEditPanelCancelButtonBounds.Contains(point);
+    public bool GetPlayerEditPanelCancelButtonHit(Point point) => _discardButton.IsHit(point);
 
     #endregion
 
     #region ［SAVE & CLOSE］
 
-    private static readonly Rectangle PlayerEditPanelSaveButtonBounds = new(1224, 288, 148, 42);
+    private readonly Button _saveAndCloseButton = new(new Rectangle(1224, 288, 148, 42), "SAVE & CLOSE", 0.26f);
 
-    public static bool GetPlayerEditPanelSaveButtonHit(Point point) => PlayerEditPanelSaveButtonBounds.Contains(point);
+    public bool GetPlayerEditPanelSaveButtonHit(Point point) => _saveAndCloseButton.IsHit(point);
 
     #endregion
 
@@ -138,8 +139,8 @@ public sealed partial class GoScreenRenderer
         FillRect(bounds, new Color(24, 29, 36, 252));
         DrawRect(bounds, 2, new Color(116, 145, 146));
         DrawText("EDIT ENTRY PROFILE", new Vector2(bounds.X + 34, bounds.Y + 28), new Color(244, 238, 218), 0.68f);
-        DrawCommandButton(PlayerEditPanelCancelButtonBounds, "DISCARD", false, mousePoint, scale: 0.30f);
-        DrawCommandButton(PlayerEditPanelSaveButtonBounds, "SAVE & CLOSE", false, mousePoint, scale: 0.26f);
+        _discardButton.Draw(mousePoint, DrawCommandButton);
+        _saveAndCloseButton.Draw(mousePoint, DrawCommandButton);
         DrawPlayerEditField(session, EntryProfileEditField.DisplayName, _playerNameLabel, mousePoint);
         DrawPlayerEditPopupField(_handleLabel, session.PlayerEditClientIdentityHandle, PlayerEditPanelClientIdentityTextBounds, mousePoint);
         if (session.PlayerEditDraft.Kind == EntryProfileKind.Computer)
