@@ -2,6 +2,7 @@ namespace KifuwarabeGo2026.Gui.Presentation;
 
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.LinkUnderline;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.StickyNote;
 using KifuwarabeGo2026.Gui.Presentation.Title;
 using Microsoft.Xna.Framework;
@@ -219,10 +220,7 @@ public sealed partial class GoScreenRenderer
             (linkBounds, label, underlineColor, textColor) =>
             {
                 DrawDynamicOptionText(label, linkBounds, textColor, 0.34f);
-                DrawRoundedFill(
-                    new Rectangle(linkBounds.X, linkBounds.Bottom + 2, linkBounds.Width, 5),
-                    2,
-                    underlineColor);
+                UnderlineRenderer.DrawRounded(linkBounds, 2, 5, 2, underlineColor, DrawRoundedFill);
             });
         if (hovered)
         {

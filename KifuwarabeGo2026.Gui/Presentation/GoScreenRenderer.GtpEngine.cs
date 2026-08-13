@@ -5,6 +5,7 @@ using KifuwarabeGo2026.GtpExtensions.InitialPosition;
 using KifuwarabeGo2026.Shared.Domain;
 using KifuwarabeGo2026.Gui.Presentation.Shared.PlayerSelector;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.LinkUnderline;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.StickyNote;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -457,7 +458,7 @@ public sealed partial class GoScreenRenderer
             (linkBounds, label, underlineColor, textColor) =>
             {
                 DrawDynamicOptionText(label, linkBounds, textColor, 0.34f);
-                DrawRoundedFill(new Rectangle(linkBounds.X, linkBounds.Bottom - 4, linkBounds.Width, 4), 2, underlineColor);
+                UnderlineRenderer.DrawRounded(linkBounds, -4, 4, 2, underlineColor, DrawRoundedFill);
             });
         if (option.Type == "spin" && option.Min is { } min && option.Max is { } max)
             DrawFittedText($"{min} .. {max}", new Rectangle(valueBounds.Right + 12, valueBounds.Y + 10, 126, 28), new Color(118, 139, 143), 0.24f);
