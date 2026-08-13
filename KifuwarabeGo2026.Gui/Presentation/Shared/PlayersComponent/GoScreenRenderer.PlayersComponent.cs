@@ -12,6 +12,7 @@ using System;
 public sealed partial class GoScreenRenderer
 {
     private static readonly PlayerEngineErrorButton PlayerEngineErrorButton = new();
+    private readonly AgehamaPlate _agehamaPlate = new();
     public static bool GetEngineErrorLogHit(Point point, GoAppSession session)
     {
         if (session.CurrentMode.Kind != GoAppModeKind.Playing || session.EngineErrorStone is not { } errorStone)
@@ -102,17 +103,8 @@ public sealed partial class GoScreenRenderer
 
     private void DrawAgehamaPlate(Rectangle bounds, int agehama, bool capturedBlack)
     {
-        _spriteBatch.Draw(_softCircle, bounds, new Color(91, 55, 31));
-        _spriteBatch.Draw(
-            _softCircle,
-            new Rectangle(bounds.X + 5, bounds.Y + 5, bounds.Width - 10, bounds.Height - 11),
-            new Color(145, 92, 48));
-        DrawStone(new Vector2(bounds.X + 30, bounds.Center.Y - 1), 12, capturedBlack);
-        DrawFittedText(
-            agehama.ToString(),
-            new Rectangle(bounds.X + 53, bounds.Y + 5, bounds.Width - 62, bounds.Height - 10),
-            Color.White,
-            0.50f);
+        _agehamaPlate.Draw(bounds, agehama, capturedBlack,
+            new AgehamaPlateDrawingCallbacks((plateBounds, color) => _spriteBatch.Draw(_softCircle, plateBounds, color), DrawStone, DrawFittedText));
     }
 
     private void DrawAgehamaSummaryComponent(Rectangle bounds, int blackAgehama, int whiteAgehama)
