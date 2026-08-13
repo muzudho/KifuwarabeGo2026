@@ -203,7 +203,7 @@ public sealed partial class GoAppSession
         return true;
     }
 
-    /// <summary>入力元一覧から、接続種別を持たない Client Identity を追加します。</summary>
+    /// <summary>入力元一覧から、HANDLE と PASSWORD が空の Client Identity を追加します。</summary>
     public bool AddClientIdentityProfileForInput()
     {
         var owner = GetClientIdentityEditOwner();
@@ -212,7 +212,8 @@ public sealed partial class GoAppSession
         var target = new ClientIdentityProfile
         {
             DisplayName = "Client Identity",
-            LoginName = new string(owner.Identifier.Where(character => !char.IsWhiteSpace(character)).ToArray()),
+            LoginName = "",
+            LoginPass = "",
         };
         _clientIdentityProfiles.Add(target);
         owner.ClientIdentityProfileIds.Add(target.Id);
