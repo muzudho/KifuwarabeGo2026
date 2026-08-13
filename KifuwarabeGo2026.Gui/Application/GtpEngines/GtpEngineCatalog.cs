@@ -70,7 +70,11 @@ public sealed class GtpEngineCatalog
                     string.Equals(profile.ExecutablePath, defaultProfile.ExecutablePath, StringComparison.OrdinalIgnoreCase)))
                 continue;
 
-            profiles.Insert(0, defaultProfile);
+            var importedProfile = defaultProfile.Clone();
+            if (profiles.Any(profile => string.Equals(profile.Id, importedProfile.Id, StringComparison.Ordinal)))
+                importedProfile.Id = CreateUniqueId(profiles);
+
+            profiles.Insert(0, importedProfile);
             changed = true;
         }
 
@@ -110,11 +114,24 @@ public sealed class GtpEngineCatalog
 
         var listDirectory = Path.GetDirectoryName(listPath) ?? AppContext.BaseDirectory;
         var profiles = JsonSerializer.Deserialize<GtpEngineProfileList>(File.ReadAllText(listPath), JsonOptions)?.GtpEngines ?? new();
-        var requiresSave = profiles.Any(profile => string.IsNullOrWhiteSpace(profile.Id));
+        var requiresSave = false;
+        var usedIds = new HashSet<string>(StringComparer.Ordinal);
         var normalizedProfiles = profiles
             .Where(profile => !string.IsNullOrWhiteSpace(profile.ExecutablePath))
             .Select(profile => Normalize(profile, listDirectory))
+            .Select(profile =>
+            {
+                if (usedIds.Add(profile.Id)) return profile;
+
+                // 先に保存されている方の ID は EntryProfile の参照先として保護し、
+                // 重複している後方のプロファイルだけを安全に再採番する。
+                profile.Id = CreateUniqueId(usedIds);
+                requiresSave = true;
+                return profile;
+            })
             .ToList();
+
+        requiresSave |= profiles.Any(profile => string.IsNullOrWhiteSpace(profile.Id));
 
         return new GtpEngineCatalog(listPath, normalizedProfiles, requiresSave);
     }
@@ -158,6 +175,22 @@ public sealed class GtpEngineCatalog
         foreach (var option in GtpEngineGuiOptions.Specs)
             normalized.GuiOptions.TryAdd(option.Id, option.DefaultValue);
         return normalized;
+    }
+
+    private static string CreateUniqueId(IEnumerable<GtpEngineProfile> profiles) =>
+        CreateUniqueId(profiles.Select(profile => profile.Id));
+
+    private static string CreateUniqueId(IEnumerable<string> usedIds)
+    {
+        var usedIdSet = usedIds as ISet<string> ?? new HashSet<string>(usedIds, StringComparer.Ordinal);
+        string id;
+        do
+        {
+            id = Guid.NewGuid().ToString("N");
+        }
+        while (!usedIdSet.Add(id));
+
+        return id;
     }
 
     private static string ResolvePath(string path, string baseDirectory)
