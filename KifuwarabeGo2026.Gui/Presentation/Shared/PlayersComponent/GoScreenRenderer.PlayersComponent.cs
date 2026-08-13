@@ -66,24 +66,19 @@ public sealed partial class GoScreenRenderer
         bool minimal)
     {
         if (!minimal) DrawDataRowFrame(bounds);
-        var activeX = minimal ? bounds.X + 34 : bounds.X;
-        if (active) FillRect(new Rectangle(activeX, bounds.Y + 2, 4, bounds.Height - 4), new Color(99, 223, 185));
-        var valueX = minimal ? GameOverValueX : bounds.X + 62;
-        var nameBounds = new Rectangle(valueX + (minimal ? 44 : 0), bounds.Y + 5, bounds.Right - valueX - 60, 34);
-        var statusX = valueX + (minimal ? 44 : -44);
-        var statusWidth = bounds.Right - statusX - (minimal ? 154 : 18);
-        var statusBounds = new Rectangle(statusX, bounds.Y + 43, statusWidth, liveElapsed is null ? 30 : 20);
-        if (minimal) DrawIconStone(new Vector2(valueX + 18, bounds.Y + 23), 16, black);
-        else DrawStone(new Vector2(bounds.X + 31, bounds.Y + 23), 16, black);
-        DrawFittedText(playerName, nameBounds, Color.White, 0.5f);
+        var layout = PlayerRowLayouts.Create(bounds, minimal, liveElapsed is not null, GameOverValueX);
+        if (active) FillRect(new Rectangle(layout.ActiveIndicatorX, bounds.Y + 2, 4, bounds.Height - 4), new Color(99, 223, 185));
+        if (minimal) DrawIconStone(new Vector2(layout.StoneCenterX, bounds.Y + 23), 16, black);
+        else DrawStone(new Vector2(layout.StoneCenterX, bounds.Y + 23), 16, black);
+        DrawFittedText(playerName, layout.NameBounds, Color.White, 0.5f);
 
         var statusText = _playerTimeStatus.Build(elapsed, mainTime, agehama, minimal, FormatElapsedTime);
-        DrawFittedText(statusText, statusBounds, new Color(204, 211, 206), 0.34f);
+        DrawFittedText(statusText, layout.StatusBounds, new Color(204, 211, 206), 0.34f);
         if (liveElapsed is { } currentElapsed)
         {
             DrawFittedText(
                 _playerTimeStatus.BuildLive(currentElapsed, FormatElapsedTime),
-                new Rectangle(statusX, bounds.Y + 65, statusWidth, 18),
+                layout.LiveStatusBounds,
                 active ? new Color(147, 244, 200) : new Color(158, 178, 178),
                 0.30f);
         }
