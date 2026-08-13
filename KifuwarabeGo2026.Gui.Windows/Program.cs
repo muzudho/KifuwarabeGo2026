@@ -25,7 +25,6 @@ internal static class Program
             using var game = new Game1(
                 new WindowsClipboardService(),
                 textCompositionService,
-                new WindowsMessageDialogService(),
                 new WindowsFileDialogService(),
                 new WindowsDesktopLauncher(),
                 new WindowsTextRasterizer(),

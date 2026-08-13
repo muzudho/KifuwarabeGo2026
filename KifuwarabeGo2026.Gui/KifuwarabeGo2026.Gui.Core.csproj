@@ -45,5 +45,6 @@
     <Folder Include="Presentation\StationeryUI\Controls\Shared\Underline\" />
     <Folder Include="Presentation\StationeryUI\Controls\VerticalSectionLabel\" />
     <Folder Include="Presentation\StationeryUI\Controls\LinkUnderline\" />
+    <Folder Include="Presentation\StationeryUI\MessageDialog\" />
   </ItemGroup>
 </Project>

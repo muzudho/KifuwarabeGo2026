@@ -33,6 +33,7 @@ public enum ActiveWindowId
     BoardEditing,
     VariationEditing,
     CgosMatchNotification,
+    MessageDialog,
 }
 
 /// <summary>

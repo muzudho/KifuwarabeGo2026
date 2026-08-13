@@ -23,6 +23,7 @@ using KifuwarabeGo2026.Gui.Presentation.GoApps.Formal.LocalMatch.Interval.Tourna
 using KifuwarabeGo2026.Gui.Presentation.Title;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.StickyNote;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.MessageDialog;
 using KifuwarabeGo2026.Gui.Sgf;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
@@ -41,7 +42,6 @@ public class Game1 : Game
     private readonly GraphicsDeviceManager _graphics;
     private readonly IClipboardService _clipboardService;
     private readonly ITextCompositionService _textCompositionService;
-    private readonly IMessageDialogService _messageDialogService;
     private readonly IFileDialogService _fileDialogService;
     private readonly IDesktopLauncher _desktopLauncher;
     private readonly ITextRasterizer _textRasterizer;
@@ -151,6 +151,7 @@ public class Game1 : Game
     private Task? _catalogSaveTask;
     private string _catalogSaveMessage = "";
     private Task<GuiReleaseUpdateResult>? _guiReleaseUpdateTask;
+    private MessageDialog? _messageDialog;
 
     private const double CgosMatchCountdownSeconds = 10d;
     private const double CgosMatchFadeSeconds = 1.2d;
@@ -171,7 +172,6 @@ public class Game1 : Game
     public Game1(
         IClipboardService clipboardService,
         ITextCompositionService textCompositionService,
-        IMessageDialogService messageDialogService,
         IFileDialogService fileDialogService,
         IDesktopLauncher desktopLauncher,
         ITextRasterizer textRasterizer,
@@ -184,7 +184,6 @@ public class Game1 : Game
         _textCompositionService = textCompositionService;
         _textCompositionService.CompositionChanged += OnTextCompositionChanged;
         _textCompositionService.DiagnosticsChanged += OnTextCompositionDiagnosticsChanged;
-        _messageDialogService = messageDialogService;
         _fileDialogService = fileDialogService;
         _desktopLauncher = desktopLauncher;
         _textRasterizer = textRasterizer;
@@ -885,6 +884,9 @@ public class Game1 : Game
         if (_renderer is not null && _isReviewUnsavedChangesConfirmationOpen)
             _renderer.DrawReviewUnsavedChangesConfirmation(Mouse.GetState().Position);
 
+        if (_renderer is not null && _messageDialog is not null)
+            _renderer.DrawMessageDialog(_messageDialog, Mouse.GetState().Position);
+
         if (_renderer is not null && IsCatalogSaveInProgress)
             _renderer.DrawSavingOverlay(_catalogSaveMessage);
 
@@ -903,6 +905,16 @@ public class Game1 : Game
 
         var mouse = Mouse.GetState();
         var point = VirtualScreen.ToVirtualPoint(GraphicsDevice.Viewport, mouse.Position);
+        if (_messageDialog is not null)
+        {
+            if (_previousMouse.LeftButton == ButtonState.Released && mouse.LeftButton == ButtonState.Pressed && _messageDialog.IsCloseHit(point))
+            {
+                _messageDialog = null;
+                _session.DeactivateModalWindow(ActiveWindowId.MessageDialog);
+            }
+            _previousMouse = mouse;
+            return;
+        }
         if (_isCommentEditorOpen)
         {
             Mouse.SetCursor(MouseCursor.Arrow);
@@ -2342,12 +2354,12 @@ public class Game1 : Game
             var result = task.GetAwaiter().GetResult();
             GuiOperationLog.User("GUI update completed", result.Message);
             if (result.DidStartUpdatedGui) Exit();
-            else _messageDialogService.ShowWarning("GUI UPDATE", result.Message);
+            else ShowMessage(result.Message, "GUI UPDATE");
         }
         catch (Exception ex)
         {
             GuiOperationLog.App("GUI update failed", ex.ToString());
-            _messageDialogService.ShowWarning("GUI UPDATE FAILED", "最新GUIの取得に失敗しました。ネットワーク接続とGitHub Releaseを確認してください。");
+            ShowMessage("最新GUIの取得に失敗しました。ネットワーク接続とGitHub Releaseを確認してください。", "GUI UPDATE FAILED");
         }
     }
 
@@ -4814,8 +4826,11 @@ public class Game1 : Game
         }
     }
 
-    private void ShowMessage(string message, string caption) =>
-        _messageDialogService.ShowWarning(caption, message);
+    private void ShowMessage(string message, string caption)
+    {
+        _messageDialog = new MessageDialog(caption, message);
+        _session.ActivateModalWindow(ActiveWindowId.MessageDialog);
+    }
 
     private void OpenGtpEngineSelectionDialog(GoStone stone)
     {
