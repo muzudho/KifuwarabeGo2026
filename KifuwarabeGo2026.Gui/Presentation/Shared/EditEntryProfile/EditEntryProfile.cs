@@ -13,6 +13,27 @@ public sealed partial class GoScreenRenderer
 {
     private readonly SinglelineTextUnderline _playerNameTextUnderline = new(
         new RoundUnderline { TopOffset = 2, Thickness = 5, Radius = 2 });
+    private readonly StickyNote _playerNameStickyNote = new(
+        StickyNoteKind.EntryProfileFieldHint,
+        new Vector2(PlayerEditFieldValueX + PlayerEditFieldValueWidth - 24, 421),
+        new Color(185, 196, 255), new Color(116, 145, 178),
+        "PLAYER NAME とは？",
+        ["画面に表示され、棋譜に書き込まれる、プレイヤーの呼び名。"],
+        bodyLineSpacing: 26);
+    private readonly StickyNote _handleStickyNote = new(
+        StickyNoteKind.EntryProfileFieldHint,
+        new Vector2(PlayerEditFieldValueX + PlayerEditFieldValueWidth - 24, 485),
+        new Color(185, 196, 255), new Color(116, 145, 178),
+        "HANDLE とは？",
+        ["対局サービスにログインするときの、プレイヤー固有の名前。", "接続する相手の機械に入力できるフォーマットに合わせます。"],
+        bodyLineSpacing: 26);
+    private readonly StickyNote _engineStickyNote = new(
+        StickyNoteKind.EntryProfileFieldHint,
+        new Vector2(PlayerEditFieldValueX + PlayerEditFieldValueWidth - 24, 549),
+        new Color(185, 196, 255), new Color(116, 145, 178),
+        "ENGINE とは？",
+        ["コンピューターとして対局するための GTP エンジン。"],
+        bodyLineSpacing: 26);
     private static readonly Rectangle PlayerEditPanelCancelButtonBounds = new(1080, 288, 132, 42);
     private static readonly Rectangle PlayerEditPanelSaveButtonBounds = new(1224, 288, 148, 42);
 
@@ -51,7 +72,15 @@ public sealed partial class GoScreenRenderer
         DrawPlayerEditPopupField("HANDLE", session.PlayerEditClientIdentityHandle, PlayerEditPanelClientIdentityTextBounds, mousePoint);
         if (session.PlayerEditDraft.Kind == EntryProfileKind.Computer)
             DrawPlayerEditPopupField("ENGINE", session.PlayerEditEngineDisplayName, PlayerEditPanelEngineTextBounds, mousePoint, PlayerEditFieldIconKind.Engine);
-        DrawPlayerEditStickyNote(session, mousePoint);
+        StickyNote? stickyNote = PlayerEditFieldHoverBounds(PlayerEditPanelFieldTextBounds(EntryProfileEditField.DisplayName)).Contains(mousePoint)
+            ? _playerNameStickyNote
+            : PlayerEditFieldHoverBounds(PlayerEditPanelClientIdentityTextBounds).Contains(mousePoint)
+                ? _handleStickyNote
+                : session.PlayerEditDraft.Kind == EntryProfileKind.Computer && PlayerEditFieldHoverBounds(PlayerEditPanelEngineTextBounds).Contains(mousePoint)
+                    ? _engineStickyNote
+                    : null;
+        if (stickyNote?.TryPlace(_stickyNoteScreen) == true)
+            stickyNote.Draw(new StickyNoteDrawingCallbacks(DrawLine, FillRect, DrawRect, DrawDynamicOptionText));
     }
 
     private static Rectangle PlayerEditPanelFieldTextBounds(EntryProfileEditField field) => field switch
@@ -63,6 +92,7 @@ public sealed partial class GoScreenRenderer
 
     private static Rectangle PlayerEditFieldIconBounds(Rectangle textBounds) => new(PlayerEditFieldIconX, textBounds.Y + 4, 34, 34);
     private static Rectangle PlayerEditFieldHoverBounds(Rectangle textBounds) => new(PlayerEditFieldLabelX, textBounds.Y, textBounds.Right - PlayerEditFieldLabelX, textBounds.Height);
+    private static Vector2 PlayerEditUnderlineConnectorStart(Rectangle textBounds) => new(textBounds.Right - 24, textBounds.Bottom + 4);
 
     private void DrawPlayerEditField(GoAppSession session, EntryProfileEditField field, string label, Point mousePoint)
     {
@@ -99,38 +129,6 @@ public sealed partial class GoScreenRenderer
         }
         DrawPlayerRoleFaceIcon(new Vector2(bounds.Center.X, bounds.Center.Y), isComputer: true);
     }
-
-    private void DrawPlayerEditStickyNote(GoAppSession session, Point mousePoint)
-    {
-        var displayNameBounds = PlayerEditPanelFieldTextBounds(EntryProfileEditField.DisplayName);
-        var handleBounds = PlayerEditPanelClientIdentityTextBounds;
-        var engineBounds = PlayerEditPanelEngineTextBounds;
-        string? heading = null;
-        string[]? bodyLines = null;
-        Vector2 connectorStart = default;
-        if (PlayerEditFieldHoverBounds(displayNameBounds).Contains(mousePoint))
-        {
-            heading = "PLAYER NAME とは？";
-            bodyLines = ["画面に表示され、棋譜に書き込まれる、プレイヤーの呼び名。"];
-            connectorStart = PlayerEditUnderlineConnectorStart(displayNameBounds);
-        }
-        else if (PlayerEditFieldHoverBounds(handleBounds).Contains(mousePoint))
-        {
-            heading = "HANDLE とは？";
-            bodyLines = ["対局サービスにログインするときの、プレイヤー固有の名前。", "接続する相手の機械に入力できるフォーマットに合わせます。"];
-            connectorStart = PlayerEditUnderlineConnectorStart(handleBounds);
-        }
-        else if (session.PlayerEditDraft.Kind == EntryProfileKind.Computer && PlayerEditFieldHoverBounds(engineBounds).Contains(mousePoint))
-        {
-            heading = "ENGINE とは？";
-            bodyLines = ["コンピューターとして対局するための GTP エンジン。"];
-            connectorStart = PlayerEditUnderlineConnectorStart(engineBounds);
-        }
-        if (heading is null || bodyLines is null) return;
-        DrawStickyNote(StickyNoteKind.EntryProfileFieldHint, connectorStart, new Color(185, 196, 255), new Color(116, 145, 178), heading, bodyLines, bodyLineSpacing: 26);
-    }
-
-    private static Vector2 PlayerEditUnderlineConnectorStart(Rectangle textBounds) => new(textBounds.Right - 24, textBounds.Bottom + 4);
 
     private enum PlayerEditFieldIconKind { None, PlayerName, Engine }
 }
