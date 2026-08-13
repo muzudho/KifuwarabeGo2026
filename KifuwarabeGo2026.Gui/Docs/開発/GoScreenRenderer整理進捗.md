@@ -26,7 +26,7 @@ partial によるファイル分割は完了扱いにしない。画面固有の
 | --- | --- | --- | --- |
 | partial 分割済み（未完了） | 大会ルール選択・編集画面 | `Pages/EditTournamentRule/GoScreenRenderer.EditTournamentRule.cs` | ファイル位置は移したが、`GoScreenRenderer` の private メソッドへ直接依存している。独立クラス化が必要。 |
 | 完了 | 大会ルールのコミ欄 | `Pages/EditTournamentRule/TournamentRuleKomiField.cs` | `SinglelineTextUnderline` を所有する独立クラス。描画は `TournamentRuleKomiFieldDrawingCallbacks` だけを受ける。 |
-| partial 分割済み（未完了） | 大会ルールのキャレット補助 | `Pages/EditTournamentRule/TournamentRuleRenderer.cs` | 現在は `GoScreenRenderer` のキャレット計算を呼ぶ薄い補助。専用の text-measure callback に置換する。 |
+| 完了 | 大会ルール編集の配置・ヒットテスト | `Pages/EditTournamentRule/TournamentRuleEditorLayout.cs` | 盤サイズ・ルール・時間・手数の配置、ヒットテスト、数値キャレット配置を所有する。キャレット計測は callback で受け取る。 |
 | 部品独立済み／呼び出し整理は残る | カタログ並び替え | `Shared/CatalogOrder/` | フレーム、カード、ページ送り、レイアウトは独立済み。`GoScreenRenderer` 側の呼び出しは残る。 |
 | 部品独立済み／呼び出し整理は残る | エントリープロフィール編集 | `Shared/EditEntryProfile/` と `Shared/EntryProfiles/` | 編集パネル部品は分離済み。画面側の入力・遷移は別途整理対象。 |
 | 完了 | 下線・入力用 UI | `StationeryUI/Controls/` | `LinkUnderline`、`SinglelineTextUnderline`、`PopupNumberUnderline`、`TextInputDialog` などを独立部品化。 |
@@ -39,10 +39,6 @@ partial によるファイル分割は完了扱いにしない。画面固有の
 
 移設先は `Pages/EditTournamentRule/`。
 
-- `GetBoardSizeButtonHit`、`GetRuleKindButtonHit`
-- `GetMainTimeStepButtonHit`、`GetMoveLimitStepButtonHit`
-- `GetTournamentRulesMainTimeTextBoxHit`、`GetTournamentRulesMoveLimitTextBoxHit`
-- `GetTournamentRulesNumericCaretIndex`
 - `DrawDisplayNameTextBox`、`DrawFilePathSelector`
 - `DrawBoardSizeButtons`、`DrawRuleKindButtons`
 - `DrawTournamentRulesTimeStrip`、`DrawTournamentRulesMoveLimitStrip`

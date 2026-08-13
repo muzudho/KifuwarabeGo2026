@@ -230,26 +230,26 @@ public sealed class TournamentRulesSetting
             return true;
         }
 
-        if (GoScreenRenderer.GetTournamentRulesMainTimeTextBoxHit(point) is { } mainTimeField)
+        if (TournamentRuleEditorLayout.GetMainTimeTextBoxHit(point) is { } mainTimeField)
         {
             BeginOrMoveNumericEdit(point, mainTimeField, getNumericCaretIndex);
             return true;
         }
 
-        if (GoScreenRenderer.GetTournamentRulesMoveLimitTextBoxHit(point))
+        if (TournamentRuleEditorLayout.IsMoveLimitTextBoxHit(point))
         {
             BeginOrMoveNumericEdit(point, TournamentRulesNumericField.MoveLimit, getNumericCaretIndex);
             return true;
         }
 
-        if (GoScreenRenderer.GetRuleKindButtonHit(point) is { } ruleKind)
+        if (TournamentRuleEditorLayout.GetRuleKindButtonHit(point) is { } ruleKind)
         {
             CommitNumericEdit();
             _session.ChangeRuleKind(ruleKind);
             return true;
         }
 
-        if (GoScreenRenderer.GetBoardSizeButtonHit(point, _session.CurrentMode.Kind) is { } boardSize)
+        if (TournamentRuleEditorLayout.GetBoardSizeButtonHit(point, _session.CurrentMode.Kind) is { } boardSize)
         {
             _session.ChangeBoardSize(boardSize);
             return true;
@@ -261,14 +261,14 @@ public sealed class TournamentRulesSetting
             return true;
         }
 
-        if (GoScreenRenderer.GetMainTimeStepButtonHit(point) is { } mainTimeStep)
+        if (TournamentRuleEditorLayout.GetMainTimeStepButtonHit(point) is { } mainTimeStep)
         {
             CommitNumericEdit();
             _session.ChangeMainTime(mainTimeStep);
             return true;
         }
 
-        if (GoScreenRenderer.GetMoveLimitStepButtonHit(point) is { } moveLimitStep)
+        if (TournamentRuleEditorLayout.GetMoveLimitStepButtonHit(point) is { } moveLimitStep)
         {
             CommitNumericEdit();
             _session.ChangeMoveLimit(moveLimitStep);

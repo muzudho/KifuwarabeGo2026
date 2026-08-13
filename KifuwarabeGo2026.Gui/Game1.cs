@@ -20,6 +20,7 @@ using KifuwarabeGo2026.Gui.Presentation.GoApps.Formal.OnlineMatch.ProfileSelect;
 using KifuwarabeGo2026.Gui.Presentation.GoApps.Formal.OnlineMatch.Watch;
 using KifuwarabeGo2026.Gui.Presentation.GoApps.Formal.LocalMatch.Interval;
 using KifuwarabeGo2026.Gui.Presentation.GoApps.Formal.LocalMatch.Interval.TournamentRules;
+using KifuwarabeGo2026.Gui.Presentation.Pages.EditTournamentRule;
 using KifuwarabeGo2026.Gui.Presentation.Title;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.StickyNote;
@@ -1505,7 +1506,7 @@ public class Game1 : Game
                 : (caretPoint, text) => TournamentRuleRenderer.GetDisplayNameCaretIndex(_renderer, caretPoint, text);
             Func<Point, TournamentRulesNumericField, string, int>? getNumericCaretIndex = _renderer is null
                 ? null
-                : (caretPoint, field, text) => _renderer.GetTournamentRulesNumericCaretIndex(caretPoint, field, text);
+                : (caretPoint, field, text) => TournamentRuleEditorLayout.GetNumericCaretIndex(caretPoint, field, text, _renderer.GetSinglelineTextCaretIndex);
             var handledByTournamentRulesSetting = !handledByGtpEngineEditPanel &&
                 !handledByGtpEngineSelectionDialog &&
                 isSetupMode &&
@@ -1822,7 +1823,7 @@ public class Game1 : Game
                 return _tournamentRulesSetting.TryHandleMouseClick(
                     point,
                     _renderer is null ? null : (caretPoint, text) => TournamentRuleRenderer.GetDisplayNameCaretIndex(_renderer, caretPoint, text),
-                    _renderer is null ? null : (caretPoint, field, text) => _renderer.GetTournamentRulesNumericCaretIndex(caretPoint, field, text));
+                    _renderer is null ? null : (caretPoint, field, text) => TournamentRuleEditorLayout.GetNumericCaretIndex(caretPoint, field, text, _renderer.GetSinglelineTextCaretIndex));
             case ActiveWindowId.TournamentRulesDeleteConfirmation:
                 return _tournamentRulesSetting.TryHandleMouseClick(point);
             case ActiveWindowId.CgosAdminPlayerSelection:
@@ -2196,7 +2197,7 @@ public class Game1 : Game
         _tournamentRulesSetting.UpdateMouseSelection(
             point,
             (caretPoint, text) => TournamentRuleRenderer.GetDisplayNameCaretIndex(_renderer, caretPoint, text),
-            (caretPoint, field, text) => _renderer.GetTournamentRulesNumericCaretIndex(caretPoint, field, text));
+            (caretPoint, field, text) => TournamentRuleEditorLayout.GetNumericCaretIndex(caretPoint, field, text, _renderer.GetSinglelineTextCaretIndex));
     }
 
     private static bool IsShiftDown()

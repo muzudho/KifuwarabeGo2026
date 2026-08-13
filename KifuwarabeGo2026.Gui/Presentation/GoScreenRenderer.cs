@@ -208,41 +208,6 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IGoScre
 
         _spriteBatch.End();
     }
-    public static int? GetBoardSizeButtonHit(Point point, GoAppModeKind modeKind)
-    {
-        if (modeKind == GoAppModeKind.GameOver)
-        {
-            return null;
-        }
-
-        var y = AddPanelBoardSizeButtonY;
-        if (BoardSizeButtonBounds(0, y).Contains(point))
-        {
-            return 9;
-        }
-
-        if (BoardSizeButtonBounds(1, y).Contains(point))
-        {
-            return 13;
-        }
-
-        return BoardSizeButtonBounds(2, y).Contains(point) ? 19 : null;
-    }
-    public static GoRuleKind? GetRuleKindButtonHit(Point point)
-    {
-        if (RuleKindButtonBounds(0).Contains(point))
-        {
-            return GoRuleKind.Japanese;
-        }
-
-        if (RuleKindButtonBounds(1).Contains(point))
-        {
-            return GoRuleKind.PureGo;
-        }
-
-        return RuleKindButtonBounds(2).Contains(point) ? GoRuleKind.Chinese : null;
-    }
-
     /// <summary>
     /// ［大会ルール設定　＞　コミ］のテキストボックスがクリックされたかどうかを判定します。
     /// XXX: なんでここにあるんだろう？　このクラスは画面描画の共通処理のはずなのに。
@@ -250,42 +215,6 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IGoScre
     /// <param name="point"></param>
     /// <returns></returns>
 
-    public static TimeSpan? GetMainTimeStepButtonHit(Point point)
-    {
-        var steps = new[] { 3600, 60, 1 };
-        for (var index = 0; index < steps.Length; index++)
-        {
-            if (MainTimeSpinButtonBounds(index, true).Contains(point)) return TimeSpan.FromSeconds(steps[index]);
-            if (MainTimeSpinButtonBounds(index, false).Contains(point)) return TimeSpan.FromSeconds(-steps[index]);
-        }
-
-        return null;
-    }
-
-    public static int? GetMoveLimitStepButtonHit(Point point)
-    {
-        var steps = new[] { 100, 10, 1 };
-        for (var index = 0; index < steps.Length; index++)
-        {
-            if (MoveLimitSpinButtonBounds(index, true).Contains(point)) return steps[index];
-            if (MoveLimitSpinButtonBounds(index, false).Contains(point)) return -steps[index];
-        }
-
-        return null;
-    }
-
-    public static TournamentRulesNumericField? GetTournamentRulesMainTimeTextBoxHit(Point point)
-    {
-        for (var index = 0; index < 3; index++)
-        {
-            if (TournamentRulesMainTimePartTextBounds(index).Contains(point))
-                return (TournamentRulesNumericField)((int)TournamentRulesNumericField.MainTimeHours + index);
-        }
-        return null;
-    }
-
-    public static bool GetTournamentRulesMoveLimitTextBoxHit(Point point) =>
-        TournamentRulesMoveLimitTextBounds.Contains(point);
     public static bool GetLocalUseButtonHit(Point point) => LocalUseButtonBounds.Contains(point);
     public static bool GetImportSgfButtonHit(Point point) => ImportSgfButtonBounds.Contains(point);
     public static bool GetStartPlayingButtonHit(Point point, GoAppModeKind modeKind) =>
@@ -325,17 +254,6 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IGoScre
     public int GetHumanPlayerNameCaretIndex(Point point, GoStone stone, string text) =>
         GetTextBoxCaretIndex(point.X, text, HumanPlayerNameTextBounds(stone == GoStone.Black ? BlackEngineButtonY : WhiteEngineButtonY), 0.42f);
 
-    public int GetTournamentRulesNumericCaretIndex(Point point, TournamentRulesNumericField field, string text)
-    {
-        var bounds = field switch
-        {
-            TournamentRulesNumericField.MainTimeHours => TournamentRulesMainTimePartTextBounds(0),
-            TournamentRulesNumericField.MainTimeMinutes => TournamentRulesMainTimePartTextBounds(1),
-            TournamentRulesNumericField.MainTimeSeconds => TournamentRulesMainTimePartTextBounds(2),
-            _ => TournamentRulesMoveLimitTextBounds,
-        };
-        return GetTextBoxCaretIndex(point.X, text, new Rectangle(bounds.X + 8, bounds.Y + 4, bounds.Width - 16, bounds.Height - 8), 0.42f);
-    }
     public static bool GetPassButtonHit(Point point) => PassButtonBounds.Contains(point);
 
     public static bool GetResignButtonHit(Point point) => ResignButtonBounds.Contains(point);
@@ -681,6 +599,10 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IGoScre
 
         return text.Length;
     }
+
+    /// <summary>画面固有レイアウトから利用できる、共通の単一行キャレット計測です。</summary>
+    public int GetSinglelineTextCaretIndex(int pointX, string text, Rectangle textBounds, float textScale) =>
+        GetTextBoxCaretIndex(pointX, text, textBounds, textScale);
     private void DrawPropertyRow(int y, string label, string value)
     {
         var bounds = new Rectangle(TournamentRulesSelectionDialogPropertyBounds.X + 18, y, TournamentRulesSelectionDialogPropertyBounds.Width - 36, 52);
