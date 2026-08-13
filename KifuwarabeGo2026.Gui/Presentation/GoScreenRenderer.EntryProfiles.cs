@@ -1,7 +1,7 @@
 namespace KifuwarabeGo2026.Gui.Presentation;
 
 using KifuwarabeGo2026.Gui.Application;
-using KifuwarabeGo2026.Gui.Presentation.Shared.StickyNote;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.StickyNote;
 using KifuwarabeGo2026.Gui.Presentation.Shared.PlayerSelector;
 using KifuwarabeGo2026.Shared.Domain;
 using Microsoft.Xna.Framework;

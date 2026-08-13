@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Gui.Presentation.Shared.StickyNote;
+namespace KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.StickyNote;
 
 using Microsoft.Xna.Framework;
 using System;
