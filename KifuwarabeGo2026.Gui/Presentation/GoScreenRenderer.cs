@@ -19,6 +19,7 @@ using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.PopupNumberUnderli
 using KifuwarabeGo2026.Gui.Presentation.Shared.CgosMatchNotification;
 using KifuwarabeGo2026.Gui.Presentation.Shared.EditEntryProfile;
 using KifuwarabeGo2026.Gui.Presentation.BoardLens;
+using KifuwarabeGo2026.Gui.Presentation.BoardLens.Shared.RenBoundaries;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.LinkUnderline;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.MultilineTextUnderline;
@@ -33,7 +34,7 @@ using System.Linq;
 /// <summary>
 /// ［画面描画］の共通処理
 /// </summary>
-public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface
+public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IGoScreenRenderer
 {
     private const int GameOverValueX = 1328;
     private const int GameOverSecondValueX = 1560;
@@ -2016,7 +2017,7 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface
         }
         DrawRenGraphCells(boardSize, getStone, start, cell); DrawRenBoundaries(renParse, start, cell);
         if (displayMode == RenParseDisplayMode.RenArea) { DrawRenAreaNumbers(renParse, start, cell); return; }
-        DrawRenBoundaryLens(renParse, displayMode, start, cell);
+        RenBoundaryLens.DrawRenBoundaryLens(this, renParse, displayMode, start, cell);
     }
 
     private void DrawRenAreaNumbers(GoRenParseResult renParse, Vector2 start, float cell)
@@ -2085,39 +2086,6 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface
         }
     }
 
-    private void DrawAdjacentRenRelationships(GoRenParseResult renParse, List<(GoPoint From, GoPoint To)> contacts,
-        HashSet<int> adjacentRenNumbers, Color legColor, float legThickness, Vector2 start, float cell)
-    {
-        var radius = MathHelper.Clamp(cell * 0.13f, 5f, 11f);
-        var innerHalf = Math.Max(2, (int)MathF.Round(radius - legThickness));
-        var outerHalf = Math.Max(innerHalf + 2, (int)MathF.Round(radius + 3f - legThickness));
-        var sorted = new List<int>(adjacentRenNumbers); sorted.Sort();
-        foreach (var number in sorted)
-        {
-            var contact = FindFirstContact(number); var target = renParse.GetRen(number);
-            var source = BoardPoint(start, cell, contact.From.X, contact.From.Y); var boundary = BoardPoint(start, cell, contact.To.X, contact.To.Y);
-            var direction = new Vector2(contact.From.X - contact.To.X, contact.From.Y - contact.To.Y); direction.Normalize();
-            var marker = boundary + new Vector2(-direction.Y, direction.X) * outerHalf * 2f;
-            DrawLine(source, marker, legThickness, legColor);
-            FillRect(new Rectangle((int)MathF.Round(marker.X) - outerHalf, (int)MathF.Round(marker.Y) - outerHalf, outerHalf * 2, outerHalf * 2), legColor);
-            FillRect(new Rectangle((int)MathF.Round(marker.X) - innerHalf, (int)MathF.Round(marker.Y) - innerHalf, innerHalf * 2, innerHalf * 2), RenGraphCellColor(target.Stone));
-        }
-        (GoPoint From, GoPoint To) FindFirstContact(int targetNumber)
-        {
-            (GoPoint From, GoPoint To)? selected = null;
-            foreach (var contact in contacts)
-                if (renParse.GetRenNumber(contact.To.X, contact.To.Y) == targetNumber && (selected is null || ComesFirst(contact, selected.Value))) selected = contact;
-            return selected ?? throw new InvalidOperationException("Adjacent ren has no boundary contact.");
-        }
-        static bool ComesFirst((GoPoint From, GoPoint To) candidate, (GoPoint From, GoPoint To) current) => candidate.To.Y < current.To.Y ||
-            (candidate.To.Y == current.To.Y && candidate.To.X < current.To.X) ||
-            (candidate.To == current.To && (candidate.From.Y < current.From.Y || (candidate.From.Y == current.From.Y && candidate.From.X < current.From.X)));
-    }
-    private static int SumAdjacentRenAreas(GoRenParseResult renParse, HashSet<int> numbers)
-    {
-        var area = 0; foreach (var number in numbers) area += renParse.GetRen(number).Points.Count; return area;
-    }
-
     private void DrawNobiLens(GoAppSession session, Vector2 start, float cell)
     {
         var renParse = session.ParseRens();
@@ -2154,6 +2122,17 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface
             }
         }
     }
+
+    public Vector2 GetBoardPoint(Vector2 start, float cell, int x, int y) => BoardPoint(start, cell, x, y);
+    public Color GetRenGraphCellColor(GoStone stone) => RenGraphCellColor(stone);
+    public void DrawBoardLensLine(Vector2 start, Vector2 end, float thickness, Color color) => DrawLine(start, end, thickness, color);
+    public void DrawBoardLensCircle(Vector2 center, float radius, Color color) => DrawCircle(center, radius, color);
+    public void FillBoardLensRectangle(Rectangle bounds, Color color) => FillRect(bounds, color);
+    public void DrawRenBoundaryPointMetric(GoRen ren, int value, Color valueColor, Vector2 start, float cell, Color? outlineColor) =>
+        DrawRenMetricNumber(ren, value, RenMetricUnit.PointCount, valueColor, start, cell, outlineColor);
+    public void DrawDeferredStrongBoundaryMetrics(GoRenParseResult renParse,
+        IReadOnlyList<(int RenNumber, int Value, Color Color, Color Outline)> metrics, Vector2 start, float cell) =>
+        DrawDeferredStrongMetrics(renParse, new List<(int RenNumber, int Value, Color Color, Color Outline)>(metrics), start, cell);
 
     private void DrawRenMetricNumber(GoRen ren, int value, RenMetricUnit unit, Color valueColor, Vector2 start,
         float cell, Color? valueOutlineColor = null)
