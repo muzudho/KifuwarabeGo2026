@@ -10,6 +10,7 @@ public sealed partial class GoScreenRenderer
     private static readonly CatalogOrder CatalogOrderControl = new();
     private readonly CatalogOrderCard _catalogOrderCard = new();
     private readonly CatalogOrderEditorFrame _catalogOrderEditorFrame = new();
+    private readonly CatalogOrderPageHeader _catalogOrderPageHeader = new();
 
     public static bool GetCatalogOrderCancelButtonHit(Point point) =>
         CatalogOrderControl.IsCancelButtonHit(point);
@@ -45,14 +46,8 @@ public sealed partial class GoScreenRenderer
             new CatalogOrderEditorFrameDrawingCallbacks(FillRect, DrawRect, DrawText, DrawCommandButton));
 
         var firstPage = editor.FirstVisiblePageIndex;
-        DrawText($"PAGE {firstPage + 1}", new Vector2(CatalogOrderEditorLayout.BoardBounds.X + 16, CatalogOrderEditorLayout.BoardBounds.Y + 12), new Color(99, 223, 185), 0.38f);
-        if (firstPage + 1 < editor.PageCount)
-            DrawText($"PAGE {firstPage + 2}", new Vector2(CatalogOrderEditorLayout.BoardBounds.X + 528, CatalogOrderEditorLayout.BoardBounds.Y + 12), new Color(99, 223, 185), 0.38f);
-        DrawLine(
-            new Vector2(CatalogOrderEditorLayout.BoardBounds.X + 520, CatalogOrderEditorLayout.BoardBounds.Y + 12),
-            new Vector2(CatalogOrderEditorLayout.BoardBounds.X + 520, CatalogOrderEditorLayout.BoardBounds.Bottom - 12),
-            2,
-            new Color(50, 91, 89));
+        _catalogOrderPageHeader.Draw(firstPage, editor.PageCount,
+            new CatalogOrderPageHeaderDrawingCallbacks(DrawText, DrawLine));
 
         var startIndex = editor.FirstVisiblePageIndex * editor.PageSize;
         for (var visibleIndex = 0; visibleIndex < editor.PageSize * 2; visibleIndex++)
