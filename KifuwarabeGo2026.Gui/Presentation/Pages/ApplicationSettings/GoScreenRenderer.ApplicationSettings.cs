@@ -17,11 +17,11 @@ public sealed partial class GoScreenRenderer
 {
     private readonly ActionBadge[] _settingsLogActionBadges =
     [
-        ActionBadge.Create("EDIT", SettingsLogItemBounds(0), 0.30f),
-        ActionBadge.Create("EDIT", SettingsLogItemBounds(1), 0.30f),
-        ActionBadge.Create("EDIT", SettingsLogItemBounds(2), 0.30f),
-        ActionBadge.Create("EDIT", SettingsLogItemBounds(3), 0.30f),
-        ActionBadge.Create("EDIT", SettingsLogItemBounds(4), 0.30f),
+        ActionBadge.Create("OPEN", SettingsLogItemBounds(0), 0.30f),
+        ActionBadge.Create("OPEN", SettingsLogItemBounds(1), 0.30f),
+        ActionBadge.Create("OPEN", SettingsLogItemBounds(2), 0.30f),
+        ActionBadge.Create("OPEN", SettingsLogItemBounds(3), 0.30f),
+        ActionBadge.Create("OPEN", SettingsLogItemBounds(4), 0.30f),
     ];
 
     private static Rectangle SettingsButtonBounds => new(1780, 972, 70, 62);
@@ -46,7 +46,7 @@ public sealed partial class GoScreenRenderer
     public static bool GetSettingsBrowseButtonHit(Point point) => SettingsLogRootFieldBounds.Contains(point);
     public static bool GetSettingsSgfBrowseButtonHit(Point point) => SettingsSgfFieldBounds.Contains(point);
     public static bool GetSettingsScreenshotBrowseButtonHit(Point point) => SettingsScreenshotFieldBounds.Contains(point);
-    public bool GetSettingsEditButtonHit(Point point, int selectedIndex) =>
+    public bool GetSettingsOpenButtonHit(Point point, int selectedIndex) =>
         selectedIndex >= 0 &&
         selectedIndex < _settingsLogActionBadges.Length &&
         _settingsLogActionBadges[selectedIndex].IsVisible &&

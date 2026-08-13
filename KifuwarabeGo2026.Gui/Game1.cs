@@ -6148,22 +6148,10 @@ public class Game1 : Game
             return;
         }
 
-        if (_applicationSettingsPage == ApplicationSettingsPage.Log && _renderer is not null && _renderer.GetSettingsEditButtonHit(point, _selectedGuiLogIndex))
+        if (_applicationSettingsPage == ApplicationSettingsPage.Log && _renderer is not null && _renderer.GetSettingsOpenButtonHit(point, _selectedGuiLogIndex))
         {
             var path = _guiLogFiles[_selectedGuiLogIndex];
-            GuiOperationLog.User("Pressed Edit log badge", Path.GetFileName(path));
-            try
-            {
-                var result = _desktopLauncher.OpenFileWithPreferredApplication(path, "code");
-                _applicationSettingsMessage = result == DesktopOpenResult.PreferredApplication
-                    ? "OPENED IN CODE"
-                    : "CODE NOT FOUND; OPENED WITH DEFAULT APP";
-            }
-            catch (Exception ex)
-            {
-                _applicationSettingsMessage = "ERROR: " + ex.Message;
-                ApplicationErrorLog.Write("OPEN GUI LOG", "Could not open the selected GUI log.", ex);
-            }
+            OpenGuiLog(path, "Pressed Open log badge");
             return;
         }
 
@@ -6172,7 +6160,25 @@ public class Game1 : Game
             _selectedGuiLogIndex = index;
             _applicationSettingsMessage = Path.GetFileName(_guiLogFiles[index]);
             GuiOperationLog.User("Selected GUI log", _applicationSettingsMessage);
+            OpenGuiLog(_guiLogFiles[index], "Opened GUI log link");
             return;
+        }
+    }
+
+    private void OpenGuiLog(string path, string action)
+    {
+        GuiOperationLog.User(action, Path.GetFileName(path));
+        try
+        {
+            var result = _desktopLauncher.OpenFileWithPreferredApplication(path, "code");
+            _applicationSettingsMessage = result == DesktopOpenResult.PreferredApplication
+                ? "OPENED IN CODE"
+                : "CODE NOT FOUND; OPENED WITH DEFAULT APP";
+        }
+        catch (Exception ex)
+        {
+            _applicationSettingsMessage = "ERROR: " + ex.Message;
+            ApplicationErrorLog.Write("OPEN GUI LOG", "Could not open the selected GUI log.", ex);
         }
     }
 

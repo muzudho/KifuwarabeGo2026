@@ -565,7 +565,7 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IGoScre
         DrawTournamentRulesFieldLabel("SETTINGS", bounds);
         var textBounds = new Rectangle(bounds.X + 132, bounds.Y + 7, bounds.Width - 152, 42);
         _tournamentRulesSettingsFileLinkUnderline.Bounds = textBounds;
-        _tournamentRulesSettingsFileLinkUnderline.SetActionBadge(ActionBadge.Create("EDIT", textBounds));
+        _tournamentRulesSettingsFileLinkUnderline.SetActionBadge(ActionBadge.Create("OPEN", textBounds));
         _tournamentRulesSettingsFileLinkUnderline.UpdatePointer(mousePoint);
         DrawFittedText(filePath, textBounds, Color.White, 0.38f);
         _tournamentRulesSettingsFileLinkUnderline.Draw(this,
