@@ -103,10 +103,10 @@ public sealed class EditEntryProfile
     public bool IsEngineChangeHit(Point point) => EngineTextBounds.Contains(point);
 
     /// <summary>入力編集を開始するフィールドを取得します。</summary>
-    public EntryProfileEditField? GetFieldHit(Point point) =>
+    public EntryProfileEditField? GetFieldHit(Point point, bool passwordEnabled) =>
         PlayerFieldTextBounds(EntryProfileEditField.DisplayName).Contains(point) ? EntryProfileEditField.DisplayName :
         ClientIdentityHandleTextBounds.Contains(point) ? EntryProfileEditField.ClientIdentityHandle :
-        ClientIdentityPasswordTextBounds.Contains(point) ? EntryProfileEditField.ClientIdentityPassword : null;
+        passwordEnabled && ClientIdentityPasswordTextBounds.Contains(point) ? EntryProfileEditField.ClientIdentityPassword : null;
 
     /// <summary>外部から渡された文字幅計算を使ってキャレット位置を求めます。</summary>
     public int GetCaretIndex(Point point, EntryProfileEditField field, string text, Func<int, string, Rectangle, float, int> getCaretIndex) =>
@@ -179,7 +179,8 @@ public sealed class EditEntryProfile
         draw.DrawLine(new Vector2(sectionBounds.X, sectionBounds.Y), new Vector2(sectionBounds.Right, sectionBounds.Y), 1, new Color(58, 78, 86));
         DrawVerticalSectionLabel(sectionBounds, "CLIENT IDENTITY", new Color(66, 104, 116), draw);
         DrawEditableIdentityField(HandleLabel, EntryProfileEditField.ClientIdentityHandle, session, ClientIdentityHandleTextBounds, mousePoint, draw, mask: false);
-        DrawEditableIdentityField(PasswordLabel, EntryProfileEditField.ClientIdentityPassword, session, ClientIdentityPasswordTextBounds, mousePoint, draw, mask: true);
+        DrawEditableIdentityField(PasswordLabel, EntryProfileEditField.ClientIdentityPassword, session, ClientIdentityPasswordTextBounds, mousePoint, draw,
+            mask: true, enabled: !session.IsPlayerEditClientIdentityLocalMatch);
         DrawClientIdentityListButton(mousePoint, draw);
     }
 
@@ -191,9 +192,16 @@ public sealed class EditEntryProfile
     }
 
     private void DrawEditableIdentityField(TableRowLabel label, EntryProfileEditField field, GoAppSession session,
-        Rectangle bounds, Point mousePoint, EditEntryProfileDrawingCallbacks draw, bool mask)
+        Rectangle bounds, Point mousePoint, EditEntryProfileDrawingCallbacks draw, bool mask, bool enabled = true)
     {
         label.Draw(draw.DrawText);
+        if (!enabled)
+        {
+            draw.FillRectangle(bounds, new Color(28, 34, 40, 235));
+            draw.DrawLine(new Vector2(bounds.X, bounds.Bottom - 2), new Vector2(bounds.Right, bounds.Bottom - 2), 2, new Color(53, 65, 70));
+            draw.DrawFittedText("NOT USED FOR LOCAL MATCH", bounds, new Color(90, 104, 108), 0.30f);
+            return;
+        }
         var active = session.ActivePlayerEditField == field;
         PlayerNameTextUnderline.Draw(bounds, active, bounds.Contains(mousePoint), new UnderlineDrawingSurface(draw));
         var text = session.GetPlayerEditFieldText(field);

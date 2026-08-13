@@ -1968,7 +1968,7 @@ public class Game1 : Game
             else if (_session.PlayerEditDraft.Kind == EntryProfileKind.Computer &&
                       _renderer?.EditEntryProfile.IsEngineChangeHit(point) == true)
                 _session.OpenPlayerEditGtpEngineSelectionDialog();
-            else if (_renderer?.EditEntryProfile.GetFieldHit(point) is { } field)
+            else if (_renderer?.EditEntryProfile.GetFieldHit(point, !_session.IsPlayerEditClientIdentityLocalMatch) is { } field)
                 BeginOrMovePlayerEditField(point, field);
             return;
         }

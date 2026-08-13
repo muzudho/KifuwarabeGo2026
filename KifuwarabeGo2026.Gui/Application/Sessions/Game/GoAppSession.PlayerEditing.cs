@@ -150,6 +150,9 @@ public sealed partial class GoAppSession
 
     public string PlayerEditClientIdentityPassword => PlayerEditClientIdentityDraft.LoginPass;
 
+    /// <summary>Local Match はパスワードを送らないため、入力欄では利用しません。</summary>
+    public bool IsPlayerEditClientIdentityLocalMatch => string.IsNullOrEmpty(PlayerEditClientIdentityDraft.ConnectionProfileId);
+
     public void ReloadPlayerEditClientIdentityDraft() => LoadPlayerEditClientIdentityDraft();
 
     public bool SavePlayerEditDraft()
