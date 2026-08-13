@@ -276,10 +276,10 @@ public sealed partial class GoScreenRenderer
         DrawText("EDIT ENTRY PROFILE", new Vector2(bounds.X + 34, bounds.Y + 28), new Color(244, 238, 218), 0.68f);
         DrawCommandButton(PlayerEditPanelCancelButtonBounds, "DISCARD", false, mousePoint, scale: 0.30f);
         DrawCommandButton(PlayerEditPanelSaveButtonBounds, "SAVE & CLOSE", false, mousePoint, scale: 0.26f);
-        DrawPlayerEditField(session, EntryProfileEditField.DisplayName, "DISPLAY NAME", mousePoint);
+        DrawPlayerEditField(session, EntryProfileEditField.DisplayName, "PLAYER NAME", mousePoint);
         DrawPlayerEditPopupField("HANDLE", session.PlayerEditClientIdentityHandle, PlayerEditPanelClientIdentityTextBounds, mousePoint);
         if (session.PlayerEditDraft.Kind == EntryProfileKind.Computer)
-            DrawPlayerEditPopupField("ENGINE", session.PlayerEditEngineDisplayName, PlayerEditPanelEngineTextBounds, mousePoint);
+            DrawPlayerEditPopupField("ENGINE", session.PlayerEditEngineDisplayName, PlayerEditPanelEngineTextBounds, mousePoint, PlayerEditFieldIconKind.Engine);
         DrawPlayerEditStickyNote(session, mousePoint);
     }
 
@@ -495,13 +495,16 @@ public sealed partial class GoScreenRenderer
 
     private static Rectangle PlayerEditPanelFieldTextBounds(EntryProfileEditField field) => field switch
     {
-        EntryProfileEditField.DisplayName => new(760, 375, 600, 42),
+        EntryProfileEditField.DisplayName => new(810, 375, 550, 42),
         EntryProfileEditField.Identifier => new(760, 439, 600, 42),
         _ => throw new ArgumentOutOfRangeException(nameof(field), field, "Unknown player edit field."),
     };
 
     private static readonly Rectangle PlayerEditPanelClientIdentityTextBounds = new(760, 439, 600, 42);
-    private static readonly Rectangle PlayerEditPanelEngineTextBounds = new(760, 503, 600, 42);
+    private static readonly Rectangle PlayerEditPanelEngineTextBounds = new(810, 503, 550, 42);
+
+    private static Rectangle PlayerEditFieldIconBounds(Rectangle textBounds) =>
+        new(textBounds.X - 46, textBounds.Y + 4, 34, 34);
 
     private static Rectangle PlayerEditFieldHoverBounds(Rectangle textBounds) =>
         new(552, textBounds.Y, textBounds.Right - 552, textBounds.Height);
@@ -519,17 +522,38 @@ public sealed partial class GoScreenRenderer
         DrawFittedText(string.IsNullOrEmpty(text) ? "-" : text, textBounds, Color.White, 0.42f);
         if (active)
             DrawTextBoxCaret(text, session.PlayerEditCaretIndex, textBounds, 0.42f);
+        if (field == EntryProfileEditField.DisplayName)
+            DrawPlayerEditFieldIcon(PlayerEditFieldIconKind.PlayerName, PlayerEditFieldIconBounds(textBounds));
         DrawEditableTextEditHint(active, hovered, textBounds);
     }
 
-    private void DrawPlayerEditPopupField(string label, string value, Rectangle textBounds, Point mousePoint)
+    private void DrawPlayerEditPopupField(
+        string label,
+        string value,
+        Rectangle textBounds,
+        Point mousePoint,
+        PlayerEditFieldIconKind iconKind = PlayerEditFieldIconKind.None)
     {
         var hovered = textBounds.Contains(mousePoint);
         DrawText(label, new Vector2(552, textBounds.Y + 7), new Color(180, 195, 195), 0.36f);
         DrawFittedText(value, textBounds, Color.White, 0.42f);
         _wideLinkUnderline.Draw(textBounds, hovered, this);
+        if (iconKind != PlayerEditFieldIconKind.None)
+            DrawPlayerEditFieldIcon(iconKind, PlayerEditFieldIconBounds(textBounds));
         if (hovered)
             DrawPlayerEditHint("CHANGE", textBounds);
+    }
+
+    private void DrawPlayerEditFieldIcon(PlayerEditFieldIconKind kind, Rectangle bounds)
+    {
+        if (kind == PlayerEditFieldIconKind.PlayerName)
+        {
+            DrawIconStone(new Vector2(bounds.Center.X - 7, bounds.Center.Y), 7, black: true);
+            DrawIconStone(new Vector2(bounds.Center.X + 7, bounds.Center.Y), 7, black: false);
+            return;
+        }
+
+        DrawPlayerRoleFaceIcon(new Vector2(bounds.Center.X, bounds.Center.Y), isComputer: true);
     }
 
     private void DrawPlayerEditHint(string text, Rectangle textBounds)
@@ -559,7 +583,7 @@ public sealed partial class GoScreenRenderer
 
         if (PlayerEditFieldHoverBounds(displayNameBounds).Contains(mousePoint))
         {
-            heading = "DISPLAY NAME とは？";
+            heading = "PLAYER NAME とは？";
             bodyLines = ["画面に表示され、棋譜に書き込まれる、プレイヤーの呼び名。"];
             connectorStart = PlayerEditUnderlineConnectorStart(displayNameBounds);
         }
@@ -609,5 +633,12 @@ public sealed partial class GoScreenRenderer
                 new Rectangle(x, centerY - halfHeight, 1, halfHeight * 2 + 1),
                 new Color(220, 234, 230));
         }
+    }
+
+    private enum PlayerEditFieldIconKind
+    {
+        None,
+        PlayerName,
+        Engine,
     }
 }
