@@ -15,6 +15,7 @@ public sealed partial class GoScreenRenderer
     private static readonly Rectangle ClientIdentityProfileSelectionEditButtonBounds = new(800, 820, 150, 48);
     private static readonly Rectangle ClientIdentityProfileSelectionDuplicateButtonBounds = new(1110, 820, 150, 48);
     private static readonly Rectangle ClientIdentityProfileSelectionSetDefaultButtonBounds = new(1272, 820, 190, 48);
+    private static readonly Rectangle ClientIdentityProfileSelectionAddButtonBounds = new(466, 820, 322, 48);
     private static readonly Rectangle ClientIdentityProfileEditCancelButtonBounds = new(1158, 182, 150, 48);
     private static readonly Rectangle ClientIdentityProfileEditSaveButtonBounds = new(1320, 182, 150, 48);
     private static readonly Rectangle ClientIdentityProfileEditUseButtonBounds = new(1158, 182, 150, 48);
@@ -48,6 +49,7 @@ public sealed partial class GoScreenRenderer
     public static bool GetClientIdentityProfileSelectionEditButtonHit(Point point) => ClientIdentityProfileSelectionEditButtonBounds.Contains(point);
     public static bool GetClientIdentityProfileSelectionDuplicateButtonHit(Point point) => ClientIdentityProfileSelectionDuplicateButtonBounds.Contains(point);
     public static bool GetClientIdentityProfileSelectionSetDefaultButtonHit(Point point) => ClientIdentityProfileSelectionSetDefaultButtonBounds.Contains(point);
+    public static bool GetClientIdentityProfileSelectionAddButtonHit(Point point) => ClientIdentityProfileSelectionAddButtonBounds.Contains(point);
     public static bool GetClientIdentityProfileEditCancelButtonHit(Point point) => ClientIdentityProfileEditCancelButtonBounds.Contains(point);
     public static bool GetClientIdentityProfileEditSaveButtonHit(Point point) => ClientIdentityProfileEditSaveButtonBounds.Contains(point);
     public static bool GetClientIdentityProfileEditAddCgosButtonHit(Point point) => ClientIdentityProfileEditAddCgosButtonBounds.Contains(point);
@@ -197,12 +199,11 @@ public sealed partial class GoScreenRenderer
         var targets = session.GetPlayerClientIdentityProfiles(session.PlayerEditDraft.Id);
         DrawCommandButton(ClientIdentityProfileSelectionUseButtonBounds, "INPUT", false, mousePoint, enabled: targets.Count > 0, scale: 0.34f);
         DrawCommandButton(ClientIdentityProfileSelectionCloseButtonBounds, "CANCEL", false, mousePoint, scale: 0.30f);
-        var addBounds = new Rectangle(ClientIdentityProfileEditAddLocalButtonBounds.X, 786, ClientIdentityProfileEditAddCgosButtonBounds.Right - ClientIdentityProfileEditAddLocalButtonBounds.X, 24);
+        var addBounds = new Rectangle(ClientIdentityProfileSelectionAddButtonBounds.X, 786, ClientIdentityProfileSelectionAddButtonBounds.Width, 24);
         FillRect(addBounds, new Color(56, 54, 84));
         DrawRect(addBounds, 1, new Color(133, 128, 177));
         DrawCenteredText("ADD", new Vector2(addBounds.Center.X, addBounds.Center.Y), Color.White, 0.34f);
-        DrawCommandButton(ClientIdentityProfileEditAddLocalButtonBounds, "LOCAL MATCH", false, mousePoint, enabled: targets.Count < 5, scale: 0.25f);
-        DrawCommandButton(ClientIdentityProfileEditAddCgosButtonBounds, "ONLINE MATCH", false, mousePoint, enabled: targets.Count < 5, scale: 0.22f);
+        DrawCommandButton(ClientIdentityProfileSelectionAddButtonBounds, "NEW IDENTITY", false, mousePoint, enabled: targets.Count < 5, scale: 0.30f);
         DrawCommandButton(ClientIdentityProfileSelectionEditButtonBounds, "EDIT", false, mousePoint, enabled: targets.Count > 0, scale: 0.34f);
         DrawCommandButton(ClientIdentityProfileEditRemoveButtonBounds, "REMOVE", false, mousePoint, enabled: targets.Count > 1, scale: 0.30f);
         DrawCommandButton(ClientIdentityProfileSelectionDuplicateButtonBounds, "DUPLICATE", false, mousePoint, enabled: targets.Count > 0 && targets.Count < 5, scale: 0.29f);
@@ -211,8 +212,8 @@ public sealed partial class GoScreenRenderer
 
         var firstRow = new Rectangle(bounds.X + 36, bounds.Y + 140, bounds.Width - 72, 78);
         DrawFittedText("HANDLE", new Rectangle(firstRow.X + 18, firstRow.Y - 27, 410, 24), new Color(180, 210, 215), 0.30f);
-        DrawFittedText("PASSWORD", new Rectangle(firstRow.X + 460, firstRow.Y - 27, 180, 24), new Color(180, 210, 215), 0.30f);
-        DrawFittedText("SERVICE", new Rectangle(firstRow.X + 680, firstRow.Y - 27, 260, 24), new Color(180, 210, 215), 0.30f);
+        DrawFittedText("PASSWORD", new Rectangle(firstRow.X + 460, firstRow.Y - 27, 250, 24), new Color(180, 210, 215), 0.30f);
+        DrawFittedText("IN DEFAULT", new Rectangle(firstRow.X + 730, firstRow.Y - 27, 240, 24), new Color(180, 210, 215), 0.30f);
 
         for (var index = 0; index < targets.Count; index++)
         {
@@ -224,10 +225,9 @@ public sealed partial class GoScreenRenderer
             DrawRect(row, operated ? 3 : selected ? 2 : 1, operated ? new Color(125, 225, 255) : selected ? new Color(147, 244, 200) : new Color(70, 85, 94));
             if (operated) DrawSelectionFingerMark(new Vector2(row.X - 55, row.Center.Y - 13), 1.65f);
             DrawFittedText(target.LoginName, new Rectangle(row.X + 18, row.Y + 25, 410, 30), Color.White, 0.42f);
-            DrawFittedText(string.IsNullOrEmpty(target.LoginPass) ? "NONE" : "SET", new Rectangle(row.X + 460, row.Y + 25, 180, 30), Color.White, 0.34f);
-            DrawFittedText(string.IsNullOrEmpty(target.ConnectionProfileId) ? "LOCAL MATCH" : "ONLINE MATCH", new Rectangle(row.X + 680, row.Y + 25, 260, 30), Color.White, 0.34f);
+            DrawFittedText(string.IsNullOrEmpty(target.LoginPass) ? "NONE" : "SET", new Rectangle(row.X + 460, row.Y + 25, 250, 30), Color.White, 0.34f);
             if (selected)
-                DrawFittedText("IN DEFAULT", new Rectangle(row.Right - 138, row.Y + 51, 120, 20), new Color(147, 244, 200), 0.24f);
+                DrawFittedText("IN DEFAULT", new Rectangle(row.X + 730, row.Y + 25, 240, 30), new Color(147, 244, 200), 0.30f);
         }
     }
 

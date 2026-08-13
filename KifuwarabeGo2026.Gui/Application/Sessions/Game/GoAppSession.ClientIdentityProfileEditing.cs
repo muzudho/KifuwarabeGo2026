@@ -196,6 +196,25 @@ public sealed partial class GoAppSession
         return true;
     }
 
+    /// <summary>入力元一覧から、接続種別を持たない Client Identity を追加します。</summary>
+    public bool AddClientIdentityProfileForInput()
+    {
+        var owner = GetClientIdentityEditOwner();
+        if (owner.ClientIdentityProfileIds.Count >= 5) return false;
+
+        var target = new ClientIdentityProfile
+        {
+            DisplayName = "Client Identity",
+            LoginName = new string(owner.Identifier.Where(character => !char.IsWhiteSpace(character)).ToArray()),
+        };
+        _clientIdentityProfiles.Add(target);
+        owner.ClientIdentityProfileIds.Add(target.Id);
+        PlayerEditDraft.ClientIdentityProfileIds = owner.ClientIdentityProfileIds.ToList();
+        ClientIdentityProfileEditIndex = owner.ClientIdentityProfileIds.Count - 1;
+        ClientIdentityProfileSelectionIndex = ClientIdentityProfileEditIndex;
+        return LoadClientIdentityProfileEditDraft();
+    }
+
     /// <summary>選択中の Client Identity を独立した設定として複製します。</summary>
     public bool DuplicateSelectedClientIdentityProfile()
     {

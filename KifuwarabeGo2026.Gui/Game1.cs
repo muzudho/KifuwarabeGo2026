@@ -1910,6 +1910,8 @@ public class Game1 : Game
                 _session.InputSelectedClientIdentityProfileToPlayerEditDraft();
             else if (GoScreenRenderer.GetClientIdentityProfileSelectionSetDefaultButtonHit(point) && _session.SetSelectedClientIdentityProfileAsDefault())
                 SavePlayerAndClientIdentityCatalogs();
+            else if (GoScreenRenderer.GetClientIdentityProfileSelectionAddButtonHit(point) && _session.AddClientIdentityProfileForInput())
+                SavePlayerAndClientIdentityCatalogs();
             else if (GoScreenRenderer.GetClientIdentityProfileSelectionEditButtonHit(point))
                 _session.OpenClientIdentityProfileEditPanel();
             else if (GoScreenRenderer.GetClientIdentityProfileSelectionDuplicateButtonHit(point) && _session.DuplicateSelectedClientIdentityProfile())
