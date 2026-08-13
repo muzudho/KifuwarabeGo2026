@@ -14,15 +14,13 @@ public sealed partial class GoScreenRenderer
 {
     #region ［CANCEL］
 
-    private readonly Button _discardButton = new(new Rectangle(1080, 288, 132, 42), "DISCARD", 0.30f);
-    public Button DiscardButton => _discardButton;
+    public Button DiscardButton { get; } = new(new Rectangle(1080, 288, 132, 42), "DISCARD", 0.30f);
 
     #endregion
 
     #region ［SAVE & CLOSE］
 
-    private readonly Button _saveAndCloseButton = new(new Rectangle(1224, 288, 148, 42), "SAVE & CLOSE", 0.26f);
-    public Button SaveAndCloseButton => _saveAndCloseButton;
+    public Button SaveAndCloseButton { get; } = new(new Rectangle(1224, 288, 148, 42), "SAVE & CLOSE", 0.26f);
 
     #endregion
 
@@ -137,8 +135,8 @@ public sealed partial class GoScreenRenderer
         FillRect(bounds, new Color(24, 29, 36, 252));
         DrawRect(bounds, 2, new Color(116, 145, 146));
         DrawText("EDIT ENTRY PROFILE", new Vector2(bounds.X + 34, bounds.Y + 28), new Color(244, 238, 218), 0.68f);
-        _discardButton.Draw(mousePoint, DrawCommandButton);
-        _saveAndCloseButton.Draw(mousePoint, DrawCommandButton);
+        DiscardButton.Draw(mousePoint, DrawCommandButton);
+        SaveAndCloseButton.Draw(mousePoint, DrawCommandButton);
         DrawPlayerEditField(session, EntryProfileEditField.DisplayName, _playerNameLabel, mousePoint);
         DrawPlayerEditPopupField(_handleLabel, session.PlayerEditClientIdentityHandle, PlayerEditPanelClientIdentityTextBounds, mousePoint);
         if (session.PlayerEditDraft.Kind == EntryProfileKind.Computer)
