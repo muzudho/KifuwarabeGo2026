@@ -2,6 +2,8 @@ namespace KifuwarabeGo2026.Gui.Presentation;
 
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.StickyNote;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.SinglelineTextUnderline;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
 using KifuwarabeGo2026.Shared.Domain;
 using Microsoft.Xna.Framework;
 using System;
@@ -9,6 +11,8 @@ using System;
 /// <summary>EDIT ENTRY PROFILE モーダルのレイアウト、入力、描画を担当します。</summary>
 public sealed partial class GoScreenRenderer
 {
+    private readonly SinglelineTextUnderline _playerNameTextUnderline = new(
+        new RoundUnderline { TopOffset = 2, Thickness = 5, Radius = 2 });
     private static readonly Rectangle PlayerEditPanelCancelButtonBounds = new(1080, 288, 132, 42);
     private static readonly Rectangle PlayerEditPanelSaveButtonBounds = new(1224, 288, 148, 42);
 
@@ -66,7 +70,7 @@ public sealed partial class GoScreenRenderer
         var active = session.ActivePlayerEditField == field;
         DrawText(label, new Vector2(PlayerEditFieldLabelX, textBounds.Y + 7), new Color(180, 195, 195), 0.36f);
         var hovered = textBounds.Contains(mousePoint);
-        DrawRoundedFill(new Rectangle(textBounds.X, textBounds.Bottom + 2, textBounds.Width, 5), 2, active ? new Color(147, 244, 200) : hovered ? new Color(185, 196, 255) : new Color(100, 110, 145));
+        _playerNameTextUnderline.Draw(textBounds, active, hovered, this);
         var text = session.GetPlayerEditFieldText(field);
         if (active) DrawTextBoxSelection(text, session.PlayerEditSelectionStart, session.PlayerEditSelectionLength, textBounds, 0.42f);
         DrawFittedText(string.IsNullOrEmpty(text) ? "-" : text, textBounds, Color.White, 0.42f);
