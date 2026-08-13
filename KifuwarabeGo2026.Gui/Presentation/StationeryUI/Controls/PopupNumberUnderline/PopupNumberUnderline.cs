@@ -106,7 +106,7 @@ public sealed class PopupNumberUnderline
         // ステップアップ・ステップダウンボタンの描画
         if (options.ShowStepControls)
         {
-            if (_spinButtons.Count > 0)
+            if (options.SpinButtons is null && _spinButtons.Count > 0)
                 _spinButtons[0].SetStepValue(options.StepLabel ?? "1");
             foreach (var spinButton in SpinButtons)
                 spinButton.Draw(mousePoint, new SpinButtonDrawingCallbacks(draw.DrawLine, draw.DrawCenteredText));
