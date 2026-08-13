@@ -32,4 +32,7 @@ public static class TitleRenderer
 
     public static bool IsSettingsButtonHit(Point point) =>
         GoScreenRenderer.GetSettingsButtonHit(point);
+
+    public static bool IsUpdateButtonHit(Point point) =>
+        GoScreenRenderer.GetUpdateButtonHit(point);
 }

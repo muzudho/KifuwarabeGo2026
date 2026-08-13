@@ -26,6 +26,7 @@ public sealed partial class GoScreenRenderer
         DrawText(GetDisplayVersion(), new Vector2(panel.X + 790, panel.Y + 91), new Color(99, 223, 185), 0.38f);
         DrawLine(new Vector2(panel.X + 790, panel.Y + 126), new Vector2(panel.X + 958, panel.Y + 126), 2, new Color(99, 223, 185, 120));
         DrawTitleMenuContent(session, page, panel, mousePoint, appProviderTabIndex, isAppProviderLoading);
+        DrawUpdateButton(mousePoint);
         DrawSettingsButton(mousePoint);
     }
 
@@ -39,6 +40,7 @@ public sealed partial class GoScreenRenderer
                 var localMatchHovered = TitleHomeLocalButtonBounds.Contains(mousePoint);
                 var onlineMatchHovered = TitleHomeCgosButtonBounds.Contains(mousePoint);
                 var settingsHovered = SettingsButtonBounds.Contains(mousePoint);
+                var updateHovered = UpdateButtonBounds.Contains(mousePoint);
                 DrawText("FORMAL APPS", new Vector2(500, 338), new Color(99, 223, 185), 0.48f);
                 DrawText("CASUAL APPS", new Vector2(950, 338), new Color(255, 190, 92), 0.48f);
                 DrawHomeServiceChoice(TitleHomeLocalButtonBounds, "Local Match", "PLAY / REVIEW", new Color(99, 223, 185), mousePoint);
@@ -49,6 +51,8 @@ public sealed partial class GoScreenRenderer
                     DrawTitleHomeHint("FORMAL APPS", "他のコンピュータ碁ソフトとできるだけ連携します！", new Color(99, 223, 185));
                 else if (casualAppsHovered)
                     DrawTitleHomeHint("CASUAL APPS", "独自実装で機能追加を進めます！", new Color(255, 190, 92));
+                else if (updateHovered)
+                    DrawStickyNote(StickyNoteKind.TitleUpdateHint, new Vector2(UpdateButtonBounds.Left, UpdateButtonBounds.Center.Y), new Color(99, 223, 185), new Color(82, 111, 114), "このボタンは？", ["このGUIを最新バージョンに更新します。", "アプリを再起動します。"]);
                 else if (settingsHovered)
                     DrawTitleHomeHint("SETTINGS", "アプリケーションを設定します！", new Color(147, 201, 190));
                 else if (localMatchHovered)

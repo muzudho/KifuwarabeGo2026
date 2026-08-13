@@ -7,6 +7,7 @@ using KifuwarabeGo2026.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.Watching;
 using KifuwarabeGo2026.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.Gui.Application.GoApps.Casual.Ponnuki;
 using KifuwarabeGo2026.Gui.Application.Local.Resting.TournamentRule;
+using KifuwarabeGo2026.Gui.Application.Updates;
 using KifuwarabeGo2026.Gui.Domain;
 using KifuwarabeGo2026.Shared.Domain;
 using KifuwarabeGo2026.Gui.Infrastructure.FileSystem;
@@ -149,6 +150,7 @@ public class Game1 : Game
     private string _appProviderSettingsEvaluationPath = "";
     private Task? _catalogSaveTask;
     private string _catalogSaveMessage = "";
+    private Task<GuiReleaseUpdateResult>? _guiReleaseUpdateTask;
 
     private const double CgosMatchCountdownSeconds = 10d;
     private const double CgosMatchFadeSeconds = 1.2d;
@@ -272,6 +274,7 @@ public class Game1 : Game
         LogWindowPositionChange();
         _inputClockSeconds = gameTime.TotalGameTime.TotalSeconds;
         CompleteAppProviderSelectionLoading();
+        CompleteGuiReleaseUpdate();
         CompleteGtpEngineSelectionLoading();
         CompleteRestoredAppProviderCheck();
         CompleteAppProviderSettingsEvaluation();
@@ -1015,6 +1018,10 @@ public class Game1 : Game
                 }
                 else if (TryHandleTitleMenuClick(point))
                 {
+                }
+                else if (TitleRenderer.IsUpdateButtonHit(point))
+                {
+                    BeginGuiReleaseUpdate();
                 }
                 else if (TitleRenderer.IsSettingsButtonHit(point))
                 {
@@ -2315,6 +2322,32 @@ public class Game1 : Game
         {
             _session.SetAppProviderCapability(false, $"CHECK FAILED: {ex.Message}");
             ApplicationErrorLog.Write("APP PROVIDER CHECK", "Could not check the Ponnuki App Provider capability.", ex);
+        }
+    }
+
+    private void BeginGuiReleaseUpdate()
+    {
+        if (_guiReleaseUpdateTask is not null) return;
+        GuiOperationLog.User("Pressed GUI update button");
+        _guiReleaseUpdateTask = GuiReleaseUpdater.DownloadLatestAndStartAsync();
+    }
+
+    private void CompleteGuiReleaseUpdate()
+    {
+        var task = _guiReleaseUpdateTask;
+        if (task is null || !task.IsCompleted) return;
+        _guiReleaseUpdateTask = null;
+        try
+        {
+            var result = task.GetAwaiter().GetResult();
+            GuiOperationLog.User("GUI update completed", result.Message);
+            if (result.DidStartUpdatedGui) Exit();
+            else _messageDialogService.ShowWarning("GUI UPDATE", result.Message);
+        }
+        catch (Exception ex)
+        {
+            GuiOperationLog.App("GUI update failed", ex.ToString());
+            _messageDialogService.ShowWarning("GUI UPDATE FAILED", "最新GUIの取得に失敗しました。ネットワーク接続とGitHub Releaseを確認してください。");
         }
     }
 

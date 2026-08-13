@@ -15,6 +15,7 @@ public enum ApplicationSettingsPage
 public sealed partial class GoScreenRenderer
 {
     private static Rectangle SettingsButtonBounds => new(1780, 972, 70, 62);
+    private static Rectangle UpdateButtonBounds => new(1698, 972, 70, 62);
     private static Rectangle SettingsBackButtonBounds => new(1390, 138, 140, 52);
     private static Rectangle SettingsLogRootFieldBounds => new(440, 374, 1070, 70);
     private static Rectangle SettingsSgfFieldBounds => new(440, 374, 1070, 70);
@@ -35,6 +36,7 @@ public sealed partial class GoScreenRenderer
     };
 
     public static bool GetSettingsButtonHit(Point point) => SettingsButtonBounds.Contains(point);
+    public static bool GetUpdateButtonHit(Point point) => UpdateButtonBounds.Contains(point);
     public static bool GetSettingsBackButtonHit(Point point) => SettingsBackButtonBounds.Contains(point);
     public static bool GetSettingsBrowseButtonHit(Point point) => SettingsLogRootFieldBounds.Contains(point);
     public static bool GetSettingsSgfBrowseButtonHit(Point point) => SettingsSgfFieldBounds.Contains(point);
@@ -187,5 +189,23 @@ public sealed partial class GoScreenRenderer
             var direction = new Vector2(MathF.Cos(angle), MathF.Sin(angle));
             DrawLine(center + direction * 15, center + direction * 24, 6, color);
         }
+    }
+
+    private void DrawUpdateButton(Point mousePoint)
+    {
+        var hovered = UpdateButtonBounds.Contains(mousePoint);
+        var color = hovered ? new Color(99, 223, 185) : new Color(180, 195, 195);
+        FillRect(UpdateButtonBounds, hovered ? new Color(36, 50, 58) : new Color(24, 31, 37));
+        DrawRect(UpdateButtonBounds, 2, hovered ? new Color(178, 219, 226) : new Color(82, 111, 114));
+        var board = new Rectangle(UpdateButtonBounds.X + 15, UpdateButtonBounds.Y + 11, 40, 40);
+        DrawRect(board, 2, color);
+        for (var index = 1; index < 5; index++)
+        {
+            var offset = index * 8;
+            DrawLine(new Vector2(board.X + offset, board.Y), new Vector2(board.X + offset, board.Bottom), 1, color);
+            DrawLine(new Vector2(board.X, board.Y + offset), new Vector2(board.Right, board.Y + offset), 1, color);
+        }
+        DrawStone(new Vector2(board.X + 16, board.Y + 24), 5, true);
+        DrawStone(new Vector2(board.X + 31, board.Y + 16), 5, false);
     }
 }
