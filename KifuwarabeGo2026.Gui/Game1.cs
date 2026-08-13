@@ -844,7 +844,7 @@ public class Game1 : Game
         }
 
         if (_renderer is not null && _activeGtpEngineIntegerOption is { } integerOption)
-            _renderer.DrawIntegerInputDialog(
+            _renderer.DrawPopupNumberUnderline(
                 backgroundMousePosition,
                 integerOption.Label,
                 _gtpEngineIntegerOptionTextBox.Text,
@@ -968,15 +968,15 @@ public class Game1 : Game
 
             if (_activeGtpEngineIntegerOption is not null)
             {
-                if (_renderer is not null && GoScreenRenderer.IsIntegerInputDialogTextBoxHit(point))
+                if (_renderer?.PopupNumberUnderline.IsTextBoxHit(point) == true)
                 {
                     _gtpEngineIntegerOptionTextBox.BeginMouseSelection(
-                        _renderer.GetIntegerInputDialogCaretIndex(point, _gtpEngineIntegerOptionTextBox.Text),
+                        _renderer.GetPopupNumberUnderlineCaretIndex(point, _gtpEngineIntegerOptionTextBox.Text),
                         IsShiftDown());
                 }
-                else if (GoScreenRenderer.GetIntegerInputDialogOkButtonHit(point))
+                else if (_renderer?.PopupNumberUnderline.OkButton.IsHit(point) == true)
                     CommitGtpEngineIntegerInput();
-                else if (GoScreenRenderer.GetIntegerInputDialogCancelButtonHit(point))
+                else if (_renderer?.PopupNumberUnderline.CancelButton.IsHit(point) == true)
                     CancelGtpEngineIntegerInput();
                 _previousMouse = mouse;
                 return;
@@ -2051,7 +2051,7 @@ public class Game1 : Game
             if (_gtpEngineIntegerOptionTextBox.IsMouseSelecting)
             {
                 _gtpEngineIntegerOptionTextBox.UpdateMouseSelection(
-                    _renderer.GetIntegerInputDialogCaretIndex(point, _gtpEngineIntegerOptionTextBox.Text));
+                    _renderer.GetPopupNumberUnderlineCaretIndex(point, _gtpEngineIntegerOptionTextBox.Text));
             }
             return;
         }
