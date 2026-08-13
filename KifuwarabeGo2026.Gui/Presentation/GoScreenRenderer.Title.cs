@@ -1,6 +1,7 @@
 namespace KifuwarabeGo2026.Gui.Presentation;
 
 using KifuwarabeGo2026.Gui.Application;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.LinkUnderline;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.StickyNote;
 using KifuwarabeGo2026.Gui.Presentation.Title;
 using Microsoft.Xna.Framework;
@@ -211,11 +212,18 @@ public sealed partial class GoScreenRenderer
         var textBounds = TitleAppProviderEngineTextBounds;
         var hovered = !isAppProviderLoading && textBounds.Contains(mousePoint);
         DrawText("PROVIDER", new Vector2(bounds.X + 16, textBounds.Y + 7), new Color(180, 195, 195), 0.36f);
-        DrawDynamicOptionText(session.SelectedAppProviderEngineDisplayName, textBounds, Color.White, 0.34f);
-        DrawRoundedFill(
-            new Rectangle(textBounds.X, textBounds.Bottom + 2, textBounds.Width, 5),
-            2,
-            hovered ? new Color(185, 196, 255) : new Color(100, 110, 145));
+        LinkUnderlineRenderer.Draw(
+            textBounds,
+            session.SelectedAppProviderEngineDisplayName,
+            hovered,
+            (linkBounds, label, underlineColor, textColor) =>
+            {
+                DrawDynamicOptionText(label, linkBounds, textColor, 0.34f);
+                DrawRoundedFill(
+                    new Rectangle(linkBounds.X, linkBounds.Bottom + 2, linkBounds.Width, 5),
+                    2,
+                    underlineColor);
+            });
         if (hovered)
         {
             DrawPlayerEditHint("CHANGE", textBounds);

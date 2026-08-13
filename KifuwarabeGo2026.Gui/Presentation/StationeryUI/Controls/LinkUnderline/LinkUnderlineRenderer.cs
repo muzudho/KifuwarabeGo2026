@@ -9,6 +9,21 @@ using System;
 /// </summary>
 public static class LinkUnderlineRenderer
 {
+    /// <summary>同期リンク向けに、ホバー状態だけで Link Underline を描画します。</summary>
+    public static void Draw(
+        Rectangle bounds,
+        string label,
+        bool hovered,
+        Action<Rectangle, string, Color, Color> drawUnderline)
+    {
+        ArgumentNullException.ThrowIfNull(drawUnderline);
+        drawUnderline(
+            bounds,
+            label,
+            hovered ? new Color(185, 196, 255) : new Color(100, 110, 145),
+            Color.White);
+    }
+
     /// <summary>状態に応じた色を決め、下線と必要ならスピナーを描画します。</summary>
     /// <param name="drawUnderline">日本語ラベルと下線を描画する処理です。</param>
     /// <param name="drawSpinner">指定位置にスピナーを描画する処理です。</param>
