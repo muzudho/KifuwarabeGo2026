@@ -31,6 +31,7 @@ public sealed class TournamentRulesSetting
     /// ［コミ］の入力欄のコントローラー
     /// </summary>
     private readonly TextBoxController _komiTextBox = new(5);
+    private readonly TextBoxController _moveLimitInputTextBox = new(4);
     private KeyboardState _previousKeyboard;
 
     public bool IsKomiInputOpen { get; private set; }
@@ -39,6 +40,12 @@ public sealed class TournamentRulesSetting
     public int KomiInputSelectionStart => _komiTextBox.SelectionStart;
     public int KomiInputSelectionLength => _komiTextBox.SelectionLength;
     public string KomiInputMessage { get; private set; } = "RANGE  0.0 .. 99.5";
+    public bool IsMoveLimitInputOpen { get; private set; }
+    public string MoveLimitInputText => _moveLimitInputTextBox.Text;
+    public int MoveLimitInputCaretIndex => _moveLimitInputTextBox.CaretIndex;
+    public int MoveLimitInputSelectionStart => _moveLimitInputTextBox.SelectionStart;
+    public int MoveLimitInputSelectionLength => _moveLimitInputTextBox.SelectionLength;
+    public string MoveLimitInputMessage { get; private set; } = "RANGE  0 .. 9999";
 
     public TournamentRulesSetting(
         GoAppSession session,
@@ -68,6 +75,16 @@ public sealed class TournamentRulesSetting
                 pasteCharacterFilter: character => char.IsAsciiDigit(character) || character == '.');
             if (action == TextBoxKeyboardAction.Commit) CommitKomiInput();
             else if (action == TextBoxKeyboardAction.Cancel) CancelKomiInput();
+            _previousKeyboard = keyboard;
+            return;
+        }
+
+        if (IsMoveLimitInputOpen)
+        {
+            var action = _moveLimitInputTextBox.HandleKeyboard(keyboard, _previousKeyboard, gameTime, _clipboardService,
+                pasteCharacterFilter: char.IsAsciiDigit);
+            if (action == TextBoxKeyboardAction.Commit) CommitMoveLimitInput();
+            else if (action == TextBoxKeyboardAction.Cancel) CancelMoveLimitInput();
             _previousKeyboard = keyboard;
             return;
         }
@@ -117,6 +134,12 @@ public sealed class TournamentRulesSetting
         if (IsKomiInputOpen)
         {
             if (char.IsAsciiDigit(character) || character == '.') _komiTextBox.TryInputCharacter(character);
+            return true;
+        }
+
+        if (IsMoveLimitInputOpen)
+        {
+            if (char.IsAsciiDigit(character)) _moveLimitInputTextBox.TryInputCharacter(character);
             return true;
         }
 
@@ -209,6 +232,42 @@ public sealed class TournamentRulesSetting
         _session.DeactivateModalWindow(ActiveWindowId.IntegerInput);
     }
 
+    public void OpenMoveLimitInput()
+    {
+        CommitNumericEdit();
+        _moveLimitInputTextBox.Begin(_session.MoveLimit.ToString());
+        MoveLimitInputMessage = "RANGE  0 .. 9999";
+        IsMoveLimitInputOpen = true;
+        _session.ActivateModalWindow(ActiveWindowId.IntegerInput);
+    }
+
+    public void BeginMoveLimitInputSelection(int caretIndex, bool extendSelection) => _moveLimitInputTextBox.BeginMouseSelection(caretIndex, extendSelection);
+
+    public void ChangeMoveLimitInput(int step)
+    {
+        var value = int.TryParse(_moveLimitInputTextBox.Text, out var current) ? current : _session.MoveLimit;
+        _moveLimitInputTextBox.Begin(Math.Clamp(value + step, 0, 9999).ToString());
+    }
+
+    public void CommitMoveLimitInput()
+    {
+        if (!int.TryParse(_moveLimitInputTextBox.Text, out var value) || value is < 0 or > 9999)
+        {
+            MoveLimitInputMessage = "ENTER 0 .. 9999";
+            return;
+        }
+        _session.SetMoveLimit(value);
+        CancelMoveLimitInput();
+    }
+
+    public void CancelMoveLimitInput()
+    {
+        IsMoveLimitInputOpen = false;
+        _moveLimitInputTextBox.Clear();
+        MoveLimitInputMessage = "RANGE  0 .. 9999";
+        _session.DeactivateModalWindow(ActiveWindowId.IntegerInput);
+    }
+
     private bool TryHandleTournamentRulesAddPanelClick(
         Point point,
         Func<Point, string, int>? getDisplayNameCaretIndex,
@@ -236,12 +295,6 @@ public sealed class TournamentRulesSetting
             return true;
         }
 
-        if (TournamentRuleEditorLayout.IsMoveLimitTextBoxHit(point))
-        {
-            BeginOrMoveNumericEdit(point, TournamentRulesNumericField.MoveLimit, getNumericCaretIndex);
-            return true;
-        }
-
         if (TournamentRuleEditorLayout.GetRuleKindButtonHit(point) is { } ruleKind)
         {
             CommitNumericEdit();
@@ -261,17 +314,16 @@ public sealed class TournamentRulesSetting
             return true;
         }
 
+        if (TournamentRuleEditorLayout.IsMoveLimitTextBoxHit(point))
+        {
+            OpenMoveLimitInput();
+            return true;
+        }
+
         if (TournamentRuleEditorLayout.GetMainTimeStepButtonHit(point) is { } mainTimeStep)
         {
             CommitNumericEdit();
             _session.ChangeMainTime(mainTimeStep);
-            return true;
-        }
-
-        if (TournamentRuleEditorLayout.GetMoveLimitStepButtonHit(point) is { } moveLimitStep)
-        {
-            CommitNumericEdit();
-            _session.ChangeMoveLimit(moveLimitStep);
             return true;
         }
 
@@ -693,7 +745,6 @@ public sealed class TournamentRulesSetting
                 TournamentRulesNumericField.MainTimeHours => 1,
                 TournamentRulesNumericField.MainTimeMinutes => 2,
                 TournamentRulesNumericField.MainTimeSeconds => 3,
-                TournamentRulesNumericField.MoveLimit => 4,
                 _ => step > 0 ? -1 : 0,
             };
 
@@ -712,7 +763,7 @@ public sealed class TournamentRulesSetting
             return;
         }
 
-        var nextIndex = (currentIndex + step + 5) % 5;
+        var nextIndex = (currentIndex + step + 4) % 4;
         switch (nextIndex)
         {
             case 0:
@@ -726,9 +777,6 @@ public sealed class TournamentRulesSetting
                 break;
             case 3:
                 BeginNumericEdit(TournamentRulesNumericField.MainTimeSeconds);
-                break;
-            case 4:
-                BeginNumericEdit(TournamentRulesNumericField.MoveLimit);
                 break;
         }
     }

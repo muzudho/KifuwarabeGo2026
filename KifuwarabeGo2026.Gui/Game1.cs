@@ -25,6 +25,7 @@ using KifuwarabeGo2026.Gui.Presentation.Title;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.StickyNote;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.PopupNumberUnderline;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.SpinButton;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.MessageDialog;
 using KifuwarabeGo2026.Gui.Sgf;
 using Microsoft.Xna.Framework;
@@ -860,6 +861,23 @@ public class Game1 : Game
                 _gtpEngineIntegerInputMessage);
 
         // ［大会ルール設定　＞　コミ］
+        if (_renderer is not null && _tournamentRulesSetting.IsMoveLimitInputOpen)
+            _renderer.DrawPopupNumberUnderline(
+                backgroundMousePosition,
+                "MOVES",
+                _tournamentRulesSetting.MoveLimitInputText,
+                _tournamentRulesSetting.MoveLimitInputCaretIndex,
+                _tournamentRulesSetting.MoveLimitInputSelectionStart,
+                _tournamentRulesSetting.MoveLimitInputSelectionLength,
+                _tournamentRulesSetting.MoveLimitInputMessage,
+                new PopupNumberUnderlineOptions(true, Caption: "MOVES INPUT", ShowTitle: false,
+                    SpinButtons:
+                    [
+                        new SpinButton(new Rectangle(700, 516, 82, 100), "100"),
+                        new SpinButton(new Rectangle(812, 516, 82, 100), "10"),
+                        new SpinButton(new Rectangle(924, 516, 82, 100), "1"),
+                    ]));
+
         if (_renderer is not null && _tournamentRulesSetting.IsKomiInputOpen)
             _renderer.DrawPopupNumberUnderline(
                 backgroundMousePosition,
@@ -869,7 +887,8 @@ public class Game1 : Game
                 _tournamentRulesSetting.KomiInputSelectionStart,
                 _tournamentRulesSetting.KomiInputSelectionLength,
                 _tournamentRulesSetting.KomiInputMessage,
-                new PopupNumberUnderlineOptions(true, "0.5", "KOMI INPUT", ShowTitle: false));
+                new PopupNumberUnderlineOptions(true, "0.5", "KOMI INPUT", ShowTitle: false,
+                    SpinButtons: [new SpinButton(new Rectangle(700, 516, 82, 100), "0.5")]));
 
         if (_renderer is not null && _activeGtpEngineStringOption is { } stringOption)
             _renderer.DrawTextInputDialog(
@@ -997,6 +1016,41 @@ public class Game1 : Game
             GuiOperationLog.User("Mouse click", $"screen={GetCurrentScreenState()} x={point.X} y={point.Y}");
             if (TryHandleActiveWindowClick(point))
             {
+                _previousMouse = mouse;
+                return;
+            }
+
+            if (_tournamentRulesSetting.IsMoveLimitInputOpen)
+            {
+                if (_renderer?.PopupNumberUnderline.IsTextBoxHit(point) == true)
+                    _tournamentRulesSetting.BeginMoveLimitInputSelection(
+                        _renderer.GetPopupNumberUnderlineCaretIndex(point, _tournamentRulesSetting.MoveLimitInputText), IsShiftDown());
+                else
+                {
+                    var spinHandled = false;
+                    if (_renderer?.PopupNumberUnderline.SpinButtons.Count >= 3)
+                    for (var index = 0; index < 3; index++)
+                    {
+                        var step = index switch { 0 => 100, 1 => 10, _ => 1 };
+                        var spinButton = _renderer.PopupNumberUnderline.SpinButtons[index];
+                        if (spinButton.UpButton.IsHit(point))
+                        {
+                            _tournamentRulesSetting.ChangeMoveLimitInput(step);
+                            spinHandled = true;
+                            break;
+                        }
+                        if (spinButton.DownButton.IsHit(point))
+                        {
+                            _tournamentRulesSetting.ChangeMoveLimitInput(-step);
+                            spinHandled = true;
+                            break;
+                        }
+                    }
+                    if (!spinHandled && _renderer?.PopupNumberUnderline.OkButton.IsHit(point) == true)
+                        _tournamentRulesSetting.CommitMoveLimitInput();
+                    else if (!spinHandled && _renderer?.PopupNumberUnderline.CancelButton.IsHit(point) == true)
+                        _tournamentRulesSetting.CancelMoveLimitInput();
+                }
                 _previousMouse = mouse;
                 return;
             }

@@ -676,18 +676,6 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IGoScre
         }
     }
 
-    private void DrawTournamentRulesMoveLimitStrip(GoAppSession session, Point mousePoint)
-    {
-        var bounds = new Rectangle(AddPanelControlX, 604, 668, 56);
-        DrawTournamentRulesFieldLabel("MOVES", bounds);
-        DrawTournamentRulesNumericTextBox(session, TournamentRulesNumericField.MoveLimit, session.MoveLimit.ToString(), TournamentRulesMoveLimitTextBounds, mousePoint, 4);
-        var amounts = new[] { "100", "10", "1" };
-        for (var index = 0; index < amounts.Length; index++)
-        {
-            DrawSpinBox(MoveLimitSpinButtonBounds(index, true), MoveLimitSpinButtonBounds(index, false), amounts[index], mousePoint);
-        }
-    }
-
     private void DrawTournamentRulesNumericTextBox(GoAppSession session, TournamentRulesNumericField field, string value, Rectangle textBounds, Point mousePoint, int tabIndex)
     {
         var active = session.ActiveTournamentRulesNumericField == field;
@@ -940,7 +928,6 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IGoScre
 
     private static Rectangle MainTimeSpinButtonBounds(int index, bool up) => new(AddPanelControlX + 188 + index * 112, up ? 534 : 570, 40, 14);
 
-    private static Rectangle MoveLimitSpinButtonBounds(int index, bool up) => new(AddPanelControlX + 324 + index * 92, up ? 606 : 642, 76, 14);
 
     private static Rectangle PlayerKindButtonBounds(int index, int y) => new(GameOverValueX + index * 236, y, 236, 52);
 

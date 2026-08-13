@@ -38,17 +38,6 @@ public static class TournamentRuleEditorLayout
         return null;
     }
 
-    public static int? GetMoveLimitStepButtonHit(Point point)
-    {
-        int[] steps = [100, 10, 1];
-        for (var index = 0; index < steps.Length; index++)
-        {
-            if (MoveLimitSpinButtonBounds(index, true).Contains(point)) return steps[index];
-            if (MoveLimitSpinButtonBounds(index, false).Contains(point)) return -steps[index];
-        }
-        return null;
-    }
-
     public static TournamentRulesNumericField? GetMainTimeTextBoxHit(Point point)
     {
         for (var index = 0; index < 3; index++)
@@ -79,5 +68,4 @@ public static class TournamentRuleEditorLayout
     public static Rectangle MainTimeColonBounds(int index) => new(ControlX + 230 + index * 112, 544, 14, 28);
     public static Rectangle MoveLimitTextBounds => new(ControlX + 132, 612, 176, 40);
     public static Rectangle MainTimeSpinButtonBounds(int index, bool up) => new(ControlX + 188 + index * 112, up ? 534 : 570, 40, 14);
-    public static Rectangle MoveLimitSpinButtonBounds(int index, bool up) => new(ControlX + 324 + index * 92, up ? 606 : 642, 76, 14);
 }

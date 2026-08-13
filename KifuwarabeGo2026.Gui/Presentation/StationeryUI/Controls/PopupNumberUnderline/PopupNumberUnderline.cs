@@ -82,6 +82,8 @@ public sealed class PopupNumberUnderline
         title ??= string.Empty;
         text ??= string.Empty;
         message ??= string.Empty;
+        if (options.SpinButtons is not null)
+            SetSpinButtons(options.SpinButtons);
 
         draw.FillRectangle(new Rectangle(0, 0, draw.VirtualScreenWidth, draw.VirtualScreenHeight), new Color(0, 0, 0, 130));
         draw.FillRectangle(new Rectangle(DialogBounds.X + 14, DialogBounds.Y + 16, DialogBounds.Width, DialogBounds.Height), new Color(0, 0, 0, 155));
@@ -122,7 +124,7 @@ public sealed class PopupNumberUnderline
 /// <param name="ShowStepControls"></param>
 /// <param name="StepLabel"></param>
 /// <param name="Caption"></param>
-public readonly record struct PopupNumberUnderlineOptions(bool ShowStepControls = false, string? StepLabel = null, string? Caption = null, bool ShowTitle = true);
+public readonly record struct PopupNumberUnderlineOptions(bool ShowStepControls = false, string? StepLabel = null, string? Caption = null, bool ShowTitle = true, IReadOnlyList<SpinButton>? SpinButtons = null);
 
 /// <summary>PopupNumberUnderline に渡す描画機能です。</summary>
 public sealed record PopupNumberUnderlineDrawingCallbacks(

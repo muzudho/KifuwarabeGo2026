@@ -13,6 +13,7 @@ using System.IO;
 public sealed partial class GoScreenRenderer
 {
     private readonly TournamentRuleKomiField _tournamentRuleKomiField = new();
+    private readonly TournamentRuleMoveLimitField _tournamentRuleMoveLimitField = new();
 
     public static bool GetTournamentRulesBrowseButtonHit(Point point) =>
         TournamentRulesSelectButtonBounds.Contains(point);
@@ -198,7 +199,9 @@ public sealed partial class GoScreenRenderer
             new TournamentRuleKomiFieldDrawingCallbacks(DrawTournamentRulesFieldLabel, DrawFittedText, this,
                 new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText)));
         DrawTournamentRulesTimeStrip(session, mousePoint);
-        DrawTournamentRulesMoveLimitStrip(session, mousePoint);
+        _tournamentRuleMoveLimitField.Draw(session.MoveLimit, mousePoint,
+            new TournamentRuleMoveLimitFieldDrawingCallbacks(DrawTournamentRulesFieldLabel, DrawFittedText, this,
+                new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText)));
         DrawFilePathSelector(session, mousePoint);
     }
 
