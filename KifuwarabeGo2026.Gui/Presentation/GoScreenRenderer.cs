@@ -1792,7 +1792,8 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IGoScre
             transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));
         PopupNumberUnderline.Draw(mousePoint, title, text, caretIndex, selectionStart, selectionLength, message,
             new PopupNumberUnderlineDrawingCallbacks(VirtualScreen.Width, VirtualScreen.Height, FillRect, DrawRect,
-                DrawText, DrawFittedText, DrawTextBoxSelection, value => _font.MeasureString(value).X, DrawCommandButton), options);
+                DrawText, DrawFittedText, DrawTextBoxSelection, value => _font.MeasureString(value).X, DrawCommandButton,
+                DrawLine, DrawSharpCenteredFittedText), options);
         _spriteBatch.End();
     }
 

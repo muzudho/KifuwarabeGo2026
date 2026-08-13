@@ -1,8 +1,10 @@
 namespace KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.PopupNumberUnderline;
 
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Button;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.SpinButton;
 using Microsoft.Xna.Framework;
 using System;
+using System.Collections.Generic;
 
 /// <summary>リンクから開く整数入力用のモーダル画面です。</summary>
 public sealed class PopupNumberUnderline
@@ -10,7 +12,7 @@ public sealed class PopupNumberUnderline
     #region Layout
 
     private static readonly Rectangle DialogBounds = new(610, 300, 700, 390);
-    private static readonly Rectangle TextBounds = new(690, 454, 540, 70);
+    private static readonly Rectangle TextBounds = new(690, 410, 540, 70);
     private static readonly Rectangle TextContentBounds = new(TextBounds.X + 22, TextBounds.Y + 12, TextBounds.Width - 44, 46);
 
     #endregion
@@ -26,12 +28,30 @@ public sealed class PopupNumberUnderline
     /// <summary>
     /// 下げるボタン
     /// </summary>
-    public Button StepDownButton { get; } = new(new Rectangle(812, 594, 82, 54), "▼", 0.46f);
+    private readonly List<SpinButton> _spinButtons =
+    [
+        new SpinButton(new Rectangle(700, 516, 82, 100), "1"),
+    ];
+
+    /// <summary>この数値入力画面に配置するスピンボタンです。</summary>
+    public IReadOnlyList<SpinButton> SpinButtons => _spinButtons;
+
+    /// <summary>スピンボタンを 0 個以上、任意の数だけ配置します。</summary>
+    public void SetSpinButtons(IEnumerable<SpinButton> spinButtons)
+    {
+        ArgumentNullException.ThrowIfNull(spinButtons);
+        _spinButtons.Clear();
+        _spinButtons.AddRange(spinButtons);
+    }
+
+    /// <summary>後方互換のため、先頭スピンボタンの下向きボタンを公開します。</summary>
+    public Button? StepDownButton => _spinButtons.Count == 0 ? null : _spinButtons[0].DownButton;
 
     /// <summary>
     /// 上げるボタン
     /// </summary>
-    public Button StepUpButton { get; } = new(new Rectangle(700, 594, 82, 54), "▲", 0.46f);
+    /// <summary>後方互換のため、先頭スピンボタンの上向きボタンを公開します。</summary>
+    public Button? StepUpButton => _spinButtons.Count == 0 ? null : _spinButtons[0].UpButton;
 
     #endregion
 
@@ -68,7 +88,8 @@ public sealed class PopupNumberUnderline
         draw.FillRectangle(DialogBounds, new Color(24, 29, 36, 252));
         draw.DrawRectangle(DialogBounds, 2, new Color(116, 145, 146));
         draw.DrawText(options.Caption ?? "NUMBER INPUT", new Vector2(DialogBounds.X + 34, DialogBounds.Y + 28), new Color(244, 238, 218), 0.68f);
-        draw.DrawFittedText(title, new Rectangle(DialogBounds.X + 36, DialogBounds.Y + 92, DialogBounds.Width - 72, 40), new Color(180, 195, 195), 0.42f);
+        if (options.ShowTitle)
+            draw.DrawFittedText(title, new Rectangle(DialogBounds.X + 36, DialogBounds.Y + 92, DialogBounds.Width - 72, 40), new Color(180, 195, 195), 0.42f);
 
         draw.FillRectangle(TextBounds, new Color(15, 20, 26));
         draw.DrawRectangle(TextBounds, 2, new Color(99, 223, 185));
@@ -78,14 +99,15 @@ public sealed class PopupNumberUnderline
         var caretX = TextContentBounds.X + (int)(draw.MeasureTextWidth(prefix) * 0.55f);
         draw.FillRectangle(new Rectangle(Math.Min(caretX, TextBounds.Right - 24), TextBounds.Y + 14, 2, 42), new Color(147, 244, 200));
 
-        draw.DrawFittedText(message, new Rectangle(DialogBounds.X + 80, 540, DialogBounds.Width - 160, 32), new Color(255, 205, 140), 0.32f);
+        draw.DrawFittedText(message, new Rectangle(DialogBounds.X + 80, 642, DialogBounds.Width - 160, 28), new Color(255, 205, 140), 0.32f);
 
         // ステップアップ・ステップダウンボタンの描画
         if (options.ShowStepControls)
         {
-            StepUpButton.Draw(mousePoint, draw.DrawButton);
-            StepDownButton.Draw(mousePoint, draw.DrawButton);
-            draw.DrawFittedText($"STEP {options.StepLabel ?? "1"}", new Rectangle(700, 558, 194, 28), new Color(180, 195, 195), 0.28f);
+            if (_spinButtons.Count > 0)
+                _spinButtons[0].SetStepValue(options.StepLabel ?? "1");
+            foreach (var spinButton in SpinButtons)
+                spinButton.Draw(mousePoint, new SpinButtonDrawingCallbacks(draw.DrawLine, draw.DrawCenteredText));
         }
         CancelButton.Draw(mousePoint, draw.DrawButton);
         OkButton.Draw(mousePoint, draw.DrawButton);
@@ -100,7 +122,7 @@ public sealed class PopupNumberUnderline
 /// <param name="ShowStepControls"></param>
 /// <param name="StepLabel"></param>
 /// <param name="Caption"></param>
-public readonly record struct PopupNumberUnderlineOptions(bool ShowStepControls = false, string? StepLabel = null, string? Caption = null);
+public readonly record struct PopupNumberUnderlineOptions(bool ShowStepControls = false, string? StepLabel = null, string? Caption = null, bool ShowTitle = true);
 
 /// <summary>PopupNumberUnderline に渡す描画機能です。</summary>
 public sealed record PopupNumberUnderlineDrawingCallbacks(
@@ -112,4 +134,6 @@ public sealed record PopupNumberUnderlineDrawingCallbacks(
     Action<string, Rectangle, Color, float> DrawFittedText,
     Action<string, int, int, Rectangle, float> DrawTextSelection,
     Func<string, float> MeasureTextWidth,
-    Action<Rectangle, string, bool, Point, bool, float> DrawButton);
+    Action<Rectangle, string, bool, Point, bool, float> DrawButton,
+    Action<Vector2, Vector2, float, Color> DrawLine,
+    Action<string, Rectangle, Color, float> DrawCenteredText);

@@ -869,7 +869,7 @@ public class Game1 : Game
                 _tournamentRulesSetting.KomiInputSelectionStart,
                 _tournamentRulesSetting.KomiInputSelectionLength,
                 _tournamentRulesSetting.KomiInputMessage,
-                new PopupNumberUnderlineOptions(true, "0.5", "KOMI INPUT"));
+                new PopupNumberUnderlineOptions(true, "0.5", "KOMI INPUT", ShowTitle: false));
 
         if (_renderer is not null && _activeGtpEngineStringOption is { } stringOption)
             _renderer.DrawTextInputDialog(
@@ -1006,9 +1006,9 @@ public class Game1 : Game
                 if (_renderer?.PopupNumberUnderline.IsTextBoxHit(point) == true)
                     _tournamentRulesSetting.BeginKomiInputSelection(
                         _renderer.GetPopupNumberUnderlineCaretIndex(point, _tournamentRulesSetting.KomiInputText), IsShiftDown());
-                else if (_renderer?.PopupNumberUnderline.StepUpButton.IsHit(point) == true)
+                else if (_renderer?.PopupNumberUnderline.StepUpButton?.IsHit(point) == true)
                     _tournamentRulesSetting.ChangeKomiInput(0.5m);
-                else if (_renderer?.PopupNumberUnderline.StepDownButton.IsHit(point) == true)
+                else if (_renderer?.PopupNumberUnderline.StepDownButton?.IsHit(point) == true)
                     _tournamentRulesSetting.ChangeKomiInput(-0.5m);
                 else if (_renderer?.PopupNumberUnderline.OkButton.IsHit(point) == true)
                     _tournamentRulesSetting.CommitKomiInput();
