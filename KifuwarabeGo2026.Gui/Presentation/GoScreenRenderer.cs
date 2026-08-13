@@ -36,10 +36,10 @@ public sealed partial class GoScreenRenderer
     private readonly Texture2D _stoneLight;
     private readonly Texture2D _stoneDark;
     private readonly LinkUnderlineRenderer _titleAppProviderLinkUnderline = new(
-        new RoundUnderlineRenderer { TopOffset = 2, Thickness = 5, Radius = 2 });
+        new RoundUnderline { TopOffset = 2, Thickness = 5, Radius = 2 });
     private readonly LinkUnderlineRenderer _gtpEngineOptionLinkUnderline = new(
-        new RoundUnderlineRenderer { TopOffset = -4, Thickness = 4, Radius = 2 });
-    private readonly SquareUnderlineRenderer _multilineTextUnderline = new() { Thickness = 1 };
+        new RoundUnderline { TopOffset = -4, Thickness = 4, Radius = 2 });
+    private readonly SquareUnderline _multilineTextUnderline = new() { Thickness = 1 };
 
     public GoScreenRenderer(
         GraphicsDevice graphicsDevice,

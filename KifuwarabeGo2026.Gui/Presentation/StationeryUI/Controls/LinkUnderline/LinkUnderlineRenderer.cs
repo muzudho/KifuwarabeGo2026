@@ -10,7 +10,7 @@ using System;
 /// </summary>
 public sealed class LinkUnderlineRenderer
 {
-    public LinkUnderlineRenderer(IUnderlineRenderer underline)
+    public LinkUnderlineRenderer(IUnderline underline)
     {
         Underline = underline ?? throw new ArgumentNullException(nameof(underline));
     }
@@ -18,7 +18,7 @@ public sealed class LinkUnderlineRenderer
     /// <summary>
     /// 下線
     /// </summary>
-    public IUnderlineRenderer Underline { get; }
+    public IUnderline Underline { get; }
 
     /// <summary>同期リンク向けに、ホバー状態だけで所有する Underline を描画します。</summary>
     public void Draw(Rectangle bounds, bool hovered, IUnderlineDrawingSurface surface)

@@ -6,11 +6,26 @@ using System;
 /// <summary>
 /// 下線
 /// </summary>
-public abstract class AbstractUnderlineRenderer : IUnderlineRenderer
+public abstract class AbstractUnderline : IUnderline
 {
+    /// <summary>
+    /// 位置とサイズ
+    /// </summary>
     public Rectangle ContentBounds { get; set; }
+
+    /// <summary>
+    /// 上からのオフセット
+    /// </summary>
     public int TopOffset { get; set; }
+
+    /// <summary>
+    /// 太さ
+    /// </summary>
     public int Thickness { get; set; } = 1;
+
+    /// <summary>
+    /// 色
+    /// </summary>
     public Color Color { get; set; } = Color.White;
 
     protected Rectangle UnderlineBounds => new(
@@ -18,7 +33,11 @@ public abstract class AbstractUnderlineRenderer : IUnderlineRenderer
         ContentBounds.Bottom + TopOffset,
         ContentBounds.Width,
         Thickness);
-
+    
+    /// <summary>
+    /// 描画
+    /// </summary>
+    /// <param name="surface">描画先</param>
     public void Draw(IUnderlineDrawingSurface surface)
     {
         ArgumentNullException.ThrowIfNull(surface);
