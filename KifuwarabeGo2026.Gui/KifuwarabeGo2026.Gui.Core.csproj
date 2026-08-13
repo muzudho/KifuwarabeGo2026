@@ -38,5 +38,6 @@
     <Folder Include="Presentation\StationeryUI\Controls\StickyNote\" />
     <Folder Include="Presentation\StationeryUI\Controls\MultilineTextUnderline\" />
     <Folder Include="Presentation\StationeryUI\Controls\SinglelineTextUnderline\" />
+    <Folder Include="Presentation\StationeryUI\Controls\LinkUnderline\" />
   </ItemGroup>
 </Project>
