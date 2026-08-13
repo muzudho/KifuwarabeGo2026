@@ -24,7 +24,7 @@ internal static class Program
 /// </summary>
 internal sealed partial class GtpEngine
 {
-    private static readonly IGenerateMoveStrategy _playStrategy = new PlayStrategy();
+    private static readonly PlayStrategy _playStrategy = new();
     private static readonly PonnukiStrategy _ponnukiStrategy = new();
     private static readonly string[] SupportedAppIds = ["play", "ponnuki"];
     private static readonly string[] SupportedPlayerAppIds = ["play", "ponnuki"];
@@ -51,6 +51,7 @@ internal sealed partial class GtpEngine
     private int _randomSeed;
     private string _engineTag = "";
     private string _debugLogFile = "";
+    private string _lastMoveComment = "";
 
     public void Run(TextReader input, TextWriter output)
     {
@@ -300,12 +301,20 @@ internal sealed partial class GtpEngine
             _avoidEyes,
             _randomMove,
             _random);
-        _lastPonnukiMoveComment = "";
-        var move = IsPonnukiCasualPlayerActive
-            ? _ponnukiStrategy.GenerateMoveWithDecision(request) is { } decision
-                ? SetPonnukiMoveDecision(decision)
-                : null
-            : _playStrategy.GenerateMove(request);
+        _lastMoveComment = "";
+        GoPoint? move;
+        if (IsPonnukiCasualPlayerActive)
+        {
+            move = _ponnukiStrategy.GenerateMoveWithDecision(request) is { } ponnukiDecision
+                ? SetPonnukiMoveDecision(ponnukiDecision)
+                : null;
+        }
+        else
+        {
+            move = _playStrategy.GenerateMoveWithDecision(request) is { } playDecision
+                ? SetPlayMoveDecision(playDecision)
+                : null;
+        }
         if (move is null)
         {
             _koPoint = null;
@@ -321,7 +330,13 @@ internal sealed partial class GtpEngine
 
     private GoPoint SetPonnukiMoveDecision(PonnukiMoveDecision decision)
     {
-        _lastPonnukiMoveComment = decision.ToComment();
+        _lastMoveComment = decision.ToComment();
+        return decision.Move;
+    }
+
+    private GoPoint SetPlayMoveDecision(PlayMoveDecision decision)
+    {
+        _lastMoveComment = decision.ToComment();
         return decision.Move;
     }
 
@@ -418,8 +433,8 @@ internal sealed partial class GtpEngine
         var winrate = 1.0 / (1.0 + Math.Exp(-perspectiveLead / 5.0));
         var json = JsonSerializer.Serialize(new
         {
-            comment = !string.IsNullOrWhiteSpace(_lastPonnukiMoveComment)
-                ? _lastPonnukiMoveComment
+            comment = !string.IsNullOrWhiteSpace(_lastMoveComment)
+                ? _lastMoveComment
                 : move.Equals("pass", StringComparison.OrdinalIgnoreCase)
                 ? "パスしたぜ（＾～＾）"
                 : $"{move.ToUpperInvariant()}に打ったぜ（＾～＾）",
