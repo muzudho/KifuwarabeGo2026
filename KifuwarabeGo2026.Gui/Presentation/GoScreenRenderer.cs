@@ -6,6 +6,8 @@ using KifuwarabeGo2026.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.Shared.Domain;
 using KifuwarabeGo2026.Gui.Presentation.Shared.PlayerSelector;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.StickyNote;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.LinkUnderline;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
 using KifuwarabeGo2026.Gui.Presentation.Title;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -33,6 +35,11 @@ public sealed partial class GoScreenRenderer
     private readonly Texture2D _softCircle;
     private readonly Texture2D _stoneLight;
     private readonly Texture2D _stoneDark;
+    private readonly LinkUnderlineRenderer _titleAppProviderLinkUnderline = new(
+        new RoundUnderlineRenderer { TopOffset = 2, Thickness = 5, Radius = 2 });
+    private readonly LinkUnderlineRenderer _gtpEngineOptionLinkUnderline = new(
+        new RoundUnderlineRenderer { TopOffset = -4, Thickness = 4, Radius = 2 });
+    private readonly SquareUnderlineRenderer _multilineTextUnderline = new() { Thickness = 1 };
 
     public GoScreenRenderer(
         GraphicsDevice graphicsDevice,

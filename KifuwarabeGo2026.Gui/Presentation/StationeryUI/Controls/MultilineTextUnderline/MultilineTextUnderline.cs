@@ -1,7 +1,6 @@
 namespace KifuwarabeGo2026.Gui.Presentation;
 
 using KifuwarabeGo2026.Gui.Application;
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -85,12 +84,10 @@ public sealed partial class GoScreenRenderer
         var underlineColor = new Color(99, 223, 185, 180);
         for (var y = bounds.Y + 18 + lineHeight - 3; y < bounds.Bottom - 18; y += lineHeight)
         {
-            UnderlineRenderer.DrawLine(
-                new Vector2(bounds.X + 18, y),
-                new Vector2(bounds.Right - 18, y),
-                1,
-                underlineColor,
-                DrawLine);
+            _multilineTextUnderline.ContentBounds = new Rectangle(bounds.X + 18, y, bounds.Width - 36, 0);
+            _multilineTextUnderline.TopOffset = 0;
+            _multilineTextUnderline.Color = underlineColor;
+            _multilineTextUnderline.Draw(this);
         }
     }
 

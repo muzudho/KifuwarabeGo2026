@@ -4,8 +4,6 @@ using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.GtpExtensions.InitialPosition;
 using KifuwarabeGo2026.Shared.Domain;
 using KifuwarabeGo2026.Gui.Presentation.Shared.PlayerSelector;
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.LinkUnderline;
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.StickyNote;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -451,15 +449,8 @@ public sealed partial class GoScreenRenderer
             "string" or "filename" => AbbreviateOptionValue(value, 28),
             _ => value,
         };
-        LinkUnderlineRenderer.Draw(
-            valueBounds,
-            string.IsNullOrEmpty(rowValue) ? "<empty>" : rowValue,
-            hovered,
-            (linkBounds, label, underlineColor, textColor) =>
-            {
-                DrawDynamicOptionText(label, linkBounds, textColor, 0.34f);
-                UnderlineRenderer.DrawRounded(linkBounds, -4, 4, 2, underlineColor, DrawRoundedFill);
-            });
+        DrawDynamicOptionText(string.IsNullOrEmpty(rowValue) ? "<empty>" : rowValue, valueBounds, Color.White, 0.34f);
+        _gtpEngineOptionLinkUnderline.Draw(valueBounds, hovered, this);
         if (option.Type == "spin" && option.Min is { } min && option.Max is { } max)
             DrawFittedText($"{min} .. {max}", new Rectangle(valueBounds.Right + 12, valueBounds.Y + 10, 126, 28), new Color(118, 139, 143), 0.24f);
         if (hovered)
