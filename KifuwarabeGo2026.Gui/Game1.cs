@@ -226,7 +226,9 @@ public class Game1 : Game
             _tournamentRulesCatalog,
             OpenTournamentRulesSelectionDialog,
             BeginDiscardTransition,
-            _clipboardService);
+            _clipboardService,
+            point => _renderer?.IsTournamentRulesSettingsFileHit(point) == true,
+            OpenTournamentRulesSettingsFile);
         _playingScene = new PlayingScene(
             _session,
             PlayPlaceStoneSound,
@@ -6192,6 +6194,24 @@ public class Game1 : Game
         {
             _applicationSettingsMessage = "ERROR: " + ex.Message;
             ApplicationErrorLog.Write("OPEN SETTINGS FOLDER", $"Could not open the {description} folder.", ex);
+        }
+    }
+
+    private void OpenTournamentRulesSettingsFile(string filePath)
+    {
+        try
+        {
+            var result = _desktopLauncher.OpenFileWithPreferredApplication(filePath, "code");
+            _session.SetTournamentRulesDisplayNameWarning(
+                result == DesktopOpenResult.PreferredApplication
+                    ? "OPENED SETTINGS IN CODE"
+                    : "CODE NOT FOUND; OPENED SETTINGS WITH DEFAULT APP");
+            GuiOperationLog.User("Opened tournament rules settings", Path.GetFileName(filePath));
+        }
+        catch (Exception ex)
+        {
+            _session.SetTournamentRulesDisplayNameWarning("Could not open settings file.");
+            ApplicationErrorLog.Write("TOURNAMENT RULES SETTINGS", "Could not open settings file.", ex);
         }
     }
 

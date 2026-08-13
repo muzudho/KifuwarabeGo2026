@@ -21,6 +21,8 @@ public sealed class TournamentRulesSetting
     private readonly TournamentRulesCatalog _catalog;
     private readonly Action _browseTournamentRules;
     private readonly Action _beginDiscardTransition;
+    private readonly Func<Point, bool> _isSettingsFileHit;
+    private readonly Action<string> _openSettingsFile;
     private readonly IClipboardService _clipboardService;
     private readonly TextBoxController _displayNameTextBox = new(MaxDisplayNameLength);
     private readonly TextBoxController _mainTimeHoursTextBox = new(3);
@@ -59,13 +61,17 @@ public sealed class TournamentRulesSetting
         TournamentRulesCatalog catalog,
         Action browseTournamentRules,
         Action beginDiscardTransition,
-        IClipboardService clipboardService)
+        IClipboardService clipboardService,
+        Func<Point, bool> isSettingsFileHit,
+        Action<string> openSettingsFile)
     {
         _session = session;
         _catalog = catalog;
         _browseTournamentRules = browseTournamentRules;
         _beginDiscardTransition = beginDiscardTransition;
         _clipboardService = clipboardService;
+        _isSettingsFileHit = isSettingsFileHit ?? throw new ArgumentNullException(nameof(isSettingsFileHit));
+        _openSettingsFile = openSettingsFile ?? throw new ArgumentNullException(nameof(openSettingsFile));
     }
 
     public void UpdateByKeyboard(KeyboardState keyboard, GameTime gameTime)
@@ -389,6 +395,13 @@ public sealed class TournamentRulesSetting
         if (TournamentRuleEditorLayout.IsMoveLimitTextBoxHit(point))
         {
             OpenMoveLimitInput();
+            return true;
+        }
+
+        if (_isSettingsFileHit(point))
+        {
+            var path = _session.CurrentTournamentRules.FilePath;
+            if (!string.IsNullOrWhiteSpace(path)) _openSettingsFile(path);
             return true;
         }
 

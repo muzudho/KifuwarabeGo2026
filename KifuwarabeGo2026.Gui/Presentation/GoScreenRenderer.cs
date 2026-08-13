@@ -68,6 +68,8 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IGoScre
         new RoundUnderline { TopOffset = -7, Thickness = 5, Radius = 2 });
     private readonly LinkUnderline _settingsValueLinkUnderline = new(
         new RoundUnderline { TopOffset = -7, Thickness = 6, Radius = 3 });
+    private readonly LinkUnderline _tournamentRulesSettingsFileLinkUnderline = new(
+        new RoundUnderline { TopOffset = 2, Thickness = 5, Radius = 2 });
     private readonly Breadcrumb _breadcrumb = new();
     private readonly SpinBox _spinBox = new();
     
@@ -560,10 +562,17 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IGoScre
     {
         var bounds = TournamentRulesAddPanelFileRowBounds;
         var filePath = string.IsNullOrWhiteSpace(session.CurrentTournamentRules.FilePath) ? "-" : session.CurrentTournamentRules.FilePath;
-        DrawDataRowFrame(bounds);
         DrawTournamentRulesFieldLabel("SETTINGS", bounds);
-        DrawFittedText(filePath, new Rectangle(bounds.X + 152, bounds.Y + 7, bounds.Width - 170, 42), Color.White, 0.38f);
+        var textBounds = new Rectangle(bounds.X + 132, bounds.Y + 7, bounds.Width - 152, 42);
+        _tournamentRulesSettingsFileLinkUnderline.Bounds = textBounds;
+        _tournamentRulesSettingsFileLinkUnderline.SetActionBadge(ActionBadge.Create("EDIT", textBounds));
+        _tournamentRulesSettingsFileLinkUnderline.UpdatePointer(mousePoint);
+        DrawFittedText(filePath, textBounds, Color.White, 0.38f);
+        _tournamentRulesSettingsFileLinkUnderline.Draw(this,
+            new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText));
     }
+
+    public bool IsTournamentRulesSettingsFileHit(Point point) => _tournamentRulesSettingsFileLinkUnderline.IsHit(point);
 
     private void DrawTextBoxCaret(string text, int caretIndex, Rectangle textBounds, float textScale)
     {
