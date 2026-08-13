@@ -12,9 +12,8 @@ using System;
 public sealed partial class GoScreenRenderer
 {
     private static readonly PlayerEngineErrorButton PlayerEngineErrorButton = new();
+    private readonly PlayerRow _playerRow = new();
     private readonly AgehamaPlate _agehamaPlate = new();
-    private readonly PlayerTimeStatus _playerTimeStatus = new();
-    private readonly PlayerTurnIndicator _playerTurnIndicator = new();
     public static bool GetEngineErrorLogHit(Point point, GoAppSession session)
     {
         if (session.CurrentMode.Kind != GoAppModeKind.Playing || session.EngineErrorStone is not { } errorStone)
@@ -66,32 +65,10 @@ public sealed partial class GoScreenRenderer
         Point? mousePoint,
         bool minimal)
     {
-        if (!minimal) DrawDataRowFrame(bounds);
-        var layout = PlayerRowLayouts.Create(bounds, minimal, liveElapsed is not null, GameOverValueX);
-        _playerTurnIndicator.Draw(layout.ActiveIndicatorX, bounds, active, FillRect);
-        if (minimal) DrawIconStone(new Vector2(layout.StoneCenterX, bounds.Y + 23), 16, black);
-        else DrawStone(new Vector2(layout.StoneCenterX, bounds.Y + 23), 16, black);
-        DrawFittedText(playerName, layout.NameBounds, Color.White, 0.5f);
-
-        var statusText = _playerTimeStatus.Build(elapsed, mainTime, agehama, minimal, FormatElapsedTime);
-        DrawFittedText(statusText, layout.StatusBounds, new Color(204, 211, 206), 0.34f);
-        if (liveElapsed is { } currentElapsed)
-        {
-            DrawFittedText(
-                _playerTimeStatus.BuildLive(currentElapsed, FormatElapsedTime),
-                layout.LiveStatusBounds,
-                active ? new Color(147, 244, 200) : new Color(158, 178, 178),
-                0.30f);
-        }
-        if (minimal)
-        {
-            DrawAgehamaPlate(new Rectangle(bounds.Right - 136, bounds.Y + 43, 118, 38), agehama, capturedBlack: !black);
-        }
-        if (engineError)
-        {
-            PlayerEngineErrorButton.Draw(bounds, mousePoint,
-                new PlayerEngineErrorButtonDrawingCallbacks(FillRect, DrawRect, DrawFittedText));
-        }
+        _playerRow.Draw(new PlayerRowModel(bounds, playerName, elapsed, liveElapsed, mainTime, agehama, black, active,
+                engineError, mousePoint, minimal, GameOverValueX),
+            new PlayerRowDrawingCallbacks(bounds => DrawDataRowFrame(bounds), FillRect, DrawRect, DrawStone, DrawIconStone, DrawFittedText,
+                FormatElapsedTime, (plateBounds, color) => _spriteBatch.Draw(_softCircle, plateBounds, color)));
     }
 
     private void DrawAgehamaPlate(Rectangle bounds, int agehama, bool capturedBlack)
