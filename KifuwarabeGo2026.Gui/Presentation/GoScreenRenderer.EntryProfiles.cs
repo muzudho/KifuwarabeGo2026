@@ -327,7 +327,7 @@ public sealed partial class GoScreenRenderer
         if (active)
             DrawTextBoxCaret(text, session.ClientIdentityProfileEditCaretIndex, textBounds, 0.42f);
         DrawEditableTextEditHint(active, hovered, textBounds);
-        if (field == ClientIdentityProfileEditField.LoginName && PlayerEditFieldHoverBounds(textBounds).Contains(mousePoint))
+        if (field == ClientIdentityProfileEditField.LoginName && ClientIdentityFieldHoverBounds(textBounds).Contains(mousePoint))
             DrawClientIdentityHandleStickyNote(textBounds);
     }
 
@@ -352,6 +352,16 @@ public sealed partial class GoScreenRenderer
             DrawPlayerEditHint("EDIT", textBounds);
     }
 
+    private static Rectangle ClientIdentityFieldHoverBounds(Rectangle textBounds) =>
+        new(536, textBounds.Y, textBounds.Right - 536, textBounds.Height);
+
+    private static Vector2 ClientIdentityUnderlineConnectorStart(Rectangle textBounds) =>
+        new(textBounds.Right - 24, textBounds.Bottom + 4);
+
+    private static Vector2 PlayerEditUnderlineConnectorStart(Rectangle textBounds) =>
+        ClientIdentityUnderlineConnectorStart(textBounds);
+
+#if false // Superseded by the independent EditEntryProfile component.
     // Moved to Presentation/Shared/EditEntryProfile/EditEntryProfile.cs.
     // Kept temporarily only as an inactive compatibility stub while this file is split further.
     private void DrawPlayerEditStickyNoteLegacy(GoAppSession session, Point mousePoint)
@@ -397,6 +407,7 @@ public sealed partial class GoScreenRenderer
         // アンダーラインの中心線へ、右端から少し内側で接続する。
         new(textBounds.Right - 24, textBounds.Bottom + 4);
 
+#endif
     private void DrawPlayerEngineCycleButton(Rectangle bounds, bool pointsRight, Point mousePoint)
     {
         var hovered = bounds.Contains(mousePoint);

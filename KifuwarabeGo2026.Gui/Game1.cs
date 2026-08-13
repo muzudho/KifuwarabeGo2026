@@ -1936,19 +1936,19 @@ public class Game1 : Game
         }
         if (_session.IsPlayerEditPanelOpen)
         {
-            if (GoScreenRenderer.GetPlayerEditPanelClientIdentityChangeHit(point))
+            if (_renderer?.EditEntryProfile.IsClientIdentityChangeHit(point) == true)
                 _session.OpenClientIdentityProfileSelectionPanel();
-            else if (_renderer?.DiscardButton.IsHit(point) == true)
+            else if (_renderer?.EditEntryProfile.DiscardButton.IsHit(point) == true)
             {
                 _session.CancelPlayerEditPanel();
                 BeginDiscardTransition();
             }
-            else if (_renderer?.SaveAndCloseButton.IsHit(point) == true && _session.SavePlayerEditDraft())
+            else if (_renderer?.EditEntryProfile.SaveAndCloseButton.IsHit(point) == true && _session.SavePlayerEditDraft())
                 SavePlayerCatalog(_session.EntryProfiles);
             else if (_session.PlayerEditDraft.Kind == EntryProfileKind.Computer &&
-                     GoScreenRenderer.GetPlayerEditPanelEngineChangeHit(point))
+                      _renderer?.EditEntryProfile.IsEngineChangeHit(point) == true)
                 _session.OpenPlayerEditGtpEngineSelectionDialog();
-            else if (GoScreenRenderer.GetPlayerEditPanelFieldHit(point) is { } field)
+            else if (_renderer?.EditEntryProfile.GetFieldHit(point) is { } field)
                 BeginOrMovePlayerEditField(point, field);
             return;
         }
