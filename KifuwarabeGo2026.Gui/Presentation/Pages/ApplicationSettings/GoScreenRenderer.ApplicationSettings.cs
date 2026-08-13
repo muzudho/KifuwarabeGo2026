@@ -114,18 +114,18 @@ public sealed partial class GoScreenRenderer
         }
         else if (page == ApplicationSettingsPage.OtherFolders)
         {
-            DrawSettingsSection(new Rectangle(420, 330, 1110, 176), "SGF", new Color(67, 112, 118));
-            DrawSettingsValueField("SGF SAVE FOLDER", string.IsNullOrWhiteSpace(sgfSaveDirectory) ? "(NOT SET - FIRST SAVE WILL BE REMEMBERED)" : sgfSaveDirectory, SettingsSgfFieldBounds, "BROWSE", mousePoint);
-            DrawSettingsSection(new Rectangle(420, 520, 1110, 202), "SCREENSHOT", new Color(76, 91, 126));
-            DrawSettingsValueField("SCREENSHOT SAVE FOLDER", screenshotSaveDirectory, SettingsScreenshotFieldBounds, "BROWSE", mousePoint);
+            DrawVerticalResultSection(new Rectangle(440, 354, 1070, 152), "SGF", new Color(67, 112, 118));
+            DrawSettingsValueField(string.Empty, string.IsNullOrWhiteSpace(sgfSaveDirectory) ? "(NOT SET - FIRST SAVE WILL BE REMEMBERED)" : sgfSaveDirectory, SettingsSgfFieldBounds, "BROWSE", mousePoint);
+            DrawVerticalResultSection(new Rectangle(440, 548, 1070, 174), "SCREENSHOT", new Color(76, 91, 126));
+            DrawSettingsValueField(string.Empty, screenshotSaveDirectory, SettingsScreenshotFieldBounds, "BROWSE", mousePoint);
             DrawFittedText("Ctrl + P captures the whole game window, including its frame.", new Rectangle(440, 656, 1020, 28), new Color(180, 195, 195), 0.30f);
         }
         else
         {
-            DrawSettingsSection(new Rectangle(420, 330, 1110, 176), "APPLICATION", new Color(67, 112, 118));
-            DrawSettingsValueField("APPLICATION SETTINGS FILE", applicationSettingsPath, SettingsApplicationSettingsFileFieldBounds, "OPEN", mousePoint);
-            DrawSettingsSection(new Rectangle(420, 520, 1110, 176), "ENGINE", new Color(76, 91, 126));
-            DrawSettingsValueField("ENGINE SETTINGS FILE", engineSettingsPath, SettingsEngineSettingsFileFieldBounds, "OPEN", mousePoint);
+            DrawVerticalResultSection(new Rectangle(440, 354, 1070, 152), "APPLICATION", new Color(67, 112, 118));
+            DrawSettingsValueField(string.Empty, applicationSettingsPath, SettingsApplicationSettingsFileFieldBounds, "OPEN", mousePoint);
+            DrawVerticalResultSection(new Rectangle(440, 548, 1070, 152), "ENGINE", new Color(76, 91, 126));
+            DrawSettingsValueField(string.Empty, engineSettingsPath, SettingsEngineSettingsFileFieldBounds, "OPEN", mousePoint);
         }
         if (!string.IsNullOrWhiteSpace(message))
             DrawFittedText(message, new Rectangle(440, 910, 780, 24), new Color(255, 205, 140), 0.28f);
@@ -167,19 +167,6 @@ public sealed partial class GoScreenRenderer
         _settingsValueLinkUnderline.SetActionBadge(ActionBadge.Create(action, bounds, 0.30f));
         _settingsValueLinkUnderline.UpdatePointer(mousePoint);
         _settingsValueLinkUnderline.Draw(this, new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText));
-    }
-
-    private void DrawSettingsSection(Rectangle bounds, string title, Color accentColor)
-    {
-        FillRect(bounds, new Color(15, 20, 26, 230));
-        DrawRect(bounds, 1, new Color(58, 78, 86));
-        FillRect(new Rectangle(bounds.X, bounds.Y, 8, bounds.Height), accentColor);
-        DrawText(title, new Vector2(bounds.X + 28, bounds.Y + 14), new Color(205, 218, 218), 0.34f);
-        DrawLine(
-            new Vector2(bounds.X + 28, bounds.Y + 46),
-            new Vector2(bounds.Right - 20, bounds.Y + 46),
-            1f,
-            new Color(58, 78, 86));
     }
 
     private void DrawSettingsButton(Point mousePoint)
