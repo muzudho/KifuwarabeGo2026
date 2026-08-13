@@ -3,6 +3,7 @@ namespace KifuwarabeGo2026.Gui.Presentation.Shared.EditEntryProfile;
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Button;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.LinkUnderline;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.ActionBadge;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.SinglelineTextUnderline;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.StickyNote;
@@ -56,7 +57,7 @@ public sealed class EditEntryProfile
 
     /// <summary>［PLAYER NAME］の単一行テキスト入力用アンダーラインです。</summary>
     
-    SinglelineTextUnderline PlayerNameTextUnderline { get; init; } = new(new RoundUnderline { TopOffset = 2, Thickness = 5, Radius = 2 });
+    SinglelineTextUnderline PlayerNameTextUnderline { get; init; } = new(new RoundUnderline { TopOffset = 2, Thickness = 5, Radius = 2 }, "EDIT");
 
     /// <summary>［PLAYER NAME］の付箋</summary>
     
@@ -176,7 +177,10 @@ public sealed class EditEntryProfile
         var field = EntryProfileEditField.DisplayName;
         var textBounds = PlayerFieldTextBounds(field);
         var active = session.ActivePlayerEditField == field;
-        PlayerNameTextUnderline.Draw(textBounds, active, textBounds.Contains(mousePoint), new UnderlineDrawingSurface(draw));
+        PlayerNameTextUnderline.Bounds = textBounds;
+        PlayerNameTextUnderline.SetEditing(active);
+        PlayerNameTextUnderline.UpdatePointer(mousePoint);
+        PlayerNameTextUnderline.Draw(new UnderlineDrawingSurface(draw), draw.ActionBadgeDrawing);
 
         // 選択範囲
         var text = session.GetPlayerEditFieldText(field);
@@ -190,7 +194,6 @@ public sealed class EditEntryProfile
 
         // アイコン
         DrawIcon(FieldIcon.PlayerName, IconBounds(textBounds), draw);
-        draw.DrawEditHint(active, textBounds.Contains(mousePoint), textBounds);
     }
 
     private void DrawClientIdentitySection(GoAppSession session, Point mousePoint, EditEntryProfileDrawingCallbacks draw)
@@ -224,7 +227,10 @@ public sealed class EditEntryProfile
             return;
         }
         var active = session.ActivePlayerEditField == field;
-        PlayerNameTextUnderline.Draw(bounds, active, bounds.Contains(mousePoint), new UnderlineDrawingSurface(draw));
+        PlayerNameTextUnderline.Bounds = bounds;
+        PlayerNameTextUnderline.SetEditing(active);
+        PlayerNameTextUnderline.UpdatePointer(mousePoint);
+        PlayerNameTextUnderline.Draw(new UnderlineDrawingSurface(draw), draw.ActionBadgeDrawing);
         var text = session.GetPlayerEditFieldText(field);
         if (active) draw.DrawTextSelection(text, session.PlayerEditSelectionStart, session.PlayerEditSelectionLength, bounds, 0.42f);
         draw.DrawFittedText(mask ? new string('●', text.Length) : text, bounds, Color.White, 0.42f);
@@ -350,7 +356,7 @@ public sealed record EditEntryProfileDrawingCallbacks(
     Action<Vector2, bool> DrawPlayerRoleFace,
     Action<string, int, int, Rectangle, float> DrawTextSelection,
     Action<string, int, Rectangle, float> DrawTextCaret,
-    Action<bool, bool, Rectangle> DrawEditHint,
+    ActionBadgeDrawingCallbacks ActionBadgeDrawing,
     Action<Rectangle> DrawChangeHint,
     Action<Vector2, Vector2, float, Color> DrawLine,
     Action<string, Rectangle, Color, float> DrawDynamicText,

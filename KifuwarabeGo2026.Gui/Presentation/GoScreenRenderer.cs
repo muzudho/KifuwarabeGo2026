@@ -56,7 +56,7 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IGoScre
     private readonly LinkUnderline _gtpEngineOptionLinkUnderline = new(
         new RoundUnderline { TopOffset = -4, Thickness = 4, Radius = 2 });
     private readonly MultilineTextUnderline _multilineTextUnderline = new(
-        new SquareUnderline { Thickness = 1 });
+        new SquareUnderline { Thickness = 1 }, "EDIT");
     private readonly LinkUnderline _compactLinkUnderline = new(
         new RoundUnderline { TopOffset = 1, Thickness = 3, Radius = 1 });
     private readonly LinkUnderline _selectorLinkUnderline = new(
@@ -1851,7 +1851,10 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IGoScre
             DrawCompositionLamp(TextAreaDialogBounds, "HOOK", 1146, compositionDiagnostics.IsWindowProcedureAttached, new Color(99, 223, 185));
             DrawCompositionLamp(TextAreaDialogBounds, "IME", 1192, composition.IsActive, new Color(255, 225, 128));
         }
-        _multilineTextUnderline.Draw(TextAreaTextBounds, this);
+        _multilineTextUnderline.Bounds = TextAreaTextBounds;
+        _multilineTextUnderline.SetEditing(true);
+        _multilineTextUnderline.UpdatePointer(mousePoint);
+        _multilineTextUnderline.Draw(this, new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText));
         DrawTextAreaContent(text, TextAreaTextBounds);
         var caret = GetTextAreaCaretPosition(text, caretIndex);
         if (composition.IsActive && !string.IsNullOrEmpty(composition.Text))
@@ -2115,7 +2118,7 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IGoScre
         EditEntryProfile.Draw(session, mousePoint, _stickyNoteScreen,
             new EditEntryProfileDrawingCallbacks(VirtualScreen.Width, VirtualScreen.Height, FillRect, DrawRoundedFill,
                 DrawRect, DrawText, DrawFittedText, DrawCommandButton, DrawIconStone, DrawPlayerRoleFaceIcon,
-                DrawTextBoxSelection, DrawTextBoxCaret, DrawEditableTextEditHint, bounds => DrawActionBadge("CHANGE", bounds),
+                DrawTextBoxSelection, DrawTextBoxCaret, new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText), bounds => DrawActionBadge("CHANGE", bounds),
                 DrawLine, DrawDynamicOptionText, DrawRotatedCenteredText));
 
     void IUnderlineDrawingSurface.FillRectangle(Rectangle bounds, Color color) => FillRect(bounds, color);
