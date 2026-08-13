@@ -21,6 +21,13 @@ public sealed partial class GoAppSession
     public int PlayerEditSelectionLength { get; private set; }
     private string PlayerEditOriginalFieldText { get; set; } = "";
     public ClientIdentityProfile PlayerEditClientIdentityDraft { get; private set; } = new();
+    private EntryProfile PlayerEditOriginalProfile { get; set; } = new();
+    private ClientIdentityProfile PlayerEditOriginalClientIdentityProfile { get; set; } = new();
+
+    /// <summary>Entry Profile または表示中の Client Identity に、開始時からの変更があるかを返します。</summary>
+    public bool HasPlayerEditChanges =>
+        !AreSame(PlayerEditDraft, PlayerEditOriginalProfile) ||
+        !AreSame(PlayerEditClientIdentityDraft, PlayerEditOriginalClientIdentityProfile);
 
     public bool OpenSelectedPlayerEditPanel()
     {
@@ -29,10 +36,12 @@ public sealed partial class GoAppSession
 
         PlayerEditProfileIndex = PlayerDialogSelectionIndex;
         PlayerEditDraft = _playerProfiles[PlayerEditProfileIndex].Clone();
+        PlayerEditOriginalProfile = PlayerEditDraft.Clone();
         IsPlayerEditDirty = false;
         ActivePlayerEditField = null;
         ClientIdentityProfileEditIndex = 0;
         LoadPlayerEditClientIdentityDraft();
+        PlayerEditOriginalClientIdentityProfile = PlayerEditClientIdentityDraft.Clone();
         IsPlayerEditPanelOpen = true;
         ActivateWindow(ActiveWindowId.PlayerEdit);
         return true;
@@ -200,6 +209,21 @@ public sealed partial class GoAppSession
         PlayerEditClientIdentityDraft = profile.Clone();
         return true;
     }
+
+    private static bool AreSame(EntryProfile left, EntryProfile right) =>
+        left.Id == right.Id &&
+        left.DisplayName == right.DisplayName &&
+        left.Identifier == right.Identifier &&
+        left.Kind == right.Kind &&
+        left.EngineProfileId == right.EngineProfileId &&
+        left.ClientIdentityProfileIds.SequenceEqual(right.ClientIdentityProfileIds, StringComparer.Ordinal);
+
+    private static bool AreSame(ClientIdentityProfile left, ClientIdentityProfile right) =>
+        left.Id == right.Id &&
+        left.DisplayName == right.DisplayName &&
+        left.ConnectionProfileId == right.ConnectionProfileId &&
+        left.LoginName == right.LoginName &&
+        left.LoginPass == right.LoginPass;
 }
 
 public enum EntryProfileEditField

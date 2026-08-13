@@ -145,6 +145,9 @@ public sealed class EditEntryProfile
         draw.FillRectangle(bounds, new Color(24, 29, 36, 252));
         draw.DrawRectangle(bounds, 2, new Color(116, 145, 146));
         draw.DrawText("EDIT ENTRY PROFILE", new Vector2(bounds.X + 34, bounds.Y + 28), new Color(244, 238, 218), 0.68f);
+        DiscardButton.IsEnabled = session.HasPlayerEditChanges;
+        SaveAndCloseButton.Label = session.HasPlayerEditChanges ? "SAVE & CLOSE" : "CLOSE";
+        SaveAndCloseButton.LabelScale = session.HasPlayerEditChanges ? 0.26f : 0.34f;
         DiscardButton.Draw(mousePoint, draw.DrawButton);
         SaveAndCloseButton.Draw(mousePoint, draw.DrawButton);
         DrawPlayerNameField(session, mousePoint, draw);
@@ -268,12 +271,12 @@ public sealed class EditEntryProfile
         }
         else
         {
-            // 閉じた目: まぶたと短いまつ毛で、伏せ字表示を示します。
-            draw.DrawLine(new Vector2(bounds.X + 7, center.Y + 3), new Vector2(center.X, center.Y - 2), 2, color);
-            draw.DrawLine(new Vector2(center.X, center.Y - 2), new Vector2(bounds.Right - 7, center.Y + 3), 2, color);
-            draw.DrawLine(new Vector2(bounds.X + 11, center.Y + 1), new Vector2(bounds.X + 9, center.Y - 4), 1, color);
-            draw.DrawLine(new Vector2(center.X, center.Y - 3), new Vector2(center.X, center.Y - 8), 1, color);
-            draw.DrawLine(new Vector2(bounds.Right - 11, center.Y + 1), new Vector2(bounds.Right - 9, center.Y - 4), 1, color);
+            // 閉じた目: 下へ伸びるまつ毛で、まぶたを閉じた姿にします。
+            draw.DrawLine(new Vector2(bounds.X + 7, center.Y - 3), new Vector2(center.X, center.Y + 2), 2, color);
+            draw.DrawLine(new Vector2(center.X, center.Y + 2), new Vector2(bounds.Right - 7, center.Y - 3), 2, color);
+            draw.DrawLine(new Vector2(bounds.X + 11, center.Y - 1), new Vector2(bounds.X + 9, center.Y + 4), 1, color);
+            draw.DrawLine(new Vector2(center.X, center.Y + 3), new Vector2(center.X, center.Y + 8), 1, color);
+            draw.DrawLine(new Vector2(bounds.Right - 11, center.Y - 1), new Vector2(bounds.Right - 9, center.Y + 4), 1, color);
         }
     }
 
