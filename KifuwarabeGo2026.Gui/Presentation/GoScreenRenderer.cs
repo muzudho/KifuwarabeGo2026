@@ -14,6 +14,8 @@ using KifuwarabeGo2026.Gui.Presentation.StationeryUI.MessageDialog;
 using KifuwarabeGo2026.Gui.Presentation.Pages.ScreenTransition;
 using KifuwarabeGo2026.Gui.Presentation.Pages.ScreenshotEffect;
 using KifuwarabeGo2026.Gui.Presentation.Pages.ReviewUnsavedChangesConfirmation;
+using KifuwarabeGo2026.Gui.Presentation.Pages.InitialPositionConcierge;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.PopupNumberUnderline;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.LinkUnderline;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.MultilineTextUnderline;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
@@ -67,6 +69,9 @@ public sealed partial class GoScreenRenderer
     public ScreenTransition ScreenTransition { get; } = new();
     public ScreenshotEffect ScreenshotEffect { get; } = new();
     public ReviewUnsavedChangesConfirmation ReviewUnsavedChangesConfirmation { get; } = new();
+    public InitialPositionConcierge InitialPositionConcierge { get; } = new();
+    public PopupNumberUnderline PopupNumberUnderline { get; } = new();
+    private StickyNoteScreenId _stickyNoteScreen = StickyNoteScreenId.Unknown;
 
     public GoScreenRenderer(
         GraphicsDevice graphicsDevice,
@@ -1843,5 +1848,34 @@ public sealed partial class GoScreenRenderer
             new ReviewUnsavedChangesConfirmationDrawingCallbacks(VirtualScreen.Width, VirtualScreen.Height, FillRect,
                 DrawRect, DrawText, DrawFittedText, DrawCommandButton));
         _spriteBatch.End();
+    }
+
+    private void DrawInitialPositionConcierge(InitialPositionConciergeView view, Point mousePoint) =>
+        InitialPositionConcierge.Draw(view, mousePoint,
+            new InitialPositionConciergeDrawingCallbacks(DrawDynamicOptionText, DrawFittedText, DrawText, FillRect, DrawRect, DrawCommandButton));
+
+    public void DrawPopupNumberUnderline(Point mousePosition, string title, string text, int caretIndex,
+        int selectionStart, int selectionLength, string message)
+    {
+        var mousePoint = VirtualScreen.ToVirtualPoint(_graphicsDevice.Viewport, mousePosition);
+        _spriteBatch.Begin(blendState: BlendState.AlphaBlend, samplerState: SamplerState.LinearClamp,
+            transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));
+        PopupNumberUnderline.Draw(mousePoint, title, text, caretIndex, selectionStart, selectionLength, message,
+            new PopupNumberUnderlineDrawingCallbacks(VirtualScreen.Width, VirtualScreen.Height, FillRect, DrawRect,
+                DrawText, DrawFittedText, DrawTextBoxSelection, value => _font.MeasureString(value).X, DrawCommandButton));
+        _spriteBatch.End();
+    }
+
+    public int GetPopupNumberUnderlineCaretIndex(Point point, string text) =>
+        PopupNumberUnderline.GetCaretIndex(point, text, GetTextBoxCaretIndex);
+
+    public void SetStickyNoteScreen(StickyNoteScreenId screen) => _stickyNoteScreen = screen;
+
+    private void DrawStickyNote(StickyNoteKind kind, Vector2 connectorStart, Color accent, Color borderColor,
+        string heading, IReadOnlyList<string> bodyLines, int bodyLineSpacing = 40, Rectangle? anchorBounds = null)
+    {
+        var note = new StickyNote(kind, connectorStart, accent, borderColor, heading, bodyLines, bodyLineSpacing, anchorBounds);
+        if (!note.TryPlace(_stickyNoteScreen)) return;
+        note.Draw(new StickyNoteDrawingCallbacks(DrawLine, FillRect, DrawRect, DrawDynamicOptionText));
     }
 }
