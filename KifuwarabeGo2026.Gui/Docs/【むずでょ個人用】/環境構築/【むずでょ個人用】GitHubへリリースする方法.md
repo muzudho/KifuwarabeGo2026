@@ -26,12 +26,40 @@ winget を使って、ローカルPCへ、 GitHub CLI を
 GitHub 公式に msi 形式のインストーラーがあってそっちを使った。  
 
 
-## GitHub の認証
+## ブラウザー側の GitHub の認証
 
-```powershell
+```shell
 gh auth login --hostname github.com --git-protocol https --web
 ```
 
 出てくる手順に従う。URL は自分でブラウザーに貼らず、Enter キーをクリック。  
 Powershell は途中で自分では閉じないこと。  
 
+
+## ターミナル側の GitHub の認証
+
+```shell
+gh auth login -h github.com
+```
+
+こうか？  
+
+```shell
+gh auth logout -h github.com -u muzudho
+gh auth login -h github.com
+```
+
+ログインしているか確認：  
+
+```shell
+gh auth status
+```
+
+```log
+github.com
+  ✓ Logged in to github.com account muzudho (keyring)
+  - Active account: true
+  - Git operations protocol: https
+  - Token: gho_************************************
+  - Token scopes: 'gist', 'read:org', 'repo', 'workflow'
+```
