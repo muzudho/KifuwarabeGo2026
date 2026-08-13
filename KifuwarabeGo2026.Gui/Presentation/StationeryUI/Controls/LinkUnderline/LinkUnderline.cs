@@ -23,28 +23,50 @@ public sealed class LinkUnderline
     /// <summary>このリンク下線が表示・クリック判定に使う領域です。</summary>
     public Rectangle Bounds { get; set; }
 
+    /// <summary>最後に更新されたポインター位置が領域内にあるかを示します。</summary>
+    public bool IsHovered { get; private set; }
+
+    /// <summary>このリンクが選択状態かを示します。</summary>
+    public bool IsSelected { get; private set; }
+
     /// <summary>指定座標がこのリンク領域内か判定します。</summary>
     public bool IsHit(Point point) => Bounds.Contains(point);
 
+    /// <summary>ポインター位置からホバー状態を更新します。</summary>
+    public void UpdatePointer(Point point) => IsHovered = IsHit(point);
+
+    /// <summary>選択状態を設定します。</summary>
+    public void SetSelected(bool selected) => IsSelected = selected;
+
+    /// <summary>指定位置がこのリンクなら選択状態にします。</summary>
+    public bool TrySelect(Point point)
+    {
+        UpdatePointer(point);
+        if (!IsHovered) return false;
+        IsSelected = true;
+        return true;
+    }
+
+    /// <summary>選択状態を解除します。</summary>
+    public void ClearSelection() => IsSelected = false;
+
     /// <summary>同期リンク向けに、ホバー状態だけで所有する Underline を描画します。</summary>
-    public void Draw(bool hovered, IUnderlineDrawingSurface surface)
+    public void Draw(IUnderlineDrawingSurface surface)
     {
         Underline.ContentBounds = Bounds;
-        Underline.Color = hovered ? new Color(185, 196, 255) : new Color(100, 110, 145);
+        Underline.Color = IsHovered ? new Color(185, 196, 255) : new Color(100, 110, 145);
         Underline.Draw(surface);
     }
 
     /// <summary>選択済みのリンクを、ホバー色より優先する色で描画します。</summary>
     public void Draw(
-        bool hovered,
-        bool selected,
         Color selectedColor,
         IUnderlineDrawingSurface surface)
     {
         Underline.ContentBounds = Bounds;
-        Underline.Color = selected
+        Underline.Color = IsSelected
             ? selectedColor
-            : hovered ? new Color(185, 196, 255) : new Color(100, 110, 145);
+            : IsHovered ? new Color(185, 196, 255) : new Color(100, 110, 145);
         Underline.Draw(surface);
     }
 
@@ -64,7 +86,8 @@ public sealed class LinkUnderline
         ArgumentNullException.ThrowIfNull(drawText);
         ArgumentNullException.ThrowIfNull(drawSpinner);
 
-        var hovered = controller.CanActivate && IsHit(mousePoint);
+        UpdatePointer(mousePoint);
+        var hovered = controller.CanActivate && IsHovered;
         var underlineColor = controller.State switch
         {
             LinkUnderlineState.Executing => new Color(255, 210, 128),

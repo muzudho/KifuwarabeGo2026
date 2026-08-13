@@ -453,7 +453,8 @@ public sealed partial class GoScreenRenderer
         };
         DrawDynamicOptionText(string.IsNullOrEmpty(rowValue) ? "<empty>" : rowValue, valueBounds, Color.White, 0.34f);
         _gtpEngineOptionLinkUnderline.Bounds = valueBounds;
-        _gtpEngineOptionLinkUnderline.Draw(hovered, this);
+        _gtpEngineOptionLinkUnderline.UpdatePointer(mousePoint);
+        _gtpEngineOptionLinkUnderline.Draw(this);
         if (option.Type == "spin" && option.Min is { } min && option.Max is { } max)
             DrawFittedText($"{min} .. {max}", new Rectangle(valueBounds.Right + 12, valueBounds.Y + 10, 126, 28), new Color(118, 139, 143), 0.24f);
         if (hovered)

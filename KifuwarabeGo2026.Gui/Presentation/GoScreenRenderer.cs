@@ -1251,7 +1251,8 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IGoScre
                 : fieldBounds;
             DrawFittedText(selector.Value, valueBounds, Color.White, 0.42f);
             _playerSelectorLinkUnderline.Bounds = fieldBounds;
-            _playerSelectorLinkUnderline.Draw(hovered, this);
+            _playerSelectorLinkUnderline.UpdatePointer(mousePoint);
+            _playerSelectorLinkUnderline.Draw(this);
             if (hovered)
             {
                 // 操作ヒントはアンダーライン終端の近くに、読みやすい反転プレートで表示する。

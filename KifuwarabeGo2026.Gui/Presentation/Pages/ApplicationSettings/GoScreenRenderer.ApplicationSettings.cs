@@ -89,9 +89,9 @@ public sealed partial class GoScreenRenderer
                 var hovered = bounds.Contains(mousePoint);
                 DrawFittedText(Path.GetFileName(logFiles[index]), new Rectangle(bounds.X + 8, bounds.Y + 6, bounds.Width - 16, 28), Color.White, 0.31f);
                 _settingsLogLinkUnderline.Bounds = new Rectangle(bounds.X + 8, bounds.Y, bounds.Width - 16, bounds.Height + 1);
+                _settingsLogLinkUnderline.UpdatePointer(mousePoint);
+                _settingsLogLinkUnderline.SetSelected(selected);
                 _settingsLogLinkUnderline.Draw(
-                    hovered,
-                    selected,
                     new Color(147, 244, 200),
                     this);
                 if (selected && hovered)
@@ -148,8 +148,8 @@ public sealed partial class GoScreenRenderer
         DrawText(label, new Vector2(bounds.X + 8, bounds.Y), new Color(180, 195, 195), 0.34f);
         DrawFittedText(value, new Rectangle(bounds.X + 8, bounds.Y + 30, bounds.Width - (hovered ? 132 : 16), 28), Color.White, 0.32f);
         _settingsValueLinkUnderline.Bounds = new Rectangle(bounds.X + 8, bounds.Y, bounds.Width - 16, bounds.Height);
+        _settingsValueLinkUnderline.UpdatePointer(mousePoint);
         _settingsValueLinkUnderline.Draw(
-            hovered,
             this);
         if (hovered)
             DrawSettingsHoverBadge(action, new Rectangle(bounds.Right - 108, bounds.Bottom - 28, 100, 26));
