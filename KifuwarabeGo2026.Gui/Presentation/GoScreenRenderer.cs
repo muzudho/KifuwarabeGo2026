@@ -10,6 +10,10 @@ using KifuwarabeGo2026.Gui.Presentation.Shared.SpinBox;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.StickyNote;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.VerticalSectionLabel;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.SinglelineTextUnderline;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.MessageDialog;
+using KifuwarabeGo2026.Gui.Presentation.Pages.ScreenTransition;
+using KifuwarabeGo2026.Gui.Presentation.Pages.ScreenshotEffect;
+using KifuwarabeGo2026.Gui.Presentation.Pages.ReviewUnsavedChangesConfirmation;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.LinkUnderline;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.MultilineTextUnderline;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
@@ -60,6 +64,9 @@ public sealed partial class GoScreenRenderer
     private readonly SpinBox _spinBox = new();
     private readonly VerticalSectionLabel _verticalSectionLabel = new();
     private readonly TextInputDialog _textInputDialog = new();
+    public ScreenTransition ScreenTransition { get; } = new();
+    public ScreenshotEffect ScreenshotEffect { get; } = new();
+    public ReviewUnsavedChangesConfirmation ReviewUnsavedChangesConfirmation { get; } = new();
 
     public GoScreenRenderer(
         GraphicsDevice graphicsDevice,
@@ -1801,5 +1808,40 @@ public sealed partial class GoScreenRenderer
         var width = texture.Width * textureScale;
         _spriteBatch.Draw(texture, new Rectangle((int)position.X, (int)position.Y, (int)width, (int)targetHeight), color);
         return width;
+    }
+
+    public void DrawMessageDialog(MessageDialog dialog, Point mousePosition)
+    {
+        var mousePoint = VirtualScreen.ToVirtualPoint(_graphicsDevice.Viewport, mousePosition);
+        _spriteBatch.Begin(samplerState: SamplerState.LinearClamp, transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));
+        dialog.Draw(mousePoint, new MessageDialogDrawingCallbacks(FillRect, DrawRect, DrawDynamicOptionText, DrawLine,
+            (bounds, text, focused, point, scale) => DrawCommandButton(bounds, text, focused, point, scale: scale)));
+        _spriteBatch.End();
+    }
+
+    public void DrawLightningScreenTransition(float progress)
+    {
+        _spriteBatch.Begin(samplerState: SamplerState.LinearClamp, transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));
+        ScreenTransition.Draw(progress, new ScreenTransitionDrawingCallbacks(VirtualScreen.Width, VirtualScreen.Height, DrawLine));
+        _spriteBatch.End();
+    }
+
+    public void DrawScreenshotCaptureEffect(float progress)
+    {
+        _spriteBatch.Begin(blendState: BlendState.AlphaBlend, samplerState: SamplerState.LinearClamp,
+            transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));
+        ScreenshotEffect.Draw(progress, new ScreenshotEffectDrawingCallbacks(VirtualScreen.Width, VirtualScreen.Height, FillRect));
+        _spriteBatch.End();
+    }
+
+    public void DrawReviewUnsavedChangesConfirmation(Point mousePosition)
+    {
+        var mousePoint = VirtualScreen.ToVirtualPoint(_graphicsDevice.Viewport, mousePosition);
+        _spriteBatch.Begin(blendState: BlendState.AlphaBlend, samplerState: SamplerState.LinearClamp,
+            transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));
+        ReviewUnsavedChangesConfirmation.Draw(mousePoint,
+            new ReviewUnsavedChangesConfirmationDrawingCallbacks(VirtualScreen.Width, VirtualScreen.Height, FillRect,
+                DrawRect, DrawText, DrawFittedText, DrawCommandButton));
+        _spriteBatch.End();
     }
 }
