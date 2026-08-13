@@ -1,6 +1,7 @@
 namespace KifuwarabeGo2026.Gui.Presentation;
 
 using KifuwarabeGo2026.Gui.Application;
+using KifuwarabeGo2026.Gui.Presentation.Pages.EditTournamentRule;
 using Microsoft.Xna.Framework;
 using System;
 using System.IO;
@@ -10,6 +11,7 @@ using System.IO;
 /// </summary>
 public sealed partial class GoScreenRenderer
 {
+    private readonly TournamentRuleKomiField _tournamentRuleKomiField = new();
 
     public static bool GetTournamentRulesBrowseButtonHit(Point point) =>
         TournamentRulesSelectButtonBounds.Contains(point);
@@ -191,7 +193,8 @@ public sealed partial class GoScreenRenderer
             "BOARD SIZE",
             new Rectangle(AddPanelControlX, AddPanelBoardSizeButtonY, 668, 50));
         DrawBoardSizeButtons(session.BoardSize, mousePoint, AddPanelBoardSizeButtonY);
-        DrawTournamentRulesKomiStrip(session, mousePoint);
+        _tournamentRuleKomiField.Draw(session.Komi, mousePoint,
+            new TournamentRuleKomiFieldDrawingCallbacks(bounds => DrawDataRowFrame(bounds), DrawTournamentRulesFieldLabel, DrawFittedText, this));
         DrawTournamentRulesTimeStrip(session, mousePoint);
         DrawTournamentRulesMoveLimitStrip(session, mousePoint);
         DrawFilePathSelector(session, mousePoint);

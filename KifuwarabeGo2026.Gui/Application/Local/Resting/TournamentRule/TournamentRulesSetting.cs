@@ -3,6 +3,7 @@ namespace KifuwarabeGo2026.Gui.Application.Local.Resting.TournamentRule;
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Infrastructure.Logging;
 using KifuwarabeGo2026.Gui.Presentation;
+using KifuwarabeGo2026.Gui.Presentation.Pages.EditTournamentRule;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
@@ -254,7 +255,7 @@ public sealed class TournamentRulesSetting
             return true;
         }
 
-        if (GoScreenRenderer.GetTournamentRulesKomiTextBoxHit(point))
+        if (TournamentRuleKomiField.IsTextBoxHit(point))
         {
             OpenKomiInput();
             return true;
