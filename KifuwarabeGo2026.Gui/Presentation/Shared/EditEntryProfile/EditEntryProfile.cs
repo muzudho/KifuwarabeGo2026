@@ -15,16 +15,14 @@ public sealed partial class GoScreenRenderer
     #region ［CANCEL］
 
     private readonly Button _discardButton = new(new Rectangle(1080, 288, 132, 42), "DISCARD", 0.30f);
-
-    public bool GetPlayerEditPanelCancelButtonHit(Point point) => _discardButton.IsHit(point);
+    public Button DiscardButton => _discardButton;
 
     #endregion
 
     #region ［SAVE & CLOSE］
 
     private readonly Button _saveAndCloseButton = new(new Rectangle(1224, 288, 148, 42), "SAVE & CLOSE", 0.26f);
-
-    public bool GetPlayerEditPanelSaveButtonHit(Point point) => _saveAndCloseButton.IsHit(point);
+    public Button SaveAndCloseButton => _saveAndCloseButton;
 
     #endregion
 
