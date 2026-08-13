@@ -14,6 +14,9 @@ public sealed class ActionBadge
 
     public bool IsVisible { get; private set; }
 
+    /// <summary>バッジ内ラベルの文字倍率です。</summary>
+    public float TextScale { get; set; } = 0.34f;
+
     /// <summary>項目の右端に合わせた標準位置でバッジを表示します。</summary>
     public void Show(string label, Rectangle anchorBounds)
     {
@@ -23,24 +26,15 @@ public sealed class ActionBadge
         IsVisible = true;
     }
 
-    /// <summary>呼び出し元が定めた位置でバッジを表示します。</summary>
-    public void ShowAt(string label, Rectangle bounds)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(label);
-        Label = label;
-        Bounds = bounds;
-        IsVisible = true;
-    }
-
     public void Hide() => IsVisible = false;
 
-    public void Draw(ActionBadgeDrawingCallbacks callbacks, float textScale)
+    public void Draw(ActionBadgeDrawingCallbacks callbacks)
     {
         ArgumentNullException.ThrowIfNull(callbacks);
         if (!IsVisible) return;
 
         callbacks.DrawRoundedFill(Bounds, 6, new Color(185, 196, 255));
-        callbacks.DrawCenteredText(Label, Bounds, new Color(15, 20, 31), textScale);
+        callbacks.DrawCenteredText(Label, Bounds, new Color(15, 20, 31), TextScale);
     }
 
     /// <summary>標準バッジの大きさと、アンダーライン右端に対する配置を返します。</summary>

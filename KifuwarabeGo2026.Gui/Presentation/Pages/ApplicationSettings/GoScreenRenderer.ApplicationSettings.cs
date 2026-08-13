@@ -17,8 +17,10 @@ public sealed partial class GoScreenRenderer
 {
     private readonly ActionBadge[] _settingsLogActionBadges =
     [
-        new(), new(), new(), new(), new(),
+        new() { TextScale = 0.30f }, new() { TextScale = 0.30f }, new() { TextScale = 0.30f },
+        new() { TextScale = 0.30f }, new() { TextScale = 0.30f },
     ];
+    private readonly ActionBadge _settingsValueActionBadge = new() { TextScale = 0.30f };
 
     private static Rectangle SettingsButtonBounds => new(1780, 972, 70, 62);
     private static Rectangle UpdateButtonBounds => new(1698, 972, 70, 62);
@@ -104,7 +106,7 @@ public sealed partial class GoScreenRenderer
                 {
                     var badge = _settingsLogActionBadges[index];
                     badge.Show("EDIT", bounds);
-                    badge.Draw(new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText), 0.30f);
+                    badge.Draw(new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText));
                 }
             }
         }
@@ -162,7 +164,7 @@ public sealed partial class GoScreenRenderer
         _settingsValueLinkUnderline.Draw(
             this);
         if (hovered)
-            DrawActionBadge(action, bounds, 0.30f);
+            DrawActionBadge(_settingsValueActionBadge, action, bounds);
     }
 
     private void DrawSettingsSection(Rectangle bounds, string title, Color accentColor)
