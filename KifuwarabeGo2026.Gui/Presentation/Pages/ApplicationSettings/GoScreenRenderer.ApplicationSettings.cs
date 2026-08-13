@@ -27,12 +27,12 @@ public sealed partial class GoScreenRenderer
     private static Rectangle SettingsButtonBounds => new(1780, 972, 70, 62);
     private static Rectangle UpdateButtonBounds => new(1698, 972, 70, 62);
     private static Rectangle SettingsBackButtonBounds => new(1390, 138, 140, 52);
-    private static Rectangle SettingsLogRootFieldBounds => new(440, 374, 1070, 70);
+    private static Rectangle SettingsLogRootFieldBounds => new(440, 374, 1070, 58);
     private static Rectangle SettingsSgfFieldBounds => new(440, 374, 1070, 70);
     private static Rectangle SettingsScreenshotFieldBounds => new(440, 564, 1070, 70);
     private static Rectangle SettingsApplicationSettingsFileFieldBounds => new(440, 374, 1070, 70);
     private static Rectangle SettingsEngineSettingsFileFieldBounds => new(440, 564, 1070, 70);
-    private static Rectangle SettingsLogItemBounds(int index) => new(440, 600 + index * 58, 1070, 48);
+    private static Rectangle SettingsLogItemBounds(int index) => new(440, 570 + index * 58, 1070, 48);
     private static Rectangle SettingsTabBounds(ApplicationSettingsPage page) => page switch
     {
         ApplicationSettingsPage.Log => new Rectangle(440, 242, 250, 52),
@@ -88,11 +88,11 @@ public sealed partial class GoScreenRenderer
             foreach (var badge in _settingsLogActionBadges)
                 badge.Hide();
 
-            DrawSettingsSection(new Rectangle(420, 330, 1110, 190), "LOG ROOT", new Color(67, 112, 118));
-            DrawSettingsValueField("LOG ROOT FOLDER", logRoot, SettingsLogRootFieldBounds, "BROWSE", mousePoint);
-            DrawFittedText("GUI   " + Path.Combine(logRoot, "Gui"), new Rectangle(440, 458, 1050, 24), new Color(180, 195, 195), 0.30f);
-            DrawFittedText("CGOS  " + Path.Combine(logRoot, "Cgos"), new Rectangle(440, 484, 1050, 24), new Color(180, 195, 195), 0.30f);
-            DrawSettingsSection(new Rectangle(420, 542, 1110, 272), "RECENT GUI LOGS", new Color(76, 91, 126));
+            DrawVerticalResultSection(new Rectangle(440, 354, 1070, 180), "ROOT FOLDER", new Color(67, 112, 118));
+            DrawSettingsValueField(string.Empty, logRoot, SettingsLogRootFieldBounds, "BROWSE", mousePoint);
+            DrawFittedText("GUI   " + Path.Combine(logRoot, "Gui"), new Rectangle(440, 452, 1050, 24), new Color(180, 195, 195), 0.30f);
+            DrawFittedText("CGOS  " + Path.Combine(logRoot, "Cgos"), new Rectangle(440, 480, 1050, 24), new Color(180, 195, 195), 0.30f);
+            DrawVerticalResultSection(new Rectangle(440, 548, 1070, 282), "RECENT GUI LOGS", new Color(76, 91, 126));
             for (var index = 0; index < logFiles.Count; index++)
             {
                 var bounds = SettingsLogItemBounds(index);
@@ -159,8 +159,10 @@ public sealed partial class GoScreenRenderer
         Point mousePoint)
     {
         var hovered = bounds.Contains(mousePoint);
-        DrawText(label, new Vector2(bounds.X + 8, bounds.Y), new Color(180, 195, 195), 0.34f);
-        DrawFittedText(value, new Rectangle(bounds.X + 8, bounds.Y + 30, bounds.Width - (hovered ? 132 : 16), 28), Color.White, 0.32f);
+        if (!string.IsNullOrWhiteSpace(label))
+            DrawText(label, new Vector2(bounds.X + 8, bounds.Y), new Color(180, 195, 195), 0.34f);
+        var valueY = string.IsNullOrWhiteSpace(label) ? bounds.Y + 16 : bounds.Y + 30;
+        DrawFittedText(value, new Rectangle(bounds.X + 8, valueY, bounds.Width - (hovered ? 132 : 16), 28), Color.White, 0.32f);
         _settingsValueLinkUnderline.Bounds = new Rectangle(bounds.X + 8, bounds.Y, bounds.Width - 16, bounds.Height);
         _settingsValueLinkUnderline.SetActionBadge(ActionBadge.Create(action, bounds, 0.30f));
         _settingsValueLinkUnderline.UpdatePointer(mousePoint);
