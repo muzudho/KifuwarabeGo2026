@@ -15,6 +15,9 @@ public sealed class LinkUnderlineRenderer
         Underline = underline ?? throw new ArgumentNullException(nameof(underline));
     }
 
+    /// <summary>
+    /// 下線
+    /// </summary>
     public IUnderlineRenderer Underline { get; }
 
     /// <summary>同期リンク向けに、ホバー状態だけで所有する Underline を描画します。</summary>

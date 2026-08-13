@@ -4,7 +4,8 @@ using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
 using Microsoft.Xna.Framework;
 
 /// <summary>
-/// XXX: 未整理
+/// XXX: 未整理。
+/// どちらかというと、下線というより、GoScreenRenderer を拡張するソースコード。
 /// </summary>
 public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface
 {

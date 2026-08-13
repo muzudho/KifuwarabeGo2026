@@ -2,7 +2,9 @@ namespace KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underli
 
 using Microsoft.Xna.Framework;
 
-/// <summary>Underline が利用する最小限の描画面です。</summary>
+/// <summary>
+///     下線の構成要素であるサーフェスを描画する機能
+/// </summary>
 public interface IUnderlineDrawingSurface
 {
     void FillRectangle(Rectangle bounds, Color color);
