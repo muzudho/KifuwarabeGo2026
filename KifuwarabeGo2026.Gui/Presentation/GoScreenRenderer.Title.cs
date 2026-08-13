@@ -212,7 +212,7 @@ public sealed partial class GoScreenRenderer
         var hovered = !isAppProviderLoading && textBounds.Contains(mousePoint);
         DrawText("PROVIDER", new Vector2(bounds.X + 16, textBounds.Y + 7), new Color(180, 195, 195), 0.36f);
         DrawDynamicOptionText(session.SelectedAppProviderEngineDisplayName, textBounds, Color.White, 0.34f);
-        _titleAppProviderLinkUnderline.Draw(textBounds, hovered, this);
+        _wideLinkUnderline.Draw(textBounds, hovered, this);
         if (hovered)
         {
             DrawPlayerEditHint("CHANGE", textBounds);

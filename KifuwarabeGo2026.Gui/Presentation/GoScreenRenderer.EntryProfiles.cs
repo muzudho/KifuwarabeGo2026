@@ -527,7 +527,7 @@ public sealed partial class GoScreenRenderer
         var hovered = textBounds.Contains(mousePoint);
         DrawText(label, new Vector2(552, textBounds.Y + 7), new Color(180, 195, 195), 0.36f);
         DrawFittedText(value, textBounds, Color.White, 0.42f);
-        DrawRoundedFill(new Rectangle(textBounds.X, textBounds.Bottom + 2, textBounds.Width, 5), 2, hovered ? new Color(185, 196, 255) : new Color(100, 110, 145));
+        _wideLinkUnderline.Draw(textBounds, hovered, this);
         if (hovered)
             DrawPlayerEditHint("CHANGE", textBounds);
     }

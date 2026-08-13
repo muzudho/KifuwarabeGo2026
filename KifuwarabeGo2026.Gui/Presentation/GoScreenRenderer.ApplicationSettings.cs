@@ -86,8 +86,12 @@ public sealed partial class GoScreenRenderer
                 var selected = index == selectedIndex;
                 var hovered = bounds.Contains(mousePoint);
                 DrawFittedText(Path.GetFileName(logFiles[index]), new Rectangle(bounds.X + 8, bounds.Y + 6, bounds.Width - 16, 28), Color.White, 0.31f);
-                DrawRoundedFill(new Rectangle(bounds.X + 8, bounds.Bottom - 6, bounds.Width - 16, 5), 2,
-                    selected ? new Color(147, 244, 200) : hovered ? new Color(185, 196, 255) : new Color(100, 110, 145));
+                _settingsLogLinkUnderline.Draw(
+                    new Rectangle(bounds.X + 8, bounds.Y, bounds.Width - 16, bounds.Height + 1),
+                    hovered,
+                    selected,
+                    new Color(147, 244, 200),
+                    this);
                 if (selected && hovered)
                     DrawSettingsHoverBadge("EDIT", SettingsLogItemActionBadgeBounds(index));
             }
@@ -141,8 +145,10 @@ public sealed partial class GoScreenRenderer
         var hovered = bounds.Contains(mousePoint);
         DrawText(label, new Vector2(bounds.X + 8, bounds.Y), new Color(180, 195, 195), 0.34f);
         DrawFittedText(value, new Rectangle(bounds.X + 8, bounds.Y + 30, bounds.Width - (hovered ? 132 : 16), 28), Color.White, 0.32f);
-        DrawRoundedFill(new Rectangle(bounds.X + 8, bounds.Bottom - 7, bounds.Width - 16, 6), 3,
-            hovered ? new Color(185, 196, 255) : new Color(100, 110, 145));
+        _settingsValueLinkUnderline.Draw(
+            new Rectangle(bounds.X + 8, bounds.Y, bounds.Width - 16, bounds.Height),
+            hovered,
+            this);
         if (hovered)
             DrawSettingsHoverBadge(action, new Rectangle(bounds.Right - 108, bounds.Bottom - 28, 100, 26));
     }

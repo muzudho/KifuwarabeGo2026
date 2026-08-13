@@ -35,11 +35,21 @@ public sealed partial class GoScreenRenderer
     private readonly Texture2D _softCircle;
     private readonly Texture2D _stoneLight;
     private readonly Texture2D _stoneDark;
-    private readonly LinkUnderline _titleAppProviderLinkUnderline = new(
+    private readonly LinkUnderline _wideLinkUnderline = new(
         new RoundUnderline { TopOffset = 2, Thickness = 5, Radius = 2 });
     private readonly LinkUnderline _gtpEngineOptionLinkUnderline = new(
         new RoundUnderline { TopOffset = -4, Thickness = 4, Radius = 2 });
     private readonly SquareUnderline _multilineTextUnderline = new() { Thickness = 1 };
+    private readonly LinkUnderline _compactLinkUnderline = new(
+        new RoundUnderline { TopOffset = 1, Thickness = 3, Radius = 1 });
+    private readonly LinkUnderline _selectorLinkUnderline = new(
+        new RoundUnderline { TopOffset = 2, Thickness = 4, Radius = 2 });
+    private readonly LinkUnderline _playerSelectorLinkUnderline = new(
+        new RoundUnderline { TopOffset = 2, Thickness = 5, Radius = 2 });
+    private readonly LinkUnderline _settingsLogLinkUnderline = new(
+        new RoundUnderline { TopOffset = -7, Thickness = 5, Radius = 2 });
+    private readonly LinkUnderline _settingsValueLinkUnderline = new(
+        new RoundUnderline { TopOffset = -7, Thickness = 6, Radius = 3 });
 
     public GoScreenRenderer(
         GraphicsDevice graphicsDevice,
@@ -1295,7 +1305,7 @@ public sealed partial class GoScreenRenderer
                 ? new Rectangle(fieldBounds.X, fieldBounds.Y, fieldBounds.Width - 122, fieldBounds.Height)
                 : fieldBounds;
             DrawFittedText(selector.Value, valueBounds, Color.White, 0.42f);
-            DrawRoundedFill(new Rectangle(fieldBounds.X, fieldBounds.Bottom + 2, fieldBounds.Width, 5), 2, hovered ? new Color(185, 196, 255) : new Color(100, 110, 145));
+            _playerSelectorLinkUnderline.Draw(fieldBounds, hovered, this);
             if (hovered)
             {
                 // 操作ヒントはアンダーライン終端の近くに、読みやすい反転プレートで表示する。
