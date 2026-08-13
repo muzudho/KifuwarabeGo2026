@@ -7,36 +7,25 @@ using System;
 /// 非同期アクションへ接続する文房具 UI のリンクアンダーラインです。
 /// 描画方法はホストがコールバックで渡すため、GoScreenRenderer には依存しません。
 /// </summary>
-public sealed class LinkUnderline
+public static class LinkUnderlineRenderer
 {
-    private readonly Action<Rectangle, string, Color, Color> _drawUnderline;
-    private readonly Action<Vector2, Color> _drawSpinner;
-
-    /// <param name="drawUnderline">
-    /// ラベル、下線色、文字色を描画します。日本語描画と座標変換はホスト側で担当します。
-    /// </param>
-    /// <param name="drawSpinner">指定位置にスピナーを描画します。</param>
-    public LinkUnderline(
-        Action<Rectangle, string, Color, Color> drawUnderline,
-        Action<Vector2, Color> drawSpinner)
-    {
-        _drawUnderline = drawUnderline ?? throw new ArgumentNullException(nameof(drawUnderline));
-        _drawSpinner = drawSpinner ?? throw new ArgumentNullException(nameof(drawSpinner));
-    }
-
-    public bool IsHit(Rectangle bounds, Point point) => bounds.Contains(point);
-
     /// <summary>状態に応じた色を決め、下線と必要ならスピナーを描画します。</summary>
-    public void Draw(
+    /// <param name="drawUnderline">日本語ラベルと下線を描画する処理です。</param>
+    /// <param name="drawSpinner">指定位置にスピナーを描画する処理です。</param>
+    public static void Draw(
         Rectangle bounds,
         string label,
         Point mousePoint,
         LinkUnderlineController controller,
-        double nowSeconds)
+        double nowSeconds,
+        Action<Rectangle, string, Color, Color> drawUnderline,
+        Action<Vector2, Color> drawSpinner)
     {
         ArgumentNullException.ThrowIfNull(controller);
+        ArgumentNullException.ThrowIfNull(drawUnderline);
+        ArgumentNullException.ThrowIfNull(drawSpinner);
 
-        var hovered = controller.CanActivate && IsHit(bounds, mousePoint);
+        var hovered = controller.CanActivate && LinkUnderlineHitTest.IsHit(bounds, mousePoint);
         var underlineColor = controller.State switch
         {
             LinkUnderlineState.Executing => new Color(255, 210, 128),
@@ -46,8 +35,8 @@ public sealed class LinkUnderline
         };
         var textColor = controller.IsExecuting ? new Color(255, 225, 160) : Color.White;
 
-        _drawUnderline(bounds, label, underlineColor, textColor);
+        drawUnderline(bounds, label, underlineColor, textColor);
         if (controller.IsSpinnerVisible(nowSeconds))
-            _drawSpinner(new Vector2(bounds.Right - 14, bounds.Center.Y), underlineColor);
+            drawSpinner(new Vector2(bounds.Right - 14, bounds.Center.Y), underlineColor);
     }
 }
