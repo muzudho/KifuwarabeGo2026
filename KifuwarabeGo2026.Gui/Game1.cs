@@ -919,9 +919,9 @@ public class Game1 : Game
         {
             if (_previousMouse.LeftButton == ButtonState.Released && mouse.LeftButton == ButtonState.Pressed)
             {
-                if (GoScreenRenderer.GetReviewUnsavedChangesSaveButtonHit(point)) SavePendingReviewExit();
-                else if (GoScreenRenderer.GetReviewUnsavedChangesDiscardButtonHit(point)) CompletePendingReviewExit(discardChanges: true);
-                else if (GoScreenRenderer.GetReviewUnsavedChangesCancelButtonHit(point)) CancelPendingReviewExit();
+                if (_renderer?.ReviewUnsavedChangesConfirmation.SaveButton.IsHit(point) == true) SavePendingReviewExit();
+                else if (_renderer?.ReviewUnsavedChangesConfirmation.DiscardButton.IsHit(point) == true) CompletePendingReviewExit(discardChanges: true);
+                else if (_renderer?.ReviewUnsavedChangesConfirmation.CancelButton.IsHit(point) == true) CancelPendingReviewExit();
             }
             _previousMouse = mouse;
             return;
