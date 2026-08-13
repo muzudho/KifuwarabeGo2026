@@ -24,8 +24,6 @@ public sealed partial class GoScreenRenderer
     private static readonly Rectangle PlayerSelectionEditButtonBounds = new(694, 880, 120, 48);
     private static readonly Rectangle PlayerSelectionDeleteButtonBounds = new(826, 880, 120, 48);
     private static readonly Rectangle PlayerSelectionOrderButtonBounds = new(958, 880, 140, 48);
-    private static readonly Rectangle PlayerEditPanelCancelButtonBounds = new(1080, 288, 132, 42);
-    private static readonly Rectangle PlayerEditPanelSaveButtonBounds = new(1224, 288, 148, 42);
     private static readonly Rectangle ClientIdentityProfileSelectionCloseButtonBounds = new(1158, 182, 150, 48);
     private static readonly Rectangle ClientIdentityProfileSelectionUseButtonBounds = new(1320, 182, 150, 48);
     private static readonly Rectangle ClientIdentityProfileSelectionEditButtonBounds = new(800, 820, 150, 48);
@@ -68,10 +66,6 @@ public sealed partial class GoScreenRenderer
     public static bool GetPlayerSelectionDialogDeleteButtonHit(Point point) => PlayerSelectionDeleteButtonBounds.Contains(point);
     public static bool GetPlayerSelectionDialogEditButtonHit(Point point) => PlayerSelectionEditButtonBounds.Contains(point);
     public static bool GetPlayerSelectionDialogOrderButtonHit(Point point) => PlayerSelectionOrderButtonBounds.Contains(point);
-    public static bool GetPlayerEditPanelCancelButtonHit(Point point) => PlayerEditPanelCancelButtonBounds.Contains(point);
-    public static bool GetPlayerEditPanelSaveButtonHit(Point point) => PlayerEditPanelSaveButtonBounds.Contains(point);
-    public static bool GetPlayerEditPanelClientIdentityChangeHit(Point point) => PlayerEditPanelClientIdentityTextBounds.Contains(point);
-    public static bool GetPlayerEditPanelEngineChangeHit(Point point) => PlayerEditPanelEngineTextBounds.Contains(point);
     public static bool GetClientIdentityProfileSelectionCloseButtonHit(Point point) => ClientIdentityProfileSelectionCloseButtonBounds.Contains(point);
     public static bool GetClientIdentityProfileSelectionUseButtonHit(Point point) => ClientIdentityProfileSelectionUseButtonBounds.Contains(point);
     public static bool GetClientIdentityProfileSelectionEditButtonHit(Point point) => ClientIdentityProfileSelectionEditButtonBounds.Contains(point);
@@ -125,13 +119,6 @@ public sealed partial class GoScreenRenderer
 
     public static int? GetClientIdentityProfileSelectionItemHit(Point point, GoAppSession session) =>
         GetClientIdentityProfileEditItemHit(point, session);
-
-    public static EntryProfileEditField? GetPlayerEditPanelFieldHit(Point point) =>
-        PlayerEditPanelFieldTextBounds(EntryProfileEditField.DisplayName).Contains(point) ? EntryProfileEditField.DisplayName :
-        null;
-
-    public int GetPlayerEditPanelCaretIndex(Point point, EntryProfileEditField field, string text) =>
-        GetTextBoxCaretIndex(point.X, text, PlayerEditPanelFieldTextBounds(field), 0.42f);
 
     public static int? GetPlayerSelectionDialogItemHit(Point point, GoAppSession session)
     {
@@ -264,23 +251,6 @@ public sealed partial class GoScreenRenderer
                 ? $"ENGINE: {session.GetEntryProfileSummary(player)}"
                 : session.GetEntryProfileSummary(player),
             player => player.Kind == EntryProfileKind.Computer);
-    }
-
-    private void DrawPlayerEditPanel(GoAppSession session, Point mousePoint)
-    {
-        if (!session.IsPlayerEditPanelOpen) return;
-        var bounds = new Rectangle(510, 270, 900, 480);
-        FillRect(new Rectangle(0, 0, VirtualScreen.Width, VirtualScreen.Height), new Color(0, 0, 0, 140));
-        FillRect(bounds, new Color(24, 29, 36, 252));
-        DrawRect(bounds, 2, new Color(116, 145, 146));
-        DrawText("EDIT ENTRY PROFILE", new Vector2(bounds.X + 34, bounds.Y + 28), new Color(244, 238, 218), 0.68f);
-        DrawCommandButton(PlayerEditPanelCancelButtonBounds, "DISCARD", false, mousePoint, scale: 0.30f);
-        DrawCommandButton(PlayerEditPanelSaveButtonBounds, "SAVE & CLOSE", false, mousePoint, scale: 0.26f);
-        DrawPlayerEditField(session, EntryProfileEditField.DisplayName, "PLAYER NAME", mousePoint);
-        DrawPlayerEditPopupField("HANDLE", session.PlayerEditClientIdentityHandle, PlayerEditPanelClientIdentityTextBounds, mousePoint);
-        if (session.PlayerEditDraft.Kind == EntryProfileKind.Computer)
-            DrawPlayerEditPopupField("ENGINE", session.PlayerEditEngineDisplayName, PlayerEditPanelEngineTextBounds, mousePoint, PlayerEditFieldIconKind.Engine);
-        DrawPlayerEditStickyNote(session, mousePoint);
     }
 
     private void DrawClientIdentityProfileEditPanel(GoAppSession session, Point mousePoint)
@@ -493,75 +463,6 @@ public sealed partial class GoScreenRenderer
         DrawStickyNote(StickyNoteKind.ClientIdentityHandleHint, PlayerEditUnderlineConnectorStart(textBounds), new Color(185, 196, 255), new Color(116, 145, 178), "HANDLE とは？", ["対局サービスにログインするときの、プレイヤー固有の名前。", "接続する相手の機械に入力できるフォーマットに合わせます。"], bodyLineSpacing: 26);
     }
 
-    // Entry Profile editor のキーレーン: ラベル、意味アイコン、値、下線を列として共有する。
-    private const int PlayerEditFieldLabelX = 536;
-    private const int PlayerEditFieldIconX = 742;
-    private const int PlayerEditFieldValueX = 785;
-    private const int PlayerEditFieldValueWidth = 575;
-
-    private static Rectangle PlayerEditPanelFieldTextBounds(EntryProfileEditField field) => field switch
-    {
-        EntryProfileEditField.DisplayName => new(PlayerEditFieldValueX, 375, PlayerEditFieldValueWidth, 42),
-        EntryProfileEditField.Identifier => new(PlayerEditFieldValueX, 439, PlayerEditFieldValueWidth, 42),
-        _ => throw new ArgumentOutOfRangeException(nameof(field), field, "Unknown player edit field."),
-    };
-
-    private static readonly Rectangle PlayerEditPanelClientIdentityTextBounds = new(PlayerEditFieldValueX, 439, PlayerEditFieldValueWidth, 42);
-    private static readonly Rectangle PlayerEditPanelEngineTextBounds = new(PlayerEditFieldValueX, 503, PlayerEditFieldValueWidth, 42);
-
-    private static Rectangle PlayerEditFieldIconBounds(Rectangle textBounds) =>
-        new(PlayerEditFieldIconX, textBounds.Y + 4, 34, 34);
-
-    private static Rectangle PlayerEditFieldHoverBounds(Rectangle textBounds) =>
-        new(PlayerEditFieldLabelX, textBounds.Y, textBounds.Right - PlayerEditFieldLabelX, textBounds.Height);
-
-    private void DrawPlayerEditField(GoAppSession session, EntryProfileEditField field, string label, Point mousePoint)
-    {
-        var textBounds = PlayerEditPanelFieldTextBounds(field);
-        var active = session.ActivePlayerEditField == field;
-        DrawText(label, new Vector2(PlayerEditFieldLabelX, textBounds.Y + 7), new Color(180, 195, 195), 0.36f);
-        var hovered = textBounds.Contains(mousePoint);
-        DrawRoundedFill(new Rectangle(textBounds.X, textBounds.Bottom + 2, textBounds.Width, 5), 2, active ? new Color(147, 244, 200) : hovered ? new Color(185, 196, 255) : new Color(100, 110, 145));
-        var text = session.GetPlayerEditFieldText(field);
-        if (active)
-            DrawTextBoxSelection(text, session.PlayerEditSelectionStart, session.PlayerEditSelectionLength, textBounds, 0.42f);
-        DrawFittedText(string.IsNullOrEmpty(text) ? "-" : text, textBounds, Color.White, 0.42f);
-        if (active)
-            DrawTextBoxCaret(text, session.PlayerEditCaretIndex, textBounds, 0.42f);
-        if (field == EntryProfileEditField.DisplayName)
-            DrawPlayerEditFieldIcon(PlayerEditFieldIconKind.PlayerName, PlayerEditFieldIconBounds(textBounds));
-        DrawEditableTextEditHint(active, hovered, textBounds);
-    }
-
-    private void DrawPlayerEditPopupField(
-        string label,
-        string value,
-        Rectangle textBounds,
-        Point mousePoint,
-        PlayerEditFieldIconKind iconKind = PlayerEditFieldIconKind.None)
-    {
-        var hovered = textBounds.Contains(mousePoint);
-        DrawText(label, new Vector2(PlayerEditFieldLabelX, textBounds.Y + 7), new Color(180, 195, 195), 0.36f);
-        DrawFittedText(value, textBounds, Color.White, 0.42f);
-        _wideLinkUnderline.Draw(textBounds, hovered, this);
-        if (iconKind != PlayerEditFieldIconKind.None)
-            DrawPlayerEditFieldIcon(iconKind, PlayerEditFieldIconBounds(textBounds));
-        if (hovered)
-            DrawPlayerEditHint("CHANGE", textBounds);
-    }
-
-    private void DrawPlayerEditFieldIcon(PlayerEditFieldIconKind kind, Rectangle bounds)
-    {
-        if (kind == PlayerEditFieldIconKind.PlayerName)
-        {
-            DrawIconStone(new Vector2(bounds.Center.X - 7, bounds.Center.Y), 7, black: true);
-            DrawIconStone(new Vector2(bounds.Center.X + 7, bounds.Center.Y), 7, black: false);
-            return;
-        }
-
-        DrawPlayerRoleFaceIcon(new Vector2(bounds.Center.X, bounds.Center.Y), isComputer: true);
-    }
-
     private void DrawPlayerEditHint(string text, Rectangle textBounds)
     {
         var hintBounds = text == "EDIT"
@@ -578,7 +479,9 @@ public sealed partial class GoScreenRenderer
             DrawPlayerEditHint("EDIT", textBounds);
     }
 
-    private void DrawPlayerEditStickyNote(GoAppSession session, Point mousePoint)
+    // Moved to Presentation/Shared/EditEntryProfile/EditEntryProfile.cs.
+    // Kept temporarily only as an inactive compatibility stub while this file is split further.
+    private void DrawPlayerEditStickyNoteLegacy(GoAppSession session, Point mousePoint)
     {
         var displayNameBounds = PlayerEditPanelFieldTextBounds(EntryProfileEditField.DisplayName);
         var handleBounds = PlayerEditPanelClientIdentityTextBounds;
@@ -617,7 +520,7 @@ public sealed partial class GoScreenRenderer
             bodyLineSpacing: 26);
     }
 
-    private static Vector2 PlayerEditUnderlineConnectorStart(Rectangle textBounds) =>
+    private static Vector2 PlayerEditUnderlineConnectorStartLegacy(Rectangle textBounds) =>
         // アンダーラインの中心線へ、右端から少し内側で接続する。
         new(textBounds.Right - 24, textBounds.Bottom + 4);
 
@@ -641,7 +544,7 @@ public sealed partial class GoScreenRenderer
         }
     }
 
-    private enum PlayerEditFieldIconKind
+    private enum PlayerEditFieldIconKindLegacy
     {
         None,
         PlayerName,

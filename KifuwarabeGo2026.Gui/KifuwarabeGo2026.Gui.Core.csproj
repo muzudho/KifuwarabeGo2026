@@ -35,6 +35,7 @@
     <Folder Include="Presentation\BoardLens\Shared\" />
     <Folder Include="Presentation\Shared\PlayerSelector\" />
     <Folder Include="Presentation\Shared\EditEntryProfile\" />
+    <Folder Include="Presentation\Shared\EditEntryProfile\" />
     <Folder Include="Presentation\StationeryUI\Controls\PopupNumberUnderline\" />
     <Folder Include="Presentation\StationeryUI\Controls\StickyNote\" />
     <Folder Include="Presentation\StationeryUI\Controls\MultilineTextUnderline\" />
