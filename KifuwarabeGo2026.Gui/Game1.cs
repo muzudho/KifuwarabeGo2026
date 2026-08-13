@@ -1928,7 +1928,7 @@ public class Game1 : Game
         }
         if (_session.IsClientIdentityProfileEditPanelOpen)
         {
-            if (GoScreenRenderer.GetClientIdentityProfileEditCancelButtonHit(point))
+            if (GoScreenRenderer.GetClientIdentityProfileEditCancelButtonHit(point) && _session.IsClientIdentityProfileEditDirty)
             {
                 _session.CancelClientIdentityProfileEdit();
                 SavePlayerAndClientIdentityCatalogs();
@@ -4441,7 +4441,7 @@ public class Game1 : Game
         var text = _session.ActiveClientIdentityProfileEditField == field
             ? _targetProfileEditTextBox.Text
             : _session.GetClientIdentityProfileEditField(field);
-        var caretIndex = _renderer?.GetClientIdentityProfileEditCaretIndex(point, _session.ClientIdentityProfileEditIndex, field, text, string.IsNullOrEmpty(_session.ClientIdentityProfileEditDraft.ConnectionProfileId)) ?? text.Length;
+        var caretIndex = _renderer?.GetClientIdentityProfileEditCaretIndex(point, _session.ClientIdentityProfileEditIndex, field, text, false) ?? text.Length;
         if (_session.ActiveClientIdentityProfileEditField == field)
         {
             _targetProfileEditTextBox.BeginMouseSelection(caretIndex, IsShiftDown());
@@ -4528,9 +4528,7 @@ public class Game1 : Game
     {
         SyncClientIdentityProfileEditField(field);
         SaveClientIdentityProfileEditDraft();
-        var fields = string.IsNullOrEmpty(_session.ClientIdentityProfileEditDraft.ConnectionProfileId)
-            ? new[] { ClientIdentityProfileEditField.DisplayName, ClientIdentityProfileEditField.LoginName }
-            : new[] { ClientIdentityProfileEditField.DisplayName, ClientIdentityProfileEditField.LoginName, ClientIdentityProfileEditField.LoginPass };
+        var fields = new[] { ClientIdentityProfileEditField.LoginName, ClientIdentityProfileEditField.LoginPass };
         var index = Array.IndexOf(fields, field);
         var next = fields[(index + step + fields.Length) % fields.Length];
         var text = _session.GetClientIdentityProfileEditField(next);

@@ -86,9 +86,8 @@ public sealed partial class GoScreenRenderer
     public static ClientIdentityProfileEditField? GetClientIdentityProfileEditFieldHit(Point point, GoAppSession session)
     {
         var index = session.ClientIdentityProfileEditIndex;
-        var isLocalMatch = string.IsNullOrEmpty(session.ClientIdentityProfileEditDraft.ConnectionProfileId);
-        return ClientIdentityProfileEditFieldTextBounds(index, ClientIdentityProfileEditField.LoginName, isLocalMatch).Contains(point) ? ClientIdentityProfileEditField.LoginName :
-            !isLocalMatch && ClientIdentityProfileEditFieldTextBounds(index, ClientIdentityProfileEditField.LoginPass, false).Contains(point) ? ClientIdentityProfileEditField.LoginPass : null;
+        return ClientIdentityProfileEditFieldTextBounds(index, ClientIdentityProfileEditField.LoginName, false).Contains(point) ? ClientIdentityProfileEditField.LoginName :
+            ClientIdentityProfileEditFieldTextBounds(index, ClientIdentityProfileEditField.LoginPass, false).Contains(point) ? ClientIdentityProfileEditField.LoginPass : null;
     }
     public int GetClientIdentityProfileEditCaretIndex(Point point, int index, ClientIdentityProfileEditField field, string text, bool isLocalMatch) =>
         GetTextBoxCaretIndex(point.X, text, ClientIdentityProfileEditFieldTextBounds(index, field, isLocalMatch), 0.34f);
@@ -152,13 +151,11 @@ public sealed partial class GoScreenRenderer
         DrawText("EDIT CLIENT IDENTITY", new Vector2(bounds.X + 34, bounds.Y + 28), new Color(244, 238, 218), 0.68f);
         DrawDynamicOptionText("機械で扱えるフォーマットのプレイヤー情報を設定できます。", new Rectangle(bounds.X + 36, bounds.Y + 82, 860, 32), new Color(180, 195, 195), 0.34f);
         var targets = session.GetPlayerClientIdentityProfiles(session.PlayerEditDraft.Id);
-        DrawCommandButton(ClientIdentityProfileEditCancelButtonBounds, "DISCARD", false, mousePoint, scale: 0.30f);
-        DrawCommandButton(ClientIdentityProfileEditSaveButtonBounds, "SAVE & CLOSE", false, mousePoint, scale: 0.26f);
-        var edited = session.ClientIdentityProfileEditDraft;
-        var isLocalMatch = string.IsNullOrEmpty(edited.ConnectionProfileId);
-        DrawClientIdentityProfileEditField(session, 0, ClientIdentityProfileEditField.LoginName, "HANDLE", mousePoint, isLocalMatch);
-        if (!isLocalMatch)
-            DrawClientIdentityProfileEditField(session, 0, ClientIdentityProfileEditField.LoginPass, "PASSWORD", mousePoint, false);
+        DrawCommandButton(ClientIdentityProfileEditCancelButtonBounds, "DISCARD", false, mousePoint, enabled: session.IsClientIdentityProfileEditDirty, scale: 0.30f);
+        DrawCommandButton(ClientIdentityProfileEditSaveButtonBounds, session.IsClientIdentityProfileEditDirty ? "SAVE & CLOSE" : "CLOSE", false, mousePoint,
+            scale: session.IsClientIdentityProfileEditDirty ? 0.26f : 0.34f);
+        DrawClientIdentityProfileEditField(session, 0, ClientIdentityProfileEditField.LoginName, "HANDLE", mousePoint, false);
+        DrawClientIdentityProfileEditField(session, 0, ClientIdentityProfileEditField.LoginPass, "PASSWORD", mousePoint, false);
         if (!session.IsClientIdentityProfileConnectionSelectionPanelOpen) return;
         for (var index = 0; index < targets.Count; index++)
         {
@@ -174,10 +171,8 @@ public sealed partial class GoScreenRenderer
             }
             if (isSelectedClientIdentity)
             {
-                var isLocalMatchForLegacy = string.IsNullOrEmpty(target.ConnectionProfileId);
-                DrawClientIdentityProfileEditField(session, index, ClientIdentityProfileEditField.LoginName, "HANDLE", mousePoint, isLocalMatchForLegacy);
-                if (!isLocalMatchForLegacy)
-                    DrawClientIdentityProfileEditField(session, index, ClientIdentityProfileEditField.LoginPass, "PASSWORD", mousePoint, false);
+                DrawClientIdentityProfileEditField(session, index, ClientIdentityProfileEditField.LoginName, "HANDLE", mousePoint, false);
+                DrawClientIdentityProfileEditField(session, index, ClientIdentityProfileEditField.LoginPass, "PASSWORD", mousePoint, false);
                 DrawFittedText($"CONNECTION: {session.ClientIdentityProfileEditConnectionDisplayName}", new Rectangle(row.X + 18, row.Y + 47, 920, 22), new Color(147, 244, 200), 0.28f);
                 if (session.IsClientIdentityProfileDefault(index))
                     DrawFittedText("IN DEFAULT", new Rectangle(row.Right - 130, row.Y + 45, 110, 22), new Color(147, 244, 200), 0.28f);

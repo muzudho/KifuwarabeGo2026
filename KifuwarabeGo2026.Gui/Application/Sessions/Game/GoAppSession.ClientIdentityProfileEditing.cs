@@ -28,6 +28,13 @@ public sealed partial class GoAppSession
     private string ClientIdentityProfileEditOriginalFieldText { get; set; } = "";
     private ClientIdentityProfile ClientIdentityProfileEditOriginalProfile { get; set; } = new();
 
+    /// <summary>編集開始時から未保存の変更があるかを返します。</summary>
+    public bool IsClientIdentityProfileEditDirty =>
+        ClientIdentityProfileEditDraft.DisplayName != ClientIdentityProfileEditOriginalProfile.DisplayName ||
+        ClientIdentityProfileEditDraft.ConnectionProfileId != ClientIdentityProfileEditOriginalProfile.ConnectionProfileId ||
+        ClientIdentityProfileEditDraft.LoginName != ClientIdentityProfileEditOriginalProfile.LoginName ||
+        ClientIdentityProfileEditDraft.LoginPass != ClientIdentityProfileEditOriginalProfile.LoginPass;
+
     public bool OpenClientIdentityProfileSelectionPanel()
     {
         if (PlayerEditProfileIndex < 0 || PlayerEditProfileIndex >= _playerProfiles.Count) return false;
@@ -396,6 +403,7 @@ public sealed partial class GoAppSession
         var target = _clientIdentityProfiles.FirstOrDefault(item => string.Equals(item.Id, ids[ClientIdentityProfileEditIndex], StringComparison.Ordinal));
         if (target is null) return false;
         ClientIdentityProfileEditDraft = target.Clone();
+        ClientIdentityProfileEditOriginalProfile = ClientIdentityProfileEditDraft.Clone();
         ActiveClientIdentityProfileEditField = null;
         return true;
     }
