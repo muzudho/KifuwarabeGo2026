@@ -1,45 +1,29 @@
 namespace KifuwarabeGo2026.Gui.Presentation;
 
 using KifuwarabeGo2026.Gui.Application;
+using KifuwarabeGo2026.Gui.Presentation.Shared.CatalogOrder;
 using Microsoft.Xna.Framework;
 using System;
 
 public sealed partial class GoScreenRenderer
 {
+    private static readonly CatalogOrder CatalogOrderControl = new();
+
     public static bool GetCatalogOrderCancelButtonHit(Point point) =>
-        CatalogOrderEditorLayout.CancelButtonBounds.Contains(point);
+        CatalogOrderControl.IsCancelButtonHit(point);
 
     public static bool GetCatalogOrderSaveButtonHit(Point point) =>
-        CatalogOrderEditorLayout.SaveButtonBounds.Contains(point);
+        CatalogOrderControl.IsSaveButtonHit(point);
 
     public static int GetCatalogOrderMoveStep(Point point, int pageSize) =>
-        CatalogOrderEditorLayout.TopButtonBounds.Contains(point) ? int.MinValue :
-        CatalogOrderEditorLayout.PageUpButtonBounds.Contains(point) ? -pageSize :
-        CatalogOrderEditorLayout.UpButtonBounds.Contains(point) ? -1 :
-        CatalogOrderEditorLayout.DownButtonBounds.Contains(point) ? 1 :
-        CatalogOrderEditorLayout.PageDownButtonBounds.Contains(point) ? pageSize :
-        0;
+        CatalogOrderControl.GetMoveStep(point, pageSize);
 
     public static int GetCatalogOrderPageStep(Point point) =>
-        CatalogOrderEditorLayout.PreviousPairButtonBounds.Contains(point) ? -1 :
-        CatalogOrderEditorLayout.NextPairButtonBounds.Contains(point) ? 1 :
-        0;
+        CatalogOrderControl.GetPageStep(point);
 
     public static int? GetCatalogOrderCardHit<T>(Point point, CatalogOrderEditor<T> editor)
     {
-        var startIndex = editor.FirstVisiblePageIndex * editor.PageSize;
-        for (var visibleIndex = 0; visibleIndex < editor.PageSize * 2; visibleIndex++)
-        {
-            if (!CatalogOrderEditorLayout.CardBounds(visibleIndex, editor.PageSize).Contains(point))
-            {
-                continue;
-            }
-
-            var index = startIndex + visibleIndex;
-            return index < editor.Items.Count ? index : null;
-        }
-
-        return null;
+        return CatalogOrderControl.GetCardHit(point, editor);
     }
 
     private void DrawCatalogOrderEditor<T>(
