@@ -286,7 +286,8 @@ public sealed class EditEntryProfile
         var hovered = textBounds.Contains(mousePoint);
         label.Draw(draw.DrawText);
         draw.DrawFittedText(value, textBounds, Color.White, 0.42f);
-        PopupFieldUnderline.Draw(textBounds, hovered, new UnderlineDrawingSurface(draw));
+        PopupFieldUnderline.Bounds = textBounds;
+        PopupFieldUnderline.Draw(hovered, new UnderlineDrawingSurface(draw));
         if (icon != FieldIcon.None) DrawIcon(icon, IconBounds(textBounds), draw);
         if (hovered) draw.DrawChangeHint(textBounds);
     }

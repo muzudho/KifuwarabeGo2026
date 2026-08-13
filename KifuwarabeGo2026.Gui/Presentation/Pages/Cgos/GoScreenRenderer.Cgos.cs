@@ -497,7 +497,8 @@ public sealed partial class GoScreenRenderer
         var valueBounds = CgosAdminPlayerValueBounds(bounds);
         var hovered = valueBounds.Contains(mousePoint);
         DrawFittedText(string.IsNullOrEmpty(playerName) ? "-" : playerName, valueBounds, Color.White, 0.25f);
-        _compactLinkUnderline.Draw(valueBounds, hovered, this);
+        _compactLinkUnderline.Bounds = valueBounds;
+        _compactLinkUnderline.Draw(hovered, this);
         if (hovered) DrawPlayerEditHint("CHANGE", valueBounds);
     }
 
@@ -654,7 +655,8 @@ public sealed partial class GoScreenRenderer
             : fieldBounds;
         DrawText(selector.Label, new Vector2(selector.Bounds.X + 12, fieldBounds.Y + 7), new Color(180, 195, 195), 0.28f);
         DrawFittedText(selector.Value, textBounds, selector.Enabled ? Color.White : new Color(91, 100, 106), 0.46f);
-        _selectorLinkUnderline.Draw(fieldBounds, hovered, this);
+        _selectorLinkUnderline.Bounds = fieldBounds;
+        _selectorLinkUnderline.Draw(hovered, this);
         if (hovered) DrawPlayerEditHint("CHANGE", fieldBounds);
     }
 

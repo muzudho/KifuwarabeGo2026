@@ -20,23 +20,28 @@ public sealed class LinkUnderline
     /// </summary>
     public IUnderline Underline { get; }
 
+    /// <summary>このリンク下線が表示・クリック判定に使う領域です。</summary>
+    public Rectangle Bounds { get; set; }
+
+    /// <summary>指定座標がこのリンク領域内か判定します。</summary>
+    public bool IsHit(Point point) => Bounds.Contains(point);
+
     /// <summary>同期リンク向けに、ホバー状態だけで所有する Underline を描画します。</summary>
-    public void Draw(Rectangle bounds, bool hovered, IUnderlineDrawingSurface surface)
+    public void Draw(bool hovered, IUnderlineDrawingSurface surface)
     {
-        Underline.ContentBounds = bounds;
+        Underline.ContentBounds = Bounds;
         Underline.Color = hovered ? new Color(185, 196, 255) : new Color(100, 110, 145);
         Underline.Draw(surface);
     }
 
     /// <summary>選択済みのリンクを、ホバー色より優先する色で描画します。</summary>
     public void Draw(
-        Rectangle bounds,
         bool hovered,
         bool selected,
         Color selectedColor,
         IUnderlineDrawingSurface surface)
     {
-        Underline.ContentBounds = bounds;
+        Underline.ContentBounds = Bounds;
         Underline.Color = selected
             ? selectedColor
             : hovered ? new Color(185, 196, 255) : new Color(100, 110, 145);
@@ -47,7 +52,6 @@ public sealed class LinkUnderline
     /// <param name="drawUnderline">日本語ラベルと下線を描画する処理です。</param>
     /// <param name="drawSpinner">指定位置にスピナーを描画する処理です。</param>
     public void Draw(
-        Rectangle bounds,
         string label,
         Point mousePoint,
         LinkUnderlineController controller,
@@ -60,7 +64,7 @@ public sealed class LinkUnderline
         ArgumentNullException.ThrowIfNull(drawText);
         ArgumentNullException.ThrowIfNull(drawSpinner);
 
-        var hovered = controller.CanActivate && LinkUnderlineHitTest.IsHit(bounds, mousePoint);
+        var hovered = controller.CanActivate && IsHit(mousePoint);
         var underlineColor = controller.State switch
         {
             LinkUnderlineState.Executing => new Color(255, 210, 128),
@@ -70,11 +74,11 @@ public sealed class LinkUnderline
         };
         var textColor = controller.IsExecuting ? new Color(255, 225, 160) : Color.White;
 
-        drawText(bounds, label, textColor);
-        Underline.ContentBounds = bounds;
+        drawText(Bounds, label, textColor);
+        Underline.ContentBounds = Bounds;
         Underline.Color = underlineColor;
         Underline.Draw(surface);
         if (controller.IsSpinnerVisible(nowSeconds))
-            drawSpinner(new Vector2(bounds.Right - 14, bounds.Center.Y), underlineColor);
+            drawSpinner(new Vector2(Bounds.Right - 14, Bounds.Center.Y), underlineColor);
     }
 }
