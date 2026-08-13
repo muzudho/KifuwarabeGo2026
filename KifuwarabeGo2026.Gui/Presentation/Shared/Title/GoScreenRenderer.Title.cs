@@ -1,6 +1,7 @@
 namespace KifuwarabeGo2026.Gui.Presentation;
 
 using KifuwarabeGo2026.Gui.Application;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.ActionBadge;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.StickyNote;
 using KifuwarabeGo2026.Gui.Presentation.Shared.TitleBackground;
 using KifuwarabeGo2026.Gui.Presentation.Title;
@@ -218,11 +219,11 @@ public sealed partial class GoScreenRenderer
         DrawText("PROVIDER", new Vector2(bounds.X + 16, textBounds.Y + 7), new Color(180, 195, 195), 0.36f);
         DrawDynamicOptionText(session.SelectedAppProviderEngineDisplayName, textBounds, Color.White, 0.34f);
         _wideLinkUnderline.Bounds = textBounds;
+        _wideLinkUnderline.SetActionBadge(ActionBadge.Create("CHANGE", textBounds));
         _wideLinkUnderline.UpdatePointer(mousePoint);
-        _wideLinkUnderline.Draw(this);
+        _wideLinkUnderline.Draw(this, new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText));
         if (hovered)
         {
-            DrawActionBadge("CHANGE", textBounds);
             DrawStickyNote(
                 StickyNoteKind.AppProviderEngineHint,
                 new Vector2(textBounds.Right, textBounds.Center.Y),

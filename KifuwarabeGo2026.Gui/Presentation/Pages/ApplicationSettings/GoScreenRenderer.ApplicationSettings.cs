@@ -162,11 +162,9 @@ public sealed partial class GoScreenRenderer
         DrawText(label, new Vector2(bounds.X + 8, bounds.Y), new Color(180, 195, 195), 0.34f);
         DrawFittedText(value, new Rectangle(bounds.X + 8, bounds.Y + 30, bounds.Width - (hovered ? 132 : 16), 28), Color.White, 0.32f);
         _settingsValueLinkUnderline.Bounds = new Rectangle(bounds.X + 8, bounds.Y, bounds.Width - 16, bounds.Height);
+        _settingsValueLinkUnderline.SetActionBadge(ActionBadge.Create(action, bounds, 0.30f));
         _settingsValueLinkUnderline.UpdatePointer(mousePoint);
-        _settingsValueLinkUnderline.Draw(
-            this);
-        if (hovered)
-            DrawActionBadge(ActionBadge.Create(action, bounds, 0.30f));
+        _settingsValueLinkUnderline.Draw(this, new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText));
     }
 
     private void DrawSettingsSection(Rectangle bounds, string title, Color accentColor)

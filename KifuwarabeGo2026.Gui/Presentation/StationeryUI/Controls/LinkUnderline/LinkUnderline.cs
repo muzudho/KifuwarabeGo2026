@@ -1,6 +1,7 @@
 namespace KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.LinkUnderline;
 
 using Microsoft.Xna.Framework;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.ActionBadge;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
 using System;
 
@@ -31,11 +32,24 @@ public sealed class LinkUnderline
 
     public Color SelectedColor { get; set; } = new(147, 244, 200);
 
+    /// <summary>このリンクをホバーしたときに表示するアクションバッジです。</summary>
+    public ActionBadge? ActionBadge { get; private set; }
+
+    /// <summary>このリンクが所有するアクションバッジを設定します。</summary>
+    public void SetActionBadge(ActionBadge actionBadge) => ActionBadge = actionBadge ?? throw new ArgumentNullException(nameof(actionBadge));
+
     /// <summary>指定座標がこのリンク領域内か判定します。</summary>
     public bool IsHit(Point point) => Bounds.Contains(point);
 
     /// <summary>ポインター位置からホバー状態を更新します。</summary>
-    public void UpdatePointer(Point point) => IsHovered = IsHit(point);
+    public void UpdatePointer(Point point)
+    {
+        IsHovered = IsHit(point);
+        if (IsHovered)
+            ActionBadge?.Show();
+        else
+            ActionBadge?.Hide();
+    }
 
     /// <summary>選択状態を設定します。</summary>
     public void SetSelected(bool selected) => IsSelected = selected;
@@ -53,13 +67,15 @@ public sealed class LinkUnderline
     public void ClearSelection() => IsSelected = false;
 
     /// <summary>同期リンク向けに、ホバー状態だけで所有する Underline を描画します。</summary>
-    public void Draw(IUnderlineDrawingSurface surface)
+    public void Draw(IUnderlineDrawingSurface surface, ActionBadgeDrawingCallbacks? actionBadgeDrawing = null)
     {
         Underline.ContentBounds = Bounds;
         Underline.Color = IsSelected
             ? SelectedColor
             : IsHovered ? new Color(185, 196, 255) : new Color(100, 110, 145);
         Underline.Draw(surface);
+        if (actionBadgeDrawing is not null)
+            ActionBadge?.Draw(actionBadgeDrawing);
     }
 
     /// <summary>選択済みのリンクを、ホバー色より優先する色で描画します。</summary>

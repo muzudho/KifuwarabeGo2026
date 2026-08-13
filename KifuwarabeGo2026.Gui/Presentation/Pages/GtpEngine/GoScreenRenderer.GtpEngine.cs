@@ -454,12 +454,11 @@ public sealed partial class GoScreenRenderer
         };
         DrawDynamicOptionText(string.IsNullOrEmpty(rowValue) ? "<empty>" : rowValue, valueBounds, Color.White, 0.34f);
         _gtpEngineOptionLinkUnderline.Bounds = valueBounds;
+        _gtpEngineOptionLinkUnderline.SetActionBadge(ActionBadge.Create(GetGtpEngineOptionActionLabel(option), valueBounds, 0.30f));
         _gtpEngineOptionLinkUnderline.UpdatePointer(mousePoint);
-        _gtpEngineOptionLinkUnderline.Draw(this);
+        _gtpEngineOptionLinkUnderline.Draw(this, new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText));
         if (option.Type == "spin" && option.Min is { } min && option.Max is { } max)
             DrawFittedText($"{min} .. {max}", new Rectangle(valueBounds.Right + 12, valueBounds.Y + 10, 126, 28), new Color(118, 139, 143), 0.24f);
-        if (hovered)
-            DrawActionBadge(ActionBadge.Create(GetGtpEngineOptionActionLabel(option), valueBounds, 0.30f));
         if (option.Type is not ("button" or "string") && row.Contains(mousePoint))
             DrawCommandButton(GtpEngineGuiOptionDefaultButtonBounds(slot), "DEFAULT", false, mousePoint, scale: 0.3f);
     }

@@ -1261,15 +1261,10 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IGoScre
                 : fieldBounds;
             DrawFittedText(selector.Value, valueBounds, Color.White, 0.42f);
             _playerSelectorLinkUnderline.Bounds = fieldBounds;
+            _playerSelectorLinkUnderline.SetActionBadge(ActionBadge.Create("CHANGE", fieldBounds));
             _playerSelectorLinkUnderline.UpdatePointer(mousePoint);
-            _playerSelectorLinkUnderline.Draw(this);
-            if (hovered)
-            {
+            _playerSelectorLinkUnderline.Draw(this, new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText));
                 // 操作ヒントはアンダーライン終端の近くに、読みやすい反転プレートで表示する。
-                var hintBounds = new Rectangle(fieldBounds.Right - 108, fieldBounds.Bottom - 28, 100, 26);
-                DrawRoundedFill(hintBounds, 6, new Color(185, 196, 255));
-                DrawSharpCenteredFittedText("CHANGE", hintBounds, new Color(15, 20, 31), 0.34f);
-            }
             return;
         }
 
