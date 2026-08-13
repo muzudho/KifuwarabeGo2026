@@ -25,7 +25,19 @@ public sealed class TournamentRulesSetting
     private readonly TextBoxController _mainTimeMinutesTextBox = new(2);
     private readonly TextBoxController _mainTimeSecondsTextBox = new(2);
     private readonly TextBoxController _moveLimitTextBox = new(4);
+
+    /// <summary>
+    /// ［コミ］の入力欄のコントローラー
+    /// </summary>
+    private readonly TextBoxController _komiTextBox = new(5);
     private KeyboardState _previousKeyboard;
+
+    public bool IsKomiInputOpen { get; private set; }
+    public string KomiInputText => _komiTextBox.Text;
+    public int KomiInputCaretIndex => _komiTextBox.CaretIndex;
+    public int KomiInputSelectionStart => _komiTextBox.SelectionStart;
+    public int KomiInputSelectionLength => _komiTextBox.SelectionLength;
+    public string KomiInputMessage { get; private set; } = "RANGE  0.0 .. 99.5";
 
     public TournamentRulesSetting(
         GoAppSession session,
@@ -45,6 +57,16 @@ public sealed class TournamentRulesSetting
     {
         if (!_session.IsTournamentRulesAddPanelOpen)
         {
+            _previousKeyboard = keyboard;
+            return;
+        }
+
+        if (IsKomiInputOpen)
+        {
+            var action = _komiTextBox.HandleKeyboard(keyboard, _previousKeyboard, gameTime, _clipboardService,
+                pasteCharacterFilter: character => char.IsAsciiDigit(character) || character == '.');
+            if (action == TextBoxKeyboardAction.Commit) CommitKomiInput();
+            else if (action == TextBoxKeyboardAction.Cancel) CancelKomiInput();
             _previousKeyboard = keyboard;
             return;
         }
@@ -89,6 +111,12 @@ public sealed class TournamentRulesSetting
         if (!_session.IsTournamentRulesAddPanelOpen)
         {
             return false;
+        }
+
+        if (IsKomiInputOpen)
+        {
+            if (char.IsAsciiDigit(character) || character == '.') _komiTextBox.TryInputCharacter(character);
+            return true;
         }
 
         if (_session.ActiveTournamentRulesNumericField is { } numericField)
@@ -144,6 +172,42 @@ public sealed class TournamentRulesSetting
         return false;
     }
 
+    public void OpenKomiInput()
+    {
+        CommitNumericEdit();
+        _komiTextBox.Begin(_session.Komi.ToString("0.0"));
+        KomiInputMessage = "RANGE  0.0 .. 99.5     STEP 0.5";
+        IsKomiInputOpen = true;
+        _session.ActivateModalWindow(ActiveWindowId.IntegerInput);
+    }
+
+    public void BeginKomiInputSelection(int caretIndex, bool extendSelection) => _komiTextBox.BeginMouseSelection(caretIndex, extendSelection);
+
+    public void ChangeKomiInput(decimal step)
+    {
+        var value = decimal.TryParse(_komiTextBox.Text, out var current) ? current : _session.Komi;
+        _komiTextBox.Begin(decimal.Clamp(value + step, 0m, 99.5m).ToString("0.0"));
+    }
+
+    public void CommitKomiInput()
+    {
+        if (!decimal.TryParse(_komiTextBox.Text, out var value) || value < 0m || value > 99.5m || value * 2m != decimal.Truncate(value * 2m))
+        {
+            KomiInputMessage = "ENTER 0.0 .. 99.5 IN 0.5 STEPS";
+            return;
+        }
+        _session.ChangeKomi(value - _session.Komi);
+        CancelKomiInput();
+    }
+
+    public void CancelKomiInput()
+    {
+        IsKomiInputOpen = false;
+        _komiTextBox.Clear();
+        KomiInputMessage = "RANGE  0.0 .. 99.5";
+        _session.DeactivateModalWindow(ActiveWindowId.IntegerInput);
+    }
+
     private bool TryHandleTournamentRulesAddPanelClick(
         Point point,
         Func<Point, string, int>? getDisplayNameCaretIndex,
@@ -190,9 +254,9 @@ public sealed class TournamentRulesSetting
             return true;
         }
 
-        if (GoScreenRenderer.GetKomiStepButtonHit(point) is { } komiStep)
+        if (GoScreenRenderer.GetTournamentRulesKomiTextBoxHit(point))
         {
-            _session.ChangeKomi(komiStep);
+            OpenKomiInput();
             return true;
         }
 

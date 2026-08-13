@@ -23,6 +23,7 @@ using KifuwarabeGo2026.Gui.Presentation.GoApps.Formal.LocalMatch.Interval.Tourna
 using KifuwarabeGo2026.Gui.Presentation.Title;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.StickyNote;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.PopupNumberUnderline;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.MessageDialog;
 using KifuwarabeGo2026.Gui.Sgf;
 using Microsoft.Xna.Framework;
@@ -857,6 +858,18 @@ public class Game1 : Game
                 _gtpEngineIntegerOptionTextBox.SelectionLength,
                 _gtpEngineIntegerInputMessage);
 
+        // ［大会ルール設定　＞　コミ］
+        if (_renderer is not null && _tournamentRulesSetting.IsKomiInputOpen)
+            _renderer.DrawPopupNumberUnderline(
+                backgroundMousePosition,
+                "KOMI",
+                _tournamentRulesSetting.KomiInputText,
+                _tournamentRulesSetting.KomiInputCaretIndex,
+                _tournamentRulesSetting.KomiInputSelectionStart,
+                _tournamentRulesSetting.KomiInputSelectionLength,
+                _tournamentRulesSetting.KomiInputMessage,
+                new PopupNumberUnderlineOptions(true, "0.5", "KOMI INPUT"));
+
         if (_renderer is not null && _activeGtpEngineStringOption is { } stringOption)
             _renderer.DrawTextInputDialog(
                 Mouse.GetState().Position,
@@ -987,6 +1000,22 @@ public class Game1 : Game
                 return;
             }
 
+            if (_tournamentRulesSetting.IsKomiInputOpen)
+            {
+                if (_renderer?.PopupNumberUnderline.IsTextBoxHit(point) == true)
+                    _tournamentRulesSetting.BeginKomiInputSelection(
+                        _renderer.GetPopupNumberUnderlineCaretIndex(point, _tournamentRulesSetting.KomiInputText), IsShiftDown());
+                else if (_renderer?.PopupNumberUnderline.StepUpButton.IsHit(point) == true)
+                    _tournamentRulesSetting.ChangeKomiInput(0.5m);
+                else if (_renderer?.PopupNumberUnderline.StepDownButton.IsHit(point) == true)
+                    _tournamentRulesSetting.ChangeKomiInput(-0.5m);
+                else if (_renderer?.PopupNumberUnderline.OkButton.IsHit(point) == true)
+                    _tournamentRulesSetting.CommitKomiInput();
+                else if (_renderer?.PopupNumberUnderline.CancelButton.IsHit(point) == true)
+                    _tournamentRulesSetting.CancelKomiInput();
+                _previousMouse = mouse;
+                return;
+            }
             if (_activeGtpEngineIntegerOption is not null)
             {
                 if (_renderer?.PopupNumberUnderline.IsTextBoxHit(point) == true)

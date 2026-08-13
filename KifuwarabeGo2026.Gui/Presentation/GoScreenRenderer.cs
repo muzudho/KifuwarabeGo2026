@@ -68,6 +68,12 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IGoScre
         new RoundUnderline { TopOffset = -7, Thickness = 6, Radius = 3 });
     private readonly Breadcrumb _breadcrumb = new();
     private readonly SpinBox _spinBox = new();
+    
+    /// <summary>
+    /// TODO: 大会ルールのコミ。なんでこんなとこにある？
+    /// </summary>
+    private readonly SinglelineTextUnderline _tournamentKomiUnderline = new(
+        new RoundUnderline { TopOffset = 2, Thickness = 5, Radius = 2 });
     private readonly VerticalSectionLabel _verticalSectionLabel = new();
     private readonly TextInputDialog _textInputDialog = new();
     public ScreenTransition ScreenTransition { get; } = new();
@@ -239,11 +245,13 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IGoScre
         return RuleKindButtonBounds(2).Contains(point) ? GoRuleKind.Chinese : null;
     }
 
-    public static decimal? GetKomiStepButtonHit(Point point)
-    {
-        if (KomiSpinButtonBounds(true).Contains(point)) return 0.5m;
-        return KomiSpinButtonBounds(false).Contains(point) ? -0.5m : null;
-    }
+    /// <summary>
+    /// ［大会ルール設定　＞　コミ］のテキストボックスがクリックされたかどうかを判定します。
+    /// XXX: なんでここにあるんだろう？　このクラスは画面描画の共通処理のはずなのに。
+    /// </summary>
+    /// <param name="point"></param>
+    /// <returns></returns>
+    public static bool GetTournamentRulesKomiTextBoxHit(Point point) => TournamentRulesKomiTextBounds.Contains(point);
 
     public static TimeSpan? GetMainTimeStepButtonHit(Point point)
     {
@@ -725,8 +733,9 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IGoScre
         var bounds = new Rectangle(AddPanelControlX, 460, 668, 56);
         DrawDataRowFrame(bounds);
         DrawTournamentRulesFieldLabel("KOMI", bounds);
-        DrawText(FormatKomi(session.Komi), new Vector2(bounds.X + 176, bounds.Y + 13), Color.White, 0.52f);
-        DrawSpinBox(KomiSpinButtonBounds(true), KomiSpinButtonBounds(false), "0.5", mousePoint);
+        var valueBounds = TournamentRulesKomiTextBounds;
+        DrawFittedText(FormatKomi(session.Komi), valueBounds, Color.White, 0.52f);
+        _tournamentKomiUnderline.Draw(valueBounds, false, valueBounds.Contains(mousePoint), this);
     }
 
     private void DrawTournamentRulesTimeStrip(GoAppSession session, Point mousePoint)
@@ -1004,7 +1013,7 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IGoScre
 
     private static Rectangle RuleKindButtonBounds(int index) => new(AddPanelControlX + 132 + index * 180, 319, 164, 50);
 
-    private static Rectangle KomiSpinButtonBounds(bool up) => new(AddPanelControlX + 300, up ? 462 : 498, 88, 14);
+    private static Rectangle TournamentRulesKomiTextBounds => new(AddPanelControlX + 132, 466, 176, 38);
 
     private static Rectangle TournamentRulesMainTimePartTextBounds(int index) => new(AddPanelControlX + 132 + index * 112, 540, 52, 40);
 
@@ -1862,14 +1871,14 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IGoScre
             new InitialPositionConciergeDrawingCallbacks(DrawDynamicOptionText, DrawFittedText, DrawText, FillRect, DrawRect, DrawCommandButton));
 
     public void DrawPopupNumberUnderline(Point mousePosition, string title, string text, int caretIndex,
-        int selectionStart, int selectionLength, string message)
+        int selectionStart, int selectionLength, string message, PopupNumberUnderlineOptions options = default)
     {
         var mousePoint = VirtualScreen.ToVirtualPoint(_graphicsDevice.Viewport, mousePosition);
         _spriteBatch.Begin(blendState: BlendState.AlphaBlend, samplerState: SamplerState.LinearClamp,
             transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));
         PopupNumberUnderline.Draw(mousePoint, title, text, caretIndex, selectionStart, selectionLength, message,
             new PopupNumberUnderlineDrawingCallbacks(VirtualScreen.Width, VirtualScreen.Height, FillRect, DrawRect,
-                DrawText, DrawFittedText, DrawTextBoxSelection, value => _font.MeasureString(value).X, DrawCommandButton));
+                DrawText, DrawFittedText, DrawTextBoxSelection, value => _font.MeasureString(value).X, DrawCommandButton), options);
         _spriteBatch.End();
     }
 
