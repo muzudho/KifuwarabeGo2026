@@ -8,6 +8,7 @@ using System;
 public sealed partial class GoScreenRenderer
 {
     private static readonly CatalogOrder CatalogOrderControl = new();
+    private readonly CatalogOrderCard _catalogOrderCard = new();
 
     public static bool GetCatalogOrderCancelButtonHit(Point point) =>
         CatalogOrderControl.IsCancelButtonHit(point);
@@ -74,21 +75,10 @@ public sealed partial class GoScreenRenderer
 
             var item = editor.Items[index];
             var cardBounds = CatalogOrderEditorLayout.CardBounds(visibleIndex, editor.PageSize);
-            var selected = index == editor.SelectedIndex;
-            var dragged = index == editor.DraggedIndex;
-            var hovered = cardBounds.Contains(mousePoint);
-            FillRect(cardBounds, dragged ? new Color(57, 82, 118) : selected ? new Color(38, 103, 86) : hovered ? new Color(43, 52, 62) : new Color(24, 31, 37));
-            DrawRect(cardBounds, dragged ? 3 : 1, dragged ? new Color(176, 194, 242) : selected ? new Color(147, 244, 200) : new Color(70, 85, 94));
-            DrawText($"{index + 1:00}", new Vector2(cardBounds.X + 12, cardBounds.Y + 14), selected ? new Color(177, 255, 215) : new Color(180, 195, 195), 0.36f);
-            DrawFittedText(getName(item), new Rectangle(cardBounds.X + 58, cardBounds.Y + 4, cardBounds.Width - 70, 30), Color.White, 0.39f);
-            var isComputer = getComputerRole?.Invoke(item);
-            if (isComputer is { } computer)
-            {
-                DrawPlayerRoleFaceIcon(new Vector2(cardBounds.X + 72, cardBounds.Y + 49), computer);
-                DrawFittedText(getSummary(item), new Rectangle(cardBounds.X + 94, cardBounds.Y + 36, cardBounds.Width - 106, 24), new Color(204, 211, 206), 0.28f);
-            }
-            else
-                DrawFittedText(getSummary(item), new Rectangle(cardBounds.X + 58, cardBounds.Y + 36, cardBounds.Width - 70, 24), new Color(204, 211, 206), 0.28f);
+            _catalogOrderCard.Draw(
+                new CatalogOrderCardModel<T>(item, index + 1, cardBounds, index == editor.SelectedIndex,
+                    index == editor.DraggedIndex, cardBounds.Contains(mousePoint), getName, getSummary, getComputerRole),
+                new CatalogOrderCardDrawingCallbacks(FillRect, DrawRect, DrawText, DrawFittedText, DrawPlayerRoleFaceIcon));
         }
 
         DrawText($"PAGES {firstPage + 1}-{Math.Min(editor.PageCount, firstPage + 2)} / {editor.PageCount}", new Vector2(804, 837), new Color(227, 224, 210), 0.36f);
