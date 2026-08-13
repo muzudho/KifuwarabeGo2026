@@ -22,6 +22,7 @@ using KifuwarabeGo2026.Gui.Presentation.BoardLens;
 using KifuwarabeGo2026.Gui.Presentation.BoardLens.Shared.RenBoundaries;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.LinkUnderline;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.ActionBadge;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.MultilineTextUnderline;
 using KifuwarabeGo2026.Gui.Presentation.Title;
 using Microsoft.Xna.Framework;
@@ -66,6 +67,7 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IGoScre
         new RoundUnderline { TopOffset = -7, Thickness = 5, Radius = 2 });
     private readonly LinkUnderline _settingsValueLinkUnderline = new(
         new RoundUnderline { TopOffset = -7, Thickness = 6, Radius = 3 });
+    private readonly ActionBadge _actionBadge = new();
     private readonly Breadcrumb _breadcrumb = new();
     private readonly SpinBox _spinBox = new();
     
@@ -83,6 +85,18 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IGoScre
     private readonly CgosMatchNotification _cgosMatchNotification = new();
     private static readonly BoardLensButtonStrip LocalPlayingBoardLensButtons = new(1516, 800);
     public EditEntryProfile EditEntryProfile { get; } = new();
+
+    private void DrawActionBadge(string label, Rectangle anchorBounds, float textScale = 0.34f)
+    {
+        _actionBadge.Show(label, anchorBounds);
+        _actionBadge.Draw(new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText), textScale);
+    }
+
+    private void DrawActionBadgeAt(string label, Rectangle bounds, float textScale = 0.34f)
+    {
+        _actionBadge.ShowAt(label, bounds);
+        _actionBadge.Draw(new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText), textScale);
+    }
 
     public GoScreenRenderer(
         GraphicsDevice graphicsDevice,
@@ -2110,7 +2124,7 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IGoScre
         EditEntryProfile.Draw(session, mousePoint, _stickyNoteScreen,
             new EditEntryProfileDrawingCallbacks(VirtualScreen.Width, VirtualScreen.Height, FillRect, DrawRoundedFill,
                 DrawRect, DrawText, DrawFittedText, DrawCommandButton, DrawIconStone, DrawPlayerRoleFaceIcon,
-                DrawTextBoxSelection, DrawTextBoxCaret, DrawEditableTextEditHint, bounds => DrawPlayerEditHint("CHANGE", bounds),
+                DrawTextBoxSelection, DrawTextBoxCaret, DrawEditableTextEditHint, bounds => DrawActionBadge("CHANGE", bounds),
                 DrawLine, DrawDynamicOptionText, DrawRotatedCenteredText));
 
     void IUnderlineDrawingSurface.FillRectangle(Rectangle bounds, Color color) => FillRect(bounds, color);

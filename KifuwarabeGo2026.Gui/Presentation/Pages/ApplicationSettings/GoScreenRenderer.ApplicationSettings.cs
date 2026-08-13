@@ -94,7 +94,7 @@ public sealed partial class GoScreenRenderer
                 _settingsLogLinkUnderline.Draw(
                     this);
                 if (selected && hovered)
-                    DrawSettingsHoverBadge("EDIT", SettingsLogItemActionBadgeBounds(index));
+                    DrawActionBadgeAt("EDIT", SettingsLogItemActionBadgeBounds(index), 0.30f);
             }
         }
         else if (page == ApplicationSettingsPage.OtherFolders)
@@ -151,13 +151,7 @@ public sealed partial class GoScreenRenderer
         _settingsValueLinkUnderline.Draw(
             this);
         if (hovered)
-            DrawSettingsHoverBadge(action, new Rectangle(bounds.Right - 108, bounds.Bottom - 28, 100, 26));
-    }
-
-    private void DrawSettingsHoverBadge(string label, Rectangle bounds)
-    {
-        DrawRoundedFill(bounds, 6, new Color(185, 196, 255));
-        DrawSharpCenteredFittedText(label, bounds, new Color(15, 20, 31), 0.30f);
+            DrawActionBadge(action, bounds, 0.30f);
     }
 
     private void DrawSettingsSection(Rectangle bounds, string title, Color accentColor)

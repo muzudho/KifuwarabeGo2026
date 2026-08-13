@@ -222,7 +222,7 @@ public sealed partial class GoScreenRenderer
         _wideLinkUnderline.Draw(this);
         if (hovered)
         {
-            DrawPlayerEditHint("CHANGE", textBounds);
+            DrawActionBadge("CHANGE", textBounds);
             DrawStickyNote(
                 StickyNoteKind.AppProviderEngineHint,
                 new Vector2(textBounds.Right, textBounds.Center.Y),

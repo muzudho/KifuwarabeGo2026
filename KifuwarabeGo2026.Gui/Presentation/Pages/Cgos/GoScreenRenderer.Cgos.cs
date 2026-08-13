@@ -500,7 +500,7 @@ public sealed partial class GoScreenRenderer
         _compactLinkUnderline.Bounds = valueBounds;
         _compactLinkUnderline.UpdatePointer(mousePoint);
         _compactLinkUnderline.Draw(this);
-        if (hovered) DrawPlayerEditHint("CHANGE", valueBounds);
+        if (hovered) DrawActionBadge("CHANGE", valueBounds);
     }
 
     private void DrawCgosCredentialFields(GoAppSession session, GoStone stone, Point mousePoint)
@@ -659,7 +659,7 @@ public sealed partial class GoScreenRenderer
         _selectorLinkUnderline.Bounds = fieldBounds;
         _selectorLinkUnderline.UpdatePointer(mousePoint);
         _selectorLinkUnderline.Draw(this);
-        if (hovered) DrawPlayerEditHint("CHANGE", fieldBounds);
+        if (hovered) DrawActionBadge("CHANGE", fieldBounds);
     }
 
 

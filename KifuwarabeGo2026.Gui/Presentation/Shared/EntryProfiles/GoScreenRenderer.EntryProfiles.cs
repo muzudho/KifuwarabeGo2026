@@ -337,20 +337,11 @@ public sealed partial class GoScreenRenderer
         DrawStickyNote(StickyNoteKind.ClientIdentityHandleHint, PlayerEditUnderlineConnectorStart(textBounds), new Color(185, 196, 255), new Color(116, 145, 178), "HANDLE とは？", ["対局サービスにログインするときの、プレイヤー固有の名前。", "接続する相手の機械に入力できるフォーマットに合わせます。"], bodyLineSpacing: 26);
     }
 
-    private void DrawPlayerEditHint(string text, Rectangle textBounds)
-    {
-        var hintBounds = text == "EDIT"
-            ? new Rectangle(textBounds.Right - 76, textBounds.Bottom - 25, 70, 23)
-            : new Rectangle(textBounds.Right - 108, textBounds.Bottom - 28, 100, 26);
-        DrawRoundedFill(hintBounds, 6, new Color(185, 196, 255));
-        DrawSharpCenteredFittedText(text, hintBounds, new Color(15, 20, 31), 0.34f);
-    }
-
     /// <summary>未編集のテキスト項目へホバーしたときだけ、共通の EDIT バッジを表示します。</summary>
     private void DrawEditableTextEditHint(bool isEditing, bool isHovered, Rectangle textBounds)
     {
         if (!isEditing && isHovered)
-            DrawPlayerEditHint("EDIT", textBounds);
+            DrawActionBadge("EDIT", textBounds);
     }
 
     private static Rectangle ClientIdentityFieldHoverBounds(Rectangle textBounds) =>

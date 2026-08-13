@@ -458,7 +458,7 @@ public sealed partial class GoScreenRenderer
         if (option.Type == "spin" && option.Min is { } min && option.Max is { } max)
             DrawFittedText($"{min} .. {max}", new Rectangle(valueBounds.Right + 12, valueBounds.Y + 10, 126, 28), new Color(118, 139, 143), 0.24f);
         if (hovered)
-            DrawGtpEngineOptionActionHint(GetGtpEngineOptionActionLabel(option), valueBounds);
+            DrawActionBadge(GetGtpEngineOptionActionLabel(option), valueBounds, 0.30f);
         if (option.Type is not ("button" or "string") && row.Contains(mousePoint))
             DrawCommandButton(GtpEngineGuiOptionDefaultButtonBounds(slot), "DEFAULT", false, mousePoint, scale: 0.3f);
     }
@@ -472,14 +472,6 @@ public sealed partial class GoScreenRenderer
         "button" => "EXECUTE",
         _ => "EDIT",
     };
-
-    private void DrawGtpEngineOptionActionHint(string label, Rectangle valueBounds)
-    {
-        var width = label is "EDIT" ? 70 : label is "SELECT" or "TOGGLE" ? 88 : 100;
-        var hintBounds = new Rectangle(valueBounds.Right - width - 6, valueBounds.Bottom - 28, width, 25);
-        DrawRoundedFill(hintBounds, 6, new Color(185, 196, 255));
-        DrawSharpCenteredFittedText(label, hintBounds, new Color(15, 20, 31), 0.30f);
-    }
 
     private void DrawGtpEngineGuiOptionValueTooltip(GoAppSession session, Point mousePoint)
     {
@@ -602,7 +594,7 @@ public sealed partial class GoScreenRenderer
         if (GtpEngineEditableTextFields.Contains(field))
             DrawEditableTextEditHint(active, hovered, textBounds);
         else if (hovered && !active)
-            DrawPlayerEditHint("CHANGE", textBounds);
+            DrawActionBadge("CHANGE", textBounds);
     }
 
 
