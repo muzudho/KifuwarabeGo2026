@@ -11,7 +11,6 @@ using System.Collections.Generic;
 internal sealed class PortablePlatformServices :
     IClipboardService,
     ITextCompositionService,
-    IMessageDialogService,
     IFileDialogService,
     IDesktopLauncher,
     ITextRasterizer,
@@ -51,10 +50,6 @@ internal sealed class PortablePlatformServices :
     {
         text = "";
         return false;
-    }
-
-    public void ShowWarning(string title, string message)
-    {
     }
 
     public string? OpenFile(OpenFileDialogOptions options) => null;

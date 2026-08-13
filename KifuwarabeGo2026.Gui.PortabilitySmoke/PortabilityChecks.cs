@@ -6,7 +6,7 @@ using KifuwarabeGo2026.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.Connection
 using KifuwarabeGo2026.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.Gui.Application.Local.Resting.TournamentRule;
 using KifuwarabeGo2026.Gui.Gtp;
-using KifuwarabeGo2026.Gui.Presentation.Shared.TextBox;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls;
 using KifuwarabeGo2026.Gui.Sgf;
 using KifuwarabeGo2026.GtpExtensions;
 using KifuwarabeGo2026.GtpExtensions.Capabilities;
@@ -179,17 +179,17 @@ internal static class PortabilityChecks
         Require(view.Engines[0].CanTryAnotherMethod && view.Engines[1].CanContinueAsIs,
             "Each engine card must expose its own available action.");
         Require(
-            KifuwarabeGo2026.Gui.Presentation.GoScreenRenderer.GetInitialPositionTryAnotherButtonHit(new Point(1170, 455)) == GoStone.Black,
+            KifuwarabeGo2026.Gui.Presentation.Pages.InitialPositionConcierge.InitialPositionConcierge.GetTryAnotherButtonHit(new Point(1170, 455)) == GoStone.Black,
             "The black-engine fallback button hit area is incorrect.");
         Require(
-            KifuwarabeGo2026.Gui.Presentation.GoScreenRenderer.GetInitialPositionContinueButtonHit(new Point(1500, 781)) == GoStone.White,
+            KifuwarabeGo2026.Gui.Presentation.Pages.InitialPositionConcierge.InitialPositionConcierge.GetContinueButtonHit(new Point(1500, 781)) == GoStone.White,
             "The white-engine continue button hit area is incorrect.");
         Require(
-            KifuwarabeGo2026.Gui.Presentation.GoScreenRenderer.GetInitialPositionEngineCardHit(new Point(1200, 550)) == GoStone.White,
+            KifuwarabeGo2026.Gui.Presentation.Pages.InitialPositionConcierge.InitialPositionConcierge.GetEngineCardHit(new Point(1200, 550)) == GoStone.White,
             "The white-engine card selection hit area is incorrect.");
         Require(
-            KifuwarabeGo2026.Gui.Presentation.GoScreenRenderer.GetInitialPositionCancelButtonHit(new Point(1200, 940)) &&
-            KifuwarabeGo2026.Gui.Presentation.GoScreenRenderer.GetInitialPositionLogButtonHit(new Point(1550, 940)),
+            KifuwarabeGo2026.Gui.Presentation.Pages.InitialPositionConcierge.InitialPositionConcierge.IsCancelButtonHit(new Point(1200, 940)) &&
+            KifuwarabeGo2026.Gui.Presentation.Pages.InitialPositionConcierge.InitialPositionConcierge.IsLogButtonHit(new Point(1550, 940)),
             "The concierge footer button hit areas are incorrect.");
     }
 
@@ -1658,7 +1658,6 @@ internal static class PortabilityChecks
     {
         var platform = new PortablePlatformServices();
         return new Game1(
-            platform,
             platform,
             platform,
             platform,

@@ -410,7 +410,6 @@ internal static class Program
     private static void VerifyServiceComposition()
     {
         IClipboardService clipboard = new WindowsClipboardService();
-        IMessageDialogService messageDialog = new WindowsMessageDialogService();
         IFileDialogService fileDialog = new WindowsFileDialogService();
         IDesktopLauncher desktopLauncher = new WindowsDesktopLauncher();
         ITextRasterizer textRasterizer = new WindowsTextRasterizer();
@@ -420,7 +419,6 @@ internal static class Program
 
         Require(
             clipboard is not null
-            && messageDialog is not null
             && fileDialog is not null
             && desktopLauncher is not null
             && textRasterizer is not null
