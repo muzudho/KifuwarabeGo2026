@@ -2055,6 +2055,69 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface
         }
     }
 
+    private void DrawRenGraphStep1Overlay(GoAppSession session, Vector2 start, float cell)
+    {
+        var renParse = session.ParseRens();
+        DrawRenGraphCells(session, start, cell); DrawRenBoundaries(renParse, start, cell);
+        DrawRenRepresentativeNumbers(renParse, start, cell);
+    }
+    private void DrawRenRepresentativeNumbers(GoRenParseResult renParse, Vector2 start, float cell)
+    {
+        var scale = RenNumberScale(cell); var drawn = new bool[renParse.Count + 1];
+        for (var y = 0; y < renParse.Size; y++) for (var x = 0; x < renParse.Size; x++)
+        {
+            var number = renParse.GetRenNumber(x, y);
+            if (drawn[number]) continue;
+            drawn[number] = true; DrawRenNumber(number, BoardPoint(start, cell, x, y), scale);
+        }
+    }
+    private void DrawRenBoundaries(GoRenParseResult renParse, Vector2 start, float cell)
+    {
+        var size = renParse.Size; var halfCell = cell * 0.5f; var thickness = Math.Max(5, (int)MathF.Round(cell * 0.08f)); var color = new Color(255, 238, 0, 238);
+        for (var y = 0; y < size; y++) for (var x = 0; x < size; x++)
+        {
+            var number = renParse.GetRenNumber(x, y); var center = BoardPoint(start, cell, x, y);
+            var left = center.X - halfCell; var top = center.Y - halfCell; var right = center.X + halfCell; var bottom = center.Y + halfCell;
+            if (x == 0 || renParse.GetRenNumber(x - 1, y) != number) FillRect(CreateVerticalLineRect(left, top, bottom, thickness), color);
+            if (y == 0 || renParse.GetRenNumber(x, y - 1) != number) FillRect(CreateHorizontalLineRect(left, right, top, thickness), color);
+            if (x == size - 1) FillRect(CreateVerticalLineRect(right, top, bottom, thickness), color);
+            if (y == size - 1) FillRect(CreateHorizontalLineRect(left, right, bottom, thickness), color);
+        }
+    }
+
+    private void DrawAdjacentRenRelationships(GoRenParseResult renParse, List<(GoPoint From, GoPoint To)> contacts,
+        HashSet<int> adjacentRenNumbers, Color legColor, float legThickness, Vector2 start, float cell)
+    {
+        var radius = MathHelper.Clamp(cell * 0.13f, 5f, 11f);
+        var innerHalf = Math.Max(2, (int)MathF.Round(radius - legThickness));
+        var outerHalf = Math.Max(innerHalf + 2, (int)MathF.Round(radius + 3f - legThickness));
+        var sorted = new List<int>(adjacentRenNumbers); sorted.Sort();
+        foreach (var number in sorted)
+        {
+            var contact = FindFirstContact(number); var target = renParse.GetRen(number);
+            var source = BoardPoint(start, cell, contact.From.X, contact.From.Y); var boundary = BoardPoint(start, cell, contact.To.X, contact.To.Y);
+            var direction = new Vector2(contact.From.X - contact.To.X, contact.From.Y - contact.To.Y); direction.Normalize();
+            var marker = boundary + new Vector2(-direction.Y, direction.X) * outerHalf * 2f;
+            DrawLine(source, marker, legThickness, legColor);
+            FillRect(new Rectangle((int)MathF.Round(marker.X) - outerHalf, (int)MathF.Round(marker.Y) - outerHalf, outerHalf * 2, outerHalf * 2), legColor);
+            FillRect(new Rectangle((int)MathF.Round(marker.X) - innerHalf, (int)MathF.Round(marker.Y) - innerHalf, innerHalf * 2, innerHalf * 2), RenGraphCellColor(target.Stone));
+        }
+        (GoPoint From, GoPoint To) FindFirstContact(int targetNumber)
+        {
+            (GoPoint From, GoPoint To)? selected = null;
+            foreach (var contact in contacts)
+                if (renParse.GetRenNumber(contact.To.X, contact.To.Y) == targetNumber && (selected is null || ComesFirst(contact, selected.Value))) selected = contact;
+            return selected ?? throw new InvalidOperationException("Adjacent ren has no boundary contact.");
+        }
+        static bool ComesFirst((GoPoint From, GoPoint To) candidate, (GoPoint From, GoPoint To) current) => candidate.To.Y < current.To.Y ||
+            (candidate.To.Y == current.To.Y && candidate.To.X < current.To.X) ||
+            (candidate.To == current.To && (candidate.From.Y < current.From.Y || (candidate.From.Y == current.From.Y && candidate.From.X < current.From.X)));
+    }
+    private static int SumAdjacentRenAreas(GoRenParseResult renParse, HashSet<int> numbers)
+    {
+        var area = 0; foreach (var number in numbers) area += renParse.GetRen(number).Points.Count; return area;
+    }
+
     private void DrawRenMetricNumber(GoRen ren, int value, RenMetricUnit unit, Color valueColor, Vector2 start,
         float cell, Color? valueOutlineColor = null)
     {
