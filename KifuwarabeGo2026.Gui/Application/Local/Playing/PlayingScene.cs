@@ -9,6 +9,7 @@ using KifuwarabeGo2026.Shared.Domain;
 using KifuwarabeGo2026.Gui.Gtp;
 using KifuwarabeGo2026.Gui.Infrastructure.Logging;
 using KifuwarabeGo2026.Gui.Presentation;
+using InitialPositionConciergePage = KifuwarabeGo2026.Gui.Presentation.Pages.InitialPositionConcierge.InitialPositionConcierge;
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
@@ -89,27 +90,27 @@ public sealed class PlayingScene : IDisposable
     {
         if (IsInitialPositionConciergeVisible)
         {
-            if (GoScreenRenderer.GetInitialPositionTryAnotherButtonHit(point) is { } tryStone)
+            if (InitialPositionConciergePage.GetTryAnotherButtonHit(point) is { } tryStone)
             {
                 SelectInitialPositionEngine(tryStone);
                 TryAnotherInitialPositionMethod(tryStone);
             }
-            else if (GoScreenRenderer.GetInitialPositionContinueButtonHit(point) is { } continueStone)
+            else if (InitialPositionConciergePage.GetContinueButtonHit(point) is { } continueStone)
             {
                 SelectInitialPositionEngine(continueStone);
                 ContinueWithInitialPositionMethod(continueStone);
             }
-            else if (GoScreenRenderer.GetInitialPositionLogButtonHit(point))
+            else if (InitialPositionConciergePage.IsLogButtonHit(point))
             {
                 _openGtpLog();
             }
-            else if (GoScreenRenderer.GetInitialPositionCancelButtonHit(point))
+            else if (InitialPositionConciergePage.IsCancelButtonHit(point))
             {
                 CancelGtpGame();
                 _session.DeactivateModalWindow(ActiveWindowId.InitialPositionConcierge);
                 _session.CancelPlaying();
             }
-            else if (GoScreenRenderer.GetInitialPositionEngineCardHit(point) is { } selectedStone)
+            else if (InitialPositionConciergePage.GetEngineCardHit(point) is { } selectedStone)
             {
                 SelectInitialPositionEngine(selectedStone);
             }
