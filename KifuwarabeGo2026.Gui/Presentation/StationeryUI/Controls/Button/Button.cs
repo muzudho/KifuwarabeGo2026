@@ -33,6 +33,8 @@ public sealed class Button
 
     public bool IsHit(Point point) => IsEnabled && Bounds.Contains(point);
 
+    public void UpdatePointer(Point point) => IsPointerOver = IsHit(point);
+
     // ========================================
     // 機能
     // ========================================
@@ -41,7 +43,7 @@ public sealed class Button
     {
         ArgumentNullException.ThrowIfNull(surface);
 
-        IsPointerOver = IsHit(mousePoint);
+        UpdatePointer(mousePoint);
         var fill = !IsEnabled ? new Color(24, 27, 31) : IsPointerOver ? PointerOverFillColor : FillColor;
         var border = !IsEnabled ? new Color(43, 50, 56) : IsPointerOver ? new Color(178, 219, 226) : new Color(126, 150, 164);
         surface.FillRectangle(new Rectangle(Bounds.X + 4, Bounds.Y + 5, Bounds.Width, Bounds.Height), new Color(0, 0, 0, IsEnabled ? 95 : 28));
