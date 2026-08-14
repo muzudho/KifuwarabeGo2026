@@ -1277,19 +1277,19 @@ public class Game1 : Game
 
                 if (_session.IsCgosAdminPlayerSelectionDialogOpen)
                 {
-                    if (GoScreenRenderer.GetCgosAdminPlayerDialogCancelButtonHit(point))
+                    if (CgosLoginPage.Default.PlayerDialogCancelButton.IsHit(point))
                     {
                         _session.CancelCgosAdminPlayerSelectionDialog();
                     }
-                    else if (GoScreenRenderer.GetCgosAdminPlayerDialogSelectButtonHit(point))
+                    else if (CgosLoginPage.Default.PlayerDialogSelectButton.IsHit(point))
                     {
                         _session.CommitCgosAdminPlayerSelectionDialog();
                     }
-                    else if (GoScreenRenderer.GetCgosAdminPlayerDialogPreviousPageButtonHit(point))
+                    else if (CgosLoginPage.Default.PlayerDialogPreviousButton.IsHit(point))
                     {
                         _session.MoveCgosAdminPlayerSelectionPage(-1);
                     }
-                    else if (GoScreenRenderer.GetCgosAdminPlayerDialogNextPageButtonHit(point))
+                    else if (CgosLoginPage.Default.PlayerDialogNextButton.IsHit(point))
                     {
                         _session.MoveCgosAdminPlayerSelectionPage(1);
                     }
@@ -1425,7 +1425,8 @@ public class Game1 : Game
                     else
                     {
                         EndCgosCredentialEdit();
-                        if (GoScreenRenderer.GetCgosConnectionStartBackButtonHit(point))
+                        CgosLoginPage.Default.UpdateGameInProgressButtons(_session.IsCgosGameInProgress);
+                        if (CgosLoginPage.Default.BackButton.IsHit(point))
                         {
                             if (_session.IsAnyCgosProcessRunning) _ = DisconnectAllCgosProcessesAsync();
                             _session.ReturnToCgosConnectionProfiles();
@@ -1442,92 +1443,85 @@ public class Game1 : Game
                         {
                             _session.OpenCgosPlayerSelectionDialog(engineStone);
                         }
-                        else if (GoScreenRenderer.GetCgosAdminButtonHit(
-                                     point,
-                                     _session.IsCgosAdminInputEnabled && _session.CgosConnectionProfiles.Count > 0))
+                        else if (_session.IsCgosAdminInputEnabled &&
+                                 _session.CgosConnectionProfiles.Count > 0 &&
+                                 CgosLoginPage.Default.AdminConnectButton.IsHit(point))
                         {
                             ToggleCgosAdminProcess();
                         }
-                        else if (GoScreenRenderer.GetCgosAdminWhoButtonHit(
-                                     point,
-                                     _session.IsCgosAdminInputEnabled && _session.IsCgosAdminRunning))
+                        else if (_session.IsCgosAdminInputEnabled &&
+                                 _session.IsCgosAdminRunning &&
+                                 CgosLoginPage.Default.AdminWhoButton.IsHit(point))
                         {
                             SendCgosAdminCommand("who");
                         }
                         else if (_session.IsCgosAdminInputEnabled &&
-                                 GoScreenRenderer.GetCgosAdminWhitePlayerSelectButtonHit(point))
+                                 CgosLoginPage.Default.AdminWhitePlayerButton.IsHit(point))
                         {
                             _session.OpenCgosAdminPlayerSelectionDialog(GoStone.White);
                         }
                         else if (_session.IsCgosAdminInputEnabled &&
-                                 GoScreenRenderer.GetCgosAdminBlackPlayerSelectButtonHit(point))
+                                 CgosLoginPage.Default.AdminBlackPlayerButton.IsHit(point))
                         {
                             _session.OpenCgosAdminPlayerSelectionDialog(GoStone.Black);
                         }
-                        else if (GoScreenRenderer.GetCgosAdminMatchButtonHit(point, _session.CanSendCgosAdminMatch))
+                        else if (_session.CanSendCgosAdminMatch && CgosLoginPage.Default.AdminMatchButton.IsHit(point))
                         {
                             SendSelectedCgosAdminMatch();
                         }
-                        else if (GoScreenRenderer.GetCgosAdminSwapButtonHit(point, _session.CanSendCgosAdminMatch))
+                        else if (_session.CanSendCgosAdminMatch && CgosLoginPage.Default.AdminSwapButton.IsHit(point))
                         {
                             _session.SwapCgosAdminPlayers();
                         }
-                        else if (GoScreenRenderer.GetCgosAdminCodeButtonHit(point, !string.IsNullOrWhiteSpace(_session.CgosAdminLogDirectory)))
+                        else if (!string.IsNullOrWhiteSpace(_session.CgosAdminLogDirectory) && CgosLoginPage.Default.AdminCodeButton.IsHit(point))
                         {
                             OpenCgosAdminLog();
                         }
-                        else if (GoScreenRenderer.GetCgosAdminTailButtonHit(point, !string.IsNullOrWhiteSpace(_session.CgosAdminLogDirectory)))
+                        else if (!string.IsNullOrWhiteSpace(_session.CgosAdminLogDirectory) && CgosLoginPage.Default.AdminTailButton.IsHit(point))
                         {
                             TailCgosAdminLog();
                         }
-                        else if (GoScreenRenderer.GetCgosBlackResignButtonHit(
-                                     point,
-                                     _session.IsCgosGameInProgress && _session.IsCgosBlackConnectionRunning))
+                        else if (_session.IsCgosGameInProgress &&
+                                 _session.IsCgosBlackConnectionRunning &&
+                                 CgosLoginPage.Default.BlackResignButton.IsHit(point))
                         {
                             SendCgosPlayerResign(GoStone.Black);
                         }
-                        else if (GoScreenRenderer.GetCgosWhiteResignButtonHit(
-                                     point,
-                                     _session.IsCgosPlayer2InputEnabled &&
+                        else if (_session.IsCgosPlayer2InputEnabled &&
                                      _session.IsCgosGameInProgress &&
-                                     _session.IsCgosWhiteConnectionRunning))
+                                     _session.IsCgosWhiteConnectionRunning &&
+                                     CgosLoginPage.Default.WhiteResignButton.IsHit(point))
                         {
                             SendCgosPlayerResign(GoStone.White);
                         }
-                        else if (GoScreenRenderer.GetCgosBlackConnectionButtonHit(
-                                     point,
-                                     _session.IsCgosBlackConnectionRunning || _session.SelectedCgosBlackGtpEngineProfile is not null,
-                                     _session.IsCgosGameInProgress))
+                        else if ((_session.IsCgosBlackConnectionRunning || _session.SelectedCgosBlackGtpEngineProfile is not null) &&
+                                 CgosLoginPage.Default.BlackConnectButton.IsHit(point))
                         {
                             ToggleCgosPlayerConnectionProcess(GoStone.Black);
                         }
-                        else if (GoScreenRenderer.GetCgosWhiteConnectionButtonHit(
-                                     point,
-                                     _session.IsCgosPlayer2InputEnabled &&
-                                     (_session.IsCgosWhiteConnectionRunning || _session.SelectedCgosWhiteGtpEngineProfile is not null),
-                                     _session.IsCgosGameInProgress))
+                        else if (_session.IsCgosPlayer2InputEnabled &&
+                                 (_session.IsCgosWhiteConnectionRunning || _session.SelectedCgosWhiteGtpEngineProfile is not null) &&
+                                 CgosLoginPage.Default.WhiteConnectButton.IsHit(point))
                         {
                             ToggleCgosPlayerConnectionProcess(GoStone.White);
                         }
-                        else if (GoScreenRenderer.GetCgosPlayer1CodeButtonHit(point, !string.IsNullOrWhiteSpace(_session.CgosBlackConnectionLogDirectory)))
+                        else if (!string.IsNullOrWhiteSpace(_session.CgosBlackConnectionLogDirectory) && CgosLoginPage.Default.BlackCodeButton.IsHit(point))
                         {
                             OpenCgosPlayerConnectionLog(GoStone.Black);
                         }
-                        else if (GoScreenRenderer.GetCgosPlayer1TailButtonHit(point, !string.IsNullOrWhiteSpace(_session.CgosBlackConnectionLogDirectory)))
+                        else if (!string.IsNullOrWhiteSpace(_session.CgosBlackConnectionLogDirectory) && CgosLoginPage.Default.BlackTailButton.IsHit(point))
                         {
                             TailCgosPlayerConnectionLog(GoStone.Black);
                         }
-                        else if (GoScreenRenderer.GetCgosPlayer2CodeButtonHit(
-                                     point,
-                                     _session.IsCgosPlayer2InputEnabled &&
-                                     !string.IsNullOrWhiteSpace(_session.CgosWhiteConnectionLogDirectory)))
+                        else if (_session.IsCgosPlayer2InputEnabled &&
+                                 !string.IsNullOrWhiteSpace(_session.CgosWhiteConnectionLogDirectory) &&
+                                 CgosLoginPage.Default.WhiteCodeButton.IsHit(point))
                         {
                             OpenCgosPlayerConnectionLog(GoStone.White);
                         }
-                        else if (GoScreenRenderer.GetCgosPlayer2TailButtonHit(
-                                     point,
-                                     _session.IsCgosPlayer2InputEnabled &&
-                                     !string.IsNullOrWhiteSpace(_session.CgosWhiteConnectionLogDirectory)))
+                        else if (_session.IsCgosPlayer2InputEnabled &&
+                                 !string.IsNullOrWhiteSpace(_session.CgosWhiteConnectionLogDirectory) &&
+                                 CgosLoginPage.Default.WhiteTailButton.IsHit(point))
                         {
                             TailCgosPlayerConnectionLog(GoStone.White);
                         }
@@ -1537,41 +1531,41 @@ public class Game1 : Game
                     return;
                 }
 
-                if (GoScreenRenderer.GetCgosBackButtonHit(point))
+                if (CgosSelectConnectionPage.Default.CancelButton.IsHit(point))
                 {
                     _session.ReturnToUseSelection();
                 }
-                else if (GoScreenRenderer.GetCgosUseSelectedProfileButtonHit(point, _session.CgosConnectionProfiles.Count > 0))
+                else if (_session.CgosConnectionProfiles.Count > 0 && CgosSelectConnectionPage.Default.SelectButton.IsHit(point))
                 {
                     _session.OpenCgosConnectionStartScreen();
                 }
-                else if (GoScreenRenderer.GetCgosAddButtonHit(point))
+                else if (CgosSelectConnectionPage.Default.AddButton.IsHit(point))
                 {
                     _session.OpenCgosConnectionAddPanel();
                 }
-                else if (GoScreenRenderer.GetCgosEditButtonHit(point) && _session.CgosConnectionProfiles.Count > 0)
+                else if (_session.CgosConnectionProfiles.Count > 0 && CgosSelectConnectionPage.Default.EditButton.IsHit(point))
                 {
                     _session.OpenCgosConnectionEditPanel();
                 }
-                else if (GoScreenRenderer.GetCgosDuplicateButtonHit(point) && _session.CgosConnectionProfiles.Count > 0)
+                else if (_session.CgosConnectionProfiles.Count > 0 && CgosSelectConnectionPage.Default.DuplicateButton.IsHit(point))
                 {
                     _session.OpenCgosConnectionDuplicatePanel();
                 }
-                else if (GoScreenRenderer.GetCgosDeleteButtonHit(point, _session.CanDeleteSelectedCgosConnectionProfile))
+                else if (_session.CanDeleteSelectedCgosConnectionProfile && CgosSelectConnectionPage.Default.DeleteButton.IsHit(point))
                 {
                     _session.RemoveSelectedCgosConnectionProfile();
                     _cgosConnectionCatalog.Save(_session.CgosConnectionProfiles);
                 }
                 else if (_session.CgosConnectionProfiles.Count > 1 &&
-                         GoScreenRenderer.GetCgosOrderButtonHit(point))
+                         CgosSelectConnectionPage.Default.OrderButton.IsHit(point))
                 {
                     _session.OpenCgosConnectionOrderEditor();
                 }
-                else if (GoScreenRenderer.GetCgosPreviousPageButtonHit(point))
+                else if (CgosSelectConnectionPage.Default.PreviousButton.IsHit(point))
                 {
                     _session.MoveCgosConnectionSelectionPage(-1);
                 }
-                else if (GoScreenRenderer.GetCgosNextPageButtonHit(point))
+                else if (CgosSelectConnectionPage.Default.NextButton.IsHit(point))
                 {
                     _session.MoveCgosConnectionSelectionPage(1);
                 }
@@ -1955,13 +1949,13 @@ public class Game1 : Game
         if (!_session.IsCgosAdminPlayerSelectionDialogOpen)
             return false;
 
-        if (GoScreenRenderer.GetCgosAdminPlayerDialogCancelButtonHit(point))
+        if (CgosLoginPage.Default.PlayerDialogCancelButton.IsHit(point))
             _session.CancelCgosAdminPlayerSelectionDialog();
-        else if (GoScreenRenderer.GetCgosAdminPlayerDialogSelectButtonHit(point))
+        else if (CgosLoginPage.Default.PlayerDialogSelectButton.IsHit(point))
             _session.CommitCgosAdminPlayerSelectionDialog();
-        else if (GoScreenRenderer.GetCgosAdminPlayerDialogPreviousPageButtonHit(point))
+        else if (CgosLoginPage.Default.PlayerDialogPreviousButton.IsHit(point))
             _session.MoveCgosAdminPlayerSelectionPage(-1);
-        else if (GoScreenRenderer.GetCgosAdminPlayerDialogNextPageButtonHit(point))
+        else if (CgosLoginPage.Default.PlayerDialogNextButton.IsHit(point))
             _session.MoveCgosAdminPlayerSelectionPage(1);
         else if (GoScreenRenderer.GetCgosAdminPlayerDialogItemHit(point, _session) is { } playerIndex)
             _session.SelectCgosAdminPlayerDialogItem(playerIndex);
@@ -3063,7 +3057,7 @@ public class Game1 : Game
             return false;
         }
 
-        if (GoScreenRenderer.GetCgosConnectionEditPanelCloseButtonHit(point) && _session.IsCgosConnectionEditDirty)
+        if (_session.IsCgosConnectionEditDirty && CgosSelectConnectionPage.Default.EditDiscardButton.IsHit(point))
         {
             EndCgosConnectionEditField();
             _cgosConnectionEditTextBox.Clear();
@@ -3072,7 +3066,7 @@ public class Game1 : Game
             return true;
         }
 
-        if (GoScreenRenderer.GetCgosConnectionEditPanelSaveButtonHit(point))
+        if (CgosSelectConnectionPage.Default.EditSaveButton.IsHit(point))
         {
             if (_session.IsCgosConnectionEditDirty)
             {

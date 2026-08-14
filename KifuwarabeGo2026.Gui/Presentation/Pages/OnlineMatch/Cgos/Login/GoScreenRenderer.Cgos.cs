@@ -60,43 +60,11 @@ public sealed partial class GoScreenRenderer
     }
 
 
-    public static bool GetCgosBackButtonHit(Point point) => CgosSelectConnectionPage.Default.CancelButton.IsHit(point);
-
-
-    public static bool GetCgosUseSelectedProfileButtonHit(Point point, bool enabled) =>
-        enabled && CgosSelectConnectionPage.Default.SelectButton.IsHit(point);
-
-
-    public static bool GetCgosAdminButtonHit(Point point, bool enabled) =>
-        enabled && CgosLoginPage.Default.AdminConnectButton.IsHit(point);
-
     public static bool GetCgosPlayer2InputCheckHit(Point point, bool enabled) =>
         enabled && CgosPlayer2InputCheckBounds.Contains(point);
 
     public static bool GetCgosAdminInputCheckHit(Point point, bool enabled) =>
         enabled && CgosAdminInputCheckBounds.Contains(point);
-
-
-    public static bool GetCgosAdminWhoButtonHit(Point point, bool enabled) =>
-        enabled && CgosLoginPage.Default.AdminWhoButton.IsHit(point);
-
-
-    public static bool GetCgosAdminWhitePlayerSelectButtonHit(Point point) => CgosAdminPlayerValueBounds(CgosAdminWhitePlayerRowBounds).Contains(point);
-
-
-    public static bool GetCgosAdminBlackPlayerSelectButtonHit(Point point) => CgosAdminPlayerValueBounds(CgosAdminBlackPlayerRowBounds).Contains(point);
-
-
-    public static bool GetCgosAdminPlayerDialogCancelButtonHit(Point point) => CgosLoginPage.Default.PlayerDialogCancelButton.IsHit(point);
-
-
-    public static bool GetCgosAdminPlayerDialogSelectButtonHit(Point point) => CgosLoginPage.Default.PlayerDialogSelectButton.IsHit(point);
-
-
-    public static bool GetCgosAdminPlayerDialogPreviousPageButtonHit(Point point) => CgosLoginPage.Default.PlayerDialogPreviousButton.IsHit(point);
-
-
-    public static bool GetCgosAdminPlayerDialogNextPageButtonHit(Point point) => CgosLoginPage.Default.PlayerDialogNextButton.IsHit(point);
 
 
     public static int? GetCgosAdminPlayerDialogItemHit(Point point, GoAppSession session)
@@ -112,19 +80,12 @@ public sealed partial class GoScreenRenderer
     }
 
 
-    public static bool GetCgosAdminMatchButtonHit(Point point, bool enabled) => enabled && CgosLoginPage.Default.AdminMatchButton.IsHit(point);
-
-
-    public static bool GetCgosAdminSwapButtonHit(Point point, bool enabled) => enabled && CgosLoginPage.Default.AdminSwapButton.IsHit(point);
-
     /// <summary>
     /// ［Admin ＞ LOG: EDIT］ボタンの活性化状態
     /// </summary>
     /// <param name="point"></param>
     /// <param name="enabled"></param>
     /// <returns></returns>
-    public static bool GetCgosAdminCodeButtonHit(Point point, bool enabled) =>
-        enabled && CgosLoginPage.Default.AdminCodeButton.IsHit(point);
 
     /// <summary>
     /// ［Admin ＞ LOG: VIEW］ボタンの活性化状態
@@ -132,28 +93,8 @@ public sealed partial class GoScreenRenderer
     /// <param name="point"></param>
     /// <param name="enabled"></param>
     /// <returns></returns>
-    public static bool GetCgosAdminTailButtonHit(Point point, bool enabled) =>
-        enabled && CgosLoginPage.Default.AdminTailButton.IsHit(point);
 
 
-    public static bool GetCgosBlackConnectionButtonHit(Point point, bool enabled, bool gameInProgress)
-    {
-        CgosLoginPage.Default.UpdateGameInProgressButtons(gameInProgress);
-        return enabled && CgosLoginPage.Default.BlackConnectButton.IsHit(point);
-    }
-
-
-    public static bool GetCgosWhiteConnectionButtonHit(Point point, bool enabled, bool gameInProgress)
-    {
-        CgosLoginPage.Default.UpdateGameInProgressButtons(gameInProgress);
-        return enabled && CgosLoginPage.Default.WhiteConnectButton.IsHit(point);
-    }
-
-    public static bool GetCgosBlackResignButtonHit(Point point, bool enabled) =>
-        enabled && CgosLoginPage.Default.BlackResignButton.IsHit(point);
-
-    public static bool GetCgosWhiteResignButtonHit(Point point, bool enabled) =>
-        enabled && CgosLoginPage.Default.WhiteResignButton.IsHit(point);
 
     /// <summary>
     /// ［プレイヤー１　＞　LOG: EDIT］ボタンの活性化状態
@@ -161,8 +102,6 @@ public sealed partial class GoScreenRenderer
     /// <param name="point"></param>
     /// <param name="enabled"></param>
     /// <returns></returns>
-    public static bool GetCgosPlayer1CodeButtonHit(Point point, bool enabled) =>
-        enabled && CgosLoginPage.Default.BlackCodeButton.IsHit(point);
 
     /// <summary>
     /// ［プレイヤー１　＞　LOG: VIEW］ボタンの活性化状態
@@ -170,8 +109,6 @@ public sealed partial class GoScreenRenderer
     /// <param name="point"></param>
     /// <param name="enabled"></param>
     /// <returns></returns>
-    public static bool GetCgosPlayer1TailButtonHit(Point point, bool enabled) =>
-        enabled && CgosLoginPage.Default.BlackTailButton.IsHit(point);
 
     /// <summary>
     /// ［プレイヤー２　＞　LOG: EDIT］ボタンの活性化状態
@@ -179,8 +116,6 @@ public sealed partial class GoScreenRenderer
     /// <param name="point"></param>
     /// <param name="enabled"></param>
     /// <returns></returns>
-    public static bool GetCgosPlayer2CodeButtonHit(Point point, bool enabled) =>
-        enabled && CgosLoginPage.Default.WhiteCodeButton.IsHit(point);
 
     /// <summary>
     /// ［プレイヤー２　＞　LOG: VIEW］ボタンの活性化状態
@@ -188,12 +123,6 @@ public sealed partial class GoScreenRenderer
     /// <param name="point"></param>
     /// <param name="enabled"></param>
     /// <returns></returns>
-    public static bool GetCgosPlayer2TailButtonHit(Point point, bool enabled) =>
-        enabled && CgosLoginPage.Default.WhiteTailButton.IsHit(point);
-
-
-    public static bool GetCgosConnectionStartBackButtonHit(Point point) =>
-        CgosLoginPage.Default.BackButton.IsHit(point);
 
 
     public static GoStone? GetCgosConnectionEngineSelectButtonHit(Point point, GoAppSession session)
@@ -205,52 +134,6 @@ public sealed partial class GoScreenRenderer
             ? GoStone.White
             : null;
     }
-
-
-    public static bool GetCgosConnectionOpenLogCodeButtonHit(Point point) =>
-        CgosLoginPage.Default.LogCodeButton.IsHit(point);
-
-
-    public static bool GetCgosConnectionOpenLogNotepadButtonHit(Point point) =>
-        CgosLoginPage.Default.LogNotepadButton.IsHit(point);
-
-
-    public static bool GetCgosConnectionOpenStandardErrorLogCodeButtonHit(Point point) =>
-        CgosLoginPage.Default.ErrorLogCodeButton.IsHit(point);
-
-
-    public static bool GetCgosConnectionOpenStandardErrorLogNotepadButtonHit(Point point) =>
-        CgosLoginPage.Default.ErrorLogNotepadButton.IsHit(point);
-
-
-    public static bool GetCgosPreviousPageButtonHit(Point point) => CgosSelectConnectionPage.Default.PreviousButton.IsHit(point);
-
-
-    public static bool GetCgosNextPageButtonHit(Point point) => CgosSelectConnectionPage.Default.NextButton.IsHit(point);
-
-
-    public static bool GetCgosAddButtonHit(Point point) => CgosSelectConnectionPage.Default.AddButton.IsHit(point);
-
-
-    public static bool GetCgosEditButtonHit(Point point) => CgosSelectConnectionPage.Default.EditButton.IsHit(point);
-
-
-    public static bool GetCgosDuplicateButtonHit(Point point) => CgosSelectConnectionPage.Default.DuplicateButton.IsHit(point);
-
-
-    public static bool GetCgosDeleteButtonHit(Point point, bool enabled) =>
-        enabled && CgosSelectConnectionPage.Default.DeleteButton.IsHit(point);
-
-    public static bool GetCgosOrderButtonHit(Point point) =>
-        CgosSelectConnectionPage.Default.OrderButton.IsHit(point);
-
-
-    public static bool GetCgosConnectionEditPanelCloseButtonHit(Point point) =>
-        CgosSelectConnectionPage.Default.EditDiscardButton.IsHit(point);
-
-
-    public static bool GetCgosConnectionEditPanelSaveButtonHit(Point point) =>
-        CgosSelectConnectionPage.Default.EditSaveButton.IsHit(point);
 
 
     public static CgosConnectionProfileEditField? GetCgosConnectionEditPanelFieldHit(Point point)

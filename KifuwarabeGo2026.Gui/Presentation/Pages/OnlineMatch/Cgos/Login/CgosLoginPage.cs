@@ -14,6 +14,8 @@ public sealed class CgosLoginPage
         BackButton = Button(1308, 244, 324, 48, "BACK", .42f);
         AdminConnectButton = Button(1220, 648, 396, 48, "CONNECT", .34f);
         AdminWhoButton = Button(1220, 756, 396, 36, "WHO", .28f);
+        AdminWhitePlayerButton = Button(1282, 801, 326, 28, "", .22f);
+        AdminBlackPlayerButton = Button(1282, 843, 326, 28, "", .22f);
         AdminMatchButton = Button(1428, 882, 198, 28, "MATCH", .22f);
         AdminSwapButton = Button(1220, 882, 198, 28, "SWAP", .22f);
         AdminTailButton = Button(1364, 706, 120, 44, "TAIL", .28f);
@@ -49,6 +51,8 @@ public sealed class CgosLoginPage
     public Button BackButton { get; }
     public Button AdminConnectButton { get; }
     public Button AdminWhoButton { get; }
+    public Button AdminWhitePlayerButton { get; }
+    public Button AdminBlackPlayerButton { get; }
     public Button AdminMatchButton { get; }
     public Button AdminSwapButton { get; }
     public Button AdminTailButton { get; }
