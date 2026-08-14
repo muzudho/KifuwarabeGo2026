@@ -18,8 +18,6 @@ public sealed class TitleScreen
         CgosClientButton = new Button(new Rectangle(500, 536, 400, 126), "Online Match (CGOS)", 0.52f);
         CaptureGameButton = new Button(new Rectangle(950, 390, 440, 84), "ポン抜きゲーム", 0.43f);
         BackButton = new Button(new Rectangle(1260, 316, 152, 54), "BACK", 0.36f);
-        AppProviderRecheckButton = new Button(new Rectangle(828, 826, 340, 54), "RECHECK PROVIDER", 0.30f);
-        AppProviderStartButton = new Button(new Rectangle(1198, 826, 152, 54), "NEXT", 0.40f);
         UpdateButton = new Button(new Rectangle(1698, 972, 70, 62), string.Empty, 0.1f);
         SettingsButton = new Button(new Rectangle(1780, 972, 70, 62), string.Empty, 0.1f);
     }
@@ -32,10 +30,6 @@ public sealed class TitleScreen
     public Button CgosClientButton { get; }
     public Button CaptureGameButton { get; }
     public Button BackButton { get; }
-    public Button AppProviderRecheckButton { get; }
-    public Button AppProviderStartButton { get; }
     public Button UpdateButton { get; }
     public Button SettingsButton { get; }
-    public Rectangle AppProviderEngineDisplayBounds { get; } = new(570, 466, 780, 56);
-    public Rectangle AppProviderEngineTextBounds { get; } = new(712, 473, 638, 42);
 }

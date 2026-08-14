@@ -35,6 +35,7 @@ using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ActionBadge;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Button;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Headline;
 using KifuwarabeGo2026.Gui.Presentation.Pages.Title;
+using KifuwarabeGo2026.Gui.Presentation.Pages.PonnukiProviderSelection;
 
 /// <summary>
 /// ［画面描画］の共通処理
@@ -937,10 +938,10 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IButton
     private static Rectangle SetupBackToTitleButtonBounds => new(1642, 104, 170, 52);
     private static Rectangle LocalUseButtonBounds => new(508, 404, 438, 300);
     private static Rectangle TitleMenuBackButtonBounds => TitleScreen.Default.BackButton.Bounds;
-    private static Rectangle TitleAppProviderEngineDisplayBounds => TitleScreen.Default.AppProviderEngineDisplayBounds;
-    private static Rectangle TitleAppProviderEngineTextBounds => TitleScreen.Default.AppProviderEngineTextBounds;
-    private static Rectangle TitleAppProviderStartButtonBounds => TitleScreen.Default.AppProviderStartButton.Bounds;
-    private static Rectangle TitleAppProviderRecheckButtonBounds => TitleScreen.Default.AppProviderRecheckButton.Bounds;
+    private static Rectangle TitleAppProviderEngineDisplayBounds => PonnukiProviderSelectionScreen.Default.ProviderDisplayBounds;
+    private static Rectangle TitleAppProviderEngineTextBounds => PonnukiProviderSelectionScreen.Default.ProviderTextBounds;
+    private static Rectangle TitleAppProviderStartButtonBounds => PonnukiProviderSelectionScreen.Default.StartButton.Bounds;
+    private static Rectangle TitleAppProviderRecheckButtonBounds => PonnukiProviderSelectionScreen.Default.RecheckButton.Bounds;
     private static Rectangle TitleHomeLocalButtonBounds => TitleScreen.Default.LocalMatchButton.Bounds;
     private static Rectangle TitleHomeCgosButtonBounds => TitleScreen.Default.CgosClientButton.Bounds;
     private static Rectangle TitleAppBounds(int index) => index == 0 ? TitleScreen.Default.CaptureGameButton.Bounds : Rectangle.Empty;

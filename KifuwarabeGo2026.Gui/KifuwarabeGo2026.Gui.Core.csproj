@@ -35,6 +35,7 @@
     <Folder Include="Presentation\BoardLens\GlassesSystem\" />
     <Folder Include="Presentation\BoardLens\Shared\RenBoundaries\" />
     <Folder Include="Presentation\Pages\EditTournamentRule\" />
+    <Folder Include="Presentation\Pages\PonnukiProviderSelection\" />
     <Folder Include="Presentation\Shared\SelectEntry\" />
     <Folder Include="Presentation\Shared\EditEntryProfile\" />
     <Folder Include="Presentation\Shared\EditEntryProfile\" />
