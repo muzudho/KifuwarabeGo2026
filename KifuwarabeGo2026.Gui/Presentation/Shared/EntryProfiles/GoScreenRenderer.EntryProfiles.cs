@@ -8,6 +8,7 @@ using Microsoft.Xna.Framework;
 using System;
 using KifuwarabeGo2026.Gui.Presentation.Shared.EntryProfiles;
 using KifuwarabeGo2026.Gui.Presentation.Pages.LocalMatch;
+using KifuwarabeGo2026.Gui.Presentation.Shared.RightSidePanel;
 using static KifuwarabeGo2026.Gui.Presentation.Shared.EntryProfiles.EntryProfilesScreenBounds;
 
 /// <summary>Player 選択欄と選択ダイアログの描画・当たり判定。</summary>
@@ -31,7 +32,7 @@ public sealed partial class GoScreenRenderer
                 IsComputer = player is null ? null : player.Kind == EntryProfileKind.Computer,
             },
             mousePoint);
-        var isPonnuki = y is PonnukiBlackPlayerKindButtonY or PonnukiWhitePlayerKindButtonY;
+        var isPonnuki = y is LocalMatchIntermissionRightSidePanel.BlackPlayerKindButtonY or LocalMatchIntermissionRightSidePanel.WhitePlayerKindButtonY;
         var handleBounds = LocalMatchScreen.Default.GetHandleBounds(stone, isPonnuki);
         DrawFittedText("HANDLE", new Rectangle(1156, handleBounds.Y + 4, 118, 32), UiLabel.TextColor, 0.34f);
         var textBounds = LocalMatchScreen.Default.GetHandleTextBounds(stone, isPonnuki);

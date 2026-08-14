@@ -29,7 +29,7 @@ public sealed class LocalMatchPlayPage
         renderer.DrawVerticalResultSection(new Rectangle(1144, 132, 668, 200), "PLAYERS", new Color(76, 91, 126));
         renderer.DrawBothPlayersComponent(
             1144,
-            GoScreenRenderer.PlayingPlayersY,
+            LocalMatchPlayRightSidePanel.PlayersY,
             668,
             session.GetLocalPlayerName(GoStone.Black),
             session.GetLocalPlayerName(GoStone.White),

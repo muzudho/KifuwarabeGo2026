@@ -1,5 +1,8 @@
 namespace KifuwarabeGo2026.Gui.Presentation;
 
+using KifuwarabeGo2026.Gui.Presentation.Shared.RightSidePanel;
+using KifuwarabeGo2026.Gui.Presentation.Pages.LocalMatch.Play;
+
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Presentation.Shared.PlayersComponent;
 using KifuwarabeGo2026.Shared.Domain;
@@ -22,8 +25,8 @@ public sealed partial class GoScreenRenderer
         }
 
         var playerBounds = errorStone == GoStone.Black
-            ? new Rectangle(1144, PlayingPlayersY, 668, 88)
-            : new Rectangle(1144, PlayingPlayersY + 96, 668, 88);
+            ? new Rectangle(1144, LocalMatchPlayRightSidePanel.PlayersY, 668, 88)
+            : new Rectangle(1144, LocalMatchPlayRightSidePanel.PlayersY + 96, 668, 88);
         return PlayerEngineErrorButton.GetBounds(playerBounds).Contains(point);
     }
 
@@ -66,7 +69,7 @@ public sealed partial class GoScreenRenderer
         bool minimal)
     {
         _playerRow.Draw(new PlayerRowModel(bounds, playerName, elapsed, liveElapsed, mainTime, agehama, black, active,
-                engineError, mousePoint, minimal, GameOverValueX),
+                engineError, mousePoint, minimal, RightSidePanelLayout.PrimaryValueX),
             new PlayerRowDrawingCallbacks(bounds => DrawDataRowFrame(bounds), FillRect, DrawRect, DrawStone, DrawIconStone, DrawFittedText,
                 FormatElapsedTime, (plateBounds, color) => _spriteBatch.Draw(_softCircle, plateBounds, color), DrawLine));
     }

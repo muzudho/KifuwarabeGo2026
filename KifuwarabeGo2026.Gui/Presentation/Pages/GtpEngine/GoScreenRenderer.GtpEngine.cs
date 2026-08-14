@@ -13,6 +13,7 @@ using System.IO;
 using System.Linq;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ActionBadge;
 using KifuwarabeGo2026.Gui.Presentation.Shared.PopupFilePathTooltip;
+using KifuwarabeGo2026.Gui.Presentation.Shared.RightSidePanel;
 
 /// <summary>
 /// ［エンジン選択画面］
@@ -215,17 +216,17 @@ public sealed partial class GoScreenRenderer
 
 
     public static bool GetBlackGtpEngineBrowseButtonHit(Point point) =>
-        PlayerSelectorLayout.CreateComputerEngineSelector(BlackEngineButtonY).ContainsBrowseButton(point);
+        PlayerSelectorLayout.CreateComputerEngineSelector(SetupRightSidePanel.BlackEngineButtonY).ContainsBrowseButton(point);
 
 
     public static bool GetWhiteGtpEngineBrowseButtonHit(Point point) =>
-        PlayerSelectorLayout.CreateComputerEngineSelector(WhiteEngineButtonY).ContainsBrowseButton(point);
+        PlayerSelectorLayout.CreateComputerEngineSelector(SetupRightSidePanel.WhiteEngineButtonY).ContainsBrowseButton(point);
 
     public static bool GetPonnukiBlackGtpEngineBrowseButtonHit(Point point) =>
-        PlayerSelectorLayout.CreateComputerEngineSelector(PonnukiBlackEngineButtonY).ContainsBrowseButton(point);
+        PlayerSelectorLayout.CreateComputerEngineSelector(LocalMatchIntermissionRightSidePanel.BlackEngineButtonY).ContainsBrowseButton(point);
 
     public static bool GetPonnukiWhiteGtpEngineBrowseButtonHit(Point point) =>
-        PlayerSelectorLayout.CreateComputerEngineSelector(PonnukiWhiteEngineButtonY).ContainsBrowseButton(point);
+        PlayerSelectorLayout.CreateComputerEngineSelector(LocalMatchIntermissionRightSidePanel.WhiteEngineButtonY).ContainsBrowseButton(point);
 
 
     private void DrawGtpEngineSelectionDialog(GoAppSession session, Point mousePoint)

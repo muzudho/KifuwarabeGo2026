@@ -3,6 +3,23 @@ RightSidePanel 残存コード整理 引き継ぎ
 
 作成日: 2026-08-15
 
+進捗（2026-08-15 続行作業）
+---------------------------
+
+次の移設は完了しました。
+
+- RightSidePanelLayout を追加。
+- GameOverValueX を RightSidePanelLayout.PrimaryValueX へ改名・移設。
+- GameOverSecondValueX を RightSidePanelLayout.SecondaryValueX へ改名・移設。
+- PlayingPlayersY を LocalMatchPlayRightSidePanel.PlayersY へ移設。
+- LocalPlayingBoardLensButtons を LocalMatchPlayRightSidePanel.BoardLensButtons へ移設。
+- Board Lens のヒット判定を LocalMatchPlayRightSidePanel.GetBoardLensButtonHit へ移設。
+- _playerSelectorLinkUnderline を SetupRightSidePanel.PlayerSelectorLinkUnderline へ移設。
+- 通常セットアップと Ponnuki 休憩画面のプレイヤー／エンジン行座標を、それぞれのパネルクラスへ移設。
+
+次は移行手順 3 の描画本体、DrawSetupRightSidePanelContent と DrawSetupPlayerRow、
+DrawPlayerSelector の移設から再開してください。
+
 目的
 ----
 
@@ -217,4 +234,3 @@ GameOverValueX と DrawStoneValue に依存しているため、RightSidePanelLa
 - GoScreenRenderer は描画デバイスに近い低水準処理だけを提供する。
 - CGOS を含む全右パネルが RightSidePanelLayout の共通座標を使用する。
 - ソリューション全体が警告 0、エラー 0 でビルドできる。
-

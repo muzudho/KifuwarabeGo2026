@@ -7,6 +7,7 @@ using KifuwarabeGo2026.Shared.Domain;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Headline;
 using KifuwarabeGo2026.Gui.Presentation.Pages.OnlineMatch.Cgos.Watch;
 using Microsoft.Xna.Framework;
+using KifuwarabeGo2026.Gui.Presentation.Shared.RightSidePanel;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 
@@ -167,11 +168,11 @@ public sealed partial class GoScreenRenderer
         if (trimmed.Length >= 2 && trimmed[1] == '+' &&
             (trimmed[0] is 'B' or 'b' or 'W' or 'w'))
         {
-            DrawStoneValue(GameOverValueX, bounds.Center.Y, trimmed[2..], trimmed[0] is 'B' or 'b', new Color(99, 223, 185));
+            DrawStoneValue(RightSidePanelLayout.PrimaryValueX, bounds.Center.Y, trimmed[2..], trimmed[0] is 'B' or 'b', new Color(99, 223, 185));
             return;
         }
 
-        DrawFittedText(trimmed, new Rectangle(GameOverValueX, bounds.Y + 6, bounds.Right - GameOverValueX - 18, bounds.Height - 12), new Color(99, 223, 185), 0.58f);
+        DrawFittedText(trimmed, new Rectangle(RightSidePanelLayout.PrimaryValueX, bounds.Y + 6, bounds.Right - RightSidePanelLayout.PrimaryValueX - 18, bounds.Height - 12), new Color(99, 223, 185), 0.58f);
     }
 
     private void DrawBroadcastStatusBadge(string label, bool chartPopup = false)

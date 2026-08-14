@@ -52,9 +52,6 @@ using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 /// </summary>
 public sealed partial class GoScreenRenderer : IGoScreenRenderer
 {
-    private const int GameOverValueX = 1328;
-    private const int GameOverSecondValueX = 1560;
-    internal const int PlayingPlayersY = 140;
     private const float MinimumTextScale = 0.32f;
 
     private readonly GraphicsDevice _graphicsDevice;
@@ -76,8 +73,6 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         new RoundUnderline { TopOffset = 1, Thickness = 3, Radius = 1 });
     private readonly LinkUnderline _selectorLinkUnderline = new(
         new RoundUnderline { TopOffset = 2, Thickness = 4, Radius = 2 });
-    private readonly LinkUnderline _playerSelectorLinkUnderline = new(
-        new RoundUnderline { TopOffset = 2, Thickness = 5, Radius = 2 });
     private readonly LinkUnderline _tournamentRulesSettingsFileLinkUnderline = new(
         new RoundUnderline { TopOffset = 2, Thickness = 5, Radius = 2 });
     private readonly SpinBox _spinBox = new();
@@ -85,7 +80,6 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
     public HeadUpDisplayComponent HeadUpDisplay { get; } = HeadUpDisplayComponent.Default;
     public InitialPositionConcierge InitialPositionConcierge { get; } = new();
     private readonly CgosMatchNotification _cgosMatchNotification = CgosMatchNotification.Default;
-    private static readonly BoardLensButtonStrip LocalPlayingBoardLensButtons = new(1516, 800);
     public EditEntryProfile EditEntryProfile { get; } = new();
     public ActionBadgeComponent EditActionBadge { get; } = ActionBadgeComponent.Create("EDIT", Rectangle.Empty);
     public ActionBadgeComponent ChangeActionBadge { get; } = ActionBadgeComponent.Create("CHANGE", Rectangle.Empty);
@@ -312,8 +306,8 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         DrawInfoStrip(1144, 600, "MOVES", FormatMoveLimit(session.MoveLimit));
 
         DrawVerticalResultSection(new Rectangle(1144, 696, 668, 216), "PLAYERS", new Color(76, 91, 126));
-        DrawSetupPlayerRow(session, GoStone.Black, mousePoint, BlackPlayerKindButtonY);
-        DrawSetupPlayerRow(session, GoStone.White, mousePoint, WhitePlayerKindButtonY);
+        DrawSetupPlayerRow(session, GoStone.Black, mousePoint, SetupRightSidePanel.BlackPlayerKindButtonY);
+        DrawSetupPlayerRow(session, GoStone.White, mousePoint, SetupRightSidePanel.WhitePlayerKindButtonY);
 
         DrawVerticalResultSection(new Rectangle(1144, 916, 668, 76), "ACTION", new Color(91, 82, 105));
         var boardAndReviewScreen = BoardAndReviewScreen.Default;
@@ -573,17 +567,6 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
 
     private const int AddPanelControlX = 626;
 
-    private const int BlackPlayerKindButtonY = 710;
-
-    private const int WhitePlayerKindButtonY = 814;
-
-    private const int BlackEngineButtonY = 768;
-
-    private const int WhiteEngineButtonY = 872;
-    internal const int PonnukiBlackPlayerKindButtonY = 646;
-    private const int PonnukiBlackEngineButtonY = 704;
-    internal const int PonnukiWhitePlayerKindButtonY = 750;
-    private const int PonnukiWhiteEngineButtonY = 808;
 
     private static Rectangle TournamentRulesMoveLimitTextBounds => new(AddPanelControlX + 132, 612, 176, 40);
 
@@ -734,22 +717,23 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
     {
         if (selector.Bounds.X == 1144 && selector.Bounds.Width == 668)
         {
-            // Player 行は値欄の左端を全行で GameOverValueX に揃える。
+            // Player 行は値欄の左端を全行で右パネルの第一値列に揃える。
             // 石アイコンが黒白を示し、セクション名も PLAYERS なので行内ラベルは重複表示しない。
             var isBlack = selector.Label.StartsWith("BLACK", StringComparison.Ordinal);
             DrawIconStone(new Vector2(selector.Bounds.X + 34, selector.Bounds.Center.Y), 13, isBlack);
             if (selector.IsComputer is { } isComputer)
                 DrawPlayerRoleFaceIcon(new Vector2(selector.Bounds.X + 76, selector.Bounds.Center.Y), isComputer);
-            var fieldBounds = new Rectangle(GameOverValueX, selector.Bounds.Y + 6, selector.Bounds.Right - GameOverValueX - 34, selector.Bounds.Height - 12);
+            var fieldBounds = new Rectangle(RightSidePanelLayout.PrimaryValueX, selector.Bounds.Y + 6, selector.Bounds.Right - RightSidePanelLayout.PrimaryValueX - 34, selector.Bounds.Height - 12);
             var hovered = selector.Enabled && selector.Bounds.Contains(mousePoint);
             var valueBounds = hovered
                 ? new Rectangle(fieldBounds.X, fieldBounds.Y, fieldBounds.Width - 122, fieldBounds.Height)
                 : fieldBounds;
             DrawFittedText(selector.Value, valueBounds, Color.White, 0.42f);
-            _playerSelectorLinkUnderline.Bounds = fieldBounds;
-            _playerSelectorLinkUnderline.SetActionBadge(ActionBadgeComponent.Create("CHANGE", fieldBounds));
-            _playerSelectorLinkUnderline.UpdatePointer(mousePoint);
-            _playerSelectorLinkUnderline.Draw(_stationeryDrawingContext);
+            var underline = LocalMatchScreen.Default.SetupRightSidePanel.PlayerSelectorLinkUnderline;
+            underline.Bounds = fieldBounds;
+            underline.SetActionBadge(ActionBadgeComponent.Create("CHANGE", fieldBounds));
+            underline.UpdatePointer(mousePoint);
+            underline.Draw(_stationeryDrawingContext);
                 // 操作ヒントはアンダーライン終端の近くに、読みやすい反転プレートで表示する。
             return;
         }
@@ -819,13 +803,13 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
     {
         var bounds = new Rectangle(x, y, 668, 72);
         DrawResultLabel(new Rectangle(x + 20, y, bounds.Width - 40, bounds.Height), label, new Color(62, 112, 105));
-        DrawFittedText(value, new Rectangle(GameOverValueX, y + 12, bounds.Right - GameOverValueX - 20, bounds.Height - 24), Color.White, 0.58f);
+        DrawFittedText(value, new Rectangle(RightSidePanelLayout.PrimaryValueX, y + 12, bounds.Right - RightSidePanelLayout.PrimaryValueX - 20, bounds.Height - 24), Color.White, 0.58f);
     }
 
     internal void DrawResultRow(Rectangle bounds, string label, string value, Color chipColor, Color valueColor)
     {
         DrawResultLabel(bounds, label, chipColor);
-        DrawFittedText(value, new Rectangle(GameOverValueX, bounds.Y + 6, bounds.Right - GameOverValueX - 18, bounds.Height - 12), valueColor, 0.58f);
+        DrawFittedText(value, new Rectangle(RightSidePanelLayout.PrimaryValueX, bounds.Y + 6, bounds.Right - RightSidePanelLayout.PrimaryValueX - 18, bounds.Height - 12), valueColor, 0.58f);
     }
 
     private void DrawResultLabel(Rectangle bounds, string label, Color accentColor)
@@ -845,11 +829,11 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         var white = result.StartsWith("WHITE ", StringComparison.Ordinal);
         if (black || white)
         {
-            DrawStoneValue(GameOverValueX, bounds.Center.Y, result[6..], black, new Color(99, 223, 185));
+            DrawStoneValue(RightSidePanelLayout.PrimaryValueX, bounds.Center.Y, result[6..], black, new Color(99, 223, 185));
             return;
         }
 
-        DrawFittedText(result, new Rectangle(GameOverValueX, bounds.Y + 6, bounds.Right - GameOverValueX - 18, bounds.Height - 12), new Color(99, 223, 185), 0.58f);
+        DrawFittedText(result, new Rectangle(RightSidePanelLayout.PrimaryValueX, bounds.Y + 6, bounds.Right - RightSidePanelLayout.PrimaryValueX - 18, bounds.Height - 12), new Color(99, 223, 185), 0.58f);
     }
 
     private void DrawCurrentStoneResultRow(Rectangle bounds, GoAppSession session)
@@ -859,11 +843,11 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         var difference = session.BlackStoneCount - session.WhiteStoneCount;
         if (difference == 0)
         {
-            DrawText("EVEN", new Vector2(GameOverValueX, bounds.Center.Y - 14), new Color(99, 223, 185), 0.5f);
+            DrawText("EVEN", new Vector2(RightSidePanelLayout.PrimaryValueX, bounds.Center.Y - 14), new Color(99, 223, 185), 0.5f);
             return;
         }
 
-        DrawStoneValue(GameOverValueX, bounds.Center.Y, $"+{Math.Abs(difference)}", difference > 0, new Color(99, 223, 185));
+        DrawStoneValue(RightSidePanelLayout.PrimaryValueX, bounds.Center.Y, $"+{Math.Abs(difference)}", difference > 0, new Color(99, 223, 185));
     }
 
     private void DrawStoneValue(int x, int centerY, string value, bool black, Color valueColor)
@@ -893,8 +877,8 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         {
             DrawText("STONES", new Vector2(bounds.X + 20, bounds.Y + 15), new Color(180, 195, 195), 0.46f);
         }
-        var firstValueX = minimal ? GameOverValueX : bounds.X + 150;
-        var secondValueX = minimal ? GameOverSecondValueX : bounds.X + 334;
+        var firstValueX = minimal ? RightSidePanelLayout.PrimaryValueX : bounds.X + 150;
+        var secondValueX = minimal ? RightSidePanelLayout.SecondaryValueX : bounds.X + 334;
         if (minimal)
         {
             DrawStoneValue(firstValueX, bounds.Y + 28, blackStones.ToString(), black: true, valueColor: Color.White);
@@ -911,7 +895,7 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         }
 
         var bar = minimal
-            ? new Rectangle(GameOverValueX, bounds.Y + 52, bounds.Right - GameOverValueX - 20, 14)
+            ? new Rectangle(RightSidePanelLayout.PrimaryValueX, bounds.Y + 52, bounds.Right - RightSidePanelLayout.PrimaryValueX - 20, 14)
             : new Rectangle(bounds.X + 20, bounds.Y + 52, bounds.Width - 40, 14);
         FillRect(bar, new Color(14, 18, 23));
         if (total > 0)
@@ -1349,13 +1333,10 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
             DrawRenNumber(renParse.GetRenNumber(x, y), BoardPoint(start, cell, x, y), scale);
     }
 
-    internal static BoardLensButton? GetLocalPlayingBoardLensButtonHit(Point point, bool isLensEnabled) =>
-        LocalPlayingBoardLensButtons.GetHit(point, isLensEnabled);
-
     internal void DrawLocalPlayingBoardLensButtonStrip(bool isLensEnabled, Point mousePoint)
     {
         DrawFittedText("BOARD LENS  [L] / [J] / [K] / [1]", new Rectangle(1164, 812, 316, 36), new Color(147, 201, 190), 0.26f);
-        DrawBoardLensButtonStrip(LocalPlayingBoardLensButtons, isLensEnabled, mousePoint, 0.32f);
+        DrawBoardLensButtonStrip(LocalMatchPlayPage.Default.RightSidePanel.BoardLensButtons, isLensEnabled, mousePoint, 0.32f);
     }
 
     private void DrawBoardLensButtonStrip(BoardLensButtonStrip buttons, bool isLensEnabled, Point mousePoint, float scale = 0.32f)

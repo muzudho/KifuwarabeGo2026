@@ -8,15 +8,23 @@ using KifuwarabeGo2026.Gui.Presentation.Pages.LocalMatch;
 using KifuwarabeGo2026.Gui.Presentation.Pages.LocalMatch.Intermission;
 using KifuwarabeGo2026.Gui.Presentation.Pages.LocalMatch.Play;
 using KifuwarabeGo2026.Shared.Domain;
+using KifuwarabeGo2026.Gui.Presentation.BoardLens;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.LinkUnderline;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
 using Microsoft.Xna.Framework;
+
+public static class RightSidePanelLayout
+{
+    public static readonly Rectangle Bounds = new(1102, 78, 760, 924);
+    public const int PrimaryValueX = 1328;
+    public const int SecondaryValueX = 1560;
+}
 
 public static class RightSidePanelFrame
 {
-    public static readonly Rectangle Bounds = new(1102, 78, 760, 924);
-
     public static void Draw(GoScreenRenderer renderer)
     {
-        var panel = Bounds;
+        var panel = RightSidePanelLayout.Bounds;
         renderer.FillRectangle(new Rectangle(panel.X + 16, panel.Y + 18, panel.Width, panel.Height), new Color(0, 0, 0, 120));
         renderer.FillRectangle(panel, new Color(21, 25, 32, 236));
         renderer.DrawRectangle(panel, 2, new Color(82, 111, 114));
@@ -71,18 +79,38 @@ public sealed class RightSidePanel
 
 public sealed class LocalMatchPlayRightSidePanel
 {
+    public const int PlayersY = 140;
+
+    internal BoardLensButtonStrip BoardLensButtons { get; } = new(1516, 800);
+
+    internal BoardLensButton? GetBoardLensButtonHit(Point point, bool isLensEnabled) =>
+        BoardLensButtons.GetHit(point, isLensEnabled);
+
     public void Draw(GoScreenRenderer renderer, GoAppSession session, Point mousePoint) =>
         LocalMatchPlayPage.Default.DrawRightSidePanelContent(renderer, session, mousePoint);
 }
 
 public sealed class LocalMatchIntermissionRightSidePanel
 {
+    internal const int BlackPlayerKindButtonY = 646;
+    internal const int BlackEngineButtonY = 704;
+    internal const int WhitePlayerKindButtonY = 750;
+    internal const int WhiteEngineButtonY = 808;
+
     public void Draw(GoScreenRenderer renderer, GoAppSession session, Point mousePoint) =>
         LocalMatchIntermissionPage.Default.DrawRightSidePanelContent(renderer, session, mousePoint);
 }
 
 public sealed class SetupRightSidePanel
 {
+    internal const int BlackPlayerKindButtonY = 710;
+    internal const int BlackEngineButtonY = 768;
+    internal const int WhitePlayerKindButtonY = 814;
+    internal const int WhiteEngineButtonY = 872;
+
+    internal LinkUnderline PlayerSelectorLinkUnderline { get; } = new(
+        new RoundUnderline { TopOffset = 2, Thickness = 5, Radius = 2 });
+
     public void Draw(GoScreenRenderer renderer, GoAppSession session, Point mousePoint) => renderer.DrawSetupRightSidePanelContent(session, mousePoint);
 }
 

@@ -37,6 +37,7 @@ using KifuwarabeGo2026.Gui.Presentation.StationeryUI.SpinButton;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.MessageDialog;
 using KifuwarabeGo2026.Gui.Sgf;
 using Microsoft.Xna.Framework;
+using KifuwarabeGo2026.Gui.Presentation.Pages.LocalMatch.Play;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -1669,7 +1670,7 @@ public class Game1 : Game
             }
 
             if (_session.CurrentMode.Kind == GoAppModeKind.Playing &&
-                GoScreenRenderer.GetLocalPlayingBoardLensButtonHit(point, _session.IsRenParseDisplayEnabled) is { } boardLensButton)
+                LocalMatchPlayPage.Default.RightSidePanel.GetBoardLensButtonHit(point, _session.IsRenParseDisplayEnabled) is { } boardLensButton)
             {
                 switch (boardLensButton)
                 {

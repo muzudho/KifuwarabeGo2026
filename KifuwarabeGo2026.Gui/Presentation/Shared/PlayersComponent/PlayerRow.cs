@@ -16,7 +16,7 @@ public sealed class PlayerRow
     {
         ArgumentNullException.ThrowIfNull(draw);
         if (!model.Minimal) draw.DrawDataRowFrame(model.Bounds);
-        var layout = PlayerRowLayouts.Create(model.Bounds, model.Minimal, model.LiveElapsed is not null, model.GameOverValueX);
+        var layout = PlayerRowLayouts.Create(model.Bounds, model.Minimal, model.LiveElapsed is not null, model.PrimaryValueX);
         _turnIndicator.Draw(layout.ActiveIndicatorX, model.Bounds, model.IsActive, draw.FillRectangle);
         if (model.Minimal) draw.DrawIconStone(new Vector2(layout.StoneCenterX, model.Bounds.Y + 23), 16, model.IsBlack);
         else draw.DrawStone(new Vector2(layout.StoneCenterX, model.Bounds.Y + 23), 16, model.IsBlack);
@@ -50,7 +50,7 @@ public sealed class PlayerRow
 
 public sealed record PlayerRowModel(Rectangle Bounds, string PlayerName, TimeSpan? Elapsed, TimeSpan? LiveElapsed,
     TimeSpan? MainTime, int Agehama, bool IsBlack, bool IsActive, bool HasEngineError, Point? MousePoint,
-    bool Minimal, int GameOverValueX);
+    bool Minimal, int PrimaryValueX);
 
 public sealed record PlayerRowDrawingCallbacks(Action<Rectangle> DrawDataRowFrame,
     Action<Rectangle, Color> FillRectangle, Action<Rectangle, int, Color> DrawRectangle,

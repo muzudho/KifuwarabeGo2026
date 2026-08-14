@@ -62,8 +62,8 @@ public sealed class LocalMatchIntermissionPage
         ChangeAppProviderButton.Draw(mousePoint, drawingContext);
 
         renderer.DrawVerticalResultSection(new Rectangle(1144, 632, 668, 216), "PLAYERS", new Color(76, 91, 126));
-        renderer.DrawSetupPlayerRow(session, GoStone.Black, mousePoint, GoScreenRenderer.PonnukiBlackPlayerKindButtonY);
-        renderer.DrawSetupPlayerRow(session, GoStone.White, mousePoint, GoScreenRenderer.PonnukiWhitePlayerKindButtonY);
+        renderer.DrawSetupPlayerRow(session, GoStone.Black, mousePoint, LocalMatchIntermissionRightSidePanel.BlackPlayerKindButtonY);
+        renderer.DrawSetupPlayerRow(session, GoStone.White, mousePoint, LocalMatchIntermissionRightSidePanel.WhitePlayerKindButtonY);
 
         renderer.DrawVerticalResultSection(new Rectangle(1144, 856, 668, 52), "SEED AUTO", new Color(112, 76, 48), labelWidth: 56);
         ProviderSeedAutoChangeButton.Label = session.PonnukiProviderSeedAutoChange ? "[x] PROVIDER" : "[ ] PROVIDER";
