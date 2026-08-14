@@ -65,3 +65,36 @@ private helper `GetPlayerKindButtonHit(Point, int)` は、各プレイヤー種�
 2. `Game1` から直接呼ばれる既存 static API は、移行中は互換ラッパーとして残す。
 3. 呼び出し元を画面クラスまたは専用の操作クラスへ移した後、そのラッパーと renderer 側の矩形を削除する。
 4. 判定で状態を必要とする場合は、`GetStartPlayingButtonHit`、`GetHumanPlayerNameTextBoxHit`、CGOS 通知のように必要最小限の状態を引数に取る。
+
+## `*Bounds` の棚卸（partial class を含む）
+
+`GoScreenRenderer` の partial class を含めて機械的に調べた結果、`Rectangle` を返す／保持する `*Bounds` 定義は **250 個**です。ここにはボタン以外に、パネル、テキスト欄、リスト行、ツールチップ、チャート領域も含まれます。したがって、すべてを `Button` に置換するのではなく、操作可能な領域は文房具 UI、表示領域は画面クラスの `Rectangle` プロパティとして移します。
+
+| 現在の定義ファイル | 数 | 移管先 |
+| --- | ---: | --- |
+| `GoScreenRenderer.cs` | 31 | `Pages/LocalMatch/LocalMatchScreen`、`Shared/TextAreaDialog`、`Shared/TournamentRules` |
+| `Pages/ApplicationSettings/GoScreenRenderer.ApplicationSettings.cs` | 10 | `Pages/ApplicationSettings/ApplicationSettingsScreen` |
+| `Pages/BoardAndReview/GoScreenRenderer.BoardAndReview.cs` | 35 | `Pages/BoardAndReview/BoardAndReviewScreen` |
+| `Pages/Cgos/GoScreenRenderer.Cgos.cs` | 67 | `Pages/Cgos/CgosScreen` |
+| `Pages/CgosWatching/GoScreenRenderer.CgosWatching.cs` | 3 | `Pages/CgosWatching/CgosWatchingScreen` |
+| `Pages/EditTournamentRule/GoScreenRenderer.EditTournamentRule.cs` | 25 | `Pages/EditTournamentRule/TournamentRulesScreen` |
+| `Pages/GtpEngine/GoScreenRenderer.GtpEngine.cs` | 52 | `Pages/GtpEngine/GtpEngineScreen` |
+| `Pages/MoveComments/GoScreenRenderer.MoveComments.cs` | 7 | `Pages/MoveComments/MoveCommentsScreen` |
+| `Pages/MoveTrendChart/GoScreenRenderer.MoveTrendChart.cs` | 5 | `Pages/MoveTrendChart/MoveTrendChartScreen` |
+| `Pages/ReviewChartPopup/GoScreenRenderer.ReviewChartPopup.cs` | 4 | `Pages/ReviewChartPopup/ReviewChartPopupScreen` |
+| `Pages/Title/GoScreenRenderer.Title.cs` | 2 | `Pages/Title/TitleScreen` |
+| `Shared/EntryProfiles/GoScreenRenderer.EntryProfiles.cs` | 7 | `Shared/EntryProfiles/EntryProfilesScreen` |
+| `Shared/SelectEntry/GoScreenRenderer.SelectEntry.cs` | 2 | `Shared/SelectEntry/SelectEntryScreen` |
+
+### 移管済みの操作 Bounds
+
+`Pages/LocalMatch/LocalMatchScreen` は次の 14 個の `Button.Bounds` と 1 個のカード領域を所有します。`GoScreenRenderer` の同名 private property は、移行中の描画互換のためこの画面オブジェクトを参照するだけです。
+
+- `StartPlayingButtonBounds`、`ChangeAppProviderButtonBounds`、`AppProviderGameSettingsButtonBounds`
+- `PonnukiProviderSeedAutoChangeBounds`、`PonnukiPlayer1SeedAutoChangeBounds`、`PonnukiPlayer2SeedAutoChangeBounds`
+- `ImportSgfButtonBounds`、`SetupBackToTitleButtonBounds`、`ReturnToSetupButtonBounds`
+- `ExportSgfButtonBounds`、`LocalGameOverReviewButtonBounds`
+- `PassButtonBounds`、`ResignButtonBounds`、`CancelPlayingButtonBounds`
+- `LocalUseButtonBounds` は `LocalUseCardBounds` として同画面が所有する（カードは現時点では `Button` 描画を使わないため）。
+
+タイトル／ポン抜きの操作 Bounds はすでに `TitleScreen` と `PonnukiProviderSelectionScreen` が所有します。

@@ -36,6 +36,7 @@ using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Button;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Headline;
 using KifuwarabeGo2026.Gui.Presentation.Pages.Title;
 using KifuwarabeGo2026.Gui.Presentation.Pages.PonnukiProviderSelection;
+using KifuwarabeGo2026.Gui.Presentation.Pages.LocalMatch;
 
 /// <summary>
 /// ［画面描画］の共通処理
@@ -924,17 +925,17 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IButton
     private static Rectangle HumanPlayerNameRowBounds(int y) => new(1144, y - 4, 668, 44);
 
     private static Rectangle HumanPlayerNameTextBounds(int y) => new(GameOverValueX, y + 2, 468, 32);
-    private static Rectangle StartPlayingButtonBounds => new(1658, 920, 154, 56);
-    private static Rectangle ChangeAppProviderButtonBounds => new(1658, 556, 154, 52);
-    private static Rectangle AppProviderGameSettingsButtonBounds => new(1328, 556, 320, 52);
-    private static Rectangle PonnukiProviderSeedAutoChangeBounds => new(1164, 870, 200, 32);
-    private static Rectangle PonnukiPlayer1SeedAutoChangeBounds => new(1378, 870, 200, 32);
-    private static Rectangle PonnukiPlayer2SeedAutoChangeBounds => new(1592, 870, 200, 32);
+    private static Rectangle StartPlayingButtonBounds => LocalMatchScreen.Default.StartPlayingButton.Bounds;
+    private static Rectangle ChangeAppProviderButtonBounds => LocalMatchScreen.Default.ChangeAppProviderButton.Bounds;
+    private static Rectangle AppProviderGameSettingsButtonBounds => LocalMatchScreen.Default.AppProviderGameSettingsButton.Bounds;
+    private static Rectangle PonnukiProviderSeedAutoChangeBounds => LocalMatchScreen.Default.ProviderSeedAutoChangeButton.Bounds;
+    private static Rectangle PonnukiPlayer1SeedAutoChangeBounds => LocalMatchScreen.Default.Player1SeedAutoChangeButton.Bounds;
+    private static Rectangle PonnukiPlayer2SeedAutoChangeBounds => LocalMatchScreen.Default.Player2SeedAutoChangeButton.Bounds;
 
-    private static Rectangle ImportSgfButtonBounds => new(1492, 184, 320, 56);
+    private static Rectangle ImportSgfButtonBounds => LocalMatchScreen.Default.ImportSgfButton.Bounds;
 
-    private static Rectangle SetupBackToTitleButtonBounds => new(1642, 104, 170, 52);
-    private static Rectangle LocalUseButtonBounds => new(508, 404, 438, 300);
+    private static Rectangle SetupBackToTitleButtonBounds => LocalMatchScreen.Default.BackToTitleButton.Bounds;
+    private static Rectangle LocalUseButtonBounds => LocalMatchScreen.Default.LocalUseCardBounds;
     private static Rectangle TitleHomeLocalButtonBounds => TitleScreen.Default.LocalMatchButton.Bounds;
     private static Rectangle TitleHomeCgosButtonBounds => TitleScreen.Default.CgosClientButton.Bounds;
     private static Rectangle TitleAppBounds(int index) => index == 0 ? TitleScreen.Default.CaptureGameButton.Bounds : Rectangle.Empty;
@@ -1002,17 +1003,17 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IButton
 
         return null;
     }
-    private static Rectangle ReturnToSetupButtonBounds => new(1492, 132, 320, 56);
+    private static Rectangle ReturnToSetupButtonBounds => LocalMatchScreen.Default.ReturnToSetupButton.Bounds;
 
-    private static Rectangle ExportSgfButtonBounds => new(1164, 910, 306, 56);
+    private static Rectangle ExportSgfButtonBounds => LocalMatchScreen.Default.ExportSgfButton.Bounds;
 
-    private static Rectangle LocalGameOverReviewButtonBounds => new(1486, 910, 306, 56);
+    private static Rectangle LocalGameOverReviewButtonBounds => LocalMatchScreen.Default.GameOverReviewButton.Bounds;
 
-    private static Rectangle PassButtonBounds => new(1144, 920, 320, 72);
+    private static Rectangle PassButtonBounds => LocalMatchScreen.Default.PassButton.Bounds;
 
-    private static Rectangle ResignButtonBounds => new(1492, 920, 320, 72);
+    private static Rectangle ResignButtonBounds => LocalMatchScreen.Default.ResignButton.Bounds;
 
-    private static Rectangle CancelPlayingButtonBounds => new(1144, 920, 668, 72);
+    private static Rectangle CancelPlayingButtonBounds => LocalMatchScreen.Default.CancelPlayingButton.Bounds;
     private static GoPlayerKind? GetPlayerKindButtonHit(Point point, int y)
     {
         if (PlayerKindButtonBounds(0, y).Contains(point))
