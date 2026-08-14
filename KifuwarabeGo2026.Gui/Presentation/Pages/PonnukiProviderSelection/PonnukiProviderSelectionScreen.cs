@@ -1,5 +1,7 @@
 namespace KifuwarabeGo2026.Gui.Presentation.Pages.PonnukiProviderSelection;
 
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
+
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ActionBadge;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Button;
@@ -134,9 +136,9 @@ public sealed class PonnukiProviderSelectionScreen
 
 /// <summary>ポン抜きプロバイダー選択画面が必要とする描画機能です。</summary>
 public sealed record PonnukiProviderSelectionDrawingCallbacks(
-    IHeadlineDrawingSurface HeadlineSurface,
-    IButtonDrawingSurface ButtonSurface,
-    IUnderlineDrawingSurface UnderlineSurface,
+    StationeryDrawingContext HeadlineSurface,
+    StationeryDrawingContext ButtonSurface,
+    StationeryDrawingContext UnderlineSurface,
     Action<string, Vector2, Color, float> DrawText,
     Action<string, Rectangle, Color, float> DrawDynamicText,
     Action<string, Rectangle, Color, float> DrawFittedText,

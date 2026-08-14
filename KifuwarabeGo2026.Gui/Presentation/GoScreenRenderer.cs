@@ -40,11 +40,12 @@ using KifuwarabeGo2026.Gui.Presentation.Pages.LocalMatch;
 using KifuwarabeGo2026.Gui.Presentation.Pages.EditTournamentRule;
 using KifuwarabeGo2026.Gui.Presentation.Pages.BoardAndReview;
 using KifuwarabeGo2026.Gui.Presentation.Shared.TextAreaDialog;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 
 /// <summary>
 /// ［画面描画］の共通処理
 /// </summary>
-public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IButtonDrawingSurface, IHeadlineDrawingSurface, IGoScreenRenderer
+public sealed partial class GoScreenRenderer : IGoScreenRenderer
 {
     private const int GameOverValueX = 1328;
     private const int GameOverSecondValueX = 1560;
@@ -60,6 +61,7 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IButton
     private readonly Texture2D _softCircle;
     private readonly Texture2D _stoneLight;
     private readonly Texture2D _stoneDark;
+    private readonly StationeryDrawingContext _stationeryDrawingContext;
     private readonly LinkUnderline _gtpEngineOptionLinkUnderline = new(
         new RoundUnderline { TopOffset = -4, Thickness = 4, Radius = 2 });
     private readonly MultilineTextUnderline _multilineTextUnderline = new(
@@ -110,6 +112,8 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IButton
         _softCircle = CreateCircleTexture(128, new Color(255, 255, 255, 255), softEdge: true);
         _stoneLight = CreateStoneTexture(128, lightStone: true);
         _stoneDark = CreateStoneTexture(128, lightStone: false);
+        _stationeryDrawingContext = new StationeryDrawingContext(
+            FillRect, DrawRoundedFill, DrawRect, DrawLine, DrawText, DrawFittedText);
     }
 
     public void Draw(
@@ -358,7 +362,7 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IButton
         DrawCommandButton(SetupBackToTitleButtonBounds, "BACK TO TITLE", false, mousePoint, scale: 0.32f);
 
         DrawVerticalResultSection(new Rectangle(1144, 184, 668, 176), "TOURNAMENT", new Color(62, 112, 105));
-        TournamentRulesScreen.Default.BrowseButton.Draw(mousePoint, this);
+        TournamentRulesScreen.Default.BrowseButton.Draw(mousePoint, _stationeryDrawingContext);
         DrawCommandButton(ImportSgfButtonBounds, session.HasReviewGameRecord ? "KIFU CLEAR (SGF)" : "KIFU INPUT (SGF)", false, mousePoint, scale: 0.34f);
         DrawResultRow(new Rectangle(1164, 292, 628, 56), "RULES", session.TournamentDisplayName, new Color(39, 68, 65), Color.White);
 
@@ -375,8 +379,8 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IButton
         DrawVerticalResultSection(new Rectangle(1144, 916, 668, 76), "ACTION", new Color(91, 82, 105));
         var boardAndReviewScreen = BoardAndReviewScreen.Default;
         boardAndReviewScreen.StartReviewingButton.IsEnabled = session.HasReviewGameRecord;
-        boardAndReviewScreen.StartReviewingButton.Draw(mousePoint, this);
-        boardAndReviewScreen.StartBoardEditingButton.Draw(mousePoint, this);
+        boardAndReviewScreen.StartReviewingButton.Draw(mousePoint, _stationeryDrawingContext);
+        boardAndReviewScreen.StartBoardEditingButton.Draw(mousePoint, _stationeryDrawingContext);
         DrawCommandButton(
             StartPlayingButtonBounds,
             session.CanStartPlaying ? "START" : "ENGINE REQUIRED",
@@ -427,7 +431,7 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IButton
 
     private void DrawGameOverSidePanel(GoAppSession session, Point mousePoint)
     {
-        new Headline("GAME OVER", new Vector2(1144, 132), new Color(255, 230, 160), 0.9f).Draw(this);
+        new Headline("GAME OVER", new Vector2(1144, 132), new Color(255, 230, 160), 0.9f).Draw(_stationeryDrawingContext);
         DrawText(FormatGameEndMoveCount(session.PlayedMoveCount), new Vector2(1144, 196), new Color(99, 223, 185), 0.58f);
         DrawCommandButton(ReturnToSetupButtonBounds, "BACK TO SETUP", false, mousePoint, scale: 0.34f);
 
@@ -527,7 +531,7 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IButton
         _tournamentRulesSettingsFileLinkUnderline.SetActionBadge(ActionBadge.Create("OPEN", textBounds));
         _tournamentRulesSettingsFileLinkUnderline.UpdatePointer(mousePoint);
         DrawFittedText(filePath, textBounds, Color.White, 0.38f);
-        _tournamentRulesSettingsFileLinkUnderline.Draw(this,
+        _tournamentRulesSettingsFileLinkUnderline.Draw(_stationeryDrawingContext,
             new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText));
     }
 
@@ -1161,7 +1165,7 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IButton
             _playerSelectorLinkUnderline.Bounds = fieldBounds;
             _playerSelectorLinkUnderline.SetActionBadge(ActionBadge.Create("CHANGE", fieldBounds));
             _playerSelectorLinkUnderline.UpdatePointer(mousePoint);
-            _playerSelectorLinkUnderline.Draw(this, new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText));
+            _playerSelectorLinkUnderline.Draw(_stationeryDrawingContext, new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText));
                 // 操作ヒントはアンダーライン終端の近くに、読みやすい反転プレートで表示する。
             return;
         }
@@ -1681,7 +1685,7 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IButton
             transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));
         ReviewUnsavedChangesConfirmation.Draw(mousePoint,
             new ReviewUnsavedChangesConfirmationDrawingCallbacks(VirtualScreen.Width, VirtualScreen.Height, FillRect,
-                DrawRect, DrawText, DrawFittedText, this));
+                DrawRect, DrawText, DrawFittedText, _stationeryDrawingContext));
         _spriteBatch.End();
     }
 
@@ -1697,7 +1701,7 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IButton
             transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));
         PopupNumberUnderline.Draw(mousePoint, title, text, caretIndex, selectionStart, selectionLength, message,
             new PopupNumberUnderlineDrawingCallbacks(VirtualScreen.Width, VirtualScreen.Height, FillRect, DrawRect,
-                DrawText, DrawFittedText, DrawTextBoxSelection, value => _font.MeasureString(value).X, this,
+                DrawText, DrawFittedText, DrawTextBoxSelection, value => _font.MeasureString(value).X, _stationeryDrawingContext,
                 DrawLine, DrawSharpCenteredFittedText), options);
         _spriteBatch.End();
     }
@@ -1712,7 +1716,7 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IButton
             transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));
         PopupTimeUnderline.Draw(mousePoint, values, carets, activePart, message,
             new PopupTimeUnderlineDrawingCallbacks(VirtualScreen.Width, VirtualScreen.Height, FillRect, DrawRect,
-                DrawText, DrawFittedText, value => _font.MeasureString(value).X, this, DrawLine, DrawSharpCenteredFittedText));
+                DrawText, DrawFittedText, value => _font.MeasureString(value).X, _stationeryDrawingContext, DrawLine, DrawSharpCenteredFittedText));
         _spriteBatch.End();
     }
 
@@ -1771,7 +1775,7 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IButton
         _multilineTextUnderline.Bounds = textBounds;
         _multilineTextUnderline.SetEditing(true);
         _multilineTextUnderline.UpdatePointer(mousePoint);
-        _multilineTextUnderline.Draw(this, new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText));
+        _multilineTextUnderline.Draw(_stationeryDrawingContext, new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText));
         DrawTextAreaContent(text, textBounds);
         var caret = GetTextAreaCaretPosition(text, caretIndex);
         if (composition.IsActive && !string.IsNullOrEmpty(composition.Text))
@@ -1782,8 +1786,8 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IButton
         FillRect(new Rectangle((int)caret.X, (int)caret.Y, 2, 29), composition.IsActive ? new Color(255, 225, 128) : new Color(147, 244, 200));
         DrawDynamicOptionText(message, new Rectangle(dialogBounds.X + 70, 752, 820, 34), new Color(180, 195, 195), 0.34f);
         DrawFittedText("ENTER: NEW LINE   CTRL+ENTER: SAVE SGF", new Rectangle(dialogBounds.X + 70, 786, 800, 28), new Color(147, 201, 190), 0.29f);
-        dialog.DiscardButton.Draw(mousePoint, this);
-        dialog.ApplyButton.Draw(mousePoint, this);
+        dialog.DiscardButton.Draw(mousePoint, _stationeryDrawingContext);
+        dialog.ApplyButton.Draw(mousePoint, _stationeryDrawingContext);
         _spriteBatch.End();
     }
 
@@ -2034,15 +2038,8 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IButton
     private void DrawPlayerEditPanel(GoAppSession session, Point mousePoint) =>
         EditEntryProfile.Draw(session, mousePoint, _stickyNoteScreen,
             new EditEntryProfileDrawingCallbacks(VirtualScreen.Width, VirtualScreen.Height, FillRect, DrawRoundedFill,
-                DrawRect, DrawText, DrawFittedText, this, DrawIconStone, DrawPlayerRoleFaceIcon,
+                DrawRect, DrawText, DrawFittedText, _stationeryDrawingContext, DrawIconStone, DrawPlayerRoleFaceIcon,
                 DrawTextBoxSelection, DrawTextBoxCaret, new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText), bounds => DrawActionBadge("CHANGE", bounds),
                 DrawLine, DrawDynamicOptionText, DrawRotatedCenteredText));
 
-    void IUnderlineDrawingSurface.FillRectangle(Rectangle bounds, Color color) => FillRect(bounds, color);
-    void IUnderlineDrawingSurface.FillRoundedRectangle(Rectangle bounds, int radius, Color color) => DrawRoundedFill(bounds, radius, color);
-    void IUnderlineDrawingSurface.DrawLine(Vector2 start, Vector2 end, float thickness, Color color) => DrawLine(start, end, thickness, color);
-    void IButtonDrawingSurface.FillRectangle(Rectangle bounds, Color color) => FillRect(bounds, color);
-    void IButtonDrawingSurface.DrawRectangle(Rectangle bounds, int thickness, Color color) => DrawRect(bounds, thickness, color);
-    void IButtonDrawingSurface.DrawFittedText(string text, Rectangle bounds, Color color, float scale) => DrawFittedText(text, bounds, color, scale);
-    void IHeadlineDrawingSurface.DrawText(string text, Vector2 position, Color color, float scale) => DrawText(text, position, color, scale);
 }

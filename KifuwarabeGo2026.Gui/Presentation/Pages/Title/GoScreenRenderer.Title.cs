@@ -34,7 +34,7 @@ public sealed partial class GoScreenRenderer
 
         // 見出し（ヘッドライン）
         _titleScreen.Headline.Position = new Vector2(panel.X + 58, panel.Y + 58);
-        _titleScreen.Headline.Draw(this);
+        _titleScreen.Headline.Draw(_stationeryDrawingContext);
         DrawText(GetDisplayVersion(), new Vector2(panel.X + 790, panel.Y + 91), new Color(99, 223, 185), 0.38f);
         DrawLine(new Vector2(panel.X + 790, panel.Y + 126), new Vector2(panel.X + 958, panel.Y + 126), 2, new Color(99, 223, 185, 120));
         DrawTitleMenuContent(session, page, panel, mousePoint, appProviderTabIndex, isAppProviderLoading);
@@ -55,8 +55,8 @@ public sealed partial class GoScreenRenderer
                 var updateBounds = ApplicationSettingsScreen.Default.UpdateButton.Bounds;
                 var settingsHovered = settingsBounds.Contains(mousePoint);
                 var updateHovered = updateBounds.Contains(mousePoint);
-                _titleScreen.FormalAppsLabel.Draw(this);
-                _titleScreen.CasualAppsLabel.Draw(this);
+                _titleScreen.FormalAppsLabel.Draw(_stationeryDrawingContext);
+                _titleScreen.CasualAppsLabel.Draw(_stationeryDrawingContext);
                 DrawHomeServiceChoice(_titleScreen.LocalMatchButton.Bounds, _titleScreen.LocalMatchButton.Label, "PLAY / REVIEW", new Color(99, 223, 185), mousePoint);
                 DrawHomeServiceChoice(_titleScreen.CgosClientButton.Bounds, _titleScreen.CgosClientButton.Label, "WATCH / CONNECT", new Color(99, 223, 185), mousePoint);
                 DrawAppChoice(_titleScreen.CaptureGameButton.Bounds, _titleScreen.CaptureGameButton.Label, "CAPTURE GAME", mousePoint);
@@ -222,7 +222,7 @@ public sealed partial class GoScreenRenderer
     {
         PonnukiProviderSelectionScreen.Default.Draw(session, mousePoint, appProviderTabIndex, isAppProviderLoading,
             new PonnukiProviderSelectionDrawingCallbacks(
-                this, this, this, DrawText, DrawDynamicOptionText, DrawFittedText, DrawLine,
+                _stationeryDrawingContext, _stationeryDrawingContext, _stationeryDrawingContext, DrawText, DrawDynamicOptionText, DrawFittedText, DrawLine,
                 DrawRoundedFill, DrawSharpCenteredFittedText,
                 (kind, connectorStart, accent, borderColor, heading, bodyLines) =>
                     DrawStickyNote(kind, connectorStart, accent, borderColor, heading, bodyLines),
@@ -232,7 +232,7 @@ public sealed partial class GoScreenRenderer
     private void DrawTitleBackButton(Point mousePoint, bool focused = false)
     {
         TitleScreen.Default.BackButton.IsSelected = focused;
-        TitleScreen.Default.BackButton.Draw(mousePoint, this);
+        TitleScreen.Default.BackButton.Draw(mousePoint, _stationeryDrawingContext);
     }
 
     private static string GetDisplayVersion()

@@ -1,5 +1,7 @@
 namespace KifuwarabeGo2026.Gui.Presentation.Pages.ReviewUnsavedChangesConfirmation;
 
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
+
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Button;
 using Microsoft.Xna.Framework;
 using System;
@@ -54,4 +56,4 @@ public sealed record ReviewUnsavedChangesConfirmationDrawingCallbacks(
     Action<Rectangle, int, Color> DrawRectangle,
     Action<string, Vector2, Color, float> DrawText,
     Action<string, Rectangle, Color, float> DrawFittedText,
-    IButtonDrawingSurface ButtonSurface);
+    StationeryDrawingContext ButtonSurface);

@@ -2,6 +2,7 @@ namespace KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Headline;
 
 using Microsoft.Xna.Framework;
 using System;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 
 /// <summary>
 /// 画面内で最も強く伝えたいメッセージを表示する、大見出し用の文房具 UI です。
@@ -35,14 +36,9 @@ public sealed class Headline
     // 機能
     // ========================================
 
-    public void Draw(IHeadlineDrawingSurface surface)
+    public void Draw(StationeryDrawingContext surface)
     {
         ArgumentNullException.ThrowIfNull(surface);
         surface.DrawText(Text, Position, Color, TextScale);
     }
-}
-
-public interface IHeadlineDrawingSurface
-{
-    void DrawText(string text, Vector2 position, Color color, float scale);
 }

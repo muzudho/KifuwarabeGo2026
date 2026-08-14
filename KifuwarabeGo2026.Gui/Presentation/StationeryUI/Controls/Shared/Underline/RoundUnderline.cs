@@ -1,5 +1,7 @@
 namespace KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
 
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
+
 /// <summary>
 /// 角丸の下線
 /// </summary>
@@ -10,6 +12,6 @@ public sealed class RoundUnderline : AbstractUnderline
     /// </summary>
     public int Radius { get; set; } = 2;
 
-    protected override void DrawCore(IUnderlineDrawingSurface surface) =>
+    protected override void DrawCore(StationeryDrawingContext surface) =>
         surface.FillRoundedRectangle(UnderlineBounds, Radius, Color);
 }

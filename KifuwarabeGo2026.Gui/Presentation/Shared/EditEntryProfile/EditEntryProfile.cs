@@ -7,6 +7,7 @@ using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.SinglelineTextUnderline;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.StickyNote;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.TableRowLabel;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 using Microsoft.Xna.Framework;
 using System;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ActionBadge;
@@ -149,8 +150,8 @@ public sealed class EditEntryProfile
         DiscardButton.IsEnabled = session.HasPlayerEditChanges;
         SaveAndCloseButton.Label = session.HasPlayerEditChanges ? "SAVE & CLOSE" : "CLOSE";
         SaveAndCloseButton.LabelScale = session.HasPlayerEditChanges ? 0.26f : 0.34f;
-        DiscardButton.Draw(mousePoint, draw.ButtonSurface);
-        SaveAndCloseButton.Draw(mousePoint, draw.ButtonSurface);
+        DiscardButton.Draw(mousePoint, draw.StationeryDrawingContext);
+        SaveAndCloseButton.Draw(mousePoint, draw.StationeryDrawingContext);
         DrawPlayerNameField(session, mousePoint, draw);
         DrawClientIdentitySection(session, mousePoint, draw);
         if (session.PlayerEditDraft.Kind == EntryProfileKind.Computer)
@@ -180,7 +181,7 @@ public sealed class EditEntryProfile
         PlayerNameTextUnderline.Bounds = textBounds;
         PlayerNameTextUnderline.SetEditing(active);
         PlayerNameTextUnderline.UpdatePointer(mousePoint);
-        PlayerNameTextUnderline.Draw(new UnderlineDrawingSurface(draw), draw.ActionBadgeDrawing);
+        PlayerNameTextUnderline.Draw(draw.StationeryDrawingContext, draw.ActionBadgeDrawing);
 
         // 選択範囲
         var text = session.GetPlayerEditFieldText(field);
@@ -230,7 +231,7 @@ public sealed class EditEntryProfile
         PlayerNameTextUnderline.Bounds = bounds;
         PlayerNameTextUnderline.SetEditing(active);
         PlayerNameTextUnderline.UpdatePointer(mousePoint);
-        PlayerNameTextUnderline.Draw(new UnderlineDrawingSurface(draw), draw.ActionBadgeDrawing);
+        PlayerNameTextUnderline.Draw(draw.StationeryDrawingContext, draw.ActionBadgeDrawing);
         var text = session.GetPlayerEditFieldText(field);
         if (active) draw.DrawTextSelection(text, session.PlayerEditSelectionStart, session.PlayerEditSelectionLength, bounds, 0.42f);
         draw.DrawFittedText(mask ? new string('●', text.Length) : text, bounds, Color.White, 0.42f);
@@ -239,7 +240,7 @@ public sealed class EditEntryProfile
 
     private void DrawClientIdentityListButton(Point mousePoint, EditEntryProfileDrawingCallbacks draw)
     {
-        ClientIdentityListButton.Draw(mousePoint, draw.ButtonSurface);
+        ClientIdentityListButton.Draw(mousePoint, draw.StationeryDrawingContext);
         var bounds = ClientIdentityListButton.Bounds;
         var color = bounds.Contains(mousePoint) ? new Color(222, 243, 246) : new Color(178, 219, 226);
 
@@ -261,7 +262,7 @@ public sealed class EditEntryProfile
     {
         var button = ClientIdentityPasswordVisibilityButton;
         button.IsEnabled = enabled;
-        button.Draw(mousePoint, draw.ButtonSurface);
+        button.Draw(mousePoint, draw.StationeryDrawingContext);
         var bounds = button.Bounds;
         var color = !enabled ? new Color(76, 88, 92) : bounds.Contains(mousePoint) ? new Color(222, 243, 246) : new Color(178, 219, 226);
         var center = new Vector2(bounds.Center.X, bounds.Center.Y);
@@ -294,7 +295,7 @@ public sealed class EditEntryProfile
         draw.DrawFittedText(value, textBounds, Color.White, 0.42f);
         PopupFieldUnderline.Bounds = textBounds;
         PopupFieldUnderline.UpdatePointer(mousePoint);
-        PopupFieldUnderline.Draw(new UnderlineDrawingSurface(draw));
+        PopupFieldUnderline.Draw(draw.StationeryDrawingContext);
         if (icon != FieldIcon.None) DrawIcon(icon, IconBounds(textBounds), draw);
         if (hovered) draw.DrawChangeHint(textBounds);
     }
@@ -332,13 +333,6 @@ public sealed class EditEntryProfile
 
     private enum FieldIcon { None, PlayerName, Engine }
 
-    private sealed class UnderlineDrawingSurface(EditEntryProfileDrawingCallbacks draw) : IUnderlineDrawingSurface
-    {
-        public void FillRectangle(Rectangle bounds, Color color) => draw.FillRectangle(bounds, color);
-        public void FillRoundedRectangle(Rectangle bounds, int radius, Color color) => draw.FillRoundedRectangle(bounds, radius, color);
-        public void DrawLine(Vector2 start, Vector2 end, float thickness, Color color) => draw.DrawLine(start, end, thickness, color);
-    }
-
     #endregion
 }
 
@@ -351,7 +345,7 @@ public sealed record EditEntryProfileDrawingCallbacks(
     Action<Rectangle, int, Color> DrawRectangle,
     Action<string, Vector2, Color, float> DrawText,
     Action<string, Rectangle, Color, float> DrawFittedText,
-    IButtonDrawingSurface ButtonSurface,
+    StationeryDrawingContext StationeryDrawingContext,
     Action<Vector2, float, bool> DrawStone,
     Action<Vector2, bool> DrawPlayerRoleFace,
     Action<string, int, int, Rectangle, float> DrawTextSelection,

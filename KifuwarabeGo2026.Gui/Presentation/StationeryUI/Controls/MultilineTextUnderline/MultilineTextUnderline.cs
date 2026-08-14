@@ -4,6 +4,7 @@ using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
 using Microsoft.Xna.Framework;
 using System;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ActionBadge;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 
 /// <summary>複数行テキスト入力欄の罫線を描画する独立コンポーネントです。</summary>
 public sealed class MultilineTextUnderline
@@ -62,7 +63,7 @@ public sealed class MultilineTextUnderline
             ActionBadge?.Hide();
     }
 
-    public void Draw(IUnderlineDrawingSurface surface, ActionBadgeDrawingCallbacks? actionBadgeDrawing = null, int lineHeight = 31, int horizontalInset = 18)
+    public void Draw(StationeryDrawingContext surface, ActionBadgeDrawingCallbacks? actionBadgeDrawing = null, int lineHeight = 31, int horizontalInset = 18)
     {
         ArgumentNullException.ThrowIfNull(surface);
 

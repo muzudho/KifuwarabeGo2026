@@ -29,7 +29,7 @@ public sealed partial class GoScreenRenderer
         FillRect(panel, new Color(21, 25, 32, 246));
         DrawRect(panel, 2, new Color(82, 111, 114));
         DrawText("APPLICATION SETTINGS", new Vector2(440, 148), new Color(244, 238, 218), 0.78f);
-        screen.BackButton.Draw(mousePoint, this);
+        screen.BackButton.Draw(mousePoint, _stationeryDrawingContext);
         DrawSettingsTabs(page, mousePoint);
         if (page == ApplicationSettingsPage.Log)
         {
@@ -50,7 +50,7 @@ public sealed partial class GoScreenRenderer
                 DrawFittedText(Path.GetFileName(logFiles[index]), new Rectangle(bounds.X + 8, bounds.Y + 6, bounds.Width - 16, 28), Color.White, 0.31f);
                 link.UpdatePointer(mousePoint);
                 link.SetSelected(selected);
-                link.Draw(this);
+                link.Draw(_stationeryDrawingContext);
                 if (selected && hovered)
                 {
                     link.ActionBadge?.Show();
@@ -110,7 +110,7 @@ public sealed partial class GoScreenRenderer
         var valueY = string.IsNullOrWhiteSpace(label) ? bounds.Y + 16 : bounds.Y + 30;
         DrawFittedText(value, new Rectangle(bounds.X + 8, valueY, bounds.Width - (hovered ? 132 : 16), 28), Color.White, 0.32f);
         link.UpdatePointer(mousePoint);
-        link.Draw(this, new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText));
+        link.Draw(_stationeryDrawingContext, new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText));
     }
 
     private void DrawSettingsButton(Point mousePoint)

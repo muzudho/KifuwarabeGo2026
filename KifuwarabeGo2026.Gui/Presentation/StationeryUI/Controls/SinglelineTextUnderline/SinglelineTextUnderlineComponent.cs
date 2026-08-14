@@ -4,6 +4,7 @@ using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
 using Microsoft.Xna.Framework;
 using System;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ActionBadge;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 
 /// <summary>単一行テキスト入力のアンダーライン表示を担当します。</summary>
 public sealed class SinglelineTextUnderline
@@ -48,7 +49,7 @@ public sealed class SinglelineTextUnderline
             ActionBadge?.Hide();
     }
 
-    public void Draw(IUnderlineDrawingSurface surface, ActionBadgeDrawingCallbacks? actionBadgeDrawing = null)
+    public void Draw(StationeryDrawingContext surface, ActionBadgeDrawingCallbacks? actionBadgeDrawing = null)
     {
         Underline.ContentBounds = Bounds;
         Underline.Color = IsEditing

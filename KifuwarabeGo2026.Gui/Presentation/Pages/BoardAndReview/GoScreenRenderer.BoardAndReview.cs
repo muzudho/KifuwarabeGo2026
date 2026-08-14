@@ -36,23 +36,23 @@ public sealed partial class GoScreenRenderer
     {
         var controls = BoardAndReviewScreen.Default.BoardEditing;
         controls.UpdateState(session.BoardEditingStone, session.CanUndoBoardEditing, session.CanRedoBoardEditing);
-        new Headline("BOARD EDIT", new Vector2(1144, 136), new Color(255, 230, 160), 0.72f).Draw(this);
-        controls.CancelButton.Draw(mousePoint, this);
-        controls.AdoptButton.Draw(mousePoint, this);
+        new Headline("BOARD EDIT", new Vector2(1144, 136), new Color(255, 230, 160), 0.72f).Draw(_stationeryDrawingContext);
+        controls.CancelButton.Draw(mousePoint, _stationeryDrawingContext);
+        controls.AdoptButton.Draw(mousePoint, _stationeryDrawingContext);
 
         DrawVerticalResultSection(new Rectangle(1144, 204, 668, 76), "BOARD", new Color(66, 104, 116));
         DrawResultRow(new Rectangle(1164, 208, 628, 60), "SIZE", $"{session.BoardSize} x {session.BoardSize}", new Color(62, 112, 105), Color.White);
 
         DrawVerticalResultSection(new Rectangle(1144, 292, 668, 260), "EDIT", new Color(76, 91, 126));
         DrawResultLabel(new Rectangle(1164, 296, 628, 40), "STONE", new Color(76, 91, 126));
-        controls.BlackButton.Draw(mousePoint, this);
-        controls.WhiteButton.Draw(mousePoint, this);
-        controls.EraseButton.Draw(mousePoint, this);
+        controls.BlackButton.Draw(mousePoint, _stationeryDrawingContext);
+        controls.WhiteButton.Draw(mousePoint, _stationeryDrawingContext);
+        controls.EraseButton.Draw(mousePoint, _stationeryDrawingContext);
 
         DrawResultLabel(new Rectangle(1164, 414, 628, 40), "HISTORY", new Color(76, 91, 126));
-        controls.UndoButton.Draw(mousePoint, this);
-        controls.RedoButton.Draw(mousePoint, this);
-        controls.ClearButton.Draw(mousePoint, this);
+        controls.UndoButton.Draw(mousePoint, _stationeryDrawingContext);
+        controls.RedoButton.Draw(mousePoint, _stationeryDrawingContext);
+        controls.ClearButton.Draw(mousePoint, _stationeryDrawingContext);
 
         DrawVerticalResultSection(new Rectangle(1144, 564, 668, 220), "POSITION", new Color(62, 112, 105));
         DrawStoneCountStrip(session, 584, showLeader: false, minimal: true);
@@ -68,7 +68,7 @@ public sealed partial class GoScreenRenderer
             session.VariationEditingStone,
             session.CanAdoptVariationPosition,
             session.CanUndoVariation);
-        new Headline("ANALYSIS BOARD", new Vector2(1144, 136), new Color(42, 62, 68), 0.68f).Draw(this);
+        new Headline("ANALYSIS BOARD", new Vector2(1144, 136), new Color(42, 62, 68), 0.68f).Draw(_stationeryDrawingContext);
         DrawCommandButton(VariationEditingDiscardButtonBounds, "DISCARD", false, mousePoint, scale: 0.34f);
         if (session.CanAdoptVariationPosition)
             DrawCommandButton(VariationEditingAdoptButtonBounds, "ADOPT", false, mousePoint, scale: 0.34f);
@@ -154,7 +154,7 @@ public sealed partial class GoScreenRenderer
         BoardAndReviewScreen.Default.Review.UpdateBoardLensState(
             session.IsRenParseDisplayEnabled,
             session.IsMeasureBoardLens);
-        new Headline("KIFU REVIEW", new Vector2(1144, 136), new Color(255, 230, 160), 0.72f).Draw(this);
+        new Headline("KIFU REVIEW", new Vector2(1144, 136), new Color(255, 230, 160), 0.72f).Draw(_stationeryDrawingContext);
         if (session.HasUnsavedReviewCommentChanges)
         {
             DrawFittedText(

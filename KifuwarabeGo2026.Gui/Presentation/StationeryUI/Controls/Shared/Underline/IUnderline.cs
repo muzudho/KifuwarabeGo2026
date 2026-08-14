@@ -1,6 +1,7 @@
 namespace KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
 
 using Microsoft.Xna.Framework;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 
 /// <summary>
 /// 下線
@@ -31,5 +32,5 @@ public interface IUnderline
     /// 描画
     /// </summary>
     /// <param name="surface">描画先</param>
-    void Draw(IUnderlineDrawingSurface surface);
+    void Draw(StationeryDrawingContext surface);
 }

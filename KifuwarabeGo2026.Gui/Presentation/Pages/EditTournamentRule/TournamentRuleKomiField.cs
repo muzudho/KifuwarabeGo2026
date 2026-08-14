@@ -1,5 +1,7 @@
 namespace KifuwarabeGo2026.Gui.Presentation.Pages.EditTournamentRule;
 
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
+
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.SinglelineTextUnderline;
 using Microsoft.Xna.Framework;
@@ -31,5 +33,5 @@ public sealed class TournamentRuleKomiField
 public sealed record TournamentRuleKomiFieldDrawingCallbacks(
     Action<string, Rectangle> DrawFieldLabel,
     Action<string, Rectangle, Color, float> DrawFittedText,
-    IUnderlineDrawingSurface UnderlineSurface,
+    StationeryDrawingContext UnderlineSurface,
     ActionBadgeDrawingCallbacks ActionBadgeDrawing);

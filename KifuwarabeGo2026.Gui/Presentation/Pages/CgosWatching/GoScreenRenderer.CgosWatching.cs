@@ -101,9 +101,9 @@ public sealed partial class GoScreenRenderer
         FillRect(panel, new Color(21, 25, 32, 236));
         DrawRect(panel, 2, new Color(82, 111, 114));
 
-        new Headline(observation.IsFinished ? "CGOS RESULT" : "CGOS WATCH", new Vector2(1144, 136), new Color(255, 230, 160), 0.72f).Draw(this);
+        new Headline(observation.IsFinished ? "CGOS RESULT" : "CGOS WATCH", new Vector2(1144, 136), new Color(255, 230, 160), 0.72f).Draw(_stationeryDrawingContext);
         var screen = CgosWatchingScreen.Default;
-        screen.LeaveViewButton.Draw(mousePoint, this);
+        screen.LeaveViewButton.Draw(mousePoint, _stationeryDrawingContext);
 
         DrawVerticalResultSection(new Rectangle(1144, 204, 668, 58), "GAME INFO", new Color(66, 104, 116));
         DrawFittedText(
@@ -137,11 +137,11 @@ public sealed partial class GoScreenRenderer
             DrawCgosResultRow(new Rectangle(1164, 852, 628, 42), observation.Result);
 
             DrawVerticalResultSection(new Rectangle(1144, 912, 668, 68), "ACTION", new Color(91, 82, 105));
-            screen.ReviewButton.Draw(mousePoint, this);
+            screen.ReviewButton.Draw(mousePoint, _stationeryDrawingContext);
             if (session.IsSgfAutoSaveAvailable)
                 DrawSgfAutoSaveCheckBox(screen.ExportSgfButton.Bounds, session, mousePoint);
             else
-                screen.ExportSgfButton.Draw(mousePoint, this);
+                screen.ExportSgfButton.Draw(mousePoint, _stationeryDrawingContext);
         }
         else
         {

@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
 using System;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ActionBadge;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 
 /// <summary>
 /// 非同期アクションへ接続する文房具 UI のリンクアンダーラインです。
@@ -81,7 +82,7 @@ public sealed class LinkUnderline
     public void ClearSelection() => IsSelected = false;
 
     /// <summary>同期リンク向けに、ホバー状態だけで所有する Underline を描画します。</summary>
-    public void Draw(IUnderlineDrawingSurface surface, ActionBadgeDrawingCallbacks? actionBadgeDrawing = null)
+    public void Draw(StationeryDrawingContext surface, ActionBadgeDrawingCallbacks? actionBadgeDrawing = null)
     {
         Underline.ContentBounds = Bounds;
         Underline.Color = IsSelected
@@ -103,7 +104,7 @@ public sealed class LinkUnderline
         double nowSeconds,
         Action<Rectangle, string, Color> drawText,
         Action<Vector2, Color> drawSpinner,
-        IUnderlineDrawingSurface surface)
+        StationeryDrawingContext surface)
     {
         ArgumentNullException.ThrowIfNull(controller);
         ArgumentNullException.ThrowIfNull(drawText);

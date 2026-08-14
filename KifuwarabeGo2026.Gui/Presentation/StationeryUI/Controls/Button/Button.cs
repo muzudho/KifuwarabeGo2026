@@ -2,6 +2,7 @@ namespace KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Button;
 
 using Microsoft.Xna.Framework;
 using System;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 
 /// <summary>位置、ラベル、有効状態、ヒット判定を所有する文房具 UI のボタンです。</summary>
 public sealed class Button
@@ -40,7 +41,7 @@ public sealed class Button
     // 機能
     // ========================================
 
-    public void Draw(Point mousePoint, IButtonDrawingSurface surface)
+    public void Draw(Point mousePoint, StationeryDrawingContext surface)
     {
         ArgumentNullException.ThrowIfNull(surface);
 
@@ -57,11 +58,4 @@ public sealed class Button
         surface.DrawFittedText(Label, new Rectangle(Bounds.X + 10, Bounds.Y + 5, Bounds.Width - 20, Bounds.Height - 10),
             IsEnabled ? Color.White : new Color(91, 100, 106), LabelScale);
     }
-}
-
-public interface IButtonDrawingSurface
-{
-    void FillRectangle(Rectangle bounds, Color color);
-    void DrawRectangle(Rectangle bounds, int thickness, Color color);
-    void DrawFittedText(string text, Rectangle bounds, Color color, float scale);
 }

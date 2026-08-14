@@ -345,7 +345,7 @@ public sealed partial class GoScreenRenderer
 
         if (session.CgosConnectionFlowKind == CgosConnectionFlowKind.ConnectionStart)
         {
-            new Headline("CGOS CLIENT", new Vector2(panel.X + 58, panel.Y + 58), new Color(255, 230, 160), 1.0f).Draw(this);
+            new Headline("CGOS CLIENT", new Vector2(panel.X + 58, panel.Y + 58), new Color(255, 230, 160), 1.0f).Draw(_stationeryDrawingContext);
             DrawCgosConnectionStartPanel(session, mousePoint);
             return;
         }
@@ -502,7 +502,7 @@ public sealed partial class GoScreenRenderer
         _compactLinkUnderline.Bounds = valueBounds;
         _compactLinkUnderline.SetActionBadge(ActionBadge.Create("CHANGE", valueBounds));
         _compactLinkUnderline.UpdatePointer(mousePoint);
-        _compactLinkUnderline.Draw(this, new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText));
+        _compactLinkUnderline.Draw(_stationeryDrawingContext, new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText));
     }
 
     private void DrawCgosCredentialFields(GoAppSession session, GoStone stone, Point mousePoint)
@@ -661,7 +661,7 @@ public sealed partial class GoScreenRenderer
         _selectorLinkUnderline.Bounds = fieldBounds;
         _selectorLinkUnderline.SetActionBadge(ActionBadge.Create("CHANGE", fieldBounds));
         _selectorLinkUnderline.UpdatePointer(mousePoint);
-        _selectorLinkUnderline.Draw(this, new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText));
+        _selectorLinkUnderline.Draw(_stationeryDrawingContext, new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText));
     }
 
 

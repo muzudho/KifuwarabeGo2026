@@ -106,8 +106,8 @@ public sealed partial class GoScreenRenderer
         DrawText(session.IsTournamentRulesEditPanelMode ? "EDIT TOURNAMENT RULES" : "ADD TOURNAMENT RULES", new Vector2(TournamentRulesAddPanelBounds.X + 30, TournamentRulesAddPanelBounds.Y + 24), new Color(244, 238, 218), 0.78f);
         var rulesScreen = TournamentRulesScreen.Default;
         rulesScreen.UpdateAddPanelState(session.IsTournamentRulesDirty);
-        rulesScreen.AddPanelDiscardButton.Draw(mousePoint, this);
-        rulesScreen.AddPanelSaveButton.Draw(mousePoint, this);
+        rulesScreen.AddPanelDiscardButton.Draw(mousePoint, _stationeryDrawingContext);
+        rulesScreen.AddPanelSaveButton.Draw(mousePoint, _stationeryDrawingContext);
 
         FillRect(TournamentRulesAddPanelEditorBounds, new Color(15, 20, 26));
         DrawRect(TournamentRulesAddPanelEditorBounds, 1, new Color(67, 84, 92));
@@ -120,13 +120,13 @@ public sealed partial class GoScreenRenderer
             new Rectangle(AddPanelControlX, AddPanelBoardSizeButtonY, 668, 50));
         DrawBoardSizeButtons(session.BoardSize, mousePoint, AddPanelBoardSizeButtonY);
         TournamentRulesScreen.Default.KomiField.Draw(session.Komi, mousePoint,
-            new TournamentRuleKomiFieldDrawingCallbacks(DrawTournamentRulesFieldLabel, DrawFittedText, this,
+            new TournamentRuleKomiFieldDrawingCallbacks(DrawTournamentRulesFieldLabel, DrawFittedText, _stationeryDrawingContext,
                 new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText)));
         TournamentRulesScreen.Default.TimeField.Draw(session.MainTime, mousePoint,
-            new TournamentRuleTimeFieldDrawingCallbacks(DrawTournamentRulesFieldLabel, DrawFittedText, this,
+            new TournamentRuleTimeFieldDrawingCallbacks(DrawTournamentRulesFieldLabel, DrawFittedText, _stationeryDrawingContext,
                 new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText)));
         TournamentRulesScreen.Default.MoveLimitField.Draw(session.MoveLimit, mousePoint,
-            new TournamentRuleMoveLimitFieldDrawingCallbacks(DrawTournamentRulesFieldLabel, DrawFittedText, this,
+            new TournamentRuleMoveLimitFieldDrawingCallbacks(DrawTournamentRulesFieldLabel, DrawFittedText, _stationeryDrawingContext,
                 new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText)));
         DrawFilePathSelector(session, mousePoint);
     }

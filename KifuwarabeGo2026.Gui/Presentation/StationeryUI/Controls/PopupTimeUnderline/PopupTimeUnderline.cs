@@ -1,5 +1,7 @@
 namespace KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.PopupTimeUnderline;
 
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
+
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Button;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.SpinButton;
 using Microsoft.Xna.Framework;
@@ -76,5 +78,5 @@ public sealed record PopupTimeUnderlineDrawingCallbacks(
     int VirtualScreenWidth, int VirtualScreenHeight,
     Action<Rectangle, Color> FillRectangle, Action<Rectangle, int, Color> DrawRectangle,
     Action<string, Vector2, Color, float> DrawText, Action<string, Rectangle, Color, float> DrawFittedText,
-    Func<string, float> MeasureTextWidth, IButtonDrawingSurface ButtonSurface,
+    Func<string, float> MeasureTextWidth, StationeryDrawingContext ButtonSurface,
     Action<Vector2, Vector2, float, Color> DrawLine, Action<string, Rectangle, Color, float> DrawCenteredText);

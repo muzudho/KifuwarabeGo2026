@@ -1,5 +1,7 @@
 namespace KifuwarabeGo2026.Gui.Presentation.Pages.EditTournamentRule;
 
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
+
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ActionBadge;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.SinglelineTextUnderline;
@@ -29,5 +31,5 @@ public sealed class TournamentRuleMoveLimitField
 public sealed record TournamentRuleMoveLimitFieldDrawingCallbacks(
     Action<string, Rectangle> DrawFieldLabel,
     Action<string, Rectangle, Color, float> DrawFittedText,
-    IUnderlineDrawingSurface UnderlineSurface,
+    StationeryDrawingContext UnderlineSurface,
     ActionBadgeDrawingCallbacks ActionBadgeDrawing);

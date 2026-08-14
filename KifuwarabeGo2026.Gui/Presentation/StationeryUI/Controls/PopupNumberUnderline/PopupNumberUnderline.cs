@@ -1,5 +1,7 @@
 namespace KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.PopupNumberUnderline;
 
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
+
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Button;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.SpinButton;
 using Microsoft.Xna.Framework;
@@ -136,6 +138,6 @@ public sealed record PopupNumberUnderlineDrawingCallbacks(
     Action<string, Rectangle, Color, float> DrawFittedText,
     Action<string, int, int, Rectangle, float> DrawTextSelection,
     Func<string, float> MeasureTextWidth,
-    IButtonDrawingSurface ButtonSurface,
+    StationeryDrawingContext ButtonSurface,
     Action<Vector2, Vector2, float, Color> DrawLine,
     Action<string, Rectangle, Color, float> DrawCenteredText);
