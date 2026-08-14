@@ -233,50 +233,9 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IButton
     /// <param name="point"></param>
     /// <returns></returns>
 
-    public static bool GetLocalUseButtonHit(Point point) => LocalUseButtonBounds.Contains(point);
-    public static bool GetImportSgfButtonHit(Point point) => ImportSgfButtonBounds.Contains(point);
-    public static bool GetStartPlayingButtonHit(Point point, GoAppModeKind modeKind) =>
-        modeKind != GoAppModeKind.GameOver && StartPlayingButtonBounds.Contains(point);
-    public static bool GetChangeAppProviderButtonHit(Point point) => ChangeAppProviderButtonBounds.Contains(point);
-    public static bool GetAppProviderGameSettingsButtonHit(Point point) => AppProviderGameSettingsButtonBounds.Contains(point);
-    public static PonnukiRandomSeedRole? GetPonnukiRandomSeedAutoChangeHit(Point point) =>
-        PonnukiProviderSeedAutoChangeBounds.Contains(point) ? PonnukiRandomSeedRole.Provider :
-        PonnukiPlayer1SeedAutoChangeBounds.Contains(point) ? PonnukiRandomSeedRole.Player1 :
-        PonnukiPlayer2SeedAutoChangeBounds.Contains(point) ? PonnukiRandomSeedRole.Player2 : null;
+    public int GetHumanPlayerNameCaretIndex(Point point, GoStone stone, string text, bool isPonnuki) =>
+        GetTextBoxCaretIndex(point.X, text, LocalMatchScreen.Default.GetPlayerKindRow(stone, isPonnuki).HumanNameTextBounds, 0.42f);
 
-    public static bool GetReturnToSetupButtonHit(Point point) => ReturnToSetupButtonBounds.Contains(point);
-
-    public static bool GetExportSgfButtonHit(Point point) => ExportSgfButtonBounds.Contains(point);
-
-    public static bool GetSgfAutoSaveCheckHit(Point point) => ExportSgfButtonBounds.Contains(point);
-
-    public static bool GetLocalGameOverReviewButtonHit(Point point) =>
-        LocalGameOverReviewButtonBounds.Contains(point);
-
-    public static bool GetSetupBackToTitleButtonHit(Point point) => SetupBackToTitleButtonBounds.Contains(point);
-
-    public static GoPlayerKind? GetBlackPlayerKindButtonHit(Point point) => GetPlayerKindButtonHit(point, BlackPlayerKindButtonY);
-
-    public static GoPlayerKind? GetWhitePlayerKindButtonHit(Point point) => GetPlayerKindButtonHit(point, WhitePlayerKindButtonY);
-
-    public static GoPlayerKind? GetPonnukiBlackPlayerKindButtonHit(Point point) => GetPlayerKindButtonHit(point, PonnukiBlackPlayerKindButtonY);
-
-    public static GoPlayerKind? GetPonnukiWhitePlayerKindButtonHit(Point point) => GetPlayerKindButtonHit(point, PonnukiWhitePlayerKindButtonY);
-
-    public static GoStone? GetHumanPlayerNameTextBoxHit(Point point, GoAppSession session)
-    {
-        if (session.BlackPlayerKind == GoPlayerKind.Human && HumanPlayerNameRowBounds(BlackEngineButtonY).Contains(point)) return GoStone.Black;
-        return session.WhitePlayerKind == GoPlayerKind.Human && HumanPlayerNameRowBounds(WhiteEngineButtonY).Contains(point) ? GoStone.White : null;
-    }
-
-    public int GetHumanPlayerNameCaretIndex(Point point, GoStone stone, string text) =>
-        GetTextBoxCaretIndex(point.X, text, HumanPlayerNameTextBounds(stone == GoStone.Black ? BlackEngineButtonY : WhiteEngineButtonY), 0.42f);
-
-    public static bool GetPassButtonHit(Point point) => PassButtonBounds.Contains(point);
-
-    public static bool GetResignButtonHit(Point point) => ResignButtonBounds.Contains(point);
-
-    public static bool GetCancelPlayingButtonHit(Point point) => CancelPlayingButtonBounds.Contains(point);
     private void DrawBackground()
     {
         var topLeft = VirtualScreen.ToVirtualPoint(_graphicsDevice.Viewport, Point.Zero);
@@ -919,13 +878,22 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IButton
     private static Rectangle TournamentRulesMoveLimitTextBounds => new(AddPanelControlX + 132, 612, 176, 40);
 
 
-    private static Rectangle PlayerKindButtonBounds(int index, int y) => new(GameOverValueX + index * 236, y, 236, 52);
+    private static PlayerKindSelectionRow PlayerKindRow(int y) => y switch
+    {
+        BlackPlayerKindButtonY => LocalMatchScreen.Default.BlackPlayerKindRow,
+        WhitePlayerKindButtonY => LocalMatchScreen.Default.WhitePlayerKindRow,
+        PonnukiBlackPlayerKindButtonY => LocalMatchScreen.Default.PonnukiBlackPlayerKindRow,
+        _ => LocalMatchScreen.Default.PonnukiWhitePlayerKindRow,
+    };
 
-    private static Rectangle PlayerKindSegmentBounds(int y) => new(GameOverValueX, y, 472, 52);
+    private static Rectangle PlayerKindButtonBounds(int index, int y) =>
+        index == 0 ? PlayerKindRow(y).HumanButton.Bounds : PlayerKindRow(y).ComputerButton.Bounds;
 
-    private static Rectangle HumanPlayerNameRowBounds(int y) => new(1144, y - 4, 668, 44);
+    private static Rectangle PlayerKindSegmentBounds(int y) => PlayerKindRow(y).SegmentBounds;
 
-    private static Rectangle HumanPlayerNameTextBounds(int y) => new(GameOverValueX, y + 2, 468, 32);
+    private static Rectangle HumanPlayerNameRowBounds(int y) => PlayerKindRow(y - 58).HumanNameRowBounds;
+
+    private static Rectangle HumanPlayerNameTextBounds(int y) => PlayerKindRow(y - 58).HumanNameTextBounds;
     private static Rectangle StartPlayingButtonBounds => LocalMatchScreen.Default.StartPlayingButton.Bounds;
     private static Rectangle ChangeAppProviderButtonBounds => LocalMatchScreen.Default.ChangeAppProviderButton.Bounds;
     private static Rectangle AppProviderGameSettingsButtonBounds => LocalMatchScreen.Default.AppProviderGameSettingsButton.Bounds;
@@ -1015,16 +983,6 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IButton
     private static Rectangle ResignButtonBounds => LocalMatchScreen.Default.ResignButton.Bounds;
 
     private static Rectangle CancelPlayingButtonBounds => LocalMatchScreen.Default.CancelPlayingButton.Bounds;
-    private static GoPlayerKind? GetPlayerKindButtonHit(Point point, int y)
-    {
-        if (PlayerKindButtonBounds(0, y).Contains(point))
-        {
-            return GoPlayerKind.Human;
-        }
-
-        return PlayerKindButtonBounds(1, y).Contains(point) ? GoPlayerKind.Computer : null;
-    }
-
     private static string PlayerKindLabel(GoPlayerKind playerKind) => playerKind == GoPlayerKind.Human ? "Human" : "Computer";
 
     private static string FormatElapsedTime(TimeSpan elapsed)

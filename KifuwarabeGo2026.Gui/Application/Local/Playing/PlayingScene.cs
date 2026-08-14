@@ -9,6 +9,7 @@ using KifuwarabeGo2026.Shared.Domain;
 using KifuwarabeGo2026.Gui.Gtp;
 using KifuwarabeGo2026.Gui.Infrastructure.Logging;
 using KifuwarabeGo2026.Gui.Presentation;
+using KifuwarabeGo2026.Gui.Presentation.Pages.LocalMatch;
 using InitialPositionConciergePage = KifuwarabeGo2026.Gui.Presentation.Pages.InitialPositionConcierge.InitialPositionConcierge;
 using Microsoft.Xna.Framework;
 using System;
@@ -118,7 +119,7 @@ public sealed class PlayingScene : IDisposable
             return true;
         }
 
-        if (ShouldShowEnginePreparing() && GoScreenRenderer.GetCancelPlayingButtonHit(point))
+        if (ShouldShowEnginePreparing() && LocalMatchScreen.Default.CancelPlayingButton.IsHit(point))
         {
             CancelGtpGame();
             _session.CancelPlaying();
@@ -136,7 +137,7 @@ public sealed class PlayingScene : IDisposable
             return true;
         }
 
-        if (GoScreenRenderer.GetPassButtonHit(point))
+        if (LocalMatchScreen.Default.PassButton.IsHit(point))
         {
             var passedBy = _session.CurrentTurn;
             if (_session.Pass())
@@ -148,7 +149,7 @@ public sealed class PlayingScene : IDisposable
             return true;
         }
 
-        if (GoScreenRenderer.GetResignButtonHit(point))
+        if (LocalMatchScreen.Default.ResignButton.IsHit(point))
         {
             if (_session.Resign())
             {

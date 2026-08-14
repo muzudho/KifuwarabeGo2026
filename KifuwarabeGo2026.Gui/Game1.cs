@@ -21,6 +21,7 @@ using KifuwarabeGo2026.Gui.Presentation.GoApps.Formal.OnlineMatch.Watch;
 using KifuwarabeGo2026.Gui.Presentation.GoApps.Formal.LocalMatch.Interval;
 using KifuwarabeGo2026.Gui.Presentation.GoApps.Formal.LocalMatch.Interval.TournamentRules;
 using KifuwarabeGo2026.Gui.Presentation.Pages.EditTournamentRule;
+using KifuwarabeGo2026.Gui.Presentation.Pages.LocalMatch;
 using KifuwarabeGo2026.Gui.Presentation.Title;
 using KifuwarabeGo2026.Gui.Presentation.Shared.TextAreaDialog;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls;
@@ -1590,7 +1591,10 @@ public class Game1 : Game
                 _previousMouse = mouse;
                 return;
             }
-            var humanPlayerNameHit = isPlayerSelectionIntermission ? GoScreenRenderer.GetHumanPlayerNameTextBoxHit(point, _session) : null;
+            var localMatchScreen = LocalMatchScreen.Default;
+            var humanPlayerNameHit = isPlayerSelectionIntermission
+                ? localMatchScreen.GetHumanPlayerNameHit(point, _session.BlackPlayerKind, _session.WhitePlayerKind, isLocalAppsIntermission)
+                : null;
             if (_session.ActiveHumanPlayerNameStone is not null && humanPlayerNameHit is null)
                 EndHumanPlayerNameEdit(commit: true);
             var handledByGtpEngineEditPanel = isPlayerSelectionIntermission && !isBoardEditing && TryHandleGtpEngineEditPanelClick(point);
@@ -1734,7 +1738,7 @@ public class Game1 : Game
                 return;
             }
             if (isLocalAppsIntermission &&
-                GoScreenRenderer.GetPonnukiRandomSeedAutoChangeHit(point) is { } seedRole &&
+                localMatchScreen.GetPonnukiRandomSeedAutoChangeHit(point) is { } seedRole &&
                 (seedRole != PonnukiRandomSeedRole.Player1 || _session.CanAutoChangePonnukiPlayer1Seed) &&
                 (seedRole != PonnukiRandomSeedRole.Player2 || _session.CanAutoChangePonnukiPlayer2Seed))
             {
@@ -1742,15 +1746,15 @@ public class Game1 : Game
                 _previousMouse = mouse;
                 return;
             }
-            if ((isSetupMode || isLocalAppsIntermission) && GoScreenRenderer.GetSetupBackToTitleButtonHit(point))
+            if ((isSetupMode || isLocalAppsIntermission) && localMatchScreen.BackToTitleButton.IsHit(point))
             {
                 _session.ReturnToUseSelection();
             }
-            else if (isLocalAppsIntermission && GoScreenRenderer.GetAppProviderGameSettingsButtonHit(point))
+            else if (isLocalAppsIntermission && localMatchScreen.AppProviderGameSettingsButton.IsHit(point))
             {
                 OpenAppProviderGameSettings();
             }
-            else if (isLocalAppsIntermission && GoScreenRenderer.GetChangeAppProviderButtonHit(point))
+            else if (isLocalAppsIntermission && localMatchScreen.ChangeAppProviderButton.IsHit(point))
             {
                 _session.ReturnToUseSelection();
                 _titleMenuPage = TitleMenuPage.CaptureGame;
@@ -1758,22 +1762,22 @@ public class Game1 : Game
             }
             else if (isLocalAppsIntermission &&
                      _session.CanStartPlaying &&
-                     GoScreenRenderer.GetStartPlayingButtonHit(point, _session.CurrentMode.Kind))
+                     localMatchScreen.StartPlayingButton.IsHit(point))
             {
                 StartPonnukiApp();
             }
-            else if (_session.CurrentMode.Kind == GoAppModeKind.GameOver && GoScreenRenderer.GetReturnToSetupButtonHit(point))
+            else if (_session.CurrentMode.Kind == GoAppModeKind.GameOver && localMatchScreen.ReturnToSetupButton.IsHit(point))
             {
                 _session.ReturnToSetup();
             }
             else if (_session.CurrentMode.Kind == GoAppModeKind.GameOver &&
-                     GoScreenRenderer.GetLocalGameOverReviewButtonHit(point))
+                     localMatchScreen.GameOverReviewButton.IsHit(point))
             {
                 StartReviewingGameRecord(_session.CurrentGameRecord.Clone(), "Local review");
             }
             else if (_session.CurrentMode.Kind == GoAppModeKind.GameOver &&
                      _session.IsSgfAutoSaveAvailable &&
-                     GoScreenRenderer.GetSgfAutoSaveCheckHit(point))
+                     localMatchScreen.ExportSgfButton.IsHit(point))
             {
                 ToggleSgfAutoSave();
                 if (_session.IsSgfAutoSaveEnabled)
@@ -1784,11 +1788,11 @@ public class Game1 : Game
             }
             else if (_session.CurrentMode.Kind == GoAppModeKind.GameOver &&
                      !_session.IsSgfAutoSaveAvailable &&
-                     GoScreenRenderer.GetExportSgfButtonHit(point))
+                     localMatchScreen.ExportSgfButton.IsHit(point))
             {
                 ExportSgf();
             }
-            else if (isSetupMode && GoScreenRenderer.GetImportSgfButtonHit(point))
+            else if (isSetupMode && localMatchScreen.ImportSgfButton.IsHit(point))
             {
                 if (_session.HasReviewGameRecord)
                 {
@@ -1809,7 +1813,7 @@ public class Game1 : Game
             }
             else if (isSetupMode &&
                      _session.CanStartPlaying &&
-                     GoScreenRenderer.GetStartPlayingButtonHit(point, _session.CurrentMode.Kind))
+                     localMatchScreen.StartPlayingButton.IsHit(point))
             {
                 _playingScene.StartPlaying();
             }
@@ -1835,9 +1839,7 @@ public class Game1 : Game
                 _session.OpenPlayerSelectionDialog(GoStone.White);
             }
             else if (isPlayerSelectionIntermission &&
-                     (isLocalAppsIntermission
-                         ? GoScreenRenderer.GetPonnukiBlackPlayerKindButtonHit(point)
-                         : GoScreenRenderer.GetBlackPlayerKindButtonHit(point)) is { } blackPlayerKind)
+                     localMatchScreen.GetPlayerKindRow(GoStone.Black, isLocalAppsIntermission).GetPlayerKindHit(point) is { } blackPlayerKind)
             {
                 EndHumanPlayerNameEdit(commit: true);
                 _session.SetPlayerKind(GoStone.Black, blackPlayerKind);
@@ -1850,9 +1852,7 @@ public class Game1 : Game
                 OpenGtpEngineSelectionDialog(GoStone.Black);
             }
             else if (isPlayerSelectionIntermission &&
-                     (isLocalAppsIntermission
-                         ? GoScreenRenderer.GetPonnukiWhitePlayerKindButtonHit(point)
-                         : GoScreenRenderer.GetWhitePlayerKindButtonHit(point)) is { } whitePlayerKind)
+                     localMatchScreen.GetPlayerKindRow(GoStone.White, isLocalAppsIntermission).GetPlayerKindHit(point) is { } whitePlayerKind)
             {
                 EndHumanPlayerNameEdit(commit: true);
                 _session.SetPlayerKind(GoStone.White, whitePlayerKind);
@@ -2253,7 +2253,7 @@ public class Game1 : Game
                  _session.ActiveHumanPlayerNameStone is { } humanStone)
         {
             _humanPlayerNameTextBox.UpdateMouseSelection(
-                _renderer.GetHumanPlayerNameCaretIndex(point, humanStone, _humanPlayerNameTextBox.Text));
+                _renderer.GetHumanPlayerNameCaretIndex(point, humanStone, _humanPlayerNameTextBox.Text, _session.UseKind == GoAppUseKind.LocalApps));
             _session.SetHumanPlayerNameDraft(_humanPlayerNameTextBox.Text, _humanPlayerNameTextBox.CaretIndex);
             _session.SetHumanPlayerNameSelection(_humanPlayerNameTextBox.SelectionStart, _humanPlayerNameTextBox.SelectionLength);
         }
@@ -4388,7 +4388,7 @@ public class Game1 : Game
         var text = _session.ActiveHumanPlayerNameStone == stone
             ? _humanPlayerNameTextBox.Text
             : _session.GetHumanPlayerName(stone);
-        var caretIndex = _renderer?.GetHumanPlayerNameCaretIndex(point, stone, text) ?? text.Length;
+        var caretIndex = _renderer?.GetHumanPlayerNameCaretIndex(point, stone, text, _session.UseKind == GoAppUseKind.LocalApps) ?? text.Length;
         if (_session.ActiveHumanPlayerNameStone == stone)
         {
             _humanPlayerNameTextBox.BeginMouseSelection(caretIndex, IsShiftDown());

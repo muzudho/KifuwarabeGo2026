@@ -1,6 +1,9 @@
 namespace KifuwarabeGo2026.Gui.Presentation.Pages.LocalMatch;
 
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Button;
+using KifuwarabeGo2026.Gui.Application;
+using KifuwarabeGo2026.Gui.Application.GoApps.Casual.Ponnuki;
+using KifuwarabeGo2026.Shared.Domain;
 using Microsoft.Xna.Framework;
 
 /// <summary>ローカル対局のセットアップ、対局中、終局後に共通する操作 UI を所有します。</summary>
@@ -24,6 +27,10 @@ public sealed class LocalMatchScreen
         PassButton = new Button(new Rectangle(1144, 920, 320, 72), "PASS", 0.62f);
         ResignButton = new Button(new Rectangle(1492, 920, 320, 72), "RESIGN", 0.62f);
         CancelPlayingButton = new Button(new Rectangle(1144, 920, 668, 72), "CANCEL", 0.62f);
+        BlackPlayerKindRow = new PlayerKindSelectionRow(710);
+        WhitePlayerKindRow = new PlayerKindSelectionRow(814);
+        PonnukiBlackPlayerKindRow = new PlayerKindSelectionRow(646);
+        PonnukiWhitePlayerKindRow = new PlayerKindSelectionRow(750);
     }
 
     public Rectangle LocalUseCardBounds { get; } = new(508, 404, 438, 300);
@@ -41,4 +48,32 @@ public sealed class LocalMatchScreen
     public Button PassButton { get; }
     public Button ResignButton { get; }
     public Button CancelPlayingButton { get; }
+    public PlayerKindSelectionRow BlackPlayerKindRow { get; }
+    public PlayerKindSelectionRow WhitePlayerKindRow { get; }
+    public PlayerKindSelectionRow PonnukiBlackPlayerKindRow { get; }
+    public PlayerKindSelectionRow PonnukiWhitePlayerKindRow { get; }
+
+    public PlayerKindSelectionRow GetPlayerKindRow(GoStone stone, bool isPonnuki) =>
+        (stone, isPonnuki) switch
+        {
+            (GoStone.Black, false) => BlackPlayerKindRow,
+            (GoStone.White, false) => WhitePlayerKindRow,
+            (GoStone.Black, true) => PonnukiBlackPlayerKindRow,
+            _ => PonnukiWhitePlayerKindRow,
+        };
+
+    public GoStone? GetHumanPlayerNameHit(Point point, GoPlayerKind blackKind, GoPlayerKind whiteKind, bool isPonnuki)
+    {
+        if (blackKind == GoPlayerKind.Human && GetPlayerKindRow(GoStone.Black, isPonnuki).HumanNameRowBounds.Contains(point))
+            return GoStone.Black;
+
+        return whiteKind == GoPlayerKind.Human && GetPlayerKindRow(GoStone.White, isPonnuki).HumanNameRowBounds.Contains(point)
+            ? GoStone.White
+            : null;
+    }
+
+    public PonnukiRandomSeedRole? GetPonnukiRandomSeedAutoChangeHit(Point point) =>
+        ProviderSeedAutoChangeButton.IsHit(point) ? PonnukiRandomSeedRole.Provider :
+        Player1SeedAutoChangeButton.IsHit(point) ? PonnukiRandomSeedRole.Player1 :
+        Player2SeedAutoChangeButton.IsHit(point) ? PonnukiRandomSeedRole.Player2 : null;
 }
