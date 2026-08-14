@@ -7,9 +7,8 @@ using KifuwarabeGo2026.Gui.Presentation.Title;
 using Microsoft.Xna.Framework;
 using System;
 using System.Linq;
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ActionBadge;
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Headline;
 using KifuwarabeGo2026.Gui.Presentation.Pages.Title;
+using KifuwarabeGo2026.Gui.Presentation.Pages.PonnukiProviderSelection;
 
 public sealed partial class GoScreenRenderer
 {
@@ -220,94 +219,13 @@ public sealed partial class GoScreenRenderer
 
     private void DrawPonnukiProviderSelection(GoAppSession session, Rectangle panel, Point mousePoint, int appProviderTabIndex, bool isAppProviderLoading)
     {
-        DrawDynamicOptionText("ポン抜きゲーム", new Rectangle(500, 350, 500, 54), Color.White, 0.62f);
-        DrawText("APP PROVIDER ENGINE", new Vector2(530, 416), new Color(255, 190, 92), 0.42f);
-        DrawDynamicOptionText("アプリ提供エンジン", new Rectangle(950, 414, 330, 34), new Color(210, 214, 207), 0.32f);
-
-        var bounds = TitleAppProviderEngineDisplayBounds;
-        var textBounds = TitleAppProviderEngineTextBounds;
-        var hovered = !isAppProviderLoading && textBounds.Contains(mousePoint);
-        DrawText("PROVIDER", new Vector2(bounds.X + 16, textBounds.Y + 7), new Color(180, 195, 195), 0.36f);
-        DrawDynamicOptionText(session.SelectedAppProviderEngineDisplayName, textBounds, Color.White, 0.34f);
-        _wideLinkUnderline.Bounds = textBounds;
-        _wideLinkUnderline.SetActionBadge(ActionBadge.Create("CHANGE", textBounds));
-        _wideLinkUnderline.UpdatePointer(mousePoint);
-        _wideLinkUnderline.Draw(this, new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText));
-        if (hovered)
-        {
-            DrawStickyNote(
-                StickyNoteKind.AppProviderEngineHint,
-                new Vector2(textBounds.Right, textBounds.Center.Y),
-                new Color(185, 196, 255),
-                new Color(116, 145, 178),
-                "APP PROVIDER ENGINE とは？",
-                ["このＧＵＩの代わりにアプリ実行を", "担当してくれるエンジンです。"]);
-        }
-        if (isAppProviderLoading)
-        {
-            DrawFittedText("LOADING PROVIDERS", textBounds, new Color(255, 210, 128), 0.30f);
-            DrawAppProviderLoadingSpinner(new Vector2(textBounds.Right - 22, textBounds.Center.Y));
-        }
-
-        var capabilityColor = session.IsAppProviderCapabilityConfirmed
-            ? new Color(99, 223, 185)
-            : session.IsAppProviderCapabilityCheckRunning
-                ? new Color(255, 210, 128)
-            : session.AppProviderCapabilityStatus == "NOT CHECKED"
-                ? new Color(180, 195, 195)
-                : new Color(255, 145, 151);
-        DrawFittedText(
-            session.AppProviderCapabilityStatus,
-            new Rectangle(570, 794, 780, 26),
-            capabilityColor,
-            0.30f);
-        DrawCommandButton(
-            TitleAppProviderRecheckButtonBounds,
-            "RECHECK PROVIDER",
-            appProviderTabIndex == 1,
-            mousePoint,
-            enabled: session.CanUseSelectedAppProvider && !session.IsAppProviderCapabilityCheckRunning,
-            scale: 0.30f);
-        DrawCommandButton(
-            TitleAppProviderStartButtonBounds,
-            session.CanStartSelectedAppProvider ? "NEXT" : session.CanUseSelectedAppProvider ? "CHECK REQUIRED" : "ENGINE REQUIRED",
-            appProviderTabIndex == 2,
-            mousePoint,
-            enabled: session.CanStartSelectedAppProvider,
-            scale: session.CanStartSelectedAppProvider ? 0.40f : 0.23f);
-        DrawTitleBackButton(mousePoint, appProviderTabIndex == 3);
-
-        DrawAppProviderTabHints(session, appProviderTabIndex, isAppProviderLoading);
-    }
-
-    private void DrawAppProviderLoadingSpinner(Vector2 center)
-    {
-        const int segmentCount = 12;
-        var head = (int)(Environment.TickCount64 / 70 % segmentCount);
-        for (var index = 0; index < segmentCount; index++)
-        {
-            var angle = MathF.Tau * index / segmentCount;
-            var direction = new Vector2(MathF.Cos(angle), MathF.Sin(angle));
-            var distance = (head - index + segmentCount) % segmentCount;
-            var alpha = (byte)Math.Clamp(235 - distance * 15, 70, 235);
-            DrawLine(center + direction * 11, center + direction * 22, 4, new Color(147, 244, 200, (int)alpha));
-        }
-    }
-
-    private void DrawAppProviderTabHints(GoAppSession session, int activeTabIndex, bool isAppProviderLoading)
-    {
-        var stops = new[]
-        {
-            (Index: 0, Bounds: TitleAppProviderEngineDisplayBounds, Enabled: !isAppProviderLoading),
-            (Index: 1, Bounds: TitleAppProviderRecheckButtonBounds, Enabled: session.CanUseSelectedAppProvider && !session.IsAppProviderCapabilityCheckRunning),
-            (Index: 2, Bounds: TitleAppProviderStartButtonBounds, Enabled: session.CanStartSelectedAppProvider),
-            (Index: 3, Bounds: TitleMenuBackButtonBounds, Enabled: true),
-        }.Where(stop => stop.Enabled).ToArray();
-        var activeStopIndex = Array.FindIndex(stops, stop => stop.Index == activeTabIndex);
-        for (var index = 0; index < stops.Length; index++)
-        {
-            DrawTabNavigationHint(stops[index].Bounds, index, activeStopIndex, stops.Length);
-        }
+        PonnukiProviderSelectionScreen.Default.Draw(session, mousePoint, appProviderTabIndex, isAppProviderLoading,
+            new PonnukiProviderSelectionDrawingCallbacks(
+                this, this, this, DrawText, DrawDynamicOptionText, DrawFittedText, DrawLine,
+                DrawRoundedFill, DrawSharpCenteredFittedText,
+                (kind, connectorStart, accent, borderColor, heading, bodyLines) =>
+                    DrawStickyNote(kind, connectorStart, accent, borderColor, heading, bodyLines),
+                DrawTabNavigationHint));
     }
 
     private void DrawTitleBackButton(Point mousePoint, bool focused = false) =>
