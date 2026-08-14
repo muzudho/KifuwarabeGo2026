@@ -113,7 +113,8 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         _stoneLight = CreateStoneTexture(128, lightStone: true);
         _stoneDark = CreateStoneTexture(128, lightStone: false);
         _stationeryDrawingContext = new StationeryDrawingContext(
-            FillRect, DrawRoundedFill, DrawRect, DrawLine, DrawText, DrawFittedText, DrawRotatedCenteredText, _font.MeasureString);
+            FillRect, DrawRoundedFill, DrawRect, DrawLine, DrawText, DrawFittedText, DrawSharpCenteredFittedText,
+            DrawRotatedCenteredText, _font.MeasureString);
     }
 
     public void Draw(

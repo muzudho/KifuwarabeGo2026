@@ -27,6 +27,7 @@ public sealed class Button
     public Rectangle Bounds { get; set; }
     public string Label { get; set; }
     public float LabelScale { get; set; }
+    public bool AutoExpandLabel { get; set; } = true;
     public bool IsEnabled { get; set; } = true;
     public bool IsPointerOver { get; private set; }
     public bool IsSelected { get; set; }
@@ -55,7 +56,12 @@ public sealed class Button
             surface.DrawRectangle(new Rectangle(Bounds.X + 2, Bounds.Y + 2, Bounds.Width - 4, Bounds.Height - 4), 1,
                 IsSelected ? new Color(215, 255, 238, 95) : new Color(255, 255, 255, IsPointerOver ? 70 : 36));
 
-        surface.DrawFittedText(Label, new Rectangle(Bounds.X + 10, Bounds.Y + 5, Bounds.Width - 20, Bounds.Height - 10),
-            IsEnabled ? Color.White : new Color(91, 100, 106), LabelScale);
+        var readableScale = Math.Clamp(Bounds.Height / 140f, 0.30f, 0.46f);
+        var requestedScale = AutoExpandLabel ? Math.Max(LabelScale, readableScale) : LabelScale;
+        surface.DrawCenteredFittedText(
+            Label,
+            new Rectangle(Bounds.X + 10, Bounds.Y + 5, Bounds.Width - 20, Bounds.Height - 10),
+            IsEnabled ? Color.White : new Color(91, 100, 106),
+            requestedScale);
     }
 }
