@@ -6,6 +6,7 @@ using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ActionBadge;
 using Microsoft.Xna.Framework;
 using System;
 using System.IO;
+using static KifuwarabeGo2026.Gui.Presentation.Pages.EditTournamentRule.TournamentRulesScreenBounds;
 
 /// <summary>
 /// ［大会ルール選択画面］
@@ -20,41 +21,6 @@ public sealed partial class GoScreenRenderer
         TournamentRulesSelectButtonBounds.Contains(point);
 
 
-    public static bool GetTournamentRulesSelectionDialogOkButtonHit(Point point) =>
-        TournamentRulesSelectionDialogOkButtonBounds.Contains(point);
-
-
-    public static bool GetTournamentRulesSelectionDialogCancelButtonHit(Point point) =>
-        TournamentRulesSelectionDialogCancelButtonBounds.Contains(point);
-
-
-    public static bool GetTournamentRulesSelectionDialogAddButtonHit(Point point) =>
-        TournamentRulesSelectionDialogAddButtonBounds.Contains(point);
-
-
-    public static bool GetTournamentRulesSelectionDialogEditButtonHit(Point point) =>
-        TournamentRulesSelectionDialogEditButtonBounds.Contains(point);
-
-
-    public static bool GetTournamentRulesSelectionDialogDuplicateButtonHit(Point point) =>
-        TournamentRulesSelectionDialogDuplicateButtonBounds.Contains(point);
-
-
-    public static bool GetTournamentRulesSelectionDialogDeleteButtonHit(Point point, bool enabled) =>
-        enabled && TournamentRulesSelectionDialogDeleteButtonBounds.Contains(point);
-
-    public static bool GetTournamentRulesSelectionDialogOrderButtonHit(Point point) =>
-        TournamentRulesSelectionDialogOrderButtonBounds.Contains(point);
-
-
-    public static bool GetTournamentRulesDeleteConfirmationConfirmButtonHit(Point point) =>
-        TournamentRulesDeleteConfirmationConfirmButtonBounds.Contains(point);
-
-
-    public static bool GetTournamentRulesDeleteConfirmationCancelButtonHit(Point point) =>
-        TournamentRulesDeleteConfirmationCancelButtonBounds.Contains(point);
-
-
     public static bool GetTournamentRulesAddPanelCloseButtonHit(Point point) =>
         TournamentRulesAddPanelCloseButtonBounds.Contains(point);
 
@@ -65,31 +31,6 @@ public sealed partial class GoScreenRenderer
 
     public int GetTournamentRulesAddPanelDisplayNameCaretIndex(Point point, string text) =>
         GetTextBoxCaretIndex(point.X, text, TournamentRulesAddPanelDisplayNameTextBounds, 0.46f);
-
-
-    public static bool GetTournamentRulesSelectionDialogPreviousPageButtonHit(Point point) =>
-        TournamentRulesSelectionDialogPreviousPageButtonBounds.Contains(point);
-
-
-    public static bool GetTournamentRulesSelectionDialogNextPageButtonHit(Point point) =>
-        TournamentRulesSelectionDialogNextPageButtonBounds.Contains(point);
-
-
-    public static int? GetTournamentRulesSelectionDialogListItemHit(Point point, GoAppSession session)
-    {
-        for (var i = 0; i < GoAppSession.TournamentRulesSelectionPageSize; i++)
-        {
-            if (!TournamentRulesSelectionDialogListItemBounds(i).Contains(point))
-            {
-                continue;
-            }
-
-            var index = session.TournamentRulesSelectionPageIndex * GoAppSession.TournamentRulesSelectionPageSize + i;
-            return index < session.TournamentRulesList.Count ? index : null;
-        }
-
-        return null;
-    }
 
 
     public static bool TryGetTournamentRulesSelectionDialogPathCopyText(Point point, GoAppSession session, out string text)
@@ -266,63 +207,6 @@ public sealed partial class GoScreenRenderer
         DrawCommandButton(TournamentRulesDeleteConfirmationCancelButtonBounds, "CANCEL", false, mousePoint, scale: 0.42f);
         DrawCommandButton(TournamentRulesDeleteConfirmationConfirmButtonBounds, "DELETE", false, mousePoint, scale: 0.42f);
     }
-
-
-    private static Rectangle TournamentRulesSelectButtonBounds => new(1144, 184, 320, 56);
-
-
-    private static Rectangle TournamentRulesSelectionDialogBounds => new(230, 126, 1460, 820);
-
-
-    private static Rectangle TournamentRulesSelectionDialogListBounds => new(270, 242, 650, 560);
-
-
-    private static Rectangle TournamentRulesSelectionDialogPropertyBounds => new(950, 270, 700, 532);
-
-
-    private static Rectangle TournamentRulesSelectionDialogCancelButtonBounds => new(1368, 156, 132, 48);
-
-
-    private static Rectangle TournamentRulesSelectionDialogOkButtonBounds => new(1518, 156, 132, 48);
-
-
-    private static Rectangle TournamentRulesSelectionDialogAddButtonBounds => new(270, 874, 100, 44);
-
-
-    private static Rectangle TournamentRulesSelectionDialogEditButtonBounds => new(380, 874, 100, 44);
-
-
-    private static Rectangle TournamentRulesSelectionDialogDuplicateButtonBounds => new(490, 874, 120, 44);
-
-
-    private static Rectangle TournamentRulesSelectionDialogDeleteButtonBounds => new(620, 874, 100, 44);
-
-    private static Rectangle TournamentRulesSelectionDialogOrderButtonBounds => new(740, 874, 120, 44);
-
-
-    private static Rectangle TournamentRulesSelectionDialogPreviousPageButtonBounds => new(730, 816, 90, 44);
-
-
-    private static Rectangle TournamentRulesSelectionDialogNextPageButtonBounds => new(830, 816, 90, 44);
-
-
-    private static Rectangle TournamentRulesSelectionDialogListItemBounds(int index) =>
-        new(TournamentRulesSelectionDialogListBounds.X + 16, TournamentRulesSelectionDialogListBounds.Y + 16 + index * 88, TournamentRulesSelectionDialogListBounds.Width - 32, 72);
-
-
-    private static Rectangle TournamentRulesSelectionDialogPropertyRowBounds(int index) =>
-        new(TournamentRulesSelectionDialogPropertyBounds.X + 18, TournamentRulesSelectionDialogPropertyBounds.Y + 22 + index * 70, TournamentRulesSelectionDialogPropertyBounds.Width - 36, 52);
-
-
-    private static Rectangle TournamentRulesDeleteConfirmationBounds => new(640, 390, 640, 260);
-
-
-    private static Rectangle TournamentRulesDeleteConfirmationCancelButtonBounds =>
-        new(TournamentRulesDeleteConfirmationBounds.X + 300, TournamentRulesDeleteConfirmationBounds.Bottom - 76, 140, 48);
-
-
-    private static Rectangle TournamentRulesDeleteConfirmationConfirmButtonBounds =>
-        new(TournamentRulesDeleteConfirmationBounds.X + 464, TournamentRulesDeleteConfirmationBounds.Bottom - 76, 140, 48);
 
 
     private static Rectangle TournamentRulesAddPanelBounds => new(430, 126, 1060, 820);

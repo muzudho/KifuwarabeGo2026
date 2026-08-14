@@ -436,62 +436,63 @@ public sealed class TournamentRulesSetting
             return true;
         }
 
-        if (GoScreenRenderer.GetTournamentRulesSelectionDialogCancelButtonHit(point))
+        var rulesScreen = TournamentRulesScreen.Default;
+        if (rulesScreen.SelectionCancelButton.IsHit(point))
         {
             _session.CancelTournamentRulesSelectionDialog();
             return true;
         }
 
-        if (GoScreenRenderer.GetTournamentRulesSelectionDialogOkButtonHit(point))
+        if (rulesScreen.SelectionOkButton.IsHit(point))
         {
             _session.CommitTournamentRulesSelectionDialog();
             return true;
         }
 
-        if (GoScreenRenderer.GetTournamentRulesSelectionDialogAddButtonHit(point))
+        if (rulesScreen.AddButton.IsHit(point))
         {
             CreateNewTournamentRules();
             return true;
         }
 
-        if (GoScreenRenderer.GetTournamentRulesSelectionDialogEditButtonHit(point))
+        if (rulesScreen.EditButton.IsHit(point))
         {
             EditSelectedTournamentRules();
             return true;
         }
 
-        if (GoScreenRenderer.GetTournamentRulesSelectionDialogDuplicateButtonHit(point))
+        if (rulesScreen.DuplicateButton.IsHit(point))
         {
             DuplicateSelectedTournamentRules();
             return true;
         }
 
-        if (GoScreenRenderer.GetTournamentRulesSelectionDialogDeleteButtonHit(point, _session.CanDeleteSelectedTournamentRules))
+        if (_session.CanDeleteSelectedTournamentRules && rulesScreen.DeleteButton.IsHit(point))
         {
             _session.OpenTournamentRulesDeleteConfirmation();
             return true;
         }
 
         if (_session.TournamentRulesList.Count > 1 &&
-            GoScreenRenderer.GetTournamentRulesSelectionDialogOrderButtonHit(point))
+            rulesScreen.OrderButton.IsHit(point))
         {
             _session.OpenTournamentRulesOrderEditor();
             return true;
         }
 
-        if (GoScreenRenderer.GetTournamentRulesSelectionDialogPreviousPageButtonHit(point))
+        if (rulesScreen.PreviousPageButton.IsHit(point))
         {
             _session.MoveTournamentRulesSelectionPage(-1);
             return true;
         }
 
-        if (GoScreenRenderer.GetTournamentRulesSelectionDialogNextPageButtonHit(point))
+        if (rulesScreen.NextPageButton.IsHit(point))
         {
             _session.MoveTournamentRulesSelectionPage(1);
             return true;
         }
 
-        if (GoScreenRenderer.GetTournamentRulesSelectionDialogListItemHit(point, _session) is { } index)
+        if (rulesScreen.GetListItemHit(point, _session.TournamentRulesSelectionPageIndex, _session.TournamentRulesList.Count, GoAppSession.TournamentRulesSelectionPageSize) is { } index)
         {
             _session.SelectTournamentRulesDialogItem(index);
             return true;
@@ -536,13 +537,14 @@ public sealed class TournamentRulesSetting
 
     private bool TryHandleTournamentRulesDeleteConfirmationClick(Point point)
     {
-        if (GoScreenRenderer.GetTournamentRulesDeleteConfirmationCancelButtonHit(point))
+        var rulesScreen = TournamentRulesScreen.Default;
+        if (rulesScreen.DeleteCancelButton.IsHit(point))
         {
             _session.CloseTournamentRulesDeleteConfirmation();
             return true;
         }
 
-        if (GoScreenRenderer.GetTournamentRulesDeleteConfirmationConfirmButtonHit(point))
+        if (rulesScreen.DeleteConfirmButton.IsHit(point))
         {
             DeleteSelectedTournamentRules();
             return true;

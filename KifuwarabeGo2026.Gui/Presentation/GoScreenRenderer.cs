@@ -37,6 +37,7 @@ using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Headline;
 using KifuwarabeGo2026.Gui.Presentation.Pages.Title;
 using KifuwarabeGo2026.Gui.Presentation.Pages.PonnukiProviderSelection;
 using KifuwarabeGo2026.Gui.Presentation.Pages.LocalMatch;
+using KifuwarabeGo2026.Gui.Presentation.Pages.EditTournamentRule;
 using KifuwarabeGo2026.Gui.Presentation.Shared.TextAreaDialog;
 
 /// <summary>
@@ -360,7 +361,7 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IButton
         DrawCommandButton(SetupBackToTitleButtonBounds, "BACK TO TITLE", false, mousePoint, scale: 0.32f);
 
         DrawVerticalResultSection(new Rectangle(1144, 184, 668, 176), "TOURNAMENT", new Color(62, 112, 105));
-        DrawCommandButton(TournamentRulesSelectButtonBounds, "TOURNAMENT SELECT", false, mousePoint, scale: 0.32f);
+        TournamentRulesScreen.Default.BrowseButton.Draw(mousePoint, this);
         DrawCommandButton(ImportSgfButtonBounds, session.HasReviewGameRecord ? "KIFU CLEAR (SGF)" : "KIFU INPUT (SGF)", false, mousePoint, scale: 0.34f);
         DrawResultRow(new Rectangle(1164, 292, 628, 56), "RULES", session.TournamentDisplayName, new Color(39, 68, 65), Color.White);
 
@@ -585,7 +586,8 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IButton
         GetTextBoxCaretIndex(pointX, text, textBounds, textScale);
     private void DrawPropertyRow(int y, string label, string value)
     {
-        var bounds = new Rectangle(TournamentRulesSelectionDialogPropertyBounds.X + 18, y, TournamentRulesSelectionDialogPropertyBounds.Width - 36, 52);
+        var propertyBounds = TournamentRulesScreen.Default.SelectionPropertyBounds;
+        var bounds = new Rectangle(propertyBounds.X + 18, y, propertyBounds.Width - 36, 52);
         DrawDataRowFrame(bounds);
         DrawUiLabel(UiLabel.InCompactRow(label, bounds));
         DrawFittedText(value, new Rectangle(bounds.X + 152, bounds.Y + 7, bounds.Width - 168, 38), Color.White, 0.46f);

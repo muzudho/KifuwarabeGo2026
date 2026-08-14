@@ -34,6 +34,10 @@ renderer は描画面の実装に限定し、移行期間だけ既存の `Get...
 - [x] CGOS観戦
   - `Pages/CgosWatching/CgosWatchingScreen` が LEAVE VIEW、KIFU REVIEW、SGF OUTPUT の3ボタンを所有する。
   - rendererの旧3 Boundsと旧ヒットAPIは削除済み。`Game1` と描画側は同じボタンを参照する。
+- [ ] 大会ルール編集（進行中）
+  - `TournamentRulesScreen` が選択ダイアログと削除確認の18領域を所有する。
+  - `TournamentRulesSetting` は画面のボタンとリスト行判定を直接参照し、対応するrendererヒットAPIは削除済み。
+  - 追加・編集パネルの7 Boundsと入力状態の移管が残る。
 - [x] タイトル画面の BACK、ポン抜きプロバイダー選択の NEXT／RECHECK／CHANGE
   - `TitleScreen` と `PonnukiProviderSelectionScreen` が所有する。
 - [x] ローカル対局のヒット判定呼び出し側
@@ -58,16 +62,16 @@ renderer は描画面の実装に限定し、移行期間だけ既存の `Get...
 | CGOS 接続 | 67 | `Pages/Cgos/CgosScreen` |
 | GTP エンジン | 52 | `Pages/GtpEngine/GtpEngineScreen` |
 | 盤編集・検討 | 35 | `Pages/BoardAndReview/BoardAndReviewScreen` |
-| 大会ルール編集 | 25 | `Pages/EditTournamentRule/TournamentRulesScreen` |
+| 大会ルール編集 | 7 | `Pages/EditTournamentRule/TournamentRulesScreen` |
 | 手の傾向チャート | 8 | `Pages/MoveTrendChart/MoveTrendChartScreen` |
 | コメント表示 | 7 | `Pages/MoveComments/MoveCommentsScreen` |
 | エントリープロファイル | 7 | `Shared/EntryProfiles/EntryProfilesScreen` |
 | 検討チャートポップアップ | 4 | `Pages/ReviewChartPopup/ReviewChartPopupScreen` |
 | エントリー選択 | 2 | `Shared/SelectEntry/SelectEntryScreen` |
 | タイトル表示 | 2 | `Pages/Title/TitleScreen` |
-| **合計** | **236** | |
+| **合計** | **218** | |
 
-この236個は、2026-08-14に現在のコードを機械的に再集計した値である。旧表の `MoveTrendChart` は5個ではなく8個だったため補正した。ボタンだけでなく表示専用領域も含む。
+この218個は、2026-08-14に現在のコードを機械的に再集計した値である。旧表の `MoveTrendChart` は5個ではなく8個だったため補正した。ボタンだけでなく表示専用領域も含む。
 
 ## 移管の共通手順
 
@@ -91,7 +95,7 @@ dotnet build KifuwarabeGo2026.Gui\KifuwarabeGo2026.Gui.Core.csproj --no-restore
 | 2 | 進行中 | ローカル対局 | 31 | `Pages/LocalMatch/LocalMatchScreen` | 操作UIの所有とヒット判定直結は済み。描画互換ラッパーと表示領域が残る。 |
 | 3 | 完了 | アプリ設定 | 10 | `Pages/ApplicationSettings/ApplicationSettingsScreen` | タブ・リンク・フォルダ選択を1画面へ集約済み。 |
 | 4 | 完了 | CGOS 観戦 | 3 | `Pages/CgosWatching/CgosWatchingScreen` | 3ボタンとヒット判定を集約済み。 |
-| 5 | 未着手 | 大会ルール編集 | 25 | `Pages/EditTournamentRule/TournamentRulesScreen` | 既存の `TournamentRulesSetting` と責務を確認してから移す。 |
+| 5 | 進行中 | 大会ルール編集 | 7 | `Pages/EditTournamentRule/TournamentRulesScreen` | 選択・削除確認は移管済み。追加・編集パネルが残る。 |
 | 6 | 未着手 | 盤編集・検討 | 35 | `Pages/BoardAndReview/BoardAndReviewScreen` | Board Lens など既存 UI を再利用できる。 |
 | 7 | 未着手 | エントリープロファイル／選択 | 9 | `Shared/EntryProfiles`、`Shared/SelectEntry` | 複数画面から再利用するため Shared に置く。 |
 | 8 | 未着手 | CGOS 接続 | 67 | `Pages/Cgos/CgosScreen` | 最大規模。接続一覧、管理パネル、編集パネルにさらに小分けする。 |
