@@ -58,6 +58,9 @@ renderer は描画面の実装に限定し、移行期間だけ既存の `Get...
   - `TitleScreen` と `PonnukiProviderSelectionScreen` が所有する。
   - HOME のローカル対局・CGOS・アプリカードと、FORMAL／CASUAL見出し領域も `TitleScreen` に集約した。
   - `TitleRenderer` は画面UIを直接参照し、renderer のタイトル用Boundsと旧ヒットAPIは削除済み。
+- [x] 検討チャートポップアップ
+  - `ReviewChartPopupScreen` がポップアップ、チャート、シーク、コメント重ね表示、リプレイ操作の領域を所有する。
+  - renderer の旧4 Boundsと、集計対象外のstatic readonly領域を削除し、描画互換参照は画面クラスを正本にした。
 - [x] ローカル対局のヒット判定呼び出し側
   - 14ボタンは `LocalMatchScreen`、プレイヤー種別と人間名入力は `PlayerKindSelectionRow` が所有する。
   - `Game1`／`PlayingScene` から renderer の旧ヒットAPIを呼ぶ経路は削除済み。
@@ -81,10 +84,9 @@ renderer は描画面の実装に限定し、移行期間だけ既存の `Get...
 | GTP エンジン | 52 | `Pages/GtpEngine/GtpEngineScreen` |
 | 手の傾向チャート | 8 | `Pages/MoveTrendChart/MoveTrendChartScreen` |
 | コメント表示 | 7 | `Pages/MoveComments/MoveCommentsScreen` |
-| 検討チャートポップアップ | 4 | `Pages/ReviewChartPopup/ReviewChartPopupScreen` |
-| **合計** | **162** | |
+| **合計** | **158** | |
 
-この162個は、2026-08-14に現在のコードを機械的に再集計した値である。旧表の `MoveTrendChart` は5個ではなく8個だったため補正した。ボタンだけでなく表示専用領域も含む。エントリー選択、プロファイル、タイトルでは、集計対象外のstatic readonly領域や互換APIもあわせて移管済みである。
+この158個は、2026-08-14に現在のコードを機械的に再集計した値である。旧表の `MoveTrendChart` は5個ではなく8個だったため補正した。ボタンだけでなく表示専用領域も含む。エントリー選択、プロファイル、タイトル、検討チャートポップアップでは、集計対象外のstatic readonly領域や互換APIもあわせて移管済みである。
 
 ## 移管の共通手順
 
@@ -113,7 +115,7 @@ dotnet build KifuwarabeGo2026.Gui\KifuwarabeGo2026.Gui.Core.csproj --no-restore
 | 7 | 完了 | エントリープロファイル／選択 | 9 | `Shared/EntryProfiles`、`Shared/SelectEntry` | SelectEntry、接続先・クイック選択、通常の選択・編集、ローカル対局ハンドルを移管済み。集計対象外の固定領域も含む。 |
 | 8 | 未着手 | CGOS 接続 | 67 | `Pages/Cgos/CgosScreen` | 最大規模。接続一覧、管理パネル、編集パネルにさらに小分けする。 |
 | 9 | 未着手 | GTP エンジン | 52 | `Pages/GtpEngine/GtpEngineScreen` | 選択、編集、GUI オプション、ランダム着手を小クラスに分割して移す。 |
-| 10 | 進行中 | コメント・チャート表示 | 19 | 各 Page の Screen | タイトル表示は完了。残るコメント欄と2種類のチャートを画面クラスへ移す。 |
+| 10 | 進行中 | コメント・チャート表示 | 15 | 各 Page の Screen | タイトル表示と検討チャートポップアップは完了。残るコメント欄と手の傾向チャートを画面クラスへ移す。 |
 
 ## 画面別の配置方針
 

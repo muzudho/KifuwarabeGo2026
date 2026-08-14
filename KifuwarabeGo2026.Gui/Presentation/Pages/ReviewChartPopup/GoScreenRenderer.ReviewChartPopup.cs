@@ -6,22 +6,11 @@ using KifuwarabeGo2026.Gui.Application.Local.Playing;
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
+using static KifuwarabeGo2026.Gui.Presentation.Pages.ReviewChartPopup.ReviewChartPopupScreenBounds;
 
 public sealed partial class GoScreenRenderer
 {
-    private static readonly Rectangle ReviewChartPopupBounds = new(56, 42, 1808, 1030);
-    private static readonly Rectangle ReviewChartPopupChartBounds = new(100, 115, 1720, 850);
-    private static readonly Rectangle ReviewChartPopupCloseButtonBounds = new(1660, 55, 160, 48);
-    private static readonly Rectangle ReviewChartPopupBackToLiveButtonBounds = new(1026, 55, 216, 48);
-    private static readonly Rectangle ReviewChartPopupAutoUpdateBounds = new(1260, 55, 300, 48);
-    private static readonly Rectangle ReviewChartPopupSeekBounds = new(180, 994, 1560, 28);
     // シークバーと手順ボタンの少し外側までを含める。ここではパンくずを一時退避する。
-    private static readonly Rectangle BottomNavigationControlsProximityBounds = new(150, 952, 1600, 126);
-    private static readonly Rectangle ReviewChartPopupPlotBounds = new(
-        ReviewChartPopupChartBounds.X + 72,
-        ReviewChartPopupChartBounds.Y + 92,
-        ReviewChartPopupChartBounds.Width - 144,
-        ReviewChartPopupChartBounds.Height - 260);
 
     public static bool GetReviewChartPopupOpenHit(Point point) =>
         ReviewTrendChartBounds.Contains(point);
@@ -73,8 +62,6 @@ public sealed partial class GoScreenRenderer
     public static bool IsReviewChartPopupCommentOverlayHit(Point point) =>
         ReviewChartPopupCommentOverlayBounds.Contains(point);
 
-    private static Rectangle ReviewChartPopupCommentOverlayBounds =>
-        new(1060, 205, 680, 740);
 
     public static int? GetReviewChartPopupSeekMove(Point point, int moveCount)
     {
@@ -277,8 +264,6 @@ public sealed partial class GoScreenRenderer
         DrawReplayEditIconButton(mousePoint);
     }
 
-    private static Rectangle ReplayEditButtonBounds => new(1018, 72, 72, 72);
-    private static Rectangle ReplayBackToLiveButtonBounds => new(836, 72, 170, 54);
 
     private void DrawReplayEditIconButton(Point mousePoint)
     {
@@ -333,8 +318,6 @@ public sealed partial class GoScreenRenderer
             new Color(238, 242, 255));
     }
 
-    private static Rectangle ReviewChartPopupStepButtonBounds(int index) =>
-        new(512 + index * 112, 1028, 102, 44);
 
     private void DrawLiveChartAutoUpdateCheckBox(GoAppSession session, Point mousePoint)
     {
