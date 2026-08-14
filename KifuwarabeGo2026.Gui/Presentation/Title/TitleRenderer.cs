@@ -13,13 +13,13 @@ public static class TitleRenderer
         renderer.DrawUseSelection(session, mousePosition, page, appProviderTabIndex, isAppProviderLoading);
 
     public static bool IsLocalGameButtonHit(Point point) =>
-        GoScreenRenderer.GetTitleHomeLocalButtonHit(point);
+        TitleScreen.Default.LocalMatchButton.IsHit(point);
 
     public static bool IsCgosClientButtonHit(Point point) =>
-        GoScreenRenderer.GetTitleHomeCgosButtonHit(point);
+        TitleScreen.Default.CgosClientButton.IsHit(point);
 
     public static int? GetAppHit(Point point) =>
-        GoScreenRenderer.GetTitleAppHit(point);
+        TitleScreen.Default.GetAppHit(point);
 
     public static bool IsBackButtonHit(Point point) =>
         TitleScreen.Default.BackButton.IsHit(point);

@@ -16,13 +16,7 @@
 
 ## タイトル画面
 
-| メソッド | 戻り値 | 対象 | 所有状態 |
-| --- | --- | --- | --- |
-| `GetTitleHomeLocalButtonHit` | `bool` | HOME の LOCAL MATCH | `TitleScreen.Default.LocalMatchButton.Bounds` を参照。 |
-| `GetTitleHomeCgosButtonHit` | `bool` | HOME の CGOS CLIENT | `TitleScreen.Default.CgosClientButton.Bounds` を参照。 |
-| `GetTitleAppHit` | `int?` | HOME のアプリカード | 現在は index 0（CAPTURE GAME）だけを走査する。 |
-
-タイトルの BACK、プロバイダー選択の NEXT／RECHECK PROVIDER、ENGINE CHANGE リンクは、2026-08-14 にこの表から除去済みです。`TitleRenderer` はそれぞれ `TitleScreen` の `Button.IsHit`、`PonnukiProviderSelectionScreen` の `Button.IsHit`／`LinkUnderline.IsHit` を直接呼びます。
+タイトルのHOME操作、BACK、FORMAL／CASUAL見出し領域、プロバイダー選択の NEXT／RECHECK PROVIDER、ENGINE CHANGE リンクは、2026-08-14 に移管済みです。`TitleRenderer` と描画側は `TitleScreen` または `PonnukiProviderSelectionScreen` を直接参照し、renderer のタイトル用ヒットAPIとBoundsは残っていません。
 
 ## すでに UI コンポーネントへ委譲している互換ラッパー
 
@@ -50,19 +44,18 @@
 
 ## `*Bounds` の棚卸（partial class を含む）
 
-`GoScreenRenderer` の partial class を含めて機械的に再集計した結果、`Rectangle` を返す／保持する `*Bounds` 定義は **167 個**です。ここにはボタン以外に、パネル、テキスト欄、リスト行、ツールチップ、チャート領域も含まれます。したがって、すべてを `Button` に置換するのではなく、操作可能な領域は文房具 UI、表示領域は画面クラスの `Rectangle` プロパティとして移します。
+`GoScreenRenderer` の partial class を含めて機械的に再集計した結果、`Rectangle` を返す／保持する `*Bounds` 定義は **162 個**です。ここにはボタン以外に、パネル、テキスト欄、リスト行、ツールチップ、チャート領域も含まれます。したがって、すべてを `Button` に置換するのではなく、操作可能な領域は文房具 UI、表示領域は画面クラスの `Rectangle` プロパティとして移します。
 
 | 現在の定義ファイル | 数 | 移管先 |
 | --- | ---: | --- |
-| `GoScreenRenderer.cs` | 27 | `Pages/LocalMatch/LocalMatchScreen`、`Shared/TournamentRules` |
+| `GoScreenRenderer.cs` | 24 | `Pages/LocalMatch/LocalMatchScreen`、`Shared/TournamentRules` |
 | `Pages/Cgos/GoScreenRenderer.Cgos.cs` | 67 | `Pages/Cgos/CgosScreen` |
 | `Pages/GtpEngine/GoScreenRenderer.GtpEngine.cs` | 52 | `Pages/GtpEngine/GtpEngineScreen` |
 | `Pages/MoveComments/GoScreenRenderer.MoveComments.cs` | 7 | `Pages/MoveComments/MoveCommentsScreen` |
 | `Pages/MoveTrendChart/GoScreenRenderer.MoveTrendChart.cs` | 8 | `Pages/MoveTrendChart/MoveTrendChartScreen` |
 | `Pages/ReviewChartPopup/GoScreenRenderer.ReviewChartPopup.cs` | 4 | `Pages/ReviewChartPopup/ReviewChartPopupScreen` |
-| `Pages/Title/GoScreenRenderer.Title.cs` | 2 | `Pages/Title/TitleScreen` |
 
-`Shared/TextAreaDialog`、`Pages/ApplicationSettings`、`Pages/CgosWatching`、`Pages/EditTournamentRule`、`Pages/BoardAndReview`、`Shared/SelectEntry`、`Shared/EntryProfiles` の Bounds は renderer から削除済みです。旧集計では `MoveTrendChart` を5個としていましたが、再集計で8個へ補正しました。
+`Shared/TextAreaDialog`、`Pages/ApplicationSettings`、`Pages/CgosWatching`、`Pages/EditTournamentRule`、`Pages/BoardAndReview`、`Shared/SelectEntry`、`Shared/EntryProfiles`、`Pages/Title` の Bounds は renderer から削除済みです。旧集計では `MoveTrendChart` を5個としていましたが、再集計で8個へ補正しました。
 
 ### 移管済みの操作 Bounds
 

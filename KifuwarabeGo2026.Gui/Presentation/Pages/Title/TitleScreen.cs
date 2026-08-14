@@ -23,6 +23,8 @@ public sealed class TitleScreen
     }
 
     public Rectangle PanelBounds { get; } = new(420, 172, 1080, 736);
+    public Rectangle FormalAppsLabelBounds { get; } = new(480, 322, 310, 62);
+    public Rectangle CasualAppsLabelBounds { get; } = new(930, 322, 310, 62);
 
     public Headline Headline { get; }
 
@@ -38,6 +40,8 @@ public sealed class TitleScreen
     public Headline CasualAppsLabel { get; }
 
     public Button CaptureGameButton { get; }
+
+    public int? GetAppHit(Point point) => CaptureGameButton.IsHit(point) ? 0 : null;
     #endregion
 
     public Button BackButton { get; }

@@ -17,11 +17,9 @@ public sealed partial class GoScreenRenderer
     private readonly TitleScreen _titleScreen = TitleScreen.Default;
 
     #region ［FORMAL APPS 区画］
-    private static Rectangle TitleFormalAppsLabelBounds => new(480, 322, 310, 62);
     #endregion
 
     #region ［CASUAL APPS 区画］
-    private static Rectangle TitleCasualAppsLabelBounds => new(930, 322, 310, 62);
     #endregion
 
     private void DrawUseSelectionPanel(GoAppSession session, Point mousePoint, TitleMenuPage page, int appProviderTabIndex, bool isAppProviderLoading)
@@ -49,10 +47,10 @@ public sealed partial class GoScreenRenderer
         switch (page)
         {
             case TitleMenuPage.Home:
-                var formalAppsHovered = TitleFormalAppsLabelBounds.Contains(mousePoint);
-                var casualAppsHovered = TitleCasualAppsLabelBounds.Contains(mousePoint);
-                var localMatchHovered = TitleHomeLocalButtonBounds.Contains(mousePoint);
-                var onlineMatchHovered = TitleHomeCgosButtonBounds.Contains(mousePoint);
+                var formalAppsHovered = _titleScreen.FormalAppsLabelBounds.Contains(mousePoint);
+                var casualAppsHovered = _titleScreen.CasualAppsLabelBounds.Contains(mousePoint);
+                var localMatchHovered = _titleScreen.LocalMatchButton.IsHit(mousePoint);
+                var onlineMatchHovered = _titleScreen.CgosClientButton.IsHit(mousePoint);
                 var settingsBounds = ApplicationSettingsScreen.Default.SettingsButton.Bounds;
                 var updateBounds = ApplicationSettingsScreen.Default.UpdateButton.Bounds;
                 var settingsHovered = settingsBounds.Contains(mousePoint);
@@ -75,7 +73,7 @@ public sealed partial class GoScreenRenderer
                     DrawTitleHomeHint("LOCAL MATCH", "ローカルPCで、人間や碁エンジンが対局！ など。", new Color(99, 223, 185));
                 else if (onlineMatchHovered)
                     DrawTitleHomeHint("ONLINE MATCH", "インターネット上の碁サーバーにお邪魔して碁エンジンが対局！", new Color(99, 223, 185));
-                else if (TitleAppBounds(0).Contains(mousePoint))
+                else if (_titleScreen.CaptureGameButton.IsHit(mousePoint))
                 {
                     DrawCaptureGamePreview();
                 }
@@ -166,9 +164,9 @@ public sealed partial class GoScreenRenderer
             "CASUAL APPS" =>
                 (StickyNoteKind.TitleCasualAppsHint, GetTitleSectionLabelConnectorTarget("CASUAL APPS", new Vector2(950, 338), connectsToRight: true)),
             "LOCAL MATCH" =>
-                (StickyNoteKind.TitleLocalMatchHint, new Vector2(TitleHomeLocalButtonBounds.Left, TitleHomeLocalButtonBounds.Center.Y)),
+                (StickyNoteKind.TitleLocalMatchHint, new Vector2(_titleScreen.LocalMatchButton.Bounds.Left, _titleScreen.LocalMatchButton.Bounds.Center.Y)),
             "ONLINE MATCH" =>
-                (StickyNoteKind.TitleOnlineMatchHint, new Vector2(TitleHomeCgosButtonBounds.Left, TitleHomeCgosButtonBounds.Center.Y)),
+                (StickyNoteKind.TitleOnlineMatchHint, new Vector2(_titleScreen.CgosClientButton.Bounds.Left, _titleScreen.CgosClientButton.Bounds.Center.Y)),
             _ =>
                 (StickyNoteKind.TitleSettingsHint, new Vector2(ApplicationSettingsScreen.Default.SettingsButton.Bounds.Left - 14, ApplicationSettingsScreen.Default.SettingsButton.Bounds.Center.Y)),
         };

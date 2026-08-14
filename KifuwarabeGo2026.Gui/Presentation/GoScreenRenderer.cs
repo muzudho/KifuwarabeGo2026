@@ -906,9 +906,6 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IButton
 
     private static Rectangle SetupBackToTitleButtonBounds => LocalMatchScreen.Default.BackToTitleButton.Bounds;
     private static Rectangle LocalUseButtonBounds => LocalMatchScreen.Default.LocalUseCardBounds;
-    private static Rectangle TitleHomeLocalButtonBounds => TitleScreen.Default.LocalMatchButton.Bounds;
-    private static Rectangle TitleHomeCgosButtonBounds => TitleScreen.Default.CgosClientButton.Bounds;
-    private static Rectangle TitleAppBounds(int index) => index == 0 ? TitleScreen.Default.CaptureGameButton.Bounds : Rectangle.Empty;
 
     private void DrawLocalAppsIntermissionSidePanel(GoAppSession session, Point mousePoint)
     {
@@ -957,21 +954,6 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IButton
             mousePoint,
             enabled: session.CanStartPlaying,
             scale: session.CanStartPlaying ? 0.48f : 0.28f);
-    }
-    public static bool GetTitleHomeLocalButtonHit(Point point) => TitleHomeLocalButtonBounds.Contains(point);
-    public static bool GetTitleHomeCgosButtonHit(Point point) => TitleHomeCgosButtonBounds.Contains(point);
-
-    public static int? GetTitleAppHit(Point point)
-    {
-        for (var index = 0; index < 1; index++)
-        {
-            if (TitleAppBounds(index).Contains(point))
-            {
-                return index;
-            }
-        }
-
-        return null;
     }
     private static Rectangle ReturnToSetupButtonBounds => LocalMatchScreen.Default.ReturnToSetupButton.Bounds;
 

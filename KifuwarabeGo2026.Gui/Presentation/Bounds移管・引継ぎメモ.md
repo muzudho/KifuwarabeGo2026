@@ -56,6 +56,8 @@ renderer は描画面の実装に限定し、移行期間だけ既存の `Get...
   - `Game1` は画面UIを直接参照し、renderer の旧ヒットAPIとBounds定義は削除済み。
 - [x] タイトル画面の BACK、ポン抜きプロバイダー選択の NEXT／RECHECK／CHANGE
   - `TitleScreen` と `PonnukiProviderSelectionScreen` が所有する。
+  - HOME のローカル対局・CGOS・アプリカードと、FORMAL／CASUAL見出し領域も `TitleScreen` に集約した。
+  - `TitleRenderer` は画面UIを直接参照し、renderer のタイトル用Boundsと旧ヒットAPIは削除済み。
 - [x] ローカル対局のヒット判定呼び出し側
   - 14ボタンは `LocalMatchScreen`、プレイヤー種別と人間名入力は `PlayerKindSelectionRow` が所有する。
   - `Game1`／`PlayingScene` から renderer の旧ヒットAPIを呼ぶ経路は削除済み。
@@ -74,16 +76,15 @@ renderer は描画面の実装に限定し、移行期間だけ既存の `Get...
 
 | 残作業 | 現在の Bounds 定義数 | 主な移管先 |
 | --- | ---: | --- |
-| `GoScreenRenderer.cs` | 27 | LocalMatch、Shared、Title |
+| `GoScreenRenderer.cs` | 24 | LocalMatch、Shared |
 | CGOS 接続 | 67 | `Pages/Cgos/CgosScreen` |
 | GTP エンジン | 52 | `Pages/GtpEngine/GtpEngineScreen` |
 | 手の傾向チャート | 8 | `Pages/MoveTrendChart/MoveTrendChartScreen` |
 | コメント表示 | 7 | `Pages/MoveComments/MoveCommentsScreen` |
 | 検討チャートポップアップ | 4 | `Pages/ReviewChartPopup/ReviewChartPopupScreen` |
-| タイトル表示 | 2 | `Pages/Title/TitleScreen` |
-| **合計** | **167** | |
+| **合計** | **162** | |
 
-この167個は、2026-08-14に現在のコードを機械的に再集計した値である。旧表の `MoveTrendChart` は5個ではなく8個だったため補正した。ボタンだけでなく表示専用領域も含む。エントリー選択とプロファイルでは、集計対象外のstatic readonly領域もあわせて移管済みである。
+この162個は、2026-08-14に現在のコードを機械的に再集計した値である。旧表の `MoveTrendChart` は5個ではなく8個だったため補正した。ボタンだけでなく表示専用領域も含む。エントリー選択、プロファイル、タイトルでは、集計対象外のstatic readonly領域や互換APIもあわせて移管済みである。
 
 ## 移管の共通手順
 
@@ -112,7 +113,7 @@ dotnet build KifuwarabeGo2026.Gui\KifuwarabeGo2026.Gui.Core.csproj --no-restore
 | 7 | 完了 | エントリープロファイル／選択 | 9 | `Shared/EntryProfiles`、`Shared/SelectEntry` | SelectEntry、接続先・クイック選択、通常の選択・編集、ローカル対局ハンドルを移管済み。集計対象外の固定領域も含む。 |
 | 8 | 未着手 | CGOS 接続 | 67 | `Pages/Cgos/CgosScreen` | 最大規模。接続一覧、管理パネル、編集パネルにさらに小分けする。 |
 | 9 | 未着手 | GTP エンジン | 52 | `Pages/GtpEngine/GtpEngineScreen` | 選択、編集、GUI オプション、ランダム着手を小クラスに分割して移す。 |
-| 10 | 未着手 | コメント・チャート・タイトル表示 | 18 | 各 Page の Screen | 表示専用 Bounds も多く、上記パターンを確立してから行う。 |
+| 10 | 進行中 | コメント・チャート表示 | 19 | 各 Page の Screen | タイトル表示は完了。残るコメント欄と2種類のチャートを画面クラスへ移す。 |
 
 ## 画面別の配置方針
 
