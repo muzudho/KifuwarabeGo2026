@@ -4,6 +4,8 @@ using Microsoft.Xna.Framework;
 using System;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Button;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.TableRowLabel;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.SectionLabel;
 
 /// <summary>［ポップアップトレンドチャート　＞　着手コメントパネル］</summary>
 public sealed class MoveCommentPanelComponent
@@ -30,6 +32,7 @@ public sealed class MoveCommentPanelComponent
 
     public TableRowLabel HeadingLabel { get; }
     public Rectangle Bounds { get; } = new(1060, 205, 680, 740);
+    public SectionLabelComponent? SectionLabel { get; private set; }
     public Button PreviousMoveButton { get; }
     public Button NextMoveButton { get; }
     public Button EditButton { get; }
@@ -39,6 +42,19 @@ public sealed class MoveCommentPanelComponent
     // ========================================
     // 機能
     // ========================================
+
+    public void DrawSectionLabel(StationeryDrawingContext drawingContext)
+    {
+        SectionLabel ??= SectionLabelComponent.CreateVerticalOverlay(
+            new Rectangle(Bounds.X, Bounds.Y, Bounds.Width, 330),
+            "MOVE COMMENT PANEL",
+            new Color(5, 10, 18),
+            new Color(170, 184, 188),
+            drawingContext,
+            labelWidth: 38,
+            leftProtrusion: 4);
+        SectionLabel.Draw(drawingContext);
+    }
 
     public Rectangle GetBodyBounds(Rectangle bounds)
     {

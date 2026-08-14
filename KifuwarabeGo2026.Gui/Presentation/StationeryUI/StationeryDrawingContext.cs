@@ -13,6 +13,7 @@ public sealed class StationeryDrawingContext
     private readonly Action<string, Vector2, Color, float> _drawText;
     private readonly Action<string, Rectangle, Color, float> _drawFittedText;
     private readonly Action<string, Vector2, Color, float> _drawRotatedCenteredText;
+    private readonly Func<string, Vector2> _measureText;
 
     public StationeryDrawingContext(
         Action<Rectangle, Color> fillRectangle,
@@ -21,7 +22,8 @@ public sealed class StationeryDrawingContext
         Action<Vector2, Vector2, float, Color> drawLine,
         Action<string, Vector2, Color, float> drawText,
         Action<string, Rectangle, Color, float> drawFittedText,
-        Action<string, Vector2, Color, float> drawRotatedCenteredText)
+        Action<string, Vector2, Color, float> drawRotatedCenteredText,
+        Func<string, Vector2> measureText)
     {
         _fillRectangle = fillRectangle ?? throw new ArgumentNullException(nameof(fillRectangle));
         _fillRoundedRectangle = fillRoundedRectangle ?? throw new ArgumentNullException(nameof(fillRoundedRectangle));
@@ -30,6 +32,7 @@ public sealed class StationeryDrawingContext
         _drawText = drawText ?? throw new ArgumentNullException(nameof(drawText));
         _drawFittedText = drawFittedText ?? throw new ArgumentNullException(nameof(drawFittedText));
         _drawRotatedCenteredText = drawRotatedCenteredText ?? throw new ArgumentNullException(nameof(drawRotatedCenteredText));
+        _measureText = measureText ?? throw new ArgumentNullException(nameof(measureText));
     }
 
     public void FillRectangle(Rectangle bounds, Color color) => _fillRectangle(bounds, color);
@@ -40,4 +43,5 @@ public sealed class StationeryDrawingContext
     public void DrawFittedText(string text, Rectangle bounds, Color color, float scale) => _drawFittedText(text, bounds, color, scale);
     public void DrawRotatedCenteredText(string text, Vector2 center, Color color, float scale) =>
         _drawRotatedCenteredText(text, center, color, scale);
+    public Vector2 MeasureText(string text) => _measureText(text);
 }

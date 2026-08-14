@@ -10,6 +10,7 @@ using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using KifuwarabeGo2026.Gui.Presentation.Pages.PopupTrendChart;
 
 public sealed partial class GoScreenRenderer
 {
@@ -410,7 +411,7 @@ public sealed partial class GoScreenRenderer
     {
         var overlay = PopupTrendChartMoveCommentPanelBounds;
         FillRect(overlay, new Color(10, 18, 31, 170));
-        DrawRect(overlay, 3, new Color(255, 215, 92, 210));
+        PopupTrendChartScreen.Default.MoveCommentPanel.DrawSectionLabel(_stationeryDrawingContext);
         DrawMoveCommentContent(moves, overlay, session, mousePoint, currentMoveNumber);
     }
 

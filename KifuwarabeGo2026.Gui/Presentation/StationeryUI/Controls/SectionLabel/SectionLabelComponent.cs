@@ -17,11 +17,12 @@ public sealed class SectionLabelComponent
         string text,
         Color accentColor,
         Color textColor,
-        Vector2 measuredTextSize,
+        StationeryDrawingContext drawingContext,
         int labelWidth = 38,
         int labelGap = 8)
     {
-        var usesSplitHorizontalText = measuredTextSize.X * VerticalScale > targetSectionBounds.Height - 12;
+        ArgumentNullException.ThrowIfNull(drawingContext);
+        var usesSplitHorizontalText = drawingContext.MeasureText(text).X * VerticalScale > targetSectionBounds.Height - 12;
         var actualWidth = usesSplitHorizontalText ? Math.Max(88, labelWidth * 2) : labelWidth;
         var bounds = new Rectangle(
             targetSectionBounds.X - actualWidth - labelGap,
@@ -49,6 +50,28 @@ public sealed class SectionLabelComponent
         return new SectionLabelComponent(
             targetSectionBounds, bounds, text, accentColor, textColor,
             SectionLabelDirection.Horizontal, usesSplitHorizontalText: false);
+    }
+
+    public static SectionLabelComponent CreateVerticalOverlay(
+        Rectangle targetSectionBounds,
+        string text,
+        Color accentColor,
+        Color textColor,
+        StationeryDrawingContext drawingContext,
+        int labelWidth = 38,
+        int leftProtrusion = 4)
+    {
+        ArgumentNullException.ThrowIfNull(drawingContext);
+        var usesSplitHorizontalText = drawingContext.MeasureText(text).X * VerticalScale > targetSectionBounds.Height - 12;
+        var actualWidth = usesSplitHorizontalText ? Math.Max(88, labelWidth * 2) : labelWidth;
+        var bounds = new Rectangle(
+            targetSectionBounds.X - leftProtrusion,
+            targetSectionBounds.Y,
+            actualWidth,
+            targetSectionBounds.Height);
+        return new SectionLabelComponent(
+            targetSectionBounds, bounds, text, accentColor, textColor,
+            SectionLabelDirection.Vertical, usesSplitHorizontalText);
     }
     #endregion
 
