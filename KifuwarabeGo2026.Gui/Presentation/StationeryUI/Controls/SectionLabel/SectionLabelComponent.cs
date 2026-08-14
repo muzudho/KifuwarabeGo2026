@@ -2,6 +2,7 @@ namespace KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.SectionLabel;
 
 using Microsoft.Xna.Framework;
 using System;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 
 /// <summary>対象区画とラベル自身の位置、サイズ、表示方向を生成時から所有する文房具UIです。</summary>
 public sealed class SectionLabelComponent
@@ -89,7 +90,7 @@ public sealed class SectionLabelComponent
     // 機能
     // ========================================
 
-    public void Draw(SectionLabelDrawingCallbacks draw)
+    public void Draw(StationeryDrawingContext draw)
     {
         ArgumentNullException.ThrowIfNull(draw);
         DrawSurface(draw);
@@ -113,7 +114,7 @@ public sealed class SectionLabelComponent
         draw.DrawFittedText(secondLine, new Rectangle(Bounds.X + 6, Bounds.Y + 7 + lineHeight, Bounds.Width - 12, lineHeight), TextColor, 0.30f);
     }
 
-    private void DrawSurface(SectionLabelDrawingCallbacks draw)
+    private void DrawSurface(StationeryDrawingContext draw)
     {
         draw.FillRectangle(Bounds, new Color(AccentColor, 150));
         draw.DrawRectangle(Bounds, 1, new Color(AccentColor, 230));
@@ -133,9 +134,3 @@ public enum SectionLabelDirection
     Horizontal,
     Vertical,
 }
-
-public sealed record SectionLabelDrawingCallbacks(
-    Action<string, Vector2, Color, float> DrawRotatedCenteredText,
-    Action<Rectangle, Color> FillRectangle,
-    Action<Rectangle, int, Color> DrawRectangle,
-    Action<string, Rectangle, Color, float> DrawFittedText);

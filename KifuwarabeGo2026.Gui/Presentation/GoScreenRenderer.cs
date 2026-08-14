@@ -113,7 +113,7 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         _stoneLight = CreateStoneTexture(128, lightStone: true);
         _stoneDark = CreateStoneTexture(128, lightStone: false);
         _stationeryDrawingContext = new StationeryDrawingContext(
-            FillRect, DrawRoundedFill, DrawRect, DrawLine, DrawText, DrawFittedText);
+            FillRect, DrawRoundedFill, DrawRect, DrawLine, DrawText, DrawFittedText, DrawRotatedCenteredText);
     }
 
     public void Draw(
@@ -1597,7 +1597,7 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
             _font.MeasureString(title),
             labelWidth,
             labelGap);
-        sectionLabel.Draw(new SectionLabelDrawingCallbacks(DrawRotatedCenteredText, FillRect, DrawRect, DrawFittedText));
+        sectionLabel.Draw(_stationeryDrawingContext);
     }
 
     private void DrawRotatedCenteredText(string text, Vector2 center, Color color, float scale) =>
