@@ -16,43 +16,6 @@ using static KifuwarabeGo2026.Gui.Presentation.Pages.BoardAndReview.BoardAndRevi
 public sealed partial class GoScreenRenderer
 {
 
-    public static bool GetVariationEditingDiscardButtonHit(Point point) =>
-        VariationEditingDiscardButtonBounds.Contains(point);
-
-    public static bool GetVariationEditingAdoptButtonHit(Point point) => VariationEditingAdoptButtonBounds.Contains(point);
-
-    public static bool GetVariationEditingExportSgfButtonHit(Point point) =>
-        VariationEditingExportSgfButtonBounds.Contains(point);
-
-    public static bool GetVariationEditingCommentButtonHit(Point point) =>
-        VariationEditingCommentButtonBounds.Contains(point);
-
-    public static bool GetVariationEditingPassButtonHit(Point point) => VariationEditingPassButtonBounds.Contains(point);
-
-    public static bool GetVariationEditingUndoButtonHit(Point point) => VariationEditingUndoButtonBounds.Contains(point);
-
-    public static bool GetVariationEditingPlayButtonHit(Point point) => VariationEditingPlayButtonBounds.Contains(point);
-
-    public static bool GetVariationEditingBlackButtonHit(Point point) => VariationEditingBlackButtonBounds.Contains(point);
-
-    public static bool GetVariationEditingWhiteButtonHit(Point point) => VariationEditingWhiteButtonBounds.Contains(point);
-
-    public static bool GetVariationEditingEraseButtonHit(Point point) => VariationEditingEraseButtonBounds.Contains(point);
-
-    public static bool GetVariationEditingClearButtonHit(Point point) => VariationEditingClearButtonBounds.Contains(point);
-
-    public static bool GetVariationEditingBoardLensButtonHit(Point point) => VariationEditingBoardLensButtons.ToggleBounds.Contains(point);
-
-    public static bool GetVariationEditingBoardLensPreviousButtonHit(Point point, bool enabled) =>
-        enabled && VariationEditingBoardLensButtons.PreviousBounds.Contains(point);
-
-    public static bool GetVariationEditingBoardLensNextButtonHit(Point point, bool enabled) =>
-        enabled && VariationEditingBoardLensButtons.NextBounds.Contains(point);
-
-    public static bool GetVariationEditingBoardLensExitButtonHit(Point point, bool enabled) =>
-        enabled && VariationEditingBoardLensButtons.ExitBounds.Contains(point);
-
-
     public static int? GetReviewStepButtonHit(Point point)
     {
         for (var i = 0; i < ReviewStepButtonValues.Length; i++)
@@ -115,6 +78,10 @@ public sealed partial class GoScreenRenderer
         Point mousePoint,
         LiveBoardPreview? liveBoardPreview)
     {
+        BoardAndReviewScreen.Default.VariationEditing.UpdateState(
+            session.VariationEditingStone,
+            session.CanAdoptVariationPosition,
+            session.CanUndoVariation);
         new Headline("ANALYSIS BOARD", new Vector2(1144, 136), new Color(42, 62, 68), 0.68f).Draw(this);
         DrawCommandButton(VariationEditingDiscardButtonBounds, "DISCARD", false, mousePoint, scale: 0.34f);
         if (session.CanAdoptVariationPosition)
@@ -256,25 +223,6 @@ public sealed partial class GoScreenRenderer
     }
 
 
-
-    private static Rectangle VariationEditingDiscardButtonBounds => new(1480, 120, 156, 52);
-    private static Rectangle VariationEditingLiveBoardBounds => new(1540, 188, 252, 252);
-    private static Rectangle VariationEditingAdoptButtonBounds => new(1648, 120, 164, 52);
-    private static Rectangle VariationEditingExportSgfButtonBounds => new(1164, 924, 145, 56);
-    private static Rectangle VariationEditingCommentButtonBounds => new(1321, 924, 145, 56);
-    private static Rectangle VariationEditingUndoButtonBounds => new(1478, 924, 145, 56);
-    private static Rectangle VariationEditingPassButtonBounds => new(1635, 924, 145, 56);
-    private static Rectangle VariationEditingPlayButtonBounds => new(1164, 584, 140, 56);
-    private static Rectangle VariationEditingBlackButtonBounds => new(1320, 584, 140, 56);
-    private static Rectangle VariationEditingWhiteButtonBounds => new(1476, 584, 140, 56);
-    private static Rectangle VariationEditingEraseButtonBounds => new(1632, 584, 140, 56);
-    private static Rectangle VariationEditingClearButtonBounds => new(1164, 810, 352, 52);
-    private static readonly BoardLensButtonStrip VariationEditingBoardLensButtons = new(1532, 806);
-
-    private static Rectangle VariationEditingBoardLensButtonBounds => VariationEditingBoardLensButtons.ToggleBounds;
-    private static Rectangle VariationEditingBoardLensPreviousButtonBounds => VariationEditingBoardLensButtons.PreviousBounds;
-    private static Rectangle VariationEditingBoardLensNextButtonBounds => VariationEditingBoardLensButtons.NextBounds;
-    private static Rectangle VariationEditingBoardLensExitButtonBounds => VariationEditingBoardLensButtons.ExitBounds;
 
     private void DrawLiveBoardWipe(LiveBoardPreview preview)
     {

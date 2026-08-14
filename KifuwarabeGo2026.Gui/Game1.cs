@@ -2881,7 +2881,8 @@ public class Game1 : Game
             variationSession.CurrentMode.Kind != GoAppModeKind.VariationEditing)
             return false;
 
-        if (GoScreenRenderer.GetVariationEditingDiscardButtonHit(point))
+        var variationControls = BoardAndReviewScreen.Default.VariationEditing;
+        if (variationControls.DiscardButton.IsHit(point))
         {
             _variationSession = null;
             _session.DeactivateModalWindow(ActiveWindowId.VariationEditing);
@@ -2890,7 +2891,7 @@ public class Game1 : Game
         }
 
         if (variationSession.CanAdoptVariationPosition &&
-            GoScreenRenderer.GetVariationEditingAdoptButtonHit(point))
+            variationControls.AdoptButton.IsHit(point))
         {
             var adoptedRecord = variationSession.CreateCurrentPositionAsSetupRecord();
             if (_session.LoadGameRecordAsInitialPosition(adoptedRecord, out var warning))
@@ -2905,7 +2906,7 @@ public class Game1 : Game
             return true;
         }
 
-        if (GoScreenRenderer.GetVariationEditingExportSgfButtonHit(point))
+        if (variationControls.ExportSgfButton.IsHit(point))
         {
             ExportSgf(
                 variationSession.CurrentGameRecord,
@@ -2914,78 +2915,78 @@ public class Game1 : Game
             return true;
         }
 
-        if (GoScreenRenderer.GetVariationEditingCommentButtonHit(point))
+        if (variationControls.CommentButton.IsHit(point))
         {
             OpenCommentEditor(variationSession, variationSession.CurrentGameRecord.Moves.Count);
             return true;
         }
 
-        if (GoScreenRenderer.GetVariationEditingBoardLensButtonHit(point))
+        if (variationControls.BoardLensToggleBounds.Contains(point))
         {
             variationSession.ToggleRenParseDisplay();
             _boardLensBannerStartedAt = _inputClockSeconds;
             return true;
         }
 
-        if (GoScreenRenderer.GetVariationEditingBoardLensPreviousButtonHit(point, variationSession.IsRenParseDisplayEnabled))
+        if (variationSession.IsRenParseDisplayEnabled && variationControls.BoardLensPreviousBounds.Contains(point))
         {
             if (variationSession.TryStepBoardLens(-1))
                 _boardLensBannerStartedAt = _inputClockSeconds;
             return true;
         }
 
-        if (GoScreenRenderer.GetVariationEditingBoardLensNextButtonHit(point, variationSession.IsRenParseDisplayEnabled))
+        if (variationSession.IsRenParseDisplayEnabled && variationControls.BoardLensNextBounds.Contains(point))
         {
             if (variationSession.TryStepBoardLens(1))
                 _boardLensBannerStartedAt = _inputClockSeconds;
             return true;
         }
 
-        if (GoScreenRenderer.GetVariationEditingBoardLensExitButtonHit(point, variationSession.IsRenParseDisplayEnabled))
+        if (variationSession.IsRenParseDisplayEnabled && variationControls.BoardLensExitBounds.Contains(point))
         {
             if (variationSession.TryDeactivateBoardLens())
                 _boardLensBannerStartedAt = _inputClockSeconds;
             return true;
         }
 
-        if (GoScreenRenderer.GetVariationEditingPlayButtonHit(point))
+        if (variationControls.PlayButton.IsHit(point))
         {
             variationSession.SetVariationEditingStone(null);
             return true;
         }
 
-        if (GoScreenRenderer.GetVariationEditingBlackButtonHit(point))
+        if (variationControls.BlackButton.IsHit(point))
         {
             variationSession.SetVariationEditingStone(GoStone.Black);
             return true;
         }
 
-        if (GoScreenRenderer.GetVariationEditingWhiteButtonHit(point))
+        if (variationControls.WhiteButton.IsHit(point))
         {
             variationSession.SetVariationEditingStone(GoStone.White);
             return true;
         }
 
-        if (GoScreenRenderer.GetVariationEditingEraseButtonHit(point))
+        if (variationControls.EraseButton.IsHit(point))
         {
             variationSession.SetVariationEditingStone(GoStone.Empty);
             return true;
         }
 
-        if (GoScreenRenderer.GetVariationEditingClearButtonHit(point))
+        if (variationControls.ClearButton.IsHit(point))
         {
             if (variationSession.ClearVariationBoard())
                 PlayPlaceStoneSound(0.42f, -0.35f, 0f);
             return true;
         }
 
-        if (GoScreenRenderer.GetVariationEditingUndoButtonHit(point))
+        if (variationControls.UndoButton.IsHit(point))
         {
             variationSession.UndoVariation();
             return true;
         }
 
-        if (GoScreenRenderer.GetVariationEditingPassButtonHit(point))
+        if (variationControls.PassButton.IsHit(point))
         {
             if (variationSession.VariationEditingStone is null &&
                 variationSession.PassVariation())
