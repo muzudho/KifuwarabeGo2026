@@ -22,9 +22,13 @@ public sealed class PlayerRow
         else draw.DrawStone(new Vector2(layout.StoneCenterX, model.Bounds.Y + 23), 16, model.IsBlack);
         draw.DrawFittedText(model.PlayerName, layout.NameBounds, Color.White, 0.5f);
         if (model.Minimal)
-            _timeUsageBar.Draw(
-                new Rectangle(layout.StatusBounds.X, layout.StatusBounds.Y, layout.StatusBounds.Width, 40),
-                model.Elapsed, model.LiveElapsed, model.MainTime, draw);
+        {
+            _timeUsageBar.Bounds = new Rectangle(layout.StatusBounds.X, layout.StatusBounds.Y, layout.StatusBounds.Width, 40);
+            _timeUsageBar.Used = model.Elapsed;
+            _timeUsageBar.Now = model.LiveElapsed;
+            _timeUsageBar.Limit = model.MainTime;
+            _timeUsageBar.Draw(draw);
+        }
         else
         {
             var status = _timeStatus.Build(model.Elapsed, model.MainTime, model.Agehama, model.Minimal, draw.FormatElapsedTime);

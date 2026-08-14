@@ -6,20 +6,21 @@ using System;
 /// <summary>USED、NOW、LIMITを比率バーと固定3列の時刻で表示します。</summary>
 public sealed class PlayerTimeUsageBar
 {
-    public void Draw(
-        Rectangle bounds,
-        TimeSpan? used,
-        TimeSpan? now,
-        TimeSpan? limit,
-        PlayerRowDrawingCallbacks draw)
+    public Rectangle Bounds { get; set; }
+    public TimeSpan? Used { get; set; }
+    public TimeSpan? Now { get; set; }
+    public TimeSpan? Limit { get; set; }
+
+    public void Draw(PlayerRowDrawingCallbacks draw)
     {
-        var iconBounds = new Rectangle(bounds.X, bounds.Y + 2, 30, 30);
+        ArgumentNullException.ThrowIfNull(draw);
+        var iconBounds = new Rectangle(Bounds.X, Bounds.Y + 2, 30, 30);
         DrawClockIcon(iconBounds, draw);
 
-        var content = new Rectangle(iconBounds.Right + 8, bounds.Y, Math.Max(1, bounds.Right - iconBounds.Right - 8), bounds.Height);
+        var content = new Rectangle(iconBounds.Right + 8, Bounds.Y, Math.Max(1, Bounds.Right - iconBounds.Right - 8), Bounds.Height);
         var bar = new Rectangle(content.X, content.Y, content.Width, 10);
-        var usedRatio = Ratio(used, limit);
-        var nowRatio = Math.Max(usedRatio, Ratio(now ?? used, limit));
+        var usedRatio = Ratio(Used, Limit);
+        var nowRatio = Math.Max(usedRatio, Ratio(Now ?? Used, Limit));
         var usedRight = bar.X + (int)Math.Round(bar.Width * usedRatio);
         var nowRight = bar.X + (int)Math.Round(bar.Width * nowRatio);
         draw.FillRectangle(bar, new Color(135, 224, 238));
@@ -30,9 +31,9 @@ public sealed class PlayerTimeUsageBar
         draw.DrawRectangle(bar, 1, new Color(205, 231, 235));
 
         var columnWidth = content.Width / 3;
-        DrawColumn(0, used);
-        DrawColumn(1, now ?? used);
-        DrawColumn(2, limit);
+        DrawColumn(0, Used);
+        DrawColumn(1, Now ?? Used);
+        DrawColumn(2, Limit);
 
         void DrawColumn(int index, TimeSpan? value)
         {
