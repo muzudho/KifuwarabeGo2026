@@ -50,14 +50,13 @@
 
 ## `*Bounds` の棚卸（partial class を含む）
 
-`GoScreenRenderer` の partial class を含めて機械的に再集計した結果、`Rectangle` を返す／保持する `*Bounds` 定義は **239 個**です。ここにはボタン以外に、パネル、テキスト欄、リスト行、ツールチップ、チャート領域も含まれます。したがって、すべてを `Button` に置換するのではなく、操作可能な領域は文房具 UI、表示領域は画面クラスの `Rectangle` プロパティとして移します。
+`GoScreenRenderer` の partial class を含めて機械的に再集計した結果、`Rectangle` を返す／保持する `*Bounds` 定義は **236 個**です。ここにはボタン以外に、パネル、テキスト欄、リスト行、ツールチップ、チャート領域も含まれます。したがって、すべてを `Button` に置換するのではなく、操作可能な領域は文房具 UI、表示領域は画面クラスの `Rectangle` プロパティとして移します。
 
 | 現在の定義ファイル | 数 | 移管先 |
 | --- | ---: | --- |
 | `GoScreenRenderer.cs` | 27 | `Pages/LocalMatch/LocalMatchScreen`、`Shared/TournamentRules` |
 | `Pages/BoardAndReview/GoScreenRenderer.BoardAndReview.cs` | 35 | `Pages/BoardAndReview/BoardAndReviewScreen` |
 | `Pages/Cgos/GoScreenRenderer.Cgos.cs` | 67 | `Pages/Cgos/CgosScreen` |
-| `Pages/CgosWatching/GoScreenRenderer.CgosWatching.cs` | 3 | `Pages/CgosWatching/CgosWatchingScreen` |
 | `Pages/EditTournamentRule/GoScreenRenderer.EditTournamentRule.cs` | 25 | `Pages/EditTournamentRule/TournamentRulesScreen` |
 | `Pages/GtpEngine/GoScreenRenderer.GtpEngine.cs` | 52 | `Pages/GtpEngine/GtpEngineScreen` |
 | `Pages/MoveComments/GoScreenRenderer.MoveComments.cs` | 7 | `Pages/MoveComments/MoveCommentsScreen` |
@@ -67,7 +66,7 @@
 | `Shared/EntryProfiles/GoScreenRenderer.EntryProfiles.cs` | 7 | `Shared/EntryProfiles/EntryProfilesScreen` |
 | `Shared/SelectEntry/GoScreenRenderer.SelectEntry.cs` | 2 | `Shared/SelectEntry/SelectEntryScreen` |
 
-`Shared/TextAreaDialog` と `Pages/ApplicationSettings` の Bounds は renderer から削除済みです。旧集計では `MoveTrendChart` を5個としていましたが、再集計で8個へ補正しました。
+`Shared/TextAreaDialog`、`Pages/ApplicationSettings`、`Pages/CgosWatching` の Bounds は renderer から削除済みです。旧集計では `MoveTrendChart` を5個としていましたが、再集計で8個へ補正しました。
 
 ### 移管済みの操作 Bounds
 

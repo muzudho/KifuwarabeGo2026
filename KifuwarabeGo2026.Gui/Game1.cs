@@ -21,6 +21,7 @@ using KifuwarabeGo2026.Gui.Presentation.GoApps.Formal.OnlineMatch.Watch;
 using KifuwarabeGo2026.Gui.Presentation.GoApps.Formal.LocalMatch.Interval;
 using KifuwarabeGo2026.Gui.Presentation.GoApps.Formal.LocalMatch.Interval.TournamentRules;
 using KifuwarabeGo2026.Gui.Presentation.Pages.EditTournamentRule;
+using KifuwarabeGo2026.Gui.Presentation.Pages.CgosWatching;
 using KifuwarabeGo2026.Gui.Presentation.Pages.ApplicationSettings;
 using KifuwarabeGo2026.Gui.Presentation.Pages.LocalMatch;
 using KifuwarabeGo2026.Gui.Presentation.Title;
@@ -1345,7 +1346,7 @@ public class Game1 : Game
                 }
 
                 if (_session.CgosConnectionFlowKind == CgosConnectionFlowKind.Watching &&
-                    GoScreenRenderer.GetCgosWatchingBackButtonHit(point))
+                    CgosWatchingScreen.Default.LeaveViewButton.IsHit(point))
                 {
                     RestoreCgosMatchNotificationAfterLeavingView();
                     _session.ReturnToCgosConnectionScreen();
@@ -1355,12 +1356,13 @@ public class Game1 : Game
 
                 if (_session.CgosConnectionFlowKind == CgosConnectionFlowKind.Result)
                 {
-                    if (GoScreenRenderer.GetCgosWatchingReviewButtonHit(point))
+                    var cgosWatchingScreen = CgosWatchingScreen.Default;
+                    if (cgosWatchingScreen.ReviewButton.IsHit(point))
                     {
                         StartReviewingGameRecord(_cgosGameObservation.CreateGameRecord(), "CGOS review");
                     }
                     else if (_session.IsSgfAutoSaveAvailable &&
-                             GoScreenRenderer.GetCgosWatchingSgfAutoSaveCheckHit(point))
+                             cgosWatchingScreen.ExportSgfButton.IsHit(point))
                     {
                         ToggleSgfAutoSave();
                         if (_session.IsSgfAutoSaveEnabled)
@@ -1370,13 +1372,13 @@ public class Game1 : Game
                         }
                     }
                     else if (!_session.IsSgfAutoSaveAvailable &&
-                             GoScreenRenderer.GetCgosWatchingExportSgfButtonHit(point))
+                             cgosWatchingScreen.ExportSgfButton.IsHit(point))
                     {
                         ExportSgf(
                             _cgosGameObservation.CreateGameRecord(),
                             CgosSgfFileNameBuilder.Create(_session.SelectedCgosConnectionProfile, _cgosGameObservation));
                     }
-                    else if (GoScreenRenderer.GetCgosWatchingBackButtonHit(point))
+                    else if (cgosWatchingScreen.LeaveViewButton.IsHit(point))
                     {
                         _session.ReturnToCgosConnectionScreen();
                     }

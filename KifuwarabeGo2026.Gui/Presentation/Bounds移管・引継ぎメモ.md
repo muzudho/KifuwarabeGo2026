@@ -10,6 +10,13 @@ renderer は描画面の実装に限定し、移行期間だけ既存の `Get...
 
 詳細な棚卸は [GoScreenRenderer.ヒット判定棚卸.md](GoScreenRenderer.ヒット判定棚卸.md) を参照する。
 
+## 構造化の原則
+
+- 原則として、アプリケーション上の1画面に対して1つの `<画面名>Screen` クラスを置く。
+- 画面固有のボタン、リンク、入力欄、表示領域、選択・ホバーなどの内部状態は、その画面クラスまたは画面配下の小さな部品へ置く。
+- `GoScreenRenderer` は移行中の描画バックエンドとし、画面固有の機能や状態を段階的に減らす。
+- 実行速度やメモリ使用量よりも、ソースコードがアプリケーションの画面構造に沿い、調査しやすいことを優先する。ただし、毎フレームの不要な大量生成は避け、画面オブジェクトを再利用する。
+
 ## 進捗を知りたいとき
 
 まずこの節を読む。この節を進捗の正本とし、移管を一まとまり終えるたびに更新する。
@@ -24,6 +31,9 @@ renderer は描画面の実装に限定し、移行期間だけ既存の `Get...
   - `Pages/ApplicationSettings/ApplicationSettingsScreen` が SETTINGS、UPDATE、BACK、3タブ、5設定リンク、5ログ行を所有する。
   - `Game1` と `TitleRenderer` は画面オブジェクトの `Button.IsHit`／`LinkUnderline.IsHit` を直接呼ぶ。
   - `GoScreenRenderer.ApplicationSettings.cs` の旧10 Bounds と旧ヒットAPIは削除済み。
+- [x] CGOS観戦
+  - `Pages/CgosWatching/CgosWatchingScreen` が LEAVE VIEW、KIFU REVIEW、SGF OUTPUT の3ボタンを所有する。
+  - rendererの旧3 Boundsと旧ヒットAPIは削除済み。`Game1` と描画側は同じボタンを参照する。
 - [x] タイトル画面の BACK、ポン抜きプロバイダー選択の NEXT／RECHECK／CHANGE
   - `TitleScreen` と `PonnukiProviderSelectionScreen` が所有する。
 - [x] ローカル対局のヒット判定呼び出し側
@@ -53,12 +63,11 @@ renderer は描画面の実装に限定し、移行期間だけ既存の `Get...
 | コメント表示 | 7 | `Pages/MoveComments/MoveCommentsScreen` |
 | エントリープロファイル | 7 | `Shared/EntryProfiles/EntryProfilesScreen` |
 | 検討チャートポップアップ | 4 | `Pages/ReviewChartPopup/ReviewChartPopupScreen` |
-| CGOS 観戦 | 3 | `Pages/CgosWatching/CgosWatchingScreen` |
 | エントリー選択 | 2 | `Shared/SelectEntry/SelectEntryScreen` |
 | タイトル表示 | 2 | `Pages/Title/TitleScreen` |
-| **合計** | **239** | |
+| **合計** | **236** | |
 
-この239個は、2026-08-14に現在のコードを機械的に再集計した値である。旧表の `MoveTrendChart` は5個ではなく8個だったため補正した。ボタンだけでなく表示専用領域も含む。
+この236個は、2026-08-14に現在のコードを機械的に再集計した値である。旧表の `MoveTrendChart` は5個ではなく8個だったため補正した。ボタンだけでなく表示専用領域も含む。
 
 ## 移管の共通手順
 
@@ -81,13 +90,13 @@ dotnet build KifuwarabeGo2026.Gui\KifuwarabeGo2026.Gui.Core.csproj --no-restore
 | 1 | 完了 | コメント入力ダイアログ | 4 | `Shared/TextAreaDialog` | 独立したモーダルであり、影響範囲が小さい。 |
 | 2 | 進行中 | ローカル対局 | 31 | `Pages/LocalMatch/LocalMatchScreen` | 操作UIの所有とヒット判定直結は済み。描画互換ラッパーと表示領域が残る。 |
 | 3 | 完了 | アプリ設定 | 10 | `Pages/ApplicationSettings/ApplicationSettingsScreen` | タブ・リンク・フォルダ選択を1画面へ集約済み。 |
-| 4 | CGOS 観戦 | 3 | `Pages/CgosWatching/CgosWatchingScreen` | 小規模で、SGF 出力 UI の分離例に向く。 |
-| 5 | 大会ルール編集 | 25 | `Pages/EditTournamentRule/TournamentRulesScreen` | 既存の `TournamentRulesSetting` と責務を確認してから移す。 |
-| 6 | 盤編集・検討 | 35 | `Pages/BoardAndReview/BoardAndReviewScreen` | Board Lens など既存 UI を再利用できる。 |
-| 7 | エントリープロファイル／選択 | 9 | `Shared/EntryProfiles`、`Shared/SelectEntry` | 複数画面から再利用するため Shared に置く。 |
-| 8 | CGOS 接続 | 67 | `Pages/Cgos/CgosScreen` | 最大規模。接続一覧、管理パネル、編集パネルにさらに小分けする。 |
-| 9 | GTP エンジン | 52 | `Pages/GtpEngine/GtpEngineScreen` | 選択、編集、GUI オプション、ランダム着手を小クラスに分割して移す。 |
-| 10 | コメント・チャート・タイトル表示 | 18 | 各 Page の Screen | 表示専用 Bounds も多く、上記パターンを確立してから行う。 |
+| 4 | 完了 | CGOS 観戦 | 3 | `Pages/CgosWatching/CgosWatchingScreen` | 3ボタンとヒット判定を集約済み。 |
+| 5 | 未着手 | 大会ルール編集 | 25 | `Pages/EditTournamentRule/TournamentRulesScreen` | 既存の `TournamentRulesSetting` と責務を確認してから移す。 |
+| 6 | 未着手 | 盤編集・検討 | 35 | `Pages/BoardAndReview/BoardAndReviewScreen` | Board Lens など既存 UI を再利用できる。 |
+| 7 | 未着手 | エントリープロファイル／選択 | 9 | `Shared/EntryProfiles`、`Shared/SelectEntry` | 複数画面から再利用するため Shared に置く。 |
+| 8 | 未着手 | CGOS 接続 | 67 | `Pages/Cgos/CgosScreen` | 最大規模。接続一覧、管理パネル、編集パネルにさらに小分けする。 |
+| 9 | 未着手 | GTP エンジン | 52 | `Pages/GtpEngine/GtpEngineScreen` | 選択、編集、GUI オプション、ランダム着手を小クラスに分割して移す。 |
+| 10 | 未着手 | コメント・チャート・タイトル表示 | 18 | 各 Page の Screen | 表示専用 Bounds も多く、上記パターンを確立してから行う。 |
 
 ## 画面別の配置方針
 

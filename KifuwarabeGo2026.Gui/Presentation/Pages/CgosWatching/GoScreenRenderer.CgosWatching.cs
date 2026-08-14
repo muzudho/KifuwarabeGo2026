@@ -5,6 +5,7 @@ using KifuwarabeGo2026.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.Watching;
 using KifuwarabeGo2026.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.Shared.Domain;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Headline;
+using KifuwarabeGo2026.Gui.Presentation.Pages.CgosWatching;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -93,20 +94,6 @@ public sealed partial class GoScreenRenderer
         }
     }
 
-    public static bool GetCgosWatchingBackButtonHit(Point point) => CgosWatchingBackButtonBounds.Contains(point);
-
-    /// <summary>
-    /// ［SGF OUTPUT］ボタンが押されたか判定します。
-    /// </summary>
-    public static bool GetCgosWatchingExportSgfButtonHit(Point point) => CgosWatchingExportSgfButtonBounds.Contains(point);
-
-    public static bool GetCgosWatchingSgfAutoSaveCheckHit(Point point) => CgosWatchingExportSgfButtonBounds.Contains(point);
-
-    /// <summary>
-    /// ［KIFU REVIEW］ボタンが押されたか判定します。
-    /// </summary>
-    public static bool GetCgosWatchingReviewButtonHit(Point point) => CgosWatchingReviewButtonBounds.Contains(point);
-
     private void DrawCgosWatchingSidePanel(GoAppSession session, CgosGameObservation observation, Point mousePoint)
     {
         var panel = new Rectangle(1102, 78, 760, 924);
@@ -115,7 +102,8 @@ public sealed partial class GoScreenRenderer
         DrawRect(panel, 2, new Color(82, 111, 114));
 
         new Headline(observation.IsFinished ? "CGOS RESULT" : "CGOS WATCH", new Vector2(1144, 136), new Color(255, 230, 160), 0.72f).Draw(this);
-        DrawCommandButton(CgosWatchingBackButtonBounds, "LEAVE VIEW", false, mousePoint, scale: 0.38f);
+        var screen = CgosWatchingScreen.Default;
+        screen.LeaveViewButton.Draw(mousePoint, this);
 
         DrawVerticalResultSection(new Rectangle(1144, 204, 668, 58), "GAME INFO", new Color(66, 104, 116));
         DrawFittedText(
@@ -149,11 +137,11 @@ public sealed partial class GoScreenRenderer
             DrawCgosResultRow(new Rectangle(1164, 852, 628, 42), observation.Result);
 
             DrawVerticalResultSection(new Rectangle(1144, 912, 668, 68), "ACTION", new Color(91, 82, 105));
-            DrawCommandButton(CgosWatchingReviewButtonBounds, "KIFU REVIEW", false, mousePoint, scale: 0.36f);
+            screen.ReviewButton.Draw(mousePoint, this);
             if (session.IsSgfAutoSaveAvailable)
-                DrawSgfAutoSaveCheckBox(CgosWatchingExportSgfButtonBounds, session, mousePoint);
+                DrawSgfAutoSaveCheckBox(screen.ExportSgfButton.Bounds, session, mousePoint);
             else
-                DrawCommandButton(CgosWatchingExportSgfButtonBounds, "SGF OUTPUT", false, mousePoint, scale: 0.4f);
+                screen.ExportSgfButton.Draw(mousePoint, this);
         }
         else
         {
@@ -185,18 +173,6 @@ public sealed partial class GoScreenRenderer
 
         DrawFittedText(trimmed, new Rectangle(GameOverValueX, bounds.Y + 6, bounds.Right - GameOverValueX - 18, bounds.Height - 12), new Color(99, 223, 185), 0.58f);
     }
-
-    private static Rectangle CgosWatchingBackButtonBounds => new(1480, 120, 332, 52);
-
-    /// <summary>
-    /// ［SGF OUTPUT］ボタンの描画範囲
-    /// </summary>
-    private static Rectangle CgosWatchingExportSgfButtonBounds => new(1486, 920, 306, 52);
-
-    /// <summary>
-    /// ［KIFU REVIEW］ボタンの描画範囲
-    /// </summary>
-    private static Rectangle CgosWatchingReviewButtonBounds => new(1164, 920, 306, 52);
 
     private void DrawBroadcastStatusBadge(string label, bool chartPopup = false)
     {
