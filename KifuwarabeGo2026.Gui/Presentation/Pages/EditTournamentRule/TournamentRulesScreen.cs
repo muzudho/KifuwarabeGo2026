@@ -22,12 +22,19 @@ public sealed class TournamentRulesScreen
         NextPageButton = new Button(new Rectangle(830, 816, 90, 44), "NEXT", 0.42f);
         DeleteCancelButton = new Button(new Rectangle(940, 574, 140, 48), "CANCEL", 0.42f);
         DeleteConfirmButton = new Button(new Rectangle(1104, 574, 140, 48), "DELETE", 0.42f);
+        AddPanelDiscardButton = new Button(new Rectangle(1144, 156, 132, 48), "DISCARD", 0.30f);
+        AddPanelSaveButton = new Button(new Rectangle(1288, 156, 162, 48), "CLOSE", 0.34f);
     }
 
     public Rectangle SelectionDialogBounds { get; } = new(230, 126, 1460, 820);
     public Rectangle SelectionListBounds { get; } = new(270, 242, 650, 560);
     public Rectangle SelectionPropertyBounds { get; } = new(950, 270, 700, 532);
     public Rectangle DeleteConfirmationBounds { get; } = new(640, 390, 640, 260);
+    public Rectangle AddPanelBounds { get; } = new(430, 126, 1060, 820);
+    public Rectangle AddPanelEditorBounds { get; } = new(520, 228, 880, 590);
+    public Rectangle AddPanelDisplayNameRowBounds { get; } = new(626, 244, 668, 56);
+    public Rectangle AddPanelDisplayNameTextBounds { get; } = new(758, 251, 520, 42);
+    public Rectangle AddPanelFileRowBounds { get; } = new(626, 676, 668, 56);
     public Button BrowseButton { get; }
     public Button SelectionCancelButton { get; }
     public Button SelectionOkButton { get; }
@@ -40,6 +47,11 @@ public sealed class TournamentRulesScreen
     public Button NextPageButton { get; }
     public Button DeleteCancelButton { get; }
     public Button DeleteConfirmButton { get; }
+    public Button AddPanelDiscardButton { get; }
+    public Button AddPanelSaveButton { get; }
+    public TournamentRuleKomiField KomiField { get; } = new();
+    public TournamentRuleMoveLimitField MoveLimitField { get; } = new();
+    public TournamentRuleTimeField TimeField { get; } = new();
 
     public Rectangle GetListItemBounds(int index) =>
         new(SelectionListBounds.X + 16, SelectionListBounds.Y + 16 + index * 88, SelectionListBounds.Width - 32, 72);
@@ -57,6 +69,13 @@ public sealed class TournamentRulesScreen
         }
 
         return null;
+    }
+
+    public void UpdateAddPanelState(bool isDirty)
+    {
+        AddPanelDiscardButton.IsEnabled = isDirty;
+        AddPanelSaveButton.Label = isDirty ? "SAVE & CLOSE" : "CLOSE";
+        AddPanelSaveButton.LabelScale = isDirty ? 0.27f : 0.34f;
     }
 }
 
@@ -83,4 +102,11 @@ internal static class TournamentRulesScreenBounds
     internal static Rectangle TournamentRulesDeleteConfirmationBounds => Screen.DeleteConfirmationBounds;
     internal static Rectangle TournamentRulesDeleteConfirmationCancelButtonBounds => Screen.DeleteCancelButton.Bounds;
     internal static Rectangle TournamentRulesDeleteConfirmationConfirmButtonBounds => Screen.DeleteConfirmButton.Bounds;
+    internal static Rectangle TournamentRulesAddPanelBounds => Screen.AddPanelBounds;
+    internal static Rectangle TournamentRulesAddPanelEditorBounds => Screen.AddPanelEditorBounds;
+    internal static Rectangle TournamentRulesAddPanelCloseButtonBounds => Screen.AddPanelDiscardButton.Bounds;
+    internal static Rectangle TournamentRulesAddPanelDisplayNameRowBounds => Screen.AddPanelDisplayNameRowBounds;
+    internal static Rectangle TournamentRulesAddPanelDisplayNameTextBounds => Screen.AddPanelDisplayNameTextBounds;
+    internal static Rectangle TournamentRulesAddPanelFileRowBounds => Screen.AddPanelFileRowBounds;
+    internal static Rectangle SaveTournamentRulesButtonBounds => Screen.AddPanelSaveButton.Bounds;
 }

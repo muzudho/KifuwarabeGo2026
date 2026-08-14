@@ -216,7 +216,7 @@ public sealed class TournamentRulesSetting
             return TryHandleTournamentRulesAddPanelClick(point, getDisplayNameCaretIndex, getNumericCaretIndex);
         }
 
-        if (GoScreenRenderer.GetTournamentRulesBrowseButtonHit(point))
+        if (TournamentRulesScreen.Default.BrowseButton.IsHit(point))
         {
             _browseTournamentRules();
             return true;
@@ -351,7 +351,8 @@ public sealed class TournamentRulesSetting
         Func<Point, string, int>? getDisplayNameCaretIndex,
         Func<Point, TournamentRulesNumericField, string, int>? getNumericCaretIndex)
     {
-        if (GoScreenRenderer.GetTournamentRulesAddPanelCloseButtonHit(point) && _session.IsTournamentRulesDirty)
+        var rulesScreen = TournamentRulesScreen.Default;
+        if (rulesScreen.AddPanelDiscardButton.IsHit(point) && _session.IsTournamentRulesDirty)
         {
             CommitNumericEdit();
             CancelDisplayNameEdit();
@@ -360,7 +361,7 @@ public sealed class TournamentRulesSetting
             return true;
         }
 
-        if (GoScreenRenderer.GetTournamentRulesAddPanelDisplayNameBoxHit(point))
+        if (rulesScreen.AddPanelDisplayNameTextBounds.Contains(point))
         {
             CommitNumericEdit();
             MoveOrBeginDisplayNameEdit(point, getDisplayNameCaretIndex);
@@ -405,7 +406,7 @@ public sealed class TournamentRulesSetting
             return true;
         }
 
-        if (GoScreenRenderer.GetSaveTournamentRulesButtonHit(point))
+        if (rulesScreen.AddPanelSaveButton.IsHit(point))
         {
             if (_session.IsTournamentRulesDirty)
             {

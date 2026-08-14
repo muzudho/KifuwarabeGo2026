@@ -489,10 +489,10 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IButton
     }
     private void DrawDisplayNameTextBox(GoAppSession session, Point mousePoint)
     {
-        var bounds = TournamentRulesAddPanelDisplayNameRowBounds;
+        var bounds = TournamentRulesScreen.Default.AddPanelDisplayNameRowBounds;
         var active = session.IsTournamentRulesDisplayNameEditing;
         var displayName = active ? session.TournamentRulesDisplayNameDraft : session.TournamentDisplayName;
-        var textBounds = TournamentRulesAddPanelDisplayNameTextBounds;
+        var textBounds = TournamentRulesScreen.Default.AddPanelDisplayNameTextBounds;
         var hovered = textBounds.Contains(mousePoint);
         DrawText("DISPLAY", new Vector2(bounds.X + 16, textBounds.Y + 7), new Color(180, 195, 195), 0.36f);
         DrawRoundedFill(
@@ -520,7 +520,7 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IButton
 
     private void DrawFilePathSelector(GoAppSession session, Point mousePoint)
     {
-        var bounds = TournamentRulesAddPanelFileRowBounds;
+        var bounds = TournamentRulesScreen.Default.AddPanelFileRowBounds;
         var filePath = string.IsNullOrWhiteSpace(session.CurrentTournamentRules.FilePath) ? "-" : session.CurrentTournamentRules.FilePath;
         DrawTournamentRulesFieldLabel("SETTINGS", bounds);
         var textBounds = new Rectangle(bounds.X + 132, bounds.Y + 7, bounds.Width - 152, 42);

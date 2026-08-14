@@ -13,22 +13,6 @@ using static KifuwarabeGo2026.Gui.Presentation.Pages.EditTournamentRule.Tourname
 /// </summary>
 public sealed partial class GoScreenRenderer
 {
-    private readonly TournamentRuleKomiField _tournamentRuleKomiField = new();
-    private readonly TournamentRuleMoveLimitField _tournamentRuleMoveLimitField = new();
-    private readonly TournamentRuleTimeField _tournamentRuleTimeField = new();
-
-    public static bool GetTournamentRulesBrowseButtonHit(Point point) =>
-        TournamentRulesSelectButtonBounds.Contains(point);
-
-
-    public static bool GetTournamentRulesAddPanelCloseButtonHit(Point point) =>
-        TournamentRulesAddPanelCloseButtonBounds.Contains(point);
-
-
-    public static bool GetTournamentRulesAddPanelDisplayNameBoxHit(Point point) =>
-        TournamentRulesAddPanelDisplayNameTextBounds.Contains(point);
-
-
     public int GetTournamentRulesAddPanelDisplayNameCaretIndex(Point point, string text) =>
         GetTextBoxCaretIndex(point.X, text, TournamentRulesAddPanelDisplayNameTextBounds, 0.46f);
 
@@ -50,9 +34,6 @@ public sealed partial class GoScreenRenderer
         text = path;
         return true;
     }
-
-
-    public static bool GetSaveTournamentRulesButtonHit(Point point) => SaveTournamentRulesButtonBounds.Contains(point);
 
 
     private void DrawTournamentRulesSelectionDialog(GoAppSession session, Point mousePoint)
@@ -123,9 +104,10 @@ public sealed partial class GoScreenRenderer
         DrawRect(TournamentRulesAddPanelBounds, 2, new Color(116, 145, 146));
 
         DrawText(session.IsTournamentRulesEditPanelMode ? "EDIT TOURNAMENT RULES" : "ADD TOURNAMENT RULES", new Vector2(TournamentRulesAddPanelBounds.X + 30, TournamentRulesAddPanelBounds.Y + 24), new Color(244, 238, 218), 0.78f);
-        DrawCommandButton(TournamentRulesAddPanelCloseButtonBounds, "DISCARD", false, mousePoint, enabled: session.IsTournamentRulesDirty, scale: 0.30f);
-        DrawCommandButton(SaveTournamentRulesButtonBounds, session.IsTournamentRulesDirty ? "SAVE & CLOSE" : "CLOSE", false, mousePoint,
-            scale: session.IsTournamentRulesDirty ? 0.27f : 0.34f);
+        var rulesScreen = TournamentRulesScreen.Default;
+        rulesScreen.UpdateAddPanelState(session.IsTournamentRulesDirty);
+        rulesScreen.AddPanelDiscardButton.Draw(mousePoint, this);
+        rulesScreen.AddPanelSaveButton.Draw(mousePoint, this);
 
         FillRect(TournamentRulesAddPanelEditorBounds, new Color(15, 20, 26));
         DrawRect(TournamentRulesAddPanelEditorBounds, 1, new Color(67, 84, 92));
@@ -137,13 +119,13 @@ public sealed partial class GoScreenRenderer
             "BOARD SIZE",
             new Rectangle(AddPanelControlX, AddPanelBoardSizeButtonY, 668, 50));
         DrawBoardSizeButtons(session.BoardSize, mousePoint, AddPanelBoardSizeButtonY);
-        _tournamentRuleKomiField.Draw(session.Komi, mousePoint,
+        TournamentRulesScreen.Default.KomiField.Draw(session.Komi, mousePoint,
             new TournamentRuleKomiFieldDrawingCallbacks(DrawTournamentRulesFieldLabel, DrawFittedText, this,
                 new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText)));
-        _tournamentRuleTimeField.Draw(session.MainTime, mousePoint,
+        TournamentRulesScreen.Default.TimeField.Draw(session.MainTime, mousePoint,
             new TournamentRuleTimeFieldDrawingCallbacks(DrawTournamentRulesFieldLabel, DrawFittedText, this,
                 new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText)));
-        _tournamentRuleMoveLimitField.Draw(session.MoveLimit, mousePoint,
+        TournamentRulesScreen.Default.MoveLimitField.Draw(session.MoveLimit, mousePoint,
             new TournamentRuleMoveLimitFieldDrawingCallbacks(DrawTournamentRulesFieldLabel, DrawFittedText, this,
                 new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText)));
         DrawFilePathSelector(session, mousePoint);
@@ -209,25 +191,4 @@ public sealed partial class GoScreenRenderer
     }
 
 
-    private static Rectangle TournamentRulesAddPanelBounds => new(430, 126, 1060, 820);
-
-
-    private static Rectangle TournamentRulesAddPanelEditorBounds => new(520, 228, 880, 590);
-
-
-    private static Rectangle TournamentRulesAddPanelCloseButtonBounds => new(1144, 156, 132, 48);
-
-
-    private static Rectangle TournamentRulesAddPanelDisplayNameRowBounds => new(AddPanelControlX, 244, 668, 56);
-
-
-    private static Rectangle TournamentRulesAddPanelDisplayNameTextBounds =>
-        new(TournamentRulesAddPanelDisplayNameRowBounds.X + 132, TournamentRulesAddPanelDisplayNameRowBounds.Y + 7, TournamentRulesAddPanelDisplayNameRowBounds.Width - 148, 42);
-
-
-    private static Rectangle TournamentRulesAddPanelFileRowBounds => new(AddPanelControlX, 676, 668, 56);
-
-
-
-    private static Rectangle SaveTournamentRulesButtonBounds => new(1288, 156, 162, 48);
 }
