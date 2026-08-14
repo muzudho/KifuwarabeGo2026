@@ -16,12 +16,50 @@ public sealed class BoardAndReviewScreen
         StartBoardEditingButton = new Button(new Rectangle(1486, 920, 154, 56), "EDIT BOARD", 0.36f);
         BoardEditing = new BoardEditingControls();
         VariationEditing = new VariationEditingControls();
+        Review = new ReviewControls();
     }
 
     public Button StartReviewingButton { get; }
     public Button StartBoardEditingButton { get; }
     public BoardEditingControls BoardEditing { get; }
     public VariationEditingControls VariationEditing { get; }
+    public ReviewControls Review { get; }
+}
+
+/// <summary>棋譜検討画面の操作と表示領域を所有します。</summary>
+public sealed class ReviewControls
+{
+    public ReviewControls()
+    {
+        UsePositionButton = new Button(new Rectangle(1648, 120, 164, 52), "USE POSITION", 0.34f);
+        BackToHomeButton = new Button(new Rectangle(1480, 120, 156, 52), "BACK TO HOME", 0.32f);
+        BoardLensButton = new Button(new Rectangle(1508, 858, 60, 60), "L", 0.16f);
+        BoardLensNextButton = new Button(new Rectangle(1652, 858, 60, 60), "K>", 0.25f);
+        BoardLensExitButton = new Button(new Rectangle(1724, 858, 60, 60), "OFF/1", 0.19f);
+        BoardLensPreviousButton = new Button(new Rectangle(1580, 858, 60, 60), "<J", 0.25f);
+        BoardLensNextButton.IsEnabled = false;
+        BoardLensExitButton.IsEnabled = false;
+        BoardLensPreviousButton.IsEnabled = false;
+    }
+
+    public Rectangle AnalysisSectionBounds { get; } = new(1144, 692, 668, 146);
+    public Rectangle AnalysisTooltipBounds { get; } = new(1164, 734, 628, 104);
+    public Rectangle UnsavedCommentsNoticeBounds { get; } = new(1334, 165, 430, 24);
+    public Button UsePositionButton { get; }
+    public Button BackToHomeButton { get; }
+    public Button BoardLensButton { get; }
+    public Button BoardLensNextButton { get; }
+    public Button BoardLensExitButton { get; }
+    public Button BoardLensPreviousButton { get; }
+
+    public void UpdateBoardLensState(bool enabled, bool isMeasureLens)
+    {
+        BoardLensButton.IsSelected = enabled;
+        BoardLensNextButton.IsEnabled = enabled;
+        BoardLensNextButton.IsSelected = isMeasureLens;
+        BoardLensPreviousButton.IsEnabled = enabled;
+        BoardLensExitButton.IsEnabled = enabled;
+    }
 }
 
 /// <summary>変化図編集画面の操作、プレビュー領域、Board Lens操作列を所有します。</summary>
@@ -110,6 +148,7 @@ internal static class BoardAndReviewScreenBounds
     private static BoardAndReviewScreen Screen => BoardAndReviewScreen.Default;
     private static BoardEditingControls BoardEditing => Screen.BoardEditing;
     private static VariationEditingControls VariationEditing => Screen.VariationEditing;
+    private static ReviewControls Review => Screen.Review;
 
     internal static Rectangle StartReviewingButtonBounds => Screen.StartReviewingButton.Bounds;
     internal static Rectangle StartBoardEditingButtonBounds => Screen.StartBoardEditingButton.Bounds;
@@ -137,4 +176,13 @@ internal static class BoardAndReviewScreenBounds
     internal static Rectangle VariationEditingBoardLensPreviousButtonBounds => VariationEditing.BoardLensPreviousBounds;
     internal static Rectangle VariationEditingBoardLensNextButtonBounds => VariationEditing.BoardLensNextBounds;
     internal static Rectangle VariationEditingBoardLensExitButtonBounds => VariationEditing.BoardLensExitBounds;
+    internal static Rectangle ReviewAnalysisSectionBounds => Review.AnalysisSectionBounds;
+    internal static Rectangle ReviewAnalysisTooltipBounds => Review.AnalysisTooltipBounds;
+    internal static Rectangle ReviewDoneButtonBounds => Review.UsePositionButton.Bounds;
+    internal static Rectangle ReviewBackToRestButtonBounds => Review.BackToHomeButton.Bounds;
+    internal static Rectangle ReviewUnsavedCommentsNoticeBounds => Review.UnsavedCommentsNoticeBounds;
+    internal static Rectangle ReviewBoardLensButtonBounds => Review.BoardLensButton.Bounds;
+    internal static Rectangle ReviewBoardLensFamilyButtonBounds => Review.BoardLensNextButton.Bounds;
+    internal static Rectangle ReviewBoardLensExitButtonBounds => Review.BoardLensExitButton.Bounds;
+    internal static Rectangle ReviewBoardLensPreviousButtonBounds => Review.BoardLensPreviousButton.Bounds;
 }

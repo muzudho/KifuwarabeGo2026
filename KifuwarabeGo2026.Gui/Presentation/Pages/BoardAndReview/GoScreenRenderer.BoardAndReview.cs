@@ -30,22 +30,6 @@ public sealed partial class GoScreenRenderer
     }
 
 
-    public static bool GetReviewDoneButtonHit(Point point) => ReviewDoneButtonBounds.Contains(point);
-
-
-    public static bool GetReviewBackToRestButtonHit(Point point) => ReviewBackToRestButtonBounds.Contains(point);
-
-    public static bool GetReviewBoardLensButtonHit(Point point) => ReviewBoardLensButtonBounds.Contains(point);
-
-    public static bool GetReviewBoardLensFamilyButtonHit(Point point, bool enabled) =>
-        enabled && ReviewBoardLensFamilyButtonBounds.Contains(point);
-
-    public static bool GetReviewBoardLensPreviousButtonHit(Point point, bool enabled) =>
-        enabled && ReviewBoardLensPreviousButtonBounds.Contains(point);
-
-    public static bool GetReviewBoardLensExitButtonHit(Point point, bool enabled) =>
-        enabled && ReviewBoardLensExitButtonBounds.Contains(point);
-
     private void DrawBoardEditingSidePanel(GoAppSession session, Point mousePoint)
     {
         var controls = BoardAndReviewScreen.Default.BoardEditing;
@@ -165,6 +149,9 @@ public sealed partial class GoScreenRenderer
 
     private void DrawReviewingSidePanel(GoAppSession session, Point mousePoint)
     {
+        BoardAndReviewScreen.Default.Review.UpdateBoardLensState(
+            session.IsRenParseDisplayEnabled,
+            session.IsMeasureBoardLens);
         new Headline("KIFU REVIEW", new Vector2(1144, 136), new Color(255, 230, 160), 0.72f).Draw(this);
         if (session.HasUnsavedReviewCommentChanges)
         {
@@ -328,30 +315,6 @@ public sealed partial class GoScreenRenderer
         > 0 => $"+{step}",
         _ => step.ToString(),
     };
-
-
-    private static Rectangle ReviewAnalysisSectionBounds => new(1144, 692, 668, 146);
-
-
-    private static Rectangle ReviewAnalysisTooltipBounds => new(1164, 734, 628, 104);
-
-
-    private static Rectangle ReviewDoneButtonBounds => new(1648, 120, 164, 52);
-
-
-    private static Rectangle ReviewBackToRestButtonBounds => new(1480, 120, 156, 52);
-
-
-    private static Rectangle ReviewUnsavedCommentsNoticeBounds => new(1334, 165, 430, 24);
-
-
-    private static Rectangle ReviewBoardLensButtonBounds => new(1508, 858, 60, 60);
-
-    private static Rectangle ReviewBoardLensFamilyButtonBounds => new(1652, 858, 60, 60);
-
-    private static Rectangle ReviewBoardLensExitButtonBounds => new(1724, 858, 60, 60);
-
-    private static Rectangle ReviewBoardLensPreviousButtonBounds => new(1580, 858, 60, 60);
 
 
     private void DrawReviewBoardLensPreviousButton(bool enabled, Point mousePoint)

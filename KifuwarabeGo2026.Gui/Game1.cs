@@ -1011,13 +1011,13 @@ public class Game1 : Game
         var engineErrorLogHovered = _session.UseKind == GoAppUseKind.LocalPlay &&
             GoScreenRenderer.GetEngineErrorLogHit(point, _session);
         var boardLensButtonHovered = _session.CurrentMode.Kind == GoAppModeKind.Reviewing &&
-            GoScreenRenderer.GetReviewBoardLensButtonHit(point);
+            BoardAndReviewScreen.Default.Review.BoardLensButton.IsHit(point);
         var boardLensFamilyButtonHovered = _session.CurrentMode.Kind == GoAppModeKind.Reviewing &&
-            GoScreenRenderer.GetReviewBoardLensFamilyButtonHit(point, _session.IsRenParseDisplayEnabled);
+            BoardAndReviewScreen.Default.Review.BoardLensNextButton.IsHit(point);
         var boardLensExitButtonHovered = _session.CurrentMode.Kind == GoAppModeKind.Reviewing &&
-            GoScreenRenderer.GetReviewBoardLensExitButtonHit(point, _session.IsRenParseDisplayEnabled);
+            BoardAndReviewScreen.Default.Review.BoardLensExitButton.IsHit(point);
         var boardLensPreviousButtonHovered = _session.CurrentMode.Kind == GoAppModeKind.Reviewing &&
-            GoScreenRenderer.GetReviewBoardLensPreviousButtonHit(point, _session.IsRenParseDisplayEnabled);
+            BoardAndReviewScreen.Default.Review.BoardLensPreviousButton.IsHit(point);
         Mouse.SetCursor(engineErrorLogHovered || boardLensButtonHovered || boardLensFamilyButtonHovered || boardLensExitButtonHovered || boardLensPreviousButtonHovered
             ? MouseCursor.Hand
             : MouseCursor.Arrow);
@@ -2726,25 +2726,27 @@ public class Game1 : Game
             return true;
         }
 
-        if (GoScreenRenderer.GetReviewBoardLensButtonHit(point))
+        var reviewControls = BoardAndReviewScreen.Default.Review;
+        reviewControls.UpdateBoardLensState(_session.IsRenParseDisplayEnabled, _session.IsMeasureBoardLens);
+        if (reviewControls.BoardLensButton.IsHit(point))
         {
             ToggleBoardLens();
             return true;
         }
 
-        if (GoScreenRenderer.GetReviewBoardLensFamilyButtonHit(point, _session.IsRenParseDisplayEnabled))
+        if (reviewControls.BoardLensNextButton.IsHit(point))
         {
             TryStepBoardLens(1);
             return true;
         }
 
-        if (GoScreenRenderer.GetReviewBoardLensPreviousButtonHit(point, _session.IsRenParseDisplayEnabled))
+        if (reviewControls.BoardLensPreviousButton.IsHit(point))
         {
             TryStepBoardLens(-1);
             return true;
         }
 
-        if (GoScreenRenderer.GetReviewBoardLensExitButtonHit(point, _session.IsRenParseDisplayEnabled))
+        if (reviewControls.BoardLensExitButton.IsHit(point))
         {
             TryDeactivateBoardLens();
             return true;
@@ -2798,13 +2800,13 @@ public class Game1 : Game
             return true;
         }
 
-        if (_session.UseKind == GoAppUseKind.LocalPlay && GoScreenRenderer.GetReviewDoneButtonHit(point))
+        if (_session.UseKind == GoAppUseKind.LocalPlay && reviewControls.UsePositionButton.IsHit(point))
         {
             BeginReviewExit(ReviewExitAction.UsePosition);
             return true;
         }
 
-        if (GoScreenRenderer.GetReviewBackToRestButtonHit(point))
+        if (reviewControls.BackToHomeButton.IsHit(point))
         {
             BeginReviewExit(ReviewExitAction.BackToHome);
             return true;
