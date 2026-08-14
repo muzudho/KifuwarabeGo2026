@@ -57,7 +57,7 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
     private readonly StationeryDrawingContext _stationeryDrawingContext;
     internal StationeryDrawingContext StationeryDrawingContext => _stationeryDrawingContext;
 
-    // 移設途中: RightSidePanelDrawingContext の導入後に削除する一時的な描画ブリッジです。
+    // 移設途中: StationeryDrawingContext の拡張と右側パネル共通部品への分離後に削除する一時的な描画ブリッジです。
     internal void DrawRightSidePanelIconStone(Vector2 center, float radius, bool black) => DrawIconStone(center, radius, black);
     internal void DrawRightSidePanelPlayerRoleFaceIcon(Vector2 center, bool isComputer) => DrawPlayerRoleFaceIcon(center, isComputer);
     internal void DrawRightSidePanelFittedText(string text, Rectangle bounds, Color color, float scale) => DrawFittedText(text, bounds, color, scale);
@@ -1187,20 +1187,6 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         for (var y = 0; y < renParse.Size; y++)
         for (var x = 0; x < renParse.Size; x++)
             DrawRenNumber(renParse.GetRenNumber(x, y), BoardPoint(start, cell, x, y), scale);
-    }
-
-    internal void DrawLocalPlayingBoardLensButtonStrip(bool isLensEnabled, Point mousePoint)
-    {
-        DrawFittedText("BOARD LENS  [L] / [J] / [K] / [1]", new Rectangle(1164, 812, 316, 36), new Color(147, 201, 190), 0.26f);
-        DrawBoardLensButtonStrip(LocalMatchPlayPage.Default.RightSidePanel.BoardLensButtons, isLensEnabled, mousePoint, 0.32f);
-    }
-
-    private void DrawBoardLensButtonStrip(BoardLensButtonStrip buttons, bool isLensEnabled, Point mousePoint, float scale = 0.32f)
-    {
-        DrawCommandButton(buttons.ToggleBounds, "L", isLensEnabled, mousePoint, scale: scale);
-        DrawCommandButton(buttons.PreviousBounds, "<J", false, mousePoint, enabled: isLensEnabled, scale: scale * 0.82f);
-        DrawCommandButton(buttons.NextBounds, "K>", false, mousePoint, enabled: isLensEnabled, scale: scale * 0.82f);
-        DrawCommandButton(buttons.ExitBounds, "OFF/1", false, mousePoint, enabled: isLensEnabled, scale: scale * 0.66f);
     }
 
     private void DrawBoardRenAnalysis(RenParseDisplayMode displayMode, int boardSize, Func<int, int, GoStone> getStone,

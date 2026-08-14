@@ -120,7 +120,8 @@ public sealed class PlayingScene : IDisposable
             return true;
         }
 
-        if (ShouldShowEnginePreparing() && LocalMatchPlayPage.Default.CancelButton.IsHit(point))
+        var rightSidePanel = LocalMatchPlayPage.Default.RightSidePanel;
+        if (ShouldShowEnginePreparing() && rightSidePanel.CancelButton.IsHit(point))
         {
             CancelGtpGame();
             _session.CancelPlaying();
@@ -138,7 +139,7 @@ public sealed class PlayingScene : IDisposable
             return true;
         }
 
-        if (LocalMatchPlayPage.Default.PassButton.IsHit(point))
+        if (rightSidePanel.PassButton.IsHit(point))
         {
             var passedBy = _session.CurrentTurn;
             if (_session.Pass())
@@ -150,7 +151,7 @@ public sealed class PlayingScene : IDisposable
             return true;
         }
 
-        if (LocalMatchPlayPage.Default.ResignButton.IsHit(point))
+        if (rightSidePanel.ResignButton.IsHit(point))
         {
             if (_session.Resign())
             {

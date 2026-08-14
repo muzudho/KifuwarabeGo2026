@@ -17,6 +17,7 @@ using KifuwarabeGo2026.Gui.Presentation.Pages.EditTournamentRule;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Headline;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Button;
 using static KifuwarabeGo2026.Gui.Presentation.Pages.PopupTrendChart.PopupTrendChartScreenBounds;
 using Microsoft.Xna.Framework;
 using System;
@@ -89,13 +90,71 @@ public sealed class LocalMatchPlayRightSidePanel
 {
     public const int PlayersY = 140;
 
-    internal BoardLensButtonStrip BoardLensButtons { get; } = new(1516, 800);
+    private readonly BoardLensButtonStrip _boardLensButtons = new(1516, 800);
+    private readonly Button _boardLensToggleButton = new(new Rectangle(1516, 800, 60, 60), "L", 0.32f);
+    private readonly Button _boardLensPreviousButton = new(new Rectangle(1588, 800, 60, 60), "<J", 0.2624f);
+    private readonly Button _boardLensNextButton = new(new Rectangle(1660, 800, 60, 60), "K>", 0.2624f);
+    private readonly Button _boardLensExitButton = new(new Rectangle(1732, 800, 60, 60), "OFF/1", 0.2112f);
+
+    public Button PassButton { get; } = new(new Rectangle(1144, 920, 320, 72), "PASS", 0.62f);
+    public Button ResignButton { get; } = new(new Rectangle(1492, 920, 320, 72), "RESIGN", 0.62f);
+    public Button CancelButton { get; } = new(new Rectangle(1144, 920, 668, 72), "CANCEL", 0.62f);
 
     internal BoardLensButton? GetBoardLensButtonHit(Point point, bool isLensEnabled) =>
-        BoardLensButtons.GetHit(point, isLensEnabled);
+        _boardLensButtons.GetHit(point, isLensEnabled);
 
-    public void Draw(GoScreenRenderer renderer, GoAppSession session, Point mousePoint) =>
-        LocalMatchPlayPage.Default.DrawRightSidePanelContent(renderer, session, mousePoint);
+    public void Draw(GoScreenRenderer renderer, GoAppSession session, Point mousePoint)
+    {
+        renderer.DrawVerticalResultSection(new Rectangle(1144, 132, 668, 200), "PLAYERS", new Color(76, 91, 126));
+        renderer.DrawBothPlayersComponent(
+            1144,
+            PlayersY,
+            668,
+            session.GetLocalPlayerName(GoStone.Black),
+            session.GetLocalPlayerName(GoStone.White),
+            session.BlackUsedTime,
+            session.WhiteUsedTime,
+            session.MainTime,
+            session.BlackAgehama,
+            session.WhiteAgehama,
+            session.CurrentTurn,
+            session.EngineErrorStone,
+            mousePoint,
+            minimal: true,
+            blackLiveElapsed: session.BlackElapsedTime,
+            whiteLiveElapsed: session.WhiteElapsedTime);
+
+        renderer.DrawVerticalResultSection(new Rectangle(1144, 344, 668, 110), "FACTS", new Color(66, 104, 116));
+        renderer.DrawInfoStrip(1144, 363, "NEXT", GoScreenRenderer.GetMoveThinkingText(session));
+        renderer.DrawLocalTrendChart(session, mousePoint);
+        renderer.DrawVerticalResultSection(new Rectangle(1144, 780, 668, 120), "REVIEW", new Color(76, 91, 126));
+        DrawBoardLensButtons(renderer.StationeryDrawingContext, session.IsRenParseDisplayEnabled, mousePoint);
+        renderer.DrawVerticalResultSection(new Rectangle(1144, 916, 668, 76), "ACTION", new Color(91, 82, 105));
+
+        var drawingContext = renderer.StationeryDrawingContext;
+        if (session.CanAcceptHumanMove)
+        {
+            PassButton.Draw(mousePoint, drawingContext);
+            ResignButton.Draw(mousePoint, drawingContext);
+        }
+        else
+        {
+            CancelButton.Draw(mousePoint, drawingContext);
+        }
+    }
+
+    private void DrawBoardLensButtons(StationeryDrawingContext drawingContext, bool isLensEnabled, Point mousePoint)
+    {
+        drawingContext.DrawFittedText("BOARD LENS  [L] / [J] / [K] / [1]", new Rectangle(1164, 812, 316, 36), new Color(147, 201, 190), 0.26f);
+        _boardLensToggleButton.IsSelected = isLensEnabled;
+        _boardLensPreviousButton.IsEnabled = isLensEnabled;
+        _boardLensNextButton.IsEnabled = isLensEnabled;
+        _boardLensExitButton.IsEnabled = isLensEnabled;
+        _boardLensToggleButton.Draw(mousePoint, drawingContext);
+        _boardLensPreviousButton.Draw(mousePoint, drawingContext);
+        _boardLensNextButton.Draw(mousePoint, drawingContext);
+        _boardLensExitButton.Draw(mousePoint, drawingContext);
+    }
 }
 
 public sealed class LocalMatchIntermissionRightSidePanel
