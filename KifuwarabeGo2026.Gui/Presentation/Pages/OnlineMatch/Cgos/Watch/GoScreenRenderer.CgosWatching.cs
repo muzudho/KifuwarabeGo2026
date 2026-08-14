@@ -140,7 +140,8 @@ public sealed partial class GoScreenRenderer
             DrawVerticalResultSection(new Rectangle(1144, 912, 668, 68), "ACTION", new Color(91, 82, 105));
             screen.ReviewButton.Draw(mousePoint, _stationeryDrawingContext);
             if (session.IsSgfAutoSaveAvailable)
-                DrawSgfAutoSaveCheckBox(screen.ExportSgfButton.Bounds, session, mousePoint);
+                screen.SgfAutoSaveCheckBox.Draw(
+                    screen.ExportSgfButton.Bounds, session, mousePoint, StationeryDrawingContext);
             else
                 screen.ExportSgfButton.Draw(mousePoint, _stationeryDrawingContext);
         }

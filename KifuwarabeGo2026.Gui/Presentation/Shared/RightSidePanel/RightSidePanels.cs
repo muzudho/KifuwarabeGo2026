@@ -15,6 +15,8 @@ using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ActionBadge;
 using KifuwarabeGo2026.Gui.Presentation.Shared.SelectEntry;
 using KifuwarabeGo2026.Gui.Presentation.Pages.EditTournamentRule;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Headline;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 using Microsoft.Xna.Framework;
 using System;
 
@@ -227,7 +229,88 @@ public sealed class RightSidePanelPlayerSelector
 
 public sealed class GameOverRightSidePanel
 {
-    public void Draw(GoScreenRenderer renderer, GoAppSession session, Point mousePoint) => renderer.DrawGameOverRightSidePanelContent(session, mousePoint);
+    public SgfAutoSaveCheckBox SgfAutoSaveCheckBox { get; } = new();
+
+    public void Draw(GoScreenRenderer renderer, GoAppSession session, Point mousePoint)
+    {
+        var drawingContext = renderer.StationeryDrawingContext;
+        new Headline("GAME OVER", new Vector2(1144, 132), new Color(255, 230, 160), 0.9f).Draw(drawingContext);
+        drawingContext.DrawText($"{session.PlayedMoveCount}手で終局", new Vector2(1144, 196), new Color(99, 223, 185), 0.58f);
+        var screen = LocalMatchScreen.Default;
+        screen.ReturnToSetupButton.Draw(mousePoint, drawingContext);
+
+        renderer.DrawVerticalResultSection(new Rectangle(1144, 236, 668, 128), "RESULT", new Color(80, 48, 38));
+        renderer.DrawResultRow(new Rectangle(1164, 242, 628, 52), "RULES", session.TournamentDisplayName, new Color(39, 68, 65), Color.White);
+        DrawCalculationResultRow(renderer, new Rectangle(1164, 300, 628, 52), session);
+
+        renderer.DrawRightSidePanelGameOverTrendChart(session, mousePoint);
+
+        if (session.UseKind == GoAppUseKind.LocalApps)
+        {
+            renderer.DrawVerticalResultSection(new Rectangle(1144, 668, 668, 174), "AGEHAMA", new Color(112, 76, 48));
+            renderer.DrawRightSidePanelAgehamaSummary(new Rectangle(1164, 692, 628, 132), session.BlackAgehama, session.WhiteAgehama);
+        }
+
+        renderer.DrawVerticalResultSection(new Rectangle(1144, 854, 668, 126), "ACTION", new Color(91, 82, 105));
+        screen.GameOverReviewButton.Draw(mousePoint, drawingContext);
+        if (session.IsSgfAutoSaveAvailable)
+            SgfAutoSaveCheckBox.Draw(screen.ExportSgfButton.Bounds, session, mousePoint, drawingContext);
+        else
+            screen.ExportSgfButton.Draw(mousePoint, drawingContext);
+    }
+
+    private static void DrawCalculationResultRow(GoScreenRenderer renderer, Rectangle bounds, GoAppSession session)
+    {
+        renderer.DrawRightSidePanelResultLabel(bounds, "RESULT", new Color(80, 48, 38));
+        const string pureGoPrefix = "PURE GO ";
+        var result = string.IsNullOrWhiteSpace(session.GameOverReason) ? "GAME OVER" : session.GameOverReason;
+        if (result.StartsWith(pureGoPrefix, StringComparison.Ordinal))
+            result = result[pureGoPrefix.Length..];
+        var black = result.StartsWith("BLACK ", StringComparison.Ordinal);
+        var white = result.StartsWith("WHITE ", StringComparison.Ordinal);
+        if (black || white)
+        {
+            renderer.DrawRightSidePanelStoneValue(RightSidePanelLayout.PrimaryValueX, bounds.Center.Y,
+                result[6..], black, new Color(99, 223, 185));
+            return;
+        }
+
+        renderer.StationeryDrawingContext.DrawFittedText(result,
+            new Rectangle(RightSidePanelLayout.PrimaryValueX, bounds.Y + 6,
+                bounds.Right - RightSidePanelLayout.PrimaryValueX - 18, bounds.Height - 12),
+            new Color(99, 223, 185), 0.58f);
+    }
+}
+
+public sealed class SgfAutoSaveCheckBox
+{
+    public void Draw(Rectangle bounds, GoAppSession session, Point mousePoint, StationeryDrawingContext drawingContext)
+    {
+        var hovered = bounds.Contains(mousePoint);
+        drawingContext.FillRectangle(bounds, hovered ? new Color(47, 65, 91, 230) : new Color(31, 45, 70, 220));
+        drawingContext.DrawRectangle(bounds, 2, new Color(137, 160, 205));
+
+        var checkBounds = new Rectangle(bounds.X + 12, bounds.Y + (bounds.Height - 28) / 2, 28, 28);
+        drawingContext.FillRectangle(checkBounds, new Color(17, 24, 48, 245));
+        drawingContext.DrawRectangle(checkBounds, 2, new Color(176, 194, 242));
+        if (session.IsSgfAutoSaveEnabled)
+        {
+            drawingContext.DrawLine(new Vector2(checkBounds.X + 6, checkBounds.Y + 15), new Vector2(checkBounds.X + 12, checkBounds.Bottom - 7), 4, new Color(91, 218, 211));
+            drawingContext.DrawLine(new Vector2(checkBounds.X + 12, checkBounds.Bottom - 7), new Vector2(checkBounds.Right - 5, checkBounds.Y + 6), 4, new Color(91, 218, 211));
+        }
+
+        var statusWidth = string.IsNullOrEmpty(session.SgfAutoSaveStatus) ? 0 : 116;
+        drawingContext.DrawFittedText("AUTO SAVE",
+            new Rectangle(checkBounds.Right + 10, bounds.Y + 6, bounds.Width - 60 - statusWidth, bounds.Height - 12),
+            Color.White, 0.34f);
+        if (statusWidth <= 0) return;
+        var statusColor = session.SgfAutoSaveStatus == "AUTO SAVED"
+            ? new Color(99, 223, 185)
+            : new Color(255, 145, 151);
+        drawingContext.DrawFittedText(session.SgfAutoSaveStatus,
+            new Rectangle(bounds.Right - statusWidth - 8, bounds.Y + 6, statusWidth, bounds.Height - 12),
+            statusColor, 0.28f);
+    }
 }
 
 public sealed class BoardEditingRightSidePanel

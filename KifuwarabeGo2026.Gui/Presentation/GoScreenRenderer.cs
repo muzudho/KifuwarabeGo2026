@@ -1,51 +1,42 @@
 namespace KifuwarabeGo2026.Gui.Presentation;
 
 using KifuwarabeGo2026.Gui.Application;
-using KifuwarabeGo2026.Gui.Application.Local.Resting.TournamentRule;
 using KifuwarabeGo2026.Gui.Application.Local.Playing;
-using KifuwarabeGo2026.Shared.Domain;
-using KifuwarabeGo2026.Gui.Presentation.Shared.SelectEntry;
-using KifuwarabeGo2026.Gui.Presentation.Shared.Breadcrumb;
-using KifuwarabeGo2026.Gui.Presentation.Shared.SpinBox;
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.StickyNote;
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.SectionLabel;
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.SinglelineTextUnderline;
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI.MessageDialog;
-using KifuwarabeGo2026.Gui.Presentation.Pages.ScreenTransition;
-using KifuwarabeGo2026.Gui.Presentation.Pages.ScreenshotEffect;
-using KifuwarabeGo2026.Gui.Presentation.Pages.ReviewUnsavedChangesConfirmation;
+using KifuwarabeGo2026.Gui.Presentation.BoardLens;
+using KifuwarabeGo2026.Gui.Presentation.BoardLens.Shared.RenBoundaries;
+using KifuwarabeGo2026.Gui.Presentation.Pages.EditTournamentRule;
 using KifuwarabeGo2026.Gui.Presentation.Pages.InitialPositionConcierge;
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.PopupNumberUnderline;
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.PopupTimeUnderline;
+using KifuwarabeGo2026.Gui.Presentation.Pages.LocalMatch;
+using KifuwarabeGo2026.Gui.Presentation.Pages.LocalMatch.Play;
+using KifuwarabeGo2026.Gui.Presentation.Pages.ReviewUnsavedChangesConfirmation;
+using KifuwarabeGo2026.Gui.Presentation.Pages.ScreenshotEffect;
+using KifuwarabeGo2026.Gui.Presentation.Pages.ScreenTransition;
+using KifuwarabeGo2026.Gui.Presentation.Shared.Breadcrumb;
 using KifuwarabeGo2026.Gui.Presentation.Shared.CgosMatchNotification;
-using KifuwarabeGo2026.Gui.Presentation.Shared.PopupFilePathTooltip;
 using KifuwarabeGo2026.Gui.Presentation.Shared.EditEntryProfile;
 using KifuwarabeGo2026.Gui.Presentation.Shared.HeadUpDisplay;
 using KifuwarabeGo2026.Gui.Presentation.Shared.RightSidePanel;
-using KifuwarabeGo2026.Gui.Presentation.BoardLens;
-using KifuwarabeGo2026.Gui.Presentation.BoardLens.Shared.RenBoundaries;
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
+using KifuwarabeGo2026.Gui.Presentation.Shared.SpinBox;
+using KifuwarabeGo2026.Gui.Presentation.Shared.TextAreaDialog;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ActionBadge;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.LinkUnderline;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.MultilineTextUnderline;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.PopupNumberUnderline;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.PopupTimeUnderline;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.SectionLabel;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.SinglelineTextUnderline;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.StickyNote;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.MessageDialog;
 using KifuwarabeGo2026.Gui.Presentation.Title;
+using KifuwarabeGo2026.Shared.Domain;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ActionBadge;
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Button;
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Headline;
-using KifuwarabeGo2026.Gui.Presentation.Pages.Title;
-using KifuwarabeGo2026.Gui.Presentation.Pages.PonnukiProviderSelection;
-using KifuwarabeGo2026.Gui.Presentation.Pages.LocalMatch;
-using KifuwarabeGo2026.Gui.Presentation.Pages.LocalMatch.Intermission;
-using KifuwarabeGo2026.Gui.Presentation.Pages.LocalMatch.Play;
-using KifuwarabeGo2026.Gui.Presentation.Pages.EditTournamentRule;
-using KifuwarabeGo2026.Gui.Presentation.Pages.BoardAndReview;
-using KifuwarabeGo2026.Gui.Presentation.Shared.TextAreaDialog;
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 
 /// <summary>
 /// ［画面描画］の共通処理
@@ -66,6 +57,7 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
     private readonly StationeryDrawingContext _stationeryDrawingContext;
     internal StationeryDrawingContext StationeryDrawingContext => _stationeryDrawingContext;
 
+    // 移設途中: RightSidePanelDrawingContext の導入後に削除する一時的な描画ブリッジです。
     internal void DrawRightSidePanelIconStone(Vector2 center, float radius, bool black) => DrawIconStone(center, radius, black);
     internal void DrawRightSidePanelPlayerRoleFaceIcon(Vector2 center, bool isComputer) => DrawPlayerRoleFaceIcon(center, isComputer);
     internal void DrawRightSidePanelFittedText(string text, Rectangle bounds, Color color, float scale) => DrawFittedText(text, bounds, color, scale);
@@ -79,6 +71,14 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
     internal void DrawRightSidePanelDataRowFrame(Rectangle bounds) => DrawDataRowFrame(bounds);
     internal void DrawRightSidePanelCommandButton(Rectangle bounds, string label, Point mousePoint, bool enabled, float scale) =>
         DrawCommandButton(bounds, label, false, mousePoint, enabled, scale);
+    internal void DrawRightSidePanelResultLabel(Rectangle bounds, string label, Color accentColor) =>
+        DrawResultLabel(bounds, label, accentColor);
+    internal void DrawRightSidePanelStoneValue(int x, int centerY, string value, bool black, Color valueColor) =>
+        DrawStoneValue(x, centerY, value, black, valueColor);
+    internal void DrawRightSidePanelGameOverTrendChart(GoAppSession session, Point mousePoint) =>
+        DrawLocalGameOverTrendChart(session, mousePoint);
+    internal void DrawRightSidePanelAgehamaSummary(Rectangle bounds, int blackAgehama, int whiteAgehama) =>
+        DrawAgehamaSummaryComponent(bounds, blackAgehama, whiteAgehama);
     private readonly LinkUnderline _gtpEngineOptionLinkUnderline = new(
         new RoundUnderline { TopOffset = -4, Thickness = 4, Radius = 2 });
     private readonly MultilineTextUnderline _multilineTextUnderline = new(
@@ -302,67 +302,6 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
             DrawLine(new Vector2(bounds.X, y), new Vector2(bounds.Right, y), 1, color);
         }
     }
-    internal void DrawGameOverRightSidePanelContent(GoAppSession session, Point mousePoint)
-    {
-        new Headline("GAME OVER", new Vector2(1144, 132), new Color(255, 230, 160), 0.9f).Draw(_stationeryDrawingContext);
-        DrawText(FormatGameEndMoveCount(session.PlayedMoveCount), new Vector2(1144, 196), new Color(99, 223, 185), 0.58f);
-        LocalMatchScreen.Default.ReturnToSetupButton.Draw(mousePoint, _stationeryDrawingContext);
-
-        var resultSection = new Rectangle(1144, 236, 668, 128);
-        DrawVerticalResultSection(resultSection, "RESULT", new Color(80, 48, 38));
-        DrawResultRow(new Rectangle(1164, 242, 628, 52), "RULES", session.TournamentDisplayName, new Color(39, 68, 65), Color.White);
-        DrawCalculationResultRow(new Rectangle(1164, 300, 628, 52), session);
-
-        DrawLocalGameOverTrendChart(session, mousePoint);
-
-        if (session.UseKind == GoAppUseKind.LocalApps)
-        {
-            DrawVerticalResultSection(new Rectangle(1144, 668, 668, 174), "AGEHAMA", new Color(112, 76, 48));
-            DrawAgehamaSummaryComponent(new Rectangle(1164, 692, 628, 132), session.BlackAgehama, session.WhiteAgehama);
-        }
-
-        var actionSection = new Rectangle(1144, 854, 668, 126);
-        DrawVerticalResultSection(actionSection, "ACTION", new Color(91, 82, 105));
-        LocalMatchScreen.Default.GameOverReviewButton.Draw(mousePoint, _stationeryDrawingContext);
-        if (session.IsSgfAutoSaveAvailable)
-            DrawSgfAutoSaveCheckBox(LocalMatchScreen.Default.ExportSgfButton.Bounds, session, mousePoint);
-        else
-            LocalMatchScreen.Default.ExportSgfButton.Draw(mousePoint, _stationeryDrawingContext);
-    }
-
-    private void DrawSgfAutoSaveCheckBox(Rectangle bounds, GoAppSession session, Point mousePoint)
-    {
-        var hovered = bounds.Contains(mousePoint);
-        FillRect(bounds, hovered ? new Color(47, 65, 91, 230) : new Color(31, 45, 70, 220));
-        DrawRect(bounds, 2, new Color(137, 160, 205));
-
-        var checkBounds = new Rectangle(bounds.X + 12, bounds.Y + (bounds.Height - 28) / 2, 28, 28);
-        FillRect(checkBounds, new Color(17, 24, 48, 245));
-        DrawRect(checkBounds, 2, new Color(176, 194, 242));
-        if (session.IsSgfAutoSaveEnabled)
-        {
-            DrawLine(new Vector2(checkBounds.X + 6, checkBounds.Y + 15), new Vector2(checkBounds.X + 12, checkBounds.Bottom - 7), 4, new Color(91, 218, 211));
-            DrawLine(new Vector2(checkBounds.X + 12, checkBounds.Bottom - 7), new Vector2(checkBounds.Right - 5, checkBounds.Y + 6), 4, new Color(91, 218, 211));
-        }
-
-        var statusWidth = string.IsNullOrEmpty(session.SgfAutoSaveStatus) ? 0 : 116;
-        DrawFittedText(
-            "AUTO SAVE",
-            new Rectangle(checkBounds.Right + 10, bounds.Y + 6, bounds.Width - 60 - statusWidth, bounds.Height - 12),
-            Color.White,
-            0.34f);
-        if (statusWidth > 0)
-        {
-            var statusColor = session.SgfAutoSaveStatus == "AUTO SAVED"
-                ? new Color(99, 223, 185)
-                : new Color(255, 145, 151);
-            DrawFittedText(
-                session.SgfAutoSaveStatus,
-                new Rectangle(bounds.Right - statusWidth - 8, bounds.Y + 6, statusWidth, bounds.Height - 12),
-                statusColor,
-                0.28f);
-        }
-    }
     private void DrawDisplayNameTextBox(GoAppSession session, Point mousePoint)
     {
         var bounds = TournamentRulesScreen.Default.AddPanelDisplayNameRowBounds;
@@ -576,17 +515,6 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         return session.MoveLimit <= 0 ? text : $"{text} / {session.MoveLimit}";
     }
 
-    private static string FormatGameEndMoveCount(int playedMoveCount) => $"{playedMoveCount}手で終局";
-
-    private static string FormatCalculationResult(GoAppSession session)
-    {
-        const string pureGoPrefix = "PURE GO ";
-        var result = string.IsNullOrWhiteSpace(session.GameOverReason) ? "GAME OVER" : session.GameOverReason;
-        return result.StartsWith(pureGoPrefix, StringComparison.Ordinal)
-            ? result[pureGoPrefix.Length..]
-            : result;
-    }
-
     private static string FormatKomi(decimal komi) => komi.ToString("0.0");
     private const float MinimumCommandButtonLabelScale = 0.36f;
     private const float CommandButtonLabelScaleMultiplier = 1.25f;
@@ -769,22 +697,6 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         // Intermission のラベル列は、section 内の行種別に関係なく同じグリッドへそろえる。
         FillRect(new Rectangle(bounds.X - 22, bounds.Center.Y - accentHeight / 2, 3, accentHeight), accentColor);
         DrawText(label, new Vector2(bounds.X - 8, bounds.Y + 14), new Color(180, 195, 195), 0.38f);
-    }
-
-    private void DrawCalculationResultRow(Rectangle bounds, GoAppSession session)
-    {
-        DrawResultLabel(bounds, "RESULT", new Color(80, 48, 38));
-
-        var result = FormatCalculationResult(session);
-        var black = result.StartsWith("BLACK ", StringComparison.Ordinal);
-        var white = result.StartsWith("WHITE ", StringComparison.Ordinal);
-        if (black || white)
-        {
-            DrawStoneValue(RightSidePanelLayout.PrimaryValueX, bounds.Center.Y, result[6..], black, new Color(99, 223, 185));
-            return;
-        }
-
-        DrawFittedText(result, new Rectangle(RightSidePanelLayout.PrimaryValueX, bounds.Y + 6, bounds.Right - RightSidePanelLayout.PrimaryValueX - 18, bounds.Height - 12), new Color(99, 223, 185), 0.58f);
     }
 
     private void DrawCurrentStoneResultRow(Rectangle bounds, GoAppSession session)

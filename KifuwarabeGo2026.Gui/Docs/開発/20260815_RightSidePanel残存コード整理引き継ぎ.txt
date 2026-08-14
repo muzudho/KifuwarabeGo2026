@@ -28,6 +28,16 @@ RightSidePanel 残存コード整理 引き継ぎ
 次は移行手順 4 の DrawGameOverRightSidePanelContent、DrawSgfAutoSaveCheckBox、
 終局結果用ヘルパーの移設から再開してください。
 
+第3段階も完了しました。
+
+- DrawGameOverRightSidePanelContent の描画本体を GameOverRightSidePanel.Draw へ移設・削除。
+- DrawSgfAutoSaveCheckBox を独立した SgfAutoSaveCheckBox コンポーネントへ移設・削除。
+- GameOverRightSidePanel と CgosWatchPage が、それぞれ専用の SgfAutoSaveCheckBox を所有。
+- FormatGameEndMoveCount、FormatCalculationResult、DrawCalculationResultRow を終局パネルへ移設・削除。
+- GoScreenRenderer の一時的な DrawRightSidePanel* ブリッジに「移設途中」コメントを追加。
+
+次は移行手順 5 の BoardEditingRightSidePanel の描画本体移設から再開してください。
+
 目的
 ----
 

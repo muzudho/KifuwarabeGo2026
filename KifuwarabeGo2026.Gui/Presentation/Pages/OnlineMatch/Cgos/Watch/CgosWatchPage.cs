@@ -4,6 +4,7 @@ using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.Watching;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Button;
 using Microsoft.Xna.Framework;
+using KifuwarabeGo2026.Gui.Presentation.Shared.RightSidePanel;
 
 /// <summary>CGOS 観戦・結果画面の描画と操作ボタンを所有します。</summary>
 public sealed class CgosWatchPage
@@ -22,5 +23,6 @@ public sealed class CgosWatchPage
 
     public Button LeaveViewButton { get; }
     public Button ExportSgfButton { get; }
+    public SgfAutoSaveCheckBox SgfAutoSaveCheckBox { get; } = new();
     public Button ReviewButton { get; }
 }
