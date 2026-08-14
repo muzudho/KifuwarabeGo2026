@@ -81,7 +81,7 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         new RoundUnderline { TopOffset = 2, Thickness = 5, Radius = 2 });
     private readonly SpinBox _spinBox = new();
 
-    public HeadUpDisplay HeadUpDisplay { get; } = HeadUpDisplay.Default;
+    public HeadUpDisplayComponent HeadUpDisplay { get; } = HeadUpDisplayComponent.Default;
     public InitialPositionConcierge InitialPositionConcierge { get; } = new();
     private readonly CgosMatchNotification _cgosMatchNotification = CgosMatchNotification.Default;
     private static readonly BoardLensButtonStrip LocalPlayingBoardLensButtons = new(1516, 800);

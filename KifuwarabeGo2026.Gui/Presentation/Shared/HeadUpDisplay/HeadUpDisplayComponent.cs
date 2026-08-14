@@ -13,11 +13,11 @@ using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.StickyNote;
 /// <summary>
 /// ページに依存せず、画面の前面へ表示する共通 UI とその状態を所有します。
 /// </summary>
-public sealed class HeadUpDisplay
+public sealed class HeadUpDisplayComponent
 {
-    public static HeadUpDisplay Default { get; } = new();
+    public static HeadUpDisplayComponent Default { get; } = new();
 
-    private HeadUpDisplay()
+    private HeadUpDisplayComponent()
     {
     }
 
