@@ -13,8 +13,9 @@ public sealed partial class GoScreenRenderer
     private void DrawPlayerSelectionDialog(GoAppSession session, Point mousePoint)
     {
         if (!session.IsPlayerSelectionDialogOpen) return;
+        var screen = SelectEntryScreen.Default;
         var pageCount = Math.Max(1, (int)Math.Ceiling(session.EntryProfiles.Count / (double)GoAppSession.PlayerSelectionPageSize));
-        SelectEntryScreen.Default.UpdateState(
+        screen.UpdateState(
             session.CanCommitPlayerSelection,
             session.GtpEngineProfiles.Count > 0,
             session.PlayerDialogSelectionIndex >= 0,
@@ -30,8 +31,8 @@ public sealed partial class GoScreenRenderer
         var stone = session.PlayerSelectionTargetStone == GoStone.Black ? "BLACK" : "WHITE";
         DrawText($"SELECT ENTRY ({stone})", new Vector2(PlayerSelectionDialogBounds.X + 34, PlayerSelectionDialogBounds.Y + 28), new Color(244, 238, 218), 0.78f);
         DrawText("Select an Entry Profile on the left, then a Client Identity on the right.", new Vector2(PlayerSelectionDialogBounds.X + 36, PlayerSelectionDialogBounds.Y + 88), new Color(180, 195, 195), 0.38f);
-        DrawCommandButton(PlayerSelectionCancelButtonBounds, "CANCEL", false, mousePoint, scale: 0.34f);
-        DrawCommandButton(PlayerSelectionOkButtonBounds, "SELECT", false, mousePoint, enabled: session.CanCommitPlayerSelection, scale: 0.34f);
+        DrawCommandButton(screen.CancelButton.Bounds, screen.CancelButton.Label, false, mousePoint, scale: screen.CancelButton.LabelScale);
+        DrawCommandButton(screen.SelectButton.Bounds, screen.SelectButton.Label, false, mousePoint, enabled: screen.SelectButton.IsEnabled, scale: screen.SelectButton.LabelScale);
 
         FillRect(PlayerSelectionListBounds, new Color(15, 20, 26));
         DrawRect(PlayerSelectionListBounds, 1, new Color(67, 84, 92));
@@ -74,15 +75,15 @@ public sealed partial class GoScreenRenderer
         DrawRect(addHeaderBounds, 1, new Color(133, 128, 177));
         var addLabelSize = _font.MeasureString("ADD") * 0.34f;
         DrawText("ADD", new Vector2(addHeaderBounds.Center.X - addLabelSize.X / 2f, addHeaderBounds.Center.Y - addLabelSize.Y / 2f), Color.White, 0.34f);
-        DrawCommandButton(PlayerSelectionAddHumanButtonBounds, "HUMAN", false, mousePoint, scale: 0.34f);
-        DrawCommandButton(PlayerSelectionAddComputerButtonBounds, "COMPUTER", false, mousePoint, enabled: session.GtpEngineProfiles.Count > 0, scale: 0.34f);
-        DrawCommandButton(PlayerSelectionDuplicateButtonBounds, "DUPLICATE", false, mousePoint, enabled: session.PlayerDialogSelectionIndex >= 0, scale: 0.29f);
-        DrawCommandButton(PlayerSelectionEditButtonBounds, "EDIT", false, mousePoint, enabled: session.PlayerDialogSelectionIndex >= 0, scale: 0.34f);
-        DrawCommandButton(PlayerSelectionDeleteButtonBounds, "DELETE", false, mousePoint, enabled: session.CanDeleteSelectedEntryProfile, scale: 0.34f);
-        DrawCommandButton(PlayerSelectionOrderButtonBounds, "ORDER", false, mousePoint, enabled: session.EntryProfiles.Count > 1, scale: 0.34f);
-        DrawCommandButton(PlayerSelectionPreviousButtonBounds, "PREV", false, mousePoint, enabled: session.PlayerSelectionPageIndex > 0, scale: 0.34f);
+        DrawCommandButton(screen.AddHumanButton.Bounds, screen.AddHumanButton.Label, false, mousePoint, scale: screen.AddHumanButton.LabelScale);
+        DrawCommandButton(screen.AddComputerButton.Bounds, screen.AddComputerButton.Label, false, mousePoint, enabled: screen.AddComputerButton.IsEnabled, scale: screen.AddComputerButton.LabelScale);
+        DrawCommandButton(screen.DuplicateButton.Bounds, screen.DuplicateButton.Label, false, mousePoint, enabled: screen.DuplicateButton.IsEnabled, scale: screen.DuplicateButton.LabelScale);
+        DrawCommandButton(screen.EditButton.Bounds, screen.EditButton.Label, false, mousePoint, enabled: screen.EditButton.IsEnabled, scale: screen.EditButton.LabelScale);
+        DrawCommandButton(screen.DeleteButton.Bounds, screen.DeleteButton.Label, false, mousePoint, enabled: screen.DeleteButton.IsEnabled, scale: screen.DeleteButton.LabelScale);
+        DrawCommandButton(screen.OrderButton.Bounds, screen.OrderButton.Label, false, mousePoint, enabled: screen.OrderButton.IsEnabled, scale: screen.OrderButton.LabelScale);
+        DrawCommandButton(screen.PreviousButton.Bounds, screen.PreviousButton.Label, false, mousePoint, enabled: screen.PreviousButton.IsEnabled, scale: screen.PreviousButton.LabelScale);
         DrawFittedText($"{session.PlayerSelectionPageIndex + 1} / {pageCount}", PlayerSelectionPageNumberBounds, new Color(227, 224, 210), 0.44f);
-        DrawCommandButton(PlayerSelectionNextButtonBounds, "NEXT", false, mousePoint, enabled: session.PlayerSelectionPageIndex < pageCount - 1, scale: 0.42f);
+        DrawCommandButton(screen.NextButton.Bounds, screen.NextButton.Label, false, mousePoint, enabled: screen.NextButton.IsEnabled, scale: screen.NextButton.LabelScale);
         DrawCatalogOrderEditor(
             session.PlayerOrderEditor,
             "PLAYERS",

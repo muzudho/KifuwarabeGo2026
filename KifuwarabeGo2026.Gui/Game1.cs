@@ -24,6 +24,7 @@ using KifuwarabeGo2026.Gui.Presentation.Pages.EditTournamentRule;
 using KifuwarabeGo2026.Gui.Presentation.Pages.BoardAndReview;
 using KifuwarabeGo2026.Gui.Presentation.Shared.SelectEntry;
 using KifuwarabeGo2026.Gui.Presentation.Shared.EntryProfiles;
+using KifuwarabeGo2026.Gui.Presentation.Shared.CgosMatchNotification;
 using KifuwarabeGo2026.Gui.Presentation.Pages.ApplicationSettings;
 using KifuwarabeGo2026.Gui.Presentation.Pages.LocalMatch;
 using KifuwarabeGo2026.Gui.Presentation.Title;
@@ -3829,7 +3830,7 @@ public class Game1 : Game
             if (_session.CgosConnectionFlowKind == CgosConnectionFlowKind.Watching)
                 return GoScreenRenderer.GetCgosMatchDeferredBannerHit(point);
 
-            if (!GoScreenRenderer.GetCgosMatchDeferredHit(point))
+            if (!CgosMatchNotification.Default.DeferredWatchButton.IsHit(point))
                 return GoScreenRenderer.GetCgosMatchDeferredBannerHit(point);
 
             OpenNotifiedCgosMatch("Pressed deferred match notification");
@@ -3838,13 +3839,15 @@ public class Game1 : Game
 
         var buttonsEnabled =
             GetCgosMatchNotificationAge().TotalSeconds >= CgosMatchButtonDelaySeconds;
-        if (GoScreenRenderer.GetCgosMatchWatchNowHit(point, buttonsEnabled))
+        CgosMatchNotification.Default.WatchNowButton.IsEnabled = buttonsEnabled;
+        CgosMatchNotification.Default.WatchLaterButton.IsEnabled = buttonsEnabled;
+        if (CgosMatchNotification.Default.WatchNowButton.IsHit(point))
         {
             OpenNotifiedCgosMatch("Pressed WATCH NOW");
             return true;
         }
 
-        if (GoScreenRenderer.GetCgosMatchWatchLaterHit(point, buttonsEnabled))
+        if (CgosMatchNotification.Default.WatchLaterButton.IsHit(point))
         {
             DeferCgosMatchNotification("Pressed WATCH LATER");
             return true;

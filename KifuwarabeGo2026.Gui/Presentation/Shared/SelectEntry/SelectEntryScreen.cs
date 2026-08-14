@@ -81,17 +81,7 @@ internal static class SelectEntryScreenBounds
     internal static Rectangle PlayerSelectionDialogBounds => Screen.DialogBounds;
     internal static Rectangle PlayerSelectionListBounds => Screen.EntryListBounds;
     internal static Rectangle PlayerSelectionClientIdentityListBounds => Screen.ClientIdentityListBounds;
-    internal static Rectangle PlayerSelectionCancelButtonBounds => Screen.CancelButton.Bounds;
-    internal static Rectangle PlayerSelectionOkButtonBounds => Screen.SelectButton.Bounds;
     internal static Rectangle PlayerSelectionPageNumberBounds => Screen.PageNumberBounds;
-    internal static Rectangle PlayerSelectionPreviousButtonBounds => Screen.PreviousButton.Bounds;
-    internal static Rectangle PlayerSelectionNextButtonBounds => Screen.NextButton.Bounds;
-    internal static Rectangle PlayerSelectionAddHumanButtonBounds => Screen.AddHumanButton.Bounds;
-    internal static Rectangle PlayerSelectionAddComputerButtonBounds => Screen.AddComputerButton.Bounds;
-    internal static Rectangle PlayerSelectionDuplicateButtonBounds => Screen.DuplicateButton.Bounds;
-    internal static Rectangle PlayerSelectionEditButtonBounds => Screen.EditButton.Bounds;
-    internal static Rectangle PlayerSelectionDeleteButtonBounds => Screen.DeleteButton.Bounds;
-    internal static Rectangle PlayerSelectionOrderButtonBounds => Screen.OrderButton.Bounds;
     internal static Rectangle PlayerSelectionItemBounds(int slot) => Screen.GetEntryItemBounds(slot);
     internal static Rectangle PlayerSelectionClientIdentityItemBounds(int index) => Screen.GetClientIdentityItemBounds(index);
 }

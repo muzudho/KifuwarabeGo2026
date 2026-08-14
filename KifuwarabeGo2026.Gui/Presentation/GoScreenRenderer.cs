@@ -85,7 +85,7 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
     public PopupNumberUnderline PopupNumberUnderline { get; } = new();
     public PopupTimeUnderline PopupTimeUnderline { get; } = new();
     private StickyNoteScreenId _stickyNoteScreen = StickyNoteScreenId.Unknown;
-    private readonly CgosMatchNotification _cgosMatchNotification = new();
+    private readonly CgosMatchNotification _cgosMatchNotification = CgosMatchNotification.Default;
     private static readonly BoardLensButtonStrip LocalPlayingBoardLensButtons = new(1516, 800);
     public EditEntryProfile EditEntryProfile { get; } = new();
 
@@ -1736,9 +1736,6 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         note.Draw(new StickyNoteDrawingCallbacks(DrawLine, FillRect, DrawRect, DrawDynamicOptionText));
     }
 
-    public static bool GetCgosMatchWatchNowHit(Point point, bool enabled) => CgosMatchNotification.IsWatchNowHit(point, enabled);
-    public static bool GetCgosMatchWatchLaterHit(Point point, bool enabled) => CgosMatchNotification.IsWatchLaterHit(point, enabled);
-    public static bool GetCgosMatchDeferredHit(Point point) => CgosMatchNotification.IsDeferredHit(point);
     public static bool GetCgosMatchDeferredBannerHit(Point point) => CgosMatchNotification.IsDeferredBannerHit(point);
 
     public void DrawCgosMatchNotification(Point mousePosition, bool deferred, bool finished, int secondsRemaining,
