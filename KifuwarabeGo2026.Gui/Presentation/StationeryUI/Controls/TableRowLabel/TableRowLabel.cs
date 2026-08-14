@@ -21,4 +21,7 @@ public sealed class TableRowLabel
 
     public void Draw(Action<string, Vector2, Color, float> drawText) =>
         (drawText ?? throw new ArgumentNullException(nameof(drawText)))(Text, new Vector2(Bounds.X, Bounds.Y), Color, Scale);
+
+    public void DrawFitted(Action<string, Rectangle, Color, float> drawFittedText) =>
+        (drawFittedText ?? throw new ArgumentNullException(nameof(drawFittedText)))(Text, Bounds, Color, Scale);
 }

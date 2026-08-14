@@ -3,6 +3,7 @@ namespace KifuwarabeGo2026.Gui.Presentation.Pages.MoveComments;
 using Microsoft.Xna.Framework;
 using System;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Button;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.TableRowLabel;
 
 /// <summary>棋譜コメント表示のレイアウトと操作判定を所有します。</summary>
 public sealed class MoveCommentsScreen
@@ -11,6 +12,7 @@ public sealed class MoveCommentsScreen
 
     private MoveCommentsScreen()
     {
+        HeadingLabel = new TableRowLabel(string.Empty, Rectangle.Empty, new Color(255, 215, 92), 0.27f);
         PreviousMoveButton = new Button(Rectangle.Empty, "< PREV", 0.19f);
         NextMoveButton = new Button(Rectangle.Empty, "NEXT >", 0.19f);
         EditButton = new Button(Rectangle.Empty, "EDIT", 0.17f);
@@ -18,16 +20,12 @@ public sealed class MoveCommentsScreen
         NextPageButton = new Button(Rectangle.Empty, "PAGE >", 0.20f);
     }
 
+    public TableRowLabel HeadingLabel { get; }
     public Button PreviousMoveButton { get; }
     public Button NextMoveButton { get; }
     public Button EditButton { get; }
     public Button PreviousPageButton { get; }
     public Button NextPageButton { get; }
-
-    public Rectangle GetHeadingBounds(Rectangle bounds) =>
-        IsExpanded(bounds)
-            ? new(bounds.X + 24, bounds.Y + 82, bounds.Width - 650, 52)
-            : new(bounds.X + 20, bounds.Y + 58, bounds.Width - 440, 36);
 
     public Rectangle GetBodyBounds(Rectangle bounds)
     {
@@ -40,6 +38,10 @@ public sealed class MoveCommentsScreen
     public void UpdateLayout(Rectangle bounds)
     {
         var expanded = IsExpanded(bounds);
+        HeadingLabel.Bounds = expanded
+            ? new(bounds.X + 24, bounds.Y + 82, bounds.Width - 650, 52)
+            : new(bounds.X + 20, bounds.Y + 58, bounds.Width - 440, 36);
+        HeadingLabel.Scale = expanded ? 0.46f : 0.27f;
         PreviousMoveButton.Bounds = expanded ? new(bounds.Right - 326, bounds.Y + 78, 140, 56) : new(bounds.Right - 206, bounds.Y + 58, 92, 36);
         NextMoveButton.Bounds = expanded ? new(bounds.Right - 174, bounds.Y + 78, 140, 56) : new(bounds.Right - 104, bounds.Y + 58, 92, 36);
         EditButton.Bounds = expanded ? new(bounds.Right - 478, bounds.Y + 78, 140, 56) : new(bounds.Right - 308, bounds.Y + 58, 92, 36);

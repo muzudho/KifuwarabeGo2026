@@ -79,15 +79,12 @@ public sealed partial class GoScreenRenderer
         var hasSelectedComment = !string.IsNullOrWhiteSpace(displayedComment);
         var expanded = bounds.Width > 1000 || bounds.Height > 600;
 
-        DrawFittedText(
-            isRootComment
-                ? "ROOT COMMENT"
-                : commentOrdinal > 0
+        MoveComments.HeadingLabel.Text = isRootComment
+            ? "ROOT COMMENT"
+            : commentOrdinal > 0
                 ? $"COMMENT {commentOrdinal} / {commentCount}   MOVE {moveNumber}"
-                : $"COMMENT - / {commentCount}   MOVE {moveNumber ?? 0}",
-            MoveComments.GetHeadingBounds(bounds),
-            new Color(255, 215, 92),
-            expanded ? 0.46f : 0.27f);
+                : $"COMMENT - / {commentCount}   MOVE {moveNumber ?? 0}";
+        MoveComments.HeadingLabel.DrawFitted(DrawFittedText);
         DrawCommandButton(
             MoveComments.PreviousMoveButton.Bounds,
             "< PREV",
