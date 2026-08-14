@@ -25,6 +25,9 @@ public sealed partial class GoAppSession
             DateTime.Now);
         BlackElapsedTime = TimeSpan.Zero;
         WhiteElapsedTime = TimeSpan.Zero;
+        BlackUsedTime = TimeSpan.Zero;
+        WhiteUsedTime = TimeSpan.Zero;
+        _timingTurn = CurrentTurn;
         _matchSession = new MatchSession(CreateMatchConfiguration());
         ChangeMode(GoAppModeKind.Playing);
     }

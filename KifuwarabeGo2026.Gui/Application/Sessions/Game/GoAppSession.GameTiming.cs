@@ -8,6 +8,9 @@ public sealed partial class GoAppSession
 {
     public TimeSpan BlackElapsedTime { get; private set; }
     public TimeSpan WhiteElapsedTime { get; private set; }
+    public TimeSpan BlackUsedTime { get; private set; }
+    public TimeSpan WhiteUsedTime { get; private set; }
+    private GoStone? _timingTurn;
 
     public void AddCurrentTurnElapsedTime(TimeSpan elapsed)
     {
@@ -16,6 +19,13 @@ public sealed partial class GoAppSession
             !string.IsNullOrWhiteSpace(EngineErrorMessage))
         {
             return;
+        }
+
+        if (_timingTurn != CurrentTurn)
+        {
+            if (_timingTurn == GoStone.Black) BlackUsedTime = BlackElapsedTime;
+            if (_timingTurn == GoStone.White) WhiteUsedTime = WhiteElapsedTime;
+            _timingTurn = CurrentTurn;
         }
 
         if (CurrentTurn == GoStone.Black)

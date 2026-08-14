@@ -398,15 +398,17 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
             668,
             session.GetLocalPlayerName(GoStone.Black),
             session.GetLocalPlayerName(GoStone.White),
-            session.BlackElapsedTime,
-            session.WhiteElapsedTime,
+            session.BlackUsedTime,
+            session.WhiteUsedTime,
             session.MainTime,
             session.BlackAgehama,
             session.WhiteAgehama,
             session.CurrentTurn,
             session.EngineErrorStone,
             mousePoint,
-            minimal: true);
+            minimal: true,
+            blackLiveElapsed: session.BlackElapsedTime,
+            whiteLiveElapsed: session.WhiteElapsedTime);
 
         DrawVerticalResultSection(new Rectangle(1144, 344, 668, 110), "FACTS", new Color(66, 104, 116));
         DrawInfoStrip(1144, 363, "NEXT", GetMoveThinkingText(session));

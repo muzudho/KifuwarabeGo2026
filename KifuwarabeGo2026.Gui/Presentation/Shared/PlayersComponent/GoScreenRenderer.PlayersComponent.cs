@@ -68,7 +68,7 @@ public sealed partial class GoScreenRenderer
         _playerRow.Draw(new PlayerRowModel(bounds, playerName, elapsed, liveElapsed, mainTime, agehama, black, active,
                 engineError, mousePoint, minimal, GameOverValueX),
             new PlayerRowDrawingCallbacks(bounds => DrawDataRowFrame(bounds), FillRect, DrawRect, DrawStone, DrawIconStone, DrawFittedText,
-                FormatElapsedTime, (plateBounds, color) => _spriteBatch.Draw(_softCircle, plateBounds, color)));
+                FormatElapsedTime, (plateBounds, color) => _spriteBatch.Draw(_softCircle, plateBounds, color), DrawLine));
     }
 
     private void DrawAgehamaPlate(Rectangle bounds, int agehama, bool capturedBlack)

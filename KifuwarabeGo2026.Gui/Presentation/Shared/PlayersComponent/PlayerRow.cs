@@ -10,6 +10,7 @@ public sealed class PlayerRow
     private readonly PlayerTurnIndicator _turnIndicator = new();
     private readonly AgehamaPlate _agehamaPlate = new();
     private readonly PlayerEngineErrorButton _engineErrorButton = new();
+    private readonly PlayerTimeUsageBar _timeUsageBar = new();
 
     public void Draw(PlayerRowModel model, PlayerRowDrawingCallbacks draw)
     {
@@ -20,11 +21,18 @@ public sealed class PlayerRow
         if (model.Minimal) draw.DrawIconStone(new Vector2(layout.StoneCenterX, model.Bounds.Y + 23), 16, model.IsBlack);
         else draw.DrawStone(new Vector2(layout.StoneCenterX, model.Bounds.Y + 23), 16, model.IsBlack);
         draw.DrawFittedText(model.PlayerName, layout.NameBounds, Color.White, 0.5f);
-        var status = _timeStatus.Build(model.Elapsed, model.MainTime, model.Agehama, model.Minimal, draw.FormatElapsedTime);
-        draw.DrawFittedText(status, layout.StatusBounds, new Color(204, 211, 206), 0.34f);
-        if (model.LiveElapsed is { } liveElapsed)
-            draw.DrawFittedText(_timeStatus.BuildLive(liveElapsed, draw.FormatElapsedTime), layout.LiveStatusBounds,
-                model.IsActive ? new Color(147, 244, 200) : new Color(158, 178, 178), 0.30f);
+        if (model.Minimal)
+            _timeUsageBar.Draw(
+                new Rectangle(layout.StatusBounds.X, layout.StatusBounds.Y, layout.StatusBounds.Width, 40),
+                model.Elapsed, model.LiveElapsed, model.MainTime, draw);
+        else
+        {
+            var status = _timeStatus.Build(model.Elapsed, model.MainTime, model.Agehama, model.Minimal, draw.FormatElapsedTime);
+            draw.DrawFittedText(status, layout.StatusBounds, new Color(204, 211, 206), 0.34f);
+            if (model.LiveElapsed is { } liveElapsed)
+                draw.DrawFittedText(_timeStatus.BuildLive(liveElapsed, draw.FormatElapsedTime), layout.LiveStatusBounds,
+                    model.IsActive ? new Color(147, 244, 200) : new Color(158, 178, 178), 0.30f);
+        }
         if (model.Minimal)
         {
             _agehamaPlate.Draw(new Rectangle(model.Bounds.Right - 136, model.Bounds.Y + 43, 118, 38), model.Agehama,
@@ -44,4 +52,5 @@ public sealed record PlayerRowDrawingCallbacks(Action<Rectangle> DrawDataRowFram
     Action<Rectangle, Color> FillRectangle, Action<Rectangle, int, Color> DrawRectangle,
     Action<Vector2, float, bool> DrawStone, Action<Vector2, float, bool> DrawIconStone,
     Action<string, Rectangle, Color, float> DrawFittedText, Func<TimeSpan, string> FormatElapsedTime,
-    Action<Rectangle, Color> DrawCircleSurface);
+    Action<Rectangle, Color> DrawCircleSurface,
+    Action<Vector2, Vector2, float, Color> DrawLine);
