@@ -3,62 +3,104 @@ namespace KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.SectionLabel;
 using Microsoft.Xna.Framework;
 using System;
 
-/// <summary>区画の見出し位置、サイズ、表示方向を所有する文房具UIです。</summary>
+/// <summary>対象区画とラベル自身の位置、サイズ、表示方向を生成時から所有する文房具UIです。</summary>
 public sealed class SectionLabelComponent
 {
-    public Rectangle SectionBounds { get; set; }
-    public string Text { get; set; } = string.Empty;
-    public Color AccentColor { get; set; }
-    public Color TextColor { get; set; } = new(205, 218, 218);
-    public int LabelWidth { get; set; } = 38;
-    public int LabelGap { get; set; } = 8;
-    public SectionLabelDirection Direction { get; set; } = SectionLabelDirection.Vertical;
+    private const float VerticalScale = 0.38f;
+    private readonly bool _usesSplitHorizontalText;
+
+    private SectionLabelComponent(
+        Rectangle targetSectionBounds,
+        Rectangle bounds,
+        string text,
+        Color accentColor,
+        Color textColor,
+        SectionLabelDirection direction,
+        bool usesSplitHorizontalText)
+    {
+        TargetSectionBounds = targetSectionBounds;
+        Bounds = bounds;
+        Text = text ?? throw new ArgumentNullException(nameof(text));
+        AccentColor = accentColor;
+        TextColor = textColor;
+        Direction = direction;
+        _usesSplitHorizontalText = usesSplitHorizontalText;
+    }
+
+    public Rectangle TargetSectionBounds { get; }
+    public Rectangle Bounds { get; }
+    public string Text { get; }
+    public Color AccentColor { get; }
+    public Color TextColor { get; }
+    public SectionLabelDirection Direction { get; }
+
+    public static SectionLabelComponent CreateVertical(
+        Rectangle targetSectionBounds,
+        string text,
+        Color accentColor,
+        Color textColor,
+        Vector2 measuredTextSize,
+        int labelWidth = 38,
+        int labelGap = 8)
+    {
+        var usesSplitHorizontalText = measuredTextSize.X * VerticalScale > targetSectionBounds.Height - 12;
+        var actualWidth = usesSplitHorizontalText ? Math.Max(88, labelWidth * 2) : labelWidth;
+        var bounds = new Rectangle(
+            targetSectionBounds.X - actualWidth - labelGap,
+            targetSectionBounds.Y,
+            actualWidth,
+            targetSectionBounds.Height);
+        return new SectionLabelComponent(
+            targetSectionBounds, bounds, text, accentColor, textColor,
+            SectionLabelDirection.Vertical, usesSplitHorizontalText);
+    }
+
+    public static SectionLabelComponent CreateHorizontal(
+        Rectangle targetSectionBounds,
+        string text,
+        Color accentColor,
+        Color textColor,
+        int labelHeight = 38,
+        int labelGap = 8)
+    {
+        var bounds = new Rectangle(
+            targetSectionBounds.X,
+            targetSectionBounds.Y - labelHeight - labelGap,
+            targetSectionBounds.Width,
+            labelHeight);
+        return new SectionLabelComponent(
+            targetSectionBounds, bounds, text, accentColor, textColor,
+            SectionLabelDirection.Horizontal, usesSplitHorizontalText: false);
+    }
 
     public void Draw(SectionLabelDrawingCallbacks draw)
     {
         ArgumentNullException.ThrowIfNull(draw);
+        DrawSurface(draw);
         if (Direction == SectionLabelDirection.Horizontal)
         {
-            DrawHorizontal(draw);
+            draw.DrawFittedText(Text, new Rectangle(Bounds.X + 8, Bounds.Y + 4, Bounds.Width - 16, Bounds.Height - 8), TextColor, 0.36f);
             return;
         }
 
-        DrawVertical(draw);
-    }
-
-    private void DrawVertical(SectionLabelDrawingCallbacks draw)
-    {
-        const float verticalScale = 0.38f;
-        if (draw.MeasureText(Text).X * verticalScale <= SectionBounds.Height - 12)
+        if (!_usesSplitHorizontalText)
         {
-            var labelBounds = new Rectangle(SectionBounds.X - LabelWidth - LabelGap, SectionBounds.Y, LabelWidth, SectionBounds.Height);
-            DrawSurface(labelBounds, draw);
-            var center = new Vector2(labelBounds.Center.X, labelBounds.Center.Y);
-            draw.DrawRotatedCenteredText(Text, center + new Vector2(2, 2), new Color(0, 0, 0, 125), verticalScale);
-            draw.DrawRotatedCenteredText(Text, center, TextColor, verticalScale);
+            var center = new Vector2(Bounds.Center.X, Bounds.Center.Y);
+            draw.DrawRotatedCenteredText(Text, center + new Vector2(2, 2), new Color(0, 0, 0, 125), VerticalScale);
+            draw.DrawRotatedCenteredText(Text, center, TextColor, VerticalScale);
             return;
         }
 
-        var fallbackWidth = Math.Max(88, LabelWidth * 2);
-        var fallbackBounds = new Rectangle(SectionBounds.X - fallbackWidth - LabelGap, SectionBounds.Y, fallbackWidth, SectionBounds.Height);
-        DrawSurface(fallbackBounds, draw);
         var (firstLine, secondLine) = Split(Text);
-        var lineHeight = Math.Max(1, (fallbackBounds.Height - 12) / 2);
-        draw.DrawFittedText(firstLine, new Rectangle(fallbackBounds.X + 6, fallbackBounds.Y + 5, fallbackBounds.Width - 12, lineHeight), TextColor, 0.30f);
-        draw.DrawFittedText(secondLine, new Rectangle(fallbackBounds.X + 6, fallbackBounds.Y + 7 + lineHeight, fallbackBounds.Width - 12, lineHeight), TextColor, 0.30f);
+        var lineHeight = Math.Max(1, (Bounds.Height - 12) / 2);
+        draw.DrawFittedText(firstLine, new Rectangle(Bounds.X + 6, Bounds.Y + 5, Bounds.Width - 12, lineHeight), TextColor, 0.30f);
+        draw.DrawFittedText(secondLine, new Rectangle(Bounds.X + 6, Bounds.Y + 7 + lineHeight, Bounds.Width - 12, lineHeight), TextColor, 0.30f);
     }
 
-    private void DrawHorizontal(SectionLabelDrawingCallbacks draw)
+    private void DrawSurface(SectionLabelDrawingCallbacks draw)
     {
-        var labelBounds = new Rectangle(SectionBounds.X, SectionBounds.Y - LabelWidth - LabelGap, SectionBounds.Width, LabelWidth);
-        DrawSurface(labelBounds, draw);
-        draw.DrawFittedText(Text, new Rectangle(labelBounds.X + 8, labelBounds.Y + 4, labelBounds.Width - 16, labelBounds.Height - 8), TextColor, 0.36f);
-    }
-
-    private void DrawSurface(Rectangle bounds, SectionLabelDrawingCallbacks draw)
-    {
-        draw.FillRectangle(bounds, new Color(AccentColor, 150));
-        draw.DrawRectangle(bounds, 1, new Color(AccentColor, 230));
+        draw.FillRectangle(Bounds, new Color(AccentColor, 150));
+        draw.DrawRectangle(Bounds, 1, new Color(AccentColor, 230));
     }
 
     private static (string FirstLine, string SecondLine) Split(string title)
@@ -77,7 +119,6 @@ public enum SectionLabelDirection
 }
 
 public sealed record SectionLabelDrawingCallbacks(
-    Func<string, Vector2> MeasureText,
     Action<string, Vector2, Color, float> DrawRotatedCenteredText,
     Action<Rectangle, Color> FillRectangle,
     Action<Rectangle, int, Color> DrawRectangle,

@@ -75,10 +75,6 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IButton
     private readonly Breadcrumb _breadcrumb = new();
     private readonly SpinBox _spinBox = new();
     
-    /// <summary>
-    /// TODO: 大会ルールのコミ。なんでこんなとこにある？
-    /// </summary>
-    private readonly SectionLabelComponent _sectionLabel = new();
     private readonly TextInputDialog _textInputDialog = new();
     public ScreenTransition ScreenTransition { get; } = new();
     public ScreenshotEffect ScreenshotEffect { get; } = new();
@@ -1589,14 +1585,15 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IButton
         Color? textColor = null, int labelWidth = 38, int labelGap = 8)
     {
         DrawLine(new Vector2(bounds.X, bounds.Y), new Vector2(bounds.Right, bounds.Y), 1, new Color(58, 78, 86));
-        _sectionLabel.SectionBounds = bounds;
-        _sectionLabel.Text = title;
-        _sectionLabel.AccentColor = accentColor;
-        _sectionLabel.TextColor = textColor ?? new Color(205, 218, 218);
-        _sectionLabel.LabelWidth = labelWidth;
-        _sectionLabel.LabelGap = labelGap;
-        _sectionLabel.Direction = SectionLabelDirection.Vertical;
-        _sectionLabel.Draw(new SectionLabelDrawingCallbacks(_font.MeasureString, DrawRotatedCenteredText, FillRect, DrawRect, DrawFittedText));
+        var sectionLabel = SectionLabelComponent.CreateVertical(
+            bounds,
+            title,
+            accentColor,
+            textColor ?? new Color(205, 218, 218),
+            _font.MeasureString(title),
+            labelWidth,
+            labelGap);
+        sectionLabel.Draw(new SectionLabelDrawingCallbacks(DrawRotatedCenteredText, FillRect, DrawRect, DrawFittedText));
     }
 
     private void DrawRotatedCenteredText(string text, Vector2 center, Color color, float scale) =>
