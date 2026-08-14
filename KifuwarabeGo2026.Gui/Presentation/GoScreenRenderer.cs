@@ -71,6 +71,8 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
     internal void DrawRightSidePanelDataRowFrame(Rectangle bounds) => DrawDataRowFrame(bounds);
     internal void DrawRightSidePanelCommandButton(Rectangle bounds, string label, Point mousePoint, bool enabled, float scale) =>
         DrawCommandButton(bounds, label, false, mousePoint, enabled, scale);
+    internal void DrawRightSidePanelSelectableCommandButton(Rectangle bounds, string label, bool selected, Point mousePoint, bool enabled, float scale) =>
+        DrawCommandButton(bounds, label, selected, mousePoint, enabled, scale);
     internal void DrawRightSidePanelResultLabel(Rectangle bounds, string label, Color accentColor) =>
         DrawResultLabel(bounds, label, accentColor);
     internal void DrawRightSidePanelStoneValue(int x, int centerY, string value, bool black, Color valueColor) =>
@@ -81,6 +83,7 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         DrawAgehamaSummaryComponent(bounds, blackAgehama, whiteAgehama);
     internal void DrawRightSidePanelStoneCountStrip(GoAppSession session, int y, bool showLeader, bool minimal) =>
         DrawStoneCountStrip(session, y, showLeader, minimal);
+    internal void DrawRightSidePanelCircle(Vector2 center, float radius, Color color) => DrawCircle(center, radius, color);
     private readonly LinkUnderline _gtpEngineOptionLinkUnderline = new(
         new RoundUnderline { TopOffset = -4, Thickness = 4, Radius = 2 });
     private readonly MultilineTextUnderline _multilineTextUnderline = new(

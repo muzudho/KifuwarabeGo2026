@@ -362,8 +362,113 @@ public sealed class BoardEditingRightSidePanel
 
 public sealed class VariationEditingRightSidePanel
 {
-    public void Draw(GoScreenRenderer renderer, GoAppSession session, Point mousePoint, LiveBoardPreview? preview) =>
-        renderer.DrawVariationEditingRightSidePanelContent(session, mousePoint, preview);
+    // ========================================
+    // 機能
+    // ========================================
+
+    public void Draw(GoScreenRenderer renderer, GoAppSession session, Point mousePoint, LiveBoardPreview? preview)
+    {
+        var controls = BoardAndReviewScreen.Default.VariationEditing;
+        var drawingContext = renderer.StationeryDrawingContext;
+        controls.UpdateState(session.VariationEditingStone, session.CanAdoptVariationPosition, session.CanUndoVariation);
+        new Headline("ANALYSIS BOARD", new Vector2(1144, 136), new Color(42, 62, 68), 0.68f).Draw(drawingContext);
+        controls.DiscardButton.Draw(mousePoint, drawingContext);
+        if (session.CanAdoptVariationPosition)
+            controls.AdoptButton.Draw(mousePoint, drawingContext);
+
+        var informationWidth = preview is null ? 668 : 372;
+        var informationRowWidth = preview is null ? 628 : 332;
+        renderer.DrawVerticalResultSection(new Rectangle(1144, 204, informationWidth, 112), "EDITING", new Color(67, 112, 118));
+        renderer.DrawResultRow(new Rectangle(1164, 210, informationRowWidth, 44), "SOURCE",
+            session.HasVariationCustomPosition ? "CUSTOM POSITION" : $"MOVE {session.VariationSourceMoveIndex}",
+            new Color(67, 112, 118), Color.White);
+        renderer.DrawResultRow(new Rectangle(1164, 260, informationRowWidth, 44), "VARIATION",
+            $"+{session.VariationMoveCount} MOVES", new Color(67, 112, 118), new Color(99, 223, 185));
+
+        renderer.DrawVerticalResultSection(new Rectangle(1144, 332, informationWidth, 200), "POSITION", new Color(76, 91, 126));
+        renderer.DrawBothPlayersComponent(1144, 340, informationWidth,
+            string.IsNullOrWhiteSpace(session.CurrentGameRecord.BlackPlayerName) ? "BLACK" : session.CurrentGameRecord.BlackPlayerName,
+            string.IsNullOrWhiteSpace(session.CurrentGameRecord.WhitePlayerName) ? "WHITE" : session.CurrentGameRecord.WhitePlayerName,
+            null, null, null, session.BlackAgehama, session.WhiteAgehama, session.CurrentTurn, minimal: true);
+
+        if (preview is not null)
+            DrawLiveBoardWipe(renderer, preview);
+
+        renderer.DrawVerticalResultSection(new Rectangle(1144, 548, 668, 112), "TOOL", new Color(67, 112, 118));
+        controls.PlayButton.Draw(mousePoint, drawingContext);
+        controls.BlackButton.Draw(mousePoint, drawingContext);
+        controls.WhiteButton.Draw(mousePoint, drawingContext);
+        controls.EraseButton.Draw(mousePoint, drawingContext);
+
+        renderer.DrawVerticalResultSection(new Rectangle(1144, 676, 668, 110), "HOW TO USE", new Color(86, 99, 104));
+        drawingContext.DrawFittedText(
+            "PLAY: LEGAL MOVES.  BLACK / WHITE / ERASE: EDIT THE POSITION DIRECTLY. THE ORIGINAL GAME IS NEVER CHANGED.",
+            new Rectangle(1166, 690, 624, 78), new Color(218, 228, 226), 0.3f);
+
+        renderer.DrawVerticalResultSection(new Rectangle(1144, 802, 668, 74), "BOARD", new Color(76, 91, 126));
+        controls.ClearButton.Draw(mousePoint, drawingContext);
+        renderer.DrawRightSidePanelSelectableCommandButton(controls.BoardLensToggleBounds, "L",
+            session.IsRenParseDisplayEnabled, mousePoint, true, 0.40f);
+        renderer.DrawRightSidePanelCommandButton(controls.BoardLensPreviousBounds, "<J", mousePoint, session.IsRenParseDisplayEnabled, 0.25f);
+        renderer.DrawRightSidePanelCommandButton(controls.BoardLensNextBounds, "K>", mousePoint, session.IsRenParseDisplayEnabled, 0.25f);
+        renderer.DrawRightSidePanelCommandButton(controls.BoardLensExitBounds, "OFF/1", mousePoint, session.IsRenParseDisplayEnabled, 0.22f);
+
+        renderer.DrawVerticalResultSection(new Rectangle(1144, 916, 668, 76), "ACTION", new Color(91, 82, 105));
+        controls.ExportSgfButton.Draw(mousePoint, drawingContext);
+        controls.CommentButton.Draw(mousePoint, drawingContext);
+        controls.UndoButton.Draw(mousePoint, drawingContext);
+        controls.PassButton.Draw(mousePoint, drawingContext);
+    }
+
+    private static void DrawLiveBoardWipe(GoScreenRenderer renderer, LiveBoardPreview preview)
+    {
+        var drawingContext = renderer.StationeryDrawingContext;
+        var bounds = BoardAndReviewScreen.Default.VariationEditing.LiveBoardBounds;
+        drawingContext.FillRectangle(new Rectangle(bounds.X + 7, bounds.Y + 8, bounds.Width, bounds.Height), new Color(0, 0, 0, 95));
+        drawingContext.FillRectangle(bounds, new Color(31, 43, 45));
+        drawingContext.DrawRectangle(bounds, 3, new Color(91, 218, 211));
+        drawingContext.DrawText($"CURRENT  MOVE {preview.MoveCount}", new Vector2(bounds.X + 12, bounds.Y + 8), new Color(91, 218, 211), 0.28f);
+
+        var board = new Rectangle(bounds.X + 15, bounds.Y + 38, bounds.Width - 30, bounds.Height - 53);
+        drawingContext.FillRectangle(board, new Color(221, 166, 82));
+        drawingContext.DrawRectangle(board, 2, new Color(83, 55, 32));
+        const float margin = 12f;
+        var start = new Vector2(board.X + margin, board.Y + margin);
+        var usable = board.Width - margin * 2f;
+        var cell = preview.BoardSize <= 1 ? usable : usable / (preview.BoardSize - 1);
+        var end = start + new Vector2(cell * (preview.BoardSize - 1), cell * (preview.BoardSize - 1));
+
+        for (var index = 0; index < preview.BoardSize; index++)
+        {
+            var offset = cell * index;
+            drawingContext.DrawLine(new Vector2(start.X + offset, start.Y), new Vector2(start.X + offset, end.Y), 1, new Color(55, 38, 25));
+            drawingContext.DrawLine(new Vector2(start.X, start.Y + offset), new Vector2(end.X, start.Y + offset), 1, new Color(55, 38, 25));
+        }
+
+        var stoneRadius = Math.Max(3f, cell * 0.38f);
+        for (var y = 0; y < preview.BoardSize; y++)
+        for (var x = 0; x < preview.BoardSize; x++)
+        {
+            var stone = preview.GetStone(x, y);
+            if (stone == GoStone.Empty) continue;
+            renderer.DrawRightSidePanelCircle(new Vector2(start.X + cell * x, start.Y + cell * y), stoneRadius,
+                stone == GoStone.Black ? new Color(27, 31, 34) : new Color(247, 245, 237));
+        }
+
+        if (preview.LatestMove?.Point is not { } point) return;
+        var center = new Vector2(start.X + cell * point.X, start.Y + cell * point.Y);
+        var radius = stoneRadius + 2f;
+        const int segments = 16;
+        for (var index = 0; index < segments; index++)
+        {
+            var angleA = MathHelper.TwoPi * index / segments;
+            var angleB = MathHelper.TwoPi * (index + 1) / segments;
+            drawingContext.DrawLine(
+                center + new Vector2(MathF.Cos(angleA), MathF.Sin(angleA)) * radius,
+                center + new Vector2(MathF.Cos(angleB), MathF.Sin(angleB)) * radius,
+                2, new Color(91, 218, 211));
+        }
+    }
 }
 
 public sealed class ReviewingRightSidePanel

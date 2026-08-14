@@ -48,6 +48,17 @@ RightSidePanel 残存コード整理 引き継ぎ
 
 次は VariationEditingRightSidePanel の描画本体と DrawLiveBoardWipe の移設から再開してください。
 
+第5段階も完了しました。
+
+- DrawVariationEditingRightSidePanelContent の描画本体を VariationEditingRightSidePanel.Draw へ移設・削除。
+- DrawLiveBoardWipe を VariationEditingRightSidePanel 内へ移設し、GoScreenRenderer partial から削除。
+- 編集情報、現在局面、操作ツール、Board Lens、アクション部をパネルへ集約。
+- 追加した構造コメントは個人用コメント規約の40文字区切りによるフラットなセクション形式を使用。
+- 円描画は RightSidePanelDrawingContext 導入まで、コメント付き一時ブリッジ
+  DrawRightSidePanelCircle 経由で使用。
+
+次は ReviewingRightSidePanel の描画本体、移動ボタン、Board Lens 操作群の移設から再開してください。
+
 目的
 ----
 
