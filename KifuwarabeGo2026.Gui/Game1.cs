@@ -773,15 +773,15 @@ public class Game1 : Game
                 }
                 else if (_session.CgosConnectionFlowKind is CgosConnectionFlowKind.Watching or CgosConnectionFlowKind.Result)
                 {
-                CgosWatchingRenderer.Draw(_renderer, _session, _cgosGameObservation, backgroundMousePosition);
+                CgosWatchPage.Default.Draw(_renderer, _session, _cgosGameObservation, backgroundMousePosition);
                 }
                 else if (_session.CgosConnectionFlowKind == CgosConnectionFlowKind.ConnectionStart)
                 {
-                CgosConnectRenderer.Draw(_renderer, _session, backgroundMousePosition);
+                CgosLoginPage.Default.Draw(_renderer, _session, backgroundMousePosition);
                 }
                 else
                 {
-                CgosConnectionTargetRenderer.Draw(_renderer, _session, backgroundMousePosition);
+                CgosSelectConnectionPage.Default.Draw(_renderer, _session, backgroundMousePosition);
                 }
             }
         }
@@ -1348,7 +1348,7 @@ public class Game1 : Game
                 }
 
                 if (_session.CgosConnectionFlowKind == CgosConnectionFlowKind.Watching &&
-                    CgosWatchingScreen.Default.LeaveViewButton.IsHit(point))
+                    CgosWatchPage.Default.LeaveViewButton.IsHit(point))
                 {
                     RestoreCgosMatchNotificationAfterLeavingView();
                     _session.ReturnToCgosConnectionScreen();
@@ -1358,7 +1358,7 @@ public class Game1 : Game
 
                 if (_session.CgosConnectionFlowKind == CgosConnectionFlowKind.Result)
                 {
-                    var cgosWatchingScreen = CgosWatchingScreen.Default;
+                    var cgosWatchingScreen = CgosWatchPage.Default;
                     if (cgosWatchingScreen.ReviewButton.IsHit(point))
                     {
                         StartReviewingGameRecord(_cgosGameObservation.CreateGameRecord(), "CGOS review");

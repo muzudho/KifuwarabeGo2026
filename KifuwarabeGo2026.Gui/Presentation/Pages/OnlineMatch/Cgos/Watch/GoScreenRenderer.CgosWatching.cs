@@ -102,7 +102,7 @@ public sealed partial class GoScreenRenderer
         DrawRect(panel, 2, new Color(82, 111, 114));
 
         new Headline(observation.IsFinished ? "CGOS RESULT" : "CGOS WATCH", new Vector2(1144, 136), new Color(255, 230, 160), 0.72f).Draw(_stationeryDrawingContext);
-        var screen = CgosWatchingScreen.Default;
+        var screen = CgosWatchPage.Default;
         screen.LeaveViewButton.Draw(mousePoint, _stationeryDrawingContext);
 
         DrawVerticalResultSection(new Rectangle(1144, 204, 668, 58), "GAME INFO", new Color(66, 104, 116));
