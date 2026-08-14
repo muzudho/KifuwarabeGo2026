@@ -9,10 +9,12 @@ using System;
 using System.Linq;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ActionBadge;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Headline;
+using KifuwarabeGo2026.Gui.Presentation.Pages.Title;
 
 public sealed partial class GoScreenRenderer
 {
     private readonly TitleGoEquipment _titleGoEquipment = new();
+    private readonly TitleScreen _titleScreen = TitleScreen.Default;
 
     #region ［FORMAL APPS 区画］
     private static Rectangle TitleFormalAppsLabelBounds => new(480, 322, 310, 62);
@@ -27,13 +29,14 @@ public sealed partial class GoScreenRenderer
         // タイトル画面の囲碁用具ワイヤー装飾。
         _titleGoEquipment.Draw(new TitleGoEquipmentDrawingCallbacks(DrawEllipseWire, DrawCircumscribedCircleArc));
 
-        var panel = new Rectangle(420, 172, 1080, 736);
+        var panel = _titleScreen.PanelBounds;
         FillRect(new Rectangle(panel.X + 18, panel.Y + 20, panel.Width, panel.Height), new Color(0, 0, 0, 130));
         FillRect(panel, new Color(21, 25, 32, 242));
         DrawRect(panel, 2, new Color(82, 111, 114));
 
         // 見出し（ヘッドライン）
-        new Headline("KIFUWARABE GO 2026", new Vector2(panel.X + 58, panel.Y + 58), new Color(244, 238, 218), 1.05f).Draw(this);
+        _titleScreen.Headline.Position = new Vector2(panel.X + 58, panel.Y + 58);
+        _titleScreen.Headline.Draw(this);
         DrawText(GetDisplayVersion(), new Vector2(panel.X + 790, panel.Y + 91), new Color(99, 223, 185), 0.38f);
         DrawLine(new Vector2(panel.X + 790, panel.Y + 126), new Vector2(panel.X + 958, panel.Y + 126), 2, new Color(99, 223, 185, 120));
         DrawTitleMenuContent(session, page, panel, mousePoint, appProviderTabIndex, isAppProviderLoading);
@@ -52,11 +55,11 @@ public sealed partial class GoScreenRenderer
                 var onlineMatchHovered = TitleHomeCgosButtonBounds.Contains(mousePoint);
                 var settingsHovered = SettingsButtonBounds.Contains(mousePoint);
                 var updateHovered = UpdateButtonBounds.Contains(mousePoint);
-                DrawText("FORMAL APPS", new Vector2(500, 338), new Color(99, 223, 185), 0.48f);
-                DrawText("CASUAL APPS", new Vector2(950, 338), new Color(255, 190, 92), 0.48f);
-                DrawHomeServiceChoice(TitleHomeLocalButtonBounds, "Local Match", "PLAY / REVIEW", new Color(99, 223, 185), mousePoint);
-                DrawHomeServiceChoice(TitleHomeCgosButtonBounds, "Online Match (CGOS)", "WATCH / CONNECT", new Color(99, 223, 185), mousePoint);
-                DrawAppChoice(TitleAppBounds(0), "ポン抜きゲーム", "CAPTURE GAME", mousePoint);
+                _titleScreen.FormalAppsLabel.Draw(this);
+                _titleScreen.CasualAppsLabel.Draw(this);
+                DrawHomeServiceChoice(_titleScreen.LocalMatchButton.Bounds, _titleScreen.LocalMatchButton.Label, "PLAY / REVIEW", new Color(99, 223, 185), mousePoint);
+                DrawHomeServiceChoice(_titleScreen.CgosClientButton.Bounds, _titleScreen.CgosClientButton.Label, "WATCH / CONNECT", new Color(99, 223, 185), mousePoint);
+                DrawAppChoice(_titleScreen.CaptureGameButton.Bounds, _titleScreen.CaptureGameButton.Label, "CAPTURE GAME", mousePoint);
                 DrawDynamicOptionText("対局、観戦、問題演習をここから直接選べます。", new Rectangle(500, 700, 890, 38), new Color(180, 195, 195), 0.34f);
                 if (formalAppsHovered)
                     DrawTitleHomeHint("FORMAL APPS", "他のコンピュータ碁ソフトとできるだけ連携します！", new Color(99, 223, 185));
