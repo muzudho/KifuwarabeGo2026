@@ -1779,6 +1779,8 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         _multilineTextUnderline.Bounds = textBounds;
         _multilineTextUnderline.LineHeight = _textRasterizer.MeasureLineHeight(textPixelHeight, extraLineSpacing);
         _multilineTextUnderline.BaselineOffset = _textRasterizer.MeasureBaselineOffset(textPixelHeight);
+        var virtualScreenScale = Math.Max(0.01f, VirtualScreen.GetScale(_graphicsDevice.Viewport));
+        _multilineTextUnderline.Underline.Thickness = Math.Max(1, (int)MathF.Ceiling(1f / virtualScreenScale));
         _multilineTextUnderline.SetEditing(true);
         _multilineTextUnderline.UpdatePointer(mousePoint);
         _multilineTextUnderline.Draw(_stationeryDrawingContext, new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText));

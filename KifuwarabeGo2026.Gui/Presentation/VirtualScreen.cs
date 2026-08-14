@@ -25,7 +25,7 @@ public static class VirtualScreen
         return new Point((int)((screenPoint.X - offsetX) / scale), (int)((screenPoint.Y - offsetY) / scale));
     }
 
-    private static float GetScale(Viewport viewport)
+    public static float GetScale(Viewport viewport)
     {
         return Math.Min(viewport.Width / (float)Width, viewport.Height / (float)Height);
     }
