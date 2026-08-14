@@ -21,6 +21,7 @@ using KifuwarabeGo2026.Gui.Presentation.Shared.CgosMatchNotification;
 using KifuwarabeGo2026.Gui.Presentation.Shared.PopupFilePathTooltip;
 using KifuwarabeGo2026.Gui.Presentation.Shared.EditEntryProfile;
 using KifuwarabeGo2026.Gui.Presentation.Shared.HeadUpDisplay;
+using KifuwarabeGo2026.Gui.Presentation.Shared.RightSidePanel;
 using KifuwarabeGo2026.Gui.Presentation.BoardLens;
 using KifuwarabeGo2026.Gui.Presentation.BoardLens.Shared.RenBoundaries;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
@@ -136,7 +137,7 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         }
         if (!session.IsReviewChartPopupOpen)
         {
-            DrawSidePanel(session, backgroundMousePoint, liveBoardPreview, initialPositionConcierge);
+            RightSidePanel.Default.Draw(this, session, backgroundMousePoint, liveBoardPreview, initialPositionConcierge);
             if (session.IsLocalReplayMode)
             {
                 DrawReplayNavigationControls(
@@ -260,62 +261,6 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         DrawGlow(new Vector2(1030, 90), 520, new Color(39, 122, 104, 80));
         DrawGlow(new Vector2(1700, 850), 360, new Color(144, 59, 48, 72));
     }
-    private void DrawSidePanel(
-        GoAppSession session,
-        Point mousePoint,
-        LiveBoardPreview? liveBoardPreview,
-        InitialPositionConciergeView? initialPositionConcierge)
-    {
-        var panel = new Rectangle(1102, 78, 760, 924);
-        FillRect(new Rectangle(panel.X + 16, panel.Y + 18, panel.Width, panel.Height), new Color(0, 0, 0, 120));
-        FillRect(panel, new Color(21, 25, 32, 236));
-        DrawRect(panel, 2, new Color(82, 111, 114));
-
-        if (initialPositionConcierge is { IsVisible: true })
-        {
-            DrawInitialPositionConcierge(initialPositionConcierge, mousePoint);
-            return;
-        }
-
-        if (session.CurrentMode.Kind == GoAppModeKind.Playing)
-        {
-            LocalMatchPlayPage.Default.Draw(this, session, mousePoint);
-            return;
-        }
-
-        if (session.CurrentMode.Kind == GoAppModeKind.GameOver)
-        {
-            DrawGameOverSidePanel(session, mousePoint);
-            return;
-        }
-
-        if (session.CurrentMode.Kind == GoAppModeKind.BoardEditing)
-        {
-            DrawBoardEditingSidePanel(session, mousePoint);
-            return;
-        }
-
-        if (session.CurrentMode.Kind == GoAppModeKind.VariationEditing)
-        {
-            DrawVariationEditingSidePanel(session, mousePoint, liveBoardPreview);
-            return;
-        }
-
-        if (session.CurrentMode.Kind == GoAppModeKind.Reviewing)
-        {
-            DrawReviewingSidePanel(session, mousePoint);
-            return;
-        }
-
-        if (session.UseKind == GoAppUseKind.LocalApps)
-        {
-            LocalMatchIntermissionPage.Default.Draw(this, session, mousePoint);
-        }
-        else
-        {
-            DrawSetupSidePanel(session, mousePoint);
-        }
-    }
     private void DrawLocalClosedBox(Rectangle bounds)
     {
         FillRect(new Rectangle(bounds.X + 8, bounds.Y + 10, bounds.Width, bounds.Height), new Color(0, 0, 0, 70));
@@ -349,7 +294,7 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
             DrawLine(new Vector2(bounds.X, y), new Vector2(bounds.Right, y), 1, color);
         }
     }
-    private void DrawSetupSidePanel(GoAppSession session, Point mousePoint)
+    internal void DrawSetupRightSidePanelContent(GoAppSession session, Point mousePoint)
     {
         var screen = LocalMatchScreen.Default;
         screen.BackToTitleButton.Draw(mousePoint, _stationeryDrawingContext);
@@ -380,7 +325,7 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         screen.StartPlayingButton.IsEnabled = session.CanStartPlaying;
         screen.StartPlayingButton.Draw(mousePoint, _stationeryDrawingContext);
     }
-    private void DrawGameOverSidePanel(GoAppSession session, Point mousePoint)
+    internal void DrawGameOverRightSidePanelContent(GoAppSession session, Point mousePoint)
     {
         new Headline("GAME OVER", new Vector2(1144, 132), new Color(255, 230, 160), 0.9f).Draw(_stationeryDrawingContext);
         DrawText(FormatGameEndMoveCount(session.PlayedMoveCount), new Vector2(1144, 196), new Color(99, 223, 185), 0.58f);
@@ -1008,6 +953,8 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
 
     private void FillRect(Rectangle rect, Color color) => _spriteBatch.Draw(_pixel, rect, color);
 
+    internal void FillRectangle(Rectangle rect, Color color) => FillRect(rect, color);
+
     private void DrawRect(Rectangle rect, int thickness, Color color)
     {
         FillRect(new Rectangle(rect.X, rect.Y, rect.Width, thickness), color);
@@ -1015,6 +962,8 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         FillRect(new Rectangle(rect.X, rect.Y, thickness, rect.Height), color);
         FillRect(new Rectangle(rect.Right - thickness, rect.Y, thickness, rect.Height), color);
     }
+
+    internal void DrawRectangle(Rectangle rect, int thickness, Color color) => DrawRect(rect, thickness, color);
 
     private static Rectangle CreateVerticalLineRect(float x, float top, float bottom, int thickness) =>
         new((int)MathF.Round(x - thickness / 2f), (int)MathF.Round(top), thickness, (int)MathF.Round(bottom - top));
@@ -1258,7 +1207,7 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         _spriteBatch.End();
     }
 
-    private void DrawInitialPositionConcierge(InitialPositionConciergeView view, Point mousePoint) =>
+    internal void DrawInitialPositionConciergeContent(InitialPositionConciergeView view, Point mousePoint) =>
         InitialPositionConcierge.Draw(view, mousePoint,
             new InitialPositionConciergeDrawingCallbacks(DrawDynamicOptionText, DrawFittedText, DrawText, FillRect, DrawRect, DrawCommandButton));
 

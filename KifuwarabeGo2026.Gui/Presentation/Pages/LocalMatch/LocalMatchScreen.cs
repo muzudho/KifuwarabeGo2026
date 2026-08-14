@@ -5,6 +5,7 @@ using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Shared.Domain;
 using Microsoft.Xna.Framework;
 using KifuwarabeGo2026.Gui.Presentation.Shared.SelectEntry;
+using KifuwarabeGo2026.Gui.Presentation.Shared.RightSidePanel;
 
 /// <summary>ローカル対局のセットアップ、対局中、終局後に共通する操作 UI を所有します。</summary>
 public sealed class LocalMatchScreen
@@ -32,6 +33,9 @@ public sealed class LocalMatchScreen
     public Button ReturnToSetupButton { get; }
     public Button ExportSgfButton { get; }
     public Button GameOverReviewButton { get; }
+    public SetupRightSidePanel SetupRightSidePanel { get; } = new();
+    public GameOverRightSidePanel GameOverRightSidePanel { get; } = new();
+    public InitialPositionConciergeRightSidePanel InitialPositionConciergeRightSidePanel { get; } = new();
     public PlayerKindSelectionRow BlackPlayerKindRow { get; }
     public PlayerKindSelectionRow WhitePlayerKindRow { get; }
     public PlayerKindSelectionRow PonnukiBlackPlayerKindRow { get; }

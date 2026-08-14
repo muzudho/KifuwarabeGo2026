@@ -32,7 +32,7 @@ public sealed partial class GoScreenRenderer
     }
 
 
-    private void DrawBoardEditingSidePanel(GoAppSession session, Point mousePoint)
+    internal void DrawBoardEditingRightSidePanelContent(GoAppSession session, Point mousePoint)
     {
         var controls = BoardAndReviewScreen.Default.BoardEditing;
         controls.UpdateState(session.BoardEditingStone, session.CanUndoBoardEditing, session.CanRedoBoardEditing);
@@ -59,7 +59,7 @@ public sealed partial class GoScreenRenderer
         DrawCurrentStoneResultRow(new Rectangle(1164, 690, 628, 64), session);
     }
 
-    private void DrawVariationEditingSidePanel(
+    internal void DrawVariationEditingRightSidePanelContent(
         GoAppSession session,
         Point mousePoint,
         LiveBoardPreview? liveBoardPreview)
@@ -144,7 +144,7 @@ public sealed partial class GoScreenRenderer
     }
 
 
-    private void DrawReviewingSidePanel(GoAppSession session, Point mousePoint)
+    internal void DrawReviewingRightSidePanelContent(GoAppSession session, Point mousePoint)
     {
         var controls = BoardAndReviewScreen.Default.Review;
         controls.UpdateBoardLensState(

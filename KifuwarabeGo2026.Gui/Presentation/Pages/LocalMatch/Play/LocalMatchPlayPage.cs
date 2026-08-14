@@ -5,6 +5,7 @@ using KifuwarabeGo2026.Gui.Presentation;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Button;
 using KifuwarabeGo2026.Shared.Domain;
 using Microsoft.Xna.Framework;
+using KifuwarabeGo2026.Gui.Presentation.Shared.RightSidePanel;
 
 /// <summary>ローカル対局の対局中ページを描画します。</summary>
 public sealed class LocalMatchPlayPage
@@ -21,8 +22,9 @@ public sealed class LocalMatchPlayPage
     public Button PassButton { get; }
     public Button ResignButton { get; }
     public Button CancelButton { get; }
+    public LocalMatchPlayRightSidePanel RightSidePanel { get; } = new();
 
-    public void Draw(GoScreenRenderer renderer, GoAppSession session, Point mousePoint)
+    internal void DrawRightSidePanelContent(GoScreenRenderer renderer, GoAppSession session, Point mousePoint)
     {
         renderer.DrawVerticalResultSection(new Rectangle(1144, 132, 668, 200), "PLAYERS", new Color(76, 91, 126));
         renderer.DrawBothPlayersComponent(

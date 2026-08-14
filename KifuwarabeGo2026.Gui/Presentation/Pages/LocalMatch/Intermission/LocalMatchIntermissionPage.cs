@@ -6,6 +6,7 @@ using KifuwarabeGo2026.Gui.Application.GoApps.Casual.Ponnuki;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Button;
 using KifuwarabeGo2026.Shared.Domain;
 using Microsoft.Xna.Framework;
+using KifuwarabeGo2026.Gui.Presentation.Shared.RightSidePanel;
 
 /// <summary>ローカルアプリ対局の休憩ページを描画します。</summary>
 public sealed class LocalMatchIntermissionPage
@@ -26,13 +27,14 @@ public sealed class LocalMatchIntermissionPage
     public Button ProviderSeedAutoChangeButton { get; }
     public Button Player1SeedAutoChangeButton { get; }
     public Button Player2SeedAutoChangeButton { get; }
+    public LocalMatchIntermissionRightSidePanel RightSidePanel { get; } = new();
 
     public PonnukiRandomSeedRole? GetRandomSeedAutoChangeHit(Point point) =>
         ProviderSeedAutoChangeButton.IsHit(point) ? PonnukiRandomSeedRole.Provider :
         Player1SeedAutoChangeButton.IsHit(point) ? PonnukiRandomSeedRole.Player1 :
         Player2SeedAutoChangeButton.IsHit(point) ? PonnukiRandomSeedRole.Player2 : null;
 
-    public void Draw(GoScreenRenderer renderer, GoAppSession session, Point mousePoint)
+    internal void DrawRightSidePanelContent(GoScreenRenderer renderer, GoAppSession session, Point mousePoint)
     {
         var screen = LocalMatchScreen.Default;
         var drawingContext = renderer.StationeryDrawingContext;

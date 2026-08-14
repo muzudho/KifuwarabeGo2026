@@ -4,6 +4,7 @@ using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Button;
 using KifuwarabeGo2026.Shared.Domain;
 using Microsoft.Xna.Framework;
 using KifuwarabeGo2026.Gui.Presentation.BoardLens;
+using KifuwarabeGo2026.Gui.Presentation.Shared.RightSidePanel;
 
 /// <summary>盤編集・変化図編集・棋譜検討画面のUIを所有します。</summary>
 public sealed class BoardAndReviewScreen
@@ -24,6 +25,9 @@ public sealed class BoardAndReviewScreen
     public BoardEditingControls BoardEditing { get; }
     public VariationEditingControls VariationEditing { get; }
     public ReviewControls Review { get; }
+    public BoardEditingRightSidePanel BoardEditingRightSidePanel { get; } = new();
+    public VariationEditingRightSidePanel VariationEditingRightSidePanel { get; } = new();
+    public ReviewingRightSidePanel ReviewingRightSidePanel { get; } = new();
 }
 
 /// <summary>棋譜検討画面の操作と表示領域を所有します。</summary>
