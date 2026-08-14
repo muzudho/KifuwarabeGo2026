@@ -4,6 +4,7 @@ using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.Watching;
 using KifuwarabeGo2026.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.Shared.Domain;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Headline;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -113,7 +114,7 @@ public sealed partial class GoScreenRenderer
         FillRect(panel, new Color(21, 25, 32, 236));
         DrawRect(panel, 2, new Color(82, 111, 114));
 
-        DrawText(observation.IsFinished ? "CGOS RESULT" : "CGOS WATCH", new Vector2(1144, 136), new Color(255, 230, 160), 0.72f);
+        new Headline(observation.IsFinished ? "CGOS RESULT" : "CGOS WATCH", new Vector2(1144, 136), new Color(255, 230, 160), 0.72f).Draw(this);
         DrawCommandButton(CgosWatchingBackButtonBounds, "LEAVE VIEW", false, mousePoint, scale: 0.38f);
 
         DrawVerticalResultSection(new Rectangle(1144, 204, 668, 58), "GAME INFO", new Color(66, 104, 116));

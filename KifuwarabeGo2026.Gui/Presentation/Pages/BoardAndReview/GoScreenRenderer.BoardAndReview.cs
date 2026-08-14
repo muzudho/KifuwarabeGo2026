@@ -4,6 +4,7 @@ using KifuwarabeGo2026.Gui.Presentation.BoardLens;
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.Shared.Domain;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Headline;
 using Microsoft.Xna.Framework;
 using System;
 
@@ -111,7 +112,7 @@ public sealed partial class GoScreenRenderer
 
     private void DrawBoardEditingSidePanel(GoAppSession session, Point mousePoint)
     {
-        DrawText("BOARD EDIT", new Vector2(1144, 136), new Color(255, 230, 160), 0.72f);
+        new Headline("BOARD EDIT", new Vector2(1144, 136), new Color(255, 230, 160), 0.72f).Draw(this);
         DrawCommandButton(BoardEditingCancelButtonBounds, "CANCEL", false, mousePoint, scale: 0.34f);
         DrawCommandButton(BoardEditingAdoptButtonBounds, "ADOPT", false, mousePoint, scale: 0.4f);
 
@@ -139,7 +140,7 @@ public sealed partial class GoScreenRenderer
         Point mousePoint,
         LiveBoardPreview? liveBoardPreview)
     {
-        DrawText("ANALYSIS BOARD", new Vector2(1144, 136), new Color(42, 62, 68), 0.68f);
+        new Headline("ANALYSIS BOARD", new Vector2(1144, 136), new Color(42, 62, 68), 0.68f).Draw(this);
         DrawCommandButton(VariationEditingDiscardButtonBounds, "DISCARD", false, mousePoint, scale: 0.34f);
         if (session.CanAdoptVariationPosition)
             DrawCommandButton(VariationEditingAdoptButtonBounds, "ADOPT", false, mousePoint, scale: 0.34f);
@@ -222,7 +223,7 @@ public sealed partial class GoScreenRenderer
 
     private void DrawReviewingSidePanel(GoAppSession session, Point mousePoint)
     {
-        DrawText("KIFU REVIEW", new Vector2(1144, 136), new Color(255, 230, 160), 0.72f);
+        new Headline("KIFU REVIEW", new Vector2(1144, 136), new Color(255, 230, 160), 0.72f).Draw(this);
         if (session.HasUnsavedReviewCommentChanges)
         {
             DrawFittedText(

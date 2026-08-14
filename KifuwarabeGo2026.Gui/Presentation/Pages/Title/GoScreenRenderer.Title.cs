@@ -8,12 +8,19 @@ using Microsoft.Xna.Framework;
 using System;
 using System.Linq;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ActionBadge;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Headline;
 
 public sealed partial class GoScreenRenderer
 {
     private readonly TitleGoEquipment _titleGoEquipment = new();
+
+    #region ［FORMAL APPS 区画］
     private static Rectangle TitleFormalAppsLabelBounds => new(480, 322, 310, 62);
+    #endregion
+
+    #region ［CASUAL APPS 区画］
     private static Rectangle TitleCasualAppsLabelBounds => new(930, 322, 310, 62);
+    #endregion
 
     private void DrawUseSelectionPanel(GoAppSession session, Point mousePoint, TitleMenuPage page, int appProviderTabIndex, bool isAppProviderLoading)
     {
@@ -25,7 +32,8 @@ public sealed partial class GoScreenRenderer
         FillRect(panel, new Color(21, 25, 32, 242));
         DrawRect(panel, 2, new Color(82, 111, 114));
 
-        DrawText("KIFUWARABE GO 2026", new Vector2(panel.X + 58, panel.Y + 58), new Color(244, 238, 218), 1.05f);
+        // 見出し（ヘッドライン）
+        new Headline("KIFUWARABE GO 2026", new Vector2(panel.X + 58, panel.Y + 58), new Color(244, 238, 218), 1.05f).Draw(this);
         DrawText(GetDisplayVersion(), new Vector2(panel.X + 790, panel.Y + 91), new Color(99, 223, 185), 0.38f);
         DrawLine(new Vector2(panel.X + 790, panel.Y + 126), new Vector2(panel.X + 958, panel.Y + 126), 2, new Color(99, 223, 185, 120));
         DrawTitleMenuContent(session, page, panel, mousePoint, appProviderTabIndex, isAppProviderLoading);

@@ -11,6 +11,7 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Linq;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ActionBadge;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Headline;
 
 public sealed partial class GoScreenRenderer
 {
@@ -344,7 +345,7 @@ public sealed partial class GoScreenRenderer
 
         if (session.CgosConnectionFlowKind == CgosConnectionFlowKind.ConnectionStart)
         {
-            DrawText("CGOS CLIENT", new Vector2(panel.X + 58, panel.Y + 58), new Color(255, 230, 160), 1.0f);
+            new Headline("CGOS CLIENT", new Vector2(panel.X + 58, panel.Y + 58), new Color(255, 230, 160), 1.0f).Draw(this);
             DrawCgosConnectionStartPanel(session, mousePoint);
             return;
         }

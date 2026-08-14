@@ -33,11 +33,12 @@ using System.Collections.Generic;
 using System.Linq;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ActionBadge;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Button;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Headline;
 
 /// <summary>
 /// ［画面描画］の共通処理
 /// </summary>
-public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IButtonDrawingSurface, IGoScreenRenderer
+public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IButtonDrawingSurface, IHeadlineDrawingSurface, IGoScreenRenderer
 {
     private const int GameOverValueX = 1328;
     private const int GameOverSecondValueX = 1560;
@@ -469,7 +470,7 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IButton
 
     private void DrawGameOverSidePanel(GoAppSession session, Point mousePoint)
     {
-        DrawText("GAME OVER", new Vector2(1144, 132), new Color(255, 230, 160), 0.9f);
+        new Headline("GAME OVER", new Vector2(1144, 132), new Color(255, 230, 160), 0.9f).Draw(this);
         DrawText(FormatGameEndMoveCount(session.PlayedMoveCount), new Vector2(1144, 196), new Color(99, 223, 185), 0.58f);
         DrawCommandButton(ReturnToSetupButtonBounds, "BACK TO SETUP", false, mousePoint, scale: 0.34f);
 
@@ -2116,4 +2117,5 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IButton
     void IButtonDrawingSurface.FillRectangle(Rectangle bounds, Color color) => FillRect(bounds, color);
     void IButtonDrawingSurface.DrawRectangle(Rectangle bounds, int thickness, Color color) => DrawRect(bounds, thickness, color);
     void IButtonDrawingSurface.DrawFittedText(string text, Rectangle bounds, Color color, float scale) => DrawFittedText(text, bounds, color, scale);
+    void IHeadlineDrawingSurface.DrawText(string text, Vector2 position, Color color, float scale) => DrawText(text, position, color, scale);
 }
