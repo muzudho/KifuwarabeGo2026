@@ -134,6 +134,23 @@ public sealed class WindowsTextRasterizer : ITextRasterizer
         return stream.ToArray();
     }
 
+    public int MeasureLineHeight(int pixelHeight, int extraLineSpacing)
+    {
+        using var font = CreateFont(pixelHeight, bold: false);
+        using var bitmap = new System.Drawing.Bitmap(1, 1);
+        using var graphics = System.Drawing.Graphics.FromImage(bitmap);
+        return GetLineHeight(font, graphics, extraLineSpacing);
+    }
+
+    public int MeasureBaselineOffset(int pixelHeight)
+    {
+        using var font = CreateFont(pixelHeight, bold: false);
+        var style = System.Drawing.FontStyle.Regular;
+        var family = font.FontFamily;
+        return Math.Max(1, (int)MathF.Round(
+            font.Size * family.GetCellAscent(style) / family.GetEmHeight(style)));
+    }
+
     private static System.Drawing.Font CreateFont(int pixelHeight, bool bold) =>
         new(
             "Meiryo",

@@ -84,6 +84,11 @@ internal sealed class PortablePlatformServices :
 
     public float MeasureTextWidth(string text, int pixelHeight, bool bold) => 0;
 
+    public int MeasureLineHeight(int pixelHeight, int extraLineSpacing) =>
+        Math.Max(1, pixelHeight + extraLineSpacing);
+
+    public int MeasureBaselineOffset(int pixelHeight) => Math.Max(1, pixelHeight);
+
     public int GetWrappedPageCount(
         string text,
         int width,

@@ -1774,7 +1774,11 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
             DrawCompositionLamp(dialogBounds, "HOOK", 1146, compositionDiagnostics.IsWindowProcedureAttached, new Color(99, 223, 185));
             DrawCompositionLamp(dialogBounds, "IME", 1192, composition.IsActive, new Color(255, 225, 128));
         }
+        const int textPixelHeight = 26;
+        const int extraLineSpacing = 5;
         _multilineTextUnderline.Bounds = textBounds;
+        _multilineTextUnderline.LineHeight = _textRasterizer.MeasureLineHeight(textPixelHeight, extraLineSpacing);
+        _multilineTextUnderline.BaselineOffset = _textRasterizer.MeasureBaselineOffset(textPixelHeight);
         _multilineTextUnderline.SetEditing(true);
         _multilineTextUnderline.UpdatePointer(mousePoint);
         _multilineTextUnderline.Draw(_stationeryDrawingContext, new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText));
@@ -1817,7 +1821,8 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         foreach (var character in beforeCaret) if (character == '\n') lineNumber++;
         var textBounds = TextAreaDialog.Default.TextBounds;
         var x = textBounds.X + 18 + (int)MathF.Round(_textRasterizer.MeasureTextWidth(lineText, pixelHeight: 26, bold: false));
-        var y = textBounds.Y + 18 + lineNumber * 31;
+        var lineHeight = _textRasterizer.MeasureLineHeight(pixelHeight: 26, extraLineSpacing: 5);
+        var y = textBounds.Y + 18 + lineNumber * lineHeight;
         return new Vector2(Math.Clamp(x, textBounds.X + 18, textBounds.Right - 22), Math.Clamp(y, textBounds.Y + 18, textBounds.Bottom - 48));
     }
 

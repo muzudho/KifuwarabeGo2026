@@ -47,6 +47,10 @@ public sealed class MultilineTextUnderline
     public bool IsHovered { get; private set; }
 
     public ActionBadge? ActionBadge { get; private set; }
+    public int LineHeight { get; set; } = 31;
+    public int BaselineOffset { get; set; } = 26;
+    public int HorizontalInset { get; set; } = 18;
+    public int TextTopInset { get; set; } = 18;
 
     // ========================================
     // 機能
@@ -63,14 +67,15 @@ public sealed class MultilineTextUnderline
             ActionBadge?.Hide();
     }
 
-    public void Draw(StationeryDrawingContext surface, ActionBadgeDrawingCallbacks? actionBadgeDrawing = null, int lineHeight = 31, int horizontalInset = 18)
+    public void Draw(StationeryDrawingContext surface, ActionBadgeDrawingCallbacks? actionBadgeDrawing = null)
     {
         ArgumentNullException.ThrowIfNull(surface);
 
         var underlineColor = IsEditing ? new Color(147, 244, 200, 180) : IsHovered ? new Color(185, 196, 255, 180) : new Color(99, 223, 185, 180);
-        for (var y = Bounds.Y + horizontalInset + lineHeight - 3; y < Bounds.Bottom - horizontalInset; y += lineHeight)
+        var firstBaselineY = Bounds.Y + TextTopInset + BaselineOffset;
+        for (var y = firstBaselineY; y < Bounds.Bottom - TextTopInset; y += LineHeight)
         {
-            Underline.ContentBounds = new Rectangle(Bounds.X + horizontalInset, y, Bounds.Width - horizontalInset * 2, 0);
+            Underline.ContentBounds = new Rectangle(Bounds.X + HorizontalInset, y, Bounds.Width - HorizontalInset * 2, 0);
             Underline.TopOffset = 0;
             Underline.Color = underlineColor;
             Underline.Draw(surface);
