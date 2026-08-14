@@ -2,7 +2,7 @@ namespace KifuwarabeGo2026.Gui.Presentation;
 
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Presentation.Pages.EditTournamentRule;
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI.ActionBadge;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ActionBadge;
 using Microsoft.Xna.Framework;
 using System;
 using System.IO;

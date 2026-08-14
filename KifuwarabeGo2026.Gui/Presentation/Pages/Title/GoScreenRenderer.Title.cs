@@ -1,13 +1,13 @@
 namespace KifuwarabeGo2026.Gui.Presentation;
 
 using KifuwarabeGo2026.Gui.Application;
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI.ActionBadge;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.StickyNote;
 using KifuwarabeGo2026.Gui.Presentation.Shared.TitleBackground;
 using KifuwarabeGo2026.Gui.Presentation.Title;
 using Microsoft.Xna.Framework;
 using System;
 using System.Linq;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ActionBadge;
 
 public sealed partial class GoScreenRenderer
 {
@@ -307,4 +307,28 @@ public sealed partial class GoScreenRenderer
         var version = typeof(GoScreenRenderer).Assembly.GetName().Version;
         return version is null ? "VERSION" : $"v{version.Major}.{version.Minor}.{version.Build}";
     }
+
+    #region ［最新バージョンへ更新］ボタン
+    /// <summary>
+    /// ［最新バージョンへ更新］ボタンを描画します。
+    /// </summary>
+    /// <param name="mousePoint"></param>
+    private void DrawUpdateButton(Point mousePoint)
+    {
+        var hovered = UpdateButtonBounds.Contains(mousePoint);
+        var color = hovered ? new Color(99, 223, 185) : new Color(180, 195, 195);
+        FillRect(UpdateButtonBounds, hovered ? new Color(36, 50, 58) : new Color(24, 31, 37));
+        DrawRect(UpdateButtonBounds, 2, hovered ? new Color(178, 219, 226) : new Color(82, 111, 114));
+        var board = new Rectangle(UpdateButtonBounds.X + 15, UpdateButtonBounds.Y + 11, 40, 40);
+        DrawRect(board, 2, color);
+        for (var index = 1; index < 5; index++)
+        {
+            var offset = index * 8;
+            DrawLine(new Vector2(board.X + offset, board.Y), new Vector2(board.X + offset, board.Bottom), 1, color);
+            DrawLine(new Vector2(board.X, board.Y + offset), new Vector2(board.Right, board.Y + offset), 1, color);
+        }
+        DrawStone(new Vector2(board.X + 16, board.Y + 24), 5, true);
+        DrawStone(new Vector2(board.X + 31, board.Y + 16), 5, false);
+    }
+    #endregion
 }

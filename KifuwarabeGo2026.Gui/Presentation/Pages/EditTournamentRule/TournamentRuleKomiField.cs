@@ -2,9 +2,9 @@ namespace KifuwarabeGo2026.Gui.Presentation.Pages.EditTournamentRule;
 
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.SinglelineTextUnderline;
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI.ActionBadge;
 using Microsoft.Xna.Framework;
 using System;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ActionBadge;
 
 /// <summary>大会ルール編集画面のコミ入力欄です。</summary>
 public sealed class TournamentRuleKomiField

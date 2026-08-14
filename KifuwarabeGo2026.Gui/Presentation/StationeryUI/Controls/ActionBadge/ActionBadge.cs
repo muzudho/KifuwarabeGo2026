@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Gui.Presentation.StationeryUI.ActionBadge;
+namespace KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ActionBadge;
 
 using Microsoft.Xna.Framework;
 using System;

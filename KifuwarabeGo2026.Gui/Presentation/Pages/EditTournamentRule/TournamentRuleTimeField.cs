@@ -1,6 +1,6 @@
 namespace KifuwarabeGo2026.Gui.Presentation.Pages.EditTournamentRule;
 
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI.ActionBadge;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ActionBadge;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.SinglelineTextUnderline;
 using Microsoft.Xna.Framework;

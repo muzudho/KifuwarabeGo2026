@@ -1,9 +1,9 @@
 namespace KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.SinglelineTextUnderline;
 
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI.ActionBadge;
 using Microsoft.Xna.Framework;
 using System;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ActionBadge;
 
 /// <summary>単一行テキスト入力のアンダーライン表示を担当します。</summary>
 public sealed class SinglelineTextUnderline

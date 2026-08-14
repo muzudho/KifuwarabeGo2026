@@ -1,9 +1,9 @@
 namespace KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.MultilineTextUnderline;
 
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI.ActionBadge;
 using Microsoft.Xna.Framework;
 using System;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ActionBadge;
 
 /// <summary>複数行テキスト入力欄の罫線を描画する独立コンポーネントです。</summary>
 public sealed class MultilineTextUnderline

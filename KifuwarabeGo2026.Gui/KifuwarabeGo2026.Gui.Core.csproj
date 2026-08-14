@@ -48,7 +48,7 @@
     <Folder Include="Presentation\StationeryUI\Controls\LinkUnderline\" />
     <Folder Include="Presentation\StationeryUI\Controls\PopupTimeUnderline\" />
     <Folder Include="Presentation\StationeryUI\MessageDialog\" />
-    <Folder Include="Presentation\StationeryUI\ActionBadge\" />
+    <Folder Include="Presentation\StationeryUI\Controls\ActionBadge\" />
     <Folder Include="Presentation\StationeryUI\SpinButton\" />
   </ItemGroup>
 </Project>
