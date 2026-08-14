@@ -6,34 +6,11 @@ using System;
 /// <summary>対象区画とラベル自身の位置、サイズ、表示方向を生成時から所有する文房具UIです。</summary>
 public sealed class SectionLabelComponent
 {
-    private const float VerticalScale = 0.38f;
-    private readonly bool _usesSplitHorizontalText;
+    // ========================================
+    // 生成
+    // ========================================
 
-    private SectionLabelComponent(
-        Rectangle targetSectionBounds,
-        Rectangle bounds,
-        string text,
-        Color accentColor,
-        Color textColor,
-        SectionLabelDirection direction,
-        bool usesSplitHorizontalText)
-    {
-        TargetSectionBounds = targetSectionBounds;
-        Bounds = bounds;
-        Text = text ?? throw new ArgumentNullException(nameof(text));
-        AccentColor = accentColor;
-        TextColor = textColor;
-        Direction = direction;
-        _usesSplitHorizontalText = usesSplitHorizontalText;
-    }
-
-    public Rectangle TargetSectionBounds { get; }
-    public Rectangle Bounds { get; }
-    public string Text { get; }
-    public Color AccentColor { get; }
-    public Color TextColor { get; }
-    public SectionLabelDirection Direction { get; }
-
+    #region ［生成　＞　ファクトリーメソッド］
     public static SectionLabelComponent CreateVertical(
         Rectangle targetSectionBounds,
         string text,
@@ -72,6 +49,45 @@ public sealed class SectionLabelComponent
             targetSectionBounds, bounds, text, accentColor, textColor,
             SectionLabelDirection.Horizontal, usesSplitHorizontalText: false);
     }
+    #endregion
+
+    #region ［生成　＞　コンストラクター］
+    private SectionLabelComponent(
+        Rectangle targetSectionBounds,
+        Rectangle bounds,
+        string text,
+        Color accentColor,
+        Color textColor,
+        SectionLabelDirection direction,
+        bool usesSplitHorizontalText)
+    {
+        TargetSectionBounds = targetSectionBounds;
+        Bounds = bounds;
+        Text = text ?? throw new ArgumentNullException(nameof(text));
+        AccentColor = accentColor;
+        TextColor = textColor;
+        Direction = direction;
+        _usesSplitHorizontalText = usesSplitHorizontalText;
+    }
+    #endregion
+
+    // ========================================
+    // データメンバー
+    // ========================================
+
+    private const float VerticalScale = 0.38f;
+    private readonly bool _usesSplitHorizontalText;
+
+    public Rectangle TargetSectionBounds { get; }
+    public Rectangle Bounds { get; }
+    public string Text { get; }
+    public Color AccentColor { get; }
+    public Color TextColor { get; }
+    public SectionLabelDirection Direction { get; }
+
+    // ========================================
+    // 機能
+    // ========================================
 
     public void Draw(SectionLabelDrawingCallbacks draw)
     {
