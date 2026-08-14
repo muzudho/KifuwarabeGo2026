@@ -6339,7 +6339,7 @@ public class Game1 : Game
         };
 
         if (_session.IsReviewChartPopupOpen)
-            breadcrumb += "  >  CHART POPUP";
+            breadcrumb += "  >  POPUP TREND CHART";
         else if (_session.IsGtpEngineSelectionDialogOpen)
             breadcrumb += "  >  COMPUTER SELECT";
         else if (_session.IsGtpEngineEditPanelOpen)

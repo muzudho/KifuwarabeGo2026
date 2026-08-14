@@ -1,6 +1,6 @@
 namespace KifuwarabeGo2026.Gui.Presentation;
 
-using static KifuwarabeGo2026.Gui.Presentation.Pages.ReviewChartPopup.ReviewChartPopupScreenBounds;
+using static KifuwarabeGo2026.Gui.Presentation.Pages.PopupTrendChart.PopupTrendChartScreenBounds;
 
 using KifuwarabeGo2026.Gui.Presentation.BoardLens;
 using KifuwarabeGo2026.Gui.Application;

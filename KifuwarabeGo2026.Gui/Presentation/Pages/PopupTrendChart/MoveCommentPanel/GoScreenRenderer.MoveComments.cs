@@ -7,11 +7,12 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using KifuwarabeGo2026.Gui.Presentation.Pages.TrendChart.MoveComments;
+using KifuwarabeGo2026.Gui.Presentation.Pages.PopupTrendChart.MoveCommentPanel;
+using KifuwarabeGo2026.Gui.Presentation.Pages.PopupTrendChart;
 
 public sealed partial class GoScreenRenderer
 {
-    private static MoveCommentsScreen MoveComments => MoveCommentsScreen.Default;
+    private static MoveCommentPanelComponent MoveComments => PopupTrendChartScreen.Default.MoveCommentPanel;
     private Texture2D? _dynamicCommentTexture;
     private string _dynamicCommentTextureKey = "";
 

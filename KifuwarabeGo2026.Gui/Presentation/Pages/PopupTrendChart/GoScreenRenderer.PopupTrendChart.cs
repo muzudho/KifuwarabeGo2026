@@ -6,8 +6,9 @@ using KifuwarabeGo2026.Gui.Application.Local.Playing;
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
-using static KifuwarabeGo2026.Gui.Presentation.Pages.ReviewChartPopup.ReviewChartPopupScreenBounds;
-using KifuwarabeGo2026.Gui.Presentation.Pages.TrendChart.MoveComments;
+using KifuwarabeGo2026.Gui.Presentation.Pages.PopupTrendChart;
+using static KifuwarabeGo2026.Gui.Presentation.Pages.PopupTrendChart.PopupTrendChartScreenBounds;
+using KifuwarabeGo2026.Gui.Presentation.Pages.PopupTrendChart.MoveCommentPanel;
 
 public sealed partial class GoScreenRenderer
 {
@@ -52,16 +53,16 @@ public sealed partial class GoScreenRenderer
         GetMoveTrendDisplayModeButtonHit(point, ReviewChartPopupChartBounds, currentMode);
 
     public static int? GetReviewChartPopupCommentPageStepButtonHit(Point point) =>
-        MoveCommentsScreen.Default.GetPageStepButtonHit(point, ReviewChartPopupCommentOverlayBounds);
+        PopupTrendChartScreen.Default.MoveCommentPanel.GetPageStepButtonHit(point, PopupTrendChartMoveCommentPanelBounds);
 
     public static int? GetReviewChartPopupCommentMoveStepButtonHit(Point point) =>
-        MoveCommentsScreen.Default.GetMoveStepButtonHit(point, ReviewChartPopupCommentOverlayBounds);
+        PopupTrendChartScreen.Default.MoveCommentPanel.GetMoveStepButtonHit(point, PopupTrendChartMoveCommentPanelBounds);
 
     public static bool GetReviewChartPopupCommentEditButtonHit(Point point) =>
-        MoveCommentsScreen.Default.IsEditButtonHit(point, ReviewChartPopupCommentOverlayBounds);
+        PopupTrendChartScreen.Default.MoveCommentPanel.IsEditButtonHit(point, PopupTrendChartMoveCommentPanelBounds);
 
     public static bool IsReviewChartPopupCommentOverlayHit(Point point) =>
-        ReviewChartPopupCommentOverlayBounds.Contains(point);
+        PopupTrendChartMoveCommentPanelBounds.Contains(point);
 
 
     public static int? GetReviewChartPopupSeekMove(Point point, int moveCount)

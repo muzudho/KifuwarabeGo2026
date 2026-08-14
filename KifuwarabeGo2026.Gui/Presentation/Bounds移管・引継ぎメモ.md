@@ -58,13 +58,14 @@ renderer は描画面の実装に限定し、移行期間だけ既存の `Get...
   - `TitleScreen` と `PonnukiProviderSelectionScreen` が所有する。
   - HOME のローカル対局・CGOS・アプリカードと、FORMAL／CASUAL見出し領域も `TitleScreen` に集約した。
   - `TitleRenderer` は画面UIを直接参照し、renderer のタイトル用Boundsと旧ヒットAPIは削除済み。
-- [x] 検討チャートポップアップ
-  - `ReviewChartPopupScreen` がポップアップ、チャート、シーク、コメント重ね表示、リプレイ操作の領域を所有する。
+- [x] Popup Trend Chart画面
+  - `PopupTrendChartScreen` がポップアップ、チャート、シーク、リプレイ操作の領域を所有する。
+  - 右側の着手コメントパネルは `MoveCommentPanel` プロパティとして1つ所有し、パネル自身が領域と内部UIを所有する。
   - renderer の旧4 Boundsと、集計対象外のstatic readonly領域を削除し、描画互換参照は画面クラスを正本にした。
 - [x] コメント表示
   - `MoveCommentsScreen` が見出しの `TableRowLabel`、本文領域、編集・コメント移動・ページ移動の5つの `Button` を所有する。
   - 表示サイズに応じて `UpdateLayout` が各 `Button.Bounds` を更新し、描画と判定が同じButtonインスタンスを参照する。
-  - 通常表示と検討チャートポップアップが同じレイアウト・ヒット判定を参照し、renderer の旧Boundsと内部判定を削除済み。
+  - 通常表示とPopup Trend Chart画面が同じレイアウト・ヒット判定を参照し、renderer の旧Boundsと内部判定を削除済み。
 - [x] ローカル対局のヒット判定呼び出し側
   - 14ボタンは `LocalMatchScreen`、プレイヤー種別と人間名入力は `PlayerKindSelectionRow` が所有する。
   - `Game1`／`PlayingScene` から renderer の旧ヒットAPIを呼ぶ経路は削除済み。

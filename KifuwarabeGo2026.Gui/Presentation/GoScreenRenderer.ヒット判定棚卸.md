@@ -53,7 +53,7 @@
 | `Pages/GtpEngine/GoScreenRenderer.GtpEngine.cs` | 52 | `Pages/GtpEngine/GtpEngineScreen` |
 | `Pages/MoveTrendChart/GoScreenRenderer.MoveTrendChart.cs` | 8 | `Pages/MoveTrendChart/MoveTrendChartScreen` |
 
-`Shared/TextAreaDialog`、`Pages/ApplicationSettings`、`Pages/CgosWatching`、`Pages/EditTournamentRule`、`Pages/BoardAndReview`、`Shared/SelectEntry`、`Shared/EntryProfiles`、`Pages/Title`、`Pages/ReviewChartPopup`、`Pages/MoveComments` の Bounds は renderer から削除済みです。旧集計では `MoveTrendChart` を5個としていましたが、再集計で8個へ補正しました。
+`Shared/TextAreaDialog`、`Pages/ApplicationSettings`、`Pages/CgosWatching`、`Pages/EditTournamentRule`、`Pages/BoardAndReview`、`Shared/SelectEntry`、`Shared/EntryProfiles`、`Pages/Title`、`Pages/PopupTrendChart` の Bounds は renderer から削除済みです。Popup Trend Chart画面は `MoveCommentPanel` を所有します。旧集計では `MoveTrendChart` を5個としていましたが、再集計で8個へ補正しました。
 
 ### 移管済みの操作 Bounds
 

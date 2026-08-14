@@ -1,6 +1,6 @@
 namespace KifuwarabeGo2026.Gui.Presentation;
 
-using static KifuwarabeGo2026.Gui.Presentation.Pages.ReviewChartPopup.ReviewChartPopupScreenBounds;
+using static KifuwarabeGo2026.Gui.Presentation.Pages.PopupTrendChart.PopupTrendChartScreenBounds;
 
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.Watching;
@@ -408,7 +408,7 @@ public sealed partial class GoScreenRenderer
         Point mousePoint,
         int? currentMoveNumber)
     {
-        var overlay = ReviewChartPopupCommentOverlayBounds;
+        var overlay = PopupTrendChartMoveCommentPanelBounds;
         FillRect(overlay, new Color(10, 18, 31, 170));
         DrawRect(overlay, 3, new Color(255, 215, 92, 210));
         DrawMoveCommentContent(moves, overlay, session, mousePoint, currentMoveNumber);
@@ -682,8 +682,8 @@ public sealed partial class GoScreenRenderer
 
     internal static Rectangle GetPopupCommentToggleBounds(Rectangle bounds) =>
         new(
-            ReviewChartPopupCommentOverlayBounds.X,
-            ReviewChartPopupCommentOverlayBounds.Y - 56,
+            PopupTrendChartMoveCommentPanelBounds.X,
+            PopupTrendChartMoveCommentPanelBounds.Y - 56,
             210,
             48);
 

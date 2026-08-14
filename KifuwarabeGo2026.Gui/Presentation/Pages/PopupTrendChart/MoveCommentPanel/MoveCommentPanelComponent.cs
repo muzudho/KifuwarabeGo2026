@@ -1,21 +1,19 @@
-namespace KifuwarabeGo2026.Gui.Presentation.Pages.TrendChart.MoveComments;
+namespace KifuwarabeGo2026.Gui.Presentation.Pages.PopupTrendChart.MoveCommentPanel;
 
 using Microsoft.Xna.Framework;
 using System;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Button;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.TableRowLabel;
 
-/// <summary>棋譜コメント表示のレイアウトと操作判定を所有します。</summary>
-public sealed class MoveCommentsScreen
+/// <summary>［ポップアップトレンドチャート　＞　着手コメントパネル］</summary>
+public sealed class MoveCommentPanelComponent
 {
     // ========================================
     // 生成
     // ========================================
 
-    public static MoveCommentsScreen Default { get; } = new();
-
     #region ［生成　＞　コンストラクター］
-    private MoveCommentsScreen()
+    internal MoveCommentPanelComponent()
     {
         HeadingLabel = new TableRowLabel(string.Empty, Rectangle.Empty, new Color(255, 215, 92), 0.27f);
         PreviousMoveButton = new Button(Rectangle.Empty, "< PREV", 0.19f);
@@ -31,6 +29,7 @@ public sealed class MoveCommentsScreen
     // ========================================
 
     public TableRowLabel HeadingLabel { get; }
+    public Rectangle Bounds { get; } = new(1060, 205, 680, 740);
     public Button PreviousMoveButton { get; }
     public Button NextMoveButton { get; }
     public Button EditButton { get; }
