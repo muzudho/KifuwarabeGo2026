@@ -2039,37 +2039,41 @@ public class Game1 : Game
         }
         if (_session.IsClientIdentityProfileSelectionPanelOpen)
         {
-            if (GoScreenRenderer.GetClientIdentityProfileSelectionCloseButtonHit(point))
+            var profileSelection = EntryProfilesScreen.Default.ProfileSelection;
+            var profileEdit = EntryProfilesScreen.Default.ProfileEdit;
+            if (profileSelection.CloseButton.IsHit(point))
                 _session.CloseClientIdentityProfileSelectionPanel();
-            else if (GoScreenRenderer.GetClientIdentityProfileSelectionUseButtonHit(point))
+            else if (profileSelection.UseButton.IsHit(point))
                 _session.InputSelectedClientIdentityProfileToPlayerEditDraft();
-            else if (GoScreenRenderer.GetClientIdentityProfileSelectionSetDefaultButtonHit(point) && _session.SetSelectedClientIdentityProfileAsDefault())
+            else if (profileSelection.SetDefaultButton.IsHit(point) && _session.SetSelectedClientIdentityProfileAsDefault())
                 SavePlayerAndClientIdentityCatalogs();
-            else if (GoScreenRenderer.GetClientIdentityProfileSelectionAddButtonHit(point) && _session.AddClientIdentityProfileForInput())
+            else if (profileSelection.AddButton.IsHit(point) && _session.AddClientIdentityProfileForInput())
                 SavePlayerAndClientIdentityCatalogs();
-            else if (GoScreenRenderer.GetClientIdentityProfileSelectionEditButtonHit(point))
+            else if (profileSelection.EditButton.IsHit(point))
                 _session.OpenClientIdentityProfileEditPanel();
-            else if (GoScreenRenderer.GetClientIdentityProfileSelectionDuplicateButtonHit(point) && _session.DuplicateSelectedClientIdentityProfile())
+            else if (profileSelection.DuplicateButton.IsHit(point) && _session.DuplicateSelectedClientIdentityProfile())
                 SavePlayerAndClientIdentityCatalogs();
-            else if (GoScreenRenderer.GetClientIdentityProfileEditAddLocalButtonHit(point) && _session.AddClientIdentityProfile(false))
+            else if (profileEdit.AddLocalButton.IsHit(point) && _session.AddClientIdentityProfile(false))
                 SavePlayerAndClientIdentityCatalogs();
-            else if (GoScreenRenderer.GetClientIdentityProfileEditAddCgosButtonHit(point) && _session.AddClientIdentityProfile(true))
+            else if (profileEdit.AddCgosButton.IsHit(point) && _session.AddClientIdentityProfile(true))
                 SavePlayerAndClientIdentityCatalogs();
-            else if (GoScreenRenderer.GetClientIdentityProfileSelectionDeleteButtonHit(point) && _session.RemoveSelectedClientIdentityProfile())
+            else if (profileSelection.DeleteButton.IsHit(point) && _session.RemoveSelectedClientIdentityProfile())
                 SavePlayerAndClientIdentityCatalogs();
-            else if (GoScreenRenderer.GetClientIdentityProfileSelectionItemHit(point, _session) is { } targetIndex)
+            else if (profileSelection.GetItemHit(point, _session.GetPlayerClientIdentityProfiles(_session.PlayerEditDraft.Id).Count) is { } targetIndex)
                 _session.SelectClientIdentityProfile(targetIndex);
             return;
         }
         if (_session.IsClientIdentityProfileEditPanelOpen)
         {
-            if (GoScreenRenderer.GetClientIdentityProfileEditCancelButtonHit(point) && _session.IsClientIdentityProfileEditDirty)
+            var profileEdit = EntryProfilesScreen.Default.ProfileEdit;
+            profileEdit.UpdateState(_session.IsClientIdentityProfileEditDirty);
+            if (profileEdit.DiscardButton.IsHit(point) && _session.IsClientIdentityProfileEditDirty)
             {
                 _session.CancelClientIdentityProfileEdit();
                 SavePlayerAndClientIdentityCatalogs();
                 BeginDiscardTransition();
             }
-            else if (GoScreenRenderer.GetClientIdentityProfileEditSaveButtonHit(point))
+            else if (profileEdit.SaveButton.IsHit(point))
             {
                 if (_session.IsClientIdentityProfileEditDirty)
                 {
@@ -2078,7 +2082,7 @@ public class Game1 : Game
                 }
                 else _session.ReturnToClientIdentityProfileSelectionPanelWithoutSaving();
             }
-            else if (GoScreenRenderer.GetClientIdentityProfileEditFieldHit(point, _session) is { } field)
+            else if (profileEdit.GetFieldHit(point) is { } field)
                 BeginOrMoveClientIdentityProfileEditField(point, field);
             return;
         }

@@ -48,11 +48,12 @@ renderer は描画面の実装に限定し、移行期間だけ既存の `Get...
   - `SelectEntryScreen` がダイアログ、10ボタン、2種類の動的一覧行を含む全16領域を所有する。
   - ページ移動、選択可否、追加・編集・削除の有効状態も画面クラスが保持する。
   - `Game1` は画面UIを直接参照し、rendererの旧ヒットAPIと領域定義は削除済み。
-- [ ] エントリープロファイル（進行中）
+- [x] エントリープロファイル
   - `EntryProfilesScreen` 配下へ接続先選択とクイック選択を分離した。
   - 2つのパネル、6ボタン、2種類の動的一覧行を移管し、`Game1` を直接接続した。
   - ローカル対局のプレイヤー選択とハンドル入力は、正しい所有先である `LocalMatchScreen` へ移管した。
-  - 通常のプロファイル選択・編集の2 Boundsと固定操作領域が残る。
+  - 通常のプロファイル選択・編集も `ProfileSelection` と `ProfileEdit` に分け、固定操作領域と動的な一覧・入力欄を移管した。
+  - `Game1` は画面UIを直接参照し、renderer の旧ヒットAPIとBounds定義は削除済み。
 - [x] タイトル画面の BACK、ポン抜きプロバイダー選択の NEXT／RECHECK／CHANGE
   - `TitleScreen` と `PonnukiProviderSelectionScreen` が所有する。
 - [x] ローカル対局のヒット判定呼び出し側
@@ -78,12 +79,11 @@ renderer は描画面の実装に限定し、移行期間だけ既存の `Get...
 | GTP エンジン | 52 | `Pages/GtpEngine/GtpEngineScreen` |
 | 手の傾向チャート | 8 | `Pages/MoveTrendChart/MoveTrendChartScreen` |
 | コメント表示 | 7 | `Pages/MoveComments/MoveCommentsScreen` |
-| エントリープロファイル | 2 | `Shared/EntryProfiles/EntryProfilesScreen` |
 | 検討チャートポップアップ | 4 | `Pages/ReviewChartPopup/ReviewChartPopupScreen` |
 | タイトル表示 | 2 | `Pages/Title/TitleScreen` |
-| **合計** | **169** | |
+| **合計** | **167** | |
 
-この169個は、2026-08-14に現在のコードを機械的に再集計した値である。旧表の `MoveTrendChart` は5個ではなく8個だったため補正した。ボタンだけでなく表示専用領域も含む。エントリー選択とプロファイルでは、集計対象外のstatic readonly領域もあわせて移管している。
+この167個は、2026-08-14に現在のコードを機械的に再集計した値である。旧表の `MoveTrendChart` は5個ではなく8個だったため補正した。ボタンだけでなく表示専用領域も含む。エントリー選択とプロファイルでは、集計対象外のstatic readonly領域もあわせて移管済みである。
 
 ## 移管の共通手順
 
@@ -109,7 +109,7 @@ dotnet build KifuwarabeGo2026.Gui\KifuwarabeGo2026.Gui.Core.csproj --no-restore
 | 4 | 完了 | CGOS 観戦 | 3 | `Pages/CgosWatching/CgosWatchingScreen` | 3ボタンとヒット判定を集約済み。 |
 | 5 | 完了 | 大会ルール編集 | 25 | `Pages/EditTournamentRule/TournamentRulesScreen` | 全領域、ヒット判定、画面固有入力UIを集約済み。 |
 | 6 | 完了 | 盤編集・検討 | 35 | `Pages/BoardAndReview/BoardAndReviewScreen` | 盤編集、変化図編集、棋譜検討と各状態を集約済み。 |
-| 7 | 進行中 | エントリープロファイル／選択 | 2 | `Shared/EntryProfiles`、`Shared/SelectEntry` | SelectEntry、接続先・クイック選択、ローカル対局ハンドルは完了。通常編集が残る。 |
+| 7 | 完了 | エントリープロファイル／選択 | 9 | `Shared/EntryProfiles`、`Shared/SelectEntry` | SelectEntry、接続先・クイック選択、通常の選択・編集、ローカル対局ハンドルを移管済み。集計対象外の固定領域も含む。 |
 | 8 | 未着手 | CGOS 接続 | 67 | `Pages/Cgos/CgosScreen` | 最大規模。接続一覧、管理パネル、編集パネルにさらに小分けする。 |
 | 9 | 未着手 | GTP エンジン | 52 | `Pages/GtpEngine/GtpEngineScreen` | 選択、編集、GUI オプション、ランダム着手を小クラスに分割して移す。 |
 | 10 | 未着手 | コメント・チャート・タイトル表示 | 18 | 各 Page の Screen | 表示専用 Bounds も多く、上記パターンを確立してから行う。 |

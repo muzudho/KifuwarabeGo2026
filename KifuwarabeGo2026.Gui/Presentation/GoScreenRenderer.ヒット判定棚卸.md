@@ -50,7 +50,7 @@
 
 ## `*Bounds` の棚卸（partial class を含む）
 
-`GoScreenRenderer` の partial class を含めて機械的に再集計した結果、`Rectangle` を返す／保持する `*Bounds` 定義は **169 個**です。ここにはボタン以外に、パネル、テキスト欄、リスト行、ツールチップ、チャート領域も含まれます。したがって、すべてを `Button` に置換するのではなく、操作可能な領域は文房具 UI、表示領域は画面クラスの `Rectangle` プロパティとして移します。
+`GoScreenRenderer` の partial class を含めて機械的に再集計した結果、`Rectangle` を返す／保持する `*Bounds` 定義は **167 個**です。ここにはボタン以外に、パネル、テキスト欄、リスト行、ツールチップ、チャート領域も含まれます。したがって、すべてを `Button` に置換するのではなく、操作可能な領域は文房具 UI、表示領域は画面クラスの `Rectangle` プロパティとして移します。
 
 | 現在の定義ファイル | 数 | 移管先 |
 | --- | ---: | --- |
@@ -61,9 +61,8 @@
 | `Pages/MoveTrendChart/GoScreenRenderer.MoveTrendChart.cs` | 8 | `Pages/MoveTrendChart/MoveTrendChartScreen` |
 | `Pages/ReviewChartPopup/GoScreenRenderer.ReviewChartPopup.cs` | 4 | `Pages/ReviewChartPopup/ReviewChartPopupScreen` |
 | `Pages/Title/GoScreenRenderer.Title.cs` | 2 | `Pages/Title/TitleScreen` |
-| `Shared/EntryProfiles/GoScreenRenderer.EntryProfiles.cs` | 2 | `Shared/EntryProfiles/EntryProfilesScreen` |
 
-`Shared/TextAreaDialog`、`Pages/ApplicationSettings`、`Pages/CgosWatching`、`Pages/EditTournamentRule`、`Pages/BoardAndReview`、`Shared/SelectEntry` の Bounds は renderer から削除済みです。旧集計では `MoveTrendChart` を5個としていましたが、再集計で8個へ補正しました。
+`Shared/TextAreaDialog`、`Pages/ApplicationSettings`、`Pages/CgosWatching`、`Pages/EditTournamentRule`、`Pages/BoardAndReview`、`Shared/SelectEntry`、`Shared/EntryProfiles` の Bounds は renderer から削除済みです。旧集計では `MoveTrendChart` を5個としていましたが、再集計で8個へ補正しました。
 
 ### 移管済みの操作 Bounds
 

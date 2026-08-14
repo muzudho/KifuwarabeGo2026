@@ -13,54 +13,11 @@ using static KifuwarabeGo2026.Gui.Presentation.Shared.EntryProfiles.EntryProfile
 /// <summary>Player 選択欄と選択ダイアログの描画・当たり判定。</summary>
 public sealed partial class GoScreenRenderer
 {
-    private static readonly Rectangle ClientIdentityProfileSelectionCloseButtonBounds = new(1158, 182, 150, 48);
-    private static readonly Rectangle ClientIdentityProfileSelectionUseButtonBounds = new(1320, 182, 150, 48);
-    // 下段は CRUD と既定設定の操作を、同じ 17px 間隔で左から並べます。
-    private static readonly Rectangle ClientIdentityProfileSelectionAddButtonBounds = new(466, 820, 180, 48);
-    private static readonly Rectangle ClientIdentityProfileSelectionDuplicateButtonBounds = new(663, 820, 180, 48);
-    private static readonly Rectangle ClientIdentityProfileSelectionEditButtonBounds = new(860, 820, 180, 48);
-    private static readonly Rectangle ClientIdentityProfileSelectionSetDefaultButtonBounds = new(1057, 820, 220, 48);
-    private static readonly Rectangle ClientIdentityProfileSelectionDeleteButtonBounds = new(1294, 820, 180, 48);
-    private static readonly Rectangle ClientIdentityProfileEditCancelButtonBounds = new(1158, 182, 150, 48);
-    private static readonly Rectangle ClientIdentityProfileEditSaveButtonBounds = new(1320, 182, 150, 48);
-    private static readonly Rectangle ClientIdentityProfileEditUseButtonBounds = new(1158, 182, 150, 48);
-    private static readonly Rectangle ClientIdentityProfileEditAddCgosButtonBounds = new(628, 820, 160, 48);
-    private static readonly Rectangle ClientIdentityProfileEditAddLocalButtonBounds = new(466, 820, 150, 48);
-    private static readonly Rectangle ClientIdentityProfileEditRemoveButtonBounds = new(962, 820, 150, 48);
 
     public int GetLocalMatchHandleCaretIndex(Point point, GoStone stone, string text, bool isPonnuki) =>
         GetTextBoxCaretIndex(point.X, text, LocalMatchScreen.Default.GetHandleTextBounds(stone, isPonnuki), 0.32f);
-    public static bool GetClientIdentityProfileSelectionCloseButtonHit(Point point) => ClientIdentityProfileSelectionCloseButtonBounds.Contains(point);
-    public static bool GetClientIdentityProfileSelectionUseButtonHit(Point point) => ClientIdentityProfileSelectionUseButtonBounds.Contains(point);
-    public static bool GetClientIdentityProfileSelectionEditButtonHit(Point point) => ClientIdentityProfileSelectionEditButtonBounds.Contains(point);
-    public static bool GetClientIdentityProfileSelectionDuplicateButtonHit(Point point) => ClientIdentityProfileSelectionDuplicateButtonBounds.Contains(point);
-    public static bool GetClientIdentityProfileSelectionSetDefaultButtonHit(Point point) => ClientIdentityProfileSelectionSetDefaultButtonBounds.Contains(point);
-    public static bool GetClientIdentityProfileSelectionAddButtonHit(Point point) => ClientIdentityProfileSelectionAddButtonBounds.Contains(point);
-    public static bool GetClientIdentityProfileSelectionDeleteButtonHit(Point point) => ClientIdentityProfileSelectionDeleteButtonBounds.Contains(point);
-    public static bool GetClientIdentityProfileEditCancelButtonHit(Point point) => ClientIdentityProfileEditCancelButtonBounds.Contains(point);
-    public static bool GetClientIdentityProfileEditSaveButtonHit(Point point) => ClientIdentityProfileEditSaveButtonBounds.Contains(point);
-    public static bool GetClientIdentityProfileEditAddCgosButtonHit(Point point) => ClientIdentityProfileEditAddCgosButtonBounds.Contains(point);
-    public static bool GetClientIdentityProfileEditAddLocalButtonHit(Point point) => ClientIdentityProfileEditAddLocalButtonBounds.Contains(point);
-    public static bool GetClientIdentityProfileEditRemoveButtonHit(Point point) => ClientIdentityProfileEditRemoveButtonBounds.Contains(point);
-    public static bool GetClientIdentityProfileEditUseButtonHit(Point point) => ClientIdentityProfileEditUseButtonBounds.Contains(point);
-    public static ClientIdentityProfileEditField? GetClientIdentityProfileEditFieldHit(Point point, GoAppSession session)
-    {
-        var index = session.ClientIdentityProfileEditIndex;
-        return ClientIdentityProfileEditFieldTextBounds(index, ClientIdentityProfileEditField.LoginName, false).Contains(point) ? ClientIdentityProfileEditField.LoginName :
-            ClientIdentityProfileEditFieldTextBounds(index, ClientIdentityProfileEditField.LoginPass, false).Contains(point) ? ClientIdentityProfileEditField.LoginPass : null;
-    }
     public int GetClientIdentityProfileEditCaretIndex(Point point, int index, ClientIdentityProfileEditField field, string text, bool isLocalMatch) =>
         GetTextBoxCaretIndex(point.X, text, ClientIdentityProfileEditFieldTextBounds(index, field, isLocalMatch), 0.34f);
-    public static int? GetClientIdentityProfileEditItemHit(Point point, GoAppSession session)
-    {
-        var count = session.GetPlayerClientIdentityProfiles(session.PlayerEditDraft.Id).Count;
-        for (var index = 0; index < count; index++)
-            if (new Rectangle(466, 290 + index * 92, 1008, 78).Contains(point)) return index;
-        return null;
-    }
-
-    public static int? GetClientIdentityProfileSelectionItemHit(Point point, GoAppSession session) =>
-        GetClientIdentityProfileEditItemHit(point, session);
 
     private void DrawSetupPlayerRow(GoAppSession session, GoStone stone, Point mousePoint, int y)
     {
@@ -105,6 +62,7 @@ public sealed partial class GoScreenRenderer
             return;
         }
         if (!session.IsClientIdentityProfileEditPanelOpen) return;
+        EntryProfilesScreen.Default.ProfileEdit.UpdateState(session.IsClientIdentityProfileEditDirty);
         var bounds = new Rectangle(430, 150, 1080, 760);
         FillRect(new Rectangle(0, 0, VirtualScreen.Width, VirtualScreen.Height), new Color(0, 0, 0, 150));
         FillRect(bounds, new Color(24, 29, 36, 252));
@@ -245,17 +203,6 @@ public sealed partial class GoScreenRenderer
         }
     }
 
-    private static Rectangle ClientIdentityProfileEditFieldTextBounds(int index, ClientIdentityProfileEditField field, bool isLocalMatch)
-    {
-        var rowY = 358;
-        return field switch
-        {
-            ClientIdentityProfileEditField.DisplayName => new Rectangle(760, rowY + 7, 600, 42),
-            ClientIdentityProfileEditField.LoginName => new Rectangle(760, rowY + 7, 600, 42),
-            ClientIdentityProfileEditField.LoginPass => new Rectangle(760, rowY + 71, 600, 42),
-            _ => throw new ArgumentOutOfRangeException(nameof(field), field, "Unknown target edit field."),
-        };
-    }
 
     private void DrawClientIdentityProfileEditField(GoAppSession session, int index, ClientIdentityProfileEditField field, string label, Point mousePoint, bool isLocalMatch)
     {
@@ -287,9 +234,6 @@ public sealed partial class GoScreenRenderer
         if (!isEditing && isHovered)
             DrawActionBadge("EDIT", textBounds);
     }
-
-    private static Rectangle ClientIdentityFieldHoverBounds(Rectangle textBounds) =>
-        new(536, textBounds.Y, textBounds.Right - 536, textBounds.Height);
 
     private static Vector2 ClientIdentityUnderlineConnectorStart(Rectangle textBounds) =>
         new(textBounds.Right - 24, textBounds.Bottom + 4);
