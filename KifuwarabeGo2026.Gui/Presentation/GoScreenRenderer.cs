@@ -20,6 +20,7 @@ using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.PopupTimeUnderline
 using KifuwarabeGo2026.Gui.Presentation.Shared.CgosMatchNotification;
 using KifuwarabeGo2026.Gui.Presentation.Shared.PopupFilePathTooltip;
 using KifuwarabeGo2026.Gui.Presentation.Shared.EditEntryProfile;
+using KifuwarabeGo2026.Gui.Presentation.Shared.HeadUpDisplay;
 using KifuwarabeGo2026.Gui.Presentation.BoardLens;
 using KifuwarabeGo2026.Gui.Presentation.BoardLens.Shared.RenBoundaries;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
@@ -78,19 +79,11 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         new RoundUnderline { TopOffset = 2, Thickness = 5, Radius = 2 });
     private readonly LinkUnderline _tournamentRulesSettingsFileLinkUnderline = new(
         new RoundUnderline { TopOffset = 2, Thickness = 5, Radius = 2 });
-    private readonly Breadcrumb _breadcrumb = new();
     private readonly SpinBox _spinBox = new();
-    
-    private readonly TextInputDialog _textInputDialog = new();
-    public ScreenTransition ScreenTransition { get; } = new();
-    public ScreenshotEffect ScreenshotEffect { get; } = new();
-    public ReviewUnsavedChangesConfirmation ReviewUnsavedChangesConfirmation { get; } = new();
+
+    public HeadUpDisplay HeadUpDisplay { get; } = HeadUpDisplay.Default;
     public InitialPositionConcierge InitialPositionConcierge { get; } = new();
-    public PopupNumberUnderline PopupNumberUnderline { get; } = new();
-    public PopupTimeUnderline PopupTimeUnderline { get; } = new();
-    private StickyNoteScreenId _stickyNoteScreen = StickyNoteScreenId.Unknown;
     private readonly CgosMatchNotification _cgosMatchNotification = CgosMatchNotification.Default;
-    private readonly PopupFilePathTooltip _popupFilePathTooltip = new();
     private static readonly BoardLensButtonStrip LocalPlayingBoardLensButtons = new(1516, 800);
     public EditEntryProfile EditEntryProfile { get; } = new();
     public ActionBadgeComponent EditActionBadge { get; } = ActionBadgeComponent.Create("EDIT", Rectangle.Empty);
@@ -562,8 +555,8 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
 
     private void DrawPathTooltipIfHovered(Rectangle rowBounds, string fullPath, Point mousePoint)
     {
-        _popupFilePathTooltip.Draw(
-            _stickyNoteScreen,
+        HeadUpDisplay.PopupFilePathTooltip.Draw(
+            HeadUpDisplay.StickyNoteScreen,
             StickyNoteKind.TournamentRulesPathHint,
             rowBounds,
             fullPath,
@@ -1149,7 +1142,7 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
     {
         if (!visible) return;
         _spriteBatch.Begin(samplerState: SamplerState.LinearClamp, transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));
-        _breadcrumb.Draw(path, VirtualScreen.Width, _font.MeasureString, new BreadcrumbDrawingCallbacks(FillRect, DrawFittedText));
+        HeadUpDisplay.Breadcrumb.Draw(path, VirtualScreen.Width, _font.MeasureString, new BreadcrumbDrawingCallbacks(FillRect, DrawFittedText));
         _spriteBatch.End();
     }
 
@@ -1192,7 +1185,7 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         var mousePoint = VirtualScreen.ToVirtualPoint(_graphicsDevice.Viewport, mousePosition);
         _spriteBatch.Begin(blendState: BlendState.AlphaBlend, samplerState: SamplerState.LinearClamp,
             transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));
-        _textInputDialog.Draw(mousePoint, title, text, caretIndex, selectionStart, selectionLength, message, showDefaultButton,
+        HeadUpDisplay.TextInputDialog.Draw(mousePoint, title, text, caretIndex, selectionStart, selectionLength, message, showDefaultButton,
             composition, compositionDiagnostics, showCompositionDiagnostics,
             new TextInputDialogDrawingCallbacks(FillRect, DrawRect, DrawText, DrawFittedText, DrawTextBoxSelection,
                 DrawDynamicCompositionText, _font.MeasureString, DrawLine, DrawCompositionLamp, DrawCommandButton));
@@ -1242,7 +1235,7 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
     public void DrawLightningScreenTransition(float progress)
     {
         _spriteBatch.Begin(samplerState: SamplerState.LinearClamp, transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));
-        ScreenTransition.Draw(progress, new ScreenTransitionDrawingCallbacks(VirtualScreen.Width, VirtualScreen.Height, DrawLine));
+        HeadUpDisplay.ScreenTransition.Draw(progress, new ScreenTransitionDrawingCallbacks(VirtualScreen.Width, VirtualScreen.Height, DrawLine));
         _spriteBatch.End();
     }
 
@@ -1250,7 +1243,7 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
     {
         _spriteBatch.Begin(blendState: BlendState.AlphaBlend, samplerState: SamplerState.LinearClamp,
             transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));
-        ScreenshotEffect.Draw(progress, new ScreenshotEffectDrawingCallbacks(VirtualScreen.Width, VirtualScreen.Height, FillRect));
+        HeadUpDisplay.ScreenshotEffect.Draw(progress, new ScreenshotEffectDrawingCallbacks(VirtualScreen.Width, VirtualScreen.Height, FillRect));
         _spriteBatch.End();
     }
 
@@ -1259,7 +1252,7 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         var mousePoint = VirtualScreen.ToVirtualPoint(_graphicsDevice.Viewport, mousePosition);
         _spriteBatch.Begin(blendState: BlendState.AlphaBlend, samplerState: SamplerState.LinearClamp,
             transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));
-        ReviewUnsavedChangesConfirmation.Draw(mousePoint,
+        HeadUpDisplay.ReviewUnsavedChangesConfirmation.Draw(mousePoint,
             new ReviewUnsavedChangesConfirmationDrawingCallbacks(VirtualScreen.Width, VirtualScreen.Height, FillRect,
                 DrawRect, DrawText, DrawFittedText, _stationeryDrawingContext));
         _spriteBatch.End();
@@ -1275,7 +1268,7 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         var mousePoint = VirtualScreen.ToVirtualPoint(_graphicsDevice.Viewport, mousePosition);
         _spriteBatch.Begin(blendState: BlendState.AlphaBlend, samplerState: SamplerState.LinearClamp,
             transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));
-        PopupNumberUnderline.Draw(mousePoint, title, text, caretIndex, selectionStart, selectionLength, message,
+        HeadUpDisplay.PopupNumberUnderline.Draw(mousePoint, title, text, caretIndex, selectionStart, selectionLength, message,
             new PopupNumberUnderlineDrawingCallbacks(VirtualScreen.Width, VirtualScreen.Height, FillRect, DrawRect,
                 DrawText, DrawFittedText, DrawTextBoxSelection, value => _font.MeasureString(value).X, _stationeryDrawingContext,
                 DrawLine, DrawSharpCenteredFittedText), options);
@@ -1283,29 +1276,29 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
     }
 
     public int GetPopupNumberUnderlineCaretIndex(Point point, string text) =>
-        PopupNumberUnderline.GetCaretIndex(point, text, GetTextBoxCaretIndex);
+        HeadUpDisplay.PopupNumberUnderline.GetCaretIndex(point, text, GetTextBoxCaretIndex);
 
     public void DrawPopupTimeUnderline(Point mousePosition, string[] values, int[] carets, int activePart, string message)
     {
         var mousePoint = VirtualScreen.ToVirtualPoint(_graphicsDevice.Viewport, mousePosition);
         _spriteBatch.Begin(blendState: BlendState.AlphaBlend, samplerState: SamplerState.LinearClamp,
             transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));
-        PopupTimeUnderline.Draw(mousePoint, values, carets, activePart, message,
+        HeadUpDisplay.PopupTimeUnderline.Draw(mousePoint, values, carets, activePart, message,
             new PopupTimeUnderlineDrawingCallbacks(VirtualScreen.Width, VirtualScreen.Height, FillRect, DrawRect,
                 DrawText, DrawFittedText, value => _font.MeasureString(value).X, _stationeryDrawingContext, DrawLine, DrawSharpCenteredFittedText));
         _spriteBatch.End();
     }
 
     public int GetPopupTimeUnderlineCaretIndex(int part, Point point, string text) =>
-        PopupTimeUnderline.GetCaretIndex(part, point, text, GetTextBoxCaretIndex);
+        HeadUpDisplay.PopupTimeUnderline.GetCaretIndex(part, point, text, GetTextBoxCaretIndex);
 
-    public void SetStickyNoteScreen(StickyNoteScreenId screen) => _stickyNoteScreen = screen;
+    public void SetStickyNoteScreen(StickyNoteScreenId screen) => HeadUpDisplay.StickyNoteScreen = screen;
 
     private void DrawStickyNote(StickyNoteKind kind, Vector2 connectorStart, Color accent, Color borderColor,
         string heading, IReadOnlyList<string> bodyLines, int bodyLineSpacing = 40, Rectangle? anchorBounds = null)
     {
         var note = new StickyNote(kind, connectorStart, accent, borderColor, heading, bodyLines, bodyLineSpacing, anchorBounds);
-        if (!note.TryPlace(_stickyNoteScreen)) return;
+        if (!note.TryPlace(HeadUpDisplay.StickyNoteScreen)) return;
         note.Draw(new StickyNoteDrawingCallbacks(DrawLine, FillRect, DrawRect, DrawDynamicOptionText));
     }
 
@@ -1610,7 +1603,7 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         EditEntryProfile.GetCaretIndex(point, field, text, GetTextBoxCaretIndex);
 
     private void DrawPlayerEditPanel(GoAppSession session, Point mousePoint) =>
-        EditEntryProfile.Draw(session, mousePoint, _stickyNoteScreen,
+        EditEntryProfile.Draw(session, mousePoint, HeadUpDisplay.StickyNoteScreen,
             new EditEntryProfileDrawingCallbacks(VirtualScreen.Width, VirtualScreen.Height, FillRect, DrawRoundedFill,
                 DrawRect, DrawText, DrawFittedText, _stationeryDrawingContext, DrawIconStone, DrawPlayerRoleFaceIcon,
                 DrawTextBoxSelection, DrawTextBoxCaret,

@@ -993,9 +993,9 @@ public class Game1 : Game
         {
             if (_previousMouse.LeftButton == ButtonState.Released && mouse.LeftButton == ButtonState.Pressed)
             {
-                if (_renderer?.ReviewUnsavedChangesConfirmation.SaveButton.IsHit(point) == true) SavePendingReviewExit();
-                else if (_renderer?.ReviewUnsavedChangesConfirmation.DiscardButton.IsHit(point) == true) CompletePendingReviewExit(discardChanges: true);
-                else if (_renderer?.ReviewUnsavedChangesConfirmation.CancelButton.IsHit(point) == true) CancelPendingReviewExit();
+                if (_renderer?.HeadUpDisplay.ReviewUnsavedChangesConfirmation.SaveButton.IsHit(point) == true) SavePendingReviewExit();
+                else if (_renderer?.HeadUpDisplay.ReviewUnsavedChangesConfirmation.DiscardButton.IsHit(point) == true) CompletePendingReviewExit(discardChanges: true);
+                else if (_renderer?.HeadUpDisplay.ReviewUnsavedChangesConfirmation.CancelButton.IsHit(point) == true) CancelPendingReviewExit();
             }
             _previousMouse = mouse;
             return;
@@ -1042,7 +1042,7 @@ public class Game1 : Game
 
             if (_tournamentRulesSetting.IsTimeInputOpen)
             {
-                if (_renderer?.PopupTimeUnderline.IsTextBoxHit(point, out var part) == true)
+                if (_renderer?.HeadUpDisplay.PopupTimeUnderline.IsTextBoxHit(point, out var part) == true)
                     _tournamentRulesSetting.BeginTimeInputSelection(part,
                         _renderer.GetPopupTimeUnderlineCaretIndex(part, point, _tournamentRulesSetting.TimeInputTexts[part]));
                 else
@@ -1052,15 +1052,15 @@ public class Game1 : Game
                     {
                         for (var index = 0; index < 3; index++)
                         {
-                            var spin = _renderer.PopupTimeUnderline.SpinButtons[index];
+                            var spin = _renderer.HeadUpDisplay.PopupTimeUnderline.SpinButtons[index];
                             var step = index == 0 ? 1 : 1;
                             if (spin.UpButton.IsHit(point)) { _tournamentRulesSetting.ChangeTimeInput(index, step); spinHandled = true; break; }
                             if (spin.DownButton.IsHit(point)) { _tournamentRulesSetting.ChangeTimeInput(index, -step); spinHandled = true; break; }
                         }
                     }
-                    if (!spinHandled && _renderer?.PopupTimeUnderline.OkButton.IsHit(point) == true)
+                    if (!spinHandled && _renderer?.HeadUpDisplay.PopupTimeUnderline.OkButton.IsHit(point) == true)
                         _tournamentRulesSetting.CommitTimeInput();
-                    else if (!spinHandled && _renderer?.PopupTimeUnderline.CancelButton.IsHit(point) == true)
+                    else if (!spinHandled && _renderer?.HeadUpDisplay.PopupTimeUnderline.CancelButton.IsHit(point) == true)
                         _tournamentRulesSetting.CancelTimeInput();
                 }
                 _previousMouse = mouse;
@@ -1069,17 +1069,17 @@ public class Game1 : Game
 
             if (_tournamentRulesSetting.IsMoveLimitInputOpen)
             {
-                if (_renderer?.PopupNumberUnderline.IsTextBoxHit(point) == true)
+                if (_renderer?.HeadUpDisplay.PopupNumberUnderline.IsTextBoxHit(point) == true)
                     _tournamentRulesSetting.BeginMoveLimitInputSelection(
                         _renderer.GetPopupNumberUnderlineCaretIndex(point, _tournamentRulesSetting.MoveLimitInputText), IsShiftDown());
                 else
                 {
                     var spinHandled = false;
-                    if (_renderer?.PopupNumberUnderline.SpinButtons.Count >= 3)
+                    if (_renderer?.HeadUpDisplay.PopupNumberUnderline.SpinButtons.Count >= 3)
                     for (var index = 0; index < 3; index++)
                     {
                         var step = index switch { 0 => 100, 1 => 10, _ => 1 };
-                        var spinButton = _renderer.PopupNumberUnderline.SpinButtons[index];
+                        var spinButton = _renderer.HeadUpDisplay.PopupNumberUnderline.SpinButtons[index];
                         if (spinButton.UpButton.IsHit(point))
                         {
                             _tournamentRulesSetting.ChangeMoveLimitInput(step);
@@ -1093,9 +1093,9 @@ public class Game1 : Game
                             break;
                         }
                     }
-                    if (!spinHandled && _renderer?.PopupNumberUnderline.OkButton.IsHit(point) == true)
+                    if (!spinHandled && _renderer?.HeadUpDisplay.PopupNumberUnderline.OkButton.IsHit(point) == true)
                         _tournamentRulesSetting.CommitMoveLimitInput();
-                    else if (!spinHandled && _renderer?.PopupNumberUnderline.CancelButton.IsHit(point) == true)
+                    else if (!spinHandled && _renderer?.HeadUpDisplay.PopupNumberUnderline.CancelButton.IsHit(point) == true)
                         _tournamentRulesSetting.CancelMoveLimitInput();
                 }
                 _previousMouse = mouse;
@@ -1104,31 +1104,31 @@ public class Game1 : Game
 
             if (_tournamentRulesSetting.IsKomiInputOpen)
             {
-                if (_renderer?.PopupNumberUnderline.IsTextBoxHit(point) == true)
+                if (_renderer?.HeadUpDisplay.PopupNumberUnderline.IsTextBoxHit(point) == true)
                     _tournamentRulesSetting.BeginKomiInputSelection(
                         _renderer.GetPopupNumberUnderlineCaretIndex(point, _tournamentRulesSetting.KomiInputText), IsShiftDown());
-                else if (_renderer?.PopupNumberUnderline.StepUpButton?.IsHit(point) == true)
+                else if (_renderer?.HeadUpDisplay.PopupNumberUnderline.StepUpButton?.IsHit(point) == true)
                     _tournamentRulesSetting.ChangeKomiInput(0.5m);
-                else if (_renderer?.PopupNumberUnderline.StepDownButton?.IsHit(point) == true)
+                else if (_renderer?.HeadUpDisplay.PopupNumberUnderline.StepDownButton?.IsHit(point) == true)
                     _tournamentRulesSetting.ChangeKomiInput(-0.5m);
-                else if (_renderer?.PopupNumberUnderline.OkButton.IsHit(point) == true)
+                else if (_renderer?.HeadUpDisplay.PopupNumberUnderline.OkButton.IsHit(point) == true)
                     _tournamentRulesSetting.CommitKomiInput();
-                else if (_renderer?.PopupNumberUnderline.CancelButton.IsHit(point) == true)
+                else if (_renderer?.HeadUpDisplay.PopupNumberUnderline.CancelButton.IsHit(point) == true)
                     _tournamentRulesSetting.CancelKomiInput();
                 _previousMouse = mouse;
                 return;
             }
             if (_activeGtpEngineIntegerOption is not null)
             {
-                if (_renderer?.PopupNumberUnderline.IsTextBoxHit(point) == true)
+                if (_renderer?.HeadUpDisplay.PopupNumberUnderline.IsTextBoxHit(point) == true)
                 {
                     _gtpEngineIntegerOptionTextBox.BeginMouseSelection(
                         _renderer.GetPopupNumberUnderlineCaretIndex(point, _gtpEngineIntegerOptionTextBox.Text),
                         IsShiftDown());
                 }
-                else if (_renderer?.PopupNumberUnderline.OkButton.IsHit(point) == true)
+                else if (_renderer?.HeadUpDisplay.PopupNumberUnderline.OkButton.IsHit(point) == true)
                     CommitGtpEngineIntegerInput();
-                else if (_renderer?.PopupNumberUnderline.CancelButton.IsHit(point) == true)
+                else if (_renderer?.HeadUpDisplay.PopupNumberUnderline.CancelButton.IsHit(point) == true)
                     CancelGtpEngineIntegerInput();
                 _previousMouse = mouse;
                 return;

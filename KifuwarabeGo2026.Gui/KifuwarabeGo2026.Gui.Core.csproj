@@ -47,6 +47,7 @@
     <Folder Include="Presentation\Shared\EditEntryProfile\" />
     <Folder Include="Presentation\Shared\EditEntryProfile\" />
     <Folder Include="Presentation\Shared\PopupFilePathTooltip\" />
+    <Folder Include="Presentation\Shared\HeadUpDisplay\" />
     <Folder Include="Presentation\StationeryUI\Controls\PopupNumberUnderline\" />
     <Folder Include="Presentation\StationeryUI\Controls\StickyNote\" />
     <Folder Include="Presentation\StationeryUI\Controls\TableRowLabel\" />

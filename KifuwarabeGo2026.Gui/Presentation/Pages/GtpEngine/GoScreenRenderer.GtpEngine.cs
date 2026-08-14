@@ -708,9 +708,9 @@ public sealed partial class GoScreenRenderer
 
         // パス用ポップアップは一度に一つだけ表示する。二つのポップアップが重なると、
         // 後から描いた方が別行のホバー判定に見えてしまう。
-        if (PopupFilePathTooltip.IsHovered(_stickyNoteScreen, StickyNoteKind.GtpEnginePathHint, executablePathRowBounds, executablePath, mousePoint))
-            _popupFilePathTooltip.Draw(
-                _stickyNoteScreen,
+        if (PopupFilePathTooltip.IsHovered(HeadUpDisplay.StickyNoteScreen, StickyNoteKind.GtpEnginePathHint, executablePathRowBounds, executablePath, mousePoint))
+            HeadUpDisplay.PopupFilePathTooltip.Draw(
+                HeadUpDisplay.StickyNoteScreen,
                 StickyNoteKind.GtpEnginePathHint,
                 executablePathRowBounds,
                 executablePath,
@@ -724,9 +724,9 @@ public sealed partial class GoScreenRenderer
                 ],
                 _stationeryDrawingContext,
                 DrawDynamicOptionText);
-        else if (PopupFilePathTooltip.IsHovered(_stickyNoteScreen, StickyNoteKind.GtpEnginePathHint, workingDirectoryRowBounds, displayWorkingDirectory, mousePoint))
-            _popupFilePathTooltip.Draw(
-                _stickyNoteScreen,
+        else if (PopupFilePathTooltip.IsHovered(HeadUpDisplay.StickyNoteScreen, StickyNoteKind.GtpEnginePathHint, workingDirectoryRowBounds, displayWorkingDirectory, mousePoint))
+            HeadUpDisplay.PopupFilePathTooltip.Draw(
+                HeadUpDisplay.StickyNoteScreen,
                 StickyNoteKind.GtpEnginePathHint,
                 workingDirectoryRowBounds,
                 displayWorkingDirectory,
