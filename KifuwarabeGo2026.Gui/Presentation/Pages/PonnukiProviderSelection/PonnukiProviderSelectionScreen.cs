@@ -65,8 +65,7 @@ public sealed class PonnukiProviderSelectionScreen
         ProviderLinkUnderline.Bounds = textBounds;
         ProviderLinkUnderline.SetActionBadge(ActionBadgeComponent.Create("CHANGE", textBounds));
         ProviderLinkUnderline.UpdatePointer(mousePoint);
-        ProviderLinkUnderline.Draw(draw.UnderlineSurface,
-            new ActionBadgeDrawingCallbacks(draw.DrawRoundedFill, draw.DrawSharpCenteredFittedText));
+        ProviderLinkUnderline.Draw(draw.UnderlineSurface);
         if (hovered)
         {
             draw.DrawStickyNote(
@@ -143,7 +142,5 @@ public sealed record PonnukiProviderSelectionDrawingCallbacks(
     Action<string, Rectangle, Color, float> DrawDynamicText,
     Action<string, Rectangle, Color, float> DrawFittedText,
     Action<Vector2, Vector2, float, Color> DrawLine,
-    Action<Rectangle, int, Color> DrawRoundedFill,
-    Action<string, Rectangle, Color, float> DrawSharpCenteredFittedText,
     Action<StickyNoteKind, Vector2, Color, Color, string, IReadOnlyList<string>> DrawStickyNote,
     Action<Rectangle, int, int, int> DrawTabNavigationHint);

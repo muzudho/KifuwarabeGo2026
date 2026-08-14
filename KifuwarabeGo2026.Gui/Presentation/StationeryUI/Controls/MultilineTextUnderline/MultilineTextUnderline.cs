@@ -67,7 +67,7 @@ public sealed class MultilineTextUnderline
             ActionBadge?.Hide();
     }
 
-    public void Draw(StationeryDrawingContext surface, ActionBadgeDrawingCallbacks? actionBadgeDrawing = null)
+    public void Draw(StationeryDrawingContext surface)
     {
         ArgumentNullException.ThrowIfNull(surface);
 
@@ -80,7 +80,6 @@ public sealed class MultilineTextUnderline
             Underline.Color = underlineColor;
             Underline.Draw(surface);
         }
-        if (actionBadgeDrawing is not null)
-            ActionBadge?.Draw(actionBadgeDrawing);
+        ActionBadge?.Draw(surface);
     }
 }

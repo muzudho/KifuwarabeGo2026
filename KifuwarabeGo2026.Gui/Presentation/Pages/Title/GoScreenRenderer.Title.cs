@@ -223,7 +223,6 @@ public sealed partial class GoScreenRenderer
         PonnukiProviderSelectionScreen.Default.Draw(session, mousePoint, appProviderTabIndex, isAppProviderLoading,
             new PonnukiProviderSelectionDrawingCallbacks(
                 _stationeryDrawingContext, _stationeryDrawingContext, _stationeryDrawingContext, DrawText, DrawDynamicOptionText, DrawFittedText, DrawLine,
-                DrawRoundedFill, DrawSharpCenteredFittedText,
                 (kind, connectorStart, accent, borderColor, heading, bodyLines) =>
                     DrawStickyNote(kind, connectorStart, accent, borderColor, heading, bodyLines),
                 DrawTabNavigationHint));

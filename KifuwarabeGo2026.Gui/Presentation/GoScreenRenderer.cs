@@ -97,7 +97,7 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
     private void DrawActionBadge(ActionBadgeComponent badge)
     {
         badge.Show();
-        badge.Draw(new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText));
+        badge.Draw(_stationeryDrawingContext);
     }
 
     private void DrawActionBadge(string label, Rectangle anchorBounds) =>
@@ -496,8 +496,7 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         _tournamentRulesSettingsFileLinkUnderline.SetActionBadge(ActionBadgeComponent.Create("OPEN", textBounds));
         _tournamentRulesSettingsFileLinkUnderline.UpdatePointer(mousePoint);
         DrawFittedText(filePath, textBounds, Color.White, 0.38f);
-        _tournamentRulesSettingsFileLinkUnderline.Draw(_stationeryDrawingContext,
-            new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText));
+        _tournamentRulesSettingsFileLinkUnderline.Draw(_stationeryDrawingContext);
     }
 
     public bool IsTournamentRulesSettingsFileHit(Point point) => _tournamentRulesSettingsFileLinkUnderline.IsHit(point);
@@ -819,7 +818,7 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
             _playerSelectorLinkUnderline.Bounds = fieldBounds;
             _playerSelectorLinkUnderline.SetActionBadge(ActionBadgeComponent.Create("CHANGE", fieldBounds));
             _playerSelectorLinkUnderline.UpdatePointer(mousePoint);
-            _playerSelectorLinkUnderline.Draw(_stationeryDrawingContext, new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText));
+            _playerSelectorLinkUnderline.Draw(_stationeryDrawingContext);
                 // 操作ヒントはアンダーライン終端の近くに、読みやすい反転プレートで表示する。
             return;
         }
@@ -1362,7 +1361,7 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         _multilineTextUnderline.Underline.Thickness = Math.Max(1, (int)MathF.Ceiling(1f / virtualScreenScale));
         _multilineTextUnderline.SetEditing(true);
         _multilineTextUnderline.UpdatePointer(mousePoint);
-        _multilineTextUnderline.Draw(_stationeryDrawingContext, new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText));
+        _multilineTextUnderline.Draw(_stationeryDrawingContext);
         DrawTextAreaContent(text, textBounds);
         var caret = GetTextAreaCaretPosition(text, caretIndex);
         if (composition.IsActive && !string.IsNullOrEmpty(composition.Text))
@@ -1621,7 +1620,7 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         EditEntryProfile.Draw(session, mousePoint, _stickyNoteScreen,
             new EditEntryProfileDrawingCallbacks(VirtualScreen.Width, VirtualScreen.Height, FillRect, DrawRoundedFill,
                 DrawRect, DrawText, DrawFittedText, _stationeryDrawingContext, DrawIconStone, DrawPlayerRoleFaceIcon,
-                DrawTextBoxSelection, DrawTextBoxCaret, new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText), bounds => DrawActionBadge("CHANGE", bounds),
+                DrawTextBoxSelection, DrawTextBoxCaret, bounds => DrawActionBadge("CHANGE", bounds),
                 DrawLine, DrawDynamicOptionText, DrawRotatedCenteredText));
 
 }

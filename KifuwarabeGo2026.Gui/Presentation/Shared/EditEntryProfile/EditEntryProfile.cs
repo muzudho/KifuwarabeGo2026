@@ -10,7 +10,6 @@ using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.TableRowLabel;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 using Microsoft.Xna.Framework;
 using System;
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ActionBadge;
 
 /// <summary>［EDIT ENTRY PROFILE］画面の構成、操作判定、描画を担当します。</summary>
 public sealed class EditEntryProfile
@@ -181,7 +180,7 @@ public sealed class EditEntryProfile
         PlayerNameTextUnderline.Bounds = textBounds;
         PlayerNameTextUnderline.SetEditing(active);
         PlayerNameTextUnderline.UpdatePointer(mousePoint);
-        PlayerNameTextUnderline.Draw(draw.StationeryDrawingContext, draw.ActionBadgeDrawing);
+        PlayerNameTextUnderline.Draw(draw.StationeryDrawingContext);
 
         // 選択範囲
         var text = session.GetPlayerEditFieldText(field);
@@ -231,7 +230,7 @@ public sealed class EditEntryProfile
         PlayerNameTextUnderline.Bounds = bounds;
         PlayerNameTextUnderline.SetEditing(active);
         PlayerNameTextUnderline.UpdatePointer(mousePoint);
-        PlayerNameTextUnderline.Draw(draw.StationeryDrawingContext, draw.ActionBadgeDrawing);
+        PlayerNameTextUnderline.Draw(draw.StationeryDrawingContext);
         var text = session.GetPlayerEditFieldText(field);
         if (active) draw.DrawTextSelection(text, session.PlayerEditSelectionStart, session.PlayerEditSelectionLength, bounds, 0.42f);
         draw.DrawFittedText(mask ? new string('●', text.Length) : text, bounds, Color.White, 0.42f);
@@ -350,7 +349,6 @@ public sealed record EditEntryProfileDrawingCallbacks(
     Action<Vector2, bool> DrawPlayerRoleFace,
     Action<string, int, int, Rectangle, float> DrawTextSelection,
     Action<string, int, Rectangle, float> DrawTextCaret,
-    ActionBadgeDrawingCallbacks ActionBadgeDrawing,
     Action<Rectangle> DrawChangeHint,
     Action<Vector2, Vector2, float, Color> DrawLine,
     Action<string, Rectangle, Color, float> DrawDynamicText,

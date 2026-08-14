@@ -1,5 +1,6 @@
 namespace KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ActionBadge;
 
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 using Microsoft.Xna.Framework;
 using System;
 
@@ -54,13 +55,13 @@ public sealed class ActionBadgeComponent
 
     public void Hide() => IsVisible = false;
 
-    public void Draw(ActionBadgeDrawingCallbacks callbacks)
+    public void Draw(StationeryDrawingContext drawingContext)
     {
-        ArgumentNullException.ThrowIfNull(callbacks);
+        ArgumentNullException.ThrowIfNull(drawingContext);
         if (!IsVisible) return;
 
-        callbacks.DrawRoundedFill(Bounds, 6, new Color(185, 196, 255));
-        callbacks.DrawCenteredText(Label, Bounds, new Color(15, 20, 31), TextScale);
+        drawingContext.FillRoundedRectangle(Bounds, 6, new Color(185, 196, 255));
+        drawingContext.DrawCenteredFittedText(Label, Bounds, new Color(15, 20, 31), TextScale);
     }
 
     /// <summary>標準バッジの大きさと、アンダーライン右端に対する配置を返します。</summary>
@@ -78,7 +79,3 @@ public sealed class ActionBadgeComponent
         return new Rectangle(anchorBounds.Right - width - rightMargin, anchorBounds.Bottom - height - bottomMargin, width, height);
     }
 }
-
-public sealed record ActionBadgeDrawingCallbacks(
-    Action<Rectangle, int, Color> DrawRoundedFill,
-    Action<string, Rectangle, Color, float> DrawCenteredText);

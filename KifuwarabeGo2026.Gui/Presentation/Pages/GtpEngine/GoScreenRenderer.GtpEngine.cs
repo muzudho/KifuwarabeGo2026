@@ -459,7 +459,7 @@ public sealed partial class GoScreenRenderer
         _gtpEngineOptionLinkUnderline.Bounds = valueBounds;
         _gtpEngineOptionLinkUnderline.SetActionBadge(ActionBadgeComponent.Create(GetGtpEngineOptionActionLabel(option), valueBounds, 0.30f));
         _gtpEngineOptionLinkUnderline.UpdatePointer(mousePoint);
-        _gtpEngineOptionLinkUnderline.Draw(_stationeryDrawingContext, new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText));
+        _gtpEngineOptionLinkUnderline.Draw(_stationeryDrawingContext);
         if (option.Type == "spin" && option.Min is { } min && option.Max is { } max)
             DrawFittedText($"{min} .. {max}", new Rectangle(valueBounds.Right + 12, valueBounds.Y + 10, 126, 28), new Color(118, 139, 143), 0.24f);
         if (option.Type is not ("button" or "string") && row.Contains(mousePoint))

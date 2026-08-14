@@ -401,7 +401,7 @@ public sealed partial class GoScreenRenderer
         _compactLinkUnderline.Bounds = valueBounds;
         _compactLinkUnderline.SetActionBadge(ActionBadgeComponent.Create("CHANGE", valueBounds));
         _compactLinkUnderline.UpdatePointer(mousePoint);
-        _compactLinkUnderline.Draw(_stationeryDrawingContext, new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText));
+        _compactLinkUnderline.Draw(_stationeryDrawingContext);
     }
 
     private void DrawCgosCredentialFields(GoAppSession session, GoStone stone, Point mousePoint)
@@ -564,7 +564,7 @@ public sealed partial class GoScreenRenderer
         _selectorLinkUnderline.Bounds = fieldBounds;
         _selectorLinkUnderline.SetActionBadge(ActionBadgeComponent.Create("CHANGE", fieldBounds));
         _selectorLinkUnderline.UpdatePointer(mousePoint);
-        _selectorLinkUnderline.Draw(_stationeryDrawingContext, new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText));
+        _selectorLinkUnderline.Draw(_stationeryDrawingContext);
     }
 
 

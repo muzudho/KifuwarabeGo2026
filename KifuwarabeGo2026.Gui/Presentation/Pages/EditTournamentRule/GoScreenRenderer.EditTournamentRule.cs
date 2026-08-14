@@ -130,14 +130,11 @@ public sealed partial class GoScreenRenderer
         page.BoardSize13Button.Draw(mousePoint, _stationeryDrawingContext);
         page.BoardSize19Button.Draw(mousePoint, _stationeryDrawingContext);
         TournamentRulesScreen.Default.KomiField.Draw(session.Komi, mousePoint,
-            new TournamentRuleKomiFieldDrawingCallbacks(DrawTournamentRulesFieldLabel, DrawFittedText, _stationeryDrawingContext,
-                new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText)));
+            new TournamentRuleKomiFieldDrawingCallbacks(DrawTournamentRulesFieldLabel, DrawFittedText, _stationeryDrawingContext));
         TournamentRulesScreen.Default.TimeField.Draw(session.MainTime, mousePoint,
-            new TournamentRuleTimeFieldDrawingCallbacks(DrawTournamentRulesFieldLabel, DrawFittedText, _stationeryDrawingContext,
-                new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText)));
+            new TournamentRuleTimeFieldDrawingCallbacks(DrawTournamentRulesFieldLabel, DrawFittedText, _stationeryDrawingContext));
         TournamentRulesScreen.Default.MoveLimitField.Draw(session.MoveLimit, mousePoint,
-            new TournamentRuleMoveLimitFieldDrawingCallbacks(DrawTournamentRulesFieldLabel, DrawFittedText, _stationeryDrawingContext,
-                new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText)));
+            new TournamentRuleMoveLimitFieldDrawingCallbacks(DrawTournamentRulesFieldLabel, DrawFittedText, _stationeryDrawingContext));
         DrawFilePathSelector(session, mousePoint);
     }
 

@@ -54,7 +54,7 @@ public sealed partial class GoScreenRenderer
                 if (selected && hovered)
                 {
                     link.ActionBadge?.Show();
-                    link.ActionBadge?.Draw(new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText));
+                    link.ActionBadge?.Draw(_stationeryDrawingContext);
                 }
             }
         }
@@ -110,7 +110,7 @@ public sealed partial class GoScreenRenderer
         var valueY = string.IsNullOrWhiteSpace(label) ? bounds.Y + 16 : bounds.Y + 30;
         DrawFittedText(value, new Rectangle(bounds.X + 8, valueY, bounds.Width - (hovered ? 132 : 16), 28), Color.White, 0.32f);
         link.UpdatePointer(mousePoint);
-        link.Draw(_stationeryDrawingContext, new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText));
+        link.Draw(_stationeryDrawingContext);
     }
 
     private void DrawSettingsButton(Point mousePoint)

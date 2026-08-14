@@ -49,14 +49,13 @@ public sealed class SinglelineTextUnderline
             ActionBadge?.Hide();
     }
 
-    public void Draw(StationeryDrawingContext surface, ActionBadgeDrawingCallbacks? actionBadgeDrawing = null)
+    public void Draw(StationeryDrawingContext surface)
     {
         Underline.ContentBounds = Bounds;
         Underline.Color = IsEditing
             ? new Color(147, 244, 200)
             : IsHovered ? new Color(185, 196, 255) : new Color(100, 110, 145);
         Underline.Draw(surface);
-        if (actionBadgeDrawing is not null)
-            ActionBadge?.Draw(actionBadgeDrawing);
+        ActionBadge?.Draw(surface);
     }
 }

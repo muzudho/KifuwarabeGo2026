@@ -2,7 +2,6 @@ namespace KifuwarabeGo2026.Gui.Presentation.Pages.EditTournamentRule;
 
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ActionBadge;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.SinglelineTextUnderline;
 using Microsoft.Xna.Framework;
@@ -22,10 +21,9 @@ public sealed class TournamentRuleTimeField
         _underline.Bounds = ValueBounds;
         _underline.SetEditing(false);
         _underline.UpdatePointer(mousePoint);
-        _underline.Draw(draw.UnderlineSurface, draw.ActionBadgeDrawing);
+        _underline.Draw(draw.UnderlineSurface);
     }
 }
 
 public sealed record TournamentRuleTimeFieldDrawingCallbacks(Action<string, Rectangle> DrawFieldLabel,
-    Action<string, Rectangle, Color, float> DrawFittedText, StationeryDrawingContext UnderlineSurface,
-    ActionBadgeDrawingCallbacks ActionBadgeDrawing);
+    Action<string, Rectangle, Color, float> DrawFittedText, StationeryDrawingContext UnderlineSurface);

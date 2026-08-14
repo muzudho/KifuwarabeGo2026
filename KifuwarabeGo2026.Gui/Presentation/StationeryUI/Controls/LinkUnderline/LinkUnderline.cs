@@ -82,15 +82,14 @@ public sealed class LinkUnderline
     public void ClearSelection() => IsSelected = false;
 
     /// <summary>同期リンク向けに、ホバー状態だけで所有する Underline を描画します。</summary>
-    public void Draw(StationeryDrawingContext surface, ActionBadgeDrawingCallbacks? actionBadgeDrawing = null)
+    public void Draw(StationeryDrawingContext surface)
     {
         Underline.ContentBounds = Bounds;
         Underline.Color = IsSelected
             ? SelectedColor
             : IsHovered ? new Color(185, 196, 255) : new Color(100, 110, 145);
         Underline.Draw(surface);
-        if (actionBadgeDrawing is not null)
-            ActionBadge?.Draw(actionBadgeDrawing);
+        ActionBadge?.Draw(surface);
     }
 
     /// <summary>選択済みのリンクを、ホバー色より優先する色で描画します。</summary>
