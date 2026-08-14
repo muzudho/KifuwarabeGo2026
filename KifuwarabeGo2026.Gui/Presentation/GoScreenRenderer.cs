@@ -93,15 +93,8 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
     private readonly PopupFilePathTooltip _popupFilePathTooltip = new();
     private static readonly BoardLensButtonStrip LocalPlayingBoardLensButtons = new(1516, 800);
     public EditEntryProfile EditEntryProfile { get; } = new();
-
-    private void DrawActionBadge(ActionBadgeComponent badge)
-    {
-        badge.Show();
-        badge.Draw(_stationeryDrawingContext);
-    }
-
-    private void DrawActionBadge(string label, Rectangle anchorBounds) =>
-        DrawActionBadge(ActionBadgeComponent.Create(label, anchorBounds));
+    public ActionBadgeComponent EditActionBadge { get; } = ActionBadgeComponent.Create("EDIT", Rectangle.Empty);
+    public ActionBadgeComponent ChangeActionBadge { get; } = ActionBadgeComponent.Create("CHANGE", Rectangle.Empty);
 
     public GoScreenRenderer(
         GraphicsDevice graphicsDevice,
@@ -1620,7 +1613,7 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         EditEntryProfile.Draw(session, mousePoint, _stickyNoteScreen,
             new EditEntryProfileDrawingCallbacks(VirtualScreen.Width, VirtualScreen.Height, FillRect, DrawRoundedFill,
                 DrawRect, DrawText, DrawFittedText, _stationeryDrawingContext, DrawIconStone, DrawPlayerRoleFaceIcon,
-                DrawTextBoxSelection, DrawTextBoxCaret, bounds => DrawActionBadge("CHANGE", bounds),
+                DrawTextBoxSelection, DrawTextBoxCaret,
                 DrawLine, DrawDynamicOptionText, DrawRotatedCenteredText));
 
 }

@@ -38,9 +38,9 @@ public sealed class ActionBadgeComponent
 
     public string Label { get; }
 
-    public Rectangle AnchorBounds { get; }
+    public Rectangle AnchorBounds { get; private set; }
 
-    public Rectangle Bounds { get; }
+    public Rectangle Bounds { get; private set; }
 
     public bool IsVisible { get; private set; }
 
@@ -54,6 +54,13 @@ public sealed class ActionBadgeComponent
     public void Show() => IsVisible = true;
 
     public void Hide() => IsVisible = false;
+
+    /// <summary>アンカー領域に合わせてバッジを再配置します。</summary>
+    public void SetAnchorBounds(Rectangle anchorBounds)
+    {
+        AnchorBounds = anchorBounds;
+        Bounds = CalculateBounds(Label, anchorBounds);
+    }
 
     public void Draw(StationeryDrawingContext drawingContext)
     {

@@ -2,6 +2,7 @@ namespace KifuwarabeGo2026.Gui.Presentation.Shared.EditEntryProfile;
 
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Button;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ActionBadge;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.LinkUnderline;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.SinglelineTextUnderline;
@@ -47,6 +48,9 @@ public sealed class EditEntryProfile
 
     /// <summary>編集内容を保存して画面を閉じます。</summary>
     public Button SaveAndCloseButton { get; } = new(new Rectangle(1224, 288, 148, 42), "SAVE & CLOSE", 0.26f);
+
+    /// <summary>ポップアップ選択フィールドへ表示する操作バッジです。</summary>
+    public ActionBadgeComponent ChangeActionBadge { get; } = ActionBadgeComponent.Create("CHANGE", EngineTextBounds);
 
     #endregion
 
@@ -296,7 +300,16 @@ public sealed class EditEntryProfile
         PopupFieldUnderline.UpdatePointer(mousePoint);
         PopupFieldUnderline.Draw(draw.StationeryDrawingContext);
         if (icon != FieldIcon.None) DrawIcon(icon, IconBounds(textBounds), draw);
-        if (hovered) draw.DrawChangeHint(textBounds);
+        if (hovered)
+        {
+            ChangeActionBadge.SetAnchorBounds(textBounds);
+            ChangeActionBadge.Show();
+            ChangeActionBadge.Draw(draw.StationeryDrawingContext);
+        }
+        else
+        {
+            ChangeActionBadge.Hide();
+        }
     }
 
     #endregion
@@ -349,7 +362,6 @@ public sealed record EditEntryProfileDrawingCallbacks(
     Action<Vector2, bool> DrawPlayerRoleFace,
     Action<string, int, int, Rectangle, float> DrawTextSelection,
     Action<string, int, Rectangle, float> DrawTextCaret,
-    Action<Rectangle> DrawChangeHint,
     Action<Vector2, Vector2, float, Color> DrawLine,
     Action<string, Rectangle, Color, float> DrawDynamicText,
     Action<string, Vector2, Color, float> DrawVerticalText);

@@ -236,8 +236,15 @@ public sealed partial class GoScreenRenderer
     /// <summary>未編集のテキスト項目へホバーしたときだけ、共通の EDIT バッジを表示します。</summary>
     private void DrawEditableTextEditHint(bool isEditing, bool isHovered, Rectangle textBounds)
     {
-        if (!isEditing && isHovered)
-            DrawActionBadge("EDIT", textBounds);
+        if (isEditing || !isHovered)
+        {
+            EditActionBadge.Hide();
+            return;
+        }
+
+        EditActionBadge.SetAnchorBounds(textBounds);
+        EditActionBadge.Show();
+        EditActionBadge.Draw(_stationeryDrawingContext);
     }
 
     private static Vector2 ClientIdentityUnderlineConnectorStart(Rectangle textBounds) =>

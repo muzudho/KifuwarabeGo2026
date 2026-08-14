@@ -597,7 +597,11 @@ public sealed partial class GoScreenRenderer
         if (GtpEngineEditableTextFields.Contains(field))
             DrawEditableTextEditHint(active, hovered, textBounds);
         else if (hovered && !active)
-            DrawActionBadge("CHANGE", textBounds);
+        {
+            ChangeActionBadge.SetAnchorBounds(textBounds);
+            ChangeActionBadge.Show();
+            ChangeActionBadge.Draw(_stationeryDrawingContext);
+        }
     }
 
 
