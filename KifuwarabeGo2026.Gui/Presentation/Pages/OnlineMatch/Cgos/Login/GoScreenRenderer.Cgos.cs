@@ -13,6 +13,7 @@ using System.Linq;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ActionBadge;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Headline;
 
+/// <summary>CGOS の接続選択・ログイン画面を描画します。</summary>
 public sealed partial class GoScreenRenderer
 {
 

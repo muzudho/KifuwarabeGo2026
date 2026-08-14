@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Gui.Presentation.Pages.CgosWatching;
+namespace KifuwarabeGo2026.Gui.Presentation.Pages.OnlineMatch.Cgos.Watch;
 
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Button;
 using Microsoft.Xna.Framework;

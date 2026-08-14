@@ -15,16 +15,15 @@ using KifuwarabeGo2026.Gui.Infrastructure.Logging;
 using KifuwarabeGo2026.Gui.Infrastructure;
 using KifuwarabeGo2026.Gui.Presentation;
 using KifuwarabeGo2026.Gui.Presentation.BoardLens;
-using KifuwarabeGo2026.Gui.Presentation.GoApps.Formal.OnlineMatch.Connect;
-using KifuwarabeGo2026.Gui.Presentation.GoApps.Formal.OnlineMatch.ProfileSelect;
-using KifuwarabeGo2026.Gui.Presentation.GoApps.Formal.OnlineMatch.Watch;
+using KifuwarabeGo2026.Gui.Presentation.Pages.OnlineMatch.Cgos.Login;
+using KifuwarabeGo2026.Gui.Presentation.Pages.OnlineMatch.Cgos.SelectConnection;
+using KifuwarabeGo2026.Gui.Presentation.Pages.OnlineMatch.Cgos.Watch;
 using KifuwarabeGo2026.Gui.Presentation.GoApps.Formal.LocalMatch.Interval;
 using KifuwarabeGo2026.Gui.Presentation.GoApps.Formal.LocalMatch.Interval.TournamentRules;
 using KifuwarabeGo2026.Gui.Presentation.Pages.EditTournamentRule;
 using KifuwarabeGo2026.Gui.Presentation.Pages.BoardAndReview;
 using KifuwarabeGo2026.Gui.Presentation.Shared.SelectEntry;
 using KifuwarabeGo2026.Gui.Presentation.Shared.EntryProfiles;
-using KifuwarabeGo2026.Gui.Presentation.Pages.CgosWatching;
 using KifuwarabeGo2026.Gui.Presentation.Pages.ApplicationSettings;
 using KifuwarabeGo2026.Gui.Presentation.Pages.LocalMatch;
 using KifuwarabeGo2026.Gui.Presentation.Title;
@@ -6380,10 +6379,10 @@ public class Game1 : Game
     private string GetCgosBreadcrumb() =>
         _session.CgosConnectionFlowKind switch
         {
-            CgosConnectionFlowKind.ProfileSelection => "FORMAL APPS  >  ONLINE MATCH (CGOS)  >  PROFILE SELECT",
-            CgosConnectionFlowKind.ConnectionStart => "FORMAL APPS  >  ONLINE MATCH (CGOS)  >  CONNECT",
-            CgosConnectionFlowKind.Watching => "FORMAL APPS  >  ONLINE MATCH (CGOS)  >  WATCH",
-            CgosConnectionFlowKind.Result => "FORMAL APPS  >  ONLINE MATCH (CGOS)  >  WATCH  >  RESULT",
+            CgosConnectionFlowKind.ProfileSelection => "Formal Apps > Online Match (CGOS) > Select Connection",
+            CgosConnectionFlowKind.ConnectionStart => "Formal Apps > Online Match (CGOS) > Login",
+            CgosConnectionFlowKind.Watching => "Formal Apps > Online Match (CGOS) > Watch",
+            CgosConnectionFlowKind.Result => "Formal Apps > Online Match (CGOS) > Watch",
             _ => "FORMAL APPS  >  ONLINE MATCH (CGOS)",
         };
 

@@ -5,7 +5,7 @@ using KifuwarabeGo2026.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.Watching;
 using KifuwarabeGo2026.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.Shared.Domain;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Headline;
-using KifuwarabeGo2026.Gui.Presentation.Pages.CgosWatching;
+using KifuwarabeGo2026.Gui.Presentation.Pages.OnlineMatch.Cgos.Watch;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;

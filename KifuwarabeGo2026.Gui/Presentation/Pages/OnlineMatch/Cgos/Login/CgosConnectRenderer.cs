@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Gui.Presentation.GoApps.Formal.OnlineMatch.Connect;
+namespace KifuwarabeGo2026.Gui.Presentation.Pages.OnlineMatch.Cgos.Login;
 
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Presentation;
