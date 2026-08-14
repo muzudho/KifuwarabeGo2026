@@ -20,41 +20,6 @@ public sealed partial class GoScreenRenderer
     public int GetClientIdentityProfileEditCaretIndex(Point point, int index, ClientIdentityProfileEditField field, string text, bool isLocalMatch) =>
         GetTextBoxCaretIndex(point.X, text, ClientIdentityProfileEditFieldTextBounds(index, field, isLocalMatch), 0.34f);
 
-    internal void DrawSetupPlayerRow(GoAppSession session, GoStone stone, Point mousePoint, int y)
-    {
-        var player = session.GetSelectedEntryProfile(stone);
-        var label = stone == GoStone.Black ? "BLACK PLAYER" : "WHITE PLAYER";
-        DrawPlayerSelector(
-            PlayerSelectorLayout.CreatePlayerSelector(y) with
-            {
-                Label = label,
-                Value = player?.DisplayName ?? "SELECT PLAYER",
-                IsComputer = player is null ? null : player.Kind == EntryProfileKind.Computer,
-            },
-            mousePoint);
-        var isPonnuki = y is LocalMatchIntermissionRightSidePanel.BlackPlayerKindButtonY or LocalMatchIntermissionRightSidePanel.WhitePlayerKindButtonY;
-        var handleBounds = LocalMatchScreen.Default.GetHandleBounds(stone, isPonnuki);
-        DrawFittedText("HANDLE", new Rectangle(1156, handleBounds.Y + 4, 118, 32), UiLabel.TextColor, 0.34f);
-        var textBounds = LocalMatchScreen.Default.GetHandleTextBounds(stone, isPonnuki);
-        var active = session.ActiveLocalMatchHandleStone == stone;
-        var hovered = textBounds.Contains(mousePoint);
-        var text = session.GetLocalMatchHandleDraft(stone);
-        DrawFittedText(text, textBounds, Color.White, 0.32f);
-        DrawRoundedFill(new Rectangle(textBounds.X, textBounds.Bottom + 2, textBounds.Width, 5), 2, active ? new Color(147, 244, 200) : hovered ? new Color(185, 196, 255) : new Color(100, 110, 145));
-        if (active)
-        {
-            DrawTextBoxSelection(text, session.LocalMatchHandleSelectionStart, session.LocalMatchHandleSelectionLength, textBounds, 0.32f);
-            DrawTextBoxCaret(text, session.LocalMatchHandleCaretIndex, textBounds, 0.32f);
-        }
-        if (hovered && !active)
-        {
-            // 入力欄のアンダーライン終端の近くに、読みやすい反転プレートで表示する。
-            var hintBounds = new Rectangle(textBounds.Right - 76, textBounds.Bottom - 25, 70, 23);
-            DrawRoundedFill(hintBounds, 6, new Color(185, 196, 255));
-            DrawSharpCenteredFittedText("EDIT", hintBounds, new Color(15, 20, 31), 0.34f);
-        }
-    }
-
     private void DrawClientIdentityProfileEditPanel(GoAppSession session, Point mousePoint)
     {
         if (session.IsClientIdentityProfileSelectionPanelOpen)

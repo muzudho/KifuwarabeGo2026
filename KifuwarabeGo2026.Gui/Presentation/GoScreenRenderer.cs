@@ -65,6 +65,20 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
     private readonly Texture2D _stoneDark;
     private readonly StationeryDrawingContext _stationeryDrawingContext;
     internal StationeryDrawingContext StationeryDrawingContext => _stationeryDrawingContext;
+
+    internal void DrawRightSidePanelIconStone(Vector2 center, float radius, bool black) => DrawIconStone(center, radius, black);
+    internal void DrawRightSidePanelPlayerRoleFaceIcon(Vector2 center, bool isComputer) => DrawPlayerRoleFaceIcon(center, isComputer);
+    internal void DrawRightSidePanelFittedText(string text, Rectangle bounds, Color color, float scale) => DrawFittedText(text, bounds, color, scale);
+    internal void DrawRightSidePanelRoundedFill(Rectangle bounds, int radius, Color color) => DrawRoundedFill(bounds, radius, color);
+    internal void DrawRightSidePanelTextSelection(string text, int start, int length, Rectangle bounds, float scale) =>
+        DrawTextBoxSelection(text, start, length, bounds, scale);
+    internal void DrawRightSidePanelTextCaret(string text, int caret, Rectangle bounds, float scale) =>
+        DrawTextBoxCaret(text, caret, bounds, scale);
+    internal void DrawRightSidePanelCenteredFittedText(string text, Rectangle bounds, Color color, float scale) =>
+        DrawSharpCenteredFittedText(text, bounds, color, scale);
+    internal void DrawRightSidePanelDataRowFrame(Rectangle bounds) => DrawDataRowFrame(bounds);
+    internal void DrawRightSidePanelCommandButton(Rectangle bounds, string label, Point mousePoint, bool enabled, float scale) =>
+        DrawCommandButton(bounds, label, false, mousePoint, enabled, scale);
     private readonly LinkUnderline _gtpEngineOptionLinkUnderline = new(
         new RoundUnderline { TopOffset = -4, Thickness = 4, Radius = 2 });
     private readonly MultilineTextUnderline _multilineTextUnderline = new(
@@ -287,37 +301,6 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
             var y = bounds.Y + i * bounds.Height / 6f;
             DrawLine(new Vector2(bounds.X, y), new Vector2(bounds.Right, y), 1, color);
         }
-    }
-    internal void DrawSetupRightSidePanelContent(GoAppSession session, Point mousePoint)
-    {
-        var screen = LocalMatchScreen.Default;
-        screen.BackToTitleButton.Draw(mousePoint, _stationeryDrawingContext);
-
-        DrawVerticalResultSection(new Rectangle(1144, 184, 668, 176), "TOURNAMENT", new Color(62, 112, 105));
-        TournamentRulesScreen.Default.BrowseButton.Draw(mousePoint, _stationeryDrawingContext);
-        screen.ImportSgfButton.Label = session.HasReviewGameRecord ? "KIFU CLEAR (SGF)" : "KIFU INPUT (SGF)";
-        screen.ImportSgfButton.Draw(mousePoint, _stationeryDrawingContext);
-        DrawResultRow(new Rectangle(1164, 292, 628, 56), "RULES", session.TournamentDisplayName, new Color(39, 68, 65), Color.White);
-
-        DrawVerticalResultSection(new Rectangle(1144, 376, 668, 304), "RULES", new Color(66, 104, 116));
-        DrawInfoStrip(1144, 384, "RULE", session.RuleKind.ToString());
-        DrawInfoStrip(1144, 456, "BOARD", $"{session.BoardSize} x {session.BoardSize}");
-        DrawInfoStrip(1144, 528, "KOMI", FormatKomi(session.Komi));
-        DrawInfoStrip(1144, 600, "MOVES", FormatMoveLimit(session.MoveLimit));
-
-        DrawVerticalResultSection(new Rectangle(1144, 696, 668, 216), "PLAYERS", new Color(76, 91, 126));
-        DrawSetupPlayerRow(session, GoStone.Black, mousePoint, SetupRightSidePanel.BlackPlayerKindButtonY);
-        DrawSetupPlayerRow(session, GoStone.White, mousePoint, SetupRightSidePanel.WhitePlayerKindButtonY);
-
-        DrawVerticalResultSection(new Rectangle(1144, 916, 668, 76), "ACTION", new Color(91, 82, 105));
-        var boardAndReviewScreen = BoardAndReviewScreen.Default;
-        boardAndReviewScreen.StartReviewingButton.IsEnabled = session.HasReviewGameRecord;
-        boardAndReviewScreen.StartReviewingButton.Draw(mousePoint, _stationeryDrawingContext);
-        boardAndReviewScreen.StartBoardEditingButton.Draw(mousePoint, _stationeryDrawingContext);
-        screen.StartPlayingButton.Label = session.CanStartPlaying ? "START" : "ENGINE REQUIRED";
-        screen.StartPlayingButton.LabelScale = session.CanStartPlaying ? 0.48f : 0.28f;
-        screen.StartPlayingButton.IsEnabled = session.CanStartPlaying;
-        screen.StartPlayingButton.Draw(mousePoint, _stationeryDrawingContext);
     }
     internal void DrawGameOverRightSidePanelContent(GoAppSession session, Point mousePoint)
     {
@@ -713,38 +696,6 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
 
         _spriteBatch.End();
     }
-    private void DrawPlayerSelector(PlayerSelector selector, Point mousePoint)
-    {
-        if (selector.Bounds.X == 1144 && selector.Bounds.Width == 668)
-        {
-            // Player 行は値欄の左端を全行で右パネルの第一値列に揃える。
-            // 石アイコンが黒白を示し、セクション名も PLAYERS なので行内ラベルは重複表示しない。
-            var isBlack = selector.Label.StartsWith("BLACK", StringComparison.Ordinal);
-            DrawIconStone(new Vector2(selector.Bounds.X + 34, selector.Bounds.Center.Y), 13, isBlack);
-            if (selector.IsComputer is { } isComputer)
-                DrawPlayerRoleFaceIcon(new Vector2(selector.Bounds.X + 76, selector.Bounds.Center.Y), isComputer);
-            var fieldBounds = new Rectangle(RightSidePanelLayout.PrimaryValueX, selector.Bounds.Y + 6, selector.Bounds.Right - RightSidePanelLayout.PrimaryValueX - 34, selector.Bounds.Height - 12);
-            var hovered = selector.Enabled && selector.Bounds.Contains(mousePoint);
-            var valueBounds = hovered
-                ? new Rectangle(fieldBounds.X, fieldBounds.Y, fieldBounds.Width - 122, fieldBounds.Height)
-                : fieldBounds;
-            DrawFittedText(selector.Value, valueBounds, Color.White, 0.42f);
-            var underline = LocalMatchScreen.Default.SetupRightSidePanel.PlayerSelectorLinkUnderline;
-            underline.Bounds = fieldBounds;
-            underline.SetActionBadge(ActionBadgeComponent.Create("CHANGE", fieldBounds));
-            underline.UpdatePointer(mousePoint);
-            underline.Draw(_stationeryDrawingContext);
-                // 操作ヒントはアンダーライン終端の近くに、読みやすい反転プレートで表示する。
-            return;
-        }
-
-        DrawDataRowFrame(selector.Bounds);
-
-        DrawFittedText(selector.Label, selector.LabelBounds, new Color(158, 178, 178), 0.36f);
-        DrawFittedText(selector.Value, selector.ValueBounds, Color.White, 0.52f);
-        DrawCommandButton(selector.BrowseButtonBounds, selector.ButtonLabel, false, mousePoint, enabled: selector.Enabled, scale: PlayerSelectorLayout.SelectButtonLabelScale);
-    }
-
     /// <summary>石の右側に、人間またはコンピューターの操作主体を示す顔アイコンを描きます。</summary>
     private void DrawPlayerRoleFaceIcon(Vector2 center, bool isComputer)
     {

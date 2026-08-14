@@ -17,8 +17,16 @@ RightSidePanel 残存コード整理 引き継ぎ
 - _playerSelectorLinkUnderline を SetupRightSidePanel.PlayerSelectorLinkUnderline へ移設。
 - 通常セットアップと Ponnuki 休憩画面のプレイヤー／エンジン行座標を、それぞれのパネルクラスへ移設。
 
-次は移行手順 3 の描画本体、DrawSetupRightSidePanelContent と DrawSetupPlayerRow、
-DrawPlayerSelector の移設から再開してください。
+第2段階も完了しました。
+
+- DrawSetupRightSidePanelContent の描画本体を SetupRightSidePanel.Draw へ移設・削除。
+- DrawSetupPlayerRow と DrawPlayerSelector を RightSidePanelPlayerSelector へ移設・削除。
+- SetupRightSidePanel と LocalMatchIntermissionRightSidePanel が、それぞれ専用の
+  RightSidePanelPlayerSelector インスタンスを所有する構成へ変更。
+- プレイヤー名、HANDLE、編集表示、石・操作主体アイコンの描画も共通部品へ移設。
+
+次は移行手順 4 の DrawGameOverRightSidePanelContent、DrawSgfAutoSaveCheckBox、
+終局結果用ヘルパーの移設から再開してください。
 
 目的
 ----
