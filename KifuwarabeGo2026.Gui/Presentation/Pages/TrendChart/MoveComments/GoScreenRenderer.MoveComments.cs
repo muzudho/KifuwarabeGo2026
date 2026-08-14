@@ -7,7 +7,7 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using KifuwarabeGo2026.Gui.Presentation.Pages.MoveComments;
+using KifuwarabeGo2026.Gui.Presentation.Pages.TrendChart.MoveComments;
 
 public sealed partial class GoScreenRenderer
 {

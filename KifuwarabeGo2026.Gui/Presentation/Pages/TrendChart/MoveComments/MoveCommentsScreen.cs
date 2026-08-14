@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Gui.Presentation.Pages.MoveComments;
+namespace KifuwarabeGo2026.Gui.Presentation.Pages.TrendChart.MoveComments;
 
 using Microsoft.Xna.Framework;
 using System;
@@ -8,8 +8,13 @@ using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.TableRowLabel;
 /// <summary>棋譜コメント表示のレイアウトと操作判定を所有します。</summary>
 public sealed class MoveCommentsScreen
 {
+    // ========================================
+    // 生成
+    // ========================================
+
     public static MoveCommentsScreen Default { get; } = new();
 
+    #region ［生成　＞　コンストラクター］
     private MoveCommentsScreen()
     {
         HeadingLabel = new TableRowLabel(string.Empty, Rectangle.Empty, new Color(255, 215, 92), 0.27f);
@@ -19,6 +24,11 @@ public sealed class MoveCommentsScreen
         PreviousPageButton = new Button(Rectangle.Empty, "< PAGE", 0.20f);
         NextPageButton = new Button(Rectangle.Empty, "PAGE >", 0.20f);
     }
+    #endregion
+
+    // ========================================
+    // データメンバー
+    // ========================================
 
     public TableRowLabel HeadingLabel { get; }
     public Button PreviousMoveButton { get; }
@@ -26,6 +36,10 @@ public sealed class MoveCommentsScreen
     public Button EditButton { get; }
     public Button PreviousPageButton { get; }
     public Button NextPageButton { get; }
+
+    // ========================================
+    // 機能
+    // ========================================
 
     public Rectangle GetBodyBounds(Rectangle bounds)
     {

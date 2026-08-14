@@ -7,7 +7,7 @@ using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using static KifuwarabeGo2026.Gui.Presentation.Pages.ReviewChartPopup.ReviewChartPopupScreenBounds;
-using KifuwarabeGo2026.Gui.Presentation.Pages.MoveComments;
+using KifuwarabeGo2026.Gui.Presentation.Pages.TrendChart.MoveComments;
 
 public sealed partial class GoScreenRenderer
 {
