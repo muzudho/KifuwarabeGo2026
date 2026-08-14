@@ -79,6 +79,8 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         DrawLocalGameOverTrendChart(session, mousePoint);
     internal void DrawRightSidePanelAgehamaSummary(Rectangle bounds, int blackAgehama, int whiteAgehama) =>
         DrawAgehamaSummaryComponent(bounds, blackAgehama, whiteAgehama);
+    internal void DrawRightSidePanelStoneCountStrip(GoAppSession session, int y, bool showLeader, bool minimal) =>
+        DrawStoneCountStrip(session, y, showLeader, minimal);
     private readonly LinkUnderline _gtpEngineOptionLinkUnderline = new(
         new RoundUnderline { TopOffset = -4, Thickness = 4, Radius = 2 });
     private readonly MultilineTextUnderline _multilineTextUnderline = new(
@@ -697,20 +699,6 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         // Intermission のラベル列は、section 内の行種別に関係なく同じグリッドへそろえる。
         FillRect(new Rectangle(bounds.X - 22, bounds.Center.Y - accentHeight / 2, 3, accentHeight), accentColor);
         DrawText(label, new Vector2(bounds.X - 8, bounds.Y + 14), new Color(180, 195, 195), 0.38f);
-    }
-
-    private void DrawCurrentStoneResultRow(Rectangle bounds, GoAppSession session)
-    {
-        DrawResultLabel(bounds, "RESULT", new Color(80, 48, 38));
-
-        var difference = session.BlackStoneCount - session.WhiteStoneCount;
-        if (difference == 0)
-        {
-            DrawText("EVEN", new Vector2(RightSidePanelLayout.PrimaryValueX, bounds.Center.Y - 14), new Color(99, 223, 185), 0.5f);
-            return;
-        }
-
-        DrawStoneValue(RightSidePanelLayout.PrimaryValueX, bounds.Center.Y, $"+{Math.Abs(difference)}", difference > 0, new Color(99, 223, 185));
     }
 
     private void DrawStoneValue(int x, int centerY, string value, bool black, Color valueColor)

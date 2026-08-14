@@ -38,6 +38,16 @@ RightSidePanel 残存コード整理 引き継ぎ
 
 次は移行手順 5 の BoardEditingRightSidePanel の描画本体移設から再開してください。
 
+第4段階も完了しました。
+
+- DrawBoardEditingRightSidePanelContent の描画本体を BoardEditingRightSidePanel.Draw へ移設・削除。
+- DrawCurrentStoneResultRow を BoardEditingRightSidePanel 内へ移設し、GoScreenRenderer から削除。
+- 盤編集の Button 状態更新、各セクション、石選択、履歴、現在局面の描画をパネルへ集約。
+- 複数パネルで共有する DrawStoneCountStrip は、共通コンポーネント化まで
+  コメント付きの一時ブリッジ DrawRightSidePanelStoneCountStrip 経由で使用。
+
+次は VariationEditingRightSidePanel の描画本体と DrawLiveBoardWipe の移設から再開してください。
+
 目的
 ----
 

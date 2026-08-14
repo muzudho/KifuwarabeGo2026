@@ -2,12 +2,15 @@ namespace KifuwarabeGo2026.Gui.Presentation.Pages.EditTournamentRule;
 
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Button;
-using KifuwarabeGo2026.Shared.Domain;
 using Microsoft.Xna.Framework;
 
 /// <summary>大会ルール設定画面の操作ボタンと、その選択・有効状態を所有します。</summary>
 public sealed class EditTournamentRulePage
 {
+    // ========================================
+    // 生成
+    // ========================================
+
     public static EditTournamentRulePage Default { get; } = new();
 
     private EditTournamentRulePage()

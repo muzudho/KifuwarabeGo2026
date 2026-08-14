@@ -315,7 +315,49 @@ public sealed class SgfAutoSaveCheckBox
 
 public sealed class BoardEditingRightSidePanel
 {
-    public void Draw(GoScreenRenderer renderer, GoAppSession session, Point mousePoint) => renderer.DrawBoardEditingRightSidePanelContent(session, mousePoint);
+    public void Draw(GoScreenRenderer renderer, GoAppSession session, Point mousePoint)
+    {
+        var controls = BoardAndReviewScreen.Default.BoardEditing;
+        var drawingContext = renderer.StationeryDrawingContext;
+        controls.UpdateState(session.BoardEditingStone, session.CanUndoBoardEditing, session.CanRedoBoardEditing);
+        new Headline("BOARD EDIT", new Vector2(1144, 136), new Color(255, 230, 160), 0.72f).Draw(drawingContext);
+        controls.CancelButton.Draw(mousePoint, drawingContext);
+        controls.AdoptButton.Draw(mousePoint, drawingContext);
+
+        renderer.DrawVerticalResultSection(new Rectangle(1144, 204, 668, 76), "BOARD", new Color(66, 104, 116));
+        renderer.DrawResultRow(new Rectangle(1164, 208, 628, 60), "SIZE", $"{session.BoardSize} x {session.BoardSize}", new Color(62, 112, 105), Color.White);
+
+        renderer.DrawVerticalResultSection(new Rectangle(1144, 292, 668, 260), "EDIT", new Color(76, 91, 126));
+        renderer.DrawRightSidePanelResultLabel(new Rectangle(1164, 296, 628, 40), "STONE", new Color(76, 91, 126));
+        controls.BlackButton.Draw(mousePoint, drawingContext);
+        controls.WhiteButton.Draw(mousePoint, drawingContext);
+        controls.EraseButton.Draw(mousePoint, drawingContext);
+
+        renderer.DrawRightSidePanelResultLabel(new Rectangle(1164, 414, 628, 40), "HISTORY", new Color(76, 91, 126));
+        controls.UndoButton.Draw(mousePoint, drawingContext);
+        controls.RedoButton.Draw(mousePoint, drawingContext);
+        controls.ClearButton.Draw(mousePoint, drawingContext);
+
+        renderer.DrawVerticalResultSection(new Rectangle(1144, 564, 668, 220), "POSITION", new Color(62, 112, 105));
+        renderer.DrawRightSidePanelStoneCountStrip(session, 584, showLeader: false, minimal: true);
+        DrawCurrentStoneResultRow(renderer, new Rectangle(1164, 690, 628, 64), session);
+    }
+
+    private static void DrawCurrentStoneResultRow(GoScreenRenderer renderer, Rectangle bounds, GoAppSession session)
+    {
+        renderer.DrawRightSidePanelResultLabel(bounds, "RESULT", new Color(80, 48, 38));
+        var difference = session.BlackStoneCount - session.WhiteStoneCount;
+        if (difference == 0)
+        {
+            renderer.StationeryDrawingContext.DrawText("EVEN",
+                new Vector2(RightSidePanelLayout.PrimaryValueX, bounds.Center.Y - 14),
+                new Color(99, 223, 185), 0.5f);
+            return;
+        }
+
+        renderer.DrawRightSidePanelStoneValue(RightSidePanelLayout.PrimaryValueX, bounds.Center.Y,
+            $"+{Math.Abs(difference)}", difference > 0, new Color(99, 223, 185));
+    }
 }
 
 public sealed class VariationEditingRightSidePanel

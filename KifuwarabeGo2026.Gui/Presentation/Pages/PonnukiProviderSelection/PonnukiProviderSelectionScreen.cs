@@ -17,8 +17,15 @@ using System.Linq;
 /// <summary>ポン抜きゲームで使用するアプリプロバイダーを選択する画面です。</summary>
 public sealed class PonnukiProviderSelectionScreen
 {
-    public static PonnukiProviderSelectionScreen Default { get; } = new();
+    // ========================================
+    // 生成
+    // ========================================
 
+    #region ［生成　＞　固定オブジェクト］
+    public static PonnukiProviderSelectionScreen Default { get; } = new();
+    #endregion
+
+    #region ［生成　＞　コンストラクター］
     private PonnukiProviderSelectionScreen()
     {
         Headline = new Headline("ポン抜きゲーム", new Vector2(500, 350), Color.White, 0.62f);
@@ -31,6 +38,11 @@ public sealed class PonnukiProviderSelectionScreen
             Bounds = ProviderTextBounds,
         };
     }
+    #endregion
+
+    // ========================================
+    // データメンバー
+    // ========================================
 
     public Headline Headline { get; }
 
@@ -46,6 +58,10 @@ public sealed class PonnukiProviderSelectionScreen
     public Button BackButton { get; }
     public Button RecheckButton { get; }
     public Button StartButton { get; }
+
+    // ========================================
+    // 機能
+    // ========================================
 
     /// <summary>ポン抜きプロバイダー選択画面を描画します。</summary>
     public void Draw(GoAppSession session, Point mousePoint, int activeTabIndex, bool isProviderLoading,

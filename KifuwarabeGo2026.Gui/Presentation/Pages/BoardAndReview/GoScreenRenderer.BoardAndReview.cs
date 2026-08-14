@@ -32,33 +32,6 @@ public sealed partial class GoScreenRenderer
     }
 
 
-    internal void DrawBoardEditingRightSidePanelContent(GoAppSession session, Point mousePoint)
-    {
-        var controls = BoardAndReviewScreen.Default.BoardEditing;
-        controls.UpdateState(session.BoardEditingStone, session.CanUndoBoardEditing, session.CanRedoBoardEditing);
-        new Headline("BOARD EDIT", new Vector2(1144, 136), new Color(255, 230, 160), 0.72f).Draw(_stationeryDrawingContext);
-        controls.CancelButton.Draw(mousePoint, _stationeryDrawingContext);
-        controls.AdoptButton.Draw(mousePoint, _stationeryDrawingContext);
-
-        DrawVerticalResultSection(new Rectangle(1144, 204, 668, 76), "BOARD", new Color(66, 104, 116));
-        DrawResultRow(new Rectangle(1164, 208, 628, 60), "SIZE", $"{session.BoardSize} x {session.BoardSize}", new Color(62, 112, 105), Color.White);
-
-        DrawVerticalResultSection(new Rectangle(1144, 292, 668, 260), "EDIT", new Color(76, 91, 126));
-        DrawResultLabel(new Rectangle(1164, 296, 628, 40), "STONE", new Color(76, 91, 126));
-        controls.BlackButton.Draw(mousePoint, _stationeryDrawingContext);
-        controls.WhiteButton.Draw(mousePoint, _stationeryDrawingContext);
-        controls.EraseButton.Draw(mousePoint, _stationeryDrawingContext);
-
-        DrawResultLabel(new Rectangle(1164, 414, 628, 40), "HISTORY", new Color(76, 91, 126));
-        controls.UndoButton.Draw(mousePoint, _stationeryDrawingContext);
-        controls.RedoButton.Draw(mousePoint, _stationeryDrawingContext);
-        controls.ClearButton.Draw(mousePoint, _stationeryDrawingContext);
-
-        DrawVerticalResultSection(new Rectangle(1144, 564, 668, 220), "POSITION", new Color(62, 112, 105));
-        DrawStoneCountStrip(session, 584, showLeader: false, minimal: true);
-        DrawCurrentStoneResultRow(new Rectangle(1164, 690, 628, 64), session);
-    }
-
     internal void DrawVariationEditingRightSidePanelContent(
         GoAppSession session,
         Point mousePoint,
