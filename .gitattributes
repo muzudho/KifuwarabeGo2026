@@ -1,7 +1,9 @@
 ###############################################################################
 # Set default behavior to automatically normalize line endings.
 ###############################################################################
-* text=auto
+# Windows working tree: use CRLF for all text files, except SGF game records.
+* text eol=crlf
+*.sgf text eol=lf
 
 ###############################################################################
 # Set default behavior for command prompt diff.
