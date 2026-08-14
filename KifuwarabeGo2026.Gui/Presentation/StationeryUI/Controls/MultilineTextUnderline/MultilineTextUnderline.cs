@@ -38,7 +38,7 @@ public sealed class MultilineTextUnderline
         set
         {
             _bounds = value;
-            ActionBadge = _actionBadgeLabel is null ? null : ActionBadge.Create(_actionBadgeLabel, value, _actionBadgeTextScale);
+            ActionBadge = _actionBadgeLabel is null ? null : ActionBadgeComponent.Create(_actionBadgeLabel, value, _actionBadgeTextScale);
         }
     }
 
@@ -46,7 +46,7 @@ public sealed class MultilineTextUnderline
 
     public bool IsHovered { get; private set; }
 
-    public ActionBadge? ActionBadge { get; private set; }
+    public ActionBadgeComponent? ActionBadge { get; private set; }
     public int LineHeight { get; set; } = 31;
     public int BaselineOffset { get; set; } = 26;
     public int HorizontalInset { get; set; } = 18;

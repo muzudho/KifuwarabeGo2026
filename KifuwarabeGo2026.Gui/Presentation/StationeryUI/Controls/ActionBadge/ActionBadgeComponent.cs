@@ -6,14 +6,23 @@ using System;
 /// <summary>
 /// アンダーライン項目にホバーしたとき、右端へ表示するアクション名のバッジです。
 /// </summary>
-public sealed class ActionBadge
+public sealed class ActionBadgeComponent
 {
     // ========================================
     // 生成
     // ========================================
 
+    #region ［生成　＞　ファクトリーメソッド］
+    /// <summary>項目の右端に合わせた標準位置でバッジを表示します。</summary>
+    public static ActionBadgeComponent Create(string label, Rectangle anchorBounds, float textScale = 0.34f)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(label);
+        return new ActionBadgeComponent(label, anchorBounds, textScale);
+    }
+    #endregion
+
     #region ［生成　＞　コンストラクター］
-    private ActionBadge(string label, Rectangle anchorBounds, float textScale)
+    private ActionBadgeComponent(string label, Rectangle anchorBounds, float textScale)
     {
         Label = label;
         AnchorBounds = anchorBounds;
@@ -40,13 +49,6 @@ public sealed class ActionBadge
     // ========================================
     // 機能
     // ========================================
-
-    /// <summary>項目の右端に合わせた標準位置でバッジを表示します。</summary>
-    public static ActionBadge Create(string label, Rectangle anchorBounds, float textScale = 0.34f)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(label);
-        return new ActionBadge(label, anchorBounds, textScale);
-    }
 
     public void Show() => IsVisible = true;
 

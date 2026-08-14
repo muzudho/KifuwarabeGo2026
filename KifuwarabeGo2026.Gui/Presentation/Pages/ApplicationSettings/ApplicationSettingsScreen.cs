@@ -79,7 +79,7 @@ public sealed class ApplicationSettingsScreen
             Thickness = inset ? 5 : 6,
             Radius = inset ? 2 : 3,
         }) { Bounds = linkBounds };
-        link.SetActionBadge(ActionBadge.Create(action, bounds, 0.30f));
+        link.SetActionBadge(ActionBadgeComponent.Create(action, bounds, 0.30f));
         return link;
     }
 }

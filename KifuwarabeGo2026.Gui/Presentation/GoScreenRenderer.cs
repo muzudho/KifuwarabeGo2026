@@ -94,14 +94,14 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
     private static readonly BoardLensButtonStrip LocalPlayingBoardLensButtons = new(1516, 800);
     public EditEntryProfile EditEntryProfile { get; } = new();
 
-    private void DrawActionBadge(ActionBadge badge)
+    private void DrawActionBadge(ActionBadgeComponent badge)
     {
         badge.Show();
         badge.Draw(new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText));
     }
 
     private void DrawActionBadge(string label, Rectangle anchorBounds) =>
-        DrawActionBadge(ActionBadge.Create(label, anchorBounds));
+        DrawActionBadge(ActionBadgeComponent.Create(label, anchorBounds));
 
     public GoScreenRenderer(
         GraphicsDevice graphicsDevice,
@@ -493,7 +493,7 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         DrawTournamentRulesFieldLabel("SETTINGS", bounds);
         var textBounds = new Rectangle(bounds.X + 132, bounds.Y + 7, bounds.Width - 152, 42);
         _tournamentRulesSettingsFileLinkUnderline.Bounds = textBounds;
-        _tournamentRulesSettingsFileLinkUnderline.SetActionBadge(ActionBadge.Create("OPEN", textBounds));
+        _tournamentRulesSettingsFileLinkUnderline.SetActionBadge(ActionBadgeComponent.Create("OPEN", textBounds));
         _tournamentRulesSettingsFileLinkUnderline.UpdatePointer(mousePoint);
         DrawFittedText(filePath, textBounds, Color.White, 0.38f);
         _tournamentRulesSettingsFileLinkUnderline.Draw(_stationeryDrawingContext,
@@ -817,7 +817,7 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
                 : fieldBounds;
             DrawFittedText(selector.Value, valueBounds, Color.White, 0.42f);
             _playerSelectorLinkUnderline.Bounds = fieldBounds;
-            _playerSelectorLinkUnderline.SetActionBadge(ActionBadge.Create("CHANGE", fieldBounds));
+            _playerSelectorLinkUnderline.SetActionBadge(ActionBadgeComponent.Create("CHANGE", fieldBounds));
             _playerSelectorLinkUnderline.UpdatePointer(mousePoint);
             _playerSelectorLinkUnderline.Draw(_stationeryDrawingContext, new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText));
                 // 操作ヒントはアンダーライン終端の近くに、読みやすい反転プレートで表示する。

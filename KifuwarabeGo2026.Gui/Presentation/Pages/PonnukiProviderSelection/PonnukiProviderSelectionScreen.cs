@@ -63,7 +63,7 @@ public sealed class PonnukiProviderSelectionScreen
         draw.DrawText("PROVIDER", new Vector2(ProviderDisplayBounds.X + 16, textBounds.Y + 7), new Color(180, 195, 195), 0.36f);
         draw.DrawDynamicText(session.SelectedAppProviderEngineDisplayName, textBounds, Color.White, 0.34f);
         ProviderLinkUnderline.Bounds = textBounds;
-        ProviderLinkUnderline.SetActionBadge(ActionBadge.Create("CHANGE", textBounds));
+        ProviderLinkUnderline.SetActionBadge(ActionBadgeComponent.Create("CHANGE", textBounds));
         ProviderLinkUnderline.UpdatePointer(mousePoint);
         ProviderLinkUnderline.Draw(draw.UnderlineSurface,
             new ActionBadgeDrawingCallbacks(draw.DrawRoundedFill, draw.DrawSharpCenteredFittedText));

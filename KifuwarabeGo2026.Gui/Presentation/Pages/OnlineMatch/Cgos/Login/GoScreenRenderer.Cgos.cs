@@ -399,7 +399,7 @@ public sealed partial class GoScreenRenderer
         var hovered = valueBounds.Contains(mousePoint);
         DrawFittedText(string.IsNullOrEmpty(playerName) ? "-" : playerName, valueBounds, Color.White, 0.25f);
         _compactLinkUnderline.Bounds = valueBounds;
-        _compactLinkUnderline.SetActionBadge(ActionBadge.Create("CHANGE", valueBounds));
+        _compactLinkUnderline.SetActionBadge(ActionBadgeComponent.Create("CHANGE", valueBounds));
         _compactLinkUnderline.UpdatePointer(mousePoint);
         _compactLinkUnderline.Draw(_stationeryDrawingContext, new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText));
     }
@@ -562,7 +562,7 @@ public sealed partial class GoScreenRenderer
         DrawText(selector.Label, new Vector2(selector.Bounds.X + 12, fieldBounds.Y + 7), new Color(180, 195, 195), 0.28f);
         DrawFittedText(selector.Value, textBounds, selector.Enabled ? Color.White : new Color(91, 100, 106), 0.46f);
         _selectorLinkUnderline.Bounds = fieldBounds;
-        _selectorLinkUnderline.SetActionBadge(ActionBadge.Create("CHANGE", fieldBounds));
+        _selectorLinkUnderline.SetActionBadge(ActionBadgeComponent.Create("CHANGE", fieldBounds));
         _selectorLinkUnderline.UpdatePointer(mousePoint);
         _selectorLinkUnderline.Draw(_stationeryDrawingContext, new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText));
     }

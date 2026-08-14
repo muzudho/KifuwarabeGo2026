@@ -28,7 +28,7 @@ public sealed class SinglelineTextUnderline
         set
         {
             _bounds = value;
-            ActionBadge = _actionBadgeLabel is null ? null : ActionBadge.Create(_actionBadgeLabel, value, _actionBadgeTextScale);
+            ActionBadge = _actionBadgeLabel is null ? null : ActionBadgeComponent.Create(_actionBadgeLabel, value, _actionBadgeTextScale);
         }
     }
 
@@ -36,7 +36,7 @@ public sealed class SinglelineTextUnderline
 
     public bool IsHovered { get; private set; }
 
-    public ActionBadge? ActionBadge { get; private set; }
+    public ActionBadgeComponent? ActionBadge { get; private set; }
 
     public void SetEditing(bool isEditing) => IsEditing = isEditing;
 

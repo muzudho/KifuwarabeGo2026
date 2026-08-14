@@ -44,14 +44,14 @@ public sealed class LinkUnderline
     public Color SelectedColor { get; set; } = new(147, 244, 200);
 
     /// <summary>このリンクをホバーしたときに表示するアクションバッジです。</summary>
-    public ActionBadge? ActionBadge { get; private set; }
+    public ActionBadgeComponent? ActionBadge { get; private set; }
 
     // ========================================
     // 機能
     // ========================================
 
     /// <summary>このリンクが所有するアクションバッジを設定します。</summary>
-    public void SetActionBadge(ActionBadge actionBadge) => ActionBadge = actionBadge ?? throw new ArgumentNullException(nameof(actionBadge));
+    public void SetActionBadge(ActionBadgeComponent actionBadge) => ActionBadge = actionBadge ?? throw new ArgumentNullException(nameof(actionBadge));
 
     /// <summary>指定座標がこのリンク領域内か判定します。</summary>
     public bool IsHit(Point point) => Bounds.Contains(point);
