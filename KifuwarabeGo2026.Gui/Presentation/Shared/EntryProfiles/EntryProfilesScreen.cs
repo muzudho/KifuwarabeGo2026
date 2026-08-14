@@ -27,13 +27,13 @@ public sealed class ClientIdentityProfileSelectionControls
 {
     public ClientIdentityProfileSelectionControls()
     {
-        CloseButton = new Button(new Rectangle(1158, 182, 150, 48), "CLOSE", 0.34f);
-        UseButton = new Button(new Rectangle(1320, 182, 150, 48), "USE", 0.34f);
+        CloseButton = new Button(new Rectangle(1158, 182, 150, 48), "CANCEL", 0.30f);
+        UseButton = new Button(new Rectangle(1320, 182, 150, 48), "INPUT", 0.34f);
         AddButton = new Button(new Rectangle(466, 820, 180, 48), "ADD", 0.34f);
         DuplicateButton = new Button(new Rectangle(663, 820, 180, 48), "DUPLICATE", 0.30f);
         EditButton = new Button(new Rectangle(860, 820, 180, 48), "EDIT", 0.34f);
-        SetDefaultButton = new Button(new Rectangle(1057, 820, 220, 48), "SET DEFAULT", 0.30f);
-        DeleteButton = new Button(new Rectangle(1294, 820, 180, 48), "DELETE", 0.34f);
+        SetDefaultButton = new Button(new Rectangle(1057, 820, 220, 48), "SET AS DEFAULT", 0.22f);
+        DeleteButton = new Button(new Rectangle(1294, 820, 180, 48), "DELETE", 0.30f);
     }
 
     public Button CloseButton { get; }
@@ -51,6 +51,16 @@ public sealed class ClientIdentityProfileSelectionControls
         for (var index = 0; index < itemCount; index++)
             if (GetItemBounds(index).Contains(point)) return index;
         return null;
+    }
+
+    public void UpdateState(int itemCount, bool isDefault)
+    {
+        UseButton.IsEnabled = itemCount > 0;
+        AddButton.IsEnabled = itemCount < 5;
+        DuplicateButton.IsEnabled = itemCount is > 0 and < 5;
+        EditButton.IsEnabled = itemCount > 0;
+        SetDefaultButton.IsEnabled = itemCount > 0 && !isDefault;
+        DeleteButton.IsEnabled = itemCount > 1;
     }
 }
 
@@ -128,6 +138,12 @@ public sealed class ClientIdentityConnectionSelectionControls
         }
         return null;
     }
+
+    public void UpdateState(int pageIndex, int pageCount)
+    {
+        PreviousButton.IsEnabled = pageIndex > 0;
+        NextButton.IsEnabled = pageIndex < pageCount - 1;
+    }
 }
 
 public sealed class QuickClientIdentitySelectionControls
@@ -159,29 +175,10 @@ internal static class EntryProfilesScreenBounds
     private static QuickClientIdentitySelectionControls Quick => Screen.QuickSelection;
     private static ClientIdentityProfileSelectionControls Selection => Screen.ProfileSelection;
     private static ClientIdentityProfileEditControls Edit => Screen.ProfileEdit;
-    internal static Rectangle ClientIdentityProfileSelectionCloseButtonBounds => Selection.CloseButton.Bounds;
-    internal static Rectangle ClientIdentityProfileSelectionUseButtonBounds => Selection.UseButton.Bounds;
-    internal static Rectangle ClientIdentityProfileSelectionAddButtonBounds => Selection.AddButton.Bounds;
-    internal static Rectangle ClientIdentityProfileSelectionDuplicateButtonBounds => Selection.DuplicateButton.Bounds;
-    internal static Rectangle ClientIdentityProfileSelectionEditButtonBounds => Selection.EditButton.Bounds;
-    internal static Rectangle ClientIdentityProfileSelectionSetDefaultButtonBounds => Selection.SetDefaultButton.Bounds;
-    internal static Rectangle ClientIdentityProfileSelectionDeleteButtonBounds => Selection.DeleteButton.Bounds;
-    internal static Rectangle ClientIdentityProfileEditCancelButtonBounds => Edit.DiscardButton.Bounds;
-    internal static Rectangle ClientIdentityProfileEditSaveButtonBounds => Edit.SaveButton.Bounds;
-    internal static Rectangle ClientIdentityProfileEditUseButtonBounds => Edit.UseButton.Bounds;
-    internal static Rectangle ClientIdentityProfileEditAddCgosButtonBounds => Edit.AddCgosButton.Bounds;
-    internal static Rectangle ClientIdentityProfileEditAddLocalButtonBounds => Edit.AddLocalButton.Bounds;
-    internal static Rectangle ClientIdentityProfileEditRemoveButtonBounds => Edit.RemoveButton.Bounds;
     internal static Rectangle ClientIdentityProfileEditFieldTextBounds(int index, ClientIdentityProfileEditField field, bool isLocalMatch) => Edit.GetFieldTextBounds(field);
     internal static Rectangle ClientIdentityFieldHoverBounds(Rectangle textBounds) => new(536, textBounds.Y, textBounds.Right - 536, textBounds.Height);
     internal static Rectangle ClientIdentityProfileConnectionSelectionPanelBounds => Connection.PanelBounds;
-    internal static Rectangle ClientIdentityProfileConnectionSelectionCancelButtonBounds => Connection.CancelButton.Bounds;
-    internal static Rectangle ClientIdentityProfileConnectionSelectionSelectButtonBounds => Connection.SelectButton.Bounds;
-    internal static Rectangle ClientIdentityProfileConnectionSelectionPreviousButtonBounds => Connection.PreviousButton.Bounds;
-    internal static Rectangle ClientIdentityProfileConnectionSelectionNextButtonBounds => Connection.NextButton.Bounds;
     internal static Rectangle ClientIdentityProfileConnectionSelectionItemBounds(int slot) => Connection.GetItemBounds(slot);
     internal static Rectangle QuickClientIdentitySelectionPanelBounds => Quick.PanelBounds;
-    internal static Rectangle QuickClientIdentitySelectionCancelButtonBounds => Quick.CancelButton.Bounds;
-    internal static Rectangle QuickClientIdentitySelectionSelectButtonBounds => Quick.SelectButton.Bounds;
     internal static Rectangle QuickClientIdentitySelectionItemBounds(int index) => Quick.GetItemBounds(index);
 }

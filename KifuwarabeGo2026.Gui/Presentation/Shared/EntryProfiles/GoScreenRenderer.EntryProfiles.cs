@@ -62,7 +62,8 @@ public sealed partial class GoScreenRenderer
             return;
         }
         if (!session.IsClientIdentityProfileEditPanelOpen) return;
-        EntryProfilesScreen.Default.ProfileEdit.UpdateState(session.IsClientIdentityProfileEditDirty);
+        var profileEdit = EntryProfilesScreen.Default.ProfileEdit;
+        profileEdit.UpdateState(session.IsClientIdentityProfileEditDirty);
         var bounds = new Rectangle(430, 150, 1080, 760);
         FillRect(new Rectangle(0, 0, VirtualScreen.Width, VirtualScreen.Height), new Color(0, 0, 0, 150));
         FillRect(bounds, new Color(24, 29, 36, 252));
@@ -70,9 +71,8 @@ public sealed partial class GoScreenRenderer
         DrawText("EDIT CLIENT IDENTITY", new Vector2(bounds.X + 34, bounds.Y + 28), new Color(244, 238, 218), 0.68f);
         DrawDynamicOptionText("機械で扱えるフォーマットのプレイヤー情報を設定できます。", new Rectangle(bounds.X + 36, bounds.Y + 82, 860, 32), new Color(180, 195, 195), 0.34f);
         var targets = session.GetPlayerClientIdentityProfiles(session.PlayerEditDraft.Id);
-        DrawCommandButton(ClientIdentityProfileEditCancelButtonBounds, "DISCARD", false, mousePoint, enabled: session.IsClientIdentityProfileEditDirty, scale: 0.30f);
-        DrawCommandButton(ClientIdentityProfileEditSaveButtonBounds, session.IsClientIdentityProfileEditDirty ? "SAVE & CLOSE" : "CLOSE", false, mousePoint,
-            scale: session.IsClientIdentityProfileEditDirty ? 0.26f : 0.34f);
+        DrawCommandButton(profileEdit.DiscardButton.Bounds, profileEdit.DiscardButton.Label, false, mousePoint, enabled: profileEdit.DiscardButton.IsEnabled, scale: profileEdit.DiscardButton.LabelScale);
+        DrawCommandButton(profileEdit.SaveButton.Bounds, profileEdit.SaveButton.Label, false, mousePoint, scale: profileEdit.SaveButton.LabelScale);
         DrawClientIdentityProfileEditField(session, 0, ClientIdentityProfileEditField.LoginName, "HANDLE", mousePoint, false);
         DrawClientIdentityProfileEditField(session, 0, ClientIdentityProfileEditField.LoginPass, "PASSWORD", mousePoint, false);
         if (!session.IsClientIdentityProfileConnectionSelectionPanelOpen) return;
@@ -115,14 +115,15 @@ public sealed partial class GoScreenRenderer
         DrawFittedText("UP TO FIVE IDENTITIES CAN BE SAVED.", new Rectangle(bounds.X + 36, bounds.Y + 65, 500, 22), new Color(180, 195, 195), 0.28f);
         DrawFittedText("GREEN: default input     BLUE: input source", new Rectangle(bounds.X + 36, bounds.Y + 87, 500, 22), new Color(180, 210, 215), 0.29f);
         var targets = session.GetPlayerClientIdentityProfiles(session.PlayerEditDraft.Id);
-        DrawCommandButton(ClientIdentityProfileSelectionUseButtonBounds, "INPUT", false, mousePoint, enabled: targets.Count > 0, scale: 0.34f);
-        DrawCommandButton(ClientIdentityProfileSelectionCloseButtonBounds, "CANCEL", false, mousePoint, scale: 0.30f);
-        DrawCommandButton(ClientIdentityProfileSelectionAddButtonBounds, "ADD", false, mousePoint, enabled: targets.Count < 5, scale: 0.34f);
-        DrawCommandButton(ClientIdentityProfileSelectionDuplicateButtonBounds, "DUPLICATE", false, mousePoint, enabled: targets.Count > 0 && targets.Count < 5, scale: 0.29f);
-        DrawCommandButton(ClientIdentityProfileSelectionEditButtonBounds, "EDIT", false, mousePoint, enabled: targets.Count > 0, scale: 0.34f);
-        DrawCommandButton(ClientIdentityProfileSelectionSetDefaultButtonBounds, "SET AS DEFAULT", false, mousePoint,
-            enabled: targets.Count > 0 && !session.IsClientIdentityProfileDefault(session.ClientIdentityProfileSelectionIndex), scale: 0.22f);
-        DrawCommandButton(ClientIdentityProfileSelectionDeleteButtonBounds, "DELETE", false, mousePoint, enabled: targets.Count > 1, scale: 0.30f);
+        var selection = EntryProfilesScreen.Default.ProfileSelection;
+        selection.UpdateState(targets.Count, session.IsClientIdentityProfileDefault(session.ClientIdentityProfileSelectionIndex));
+        DrawCommandButton(selection.UseButton.Bounds, selection.UseButton.Label, false, mousePoint, enabled: selection.UseButton.IsEnabled, scale: selection.UseButton.LabelScale);
+        DrawCommandButton(selection.CloseButton.Bounds, selection.CloseButton.Label, false, mousePoint, scale: selection.CloseButton.LabelScale);
+        DrawCommandButton(selection.AddButton.Bounds, selection.AddButton.Label, false, mousePoint, enabled: selection.AddButton.IsEnabled, scale: selection.AddButton.LabelScale);
+        DrawCommandButton(selection.DuplicateButton.Bounds, selection.DuplicateButton.Label, false, mousePoint, enabled: selection.DuplicateButton.IsEnabled, scale: 0.29f);
+        DrawCommandButton(selection.EditButton.Bounds, selection.EditButton.Label, false, mousePoint, enabled: selection.EditButton.IsEnabled, scale: selection.EditButton.LabelScale);
+        DrawCommandButton(selection.SetDefaultButton.Bounds, selection.SetDefaultButton.Label, false, mousePoint, enabled: selection.SetDefaultButton.IsEnabled, scale: selection.SetDefaultButton.LabelScale);
+        DrawCommandButton(selection.DeleteButton.Bounds, selection.DeleteButton.Label, false, mousePoint, enabled: selection.DeleteButton.IsEnabled, scale: 0.30f);
 
         var firstRow = new Rectangle(bounds.X + 36, bounds.Y + 140, bounds.Width - 72, 78);
         DrawFittedText("HANDLE", new Rectangle(firstRow.X + 18, firstRow.Y - 27, 410, 24), new Color(180, 210, 215), 0.30f);
@@ -149,13 +150,16 @@ public sealed partial class GoScreenRenderer
     {
         if (!session.IsClientIdentityProfileConnectionSelectionPanelOpen) return;
 
+        var connectionControls = EntryProfilesScreen.Default.ConnectionSelection;
+        connectionControls.UpdateState(session.ClientIdentityProfileConnectionSelectionPageIndex, session.ClientIdentityProfileConnectionSelectionPageCount);
+
         FillRect(new Rectangle(0, 0, VirtualScreen.Width, VirtualScreen.Height), new Color(0, 0, 0, 105));
         FillRect(ClientIdentityProfileConnectionSelectionPanelBounds, new Color(19, 24, 31, 252));
         DrawRect(ClientIdentityProfileConnectionSelectionPanelBounds, 2, new Color(116, 145, 146));
         DrawText("SELECT ONLINE MATCH SERVER", new Vector2(542, 240), new Color(244, 238, 218), 0.50f);
         DrawText("Choose the OnlineMatch (CGOS) server for this Client Identity.", new Vector2(544, 294), new Color(180, 195, 195), 0.28f);
-        DrawCommandButton(ClientIdentityProfileConnectionSelectionCancelButtonBounds, "CANCEL", false, mousePoint, scale: 0.30f);
-        DrawCommandButton(ClientIdentityProfileConnectionSelectionSelectButtonBounds, "SELECT", false, mousePoint, scale: 0.34f);
+        DrawCommandButton(connectionControls.CancelButton.Bounds, connectionControls.CancelButton.Label, false, mousePoint, scale: 0.30f);
+        DrawCommandButton(connectionControls.SelectButton.Bounds, connectionControls.SelectButton.Label, false, mousePoint, scale: connectionControls.SelectButton.LabelScale);
 
         for (var slot = 0; slot < GoAppSession.ClientIdentityProfileConnectionSelectionPageSize; slot++)
         {
@@ -170,13 +174,14 @@ public sealed partial class GoScreenRenderer
         }
 
         DrawFittedText($"PAGE {session.ClientIdentityProfileConnectionSelectionPageIndex + 1} / {session.ClientIdentityProfileConnectionSelectionPageCount}", new Rectangle(872, 805, 168, 30), new Color(227, 224, 210), 0.34f);
-        DrawCommandButton(ClientIdentityProfileConnectionSelectionPreviousButtonBounds, "PREV", false, mousePoint, enabled: session.ClientIdentityProfileConnectionSelectionPageIndex > 0, scale: 0.32f);
-        DrawCommandButton(ClientIdentityProfileConnectionSelectionNextButtonBounds, "NEXT", false, mousePoint, enabled: session.ClientIdentityProfileConnectionSelectionPageIndex < session.ClientIdentityProfileConnectionSelectionPageCount - 1, scale: 0.32f);
+        DrawCommandButton(connectionControls.PreviousButton.Bounds, connectionControls.PreviousButton.Label, false, mousePoint, enabled: connectionControls.PreviousButton.IsEnabled, scale: 0.32f);
+        DrawCommandButton(connectionControls.NextButton.Bounds, connectionControls.NextButton.Label, false, mousePoint, enabled: connectionControls.NextButton.IsEnabled, scale: 0.32f);
     }
 
     private void DrawQuickClientIdentitySelectionPanel(GoAppSession session, Point mousePoint)
     {
         if (!session.IsQuickClientIdentitySelectionPanelOpen) return;
+        var quick = EntryProfilesScreen.Default.QuickSelection;
         var targets = session.GetQuickClientIdentitySelectionTargets(session.QuickClientIdentitySelectionStone, session.QuickClientIdentitySelectionIsCgos);
         FillRect(new Rectangle(0, 0, VirtualScreen.Width, VirtualScreen.Height), new Color(0, 0, 0, 125));
         FillRect(QuickClientIdentitySelectionPanelBounds, new Color(19, 24, 31, 252));
@@ -191,8 +196,8 @@ public sealed partial class GoScreenRenderer
             "HANDLE とは？",
             ["機械に入力できる書式に従った、Player の Entry 名です。", $"この一覧は {service} 用です。選択は今回だけに適用されます。"],
             bodyLineSpacing: 30);
-        DrawCommandButton(QuickClientIdentitySelectionCancelButtonBounds, "CANCEL", false, mousePoint, scale: 0.30f);
-        DrawCommandButton(QuickClientIdentitySelectionSelectButtonBounds, "SELECT", false, mousePoint, scale: 0.30f);
+        DrawCommandButton(quick.CancelButton.Bounds, quick.CancelButton.Label, false, mousePoint, scale: 0.30f);
+        DrawCommandButton(quick.SelectButton.Bounds, quick.SelectButton.Label, false, mousePoint, scale: 0.30f);
         for (var index = 0; index < targets.Count; index++)
         {
             var target = targets[index];

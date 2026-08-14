@@ -1014,6 +1014,15 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
     private const float MinimumCommandButtonLabelScale = 0.36f;
     private const float CommandButtonLabelScaleMultiplier = 1.25f;
 
+    /// <summary>
+    /// XXX: 何これ（＾～＾）？　ボタン（＾～＾）？
+    /// </summary>
+    /// <param name="bounds"></param>
+    /// <param name="label"></param>
+    /// <param name="selected"></param>
+    /// <param name="mousePoint"></param>
+    /// <param name="enabled"></param>
+    /// <param name="scale"></param>
     private void DrawCommandButton(Rectangle bounds, string label, bool selected, Point mousePoint, bool enabled = true, float scale = 0.62f)
     {
         var hovered = enabled && bounds.Contains(mousePoint);

@@ -2008,6 +2008,9 @@ public class Game1 : Game
             return false;
 
         var connectionSelection = EntryProfilesScreen.Default.ConnectionSelection;
+        connectionSelection.UpdateState(
+            _session.ClientIdentityProfileConnectionSelectionPageIndex,
+            _session.ClientIdentityProfileConnectionSelectionPageCount);
         if (connectionSelection.CancelButton.IsHit(point))
             _session.CancelClientIdentityProfileConnectionSelectionPanel();
         else if (connectionSelection.SelectButton.IsHit(point))
@@ -2035,6 +2038,10 @@ public class Game1 : Game
         {
             var profileSelection = EntryProfilesScreen.Default.ProfileSelection;
             var profileEdit = EntryProfilesScreen.Default.ProfileEdit;
+            var profileCount = _session.GetPlayerClientIdentityProfiles(_session.PlayerEditDraft.Id).Count;
+            profileSelection.UpdateState(
+                profileCount,
+                _session.IsClientIdentityProfileDefault(_session.ClientIdentityProfileSelectionIndex));
             if (profileSelection.CloseButton.IsHit(point))
                 _session.CloseClientIdentityProfileSelectionPanel();
             else if (profileSelection.UseButton.IsHit(point))
