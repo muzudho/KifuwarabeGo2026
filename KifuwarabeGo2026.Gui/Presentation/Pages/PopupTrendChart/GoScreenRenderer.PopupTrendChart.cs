@@ -1,5 +1,7 @@
 namespace KifuwarabeGo2026.Gui.Presentation;
 
+using KifuwarabeGo2026.Gui.Presentation.Shared.RightSidePanel;
+
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.Watching;
 using KifuwarabeGo2026.Gui.Application.Local.Playing;
@@ -80,14 +82,7 @@ public sealed partial class GoScreenRenderer
 
     public static int? GetReviewChartPopupStepButtonHit(Point point)
     {
-        for (var index = 0; index < ReviewStepButtonValues.Length; index++)
-        {
-            if (ReviewChartPopupStepButtonBounds(index).Contains(point))
-            {
-                return ReviewStepButtonValues[index];
-            }
-        }
-        return null;
+        return ReviewMoveNavigation.GetButtonHit(point, ReviewChartPopupStepButtonBounds);
     }
 
     public static int? GetReplayStepButtonHit(Point point) =>
@@ -226,11 +221,7 @@ public sealed partial class GoScreenRenderer
         int moveCount,
         Point mousePoint)
     {
-        DrawMoveNavigationButtons(
-            currentMoveIndex,
-            moveCount,
-            mousePoint,
-            ReviewChartPopupStepButtonBounds);
+        ReviewMoveNavigation.Draw(this, currentMoveIndex, moveCount, mousePoint, ReviewChartPopupStepButtonBounds);
     }
 
     private void DrawReplayNavigationControls(

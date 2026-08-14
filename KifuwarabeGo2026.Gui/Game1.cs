@@ -2762,7 +2762,7 @@ public class Game1 : Game
             return true;
         }
 
-        if (GoScreenRenderer.GetReviewStepButtonHit(point) is { } step)
+        if (BoardAndReviewScreen.Default.ReviewingRightSidePanel.GetStepButtonHit(point) is { } step)
         {
             ExecuteReviewNavigation(step);
             _reviewMouseRepeatCommand = step is int.MinValue or int.MaxValue ? null : step;
@@ -3347,7 +3347,7 @@ public class Game1 : Game
 
         if (_previousMouse.LeftButton != ButtonState.Pressed ||
             _reviewMouseRepeatCommand is not { } command ||
-            GoScreenRenderer.GetReviewStepButtonHit(point) != command)
+            BoardAndReviewScreen.Default.ReviewingRightSidePanel.GetStepButtonHit(point) != command)
         {
             return;
         }

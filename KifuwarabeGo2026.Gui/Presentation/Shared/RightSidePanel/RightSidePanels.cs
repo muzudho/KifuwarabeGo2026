@@ -17,6 +17,7 @@ using KifuwarabeGo2026.Gui.Presentation.Pages.EditTournamentRule;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Headline;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
+using static KifuwarabeGo2026.Gui.Presentation.Pages.PopupTrendChart.PopupTrendChartScreenBounds;
 using Microsoft.Xna.Framework;
 using System;
 
@@ -473,7 +474,95 @@ public sealed class VariationEditingRightSidePanel
 
 public sealed class ReviewingRightSidePanel
 {
-    public void Draw(GoScreenRenderer renderer, GoAppSession session, Point mousePoint) => renderer.DrawReviewingRightSidePanelContent(session, mousePoint);
+    // ========================================
+    // 機能
+    // ========================================
+
+    public int? GetStepButtonHit(Point point) =>
+        ReviewMoveNavigation.GetButtonHit(point, ReviewChartPopupStepButtonBounds);
+
+    public void Draw(GoScreenRenderer renderer, GoAppSession session, Point mousePoint)
+    {
+        var controls = BoardAndReviewScreen.Default.Review;
+        var drawingContext = renderer.StationeryDrawingContext;
+        controls.UpdateBoardLensState(session.IsRenParseDisplayEnabled, session.IsMeasureBoardLens);
+        new Headline("KIFU REVIEW", new Vector2(1144, 136), new Color(255, 230, 160), 0.72f).Draw(drawingContext);
+        if (session.HasUnsavedReviewCommentChanges)
+        {
+            drawingContext.DrawFittedText("COMMENTS NOT SAVED TO FILE", controls.UnsavedCommentsNoticeBounds,
+                new Color(255, 205, 112), 0.26f);
+        }
+        controls.BackToHomeButton.Draw(mousePoint, drawingContext);
+        if (session.UseKind == GoAppUseKind.LocalPlay)
+            controls.UsePositionButton.Draw(mousePoint, drawingContext);
+
+        renderer.DrawVerticalResultSection(new Rectangle(1144, 204, 668, 120), "RULES", new Color(66, 104, 116));
+        renderer.DrawResultRow(new Rectangle(1164, 208, 628, 52), "BOARD", $"{session.BoardSize} x {session.BoardSize}", new Color(62, 112, 105), Color.White);
+        renderer.DrawResultRow(new Rectangle(1164, 264, 628, 52), "KOMI", session.Komi.ToString("0.0"), new Color(62, 112, 105), Color.White);
+
+        renderer.DrawVerticalResultSection(new Rectangle(1144, 336, 668, 200), "PLAYERS", new Color(76, 91, 126));
+        renderer.DrawBothPlayersComponent(1144, 344, 668,
+            session.ReviewBlackPlayerName, session.ReviewWhitePlayerName,
+            session.ReviewBlackUsedTime, session.ReviewWhiteUsedTime, session.ReviewTimeLimit,
+            session.BlackAgehama, session.WhiteAgehama, session.CurrentTurn, minimal: true,
+            blackLiveElapsed: session.ReviewBlackUsedTime, whiteLiveElapsed: session.ReviewWhiteUsedTime);
+
+        renderer.DrawRightSidePanelReviewTrendChart(session, mousePoint);
+
+        renderer.DrawVerticalResultSection(new Rectangle(1144, 850, 668, 142), "REVIEW", new Color(76, 91, 126));
+        renderer.DrawRightSidePanelResultLabel(new Rectangle(1164, 858, 468, 36),
+            $"STEP {session.ReviewMoveIndex} / {session.ReviewMoveCount}", new Color(76, 91, 126));
+        controls.BoardLensNextButton.Draw(mousePoint, drawingContext);
+        controls.BoardLensPreviousButton.Draw(mousePoint, drawingContext);
+        controls.BoardLensExitButton.Draw(mousePoint, drawingContext);
+        controls.BoardLensButton.Draw(mousePoint, drawingContext);
+        ReviewMoveNavigation.Draw(renderer, session.ReviewMoveIndex, session.ReviewMoveCount,
+            mousePoint, ReviewChartPopupStepButtonBounds);
+        drawingContext.DrawFittedText(
+            "[L] BOARD LENS    HOME/END    ARROWS: -/+1,10    PGDN/PGUP: -/+50",
+            new Rectangle(1168, 950, 624, 24), new Color(147, 201, 190), 0.23f);
+    }
+}
+
+public static class ReviewMoveNavigation
+{
+    // ========================================
+    // データメンバー
+    // ========================================
+
+    internal static readonly int[] StepButtonValues =
+        [int.MinValue, -50, -10, -1, 1, 10, 50, int.MaxValue];
+
+    // ========================================
+    // 機能
+    // ========================================
+
+    public static int? GetButtonHit(Point point, Func<int, Rectangle> getButtonBounds)
+    {
+        for (var index = 0; index < StepButtonValues.Length; index++)
+            if (getButtonBounds(index).Contains(point))
+                return StepButtonValues[index];
+        return null;
+    }
+
+    internal static void Draw(GoScreenRenderer renderer, int currentMoveIndex, int moveCount,
+        Point mousePoint, Func<int, Rectangle> getButtonBounds)
+    {
+        for (var index = 0; index < StepButtonValues.Length; index++)
+        {
+            var step = StepButtonValues[index];
+            var enabled = step < 0 ? currentMoveIndex > 0 : currentMoveIndex < moveCount;
+            renderer.DrawRightSidePanelCommandButton(getButtonBounds(index), FormatStep(step), mousePoint, enabled, 0.31f);
+        }
+    }
+
+    private static string FormatStep(int step) => step switch
+    {
+        int.MinValue => "|<",
+        int.MaxValue => ">|",
+        > 0 => $"+{step}",
+        _ => step.ToString(),
+    };
 }
 
 public sealed class InitialPositionConciergeRightSidePanel

@@ -84,6 +84,8 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
     internal void DrawRightSidePanelStoneCountStrip(GoAppSession session, int y, bool showLeader, bool minimal) =>
         DrawStoneCountStrip(session, y, showLeader, minimal);
     internal void DrawRightSidePanelCircle(Vector2 center, float radius, Color color) => DrawCircle(center, radius, color);
+    internal void DrawRightSidePanelReviewTrendChart(GoAppSession session, Point mousePoint) =>
+        DrawReviewTrendChart(session, mousePoint);
     private readonly LinkUnderline _gtpEngineOptionLinkUnderline = new(
         new RoundUnderline { TopOffset = -4, Thickness = 4, Radius = 2 });
     private readonly MultilineTextUnderline _multilineTextUnderline = new(

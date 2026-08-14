@@ -59,6 +59,21 @@ RightSidePanel 残存コード整理 引き継ぎ
 
 次は ReviewingRightSidePanel の描画本体、移動ボタン、Board Lens 操作群の移設から再開してください。
 
+第6段階も完了しました。
+
+- DrawReviewingRightSidePanelContent の描画本体を ReviewingRightSidePanel.Draw へ移設・削除。
+- ReviewStepButtonValues、DrawMoveNavigationButtons、FormatMoveNavigationStep を
+  共通部品 ReviewMoveNavigation へ移設・削除。
+- チャートポップアップとリプレイも ReviewMoveNavigation を使用するよう変更。
+- DrawReviewBoardLensPreviousButton、DrawReviewBoardLensExitButton、
+  DrawReviewBoardLensFamilyButton、DrawReviewBoardLensButton を削除。
+- BoardAndReviewScreen が所有する ReviewControls の Button.Draw を直接使用。
+- GetReviewStepButtonHit を ReviewingRightSidePanel.GetStepButtonHit へ移設し、
+  GoScreenRenderer から削除。
+
+次は LocalMatchPlayRightSidePanel と LocalMatchIntermissionRightSidePanel に残る
+各ページの DrawRightSidePanelContent 本体移設から再開してください。
+
 目的
 ----
 
