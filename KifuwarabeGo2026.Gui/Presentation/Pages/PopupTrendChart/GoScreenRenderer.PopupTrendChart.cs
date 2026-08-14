@@ -105,12 +105,7 @@ public sealed partial class GoScreenRenderer
         FillRect(ReviewChartPopupBounds, new Color(54, 69, 112, 108));
         DrawRect(ReviewChartPopupBounds, 4, new Color(158, 177, 229, 230));
         DrawText("KIFU NAVIGATION", new Vector2(92, 58), new Color(238, 242, 255), 0.62f);
-        DrawCommandButton(
-            ReviewChartPopupCloseButtonBounds,
-            "CLOSE",
-            false,
-            mousePoint,
-            scale: 0.38f);
+        PopupTrendChartScreen.Default.CloseButton.Draw(mousePoint, _stationeryDrawingContext);
 
         DrawMoveTrendChart(
             session,
@@ -188,22 +183,14 @@ public sealed partial class GoScreenRenderer
                 new Color(255, 205, 112),
                 0.34f);
         }
-        DrawCommandButton(
-            ReviewChartPopupCloseButtonBounds,
-            "CLOSE",
-            false,
-            mousePoint,
-            scale: 0.38f);
+        PopupTrendChartScreen.Default.CloseButton.Draw(mousePoint, _stationeryDrawingContext);
         if (showBackToLive)
         {
             DrawLiveChartAutoUpdateCheckBox(session, mousePoint);
-            DrawCommandButton(
-                ReviewChartPopupBackToLiveButtonBounds,
-                backToLiveLabel,
-                false,
-                mousePoint,
-                enabled: backToLiveEnabled,
-                scale: 0.34f);
+            var backToLiveButton = PopupTrendChartScreen.Default.BackToLiveButton;
+            backToLiveButton.Label = backToLiveLabel;
+            backToLiveButton.IsEnabled = backToLiveEnabled;
+            backToLiveButton.Draw(mousePoint, _stationeryDrawingContext);
         }
 
         DrawMoveTrendChart(
@@ -256,12 +243,9 @@ public sealed partial class GoScreenRenderer
         DrawReviewChartPopupStepButtons(currentMoveIndex, moveCount, mousePoint);
         if (showBackToLive)
         {
-            DrawCommandButton(
-                ReplayBackToLiveButtonBounds,
-                backToLiveLabel,
-                false,
-                mousePoint,
-                scale: 0.3f);
+            var backToLiveButton = PopupTrendChartScreen.Default.ReplayBackToLiveButton;
+            backToLiveButton.Label = backToLiveLabel;
+            backToLiveButton.Draw(mousePoint, _stationeryDrawingContext);
         }
         DrawReplayEditIconButton(mousePoint);
     }

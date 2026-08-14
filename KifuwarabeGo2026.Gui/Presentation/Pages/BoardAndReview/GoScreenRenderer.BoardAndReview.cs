@@ -64,14 +64,15 @@ public sealed partial class GoScreenRenderer
         Point mousePoint,
         LiveBoardPreview? liveBoardPreview)
     {
-        BoardAndReviewScreen.Default.VariationEditing.UpdateState(
+        var controls = BoardAndReviewScreen.Default.VariationEditing;
+        controls.UpdateState(
             session.VariationEditingStone,
             session.CanAdoptVariationPosition,
             session.CanUndoVariation);
         new Headline("ANALYSIS BOARD", new Vector2(1144, 136), new Color(42, 62, 68), 0.68f).Draw(_stationeryDrawingContext);
-        DrawCommandButton(VariationEditingDiscardButtonBounds, "DISCARD", false, mousePoint, scale: 0.34f);
+        controls.DiscardButton.Draw(mousePoint, _stationeryDrawingContext);
         if (session.CanAdoptVariationPosition)
-            DrawCommandButton(VariationEditingAdoptButtonBounds, "ADOPT", false, mousePoint, scale: 0.34f);
+            controls.AdoptButton.Draw(mousePoint, _stationeryDrawingContext);
 
         var informationWidth = liveBoardPreview is null ? 668 : 372;
         var informationRowWidth = liveBoardPreview is null ? 628 : 332;
@@ -116,10 +117,10 @@ public sealed partial class GoScreenRenderer
         }
 
         DrawVerticalResultSection(new Rectangle(1144, 548, 668, 112), "TOOL", new Color(67, 112, 118));
-        DrawCommandButton(VariationEditingPlayButtonBounds, "PLAY", session.VariationEditingStone is null, mousePoint, scale: 0.42f);
-        DrawCommandButton(VariationEditingBlackButtonBounds, "BLACK", session.VariationEditingStone == GoStone.Black, mousePoint, scale: 0.4f);
-        DrawCommandButton(VariationEditingWhiteButtonBounds, "WHITE", session.VariationEditingStone == GoStone.White, mousePoint, scale: 0.4f);
-        DrawCommandButton(VariationEditingEraseButtonBounds, "ERASE", session.VariationEditingStone == GoStone.Empty, mousePoint, scale: 0.4f);
+        controls.PlayButton.Draw(mousePoint, _stationeryDrawingContext);
+        controls.BlackButton.Draw(mousePoint, _stationeryDrawingContext);
+        controls.WhiteButton.Draw(mousePoint, _stationeryDrawingContext);
+        controls.EraseButton.Draw(mousePoint, _stationeryDrawingContext);
 
         DrawVerticalResultSection(new Rectangle(1144, 676, 668, 110), "HOW TO USE", new Color(86, 99, 104));
         DrawFittedText(
@@ -129,29 +130,24 @@ public sealed partial class GoScreenRenderer
             0.3f);
 
         DrawVerticalResultSection(new Rectangle(1144, 802, 668, 74), "BOARD", new Color(76, 91, 126));
-        DrawCommandButton(VariationEditingClearButtonBounds, "CLEAR BOARD", false, mousePoint, scale: 0.32f);
+        controls.ClearButton.Draw(mousePoint, _stationeryDrawingContext);
         DrawCommandButton(VariationEditingBoardLensButtonBounds, "L", session.IsRenParseDisplayEnabled, mousePoint, scale: 0.40f);
         DrawCommandButton(VariationEditingBoardLensPreviousButtonBounds, "<J", false, mousePoint, enabled: session.IsRenParseDisplayEnabled, scale: 0.25f);
         DrawCommandButton(VariationEditingBoardLensNextButtonBounds, "K>", false, mousePoint, enabled: session.IsRenParseDisplayEnabled, scale: 0.25f);
         DrawCommandButton(VariationEditingBoardLensExitButtonBounds, "OFF/1", false, mousePoint, enabled: session.IsRenParseDisplayEnabled, scale: 0.22f);
 
         DrawVerticalResultSection(new Rectangle(1144, 916, 668, 76), "ACTION", new Color(91, 82, 105));
-        DrawCommandButton(VariationEditingExportSgfButtonBounds, "KIFU OUTPUT (SGF)", false, mousePoint, scale: 0.20f);
-        DrawCommandButton(VariationEditingCommentButtonBounds, "COMMENT", false, mousePoint, scale: 0.30f);
-        DrawCommandButton(
-            VariationEditingUndoButtonBounds,
-            "UNDO",
-            false,
-            mousePoint,
-            enabled: session.CanUndoVariation,
-            scale: 0.42f);
-        DrawCommandButton(VariationEditingPassButtonBounds, "PASS", false, mousePoint, scale: 0.44f);
+        controls.ExportSgfButton.Draw(mousePoint, _stationeryDrawingContext);
+        controls.CommentButton.Draw(mousePoint, _stationeryDrawingContext);
+        controls.UndoButton.Draw(mousePoint, _stationeryDrawingContext);
+        controls.PassButton.Draw(mousePoint, _stationeryDrawingContext);
     }
 
 
     private void DrawReviewingSidePanel(GoAppSession session, Point mousePoint)
     {
-        BoardAndReviewScreen.Default.Review.UpdateBoardLensState(
+        var controls = BoardAndReviewScreen.Default.Review;
+        controls.UpdateBoardLensState(
             session.IsRenParseDisplayEnabled,
             session.IsMeasureBoardLens);
         new Headline("KIFU REVIEW", new Vector2(1144, 136), new Color(255, 230, 160), 0.72f).Draw(_stationeryDrawingContext);
@@ -163,10 +159,10 @@ public sealed partial class GoScreenRenderer
                 new Color(255, 205, 112),
                 0.26f);
         }
-        DrawCommandButton(ReviewBackToRestButtonBounds, "BACK TO HOME", false, mousePoint, scale: 0.32f);
+        controls.BackToHomeButton.Draw(mousePoint, _stationeryDrawingContext);
         if (session.UseKind == GoAppUseKind.LocalPlay)
         {
-            DrawCommandButton(ReviewDoneButtonBounds, "USE POSITION", false, mousePoint, scale: 0.34f);
+            controls.UsePositionButton.Draw(mousePoint, _stationeryDrawingContext);
         }
 
         DrawVerticalResultSection(new Rectangle(1144, 204, 668, 120), "RULES", new Color(66, 104, 116));

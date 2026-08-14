@@ -77,6 +77,16 @@ public sealed class TournamentRulesScreen
         AddPanelSaveButton.Label = isDirty ? "SAVE & CLOSE" : "CLOSE";
         AddPanelSaveButton.LabelScale = isDirty ? 0.27f : 0.34f;
     }
+
+    public void UpdateSelectionState(int itemCount, bool canDelete, int pageIndex, int pageCount)
+    {
+        EditButton.IsEnabled = itemCount > 0;
+        DuplicateButton.IsEnabled = itemCount > 0;
+        DeleteButton.IsEnabled = canDelete;
+        OrderButton.IsEnabled = itemCount > 1;
+        PreviousPageButton.IsEnabled = pageIndex > 0;
+        NextPageButton.IsEnabled = pageIndex < pageCount - 1;
+    }
 }
 
 /// <summary>移行中のrendererが画面所有領域を参照するための名前付きアダプターです。</summary>
@@ -84,29 +94,15 @@ internal static class TournamentRulesScreenBounds
 {
     private static TournamentRulesScreen Screen => TournamentRulesScreen.Default;
 
-    internal static Rectangle TournamentRulesSelectButtonBounds => Screen.BrowseButton.Bounds;
     internal static Rectangle TournamentRulesSelectionDialogBounds => Screen.SelectionDialogBounds;
     internal static Rectangle TournamentRulesSelectionDialogListBounds => Screen.SelectionListBounds;
     internal static Rectangle TournamentRulesSelectionDialogPropertyBounds => Screen.SelectionPropertyBounds;
-    internal static Rectangle TournamentRulesSelectionDialogCancelButtonBounds => Screen.SelectionCancelButton.Bounds;
-    internal static Rectangle TournamentRulesSelectionDialogOkButtonBounds => Screen.SelectionOkButton.Bounds;
-    internal static Rectangle TournamentRulesSelectionDialogAddButtonBounds => Screen.AddButton.Bounds;
-    internal static Rectangle TournamentRulesSelectionDialogEditButtonBounds => Screen.EditButton.Bounds;
-    internal static Rectangle TournamentRulesSelectionDialogDuplicateButtonBounds => Screen.DuplicateButton.Bounds;
-    internal static Rectangle TournamentRulesSelectionDialogDeleteButtonBounds => Screen.DeleteButton.Bounds;
-    internal static Rectangle TournamentRulesSelectionDialogOrderButtonBounds => Screen.OrderButton.Bounds;
-    internal static Rectangle TournamentRulesSelectionDialogPreviousPageButtonBounds => Screen.PreviousPageButton.Bounds;
-    internal static Rectangle TournamentRulesSelectionDialogNextPageButtonBounds => Screen.NextPageButton.Bounds;
     internal static Rectangle TournamentRulesSelectionDialogListItemBounds(int index) => Screen.GetListItemBounds(index);
     internal static Rectangle TournamentRulesSelectionDialogPropertyRowBounds(int index) => Screen.GetPropertyRowBounds(index);
     internal static Rectangle TournamentRulesDeleteConfirmationBounds => Screen.DeleteConfirmationBounds;
-    internal static Rectangle TournamentRulesDeleteConfirmationCancelButtonBounds => Screen.DeleteCancelButton.Bounds;
-    internal static Rectangle TournamentRulesDeleteConfirmationConfirmButtonBounds => Screen.DeleteConfirmButton.Bounds;
     internal static Rectangle TournamentRulesAddPanelBounds => Screen.AddPanelBounds;
     internal static Rectangle TournamentRulesAddPanelEditorBounds => Screen.AddPanelEditorBounds;
-    internal static Rectangle TournamentRulesAddPanelCloseButtonBounds => Screen.AddPanelDiscardButton.Bounds;
     internal static Rectangle TournamentRulesAddPanelDisplayNameRowBounds => Screen.AddPanelDisplayNameRowBounds;
     internal static Rectangle TournamentRulesAddPanelDisplayNameTextBounds => Screen.AddPanelDisplayNameTextBounds;
     internal static Rectangle TournamentRulesAddPanelFileRowBounds => Screen.AddPanelFileRowBounds;
-    internal static Rectangle SaveTournamentRulesButtonBounds => Screen.AddPanelSaveButton.Bounds;
 }

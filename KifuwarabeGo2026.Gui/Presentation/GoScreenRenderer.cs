@@ -360,11 +360,13 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
     }
     private void DrawSetupSidePanel(GoAppSession session, Point mousePoint)
     {
-        DrawCommandButton(SetupBackToTitleButtonBounds, "BACK TO TITLE", false, mousePoint, scale: 0.32f);
+        var screen = LocalMatchScreen.Default;
+        screen.BackToTitleButton.Draw(mousePoint, _stationeryDrawingContext);
 
         DrawVerticalResultSection(new Rectangle(1144, 184, 668, 176), "TOURNAMENT", new Color(62, 112, 105));
         TournamentRulesScreen.Default.BrowseButton.Draw(mousePoint, _stationeryDrawingContext);
-        DrawCommandButton(ImportSgfButtonBounds, session.HasReviewGameRecord ? "KIFU CLEAR (SGF)" : "KIFU INPUT (SGF)", false, mousePoint, scale: 0.34f);
+        screen.ImportSgfButton.Label = session.HasReviewGameRecord ? "KIFU CLEAR (SGF)" : "KIFU INPUT (SGF)";
+        screen.ImportSgfButton.Draw(mousePoint, _stationeryDrawingContext);
         DrawResultRow(new Rectangle(1164, 292, 628, 56), "RULES", session.TournamentDisplayName, new Color(39, 68, 65), Color.White);
 
         DrawVerticalResultSection(new Rectangle(1144, 376, 668, 304), "RULES", new Color(66, 104, 116));
@@ -382,13 +384,10 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         boardAndReviewScreen.StartReviewingButton.IsEnabled = session.HasReviewGameRecord;
         boardAndReviewScreen.StartReviewingButton.Draw(mousePoint, _stationeryDrawingContext);
         boardAndReviewScreen.StartBoardEditingButton.Draw(mousePoint, _stationeryDrawingContext);
-        DrawCommandButton(
-            StartPlayingButtonBounds,
-            session.CanStartPlaying ? "START" : "ENGINE REQUIRED",
-            false,
-            mousePoint,
-            enabled: session.CanStartPlaying,
-            scale: session.CanStartPlaying ? 0.48f : 0.28f);
+        screen.StartPlayingButton.Label = session.CanStartPlaying ? "START" : "ENGINE REQUIRED";
+        screen.StartPlayingButton.LabelScale = session.CanStartPlaying ? 0.48f : 0.28f;
+        screen.StartPlayingButton.IsEnabled = session.CanStartPlaying;
+        screen.StartPlayingButton.Draw(mousePoint, _stationeryDrawingContext);
     }
     private void DrawPlayingSidePanel(GoAppSession session, Point mousePoint)
     {
@@ -423,12 +422,12 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
 
         if (session.CanAcceptHumanMove)
         {
-            DrawCommandButton(PassButtonBounds, "PASS", false, mousePoint);
-            DrawCommandButton(ResignButtonBounds, "RESIGN", false, mousePoint);
+            LocalMatchScreen.Default.PassButton.Draw(mousePoint, _stationeryDrawingContext);
+            LocalMatchScreen.Default.ResignButton.Draw(mousePoint, _stationeryDrawingContext);
         }
         else
         {
-            DrawCommandButton(CancelPlayingButtonBounds, "CANCEL", false, mousePoint);
+            LocalMatchScreen.Default.CancelPlayingButton.Draw(mousePoint, _stationeryDrawingContext);
         }
     }
 
@@ -436,7 +435,7 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
     {
         new Headline("GAME OVER", new Vector2(1144, 132), new Color(255, 230, 160), 0.9f).Draw(_stationeryDrawingContext);
         DrawText(FormatGameEndMoveCount(session.PlayedMoveCount), new Vector2(1144, 196), new Color(99, 223, 185), 0.58f);
-        DrawCommandButton(ReturnToSetupButtonBounds, "BACK TO SETUP", false, mousePoint, scale: 0.34f);
+        LocalMatchScreen.Default.ReturnToSetupButton.Draw(mousePoint, _stationeryDrawingContext);
 
         var resultSection = new Rectangle(1144, 236, 668, 128);
         DrawVerticalResultSection(resultSection, "RESULT", new Color(80, 48, 38));
@@ -453,11 +452,11 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
 
         var actionSection = new Rectangle(1144, 854, 668, 126);
         DrawVerticalResultSection(actionSection, "ACTION", new Color(91, 82, 105));
-        DrawCommandButton(LocalGameOverReviewButtonBounds, "KIFU REVIEW", false, mousePoint, scale: 0.36f);
+        LocalMatchScreen.Default.GameOverReviewButton.Draw(mousePoint, _stationeryDrawingContext);
         if (session.IsSgfAutoSaveAvailable)
-            DrawSgfAutoSaveCheckBox(ExportSgfButtonBounds, session, mousePoint);
+            DrawSgfAutoSaveCheckBox(LocalMatchScreen.Default.ExportSgfButton.Bounds, session, mousePoint);
         else
-            DrawCommandButton(ExportSgfButtonBounds, "SGF OUTPUT", false, mousePoint, scale: 0.52f);
+            LocalMatchScreen.Default.ExportSgfButton.Draw(mousePoint, _stationeryDrawingContext);
     }
 
     private void DrawSgfAutoSaveCheckBox(Rectangle bounds, GoAppSession session, Point mousePoint)
@@ -898,21 +897,12 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
     private static Rectangle HumanPlayerNameRowBounds(int y) => PlayerKindRow(y - 58).HumanNameRowBounds;
 
     private static Rectangle HumanPlayerNameTextBounds(int y) => PlayerKindRow(y - 58).HumanNameTextBounds;
-    private static Rectangle StartPlayingButtonBounds => LocalMatchScreen.Default.StartPlayingButton.Bounds;
-    private static Rectangle ChangeAppProviderButtonBounds => LocalMatchScreen.Default.ChangeAppProviderButton.Bounds;
-    private static Rectangle AppProviderGameSettingsButtonBounds => LocalMatchScreen.Default.AppProviderGameSettingsButton.Bounds;
-    private static Rectangle PonnukiProviderSeedAutoChangeBounds => LocalMatchScreen.Default.ProviderSeedAutoChangeButton.Bounds;
-    private static Rectangle PonnukiPlayer1SeedAutoChangeBounds => LocalMatchScreen.Default.Player1SeedAutoChangeButton.Bounds;
-    private static Rectangle PonnukiPlayer2SeedAutoChangeBounds => LocalMatchScreen.Default.Player2SeedAutoChangeButton.Bounds;
-
-    private static Rectangle ImportSgfButtonBounds => LocalMatchScreen.Default.ImportSgfButton.Bounds;
-
-    private static Rectangle SetupBackToTitleButtonBounds => LocalMatchScreen.Default.BackToTitleButton.Bounds;
     private static Rectangle LocalUseButtonBounds => LocalMatchScreen.Default.LocalUseCardBounds;
 
     private void DrawLocalAppsIntermissionSidePanel(GoAppSession session, Point mousePoint)
     {
-        DrawCommandButton(SetupBackToTitleButtonBounds, "BACK TO TITLE", false, mousePoint, scale: 0.32f);
+        var screen = LocalMatchScreen.Default;
+        screen.BackToTitleButton.Draw(mousePoint, _stationeryDrawingContext);
 
         DrawVerticalResultSection(new Rectangle(1144, 184, 668, 176), "LOCAL APPS", new Color(99, 76, 48));
         DrawResultRow(new Rectangle(1164, 236, 628, 56), "APP", "PONNUKI", new Color(73, 57, 39), Color.White);
@@ -938,37 +928,31 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
             new Rectangle(1164, 536, 628, 22),
             new Color(180, 195, 195),
             0.30f);
-        DrawCommandButton(AppProviderGameSettingsButtonBounds, "GAME SETTINGS", false, mousePoint, scale: 0.32f);
-        DrawCommandButton(ChangeAppProviderButtonBounds, "CHANGE", false, mousePoint, scale: 0.28f);
+        screen.AppProviderGameSettingsButton.Draw(mousePoint, _stationeryDrawingContext);
+        screen.ChangeAppProviderButton.Draw(mousePoint, _stationeryDrawingContext);
         DrawVerticalResultSection(new Rectangle(1144, 632, 668, 216), "PLAYERS", new Color(76, 91, 126));
         DrawSetupPlayerRow(session, GoStone.Black, mousePoint, PonnukiBlackPlayerKindButtonY);
         DrawSetupPlayerRow(session, GoStone.White, mousePoint, PonnukiWhitePlayerKindButtonY);
 
         DrawVerticalResultSection(new Rectangle(1144, 856, 668, 52), "SEED AUTO", new Color(112, 76, 48), labelWidth: 56);
-        DrawCommandButton(PonnukiProviderSeedAutoChangeBounds, session.PonnukiProviderSeedAutoChange ? "[x] PROVIDER" : "[ ] PROVIDER", session.PonnukiProviderSeedAutoChange, mousePoint, scale: 0.22f);
-        DrawCommandButton(PonnukiPlayer1SeedAutoChangeBounds, session.PonnukiBlackPlayerSeedAutoChange ? "[x] BLACK" : "[ ] BLACK", session.PonnukiBlackPlayerSeedAutoChange, mousePoint, enabled: session.CanAutoChangePonnukiPlayer1Seed, scale: 0.22f);
-        DrawCommandButton(PonnukiPlayer2SeedAutoChangeBounds, session.PonnukiWhitePlayerSeedAutoChange ? "[x] WHITE" : "[ ] WHITE", session.PonnukiWhitePlayerSeedAutoChange, mousePoint, enabled: session.CanAutoChangePonnukiPlayer2Seed, scale: 0.22f);
+        screen.ProviderSeedAutoChangeButton.Label = session.PonnukiProviderSeedAutoChange ? "[x] PROVIDER" : "[ ] PROVIDER";
+        screen.ProviderSeedAutoChangeButton.IsSelected = session.PonnukiProviderSeedAutoChange;
+        screen.ProviderSeedAutoChangeButton.Draw(mousePoint, _stationeryDrawingContext);
+        screen.Player1SeedAutoChangeButton.Label = session.PonnukiBlackPlayerSeedAutoChange ? "[x] BLACK" : "[ ] BLACK";
+        screen.Player1SeedAutoChangeButton.IsSelected = session.PonnukiBlackPlayerSeedAutoChange;
+        screen.Player1SeedAutoChangeButton.IsEnabled = session.CanAutoChangePonnukiPlayer1Seed;
+        screen.Player1SeedAutoChangeButton.Draw(mousePoint, _stationeryDrawingContext);
+        screen.Player2SeedAutoChangeButton.Label = session.PonnukiWhitePlayerSeedAutoChange ? "[x] WHITE" : "[ ] WHITE";
+        screen.Player2SeedAutoChangeButton.IsSelected = session.PonnukiWhitePlayerSeedAutoChange;
+        screen.Player2SeedAutoChangeButton.IsEnabled = session.CanAutoChangePonnukiPlayer2Seed;
+        screen.Player2SeedAutoChangeButton.Draw(mousePoint, _stationeryDrawingContext);
 
         DrawVerticalResultSection(new Rectangle(1144, 916, 668, 76), "ACTION", new Color(91, 82, 105));
-        DrawCommandButton(
-            StartPlayingButtonBounds,
-            session.CanStartPlaying ? "START" : "ENGINE REQUIRED",
-            false,
-            mousePoint,
-            enabled: session.CanStartPlaying,
-            scale: session.CanStartPlaying ? 0.48f : 0.28f);
+        screen.StartPlayingButton.Label = session.CanStartPlaying ? "START" : "ENGINE REQUIRED";
+        screen.StartPlayingButton.LabelScale = session.CanStartPlaying ? 0.48f : 0.28f;
+        screen.StartPlayingButton.IsEnabled = session.CanStartPlaying;
+        screen.StartPlayingButton.Draw(mousePoint, _stationeryDrawingContext);
     }
-    private static Rectangle ReturnToSetupButtonBounds => LocalMatchScreen.Default.ReturnToSetupButton.Bounds;
-
-    private static Rectangle ExportSgfButtonBounds => LocalMatchScreen.Default.ExportSgfButton.Bounds;
-
-    private static Rectangle LocalGameOverReviewButtonBounds => LocalMatchScreen.Default.GameOverReviewButton.Bounds;
-
-    private static Rectangle PassButtonBounds => LocalMatchScreen.Default.PassButton.Bounds;
-
-    private static Rectangle ResignButtonBounds => LocalMatchScreen.Default.ResignButton.Bounds;
-
-    private static Rectangle CancelPlayingButtonBounds => LocalMatchScreen.Default.CancelPlayingButton.Bounds;
     private static string PlayerKindLabel(GoPlayerKind playerKind) => playerKind == GoPlayerKind.Human ? "Human" : "Computer";
 
     private static string FormatElapsedTime(TimeSpan elapsed)

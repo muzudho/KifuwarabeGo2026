@@ -251,15 +251,22 @@ public sealed partial class GoScreenRenderer
         DrawCgosConnectionProperties(session);
         DrawText($"PAGE {session.CgosConnectionSelectionPageIndex + 1} / {session.GetCgosConnectionSelectionPageCount()}", new Vector2(600, 817), new Color(227, 224, 210), 0.42f);
         var page = CgosSelectConnectionPage.Default;
-        DrawCommandButton(page.PreviousButton.Bounds, page.PreviousButton.Label, false, mousePoint, enabled: session.CanMoveCgosConnectionSelectionPage(-1), scale: page.PreviousButton.LabelScale);
-        DrawCommandButton(page.NextButton.Bounds, page.NextButton.Label, false, mousePoint, enabled: session.CanMoveCgosConnectionSelectionPage(1), scale: page.NextButton.LabelScale);
-        DrawCommandButton(page.AddButton.Bounds, page.AddButton.Label, false, mousePoint, scale: page.AddButton.LabelScale);
-        DrawCommandButton(page.EditButton.Bounds, page.EditButton.Label, false, mousePoint, enabled: session.CgosConnectionProfiles.Count > 0, scale: page.EditButton.LabelScale);
-        DrawCommandButton(page.DuplicateButton.Bounds, page.DuplicateButton.Label, false, mousePoint, enabled: session.CgosConnectionProfiles.Count > 0, scale: page.DuplicateButton.LabelScale);
-        DrawCommandButton(page.DeleteButton.Bounds, page.DeleteButton.Label, false, mousePoint, enabled: session.CanDeleteSelectedCgosConnectionProfile, scale: page.DeleteButton.LabelScale);
-        DrawCommandButton(page.OrderButton.Bounds, page.OrderButton.Label, false, mousePoint, enabled: session.CgosConnectionProfiles.Count > 1, scale: page.OrderButton.LabelScale);
-        DrawCommandButton(page.SelectButton.Bounds, page.SelectButton.Label, false, mousePoint, enabled: session.CgosConnectionProfiles.Count > 0, scale: page.SelectButton.LabelScale);
-        DrawCommandButton(page.CancelButton.Bounds, page.CancelButton.Label, false, mousePoint, scale: page.CancelButton.LabelScale);
+        page.PreviousButton.IsEnabled = session.CanMoveCgosConnectionSelectionPage(-1);
+        page.NextButton.IsEnabled = session.CanMoveCgosConnectionSelectionPage(1);
+        page.EditButton.IsEnabled = session.CgosConnectionProfiles.Count > 0;
+        page.DuplicateButton.IsEnabled = session.CgosConnectionProfiles.Count > 0;
+        page.DeleteButton.IsEnabled = session.CanDeleteSelectedCgosConnectionProfile;
+        page.OrderButton.IsEnabled = session.CgosConnectionProfiles.Count > 1;
+        page.SelectButton.IsEnabled = session.CgosConnectionProfiles.Count > 0;
+        page.PreviousButton.Draw(mousePoint, _stationeryDrawingContext);
+        page.NextButton.Draw(mousePoint, _stationeryDrawingContext);
+        page.AddButton.Draw(mousePoint, _stationeryDrawingContext);
+        page.EditButton.Draw(mousePoint, _stationeryDrawingContext);
+        page.DuplicateButton.Draw(mousePoint, _stationeryDrawingContext);
+        page.DeleteButton.Draw(mousePoint, _stationeryDrawingContext);
+        page.OrderButton.Draw(mousePoint, _stationeryDrawingContext);
+        page.SelectButton.Draw(mousePoint, _stationeryDrawingContext);
+        page.CancelButton.Draw(mousePoint, _stationeryDrawingContext);
         DrawCatalogOrderEditor(
             session.CgosConnectionOrderEditor,
             "CGOS CONNECTIONS",
@@ -297,11 +304,14 @@ public sealed partial class GoScreenRenderer
             page.AdminCodeButton.Bounds,
             session.IsCgosAdminInputEnabled && !string.IsNullOrWhiteSpace(session.CgosAdminLogDirectory),
             mousePoint);
-        DrawCommandButton(page.AdminWhoButton.Bounds, page.AdminWhoButton.Label, false, mousePoint, enabled: session.IsCgosAdminInputEnabled && session.IsCgosAdminRunning, scale: page.AdminWhoButton.LabelScale);
+        page.AdminWhoButton.IsEnabled = session.IsCgosAdminInputEnabled && session.IsCgosAdminRunning;
+        page.AdminWhoButton.Draw(mousePoint, _stationeryDrawingContext);
         DrawCgosAdminPlayerSelector(CgosAdminWhitePlayerRowBounds, "WHITE", session.CgosAdminWhitePlayerName, mousePoint);
         DrawCgosAdminPlayerSelector(CgosAdminBlackPlayerRowBounds, "BLACK", session.CgosAdminBlackPlayerName, mousePoint);
-        DrawCommandButton(page.AdminMatchButton.Bounds, page.AdminMatchButton.Label, false, mousePoint, enabled: session.IsCgosAdminInputEnabled && session.CanSendCgosAdminMatch, scale: page.AdminMatchButton.LabelScale);
-        DrawCommandButton(page.AdminSwapButton.Bounds, page.AdminSwapButton.Label, false, mousePoint, enabled: session.IsCgosAdminInputEnabled && session.CanSendCgosAdminMatch, scale: page.AdminSwapButton.LabelScale);
+        page.AdminMatchButton.IsEnabled = session.IsCgosAdminInputEnabled && session.CanSendCgosAdminMatch;
+        page.AdminSwapButton.IsEnabled = page.AdminMatchButton.IsEnabled;
+        page.AdminMatchButton.Draw(mousePoint, _stationeryDrawingContext);
+        page.AdminSwapButton.Draw(mousePoint, _stationeryDrawingContext);
         if (!session.IsCgosAdminInputEnabled)
             FillRect(CgosAdminProcessPanelBounds, new Color(8, 11, 15, 176));
         DrawCgosOptionalInputCheck(
@@ -331,7 +341,7 @@ public sealed partial class GoScreenRenderer
             mousePoint);
         if (session.IsCgosGameInProgress && session.IsCgosBlackConnectionRunning)
         {
-            DrawCommandButton(page.BlackResignButton.Bounds, page.BlackResignButton.Label, false, mousePoint, scale: page.BlackResignButton.LabelScale);
+            page.BlackResignButton.Draw(mousePoint, _stationeryDrawingContext);
         }
         DrawCgosCredentialFields(session, GoStone.Black, mousePoint);
 
@@ -356,7 +366,7 @@ public sealed partial class GoScreenRenderer
             mousePoint);
         if (session.IsCgosGameInProgress && session.IsCgosWhiteConnectionRunning)
         {
-            DrawCommandButton(page.WhiteResignButton.Bounds, page.WhiteResignButton.Label, false, mousePoint, scale: page.WhiteResignButton.LabelScale);
+            page.WhiteResignButton.Draw(mousePoint, _stationeryDrawingContext);
         }
         DrawCgosCredentialFields(session, GoStone.White, mousePoint);
         if (!session.IsCgosPlayer2InputEnabled)
@@ -452,8 +462,9 @@ public sealed partial class GoScreenRenderer
         var target = session.CgosAdminPlayerSelectionTarget == GoStone.White ? "WHITE" : "BLACK";
         DrawText($"PARTICIPANT SELECT  {target}", new Vector2(CgosAdminPlayerDialogBounds.X + 30, CgosAdminPlayerDialogBounds.Y + 24), new Color(244, 238, 218), 0.72f);
         var page = CgosLoginPage.Default;
-        DrawCommandButton(page.PlayerDialogCancelButton.Bounds, page.PlayerDialogCancelButton.Label, false, mousePoint, scale: page.PlayerDialogCancelButton.LabelScale);
-        DrawCommandButton(page.PlayerDialogSelectButton.Bounds, page.PlayerDialogSelectButton.Label, false, mousePoint, enabled: session.CgosAdminWaitingPlayers.Count > 0, scale: page.PlayerDialogSelectButton.LabelScale);
+        page.PlayerDialogSelectButton.IsEnabled = session.CgosAdminWaitingPlayers.Count > 0;
+        page.PlayerDialogCancelButton.Draw(mousePoint, _stationeryDrawingContext);
+        page.PlayerDialogSelectButton.Draw(mousePoint, _stationeryDrawingContext);
 
         DrawText("PARTICIPANTS", new Vector2(CgosAdminPlayerDialogListBounds.X, CgosAdminPlayerDialogListBounds.Y - 34), new Color(180, 195, 195), 0.46f);
         FillRect(CgosAdminPlayerDialogListBounds, new Color(15, 20, 26));
@@ -480,8 +491,10 @@ public sealed partial class GoScreenRenderer
 
         var pageCount = session.GetCgosAdminPlayerSelectionPageCount();
         DrawText($"PAGE {session.CgosAdminPlayerSelectionPageIndex + 1} / {pageCount}", new Vector2(910, 825), new Color(227, 224, 210), 0.42f);
-        DrawCommandButton(page.PlayerDialogPreviousButton.Bounds, page.PlayerDialogPreviousButton.Label, false, mousePoint, enabled: session.CgosAdminPlayerSelectionPageIndex > 0, scale: page.PlayerDialogPreviousButton.LabelScale);
-        DrawCommandButton(page.PlayerDialogNextButton.Bounds, page.PlayerDialogNextButton.Label, false, mousePoint, enabled: session.CgosAdminPlayerSelectionPageIndex < pageCount - 1, scale: page.PlayerDialogNextButton.LabelScale);
+        page.PlayerDialogPreviousButton.IsEnabled = session.CgosAdminPlayerSelectionPageIndex > 0;
+        page.PlayerDialogNextButton.IsEnabled = session.CgosAdminPlayerSelectionPageIndex < pageCount - 1;
+        page.PlayerDialogPreviousButton.Draw(mousePoint, _stationeryDrawingContext);
+        page.PlayerDialogNextButton.Draw(mousePoint, _stationeryDrawingContext);
     }
 
     /// <summary>
@@ -563,15 +576,15 @@ public sealed partial class GoScreenRenderer
         DrawUiLabel(UiLabel.InCompactRow("STDIO", stdioBounds));
         DrawFittedText(logPath, CgosConnectionLogPathBounds, Color.White, 0.32f);
         var page = CgosLoginPage.Default;
-        DrawCommandButton(page.LogCodeButton.Bounds, page.LogCodeButton.Label, false, mousePoint, scale: page.LogCodeButton.LabelScale);
-        DrawCommandButton(page.LogNotepadButton.Bounds, page.LogNotepadButton.Label, false, mousePoint, scale: page.LogNotepadButton.LabelScale);
+        page.LogCodeButton.Draw(mousePoint, _stationeryDrawingContext);
+        page.LogNotepadButton.Draw(mousePoint, _stationeryDrawingContext);
 
         var stderrBounds = new Rectangle(CgosConnectionStartStatusBounds.X + 22, CgosConnectionStartStatusBounds.Y + 332, CgosConnectionStartStatusBounds.Width - 44, 56);
         DrawDataRowFrame(stderrBounds);
         DrawUiLabel(UiLabel.InCompactRow("STDERR", stderrBounds));
         DrawFittedText(logPath, CgosConnectionStandardErrorLogPathBounds, Color.White, 0.32f);
-        DrawCommandButton(page.ErrorLogCodeButton.Bounds, page.ErrorLogCodeButton.Label, false, mousePoint, scale: page.ErrorLogCodeButton.LabelScale);
-        DrawCommandButton(page.ErrorLogNotepadButton.Bounds, page.ErrorLogNotepadButton.Label, false, mousePoint, scale: page.ErrorLogNotepadButton.LabelScale);
+        page.ErrorLogCodeButton.Draw(mousePoint, _stationeryDrawingContext);
+        page.ErrorLogNotepadButton.Draw(mousePoint, _stationeryDrawingContext);
     }
 
 
@@ -701,9 +714,11 @@ public sealed partial class GoScreenRenderer
 
         DrawText(session.IsCgosConnectionAddPanelMode ? "ADD SERVICE PROFILE" : "EDIT SERVICE PROFILE", new Vector2(CgosConnectionEditPanelBounds.X + 28, CgosConnectionEditPanelBounds.Y + 24), new Color(244, 238, 218), 0.68f);
         var page = CgosSelectConnectionPage.Default;
-        DrawCommandButton(page.EditDiscardButton.Bounds, page.EditDiscardButton.Label, false, mousePoint, enabled: session.IsCgosConnectionEditDirty, scale: page.EditDiscardButton.LabelScale);
-        DrawCommandButton(page.EditSaveButton.Bounds, session.IsCgosConnectionEditDirty ? page.EditSaveButton.Label : "CLOSE", false, mousePoint,
-            scale: session.IsCgosConnectionEditDirty ? 0.27f : 0.34f);
+        page.EditDiscardButton.IsEnabled = session.IsCgosConnectionEditDirty;
+        page.EditSaveButton.Label = session.IsCgosConnectionEditDirty ? "SAVE & CLOSE" : "CLOSE";
+        page.EditSaveButton.LabelScale = session.IsCgosConnectionEditDirty ? 0.27f : 0.34f;
+        page.EditDiscardButton.Draw(mousePoint, _stationeryDrawingContext);
+        page.EditSaveButton.Draw(mousePoint, _stationeryDrawingContext);
 
         DrawCgosConnectionEditField(session, CgosConnectionProfileEditField.DisplayName, "DISPLAY", mousePoint);
         DrawCgosConnectionEditField(session, CgosConnectionProfileEditField.Host, "HOST", mousePoint);

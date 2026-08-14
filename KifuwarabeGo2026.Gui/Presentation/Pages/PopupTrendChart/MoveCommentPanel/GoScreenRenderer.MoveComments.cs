@@ -86,32 +86,18 @@ public sealed partial class GoScreenRenderer
                 ? $"COMMENT {commentOrdinal} / {commentCount}   MOVE {moveNumber}"
                 : $"COMMENT - / {commentCount}   MOVE {moveNumber ?? 0}";
         MoveComments.HeadingLabel.DrawFitted(DrawFittedText);
-        DrawCommandButton(
-            MoveComments.PreviousMoveButton.Bounds,
-            "< PREV",
-            false,
-            mousePoint,
-            enabled:
-                moveNumber is { } previousAnchor
-                && MoveCommentNavigator.FindAdjacent(moves, previousAnchor, -1) is not null,
-            scale: expanded ? 0.28f : 0.19f);
-        DrawCommandButton(
-            MoveComments.NextMoveButton.Bounds,
-            "NEXT >",
-            false,
-            mousePoint,
-            enabled:
-                moveNumber is { } nextAnchor
-                && MoveCommentNavigator.FindAdjacent(moves, nextAnchor, 1) is not null,
-            scale: expanded ? 0.28f : 0.19f);
+        MoveComments.PreviousMoveButton.IsEnabled = moveNumber is { } previousAnchor
+            && MoveCommentNavigator.FindAdjacent(moves, previousAnchor, -1) is not null;
+        MoveComments.PreviousMoveButton.LabelScale = expanded ? 0.28f : 0.19f;
+        MoveComments.PreviousMoveButton.Draw(mousePoint, _stationeryDrawingContext);
+        MoveComments.NextMoveButton.IsEnabled = moveNumber is { } nextAnchor
+            && MoveCommentNavigator.FindAdjacent(moves, nextAnchor, 1) is not null;
+        MoveComments.NextMoveButton.LabelScale = expanded ? 0.28f : 0.19f;
+        MoveComments.NextMoveButton.Draw(mousePoint, _stationeryDrawingContext);
         if (session.CurrentMode.Kind == GoAppModeKind.Reviewing)
         {
-            DrawCommandButton(
-                MoveComments.EditButton.Bounds,
-                "EDIT",
-                false,
-                mousePoint,
-                scale: expanded ? 0.25f : 0.17f);
+            MoveComments.EditButton.LabelScale = expanded ? 0.25f : 0.17f;
+            MoveComments.EditButton.Draw(mousePoint, _stationeryDrawingContext);
         }
 
         if (!hasSelectedComment)
@@ -136,20 +122,12 @@ public sealed partial class GoScreenRenderer
             new Rectangle(bounds.X + 36, bounds.Bottom - (expanded ? 70 : 44), expanded ? 340 : 220, expanded ? 50 : 32),
             new Color(174, 198, 198),
             expanded ? 0.40f : 0.25f);
-        DrawCommandButton(
-            MoveComments.PreviousPageButton.Bounds,
-            "< PAGE",
-            false,
-            mousePoint,
-            enabled: session.CommentPageIndex > 0,
-            scale: expanded ? 0.30f : 0.20f);
-        DrawCommandButton(
-            MoveComments.NextPageButton.Bounds,
-            "PAGE >",
-            false,
-            mousePoint,
-            enabled: session.CommentPageIndex + 1 < session.CommentPageCount,
-            scale: expanded ? 0.30f : 0.20f);
+        MoveComments.PreviousPageButton.IsEnabled = session.CommentPageIndex > 0;
+        MoveComments.PreviousPageButton.LabelScale = expanded ? 0.30f : 0.20f;
+        MoveComments.PreviousPageButton.Draw(mousePoint, _stationeryDrawingContext);
+        MoveComments.NextPageButton.IsEnabled = session.CommentPageIndex + 1 < session.CommentPageCount;
+        MoveComments.NextPageButton.LabelScale = expanded ? 0.30f : 0.20f;
+        MoveComments.NextPageButton.Draw(mousePoint, _stationeryDrawingContext);
     }
 
     private int DrawDynamicCommentText(string text, Rectangle bounds, int requestedPage)

@@ -43,14 +43,16 @@ public sealed partial class GoScreenRenderer
             return;
         }
 
+        var screen = TournamentRulesScreen.Default;
+
         FillRect(new Rectangle(0, 0, VirtualScreen.Width, VirtualScreen.Height), new Color(0, 0, 0, 105));
         FillRect(new Rectangle(TournamentRulesSelectionDialogBounds.X + 18, TournamentRulesSelectionDialogBounds.Y + 20, TournamentRulesSelectionDialogBounds.Width, TournamentRulesSelectionDialogBounds.Height), new Color(0, 0, 0, 145));
         FillRect(TournamentRulesSelectionDialogBounds, new Color(19, 24, 31, 248));
         DrawRect(TournamentRulesSelectionDialogBounds, 2, new Color(116, 145, 146));
 
         DrawText("TOURNAMENT RULES", new Vector2(TournamentRulesSelectionDialogBounds.X + 30, TournamentRulesSelectionDialogBounds.Y + 24), new Color(244, 238, 218), 0.78f);
-        DrawCommandButton(TournamentRulesSelectionDialogCancelButtonBounds, "CANCEL", false, mousePoint, scale: 0.34f);
-        DrawCommandButton(TournamentRulesSelectionDialogOkButtonBounds, "SELECT", false, mousePoint, scale: 0.34f);
+        screen.SelectionCancelButton.Draw(mousePoint, _stationeryDrawingContext);
+        screen.SelectionOkButton.Draw(mousePoint, _stationeryDrawingContext);
 
         DrawText("LIST", new Vector2(TournamentRulesSelectionDialogListBounds.X, TournamentRulesSelectionDialogListBounds.Y - 34), new Color(180, 195, 195), 0.46f);
         DrawText("PROPERTIES", new Vector2(TournamentRulesSelectionDialogPropertyBounds.X, TournamentRulesSelectionDialogPropertyBounds.Y - 34), new Color(180, 195, 195), 0.46f);
@@ -73,14 +75,15 @@ public sealed partial class GoScreenRenderer
         DrawTournamentRulesSelectionProperties(session, mousePoint);
 
         var pageCount = Math.Max(1, (int)Math.Ceiling(session.TournamentRulesList.Count / (double)GoAppSession.TournamentRulesSelectionPageSize));
-        DrawCommandButton(TournamentRulesSelectionDialogPreviousPageButtonBounds, "PREV", false, mousePoint, enabled: session.TournamentRulesSelectionPageIndex > 0, scale: 0.42f);
+        screen.UpdateSelectionState(session.TournamentRulesList.Count, session.CanDeleteSelectedTournamentRules, session.TournamentRulesSelectionPageIndex, pageCount);
+        screen.PreviousPageButton.Draw(mousePoint, _stationeryDrawingContext);
         DrawText($"PAGE {session.TournamentRulesSelectionPageIndex + 1} / {pageCount}", new Vector2(600, 817), new Color(227, 224, 210), 0.42f);
-        DrawCommandButton(TournamentRulesSelectionDialogNextPageButtonBounds, "NEXT", false, mousePoint, enabled: session.TournamentRulesSelectionPageIndex < pageCount - 1, scale: 0.42f);
-        DrawCommandButton(TournamentRulesSelectionDialogAddButtonBounds, "ADD", false, mousePoint, scale: 0.42f);
-        DrawCommandButton(TournamentRulesSelectionDialogEditButtonBounds, "EDIT", false, mousePoint, enabled: session.TournamentRulesList.Count > 0, scale: 0.42f);
-        DrawCommandButton(TournamentRulesSelectionDialogDuplicateButtonBounds, "DUPLICATE", false, mousePoint, enabled: session.TournamentRulesList.Count > 0, scale: 0.34f);
-        DrawCommandButton(TournamentRulesSelectionDialogDeleteButtonBounds, "DELETE", false, mousePoint, enabled: session.CanDeleteSelectedTournamentRules, scale: 0.42f);
-        DrawCommandButton(TournamentRulesSelectionDialogOrderButtonBounds, "ORDER", false, mousePoint, enabled: session.TournamentRulesList.Count > 1, scale: 0.38f);
+        screen.NextPageButton.Draw(mousePoint, _stationeryDrawingContext);
+        screen.AddButton.Draw(mousePoint, _stationeryDrawingContext);
+        screen.EditButton.Draw(mousePoint, _stationeryDrawingContext);
+        screen.DuplicateButton.Draw(mousePoint, _stationeryDrawingContext);
+        screen.DeleteButton.Draw(mousePoint, _stationeryDrawingContext);
+        screen.OrderButton.Draw(mousePoint, _stationeryDrawingContext);
         DrawTournamentRulesDeleteConfirmation(session, mousePoint);
         DrawCatalogOrderEditor(
             session.TournamentRulesOrderEditor,
@@ -186,8 +189,8 @@ public sealed partial class GoScreenRenderer
         DrawText("DELETE TOURNAMENT RULES", new Vector2(TournamentRulesDeleteConfirmationBounds.X + 28, TournamentRulesDeleteConfirmationBounds.Y + 24), new Color(255, 230, 160), 0.62f);
         DrawFittedText($"{session.TournamentRulesDeleteConfirmationFileName} will be deleted.", new Rectangle(TournamentRulesDeleteConfirmationBounds.X + 28, TournamentRulesDeleteConfirmationBounds.Y + 92, TournamentRulesDeleteConfirmationBounds.Width - 56, 42), Color.White, 0.5f);
         DrawText("DELETE?", new Vector2(TournamentRulesDeleteConfirmationBounds.X + 28, TournamentRulesDeleteConfirmationBounds.Y + 150), new Color(180, 195, 195), 0.46f);
-        DrawCommandButton(TournamentRulesDeleteConfirmationCancelButtonBounds, "CANCEL", false, mousePoint, scale: 0.42f);
-        DrawCommandButton(TournamentRulesDeleteConfirmationConfirmButtonBounds, "DELETE", false, mousePoint, scale: 0.42f);
+        TournamentRulesScreen.Default.DeleteCancelButton.Draw(mousePoint, _stationeryDrawingContext);
+        TournamentRulesScreen.Default.DeleteConfirmButton.Draw(mousePoint, _stationeryDrawingContext);
     }
 
 

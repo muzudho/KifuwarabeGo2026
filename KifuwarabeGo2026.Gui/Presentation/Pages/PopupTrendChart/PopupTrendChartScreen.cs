@@ -3,6 +3,7 @@ namespace KifuwarabeGo2026.Gui.Presentation.Pages.PopupTrendChart;
 using Microsoft.Xna.Framework;
 using KifuwarabeGo2026.Gui.Presentation.Pages.PopupTrendChart.MoveCommentPanel;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ChartAxisSectionLabel;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Button;
 
 /// <summary>検討チャートポップアップとリプレイ操作のレイアウトを所有します。</summary>
 public sealed class PopupTrendChartScreen
@@ -14,6 +15,9 @@ public sealed class PopupTrendChartScreen
         MoveCommentPanel = new MoveCommentPanelComponent();
         ScoreAxisSectionLabel = new(new Rectangle(400, 55, 150, 48), "SCORE", ChartAxisSide.Left);
         WinRateAxisSectionLabel = new(new Rectangle(558, 55, 190, 48), "WIN RATE", ChartAxisSide.Right);
+        CloseButton = new Button(new Rectangle(1660, 55, 160, 48), "CLOSE", 0.38f);
+        BackToLiveButton = new Button(new Rectangle(1026, 55, 216, 48), "BACK TO LIVE", 0.34f);
+        ReplayBackToLiveButton = new Button(new Rectangle(836, 72, 170, 54), "BACK TO LIVE", 0.30f);
     }
 
     public MoveCommentPanelComponent MoveCommentPanel { get; }
@@ -22,13 +26,13 @@ public sealed class PopupTrendChartScreen
 
     public Rectangle PopupBounds { get; } = new(56, 42, 1808, 1030);
     public Rectangle ChartBounds { get; } = new(100, 115, 1720, 850);
-    public Rectangle CloseButtonBounds { get; } = new(1660, 55, 160, 48);
-    public Rectangle BackToLiveButtonBounds { get; } = new(1026, 55, 216, 48);
+    public Button CloseButton { get; }
+    public Button BackToLiveButton { get; }
     public Rectangle AutoUpdateBounds { get; } = new(1260, 55, 300, 48);
     public Rectangle SeekBounds { get; } = new(180, 994, 1560, 28);
     public Rectangle BottomNavigationControlsProximityBounds { get; } = new(150, 952, 1600, 126);
     public Rectangle ReplayEditButtonBounds { get; } = new(1018, 72, 72, 72);
-    public Rectangle ReplayBackToLiveButtonBounds { get; } = new(836, 72, 170, 54);
+    public Button ReplayBackToLiveButton { get; }
 
     public Rectangle PlotBounds => new(
         ChartBounds.X + 72,
@@ -45,14 +49,14 @@ internal static class PopupTrendChartScreenBounds
 
     internal static Rectangle ReviewChartPopupBounds => Screen.PopupBounds;
     internal static Rectangle ReviewChartPopupChartBounds => Screen.ChartBounds;
-    internal static Rectangle ReviewChartPopupCloseButtonBounds => Screen.CloseButtonBounds;
-    internal static Rectangle ReviewChartPopupBackToLiveButtonBounds => Screen.BackToLiveButtonBounds;
+    internal static Rectangle ReviewChartPopupCloseButtonBounds => Screen.CloseButton.Bounds;
+    internal static Rectangle ReviewChartPopupBackToLiveButtonBounds => Screen.BackToLiveButton.Bounds;
     internal static Rectangle ReviewChartPopupAutoUpdateBounds => Screen.AutoUpdateBounds;
     internal static Rectangle ReviewChartPopupSeekBounds => Screen.SeekBounds;
     internal static Rectangle BottomNavigationControlsProximityBounds => Screen.BottomNavigationControlsProximityBounds;
     internal static Rectangle ReviewChartPopupPlotBounds => Screen.PlotBounds;
     internal static Rectangle PopupTrendChartMoveCommentPanelBounds => Screen.MoveCommentPanel.Bounds;
     internal static Rectangle ReplayEditButtonBounds => Screen.ReplayEditButtonBounds;
-    internal static Rectangle ReplayBackToLiveButtonBounds => Screen.ReplayBackToLiveButtonBounds;
+    internal static Rectangle ReplayBackToLiveButtonBounds => Screen.ReplayBackToLiveButton.Bounds;
     internal static Rectangle ReviewChartPopupStepButtonBounds(int index) => Screen.GetStepButtonBounds(index);
 }
