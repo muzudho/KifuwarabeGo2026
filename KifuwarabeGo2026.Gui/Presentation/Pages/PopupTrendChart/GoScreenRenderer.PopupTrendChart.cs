@@ -39,10 +39,10 @@ public sealed partial class GoScreenRenderer
         ReviewChartPopupAutoUpdateBounds.Contains(point);
 
     public static bool GetReviewChartPopupScoreToggleHit(Point point) =>
-        GetPopupScoreToggleBounds(ReviewChartPopupChartBounds).Contains(point);
+        PopupTrendChartScreen.Default.ScoreAxisSectionLabel.IsVisibilityPinHit(point);
 
     public static bool GetReviewChartPopupWinRateToggleHit(Point point) =>
-        GetPopupWinRateToggleBounds(ReviewChartPopupChartBounds).Contains(point);
+        PopupTrendChartScreen.Default.WinRateAxisSectionLabel.IsVisibilityPinHit(point);
 
     public static bool GetReviewChartPopupCommentToggleHit(Point point) =>
         PopupTrendChartScreen.Default.MoveCommentPanel.IsVisibilityPinHit(point);

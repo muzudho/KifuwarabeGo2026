@@ -40,7 +40,8 @@ public sealed class SectionLabelComponent
         Color accentColor,
         Color textColor,
         int labelHeight = 38,
-        int labelGap = 8)
+        int labelGap = 8,
+        byte surfaceOpacity = 150)
     {
         var bounds = new Rectangle(
             targetSectionBounds.X,
@@ -49,7 +50,7 @@ public sealed class SectionLabelComponent
             labelHeight);
         return new SectionLabelComponent(
             targetSectionBounds, bounds, text, accentColor, textColor,
-            SectionLabelDirection.Horizontal, usesSplitHorizontalText: false);
+            SectionLabelDirection.Horizontal, usesSplitHorizontalText: false, surfaceOpacity);
     }
 
     public static SectionLabelComponent CreateVerticalOverlay(
@@ -98,7 +99,8 @@ public sealed class SectionLabelComponent
         Color accentColor,
         Color textColor,
         SectionLabelDirection direction,
-        bool usesSplitHorizontalText)
+        bool usesSplitHorizontalText,
+        byte surfaceOpacity = 150)
     {
         TargetSectionBounds = targetSectionBounds;
         Bounds = bounds;
@@ -107,6 +109,7 @@ public sealed class SectionLabelComponent
         TextColor = textColor;
         Direction = direction;
         _usesSplitHorizontalText = usesSplitHorizontalText;
+        _surfaceOpacity = surfaceOpacity;
     }
     #endregion
 
@@ -116,6 +119,7 @@ public sealed class SectionLabelComponent
 
     private const float VerticalScale = 0.38f;
     private readonly bool _usesSplitHorizontalText;
+    private readonly byte _surfaceOpacity;
 
     public Rectangle TargetSectionBounds { get; }
     public Rectangle Bounds { get; }
@@ -192,8 +196,9 @@ public sealed class SectionLabelComponent
 
     private void DrawSurface(StationeryDrawingContext draw)
     {
-        draw.FillRectangle(Bounds, new Color(AccentColor, 150));
-        draw.DrawRectangle(Bounds, 1, new Color(AccentColor, 230));
+        if (_surfaceOpacity == 0) return;
+        draw.FillRectangle(Bounds, new Color(AccentColor, _surfaceOpacity));
+        draw.DrawRectangle(Bounds, 1, new Color(AccentColor, Math.Max(_surfaceOpacity, (byte)180)));
     }
 
     private static (string FirstLine, string SecondLine) Split(string title)

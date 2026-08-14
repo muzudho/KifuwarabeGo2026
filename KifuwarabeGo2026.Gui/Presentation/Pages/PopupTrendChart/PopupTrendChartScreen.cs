@@ -2,6 +2,7 @@ namespace KifuwarabeGo2026.Gui.Presentation.Pages.PopupTrendChart;
 
 using Microsoft.Xna.Framework;
 using KifuwarabeGo2026.Gui.Presentation.Pages.PopupTrendChart.MoveCommentPanel;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ChartAxisSectionLabel;
 
 /// <summary>検討チャートポップアップとリプレイ操作のレイアウトを所有します。</summary>
 public sealed class PopupTrendChartScreen
@@ -11,9 +12,13 @@ public sealed class PopupTrendChartScreen
     private PopupTrendChartScreen()
     {
         MoveCommentPanel = new MoveCommentPanelComponent();
+        ScoreAxisSectionLabel = new(new Rectangle(400, 55, 150, 48), "SCORE", ChartAxisSide.Left);
+        WinRateAxisSectionLabel = new(new Rectangle(558, 55, 190, 48), "WIN RATE", ChartAxisSide.Right);
     }
 
     public MoveCommentPanelComponent MoveCommentPanel { get; }
+    public ChartAxisSectionLabelComponent ScoreAxisSectionLabel { get; }
+    public ChartAxisSectionLabelComponent WinRateAxisSectionLabel { get; }
 
     public Rectangle PopupBounds { get; } = new(56, 42, 1808, 1030);
     public Rectangle ChartBounds { get; } = new(100, 115, 1720, 850);

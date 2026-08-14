@@ -121,7 +121,9 @@ public sealed partial class GoScreenRenderer
         int? currentMoveNumber = null,
         bool popup = false)
     {
-        DrawMoveTrendChartSurface(bounds, popup);
+        var isPopupChartVisible = !popup || session.IsPopupScoreVisible || session.IsPopupWinRateVisible;
+        if (isPopupChartVisible)
+            DrawMoveTrendChartSurface(bounds, popup);
         if (popup)
         {
             DrawPopupInformationChecks(session, bounds, mousePoint);
@@ -135,6 +137,15 @@ public sealed partial class GoScreenRenderer
                 DrawMoveCommentContent(moves, bounds, session, mousePoint, currentMoveNumber);
                 return;
             }
+        }
+
+        if (!isPopupChartVisible)
+        {
+            if (session.IsPopupCommentVisible)
+                DrawPopupCommentOverlay(moves, session, mousePoint, currentMoveNumber);
+            else
+                PopupTrendChartScreen.Default.MoveCommentPanel.DrawSectionLabel(_stationeryDrawingContext, isPanelVisible: false);
+            return;
         }
 
         if (!popup)
@@ -172,7 +183,7 @@ public sealed partial class GoScreenRenderer
             DrawLine(new Vector2(plot.Left, y), new Vector2(plot.Right, y), step == 0 ? 2 : 1,
                 step == 0 ? new Color(211, 226, 219, 165) : new Color(104, 139, 143, 70));
             var drawAxisLabel = popup || step is -2 or 0 or 2;
-            if (drawScore && drawAxisLabel)
+            if (drawScore && drawAxisLabel && !popup)
             {
                 var scoreAxisBounds = popup
                     ? new Rectangle(bounds.X + 4, y - 20, 68, 40)
@@ -191,7 +202,7 @@ public sealed partial class GoScreenRenderer
                     plot: plot,
                     axisStep: step);
             }
-            if (drawWinRate && drawAxisLabel)
+            if (drawWinRate && drawAxisLabel && !popup)
             {
                 var winRateAxisBounds = popup
                     ? new Rectangle(plot.Right + 4, y - 20, 76, 40)
@@ -206,6 +217,17 @@ public sealed partial class GoScreenRenderer
                     axisStep: step);
             }
         }
+
+        if (popup && drawScore)
+            PopupTrendChartScreen.Default.ScoreAxisSectionLabel.DrawAxisLabels(
+                _stationeryDrawingContext, plot,
+                new[] { FormatTrendScoreAxisValue(scoreAxisMaximum), FormatTrendScoreAxisValue(scoreAxisMaximum / 2.0), "EVEN", FormatTrendScoreAxisValue(scoreAxisMaximum / 2.0), FormatTrendScoreAxisValue(scoreAxisMaximum) },
+                new Color(105, 232, 224), 0.58f);
+        if (popup && drawWinRate)
+            PopupTrendChartScreen.Default.WinRateAxisSectionLabel.DrawAxisLabels(
+                _stationeryDrawingContext, plot,
+                new[] { "100%", "50%", "EVEN", "50%", "100%" },
+                new Color(105, 232, 224), 0.58f);
 
         var maximumMove = popup ? Math.Max(1, moves.Count) : Math.Max(100, points.Count);
         if (drawWinRate)
@@ -358,48 +380,9 @@ public sealed partial class GoScreenRenderer
         Rectangle bounds,
         Point mousePoint)
     {
-        DrawPopupInformationCheck(
-            GetPopupScoreToggleBounds(bounds),
-            "SCORE",
-            session.IsPopupScoreVisible,
-            mousePoint);
-        DrawPopupInformationCheck(
-            GetPopupWinRateToggleBounds(bounds),
-            "WIN RATE",
-            session.IsPopupWinRateVisible,
-            mousePoint);
-    }
-
-    private void DrawPopupInformationCheck(
-        Rectangle bounds,
-        string label,
-        bool isChecked,
-        Point mousePoint)
-    {
-        var hovered = bounds.Contains(mousePoint);
-        FillRect(bounds, hovered ? new Color(43, 67, 83, 238) : new Color(24, 43, 57, 232));
-        DrawRect(bounds, 2, isChecked ? new Color(91, 218, 211) : new Color(91, 117, 128));
-        var checkBounds = new Rectangle(bounds.X + 12, bounds.Y + 12, 28, 28);
-        FillRect(checkBounds, new Color(14, 23, 35, 245));
-        DrawRect(checkBounds, 2, new Color(176, 194, 212));
-        if (isChecked)
-        {
-            DrawLine(
-                new Vector2(checkBounds.X + 6, checkBounds.Y + 15),
-                new Vector2(checkBounds.X + 12, checkBounds.Bottom - 7),
-                4,
-                new Color(91, 218, 211));
-            DrawLine(
-                new Vector2(checkBounds.X + 12, checkBounds.Bottom - 7),
-                new Vector2(checkBounds.Right - 5, checkBounds.Y + 6),
-                4,
-                new Color(91, 218, 211));
-        }
-        DrawFittedText(
-            label,
-            new Rectangle(bounds.X + 50, bounds.Y + 7, bounds.Width - 60, bounds.Height - 14),
-            Color.White,
-            0.34f);
+        var screen = PopupTrendChartScreen.Default;
+        screen.ScoreAxisSectionLabel.DrawHeader(_stationeryDrawingContext, session.IsPopupScoreVisible);
+        screen.WinRateAxisSectionLabel.DrawHeader(_stationeryDrawingContext, session.IsPopupWinRateVisible);
     }
 
     private void DrawPopupCommentOverlay(
@@ -673,12 +656,6 @@ public sealed partial class GoScreenRenderer
         bounds.Width > 1000
             ? new(bounds.X + 212, bounds.Y + 18, 240, 52)
             : new(bounds.X + 122, bounds.Y + 12, 142, 36);
-
-    internal static Rectangle GetPopupScoreToggleBounds(Rectangle bounds) =>
-        new(400, 55, 150, 48);
-
-    internal static Rectangle GetPopupWinRateToggleBounds(Rectangle bounds) =>
-        new(558, 55, 190, 48);
 
     private static Rectangle MoveTrendWinRateButtonBounds(Rectangle chartBounds) =>
         chartBounds.Width > 1000

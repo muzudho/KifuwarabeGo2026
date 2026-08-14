@@ -62,6 +62,7 @@ renderer は描画面の実装に限定し、移行期間だけ既存の `Get...
   - `PopupTrendChartScreen` がポップアップ、チャート、シーク、リプレイ操作の領域を所有する。
   - 右側の着手コメントパネルは `MoveCommentPanel` プロパティとして1つ所有し、パネル自身が領域と内部UIを所有する。
   - 着手コメントパネルの表示切替を区画ラベルの任意ピンへ集約し、従来のCOMMENTSチェックを削除した。非表示時は画面左端に抜けたピン付き区画ラベルだけを表示し、表示切替時は両位置の間を補間して移動する。
+  - SCORE軸とWIN RATE軸を `ChartAxisSectionLabel` として画面が所有する。軸名、ピン、目盛り配置を集約し、両方が非表示ならチャート面も描画しない。
   - renderer の旧4 Boundsと、集計対象外のstatic readonly領域を削除し、描画互換参照は画面クラスを正本にした。
 - [x] コメント表示
   - `MoveCommentsScreen` が見出しの `TableRowLabel`、本文領域、編集・コメント移動・ページ移動の5つの `Button` を所有する。
