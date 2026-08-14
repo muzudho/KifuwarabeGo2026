@@ -39,10 +39,14 @@ public sealed partial class GoAppSession
         var consecutivePasses = 0;
         GoPoint? replayKoPoint = null;
         GoPoint? currentKoPoint = null;
+        TimeSpan? blackTimeLeft = null;
+        TimeSpan? whiteTimeLeft = null;
         var clampedMoveCount = Math.Clamp(moveCount, 0, record.Moves.Count);
         for (var i = 0; i < clampedMoveCount; i++)
         {
             var move = record.Moves[i];
+            if (move.Stone == GoStone.Black && move.TimeLeftAfterMove is { } blackLeft) blackTimeLeft = blackLeft;
+            if (move.Stone == GoStone.White && move.TimeLeftAfterMove is { } whiteLeft) whiteTimeLeft = whiteLeft;
             if (move.Point is not { } point)
             {
                 replayKoPoint = null;
@@ -81,6 +85,8 @@ public sealed partial class GoAppSession
         ConsecutivePasses = consecutivePasses;
         PlayedMoveCount = clampedMoveCount;
         ReviewMoveIndex = clampedMoveCount;
+        ReviewBlackUsedTime = GetUsedTime(record.TimeLimit, blackTimeLeft);
+        ReviewWhiteUsedTime = GetUsedTime(record.TimeLimit, whiteTimeLeft);
         Winner = null;
         GameOverReason = "";
         IsEngineReady = true;
@@ -92,6 +98,11 @@ public sealed partial class GoAppSession
         warning = "";
         return true;
     }
+
+    private static TimeSpan? GetUsedTime(TimeSpan limit, TimeSpan? timeLeft) =>
+        limit > TimeSpan.Zero && timeLeft is { } remaining
+            ? (remaining >= limit ? TimeSpan.Zero : limit - remaining)
+            : null;
 
     private static GoGameRecord CreateReviewGameRecord(GoGameRecord source, int moveCount)
     {

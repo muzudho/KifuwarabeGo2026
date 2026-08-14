@@ -19,7 +19,8 @@ public sealed partial class GoAppSession
         }
 
         var placedBy = CurrentTurn;
-        CurrentGameRecord.Moves.Add(new GoGameMove(placedBy, new GoPoint(x, y), comment, analysis, commonAnalysisJson));
+        CurrentGameRecord.Moves.Add(new GoGameMove(placedBy, new GoPoint(x, y), comment, analysis, commonAnalysisJson,
+            timeLeftAfterMove: GetRemainingTimeAfterMove(placedBy)));
         if (placedBy == GoStone.Black)
             BlackAgehama += capturedStones;
         else
@@ -52,7 +53,8 @@ public sealed partial class GoAppSession
 
         KoPoint = null;
         ConsecutivePasses++;
-        CurrentGameRecord.Moves.Add(new GoGameMove(CurrentTurn, null, comment, analysis, commonAnalysisJson));
+        CurrentGameRecord.Moves.Add(new GoGameMove(CurrentTurn, null, comment, analysis, commonAnalysisJson,
+            timeLeftAfterMove: GetRemainingTimeAfterMove(CurrentTurn)));
         CompleteMoveAndPassTurn();
         if (CurrentMode.Kind == GoAppModeKind.GameOver)
             return true;

@@ -28,6 +28,9 @@ public sealed partial class GoAppSession
         string.IsNullOrWhiteSpace(_reviewGameRecord?.BlackPlayerName) ? "BLACK" : _reviewGameRecord.BlackPlayerName;
     public string ReviewWhitePlayerName =>
         string.IsNullOrWhiteSpace(_reviewGameRecord?.WhitePlayerName) ? "WHITE" : _reviewGameRecord.WhitePlayerName;
+    public TimeSpan? ReviewBlackUsedTime { get; private set; }
+    public TimeSpan? ReviewWhiteUsedTime { get; private set; }
+    public TimeSpan? ReviewTimeLimit => _reviewGameRecord?.TimeLimit is { } limit && limit > TimeSpan.Zero ? limit : null;
 
     public bool MoveReview(int step, out string warning)
     {

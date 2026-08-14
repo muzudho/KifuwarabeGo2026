@@ -36,7 +36,8 @@ public sealed partial class GoAppSession
         if (!result.Succeeded)
             return false;
 
-        CurrentGameRecord.Moves.Add(new GoGameMove(result.PlayedBy, result.Point, comment, analysis, commonAnalysisJson));
+        CurrentGameRecord.Moves.Add(new GoGameMove(result.PlayedBy, result.Point, comment, analysis, commonAnalysisJson,
+            timeLeftAfterMove: GetRemainingTimeAfterMove(result.PlayedBy)));
         if (result.PlayedBy == GoStone.Black)
             BlackAgehama += result.CapturedStones;
         else
@@ -56,7 +57,8 @@ public sealed partial class GoAppSession
         if (!result.Succeeded)
             return false;
 
-        CurrentGameRecord.Moves.Add(new GoGameMove(result.PlayedBy, null, comment, analysis, commonAnalysisJson));
+        CurrentGameRecord.Moves.Add(new GoGameMove(result.PlayedBy, null, comment, analysis, commonAnalysisJson,
+            timeLeftAfterMove: GetRemainingTimeAfterMove(result.PlayedBy)));
         ApplyMatchSnapshot(result.Snapshot);
         CompleteMatchBackedActionIfNeeded(result.Snapshot, result.PlayedBy);
         return true;

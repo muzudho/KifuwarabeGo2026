@@ -143,6 +143,13 @@ public static class SgfGameRecordConverter
         {
             builder.Append('\n').Append(';');
             AppendProperty(builder, move.Stone == GoStone.Black ? "B" : "W", SgfCoordinate.FormatPoint(move.Point, record.BoardSize));
+            if (move.TimeLeftAfterMove is { } timeLeft)
+            {
+                AppendProperty(
+                    builder,
+                    move.Stone == GoStone.Black ? "BL" : "WL",
+                    Math.Max(0, timeLeft.TotalSeconds).ToString("0.###", CultureInfo.InvariantCulture));
+            }
             if (!string.IsNullOrWhiteSpace(move.Comment))
             {
                 AppendCommentProperty(builder, move.Comment);
@@ -338,6 +345,14 @@ public static class SgfGameRecordConverter
 
         var comment = TryGetSingleValue(node, "C", out var nodeComment) ? NormalizeCommentLineEndings(nodeComment) : "";
         var playedVertex = point is { } playedPoint ? GtpCoordinate.FormatVertex(playedPoint, record.BoardSize) : "pass";
+        TimeSpan? timeLeftAfterMove = null;
+        var timePropertyName = stone == GoStone.Black ? "BL" : "WL";
+        if (TryGetSingleValue(node, timePropertyName, out var timeLeftText) &&
+            double.TryParse(timeLeftText, NumberStyles.Float, CultureInfo.InvariantCulture, out var timeLeftSeconds) &&
+            double.IsFinite(timeLeftSeconds) && timeLeftSeconds >= 0 && timeLeftSeconds <= TimeSpan.MaxValue.TotalSeconds)
+        {
+            timeLeftAfterMove = TimeSpan.FromSeconds(timeLeftSeconds);
+        }
         GoMoveAnalysis? analysis = null;
         string? commonAnalysisJson = null;
         string? legacyKifuwarabeAnalysisJson = null;
@@ -363,7 +378,8 @@ public static class SgfGameRecordConverter
             comment,
             analysis,
             commonAnalysisJson,
-            legacyKifuwarabeAnalysisJson));
+            legacyKifuwarabeAnalysisJson,
+            timeLeftAfterMove));
         return true;
     }
 

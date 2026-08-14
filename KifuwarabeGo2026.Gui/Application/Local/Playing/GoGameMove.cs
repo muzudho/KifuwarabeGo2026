@@ -11,7 +11,8 @@ public readonly record struct GoGameMove
         string comment = "",
         GoMoveAnalysis? analysis = null,
         string? commonAnalysisJson = null,
-        string? legacyKifuwarabeAnalysisJson = null)
+        string? legacyKifuwarabeAnalysisJson = null,
+        TimeSpan? timeLeftAfterMove = null)
     {
         if (stone is not (GoStone.Black or GoStone.White))
         {
@@ -24,6 +25,7 @@ public readonly record struct GoGameMove
         Analysis = analysis;
         CommonAnalysisJson = commonAnalysisJson;
         LegacyKifuwarabeAnalysisJson = legacyKifuwarabeAnalysisJson;
+        TimeLeftAfterMove = timeLeftAfterMove;
     }
 
     public GoStone Stone { get; }
@@ -46,8 +48,11 @@ public readonly record struct GoGameMove
     /// </summary>
     public string? LegacyKifuwarabeAnalysisJson { get; }
 
+    /// <summary>SGFのBL/WLに対応する、着手直後の着手者の残り時間です。</summary>
+    public TimeSpan? TimeLeftAfterMove { get; }
+
     public bool IsPass => Point is null;
 
     public GoGameMove WithComment(string comment) =>
-        new(Stone, Point, comment, Analysis, CommonAnalysisJson, LegacyKifuwarabeAnalysisJson);
+        new(Stone, Point, comment, Analysis, CommonAnalysisJson, LegacyKifuwarabeAnalysisJson, TimeLeftAfterMove);
 }

@@ -36,4 +36,11 @@ public sealed partial class GoAppSession
 
         WhiteElapsedTime += elapsed;
     }
+
+    private TimeSpan? GetRemainingTimeAfterMove(GoStone stone)
+    {
+        if (MainTime <= TimeSpan.Zero) return null;
+        var elapsed = stone == GoStone.Black ? BlackElapsedTime : WhiteElapsedTime;
+        return elapsed >= MainTime ? TimeSpan.Zero : MainTime - elapsed;
+    }
 }

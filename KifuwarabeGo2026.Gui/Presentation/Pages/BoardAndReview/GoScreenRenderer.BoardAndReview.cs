@@ -180,13 +180,15 @@ public sealed partial class GoScreenRenderer
             668,
             session.ReviewBlackPlayerName,
             session.ReviewWhitePlayerName,
-            null,
-            null,
-            null,
+            session.ReviewBlackUsedTime,
+            session.ReviewWhiteUsedTime,
+            session.ReviewTimeLimit,
             session.BlackAgehama,
             session.WhiteAgehama,
             session.CurrentTurn,
-            minimal: true);
+            minimal: true,
+            blackLiveElapsed: session.ReviewBlackUsedTime,
+            whiteLiveElapsed: session.ReviewWhiteUsedTime);
 
         DrawReviewTrendChart(session, mousePoint);
 
