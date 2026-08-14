@@ -7,6 +7,7 @@ using KifuwarabeGo2026.Shared.Domain;
 using Microsoft.Xna.Framework;
 using System;
 using KifuwarabeGo2026.Gui.Presentation.Shared.EntryProfiles;
+using KifuwarabeGo2026.Gui.Presentation.Pages.LocalMatch;
 using static KifuwarabeGo2026.Gui.Presentation.Shared.EntryProfiles.EntryProfilesScreenBounds;
 
 /// <summary>Player 選択欄と選択ダイアログの描画・当たり判定。</summary>
@@ -27,19 +28,8 @@ public sealed partial class GoScreenRenderer
     private static readonly Rectangle ClientIdentityProfileEditAddLocalButtonBounds = new(466, 820, 150, 48);
     private static readonly Rectangle ClientIdentityProfileEditRemoveButtonBounds = new(962, 820, 150, 48);
 
-    public static bool GetBlackPlayerSelectButtonHit(Point point) => PlayerSelectorLayout.CreatePlayerSelector(BlackPlayerKindButtonY).Bounds.Contains(point);
-    public static bool GetWhitePlayerSelectButtonHit(Point point) => PlayerSelectorLayout.CreatePlayerSelector(WhitePlayerKindButtonY).Bounds.Contains(point);
-    public static bool GetPonnukiBlackPlayerSelectButtonHit(Point point) => PlayerSelectorLayout.CreatePlayerSelector(PonnukiBlackPlayerKindButtonY).Bounds.Contains(point);
-    public static bool GetPonnukiWhitePlayerSelectButtonHit(Point point) => PlayerSelectorLayout.CreatePlayerSelector(PonnukiWhitePlayerKindButtonY).Bounds.Contains(point);
-    public static GoStone? GetLocalMatchHandleHit(Point point, bool isPonnuki)
-    {
-        var blackPlayerY = isPonnuki ? PonnukiBlackPlayerKindButtonY : BlackPlayerKindButtonY;
-        var whitePlayerY = isPonnuki ? PonnukiWhitePlayerKindButtonY : WhitePlayerKindButtonY;
-        if (LocalMatchHandleBounds(blackPlayerY).Contains(point)) return GoStone.Black;
-        return LocalMatchHandleBounds(whitePlayerY).Contains(point) ? GoStone.White : null;
-    }
     public int GetLocalMatchHandleCaretIndex(Point point, GoStone stone, string text, bool isPonnuki) =>
-        GetTextBoxCaretIndex(point.X, text, LocalMatchHandleTextBounds(stone, isPonnuki), 0.32f);
+        GetTextBoxCaretIndex(point.X, text, LocalMatchScreen.Default.GetHandleTextBounds(stone, isPonnuki), 0.32f);
     public static bool GetClientIdentityProfileSelectionCloseButtonHit(Point point) => ClientIdentityProfileSelectionCloseButtonBounds.Contains(point);
     public static bool GetClientIdentityProfileSelectionUseButtonHit(Point point) => ClientIdentityProfileSelectionUseButtonBounds.Contains(point);
     public static bool GetClientIdentityProfileSelectionEditButtonHit(Point point) => ClientIdentityProfileSelectionEditButtonBounds.Contains(point);
@@ -84,9 +74,10 @@ public sealed partial class GoScreenRenderer
                 IsComputer = player is null ? null : player.Kind == EntryProfileKind.Computer,
             },
             mousePoint);
-        var handleBounds = LocalMatchHandleBounds(y);
+        var isPonnuki = y is PonnukiBlackPlayerKindButtonY or PonnukiWhitePlayerKindButtonY;
+        var handleBounds = LocalMatchScreen.Default.GetHandleBounds(stone, isPonnuki);
         DrawFittedText("HANDLE", new Rectangle(1156, handleBounds.Y + 4, 118, 32), UiLabel.TextColor, 0.34f);
-        var textBounds = LocalMatchHandleTextBounds(y);
+        var textBounds = LocalMatchScreen.Default.GetHandleTextBounds(stone, isPonnuki);
         var active = session.ActiveLocalMatchHandleStone == stone;
         var hovered = textBounds.Contains(mousePoint);
         var text = session.GetLocalMatchHandleDraft(stone);
@@ -252,19 +243,6 @@ public sealed partial class GoScreenRenderer
             DrawFittedText(target.LoginName, new Rectangle(bounds.X + 18, bounds.Y + 9, 420, 28), Color.White, 0.42f);
             DrawFittedText(target.DisplayName, new Rectangle(bounds.X + 18, bounds.Y + 43, 420, 20), new Color(180, 195, 195), 0.27f);
         }
-    }
-
-    private static Rectangle LocalMatchHandleBounds(int y) => new(1144, y + 48, 668, 40);
-
-    private static Rectangle LocalMatchHandleTextBounds(GoStone stone, bool isPonnuki) =>
-        LocalMatchHandleTextBounds(stone == GoStone.Black
-            ? (isPonnuki ? PonnukiBlackPlayerKindButtonY : BlackPlayerKindButtonY)
-            : (isPonnuki ? PonnukiWhitePlayerKindButtonY : WhitePlayerKindButtonY));
-
-    private static Rectangle LocalMatchHandleTextBounds(int playerY)
-    {
-        var bounds = LocalMatchHandleBounds(playerY);
-        return new Rectangle(GameOverValueX, bounds.Y + 4, 410, 30);
     }
 
     private static Rectangle ClientIdentityProfileEditFieldTextBounds(int index, ClientIdentityProfileEditField field, bool isLocalMatch)

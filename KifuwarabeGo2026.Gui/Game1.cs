@@ -1825,22 +1825,18 @@ public class Game1 : Game
                 _playingScene.StartPlaying();
             }
             else if (isPlayerSelectionIntermission &&
-                     GoScreenRenderer.GetLocalMatchHandleHit(point, _session.UseKind == GoAppUseKind.LocalApps) is { } handleStone)
+                     localMatchScreen.GetHandleHit(point, _session.UseKind == GoAppUseKind.LocalApps) is { } handleStone)
             {
                 BeginOrMoveLocalMatchHandleEdit(point, handleStone);
             }
             else if (isPlayerSelectionIntermission &&
-                     (isLocalAppsIntermission
-                         ? GoScreenRenderer.GetPonnukiBlackPlayerSelectButtonHit(point)
-                         : GoScreenRenderer.GetBlackPlayerSelectButtonHit(point)))
+                     localMatchScreen.GetPlayerSelectorBounds(GoStone.Black, isLocalAppsIntermission).Contains(point))
             {
                 EndHumanPlayerNameEdit(commit: true);
                 _session.OpenPlayerSelectionDialog(GoStone.Black);
             }
             else if (isPlayerSelectionIntermission &&
-                     (isLocalAppsIntermission
-                         ? GoScreenRenderer.GetPonnukiWhitePlayerSelectButtonHit(point)
-                         : GoScreenRenderer.GetWhitePlayerSelectButtonHit(point)))
+                     localMatchScreen.GetPlayerSelectorBounds(GoStone.White, isLocalAppsIntermission).Contains(point))
             {
                 EndHumanPlayerNameEdit(commit: true);
                 _session.OpenPlayerSelectionDialog(GoStone.White);

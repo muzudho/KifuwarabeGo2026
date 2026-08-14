@@ -5,6 +5,7 @@ using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Application.GoApps.Casual.Ponnuki;
 using KifuwarabeGo2026.Shared.Domain;
 using Microsoft.Xna.Framework;
+using KifuwarabeGo2026.Gui.Presentation.Shared.SelectEntry;
 
 /// <summary>ローカル対局のセットアップ、対局中、終局後に共通する操作 UI を所有します。</summary>
 public sealed class LocalMatchScreen
@@ -76,4 +77,29 @@ public sealed class LocalMatchScreen
         ProviderSeedAutoChangeButton.IsHit(point) ? PonnukiRandomSeedRole.Provider :
         Player1SeedAutoChangeButton.IsHit(point) ? PonnukiRandomSeedRole.Player1 :
         Player2SeedAutoChangeButton.IsHit(point) ? PonnukiRandomSeedRole.Player2 : null;
+
+    public Rectangle GetPlayerSelectorBounds(GoStone stone, bool isPonnuki) =>
+        PlayerSelectorLayout.CreatePlayerSelector(GetPlayerRowY(stone, isPonnuki)).Bounds;
+
+    public Rectangle GetHandleBounds(GoStone stone, bool isPonnuki) =>
+        new(1144, GetPlayerRowY(stone, isPonnuki) + 48, 668, 40);
+
+    public Rectangle GetHandleTextBounds(GoStone stone, bool isPonnuki)
+    {
+        var bounds = GetHandleBounds(stone, isPonnuki);
+        return new Rectangle(1328, bounds.Y + 4, 410, 30);
+    }
+
+    public GoStone? GetHandleHit(Point point, bool isPonnuki) =>
+        GetHandleBounds(GoStone.Black, isPonnuki).Contains(point) ? GoStone.Black :
+        GetHandleBounds(GoStone.White, isPonnuki).Contains(point) ? GoStone.White : null;
+
+    private static int GetPlayerRowY(GoStone stone, bool isPonnuki) =>
+        (stone, isPonnuki) switch
+        {
+            (GoStone.Black, false) => 710,
+            (GoStone.White, false) => 814,
+            (GoStone.Black, true) => 646,
+            _ => 750,
+        };
 }
