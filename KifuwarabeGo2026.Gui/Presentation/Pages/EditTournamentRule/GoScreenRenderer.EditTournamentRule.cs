@@ -3,6 +3,8 @@ namespace KifuwarabeGo2026.Gui.Presentation;
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Presentation.Pages.EditTournamentRule;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ActionBadge;
+using KifuwarabeGo2026.Gui.Presentation.Shared.PopupFilePathTooltip;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.StickyNote;
 using Microsoft.Xna.Framework;
 using System;
 using System.IO;
@@ -19,20 +21,20 @@ public sealed partial class GoScreenRenderer
 
     public static bool TryGetTournamentRulesSelectionDialogPathCopyText(Point point, GoAppSession session, out string text)
     {
-        text = "";
         if (session.TournamentRulesDialogSelectionIndex < 0 || session.TournamentRulesDialogSelectionIndex >= session.TournamentRulesList.Count)
         {
+            text = string.Empty;
             return false;
         }
 
         var path = session.TournamentRulesList[session.TournamentRulesDialogSelectionIndex].FilePath;
-        if (string.IsNullOrWhiteSpace(path) || !PathTooltipCopyButtonBounds(TournamentRulesSelectionDialogPropertyRowBounds(6)).Contains(point))
-        {
-            return false;
-        }
-
-        text = path;
-        return true;
+        return PopupFilePathTooltip.TryGetCopyText(
+            StickyNoteScreenId.TournamentRulesSelection,
+            StickyNoteKind.TournamentRulesPathHint,
+            TournamentRulesSelectionDialogPropertyRowBounds(6),
+            path,
+            point,
+            out text);
     }
 
 

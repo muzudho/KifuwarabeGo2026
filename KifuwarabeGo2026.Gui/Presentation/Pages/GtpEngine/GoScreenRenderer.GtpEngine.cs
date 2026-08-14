@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ActionBadge;
+using KifuwarabeGo2026.Gui.Presentation.Shared.PopupFilePathTooltip;
 
 /// <summary>
 /// ［エンジン選択画面］
@@ -193,19 +194,21 @@ public sealed partial class GoScreenRenderer
 
         var profile = session.GtpEngineProfiles[selectedIndex];
 
-        // 実行ファイルのパスのコピー
-        if (!string.IsNullOrWhiteSpace(profile.ExecutablePath) && PathTooltipCopyButtonBounds(GtpEngineSelectionDialogPropertyRowBounds(1)).Contains(point))
-        {
-            text = profile.ExecutablePath;
-            return true;
-        }
+        if (PopupFilePathTooltip.TryGetCopyText(
+                StickyNoteScreenId.GtpEngineSelection,
+                StickyNoteKind.GtpEnginePathHint,
+                GtpEngineSelectionDialogPropertyRowBounds(1),
+                profile.ExecutablePath,
+                point,
+                out text)) return true;
 
-        // 作業用ディレクトリのコピー
-        if (!profile.WorkingDirectoryModel.IsEmpty && PathTooltipCopyButtonBounds(GtpEngineSelectionDialogPropertyRowBounds(2)).Contains(point))
-        {
-            text = profile.WorkingDirectoryModel.Value;
-            return true;
-        }
+        if (PopupFilePathTooltip.TryGetCopyText(
+                StickyNoteScreenId.GtpEngineSelection,
+                StickyNoteKind.GtpEnginePathHint,
+                GtpEngineSelectionDialogPropertyRowBounds(2),
+                profile.WorkingDirectoryModel.DisplayValue,
+                point,
+                out text)) return true;
 
         return false;
     }
@@ -701,8 +704,9 @@ public sealed partial class GoScreenRenderer
 
         // パス用ポップアップは一度に一つだけ表示する。二つのポップアップが重なると、
         // 後から描いた方が別行のホバー判定に見えてしまう。
-        if (IsPathTooltipHovered(executablePathRowBounds, executablePath, mousePoint))
-            DrawPathTooltip(
+        if (PopupFilePathTooltip.IsHovered(_stickyNoteScreen, StickyNoteKind.GtpEnginePathHint, executablePathRowBounds, executablePath, mousePoint))
+            _popupFilePathTooltip.Draw(
+                _stickyNoteScreen,
                 StickyNoteKind.GtpEnginePathHint,
                 executablePathRowBounds,
                 executablePath,
@@ -713,9 +717,12 @@ public sealed partial class GoScreenRenderer
                     "いわゆる思考エンジンです。",
                     "GTP プロトコルに対応している",
                     "必要があります。",
-                ]);
-        else if (IsPathTooltipHovered(workingDirectoryRowBounds, displayWorkingDirectory, mousePoint))
-            DrawPathTooltip(
+                ],
+                _stationeryDrawingContext,
+                DrawDynamicOptionText);
+        else if (PopupFilePathTooltip.IsHovered(_stickyNoteScreen, StickyNoteKind.GtpEnginePathHint, workingDirectoryRowBounds, displayWorkingDirectory, mousePoint))
+            _popupFilePathTooltip.Draw(
+                _stickyNoteScreen,
                 StickyNoteKind.GtpEnginePathHint,
                 workingDirectoryRowBounds,
                 displayWorkingDirectory,
@@ -727,7 +734,9 @@ public sealed partial class GoScreenRenderer
                     "ディレクトリーです。詳しくは",
                     "「ワーキングディレクトリー」で",
                     "調べてください。",
-                ]);
+                ],
+                _stationeryDrawingContext,
+                DrawDynamicOptionText);
     }
 
 

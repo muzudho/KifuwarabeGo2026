@@ -18,6 +18,7 @@ using KifuwarabeGo2026.Gui.Presentation.Pages.InitialPositionConcierge;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.PopupNumberUnderline;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.PopupTimeUnderline;
 using KifuwarabeGo2026.Gui.Presentation.Shared.CgosMatchNotification;
+using KifuwarabeGo2026.Gui.Presentation.Shared.PopupFilePathTooltip;
 using KifuwarabeGo2026.Gui.Presentation.Shared.EditEntryProfile;
 using KifuwarabeGo2026.Gui.Presentation.BoardLens;
 using KifuwarabeGo2026.Gui.Presentation.BoardLens.Shared.RenBoundaries;
@@ -86,6 +87,7 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
     public PopupTimeUnderline PopupTimeUnderline { get; } = new();
     private StickyNoteScreenId _stickyNoteScreen = StickyNoteScreenId.Unknown;
     private readonly CgosMatchNotification _cgosMatchNotification = CgosMatchNotification.Default;
+    private readonly PopupFilePathTooltip _popupFilePathTooltip = new();
     private static readonly BoardLensButtonStrip LocalPlayingBoardLensButtons = new(1516, 800);
     public EditEntryProfile EditEntryProfile { get; } = new();
 
@@ -607,13 +609,17 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
 
     private void DrawPathTooltipIfHovered(Rectangle rowBounds, string fullPath, Point mousePoint)
     {
-        if (IsPathTooltipHovered(rowBounds, fullPath, mousePoint))
-            DrawPathTooltip(StickyNoteKind.TournamentRulesPathHint, rowBounds, fullPath, mousePoint, "FILE とは？", ["対局ルールで利用するファイルの場所です。"]);
+        _popupFilePathTooltip.Draw(
+            _stickyNoteScreen,
+            StickyNoteKind.TournamentRulesPathHint,
+            rowBounds,
+            fullPath,
+            mousePoint,
+            "FILE とは？",
+            ["対局ルールで利用するファイルの場所です。"],
+            _stationeryDrawingContext,
+            DrawDynamicOptionText);
     }
-
-    private static bool IsPathTooltipHovered(Rectangle rowBounds, string fullPath, Point mousePoint) =>
-        !string.IsNullOrWhiteSpace(fullPath) && fullPath != "-" &&
-        (rowBounds.Contains(mousePoint) || PathTooltipBounds(rowBounds).Contains(mousePoint));
 
     private void DrawBoardSizeButtons(int boardSize, Point mousePoint, int y)
     {
@@ -856,26 +862,6 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
     private const int PonnukiWhiteEngineButtonY = 808;
 
     private static Rectangle BoardSizeButtonBounds(int index, int y) => new(AddPanelControlX + 132 + index * 180, y, 164, 50);
-    private static Rectangle PathTooltipBounds(Rectangle rowBounds)
-    {
-        const int height = 370;
-        // 行と同じ横幅に制限する。エンジン一覧には決して重ねない。
-        // 画面下端へ出すことで、EXE と WORKDIR の各行も覆わない。
-        return new Rectangle(
-            rowBounds.X,
-            VirtualScreen.Height - height - 10,
-            rowBounds.Width,
-            height);
-    }
-
-    private static Rectangle PathTooltipCopyButtonBounds(Rectangle rowBounds)
-    {
-        return PathTooltipCopyButtonBoundsFromPopup(PathTooltipBounds(rowBounds));
-    }
-
-    private static Rectangle PathTooltipCopyButtonBoundsFromPopup(Rectangle popupBounds) =>
-        new(popupBounds.Right - 132, popupBounds.Bottom - 48, 108, 34);
-
     private static Rectangle RuleKindButtonBounds(int index) => new(AddPanelControlX + 132 + index * 180, 319, 164, 50);
 
     private static Rectangle TournamentRulesMoveLimitTextBounds => new(AddPanelControlX + 132, 612, 176, 40);
@@ -1103,45 +1089,6 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
 
         _spriteBatch.End();
     }
-    private void DrawPathTooltip(
-        StickyNoteKind kind,
-        Rectangle rowBounds,
-        string fullPath,
-        Point mousePoint,
-        string heading,
-        IReadOnlyList<string> descriptionLines)
-    {
-        // 長いパスは表示幅を超えたために縮小せず、区切り文字で改行する。
-        var lines = descriptionLines.Concat(WrapPathForTooltip(fullPath, 72).Take(2)).ToArray();
-        DrawStickyNote(
-            kind,
-            new Vector2(rowBounds.Center.X, rowBounds.Bottom),
-            new Color(147, 244, 200),
-            new Color(87, 157, 128),
-            heading,
-            lines,
-            bodyLineSpacing: 32,
-            anchorBounds: rowBounds);
-        if (StickyNotePlacementStrategies.TryGetPlacement(
-                _stickyNoteScreen,
-                kind,
-                new StickyNotePlacementContext(Vector2.Zero, rowBounds),
-                out var placement))
-            DrawCommandButton(PathTooltipCopyButtonBoundsFromPopup(placement.Bounds), "COPY", false, mousePoint, scale: 0.34f);
-    }
-
-    private static IEnumerable<string> WrapPathForTooltip(string path, int maximumLength)
-    {
-        while (path.Length > maximumLength)
-        {
-            var split = path.LastIndexOfAny(['\\', '/'], Math.Min(maximumLength, path.Length - 1));
-            if (split <= 0) split = maximumLength;
-            yield return path[..(split + (path[split] is '\\' or '/' ? 1 : 0))];
-            path = path[(split + (path[split] is '\\' or '/' ? 1 : 0))..];
-        }
-        yield return path;
-    }
-
     private void DrawPlayerSelector(PlayerSelector selector, Point mousePoint)
     {
         if (selector.Bounds.X == 1144 && selector.Bounds.Width == 668)

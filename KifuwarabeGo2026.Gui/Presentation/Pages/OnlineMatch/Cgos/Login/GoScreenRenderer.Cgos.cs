@@ -10,6 +10,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Linq;
+using System.Collections.Generic;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ActionBadge;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Headline;
 using KifuwarabeGo2026.Gui.Presentation.Pages.OnlineMatch.Cgos.Login;
@@ -672,9 +673,23 @@ public sealed partial class GoScreenRenderer
             new Color(147, 244, 200),
             new Color(87, 157, 128),
             title,
-            WrapPathForTooltip(command, 28).Take(4).ToArray(),
+            WrapCgosCommandForTooltip(command, 28).Take(4).ToArray(),
             bodyLineSpacing: 28,
             anchorBounds: targetBounds);
+    }
+
+    private static IEnumerable<string> WrapCgosCommandForTooltip(string command, int maximumLength)
+    {
+        while (command.Length > maximumLength)
+        {
+            var split = command.LastIndexOfAny([' ', '\\', '/'], Math.Min(maximumLength, command.Length - 1));
+            if (split <= 0) split = maximumLength;
+            var includesSeparator = command[split] is ' ' or '\\' or '/';
+            yield return command[..(split + (includesSeparator ? 1 : 0))];
+            command = command[(split + (includesSeparator ? 1 : 0))..];
+        }
+
+        yield return command;
     }
 
 
