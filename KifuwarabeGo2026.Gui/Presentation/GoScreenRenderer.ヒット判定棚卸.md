@@ -2,35 +2,17 @@
 
 対象は `Presentation/GoScreenRenderer.cs` に**直接定義されている**、マウスの仮想座標 `Point` に対するヒット判定です。`GoScreenRenderer.*.cs` にある partial class 側の判定は含めません。
 
-2026-08-14 時点で、公開・内部公開の判定は 34 個、これらが共用する private helper は 1 個です。呼び出し元は主に `Game1` です。
+進捗の正本と、完了済み／残作業の一覧は [Bounds移管・引継ぎメモ.md](Bounds移管・引継ぎメモ.md) にあります。この文書は残っている判定の詳細を調べるときに使います。
 
-## 画面に残っている矩形ベースの判定
+2026-08-14 の再集計時点で、このファイルに直接残る公開判定は12個、内部公開判定は1個です。旧34判定のうち、コメント入力、ローカル対局ボタン、プレイヤー種別、人間名入力の判定は移管済みで、共用していた private helper も削除済みです。
 
-| メソッド | 戻り値 | 対象 | 現在の所有・メモ |
-| --- | --- | --- | --- |
-| `GetLocalUseButtonHit` | `bool` | ローカル対局の利用カード | `LocalUseButtonBounds`。画面コンポーネント未分離。 |
-| `GetImportSgfButtonHit` | `bool` | SGF 読込 | `ImportSgfButtonBounds`。 |
-| `GetStartPlayingButtonHit` | `bool` | 対局開始 | 終局中は常に `false`。 |
-| `GetChangeAppProviderButtonHit` | `bool` | アプリ提供エンジン変更 | ローカルアプリ中断パネル。 |
-| `GetAppProviderGameSettingsButtonHit` | `bool` | 提供エンジンのゲーム設定 | ローカルアプリ中断パネル。 |
-| `GetPonnukiRandomSeedAutoChangeHit` | `PonnukiRandomSeedRole?` | Provider / Black / White の SEED AUTO | 3 矩形を順に調べ、該当ロールを返す。 |
-| `GetReturnToSetupButtonHit` | `bool` | 設定へ戻る | `ReturnToSetupButtonBounds`。 |
-| `GetExportSgfButtonHit` | `bool` | SGF 出力 | `ExportSgfButtonBounds`。 |
-| `GetSgfAutoSaveCheckHit` | `bool` | SGF 自動保存チェック | `ExportSgfButtonBounds` 全体を使う。描画側も同じ bounds をチェックボックスに渡している。 |
-| `GetLocalGameOverReviewButtonHit` | `bool` | 終局後の検討 | `LocalGameOverReviewButtonBounds`。 |
-| `GetSetupBackToTitleButtonHit` | `bool` | タイトルへ戻る | `SetupBackToTitleButtonBounds`。 |
-| `GetBlackPlayerKindButtonHit` | `GoPlayerKind?` | 黒番プレイヤー種別 | private helper を使う。 |
-| `GetWhitePlayerKindButtonHit` | `GoPlayerKind?` | 白番プレイヤー種別 | private helper を使う。 |
-| `GetPonnukiBlackPlayerKindButtonHit` | `GoPlayerKind?` | ポン抜き黒番プレイヤー種別 | private helper を使う。 |
-| `GetPonnukiWhitePlayerKindButtonHit` | `GoPlayerKind?` | ポン抜き白番プレイヤー種別 | private helper を使う。 |
-| `GetHumanPlayerNameTextBoxHit` | `GoStone?` | 人間プレイヤー名 | 人間に設定された側だけを判定し、石色を返す。 |
-| `GetPassButtonHit` | `bool` | パス | `PassButtonBounds`。 |
-| `GetResignButtonHit` | `bool` | 投了 | `ResignButtonBounds`。 |
-| `GetCancelPlayingButtonHit` | `bool` | エンジン準備中の取消 | `CancelPlayingButtonBounds`。 |
-| `GetTextAreaDialogCancelButtonHit` | `bool` | コメント入力ダイアログの取消 | `TextAreaDiscardButtonBounds`。 |
-| `GetTextAreaDialogApplyButtonHit` | `bool` | コメント入力ダイアログの適用 | `TextAreaApplyButtonBounds`。 |
+## 移管済みで、このファイルから削除した判定
 
-private helper `GetPlayerKindButtonHit(Point, int)` は、各プレイヤー種別行の 3 種類の選択肢を調べて `GoPlayerKind?` を返します。公開 API ではありません。
+- コメント入力：DISCARD、SAVE & CLOSE。
+- ローカル対局：BACK、START、CHANGE、GAME SETTINGS、SEED AUTO、SGF入出力、終局後検討、PASS、RESIGN、CANCEL。
+- プレイヤー設定：通常／ポン抜きの黒白プレイヤー種別、人間名入力。
+
+これらの現在の所有先は `TextAreaDialog`、`LocalMatchScreen`、`PlayerKindSelectionRow` です。
 
 ## タイトル画面
 
@@ -68,23 +50,24 @@ private helper `GetPlayerKindButtonHit(Point, int)` は、各プレイヤー種�
 
 ## `*Bounds` の棚卸（partial class を含む）
 
-`GoScreenRenderer` の partial class を含めて機械的に調べた結果、`Rectangle` を返す／保持する `*Bounds` 定義は **250 個**です。ここにはボタン以外に、パネル、テキスト欄、リスト行、ツールチップ、チャート領域も含まれます。したがって、すべてを `Button` に置換するのではなく、操作可能な領域は文房具 UI、表示領域は画面クラスの `Rectangle` プロパティとして移します。
+`GoScreenRenderer` の partial class を含めて機械的に再集計した結果、`Rectangle` を返す／保持する `*Bounds` 定義は **239 個**です。ここにはボタン以外に、パネル、テキスト欄、リスト行、ツールチップ、チャート領域も含まれます。したがって、すべてを `Button` に置換するのではなく、操作可能な領域は文房具 UI、表示領域は画面クラスの `Rectangle` プロパティとして移します。
 
 | 現在の定義ファイル | 数 | 移管先 |
 | --- | ---: | --- |
-| `GoScreenRenderer.cs` | 31 | `Pages/LocalMatch/LocalMatchScreen`、`Shared/TextAreaDialog`、`Shared/TournamentRules` |
-| `Pages/ApplicationSettings/GoScreenRenderer.ApplicationSettings.cs` | 10 | `Pages/ApplicationSettings/ApplicationSettingsScreen` |
+| `GoScreenRenderer.cs` | 27 | `Pages/LocalMatch/LocalMatchScreen`、`Shared/TournamentRules` |
 | `Pages/BoardAndReview/GoScreenRenderer.BoardAndReview.cs` | 35 | `Pages/BoardAndReview/BoardAndReviewScreen` |
 | `Pages/Cgos/GoScreenRenderer.Cgos.cs` | 67 | `Pages/Cgos/CgosScreen` |
 | `Pages/CgosWatching/GoScreenRenderer.CgosWatching.cs` | 3 | `Pages/CgosWatching/CgosWatchingScreen` |
 | `Pages/EditTournamentRule/GoScreenRenderer.EditTournamentRule.cs` | 25 | `Pages/EditTournamentRule/TournamentRulesScreen` |
 | `Pages/GtpEngine/GoScreenRenderer.GtpEngine.cs` | 52 | `Pages/GtpEngine/GtpEngineScreen` |
 | `Pages/MoveComments/GoScreenRenderer.MoveComments.cs` | 7 | `Pages/MoveComments/MoveCommentsScreen` |
-| `Pages/MoveTrendChart/GoScreenRenderer.MoveTrendChart.cs` | 5 | `Pages/MoveTrendChart/MoveTrendChartScreen` |
+| `Pages/MoveTrendChart/GoScreenRenderer.MoveTrendChart.cs` | 8 | `Pages/MoveTrendChart/MoveTrendChartScreen` |
 | `Pages/ReviewChartPopup/GoScreenRenderer.ReviewChartPopup.cs` | 4 | `Pages/ReviewChartPopup/ReviewChartPopupScreen` |
 | `Pages/Title/GoScreenRenderer.Title.cs` | 2 | `Pages/Title/TitleScreen` |
 | `Shared/EntryProfiles/GoScreenRenderer.EntryProfiles.cs` | 7 | `Shared/EntryProfiles/EntryProfilesScreen` |
 | `Shared/SelectEntry/GoScreenRenderer.SelectEntry.cs` | 2 | `Shared/SelectEntry/SelectEntryScreen` |
+
+`Shared/TextAreaDialog` と `Pages/ApplicationSettings` の Bounds は renderer から削除済みです。旧集計では `MoveTrendChart` を5個としていましたが、再集計で8個へ補正しました。
 
 ### 移管済みの操作 Bounds
 

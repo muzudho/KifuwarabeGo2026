@@ -10,16 +10,55 @@ renderer は描画面の実装に限定し、移行期間だけ既存の `Get...
 
 詳細な棚卸は [GoScreenRenderer.ヒット判定棚卸.md](GoScreenRenderer.ヒット判定棚卸.md) を参照する。
 
-## 現在地（2026-08-14）
+## 進捗を知りたいとき
 
-- partial を含む `GoScreenRenderer` に `*Bounds` 定義が 250 個ある。
-- タイトル画面の BACK、ポン抜きプロバイダー選択の NEXT／RECHECK／CHANGE は移管済み。
-  - `TitleScreen` と `PonnukiProviderSelectionScreen` が `Button`／`LinkUnderline` を所有する。
-  - `TitleRenderer` はそれらの `IsHit` を直接呼ぶ。
-- ローカル対局の操作領域 15 個は移管を開始済み。
-  - [LocalMatchScreen.cs](Pages/LocalMatch/LocalMatchScreen.cs) が 14 個の `Button` と `LocalUseCardBounds` を所有する。
-  - `GoScreenRenderer` の既存 private `...Bounds` は、現時点では同クラスの `.Bounds` を参照する互換ラッパーである。
-- `TextInputDialog`、`CgosMatchNotification`、`LinkUnderline`、`BoardLensButtonStrip` は、すでに UI 側でヒット判定の本体を所有している。
+まずこの節を読む。この節を進捗の正本とし、移管を一まとまり終えるたびに更新する。
+
+### 今わかっている終わったもの
+
+- [x] コメント入力ダイアログ
+  - `Shared/TextAreaDialog/TextAreaDialog` がダイアログ、本文、DISCARD、SAVE & CLOSE の4領域を所有する。
+  - `Game1` はボタンの `IsHit` を直接呼ぶ。
+  - renderer の旧4 Bounds と旧ヒットAPIは削除済み。
+- [x] アプリ設定
+  - `Pages/ApplicationSettings/ApplicationSettingsScreen` が SETTINGS、UPDATE、BACK、3タブ、5設定リンク、5ログ行を所有する。
+  - `Game1` と `TitleRenderer` は画面オブジェクトの `Button.IsHit`／`LinkUnderline.IsHit` を直接呼ぶ。
+  - `GoScreenRenderer.ApplicationSettings.cs` の旧10 Bounds と旧ヒットAPIは削除済み。
+- [x] タイトル画面の BACK、ポン抜きプロバイダー選択の NEXT／RECHECK／CHANGE
+  - `TitleScreen` と `PonnukiProviderSelectionScreen` が所有する。
+- [x] ローカル対局のヒット判定呼び出し側
+  - 14ボタンは `LocalMatchScreen`、プレイヤー種別と人間名入力は `PlayerKindSelectionRow` が所有する。
+  - `Game1`／`PlayingScene` から renderer の旧ヒットAPIを呼ぶ経路は削除済み。
+  - 通常対局とポン抜きで異なる人間名入力座標を明示済み。
+- [x] 既存UIへ委譲済みの本体
+  - `TextInputDialog`、`CgosMatchNotification`、`LinkUnderline`、`BoardLensButtonStrip` はUI側がヒット判定の本体を所有する。
+
+### 今わかっている残っているもの
+
+- [ ] ローカル対局を完全移管する。
+  - 14ボタンの renderer private `...Bounds` は描画互換ラッパーとして残る。
+  - カード、プレイヤー選択、盤サイズ、SGF表示領域など、`GoScreenRenderer.cs` の残りを用途別に移す。
+- [ ] 既存UIへ委譲するだけの renderer 互換ヒットAPIを呼び出し側から外す。
+  - `TextInputDialog`、`CgosMatchNotification`、大会ルール設定リンクなどが対象。
+- [ ] 以下の画面別 renderer Bounds を独立クラスへ移す。
+
+| 残作業 | 現在の Bounds 定義数 | 主な移管先 |
+| --- | ---: | --- |
+| `GoScreenRenderer.cs` | 27 | LocalMatch、Shared、Title |
+| CGOS 接続 | 67 | `Pages/Cgos/CgosScreen` |
+| GTP エンジン | 52 | `Pages/GtpEngine/GtpEngineScreen` |
+| 盤編集・検討 | 35 | `Pages/BoardAndReview/BoardAndReviewScreen` |
+| 大会ルール編集 | 25 | `Pages/EditTournamentRule/TournamentRulesScreen` |
+| 手の傾向チャート | 8 | `Pages/MoveTrendChart/MoveTrendChartScreen` |
+| コメント表示 | 7 | `Pages/MoveComments/MoveCommentsScreen` |
+| エントリープロファイル | 7 | `Shared/EntryProfiles/EntryProfilesScreen` |
+| 検討チャートポップアップ | 4 | `Pages/ReviewChartPopup/ReviewChartPopupScreen` |
+| CGOS 観戦 | 3 | `Pages/CgosWatching/CgosWatchingScreen` |
+| エントリー選択 | 2 | `Shared/SelectEntry/SelectEntryScreen` |
+| タイトル表示 | 2 | `Pages/Title/TitleScreen` |
+| **合計** | **239** | |
+
+この239個は、2026-08-14に現在のコードを機械的に再集計した値である。旧表の `MoveTrendChart` は5個ではなく8個だったため補正した。ボタンだけでなく表示専用領域も含む。
 
 ## 移管の共通手順
 
@@ -37,11 +76,11 @@ dotnet build KifuwarabeGo2026.Gui\KifuwarabeGo2026.Gui.Core.csproj --no-restore
 
 ## 推奨作業順
 
-| 優先 | 対象 | Bounds 数 | 移管先 | 理由 |
-| ---: | --- | ---: | --- | --- |
-| 1 | コメント入力ダイアログ | 4 | `Shared/TextAreaDialog` | 独立したモーダルであり、影響範囲が小さい。 |
-| 2 | ローカル対局 | 31 | `Pages/LocalMatch/LocalMatchScreen` | 15 個は所有済み。プレイヤー選択・カード・テキスト欄を続けて移せる。 |
-| 3 | アプリ設定 | 10 | `Pages/ApplicationSettings/ApplicationSettingsScreen` | タブ・リンク・フォルダ選択を 1 画面へ集約できる。 |
+| 優先 | 状態 | 対象 | Bounds 数 | 移管先 | 理由 |
+| ---: | --- | --- | ---: | --- | --- |
+| 1 | 完了 | コメント入力ダイアログ | 4 | `Shared/TextAreaDialog` | 独立したモーダルであり、影響範囲が小さい。 |
+| 2 | 進行中 | ローカル対局 | 31 | `Pages/LocalMatch/LocalMatchScreen` | 操作UIの所有とヒット判定直結は済み。描画互換ラッパーと表示領域が残る。 |
+| 3 | 完了 | アプリ設定 | 10 | `Pages/ApplicationSettings/ApplicationSettingsScreen` | タブ・リンク・フォルダ選択を1画面へ集約済み。 |
 | 4 | CGOS 観戦 | 3 | `Pages/CgosWatching/CgosWatchingScreen` | 小規模で、SGF 出力 UI の分離例に向く。 |
 | 5 | 大会ルール編集 | 25 | `Pages/EditTournamentRule/TournamentRulesScreen` | 既存の `TournamentRulesSetting` と責務を確認してから移す。 |
 | 6 | 盤編集・検討 | 35 | `Pages/BoardAndReview/BoardAndReviewScreen` | Board Lens など既存 UI を再利用できる。 |
@@ -53,13 +92,12 @@ dotnet build KifuwarabeGo2026.Gui\KifuwarabeGo2026.Gui.Core.csproj --no-restore
 ## 画面別の配置方針
 
 - `Pages/LocalMatch/LocalMatchScreen`
-  - 既存の 14 `Button` とカード矩形を維持する。
-  - `PlayerKindButtonBounds`、人間名入力欄、盤サイズ、SGF 操作を追加する。
+  - 14 `Button`、カード矩形、`PlayerKindSelectionRow` を維持する。
+  - rendererの描画互換ラッパーと残る表示領域を続けて移す。
 - `Shared/TextAreaDialog/TextAreaDialog`
-  - `TextAreaDialogBounds`、`TextAreaTextBounds`、DISCARD／SAVE ボタンを所有する。
-  - `Game1` は renderer の static API ではなく、このダイアログのボタンへ問い合わせる。
+  - 移管完了。ダイアログ、本文、DISCARD／SAVEボタンを所有する。
 - `Pages/ApplicationSettings/ApplicationSettingsScreen`
-  - BACK、設定タブ、フォルダ／ログのリンク下線を所有する。
+  - 移管完了。タイトル右下操作、BACK、設定タブ、フォルダ／ログのリンク下線を所有する。
 - `Pages/CgosWatching/CgosWatchingScreen`
   - BACK、REVIEW、SGF OUTPUT と自動保存チェックを所有する。
 - `Pages/BoardAndReview/BoardAndReviewScreen`

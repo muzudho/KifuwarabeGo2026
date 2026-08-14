@@ -21,6 +21,7 @@ using KifuwarabeGo2026.Gui.Presentation.GoApps.Formal.OnlineMatch.Watch;
 using KifuwarabeGo2026.Gui.Presentation.GoApps.Formal.LocalMatch.Interval;
 using KifuwarabeGo2026.Gui.Presentation.GoApps.Formal.LocalMatch.Interval.TournamentRules;
 using KifuwarabeGo2026.Gui.Presentation.Pages.EditTournamentRule;
+using KifuwarabeGo2026.Gui.Presentation.Pages.ApplicationSettings;
 using KifuwarabeGo2026.Gui.Presentation.Pages.LocalMatch;
 using KifuwarabeGo2026.Gui.Presentation.Title;
 using KifuwarabeGo2026.Gui.Presentation.Shared.TextAreaDialog;
@@ -6038,7 +6039,8 @@ public class Game1 : Game
 
     private void HandleApplicationSettingsClick(Point point)
     {
-        if (GoScreenRenderer.GetSettingsBackButtonHit(point))
+        var settingsScreen = ApplicationSettingsScreen.Default;
+        if (settingsScreen.BackButton.IsHit(point))
         {
             GuiOperationLog.User("Pressed settings Back button");
             _isApplicationSettingsOpen = false;
@@ -6046,7 +6048,7 @@ public class Game1 : Game
             return;
         }
 
-        if (GoScreenRenderer.GetSettingsTabHit(point) is { } page)
+        if (settingsScreen.GetTabHit(point) is { } page)
         {
             _applicationSettingsPage = page;
             _applicationSettingsMessage = "";
@@ -6054,7 +6056,7 @@ public class Game1 : Game
             return;
         }
 
-        if (_applicationSettingsPage == ApplicationSettingsPage.Log && GoScreenRenderer.GetSettingsBrowseButtonHit(point))
+        if (_applicationSettingsPage == ApplicationSettingsPage.Log && settingsScreen.LogRootLink.IsHit(point))
         {
             GuiOperationLog.User("Pressed log folder Browse button");
             var selectedPath = _fileDialogService.SelectFolder(new FolderDialogOptions
@@ -6085,7 +6087,7 @@ public class Game1 : Game
             return;
         }
 
-        if (_applicationSettingsPage == ApplicationSettingsPage.OtherFolders && GoScreenRenderer.GetSettingsSgfBrowseButtonHit(point))
+        if (_applicationSettingsPage == ApplicationSettingsPage.OtherFolders && settingsScreen.SgfFolderLink.IsHit(point))
         {
             GuiOperationLog.User("Pressed SGF folder Browse button");
             var selectedPath = _fileDialogService.SelectFolder(new FolderDialogOptions
@@ -6112,7 +6114,7 @@ public class Game1 : Game
             return;
         }
 
-        if (_applicationSettingsPage == ApplicationSettingsPage.OtherFolders && GoScreenRenderer.GetSettingsScreenshotBrowseButtonHit(point))
+        if (_applicationSettingsPage == ApplicationSettingsPage.OtherFolders && settingsScreen.ScreenshotFolderLink.IsHit(point))
         {
             GuiOperationLog.User("Pressed screenshot folder Browse button");
             var selectedPath = _fileDialogService.SelectFolder(new FolderDialogOptions
@@ -6139,26 +6141,26 @@ public class Game1 : Game
             return;
         }
 
-        if (_applicationSettingsPage == ApplicationSettingsPage.Other && GoScreenRenderer.GetSettingsOpenApplicationSettingsFolderButtonHit(point))
+        if (_applicationSettingsPage == ApplicationSettingsPage.Other && settingsScreen.ApplicationSettingsFileLink.IsHit(point))
         {
             OpenSettingsFolder(ApplicationSettings.FilePath, "application settings");
             return;
         }
 
-        if (_applicationSettingsPage == ApplicationSettingsPage.Other && GoScreenRenderer.GetSettingsOpenEngineSettingsFolderButtonHit(point))
+        if (_applicationSettingsPage == ApplicationSettingsPage.Other && settingsScreen.EngineSettingsFileLink.IsHit(point))
         {
             OpenSettingsFolder(_gtpEngineCatalog.ListPath, "engine settings");
             return;
         }
 
-        if (_applicationSettingsPage == ApplicationSettingsPage.Log && _renderer is not null && _renderer.GetSettingsOpenButtonHit(point, _selectedGuiLogIndex))
+        if (_applicationSettingsPage == ApplicationSettingsPage.Log && settingsScreen.IsSelectedLogOpenBadgeHit(point, _selectedGuiLogIndex))
         {
             var path = _guiLogFiles[_selectedGuiLogIndex];
             OpenGuiLog(path, "Pressed Open log badge");
             return;
         }
 
-        if (_applicationSettingsPage == ApplicationSettingsPage.Log && GoScreenRenderer.GetSettingsLogItemHit(point, _guiLogFiles.Count) is { } index)
+        if (_applicationSettingsPage == ApplicationSettingsPage.Log && settingsScreen.GetLogItemHit(point, _guiLogFiles.Count) is { } index)
         {
             _selectedGuiLogIndex = index;
             _applicationSettingsMessage = Path.GetFileName(_guiLogFiles[index]);

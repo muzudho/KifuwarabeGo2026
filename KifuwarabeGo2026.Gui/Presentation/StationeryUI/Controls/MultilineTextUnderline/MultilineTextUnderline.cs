@@ -8,16 +8,26 @@ using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ActionBadge;
 /// <summary>複数行テキスト入力欄の罫線を描画する独立コンポーネントです。</summary>
 public sealed class MultilineTextUnderline
 {
-    private readonly string? _actionBadgeLabel;
-    private readonly float _actionBadgeTextScale;
-    private Rectangle _bounds;
+    // ========================================
+    // 生成
+    // ========================================
 
+    #region ［生成　＞　コンストラクター］
     public MultilineTextUnderline(IUnderline underline, string? actionBadgeLabel = null, float actionBadgeTextScale = 0.34f)
     {
         Underline = underline ?? throw new ArgumentNullException(nameof(underline));
         _actionBadgeLabel = actionBadgeLabel;
         _actionBadgeTextScale = actionBadgeTextScale;
     }
+    #endregion
+
+    // ========================================
+    // データメンバー
+    // ========================================
+
+    private readonly string? _actionBadgeLabel;
+    private readonly float _actionBadgeTextScale;
+    private Rectangle _bounds;
 
     public IUnderline Underline { get; }
 
@@ -36,6 +46,10 @@ public sealed class MultilineTextUnderline
     public bool IsHovered { get; private set; }
 
     public ActionBadge? ActionBadge { get; private set; }
+
+    // ========================================
+    // 機能
+    // ========================================
 
     public void SetEditing(bool isEditing) => IsEditing = isEditing;
 

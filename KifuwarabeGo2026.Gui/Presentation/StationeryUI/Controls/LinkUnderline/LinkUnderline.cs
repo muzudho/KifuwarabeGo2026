@@ -11,10 +11,20 @@ using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ActionBadge;
 /// </summary>
 public sealed class LinkUnderline
 {
+    // ========================================
+    // 生成
+    // ========================================
+
+    #region ［生成　＞　コンストラクター］
     public LinkUnderline(IUnderline underline)
     {
         Underline = underline ?? throw new ArgumentNullException(nameof(underline));
     }
+    #endregion
+
+    // ========================================
+    // データメンバー
+    // ========================================
 
     /// <summary>
     /// 下線
@@ -34,6 +44,10 @@ public sealed class LinkUnderline
 
     /// <summary>このリンクをホバーしたときに表示するアクションバッジです。</summary>
     public ActionBadge? ActionBadge { get; private set; }
+
+    // ========================================
+    // 機能
+    // ========================================
 
     /// <summary>このリンクが所有するアクションバッジを設定します。</summary>
     public void SetActionBadge(ActionBadge actionBadge) => ActionBadge = actionBadge ?? throw new ArgumentNullException(nameof(actionBadge));

@@ -8,6 +8,11 @@ using System;
 /// </summary>
 public sealed class ActionBadge
 {
+    // ========================================
+    // 生成
+    // ========================================
+
+    #region ［生成　＞　コンストラクター］
     private ActionBadge(string label, Rectangle anchorBounds, float textScale)
     {
         Label = label;
@@ -15,6 +20,11 @@ public sealed class ActionBadge
         Bounds = CalculateBounds(label, anchorBounds);
         TextScale = textScale;
     }
+    #endregion
+
+    // ========================================
+    // データメンバー
+    // ========================================
 
     public string Label { get; }
 
@@ -26,6 +36,10 @@ public sealed class ActionBadge
 
     /// <summary>バッジ内ラベルの文字倍率です。</summary>
     public float TextScale { get; }
+
+    // ========================================
+    // 機能
+    // ========================================
 
     /// <summary>項目の右端に合わせた標準位置でバッジを表示します。</summary>
     public static ActionBadge Create(string label, Rectangle anchorBounds, float textScale = 0.34f)

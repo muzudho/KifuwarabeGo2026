@@ -68,10 +68,6 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IButton
         new RoundUnderline { TopOffset = 2, Thickness = 4, Radius = 2 });
     private readonly LinkUnderline _playerSelectorLinkUnderline = new(
         new RoundUnderline { TopOffset = 2, Thickness = 5, Radius = 2 });
-    private readonly LinkUnderline _settingsLogLinkUnderline = new(
-        new RoundUnderline { TopOffset = -7, Thickness = 5, Radius = 2 });
-    private readonly LinkUnderline _settingsValueLinkUnderline = new(
-        new RoundUnderline { TopOffset = -7, Thickness = 6, Radius = 3 });
     private readonly LinkUnderline _tournamentRulesSettingsFileLinkUnderline = new(
         new RoundUnderline { TopOffset = 2, Thickness = 5, Radius = 2 });
     private readonly Breadcrumb _breadcrumb = new();

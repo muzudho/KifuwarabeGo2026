@@ -9,6 +9,7 @@ using System;
 using System.Linq;
 using KifuwarabeGo2026.Gui.Presentation.Pages.Title;
 using KifuwarabeGo2026.Gui.Presentation.Pages.PonnukiProviderSelection;
+using KifuwarabeGo2026.Gui.Presentation.Pages.ApplicationSettings;
 
 public sealed partial class GoScreenRenderer
 {
@@ -52,8 +53,10 @@ public sealed partial class GoScreenRenderer
                 var casualAppsHovered = TitleCasualAppsLabelBounds.Contains(mousePoint);
                 var localMatchHovered = TitleHomeLocalButtonBounds.Contains(mousePoint);
                 var onlineMatchHovered = TitleHomeCgosButtonBounds.Contains(mousePoint);
-                var settingsHovered = SettingsButtonBounds.Contains(mousePoint);
-                var updateHovered = UpdateButtonBounds.Contains(mousePoint);
+                var settingsBounds = ApplicationSettingsScreen.Default.SettingsButton.Bounds;
+                var updateBounds = ApplicationSettingsScreen.Default.UpdateButton.Bounds;
+                var settingsHovered = settingsBounds.Contains(mousePoint);
+                var updateHovered = updateBounds.Contains(mousePoint);
                 _titleScreen.FormalAppsLabel.Draw(this);
                 _titleScreen.CasualAppsLabel.Draw(this);
                 DrawHomeServiceChoice(_titleScreen.LocalMatchButton.Bounds, _titleScreen.LocalMatchButton.Label, "PLAY / REVIEW", new Color(99, 223, 185), mousePoint);
@@ -65,7 +68,7 @@ public sealed partial class GoScreenRenderer
                 else if (casualAppsHovered)
                     DrawTitleHomeHint("CASUAL APPS", "独自実装で機能追加を進めます！", new Color(255, 190, 92));
                 else if (updateHovered)
-                    DrawStickyNote(StickyNoteKind.TitleUpdateHint, new Vector2(UpdateButtonBounds.Left, UpdateButtonBounds.Center.Y), new Color(99, 223, 185), new Color(82, 111, 114), "このボタンは？", ["このGUIを最新バージョンに更新します。", "アプリを再起動します。"]);
+                    DrawStickyNote(StickyNoteKind.TitleUpdateHint, new Vector2(updateBounds.Left, updateBounds.Center.Y), new Color(99, 223, 185), new Color(82, 111, 114), "このボタンは？", ["このGUIを最新バージョンに更新します。", "アプリを再起動します。"]);
                 else if (settingsHovered)
                     DrawTitleHomeHint("SETTINGS", "アプリケーションを設定します！", new Color(147, 201, 190));
                 else if (localMatchHovered)
@@ -167,7 +170,7 @@ public sealed partial class GoScreenRenderer
             "ONLINE MATCH" =>
                 (StickyNoteKind.TitleOnlineMatchHint, new Vector2(TitleHomeCgosButtonBounds.Left, TitleHomeCgosButtonBounds.Center.Y)),
             _ =>
-                (StickyNoteKind.TitleSettingsHint, new Vector2(SettingsButtonBounds.Left - 14, SettingsButtonBounds.Center.Y)),
+                (StickyNoteKind.TitleSettingsHint, new Vector2(ApplicationSettingsScreen.Default.SettingsButton.Bounds.Left - 14, ApplicationSettingsScreen.Default.SettingsButton.Bounds.Center.Y)),
         };
         var bodyLines = heading switch
         {
@@ -247,11 +250,12 @@ public sealed partial class GoScreenRenderer
     /// <param name="mousePoint"></param>
     private void DrawUpdateButton(Point mousePoint)
     {
-        var hovered = UpdateButtonBounds.Contains(mousePoint);
+        var bounds = ApplicationSettingsScreen.Default.UpdateButton.Bounds;
+        var hovered = bounds.Contains(mousePoint);
         var color = hovered ? new Color(99, 223, 185) : new Color(180, 195, 195);
-        FillRect(UpdateButtonBounds, hovered ? new Color(36, 50, 58) : new Color(24, 31, 37));
-        DrawRect(UpdateButtonBounds, 2, hovered ? new Color(178, 219, 226) : new Color(82, 111, 114));
-        var board = new Rectangle(UpdateButtonBounds.X + 15, UpdateButtonBounds.Y + 11, 40, 40);
+        FillRect(bounds, hovered ? new Color(36, 50, 58) : new Color(24, 31, 37));
+        DrawRect(bounds, 2, hovered ? new Color(178, 219, 226) : new Color(82, 111, 114));
+        var board = new Rectangle(bounds.X + 15, bounds.Y + 11, 40, 40);
         DrawRect(board, 2, color);
         for (var index = 1; index < 5; index++)
         {

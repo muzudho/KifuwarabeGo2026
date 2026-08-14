@@ -4,6 +4,7 @@ using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Presentation;
 using KifuwarabeGo2026.Gui.Presentation.Pages.PonnukiProviderSelection;
 using KifuwarabeGo2026.Gui.Presentation.Pages.Title;
+using KifuwarabeGo2026.Gui.Presentation.Pages.ApplicationSettings;
 using Microsoft.Xna.Framework;
 
 public static class TitleRenderer
@@ -33,8 +34,8 @@ public static class TitleRenderer
         PonnukiProviderSelectionScreen.Default.RecheckButton.IsHit(point);
 
     public static bool IsSettingsButtonHit(Point point) =>
-        GoScreenRenderer.GetSettingsButtonHit(point);
+        ApplicationSettingsScreen.Default.SettingsButton.IsHit(point);
 
     public static bool IsUpdateButtonHit(Point point) =>
-        GoScreenRenderer.GetUpdateButtonHit(point);
+        ApplicationSettingsScreen.Default.UpdateButton.IsHit(point);
 }
