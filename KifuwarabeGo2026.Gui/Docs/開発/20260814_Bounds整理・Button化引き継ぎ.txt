@@ -1,0 +1,351 @@
+［Rectangle *Bounds 整理・文房具 UI Button 化　引き継ぎ］
+
+作成日：2026-08-14
+対象：KifuwarabeGo2026.Gui の Presentation 層
+
+
+■ 目的
+
+画面内の操作ボタンについて、配置を表す Rectangle とクリック判定を別々に管理する構造を整理する。
+ページまたはコンポーネントが文房具 UI の Button インスタンスを所有し、描画では Button.Bounds、
+クリック判定では同じインスタンスの Button.IsHit(Point) を参照する構造へ段階的に移行する。
+
+ただし、名前が *Bounds の Rectangle を一律に Button へ変換してはいけない。
+パネル、ダイアログ、リスト、行、テキスト、チャート、ツールチップなどの純粋なレイアウト領域は
+Rectangle のまま維持する。
+
+
+■ 現在までに実施した作業
+
+1. Online Match (CGOS) の Presentation ソースを次のフォルダーへ整理した。
+
+   Presentation/Pages/OnlineMatch/Cgos/SelectConnection/
+   Presentation/Pages/OnlineMatch/Cgos/Login/
+   Presentation/Pages/OnlineMatch/Cgos/Watch/
+
+2. CGOS のページクラスを作成した。
+
+   CgosSelectConnectionPage
+   CgosLoginPage
+   CgosWatchPage
+
+3. 上記ページが操作用 Button インスタンスをプロパティとして所有する構造へ変更した。
+
+4. GoScreenRenderer.Cgos.cs にあった *ButtonBounds プロパティを削除し、ページが所有する
+   Button.Bounds を参照するようにした。
+
+5. Button.IsHit へ転送するだけの *ButtonHit ラッパーメソッドを削除し、Game1.cs から
+   ページの Button.IsHit を直接呼び出すようにした。
+
+6. CGOS のパンくずを次の名称へ変更した。
+
+   Formal Apps > Online Match (CGOS) > Select Connection
+   Formal Apps > Online Match (CGOS) > Login
+   Formal Apps > Online Match (CGOS) > Watch
+
+7. 最後に確認した時点で、次のコマンドによるソリューション全体のビルドは成功している。
+
+   dotnet build KifuwarabeGo2026.slnx --no-restore
+
+   結果：警告 0、エラー 0
+
+
+■ 棚卸し結果
+
+C# ソース全体から Rectangle 型の *Bounds 宣言を検索した結果は次のとおり。
+
+   対象ファイル数：40
+   *Bounds 宣言：約352件
+   名前に ButtonBounds を含む宣言：約155件
+
+この件数には、プロパティ、フィールド、動的な Bounds 計算メソッドが含まれる。
+
+ButtonBounds 約155件は、次の3種類に分類する必要がある。
+
+1. 未移行の操作ボタン
+   Rectangle を Button インスタンスへ置き換える。
+
+2. 既存 Button.Bounds の転送プロパティ
+   新しい Button は作らず、呼び出し側を既存 Button へ直接つなぎ、転送プロパティを削除する。
+
+3. 名前に Button が含まれていても、動的レイアウト計算や複合コントロールの一部であるもの
+   Button、Button のコレクション、専用コンポーネントのどれが適切か個別に判断する。
+
+
+■ 基本的な移行規則
+
+移行前：
+
+   private static Rectangle OkButtonBounds => new(...);
+   public static bool IsOkButtonHit(Point point) => OkButtonBounds.Contains(point);
+
+移行後：
+
+   public Button OkButton { get; } = new(new Rectangle(...), "OK", 0.34f);
+
+描画側：
+
+   DrawCommandButton(
+       page.OkButton.Bounds,
+       page.OkButton.Label,
+       ...,
+       scale: page.OkButton.LabelScale);
+
+クリック側：
+
+   if (page.OkButton.IsHit(point))
+
+有効条件がある場合は、Button.IsEnabled と描画条件を同期させることが理想である。
+既存コードとの段階的移行中は、次のように外側の条件を維持してもよい。
+
+   if (canSave && page.SaveButton.IsHit(point))
+
+動的に位置や幅が変わる場合は、クリック判定の前にも Button.Bounds を現在の状態へ更新する。
+
+
+■ 実装順序
+
+
+［第1段階：CGOS 対局通知］
+
+対象：
+
+   Presentation/Shared/CgosMatchNotification/CgosMatchNotification.cs
+
+Button 化する候補：
+
+   WatchNowBounds      → WatchNowButton
+   WatchLaterBounds    → WatchLaterButton
+   DeferredWatchBounds → DeferredWatchButton
+
+削除する候補：
+
+   IsWatchNowHit
+   IsWatchLaterHit
+   IsDeferredHit
+
+呼び出し側から CgosMatchNotification の Button.IsHit を直接呼び出す。
+
+Rectangle のまま維持するもの：
+
+   BannerBounds
+   DeferredBounds
+
+DeferredBounds は通知カード全体の領域であり、通常の Button より専用の NotificationCard の方が
+適切である可能性がある。今回の Button 化では無理に変更しない。
+
+CgosMatchNotification は独自の透明度と描画コールバックを使っているため、最初の移行では
+Button.Draw へ統合せず、Button.Bounds と Button.IsHit のみを利用してもよい。
+
+
+［第2段階：既存 Button.Bounds の転送プロパティ削除］
+
+対象：
+
+   Presentation/Pages/BoardAndReview/BoardAndReviewScreen.cs
+   Presentation/Shared/EntryProfiles/EntryProfilesScreen.cs
+   Presentation/Pages/EditTournamentRule/TournamentRulesScreen.cs
+   Presentation/Shared/SelectEntry/SelectEntryScreen.cs
+   Presentation/GoScreenRenderer.cs のローカル対局関連
+
+これらには、すでに Button が存在するにもかかわらず、次のような互換用プロパティが多数残っている。
+
+   internal static Rectangle XxxButtonBounds => Screen.XxxButton.Bounds;
+
+実施内容：
+
+   1. 描画側を Screen.XxxButton.Bounds へ変更する。
+   2. クリック側を Screen.XxxButton.IsHit(point) へ変更する。
+   3. 単純な *ButtonHit ラッパーを削除する。
+   4. XxxButtonBounds 転送プロパティを削除する。
+
+推奨作業順：
+
+   SelectEntryScreen
+   EntryProfilesScreen
+   TournamentRulesScreen
+   BoardAndReviewScreen
+   GoScreenRenderer のローカル対局関連
+
+
+［第3段階：小規模コンポーネント］
+
+対象：
+
+   Presentation/StationeryUI/Controls/SinglelineTextUnderline/TextInputDialog.cs
+   Presentation/Pages/InitialPositionConcierge/InitialPositionConcierge.cs
+   Presentation/Shared/EditEntryProfile/EditEntryProfile.cs
+   Presentation/StationeryUI/MessageDialog/MessageDialog.cs
+
+候補：
+
+   TextInputDialog
+       DefaultButton
+       CancelButton
+       OkButton
+
+   InitialPositionConcierge
+       CancelButton
+       LogButton
+
+   EditEntryProfile
+       ClientIdentityPasswordVisibilityButton
+       ClientIdentityListButton
+
+   MessageDialog
+       CloseButton
+
+アイコンだけの操作部品は、空ラベルの Button と独自アイコン描画を組み合わせるか、
+専用の IconButton を将来追加するかを検討する。
+
+
+［第4段階：CatalogOrderEditor］
+
+対象：
+
+   Presentation/CatalogOrderEditorLayout.cs
+   CatalogOrderEditor の描画・クリック処理
+
+Button 化する候補：
+
+   CancelButton
+   SaveButton
+   PreviousPairButton
+   NextPairButton
+   TopButton
+   PageUpButton
+   UpButton
+   DownButton
+   PageDownButton
+
+BoardBounds、PropertyBounds、CardBounds(...) はレイアウト領域なので Rectangle のまま維持する。
+可能なら静的レイアウトクラスから、状態と Button を所有するコンポーネントへ移行する。
+
+
+［第5段階：PopupTrendChart］
+
+対象：
+
+   Presentation/Pages/PopupTrendChart/PopupTrendChartScreen.cs
+   関連レンダラーとクリック処理
+
+固定 Button 候補：
+
+   CloseButton
+   BackToLiveButton
+   ReplayEditButton
+   ReplayBackToLiveButton
+
+ステップ移動ボタンは IReadOnlyList<Button> などのコレクションとして所有する。
+PopupBounds、ChartBounds、SeekBounds、PlotBounds は Rectangle のまま維持する。
+AutoUpdateBounds は通常ボタン、トグル、チェック部品のどれかを操作仕様から判断する。
+
+
+［第6段階：GTP Engine 画面］
+
+対象：
+
+   Presentation/Pages/GtpEngine/GoScreenRenderer.GtpEngine.cs
+
+未移行の ButtonBounds が約31件あり、最大の作業単位である。
+一つのクラスへ全 Button を集めず、次の画面・ダイアログ単位に分割する。
+
+   GtpEngineSelectionPage
+   GtpEngineEditPage
+   GtpEngineDeleteConfirmation
+   GtpEngineGuiOptionsDialog
+   GtpEngineRandomMoveSelectionDialog
+
+各クラスが自身の Button を所有する。
+GUI オプション行のような動的ボタンは、表示スロット数に対応した Button コレクションを検討する。
+ダイアログ、リスト、プロパティ欄、行、テキスト領域は Rectangle のまま維持する。
+
+
+［第7段階：動的・複合操作領域］
+
+対象例：
+
+   MoveTrendChart
+   PlayerSelector
+   Tournament Rule のボードサイズ選択
+   Tournament Rule のルール種別選択
+   プレイヤー種別選択
+   XxxButtonBounds(index) 形式の動的ボタン
+
+判断基準：
+
+   固定個数              → IReadOnlyList<Button>
+   表示件数に依存        → 表示スロット単位の再利用 Button
+   排他的な選択          → Button.IsSelected を利用
+   有効条件がある        → Button.IsEnabled を同期
+   ON/OFF 状態を持つ     → ToggleButton 導入を検討
+   セグメント選択        → 専用コンポーネントを検討
+
+
+■ Button 化しない Bounds
+
+以下は、原則として Rectangle のまま維持する。
+
+   BoardBounds
+   ChartBounds
+   DialogBounds
+   PanelBounds
+   ListBounds
+   PropertyBounds
+   RowBounds
+   TextBounds
+   TooltipBounds
+   CredentialBounds
+   OutputBounds
+   CardBounds
+   ContentBounds
+   動的な描画領域を返す GetXxxBounds(...)
+
+操作可能かどうかだけで判断せず、その Rectangle が「UI 部品そのもの」なのか、
+「別の UI 部品を構成する内部レイアウト」なのかを確認する。
+
+
+■ 各段階の確認項目
+
+   □ 描画位置とサイズが移行前から変化していない。
+   □ Button.Bounds と Button.IsHit が同じインスタンスを参照している。
+   □ 無効なボタンをクリックできない。
+   □ ラベルと LabelScale が移行前と一致している。
+   □ 動的 Bounds がクリック前にも更新される。
+   □ 不要な *ButtonBounds 転送プロパティを削除した。
+   □ 不要な *ButtonHit / IsXxxHit ラッパーを削除した。
+   □ ボタン以外の Rectangle を誤って Button 化していない。
+   □ dotnet build KifuwarabeGo2026.slnx --no-restore が成功する。
+   □ 主要なクリック操作を手動またはスモークテストで確認した。
+
+
+■ 最終確認用の検索観点
+
+   Rectangle 型の *ButtonBounds
+   => SomeButton.Bounds となっている転送プロパティ
+   *ButtonHit / Is*Hit ラッパー
+   ボタン名を持つ Rectangle に対する Contains(point)
+   DrawCommandButton に直接渡される新規 Rectangle
+
+残った箇所は、未移行、意図的に維持、専用コンポーネント待ちのいずれかを明示する。
+
+
+■ 作業上の注意
+
+・作業ツリーには、この整理とは無関係なユーザーの未コミット変更が存在する可能性がある。
+  git status と git diff を確認し、無関係な変更を戻したり上書きしたりしないこと。
+
+・現在の GoScreenRenderer.Cgos.cs には、以前削除したメソッドに付いていた文字化けした XML コメントが
+  残っている可能性がある。関連箇所を編集する際に、対象メソッドとの対応を確認して整理すること。
+
+・Button.Draw への全面統一は、この計画の必須条件ではない。
+  既存画面固有の描画表現を維持しながら、Button.Bounds と Button.IsHit だけを利用する段階的移行も可とする。
+
+・一度に全画面を変更しない。上記の段階または画面単位で変更し、その都度ビルドすること。
+
+
+■ 推奨する次の作業
+
+最初に CgosMatchNotification の3つの操作領域を Button 化する。
+CGOS ページで採用した「所有クラスの Button.Bounds を描画に使い、Button.IsHit を直接呼ぶ」方式に揃える。
+その変更をビルド・動作確認したあと、既存 Button.Bounds の転送プロパティ削除へ進む。
