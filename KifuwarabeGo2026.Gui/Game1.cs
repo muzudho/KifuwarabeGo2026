@@ -21,6 +21,7 @@ using KifuwarabeGo2026.Gui.Presentation.GoApps.Formal.OnlineMatch.Watch;
 using KifuwarabeGo2026.Gui.Presentation.GoApps.Formal.LocalMatch.Interval;
 using KifuwarabeGo2026.Gui.Presentation.GoApps.Formal.LocalMatch.Interval.TournamentRules;
 using KifuwarabeGo2026.Gui.Presentation.Pages.EditTournamentRule;
+using KifuwarabeGo2026.Gui.Presentation.Pages.BoardAndReview;
 using KifuwarabeGo2026.Gui.Presentation.Pages.CgosWatching;
 using KifuwarabeGo2026.Gui.Presentation.Pages.ApplicationSettings;
 using KifuwarabeGo2026.Gui.Presentation.Pages.LocalMatch;
@@ -1806,11 +1807,11 @@ public class Game1 : Game
                     ImportSgf();
                 }
             }
-            else if (isSetupMode && GoScreenRenderer.GetStartReviewingButtonHit(point, _session.HasReviewGameRecord))
+            else if (isSetupMode && _session.HasReviewGameRecord && BoardAndReviewScreen.Default.StartReviewingButton.IsHit(point))
             {
                 StartReviewingStoredGameRecord();
             }
-            else if (isSetupMode && GoScreenRenderer.GetStartBoardEditingButtonHit(point, _session.CurrentMode.Kind))
+            else if (isSetupMode && BoardAndReviewScreen.Default.StartBoardEditingButton.IsHit(point))
             {
                 StartWhiteboardFromLocalSetup();
             }
@@ -2648,51 +2649,52 @@ public class Game1 : Game
             return false;
         }
 
-        if (GoScreenRenderer.GetBoardEditingBlackButtonHit(point))
+        var boardEditing = BoardAndReviewScreen.Default.BoardEditing;
+        if (boardEditing.BlackButton.IsHit(point))
         {
             _session.SetBoardEditingStone(GoStone.Black);
             return true;
         }
 
-        if (GoScreenRenderer.GetBoardEditingWhiteButtonHit(point))
+        if (boardEditing.WhiteButton.IsHit(point))
         {
             _session.SetBoardEditingStone(GoStone.White);
             return true;
         }
 
-        if (GoScreenRenderer.GetBoardEditingEraseButtonHit(point))
+        if (boardEditing.EraseButton.IsHit(point))
         {
             _session.SetBoardEditingStone(GoStone.Empty);
             return true;
         }
 
-        if (GoScreenRenderer.GetBoardEditingUndoButtonHit(point))
+        if (boardEditing.UndoButton.IsHit(point))
         {
             _session.UndoBoardEditing();
             return true;
         }
 
-        if (GoScreenRenderer.GetBoardEditingRedoButtonHit(point))
+        if (boardEditing.RedoButton.IsHit(point))
         {
             _session.RedoBoardEditing();
             return true;
         }
 
-        if (GoScreenRenderer.GetBoardEditingClearButtonHit(point))
+        if (boardEditing.ClearButton.IsHit(point))
         {
             if (_session.ClearBoardEditing())
                 PlayPlaceStoneSound(0.42f, -0.35f, 0f);
             return true;
         }
 
-        if (GoScreenRenderer.GetBoardEditingCancelButtonHit(point))
+        if (boardEditing.CancelButton.IsHit(point))
         {
             _session.CancelBoardEditing();
             BeginDiscardTransition();
             return true;
         }
 
-        if (GoScreenRenderer.GetBoardEditingAdoptButtonHit(point))
+        if (boardEditing.AdoptButton.IsHit(point))
         {
             _session.FinishBoardEditing();
             return true;

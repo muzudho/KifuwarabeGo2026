@@ -38,6 +38,10 @@ renderer は描画面の実装に限定し、移行期間だけ既存の `Get...
   - `TournamentRulesScreen` が全25領域、選択ダイアログ、削除確認、追加・編集パネルを所有する。
   - コミ・持ち時間・手数入力UIとdirty状態に応じたボタン状態も画面クラスが保持する。
   - `TournamentRulesSetting` は画面のUIを直接参照し、rendererの旧ヒットAPIとBoundsは削除済み。
+- [ ] 盤編集・検討（進行中）
+  - `BoardAndReviewScreen` と `BoardEditingControls` が開始操作と盤編集の10ボタンを所有する。
+  - 選択石、UNDO、REDOの画面状態も操作グループが保持し、`Game1` はボタンを直接参照する。
+  - 変化図編集と棋譜検討の25 Boundsが残る。
 - [x] タイトル画面の BACK、ポン抜きプロバイダー選択の NEXT／RECHECK／CHANGE
   - `TitleScreen` と `PonnukiProviderSelectionScreen` が所有する。
 - [x] ローカル対局のヒット判定呼び出し側
@@ -61,16 +65,16 @@ renderer は描画面の実装に限定し、移行期間だけ既存の `Get...
 | `GoScreenRenderer.cs` | 27 | LocalMatch、Shared、Title |
 | CGOS 接続 | 67 | `Pages/Cgos/CgosScreen` |
 | GTP エンジン | 52 | `Pages/GtpEngine/GtpEngineScreen` |
-| 盤編集・検討 | 35 | `Pages/BoardAndReview/BoardAndReviewScreen` |
+| 盤編集・検討 | 25 | `Pages/BoardAndReview/BoardAndReviewScreen` |
 | 手の傾向チャート | 8 | `Pages/MoveTrendChart/MoveTrendChartScreen` |
 | コメント表示 | 7 | `Pages/MoveComments/MoveCommentsScreen` |
 | エントリープロファイル | 7 | `Shared/EntryProfiles/EntryProfilesScreen` |
 | 検討チャートポップアップ | 4 | `Pages/ReviewChartPopup/ReviewChartPopupScreen` |
 | エントリー選択 | 2 | `Shared/SelectEntry/SelectEntryScreen` |
 | タイトル表示 | 2 | `Pages/Title/TitleScreen` |
-| **合計** | **211** | |
+| **合計** | **201** | |
 
-この211個は、2026-08-14に現在のコードを機械的に再集計した値である。旧表の `MoveTrendChart` は5個ではなく8個だったため補正した。ボタンだけでなく表示専用領域も含む。
+この201個は、2026-08-14に現在のコードを機械的に再集計した値である。旧表の `MoveTrendChart` は5個ではなく8個だったため補正した。ボタンだけでなく表示専用領域も含む。
 
 ## 移管の共通手順
 
@@ -95,7 +99,7 @@ dotnet build KifuwarabeGo2026.Gui\KifuwarabeGo2026.Gui.Core.csproj --no-restore
 | 3 | 完了 | アプリ設定 | 10 | `Pages/ApplicationSettings/ApplicationSettingsScreen` | タブ・リンク・フォルダ選択を1画面へ集約済み。 |
 | 4 | 完了 | CGOS 観戦 | 3 | `Pages/CgosWatching/CgosWatchingScreen` | 3ボタンとヒット判定を集約済み。 |
 | 5 | 完了 | 大会ルール編集 | 25 | `Pages/EditTournamentRule/TournamentRulesScreen` | 全領域、ヒット判定、画面固有入力UIを集約済み。 |
-| 6 | 未着手 | 盤編集・検討 | 35 | `Pages/BoardAndReview/BoardAndReviewScreen` | Board Lens など既存 UI を再利用できる。 |
+| 6 | 進行中 | 盤編集・検討 | 25 | `Pages/BoardAndReview/BoardAndReviewScreen` | 盤編集は移管済み。変化図編集と棋譜検討が残る。 |
 | 7 | 未着手 | エントリープロファイル／選択 | 9 | `Shared/EntryProfiles`、`Shared/SelectEntry` | 複数画面から再利用するため Shared に置く。 |
 | 8 | 未着手 | CGOS 接続 | 67 | `Pages/Cgos/CgosScreen` | 最大規模。接続一覧、管理パネル、編集パネルにさらに小分けする。 |
 | 9 | 未着手 | GTP エンジン | 52 | `Pages/GtpEngine/GtpEngineScreen` | 選択、編集、GUI オプション、ランダム着手を小クラスに分割して移す。 |

@@ -38,6 +38,7 @@ using KifuwarabeGo2026.Gui.Presentation.Pages.Title;
 using KifuwarabeGo2026.Gui.Presentation.Pages.PonnukiProviderSelection;
 using KifuwarabeGo2026.Gui.Presentation.Pages.LocalMatch;
 using KifuwarabeGo2026.Gui.Presentation.Pages.EditTournamentRule;
+using KifuwarabeGo2026.Gui.Presentation.Pages.BoardAndReview;
 using KifuwarabeGo2026.Gui.Presentation.Shared.TextAreaDialog;
 
 /// <summary>
@@ -376,8 +377,10 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IButton
         DrawSetupPlayerRow(session, GoStone.White, mousePoint, WhitePlayerKindButtonY);
 
         DrawVerticalResultSection(new Rectangle(1144, 916, 668, 76), "ACTION", new Color(91, 82, 105));
-        DrawCommandButton(StartReviewingButtonBounds, "KIFU REVIEW", false, mousePoint, enabled: session.HasReviewGameRecord, scale: 0.32f);
-        DrawCommandButton(StartBoardEditingButtonBounds, "EDIT BOARD", false, mousePoint, scale: 0.36f);
+        var boardAndReviewScreen = BoardAndReviewScreen.Default;
+        boardAndReviewScreen.StartReviewingButton.IsEnabled = session.HasReviewGameRecord;
+        boardAndReviewScreen.StartReviewingButton.Draw(mousePoint, this);
+        boardAndReviewScreen.StartBoardEditingButton.Draw(mousePoint, this);
         DrawCommandButton(
             StartPlayingButtonBounds,
             session.CanStartPlaying ? "START" : "ENGINE REQUIRED",
