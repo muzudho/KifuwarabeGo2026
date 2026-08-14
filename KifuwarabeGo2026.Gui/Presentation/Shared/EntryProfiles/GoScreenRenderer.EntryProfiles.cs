@@ -6,6 +6,8 @@ using KifuwarabeGo2026.Gui.Presentation.Shared.SelectEntry;
 using KifuwarabeGo2026.Shared.Domain;
 using Microsoft.Xna.Framework;
 using System;
+using KifuwarabeGo2026.Gui.Presentation.Shared.EntryProfiles;
+using static KifuwarabeGo2026.Gui.Presentation.Shared.EntryProfiles.EntryProfilesScreenBounds;
 
 /// <summary>Player 選択欄と選択ダイアログの描画・当たり判定。</summary>
 public sealed partial class GoScreenRenderer
@@ -24,14 +26,6 @@ public sealed partial class GoScreenRenderer
     private static readonly Rectangle ClientIdentityProfileEditAddCgosButtonBounds = new(628, 820, 160, 48);
     private static readonly Rectangle ClientIdentityProfileEditAddLocalButtonBounds = new(466, 820, 150, 48);
     private static readonly Rectangle ClientIdentityProfileEditRemoveButtonBounds = new(962, 820, 150, 48);
-    private static readonly Rectangle ClientIdentityProfileConnectionSelectionPanelBounds = new(510, 210, 900, 660);
-    private static readonly Rectangle ClientIdentityProfileConnectionSelectionCancelButtonBounds = new(1050, 236, 140, 48);
-    private static readonly Rectangle ClientIdentityProfileConnectionSelectionSelectButtonBounds = new(1202, 236, 170, 48);
-    private static readonly Rectangle ClientIdentityProfileConnectionSelectionPreviousButtonBounds = new(1060, 798, 120, 44);
-    private static readonly Rectangle ClientIdentityProfileConnectionSelectionNextButtonBounds = new(1192, 798, 120, 44);
-    private static readonly Rectangle QuickClientIdentitySelectionPanelBounds = new(560, 245, 800, 560);
-    private static readonly Rectangle QuickClientIdentitySelectionCancelButtonBounds = new(1030, 272, 140, 48);
-    private static readonly Rectangle QuickClientIdentitySelectionSelectButtonBounds = new(1182, 272, 140, 48);
 
     public static bool GetBlackPlayerSelectButtonHit(Point point) => PlayerSelectorLayout.CreatePlayerSelector(BlackPlayerKindButtonY).Bounds.Contains(point);
     public static bool GetWhitePlayerSelectButtonHit(Point point) => PlayerSelectorLayout.CreatePlayerSelector(WhitePlayerKindButtonY).Bounds.Contains(point);
@@ -59,30 +53,6 @@ public sealed partial class GoScreenRenderer
     public static bool GetClientIdentityProfileEditAddLocalButtonHit(Point point) => ClientIdentityProfileEditAddLocalButtonBounds.Contains(point);
     public static bool GetClientIdentityProfileEditRemoveButtonHit(Point point) => ClientIdentityProfileEditRemoveButtonBounds.Contains(point);
     public static bool GetClientIdentityProfileEditUseButtonHit(Point point) => ClientIdentityProfileEditUseButtonBounds.Contains(point);
-    public static bool GetClientIdentityProfileConnectionSelectionCancelButtonHit(Point point) => ClientIdentityProfileConnectionSelectionCancelButtonBounds.Contains(point);
-    public static bool GetClientIdentityProfileConnectionSelectionSelectButtonHit(Point point) => ClientIdentityProfileConnectionSelectionSelectButtonBounds.Contains(point);
-    public static bool GetClientIdentityProfileConnectionSelectionPreviousButtonHit(Point point) => ClientIdentityProfileConnectionSelectionPreviousButtonBounds.Contains(point);
-    public static bool GetClientIdentityProfileConnectionSelectionNextButtonHit(Point point) => ClientIdentityProfileConnectionSelectionNextButtonBounds.Contains(point);
-    public static int? GetClientIdentityProfileConnectionSelectionItemHit(Point point, GoAppSession session)
-    {
-        var start = session.ClientIdentityProfileConnectionSelectionPageIndex * GoAppSession.ClientIdentityProfileConnectionSelectionPageSize;
-        for (var slot = 0; slot < GoAppSession.ClientIdentityProfileConnectionSelectionPageSize; slot++)
-        {
-            var index = start + slot;
-            if (index >= session.CgosConnectionProfiles.Count) break;
-            if (ClientIdentityProfileConnectionSelectionItemBounds(slot).Contains(point)) return index;
-        }
-        return null;
-    }
-    public static bool GetQuickClientIdentitySelectionCancelButtonHit(Point point) => QuickClientIdentitySelectionCancelButtonBounds.Contains(point);
-    public static bool GetQuickClientIdentitySelectionSelectButtonHit(Point point) => QuickClientIdentitySelectionSelectButtonBounds.Contains(point);
-    public static int? GetQuickClientIdentitySelectionItemHit(Point point, GoAppSession session)
-    {
-        var targets = session.GetQuickClientIdentitySelectionTargets(session.QuickClientIdentitySelectionStone, session.QuickClientIdentitySelectionIsCgos);
-        for (var index = 0; index < targets.Count; index++)
-            if (QuickClientIdentitySelectionItemBounds(index).Contains(point)) return index;
-        return null;
-    }
     public static ClientIdentityProfileEditField? GetClientIdentityProfileEditFieldHit(Point point, GoAppSession session)
     {
         var index = session.ClientIdentityProfileEditIndex;
@@ -296,10 +266,6 @@ public sealed partial class GoScreenRenderer
         var bounds = LocalMatchHandleBounds(playerY);
         return new Rectangle(GameOverValueX, bounds.Y + 4, 410, 30);
     }
-
-    private static Rectangle ClientIdentityProfileConnectionSelectionItemBounds(int slot) => new(544, 332 + slot * 82, 832, 70);
-
-    private static Rectangle QuickClientIdentitySelectionItemBounds(int index) => new(592, 392 + index * 72, 736, 62);
 
     private static Rectangle ClientIdentityProfileEditFieldTextBounds(int index, ClientIdentityProfileEditField field, bool isLocalMatch)
     {

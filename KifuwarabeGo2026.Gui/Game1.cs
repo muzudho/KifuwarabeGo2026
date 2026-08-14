@@ -23,6 +23,7 @@ using KifuwarabeGo2026.Gui.Presentation.GoApps.Formal.LocalMatch.Interval.Tourna
 using KifuwarabeGo2026.Gui.Presentation.Pages.EditTournamentRule;
 using KifuwarabeGo2026.Gui.Presentation.Pages.BoardAndReview;
 using KifuwarabeGo2026.Gui.Presentation.Shared.SelectEntry;
+using KifuwarabeGo2026.Gui.Presentation.Shared.EntryProfiles;
 using KifuwarabeGo2026.Gui.Presentation.Pages.CgosWatching;
 using KifuwarabeGo2026.Gui.Presentation.Pages.ApplicationSettings;
 using KifuwarabeGo2026.Gui.Presentation.Pages.LocalMatch;
@@ -1412,9 +1413,10 @@ public class Game1 : Game
                 {
                     if (_session.IsQuickClientIdentitySelectionPanelOpen)
                     {
-                        if (GoScreenRenderer.GetQuickClientIdentitySelectionCancelButtonHit(point)) _session.CancelQuickClientIdentitySelectionPanel();
-                        else if (GoScreenRenderer.GetQuickClientIdentitySelectionSelectButtonHit(point)) _session.CommitQuickClientIdentitySelection();
-                        else if (GoScreenRenderer.GetQuickClientIdentitySelectionItemHit(point, _session) is { } targetIndex) _session.SelectQuickClientIdentity(targetIndex);
+                        var quickSelection = EntryProfilesScreen.Default.QuickSelection;
+                        if (quickSelection.CancelButton.IsHit(point)) _session.CancelQuickClientIdentitySelectionPanel();
+                        else if (quickSelection.SelectButton.IsHit(point)) _session.CommitQuickClientIdentitySelection();
+                        else if (quickSelection.GetItemHit(point, _session.GetQuickClientIdentitySelectionTargets(_session.QuickClientIdentitySelectionStone, _session.QuickClientIdentitySelectionIsCgos).Count) is { } targetIndex) _session.SelectQuickClientIdentity(targetIndex);
                     }
                     else if (GoScreenRenderer.GetCgosCredentialFieldHit(point) is { } credential &&
                         (credential.Stone == GoStone.Black || _session.IsCgosPlayer2InputEnabled))
@@ -2000,11 +2002,12 @@ public class Game1 : Game
         if (!_session.IsQuickClientIdentitySelectionPanelOpen)
             return false;
 
-        if (GoScreenRenderer.GetQuickClientIdentitySelectionCancelButtonHit(point))
+        var quickSelection = EntryProfilesScreen.Default.QuickSelection;
+        if (quickSelection.CancelButton.IsHit(point))
             _session.CancelQuickClientIdentitySelectionPanel();
-        else if (GoScreenRenderer.GetQuickClientIdentitySelectionSelectButtonHit(point))
+        else if (quickSelection.SelectButton.IsHit(point))
             _session.CommitQuickClientIdentitySelection();
-        else if (GoScreenRenderer.GetQuickClientIdentitySelectionItemHit(point, _session) is { } index)
+        else if (quickSelection.GetItemHit(point, _session.GetQuickClientIdentitySelectionTargets(_session.QuickClientIdentitySelectionStone, _session.QuickClientIdentitySelectionIsCgos).Count) is { } index)
             _session.SelectQuickClientIdentity(index);
         return true;
     }
@@ -2014,15 +2017,16 @@ public class Game1 : Game
         if (!_session.IsClientIdentityProfileConnectionSelectionPanelOpen)
             return false;
 
-        if (GoScreenRenderer.GetClientIdentityProfileConnectionSelectionCancelButtonHit(point))
+        var connectionSelection = EntryProfilesScreen.Default.ConnectionSelection;
+        if (connectionSelection.CancelButton.IsHit(point))
             _session.CancelClientIdentityProfileConnectionSelectionPanel();
-        else if (GoScreenRenderer.GetClientIdentityProfileConnectionSelectionSelectButtonHit(point))
+        else if (connectionSelection.SelectButton.IsHit(point))
             _session.CommitClientIdentityProfileConnectionSelection();
-        else if (GoScreenRenderer.GetClientIdentityProfileConnectionSelectionPreviousButtonHit(point))
+        else if (connectionSelection.PreviousButton.IsHit(point))
             _session.MoveClientIdentityProfileConnectionSelectionPage(-1);
-        else if (GoScreenRenderer.GetClientIdentityProfileConnectionSelectionNextButtonHit(point))
+        else if (connectionSelection.NextButton.IsHit(point))
             _session.MoveClientIdentityProfileConnectionSelectionPage(1);
-        else if (GoScreenRenderer.GetClientIdentityProfileConnectionSelectionItemHit(point, _session) is { } index)
+        else if (connectionSelection.GetItemHit(point, _session.ClientIdentityProfileConnectionSelectionPageIndex, GoAppSession.ClientIdentityProfileConnectionSelectionPageSize, _session.CgosConnectionProfiles.Count) is { } index)
             _session.SelectClientIdentityProfileConnection(index);
         return true;
     }
@@ -2031,9 +2035,10 @@ public class Game1 : Game
     {
         if (_session.IsQuickClientIdentitySelectionPanelOpen)
         {
-            if (GoScreenRenderer.GetQuickClientIdentitySelectionCancelButtonHit(point)) _session.CancelQuickClientIdentitySelectionPanel();
-            else if (GoScreenRenderer.GetQuickClientIdentitySelectionSelectButtonHit(point)) _session.CommitQuickClientIdentitySelection();
-            else if (GoScreenRenderer.GetQuickClientIdentitySelectionItemHit(point, _session) is { } targetIndex) _session.SelectQuickClientIdentity(targetIndex);
+            var quickSelection = EntryProfilesScreen.Default.QuickSelection;
+            if (quickSelection.CancelButton.IsHit(point)) _session.CancelQuickClientIdentitySelectionPanel();
+            else if (quickSelection.SelectButton.IsHit(point)) _session.CommitQuickClientIdentitySelection();
+            else if (quickSelection.GetItemHit(point, _session.GetQuickClientIdentitySelectionTargets(_session.QuickClientIdentitySelectionStone, _session.QuickClientIdentitySelectionIsCgos).Count) is { } targetIndex) _session.SelectQuickClientIdentity(targetIndex);
             return;
         }
         if (_session.IsClientIdentityProfileSelectionPanelOpen)
