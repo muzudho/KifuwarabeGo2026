@@ -352,7 +352,9 @@ public sealed class TournamentRulesSetting
         Func<Point, TournamentRulesNumericField, string, int>? getNumericCaretIndex)
     {
         var rulesScreen = TournamentRulesScreen.Default;
-        if (rulesScreen.AddPanelDiscardButton.IsHit(point) && _session.IsTournamentRulesDirty)
+        var page = EditTournamentRulePage.Default;
+        page.UpdateState(_session.IsTournamentRulesDirty, _session.RuleKind, _session.BoardSize, _session.CurrentMode.Kind);
+        if (page.DiscardButton.IsHit(point))
         {
             CommitNumericEdit();
             CancelDisplayNameEdit();
@@ -368,14 +370,14 @@ public sealed class TournamentRulesSetting
             return true;
         }
 
-        if (TournamentRuleEditorLayout.GetRuleKindButtonHit(point) is { } ruleKind)
+        if (page.GetRuleKindHit(point) is { } ruleKind)
         {
             CommitNumericEdit();
             _session.ChangeRuleKind(ruleKind);
             return true;
         }
 
-        if (TournamentRuleEditorLayout.GetBoardSizeButtonHit(point, _session.CurrentMode.Kind) is { } boardSize)
+        if (page.GetBoardSizeHit(point) is { } boardSize)
         {
             _session.ChangeBoardSize(boardSize);
             return true;
@@ -406,7 +408,7 @@ public sealed class TournamentRulesSetting
             return true;
         }
 
-        if (rulesScreen.AddPanelSaveButton.IsHit(point))
+        if (page.SaveButton.IsHit(point))
         {
             if (_session.IsTournamentRulesDirty)
             {

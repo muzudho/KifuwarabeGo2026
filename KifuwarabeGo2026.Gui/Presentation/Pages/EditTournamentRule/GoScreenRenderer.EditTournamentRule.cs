@@ -110,20 +110,25 @@ public sealed partial class GoScreenRenderer
 
         DrawText(session.IsTournamentRulesEditPanelMode ? "EDIT TOURNAMENT RULES" : "ADD TOURNAMENT RULES", new Vector2(TournamentRulesAddPanelBounds.X + 30, TournamentRulesAddPanelBounds.Y + 24), new Color(244, 238, 218), 0.78f);
         var rulesScreen = TournamentRulesScreen.Default;
-        rulesScreen.UpdateAddPanelState(session.IsTournamentRulesDirty);
-        rulesScreen.AddPanelDiscardButton.Draw(mousePoint, _stationeryDrawingContext);
-        rulesScreen.AddPanelSaveButton.Draw(mousePoint, _stationeryDrawingContext);
+        var page = EditTournamentRulePage.Default;
+        page.UpdateState(session.IsTournamentRulesDirty, session.RuleKind, session.BoardSize, session.CurrentMode.Kind);
+        page.DiscardButton.Draw(mousePoint, _stationeryDrawingContext);
+        page.SaveButton.Draw(mousePoint, _stationeryDrawingContext);
 
         FillRect(TournamentRulesAddPanelEditorBounds, new Color(15, 20, 26));
         DrawRect(TournamentRulesAddPanelEditorBounds, 1, new Color(67, 84, 92));
 
         DrawDisplayNameTextBox(session, mousePoint);
         DrawTournamentRulesFieldLabel("RULE", new Rectangle(AddPanelControlX, 319, 668, 50));
-        DrawRuleKindButtons(session.RuleKind, mousePoint);
+        page.JapaneseRuleButton.Draw(mousePoint, _stationeryDrawingContext);
+        page.PureGoRuleButton.Draw(mousePoint, _stationeryDrawingContext);
+        page.ChineseRuleButton.Draw(mousePoint, _stationeryDrawingContext);
         DrawTournamentRulesFieldLabel(
             "BOARD SIZE",
-            new Rectangle(AddPanelControlX, AddPanelBoardSizeButtonY, 668, 50));
-        DrawBoardSizeButtons(session.BoardSize, mousePoint, AddPanelBoardSizeButtonY);
+            new Rectangle(AddPanelControlX, page.BoardSize9Button.Bounds.Y, 668, 50));
+        page.BoardSize9Button.Draw(mousePoint, _stationeryDrawingContext);
+        page.BoardSize13Button.Draw(mousePoint, _stationeryDrawingContext);
+        page.BoardSize19Button.Draw(mousePoint, _stationeryDrawingContext);
         TournamentRulesScreen.Default.KomiField.Draw(session.Komi, mousePoint,
             new TournamentRuleKomiFieldDrawingCallbacks(DrawTournamentRulesFieldLabel, DrawFittedText, _stationeryDrawingContext,
                 new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText)));

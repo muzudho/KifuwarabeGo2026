@@ -621,25 +621,6 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
             DrawDynamicOptionText);
     }
 
-    private void DrawBoardSizeButtons(int boardSize, Point mousePoint, int y)
-    {
-        var labels = new[] { "9 x 9", "13 x 13", "19 x 19" };
-        var sizes = new[] { 9, 13, 19 };
-        for (var i = 0; i < labels.Length; i++)
-        {
-            var bounds = BoardSizeButtonBounds(i, y);
-            var selected = boardSize == sizes[i];
-            DrawTournamentRulesChoiceButton(bounds, labels[i], selected, mousePoint, 0.56f);
-        }
-    }
-
-    private void DrawRuleKindButtons(GoRuleKind selectedKind, Point mousePoint)
-    {
-        DrawTournamentRulesChoiceButton(RuleKindButtonBounds(0), "JAPANESE", selectedKind == GoRuleKind.Japanese, mousePoint, 0.44f);
-        DrawTournamentRulesChoiceButton(RuleKindButtonBounds(1), "PURE GO", selectedKind == GoRuleKind.PureGo, mousePoint, 0.44f);
-        DrawTournamentRulesChoiceButton(RuleKindButtonBounds(2), "CHINESE", selectedKind == GoRuleKind.Chinese, mousePoint, 0.44f);
-    }
-
     private void DrawTournamentRulesNumericTextBox(GoAppSession session, TournamentRulesNumericField field, string value, Rectangle textBounds, Point mousePoint, int tabIndex)
     {
         var active = session.ActiveTournamentRulesNumericField == field;
@@ -650,26 +631,6 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         if (active) DrawTextBoxSelection(text, session.TournamentRulesNumericSelectionStart, session.TournamentRulesNumericSelectionLength, contentBounds, 0.42f);
         DrawFittedText(text, contentBounds, Color.White, 0.42f);
         if (active) DrawTextBoxCaret(text, session.TournamentRulesNumericCaretIndex, contentBounds, 0.42f);
-    }
-
-    private void DrawTournamentRulesChoiceButton(
-        Rectangle bounds,
-        string label,
-        bool selected,
-        Point mousePoint,
-        float scale)
-    {
-        var hovered = bounds.Contains(mousePoint);
-        var background = selected
-            ? new Color(38, 91, 78)
-            : hovered
-                ? new Color(42, 53, 61)
-                : new Color(27, 35, 42);
-        DrawTournamentRulesRoundedButton(
-            bounds,
-            background,
-            selected ? new Color(190, 255, 229) : hovered ? new Color(128, 160, 164) : new Color(73, 91, 98));
-        DrawFittedText(label, new Rectangle(bounds.X + 10, bounds.Y + 7, bounds.Width - 20, bounds.Height - 14), Color.White, scale);
     }
 
     private void DrawTournamentRulesFieldLabel(string label, Rectangle rowBounds)
@@ -693,22 +654,6 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
             new Vector2(labelBounds.X, labelBounds.Center.Y - size.Y / 2),
             new Color(180, 195, 195),
             scale);
-    }
-
-    private void DrawTournamentRulesAdjustmentButton(Rectangle bounds, string label, Point mousePoint, float scale)
-    {
-        var hovered = bounds.Contains(mousePoint);
-        DrawTournamentRulesRoundedButton(
-            bounds,
-            hovered ? new Color(53, 66, 75) : new Color(31, 40, 47),
-            hovered ? new Color(184, 220, 216) : new Color(105, 127, 134));
-        DrawFittedText(label, new Rectangle(bounds.X + 6, bounds.Y + 5, bounds.Width - 12, bounds.Height - 10), Color.White, scale);
-    }
-
-    private void DrawTournamentRulesRoundedButton(Rectangle bounds, Color background, Color border)
-    {
-        DrawRoundedFill(bounds, 7, border);
-        DrawRoundedFill(new Rectangle(bounds.X + 2, bounds.Y + 2, bounds.Width - 4, bounds.Height - 4), 5, background);
     }
 
     private void DrawRoundedFill(Rectangle bounds, int radius, Color color)
@@ -847,8 +792,6 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
 
     private const int AddPanelControlX = 626;
 
-    private const int AddPanelBoardSizeButtonY = 391;
-
     private const int BlackPlayerKindButtonY = 710;
 
     private const int WhitePlayerKindButtonY = 814;
@@ -860,9 +803,6 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
     private const int PonnukiBlackEngineButtonY = 704;
     private const int PonnukiWhitePlayerKindButtonY = 750;
     private const int PonnukiWhiteEngineButtonY = 808;
-
-    private static Rectangle BoardSizeButtonBounds(int index, int y) => new(AddPanelControlX + 132 + index * 180, y, 164, 50);
-    private static Rectangle RuleKindButtonBounds(int index) => new(AddPanelControlX + 132 + index * 180, 319, 164, 50);
 
     private static Rectangle TournamentRulesMoveLimitTextBounds => new(AddPanelControlX + 132, 612, 176, 40);
 

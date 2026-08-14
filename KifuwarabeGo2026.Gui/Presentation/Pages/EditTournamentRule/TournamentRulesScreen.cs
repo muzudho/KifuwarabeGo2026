@@ -22,8 +22,6 @@ public sealed class TournamentRulesScreen
         NextPageButton = new Button(new Rectangle(830, 816, 90, 44), "NEXT", 0.42f);
         DeleteCancelButton = new Button(new Rectangle(940, 574, 140, 48), "CANCEL", 0.42f);
         DeleteConfirmButton = new Button(new Rectangle(1104, 574, 140, 48), "DELETE", 0.42f);
-        AddPanelDiscardButton = new Button(new Rectangle(1144, 156, 132, 48), "DISCARD", 0.30f);
-        AddPanelSaveButton = new Button(new Rectangle(1288, 156, 162, 48), "CLOSE", 0.34f);
     }
 
     public Rectangle SelectionDialogBounds { get; } = new(230, 126, 1460, 820);
@@ -47,8 +45,6 @@ public sealed class TournamentRulesScreen
     public Button NextPageButton { get; }
     public Button DeleteCancelButton { get; }
     public Button DeleteConfirmButton { get; }
-    public Button AddPanelDiscardButton { get; }
-    public Button AddPanelSaveButton { get; }
     public TournamentRuleKomiField KomiField { get; } = new();
     public TournamentRuleMoveLimitField MoveLimitField { get; } = new();
     public TournamentRuleTimeField TimeField { get; } = new();
@@ -69,13 +65,6 @@ public sealed class TournamentRulesScreen
         }
 
         return null;
-    }
-
-    public void UpdateAddPanelState(bool isDirty)
-    {
-        AddPanelDiscardButton.IsEnabled = isDirty;
-        AddPanelSaveButton.Label = isDirty ? "SAVE & CLOSE" : "CLOSE";
-        AddPanelSaveButton.LabelScale = isDirty ? 0.27f : 0.34f;
     }
 
     public void UpdateSelectionState(int itemCount, bool canDelete, int pageIndex, int pageCount)
