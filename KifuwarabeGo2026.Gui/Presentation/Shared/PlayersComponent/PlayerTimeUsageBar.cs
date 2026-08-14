@@ -30,26 +30,27 @@ public sealed class PlayerTimeUsageBar
         draw.DrawRectangle(bar, 1, new Color(205, 231, 235));
 
         var columnWidth = content.Width / 3;
-        DrawColumn(0, "USED", used, new Color(22, 28, 34));
-        DrawColumn(1, "NOW", now ?? used, new Color(78, 163, 238));
-        DrawColumn(2, "LIMIT", limit, new Color(135, 224, 238));
+        DrawColumn(0, used);
+        DrawColumn(1, now ?? used);
+        DrawColumn(2, limit);
 
-        void DrawColumn(int index, string label, TimeSpan? value, Color color)
+        void DrawColumn(int index, TimeSpan? value)
         {
-            var column = new Rectangle(content.X + columnWidth * index, content.Y + 13,
-                index == 2 ? content.Right - (content.X + columnWidth * index) : columnWidth, Math.Max(1, content.Height - 13));
-            draw.DrawFittedText(label, new Rectangle(column.X, column.Y, column.Width, 10), color, 0.17f);
+            var column = new Rectangle(content.X + columnWidth * index, content.Y + 12,
+                index == 2 ? content.Right - (content.X + columnWidth * index) : columnWidth, Math.Max(1, content.Height - 12));
             var text = value is { } time
                 ? FormatClockTime(time)
-                : "--:--:--";
-            draw.DrawFittedText(text, new Rectangle(column.X, column.Y + 10, column.Width, Math.Max(1, column.Height - 10)), Color.White, 0.25f);
+                : "   --:--";
+            draw.DrawFittedText(text, column, Color.White, 0.42f);
         }
     }
 
     private static string FormatClockTime(TimeSpan value)
     {
         var totalHours = Math.Max(0, (int)value.TotalHours);
-        return $"{totalHours:00}:{value.Minutes:00}:{value.Seconds:00}";
+        return totalHours == 0
+            ? $"   {(int)value.TotalMinutes:00}:{value.Seconds:00}"
+            : $"{totalHours:00}:{value.Minutes:00}:{value.Seconds:00}";
     }
 
     private static double Ratio(TimeSpan? value, TimeSpan? limit)
