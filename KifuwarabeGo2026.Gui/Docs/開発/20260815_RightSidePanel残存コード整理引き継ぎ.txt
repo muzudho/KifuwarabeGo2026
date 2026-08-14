@@ -1,0 +1,220 @@
+RightSidePanel 残存コード整理 引き継ぎ
+=====================================
+
+作成日: 2026-08-15
+
+目的
+----
+
+GoScreenRenderer に残っている右側パネル固有の座標、部品、描画処理を棚卸しし、
+Presentation/Shared/RightSidePanel/ 以下へ移すための引き継ぎ資料です。
+
+重要な現状
+----------
+
+前段の作業で DrawSidePanel の分岐と共通フレームは RightSidePanel.cs 側へ移りました。
+しかし、各 RightSidePanel クラスは現在も次の GoScreenRenderer メソッドを呼ぶ薄い橋渡しです。
+
+- DrawSetupRightSidePanelContent
+- DrawGameOverRightSidePanelContent
+- DrawBoardEditingRightSidePanelContent
+- DrawVariationEditingRightSidePanelContent
+- DrawReviewingRightSidePanelContent
+- DrawInitialPositionConciergeContent
+
+したがって、右側パネルの描画本体はまだ GoScreenRenderer から分離できていません。
+上記メソッドを各パネルクラスへ移し終えるまで、移行完了とはしないでください。
+
+移動対象のプロパティ・定数
+--------------------------
+
+1. 右側パネル共通レイアウトへ移すもの
+
+GoScreenRenderer.cs:
+
+- GameOverValueX = 1328
+  - 名前は GameOver ですが、実態は右パネルの第一値列 X 座標です。
+  - セットアップのプレイヤー選択、結果行、石数、対局プレイヤー行、レビュー、CGOS観戦でも使用します。
+  - RightSidePanelLayout.PrimaryValueX のように改名して移してください。
+
+- GameOverSecondValueX = 1560
+  - 右パネルの第二値列 X 座標です。
+  - RightSidePanelLayout.SecondaryValueX へ移すのが適切です。
+
+- PlayingPlayersY = 140
+  - 対局中プレイヤー欄の上端です。
+  - LocalMatchPlayRightSidePanel のレイアウト値へ移してください。
+  - PlayersComponent が参照しているため、描画モデルへ Y 座標を渡す形が望ましいです。
+
+- LocalPlayingBoardLensButtons
+  - 対局中右パネルの Board Lens ボタン列です。
+  - LocalMatchPlayRightSidePanel のプロパティとして所有してください。
+  - GetLocalPlayingBoardLensButtonHit と DrawLocalPlayingBoardLensButtonStrip も同じクラスへ移します。
+
+2. セットアップ右パネルへ移すもの
+
+- _playerSelectorLinkUnderline
+  - DrawPlayerSelector だけで使用する右パネル用リンク下線です。
+  - SetupRightSidePanel が所有してください。
+
+- BlackPlayerKindButtonY = 710
+- WhitePlayerKindButtonY = 814
+- BlackEngineButtonY = 768
+- WhiteEngineButtonY = 872
+  - 通常の対局セットアップ右パネル固有の行座標です。
+  - SetupRightSidePanelLayout または SetupRightSidePanel へ移してください。
+
+注意:
+PonnukiBlackPlayerKindButtonY、PonnukiWhitePlayerKindButtonY、
+PonnukiBlackEngineButtonY、PonnukiWhiteEngineButtonY はローカルアプリ休憩パネル側です。
+LocalMatchIntermissionRightSidePanel へ移します。
+
+3. 個別ページに残すもの
+
+- InitialPositionConcierge
+  - GoScreenRenderer のプロパティではなく、初期配置を所有するページへ移してください。
+  - InitialPositionConciergeRightSidePanel は、そのページのプロパティとして所有します。
+
+GoScreenRenderer から移す描画メソッド
+------------------------------------
+
+SetupRightSidePanel:
+
+- DrawSetupRightSidePanelContent
+- DrawSetupPlayerRow
+- DrawPlayerSelector
+- セットアップ専用のプレイヤー種別・エンジン選択描画
+
+GameOverRightSidePanel:
+
+- DrawGameOverRightSidePanelContent
+- DrawSgfAutoSaveCheckBox
+- DrawCalculationResultRow
+- DrawCurrentStoneResultRow（終局専用であるか再確認すること）
+- FormatGameEndMoveCount
+- FormatCalculationResult
+
+BoardEditingRightSidePanel:
+
+- DrawBoardEditingRightSidePanelContent
+- 盤編集パネルだけが使用する POSITION、EDIT、HISTORY 描画
+
+VariationEditingRightSidePanel:
+
+- DrawVariationEditingRightSidePanelContent
+- DrawLiveBoardWipe
+- 変化図用 Board Lens ボタン描画
+
+ReviewingRightSidePanel:
+
+- DrawReviewingRightSidePanelContent
+- DrawMoveNavigationButtons
+- FormatMoveNavigationStep
+- DrawReviewBoardLensPreviousButton
+- DrawReviewBoardLensExitButton
+- DrawReviewBoardLensFamilyButton
+- DrawReviewBoardLensButton
+- ReviewStepButtonValues
+
+LocalMatchPlayRightSidePanel:
+
+- LocalMatchPlayPage.DrawRightSidePanelContent の本体
+- DrawLocalPlayingBoardLensButtonStrip
+- GetLocalPlayingBoardLensButtonHit
+- PlayingPlayersY
+- LocalPlayingBoardLensButtons
+
+LocalMatchIntermissionRightSidePanel:
+
+- LocalMatchIntermissionPage.DrawRightSidePanelContent の本体
+- Ponnuki 用プレイヤー行座標
+- 休憩パネルの各 Button
+
+共通部品として残す／切り出す描画処理
+--------------------------------------
+
+次はパネル固有ではなく、複数の右パネルが使うため共通部品にします。
+GoScreenRenderer の private メソッドを各パネルから直接呼び続ける形にはしないでください。
+
+- DrawVerticalResultSection
+- DrawInfoStrip
+- DrawResultRow
+- DrawResultLabel
+- DrawStoneValue
+- DrawStoneCountStrip
+- DrawBothPlayersComponent
+- DrawSetupPlayerRow のうち再利用可能なプレイヤー行部分
+- DrawLocalTrendChart / DrawReviewTrendChart / DrawLocalGameOverTrendChart
+
+推奨案:
+
+- RightSidePanelDrawingContext
+  - StationeryDrawingContext
+  - FillRectangle
+  - DrawRectangle
+  - DrawText / DrawFittedText
+  - DrawLine / DrawCircle / DrawStone
+  - 上記の低水準描画だけをまとめます。
+
+- RightSidePanelLayout
+  - Bounds = (1102, 78, 760, 924)
+  - PrimaryValueX = 1328
+  - SecondaryValueX = 1560
+  - 共通セクション幅などを置きます。
+
+- RightSidePanelComponents
+  - ResultSection、ResultRow、StoneCountStrip、PlayersComponent などを所有します。
+
+ページと所有パネルの対応
+------------------------
+
+- LocalMatchScreen
+  - SetupRightSidePanel
+  - GameOverRightSidePanel
+
+- LocalMatchPlayPage
+  - LocalMatchPlayRightSidePanel
+
+- LocalMatchIntermissionPage
+  - LocalMatchIntermissionRightSidePanel
+
+- BoardAndReviewScreen
+  - BoardEditingRightSidePanel
+  - VariationEditingRightSidePanel
+  - ReviewingRightSidePanel
+
+- 初期配置を開始するページ
+  - InitialPositionConciergeRightSidePanel
+
+CGOS 観戦について
+-----------------
+
+GoScreenRenderer.CgosWatching.cs の DrawCgosWatchingSidePanel も同じ右側領域を使っています。
+GameOverValueX と DrawStoneValue に依存しているため、RightSidePanelLayout の共通値列を使用します。
+最終的には CgosWatchingRightSidePanel を作り、CGOS Watch ページが所有するのが自然です。
+
+移行手順
+--------
+
+1. RightSidePanelLayout と RightSidePanelDrawingContext を作る。
+2. GameOverValueX / GameOverSecondValueX を改名して Layout へ移す。
+3. SetupRightSidePanel の描画本体と _playerSelectorLinkUnderline を移す。
+4. GameOverRightSidePanel の描画本体と終局専用ヘルパーを移す。
+5. BoardEditing、VariationEditing、Reviewing の順に BoardAndReview partial から移す。
+6. Play、Intermission の DrawRightSidePanelContent を各 RightSidePanel クラスへ移す。
+7. CgosWatchingRightSidePanel を作る。
+8. GoScreenRenderer の *RightSidePanelContent メソッドと不要になった internal 公開面を削除する。
+9. rg で RightSidePanel、GameOverValueX、PlayingPlayersY、LocalPlayingBoardLensButtons を再検索する。
+10. dotnet build KifuwarabeGo2026.slnx --no-restore を実行する。
+
+完了条件
+--------
+
+- GoScreenRenderer に *RightSidePanelContent メソッドが残っていない。
+- GoScreenRenderer に右パネル固有の座標・Button・Underline が残っていない。
+- 各ページが利用する右パネルのインスタンスをプロパティとして所有している。
+- RightSidePanel クラスが GoScreenRenderer の高水準描画メソッドを呼ばない。
+- GoScreenRenderer は描画デバイスに近い低水準処理だけを提供する。
+- CGOS を含む全右パネルが RightSidePanelLayout の共通座標を使用する。
+- ソリューション全体が警告 0、エラー 0 でビルドできる。
+
