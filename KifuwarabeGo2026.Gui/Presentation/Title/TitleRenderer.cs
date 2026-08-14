@@ -3,6 +3,7 @@ namespace KifuwarabeGo2026.Gui.Presentation.Title;
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Presentation;
 using KifuwarabeGo2026.Gui.Presentation.Pages.PonnukiProviderSelection;
+using KifuwarabeGo2026.Gui.Presentation.Pages.Title;
 using Microsoft.Xna.Framework;
 
 public static class TitleRenderer
@@ -20,16 +21,16 @@ public static class TitleRenderer
         GoScreenRenderer.GetTitleAppHit(point);
 
     public static bool IsBackButtonHit(Point point) =>
-        GoScreenRenderer.GetTitleMenuBackButtonHit(point);
+        TitleScreen.Default.BackButton.IsHit(point);
 
     public static bool IsAppProviderEngineSelectButtonHit(Point point) =>
         PonnukiProviderSelectionScreen.Default.IsProviderLinkHit(point);
 
     public static bool IsAppProviderStartButtonHit(Point point) =>
-        GoScreenRenderer.GetTitleAppProviderStartButtonHit(point);
+        PonnukiProviderSelectionScreen.Default.StartButton.IsHit(point);
 
     public static bool IsAppProviderRecheckButtonHit(Point point) =>
-        GoScreenRenderer.GetTitleAppProviderRecheckButtonHit(point);
+        PonnukiProviderSelectionScreen.Default.RecheckButton.IsHit(point);
 
     public static bool IsSettingsButtonHit(Point point) =>
         GoScreenRenderer.GetSettingsButtonHit(point);

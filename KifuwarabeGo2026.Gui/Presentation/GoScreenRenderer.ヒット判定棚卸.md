@@ -2,7 +2,7 @@
 
 対象は `Presentation/GoScreenRenderer.cs` に**直接定義されている**、マウスの仮想座標 `Point` に対するヒット判定です。`GoScreenRenderer.*.cs` にある partial class 側の判定は含めません。
 
-2026-08-14 時点で、公開・内部公開の判定は 37 個、これらが共用する private helper は 1 個です。呼び出し元は主に `Game1`、タイトル画面だけは `TitleRenderer` です。
+2026-08-14 時点で、公開・内部公開の判定は 34 個、これらが共用する private helper は 1 個です。呼び出し元は主に `Game1` です。
 
 ## 画面に残っている矩形ベースの判定
 
@@ -36,14 +36,11 @@ private helper `GetPlayerKindButtonHit(Point, int)` は、各プレイヤー種�
 
 | メソッド | 戻り値 | 対象 | 所有状態 |
 | --- | --- | --- | --- |
-| `GetTitleMenuBackButtonHit` | `bool` | タイトル画面の BACK | `TitleScreen.Default.BackButton.Bounds` を参照。 |
-| `GetTitleAppProviderStartButtonHit` | `bool` | ポン抜きプロバイダー選択の NEXT | `PonnukiProviderSelectionScreen.Default.StartButton.Bounds` を参照。互換 API。 |
-| `GetTitleAppProviderRecheckButtonHit` | `bool` | 同 RECHECK PROVIDER | `PonnukiProviderSelectionScreen.Default.RecheckButton.Bounds` を参照。互換 API。 |
 | `GetTitleHomeLocalButtonHit` | `bool` | HOME の LOCAL MATCH | `TitleScreen.Default.LocalMatchButton.Bounds` を参照。 |
 | `GetTitleHomeCgosButtonHit` | `bool` | HOME の CGOS CLIENT | `TitleScreen.Default.CgosClientButton.Bounds` を参照。 |
 | `GetTitleAppHit` | `int?` | HOME のアプリカード | 現在は index 0（CAPTURE GAME）だけを走査する。 |
 
-プロバイダー選択の ENGINE CHANGE リンクは、2026-08-14 にこの表から除去済みです。`PonnukiProviderSelectionScreen.IsProviderLinkHit` が所有する `LinkUnderline.IsHit` を `TitleRenderer` が直接呼びます。
+タイトルの BACK、プロバイダー選択の NEXT／RECHECK PROVIDER、ENGINE CHANGE リンクは、2026-08-14 にこの表から除去済みです。`TitleRenderer` はそれぞれ `TitleScreen` の `Button.IsHit`、`PonnukiProviderSelectionScreen` の `Button.IsHit`／`LinkUnderline.IsHit` を直接呼びます。
 
 ## すでに UI コンポーネントへ委譲している互換ラッパー
 

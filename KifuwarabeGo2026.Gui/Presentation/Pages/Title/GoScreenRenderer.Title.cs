@@ -228,8 +228,11 @@ public sealed partial class GoScreenRenderer
                 DrawTabNavigationHint));
     }
 
-    private void DrawTitleBackButton(Point mousePoint, bool focused = false) =>
-        DrawCommandButton(TitleMenuBackButtonBounds, "BACK", focused, mousePoint, scale: 0.36f);
+    private void DrawTitleBackButton(Point mousePoint, bool focused = false)
+    {
+        TitleScreen.Default.BackButton.IsSelected = focused;
+        TitleScreen.Default.BackButton.Draw(mousePoint, this);
+    }
 
     private static string GetDisplayVersion()
     {
