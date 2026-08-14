@@ -4,59 +4,24 @@ using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Shared.Domain;
 using Microsoft.Xna.Framework;
 using System;
+using KifuwarabeGo2026.Gui.Presentation.Shared.SelectEntry;
+using static KifuwarabeGo2026.Gui.Presentation.Shared.SelectEntry.SelectEntryScreenBounds;
 
 /// <summary>［SELECT ENTRY］画面の表示と操作判定を担当します。</summary>
 public sealed partial class GoScreenRenderer
 {
-    private static readonly Rectangle PlayerSelectionDialogBounds = new(210, 120, 1500, 840);
-    private static readonly Rectangle PlayerSelectionListBounds = new(250, 270, 660, 510);
-    private static readonly Rectangle PlayerSelectionClientIdentityListBounds = new(970, 270, 700, 510);
-    private static readonly Rectangle PlayerSelectionCancelButtonBounds = new(1116, 180, 156, 50);
-    private static readonly Rectangle PlayerSelectionOkButtonBounds = new(1302, 180, 180, 50);
-    private static readonly Rectangle PlayerSelectionPageNumberBounds = new(610, 790, 64, 32);
-    private static readonly Rectangle PlayerSelectionPreviousButtonBounds = new(686, 782, 104, 48);
-    private static readonly Rectangle PlayerSelectionNextButtonBounds = new(802, 782, 116, 48);
-    private static readonly Rectangle PlayerSelectionAddHumanButtonBounds = new(270, 880, 110, 48);
-    private static readonly Rectangle PlayerSelectionAddComputerButtonBounds = new(392, 880, 150, 48);
-    private static readonly Rectangle PlayerSelectionDuplicateButtonBounds = new(554, 880, 128, 48);
-    private static readonly Rectangle PlayerSelectionEditButtonBounds = new(694, 880, 120, 48);
-    private static readonly Rectangle PlayerSelectionDeleteButtonBounds = new(826, 880, 120, 48);
-    private static readonly Rectangle PlayerSelectionOrderButtonBounds = new(958, 880, 140, 48);
-
-    public static bool GetPlayerSelectionDialogCancelButtonHit(Point point) => PlayerSelectionCancelButtonBounds.Contains(point);
-    public static bool GetPlayerSelectionDialogOkButtonHit(Point point) => PlayerSelectionOkButtonBounds.Contains(point);
-    public static bool GetPlayerSelectionDialogPreviousPageButtonHit(Point point) => PlayerSelectionPreviousButtonBounds.Contains(point);
-    public static bool GetPlayerSelectionDialogNextPageButtonHit(Point point) => PlayerSelectionNextButtonBounds.Contains(point);
-    public static bool GetPlayerSelectionDialogAddHumanButtonHit(Point point) => PlayerSelectionAddHumanButtonBounds.Contains(point);
-    public static bool GetPlayerSelectionDialogAddComputerButtonHit(Point point) => PlayerSelectionAddComputerButtonBounds.Contains(point);
-    public static bool GetPlayerSelectionDialogDuplicateButtonHit(Point point) => PlayerSelectionDuplicateButtonBounds.Contains(point);
-    public static bool GetPlayerSelectionDialogDeleteButtonHit(Point point) => PlayerSelectionDeleteButtonBounds.Contains(point);
-    public static bool GetPlayerSelectionDialogEditButtonHit(Point point) => PlayerSelectionEditButtonBounds.Contains(point);
-    public static bool GetPlayerSelectionDialogOrderButtonHit(Point point) => PlayerSelectionOrderButtonBounds.Contains(point);
-
-    public static int? GetPlayerSelectionDialogItemHit(Point point, GoAppSession session)
-    {
-        var start = session.PlayerSelectionPageIndex * GoAppSession.PlayerSelectionPageSize;
-        for (var slot = 0; slot < GoAppSession.PlayerSelectionPageSize; slot++)
-        {
-            var index = start + slot;
-            if (index >= session.EntryProfiles.Count) break;
-            if (PlayerSelectionItemBounds(slot).Contains(point)) return index;
-        }
-        return null;
-    }
-
-    public static int? GetPlayerSelectionClientIdentityItemHit(Point point, GoAppSession session)
-    {
-        var identities = session.GetPlayerSelectionClientIdentities();
-        for (var index = 0; index < identities.Count; index++)
-            if (PlayerSelectionClientIdentityItemBounds(index).Contains(point)) return index;
-        return null;
-    }
-
     private void DrawPlayerSelectionDialog(GoAppSession session, Point mousePoint)
     {
         if (!session.IsPlayerSelectionDialogOpen) return;
+        var pageCount = Math.Max(1, (int)Math.Ceiling(session.EntryProfiles.Count / (double)GoAppSession.PlayerSelectionPageSize));
+        SelectEntryScreen.Default.UpdateState(
+            session.CanCommitPlayerSelection,
+            session.GtpEngineProfiles.Count > 0,
+            session.PlayerDialogSelectionIndex >= 0,
+            session.CanDeleteSelectedEntryProfile,
+            session.EntryProfiles.Count > 1,
+            session.PlayerSelectionPageIndex > 0,
+            session.PlayerSelectionPageIndex < pageCount - 1);
         FillRect(new Rectangle(0, 0, VirtualScreen.Width, VirtualScreen.Height), new Color(0, 0, 0, 125));
         FillRect(new Rectangle(PlayerSelectionDialogBounds.X + 16, PlayerSelectionDialogBounds.Y + 18, PlayerSelectionDialogBounds.Width, PlayerSelectionDialogBounds.Height), new Color(0, 0, 0, 150));
         FillRect(PlayerSelectionDialogBounds, new Color(19, 24, 31, 250));
@@ -104,7 +69,6 @@ public sealed partial class GoScreenRenderer
             DrawFittedText($"HANDLE: {identity.LoginName}", new Rectangle(bounds.X + 18, bounds.Y + 39, bounds.Width - 36, 22), new Color(180, 195, 195), 0.27f);
         }
 
-        var pageCount = Math.Max(1, (int)Math.Ceiling(session.EntryProfiles.Count / (double)GoAppSession.PlayerSelectionPageSize));
         var addHeaderBounds = new Rectangle(270, 846, 272, 26);
         FillRect(addHeaderBounds, new Color(56, 54, 84));
         DrawRect(addHeaderBounds, 1, new Color(133, 128, 177));
@@ -130,7 +94,4 @@ public sealed partial class GoScreenRenderer
             player => player.Kind == EntryProfileKind.Computer);
     }
 
-    private static Rectangle PlayerSelectionItemBounds(int slot) => new(PlayerSelectionListBounds.X + 16, PlayerSelectionListBounds.Y + 14 + slot * 82, PlayerSelectionListBounds.Width - 32, 72);
-
-    private static Rectangle PlayerSelectionClientIdentityItemBounds(int index) => new(PlayerSelectionClientIdentityListBounds.X + 16, PlayerSelectionClientIdentityListBounds.Y + 14 + index * 82, PlayerSelectionClientIdentityListBounds.Width - 32, 72);
 }

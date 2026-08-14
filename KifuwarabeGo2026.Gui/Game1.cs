@@ -22,6 +22,7 @@ using KifuwarabeGo2026.Gui.Presentation.GoApps.Formal.LocalMatch.Interval;
 using KifuwarabeGo2026.Gui.Presentation.GoApps.Formal.LocalMatch.Interval.TournamentRules;
 using KifuwarabeGo2026.Gui.Presentation.Pages.EditTournamentRule;
 using KifuwarabeGo2026.Gui.Presentation.Pages.BoardAndReview;
+using KifuwarabeGo2026.Gui.Presentation.Shared.SelectEntry;
 using KifuwarabeGo2026.Gui.Presentation.Pages.CgosWatching;
 using KifuwarabeGo2026.Gui.Presentation.Pages.ApplicationSettings;
 using KifuwarabeGo2026.Gui.Presentation.Pages.LocalMatch;
@@ -2126,77 +2127,78 @@ public class Game1 : Game
             return;
         }
 
-        if (GoScreenRenderer.GetPlayerSelectionDialogCancelButtonHit(point))
+        var selectEntryScreen = SelectEntryScreen.Default;
+        if (selectEntryScreen.CancelButton.IsHit(point))
         {
             _session.CancelPlayerSelectionDialog();
             return;
         }
 
-        if (GoScreenRenderer.GetPlayerSelectionDialogOkButtonHit(point))
+        if (selectEntryScreen.SelectButton.IsHit(point))
         {
             _session.CommitPlayerSelectionDialog();
             return;
         }
 
-        if (GoScreenRenderer.GetPlayerSelectionDialogPreviousPageButtonHit(point))
+        if (selectEntryScreen.PreviousButton.IsHit(point))
         {
             _session.MovePlayerSelectionPage(-1);
             return;
         }
 
-        if (GoScreenRenderer.GetPlayerSelectionDialogNextPageButtonHit(point))
+        if (selectEntryScreen.NextButton.IsHit(point))
         {
             _session.MovePlayerSelectionPage(1);
             return;
         }
 
-        if (GoScreenRenderer.GetPlayerSelectionDialogAddHumanButtonHit(point))
+        if (selectEntryScreen.AddHumanButton.IsHit(point))
         {
             if (_session.AddEntryProfile(EntryProfileKind.Human))
                 SavePlayerAndClientIdentityCatalogs();
             return;
         }
 
-        if (GoScreenRenderer.GetPlayerSelectionDialogAddComputerButtonHit(point))
+        if (selectEntryScreen.AddComputerButton.IsHit(point))
         {
             if (_session.AddEntryProfile(EntryProfileKind.Computer))
                 SavePlayerAndClientIdentityCatalogs();
             return;
         }
 
-        if (GoScreenRenderer.GetPlayerSelectionDialogDuplicateButtonHit(point))
+        if (selectEntryScreen.DuplicateButton.IsHit(point))
         {
             if (_session.DuplicateSelectedEntryProfile())
                 SavePlayerAndClientIdentityCatalogs();
             return;
         }
 
-        if (GoScreenRenderer.GetPlayerSelectionDialogDeleteButtonHit(point))
+        if (selectEntryScreen.DeleteButton.IsHit(point))
         {
             if (_session.DeleteSelectedEntryProfile())
                 SavePlayerAndClientIdentityCatalogs();
             return;
         }
 
-        if (GoScreenRenderer.GetPlayerSelectionDialogEditButtonHit(point))
+        if (selectEntryScreen.EditButton.IsHit(point))
         {
             _session.OpenSelectedPlayerEditPanel();
             return;
         }
 
-        if (GoScreenRenderer.GetPlayerSelectionDialogOrderButtonHit(point))
+        if (selectEntryScreen.OrderButton.IsHit(point))
         {
             _session.OpenPlayerOrderEditor();
             return;
         }
 
-        if (GoScreenRenderer.GetPlayerSelectionClientIdentityItemHit(point, _session) is { } clientIdentityIndex)
+        if (selectEntryScreen.GetClientIdentityItemHit(point, _session.GetPlayerSelectionClientIdentities().Count) is { } clientIdentityIndex)
         {
             _session.SelectPlayerSelectionClientIdentity(clientIdentityIndex);
             return;
         }
 
-        if (GoScreenRenderer.GetPlayerSelectionDialogItemHit(point, _session) is { } index)
+        if (selectEntryScreen.GetEntryItemHit(point, _session.PlayerSelectionPageIndex, GoAppSession.PlayerSelectionPageSize, _session.EntryProfiles.Count) is { } index)
             _session.SelectPlayerDialogItem(index);
     }
 
