@@ -8,7 +8,7 @@ using KifuwarabeGo2026.Gui.Presentation.Shared.SelectEntry;
 using KifuwarabeGo2026.Gui.Presentation.Shared.Breadcrumb;
 using KifuwarabeGo2026.Gui.Presentation.Shared.SpinBox;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.StickyNote;
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.VerticalSectionLabel;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.SectionLabel;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.SinglelineTextUnderline;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.MessageDialog;
 using KifuwarabeGo2026.Gui.Presentation.Pages.ScreenTransition;
@@ -78,7 +78,7 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IButton
     /// <summary>
     /// TODO: 大会ルールのコミ。なんでこんなとこにある？
     /// </summary>
-    private readonly VerticalSectionLabel _verticalSectionLabel = new();
+    private readonly SectionLabelComponent _sectionLabel = new();
     private readonly TextInputDialog _textInputDialog = new();
     public ScreenTransition ScreenTransition { get; } = new();
     public ScreenshotEffect ScreenshotEffect { get; } = new();
@@ -1589,8 +1589,14 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IButton
         Color? textColor = null, int labelWidth = 38, int labelGap = 8)
     {
         DrawLine(new Vector2(bounds.X, bounds.Y), new Vector2(bounds.Right, bounds.Y), 1, new Color(58, 78, 86));
-        _verticalSectionLabel.Draw(bounds, title, accentColor, textColor ?? new Color(205, 218, 218), labelWidth, labelGap,
-            new VerticalSectionLabelDrawingCallbacks(_font.MeasureString, DrawRotatedCenteredText, FillRect, DrawRect, DrawFittedText));
+        _sectionLabel.SectionBounds = bounds;
+        _sectionLabel.Text = title;
+        _sectionLabel.AccentColor = accentColor;
+        _sectionLabel.TextColor = textColor ?? new Color(205, 218, 218);
+        _sectionLabel.LabelWidth = labelWidth;
+        _sectionLabel.LabelGap = labelGap;
+        _sectionLabel.Direction = SectionLabelDirection.Vertical;
+        _sectionLabel.Draw(new SectionLabelDrawingCallbacks(_font.MeasureString, DrawRotatedCenteredText, FillRect, DrawRect, DrawFittedText));
     }
 
     private void DrawRotatedCenteredText(string text, Vector2 center, Color color, float scale) =>
