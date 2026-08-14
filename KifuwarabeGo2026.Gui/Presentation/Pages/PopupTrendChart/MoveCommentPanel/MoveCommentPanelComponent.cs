@@ -2,6 +2,7 @@ namespace KifuwarabeGo2026.Gui.Presentation.Pages.PopupTrendChart.MoveCommentPan
 
 using Microsoft.Xna.Framework;
 using System;
+using System.Diagnostics;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Button;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.TableRowLabel;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
@@ -10,6 +11,10 @@ using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.SectionLabel;
 /// <summary>［ポップアップトレンドチャート　＞　着手コメントパネル］</summary>
 public sealed class MoveCommentPanelComponent
 {
+    private const double SectionLabelAnimationSeconds = 0.35;
+    private static readonly Color SectionLabelAccentColor = new(5, 10, 18);
+    private static readonly Color SectionLabelTextColor = new(170, 184, 188);
+
     // ========================================
     // 生成
     // ========================================
@@ -38,6 +43,9 @@ public sealed class MoveCommentPanelComponent
     public Button EditButton { get; }
     public Button PreviousPageButton { get; }
     public Button NextPageButton { get; }
+    private bool? _lastPanelVisible;
+    private long _sectionLabelAnimationStartedAt;
+    private Rectangle _sectionLabelAnimationFrom;
 
     // ========================================
     // 機能
@@ -45,26 +53,53 @@ public sealed class MoveCommentPanelComponent
 
     public void DrawSectionLabel(StationeryDrawingContext drawingContext, bool isPanelVisible)
     {
-        if (SectionLabel is null || SectionLabel.IsPinned != isPanelVisible)
+        var targetSectionBounds = isPanelVisible
+            ? new Rectangle(Bounds.X, Bounds.Y, Bounds.Width, 330)
+            : new Rectangle(50, 630, 1, 300);
+        var targetLabel = isPanelVisible
+            ? SectionLabelComponent.CreateVerticalOverlay(
+                targetSectionBounds,
+                "MOVE COMMENT PANEL",
+                SectionLabelAccentColor,
+                SectionLabelTextColor,
+                drawingContext,
+                labelWidth: 38,
+                leftProtrusion: 4)
+            : SectionLabelComponent.CreateVertical(
+                targetSectionBounds,
+                "MOVE COMMENT PANEL",
+                SectionLabelAccentColor,
+                SectionLabelTextColor,
+                drawingContext,
+                labelWidth: 38,
+                labelGap: 8);
+
+        if (_lastPanelVisible is null)
         {
-            SectionLabel = isPanelVisible
-                ? SectionLabelComponent.CreateVerticalOverlay(
-                    new Rectangle(Bounds.X, Bounds.Y, Bounds.Width, 330),
-                    "MOVE COMMENT PANEL",
-                    new Color(5, 10, 18),
-                    new Color(170, 184, 188),
-                    drawingContext,
-                    labelWidth: 38,
-                    leftProtrusion: 4)
-                : SectionLabelComponent.CreateHorizontal(
-                    new Rectangle(56, 998, 330, 1),
-                    "MOVE COMMENT PANEL",
-                    new Color(5, 10, 18),
-                    new Color(170, 184, 188),
-                    labelHeight: 42,
-                    labelGap: 4);
-            SectionLabel.EnableVisibilityPin(isPanelVisible);
+            _lastPanelVisible = isPanelVisible;
+            _sectionLabelAnimationFrom = targetLabel.Bounds;
         }
+        else if (_lastPanelVisible != isPanelVisible)
+        {
+            _lastPanelVisible = isPanelVisible;
+            _sectionLabelAnimationFrom = SectionLabel?.Bounds ?? targetLabel.Bounds;
+            _sectionLabelAnimationStartedAt = Stopwatch.GetTimestamp();
+        }
+
+        var elapsed = _sectionLabelAnimationStartedAt == 0
+            ? SectionLabelAnimationSeconds
+            : Stopwatch.GetElapsedTime(_sectionLabelAnimationStartedAt).TotalSeconds;
+        var amount = Math.Clamp(elapsed / SectionLabelAnimationSeconds, 0.0, 1.0);
+        amount = amount * amount * (3.0 - 2.0 * amount);
+        var animatedBounds = Lerp(_sectionLabelAnimationFrom, targetLabel.Bounds, amount);
+        SectionLabel = SectionLabelComponent.CreateVerticalAt(
+            targetSectionBounds,
+            animatedBounds,
+            "MOVE COMMENT PANEL",
+            SectionLabelAccentColor,
+            SectionLabelTextColor,
+            drawingContext);
+        SectionLabel.EnableVisibilityPin(isPanelVisible);
         SectionLabel.Draw(drawingContext);
     }
 
@@ -114,4 +149,10 @@ public sealed class MoveCommentPanelComponent
     }
 
     private static bool IsExpanded(Rectangle bounds) => bounds.Width > 1000 || bounds.Height > 600;
+
+    private static Rectangle Lerp(Rectangle from, Rectangle to, double amount) => new(
+        (int)Math.Round(from.X + (to.X - from.X) * amount),
+        (int)Math.Round(from.Y + (to.Y - from.Y) * amount),
+        (int)Math.Round(from.Width + (to.Width - from.Width) * amount),
+        (int)Math.Round(from.Height + (to.Height - from.Height) * amount));
 }

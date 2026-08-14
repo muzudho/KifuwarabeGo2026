@@ -73,6 +73,21 @@ public sealed class SectionLabelComponent
             targetSectionBounds, bounds, text, accentColor, textColor,
             SectionLabelDirection.Vertical, usesSplitHorizontalText);
     }
+
+    public static SectionLabelComponent CreateVerticalAt(
+        Rectangle targetSectionBounds,
+        Rectangle bounds,
+        string text,
+        Color accentColor,
+        Color textColor,
+        StationeryDrawingContext drawingContext)
+    {
+        ArgumentNullException.ThrowIfNull(drawingContext);
+        var usesSplitHorizontalText = drawingContext.MeasureText(text).X * VerticalScale > bounds.Height - 12;
+        return new SectionLabelComponent(
+            targetSectionBounds, bounds, text, accentColor, textColor,
+            SectionLabelDirection.Vertical, usesSplitHorizontalText);
+    }
     #endregion
 
     #region ［生成　＞　コンストラクター］
@@ -164,9 +179,13 @@ public sealed class SectionLabelComponent
         draw.DrawRectangle(pin, 1, new Color(78, 105, 112, 220));
         var color = IsPinned ? new Color(105, 247, 232) : new Color(145, 160, 164);
         var center = new Vector2(pin.Center.X, pin.Center.Y);
-        draw.DrawLine(center + new Vector2(-7, -6), center + new Vector2(7, -6), 3, color);
-        draw.DrawLine(center + new Vector2(-4, -6), center + new Vector2(4, 2), 3, color);
-        draw.DrawLine(center + new Vector2(0, 1), center + new Vector2(0, 10), 3, color);
+        var head = new Rectangle((int)center.X - 8, (int)center.Y - 9, 16, 6);
+        draw.FillRectangle(head, color);
+        draw.DrawRectangle(head, 1, new Color(color, 245));
+        draw.FillRectangle(new Rectangle((int)center.X - 3, (int)center.Y - 3, 6, 8), color);
+        draw.DrawLine(center + new Vector2(0, 4), center + new Vector2(0, 11), 3, color);
+        draw.DrawLine(center + new Vector2(-3, 8), center + new Vector2(0, 12), 2, color);
+        draw.DrawLine(center + new Vector2(3, 8), center + new Vector2(0, 12), 2, color);
         if (!IsPinned)
             draw.DrawLine(center + new Vector2(-9, 9), center + new Vector2(9, -9), 3, new Color(220, 150, 145));
     }
