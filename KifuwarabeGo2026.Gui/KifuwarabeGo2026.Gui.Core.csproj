@@ -35,6 +35,8 @@
     <Folder Include="Presentation\BoardLens\LibertySystem\" />
     <Folder Include="Presentation\BoardLens\GlassesSystem\" />
     <Folder Include="Presentation\BoardLens\Shared\RenBoundaries\" />
+    <Folder Include="Presentation\Pages\LocalMatch\Intermission\" />
+    <Folder Include="Presentation\Pages\LocalMatch\Play\" />
     <Folder Include="Presentation\Pages\OnlineMatch\Cgos\SelectConnection\" />
     <Folder Include="Presentation\Pages\OnlineMatch\Cgos\Login\" />
     <Folder Include="Presentation\Pages\OnlineMatch\Cgos\Watch\" />

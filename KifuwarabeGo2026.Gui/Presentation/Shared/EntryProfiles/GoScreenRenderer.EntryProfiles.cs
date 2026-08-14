@@ -19,7 +19,7 @@ public sealed partial class GoScreenRenderer
     public int GetClientIdentityProfileEditCaretIndex(Point point, int index, ClientIdentityProfileEditField field, string text, bool isLocalMatch) =>
         GetTextBoxCaretIndex(point.X, text, ClientIdentityProfileEditFieldTextBounds(index, field, isLocalMatch), 0.34f);
 
-    private void DrawSetupPlayerRow(GoAppSession session, GoStone stone, Point mousePoint, int y)
+    internal void DrawSetupPlayerRow(GoAppSession session, GoStone stone, Point mousePoint, int y)
     {
         var player = session.GetSelectedEntryProfile(stone);
         var label = stone == GoStone.Black ? "BLACK PLAYER" : "WHITE PLAYER";

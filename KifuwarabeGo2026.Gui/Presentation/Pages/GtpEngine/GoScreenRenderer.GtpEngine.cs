@@ -500,7 +500,7 @@ public sealed partial class GoScreenRenderer
     private static string AbbreviateOptionValue(string value, int maximumCharacters) =>
         value.Length <= maximumCharacters ? value : value[..Math.Max(0, maximumCharacters - 3)] + "...";
 
-    private void DrawDynamicOptionText(string text, Rectangle bounds, Color color, float scale)
+    internal void DrawDynamicOptionText(string text, Rectangle bounds, Color color, float scale)
     {
         if (text.All(character => _font.Characters.Contains(character)))
         {

@@ -30,7 +30,7 @@ public sealed partial class GoScreenRenderer
     /// <summary>
     /// 黒番と白番の名前、時間、アゲハマを共通レイアウトで描画します。
     /// </summary>
-    private void DrawBothPlayersComponent(
+    internal void DrawBothPlayersComponent(
         int x,
         int y,
         int width,

@@ -84,7 +84,7 @@ public sealed partial class GoScreenRenderer
             mousePoint,
             observation.DisplayMoveIndex);
 
-    private void DrawLocalTrendChart(GoAppSession session, Point mousePoint) =>
+    internal void DrawLocalTrendChart(GoAppSession session, Point mousePoint) =>
         DrawMoveTrendChart(
             session,
             session.CurrentGameRecord.Moves,

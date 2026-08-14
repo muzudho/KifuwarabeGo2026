@@ -27,6 +27,7 @@ using KifuwarabeGo2026.Gui.Presentation.Shared.EntryProfiles;
 using KifuwarabeGo2026.Gui.Presentation.Shared.CgosMatchNotification;
 using KifuwarabeGo2026.Gui.Presentation.Pages.ApplicationSettings;
 using KifuwarabeGo2026.Gui.Presentation.Pages.LocalMatch;
+using KifuwarabeGo2026.Gui.Presentation.Pages.LocalMatch.Intermission;
 using KifuwarabeGo2026.Gui.Presentation.Title;
 using KifuwarabeGo2026.Gui.Presentation.Shared.TextAreaDialog;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls;
@@ -1739,7 +1740,7 @@ public class Game1 : Game
                 return;
             }
             if (isLocalAppsIntermission &&
-                localMatchScreen.GetPonnukiRandomSeedAutoChangeHit(point) is { } seedRole &&
+                LocalMatchIntermissionPage.Default.GetRandomSeedAutoChangeHit(point) is { } seedRole &&
                 (seedRole != PonnukiRandomSeedRole.Player1 || _session.CanAutoChangePonnukiPlayer1Seed) &&
                 (seedRole != PonnukiRandomSeedRole.Player2 || _session.CanAutoChangePonnukiPlayer2Seed))
             {
@@ -1751,11 +1752,11 @@ public class Game1 : Game
             {
                 _session.ReturnToUseSelection();
             }
-            else if (isLocalAppsIntermission && localMatchScreen.AppProviderGameSettingsButton.IsHit(point))
+            else if (isLocalAppsIntermission && LocalMatchIntermissionPage.Default.AppProviderGameSettingsButton.IsHit(point))
             {
                 OpenAppProviderGameSettings();
             }
-            else if (isLocalAppsIntermission && localMatchScreen.ChangeAppProviderButton.IsHit(point))
+            else if (isLocalAppsIntermission && LocalMatchIntermissionPage.Default.ChangeAppProviderButton.IsHit(point))
             {
                 _session.ReturnToUseSelection();
                 _titleMenuPage = TitleMenuPage.CaptureGame;

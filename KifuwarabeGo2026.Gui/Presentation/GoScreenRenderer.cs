@@ -38,6 +38,8 @@ using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Headline;
 using KifuwarabeGo2026.Gui.Presentation.Pages.Title;
 using KifuwarabeGo2026.Gui.Presentation.Pages.PonnukiProviderSelection;
 using KifuwarabeGo2026.Gui.Presentation.Pages.LocalMatch;
+using KifuwarabeGo2026.Gui.Presentation.Pages.LocalMatch.Intermission;
+using KifuwarabeGo2026.Gui.Presentation.Pages.LocalMatch.Play;
 using KifuwarabeGo2026.Gui.Presentation.Pages.EditTournamentRule;
 using KifuwarabeGo2026.Gui.Presentation.Pages.BoardAndReview;
 using KifuwarabeGo2026.Gui.Presentation.Shared.TextAreaDialog;
@@ -50,7 +52,7 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
 {
     private const int GameOverValueX = 1328;
     private const int GameOverSecondValueX = 1560;
-    private const int PlayingPlayersY = 140;
+    internal const int PlayingPlayersY = 140;
     private const float MinimumTextScale = 0.32f;
 
     private readonly GraphicsDevice _graphicsDevice;
@@ -63,6 +65,7 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
     private readonly Texture2D _stoneLight;
     private readonly Texture2D _stoneDark;
     private readonly StationeryDrawingContext _stationeryDrawingContext;
+    internal StationeryDrawingContext StationeryDrawingContext => _stationeryDrawingContext;
     private readonly LinkUnderline _gtpEngineOptionLinkUnderline = new(
         new RoundUnderline { TopOffset = -4, Thickness = 4, Radius = 2 });
     private readonly MultilineTextUnderline _multilineTextUnderline = new(
@@ -290,7 +293,7 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
 
         if (session.CurrentMode.Kind == GoAppModeKind.Playing)
         {
-            DrawPlayingSidePanel(session, mousePoint);
+            LocalMatchPlayPage.Default.Draw(this, session, mousePoint);
             return;
         }
 
@@ -320,7 +323,7 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
 
         if (session.UseKind == GoAppUseKind.LocalApps)
         {
-            DrawLocalAppsIntermissionSidePanel(session, mousePoint);
+            LocalMatchIntermissionPage.Default.Draw(this, session, mousePoint);
         }
         else
         {
@@ -391,48 +394,6 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         screen.StartPlayingButton.IsEnabled = session.CanStartPlaying;
         screen.StartPlayingButton.Draw(mousePoint, _stationeryDrawingContext);
     }
-    private void DrawPlayingSidePanel(GoAppSession session, Point mousePoint)
-    {
-        DrawVerticalResultSection(new Rectangle(1144, 132, 668, 200), "PLAYERS", new Color(76, 91, 126));
-        DrawBothPlayersComponent(
-            1144,
-            PlayingPlayersY,
-            668,
-            session.GetLocalPlayerName(GoStone.Black),
-            session.GetLocalPlayerName(GoStone.White),
-            session.BlackUsedTime,
-            session.WhiteUsedTime,
-            session.MainTime,
-            session.BlackAgehama,
-            session.WhiteAgehama,
-            session.CurrentTurn,
-            session.EngineErrorStone,
-            mousePoint,
-            minimal: true,
-            blackLiveElapsed: session.BlackElapsedTime,
-            whiteLiveElapsed: session.WhiteElapsedTime);
-
-        DrawVerticalResultSection(new Rectangle(1144, 344, 668, 110), "FACTS", new Color(66, 104, 116));
-        DrawInfoStrip(1144, 363, "NEXT", GetMoveThinkingText(session));
-
-        DrawLocalTrendChart(session, mousePoint);
-
-        DrawVerticalResultSection(new Rectangle(1144, 780, 668, 120), "REVIEW", new Color(76, 91, 126));
-        DrawLocalPlayingBoardLensButtonStrip(session.IsRenParseDisplayEnabled, mousePoint);
-
-        DrawVerticalResultSection(new Rectangle(1144, 916, 668, 76), "ACTION", new Color(91, 82, 105));
-
-        if (session.CanAcceptHumanMove)
-        {
-            LocalMatchScreen.Default.PassButton.Draw(mousePoint, _stationeryDrawingContext);
-            LocalMatchScreen.Default.ResignButton.Draw(mousePoint, _stationeryDrawingContext);
-        }
-        else
-        {
-            LocalMatchScreen.Default.CancelPlayingButton.Draw(mousePoint, _stationeryDrawingContext);
-        }
-    }
-
     private void DrawGameOverSidePanel(GoAppSession session, Point mousePoint)
     {
         new Headline("GAME OVER", new Vector2(1144, 132), new Color(255, 230, 160), 0.9f).Draw(_stationeryDrawingContext);
@@ -689,9 +650,9 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
     private const int BlackEngineButtonY = 768;
 
     private const int WhiteEngineButtonY = 872;
-    private const int PonnukiBlackPlayerKindButtonY = 646;
+    internal const int PonnukiBlackPlayerKindButtonY = 646;
     private const int PonnukiBlackEngineButtonY = 704;
-    private const int PonnukiWhitePlayerKindButtonY = 750;
+    internal const int PonnukiWhitePlayerKindButtonY = 750;
     private const int PonnukiWhiteEngineButtonY = 808;
 
     private static Rectangle TournamentRulesMoveLimitTextBounds => new(AddPanelControlX + 132, 612, 176, 40);
@@ -699,60 +660,6 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
 
     private static Rectangle LocalUseButtonBounds => LocalMatchScreen.Default.LocalUseCardBounds;
 
-    private void DrawLocalAppsIntermissionSidePanel(GoAppSession session, Point mousePoint)
-    {
-        var screen = LocalMatchScreen.Default;
-        screen.BackToTitleButton.Draw(mousePoint, _stationeryDrawingContext);
-
-        DrawVerticalResultSection(new Rectangle(1144, 184, 668, 176), "LOCAL APPS", new Color(99, 76, 48));
-        DrawResultRow(new Rectangle(1164, 236, 628, 56), "APP", "PONNUKI", new Color(73, 57, 39), Color.White);
-        DrawResultRow(
-            new Rectangle(1164, 296, 628, 48),
-            "STATUS",
-            string.IsNullOrWhiteSpace(session.LocalAppsErrorMessage) ? "INTERMISSION" : "PROVIDER ERROR",
-            new Color(58, 48, 38),
-            string.IsNullOrWhiteSpace(session.LocalAppsErrorMessage) ? new Color(255, 210, 128) : new Color(255, 145, 151));
-
-        DrawVerticalResultSection(new Rectangle(1144, 392, 668, 224), "APP PROVIDER ENGINE", new Color(66, 104, 116));
-        DrawDynamicOptionText("アプリ提供エンジン", new Rectangle(1164, 410, 300, 34), new Color(180, 195, 195), 0.30f);
-        DrawResultRow(
-            new Rectangle(1164, 466, 628, 64),
-            "PROVIDER",
-            session.SelectedAppProviderEngineDisplayName,
-            new Color(39, 68, 65),
-            Color.White);
-        DrawDynamicOptionText(
-            string.IsNullOrWhiteSpace(session.LocalAppsErrorMessage)
-                ? "初期局面とポン抜きの進行を提供します。"
-                : session.LocalAppsErrorMessage,
-            new Rectangle(1164, 536, 628, 22),
-            new Color(180, 195, 195),
-            0.30f);
-        screen.AppProviderGameSettingsButton.Draw(mousePoint, _stationeryDrawingContext);
-        screen.ChangeAppProviderButton.Draw(mousePoint, _stationeryDrawingContext);
-        DrawVerticalResultSection(new Rectangle(1144, 632, 668, 216), "PLAYERS", new Color(76, 91, 126));
-        DrawSetupPlayerRow(session, GoStone.Black, mousePoint, PonnukiBlackPlayerKindButtonY);
-        DrawSetupPlayerRow(session, GoStone.White, mousePoint, PonnukiWhitePlayerKindButtonY);
-
-        DrawVerticalResultSection(new Rectangle(1144, 856, 668, 52), "SEED AUTO", new Color(112, 76, 48), labelWidth: 56);
-        screen.ProviderSeedAutoChangeButton.Label = session.PonnukiProviderSeedAutoChange ? "[x] PROVIDER" : "[ ] PROVIDER";
-        screen.ProviderSeedAutoChangeButton.IsSelected = session.PonnukiProviderSeedAutoChange;
-        screen.ProviderSeedAutoChangeButton.Draw(mousePoint, _stationeryDrawingContext);
-        screen.Player1SeedAutoChangeButton.Label = session.PonnukiBlackPlayerSeedAutoChange ? "[x] BLACK" : "[ ] BLACK";
-        screen.Player1SeedAutoChangeButton.IsSelected = session.PonnukiBlackPlayerSeedAutoChange;
-        screen.Player1SeedAutoChangeButton.IsEnabled = session.CanAutoChangePonnukiPlayer1Seed;
-        screen.Player1SeedAutoChangeButton.Draw(mousePoint, _stationeryDrawingContext);
-        screen.Player2SeedAutoChangeButton.Label = session.PonnukiWhitePlayerSeedAutoChange ? "[x] WHITE" : "[ ] WHITE";
-        screen.Player2SeedAutoChangeButton.IsSelected = session.PonnukiWhitePlayerSeedAutoChange;
-        screen.Player2SeedAutoChangeButton.IsEnabled = session.CanAutoChangePonnukiPlayer2Seed;
-        screen.Player2SeedAutoChangeButton.Draw(mousePoint, _stationeryDrawingContext);
-
-        DrawVerticalResultSection(new Rectangle(1144, 916, 668, 76), "ACTION", new Color(91, 82, 105));
-        screen.StartPlayingButton.Label = session.CanStartPlaying ? "START" : "ENGINE REQUIRED";
-        screen.StartPlayingButton.LabelScale = session.CanStartPlaying ? 0.48f : 0.28f;
-        screen.StartPlayingButton.IsEnabled = session.CanStartPlaying;
-        screen.StartPlayingButton.Draw(mousePoint, _stationeryDrawingContext);
-    }
     private static string FormatElapsedTime(TimeSpan elapsed)
     {
         var totalHours = (int)elapsed.TotalHours;
@@ -767,7 +674,7 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
     private static string FormatMoveLimit(int moveLimit) =>
         moveLimit <= 0 ? "NO LIMIT" : moveLimit.ToString();
 
-    private static string GetMoveThinkingText(GoAppSession session)
+    internal static string GetMoveThinkingText(GoAppSession session)
     {
         var text = $"{session.NextMoveNumber}手目を思考中";
         return session.MoveLimit <= 0 ? text : $"{text} / {session.MoveLimit}";
@@ -978,14 +885,14 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         }
     }
 
-    private void DrawInfoStrip(int x, int y, string label, string value)
+    internal void DrawInfoStrip(int x, int y, string label, string value)
     {
         var bounds = new Rectangle(x, y, 668, 72);
         DrawResultLabel(new Rectangle(x + 20, y, bounds.Width - 40, bounds.Height), label, new Color(62, 112, 105));
         DrawFittedText(value, new Rectangle(GameOverValueX, y + 12, bounds.Right - GameOverValueX - 20, bounds.Height - 24), Color.White, 0.58f);
     }
 
-    private void DrawResultRow(Rectangle bounds, string label, string value, Color chipColor, Color valueColor)
+    internal void DrawResultRow(Rectangle bounds, string label, string value, Color chipColor, Color valueColor)
     {
         DrawResultLabel(bounds, label, chipColor);
         DrawFittedText(value, new Rectangle(GameOverValueX, bounds.Y + 6, bounds.Right - GameOverValueX - 18, bounds.Height - 12), valueColor, 0.58f);
@@ -1262,7 +1169,7 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         DrawText(text, new Vector2(bounds.Center.X - size.X / 2, bounds.Center.Y - size.Y / 2), color, scale);
     }
 
-    private void DrawVerticalResultSection(Rectangle bounds, string title, Color accentColor,
+    internal void DrawVerticalResultSection(Rectangle bounds, string title, Color accentColor,
         Color? textColor = null, int labelWidth = 38, int labelGap = 8)
     {
         DrawLine(new Vector2(bounds.X, bounds.Y), new Vector2(bounds.Right, bounds.Y), 1, new Color(58, 78, 86));
@@ -1511,7 +1418,7 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
     internal static BoardLensButton? GetLocalPlayingBoardLensButtonHit(Point point, bool isLensEnabled) =>
         LocalPlayingBoardLensButtons.GetHit(point, isLensEnabled);
 
-    private void DrawLocalPlayingBoardLensButtonStrip(bool isLensEnabled, Point mousePoint)
+    internal void DrawLocalPlayingBoardLensButtonStrip(bool isLensEnabled, Point mousePoint)
     {
         DrawFittedText("BOARD LENS  [L] / [J] / [K] / [1]", new Rectangle(1164, 812, 316, 36), new Color(147, 201, 190), 0.26f);
         DrawBoardLensButtonStrip(LocalPlayingBoardLensButtons, isLensEnabled, mousePoint, 0.32f);
