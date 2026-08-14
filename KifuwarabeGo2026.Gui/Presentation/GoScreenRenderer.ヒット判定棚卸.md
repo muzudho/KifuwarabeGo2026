@@ -1,0 +1,70 @@
+# GoScreenRenderer のヒット判定棚卸
+
+対象は `Presentation/GoScreenRenderer.cs` に**直接定義されている**、マウスの仮想座標 `Point` に対するヒット判定です。`GoScreenRenderer.*.cs` にある partial class 側の判定は含めません。
+
+2026-08-14 時点で、公開・内部公開の判定は 37 個、これらが共用する private helper は 1 個です。呼び出し元は主に `Game1`、タイトル画面だけは `TitleRenderer` です。
+
+## 画面に残っている矩形ベースの判定
+
+| メソッド | 戻り値 | 対象 | 現在の所有・メモ |
+| --- | --- | --- | --- |
+| `GetLocalUseButtonHit` | `bool` | ローカル対局の利用カード | `LocalUseButtonBounds`。画面コンポーネント未分離。 |
+| `GetImportSgfButtonHit` | `bool` | SGF 読込 | `ImportSgfButtonBounds`。 |
+| `GetStartPlayingButtonHit` | `bool` | 対局開始 | 終局中は常に `false`。 |
+| `GetChangeAppProviderButtonHit` | `bool` | アプリ提供エンジン変更 | ローカルアプリ中断パネル。 |
+| `GetAppProviderGameSettingsButtonHit` | `bool` | 提供エンジンのゲーム設定 | ローカルアプリ中断パネル。 |
+| `GetPonnukiRandomSeedAutoChangeHit` | `PonnukiRandomSeedRole?` | Provider / Black / White の SEED AUTO | 3 矩形を順に調べ、該当ロールを返す。 |
+| `GetReturnToSetupButtonHit` | `bool` | 設定へ戻る | `ReturnToSetupButtonBounds`。 |
+| `GetExportSgfButtonHit` | `bool` | SGF 出力 | `ExportSgfButtonBounds`。 |
+| `GetSgfAutoSaveCheckHit` | `bool` | SGF 自動保存チェック | `ExportSgfButtonBounds` 全体を使う。描画側も同じ bounds をチェックボックスに渡している。 |
+| `GetLocalGameOverReviewButtonHit` | `bool` | 終局後の検討 | `LocalGameOverReviewButtonBounds`。 |
+| `GetSetupBackToTitleButtonHit` | `bool` | タイトルへ戻る | `SetupBackToTitleButtonBounds`。 |
+| `GetBlackPlayerKindButtonHit` | `GoPlayerKind?` | 黒番プレイヤー種別 | private helper を使う。 |
+| `GetWhitePlayerKindButtonHit` | `GoPlayerKind?` | 白番プレイヤー種別 | private helper を使う。 |
+| `GetPonnukiBlackPlayerKindButtonHit` | `GoPlayerKind?` | ポン抜き黒番プレイヤー種別 | private helper を使う。 |
+| `GetPonnukiWhitePlayerKindButtonHit` | `GoPlayerKind?` | ポン抜き白番プレイヤー種別 | private helper を使う。 |
+| `GetHumanPlayerNameTextBoxHit` | `GoStone?` | 人間プレイヤー名 | 人間に設定された側だけを判定し、石色を返す。 |
+| `GetPassButtonHit` | `bool` | パス | `PassButtonBounds`。 |
+| `GetResignButtonHit` | `bool` | 投了 | `ResignButtonBounds`。 |
+| `GetCancelPlayingButtonHit` | `bool` | エンジン準備中の取消 | `CancelPlayingButtonBounds`。 |
+| `GetTextAreaDialogCancelButtonHit` | `bool` | コメント入力ダイアログの取消 | `TextAreaDiscardButtonBounds`。 |
+| `GetTextAreaDialogApplyButtonHit` | `bool` | コメント入力ダイアログの適用 | `TextAreaApplyButtonBounds`。 |
+
+private helper `GetPlayerKindButtonHit(Point, int)` は、各プレイヤー種別行の 3 種類の選択肢を調べて `GoPlayerKind?` を返します。公開 API ではありません。
+
+## タイトル画面
+
+| メソッド | 戻り値 | 対象 | 所有状態 |
+| --- | --- | --- | --- |
+| `GetTitleMenuBackButtonHit` | `bool` | タイトル画面の BACK | `TitleScreen.Default.BackButton.Bounds` を参照。 |
+| `GetTitleAppProviderStartButtonHit` | `bool` | ポン抜きプロバイダー選択の NEXT | `PonnukiProviderSelectionScreen.Default.StartButton.Bounds` を参照。互換 API。 |
+| `GetTitleAppProviderRecheckButtonHit` | `bool` | 同 RECHECK PROVIDER | `PonnukiProviderSelectionScreen.Default.RecheckButton.Bounds` を参照。互換 API。 |
+| `GetTitleHomeLocalButtonHit` | `bool` | HOME の LOCAL MATCH | `TitleScreen.Default.LocalMatchButton.Bounds` を参照。 |
+| `GetTitleHomeCgosButtonHit` | `bool` | HOME の CGOS CLIENT | `TitleScreen.Default.CgosClientButton.Bounds` を参照。 |
+| `GetTitleAppHit` | `int?` | HOME のアプリカード | 現在は index 0（CAPTURE GAME）だけを走査する。 |
+
+プロバイダー選択の ENGINE CHANGE リンクは、2026-08-14 にこの表から除去済みです。`PonnukiProviderSelectionScreen.IsProviderLinkHit` が所有する `LinkUnderline.IsHit` を `TitleRenderer` が直接呼びます。
+
+## すでに UI コンポーネントへ委譲している互換ラッパー
+
+| メソッド | 委譲先 | 対象 |
+| --- | --- | --- |
+| `IsTournamentRulesSettingsFileHit` | `_tournamentRulesSettingsFileLinkUnderline.IsHit` | 大会ルール設定ファイルのリンク。唯一のインスタンスメソッド。 |
+| `GetTextInputDialogCancelButtonHit` | `TextInputDialog.IsCancelButtonHit` | テキスト入力ダイアログ CANCEL。 |
+| `GetTextInputDialogOkButtonHit` | `TextInputDialog.IsOkButtonHit` | テキスト入力ダイアログ OK。 |
+| `GetTextInputDialogDefaultButtonHit` | `TextInputDialog.IsDefaultButtonHit` | テキスト入力ダイアログ DEFAULT。 |
+| `IsTextInputDialogTextBoxHit` | `TextInputDialog.IsTextBoxHit` | テキスト入力欄。 |
+| `GetCgosMatchWatchNowHit` | `CgosMatchNotification.IsWatchNowHit` | CGOS 対局通知の即時観戦。`enabled` も渡す。 |
+| `GetCgosMatchWatchLaterHit` | `CgosMatchNotification.IsWatchLaterHit` | CGOS 対局通知の後で観戦。`enabled` も渡す。 |
+| `GetCgosMatchDeferredHit` | `CgosMatchNotification.IsDeferredHit` | CGOS 対局通知の保留。 |
+| `GetCgosMatchDeferredBannerHit` | `CgosMatchNotification.IsDeferredBannerHit` | CGOS 保留バナー。 |
+| `GetLocalPlayingBoardLensButtonHit` | `LocalPlayingBoardLensButtons.GetHit` | 対局中 BOARD LENS。`internal` で `BoardLensButton?` を返す。 |
+
+これらはすでに UI が実際の矩形・有効状態の一部を所有しています。呼び出し側の互換性が不要になった段階で、`GoScreenRenderer` のラッパーを削除できる候補です。
+
+## 次の整理方針
+
+1. 新しい画面では、ボタン・リンク・入力欄の `IsHit` を画面または文房具 UI が所有する。
+2. `Game1` から直接呼ばれる既存 static API は、移行中は互換ラッパーとして残す。
+3. 呼び出し元を画面クラスまたは専用の操作クラスへ移した後、そのラッパーと renderer 側の矩形を削除する。
+4. 判定で状態を必要とする場合は、`GetStartPlayingButtonHit`、`GetHumanPlayerNameTextBoxHit`、CGOS 通知のように必要最小限の状態を引数に取る。
