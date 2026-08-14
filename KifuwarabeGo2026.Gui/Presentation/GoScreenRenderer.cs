@@ -621,18 +621,6 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
             DrawDynamicOptionText);
     }
 
-    private void DrawTournamentRulesNumericTextBox(GoAppSession session, TournamentRulesNumericField field, string value, Rectangle textBounds, Point mousePoint, int tabIndex)
-    {
-        var active = session.ActiveTournamentRulesNumericField == field;
-        var text = active ? session.TournamentRulesNumericDraft : value;
-        DrawTournamentRulesTabNavigationHint(textBounds, session, tabIndex);
-        DrawTournamentRulesTextInputSurface(textBounds, active, textBounds.Contains(mousePoint));
-        var contentBounds = new Rectangle(textBounds.X + 8, textBounds.Y + 4, textBounds.Width - 16, textBounds.Height - 8);
-        if (active) DrawTextBoxSelection(text, session.TournamentRulesNumericSelectionStart, session.TournamentRulesNumericSelectionLength, contentBounds, 0.42f);
-        DrawFittedText(text, contentBounds, Color.White, 0.42f);
-        if (active) DrawTextBoxCaret(text, session.TournamentRulesNumericCaretIndex, contentBounds, 0.42f);
-    }
-
     private void DrawTournamentRulesFieldLabel(string label, Rectangle rowBounds)
     {
         const float preferredScale = 0.38f;
@@ -667,21 +655,6 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         DrawCircle(new Vector2(bounds.Right - radius, bounds.Bottom - radius), radius, color);
     }
 
-    private void DrawTournamentRulesTabNavigationHint(Rectangle bounds, GoAppSession session, int tabIndex)
-    {
-        var activeIndex = session.IsTournamentRulesDisplayNameEditing
-            ? 0
-            : session.ActiveTournamentRulesNumericField switch
-            {
-                TournamentRulesNumericField.MainTimeHours => 1,
-                TournamentRulesNumericField.MainTimeMinutes => 2,
-                TournamentRulesNumericField.MainTimeSeconds => 3,
-                TournamentRulesNumericField.MoveLimit => 4,
-                _ => -1,
-            };
-        DrawTabNavigationHint(bounds, tabIndex, activeIndex, 5);
-    }
-
     private void DrawTabNavigationHint(Rectangle bounds, int tabIndex, int activeIndex, int stopCount)
     {
         if (activeIndex < 0 || tabIndex == activeIndex || stopCount < 2)
@@ -707,89 +680,6 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
             MinimumTextScale);
     }
 
-    private void DrawTournamentRulesTextInputSurface(Rectangle bounds, bool active, bool hovered)
-    {
-        var background = active
-            ? new Color(63, 128, 106)
-            : hovered
-                ? new Color(35, 47, 53)
-                : new Color(22, 29, 34);
-        var underline = active
-            ? new Color(190, 255, 229)
-            : hovered
-                ? new Color(128, 174, 168)
-                : new Color(70, 91, 96);
-
-        FillRect(bounds, background);
-        FillRect(new Rectangle(bounds.X, bounds.Bottom - (active ? 3 : 2), bounds.Width, active ? 3 : 2), underline);
-    }
-
-    private void DrawSetupPlayerKindRow(GoStone stone, GoPlayerKind selectedKind, Point mousePoint, int y, string computerLabel = "COMPUTER")
-    {
-        var rowBounds = new Rectangle(1144, y - 14, 668, 72);
-        DrawIconStone(new Vector2(rowBounds.X + 36, rowBounds.Center.Y), 18, stone == GoStone.Black);
-
-        var humanBounds = PlayerKindButtonBounds(0, y);
-        var computerBounds = PlayerKindButtonBounds(1, y);
-        var bounds = PlayerKindSegmentBounds(y);
-
-        FillRect(new Rectangle(bounds.X + 4, bounds.Y + 5, bounds.Width, bounds.Height), new Color(0, 0, 0, 90));
-        FillRect(bounds, new Color(33, 43, 52));
-        DrawSegmentedPlayerKindButton(humanBounds, "HUMAN", selectedKind == GoPlayerKind.Human, humanBounds.Contains(mousePoint));
-        DrawSegmentedPlayerKindButton(computerBounds, computerLabel, selectedKind == GoPlayerKind.Computer, computerBounds.Contains(mousePoint));
-        DrawRect(bounds, 2, new Color(126, 150, 164));
-    }
-
-    private void DrawSegmentedPlayerKindButton(Rectangle bounds, string label, bool selected, bool hovered)
-    {
-        var fill = selected ? new Color(31, 151, 112) : hovered ? new Color(44, 59, 70) : new Color(33, 43, 52);
-        var textColor = selected ? Color.White : new Color(202, 213, 211);
-        FillRect(bounds, fill);
-
-        var measured = _font.MeasureString(label);
-        var fittedScale = MathF.Min(0.52f, MathF.Min((bounds.Width - 20) / Math.Max(1f, measured.X), (bounds.Height - 10) / Math.Max(1f, measured.Y)));
-        var size = measured * fittedScale;
-        DrawText(label, new Vector2(bounds.Center.X - size.X / 2, bounds.Center.Y - size.Y / 2), textColor, fittedScale);
-    }
-
-    private void DrawSetupPlayerSelector(GoAppSession session, GoStone stone, Point mousePoint, int y)
-    {
-        var playerKind = stone == GoStone.Black ? session.BlackPlayerKind : session.WhitePlayerKind;
-        if (playerKind == GoPlayerKind.Human)
-        {
-            DrawHumanPlayerNameTextBox(session, stone, mousePoint, y);
-            return;
-        }
-
-        var selectedIndex = stone == GoStone.Black ? session.SelectedBlackGtpEngineIndex : session.SelectedWhiteGtpEngineIndex;
-        var engineName = selectedIndex >= 0 && selectedIndex < session.GtpEngineProfiles.Count
-            ? session.GtpEngineProfiles[selectedIndex].DisplayName
-            : "No engine";
-        DrawPlayerSelector(PlayerSelectorLayout.CreateComputerEngineSelector(y) with { Value = engineName }, mousePoint);
-    }
-
-    private void DrawHumanPlayerNameTextBox(GoAppSession session, GoStone stone, Point mousePoint, int y)
-    {
-        var bounds = HumanPlayerNameRowBounds(y);
-        var active = session.ActiveHumanPlayerNameStone == stone;
-        var text = active ? session.HumanPlayerNameDraft : session.GetHumanPlayerName(stone);
-        DrawResultLabel(new Rectangle(bounds.X + 20, bounds.Y - 6, bounds.Width - 40, bounds.Height + 12), "NAME", new Color(76, 91, 126));
-        var textBounds = HumanPlayerNameTextBounds(y);
-        DrawTournamentRulesTextInputSurface(textBounds, active, bounds.Contains(mousePoint));
-        var humanStops = new[] { GoStone.Black, GoStone.White }
-            .Where(candidate => session.GetPlayerKind(candidate) == GoPlayerKind.Human)
-            .ToArray();
-        DrawTabNavigationHint(
-            bounds,
-            Array.IndexOf(humanStops, stone),
-            session.ActiveHumanPlayerNameStone is { } activeStone ? Array.IndexOf(humanStops, activeStone) : -1,
-            humanStops.Length);
-        if (active)
-            DrawTextBoxSelection(text, session.HumanPlayerNameSelectionStart, session.HumanPlayerNameSelectionLength, textBounds, 0.42f);
-        DrawFittedText(text, textBounds, Color.White, 0.42f);
-        if (active) DrawTextBoxCaret(text, session.HumanPlayerNameCaretIndex, textBounds, 0.42f);
-    }
-
     private const int AddPanelControlX = 626;
 
     private const int BlackPlayerKindButtonY = 710;
@@ -807,22 +697,6 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
     private static Rectangle TournamentRulesMoveLimitTextBounds => new(AddPanelControlX + 132, 612, 176, 40);
 
 
-    private static PlayerKindSelectionRow PlayerKindRow(int y) => y switch
-    {
-        BlackPlayerKindButtonY => LocalMatchScreen.Default.BlackPlayerKindRow,
-        WhitePlayerKindButtonY => LocalMatchScreen.Default.WhitePlayerKindRow,
-        PonnukiBlackPlayerKindButtonY => LocalMatchScreen.Default.PonnukiBlackPlayerKindRow,
-        _ => LocalMatchScreen.Default.PonnukiWhitePlayerKindRow,
-    };
-
-    private static Rectangle PlayerKindButtonBounds(int index, int y) =>
-        index == 0 ? PlayerKindRow(y).HumanButton.Bounds : PlayerKindRow(y).ComputerButton.Bounds;
-
-    private static Rectangle PlayerKindSegmentBounds(int y) => PlayerKindRow(y).SegmentBounds;
-
-    private static Rectangle HumanPlayerNameRowBounds(int y) => PlayerKindRow(y - 58).HumanNameRowBounds;
-
-    private static Rectangle HumanPlayerNameTextBounds(int y) => PlayerKindRow(y - 58).HumanNameTextBounds;
     private static Rectangle LocalUseButtonBounds => LocalMatchScreen.Default.LocalUseCardBounds;
 
     private void DrawLocalAppsIntermissionSidePanel(GoAppSession session, Point mousePoint)
@@ -879,8 +753,6 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         screen.StartPlayingButton.IsEnabled = session.CanStartPlaying;
         screen.StartPlayingButton.Draw(mousePoint, _stationeryDrawingContext);
     }
-    private static string PlayerKindLabel(GoPlayerKind playerKind) => playerKind == GoPlayerKind.Human ? "Human" : "Computer";
-
     private static string FormatElapsedTime(TimeSpan elapsed)
     {
         var totalHours = (int)elapsed.TotalHours;
@@ -902,14 +774,6 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
     }
 
     private static string FormatGameEndMoveCount(int playedMoveCount) => $"{playedMoveCount}手で終局";
-
-    private static string FormatRuleKind(GoRuleKind ruleKind) => ruleKind switch
-    {
-        GoRuleKind.PureGo => "PURE GO",
-        GoRuleKind.Japanese => "JAPANESE",
-        GoRuleKind.Chinese => "CHINESE",
-        _ => ruleKind.ToString().ToUpperInvariant(),
-    };
 
     private static string FormatCalculationResult(GoAppSession session)
     {
@@ -1121,31 +985,10 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         DrawFittedText(value, new Rectangle(GameOverValueX, y + 12, bounds.Right - GameOverValueX - 20, bounds.Height - 24), Color.White, 0.58f);
     }
 
-    private void DrawSectionTitle(string title, int x, int y, Color accentColor)
-    {
-        FillRect(new Rectangle(x, y + 2, 3, 30), accentColor);
-        DrawText(title, new Vector2(x + 16, y), new Color(180, 195, 195), 0.5f);
-        DrawLine(new Vector2(x, y + 40), new Vector2(x + 668, y + 40), 1, new Color(58, 78, 86));
-    }
-
     private void DrawResultRow(Rectangle bounds, string label, string value, Color chipColor, Color valueColor)
     {
         DrawResultLabel(bounds, label, chipColor);
         DrawFittedText(value, new Rectangle(GameOverValueX, bounds.Y + 6, bounds.Right - GameOverValueX - 18, bounds.Height - 12), valueColor, 0.58f);
-    }
-
-    private void DrawCalculationMethodRow(Rectangle bounds, GoAppSession session)
-    {
-        if (session.RuleKind == GoRuleKind.PureGo)
-        {
-            DrawResultRow(bounds, "METHOD", "PURE GO", new Color(39, 68, 65), Color.White);
-            return;
-        }
-
-        DrawResultLabel(bounds, "METHOD", new Color(39, 68, 65));
-        var valueWidth = bounds.Right - GameOverValueX - 18;
-        DrawFittedText("PURE GO", new Rectangle(GameOverValueX, bounds.Y + 1, valueWidth, 32), Color.White, 0.48f);
-        DrawFittedText($"RULES: {FormatRuleKind(session.RuleKind)}", new Rectangle(GameOverValueX, bounds.Y + 34, valueWidth, 18), new Color(118, 139, 143), 0.24f);
     }
 
     private void DrawResultLabel(Rectangle bounds, string label, Color accentColor)
@@ -1190,36 +1033,6 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
     {
         DrawIconStone(new Vector2(x + 18, centerY), 16, black);
         DrawText(value, new Vector2(x + 44, centerY - 14), valueColor, 0.5f);
-    }
-
-    private void DrawAgehamaStrip(GoAppSession session, int y = 540, bool minimal = false)
-    {
-        var bounds = new Rectangle(1144, y, 668, 56);
-        if (!minimal)
-        {
-            FillRect(bounds, new Color(24, 31, 37));
-            DrawRect(bounds, 1, new Color(70, 85, 94));
-        }
-        if (minimal)
-        {
-            DrawResultLabel(new Rectangle(bounds.X + 20, bounds.Y, bounds.Width - 40, bounds.Height), "AGEHAMA", new Color(66, 104, 116));
-        }
-        else
-        {
-            DrawText("AGEHAMA", new Vector2(bounds.X + 20, bounds.Y + 16), new Color(180, 195, 195), 0.46f);
-        }
-        var firstValueX = minimal ? GameOverValueX : bounds.X + 220;
-        var secondValueX = minimal ? GameOverSecondValueX : bounds.X + 430;
-        if (minimal)
-        {
-            DrawStoneValue(firstValueX, bounds.Center.Y, session.BlackAgehama.ToString(), black: true, valueColor: Color.White);
-            DrawStoneValue(secondValueX, bounds.Center.Y, session.WhiteAgehama.ToString(), black: false, valueColor: Color.White);
-        }
-        else
-        {
-            DrawText($"BLACK {session.BlackAgehama}", new Vector2(firstValueX, bounds.Y + 14), Color.White, 0.5f);
-            DrawText($"WHITE {session.WhiteAgehama}", new Vector2(secondValueX, bounds.Y + 14), Color.White, 0.5f);
-        }
     }
 
     private void DrawStoneCountStrip(GoAppSession session, int y, bool showLeader = true, bool minimal = false)
@@ -1282,22 +1095,6 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         DrawRect(bar, 1, new Color(95, 108, 116));
     }
 
-    private void DrawMiniBoard(Rectangle rect)
-    {
-        FillRect(rect, new Color(202, 145, 68));
-        var margin = 14f;
-        var cell = (rect.Width - margin * 2) / 8f;
-        for (var i = 0; i < 9; i++)
-        {
-            var x = rect.X + margin + cell * i;
-            DrawLine(new Vector2(x, rect.Y + margin), new Vector2(x, rect.Bottom - margin), 1, new Color(48, 34, 24));
-            var y = rect.Y + margin + cell * i;
-            DrawLine(new Vector2(rect.X + margin, y), new Vector2(rect.Right - margin, y), 1, new Color(48, 34, 24));
-        }
-
-        DrawStone(new Vector2(rect.X + margin + cell * 2, rect.Y + margin + cell * 2), 9, black: true);
-        DrawStone(new Vector2(rect.X + margin + cell * 5, rect.Y + margin + cell * 4), 9, black: false);
-    }
     private void DrawGlow(Vector2 center, float radius, Color color)
     {
         var destination = new Rectangle((int)(center.X - radius), (int)(center.Y - radius), (int)(radius * 2), (int)(radius * 2));
@@ -1456,9 +1253,6 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         _breadcrumb.Draw(path, VirtualScreen.Width, _font.MeasureString, new BreadcrumbDrawingCallbacks(FillRect, DrawFittedText));
         _spriteBatch.End();
     }
-
-    private void DrawSpinBox(Rectangle upBounds, Rectangle downBounds, string amountLabel, Point mousePoint) =>
-        _spinBox.Draw(upBounds, downBounds, amountLabel, mousePoint, new SpinBoxDrawingCallbacks(FillRect, DrawCenteredFittedText));
 
     private void DrawCenteredFittedText(string text, Rectangle bounds, Color color, float preferredScale)
     {
@@ -1791,12 +1585,6 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         }
     }
 
-    private void DrawRenGraphStep1Overlay(GoAppSession session, Vector2 start, float cell)
-    {
-        var renParse = session.ParseRens();
-        DrawRenGraphCells(session, start, cell); DrawRenBoundaries(renParse, start, cell);
-        DrawRenRepresentativeNumbers(renParse, start, cell);
-    }
     private void DrawRenRepresentativeNumbers(GoRenParseResult renParse, Vector2 start, float cell)
     {
         var scale = RenNumberScale(cell); var drawn = new bool[renParse.Count + 1];
