@@ -23,13 +23,28 @@ public sealed class TitleScreen
     }
 
     public Rectangle PanelBounds { get; } = new(420, 172, 1080, 736);
+
     public Headline Headline { get; }
+
+    #region ［FORMAL APPS］
     public Headline FormalAppsLabel { get; }
-    public Headline CasualAppsLabel { get; }
+
     public Button LocalMatchButton { get; }
+
     public Button CgosClientButton { get; }
+    #endregion
+
+    #region ［CASUAL APPS］
+    public Headline CasualAppsLabel { get; }
+
     public Button CaptureGameButton { get; }
+    #endregion
+
     public Button BackButton { get; }
+
+    #region ［右下のボタン］
     public Button UpdateButton { get; }
+
     public Button SettingsButton { get; }
+    #endregion
 }

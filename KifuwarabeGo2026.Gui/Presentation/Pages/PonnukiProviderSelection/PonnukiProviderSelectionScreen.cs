@@ -24,18 +24,26 @@ public sealed class PonnukiProviderSelectionScreen
         BackButton = new Button(new Rectangle(1260, 316, 152, 54), "BACK", 0.36f);
         RecheckButton = new Button(new Rectangle(828, 826, 340, 54), "RECHECK PROVIDER", 0.30f);
         StartButton = new Button(new Rectangle(1198, 826, 152, 54), "NEXT", 0.40f);
-        ProviderLinkUnderline = new LinkUnderline(new RoundUnderline { TopOffset = 2, Thickness = 5, Radius = 2 });
+        ProviderLinkUnderline = new LinkUnderline(new RoundUnderline { TopOffset = 2, Thickness = 5, Radius = 2 })
+        {
+            Bounds = ProviderTextBounds,
+        };
     }
 
     public Headline Headline { get; }
+
+    #region ［Provider］
     public Headline ProviderLabel { get; }
     public Rectangle ProviderDisplayBounds { get; } = new(570, 466, 780, 56);
     public Rectangle ProviderTextBounds { get; } = new(712, 473, 638, 42);
+    private LinkUnderline ProviderLinkUnderline { get; }
+    public bool IsProviderLinkHit(Point point) => ProviderLinkUnderline.IsHit(point);
+    #endregion
+
     public Rectangle CapabilityStatusBounds { get; } = new(570, 794, 780, 26);
     public Button BackButton { get; }
     public Button RecheckButton { get; }
     public Button StartButton { get; }
-    private LinkUnderline ProviderLinkUnderline { get; }
 
     /// <summary>ポン抜きプロバイダー選択画面を描画します。</summary>
     public void Draw(GoAppSession session, Point mousePoint, int activeTabIndex, bool isProviderLoading,

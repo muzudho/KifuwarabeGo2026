@@ -937,7 +937,6 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IButton
     private static Rectangle LocalUseButtonBounds => new(508, 404, 438, 300);
     private static Rectangle TitleMenuBackButtonBounds => TitleScreen.Default.BackButton.Bounds;
     private static Rectangle TitleAppProviderEngineDisplayBounds => PonnukiProviderSelectionScreen.Default.ProviderDisplayBounds;
-    private static Rectangle TitleAppProviderEngineTextBounds => PonnukiProviderSelectionScreen.Default.ProviderTextBounds;
     private static Rectangle TitleAppProviderStartButtonBounds => PonnukiProviderSelectionScreen.Default.StartButton.Bounds;
     private static Rectangle TitleAppProviderRecheckButtonBounds => PonnukiProviderSelectionScreen.Default.RecheckButton.Bounds;
     private static Rectangle TitleHomeLocalButtonBounds => TitleScreen.Default.LocalMatchButton.Bounds;
@@ -947,9 +946,6 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IButton
     public static bool GetTitleMenuBackButtonHit(Point point) => TitleMenuBackButtonBounds.Contains(point);
     public static bool GetTitleAppProviderStartButtonHit(Point point) => TitleAppProviderStartButtonBounds.Contains(point);
     public static bool GetTitleAppProviderRecheckButtonHit(Point point) => TitleAppProviderRecheckButtonBounds.Contains(point);
-
-    public static bool GetTitleAppProviderEngineSelectButtonHit(Point point) =>
-        TitleAppProviderEngineTextBounds.Contains(point);
 
     private void DrawLocalAppsIntermissionSidePanel(GoAppSession session, Point mousePoint)
     {

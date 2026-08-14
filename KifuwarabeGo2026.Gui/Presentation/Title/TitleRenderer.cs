@@ -2,6 +2,7 @@ namespace KifuwarabeGo2026.Gui.Presentation.Title;
 
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Presentation;
+using KifuwarabeGo2026.Gui.Presentation.Pages.PonnukiProviderSelection;
 using Microsoft.Xna.Framework;
 
 public static class TitleRenderer
@@ -22,7 +23,7 @@ public static class TitleRenderer
         GoScreenRenderer.GetTitleMenuBackButtonHit(point);
 
     public static bool IsAppProviderEngineSelectButtonHit(Point point) =>
-        GoScreenRenderer.GetTitleAppProviderEngineSelectButtonHit(point);
+        PonnukiProviderSelectionScreen.Default.IsProviderLinkHit(point);
 
     public static bool IsAppProviderStartButtonHit(Point point) =>
         GoScreenRenderer.GetTitleAppProviderStartButtonHit(point);
