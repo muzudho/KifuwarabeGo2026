@@ -236,6 +236,10 @@ public sealed partial class GoScreenRenderer
         {
             DrawPopupCommentOverlay(moves, session, mousePoint, currentMoveNumber);
         }
+        else if (popup)
+        {
+            PopupTrendChartScreen.Default.MoveCommentPanel.DrawSectionLabel(_stationeryDrawingContext, isPanelVisible: false);
+        }
     }
 
     private void DrawRotatedTrendAxisText(
@@ -364,11 +368,6 @@ public sealed partial class GoScreenRenderer
             "WIN RATE",
             session.IsPopupWinRateVisible,
             mousePoint);
-        DrawPopupInformationCheck(
-            GetPopupCommentToggleBounds(bounds),
-            "COMMENTS",
-            session.IsPopupCommentVisible,
-            mousePoint);
     }
 
     private void DrawPopupInformationCheck(
@@ -411,7 +410,7 @@ public sealed partial class GoScreenRenderer
     {
         var overlay = PopupTrendChartMoveCommentPanelBounds;
         FillRect(overlay, new Color(10, 18, 31, 170));
-        PopupTrendChartScreen.Default.MoveCommentPanel.DrawSectionLabel(_stationeryDrawingContext);
+        PopupTrendChartScreen.Default.MoveCommentPanel.DrawSectionLabel(_stationeryDrawingContext, isPanelVisible: true);
         DrawMoveCommentContent(moves, overlay, session, mousePoint, currentMoveNumber);
     }
 
@@ -680,13 +679,6 @@ public sealed partial class GoScreenRenderer
 
     internal static Rectangle GetPopupWinRateToggleBounds(Rectangle bounds) =>
         new(558, 55, 190, 48);
-
-    internal static Rectangle GetPopupCommentToggleBounds(Rectangle bounds) =>
-        new(
-            PopupTrendChartMoveCommentPanelBounds.X,
-            PopupTrendChartMoveCommentPanelBounds.Y - 56,
-            210,
-            48);
 
     private static Rectangle MoveTrendWinRateButtonBounds(Rectangle chartBounds) =>
         chartBounds.Width > 1000

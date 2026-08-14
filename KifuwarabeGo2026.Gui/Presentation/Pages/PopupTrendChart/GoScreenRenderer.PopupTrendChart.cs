@@ -45,7 +45,7 @@ public sealed partial class GoScreenRenderer
         GetPopupWinRateToggleBounds(ReviewChartPopupChartBounds).Contains(point);
 
     public static bool GetReviewChartPopupCommentToggleHit(Point point) =>
-        GetPopupCommentToggleBounds(ReviewChartPopupChartBounds).Contains(point);
+        PopupTrendChartScreen.Default.MoveCommentPanel.IsVisibilityPinHit(point);
 
     public static MoveTrendDisplayMode? GetReviewChartPopupTrendDisplayModeButtonHit(
         Point point,

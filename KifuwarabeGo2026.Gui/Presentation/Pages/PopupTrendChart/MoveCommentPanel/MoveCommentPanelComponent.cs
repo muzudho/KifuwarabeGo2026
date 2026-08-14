@@ -43,18 +43,32 @@ public sealed class MoveCommentPanelComponent
     // 機能
     // ========================================
 
-    public void DrawSectionLabel(StationeryDrawingContext drawingContext)
+    public void DrawSectionLabel(StationeryDrawingContext drawingContext, bool isPanelVisible)
     {
-        SectionLabel ??= SectionLabelComponent.CreateVerticalOverlay(
-            new Rectangle(Bounds.X, Bounds.Y, Bounds.Width, 330),
-            "MOVE COMMENT PANEL",
-            new Color(5, 10, 18),
-            new Color(170, 184, 188),
-            drawingContext,
-            labelWidth: 38,
-            leftProtrusion: 4);
+        if (SectionLabel is null || SectionLabel.IsPinned != isPanelVisible)
+        {
+            SectionLabel = isPanelVisible
+                ? SectionLabelComponent.CreateVerticalOverlay(
+                    new Rectangle(Bounds.X, Bounds.Y, Bounds.Width, 330),
+                    "MOVE COMMENT PANEL",
+                    new Color(5, 10, 18),
+                    new Color(170, 184, 188),
+                    drawingContext,
+                    labelWidth: 38,
+                    leftProtrusion: 4)
+                : SectionLabelComponent.CreateHorizontal(
+                    new Rectangle(56, 998, 330, 1),
+                    "MOVE COMMENT PANEL",
+                    new Color(5, 10, 18),
+                    new Color(170, 184, 188),
+                    labelHeight: 42,
+                    labelGap: 4);
+            SectionLabel.EnableVisibilityPin(isPanelVisible);
+        }
         SectionLabel.Draw(drawingContext);
     }
+
+    public bool IsVisibilityPinHit(Point point) => SectionLabel?.IsVisibilityPinHit(point) ?? false;
 
     public Rectangle GetBodyBounds(Rectangle bounds)
     {

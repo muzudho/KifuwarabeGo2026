@@ -108,6 +108,12 @@ public sealed class SectionLabelComponent
     public Color AccentColor { get; }
     public Color TextColor { get; }
     public SectionLabelDirection Direction { get; }
+    public bool HasVisibilityPin { get; private set; }
+    public bool IsPinned { get; private set; }
+
+    public Rectangle VisibilityPinBounds => Direction == SectionLabelDirection.Vertical
+        ? new(Bounds.X, Bounds.Y, Bounds.Width, Math.Min(Bounds.Width, Bounds.Height))
+        : new(Bounds.X, Bounds.Y, Math.Min(Bounds.Height, Bounds.Width), Bounds.Height);
 
     // ========================================
     // 機能
@@ -119,15 +125,19 @@ public sealed class SectionLabelComponent
         DrawSurface(draw);
         if (Direction == SectionLabelDirection.Horizontal)
         {
-            draw.DrawFittedText(Text, new Rectangle(Bounds.X + 8, Bounds.Y + 4, Bounds.Width - 16, Bounds.Height - 8), TextColor, 0.36f);
+            var pinInset = HasVisibilityPin ? VisibilityPinBounds.Width : 0;
+            draw.DrawFittedText(Text, new Rectangle(Bounds.X + pinInset + 8, Bounds.Y + 4, Bounds.Width - pinInset - 16, Bounds.Height - 8), TextColor, 0.36f);
+            DrawVisibilityPin(draw);
             return;
         }
 
         if (!_usesSplitHorizontalText)
         {
-            var center = new Vector2(Bounds.Center.X, Bounds.Center.Y);
+            var pinInset = HasVisibilityPin ? VisibilityPinBounds.Height : 0;
+            var center = new Vector2(Bounds.Center.X, Bounds.Y + pinInset + (Bounds.Height - pinInset) / 2f);
             draw.DrawRotatedCenteredText(Text, center + new Vector2(2, 2), new Color(0, 0, 0, 125), VerticalScale);
             draw.DrawRotatedCenteredText(Text, center, TextColor, VerticalScale);
+            DrawVisibilityPin(draw);
             return;
         }
 
@@ -135,6 +145,30 @@ public sealed class SectionLabelComponent
         var lineHeight = Math.Max(1, (Bounds.Height - 12) / 2);
         draw.DrawFittedText(firstLine, new Rectangle(Bounds.X + 6, Bounds.Y + 5, Bounds.Width - 12, lineHeight), TextColor, 0.30f);
         draw.DrawFittedText(secondLine, new Rectangle(Bounds.X + 6, Bounds.Y + 7 + lineHeight, Bounds.Width - 12, lineHeight), TextColor, 0.30f);
+        DrawVisibilityPin(draw);
+    }
+
+    public void EnableVisibilityPin(bool isPinned)
+    {
+        HasVisibilityPin = true;
+        IsPinned = isPinned;
+    }
+
+    public bool IsVisibilityPinHit(Point point) => HasVisibilityPin && VisibilityPinBounds.Contains(point);
+
+    private void DrawVisibilityPin(StationeryDrawingContext draw)
+    {
+        if (!HasVisibilityPin) return;
+        var pin = VisibilityPinBounds;
+        draw.FillRectangle(pin, new Color(9, 17, 25, 235));
+        draw.DrawRectangle(pin, 1, new Color(78, 105, 112, 220));
+        var color = IsPinned ? new Color(105, 247, 232) : new Color(145, 160, 164);
+        var center = new Vector2(pin.Center.X, pin.Center.Y);
+        draw.DrawLine(center + new Vector2(-7, -6), center + new Vector2(7, -6), 3, color);
+        draw.DrawLine(center + new Vector2(-4, -6), center + new Vector2(4, 2), 3, color);
+        draw.DrawLine(center + new Vector2(0, 1), center + new Vector2(0, 10), 3, color);
+        if (!IsPinned)
+            draw.DrawLine(center + new Vector2(-9, 9), center + new Vector2(9, -9), 3, new Color(220, 150, 145));
     }
 
     private void DrawSurface(StationeryDrawingContext draw)
