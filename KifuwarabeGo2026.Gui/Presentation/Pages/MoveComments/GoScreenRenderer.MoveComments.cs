@@ -7,38 +7,40 @@ using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using KifuwarabeGo2026.Gui.Presentation.Pages.MoveComments;
 
 public sealed partial class GoScreenRenderer
 {
+    private static MoveCommentsScreen MoveComments => MoveCommentsScreen.Default;
     private Texture2D? _dynamicCommentTexture;
     private string _dynamicCommentTextureKey = "";
 
     public static int? GetCgosCommentPageStepButtonHit(Point point) =>
-        GetCommentPageStepButtonHit(point, CgosTrendChartBounds);
+        MoveComments.GetPageStepButtonHit(point, CgosTrendChartBounds);
 
     public static int? GetLocalCommentPageStepButtonHit(Point point) =>
-        GetCommentPageStepButtonHit(point, LocalTrendChartBounds);
+        MoveComments.GetPageStepButtonHit(point, LocalTrendChartBounds);
 
     public static int? GetLocalGameOverCommentPageStepButtonHit(Point point) =>
-        GetCommentPageStepButtonHit(point, LocalGameOverTrendChartBounds);
+        MoveComments.GetPageStepButtonHit(point, LocalGameOverTrendChartBounds);
 
     public static int? GetReviewCommentPageStepButtonHit(Point point) =>
-        GetCommentPageStepButtonHit(point, ReviewTrendChartBounds);
+        MoveComments.GetPageStepButtonHit(point, ReviewTrendChartBounds);
 
     public static int? GetCgosCommentMoveStepButtonHit(Point point) =>
-        GetCommentMoveStepButtonHit(point, CgosTrendChartBounds);
+        MoveComments.GetMoveStepButtonHit(point, CgosTrendChartBounds);
 
     public static int? GetLocalCommentMoveStepButtonHit(Point point) =>
-        GetCommentMoveStepButtonHit(point, LocalTrendChartBounds);
+        MoveComments.GetMoveStepButtonHit(point, LocalTrendChartBounds);
 
     public static int? GetLocalGameOverCommentMoveStepButtonHit(Point point) =>
-        GetCommentMoveStepButtonHit(point, LocalGameOverTrendChartBounds);
+        MoveComments.GetMoveStepButtonHit(point, LocalGameOverTrendChartBounds);
 
     public static int? GetReviewCommentMoveStepButtonHit(Point point) =>
-        GetCommentMoveStepButtonHit(point, ReviewTrendChartBounds);
+        MoveComments.GetMoveStepButtonHit(point, ReviewTrendChartBounds);
 
     public static bool GetReviewCommentEditButtonHit(Point point) =>
-        CommentEditButtonBounds(ReviewTrendChartBounds).Contains(point);
+        MoveComments.IsEditButtonHit(point, ReviewTrendChartBounds);
 
     private static bool HasMoveComment(IReadOnlyList<GoGameMove> moves, string rootComment = "")
     {
@@ -59,6 +61,7 @@ public sealed partial class GoScreenRenderer
         Point mousePoint,
         int? preferredMoveNumber = null)
     {
+        MoveComments.UpdateLayout(bounds);
         var moveNumber = preferredMoveNumber
             ?? MoveCommentNavigator.FindAdjacent(moves, moves.Count + 1, -1);
         var commentCount = MoveCommentNavigator.Count(moves);
@@ -82,11 +85,11 @@ public sealed partial class GoScreenRenderer
                 : commentOrdinal > 0
                 ? $"COMMENT {commentOrdinal} / {commentCount}   MOVE {moveNumber}"
                 : $"COMMENT - / {commentCount}   MOVE {moveNumber ?? 0}",
-            CommentHeadingBounds(bounds),
+            MoveComments.GetHeadingBounds(bounds),
             new Color(255, 215, 92),
             expanded ? 0.46f : 0.27f);
         DrawCommandButton(
-            CommentPreviousMoveButtonBounds(bounds),
+            MoveComments.PreviousMoveButton.Bounds,
             "< PREV",
             false,
             mousePoint,
@@ -95,7 +98,7 @@ public sealed partial class GoScreenRenderer
                 && MoveCommentNavigator.FindAdjacent(moves, previousAnchor, -1) is not null,
             scale: expanded ? 0.28f : 0.19f);
         DrawCommandButton(
-            CommentNextMoveButtonBounds(bounds),
+            MoveComments.NextMoveButton.Bounds,
             "NEXT >",
             false,
             mousePoint,
@@ -106,7 +109,7 @@ public sealed partial class GoScreenRenderer
         if (session.CurrentMode.Kind == GoAppModeKind.Reviewing)
         {
             DrawCommandButton(
-                CommentEditButtonBounds(bounds),
+                MoveComments.EditButton.Bounds,
                 "EDIT",
                 false,
                 mousePoint,
@@ -117,7 +120,7 @@ public sealed partial class GoScreenRenderer
         {
             DrawFittedText(
                 isRootComment ? "NO ROOT COMMENT" : commentCount == 0 ? "NO COMMENT" : "NO COMMENT ON THIS MOVE",
-                CommentBodyBounds(bounds),
+                MoveComments.GetBodyBounds(bounds),
                 new Color(142, 163, 164),
                 0.34f);
             session.UpdateCommentPageCount(1);
@@ -126,7 +129,7 @@ public sealed partial class GoScreenRenderer
 
         var pageCount = DrawDynamicCommentText(
             displayedComment,
-            CommentBodyBounds(bounds),
+            MoveComments.GetBodyBounds(bounds),
             session.CommentPageIndex);
         session.UpdateCommentPageCount(pageCount);
 
@@ -136,14 +139,14 @@ public sealed partial class GoScreenRenderer
             new Color(174, 198, 198),
             expanded ? 0.40f : 0.25f);
         DrawCommandButton(
-            CommentPreviousPageButtonBounds(bounds),
+            MoveComments.PreviousPageButton.Bounds,
             "< PAGE",
             false,
             mousePoint,
             enabled: session.CommentPageIndex > 0,
             scale: expanded ? 0.30f : 0.20f);
         DrawCommandButton(
-            CommentNextPageButtonBounds(bounds),
+            MoveComments.NextPageButton.Bounds,
             "PAGE >",
             false,
             mousePoint,
@@ -186,59 +189,4 @@ public sealed partial class GoScreenRenderer
         return pageCount;
     }
 
-    private static int? GetCommentPageStepButtonHit(Point point, Rectangle bounds)
-    {
-        if (CommentPreviousPageButtonBounds(bounds).Contains(point)) return -1;
-        if (CommentNextPageButtonBounds(bounds).Contains(point)) return 1;
-        return null;
-    }
-
-    private static int? GetCommentMoveStepButtonHit(Point point, Rectangle bounds)
-    {
-        if (CommentPreviousMoveButtonBounds(bounds).Contains(point)) return -1;
-        if (CommentNextMoveButtonBounds(bounds).Contains(point)) return 1;
-        return null;
-    }
-
-    private static Rectangle CommentHeadingBounds(Rectangle bounds) =>
-        bounds.Width > 1000 || bounds.Height > 600
-            ? new(bounds.X + 24, bounds.Y + 82, bounds.Width - 650, 52)
-            : new(bounds.X + 20, bounds.Y + 58, bounds.Width - 440, 36);
-
-    private static Rectangle CommentBodyBounds(Rectangle bounds)
-    {
-        var expanded = bounds.Width > 1000 || bounds.Height > 600;
-        var top = bounds.Y + (expanded ? 148 : 102);
-        var footerHeight = expanded ? 92 : 56;
-        return new Rectangle(
-            bounds.X + 36,
-            top,
-            bounds.Width - 72,
-            Math.Max(1, bounds.Bottom - top - footerHeight));
-    }
-
-    private static Rectangle CommentPreviousMoveButtonBounds(Rectangle bounds) =>
-        bounds.Width > 1000 || bounds.Height > 600
-            ? new(bounds.Right - 326, bounds.Y + 78, 140, 56)
-            : new(bounds.Right - 206, bounds.Y + 58, 92, 36);
-
-    private static Rectangle CommentNextMoveButtonBounds(Rectangle bounds) =>
-        bounds.Width > 1000 || bounds.Height > 600
-            ? new(bounds.Right - 174, bounds.Y + 78, 140, 56)
-            : new(bounds.Right - 104, bounds.Y + 58, 92, 36);
-
-    private static Rectangle CommentEditButtonBounds(Rectangle bounds) =>
-        bounds.Width > 1000 || bounds.Height > 600
-            ? new(bounds.Right - 478, bounds.Y + 78, 140, 56)
-            : new(bounds.Right - 308, bounds.Y + 58, 92, 36);
-
-    private static Rectangle CommentPreviousPageButtonBounds(Rectangle bounds) =>
-        bounds.Width > 1000 || bounds.Height > 600
-            ? new(bounds.Right - 330, bounds.Bottom - 76, 140, 56)
-            : new(bounds.Right - 170, bounds.Bottom - 46, 70, 36);
-
-    private static Rectangle CommentNextPageButtonBounds(Rectangle bounds) =>
-        bounds.Width > 1000 || bounds.Height > 600
-            ? new(bounds.Right - 174, bounds.Bottom - 76, 140, 56)
-            : new(bounds.Right - 92, bounds.Bottom - 46, 70, 36);
 }

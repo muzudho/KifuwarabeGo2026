@@ -7,6 +7,7 @@ using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using static KifuwarabeGo2026.Gui.Presentation.Pages.ReviewChartPopup.ReviewChartPopupScreenBounds;
+using KifuwarabeGo2026.Gui.Presentation.Pages.MoveComments;
 
 public sealed partial class GoScreenRenderer
 {
@@ -51,13 +52,13 @@ public sealed partial class GoScreenRenderer
         GetMoveTrendDisplayModeButtonHit(point, ReviewChartPopupChartBounds, currentMode);
 
     public static int? GetReviewChartPopupCommentPageStepButtonHit(Point point) =>
-        GetCommentPageStepButtonHit(point, ReviewChartPopupCommentOverlayBounds);
+        MoveCommentsScreen.Default.GetPageStepButtonHit(point, ReviewChartPopupCommentOverlayBounds);
 
     public static int? GetReviewChartPopupCommentMoveStepButtonHit(Point point) =>
-        GetCommentMoveStepButtonHit(point, ReviewChartPopupCommentOverlayBounds);
+        MoveCommentsScreen.Default.GetMoveStepButtonHit(point, ReviewChartPopupCommentOverlayBounds);
 
     public static bool GetReviewChartPopupCommentEditButtonHit(Point point) =>
-        CommentEditButtonBounds(ReviewChartPopupCommentOverlayBounds).Contains(point);
+        MoveCommentsScreen.Default.IsEditButtonHit(point, ReviewChartPopupCommentOverlayBounds);
 
     public static bool IsReviewChartPopupCommentOverlayHit(Point point) =>
         ReviewChartPopupCommentOverlayBounds.Contains(point);
