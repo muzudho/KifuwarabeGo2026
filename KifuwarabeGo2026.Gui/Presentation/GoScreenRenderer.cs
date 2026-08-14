@@ -37,6 +37,7 @@ using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Headline;
 using KifuwarabeGo2026.Gui.Presentation.Pages.Title;
 using KifuwarabeGo2026.Gui.Presentation.Pages.PonnukiProviderSelection;
 using KifuwarabeGo2026.Gui.Presentation.Pages.LocalMatch;
+using KifuwarabeGo2026.Gui.Presentation.Shared.TextAreaDialog;
 
 /// <summary>
 /// ［画面描画］の共通処理
@@ -1800,37 +1801,34 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IButton
         _spriteBatch.End();
     }
 
-    private static Rectangle TextAreaDialogBounds => new(320, 150, 1280, 780);
-    private static Rectangle TextAreaTextBounds => new(390, 330, 1140, 400);
-    private static Rectangle TextAreaDiscardButtonBounds => new(1230, 172, 150, 54);
-    private static Rectangle TextAreaApplyButtonBounds => new(1410, 172, 150, 54);
-    public static bool GetTextAreaDialogCancelButtonHit(Point point) => TextAreaDiscardButtonBounds.Contains(point);
-    public static bool GetTextAreaDialogApplyButtonHit(Point point) => TextAreaApplyButtonBounds.Contains(point);
-
     public void DrawTextAreaDialog(Point mousePosition, string title, string text, int caretIndex, string message, bool hasChanges,
         TextCompositionState composition = default, TextCompositionDiagnostics compositionDiagnostics = default,
         bool showCompositionDiagnostics = false)
     {
+        var dialog = TextAreaDialog.Default;
+        dialog.SetHasChanges(hasChanges);
+        var dialogBounds = dialog.Bounds;
+        var textBounds = dialog.TextBounds;
         var mousePoint = VirtualScreen.ToVirtualPoint(_graphicsDevice.Viewport, mousePosition);
         _spriteBatch.Begin(blendState: BlendState.AlphaBlend, samplerState: SamplerState.LinearClamp,
             transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));
         FillRect(new Rectangle(0, 0, VirtualScreen.Width, VirtualScreen.Height), new Color(0, 0, 0, 145));
-        FillRect(new Rectangle(TextAreaDialogBounds.X + 14, TextAreaDialogBounds.Y + 16, TextAreaDialogBounds.Width, TextAreaDialogBounds.Height), new Color(0, 0, 0, 155));
-        FillRect(TextAreaDialogBounds, new Color(24, 29, 36, 252));
-        DrawRect(TextAreaDialogBounds, 2, new Color(116, 145, 146));
-        DrawText("COMMENT EDITOR", new Vector2(TextAreaDialogBounds.X + 34, TextAreaDialogBounds.Y + 28), new Color(244, 238, 218), 0.68f);
-        DrawDynamicOptionText(title, new Rectangle(TextAreaDialogBounds.X + 36, TextAreaDialogBounds.Y + 96, TextAreaDialogBounds.Width - 72, 40), new Color(180, 195, 195), 0.42f);
+        FillRect(new Rectangle(dialogBounds.X + 14, dialogBounds.Y + 16, dialogBounds.Width, dialogBounds.Height), new Color(0, 0, 0, 155));
+        FillRect(dialogBounds, new Color(24, 29, 36, 252));
+        DrawRect(dialogBounds, 2, new Color(116, 145, 146));
+        DrawText("COMMENT EDITOR", new Vector2(dialogBounds.X + 34, dialogBounds.Y + 28), new Color(244, 238, 218), 0.68f);
+        DrawDynamicOptionText(title, new Rectangle(dialogBounds.X + 36, dialogBounds.Y + 96, dialogBounds.Width - 72, 40), new Color(180, 195, 195), 0.42f);
         if (showCompositionDiagnostics)
         {
-            DrawCompositionLamp(TextAreaDialogBounds, "SDL", 1100, compositionDiagnostics.IsSdlWindowResolved, new Color(99, 223, 185));
-            DrawCompositionLamp(TextAreaDialogBounds, "HOOK", 1146, compositionDiagnostics.IsWindowProcedureAttached, new Color(99, 223, 185));
-            DrawCompositionLamp(TextAreaDialogBounds, "IME", 1192, composition.IsActive, new Color(255, 225, 128));
+            DrawCompositionLamp(dialogBounds, "SDL", 1100, compositionDiagnostics.IsSdlWindowResolved, new Color(99, 223, 185));
+            DrawCompositionLamp(dialogBounds, "HOOK", 1146, compositionDiagnostics.IsWindowProcedureAttached, new Color(99, 223, 185));
+            DrawCompositionLamp(dialogBounds, "IME", 1192, composition.IsActive, new Color(255, 225, 128));
         }
-        _multilineTextUnderline.Bounds = TextAreaTextBounds;
+        _multilineTextUnderline.Bounds = textBounds;
         _multilineTextUnderline.SetEditing(true);
         _multilineTextUnderline.UpdatePointer(mousePoint);
         _multilineTextUnderline.Draw(this, new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText));
-        DrawTextAreaContent(text, TextAreaTextBounds);
+        DrawTextAreaContent(text, textBounds);
         var caret = GetTextAreaCaretPosition(text, caretIndex);
         if (composition.IsActive && !string.IsNullOrEmpty(composition.Text))
         {
@@ -1838,11 +1836,10 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IButton
             DrawLine(caret + new Vector2(0, 29), caret + new Vector2(compositionWidth, 29), 2, new Color(255, 225, 128));
         }
         FillRect(new Rectangle((int)caret.X, (int)caret.Y, 2, 29), composition.IsActive ? new Color(255, 225, 128) : new Color(147, 244, 200));
-        DrawDynamicOptionText(message, new Rectangle(TextAreaDialogBounds.X + 70, 752, 820, 34), new Color(180, 195, 195), 0.34f);
-        DrawFittedText("ENTER: NEW LINE   CTRL+ENTER: SAVE SGF", new Rectangle(TextAreaDialogBounds.X + 70, 786, 800, 28), new Color(147, 201, 190), 0.29f);
-        DrawCommandButton(TextAreaDiscardButtonBounds, "DISCARD", false, mousePoint, enabled: hasChanges, scale: 0.30f);
-        DrawCommandButton(TextAreaApplyButtonBounds, hasChanges ? "SAVE & CLOSE" : "CLOSE", false, mousePoint,
-            scale: hasChanges ? 0.25f : 0.34f);
+        DrawDynamicOptionText(message, new Rectangle(dialogBounds.X + 70, 752, 820, 34), new Color(180, 195, 195), 0.34f);
+        DrawFittedText("ENTER: NEW LINE   CTRL+ENTER: SAVE SGF", new Rectangle(dialogBounds.X + 70, 786, 800, 28), new Color(147, 201, 190), 0.29f);
+        dialog.DiscardButton.Draw(mousePoint, this);
+        dialog.ApplyButton.Draw(mousePoint, this);
         _spriteBatch.End();
     }
 
@@ -1868,9 +1865,10 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IButton
         var lineText = beforeCaret[lastLineStart..];
         var lineNumber = 0;
         foreach (var character in beforeCaret) if (character == '\n') lineNumber++;
-        var x = TextAreaTextBounds.X + 18 + (int)MathF.Round(_textRasterizer.MeasureTextWidth(lineText, pixelHeight: 26, bold: false));
-        var y = TextAreaTextBounds.Y + 18 + lineNumber * 31;
-        return new Vector2(Math.Clamp(x, TextAreaTextBounds.X + 18, TextAreaTextBounds.Right - 22), Math.Clamp(y, TextAreaTextBounds.Y + 18, TextAreaTextBounds.Bottom - 48));
+        var textBounds = TextAreaDialog.Default.TextBounds;
+        var x = textBounds.X + 18 + (int)MathF.Round(_textRasterizer.MeasureTextWidth(lineText, pixelHeight: 26, bold: false));
+        var y = textBounds.Y + 18 + lineNumber * 31;
+        return new Vector2(Math.Clamp(x, textBounds.X + 18, textBounds.Right - 22), Math.Clamp(y, textBounds.Y + 18, textBounds.Bottom - 48));
     }
 
     private void DrawRenNumbers(GoRenParseResult renParse, Vector2 start, float cell)

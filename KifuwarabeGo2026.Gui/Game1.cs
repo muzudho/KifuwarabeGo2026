@@ -22,6 +22,7 @@ using KifuwarabeGo2026.Gui.Presentation.GoApps.Formal.LocalMatch.Interval;
 using KifuwarabeGo2026.Gui.Presentation.GoApps.Formal.LocalMatch.Interval.TournamentRules;
 using KifuwarabeGo2026.Gui.Presentation.Pages.EditTournamentRule;
 using KifuwarabeGo2026.Gui.Presentation.Title;
+using KifuwarabeGo2026.Gui.Presentation.Shared.TextAreaDialog;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.StickyNote;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.PopupNumberUnderline;
@@ -965,12 +966,14 @@ public class Game1 : Game
             Mouse.SetCursor(MouseCursor.Arrow);
             if (_previousMouse.LeftButton == ButtonState.Released && mouse.LeftButton == ButtonState.Pressed)
             {
-                if (GoScreenRenderer.GetTextAreaDialogApplyButtonHit(point))
+                var commentDialog = TextAreaDialog.Default;
+                commentDialog.SetHasChanges(_commentTextArea.Text != _commentEditorInitialText);
+                if (commentDialog.ApplyButton.IsHit(point))
                 {
                     if (_commentTextArea.Text != _commentEditorInitialText) CommitCommentEditor(saveToFile: true);
                     else CancelCommentEditor();
                 }
-                else if (GoScreenRenderer.GetTextAreaDialogCancelButtonHit(point) && _commentTextArea.Text != _commentEditorInitialText)
+                else if (commentDialog.DiscardButton.IsHit(point))
                 {
                     CancelCommentEditor();
                     BeginDiscardTransition();
