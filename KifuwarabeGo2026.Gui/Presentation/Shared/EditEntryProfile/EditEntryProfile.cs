@@ -149,8 +149,8 @@ public sealed class EditEntryProfile
         DiscardButton.IsEnabled = session.HasPlayerEditChanges;
         SaveAndCloseButton.Label = session.HasPlayerEditChanges ? "SAVE & CLOSE" : "CLOSE";
         SaveAndCloseButton.LabelScale = session.HasPlayerEditChanges ? 0.26f : 0.34f;
-        DiscardButton.Draw(mousePoint, draw.DrawButton);
-        SaveAndCloseButton.Draw(mousePoint, draw.DrawButton);
+        DiscardButton.Draw(mousePoint, draw.ButtonSurface);
+        SaveAndCloseButton.Draw(mousePoint, draw.ButtonSurface);
         DrawPlayerNameField(session, mousePoint, draw);
         DrawClientIdentitySection(session, mousePoint, draw);
         if (session.PlayerEditDraft.Kind == EntryProfileKind.Computer)
@@ -239,7 +239,7 @@ public sealed class EditEntryProfile
 
     private void DrawClientIdentityListButton(Point mousePoint, EditEntryProfileDrawingCallbacks draw)
     {
-        ClientIdentityListButton.Draw(mousePoint, draw.DrawButton);
+        ClientIdentityListButton.Draw(mousePoint, draw.ButtonSurface);
         var bounds = ClientIdentityListButton.Bounds;
         var color = bounds.Contains(mousePoint) ? new Color(222, 243, 246) : new Color(178, 219, 226);
 
@@ -261,7 +261,7 @@ public sealed class EditEntryProfile
     {
         var button = ClientIdentityPasswordVisibilityButton;
         button.IsEnabled = enabled;
-        button.Draw(mousePoint, draw.DrawButton);
+        button.Draw(mousePoint, draw.ButtonSurface);
         var bounds = button.Bounds;
         var color = !enabled ? new Color(76, 88, 92) : bounds.Contains(mousePoint) ? new Color(222, 243, 246) : new Color(178, 219, 226);
         var center = new Vector2(bounds.Center.X, bounds.Center.Y);
@@ -351,7 +351,7 @@ public sealed record EditEntryProfileDrawingCallbacks(
     Action<Rectangle, int, Color> DrawRectangle,
     Action<string, Vector2, Color, float> DrawText,
     Action<string, Rectangle, Color, float> DrawFittedText,
-    Action<Rectangle, string, bool, Point, bool, float> DrawButton,
+    IButtonDrawingSurface ButtonSurface,
     Action<Vector2, float, bool> DrawStone,
     Action<Vector2, bool> DrawPlayerRoleFace,
     Action<string, int, int, Rectangle, float> DrawTextSelection,

@@ -32,11 +32,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ActionBadge;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Button;
 
 /// <summary>
 /// ［画面描画］の共通処理
 /// </summary>
-public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IGoScreenRenderer
+public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IButtonDrawingSurface, IGoScreenRenderer
 {
     private const int GameOverValueX = 1328;
     private const int GameOverSecondValueX = 1560;
@@ -1749,7 +1750,7 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IGoScre
             transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));
         ReviewUnsavedChangesConfirmation.Draw(mousePoint,
             new ReviewUnsavedChangesConfirmationDrawingCallbacks(VirtualScreen.Width, VirtualScreen.Height, FillRect,
-                DrawRect, DrawText, DrawFittedText, DrawCommandButton));
+                DrawRect, DrawText, DrawFittedText, this));
         _spriteBatch.End();
     }
 
@@ -1765,7 +1766,7 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IGoScre
             transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));
         PopupNumberUnderline.Draw(mousePoint, title, text, caretIndex, selectionStart, selectionLength, message,
             new PopupNumberUnderlineDrawingCallbacks(VirtualScreen.Width, VirtualScreen.Height, FillRect, DrawRect,
-                DrawText, DrawFittedText, DrawTextBoxSelection, value => _font.MeasureString(value).X, DrawCommandButton,
+                DrawText, DrawFittedText, DrawTextBoxSelection, value => _font.MeasureString(value).X, this,
                 DrawLine, DrawSharpCenteredFittedText), options);
         _spriteBatch.End();
     }
@@ -1780,7 +1781,7 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IGoScre
             transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));
         PopupTimeUnderline.Draw(mousePoint, values, carets, activePart, message,
             new PopupTimeUnderlineDrawingCallbacks(VirtualScreen.Width, VirtualScreen.Height, FillRect, DrawRect,
-                DrawText, DrawFittedText, value => _font.MeasureString(value).X, DrawCommandButton, DrawLine, DrawSharpCenteredFittedText));
+                DrawText, DrawFittedText, value => _font.MeasureString(value).X, this, DrawLine, DrawSharpCenteredFittedText));
         _spriteBatch.End();
     }
 
@@ -2105,11 +2106,14 @@ public sealed partial class GoScreenRenderer : IUnderlineDrawingSurface, IGoScre
     private void DrawPlayerEditPanel(GoAppSession session, Point mousePoint) =>
         EditEntryProfile.Draw(session, mousePoint, _stickyNoteScreen,
             new EditEntryProfileDrawingCallbacks(VirtualScreen.Width, VirtualScreen.Height, FillRect, DrawRoundedFill,
-                DrawRect, DrawText, DrawFittedText, DrawCommandButton, DrawIconStone, DrawPlayerRoleFaceIcon,
+                DrawRect, DrawText, DrawFittedText, this, DrawIconStone, DrawPlayerRoleFaceIcon,
                 DrawTextBoxSelection, DrawTextBoxCaret, new ActionBadgeDrawingCallbacks(DrawRoundedFill, DrawSharpCenteredFittedText), bounds => DrawActionBadge("CHANGE", bounds),
                 DrawLine, DrawDynamicOptionText, DrawRotatedCenteredText));
 
     void IUnderlineDrawingSurface.FillRectangle(Rectangle bounds, Color color) => FillRect(bounds, color);
     void IUnderlineDrawingSurface.FillRoundedRectangle(Rectangle bounds, int radius, Color color) => DrawRoundedFill(bounds, radius, color);
     void IUnderlineDrawingSurface.DrawLine(Vector2 start, Vector2 end, float thickness, Color color) => DrawLine(start, end, thickness, color);
+    void IButtonDrawingSurface.FillRectangle(Rectangle bounds, Color color) => FillRect(bounds, color);
+    void IButtonDrawingSurface.DrawRectangle(Rectangle bounds, int thickness, Color color) => DrawRect(bounds, thickness, color);
+    void IButtonDrawingSurface.DrawFittedText(string text, Rectangle bounds, Color color, float scale) => DrawFittedText(text, bounds, color, scale);
 }

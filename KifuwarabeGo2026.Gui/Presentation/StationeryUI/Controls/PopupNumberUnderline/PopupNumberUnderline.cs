@@ -111,8 +111,8 @@ public sealed class PopupNumberUnderline
             foreach (var spinButton in SpinButtons)
                 spinButton.Draw(mousePoint, new SpinButtonDrawingCallbacks(draw.DrawLine, draw.DrawCenteredText));
         }
-        CancelButton.Draw(mousePoint, draw.DrawButton);
-        OkButton.Draw(mousePoint, draw.DrawButton);
+        CancelButton.Draw(mousePoint, draw.ButtonSurface);
+        OkButton.Draw(mousePoint, draw.ButtonSurface);
     }
 
     #endregion
@@ -136,6 +136,6 @@ public sealed record PopupNumberUnderlineDrawingCallbacks(
     Action<string, Rectangle, Color, float> DrawFittedText,
     Action<string, int, int, Rectangle, float> DrawTextSelection,
     Func<string, float> MeasureTextWidth,
-    Action<Rectangle, string, bool, Point, bool, float> DrawButton,
+    IButtonDrawingSurface ButtonSurface,
     Action<Vector2, Vector2, float, Color> DrawLine,
     Action<string, Rectangle, Color, float> DrawCenteredText);

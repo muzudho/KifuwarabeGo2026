@@ -27,6 +27,9 @@ public sealed class Button
     public string Label { get; set; }
     public float LabelScale { get; set; }
     public bool IsEnabled { get; set; } = true;
+    public bool IsPointerOver { get; private set; }
+    public Color FillColor { get; set; } = new Color(36, 48, 58);
+    public Color PointerOverFillColor { get; set; } = new Color(58, 82, 94);
 
     public bool IsHit(Point point) => IsEnabled && Bounds.Contains(point);
 
@@ -34,6 +37,28 @@ public sealed class Button
     // 機能
     // ========================================
 
-    public void Draw(Point mousePoint, Action<Rectangle, string, bool, Point, bool, float> drawButton) =>
-        (drawButton ?? throw new ArgumentNullException(nameof(drawButton)))(Bounds, Label, false, mousePoint, IsEnabled, LabelScale);
+    public void Draw(Point mousePoint, IButtonDrawingSurface surface)
+    {
+        ArgumentNullException.ThrowIfNull(surface);
+
+        IsPointerOver = IsHit(mousePoint);
+        var fill = !IsEnabled ? new Color(24, 27, 31) : IsPointerOver ? PointerOverFillColor : FillColor;
+        var border = !IsEnabled ? new Color(43, 50, 56) : IsPointerOver ? new Color(178, 219, 226) : new Color(126, 150, 164);
+        surface.FillRectangle(new Rectangle(Bounds.X + 4, Bounds.Y + 5, Bounds.Width, Bounds.Height), new Color(0, 0, 0, IsEnabled ? 95 : 28));
+        surface.FillRectangle(Bounds, fill);
+        surface.DrawRectangle(Bounds, 2, border);
+        if (IsEnabled)
+            surface.DrawRectangle(new Rectangle(Bounds.X + 2, Bounds.Y + 2, Bounds.Width - 4, Bounds.Height - 4), 1,
+                new Color(255, 255, 255, IsPointerOver ? 70 : 36));
+
+        surface.DrawFittedText(Label, new Rectangle(Bounds.X + 10, Bounds.Y + 5, Bounds.Width - 20, Bounds.Height - 10),
+            IsEnabled ? Color.White : new Color(91, 100, 106), LabelScale);
+    }
+}
+
+public interface IButtonDrawingSurface
+{
+    void FillRectangle(Rectangle bounds, Color color);
+    void DrawRectangle(Rectangle bounds, int thickness, Color color);
+    void DrawFittedText(string text, Rectangle bounds, Color color, float scale);
 }

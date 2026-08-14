@@ -65,8 +65,8 @@ public sealed class PopupTimeUnderline
         foreach (var spinButton in SpinButtons)
             spinButton.Draw(mousePoint, new SpinButtonDrawingCallbacks(draw.DrawLine, draw.DrawCenteredText));
         draw.DrawFittedText(message ?? string.Empty, new Rectangle(DialogBounds.X + 80, 642, DialogBounds.Width - 160, 28), new Color(255, 205, 140), 0.32f);
-        CancelButton.Draw(mousePoint, draw.DrawButton);
-        OkButton.Draw(mousePoint, draw.DrawButton);
+        CancelButton.Draw(mousePoint, draw.ButtonSurface);
+        OkButton.Draw(mousePoint, draw.ButtonSurface);
     }
 
     private static Rectangle ContentBounds(int part) => new(ValueBounds[part].X + 22, ValueBounds[part].Y + 12, ValueBounds[part].Width - 44, 46);
@@ -76,5 +76,5 @@ public sealed record PopupTimeUnderlineDrawingCallbacks(
     int VirtualScreenWidth, int VirtualScreenHeight,
     Action<Rectangle, Color> FillRectangle, Action<Rectangle, int, Color> DrawRectangle,
     Action<string, Vector2, Color, float> DrawText, Action<string, Rectangle, Color, float> DrawFittedText,
-    Func<string, float> MeasureTextWidth, Action<Rectangle, string, bool, Point, bool, float> DrawButton,
+    Func<string, float> MeasureTextWidth, IButtonDrawingSurface ButtonSurface,
     Action<Vector2, Vector2, float, Color> DrawLine, Action<string, Rectangle, Color, float> DrawCenteredText);

@@ -38,9 +38,9 @@ public sealed class ReviewUnsavedChangesConfirmation
         draw.DrawText("UNSAVED COMMENTS", new Vector2(DialogBounds.X + 34, DialogBounds.Y + 30), new Color(255, 230, 160), 0.64f);
         draw.DrawFittedText("Comments have not been written to an SGF file.", new Rectangle(DialogBounds.X + 34, DialogBounds.Y + 112, 700, 38), Color.White, 0.44f);
         draw.DrawFittedText("Save before leaving this review?", new Rectangle(DialogBounds.X + 34, DialogBounds.Y + 160, 700, 36), new Color(180, 195, 195), 0.40f);
-        SaveButton.Draw(mousePoint, draw.DrawButton);
-        DiscardButton.Draw(mousePoint, draw.DrawButton);
-        CancelButton.Draw(mousePoint, draw.DrawButton);
+        SaveButton.Draw(mousePoint, draw.ButtonSurface);
+        DiscardButton.Draw(mousePoint, draw.ButtonSurface);
+        CancelButton.Draw(mousePoint, draw.ButtonSurface);
     }
 
     #endregion
@@ -54,4 +54,4 @@ public sealed record ReviewUnsavedChangesConfirmationDrawingCallbacks(
     Action<Rectangle, int, Color> DrawRectangle,
     Action<string, Vector2, Color, float> DrawText,
     Action<string, Rectangle, Color, float> DrawFittedText,
-    Action<Rectangle, string, bool, Point, bool, float> DrawButton);
+    IButtonDrawingSurface ButtonSurface);
