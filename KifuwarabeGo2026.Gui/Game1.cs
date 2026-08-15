@@ -47,6 +47,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using KifuwarabeGo2026.Gui.Presentation.Shared.LiveBoardPreview;
 
 public class Game1 : Game
 {
@@ -3687,7 +3688,7 @@ public class Game1 : Game
         return false;
     }
 
-    private LiveBoardPreview? CreateLiveBoardPreview()
+    private LiveBoardPreviewModel? CreateLiveBoardPreview()
     {
         if (_variationSession is null)
             return null;
@@ -3696,7 +3697,7 @@ public class Game1 : Game
             _session.CurrentMode.Kind == GoAppModeKind.Playing)
         {
             var moves = _session.CurrentGameRecord.Moves;
-            return new LiveBoardPreview(
+            return new LiveBoardPreviewModel(
                 _session.BoardSize,
                 _session.GetStone,
                 moves.Count == 0 ? null : moves[^1],
@@ -3710,7 +3711,7 @@ public class Game1 : Game
             _cgosGameObservation.IsStarted &&
             !_cgosGameObservation.IsFinished)
         {
-            return new LiveBoardPreview(
+            return new LiveBoardPreviewModel(
                 _cgosGameObservation.BoardSize,
                 _cgosGameObservation.GetLiveStone,
                 _cgosGameObservation.LatestMove,

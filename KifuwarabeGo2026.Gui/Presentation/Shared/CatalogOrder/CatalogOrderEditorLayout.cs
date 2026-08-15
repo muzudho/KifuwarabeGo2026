@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Gui.Presentation;
+namespace KifuwarabeGo2026.Gui.Presentation.Shared.CatalogOrder;
 
 using Microsoft.Xna.Framework;
 

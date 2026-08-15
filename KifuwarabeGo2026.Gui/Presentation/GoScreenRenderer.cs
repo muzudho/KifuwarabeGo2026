@@ -2,6 +2,7 @@ namespace KifuwarabeGo2026.Gui.Presentation;
 
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Application.Local.Playing;
+using KifuwarabeGo2026.Gui.Presentation.BoardLens;
 using KifuwarabeGo2026.Gui.Presentation.BoardLens.Shared.RenBoundaries;
 using KifuwarabeGo2026.Gui.Presentation.Pages.EditTournamentRule;
 using KifuwarabeGo2026.Gui.Presentation.Pages.InitialPositionConcierge;
@@ -13,6 +14,7 @@ using KifuwarabeGo2026.Gui.Presentation.Shared.Breadcrumb;
 using KifuwarabeGo2026.Gui.Presentation.Shared.CgosMatchNotification;
 using KifuwarabeGo2026.Gui.Presentation.Shared.EditEntryProfile;
 using KifuwarabeGo2026.Gui.Presentation.Shared.HeadUpDisplay;
+using KifuwarabeGo2026.Gui.Presentation.Shared.LiveBoardPreview;
 using KifuwarabeGo2026.Gui.Presentation.Shared.RightSidePanel;
 using KifuwarabeGo2026.Gui.Presentation.Shared.SpinBox;
 using KifuwarabeGo2026.Gui.Presentation.Shared.TextAreaDialog;
@@ -39,7 +41,7 @@ using System.Linq;
 /// <summary>
 /// ［画面描画］の共通処理
 /// </summary>
-public sealed partial class GoScreenRenderer : IGoScreenRenderer
+public sealed partial class GoScreenRenderer
 {
     private const float MinimumTextScale = 0.32f;
 
@@ -53,6 +55,7 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
     private readonly Texture2D _stoneLight;
     private readonly Texture2D _stoneDark;
     private readonly StationeryDrawingContext _stationeryDrawingContext;
+    private readonly BoardLensModel _boardLensModel;
     internal StationeryDrawingContext StationeryDrawingContext => _stationeryDrawingContext;
 
     // 移設途中: StationeryDrawingContext の拡張と右側パネル共通部品への分離後に削除する一時的な描画ブリッジです。
@@ -93,12 +96,21 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
             this,
             FillRect, DrawRoundedFill, DrawRect, DrawLine, DrawCircle, DrawStone, DrawText, DrawFittedText, DrawSharpCenteredFittedText,
             DrawRotatedCenteredText, _font.MeasureString);
+        _boardLensModel = new BoardLensModel(
+            BoardPoint,
+            RenGraphCellColor,
+            DrawLine,
+            DrawCircle,
+            FillRect,
+            (ren, value, color, start, cell, outline) => DrawRenMetricNumber(ren, value, RenMetricUnit.PointCount, color, start, cell, outline),
+            (parse, metrics, start, cell) => DrawDeferredStrongMetrics(parse,
+                new List<(int RenNumber, int Value, Color Color, Color Outline)>(metrics), start, cell));
     }
 
     public void Draw(
         GoAppSession session,
         Point mousePosition,
-        LiveBoardPreview? liveBoardPreview = null,
+        LiveBoardPreviewModel? liveBoardPreview = null,
         InitialPositionConciergeView? initialPositionConcierge = null)
     {
         var mousePoint = VirtualScreen.ToVirtualPoint(_graphicsDevice.Viewport, mousePosition);
@@ -1165,7 +1177,7 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         }
         DrawRenGraphCells(boardSize, getStone, start, cell); DrawRenBoundaries(renParse, start, cell);
         if (displayMode == RenParseDisplayMode.RenArea) { DrawRenAreaNumbers(renParse, start, cell); return; }
-        RenBoundaryLens.DrawRenBoundaryLens(this, renParse, displayMode, start, cell);
+        RenBoundaryLens.DrawRenBoundaryLens(_boardLensModel, renParse, displayMode, start, cell);
     }
 
     private void DrawRenAreaNumbers(GoRenParseResult renParse, Vector2 start, float cell)
@@ -1264,17 +1276,6 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
             }
         }
     }
-
-    public Vector2 GetBoardPoint(Vector2 start, float cell, int x, int y) => BoardPoint(start, cell, x, y);
-    public Color GetRenGraphCellColor(GoStone stone) => RenGraphCellColor(stone);
-    public void DrawBoardLensLine(Vector2 start, Vector2 end, float thickness, Color color) => DrawLine(start, end, thickness, color);
-    public void DrawBoardLensCircle(Vector2 center, float radius, Color color) => DrawCircle(center, radius, color);
-    public void FillBoardLensRectangle(Rectangle bounds, Color color) => FillRect(bounds, color);
-    public void DrawRenBoundaryPointMetric(GoRen ren, int value, Color valueColor, Vector2 start, float cell, Color? outlineColor) =>
-        DrawRenMetricNumber(ren, value, RenMetricUnit.PointCount, valueColor, start, cell, outlineColor);
-    public void DrawDeferredStrongBoundaryMetrics(GoRenParseResult renParse,
-        IReadOnlyList<(int RenNumber, int Value, Color Color, Color Outline)> metrics, Vector2 start, float cell) =>
-        DrawDeferredStrongMetrics(renParse, new List<(int RenNumber, int Value, Color Color, Color Outline)>(metrics), start, cell);
 
     private void DrawRenMetricNumber(GoRen ren, int value, RenMetricUnit unit, Color valueColor, Vector2 start,
         float cell, Color? valueOutlineColor = null)

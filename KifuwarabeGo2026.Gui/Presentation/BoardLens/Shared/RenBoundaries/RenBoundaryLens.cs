@@ -1,6 +1,7 @@
 namespace KifuwarabeGo2026.Gui.Presentation.BoardLens.Shared.RenBoundaries;
 
 using KifuwarabeGo2026.Gui.Application;
+using KifuwarabeGo2026.Gui.Presentation.BoardLens;
 using KifuwarabeGo2026.Shared.BoardLens.Strong;
 using KifuwarabeGo2026.Shared.Domain;
 using Microsoft.Xna.Framework;
@@ -12,7 +13,7 @@ public static class RenBoundaryLens
 {
     private static readonly RenBoundaryPoints BoundaryPoints = new();
 
-    public static void DrawRenBoundaryLens(IGoScreenRenderer renderer, GoRenParseResult renParse,
+    public static void DrawRenBoundaryLens(BoardLensModel renderer, GoRenParseResult renParse,
         RenParseDisplayMode displayMode, Vector2 start, float cell)
     {
         ArgumentNullException.ThrowIfNull(renderer);
@@ -44,7 +45,7 @@ public static class RenBoundaryLens
         if (displayMode == RenParseDisplayMode.Strong) renderer.DrawDeferredStrongBoundaryMetrics(renParse, deferred, start, cell);
     }
 
-    private static void DrawPointMarkers(IGoScreenRenderer renderer, GoRenParseResult parse, RenBoundaryPointSet boundary, Color legColor, float legThickness, Vector2 start, float cell)
+    private static void DrawPointMarkers(BoardLensModel renderer, GoRenParseResult parse, RenBoundaryPointSet boundary, Color legColor, float legThickness, Vector2 start, float cell)
     {
         var originalRadius = MathHelper.Clamp(cell * 0.13f, 5f, 11f); var radius = Math.Max(2f, originalRadius - legThickness); var outerRadius = radius + 4f;
         var centers = new Dictionary<GoPoint, Vector2>();
@@ -53,15 +54,15 @@ public static class RenBoundaryLens
             var direction = boundary.DirectionSums[point]; if (direction.LengthSquared() < 0.01f) direction = boundary.FallbackDirections[point]; direction.Normalize();
             centers[point] = renderer.GetBoardPoint(start, cell, point.X, point.Y) + new Vector2(-direction.Y, direction.X) * (originalRadius + 4f) * 2f;
         }
-        foreach (var contact in boundary.Contacts) renderer.DrawBoardLensLine(renderer.GetBoardPoint(start, cell, contact.From.X, contact.From.Y), centers[contact.To], legThickness, legColor);
+        foreach (var contact in boundary.Contacts) renderer.DrawLine(renderer.GetBoardPoint(start, cell, contact.From.X, contact.From.Y), centers[contact.To], legThickness, legColor);
         foreach (var marker in centers)
         {
             var stone = parse.GetRen(parse.GetRenNumber(marker.Key.X, marker.Key.Y)).Stone;
-            renderer.DrawBoardLensCircle(marker.Value, Math.Max(1f, outerRadius - 1f), legColor); renderer.DrawBoardLensCircle(marker.Value, radius, renderer.GetRenGraphCellColor(stone));
+            renderer.DrawCircle(marker.Value, Math.Max(1f, outerRadius - 1f), legColor); renderer.DrawCircle(marker.Value, radius, renderer.GetRenGraphCellColor(stone));
         }
     }
 
-    private static void DrawAdjacentRelationships(IGoScreenRenderer renderer, GoRenParseResult parse, List<(GoPoint From, GoPoint To)> contacts, HashSet<int> adjacentNumbers, Color legColor, float thickness, Vector2 start, float cell)
+    private static void DrawAdjacentRelationships(BoardLensModel renderer, GoRenParseResult parse, List<(GoPoint From, GoPoint To)> contacts, HashSet<int> adjacentNumbers, Color legColor, float thickness, Vector2 start, float cell)
     {
         var radius = MathHelper.Clamp(cell * 0.13f, 5f, 11f); var innerHalf = Math.Max(2, (int)MathF.Round(radius - thickness)); var outerHalf = Math.Max(innerHalf + 2, (int)MathF.Round(radius + 3f - thickness));
         var sorted = new List<int>(adjacentNumbers); sorted.Sort();
@@ -70,9 +71,9 @@ public static class RenBoundaryLens
             var contact = FindFirstContact(parse, contacts, number); var target = parse.GetRen(number);
             var source = renderer.GetBoardPoint(start, cell, contact.From.X, contact.From.Y); var boundary = renderer.GetBoardPoint(start, cell, contact.To.X, contact.To.Y);
             var direction = new Vector2(contact.From.X - contact.To.X, contact.From.Y - contact.To.Y); direction.Normalize(); var marker = boundary + new Vector2(-direction.Y, direction.X) * outerHalf * 2f;
-            renderer.DrawBoardLensLine(source, marker, thickness, legColor);
-            renderer.FillBoardLensRectangle(new Rectangle((int)MathF.Round(marker.X) - outerHalf, (int)MathF.Round(marker.Y) - outerHalf, outerHalf * 2, outerHalf * 2), legColor);
-            renderer.FillBoardLensRectangle(new Rectangle((int)MathF.Round(marker.X) - innerHalf, (int)MathF.Round(marker.Y) - innerHalf, innerHalf * 2, innerHalf * 2), renderer.GetRenGraphCellColor(target.Stone));
+            renderer.DrawLine(source, marker, thickness, legColor);
+            renderer.FillRectangle(new Rectangle((int)MathF.Round(marker.X) - outerHalf, (int)MathF.Round(marker.Y) - outerHalf, outerHalf * 2, outerHalf * 2), legColor);
+            renderer.FillRectangle(new Rectangle((int)MathF.Round(marker.X) - innerHalf, (int)MathF.Round(marker.Y) - innerHalf, innerHalf * 2, innerHalf * 2), renderer.GetRenGraphCellColor(target.Stone));
         }
     }
     private static (GoPoint From, GoPoint To) FindFirstContact(GoRenParseResult parse, List<(GoPoint From, GoPoint To)> contacts, int target)

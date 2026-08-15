@@ -2,6 +2,7 @@ namespace KifuwarabeGo2026.Gui.Presentation.GoApps.Formal.LocalMatch.Interval;
 
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Application.Local.Playing;
+using KifuwarabeGo2026.Gui.Presentation.Shared.LiveBoardPreview;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 using Microsoft.Xna.Framework;
 
@@ -14,7 +15,7 @@ public static class LocalIntermissionRenderer
         StationeryDrawingContext drawingContext,
         GoAppSession session,
         Point mousePosition,
-        LiveBoardPreview? liveBoardPreview = null,
+        LiveBoardPreviewModel? liveBoardPreview = null,
         InitialPositionConciergeView? initialPositionConcierge = null) =>
         drawingContext.ScreenRenderer.Draw(session, mousePosition, liveBoardPreview, initialPositionConcierge);
 }

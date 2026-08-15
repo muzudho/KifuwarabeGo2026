@@ -21,6 +21,7 @@ using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Button;
 using static KifuwarabeGo2026.Gui.Presentation.Pages.PopupTrendChart.PopupTrendChartScreenBounds;
 using Microsoft.Xna.Framework;
 using System;
+using KifuwarabeGo2026.Gui.Presentation.Shared.LiveBoardPreview;
 
 public static class RightSidePanelLayout
 {
@@ -51,7 +52,7 @@ public sealed class RightSidePanel
     }
 
     public void Draw(StationeryDrawingContext drawingContext, GoAppSession session, Point mousePoint,
-        LiveBoardPreview? liveBoardPreview, InitialPositionConciergeView? initialPositionConcierge)
+        LiveBoardPreviewModel? liveBoardPreview, InitialPositionConciergeView? initialPositionConcierge)
     {
         var renderer = drawingContext.ScreenRenderer;
         RightSidePanelFrame.Draw(drawingContext);
@@ -432,7 +433,7 @@ public sealed class VariationEditingRightSidePanel
     // 機能
     // ========================================
 
-    public void Draw(StationeryDrawingContext drawingContext, GoAppSession session, Point mousePoint, LiveBoardPreview? preview)
+    public void Draw(StationeryDrawingContext drawingContext, GoAppSession session, Point mousePoint, LiveBoardPreviewModel? preview)
     {
         var renderer = drawingContext.ScreenRenderer;
         var controls = BoardAndReviewScreen.Default.VariationEditing;
@@ -486,7 +487,7 @@ public sealed class VariationEditingRightSidePanel
         controls.PassButton.Draw(mousePoint, drawingContext);
     }
 
-    private static void DrawLiveBoardWipe(StationeryDrawingContext drawingContext, LiveBoardPreview preview)
+    private static void DrawLiveBoardWipe(StationeryDrawingContext drawingContext, LiveBoardPreviewModel preview)
     {
         var renderer = drawingContext.ScreenRenderer;
         var bounds = BoardAndReviewScreen.Default.VariationEditing.LiveBoardBounds;
