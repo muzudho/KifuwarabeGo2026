@@ -940,7 +940,9 @@ public sealed class PlayingScene : IDisposable
             profile.Arguments,
             profile.EnableGtpLog,
             logPrefix,
-            new Dictionary<string, string>(profile.GuiOptions),
+            _session.UseKind == GoAppUseKind.LocalPlay
+                ? _session.GetLocalMatchEngineGuiOptions(stone)
+                : new Dictionary<string, string>(profile.GuiOptions),
             appId,
             "player");
     }

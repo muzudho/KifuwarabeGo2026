@@ -1821,11 +1821,15 @@ public class Game1 : Game
             {
                 StartWhiteboardFromLocalSetup();
             }
+            else if (isSetupMode && localMatchScreen.GetSeedAutoChangeHit(point) is { } seedStone)
+            {
+                _session.ToggleLocalMatchSeedAutoChange(seedStone);
+            }
             else if (isSetupMode &&
                      _session.CanStartPlaying &&
                      localMatchScreen.StartPlayingButton.IsHit(point))
             {
-                _playingScene.StartPlaying();
+                StartLocalMatch();
             }
             else if (isPlayerSelectionIntermission &&
                      localMatchScreen.GetHandleHit(point, _session.UseKind == GoAppUseKind.LocalApps) is { } handleStone)
@@ -2405,6 +2409,21 @@ public class Game1 : Game
         var logPath = Path.Combine(AppContext.BaseDirectory, "logs", "gtp.log");
         _desktopLauncher.OpenTextFile(logPath);
     }
+
+    private void StartLocalMatch()
+    {
+        var seeds = _session.ApplyLocalMatchRandomSeedsAtStart();
+        _playingScene.StartPlaying();
+
+        var seedComment = $"LOCAL MATCH RANDOM SEEDS\nBlack: {FormatLocalMatchSeed(seeds.Black)}\nWhite: {FormatLocalMatchSeed(seeds.White)}";
+        _session.CurrentGameRecord.RootComment = string.IsNullOrWhiteSpace(_session.CurrentGameRecord.RootComment)
+            ? seedComment
+            : $"{_session.CurrentGameRecord.RootComment}\n\n{seedComment}";
+        GuiOperationLog.User("Started Local Match",
+            $"blackSeed={FormatLocalMatchSeed(seeds.Black)}; whiteSeed={FormatLocalMatchSeed(seeds.White)}");
+    }
+
+    private static string FormatLocalMatchSeed(int? seed) => seed?.ToString() ?? "HUMAN";
 
     private void StartPonnukiApp()
     {

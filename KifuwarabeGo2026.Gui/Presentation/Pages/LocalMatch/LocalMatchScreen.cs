@@ -22,6 +22,8 @@ public sealed class LocalMatchScreen
         WhitePlayerKindRow = new PlayerKindSelectionRow(814);
         PonnukiBlackPlayerKindRow = new PlayerKindSelectionRow(646);
         PonnukiWhitePlayerKindRow = new PlayerKindSelectionRow(750);
+        BlackSeedAutoChangeButton = new Button(new Rectangle(1164, 870, 307, 32), "BLACK", 0.22f);
+        WhiteSeedAutoChangeButton = new Button(new Rectangle(1485, 870, 307, 32), "WHITE", 0.22f);
     }
 
     public Rectangle LocalUseCardBounds { get; } = new(508, 404, 438, 300);
@@ -34,6 +36,12 @@ public sealed class LocalMatchScreen
     public PlayerKindSelectionRow WhitePlayerKindRow { get; }
     public PlayerKindSelectionRow PonnukiBlackPlayerKindRow { get; }
     public PlayerKindSelectionRow PonnukiWhitePlayerKindRow { get; }
+    public Button BlackSeedAutoChangeButton { get; }
+    public Button WhiteSeedAutoChangeButton { get; }
+
+    public GoStone? GetSeedAutoChangeHit(Point point) =>
+        BlackSeedAutoChangeButton.IsHit(point) ? GoStone.Black :
+        WhiteSeedAutoChangeButton.IsHit(point) ? GoStone.White : null;
 
     public PlayerKindSelectionRow GetPlayerKindRow(GoStone stone, bool isPonnuki) =>
         (stone, isPonnuki) switch

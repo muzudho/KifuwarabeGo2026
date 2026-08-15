@@ -184,10 +184,10 @@ public sealed class LocalMatchIntermissionRightSidePanel
 
 public sealed class SetupRightSidePanel
 {
-    internal const int BlackPlayerKindButtonY = 710;
-    internal const int BlackEngineButtonY = 768;
-    internal const int WhitePlayerKindButtonY = 814;
-    internal const int WhiteEngineButtonY = 872;
+    internal const int BlackPlayerKindButtonY = 646;
+    internal const int BlackEngineButtonY = 704;
+    internal const int WhitePlayerKindButtonY = 750;
+    internal const int WhiteEngineButtonY = 808;
 
     internal RightSidePanelPlayerSelector PlayerSelector { get; } = new();
 
@@ -203,15 +203,25 @@ public sealed class SetupRightSidePanel
         screen.ImportSgfButton.Draw(mousePoint, drawingContext);
         renderer.DrawResultRow(new Rectangle(1164, 292, 628, 56), "RULES", session.TournamentDisplayName, new Color(39, 68, 65), Color.White);
 
-        renderer.DrawVerticalResultSection(new Rectangle(1144, 376, 668, 304), "RULES", new Color(66, 104, 116));
+        renderer.DrawVerticalResultSection(new Rectangle(1144, 376, 668, 240), "RULES", new Color(66, 104, 116));
         renderer.DrawInfoStrip(1144, 384, "RULE", session.RuleKind.ToString());
-        renderer.DrawInfoStrip(1144, 456, "BOARD", $"{session.BoardSize} x {session.BoardSize}");
-        renderer.DrawInfoStrip(1144, 528, "KOMI", session.Komi.ToString("0.0"));
-        renderer.DrawInfoStrip(1144, 600, "MOVES", session.MoveLimit <= 0 ? "UNLIMITED" : session.MoveLimit.ToString());
+        renderer.DrawInfoStrip(1144, 440, "BOARD", $"{session.BoardSize} x {session.BoardSize}");
+        renderer.DrawInfoStrip(1144, 496, "KOMI", session.Komi.ToString("0.0"));
+        renderer.DrawInfoStrip(1144, 552, "MOVES", session.MoveLimit <= 0 ? "UNLIMITED" : session.MoveLimit.ToString());
 
-        renderer.DrawVerticalResultSection(new Rectangle(1144, 696, 668, 216), "PLAYERS", new Color(76, 91, 126));
+        renderer.DrawVerticalResultSection(new Rectangle(1144, 632, 668, 216), "PLAYERS", new Color(76, 91, 126));
         PlayerSelector.DrawPlayerRow(drawingContext, session, GoStone.Black, mousePoint, BlackPlayerKindButtonY);
         PlayerSelector.DrawPlayerRow(drawingContext, session, GoStone.White, mousePoint, WhitePlayerKindButtonY);
+
+        renderer.DrawVerticalResultSection(new Rectangle(1144, 856, 668, 52), "SEED AUTO", new Color(112, 76, 48), labelWidth: 56);
+        screen.BlackSeedAutoChangeButton.Label = session.LocalMatchBlackSeedAutoChange ? "[x] BLACK" : "[ ] BLACK";
+        screen.BlackSeedAutoChangeButton.IsSelected = session.LocalMatchBlackSeedAutoChange;
+        screen.BlackSeedAutoChangeButton.IsEnabled = session.CanAutoChangeLocalMatchSeed(GoStone.Black);
+        screen.BlackSeedAutoChangeButton.Draw(mousePoint, drawingContext);
+        screen.WhiteSeedAutoChangeButton.Label = session.LocalMatchWhiteSeedAutoChange ? "[x] WHITE" : "[ ] WHITE";
+        screen.WhiteSeedAutoChangeButton.IsSelected = session.LocalMatchWhiteSeedAutoChange;
+        screen.WhiteSeedAutoChangeButton.IsEnabled = session.CanAutoChangeLocalMatchSeed(GoStone.White);
+        screen.WhiteSeedAutoChangeButton.Draw(mousePoint, drawingContext);
 
         renderer.DrawVerticalResultSection(new Rectangle(1144, 916, 668, 76), "ACTION", new Color(91, 82, 105));
         var boardAndReviewScreen = BoardAndReviewScreen.Default;
