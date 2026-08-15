@@ -1,7 +1,5 @@
 namespace KifuwarabeGo2026.Gui.Presentation.Pages.PopupTrendChart;
 
-using KifuwarabeGo2026.Gui.Presentation.Shared.RightSidePanel;
-
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.Watching;
 using KifuwarabeGo2026.Gui.Application.Local.Playing;
@@ -91,7 +89,7 @@ public sealed class PopupTrendChartRenderer
 
     public static int? GetReviewChartPopupStepButtonHit(Point point)
     {
-        return ReviewMoveNavigation.GetButtonHit(point, ReviewChartPopupStepButtonBounds);
+        return PopupTrendChartScreen.Default.SeekButtonStrip.GetButtonHit(point);
     }
 
     public static int? GetReplayStepButtonHit(Point point) =>
@@ -121,7 +119,8 @@ public sealed class PopupTrendChartRenderer
             session.ReviewMoveIndex,
             popup: true);
 
-        DrawReviewChartPopupStepButtons(
+        PopupTrendChartScreen.Default.SeekButtonStrip.Draw(
+            _drawingContext,
             session.ReviewTimelineIndex,
             session.ReviewTimelineMaximum,
             mousePoint);
@@ -217,7 +216,8 @@ public sealed class PopupTrendChartRenderer
 
         if (seekable)
         {
-            DrawReviewChartPopupStepButtons(
+            PopupTrendChartScreen.Default.SeekButtonStrip.Draw(
+                _drawingContext,
                 Math.Min(selectedMoveIndex ?? visibleMoves.Count, visibleMoves.Count),
                 visibleMoves.Count,
                 mousePoint);
@@ -235,14 +235,6 @@ public sealed class PopupTrendChartRenderer
         }
     }
 
-    private void DrawReviewChartPopupStepButtons(
-        int currentMoveIndex,
-        int moveCount,
-        Point mousePoint)
-    {
-        ReviewMoveNavigation.Draw(_drawingContext, currentMoveIndex, moveCount, mousePoint, ReviewChartPopupStepButtonBounds);
-    }
-
     public void DrawReplayNavigationControls(
         KfwStationeryDrawingTools drawingContext,
         int currentMoveIndex,
@@ -252,7 +244,8 @@ public sealed class PopupTrendChartRenderer
         string backToLiveLabel)
     {
         _drawingContext = drawingContext;
-        DrawReviewChartPopupStepButtons(currentMoveIndex, moveCount, mousePoint);
+        PopupTrendChartScreen.Default.SeekButtonStrip.Draw(
+            _drawingContext, currentMoveIndex, moveCount, mousePoint);
         if (showBackToLive)
         {
             var backToLiveButton = PopupTrendChartScreen.Default.ReplayBackToLiveButton;

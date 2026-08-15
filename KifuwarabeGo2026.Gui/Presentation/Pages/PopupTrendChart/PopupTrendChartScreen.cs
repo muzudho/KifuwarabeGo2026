@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework;
 using KifuwarabeGo2026.Gui.Presentation.Pages.PopupTrendChart.MoveCommentPanel;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ChartAxisSectionLabel;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Button;
+using KifuwarabeGo2026.Gui.Presentation.Shared.SeekButtonStrip;
 
 /// <summary>検討チャートポップアップとリプレイ操作のレイアウトを所有します。</summary>
 public sealed class PopupTrendChartScreen
@@ -18,6 +19,7 @@ public sealed class PopupTrendChartScreen
         CloseButton = new Button(new Rectangle(1660, 55, 160, 48), "CLOSE", 0.38f);
         BackToLiveButton = new Button(new Rectangle(1026, 55, 216, 48), "BACK TO LIVE", 0.34f);
         ReplayBackToLiveButton = new Button(new Rectangle(836, 72, 170, 54), "BACK TO LIVE", 0.30f);
+        SeekButtonStrip = new SeekButtonStripComponent(index => new Rectangle(512 + index * 112, 1028, 102, 44));
     }
 
     public MoveCommentPanelComponent MoveCommentPanel { get; }
@@ -33,6 +35,7 @@ public sealed class PopupTrendChartScreen
     public Rectangle BottomNavigationControlsProximityBounds { get; } = new(150, 952, 1600, 126);
     public Rectangle ReplayEditButtonBounds { get; } = new(1018, 72, 72, 72);
     public Button ReplayBackToLiveButton { get; }
+    public SeekButtonStripComponent SeekButtonStrip { get; }
 
     public Rectangle PlotBounds => new(
         ChartBounds.X + 72,
@@ -40,7 +43,6 @@ public sealed class PopupTrendChartScreen
         ChartBounds.Width - 144,
         ChartBounds.Height - 260);
 
-    public Rectangle GetStepButtonBounds(int index) => new(512 + index * 112, 1028, 102, 44);
 }
 
 internal static class PopupTrendChartScreenBounds
@@ -58,5 +60,4 @@ internal static class PopupTrendChartScreenBounds
     internal static Rectangle PopupTrendChartMoveCommentPanelBounds => Screen.MoveCommentPanel.Bounds;
     internal static Rectangle ReplayEditButtonBounds => Screen.ReplayEditButtonBounds;
     internal static Rectangle ReplayBackToLiveButtonBounds => Screen.ReplayBackToLiveButton.Bounds;
-    internal static Rectangle ReviewChartPopupStepButtonBounds(int index) => Screen.GetStepButtonBounds(index);
 }

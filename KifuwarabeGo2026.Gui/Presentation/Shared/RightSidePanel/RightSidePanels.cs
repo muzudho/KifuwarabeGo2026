@@ -24,6 +24,7 @@ using Microsoft.Xna.Framework;
 using System;
 using KifuwarabeGo2026.Gui.Presentation.Shared.LiveBoardPreview;
 using KifuwarabeGo2026.Gui.Presentation.Pages.MoveTrendChart;
+using KifuwarabeGo2026.Gui.Presentation.Pages.PopupTrendChart;
 
 public static class RightSidePanelLayout
 {
@@ -498,7 +499,7 @@ public sealed class ReviewingRightSidePanel
     // ========================================
 
     public int? GetStepButtonHit(Point point) =>
-        ReviewMoveNavigation.GetButtonHit(point, ReviewChartPopupStepButtonBounds);
+        PopupTrendChartScreen.Default.SeekButtonStrip.GetButtonHit(point);
 
     public void Draw(KfwStationeryDrawingTools drawingContext, MoveTrendChartRenderer moveTrendChartRenderer, GoAppSession session, Point mousePoint)
     {
@@ -541,8 +542,8 @@ public sealed class ReviewingRightSidePanel
         controls.BoardLensPreviousButton.Draw(mousePoint, drawingContext);
         controls.BoardLensExitButton.Draw(mousePoint, drawingContext);
         controls.BoardLensButton.Draw(mousePoint, drawingContext);
-        ReviewMoveNavigation.Draw(drawingContext, session.ReviewTimelineIndex, session.ReviewTimelineMaximum,
-            mousePoint, ReviewChartPopupStepButtonBounds);
+        PopupTrendChartScreen.Default.SeekButtonStrip.Draw(
+            drawingContext, session.ReviewTimelineIndex, session.ReviewTimelineMaximum, mousePoint);
         drawingContext.DrawFittedText(
             "[L] BOARD LENS    HOME/END    ARROWS: -/+1,10    PGDN/PGUP: -/+50",
             new Rectangle(1168, 950, 624, 24), new Color(147, 201, 190), 0.23f);
@@ -587,8 +588,8 @@ public sealed class ReviewingRightSidePanel
             new Color(76, 91, 126));
         var timelineIndex = isCompletedGame ? session.LocalReviewTimelineIndex : session.ReviewTimelineIndex;
         var timelineMaximum = isCompletedGame ? session.LocalReviewTimelineMaximum : session.ReviewTimelineMaximum;
-        ReviewMoveNavigation.Draw(drawingContext, timelineIndex, timelineMaximum,
-            mousePoint, ReviewChartPopupStepButtonBounds);
+        PopupTrendChartScreen.Default.SeekButtonStrip.Draw(
+            drawingContext, timelineIndex, timelineMaximum, mousePoint);
         drawingContext.DrawFittedText(
             "HOME/END    ARROWS: -/+1,10    PGDN/PGUP: -/+50    END: RESULT",
             new Rectangle(1168, 950, 624, 24), new Color(147, 201, 190), 0.23f);
@@ -613,50 +614,6 @@ public sealed class ReviewingRightSidePanel
             new Rectangle(RightSidePanelLayout.PrimaryValueX, bounds.Y + 8, 448, bounds.Height - 16),
             new Color(99, 223, 185), 0.42f);
     }
-}
-
-public static class ReviewMoveNavigation
-{
-    // ========================================
-    // データメンバー
-    // ========================================
-
-    internal static readonly int[] StepButtonValues =
-        [int.MinValue, -50, -10, -1, 1, 10, 50, int.MaxValue];
-
-    // ========================================
-    // 機能
-    // ========================================
-
-    public static int? GetButtonHit(Point point, Func<int, Rectangle> getButtonBounds)
-    {
-        for (var index = 0; index < StepButtonValues.Length; index++)
-            if (getButtonBounds(index).Contains(point))
-                return StepButtonValues[index];
-        return null;
-    }
-
-    internal static void Draw(KfwStationeryDrawingTools drawingContext, int currentMoveIndex, int maximumMoveIndex,
-        Point mousePoint, Func<int, Rectangle> getButtonBounds)
-    {
-        var renderer = drawingContext;
-        for (var index = 0; index < StepButtonValues.Length; index++)
-        {
-            var step = StepButtonValues[index];
-            var enabled = step < 0
-                ? currentMoveIndex > 0
-                : currentMoveIndex < maximumMoveIndex;
-            renderer.DrawCommandButton(getButtonBounds(index), FormatStep(step), false, mousePoint, enabled, 0.31f);
-        }
-    }
-
-    private static string FormatStep(int step) => step switch
-    {
-        int.MinValue => "|<",
-        int.MaxValue => ">|",
-        > 0 => $"+{step}",
-        _ => step.ToString(),
-    };
 }
 
 public sealed class InitialPositionConciergeRightSidePanel
