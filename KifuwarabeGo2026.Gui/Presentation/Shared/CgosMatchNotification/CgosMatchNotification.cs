@@ -1,6 +1,7 @@
 namespace KifuwarabeGo2026.Gui.Presentation.Shared.CgosMatchNotification;
 
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Button;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 using Microsoft.Xna.Framework;
 using System;
 
@@ -24,6 +25,27 @@ public sealed class CgosMatchNotification
     public Button DeferredWatchButton { get; }
 
     public static bool IsDeferredBannerHit(Point point) => DeferredBounds.Contains(point);
+
+    /// <summary>物理座標を受け取り、CGOS 対局通知の描画サイクル全体を実行します。</summary>
+    public void Draw(StationeryDrawingContext drawingContext, Point mousePosition, bool deferred, bool finished,
+        int secondsRemaining, float opacity, float buttonOpacity, bool buttonsEnabled, bool showDeferredAction)
+    {
+        ArgumentNullException.ThrowIfNull(drawingContext);
+        var mousePoint = drawingContext.ToVirtualPoint(mousePosition);
+        var message = finished
+            ? "対局が終了しました。結果画面へ移動します。"
+            : $"対局が始まりました。{secondsRemaining} 秒後に観戦画面へ移動します。";
+
+        drawingContext.Begin();
+        Draw(mousePoint, deferred, finished, message, opacity, buttonOpacity, buttonsEnabled, showDeferredAction,
+            new CgosMatchNotificationDrawingCallbacks(
+                drawingContext.FillRectangle,
+                drawingContext.DrawRectangle,
+                drawingContext.DrawCircle,
+                drawingContext.DrawDynamicText,
+                drawingContext.DrawFittedText));
+        drawingContext.End();
+    }
 
     public void Draw(Point mousePoint, bool deferred, bool finished, string message, float opacity, float buttonOpacity,
         bool buttonsEnabled, bool showDeferredAction, CgosMatchNotificationDrawingCallbacks draw)

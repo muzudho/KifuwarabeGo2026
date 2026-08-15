@@ -816,7 +816,8 @@ public class Game1 : Game
                 (float)Math.Clamp(notificationAge.TotalSeconds / CgosMatchFadeSeconds, 0d, 1d);
             var buttonsEnabled =
                 notificationAge.TotalSeconds >= CgosMatchButtonDelaySeconds;
-            _renderer.DrawCgosMatchNotification(
+            CgosMatchNotification.Default.Draw(
+                _renderer.StationeryDrawingContext,
                 Mouse.GetState().Position,
                 _cgosMatchNotificationMode == CgosMatchNotificationMode.Deferred,
                 _cgosGameObservation.IsFinished,
@@ -3844,10 +3845,10 @@ public class Game1 : Game
         if (_cgosMatchNotificationMode == CgosMatchNotificationMode.Deferred)
         {
             if (_session.CgosConnectionFlowKind == CgosConnectionFlowKind.Watching)
-                return GoScreenRenderer.GetCgosMatchDeferredBannerHit(point);
+                return CgosMatchNotification.IsDeferredBannerHit(point);
 
             if (!CgosMatchNotification.Default.DeferredWatchButton.IsHit(point))
-                return GoScreenRenderer.GetCgosMatchDeferredBannerHit(point);
+                return CgosMatchNotification.IsDeferredBannerHit(point);
 
             OpenNotifiedCgosMatch("Pressed deferred match notification");
             return true;

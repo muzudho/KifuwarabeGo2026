@@ -18,7 +18,6 @@ using KifuwarabeGo2026.Gui.Presentation.Pages.ScreenshotEffect;
 using KifuwarabeGo2026.Gui.Presentation.Pages.ScreenTransition;
 using KifuwarabeGo2026.Gui.Presentation.Pages.Title;
 using KifuwarabeGo2026.Gui.Presentation.Shared.Breadcrumb;
-using KifuwarabeGo2026.Gui.Presentation.Shared.CgosMatchNotification;
 using KifuwarabeGo2026.Gui.Presentation.Shared.EditEntryProfile;
 using KifuwarabeGo2026.Gui.Presentation.Shared.EntryProfiles;
 using KifuwarabeGo2026.Gui.Presentation.Shared.HeadUpDisplay;
@@ -76,7 +75,6 @@ public sealed class GoScreenRenderer
         new SquareUnderline { Thickness = 1 }, "EDIT");
     public HeadUpDisplayComponent HeadUpDisplay { get; } = HeadUpDisplayComponent.Default;
     public InitialPositionConcierge InitialPositionConcierge { get; } = new();
-    private readonly CgosMatchNotification _cgosMatchNotification = CgosMatchNotification.Default;
     public EditEntryProfile EditEntryProfile { get; } = new();
 
     public GoScreenRenderer(
@@ -869,19 +867,6 @@ public sealed class GoScreenRenderer
         var note = new StickyNote(kind, connectorStart, accent, borderColor, heading, bodyLines, bodyLineSpacing, anchorBounds);
         if (!note.TryPlace(HeadUpDisplay.StickyNoteScreen)) return;
         note.Draw(new StickyNoteDrawingCallbacks(DrawLine, FillRect, DrawRect, DrawDynamicOptionText));
-    }
-
-    public static bool GetCgosMatchDeferredBannerHit(Point point) => CgosMatchNotification.IsDeferredBannerHit(point);
-
-    public void DrawCgosMatchNotification(Point mousePosition, bool deferred, bool finished, int secondsRemaining,
-        float opacity, float buttonOpacity, bool buttonsEnabled, bool showDeferredAction)
-    {
-        var mousePoint = VirtualScreen.ToVirtualPoint(_graphicsDevice.Viewport, mousePosition);
-        var message = finished ? "対局が終了しました。結果画面へ移動します。" : $"対局が始まりました。{secondsRemaining} 秒後に観戦画面へ移動します。";
-        _spriteBatch.Begin(samplerState: SamplerState.LinearClamp, transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));
-        _cgosMatchNotification.Draw(mousePoint, deferred, finished, message, opacity, buttonOpacity, buttonsEnabled, showDeferredAction,
-            new CgosMatchNotificationDrawingCallbacks(FillRect, DrawRect, DrawCircle, DrawDynamicOptionText, DrawFittedText));
-        _spriteBatch.End();
     }
 
     public void DrawTextAreaDialog(Point mousePosition, string title, string text, int caretIndex, string message, bool hasChanges,
