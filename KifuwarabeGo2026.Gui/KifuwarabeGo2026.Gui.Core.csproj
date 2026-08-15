@@ -49,6 +49,7 @@
     <Folder Include="Presentation\Shared\PopupFilePathTooltip\" />
     <Folder Include="Presentation\Shared\RightSidePanel\" />
     <Folder Include="Presentation\Shared\SeekButtonStrip\" />
+    <Folder Include="Presentation\Shared\RandomSeedRow\" />
     <Folder Include="Presentation\StationeryUI\Controls\PopupNumberUnderline\" />
     <Folder Include="Presentation\StationeryUI\Controls\StickyNote\" />
     <Folder Include="Presentation\StationeryUI\Controls\TableRowLabel\" />

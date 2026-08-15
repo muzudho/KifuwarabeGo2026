@@ -25,6 +25,7 @@ using System;
 using KifuwarabeGo2026.Gui.Presentation.Shared.LiveBoardPreview;
 using KifuwarabeGo2026.Gui.Presentation.Pages.MoveTrendChart;
 using KifuwarabeGo2026.Gui.Presentation.Pages.PopupTrendChart;
+using KifuwarabeGo2026.Gui.Presentation.Shared.RandomSeedRow;
 
 public static class RightSidePanelLayout
 {
@@ -213,9 +214,10 @@ public sealed class SetupRightSidePanel
         PlayerSelector.DrawPlayerRow(drawingContext, session, GoStone.Black, mousePoint, BlackPlayerKindButtonY);
         PlayerSelector.DrawPlayerRow(drawingContext, session, GoStone.White, mousePoint, WhitePlayerKindButtonY);
 
-        renderer.DrawVerticalResultSection(new Rectangle(1144, 856, 668, 52), "RANDOM SEED", new Color(112, 76, 48), labelWidth: 56);
-        DrawRandomSeedLink(drawingContext, session, mousePoint, GoStone.Black, screen.BlackSeedLink);
-        DrawRandomSeedLink(drawingContext, session, mousePoint, GoStone.White, screen.WhiteSeedLink);
+        RandomSeedRowComponent.LocalMatch.Draw(drawingContext, mousePoint, new RandomSeedRowModel(
+            false, "",
+            session.SupportsLocalMatchRandomSeed(GoStone.Black), session.GetLocalMatchRandomSeedText(GoStone.Black),
+            session.SupportsLocalMatchRandomSeed(GoStone.White), session.GetLocalMatchRandomSeedText(GoStone.White)));
 
         renderer.DrawVerticalResultSection(new Rectangle(1144, 916, 668, 76), "ACTION", new Color(91, 82, 105));
         var boardAndReviewScreen = BoardAndReviewScreen.Default;
@@ -228,16 +230,6 @@ public sealed class SetupRightSidePanel
         screen.StartPlayingButton.Draw(mousePoint, drawingContext);
     }
 
-    private static void DrawRandomSeedLink(KfwStationeryDrawingTools drawingContext, GoAppSession session,
-        Point mousePoint, GoStone stone, LinkUnderline link)
-    {
-        if (!session.SupportsLocalMatchRandomSeed(stone)) return;
-        link.UpdatePointer(mousePoint);
-        drawingContext.DrawIconStone(new Vector2(link.Bounds.X - 28, link.Bounds.Center.Y), 12, stone == GoStone.Black);
-        drawingContext.DrawFittedText(link.GetDisplayText(session.GetLocalMatchRandomSeedText(stone)),
-            new Rectangle(link.Bounds.X + 8, link.Bounds.Y + 2, link.Bounds.Width - 116, 26), Color.White, 0.31f);
-        link.Draw(drawingContext);
-    }
 }
 
 public sealed class RightSidePanelPlayerSelector

@@ -46,6 +46,8 @@ public sealed class PopupNumberUnderline
     /// <summary>入力した数値を確定します。</summary>
     public Button OkButton { get; } = new(new Rectangle(DialogBounds.Right - 190, DialogBounds.Y + 22, 150, 54), "OK", 0.42f);
 
+    public Button ClearButton { get; } = new(new Rectangle(DialogBounds.Right - 530, DialogBounds.Y + 22, 150, 54), "CLEAR", 0.32f);
+
     /// <summary>
     /// 下げるボタン
     /// </summary>
@@ -133,6 +135,7 @@ public sealed class PopupNumberUnderline
         }
         CancelButton.Draw(mousePoint, draw.ButtonSurface);
         OkButton.Draw(mousePoint, draw.ButtonSurface);
+        if (options.ShowClearButton) ClearButton.Draw(mousePoint, draw.ButtonSurface);
     }
 
     #endregion
@@ -150,7 +153,8 @@ public readonly record struct PopupNumberUnderlineOptions(
     string? Caption = null,
     bool ShowTitle = true,
     IReadOnlyList<SpinButton>? SpinButtons = null,
-    bool AllowEmpty = false);
+    bool AllowEmpty = false,
+    bool ShowClearButton = false);
 
 /// <summary>PopupNumberUnderline に渡す描画機能です。</summary>
 public sealed record PopupNumberUnderlineDrawingCallbacks(

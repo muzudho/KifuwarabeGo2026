@@ -53,6 +53,8 @@ LocalMatch のランダムシード指定を、自動変更チェックボック
 - 区画ラベルを `RANDOM SEED` とし、BLACK / WHITE の文字ラベルを石アイコンへ変更。
 - リンクアンダーラインへホバーしたときに `CHANGE` アクションバッジを表示。
 - 数字ポップアップを下線表示へ統一し、見出しと入力文字の重なりを解消。
+- `PopupNumberUnderlineOptions.ShowClearButton` を追加し、空欄へ戻す `CLEAR` 操作を実装。
+- LocalMatch と Ponnuki の行描画・AUTO表示・バッジ・当たり判定を `Shared/RandomSeedRow/RandomSeedRowComponent` へ集約。
 - ソリューション全体のビルド成功（警告 0、エラー 0）。
 - PortabilitySmoke と WindowsSmoke の成功。
 

@@ -60,6 +60,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using KifuwarabeGo2026.Gui.Presentation.Shared.LiveBoardPreview;
+using KifuwarabeGo2026.Gui.Presentation.Shared.RandomSeedRow;
 
 public class Game1 : Game
 {
@@ -911,7 +912,8 @@ public class Game1 : Game
                 new PopupNumberUnderlineOptions(
                     Caption: _activeLocalMatchRandomSeedStone is null && _activePonnukiRandomSeedRole is null ? null : "RANDOM SEED INPUT",
                     ShowTitle: _activeLocalMatchRandomSeedStone is null && _activePonnukiRandomSeedRole is null,
-                    AllowEmpty: _activeLocalMatchRandomSeedStone is not null || _activePonnukiRandomSeedRole is not null));
+                    AllowEmpty: _activeLocalMatchRandomSeedStone is not null || _activePonnukiRandomSeedRole is not null,
+                    ShowClearButton: _activeLocalMatchRandomSeedStone is not null || _activePonnukiRandomSeedRole is not null));
 
         // ［大会ルール設定　＞　コミ］
         if (_presentationServices is not null && _tournamentRulesSetting.IsMoveLimitInputOpen)
@@ -1197,6 +1199,12 @@ public class Game1 : Game
                 }
                 else if (HeadUpDisplayComponent.Default.PopupNumberUnderline.OkButton.IsHit(point) == true)
                     CommitGtpEngineIntegerInput();
+                else if (HeadUpDisplayComponent.Default.PopupNumberUnderline.ClearButton.IsHit(point) == true &&
+                         (_activeLocalMatchRandomSeedStone is not null || _activePonnukiRandomSeedRole is not null))
+                {
+                    _gtpEngineIntegerOptionTextBox.Begin("");
+                    _gtpEngineIntegerInputMessage = "EMPTY: AUTO";
+                }
                 else if (HeadUpDisplayComponent.Default.PopupNumberUnderline.CancelButton.IsHit(point) == true)
                     CancelGtpEngineIntegerInput();
                 _previousMouse = mouse;
@@ -1824,9 +1832,15 @@ public class Game1 : Game
                 return;
             }
             if (isLocalAppsIntermission &&
-                LocalMatchIntermissionPage.Default.GetRandomSeedHit(point, _session) is { } seedRole)
+                RandomSeedRowComponent.Ponnuki.GetHit(point,
+                    LocalMatchIntermissionPage.Default.CreateRandomSeedModel(_session)) is { } ponnukiSeedTarget)
             {
-                EditPonnukiRandomSeed(seedRole);
+                EditPonnukiRandomSeed(ponnukiSeedTarget switch
+                {
+                    RandomSeedRowTarget.Provider => PonnukiRandomSeedRole.Provider,
+                    RandomSeedRowTarget.Black => PonnukiRandomSeedRole.Player1,
+                    _ => PonnukiRandomSeedRole.Player2,
+                });
                 _previousMouse = mouse;
                 return;
             }
@@ -1869,9 +1883,12 @@ public class Game1 : Game
             {
                 StartWhiteboardFromLocalSetup();
             }
-            else if (isSetupMode && localMatchScreen.GetRandomSeedHit(point, _session) is { } seedStone)
+            else if (isSetupMode && RandomSeedRowComponent.LocalMatch.GetHit(point, new RandomSeedRowModel(
+                         false, "",
+                         _session.SupportsLocalMatchRandomSeed(GoStone.Black), _session.GetLocalMatchRandomSeedText(GoStone.Black),
+                         _session.SupportsLocalMatchRandomSeed(GoStone.White), _session.GetLocalMatchRandomSeedText(GoStone.White))) is { } localSeedTarget)
             {
-                EditLocalMatchRandomSeed(seedStone);
+                EditLocalMatchRandomSeed(localSeedTarget == RandomSeedRowTarget.Black ? GoStone.Black : GoStone.White);
             }
             else if (isSetupMode &&
                      _session.CanStartPlaying &&
