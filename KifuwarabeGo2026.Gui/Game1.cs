@@ -146,6 +146,9 @@ public class Game1 : Game
     private int _selectedGuiLogIndex = -1;
     private string _applicationSettingsMessage = "";
     private string _lastScreenState = "Title";
+    private ScreenInputTrace? _lastScreenInput;
+    private ScreenPresentationTrace? _screenWaitingForFirstDraw;
+    private ScreenPresentationTrace? _screenAwaitingPresentationConfirmation;
     private bool _inputArmed;
     private CgosMatchNotificationMode _cgosMatchNotificationMode;
     private DateTimeOffset _cgosMatchNotificationStartedAt;
@@ -316,6 +319,7 @@ public class Game1 : Game
         ApplyInitialWindowLayout();
         LogWindowPositionChange();
         _inputClockSeconds = gameTime.TotalGameTime.TotalSeconds;
+        LogPresentedScreenFrame();
         CompleteAppProviderSelectionLoading();
         CompleteGuiReleaseUpdate();
         CompleteGtpEngineSelectionLoading();
@@ -1004,6 +1008,7 @@ public class Game1 : Game
                 GetScreenBreadcrumb(), visible: !hideBreadcrumbForReviewControls);
 
         base.Draw(gameTime);
+        MarkScreenFrameDrawn();
     }
 
     private void UpdateMouseInput()
@@ -1120,7 +1125,10 @@ public class Game1 : Game
 
         if (_previousMouse.LeftButton == ButtonState.Released && mouse.LeftButton == ButtonState.Pressed)
         {
-            GuiOperationLog.User("Mouse click", $"screen={GetCurrentScreenState()} x={point.X} y={point.Y}");
+            var pressedAt = DateTimeOffset.Now;
+            var inputScreen = GetCurrentScreenState();
+            _lastScreenInput = new ScreenInputTrace(pressedAt, inputScreen, point.X, point.Y);
+            GuiOperationLog.User("Mouse click", $"screen={inputScreen} x={point.X} y={point.Y}; pressedAt={pressedAt:O}");
             if (TryHandleActiveWindowClick(point))
             {
                 _previousMouse = mouse;
@@ -6579,11 +6587,55 @@ public class Game1 : Game
         if (current == _lastScreenState)
             return;
 
-        GuiOperationLog.App("Screen changed", $"from={_lastScreenState} to={current}; breadcrumb={GetScreenBreadcrumb()}");
+        var changedAt = DateTimeOffset.Now;
+        var input = _lastScreenInput;
+        if (input is not null && changedAt - input.PressedAt > TimeSpan.FromSeconds(30))
+            input = null;
+        GuiOperationLog.App("Screen changed",
+            $"from={_lastScreenState} to={current}; breadcrumb={GetScreenBreadcrumb()}; changedAt={changedAt:O}" +
+            (input is null ? "; trigger=automatic" : $"; elapsedFromButton={FormatElapsedMilliseconds(changedAt - input.PressedAt)}ms"));
+        _screenWaitingForFirstDraw = new ScreenPresentationTrace(current, changedAt, input);
+        _lastScreenInput = null;
         // Board Lens の案内は操作した画面だけで表示し、画面遷移先へ持ち越さない。
         _boardLensBannerStartedAt = double.NegativeInfinity;
         _lastScreenState = current;
     }
+
+    /// <summary>
+    /// Draw完了後のフレームはGameループによって提示されます。次のUpdateへ到達した時点で、
+    /// そのフレームが提示済みであることを操作ログへ記録します。
+    /// </summary>
+    private void LogPresentedScreenFrame()
+    {
+        if (_screenAwaitingPresentationConfirmation is not { } trace)
+            return;
+
+        _screenAwaitingPresentationConfirmation = null;
+        var confirmedAt = DateTimeOffset.Now;
+        var detail = $"screen={trace.Screen}; confirmedAt={confirmedAt:O}; " +
+                     $"elapsedFromStateChange={FormatElapsedMilliseconds(confirmedAt - trace.StateChangedAt)}ms";
+        if (trace.Input is { } input)
+            detail += $"; elapsedFromButton={FormatElapsedMilliseconds(confirmedAt - input.PressedAt)}ms; " +
+                      $"buttonScreen={input.Screen} x={input.X} y={input.Y}";
+        else
+            detail += "; trigger=automatic";
+        GuiOperationLog.App("Screen first frame presented", detail);
+    }
+
+    private void MarkScreenFrameDrawn()
+    {
+        if (_screenWaitingForFirstDraw is not { } trace || trace.Screen != GetCurrentScreenState())
+            return;
+
+        _screenWaitingForFirstDraw = null;
+        _screenAwaitingPresentationConfirmation = trace;
+    }
+
+    private static string FormatElapsedMilliseconds(TimeSpan elapsed) =>
+        Math.Max(0d, elapsed.TotalMilliseconds).ToString("0.0", System.Globalization.CultureInfo.InvariantCulture);
+
+    private sealed record ScreenInputTrace(DateTimeOffset PressedAt, string Screen, int X, int Y);
+    private sealed record ScreenPresentationTrace(string Screen, DateTimeOffset StateChangedAt, ScreenInputTrace? Input);
 
     private void BeginDiscardTransition()
     {
@@ -6591,8 +6643,9 @@ public class Game1 : Game
         PlayScreenTransitionSound();
     }
 
-    private string GetCurrentScreenState() =>
-        _isApplicationSettingsOpen
+    private string GetCurrentScreenState()
+    {
+        var screen = _isApplicationSettingsOpen
             ? "Application settings"
             : _session.UseKind is null
                 ? $"Title/{_titleMenuPage}"
@@ -6601,6 +6654,16 @@ public class Game1 : Game
                         ? "Formal/LocalMatch/InitialPositionConcierge"
                         : $"Formal/LocalMatch/{_session.CurrentMode.Kind}"
                     : $"Formal/OnlineMatch.Cgos/{_session.CgosConnectionFlowKind}/{_session.CurrentMode.Kind}";
+
+        var overlay = _guiUpdateProgressDialog is not null
+            ? "GuiUpdateProgress"
+            : _messageDialog is not null
+                ? "MessageDialog"
+                : _session.ActiveWindowId != ActiveWindowId.None
+                    ? _session.ActiveWindowId.ToString()
+                    : "";
+        return string.IsNullOrEmpty(overlay) ? screen : $"{screen}/Window={overlay}";
+    }
 
     private StickyNoteScreenId GetStickyNoteScreen()
     {
