@@ -95,10 +95,10 @@ public sealed class GoPresentationRenderer : System.IDisposable
         {
             RightSidePanel.Default.Draw(_drawingContext, _moveTrendChartRenderer, session,
                 backgroundMousePoint, liveBoardPreview, initialPositionConcierge);
-            if (session.IsLocalReplayMode)
+            if (session.IsLocalReplayMode && session.CurrentMode.Kind == GoAppModeKind.Playing)
                 _popupTrendChartRenderer.DrawReplayNavigationControls(_drawingContext,
                     session.LocalDisplayMoveIndex, session.CurrentGameRecord.Moves.Count, backgroundMousePoint,
-                    session.CurrentMode.Kind == GoAppModeKind.Playing, "BACK TO CURRENT");
+                    showBackToLive: true, backToLiveLabel: "BACK TO CURRENT");
             else if (session.CanOpenLocalChartPopup || session.CurrentMode.Kind == GoAppModeKind.Reviewing)
                 _popupTrendChartRenderer.DrawReplayEditIconButton(_drawingContext, backgroundMousePoint);
             TournamentRulesPresenter.Default.Draw(_drawingContext, session, mousePoint);
