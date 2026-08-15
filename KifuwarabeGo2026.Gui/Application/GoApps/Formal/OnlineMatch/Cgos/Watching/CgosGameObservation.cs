@@ -91,6 +91,7 @@ public sealed class CgosGameObservation
             BoardSize = BoardSize,
             Komi = Komi,
             TimeLimit = MainTime,
+            Result = Result,
         };
         record.Moves.AddRange(_moves);
         return record;
@@ -215,20 +216,22 @@ public sealed class CgosGameObservation
 
         var analysis = CgosMoveAnalysisParser.Parse(analysisJson, vertex);
         var comment = CgosMoveAnalysisParser.ParseComment(analysisJson);
+        TimeSpan? timeLeftAfterMove = null;
+        if (long.TryParse(remainingTimeMilliseconds, out var remainingMilliseconds))
+        {
+            timeLeftAfterMove = TimeSpan.FromMilliseconds(Math.Clamp(remainingMilliseconds, 0, (long)MainTime.TotalMilliseconds));
+            if (stone == GoStone.Black)
+                BlackRemainingTime = timeLeftAfterMove.Value;
+            else
+                WhiteRemainingTime = timeLeftAfterMove.Value;
+        }
         _moves.Add(new GoGameMove(
             stone,
             movePoint,
             comment,
             analysis,
-            commonAnalysisJson: string.IsNullOrWhiteSpace(analysisJson) ? null : analysisJson));
-        if (long.TryParse(remainingTimeMilliseconds, out var remainingMilliseconds))
-        {
-            var remaining = TimeSpan.FromMilliseconds(Math.Clamp(remainingMilliseconds, 0, (long)MainTime.TotalMilliseconds));
-            if (stone == GoStone.Black)
-                BlackRemainingTime = remaining;
-            else
-                WhiteRemainingTime = remaining;
-        }
+            commonAnalysisJson: string.IsNullOrWhiteSpace(analysisJson) ? null : analysisJson,
+            timeLeftAfterMove: timeLeftAfterMove));
         MoveCount++;
         CurrentTurn = stone == GoStone.Black ? GoStone.White : GoStone.Black;
         _lastClockSyncAt = DateTimeOffset.UtcNow;

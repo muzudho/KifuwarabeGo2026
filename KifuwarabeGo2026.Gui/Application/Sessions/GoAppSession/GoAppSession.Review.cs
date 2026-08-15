@@ -21,6 +21,7 @@ public sealed partial class GoAppSession
     public int ReviewTimelineIndex => IsReviewResultPosition ? ReviewMoveCount + 1 : ReviewMoveIndex;
     public int ReviewTimelineMaximum => ReviewMoveCount + 1;
     public string ReviewResult => _reviewGameRecord?.Result ?? CurrentGameRecord.Result;
+    public string ReviewRuleName => string.IsNullOrWhiteSpace(_reviewGameRecord?.RuleName) ? "GO" : _reviewGameRecord.RuleName;
     public IReadOnlyList<GoGameMove> ReviewMoves =>
         _reviewGameRecord is null ? Array.Empty<GoGameMove>() : _reviewGameRecord.Moves;
     /// <summary>レビュー対象 SGF の 0 手目コメントです。</summary>

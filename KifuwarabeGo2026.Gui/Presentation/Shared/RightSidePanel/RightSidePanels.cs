@@ -575,7 +575,8 @@ public sealed class ReviewingRightSidePanel
             drawingContext.DrawText($"{session.PlayedMoveCount}手で終局", new Vector2(1144, 196),
                 new Color(99, 223, 185), 0.52f);
             drawingContext.DrawVerticalResultSection(new Rectangle(1144, 236, 668, 128), "RESULT", new Color(80, 48, 38));
-            drawingContext.DrawResultRow(new Rectangle(1164, 242, 628, 52), "RULES", session.TournamentDisplayName,
+            drawingContext.DrawResultRow(new Rectangle(1164, 242, 628, 52), "RULES",
+                isCompletedGame ? session.TournamentDisplayName : session.ReviewRuleName,
                 new Color(39, 68, 65), Color.White);
             DrawResultRow(drawingContext, new Rectangle(1164, 300, 628, 52), session,
                 isCompletedGame ? session.GameOverReason : session.ReviewResult);

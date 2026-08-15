@@ -1456,7 +1456,7 @@ public class Game1 : Game
                     var cgosWatchingScreen = CgosWatchPage.Default;
                     if (cgosWatchingScreen.ReviewButton.IsHit(point))
                     {
-                        StartReviewingGameRecord(_cgosGameObservation.CreateGameRecord(), "CGOS review");
+                        StartReviewingCgosResult();
                     }
                     else if (_session.IsSgfAutoSaveAvailable &&
                              cgosWatchingScreen.ExportSgfButton.IsHit(point))
@@ -2896,7 +2896,19 @@ public class Game1 : Game
         if (_session.IsReviewResultPosition &&
             BoardAndReviewScreen.Default.Review.ExportSgfButton.IsHit(point))
         {
-            ExportSgf();
+            if (_session.UseKind == GoAppUseKind.CgosClient && _session.IsSgfAutoSaveAvailable)
+            {
+                ToggleSgfAutoSave();
+                if (_session.IsSgfAutoSaveEnabled)
+                {
+                    _lastAutoSavedCgosGameId = null;
+                    TryAutoSaveCgosGame();
+                }
+            }
+            else
+            {
+                ExportSgf();
+            }
             return true;
         }
 
@@ -3482,7 +3494,7 @@ public class Game1 : Game
         {
             TryAutoSaveCgosGame();
             if (_cgosMatchNotificationMode == CgosMatchNotificationMode.None)
-                _session.OpenCgosResultScreen();
+                StartReviewingCgosResult();
         }
     }
 
@@ -4053,7 +4065,7 @@ public class Game1 : Game
         if (_session.CurrentMode.Kind == GoAppModeKind.Reviewing)
             _session.ReturnFromReviewingToResting();
         if (_cgosGameObservation.IsFinished)
-            _session.OpenCgosResultScreen();
+            StartReviewingCgosResult();
         else
             _session.OpenCgosWatchingScreen();
     }
@@ -4491,7 +4503,11 @@ public class Game1 : Game
         if (action == ReviewExitAction.UsePosition)
             _session.FinishReviewing();
         else
+        {
             _session.ReturnFromReviewingToResting();
+            if (_session.UseKind == GoAppUseKind.CgosClient)
+                _session.ReturnToCgosConnectionScreen();
+        }
     }
 
     private enum ReviewExitAction { BackToHome, UsePosition }
@@ -5152,7 +5168,8 @@ public class Game1 : Game
             _session.SetLocalResultSgfSaved(true);
         }
         else if (_session.UseKind == GoAppUseKind.CgosClient &&
-                 _session.CgosConnectionFlowKind == CgosConnectionFlowKind.Result)
+                 (_session.CgosConnectionFlowKind == CgosConnectionFlowKind.Result ||
+                  _session.CurrentMode.Kind == GoAppModeKind.Reviewing && _session.IsReviewResultPosition))
         {
             _session.SetCgosResultSgfSaved(true);
         }
@@ -5359,6 +5376,14 @@ public class Game1 : Game
             ShowMessage(ex.Message, "SGF output");
             return false;
         }
+    }
+
+    /// <summary>CGOSの終局棋譜を共通レビューへ渡し、タイムライン末端のRESULTを表示します。</summary>
+    private void StartReviewingCgosResult()
+    {
+        StartReviewingGameRecord(_cgosGameObservation.CreateGameRecord(), "CGOS review");
+        if (_session.CurrentMode.Kind == GoAppModeKind.Reviewing)
+            MoveReview(_session.ReviewTimelineMaximum - _session.ReviewTimelineIndex);
     }
 
     private void RefreshCurrentGtpEngineAppCompatibilities() =>
@@ -6674,8 +6699,14 @@ public class Game1 : Game
         };
     }
 
-    private string GetCgosBreadcrumb() =>
-        _session.CgosConnectionFlowKind switch
+    private string GetCgosBreadcrumb()
+    {
+        if (_session.CurrentMode.Kind == GoAppModeKind.Reviewing)
+            return _session.IsReviewResultPosition
+                ? "Formal Apps > Online Match (CGOS) > Watch > Review > Result"
+                : "Formal Apps > Online Match (CGOS) > Watch > Review";
+
+        return _session.CgosConnectionFlowKind switch
         {
             CgosConnectionFlowKind.ProfileSelection => "Formal Apps > Online Match (CGOS) > Select Connection",
             CgosConnectionFlowKind.ConnectionStart => "Formal Apps > Online Match (CGOS) > Login",
@@ -6683,6 +6714,7 @@ public class Game1 : Game
             CgosConnectionFlowKind.Result => "Formal Apps > Online Match (CGOS) > Watch",
             _ => "FORMAL APPS  >  ONLINE MATCH (CGOS)",
         };
+    }
 
     protected override void Dispose(bool disposing)
     {

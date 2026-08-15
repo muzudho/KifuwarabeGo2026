@@ -3,6 +3,7 @@ namespace KifuwarabeGo2026.Gui.PortabilitySmoke;
 using KifuwarabeGo2026.Gui;
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.ConnectionTarget;
+using KifuwarabeGo2026.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.Watching;
 using KifuwarabeGo2026.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.Gui.Application.Local.Resting.TournamentRule;
 using KifuwarabeGo2026.Gui.Gtp;
@@ -71,9 +72,30 @@ internal static class PortabilityChecks
         VerifyTextBoxEditing();
         VerifyInitialWindowLayout();
         VerifyDefaultCgosConnection();
+        VerifyCgosResultReviewRecord();
         VerifyLocalMatchSgfFileName();
         VerifyTournamentRulesJsonCompatibility();
         VerifyComposition();
+    }
+
+    private static void VerifyCgosResultReviewRecord()
+    {
+        var observation = new CgosGameObservation();
+        observation.ProcessLogLine("[CGOS] > setup 123 9 7.0 300000 WhitePlayer BlackPlayer");
+        observation.ProcessLogLine("[CGOS] > play black D4 290000");
+        observation.ProcessLogLine("[CGOS] > gameover B+R");
+
+        var record = observation.CreateGameRecord();
+        Require(record.Result == "B+R" && record.Moves.Count == 1 &&
+                record.Moves[0].TimeLeftAfterMove == TimeSpan.FromSeconds(290),
+            "The CGOS result review record did not preserve the result, moves, or clock.");
+
+        var session = new GoAppSession();
+        Require(session.StartReviewingGameRecord(record, out var warning),
+            $"The CGOS result record could not start a review: {warning}");
+        Require(session.MoveReview(session.ReviewTimelineMaximum - session.ReviewTimelineIndex, out warning) &&
+                session.IsReviewResultPosition && session.ReviewResult == "B+R",
+            $"The CGOS review did not reach its terminal RESULT position: {warning}");
     }
 
     private static void VerifyGoAppEngineSelectionCompatibility()
