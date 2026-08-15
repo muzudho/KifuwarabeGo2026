@@ -103,6 +103,7 @@ public class Game1 : Game
     private readonly TextBoxController _gtpEngineEditTextBox = new(520);
     private readonly TextBoxController _gtpEngineIntegerOptionTextBox = new(11);
     private GtpEngineGuiOptionSpec? _activeGtpEngineIntegerOption;
+    private GoStone? _activeLocalMatchRandomSeedStone;
     private KeyboardState _previousGtpEngineIntegerKeyboard;
     private string _gtpEngineIntegerInputMessage = "";
     private readonly TextBoxController _gtpEngineStringOptionTextBox = new(GtpEngineGuiOptions.MaximumTextLength);
@@ -894,7 +895,10 @@ public class Game1 : Game
                 _gtpEngineIntegerOptionTextBox.CaretIndex,
                 _gtpEngineIntegerOptionTextBox.SelectionStart,
                 _gtpEngineIntegerOptionTextBox.SelectionLength,
-                _gtpEngineIntegerInputMessage);
+                _gtpEngineIntegerInputMessage,
+                new PopupNumberUnderlineOptions(
+                    Caption: _activeLocalMatchRandomSeedStone is null ? null : "RANDOM SEED INPUT",
+                    AllowEmpty: _activeLocalMatchRandomSeedStone is not null));
 
         // ［大会ルール設定　＞　コミ］
         if (_presentationServices is not null && _tournamentRulesSetting.IsMoveLimitInputOpen)
@@ -1848,9 +1852,9 @@ public class Game1 : Game
             {
                 StartWhiteboardFromLocalSetup();
             }
-            else if (isSetupMode && localMatchScreen.GetSeedAutoChangeHit(point) is { } seedStone)
+            else if (isSetupMode && localMatchScreen.GetRandomSeedHit(point, _session) is { } seedStone)
             {
-                _session.ToggleLocalMatchSeedAutoChange(seedStone);
+                EditLocalMatchRandomSeed(seedStone);
             }
             else if (isSetupMode &&
                      _session.CanStartPlaying &&
@@ -6009,11 +6013,23 @@ public class Game1 : Game
 
     private void EditGtpEngineSpinOption(GtpEngineGuiOptionSpec option)
     {
+        _activeLocalMatchRandomSeedStone = null;
         _activeGtpEngineIntegerOption = option;
         _session.ActivateModalWindow(ActiveWindowId.IntegerInput);
         _gtpEngineIntegerOptionTextBox.Begin(_session.GetGtpEngineGuiOptionDraft(option));
         _previousGtpEngineIntegerKeyboard = Keyboard.GetState();
         _gtpEngineIntegerInputMessage = $"RANGE  {option.Min ?? int.MinValue} .. {option.Max ?? int.MaxValue}";
+    }
+
+    private void EditLocalMatchRandomSeed(GoStone stone)
+    {
+        var option = GtpEngineGuiOptions.Specs.First(spec => spec.Id == GtpEngineGuiOptions.RandomSeedId);
+        _activeLocalMatchRandomSeedStone = stone;
+        _activeGtpEngineIntegerOption = option;
+        _session.ActivateModalWindow(ActiveWindowId.IntegerInput);
+        _gtpEngineIntegerOptionTextBox.Begin(_session.GetLocalMatchRandomSeedText(stone));
+        _previousGtpEngineIntegerKeyboard = Keyboard.GetState();
+        _gtpEngineIntegerInputMessage = $"EMPTY: AUTO   RANGE  {option.Min ?? int.MinValue} .. {option.Max ?? int.MaxValue}";
     }
 
     private void UpdateGtpEngineIntegerInputKeyboard(KeyboardState keyboard, GameTime gameTime)
@@ -6035,6 +6051,12 @@ public class Game1 : Game
     {
         if (_activeGtpEngineIntegerOption is not { } option)
             return;
+        if (_activeLocalMatchRandomSeedStone is { } stone && string.IsNullOrWhiteSpace(_gtpEngineIntegerOptionTextBox.Text))
+        {
+            _session.SetLocalMatchRandomSeedText(stone, "");
+            CancelGtpEngineIntegerInput();
+            return;
+        }
         if (!int.TryParse(_gtpEngineIntegerOptionTextBox.Text, out var value))
         {
             _gtpEngineIntegerInputMessage = "ENTER A VALID INTEGER";
@@ -6047,15 +6069,21 @@ public class Game1 : Game
             _gtpEngineIntegerInputMessage = $"OUT OF RANGE  {minimum} .. {maximum}";
             return;
         }
-        _session.SetGtpEngineGuiOptionDraft(option, value.ToString());
-        if (_session.IsAppProviderGameSettingsDialogOpen)
-            QueueAppProviderSettingsEvaluation();
+        if (_activeLocalMatchRandomSeedStone is { } localMatchStone)
+            _session.SetLocalMatchRandomSeedText(localMatchStone, value.ToString());
+        else
+        {
+            _session.SetGtpEngineGuiOptionDraft(option, value.ToString());
+            if (_session.IsAppProviderGameSettingsDialogOpen)
+                QueueAppProviderSettingsEvaluation();
+        }
         CancelGtpEngineIntegerInput();
     }
 
     private void CancelGtpEngineIntegerInput()
     {
         _activeGtpEngineIntegerOption = null;
+        _activeLocalMatchRandomSeedStone = null;
         _session.DeactivateModalWindow(ActiveWindowId.IntegerInput);
         _gtpEngineIntegerOptionTextBox.Clear();
         _gtpEngineIntegerInputMessage = "";

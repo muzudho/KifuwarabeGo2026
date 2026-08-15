@@ -35,6 +35,12 @@ public sealed class LinkUnderline
     /// <summary>このリンク下線が表示・クリック判定に使う領域です。</summary>
     public Rectangle Bounds { get; set; }
 
+    /// <summary>実値が空のときだけ表示する文字列です。実値には保存されません。</summary>
+    public string Placeholder { get; set; } = string.Empty;
+
+    public string GetDisplayText(string? value) =>
+        string.IsNullOrEmpty(value) ? Placeholder : value;
+
     /// <summary>最後に更新されたポインター位置が領域内にあるかを示します。</summary>
     public bool IsHovered { get; private set; }
 

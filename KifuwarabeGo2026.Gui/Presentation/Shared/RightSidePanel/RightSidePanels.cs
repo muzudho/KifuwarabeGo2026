@@ -213,15 +213,9 @@ public sealed class SetupRightSidePanel
         PlayerSelector.DrawPlayerRow(drawingContext, session, GoStone.Black, mousePoint, BlackPlayerKindButtonY);
         PlayerSelector.DrawPlayerRow(drawingContext, session, GoStone.White, mousePoint, WhitePlayerKindButtonY);
 
-        renderer.DrawVerticalResultSection(new Rectangle(1144, 856, 668, 52), "SEED AUTO", new Color(112, 76, 48), labelWidth: 56);
-        screen.BlackSeedAutoChangeButton.Label = session.LocalMatchBlackSeedAutoChange ? "[x] BLACK" : "[ ] BLACK";
-        screen.BlackSeedAutoChangeButton.IsSelected = session.LocalMatchBlackSeedAutoChange;
-        screen.BlackSeedAutoChangeButton.IsEnabled = session.CanAutoChangeLocalMatchSeed(GoStone.Black);
-        screen.BlackSeedAutoChangeButton.Draw(mousePoint, drawingContext);
-        screen.WhiteSeedAutoChangeButton.Label = session.LocalMatchWhiteSeedAutoChange ? "[x] WHITE" : "[ ] WHITE";
-        screen.WhiteSeedAutoChangeButton.IsSelected = session.LocalMatchWhiteSeedAutoChange;
-        screen.WhiteSeedAutoChangeButton.IsEnabled = session.CanAutoChangeLocalMatchSeed(GoStone.White);
-        screen.WhiteSeedAutoChangeButton.Draw(mousePoint, drawingContext);
+        renderer.DrawVerticalResultSection(new Rectangle(1144, 856, 668, 52), "SEED", new Color(112, 76, 48), labelWidth: 56);
+        DrawRandomSeedLink(drawingContext, session, mousePoint, GoStone.Black, screen.BlackSeedLink);
+        DrawRandomSeedLink(drawingContext, session, mousePoint, GoStone.White, screen.WhiteSeedLink);
 
         renderer.DrawVerticalResultSection(new Rectangle(1144, 916, 668, 76), "ACTION", new Color(91, 82, 105));
         var boardAndReviewScreen = BoardAndReviewScreen.Default;
@@ -232,6 +226,18 @@ public sealed class SetupRightSidePanel
         screen.StartPlayingButton.LabelScale = session.CanStartPlaying ? 0.48f : 0.28f;
         screen.StartPlayingButton.IsEnabled = session.CanStartPlaying;
         screen.StartPlayingButton.Draw(mousePoint, drawingContext);
+    }
+
+    private static void DrawRandomSeedLink(KfwStationeryDrawingTools drawingContext, GoAppSession session,
+        Point mousePoint, GoStone stone, LinkUnderline link)
+    {
+        if (!session.SupportsLocalMatchRandomSeed(stone)) return;
+        link.UpdatePointer(mousePoint);
+        var labelBounds = new Rectangle(link.Bounds.X - 68, link.Bounds.Y + 4, 62, 24);
+        drawingContext.DrawFittedText(stone == GoStone.Black ? "BLACK" : "WHITE", labelBounds, new Color(180, 195, 195), 0.25f);
+        drawingContext.DrawFittedText(link.GetDisplayText(session.GetLocalMatchRandomSeedText(stone)),
+            new Rectangle(link.Bounds.X + 8, link.Bounds.Y + 2, link.Bounds.Width - 16, 26), Color.White, 0.31f);
+        link.Draw(drawingContext);
     }
 }
 

@@ -11,7 +11,7 @@
       "guiOptions": {
         "RandomMove": "ChebyshevDistanceFromStar",
         "AvoidEyes": "true",
-        "RandomSeed": "0",
+        "RandomSeed": "",
         "EngineTag": "",
         "DebugLogFile": "",
         "ClearCache": "false"
@@ -28,7 +28,7 @@
       "guiOptions": {
         "RandomMove": "ChebyshevDistanceFromStar",
         "AvoidEyes": "true",
-        "RandomSeed": "0",
+        "RandomSeed": "",
         "EngineTag": "",
         "DebugLogFile": "",
         "ClearCache": "false"
@@ -45,7 +45,7 @@
       "guiOptions": {
         "RandomMove": "ChebyshevDistanceFromStar",
         "AvoidEyes": "true",
-        "RandomSeed": "0",
+        "RandomSeed": "",
         "EngineTag": "",
         "DebugLogFile": "",
         "ClearCache": "false"
@@ -62,7 +62,7 @@
       "guiOptions": {
         "RandomMove": "ChebyshevDistanceFromStar",
         "AvoidEyes": "true",
-        "RandomSeed": "0",
+        "RandomSeed": "",
         "EngineTag": "",
         "DebugLogFile": "",
         "ClearCache": "false"
@@ -79,7 +79,7 @@
       "guiOptions": {
         "RandomMove": "Normal",
         "AvoidEyes": "true",
-        "RandomSeed": "0",
+        "RandomSeed": "",
         "EngineTag": "",
         "DebugLogFile": "",
         "ClearCache": "false"
@@ -96,7 +96,7 @@
       "guiOptions": {
         "RandomMove": "ChebyshevDistanceFromStar",
         "AvoidEyes": "true",
-        "RandomSeed": "0",
+        "RandomSeed": "",
         "EngineTag": "",
         "DebugLogFile": "",
         "ClearCache": "false"
@@ -113,7 +113,7 @@
       "guiOptions": {
         "RandomMove": "ChebyshevDistanceFromStar",
         "AvoidEyes": "true",
-        "RandomSeed": "0",
+        "RandomSeed": "",
         "EngineTag": "",
         "DebugLogFile": "",
         "ClearCache": "false"

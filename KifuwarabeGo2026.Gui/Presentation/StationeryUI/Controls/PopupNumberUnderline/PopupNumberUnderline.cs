@@ -145,7 +145,13 @@ public sealed class PopupNumberUnderline
 /// <param name="ShowStepControls"></param>
 /// <param name="StepLabel"></param>
 /// <param name="Caption"></param>
-public readonly record struct PopupNumberUnderlineOptions(bool ShowStepControls = false, string? StepLabel = null, string? Caption = null, bool ShowTitle = true, IReadOnlyList<SpinButton>? SpinButtons = null);
+public readonly record struct PopupNumberUnderlineOptions(
+    bool ShowStepControls = false,
+    string? StepLabel = null,
+    string? Caption = null,
+    bool ShowTitle = true,
+    IReadOnlyList<SpinButton>? SpinButtons = null,
+    bool AllowEmpty = false);
 
 /// <summary>PopupNumberUnderline に渡す描画機能です。</summary>
 public sealed record PopupNumberUnderlineDrawingCallbacks(

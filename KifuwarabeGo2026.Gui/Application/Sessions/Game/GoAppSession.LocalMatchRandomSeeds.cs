@@ -7,28 +7,29 @@ using System.Security.Cryptography;
 
 public sealed partial class GoAppSession
 {
-    public bool LocalMatchBlackSeedAutoChange { get; private set; }
-    public bool LocalMatchWhiteSeedAutoChange { get; private set; }
-
-    public bool CanAutoChangeLocalMatchSeed(GoStone stone) =>
-        GetPlayerKind(stone) == GoPlayerKind.Computer;
-
-    public void ToggleLocalMatchSeedAutoChange(GoStone stone)
+    public bool SupportsLocalMatchRandomSeed(GoStone stone)
     {
-        if (!CanAutoChangeLocalMatchSeed(stone)) return;
+        if (GetPlayerKind(stone) != GoPlayerKind.Computer) return false;
+        return GetGtpEngineProfile(stone).GuiOptions.ContainsKey(GtpEngineGuiOptions.RandomSeedId);
+    }
 
-        if (stone == GoStone.Black)
-            LocalMatchBlackSeedAutoChange = !LocalMatchBlackSeedAutoChange;
-        else if (stone == GoStone.White)
-            LocalMatchWhiteSeedAutoChange = !LocalMatchWhiteSeedAutoChange;
-        else
-            throw new ArgumentOutOfRangeException(nameof(stone), stone, "A random seed belongs to black or white.");
+    public string GetLocalMatchRandomSeedText(GoStone stone) =>
+        SupportsLocalMatchRandomSeed(stone)
+            ? GetGtpEngineProfile(stone).GuiOptions.GetValueOrDefault(GtpEngineGuiOptions.RandomSeedId, "")
+            : "";
+
+    public void SetLocalMatchRandomSeedText(GoStone stone, string value)
+    {
+        if (!SupportsLocalMatchRandomSeed(stone)) return;
+        var index = stone == GoStone.Black ? SelectedBlackGtpEngineIndex : SelectedWhiteGtpEngineIndex;
+        _gtpEngineProfiles[Math.Clamp(index, 0, _gtpEngineProfiles.Count - 1)]
+            .GuiOptions[GtpEngineGuiOptions.RandomSeedId] = value;
     }
 
     public LocalMatchRandomSeedSnapshot ApplyLocalMatchRandomSeedsAtStart()
     {
-        var black = ResolveLocalMatchSeed(GoStone.Black, LocalMatchBlackSeedAutoChange);
-        var white = ResolveLocalMatchSeed(GoStone.White, LocalMatchWhiteSeedAutoChange);
+        var black = ResolveLocalMatchSeed(GoStone.Black);
+        var white = ResolveLocalMatchSeed(GoStone.White);
         _localMatchRandomSeeds = new LocalMatchRandomSeedSnapshot(black, white);
         return _localMatchRandomSeeds;
     }
@@ -44,16 +45,12 @@ public sealed partial class GoAppSession
 
     private LocalMatchRandomSeedSnapshot _localMatchRandomSeeds;
 
-    private int? ResolveLocalMatchSeed(GoStone stone, bool autoChange)
+    private int? ResolveLocalMatchSeed(GoStone stone)
     {
-        if (!CanAutoChangeLocalMatchSeed(stone)) return null;
-        if (autoChange) return RandomNumberGenerator.GetInt32(1, int.MaxValue);
-
-        var profile = GetGtpEngineProfile(stone);
-        return profile.GuiOptions.TryGetValue(GtpEngineGuiOptions.RandomSeedId, out var text) &&
-               int.TryParse(text, out var seed)
+        if (!SupportsLocalMatchRandomSeed(stone)) return null;
+        return int.TryParse(GetLocalMatchRandomSeedText(stone), out var seed)
             ? seed
-            : 0;
+            : RandomNumberGenerator.GetInt32(1, int.MaxValue);
     }
 }
 

@@ -7,6 +7,8 @@ using Microsoft.Xna.Framework;
 using KifuwarabeGo2026.Gui.Presentation.Shared.SelectEntry;
 using KifuwarabeGo2026.Gui.Presentation.Shared.RightSidePanel;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.LinkUnderline;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
 
 /// <summary>ローカル対局のセットアップ、対局中、終局後に共通する操作 UI を所有します。</summary>
 public sealed class LocalMatchScreen
@@ -25,8 +27,8 @@ public sealed class LocalMatchScreen
         WhitePlayerKindRow = new PlayerKindSelectionRow(SetupWhitePlayerRowY);
         PonnukiBlackPlayerKindRow = new PlayerKindSelectionRow(646);
         PonnukiWhitePlayerKindRow = new PlayerKindSelectionRow(750);
-        BlackSeedAutoChangeButton = new Button(new Rectangle(1164, 870, 307, 32), "BLACK", 0.22f);
-        WhiteSeedAutoChangeButton = new Button(new Rectangle(1485, 870, 307, 32), "WHITE", 0.22f);
+        BlackSeedLink = new LinkUnderline(new RoundUnderline()) { Bounds = new Rectangle(1240, 870, 225, 32), Placeholder = "AUTO" };
+        WhiteSeedLink = new LinkUnderline(new RoundUnderline()) { Bounds = new Rectangle(1560, 870, 225, 32), Placeholder = "AUTO" };
     }
 
     public Rectangle LocalUseCardBounds { get; } = new(508, 404, 438, 300);
@@ -39,12 +41,12 @@ public sealed class LocalMatchScreen
     public PlayerKindSelectionRow WhitePlayerKindRow { get; }
     public PlayerKindSelectionRow PonnukiBlackPlayerKindRow { get; }
     public PlayerKindSelectionRow PonnukiWhitePlayerKindRow { get; }
-    public Button BlackSeedAutoChangeButton { get; }
-    public Button WhiteSeedAutoChangeButton { get; }
+    public LinkUnderline BlackSeedLink { get; }
+    public LinkUnderline WhiteSeedLink { get; }
 
-    public GoStone? GetSeedAutoChangeHit(Point point) =>
-        BlackSeedAutoChangeButton.IsHit(point) ? GoStone.Black :
-        WhiteSeedAutoChangeButton.IsHit(point) ? GoStone.White : null;
+    public GoStone? GetRandomSeedHit(Point point, GoAppSession session) =>
+        session.SupportsLocalMatchRandomSeed(GoStone.Black) && BlackSeedLink.IsHit(point) ? GoStone.Black :
+        session.SupportsLocalMatchRandomSeed(GoStone.White) && WhiteSeedLink.IsHit(point) ? GoStone.White : null;
 
     public PlayerKindSelectionRow GetPlayerKindRow(GoStone stone, bool isPonnuki) =>
         (stone, isPonnuki) switch

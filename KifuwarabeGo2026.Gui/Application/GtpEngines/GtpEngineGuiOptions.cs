@@ -36,7 +36,7 @@ public static class GtpEngineGuiOptions
     public static readonly GtpEngineGuiOptionSpec[] Specs =
     [
         new(AvoidEyesId, "AvoidEyes", "check", "true"),
-        new(RandomSeedId, "RandomSeed", "spin", "0", 0, int.MaxValue),
+        new(RandomSeedId, "RandomSeed", "spin", "", 0, int.MaxValue),
         new(RandomMoveId, "RandomMove", "combo", ChebyshevDistanceFromStarRandomMove, Values: RandomMoveValues),
         new(EngineTagId, "EngineTag", "string", ""),
         new(DebugLogFileId, "DebugLogFile", "filename", ""),
