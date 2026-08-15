@@ -50,7 +50,7 @@ public sealed partial class GoScreenRenderer
             FillRect(bounds, selected ? new Color(38, 91, 78) : hovered ? new Color(42, 53, 61) : new Color(27, 35, 42));
             DrawRect(bounds, selected ? 2 : 1, selected ? new Color(190, 255, 229) : new Color(73, 91, 98));
             DrawFittedText(player.DisplayName, new Rectangle(bounds.X + 20, bounds.Y + 6, bounds.Width - 40, 32), Color.White, 0.50f);
-            DrawPlayerRoleFaceIcon(new Vector2(bounds.X + 34, bounds.Y + 55), player.Kind == EntryProfileKind.Computer);
+            _stationeryDrawingContext.DrawPlayerRoleFaceIcon(new Vector2(bounds.X + 34, bounds.Y + 55), player.Kind == EntryProfileKind.Computer);
             var detail = session.GetPlayerSelectionDetail(index);
             var detailText = player.Kind == EntryProfileKind.Computer ? $"ENGINE: {detail}" : detail;
             DrawFittedText(detailText, new Rectangle(bounds.X + 58, bounds.Y + 45, bounds.Width - 78, 24), new Color(180, 195, 195), 0.30f);

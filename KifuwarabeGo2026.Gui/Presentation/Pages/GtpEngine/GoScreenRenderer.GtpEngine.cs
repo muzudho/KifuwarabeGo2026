@@ -640,7 +640,7 @@ public sealed partial class GoScreenRenderer
         DrawText($"{index + 1:00}", new Vector2(bounds.X + 14, bounds.Y + 16), inUse ? new Color(177, 255, 215) : new Color(180, 195, 195), 0.4f);
         if (inspected)
             DrawSelectionFingerMark(new Vector2(bounds.X - 55, bounds.Center.Y - 13), 1.65f);
-        DrawPlayerRoleFaceIcon(new Vector2(bounds.X + 72, bounds.Y + 22), isComputer: true);
+        _stationeryDrawingContext.DrawPlayerRoleFaceIcon(new Vector2(bounds.X + 72, bounds.Y + 22), isComputer: true);
         var nameWidth = inUse ? bounds.Width - 196 : bounds.Width - 106;
         DrawFittedText(profile.DisplayName, new Rectangle(bounds.X + 86, bounds.Y + 6, nameWidth, 30), enabled ? Color.White : new Color(145, 145, 145), 0.5f);
         if (inUse)

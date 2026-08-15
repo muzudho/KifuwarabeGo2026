@@ -236,27 +236,27 @@ public sealed class RightSidePanelPlayerSelector
 
         var isPonnuki = y is LocalMatchIntermissionRightSidePanel.BlackPlayerKindButtonY or LocalMatchIntermissionRightSidePanel.WhitePlayerKindButtonY;
         var handleBounds = LocalMatchScreen.Default.GetHandleBounds(stone, isPonnuki);
-        renderer.DrawRightSidePanelFittedText("HANDLE", new Rectangle(1156, handleBounds.Y + 4, 118, 32), UiLabel.TextColor, 0.34f);
+        drawingContext.DrawFittedText("HANDLE", new Rectangle(1156, handleBounds.Y + 4, 118, 32), UiLabel.TextColor, 0.34f);
         var textBounds = LocalMatchScreen.Default.GetHandleTextBounds(stone, isPonnuki);
         var active = session.ActiveLocalMatchHandleStone == stone;
         var hovered = textBounds.Contains(mousePoint);
         var text = session.GetLocalMatchHandleDraft(stone);
-        renderer.DrawRightSidePanelFittedText(text, textBounds, Color.White, 0.32f);
-        renderer.DrawRightSidePanelRoundedFill(
+        drawingContext.DrawFittedText(text, textBounds, Color.White, 0.32f);
+        drawingContext.FillRoundedRectangle(
             new Rectangle(textBounds.X, textBounds.Bottom + 2, textBounds.Width, 5),
             2,
             active ? new Color(147, 244, 200) : hovered ? new Color(185, 196, 255) : new Color(100, 110, 145));
         if (active)
         {
-            renderer.DrawRightSidePanelTextSelection(text, session.LocalMatchHandleSelectionStart,
+            drawingContext.DrawTextSelection(text, session.LocalMatchHandleSelectionStart,
                 session.LocalMatchHandleSelectionLength, textBounds, 0.32f);
-            renderer.DrawRightSidePanelTextCaret(text, session.LocalMatchHandleCaretIndex, textBounds, 0.32f);
+            drawingContext.DrawTextCaret(text, session.LocalMatchHandleCaretIndex, textBounds, 0.32f);
         }
         if (hovered && !active)
         {
             var hintBounds = new Rectangle(textBounds.Right - 76, textBounds.Bottom - 25, 70, 23);
-            renderer.DrawRightSidePanelRoundedFill(hintBounds, 6, new Color(185, 196, 255));
-            renderer.DrawRightSidePanelCenteredFittedText("EDIT", hintBounds, new Color(15, 20, 31), 0.34f);
+            drawingContext.FillRoundedRectangle(hintBounds, 6, new Color(185, 196, 255));
+            drawingContext.DrawCenteredFittedText("EDIT", hintBounds, new Color(15, 20, 31), 0.34f);
         }
     }
 
@@ -266,16 +266,16 @@ public sealed class RightSidePanelPlayerSelector
         if (selector.Bounds.X == 1144 && selector.Bounds.Width == 668)
         {
             var isBlack = selector.Label.StartsWith("BLACK", StringComparison.Ordinal);
-            renderer.DrawRightSidePanelIconStone(new Vector2(selector.Bounds.X + 34, selector.Bounds.Center.Y), 13, isBlack);
+            drawingContext.DrawIconStone(new Vector2(selector.Bounds.X + 34, selector.Bounds.Center.Y), 13, isBlack);
             if (selector.IsComputer is { } isComputer)
-                renderer.DrawRightSidePanelPlayerRoleFaceIcon(new Vector2(selector.Bounds.X + 76, selector.Bounds.Center.Y), isComputer);
+                drawingContext.DrawPlayerRoleFaceIcon(new Vector2(selector.Bounds.X + 76, selector.Bounds.Center.Y), isComputer);
             var fieldBounds = new Rectangle(RightSidePanelLayout.PrimaryValueX, selector.Bounds.Y + 6,
                 selector.Bounds.Right - RightSidePanelLayout.PrimaryValueX - 34, selector.Bounds.Height - 12);
             var hovered = selector.Enabled && selector.Bounds.Contains(mousePoint);
             var valueBounds = hovered
                 ? new Rectangle(fieldBounds.X, fieldBounds.Y, fieldBounds.Width - 122, fieldBounds.Height)
                 : fieldBounds;
-            renderer.DrawRightSidePanelFittedText(selector.Value, valueBounds, Color.White, 0.42f);
+            drawingContext.DrawFittedText(selector.Value, valueBounds, Color.White, 0.42f);
             Underline.Bounds = fieldBounds;
             Underline.SetActionBadge(ActionBadgeComponent.Create("CHANGE", fieldBounds));
             Underline.UpdatePointer(mousePoint);
@@ -283,10 +283,10 @@ public sealed class RightSidePanelPlayerSelector
             return;
         }
 
-        renderer.DrawRightSidePanelDataRowFrame(selector.Bounds);
-        renderer.DrawRightSidePanelFittedText(selector.Label, selector.LabelBounds, new Color(158, 178, 178), 0.36f);
-        renderer.DrawRightSidePanelFittedText(selector.Value, selector.ValueBounds, Color.White, 0.52f);
-        renderer.DrawRightSidePanelCommandButton(selector.BrowseButtonBounds, selector.ButtonLabel, mousePoint,
+        drawingContext.DrawDataRowFrame(selector.Bounds);
+        drawingContext.DrawFittedText(selector.Label, selector.LabelBounds, new Color(158, 178, 178), 0.36f);
+        drawingContext.DrawFittedText(selector.Value, selector.ValueBounds, Color.White, 0.52f);
+        renderer.DrawCommandButton(selector.BrowseButtonBounds, selector.ButtonLabel, false, mousePoint,
             selector.Enabled, PlayerSelectorLayout.SelectButtonLabelScale);
     }
 }
@@ -307,12 +307,12 @@ public sealed class GameOverRightSidePanel
         renderer.DrawResultRow(new Rectangle(1164, 242, 628, 52), "RULES", session.TournamentDisplayName, new Color(39, 68, 65), Color.White);
         DrawCalculationResultRow(drawingContext, new Rectangle(1164, 300, 628, 52), session);
 
-        renderer.DrawRightSidePanelGameOverTrendChart(session, mousePoint);
+        renderer.DrawLocalGameOverTrendChart(session, mousePoint);
 
         if (session.UseKind == GoAppUseKind.LocalApps)
         {
             renderer.DrawVerticalResultSection(new Rectangle(1144, 668, 668, 174), "AGEHAMA", new Color(112, 76, 48));
-            renderer.DrawRightSidePanelAgehamaSummary(new Rectangle(1164, 692, 628, 132), session.BlackAgehama, session.WhiteAgehama);
+            renderer.DrawAgehamaSummaryComponent(new Rectangle(1164, 692, 628, 132), session.BlackAgehama, session.WhiteAgehama);
         }
 
         renderer.DrawVerticalResultSection(new Rectangle(1144, 854, 668, 126), "ACTION", new Color(91, 82, 105));
@@ -326,7 +326,7 @@ public sealed class GameOverRightSidePanel
     private static void DrawCalculationResultRow(StationeryDrawingContext drawingContext, Rectangle bounds, GoAppSession session)
     {
         var renderer = drawingContext.ScreenRenderer;
-        renderer.DrawRightSidePanelResultLabel(bounds, "RESULT", new Color(80, 48, 38));
+        drawingContext.DrawResultLabel(bounds, "RESULT", new Color(80, 48, 38));
         const string pureGoPrefix = "PURE GO ";
         var result = string.IsNullOrWhiteSpace(session.GameOverReason) ? "GAME OVER" : session.GameOverReason;
         if (result.StartsWith(pureGoPrefix, StringComparison.Ordinal))
@@ -335,7 +335,7 @@ public sealed class GameOverRightSidePanel
         var white = result.StartsWith("WHITE ", StringComparison.Ordinal);
         if (black || white)
         {
-            renderer.DrawRightSidePanelStoneValue(RightSidePanelLayout.PrimaryValueX, bounds.Center.Y,
+            drawingContext.DrawStoneValue(RightSidePanelLayout.PrimaryValueX, bounds.Center.Y,
                 result[6..], black, new Color(99, 223, 185));
             return;
         }
@@ -393,25 +393,25 @@ public sealed class BoardEditingRightSidePanel
         renderer.DrawResultRow(new Rectangle(1164, 208, 628, 60), "SIZE", $"{session.BoardSize} x {session.BoardSize}", new Color(62, 112, 105), Color.White);
 
         renderer.DrawVerticalResultSection(new Rectangle(1144, 292, 668, 260), "EDIT", new Color(76, 91, 126));
-        renderer.DrawRightSidePanelResultLabel(new Rectangle(1164, 296, 628, 40), "STONE", new Color(76, 91, 126));
+        drawingContext.DrawResultLabel(new Rectangle(1164, 296, 628, 40), "STONE", new Color(76, 91, 126));
         controls.BlackButton.Draw(mousePoint, drawingContext);
         controls.WhiteButton.Draw(mousePoint, drawingContext);
         controls.EraseButton.Draw(mousePoint, drawingContext);
 
-        renderer.DrawRightSidePanelResultLabel(new Rectangle(1164, 414, 628, 40), "HISTORY", new Color(76, 91, 126));
+        drawingContext.DrawResultLabel(new Rectangle(1164, 414, 628, 40), "HISTORY", new Color(76, 91, 126));
         controls.UndoButton.Draw(mousePoint, drawingContext);
         controls.RedoButton.Draw(mousePoint, drawingContext);
         controls.ClearButton.Draw(mousePoint, drawingContext);
 
         renderer.DrawVerticalResultSection(new Rectangle(1144, 564, 668, 220), "POSITION", new Color(62, 112, 105));
-        renderer.DrawRightSidePanelStoneCountStrip(session, 584, showLeader: false, minimal: true);
+        renderer.DrawStoneCountStrip(session, 584, showLeader: false, minimal: true);
         DrawCurrentStoneResultRow(drawingContext, new Rectangle(1164, 690, 628, 64), session);
     }
 
     private static void DrawCurrentStoneResultRow(StationeryDrawingContext drawingContext, Rectangle bounds, GoAppSession session)
     {
         var renderer = drawingContext.ScreenRenderer;
-        renderer.DrawRightSidePanelResultLabel(bounds, "RESULT", new Color(80, 48, 38));
+        drawingContext.DrawResultLabel(bounds, "RESULT", new Color(80, 48, 38));
         var difference = session.BlackStoneCount - session.WhiteStoneCount;
         if (difference == 0)
         {
@@ -421,7 +421,7 @@ public sealed class BoardEditingRightSidePanel
             return;
         }
 
-        renderer.DrawRightSidePanelStoneValue(RightSidePanelLayout.PrimaryValueX, bounds.Center.Y,
+        drawingContext.DrawStoneValue(RightSidePanelLayout.PrimaryValueX, bounds.Center.Y,
             $"+{Math.Abs(difference)}", difference > 0, new Color(99, 223, 185));
     }
 }
@@ -473,11 +473,11 @@ public sealed class VariationEditingRightSidePanel
 
         renderer.DrawVerticalResultSection(new Rectangle(1144, 802, 668, 74), "BOARD", new Color(76, 91, 126));
         controls.ClearButton.Draw(mousePoint, drawingContext);
-        renderer.DrawRightSidePanelSelectableCommandButton(controls.BoardLensToggleBounds, "L",
+        renderer.DrawCommandButton(controls.BoardLensToggleBounds, "L",
             session.IsRenParseDisplayEnabled, mousePoint, true, 0.40f);
-        renderer.DrawRightSidePanelCommandButton(controls.BoardLensPreviousBounds, "<J", mousePoint, session.IsRenParseDisplayEnabled, 0.25f);
-        renderer.DrawRightSidePanelCommandButton(controls.BoardLensNextBounds, "K>", mousePoint, session.IsRenParseDisplayEnabled, 0.25f);
-        renderer.DrawRightSidePanelCommandButton(controls.BoardLensExitBounds, "OFF/1", mousePoint, session.IsRenParseDisplayEnabled, 0.22f);
+        renderer.DrawCommandButton(controls.BoardLensPreviousBounds, "<J", false, mousePoint, session.IsRenParseDisplayEnabled, 0.25f);
+        renderer.DrawCommandButton(controls.BoardLensNextBounds, "K>", false, mousePoint, session.IsRenParseDisplayEnabled, 0.25f);
+        renderer.DrawCommandButton(controls.BoardLensExitBounds, "OFF/1", false, mousePoint, session.IsRenParseDisplayEnabled, 0.22f);
 
         renderer.DrawVerticalResultSection(new Rectangle(1144, 916, 668, 76), "ACTION", new Color(91, 82, 105));
         controls.ExportSgfButton.Draw(mousePoint, drawingContext);
@@ -517,7 +517,7 @@ public sealed class VariationEditingRightSidePanel
         {
             var stone = preview.GetStone(x, y);
             if (stone == GoStone.Empty) continue;
-            renderer.DrawRightSidePanelCircle(new Vector2(start.X + cell * x, start.Y + cell * y), stoneRadius,
+            drawingContext.DrawCircle(new Vector2(start.X + cell * x, start.Y + cell * y), stoneRadius,
                 stone == GoStone.Black ? new Color(27, 31, 34) : new Color(247, 245, 237));
         }
 
@@ -572,10 +572,10 @@ public sealed class ReviewingRightSidePanel
             session.BlackAgehama, session.WhiteAgehama, session.CurrentTurn, minimal: true,
             blackLiveElapsed: session.ReviewBlackUsedTime, whiteLiveElapsed: session.ReviewWhiteUsedTime);
 
-        renderer.DrawRightSidePanelReviewTrendChart(session, mousePoint);
+        renderer.DrawReviewTrendChart(session, mousePoint);
 
         renderer.DrawVerticalResultSection(new Rectangle(1144, 850, 668, 142), "REVIEW", new Color(76, 91, 126));
-        renderer.DrawRightSidePanelResultLabel(new Rectangle(1164, 858, 468, 36),
+        drawingContext.DrawResultLabel(new Rectangle(1164, 858, 468, 36),
             $"STEP {session.ReviewMoveIndex} / {session.ReviewMoveCount}", new Color(76, 91, 126));
         controls.BoardLensNextButton.Draw(mousePoint, drawingContext);
         controls.BoardLensPreviousButton.Draw(mousePoint, drawingContext);
@@ -618,7 +618,7 @@ public static class ReviewMoveNavigation
         {
             var step = StepButtonValues[index];
             var enabled = step < 0 ? currentMoveIndex > 0 : currentMoveIndex < moveCount;
-            renderer.DrawRightSidePanelCommandButton(getButtonBounds(index), FormatStep(step), mousePoint, enabled, 0.31f);
+            renderer.DrawCommandButton(getButtonBounds(index), FormatStep(step), false, mousePoint, enabled, 0.31f);
         }
     }
 

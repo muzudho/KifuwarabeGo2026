@@ -56,34 +56,6 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
     internal StationeryDrawingContext StationeryDrawingContext => _stationeryDrawingContext;
 
     // 移設途中: StationeryDrawingContext の拡張と右側パネル共通部品への分離後に削除する一時的な描画ブリッジです。
-    internal void DrawRightSidePanelIconStone(Vector2 center, float radius, bool black) => DrawIconStone(center, radius, black);
-    internal void DrawRightSidePanelPlayerRoleFaceIcon(Vector2 center, bool isComputer) => DrawPlayerRoleFaceIcon(center, isComputer);
-    internal void DrawRightSidePanelFittedText(string text, Rectangle bounds, Color color, float scale) => DrawFittedText(text, bounds, color, scale);
-    internal void DrawRightSidePanelRoundedFill(Rectangle bounds, int radius, Color color) => DrawRoundedFill(bounds, radius, color);
-    internal void DrawRightSidePanelTextSelection(string text, int start, int length, Rectangle bounds, float scale) =>
-        DrawTextBoxSelection(text, start, length, bounds, scale);
-    internal void DrawRightSidePanelTextCaret(string text, int caret, Rectangle bounds, float scale) =>
-        DrawTextBoxCaret(text, caret, bounds, scale);
-    internal void DrawRightSidePanelCenteredFittedText(string text, Rectangle bounds, Color color, float scale) =>
-        DrawSharpCenteredFittedText(text, bounds, color, scale);
-    internal void DrawRightSidePanelDataRowFrame(Rectangle bounds) => DrawDataRowFrame(bounds);
-    internal void DrawRightSidePanelCommandButton(Rectangle bounds, string label, Point mousePoint, bool enabled, float scale) =>
-        DrawCommandButton(bounds, label, false, mousePoint, enabled, scale);
-    internal void DrawRightSidePanelSelectableCommandButton(Rectangle bounds, string label, bool selected, Point mousePoint, bool enabled, float scale) =>
-        DrawCommandButton(bounds, label, selected, mousePoint, enabled, scale);
-    internal void DrawRightSidePanelResultLabel(Rectangle bounds, string label, Color accentColor) =>
-        DrawResultLabel(bounds, label, accentColor);
-    internal void DrawRightSidePanelStoneValue(int x, int centerY, string value, bool black, Color valueColor) =>
-        DrawStoneValue(x, centerY, value, black, valueColor);
-    internal void DrawRightSidePanelGameOverTrendChart(GoAppSession session, Point mousePoint) =>
-        DrawLocalGameOverTrendChart(session, mousePoint);
-    internal void DrawRightSidePanelAgehamaSummary(Rectangle bounds, int blackAgehama, int whiteAgehama) =>
-        DrawAgehamaSummaryComponent(bounds, blackAgehama, whiteAgehama);
-    internal void DrawRightSidePanelStoneCountStrip(GoAppSession session, int y, bool showLeader, bool minimal) =>
-        DrawStoneCountStrip(session, y, showLeader, minimal);
-    internal void DrawRightSidePanelCircle(Vector2 center, float radius, Color color) => DrawCircle(center, radius, color);
-    internal void DrawRightSidePanelReviewTrendChart(GoAppSession session, Point mousePoint) =>
-        DrawReviewTrendChart(session, mousePoint);
     private readonly LinkUnderline _gtpEngineOptionLinkUnderline = new(
         new RoundUnderline { TopOffset = -4, Thickness = 4, Radius = 2 });
     private readonly MultilineTextUnderline _multilineTextUnderline = new(
@@ -119,7 +91,7 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         _stoneDark = CreateStoneTexture(128, lightStone: false);
         _stationeryDrawingContext = new StationeryDrawingContext(
             this,
-            FillRect, DrawRoundedFill, DrawRect, DrawLine, DrawText, DrawFittedText, DrawSharpCenteredFittedText,
+            FillRect, DrawRoundedFill, DrawRect, DrawLine, DrawCircle, DrawStone, DrawText, DrawFittedText, DrawSharpCenteredFittedText,
             DrawRotatedCenteredText, _font.MeasureString);
     }
 
@@ -285,19 +257,9 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         var left = new Vector2(bounds.X + 94, bounds.Y + 76);
         var right = new Vector2(bounds.X + 206, bounds.Y + 76);
         DrawLine(left, right, 5, new Color(99, 223, 185));
-        DrawIconStone(left, 24, black: true);
-        DrawIconStone(right, 24, black: false);
+        _stationeryDrawingContext.DrawIconStone(left, 24, black: true);
+        _stationeryDrawingContext.DrawIconStone(right, 24, black: false);
     }
-    private void DrawIconStone(Vector2 center, float radius, bool black)
-    {
-        DrawCircle(center, radius + 5, black ? new Color(178, 219, 226) : new Color(72, 80, 84));
-        DrawStone(center, radius, black);
-        if (black)
-        {
-            DrawCircle(new Vector2(center.X - radius * 0.28f, center.Y - radius * 0.32f), radius * 0.22f, new Color(255, 255, 255, 42));
-        }
-    }
-
     private void DrawMiniBoardGrid(Rectangle bounds, Color color)
     {
         for (var i = 0; i < 7; i++)
@@ -534,7 +496,7 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
     /// <param name="mousePoint"></param>
     /// <param name="enabled"></param>
     /// <param name="scale"></param>
-    private void DrawCommandButton(Rectangle bounds, string label, bool selected, Point mousePoint, bool enabled = true, float scale = 0.62f)
+    internal void DrawCommandButton(Rectangle bounds, string label, bool selected, Point mousePoint, bool enabled = true, float scale = 0.62f)
     {
         var hovered = enabled && bounds.Contains(mousePoint);
         var fill = !enabled ? new Color(24, 27, 31) : selected ? new Color(31, 151, 112) : hovered ? new Color(58, 82, 94) : new Color(36, 48, 58);
@@ -705,13 +667,7 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         DrawText(label, new Vector2(bounds.X - 8, bounds.Y + 14), new Color(180, 195, 195), 0.38f);
     }
 
-    private void DrawStoneValue(int x, int centerY, string value, bool black, Color valueColor)
-    {
-        DrawIconStone(new Vector2(x + 18, centerY), 16, black);
-        DrawText(value, new Vector2(x + 44, centerY - 14), valueColor, 0.5f);
-    }
-
-    private void DrawStoneCountStrip(GoAppSession session, int y, bool showLeader = true, bool minimal = false)
+    internal void DrawStoneCountStrip(GoAppSession session, int y, bool showLeader = true, bool minimal = false)
     {
         var bounds = new Rectangle(1144, y, 668, 82);
         var blackStones = session.BlackStoneCount;
@@ -736,8 +692,8 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         var secondValueX = minimal ? RightSidePanelLayout.SecondaryValueX : bounds.X + 334;
         if (minimal)
         {
-            DrawStoneValue(firstValueX, bounds.Y + 28, blackStones.ToString(), black: true, valueColor: Color.White);
-            DrawStoneValue(secondValueX, bounds.Y + 28, whiteStones.ToString(), black: false, valueColor: Color.White);
+            _stationeryDrawingContext.DrawStoneValue(firstValueX, bounds.Y + 28, blackStones.ToString(), black: true, valueColor: Color.White);
+            _stationeryDrawingContext.DrawStoneValue(secondValueX, bounds.Y + 28, whiteStones.ToString(), black: false, valueColor: Color.White);
         }
         else
         {
@@ -1376,8 +1332,8 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
     private void DrawPlayerEditPanel(GoAppSession session, Point mousePoint) =>
         EditEntryProfile.Draw(session, mousePoint, HeadUpDisplay.StickyNoteScreen,
             new EditEntryProfileDrawingCallbacks(VirtualScreen.Width, VirtualScreen.Height, FillRect, DrawRoundedFill,
-                DrawRect, DrawText, DrawFittedText, _stationeryDrawingContext, DrawIconStone, DrawPlayerRoleFaceIcon,
-                DrawTextBoxSelection, DrawTextBoxCaret,
+                DrawRect, DrawText, DrawFittedText, _stationeryDrawingContext, _stationeryDrawingContext.DrawIconStone, _stationeryDrawingContext.DrawPlayerRoleFaceIcon,
+                _stationeryDrawingContext.DrawTextSelection, _stationeryDrawingContext.DrawTextCaret,
                 DrawLine, DrawDynamicOptionText, DrawRotatedCenteredText));
 
 }

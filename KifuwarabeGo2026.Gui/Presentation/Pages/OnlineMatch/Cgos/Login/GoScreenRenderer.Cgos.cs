@@ -204,8 +204,8 @@ public sealed partial class GoScreenRenderer
 
         DrawLine(localStone, exit, 5, new Color(99, 223, 185));
         DrawLine(exit, server, 5, new Color(99, 223, 185));
-        DrawIconStone(localStone, 24, black: true);
-        DrawIconStone(server, 18, black: false);
+        _stationeryDrawingContext.DrawIconStone(localStone, 24, black: true);
+        _stationeryDrawingContext.DrawIconStone(server, 18, black: false);
     }
 
 

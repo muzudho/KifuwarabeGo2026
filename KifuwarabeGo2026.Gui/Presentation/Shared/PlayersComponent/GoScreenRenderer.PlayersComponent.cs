@@ -70,7 +70,7 @@ public sealed partial class GoScreenRenderer
     {
         _playerRow.Draw(new PlayerRowModel(bounds, playerName, elapsed, liveElapsed, mainTime, agehama, black, active,
                 engineError, mousePoint, minimal, RightSidePanelLayout.PrimaryValueX),
-            new PlayerRowDrawingCallbacks(bounds => DrawDataRowFrame(bounds), FillRect, DrawRect, DrawStone, DrawIconStone, DrawFittedText,
+            new PlayerRowDrawingCallbacks(bounds => DrawDataRowFrame(bounds), FillRect, DrawRect, DrawStone, _stationeryDrawingContext.DrawIconStone, DrawFittedText,
                 FormatElapsedTime, (plateBounds, color) => _spriteBatch.Draw(_softCircle, plateBounds, color), DrawLine));
     }
 
@@ -80,7 +80,7 @@ public sealed partial class GoScreenRenderer
             new AgehamaPlateDrawingCallbacks((plateBounds, color) => _spriteBatch.Draw(_softCircle, plateBounds, color), DrawStone, DrawFittedText));
     }
 
-    private void DrawAgehamaSummaryComponent(Rectangle bounds, int blackAgehama, int whiteAgehama)
+    internal void DrawAgehamaSummaryComponent(Rectangle bounds, int blackAgehama, int whiteAgehama)
     {
         DrawAgehamaSummaryRow(new Rectangle(bounds.X, bounds.Y, bounds.Width, 60), "BLACK CAPTURES", blackAgehama, capturedBlack: false);
         DrawAgehamaSummaryRow(new Rectangle(bounds.X, bounds.Y + 68, bounds.Width, 60), "WHITE CAPTURES", whiteAgehama, capturedBlack: true);

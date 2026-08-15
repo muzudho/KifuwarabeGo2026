@@ -169,7 +169,7 @@ public sealed partial class GoScreenRenderer
         if (trimmed.Length >= 2 && trimmed[1] == '+' &&
             (trimmed[0] is 'B' or 'b' or 'W' or 'w'))
         {
-            DrawStoneValue(RightSidePanelLayout.PrimaryValueX, bounds.Center.Y, trimmed[2..], trimmed[0] is 'B' or 'b', new Color(99, 223, 185));
+            _stationeryDrawingContext.DrawStoneValue(RightSidePanelLayout.PrimaryValueX, bounds.Center.Y, trimmed[2..], trimmed[0] is 'B' or 'b', new Color(99, 223, 185));
             return;
         }
 
