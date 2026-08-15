@@ -541,8 +541,8 @@ public sealed class ReviewingRightSidePanel
         controls.BoardLensPreviousButton.Draw(mousePoint, drawingContext);
         controls.BoardLensExitButton.Draw(mousePoint, drawingContext);
         controls.BoardLensButton.Draw(mousePoint, drawingContext);
-        ReviewMoveNavigation.Draw(drawingContext, session.ReviewTimelineIndex, session.ReviewTimelineMaximum,
-            mousePoint, ReviewChartPopupStepButtonBounds);
+        ReviewMoveNavigation.Draw(drawingContext, session.ReviewTimelineIndex, session.ReviewMoveCount,
+            mousePoint, ReviewChartPopupStepButtonBounds, enableResultStepFromLastMove: true);
         drawingContext.DrawFittedText(
             "[L] BOARD LENS    HOME/END    ARROWS: -/+1,10    PGDN/PGUP: -/+50",
             new Rectangle(1168, 950, 624, 24), new Color(147, 201, 190), 0.23f);
@@ -579,16 +579,16 @@ public sealed class ReviewingRightSidePanel
             drawingContext.DrawResultRow(new Rectangle(1164, 264, 628, 52), "KOMI", session.Komi.ToString("0.0"), new Color(62, 112, 105), Color.White);
         }
 
-        moveTrendChartRenderer.DrawCompletedLocalGame(drawingContext, session, mousePoint);
+        moveTrendChartRenderer.DrawCompletedLocalGame(drawingContext, session, mousePoint, showComment: !isResult);
         drawingContext.DrawVerticalResultSection(new Rectangle(1144, 850, 668, 142),
             isResult ? "RESULT" : "REVIEW", new Color(76, 91, 126));
         drawingContext.DrawResultLabel(new Rectangle(1164, 858, 280, 36),
             isResult ? "RESULT" : $"STEP {session.LocalDisplayMoveIndex} / {session.CurrentGameRecord.Moves.Count}",
             new Color(76, 91, 126));
         var timelineIndex = isCompletedGame ? session.LocalReviewTimelineIndex : session.ReviewTimelineIndex;
-        var timelineMaximum = isCompletedGame ? session.LocalReviewTimelineMaximum : session.ReviewTimelineMaximum;
-        ReviewMoveNavigation.Draw(drawingContext, timelineIndex, timelineMaximum,
-            mousePoint, ReviewChartPopupStepButtonBounds);
+        var lastMoveIndex = isCompletedGame ? session.CurrentGameRecord.Moves.Count : session.ReviewMoveCount;
+        ReviewMoveNavigation.Draw(drawingContext, timelineIndex, lastMoveIndex,
+            mousePoint, ReviewChartPopupStepButtonBounds, enableResultStepFromLastMove: true);
         drawingContext.DrawFittedText(
             "HOME/END    ARROWS: -/+1,10    PGDN/PGUP: -/+50    END: RESULT",
             new Rectangle(1168, 950, 624, 24), new Color(147, 201, 190), 0.23f);
@@ -637,13 +637,15 @@ public static class ReviewMoveNavigation
     }
 
     internal static void Draw(KfwStationeryDrawingTools drawingContext, int currentMoveIndex, int moveCount,
-        Point mousePoint, Func<int, Rectangle> getButtonBounds)
+        Point mousePoint, Func<int, Rectangle> getButtonBounds, bool enableResultStepFromLastMove = false)
     {
         var renderer = drawingContext;
         for (var index = 0; index < StepButtonValues.Length; index++)
         {
             var step = StepButtonValues[index];
-            var enabled = step < 0 ? currentMoveIndex > 0 : currentMoveIndex < moveCount;
+            var enabled = step < 0
+                ? currentMoveIndex > 0
+                : currentMoveIndex < moveCount || enableResultStepFromLastMove && currentMoveIndex == moveCount;
             renderer.DrawCommandButton(getButtonBounds(index), FormatStep(step), false, mousePoint, enabled, 0.31f);
         }
     }

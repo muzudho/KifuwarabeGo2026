@@ -108,7 +108,8 @@ public sealed class MoveTrendChartRenderer
             session.LocalDisplayMoveIndex);
     }
 
-    public void DrawCompletedLocalGame(KfwStationeryDrawingTools drawingContext, GoAppSession session, Point mousePoint)
+    public void DrawCompletedLocalGame(KfwStationeryDrawingTools drawingContext, GoAppSession session, Point mousePoint,
+        bool showComment = true)
     {
         _drawingContext = drawingContext;
         DrawMoveTrendChart(
@@ -116,7 +117,8 @@ public sealed class MoveTrendChartRenderer
             session.CurrentGameRecord.Moves,
             GetCompletedLocalGameTrendChartBounds(session),
             mousePoint,
-            session.LocalDisplayMoveIndex);
+            session.LocalDisplayMoveIndex,
+            allowComment: showComment);
     }
 
     private static Rectangle GetCompletedLocalGameTrendChartBounds(GoAppSession session) =>
@@ -149,7 +151,8 @@ public sealed class MoveTrendChartRenderer
         Rectangle bounds,
         Point mousePoint,
         int? currentMoveNumber = null,
-        bool popup = false)
+        bool popup = false,
+        bool allowComment = true)
     {
         var isPopupChartVisible = !popup || session.IsPopupScoreVisible || session.IsPopupWinRateVisible;
         if (isPopupChartVisible)
@@ -162,7 +165,7 @@ public sealed class MoveTrendChartRenderer
         {
             DrawMoveInformationTabs(session, moves, bounds, mousePoint);
 
-            if (session.MoveInformationDisplayMode == MoveInformationDisplayMode.Comment)
+            if (allowComment && session.MoveInformationDisplayMode == MoveInformationDisplayMode.Comment)
             {
                 _moveCommentPanelRenderer.Draw(moves, bounds, session, mousePoint, currentMoveNumber);
                 return;
