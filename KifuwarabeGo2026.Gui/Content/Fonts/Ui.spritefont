@@ -96,6 +96,11 @@
         <Start>&#32;</Start>
         <End>&#126;</End>
       </CharacterRegion>
+      <!-- Full-width ASCII variants used by Japanese text and kaomoji: （＾～＾） etc. -->
+      <CharacterRegion>
+        <Start>&#65281;</Start>
+        <End>&#65374;</End>
+      </CharacterRegion>
       <CharacterRegion>
         <Start>&#20013;</Start>
         <End>&#20013;</End>
