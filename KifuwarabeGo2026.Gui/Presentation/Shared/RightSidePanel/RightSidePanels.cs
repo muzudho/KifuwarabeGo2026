@@ -541,8 +541,8 @@ public sealed class ReviewingRightSidePanel
         controls.BoardLensPreviousButton.Draw(mousePoint, drawingContext);
         controls.BoardLensExitButton.Draw(mousePoint, drawingContext);
         controls.BoardLensButton.Draw(mousePoint, drawingContext);
-        ReviewMoveNavigation.Draw(drawingContext, session.ReviewTimelineIndex, session.ReviewMoveCount,
-            mousePoint, ReviewChartPopupStepButtonBounds, enableResultStepFromLastMove: true);
+        ReviewMoveNavigation.Draw(drawingContext, session.ReviewTimelineIndex, session.ReviewTimelineMaximum,
+            mousePoint, ReviewChartPopupStepButtonBounds);
         drawingContext.DrawFittedText(
             "[L] BOARD LENS    HOME/END    ARROWS: -/+1,10    PGDN/PGUP: -/+50",
             new Rectangle(1168, 950, 624, 24), new Color(147, 201, 190), 0.23f);
@@ -586,9 +586,9 @@ public sealed class ReviewingRightSidePanel
             isResult ? "RESULT" : $"STEP {session.LocalDisplayMoveIndex} / {session.CurrentGameRecord.Moves.Count}",
             new Color(76, 91, 126));
         var timelineIndex = isCompletedGame ? session.LocalReviewTimelineIndex : session.ReviewTimelineIndex;
-        var lastMoveIndex = isCompletedGame ? session.CurrentGameRecord.Moves.Count : session.ReviewMoveCount;
-        ReviewMoveNavigation.Draw(drawingContext, timelineIndex, lastMoveIndex,
-            mousePoint, ReviewChartPopupStepButtonBounds, enableResultStepFromLastMove: true);
+        var timelineMaximum = isCompletedGame ? session.LocalReviewTimelineMaximum : session.ReviewTimelineMaximum;
+        ReviewMoveNavigation.Draw(drawingContext, timelineIndex, timelineMaximum,
+            mousePoint, ReviewChartPopupStepButtonBounds);
         drawingContext.DrawFittedText(
             "HOME/END    ARROWS: -/+1,10    PGDN/PGUP: -/+50    END: RESULT",
             new Rectangle(1168, 950, 624, 24), new Color(147, 201, 190), 0.23f);
@@ -636,8 +636,8 @@ public static class ReviewMoveNavigation
         return null;
     }
 
-    internal static void Draw(KfwStationeryDrawingTools drawingContext, int currentMoveIndex, int moveCount,
-        Point mousePoint, Func<int, Rectangle> getButtonBounds, bool enableResultStepFromLastMove = false)
+    internal static void Draw(KfwStationeryDrawingTools drawingContext, int currentMoveIndex, int maximumMoveIndex,
+        Point mousePoint, Func<int, Rectangle> getButtonBounds)
     {
         var renderer = drawingContext;
         for (var index = 0; index < StepButtonValues.Length; index++)
@@ -645,7 +645,7 @@ public static class ReviewMoveNavigation
             var step = StepButtonValues[index];
             var enabled = step < 0
                 ? currentMoveIndex > 0
-                : currentMoveIndex < moveCount || enableResultStepFromLastMove && currentMoveIndex == moveCount;
+                : currentMoveIndex < maximumMoveIndex;
             renderer.DrawCommandButton(getButtonBounds(index), FormatStep(step), false, mousePoint, enabled, 0.31f);
         }
     }
