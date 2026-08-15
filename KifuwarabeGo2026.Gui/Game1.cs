@@ -25,9 +25,11 @@ using KifuwarabeGo2026.Gui.Presentation.Shared.SelectEntry;
 using KifuwarabeGo2026.Gui.Presentation.Shared.EntryProfiles;
 using KifuwarabeGo2026.Gui.Presentation.Shared.CgosMatchNotification;
 using KifuwarabeGo2026.Gui.Presentation.Pages.ApplicationSettings;
+using KifuwarabeGo2026.Gui.Presentation.Pages.PonnukiProviderSelection;
+using KifuwarabeGo2026.Gui.Presentation.Pages.Title;
+using KifuwarabeGo2026.Gui.Presentation.Title;
 using KifuwarabeGo2026.Gui.Presentation.Pages.LocalMatch;
 using KifuwarabeGo2026.Gui.Presentation.Pages.LocalMatch.Intermission;
-using KifuwarabeGo2026.Gui.Presentation.Title;
 using KifuwarabeGo2026.Gui.Presentation.Shared.TextAreaDialog;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.StickyNote;
@@ -752,7 +754,7 @@ public class Game1 : Game
                 if (_isApplicationSettingsOpen)
                     _renderer.DrawApplicationSettings(backgroundMousePosition, _applicationSettingsPage, ApplicationSettings.Current.LogRootDirectory, ApplicationSettings.Current.SgfSaveDirectory, ApplicationSettings.Current.ScreenshotSaveDirectory, ApplicationSettings.FilePath, _gtpEngineCatalog.ListPath, _guiLogFiles, _selectedGuiLogIndex, _applicationSettingsMessage);
                 else
-                    TitleRenderer.Draw(_renderer.StationeryDrawingContext, _session, backgroundMousePosition, _titleMenuPage, _appProviderTabIndex, _appProviderSelectionLoadTask is not null);
+                    _renderer.DrawUseSelection(_session, backgroundMousePosition, _titleMenuPage, _appProviderTabIndex, _appProviderSelectionLoadTask is not null);
             }
         }
         else if (_variationSession is not null)
@@ -1166,11 +1168,11 @@ public class Game1 : Game
                 else if (TryHandleTitleMenuClick(point))
                 {
                 }
-                else if (TitleRenderer.IsUpdateButtonHit(point))
+                else if (ApplicationSettingsScreen.Default.UpdateButton.IsHit(point))
                 {
                     BeginGuiReleaseUpdate();
                 }
-                else if (TitleRenderer.IsSettingsButtonHit(point))
+                else if (ApplicationSettingsScreen.Default.SettingsButton.IsHit(point))
                 {
                     GuiOperationLog.User("Pressed Settings button");
                     _isApplicationSettingsOpen = true;
@@ -2526,7 +2528,7 @@ public class Game1 : Game
 
     private bool TryHandleTitleMenuClick(Point point)
     {
-        if (TitleRenderer.IsBackButtonHit(point))
+        if (TitleScreen.Default.BackButton.IsHit(point))
         {
             _titleMenuPage = TitleMenuPage.Home;
             GuiOperationLog.User("Pressed title menu Back button", $"page={_titleMenuPage}");
@@ -2535,21 +2537,21 @@ public class Game1 : Game
 
         if (_titleMenuPage == TitleMenuPage.Home)
         {
-            if (TitleRenderer.IsLocalGameButtonHit(point))
+            if (TitleScreen.Default.LocalMatchButton.IsHit(point))
             {
                 GuiOperationLog.User("Pressed Local Match button", "Navigate from title to local-match setup");
                 _session.SelectUseKind(GoAppUseKind.LocalPlay);
                 return true;
             }
 
-            if (TitleRenderer.IsCgosClientButtonHit(point))
+            if (TitleScreen.Default.CgosClientButton.IsHit(point))
             {
                 GuiOperationLog.User("Pressed CGOS button", "Navigate from title to CGOS connection selection");
                 _session.SelectUseKind(GoAppUseKind.CgosClient);
                 return true;
             }
 
-            if (TitleRenderer.GetAppHit(point) is { } appIndex)
+            if (TitleScreen.Default.GetAppHit(point) is { } appIndex)
             {
                 _titleMenuPage = appIndex switch
                 {
@@ -2564,7 +2566,7 @@ public class Game1 : Game
 
         if (_titleMenuPage == TitleMenuPage.CaptureGame)
         {
-            if (TitleRenderer.IsAppProviderEngineSelectButtonHit(point))
+            if (PonnukiProviderSelectionScreen.Default.IsProviderLinkHit(point))
             {
                 BeginOpenAppProviderGtpEngineSelectionDialog("ponnuki");
                 return true;
@@ -2572,13 +2574,13 @@ public class Game1 : Game
 
             if (_session.CanUseSelectedAppProvider &&
                 !_session.IsAppProviderCapabilityCheckRunning &&
-                TitleRenderer.IsAppProviderRecheckButtonHit(point))
+                PonnukiProviderSelectionScreen.Default.RecheckButton.IsHit(point))
             {
                 RecheckPonnukiProvider();
                 return true;
             }
 
-            if (_session.CanStartSelectedAppProvider && TitleRenderer.IsAppProviderStartButtonHit(point))
+            if (_session.CanStartSelectedAppProvider && PonnukiProviderSelectionScreen.Default.StartButton.IsHit(point))
             {
                 _session.SelectUseKind(GoAppUseKind.LocalApps);
                 GuiOperationLog.User("Entered Local Apps intermission", "app=ponnuki");
