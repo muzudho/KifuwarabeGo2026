@@ -36,6 +36,7 @@ public sealed class PlayingScene : IDisposable
     private CancellationTokenSource _engineCancellation = new();
     private Task<EngineCommandCompletion>? _pendingEngineCommand;
     private int _engineCommandGeneration;
+    private bool _computerMoveAwaitingDraw;
     private bool _isInitialPositionConciergeActive;
     private GoStone? _selectedInitialPositionEngine;
 
@@ -83,8 +84,15 @@ public sealed class PlayingScene : IDisposable
         RequestComputerMoveIfReady();
     }
 
+    /// <summary>
+    /// 直前のコンピューター着手を盤面へ描画したことを通知します。
+    /// 描画が間引かれる状況でも、次の着手へ進む前に局面を最低 1 フレーム表示します。
+    /// </summary>
+    public void MarkFrameDrawn() => _computerMoveAwaitingDraw = false;
+
     public void StartPlaying()
     {
+        _computerMoveAwaitingDraw = false;
         _session.StartPlaying();
         StartGtpGameIfNeeded();
     }
@@ -604,6 +612,7 @@ public sealed class PlayingScene : IDisposable
     {
         var currentTurn = _session.CurrentTurn;
         if (_pendingEngineCommand is not null ||
+            _computerMoveAwaitingDraw ||
             _session.CurrentMode.Kind != GoAppModeKind.Playing ||
             !_session.IsEngineReady ||
             _session.IsEngineThinking ||
@@ -735,6 +744,7 @@ public sealed class PlayingScene : IDisposable
             var comment = string.IsNullOrWhiteSpace(result.Comment) ? forcedPassComment : result.Comment;
             if (_session.Pass(comment, result.Analysis, result.CommonAnalysisJson))
             {
+                _computerMoveAwaitingDraw = true;
                 PlayPlaceStoneSound(0.45f, 0.25f, 0f);
             }
 
@@ -761,6 +771,7 @@ public sealed class PlayingScene : IDisposable
         }
 
         PlayPlaceStoneSound();
+        _computerMoveAwaitingDraw = true;
         SyncComputerMoveToOtherEnginesIfNeeded(result.PlayedBy, GtpCoordinate.FormatVertex(point, _session.BoardSize));
         StartQueuedEngineCommandIfNeeded();
     }
@@ -861,6 +872,7 @@ public sealed class PlayingScene : IDisposable
 
     private void StopGtpGame()
     {
+        _computerMoveAwaitingDraw = false;
         _engineCommandGeneration++;
         _engineCommandQueue.Clear();
         _pendingEngineCommand = null;

@@ -1008,6 +1008,7 @@ public class Game1 : Game
                 GetScreenBreadcrumb(), visible: !hideBreadcrumbForReviewControls);
 
         base.Draw(gameTime);
+        _playingScene.MarkFrameDrawn();
         MarkScreenFrameDrawn();
     }
 
