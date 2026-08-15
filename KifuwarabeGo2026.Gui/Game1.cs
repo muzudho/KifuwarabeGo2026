@@ -898,6 +898,7 @@ public class Game1 : Game
                 _gtpEngineIntegerInputMessage,
                 new PopupNumberUnderlineOptions(
                     Caption: _activeLocalMatchRandomSeedStone is null ? null : "RANDOM SEED INPUT",
+                    ShowTitle: _activeLocalMatchRandomSeedStone is null,
                     AllowEmpty: _activeLocalMatchRandomSeedStone is not null));
 
         // ［大会ルール設定　＞　コミ］

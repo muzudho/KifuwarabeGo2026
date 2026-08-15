@@ -33,8 +33,8 @@ public sealed class PopupNumberUnderline
     #region Layout
 
     private static readonly Rectangle DialogBounds = new(610, 300, 700, 390);
-    private static readonly Rectangle TextBounds = new(690, 410, 540, 70);
-    private static readonly Rectangle TextContentBounds = new(TextBounds.X + 22, TextBounds.Y + 12, TextBounds.Width - 44, 46);
+    private static readonly Rectangle TextBounds = new(690, 430, 540, 60);
+    private static readonly Rectangle TextContentBounds = new(TextBounds.X + 12, TextBounds.Y + 6, TextBounds.Width - 24, 42);
 
     #endregion
 
@@ -112,15 +112,14 @@ public sealed class PopupNumberUnderline
         draw.DrawRectangle(DialogBounds, 2, new Color(116, 145, 146));
         draw.DrawText(options.Caption ?? "NUMBER INPUT", new Vector2(DialogBounds.X + 34, DialogBounds.Y + 28), new Color(244, 238, 218), 0.68f);
         if (options.ShowTitle)
-            draw.DrawFittedText(title, new Rectangle(DialogBounds.X + 36, DialogBounds.Y + 92, DialogBounds.Width - 72, 40), new Color(180, 195, 195), 0.42f);
+            draw.DrawFittedText(title, new Rectangle(DialogBounds.X + 36, DialogBounds.Y + 88, DialogBounds.Width - 72, 30), new Color(180, 195, 195), 0.38f);
 
-        draw.FillRectangle(TextBounds, new Color(15, 20, 26));
-        draw.DrawRectangle(TextBounds, 2, new Color(99, 223, 185));
+        draw.FillRectangle(new Rectangle(TextBounds.X, TextBounds.Bottom - 4, TextBounds.Width, 4), new Color(99, 223, 185));
         draw.DrawTextSelection(text, selectionStart, selectionLength, TextContentBounds, 0.55f);
         draw.DrawFittedText(string.IsNullOrEmpty(text) ? " " : text, TextContentBounds, Color.White, 0.55f);
         var prefix = text[..Math.Clamp(caretIndex, 0, text.Length)];
         var caretX = TextContentBounds.X + (int)(draw.MeasureTextWidth(prefix) * 0.55f);
-        draw.FillRectangle(new Rectangle(Math.Min(caretX, TextBounds.Right - 24), TextBounds.Y + 14, 2, 42), new Color(147, 244, 200));
+        draw.FillRectangle(new Rectangle(Math.Min(caretX, TextBounds.Right - 14), TextBounds.Y + 7, 2, 40), new Color(147, 244, 200));
 
         draw.DrawFittedText(message, new Rectangle(DialogBounds.X + 80, 642, DialogBounds.Width - 160, 28), new Color(255, 205, 140), 0.32f);
 

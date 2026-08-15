@@ -9,6 +9,7 @@ using KifuwarabeGo2026.Gui.Presentation.Shared.RightSidePanel;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.LinkUnderline;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ActionBadge;
 
 /// <summary>ローカル対局のセットアップ、対局中、終局後に共通する操作 UI を所有します。</summary>
 public sealed class LocalMatchScreen
@@ -29,6 +30,8 @@ public sealed class LocalMatchScreen
         PonnukiWhitePlayerKindRow = new PlayerKindSelectionRow(750);
         BlackSeedLink = new LinkUnderline(new RoundUnderline()) { Bounds = new Rectangle(1240, 870, 225, 32), Placeholder = "AUTO" };
         WhiteSeedLink = new LinkUnderline(new RoundUnderline()) { Bounds = new Rectangle(1560, 870, 225, 32), Placeholder = "AUTO" };
+        BlackSeedLink.SetActionBadge(ActionBadgeComponent.Create("CHANGE", BlackSeedLink.Bounds, 0.26f));
+        WhiteSeedLink.SetActionBadge(ActionBadgeComponent.Create("CHANGE", WhiteSeedLink.Bounds, 0.26f));
     }
 
     public Rectangle LocalUseCardBounds { get; } = new(508, 404, 438, 300);

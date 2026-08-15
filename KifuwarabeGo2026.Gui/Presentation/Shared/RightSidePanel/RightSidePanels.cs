@@ -213,7 +213,7 @@ public sealed class SetupRightSidePanel
         PlayerSelector.DrawPlayerRow(drawingContext, session, GoStone.Black, mousePoint, BlackPlayerKindButtonY);
         PlayerSelector.DrawPlayerRow(drawingContext, session, GoStone.White, mousePoint, WhitePlayerKindButtonY);
 
-        renderer.DrawVerticalResultSection(new Rectangle(1144, 856, 668, 52), "SEED", new Color(112, 76, 48), labelWidth: 56);
+        renderer.DrawVerticalResultSection(new Rectangle(1144, 856, 668, 52), "RANDOM SEED", new Color(112, 76, 48), labelWidth: 56);
         DrawRandomSeedLink(drawingContext, session, mousePoint, GoStone.Black, screen.BlackSeedLink);
         DrawRandomSeedLink(drawingContext, session, mousePoint, GoStone.White, screen.WhiteSeedLink);
 
@@ -233,10 +233,9 @@ public sealed class SetupRightSidePanel
     {
         if (!session.SupportsLocalMatchRandomSeed(stone)) return;
         link.UpdatePointer(mousePoint);
-        var labelBounds = new Rectangle(link.Bounds.X - 68, link.Bounds.Y + 4, 62, 24);
-        drawingContext.DrawFittedText(stone == GoStone.Black ? "BLACK" : "WHITE", labelBounds, new Color(180, 195, 195), 0.25f);
+        drawingContext.DrawIconStone(new Vector2(link.Bounds.X - 28, link.Bounds.Center.Y), 12, stone == GoStone.Black);
         drawingContext.DrawFittedText(link.GetDisplayText(session.GetLocalMatchRandomSeedText(stone)),
-            new Rectangle(link.Bounds.X + 8, link.Bounds.Y + 2, link.Bounds.Width - 16, 26), Color.White, 0.31f);
+            new Rectangle(link.Bounds.X + 8, link.Bounds.Y + 2, link.Bounds.Width - 116, 26), Color.White, 0.31f);
         link.Draw(drawingContext);
     }
 }
