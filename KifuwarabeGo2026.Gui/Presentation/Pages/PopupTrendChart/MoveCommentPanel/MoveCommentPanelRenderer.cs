@@ -14,7 +14,7 @@ public sealed class MoveCommentPanelRenderer
 {
     private static readonly Rectangle CgosTrendChartBounds = new(1144, 498, 668, 342);
     private static readonly Rectangle LocalTrendChartBounds = new(1144, 466, 668, 300);
-    private static readonly Rectangle LocalGameOverTrendChartBounds = new(1144, 376, 668, 466);
+    private static readonly Rectangle CompletedLocalGameTrendChartBounds = new(1144, 376, 668, 466);
     private static readonly Rectangle ReviewTrendChartBounds = new(1144, 548, 668, 290);
     private static MoveCommentPanelComponent MoveComments => PopupTrendChartScreen.Default.MoveCommentPanel;
     private readonly GraphicsDevice _graphicsDevice;
@@ -42,8 +42,8 @@ public sealed class MoveCommentPanelRenderer
     public static int? GetLocalCommentPageStepButtonHit(Point point) =>
         MoveComments.GetPageStepButtonHit(point, LocalTrendChartBounds);
 
-    public static int? GetLocalGameOverCommentPageStepButtonHit(Point point) =>
-        MoveComments.GetPageStepButtonHit(point, LocalGameOverTrendChartBounds);
+    public static int? GetCompletedLocalGameCommentPageStepButtonHit(Point point) =>
+        MoveComments.GetPageStepButtonHit(point, CompletedLocalGameTrendChartBounds);
 
     public static int? GetReviewCommentPageStepButtonHit(Point point) =>
         MoveComments.GetPageStepButtonHit(point, ReviewTrendChartBounds);
@@ -54,8 +54,8 @@ public sealed class MoveCommentPanelRenderer
     public static int? GetLocalCommentMoveStepButtonHit(Point point) =>
         MoveComments.GetMoveStepButtonHit(point, LocalTrendChartBounds);
 
-    public static int? GetLocalGameOverCommentMoveStepButtonHit(Point point) =>
-        MoveComments.GetMoveStepButtonHit(point, LocalGameOverTrendChartBounds);
+    public static int? GetCompletedLocalGameCommentMoveStepButtonHit(Point point) =>
+        MoveComments.GetMoveStepButtonHit(point, CompletedLocalGameTrendChartBounds);
 
     public static int? GetReviewCommentMoveStepButtonHit(Point point) =>
         MoveComments.GetMoveStepButtonHit(point, ReviewTrendChartBounds);

@@ -31,8 +31,8 @@ public sealed class PopupTrendChartRenderer
     public static bool GetLocalLiveChartPopupOpenHit(Point point) =>
         MoveTrendChartRenderer.LocalTrendChartBounds.Contains(point);
 
-    public static bool GetLocalGameOverChartPopupOpenHit(Point point) =>
-        MoveTrendChartRenderer.LocalGameOverTrendChartBounds.Contains(point);
+    public static bool GetCompletedLocalGameChartPopupOpenHit(Point point) =>
+        MoveTrendChartRenderer.CompletedLocalGameTrendChartBounds.Contains(point);
 
     public static bool GetCgosLiveChartPopupOpenHit(Point point) =>
         MoveTrendChartRenderer.CgosTrendChartBounds.Contains(point);

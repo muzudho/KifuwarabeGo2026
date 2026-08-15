@@ -518,7 +518,7 @@ public class Game1 : Game
             return;
         }
 
-        if (_session.CurrentMode.Kind == GoAppModeKind.Reviewing && TryHandleReviewKeyboardInput(keyboard))
+        if (_session.CurrentMode.Kind is GoAppModeKind.Reviewing or GoAppModeKind.GameOver && TryHandleReviewKeyboardInput(keyboard))
         {
             _previousKeyboard = keyboard;
             return;
@@ -697,6 +697,18 @@ public class Game1 : Game
 
     private void ExecuteReviewNavigation(int navigation)
     {
+        if (_session.CurrentMode.Kind == GoAppModeKind.GameOver)
+        {
+            var target = navigation switch
+            {
+                int.MinValue => 0,
+                int.MaxValue => _session.LocalReviewTimelineMaximum,
+                _ => Math.Clamp(_session.LocalReviewTimelineIndex + navigation, 0, _session.LocalReviewTimelineMaximum),
+            };
+            _session.SeekLocalReviewTimeline(target);
+            return;
+        }
+
         if (navigation == int.MinValue)
         {
             MoveReview(-_session.ReviewMoveIndex);
@@ -1647,6 +1659,12 @@ public class Game1 : Game
                 return;
             }
 
+            if (_session.CurrentMode.Kind == GoAppModeKind.GameOver && TryHandlePostGameReviewClick(point))
+            {
+                _previousMouse = mouse;
+                return;
+            }
+
             if (_session.CurrentMode.Kind == GoAppModeKind.Reviewing && TryHandleReviewClick(point))
             {
                 _previousMouse = mouse;
@@ -1656,7 +1674,7 @@ public class Game1 : Game
             int? localCommentPageStep = _session.CurrentMode.Kind switch
             {
                 GoAppModeKind.Playing => MoveCommentPanelRenderer.GetLocalCommentPageStepButtonHit(point),
-                GoAppModeKind.GameOver => MoveCommentPanelRenderer.GetLocalGameOverCommentPageStepButtonHit(point),
+                GoAppModeKind.GameOver => MoveCommentPanelRenderer.GetCompletedLocalGameCommentPageStepButtonHit(point),
                 _ => null,
             };
             if (_session.MoveInformationDisplayMode == MoveInformationDisplayMode.Comment &&
@@ -1665,7 +1683,7 @@ public class Game1 : Game
                 int? localCommentMoveStep = _session.CurrentMode.Kind switch
                 {
                     GoAppModeKind.Playing => MoveCommentPanelRenderer.GetLocalCommentMoveStepButtonHit(point),
-                    GoAppModeKind.GameOver => MoveCommentPanelRenderer.GetLocalGameOverCommentMoveStepButtonHit(point),
+                    GoAppModeKind.GameOver => MoveCommentPanelRenderer.GetCompletedLocalGameCommentMoveStepButtonHit(point),
                     _ => null,
                 };
                 if (localCommentMoveStep is { } selectedLocalCommentMoveStep)
@@ -1710,7 +1728,7 @@ public class Game1 : Game
             MoveInformationDisplayMode? localInformationMode = _session.CurrentMode.Kind switch
             {
                 GoAppModeKind.Playing => MoveTrendChartRenderer.GetLocalMoveInformationDisplayModeButtonHit(point),
-                GoAppModeKind.GameOver => MoveTrendChartRenderer.GetLocalGameOverMoveInformationDisplayModeButtonHit(point, _session),
+                GoAppModeKind.GameOver => MoveTrendChartRenderer.GetCompletedLocalGameMoveInformationDisplayModeButtonHit(point, _session),
                 _ => null,
             };
             if (localInformationMode is { } selectedLocalInformationMode)
@@ -1724,7 +1742,7 @@ public class Game1 : Game
             MoveTrendDisplayMode? localTrendMode = _session.CurrentMode.Kind switch
             {
                 GoAppModeKind.Playing => MoveTrendChartRenderer.GetLocalTrendDisplayModeButtonHit(point, _session.MoveTrendDisplayMode),
-                GoAppModeKind.GameOver => MoveTrendChartRenderer.GetLocalGameOverTrendDisplayModeButtonHit(point, _session, _session.MoveTrendDisplayMode),
+                GoAppModeKind.GameOver => MoveTrendChartRenderer.GetCompletedLocalGameTrendDisplayModeButtonHit(point, _session, _session.MoveTrendDisplayMode),
                 _ => null,
             };
             if (localTrendMode is { } selectedLocalTrendMode)
@@ -1738,7 +1756,7 @@ public class Game1 : Game
             var localChartPopupOpenHit = _session.CurrentMode.Kind switch
             {
                 GoAppModeKind.Playing => PopupTrendChartRenderer.GetLocalLiveChartPopupOpenHit(point),
-                GoAppModeKind.GameOver => PopupTrendChartRenderer.GetLocalGameOverChartPopupOpenHit(point),
+                GoAppModeKind.GameOver => PopupTrendChartRenderer.GetCompletedLocalGameChartPopupOpenHit(point),
                 _ => false,
             };
             if (_session.CanOpenLocalChartPopup && localChartPopupOpenHit)
@@ -1783,32 +1801,6 @@ public class Game1 : Game
                      localMatchScreen.StartPlayingButton.IsHit(point))
             {
                 StartPonnukiApp();
-            }
-            else if (_session.CurrentMode.Kind == GoAppModeKind.GameOver && localMatchScreen.ReturnToSetupButton.IsHit(point))
-            {
-                _session.ReturnToSetup();
-            }
-            else if (_session.CurrentMode.Kind == GoAppModeKind.GameOver &&
-                     localMatchScreen.GameOverReviewButton.IsHit(point))
-            {
-                StartReviewingGameRecord(_session.CurrentGameRecord.Clone(), "Local review");
-            }
-            else if (_session.CurrentMode.Kind == GoAppModeKind.GameOver &&
-                     _session.IsSgfAutoSaveAvailable &&
-                     localMatchScreen.ExportSgfButton.IsHit(point))
-            {
-                ToggleSgfAutoSave();
-                if (_session.IsSgfAutoSaveEnabled)
-                {
-                    _lastAutoSavedLocalGameRecord = null;
-                    TryAutoSaveCompletedLocalGame();
-                }
-            }
-            else if (_session.CurrentMode.Kind == GoAppModeKind.GameOver &&
-                     !_session.IsSgfAutoSaveAvailable &&
-                     localMatchScreen.ExportSgfButton.IsHit(point))
-            {
-                ExportSgf();
             }
             else if (isSetupMode && localMatchScreen.ImportSgfButton.IsHit(point))
             {
@@ -2738,6 +2730,42 @@ public class Game1 : Game
         return false;
     }
 
+    private bool TryHandlePostGameReviewClick(Point point)
+    {
+        if (_session.CurrentMode.Kind != GoAppModeKind.GameOver) return false;
+        var controls = BoardAndReviewScreen.Default.Review;
+        if (controls.BackToHomeButton.IsHit(point))
+        {
+            _session.ReturnToSetup();
+            return true;
+        }
+        if (BoardAndReviewScreen.Default.ReviewingRightSidePanel.GetStepButtonHit(point) is { } step)
+        {
+            ExecuteReviewNavigation(step);
+            _reviewMouseRepeatCommand = step is int.MinValue or int.MaxValue ? null : step;
+            _reviewMouseNextRepeatAt = _inputClockSeconds + ReviewRepeatInitialDelaySeconds;
+            return true;
+        }
+        if (_session.IsLocalResultPosition && controls.ExportSgfButton.IsHit(point))
+        {
+            if (_session.IsSgfAutoSaveAvailable)
+            {
+                ToggleSgfAutoSave();
+                if (_session.IsSgfAutoSaveEnabled)
+                {
+                    _lastAutoSavedLocalGameRecord = null;
+                    TryAutoSaveCompletedLocalGame();
+                }
+            }
+            else
+            {
+                ExportSgf();
+            }
+            return true;
+        }
+        return false;
+    }
+
     private bool TryHandleReviewClick(Point point)
     {
         if (_session.CurrentMode.Kind != GoAppModeKind.Reviewing)
@@ -3353,7 +3381,7 @@ public class Game1 : Game
 
     private void UpdateReviewMouseRepeat(MouseState mouse, Point point)
     {
-        if (_session.CurrentMode.Kind != GoAppModeKind.Reviewing ||
+        if (_session.CurrentMode.Kind is not (GoAppModeKind.Reviewing or GoAppModeKind.GameOver) ||
             mouse.LeftButton != ButtonState.Pressed)
         {
             _reviewMouseRepeatCommand = null;
@@ -3616,7 +3644,10 @@ public class Game1 : Game
         else if (IsLocalPlayUseKind() &&
                  _session.CurrentMode.Kind is GoAppModeKind.Playing or GoAppModeKind.GameOver)
         {
-            _session.SeekLocalReplay(moveIndex);
+            if (_session.CurrentMode.Kind == GoAppModeKind.GameOver)
+                _session.SeekLocalReviewTimeline(moveIndex);
+            else
+                _session.SeekLocalReplay(moveIndex);
         }
     }
 
@@ -3690,9 +3721,11 @@ public class Game1 : Game
         if (IsLocalPlayUseKind() &&
             _session.CurrentMode.Kind is GoAppModeKind.Playing or GoAppModeKind.GameOver)
         {
-            currentMoveIndex = _session.LocalDisplayMoveIndex;
+            currentMoveIndex = _session.CurrentMode.Kind == GoAppModeKind.GameOver
+                ? _session.LocalReviewTimelineIndex
+                : _session.LocalDisplayMoveIndex;
             maximumMoveIndex = _session.CurrentMode.Kind == GoAppModeKind.GameOver
-                ? _session.CurrentGameRecord.Moves.Count
+                ? _session.LocalReviewTimelineMaximum
                 : _session.GetLiveChartVisibleMoveCount(_session.CurrentGameRecord.Moves.Count);
             return true;
         }
@@ -6389,7 +6422,9 @@ public class Game1 : Game
         {
             GoAppModeKind.Resting => "FORMAL APPS  >  LOCAL MATCH  >  INTERVAL",
             GoAppModeKind.Playing => "FORMAL APPS  >  LOCAL MATCH  >  PLAY",
-            GoAppModeKind.GameOver => "FORMAL APPS  >  LOCAL MATCH  >  PLAY  >  RESULT",
+            GoAppModeKind.GameOver => _session.IsLocalResultPosition
+                ? "FORMAL APPS  >  LOCAL MATCH  >  PLAY  >  REVIEW  >  RESULT"
+                : "FORMAL APPS  >  LOCAL MATCH  >  PLAY  >  REVIEW",
             GoAppModeKind.BoardEditing => "FORMAL APPS  >  LOCAL MATCH  >  PLAY  >  EDIT BOARD",
             GoAppModeKind.VariationEditing => "FORMAL APPS  >  LOCAL MATCH  >  PLAY  >  EDIT BOARD",
             GoAppModeKind.Reviewing => "FORMAL APPS  >  LOCAL MATCH  >  PLAY  >  REVIEW",

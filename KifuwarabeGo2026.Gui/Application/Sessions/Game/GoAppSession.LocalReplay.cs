@@ -17,6 +17,15 @@ public sealed partial class GoAppSession
     public int LocalDisplayMoveIndex =>
         _localReplayMoveIndex ?? CurrentGameRecord.Moves.Count;
 
+    /// <summary>終局後レビューの終端にある、棋譜の着手ではない結果表示位置です。</summary>
+    public bool IsLocalResultPosition =>
+        CurrentMode.Kind == GoAppModeKind.GameOver && _localReplayMoveIndex is null;
+
+    public int LocalReviewTimelineIndex =>
+        IsLocalResultPosition ? CurrentGameRecord.Moves.Count + 1 : LocalDisplayMoveIndex;
+
+    public int LocalReviewTimelineMaximum => CurrentGameRecord.Moves.Count + 1;
+
     public void SeekLocalReplay(int moveIndex)
     {
         if (CurrentMode.Kind is not (GoAppModeKind.Playing or GoAppModeKind.GameOver) ||
@@ -26,7 +35,7 @@ public sealed partial class GoAppSession
         }
 
         var clampedMoveIndex = Math.Clamp(moveIndex, 0, CurrentGameRecord.Moves.Count);
-        if (clampedMoveIndex == CurrentGameRecord.Moves.Count)
+        if (CurrentMode.Kind == GoAppModeKind.Playing && clampedMoveIndex == CurrentGameRecord.Moves.Count)
         {
             ReturnLocalReplayToLive();
             return;
@@ -34,6 +43,18 @@ public sealed partial class GoAppSession
 
         _localReplayMoveIndex = clampedMoveIndex;
         _localReplayBoard = BuildLocalReplayBoard(clampedMoveIndex);
+    }
+
+    public void SeekLocalReviewTimeline(int timelineIndex)
+    {
+        if (CurrentMode.Kind != GoAppModeKind.GameOver) return;
+        var target = Math.Clamp(timelineIndex, 0, LocalReviewTimelineMaximum);
+        if (target == LocalReviewTimelineMaximum)
+        {
+            ReturnLocalReplayToLive();
+            return;
+        }
+        SeekLocalReplay(target);
     }
 
     public void ReturnLocalReplayToLive()

@@ -71,7 +71,7 @@ public sealed class RightSidePanel
                 LocalMatchPlayPage.Default.RightSidePanel.Draw(drawingContext, moveTrendChartRenderer, session, mousePoint);
                 return;
             case GoAppModeKind.GameOver:
-                LocalMatchScreen.Default.GameOverRightSidePanel.Draw(drawingContext, moveTrendChartRenderer, session, mousePoint);
+                BoardAndReviewScreen.Default.ReviewingRightSidePanel.Draw(drawingContext, moveTrendChartRenderer, session, mousePoint);
                 return;
             case GoAppModeKind.BoardEditing:
                 BoardAndReviewScreen.Default.BoardEditingRightSidePanel.Draw(drawingContext, session, mousePoint);
@@ -300,62 +300,6 @@ public sealed class RightSidePanelPlayerSelector
     }
 }
 
-public sealed class GameOverRightSidePanel
-{
-    public SgfAutoSaveCheckBox SgfAutoSaveCheckBox { get; } = new();
-
-    public void Draw(KfwStationeryDrawingTools drawingContext, MoveTrendChartRenderer moveTrendChartRenderer, GoAppSession session, Point mousePoint)
-    {
-        var renderer = drawingContext;
-        new Headline("GAME OVER", new Vector2(1144, 132), new Color(255, 230, 160), 0.9f).Draw(drawingContext);
-        drawingContext.DrawText($"{session.PlayedMoveCount}手で終局", new Vector2(1144, 196), new Color(99, 223, 185), 0.58f);
-        var screen = LocalMatchScreen.Default;
-        screen.ReturnToSetupButton.Draw(mousePoint, drawingContext);
-
-        renderer.DrawVerticalResultSection(new Rectangle(1144, 236, 668, 128), "RESULT", new Color(80, 48, 38));
-        renderer.DrawResultRow(new Rectangle(1164, 242, 628, 52), "RULES", session.TournamentDisplayName, new Color(39, 68, 65), Color.White);
-        DrawCalculationResultRow(drawingContext, new Rectangle(1164, 300, 628, 52), session);
-
-        moveTrendChartRenderer.DrawLocalGameOver(drawingContext, session, mousePoint);
-
-        if (session.UseKind == GoAppUseKind.LocalApps)
-        {
-            renderer.DrawVerticalResultSection(new Rectangle(1144, 668, 668, 174), "AGEHAMA", new Color(112, 76, 48));
-            PlayersComponent.Default.DrawAgehamaSummary(drawingContext, new Rectangle(1164, 692, 628, 132), session.BlackAgehama, session.WhiteAgehama);
-        }
-
-        renderer.DrawVerticalResultSection(new Rectangle(1144, 854, 668, 126), "ACTION", new Color(91, 82, 105));
-        screen.GameOverReviewButton.Draw(mousePoint, drawingContext);
-        if (session.IsSgfAutoSaveAvailable)
-            SgfAutoSaveCheckBox.Draw(screen.ExportSgfButton.Bounds, session, mousePoint, drawingContext);
-        else
-            screen.ExportSgfButton.Draw(mousePoint, drawingContext);
-    }
-
-    private static void DrawCalculationResultRow(KfwStationeryDrawingTools drawingContext, Rectangle bounds, GoAppSession session)
-    {
-        var renderer = drawingContext;
-        drawingContext.DrawResultLabel(bounds, "RESULT", new Color(80, 48, 38));
-        const string pureGoPrefix = "PURE GO ";
-        var result = string.IsNullOrWhiteSpace(session.GameOverReason) ? "GAME OVER" : session.GameOverReason;
-        if (result.StartsWith(pureGoPrefix, StringComparison.Ordinal))
-            result = result[pureGoPrefix.Length..];
-        var black = result.StartsWith("BLACK ", StringComparison.Ordinal);
-        var white = result.StartsWith("WHITE ", StringComparison.Ordinal);
-        if (black || white)
-        {
-            drawingContext.DrawStoneValue(RightSidePanelLayout.PrimaryValueX, bounds.Center.Y,
-                result[6..], black, new Color(99, 223, 185));
-            return;
-        }
-
-        drawingContext.DrawFittedText(result,
-            new Rectangle(RightSidePanelLayout.PrimaryValueX, bounds.Y + 6,
-                bounds.Right - RightSidePanelLayout.PrimaryValueX - 18, bounds.Height - 12),
-            new Color(99, 223, 185), 0.58f);
-    }
-}
-
 public sealed class SgfAutoSaveCheckBox
 {
     public void Draw(Rectangle bounds, GoAppSession session, Point mousePoint, KfwStationeryDrawingTools drawingContext)
@@ -548,6 +492,7 @@ public sealed class VariationEditingRightSidePanel
 
 public sealed class ReviewingRightSidePanel
 {
+    private readonly SgfAutoSaveCheckBox _sgfAutoSaveCheckBox = new();
     // ========================================
     // 機能
     // ========================================
@@ -557,6 +502,12 @@ public sealed class ReviewingRightSidePanel
 
     public void Draw(KfwStationeryDrawingTools drawingContext, MoveTrendChartRenderer moveTrendChartRenderer, GoAppSession session, Point mousePoint)
     {
+        if (session.CurrentMode.Kind == GoAppModeKind.GameOver)
+        {
+            DrawCompletedLocalGame(drawingContext, moveTrendChartRenderer, session, mousePoint);
+            return;
+        }
+
         var renderer = drawingContext;
         var controls = BoardAndReviewScreen.Default.Review;
         controls.UpdateBoardLensState(session.IsRenParseDisplayEnabled, session.IsMeasureBoardLens);
@@ -595,6 +546,67 @@ public sealed class ReviewingRightSidePanel
         drawingContext.DrawFittedText(
             "[L] BOARD LENS    HOME/END    ARROWS: -/+1,10    PGDN/PGUP: -/+50",
             new Rectangle(1168, 950, 624, 24), new Color(147, 201, 190), 0.23f);
+    }
+
+    private void DrawCompletedLocalGame(KfwStationeryDrawingTools drawingContext,
+        MoveTrendChartRenderer moveTrendChartRenderer, GoAppSession session, Point mousePoint)
+    {
+        var controls = BoardAndReviewScreen.Default.Review;
+        var isResult = session.IsLocalResultPosition;
+        new Headline(isResult ? "GAME RESULT" : "KIFU REVIEW", new Vector2(1144, 132),
+            new Color(255, 230, 160), isResult ? 0.82f : 0.72f).Draw(drawingContext);
+        controls.BackToHomeButton.Draw(mousePoint, drawingContext);
+        if (isResult)
+        {
+            if (session.IsSgfAutoSaveAvailable)
+                _sgfAutoSaveCheckBox.Draw(controls.ExportSgfButton.Bounds, session, mousePoint, drawingContext);
+            else
+                controls.ExportSgfButton.Draw(mousePoint, drawingContext);
+
+            drawingContext.DrawText($"{session.PlayedMoveCount}手で終局", new Vector2(1144, 196),
+                new Color(99, 223, 185), 0.52f);
+            drawingContext.DrawVerticalResultSection(new Rectangle(1144, 236, 668, 128), "RESULT", new Color(80, 48, 38));
+            drawingContext.DrawResultRow(new Rectangle(1164, 242, 628, 52), "RULES", session.TournamentDisplayName,
+                new Color(39, 68, 65), Color.White);
+            DrawResultRow(drawingContext, new Rectangle(1164, 300, 628, 52), session);
+        }
+        else
+        {
+            drawingContext.DrawVerticalResultSection(new Rectangle(1144, 204, 668, 120), "RULES", new Color(66, 104, 116));
+            drawingContext.DrawResultRow(new Rectangle(1164, 208, 628, 52), "BOARD", $"{session.BoardSize} x {session.BoardSize}", new Color(62, 112, 105), Color.White);
+            drawingContext.DrawResultRow(new Rectangle(1164, 264, 628, 52), "KOMI", session.Komi.ToString("0.0"), new Color(62, 112, 105), Color.White);
+        }
+
+        moveTrendChartRenderer.DrawCompletedLocalGame(drawingContext, session, mousePoint);
+        drawingContext.DrawVerticalResultSection(new Rectangle(1144, 850, 668, 142),
+            isResult ? "RESULT" : "REVIEW", new Color(76, 91, 126));
+        drawingContext.DrawResultLabel(new Rectangle(1164, 858, 280, 36),
+            isResult ? "RESULT" : $"STEP {session.LocalDisplayMoveIndex} / {session.CurrentGameRecord.Moves.Count}",
+            new Color(76, 91, 126));
+        ReviewMoveNavigation.Draw(drawingContext, session.LocalReviewTimelineIndex,
+            session.LocalReviewTimelineMaximum, mousePoint, ReviewChartPopupStepButtonBounds);
+        drawingContext.DrawFittedText(
+            "HOME/END    ARROWS: -/+1,10    PGDN/PGUP: -/+50    END: RESULT",
+            new Rectangle(1168, 950, 624, 24), new Color(147, 201, 190), 0.23f);
+    }
+
+    private static void DrawResultRow(KfwStationeryDrawingTools drawingContext, Rectangle bounds, GoAppSession session)
+    {
+        drawingContext.DrawResultLabel(bounds, "RESULT", new Color(80, 48, 38));
+        const string prefix = "PURE GO ";
+        var result = string.IsNullOrWhiteSpace(session.GameOverReason) ? "GAME OVER" : session.GameOverReason;
+        if (result.StartsWith(prefix, StringComparison.Ordinal)) result = result[prefix.Length..];
+        var black = result.StartsWith("BLACK ", StringComparison.Ordinal);
+        var white = result.StartsWith("WHITE ", StringComparison.Ordinal);
+        if (black || white)
+        {
+            drawingContext.DrawStoneValue(RightSidePanelLayout.PrimaryValueX, bounds.Center.Y,
+                result[6..], black, new Color(99, 223, 185));
+            return;
+        }
+        drawingContext.DrawFittedText(result,
+            new Rectangle(RightSidePanelLayout.PrimaryValueX, bounds.Y + 8, 448, bounds.Height - 16),
+            new Color(99, 223, 185), 0.42f);
     }
 }
 

@@ -77,6 +77,7 @@ public sealed class ReviewControls
     {
         UsePositionButton = new Button(new Rectangle(1648, 120, 164, 52), "USE POSITION", 0.34f);
         BackToHomeButton = new Button(new Rectangle(1480, 120, 156, 52), "BACK TO HOME", 0.32f);
+        ExportSgfButton = new Button(new Rectangle(1648, 120, 164, 52), "SGF OUTPUT", 0.28f);
         BoardLensButton = new Button(new Rectangle(1508, 858, 60, 60), "L", 0.16f);
         BoardLensNextButton = new Button(new Rectangle(1652, 858, 60, 60), "K>", 0.25f);
         BoardLensExitButton = new Button(new Rectangle(1724, 858, 60, 60), "OFF/1", 0.19f);
@@ -91,6 +92,7 @@ public sealed class ReviewControls
     public Rectangle UnsavedCommentsNoticeBounds { get; } = new(1334, 165, 430, 24);
     public Button UsePositionButton { get; }
     public Button BackToHomeButton { get; }
+    public Button ExportSgfButton { get; }
     public Button BoardLensButton { get; }
     public Button BoardLensNextButton { get; }
     public Button BoardLensExitButton { get; }

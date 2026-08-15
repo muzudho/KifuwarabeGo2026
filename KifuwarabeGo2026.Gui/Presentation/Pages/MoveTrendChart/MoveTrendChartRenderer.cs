@@ -26,7 +26,7 @@ public sealed class MoveTrendChartRenderer
     }
     public static readonly Rectangle CgosTrendChartBounds = new(1144, 498, 668, 342);
     public static readonly Rectangle LocalTrendChartBounds = new(1144, 466, 668, 300);
-    public static readonly Rectangle LocalGameOverTrendChartBounds = new(1144, 376, 668, 466);
+    public static readonly Rectangle CompletedLocalGameTrendChartBounds = new(1144, 376, 668, 466);
     private static readonly Rectangle LocalAppsGameOverTrendChartBounds = new(1144, 376, 668, 280);
     public static readonly Rectangle ReviewTrendChartBounds = new(1144, 548, 668, 290);
 
@@ -41,8 +41,8 @@ public sealed class MoveTrendChartRenderer
     public static MoveInformationDisplayMode? GetLocalMoveInformationDisplayModeButtonHit(Point point) =>
         GetMoveInformationDisplayModeButtonHit(point, LocalTrendChartBounds);
 
-    public static MoveInformationDisplayMode? GetLocalGameOverMoveInformationDisplayModeButtonHit(Point point, GoAppSession session) =>
-        GetMoveInformationDisplayModeButtonHit(point, GetLocalGameOverTrendChartBounds(session));
+    public static MoveInformationDisplayMode? GetCompletedLocalGameMoveInformationDisplayModeButtonHit(Point point, GoAppSession session) =>
+        GetMoveInformationDisplayModeButtonHit(point, GetCompletedLocalGameTrendChartBounds(session));
 
     public static MoveInformationDisplayMode? GetReviewMoveInformationDisplayModeButtonHit(Point point) =>
         GetMoveInformationDisplayModeButtonHit(point, ReviewTrendChartBounds);
@@ -52,9 +52,9 @@ public sealed class MoveTrendChartRenderer
         return GetMoveTrendDisplayModeButtonHit(point, LocalTrendChartBounds, currentMode);
     }
 
-    public static MoveTrendDisplayMode? GetLocalGameOverTrendDisplayModeButtonHit(Point point, GoAppSession session, MoveTrendDisplayMode currentMode)
+    public static MoveTrendDisplayMode? GetCompletedLocalGameTrendDisplayModeButtonHit(Point point, GoAppSession session, MoveTrendDisplayMode currentMode)
     {
-        return GetMoveTrendDisplayModeButtonHit(point, GetLocalGameOverTrendChartBounds(session), currentMode);
+        return GetMoveTrendDisplayModeButtonHit(point, GetCompletedLocalGameTrendChartBounds(session), currentMode);
     }
 
     public static MoveTrendDisplayMode? GetReviewTrendDisplayModeButtonHit(Point point, MoveTrendDisplayMode currentMode) =>
@@ -108,21 +108,21 @@ public sealed class MoveTrendChartRenderer
             session.LocalDisplayMoveIndex);
     }
 
-    public void DrawLocalGameOver(KfwStationeryDrawingTools drawingContext, GoAppSession session, Point mousePoint)
+    public void DrawCompletedLocalGame(KfwStationeryDrawingTools drawingContext, GoAppSession session, Point mousePoint)
     {
         _drawingContext = drawingContext;
         DrawMoveTrendChart(
             session,
             session.CurrentGameRecord.Moves,
-            GetLocalGameOverTrendChartBounds(session),
+            GetCompletedLocalGameTrendChartBounds(session),
             mousePoint,
             session.LocalDisplayMoveIndex);
     }
 
-    private static Rectangle GetLocalGameOverTrendChartBounds(GoAppSession session) =>
+    private static Rectangle GetCompletedLocalGameTrendChartBounds(GoAppSession session) =>
         session.UseKind == GoAppUseKind.LocalApps
             ? LocalAppsGameOverTrendChartBounds
-            : LocalGameOverTrendChartBounds;
+            : CompletedLocalGameTrendChartBounds;
 
     public void DrawReview(KfwStationeryDrawingTools drawingContext, GoAppSession session, Point mousePoint)
     {

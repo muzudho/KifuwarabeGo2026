@@ -18,9 +18,6 @@ public sealed class LocalMatchScreen
         StartPlayingButton = new Button(new Rectangle(1658, 920, 154, 56), "START", 0.48f);
         ImportSgfButton = new Button(new Rectangle(1492, 184, 320, 56), "KIFU INPUT (SGF)", 0.34f);
         BackToTitleButton = new Button(new Rectangle(1642, 104, 170, 52), "BACK TO TITLE", 0.32f);
-        ReturnToSetupButton = new Button(new Rectangle(1492, 132, 320, 56), "BACK TO SETUP", 0.34f);
-        ExportSgfButton = new Button(new Rectangle(1164, 910, 306, 56), "SGF OUTPUT", 0.52f);
-        GameOverReviewButton = new Button(new Rectangle(1486, 910, 306, 56), "KIFU REVIEW", 0.36f);
         BlackPlayerKindRow = new PlayerKindSelectionRow(710);
         WhitePlayerKindRow = new PlayerKindSelectionRow(814);
         PonnukiBlackPlayerKindRow = new PlayerKindSelectionRow(646);
@@ -31,11 +28,7 @@ public sealed class LocalMatchScreen
     public Button StartPlayingButton { get; }
     public Button ImportSgfButton { get; }
     public Button BackToTitleButton { get; }
-    public Button ReturnToSetupButton { get; }
-    public Button ExportSgfButton { get; }
-    public Button GameOverReviewButton { get; }
     public SetupRightSidePanel SetupRightSidePanel { get; } = new();
-    public GameOverRightSidePanel GameOverRightSidePanel { get; } = new();
     public InitialPositionConciergeRightSidePanel InitialPositionConciergeRightSidePanel { get; } = new();
     public PlayerKindSelectionRow BlackPlayerKindRow { get; }
     public PlayerKindSelectionRow WhitePlayerKindRow { get; }

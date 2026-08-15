@@ -1122,8 +1122,18 @@ internal static class PortabilityChecks
         passSession.SetPlayerKind(GoStone.White, GoPlayerKind.Human);
         passSession.StartPlaying();
         Require(passSession.Pass() && passSession.Pass(), "The GUI session must pass through Match.");
-        Require(passSession.CurrentMode.Kind == GoAppModeKind.GameOver, "The local wrapper must enter its result screen after result waiting begins.");
+        Require(passSession.CurrentMode.Kind == GoAppModeKind.GameOver, "The local wrapper must enter its completed-game state after result waiting begins.");
         Require(passSession.Winner is null, "Match must not infer a winner from two passes on an empty board.");
+        Require(passSession.IsLocalResultPosition && passSession.LocalReviewTimelineIndex == 3,
+            "A completed two-move game must open at the RESULT position after its final move.");
+        passSession.SeekLocalReviewTimeline(2);
+        Require(!passSession.IsLocalResultPosition && passSession.IsLocalReplayMode && passSession.LocalDisplayMoveIndex == 2,
+            "Stepping back from RESULT must expose the final move as a distinct review position.");
+        passSession.SeekLocalReviewTimeline(passSession.LocalReviewTimelineMaximum);
+        Require(passSession.IsLocalResultPosition,
+            "Seeking to the post-game timeline end must return to RESULT without adding a record move.");
+        Require(passSession.CurrentGameRecord.Moves.Count == 2,
+            "The RESULT timeline position must not be stored as a fictitious game-record move.");
 
         var resignSession = new GoAppSession();
         resignSession.SetPlayerKind(GoStone.Black, GoPlayerKind.Human);
