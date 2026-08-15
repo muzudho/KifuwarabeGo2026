@@ -1,4 +1,11 @@
-namespace KifuwarabeGo2026.Gui.Presentation;
+namespace KifuwarabeGo2026.Gui.Presentation.Pages.OnlineMatch.Cgos.Login;
+using KifuwarabeGo2026.Gui.Presentation.Shared.CatalogOrder;
+using KifuwarabeGo2026.Gui.Presentation.Shared.EntryProfiles;
+using KifuwarabeGo2026.Gui.Presentation;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.LinkUnderline;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
+using KifuwarabeGo2026.Gui.Presentation.Pages.GtpEngine;
 
 using KifuwarabeGo2026.Gui.Presentation.Title;
 using KifuwarabeGo2026.Gui.Application;
@@ -17,40 +24,52 @@ using KifuwarabeGo2026.Gui.Presentation.Pages.OnlineMatch.Cgos.Login;
 using KifuwarabeGo2026.Gui.Presentation.Pages.OnlineMatch.Cgos.SelectConnection;
 
 /// <summary>CGOS の接続選択・ログイン画面を描画します。</summary>
-public sealed partial class GoScreenRenderer
+public sealed class CgosLoginRenderer
 {
+    private const int AddPanelControlX = 626;
+    private readonly GtpEngineRenderer _gtpEngineRenderer;
+    private readonly Action<GoAppSession, Point> _drawPlayerEditPanel;
+    private readonly LinkUnderline _compactLinkUnderline = new(
+        new RoundUnderline { TopOffset = 1, Thickness = 3, Radius = 1 });
+    private readonly LinkUnderline _selectorLinkUnderline = new(
+        new RoundUnderline { TopOffset = 2, Thickness = 4, Radius = 2 });
+    private readonly ActionBadgeComponent _editActionBadge = ActionBadgeComponent.Create("EDIT", Rectangle.Empty);
+    private StationeryDrawingContext _drawingContext = null!;
 
-    public void DrawCgosClientTop(GoAppSession session, Point mousePosition)
+    public CgosLoginRenderer(GtpEngineRenderer gtpEngineRenderer, Action<GoAppSession, Point> drawPlayerEditPanel)
     {
-        var mousePoint = VirtualScreen.ToVirtualPoint(_graphicsDevice.Viewport, mousePosition);
+        _gtpEngineRenderer = gtpEngineRenderer;
+        _drawPlayerEditPanel = drawPlayerEditPanel;
+    }
 
-        _spriteBatch.Begin(
-            samplerState: SamplerState.LinearClamp,
-            transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));
+    public void Draw(StationeryDrawingContext drawingContext, GoAppSession session, Point mousePosition)
+    {
+        _drawingContext = drawingContext;
+        var mousePoint = drawingContext.ToVirtualPoint(mousePosition);
 
-        DrawBackground();
+        drawingContext.Begin();
+
+        drawingContext.DrawBackground();
         var modalOpen = session.IsPlayerSelectionDialogOpen || session.IsPlayerEditPanelOpen || session.IsClientIdentityProfileSelectionPanelOpen || session.IsClientIdentityProfileEditPanelOpen || session.IsQuickClientIdentitySelectionPanelOpen ||
                         session.IsGtpEngineSelectionDialogOpen || session.IsGtpEngineEditPanelOpen ||
                         session.IsCgosConnectionEditPanelOpen || session.IsCgosAdminPlayerSelectionDialogOpen;
         DrawCgosClientTopPanel(session, modalOpen ? new Point(-1, -1) : mousePoint);
-        DrawPlayerSelectionDialog(session, mousePoint);
-        DrawPlayerEditPanel(session, mousePoint);
-        DrawClientIdentityProfileEditPanel(session, mousePoint);
-        DrawQuickClientIdentitySelectionPanel(session, mousePoint);
-        DrawGtpEngineSelectionDialog(session, mousePoint);
-        DrawGtpEngineEditPanel(session, mousePoint);
+        SelectEntryPresenter.Default.Draw(_drawingContext, session, mousePoint);
+        _drawPlayerEditPanel(session, mousePoint);
+        EntryProfilesPresenter.Default.DrawPanels(_drawingContext, session, mousePoint);
+        _gtpEngineRenderer.Draw(_drawingContext, session, mousePoint);
         DrawCgosConnectionEditPanel(session, mousePoint);
         DrawCgosAdminPlayerSelectionDialog(session, mousePoint);
 
-        _spriteBatch.End();
+        drawingContext.End();
     }
 
 
     public int GetCgosConnectionEditPanelCaretIndex(Point point, CgosConnectionProfileEditField field, string text) =>
-        GetTextBoxCaretIndex(point.X, text, CgosConnectionEditPanelFieldTextBounds(field), 0.42f);
+        _drawingContext.GetTextCaretIndex(point.X, text, CgosConnectionEditPanelFieldTextBounds(field), 0.42f);
 
     public int GetCgosCredentialCaretIndex(Point point, GoStone stone, CgosPlayerCredentialField field, string text) =>
-        GetTextBoxCaretIndex(point.X, text, CgosCredentialTextBounds(stone, field), 0.32f);
+        _drawingContext.GetTextCaretIndex(point.X, text, CgosCredentialTextBounds(stone, field), 0.32f);
 
     public static (GoStone Stone, CgosPlayerCredentialField Field)? GetCgosCredentialFieldHit(Point point)
     {
@@ -204,8 +223,8 @@ public sealed partial class GoScreenRenderer
 
         DrawLine(localStone, exit, 5, new Color(99, 223, 185));
         DrawLine(exit, server, 5, new Color(99, 223, 185));
-        _stationeryDrawingContext.DrawIconStone(localStone, 24, black: true);
-        _stationeryDrawingContext.DrawIconStone(server, 18, black: false);
+        _drawingContext.DrawIconStone(localStone, 24, black: true);
+        _drawingContext.DrawIconStone(server, 18, black: false);
     }
 
 
@@ -231,7 +250,7 @@ public sealed partial class GoScreenRenderer
 
         if (session.CgosConnectionFlowKind == CgosConnectionFlowKind.ConnectionStart)
         {
-            new Headline("CGOS CLIENT", new Vector2(panel.X + 58, panel.Y + 58), new Color(255, 230, 160), 1.0f).Draw(_stationeryDrawingContext);
+            new Headline("CGOS CLIENT", new Vector2(panel.X + 58, panel.Y + 58), new Color(255, 230, 160), 1.0f).Draw(_drawingContext);
             DrawCgosConnectionStartPanel(session, mousePoint);
             return;
         }
@@ -259,16 +278,16 @@ public sealed partial class GoScreenRenderer
         page.DeleteButton.IsEnabled = session.CanDeleteSelectedCgosConnectionProfile;
         page.OrderButton.IsEnabled = session.CgosConnectionProfiles.Count > 1;
         page.SelectButton.IsEnabled = session.CgosConnectionProfiles.Count > 0;
-        page.PreviousButton.Draw(mousePoint, _stationeryDrawingContext);
-        page.NextButton.Draw(mousePoint, _stationeryDrawingContext);
-        page.AddButton.Draw(mousePoint, _stationeryDrawingContext);
-        page.EditButton.Draw(mousePoint, _stationeryDrawingContext);
-        page.DuplicateButton.Draw(mousePoint, _stationeryDrawingContext);
-        page.DeleteButton.Draw(mousePoint, _stationeryDrawingContext);
-        page.OrderButton.Draw(mousePoint, _stationeryDrawingContext);
-        page.SelectButton.Draw(mousePoint, _stationeryDrawingContext);
-        page.CancelButton.Draw(mousePoint, _stationeryDrawingContext);
-        DrawCatalogOrderEditor(
+        page.PreviousButton.Draw(mousePoint, _drawingContext);
+        page.NextButton.Draw(mousePoint, _drawingContext);
+        page.AddButton.Draw(mousePoint, _drawingContext);
+        page.EditButton.Draw(mousePoint, _drawingContext);
+        page.DuplicateButton.Draw(mousePoint, _drawingContext);
+        page.DeleteButton.Draw(mousePoint, _drawingContext);
+        page.OrderButton.Draw(mousePoint, _drawingContext);
+        page.SelectButton.Draw(mousePoint, _drawingContext);
+        page.CancelButton.Draw(mousePoint, _drawingContext);
+        CatalogOrderPresenter.Default.Draw(_drawingContext,
             session.CgosConnectionOrderEditor,
             "CGOS CONNECTIONS",
             mousePoint,
@@ -306,13 +325,13 @@ public sealed partial class GoScreenRenderer
             session.IsCgosAdminInputEnabled && !string.IsNullOrWhiteSpace(session.CgosAdminLogDirectory),
             mousePoint);
         page.AdminWhoButton.IsEnabled = session.IsCgosAdminInputEnabled && session.IsCgosAdminRunning;
-        page.AdminWhoButton.Draw(mousePoint, _stationeryDrawingContext);
+        page.AdminWhoButton.Draw(mousePoint, _drawingContext);
         DrawCgosAdminPlayerSelector(CgosAdminWhitePlayerRowBounds, "WHITE", session.CgosAdminWhitePlayerName, mousePoint);
         DrawCgosAdminPlayerSelector(CgosAdminBlackPlayerRowBounds, "BLACK", session.CgosAdminBlackPlayerName, mousePoint);
         page.AdminMatchButton.IsEnabled = session.IsCgosAdminInputEnabled && session.CanSendCgosAdminMatch;
         page.AdminSwapButton.IsEnabled = page.AdminMatchButton.IsEnabled;
-        page.AdminMatchButton.Draw(mousePoint, _stationeryDrawingContext);
-        page.AdminSwapButton.Draw(mousePoint, _stationeryDrawingContext);
+        page.AdminMatchButton.Draw(mousePoint, _drawingContext);
+        page.AdminSwapButton.Draw(mousePoint, _drawingContext);
         if (!session.IsCgosAdminInputEnabled)
             FillRect(CgosAdminProcessPanelBounds, new Color(8, 11, 15, 176));
         DrawCgosOptionalInputCheck(
@@ -342,7 +361,7 @@ public sealed partial class GoScreenRenderer
             mousePoint);
         if (session.IsCgosGameInProgress && session.IsCgosBlackConnectionRunning)
         {
-            page.BlackResignButton.Draw(mousePoint, _stationeryDrawingContext);
+            page.BlackResignButton.Draw(mousePoint, _drawingContext);
         }
         DrawCgosCredentialFields(session, GoStone.Black, mousePoint);
 
@@ -367,7 +386,7 @@ public sealed partial class GoScreenRenderer
             mousePoint);
         if (session.IsCgosGameInProgress && session.IsCgosWhiteConnectionRunning)
         {
-            page.WhiteResignButton.Draw(mousePoint, _stationeryDrawingContext);
+            page.WhiteResignButton.Draw(mousePoint, _drawingContext);
         }
         DrawCgosCredentialFields(session, GoStone.White, mousePoint);
         if (!session.IsCgosPlayer2InputEnabled)
@@ -401,7 +420,7 @@ public sealed partial class GoScreenRenderer
         _compactLinkUnderline.Bounds = valueBounds;
         _compactLinkUnderline.SetActionBadge(ActionBadgeComponent.Create("CHANGE", valueBounds));
         _compactLinkUnderline.UpdatePointer(mousePoint);
-        _compactLinkUnderline.Draw(_stationeryDrawingContext);
+        _compactLinkUnderline.Draw(_drawingContext);
     }
 
     private void DrawCgosCredentialFields(GoAppSession session, GoStone stone, Point mousePoint)
@@ -455,7 +474,7 @@ public sealed partial class GoScreenRenderer
     {
         if (!session.IsCgosAdminPlayerSelectionDialogOpen) return;
 
-        FillRect(new Rectangle(0, 0, VirtualScreen.Width, VirtualScreen.Height), new Color(0, 0, 0, 105));
+        FillRect(new Rectangle(0, 0, _drawingContext.ScreenWidth, _drawingContext.ScreenHeight), new Color(0, 0, 0, 105));
         FillRect(new Rectangle(CgosAdminPlayerDialogBounds.X + 18, CgosAdminPlayerDialogBounds.Y + 20, CgosAdminPlayerDialogBounds.Width, CgosAdminPlayerDialogBounds.Height), new Color(0, 0, 0, 145));
         FillRect(CgosAdminPlayerDialogBounds, new Color(19, 24, 31, 248));
         DrawRect(CgosAdminPlayerDialogBounds, 2, new Color(116, 145, 146));
@@ -464,8 +483,8 @@ public sealed partial class GoScreenRenderer
         DrawText($"PARTICIPANT SELECT  {target}", new Vector2(CgosAdminPlayerDialogBounds.X + 30, CgosAdminPlayerDialogBounds.Y + 24), new Color(244, 238, 218), 0.72f);
         var page = CgosLoginPage.Default;
         page.PlayerDialogSelectButton.IsEnabled = session.CgosAdminWaitingPlayers.Count > 0;
-        page.PlayerDialogCancelButton.Draw(mousePoint, _stationeryDrawingContext);
-        page.PlayerDialogSelectButton.Draw(mousePoint, _stationeryDrawingContext);
+        page.PlayerDialogCancelButton.Draw(mousePoint, _drawingContext);
+        page.PlayerDialogSelectButton.Draw(mousePoint, _drawingContext);
 
         DrawText("PARTICIPANTS", new Vector2(CgosAdminPlayerDialogListBounds.X, CgosAdminPlayerDialogListBounds.Y - 34), new Color(180, 195, 195), 0.46f);
         FillRect(CgosAdminPlayerDialogListBounds, new Color(15, 20, 26));
@@ -494,8 +513,8 @@ public sealed partial class GoScreenRenderer
         DrawText($"PAGE {session.CgosAdminPlayerSelectionPageIndex + 1} / {pageCount}", new Vector2(910, 825), new Color(227, 224, 210), 0.42f);
         page.PlayerDialogPreviousButton.IsEnabled = session.CgosAdminPlayerSelectionPageIndex > 0;
         page.PlayerDialogNextButton.IsEnabled = session.CgosAdminPlayerSelectionPageIndex < pageCount - 1;
-        page.PlayerDialogPreviousButton.Draw(mousePoint, _stationeryDrawingContext);
-        page.PlayerDialogNextButton.Draw(mousePoint, _stationeryDrawingContext);
+        page.PlayerDialogPreviousButton.Draw(mousePoint, _drawingContext);
+        page.PlayerDialogNextButton.Draw(mousePoint, _drawingContext);
     }
 
     /// <summary>
@@ -564,7 +583,7 @@ public sealed partial class GoScreenRenderer
         _selectorLinkUnderline.Bounds = fieldBounds;
         _selectorLinkUnderline.SetActionBadge(ActionBadgeComponent.Create("CHANGE", fieldBounds));
         _selectorLinkUnderline.UpdatePointer(mousePoint);
-        _selectorLinkUnderline.Draw(_stationeryDrawingContext);
+        _selectorLinkUnderline.Draw(_drawingContext);
     }
 
 
@@ -577,15 +596,15 @@ public sealed partial class GoScreenRenderer
         DrawUiLabel(UiLabel.InCompactRow("STDIO", stdioBounds));
         DrawFittedText(logPath, CgosConnectionLogPathBounds, Color.White, 0.32f);
         var page = CgosLoginPage.Default;
-        page.LogCodeButton.Draw(mousePoint, _stationeryDrawingContext);
-        page.LogNotepadButton.Draw(mousePoint, _stationeryDrawingContext);
+        page.LogCodeButton.Draw(mousePoint, _drawingContext);
+        page.LogNotepadButton.Draw(mousePoint, _drawingContext);
 
         var stderrBounds = new Rectangle(CgosConnectionStartStatusBounds.X + 22, CgosConnectionStartStatusBounds.Y + 332, CgosConnectionStartStatusBounds.Width - 44, 56);
         DrawDataRowFrame(stderrBounds);
         DrawUiLabel(UiLabel.InCompactRow("STDERR", stderrBounds));
         DrawFittedText(logPath, CgosConnectionStandardErrorLogPathBounds, Color.White, 0.32f);
-        page.ErrorLogCodeButton.Draw(mousePoint, _stationeryDrawingContext);
-        page.ErrorLogNotepadButton.Draw(mousePoint, _stationeryDrawingContext);
+        page.ErrorLogCodeButton.Draw(mousePoint, _drawingContext);
+        page.ErrorLogNotepadButton.Draw(mousePoint, _drawingContext);
     }
 
 
@@ -722,7 +741,7 @@ public sealed partial class GoScreenRenderer
             return;
         }
 
-        FillRect(new Rectangle(0, 0, VirtualScreen.Width, VirtualScreen.Height), new Color(0, 0, 0, 95));
+        FillRect(new Rectangle(0, 0, _drawingContext.ScreenWidth, _drawingContext.ScreenHeight), new Color(0, 0, 0, 95));
         FillRect(new Rectangle(CgosConnectionEditPanelBounds.X + 14, CgosConnectionEditPanelBounds.Y + 16, CgosConnectionEditPanelBounds.Width, CgosConnectionEditPanelBounds.Height), new Color(0, 0, 0, 145));
         FillRect(CgosConnectionEditPanelBounds, new Color(19, 24, 31, 250));
         DrawRect(CgosConnectionEditPanelBounds, 2, new Color(116, 145, 146));
@@ -732,8 +751,8 @@ public sealed partial class GoScreenRenderer
         page.EditDiscardButton.IsEnabled = session.IsCgosConnectionEditDirty;
         page.EditSaveButton.Label = session.IsCgosConnectionEditDirty ? "SAVE & CLOSE" : "CLOSE";
         page.EditSaveButton.LabelScale = session.IsCgosConnectionEditDirty ? 0.27f : 0.34f;
-        page.EditDiscardButton.Draw(mousePoint, _stationeryDrawingContext);
-        page.EditSaveButton.Draw(mousePoint, _stationeryDrawingContext);
+        page.EditDiscardButton.Draw(mousePoint, _drawingContext);
+        page.EditSaveButton.Draw(mousePoint, _drawingContext);
 
         DrawCgosConnectionEditField(session, CgosConnectionProfileEditField.DisplayName, "DISPLAY", mousePoint);
         DrawCgosConnectionEditField(session, CgosConnectionProfileEditField.Host, "HOST", mousePoint);
@@ -956,5 +975,54 @@ public sealed partial class GoScreenRenderer
 
     private static Rectangle CgosConnectionProfileBounds(int index) =>
         new(CgosConnectionListBounds.X + 16, CgosConnectionListBounds.Y + 16 + index * 104, CgosConnectionListBounds.Width - 32, 86);
+
+    private void FillRect(Rectangle bounds, Color color) => _drawingContext.FillRectangle(bounds, color);
+    private void DrawRect(Rectangle bounds, int thickness, Color color) => _drawingContext.DrawRectangle(bounds, thickness, color);
+    private void DrawLine(Vector2 start, Vector2 end, float thickness, Color color) => _drawingContext.DrawLine(start, end, thickness, color);
+    private void DrawText(string text, Vector2 position, Color color, float scale) => _drawingContext.DrawText(text, position, color, scale);
+    private void DrawFittedText(string text, Rectangle bounds, Color color, float scale) => _drawingContext.DrawFittedText(text, bounds, color, scale);
+    private void DrawCommandButton(Rectangle bounds, string label, bool selected, Point mousePoint, bool enabled = true, float scale = 0.5f) => _drawingContext.DrawCommandButton(bounds, label, selected, mousePoint, enabled, scale);
+    private void DrawDataRowFrame(Rectangle bounds) => _drawingContext.DrawDataRowFrame(bounds);
+    private void DrawUiLabel(UiLabel label) => DrawFittedText(label.Text, label.Bounds, UiLabel.TextColor, label.Scale);
+    private void DrawTextBoxSelection(string text, int start, int length, Rectangle bounds, float scale) => _drawingContext.DrawTextSelection(text, start, length, bounds, scale);
+    private void DrawTextBoxCaret(string text, int caret, Rectangle bounds, float scale) => _drawingContext.DrawTextCaret(text, caret, bounds, scale);
+    private void DrawRoundedFill(Rectangle bounds, int radius, Color color) => _drawingContext.FillRoundedRectangle(bounds, radius, color);
+    private void DrawIconStone(Vector2 center, float radius, bool black) => _drawingContext.DrawIconStone(center, radius, black);
+    private void DrawStickyNote(StickyNoteKind kind, Vector2 connectorStart, Color accent, Color border, string heading,
+        IReadOnlyList<string> lines, int bodyLineSpacing = 40, Rectangle? anchorBounds = null) =>
+        _drawingContext.DrawStickyNote(kind, connectorStart, accent, border, heading, lines, bodyLineSpacing, anchorBounds);
+    private void DrawEditableTextEditHint(bool editing, bool hovered, Rectangle bounds)
+    {
+        if (editing || !hovered) { _editActionBadge.Hide(); return; }
+        _editActionBadge.SetAnchorBounds(bounds); _editActionBadge.Show(); _editActionBadge.Draw(_drawingContext);
+    }
+    private void DrawTabNavigationHint(Rectangle bounds, int tabIndex, int activeIndex, int stopCount)
+    {
+        if (activeIndex < 0 || tabIndex == activeIndex || stopCount < 2) return;
+        var previous = tabIndex == (activeIndex + stopCount - 1) % stopCount;
+        var next = tabIndex == (activeIndex + 1) % stopCount;
+        if (!previous && !next) return;
+        var text = previous ? "SHIFT + TAB" : "TAB"; var width = previous ? 132 : 56;
+        var hint = new Rectangle(bounds.X - width - 6, bounds.Y - 34, width, 28);
+        DrawRoundedFill(hint, 6, new Color(4, 6, 8, 235));
+        DrawFittedText(text, new Rectangle(hint.X + 4, hint.Y + 2, hint.Width - 8, hint.Height - 4), Color.White, 0.32f);
+    }
+    private void DrawLocalClosedBox(Rectangle bounds)
+    {
+        FillRect(new Rectangle(bounds.X + 8, bounds.Y + 10, bounds.Width, bounds.Height), new Color(0, 0, 0, 70));
+        FillRect(bounds, new Color(17, 24, 29)); DrawRect(bounds, 4, new Color(126, 150, 164));
+        DrawMiniBoardGrid(new Rectangle(bounds.X + 22, bounds.Y + 20, bounds.Width - 44, bounds.Height - 40), new Color(88, 102, 112, 85));
+        var left = new Vector2(bounds.X + 94, bounds.Y + 76); var right = new Vector2(bounds.X + 206, bounds.Y + 76);
+        DrawLine(left, right, 5, new Color(99, 223, 185)); DrawIconStone(left, 24, true); DrawIconStone(right, 24, false);
+    }
+    private void DrawMiniBoardGrid(Rectangle bounds, Color color)
+    {
+        for (var index = 0; index < 7; index++)
+        {
+            var x = bounds.X + index * bounds.Width / 6f; var y = bounds.Y + index * bounds.Height / 6f;
+            DrawLine(new Vector2(x, bounds.Y), new Vector2(x, bounds.Bottom), 1, color);
+            DrawLine(new Vector2(bounds.X, y), new Vector2(bounds.Right, y), 1, color);
+        }
+    }
 
 }

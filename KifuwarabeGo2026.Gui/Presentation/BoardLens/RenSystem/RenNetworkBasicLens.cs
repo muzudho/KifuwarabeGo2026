@@ -1,46 +1,50 @@
-namespace KifuwarabeGo2026.Gui.Presentation;
+namespace KifuwarabeGo2026.Gui.Presentation.BoardLens.RenSystem;
 
 using KifuwarabeGo2026.Gui.Application;
+using KifuwarabeGo2026.Gui.Presentation.BoardLens;
 using KifuwarabeGo2026.Shared.Domain;
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 
-public sealed partial class GoScreenRenderer
+public sealed class RenNetworkBasicLens
 {
-    private void DrawRenGraphCells(GoAppSession session, Vector2 start, float cell) =>
-        DrawRenGraphCells(session.BoardSize, session.GetStone, start, cell);
+    public static RenNetworkBasicLens Default { get; } = new();
 
-    private void DrawRenGraphOverlay(GoAppSession session, Vector2 start, float cell, bool applyEyeJudgement)
+    private RenNetworkBasicLens()
     {
-        var renParse = session.ParseRens();
-        var nodes = CreateRenGraphNodes(renParse, start, cell, applyEyeJudgement);
-        FillRect(BoardBounds, new Color(56, 145, 129));
-        DrawRenGraphEdges(nodes, renParse.Edges, cell);
-        DrawRenGraphNodes(nodes, cell);
     }
 
-    private void DrawRenGraphCells(int boardSize, Func<int, int, GoStone> getStone, Vector2 start, float cell)
+    public void DrawOverlay(BoardLensModel model, GoRenParseResult renParse, Rectangle boardBounds,
+        Vector2 start, float cell, bool applyEyeJudgement)
+    {
+        var nodes = CreateRenGraphNodes(model, renParse, start, cell, applyEyeJudgement);
+        model.FillRectangle(boardBounds, new Color(56, 145, 129));
+        DrawRenGraphEdges(model, nodes, renParse.Edges, cell);
+        DrawRenGraphNodes(model, nodes, cell);
+    }
+
+    public void DrawCells(BoardLensModel model, int boardSize, Func<int, int, GoStone> getStone, Vector2 start, float cell)
     {
         var halfCell = cell * 0.5f;
         for (var y = 0; y < boardSize; y++)
         for (var x = 0; x < boardSize; x++)
         {
-            var center = BoardPoint(start, cell, x, y);
+            var center = model.GetBoardPoint(start, cell, x, y);
             var rect = new Rectangle((int)MathF.Round(center.X - halfCell), (int)MathF.Round(center.Y - halfCell), (int)MathF.Ceiling(cell), (int)MathF.Ceiling(cell));
-            FillRect(rect, RenGraphCellColor(getStone(x, y)));
+            model.FillRectangle(rect, model.GetRenGraphCellColor(getStone(x, y)));
         }
     }
 
     /// <summary>REN NETWORKのノードを生成します。</summary>
-    private RenGraphNode[] CreateRenGraphNodes(GoRenParseResult renParse, Vector2 start, float cell, bool applyEyeJudgement)
+    private static RenGraphNode[] CreateRenGraphNodes(BoardLensModel model, GoRenParseResult renParse, Vector2 start, float cell, bool applyEyeJudgement)
     {
         var sumX = new float[renParse.Count + 1];
         var sumY = new float[renParse.Count + 1];
         for (var y = 0; y < renParse.Size; y++) for (var x = 0; x < renParse.Size; x++)
         {
             var number = renParse.GetRenNumber(x, y);
-            var center = BoardPoint(start, cell, x, y);
+            var center = model.GetBoardPoint(start, cell, x, y);
             sumX[number] += center.X; sumY[number] += center.Y;
         }
         var nodes = new RenGraphNode[renParse.Count + 1];
@@ -53,24 +57,24 @@ public sealed partial class GoScreenRenderer
     }
 
     /// <summary>REN NETWORK BASIC LENS のノードを描画します。</summary>
-    private void DrawRenGraphNodes(RenGraphNode[] nodes, float cell)
+    private static void DrawRenGraphNodes(BoardLensModel model, RenGraphNode[] nodes, float cell)
     {
         var radius = MathHelper.Clamp(cell * 0.45f, 22f, 46f);
-        var scale = RenNumberScale(cell);
+        var scale = MathHelper.Clamp(cell / 120f, 0.18f, 0.46f);
         for (var renNumber = 1; renNumber < nodes.Length; renNumber++)
         {
             var node = nodes[renNumber];
             if (!node.IsVisible)
                 continue;
 
-            DrawCircle(node.Center, radius, RenGraphNodeColor(node.Stone));
-            DrawRenNumber(node.Number, node.Center, scale);
-            DrawRenGraphEyeMarkers(node, radius, scale);
+            model.DrawCircle(node.Center, radius, model.GetRenGraphCellColor(node.Stone));
+            model.DrawRenNumber(node.Number, node.Center, scale);
+            DrawEyeMarkers(model, node, radius, scale);
         }
     }
 
     /// <summary>REN NETWORK BASIC LENS の接続線を描画します。</summary>
-    private void DrawRenGraphEdges(RenGraphNode[] nodes, IReadOnlyList<GoRenGraphEdge> edges, float cell)
+    private static void DrawRenGraphEdges(BoardLensModel model, RenGraphNode[] nodes, IReadOnlyList<GoRenGraphEdge> edges, float cell)
     {
         var thickness = MathHelper.Clamp(cell * 0.08f, 4f, 8f);
         foreach (var edge in edges)
@@ -80,15 +84,33 @@ public sealed partial class GoScreenRenderer
 
             var from = nodes[edge.From];
             var to = nodes[edge.To];
-            DrawLine(from.Center, to.Center, thickness, RenNetworkEdgeColor(from.Stone, to.Stone));
+            model.DrawLine(from.Center, to.Center, thickness, RenNetworkEdgeColor(model, from.Stone, to.Stone));
         }
     }
 
-    private static Color RenNetworkEdgeColor(GoStone from, GoStone to)
+    private static Color RenNetworkEdgeColor(BoardLensModel model, GoStone from, GoStone to)
     {
-        if (from == GoStone.Empty) return RenGraphCellColor(to);
-        if (to == GoStone.Empty) return RenGraphCellColor(from);
+        if (from == GoStone.Empty) return model.GetRenGraphCellColor(to);
+        if (to == GoStone.Empty) return model.GetRenGraphCellColor(from);
         return new Color(66, 119, 145, 205);
+    }
+
+    private static void DrawEyeMarkers(BoardLensModel model, RenGraphNode node, float radius, float scale)
+    {
+        if (node.EyeNumbers.Count == 0) return;
+        var markerScale = Math.Max(0.22f, scale * 0.52f);
+        var markerSize = Math.Max(16f, radius * 0.56f);
+        var spacing = markerSize + 6f;
+        var startX = node.Center.X + radius * 0.34f;
+        var startY = node.Center.Y + radius * 0.62f;
+        for (var index = 0; index < node.EyeNumbers.Count; index++)
+        {
+            var bounds = new Rectangle((int)MathF.Round(startX + index * spacing - markerSize * 0.5f),
+                (int)MathF.Round(startY - markerSize * 0.5f), (int)MathF.Round(markerSize), (int)MathF.Round(markerSize));
+            model.FillRectangle(bounds, new Color(255, 238, 0, 245));
+            model.DrawRectangle(bounds, 2, new Color(255, 250, 220));
+            model.DrawRenNumber(node.EyeNumbers[index], new Vector2(bounds.Center.X, bounds.Center.Y), markerScale);
+        }
     }
 
     private sealed class RenGraphNode

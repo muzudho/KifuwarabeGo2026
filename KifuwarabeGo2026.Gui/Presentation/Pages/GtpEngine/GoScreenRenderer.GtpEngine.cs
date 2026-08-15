@@ -1,4 +1,9 @@
-namespace KifuwarabeGo2026.Gui.Presentation;
+namespace KifuwarabeGo2026.Gui.Presentation.Pages.GtpEngine;
+using KifuwarabeGo2026.Gui.Presentation.Shared.CatalogOrder;
+using KifuwarabeGo2026.Gui.Presentation;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.LinkUnderline;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
 
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.GtpExtensions.InitialPosition;
@@ -14,16 +19,45 @@ using System.Linq;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ActionBadge;
 using KifuwarabeGo2026.Gui.Presentation.Shared.PopupFilePathTooltip;
 using KifuwarabeGo2026.Gui.Presentation.Shared.RightSidePanel;
+using KifuwarabeGo2026.Gui.Presentation.Shared.HeadUpDisplay;
 
 /// <summary>
 /// ［エンジン選択画面］
 /// </summary>
-public sealed partial class GoScreenRenderer
+public sealed class GtpEngineRenderer
 {
+    private const int AddPanelControlX = 626;
     private readonly Dictionary<string, Texture2D> _dynamicOptionTextTextures = [];
+    private readonly GraphicsDevice _graphicsDevice;
+    private readonly SpriteBatch _spriteBatch;
+    private readonly SpriteFont _font;
+    private readonly ITextRasterizer _textRasterizer;
+    private readonly LinkUnderline _gtpEngineOptionLinkUnderline = new(
+        new RoundUnderline { TopOffset = -4, Thickness = 4, Radius = 2 });
+    private readonly ActionBadgeComponent _changeActionBadge = ActionBadgeComponent.Create("CHANGE", Rectangle.Empty);
+    private readonly ActionBadgeComponent _editActionBadge = ActionBadgeComponent.Create("EDIT", Rectangle.Empty);
+    private StationeryDrawingContext _drawingContext = null!;
+    private HeadUpDisplayComponent HeadUpDisplay { get; } = HeadUpDisplayComponent.Default;
+
+    public GtpEngineRenderer(GraphicsDevice graphicsDevice, SpriteBatch spriteBatch, SpriteFont font, ITextRasterizer textRasterizer)
+    {
+        _graphicsDevice = graphicsDevice;
+        _spriteBatch = spriteBatch;
+        _font = font;
+        _textRasterizer = textRasterizer;
+    }
+
+    public void Draw(StationeryDrawingContext drawingContext, GoAppSession session, Point mousePoint)
+    {
+        _drawingContext = drawingContext;
+        DrawGtpEngineSelectionDialog(session, mousePoint);
+        DrawGtpEngineEditPanel(session, mousePoint);
+        if (session.IsGtpEngineGuiOptionsDialogOpen)
+            DrawGtpEngineGuiOptionsDialog(session, mousePoint);
+    }
 
     public int GetGtpEngineEditPanelCaretIndex(Point point, GtpEngineProfileEditField field, string text) =>
-        GetTextBoxCaretIndex(point.X, text, GtpEngineEditPanelFieldTextBounds(field), 0.42f);
+        _drawingContext.GetTextCaretIndex(point.X, text, GtpEngineEditPanelFieldTextBounds(field), 0.42f);
 
 
     public static bool GetGtpEngineSelectionDialogOkButtonHit(Point point) =>
@@ -236,7 +270,7 @@ public sealed partial class GoScreenRenderer
             return;
         }
 
-        FillRect(new Rectangle(0, 0, VirtualScreen.Width, VirtualScreen.Height), new Color(0, 0, 0, 105));
+        FillRect(new Rectangle(0, 0, _drawingContext.ScreenWidth, _drawingContext.ScreenHeight), new Color(0, 0, 0, 105));
         FillRect(new Rectangle(GtpEngineSelectionDialogBounds.X + 18, GtpEngineSelectionDialogBounds.Y + 20, GtpEngineSelectionDialogBounds.Width, GtpEngineSelectionDialogBounds.Height), new Color(0, 0, 0, 145));
         FillRect(GtpEngineSelectionDialogBounds, new Color(19, 24, 31, 248));
         DrawRect(GtpEngineSelectionDialogBounds, 2, new Color(116, 145, 146));
@@ -286,7 +320,7 @@ public sealed partial class GoScreenRenderer
         DrawCommandButton(GtpEngineSelectionDialogDeleteButtonBounds, "DELETE", false, mousePoint, enabled: !session.IsGtpEngineCompatibilityLoading && session.CanDeleteSelectedGtpEngine, scale: 0.42f);
         DrawCommandButton(GtpEngineSelectionDialogOrderButtonBounds, "ORDER", false, mousePoint, enabled: !session.IsGtpEngineCompatibilityLoading && session.GtpEngineProfiles.Count > 1, scale: 0.38f);
         DrawGtpEngineDeleteConfirmation(session, mousePoint);
-        DrawCatalogOrderEditor(
+        CatalogOrderPresenter.Default.Draw(_drawingContext,
             session.GtpEngineOrderEditor,
             "GTP ENGINES",
             mousePoint,
@@ -337,7 +371,7 @@ public sealed partial class GoScreenRenderer
             return;
         }
 
-        FillRect(new Rectangle(0, 0, VirtualScreen.Width, VirtualScreen.Height), new Color(0, 0, 0, 105));
+        FillRect(new Rectangle(0, 0, _drawingContext.ScreenWidth, _drawingContext.ScreenHeight), new Color(0, 0, 0, 105));
         FillRect(new Rectangle(GtpEngineEditPanelBounds.X + 18, GtpEngineEditPanelBounds.Y + 20, GtpEngineEditPanelBounds.Width, GtpEngineEditPanelBounds.Height), new Color(0, 0, 0, 145));
         FillRect(GtpEngineEditPanelBounds, new Color(19, 24, 31, 248));
         DrawRect(GtpEngineEditPanelBounds, 2, new Color(116, 145, 146));
@@ -405,7 +439,7 @@ public sealed partial class GoScreenRenderer
     {
         if (!session.IsGtpEngineGuiOptionsDialogOpen) return;
 
-        FillRect(new Rectangle(0, 0, VirtualScreen.Width, VirtualScreen.Height), new Color(0, 0, 0, 115));
+        FillRect(new Rectangle(0, 0, _drawingContext.ScreenWidth, _drawingContext.ScreenHeight), new Color(0, 0, 0, 115));
         FillRect(new Rectangle(GtpEngineGuiOptionsDialogBounds.X + 14, GtpEngineGuiOptionsDialogBounds.Y + 16, GtpEngineGuiOptionsDialogBounds.Width, GtpEngineGuiOptionsDialogBounds.Height), new Color(0, 0, 0, 150));
         FillRect(GtpEngineGuiOptionsDialogBounds, new Color(24, 29, 36, 252));
         DrawRect(GtpEngineGuiOptionsDialogBounds, 2, new Color(116, 145, 146));
@@ -460,7 +494,7 @@ public sealed partial class GoScreenRenderer
         _gtpEngineOptionLinkUnderline.Bounds = valueBounds;
         _gtpEngineOptionLinkUnderline.SetActionBadge(ActionBadgeComponent.Create(GetGtpEngineOptionActionLabel(option), valueBounds, 0.30f));
         _gtpEngineOptionLinkUnderline.UpdatePointer(mousePoint);
-        _gtpEngineOptionLinkUnderline.Draw(_stationeryDrawingContext);
+        _gtpEngineOptionLinkUnderline.Draw(_drawingContext);
         if (option.Type == "spin" && option.Min is { } min && option.Max is { } max)
             DrawFittedText($"{min} .. {max}", new Rectangle(valueBounds.Right + 12, valueBounds.Y + 10, 126, 28), new Color(118, 139, 143), 0.24f);
         if (option.Type is not ("button" or "string") && row.Contains(mousePoint))
@@ -526,7 +560,7 @@ public sealed partial class GoScreenRenderer
     {
         if (!session.IsGtpEngineRandomMoveSelectionDialogOpen) return;
 
-        FillRect(new Rectangle(0, 0, VirtualScreen.Width, VirtualScreen.Height), new Color(0, 0, 0, 105));
+        FillRect(new Rectangle(0, 0, _drawingContext.ScreenWidth, _drawingContext.ScreenHeight), new Color(0, 0, 0, 105));
         FillRect(new Rectangle(GtpEngineRandomMoveSelectionDialogBounds.X + 14, GtpEngineRandomMoveSelectionDialogBounds.Y + 16, GtpEngineRandomMoveSelectionDialogBounds.Width, GtpEngineRandomMoveSelectionDialogBounds.Height), new Color(0, 0, 0, 150));
         FillRect(GtpEngineRandomMoveSelectionDialogBounds, new Color(24, 29, 36, 252));
         DrawRect(GtpEngineRandomMoveSelectionDialogBounds, 2, new Color(116, 145, 146));
@@ -599,9 +633,9 @@ public sealed partial class GoScreenRenderer
             DrawEditableTextEditHint(active, hovered, textBounds);
         else if (hovered && !active)
         {
-            ChangeActionBadge.SetAnchorBounds(textBounds);
-            ChangeActionBadge.Show();
-            ChangeActionBadge.Draw(_stationeryDrawingContext);
+            _changeActionBadge.SetAnchorBounds(textBounds);
+            _changeActionBadge.Show();
+            _changeActionBadge.Draw(_drawingContext);
         }
     }
 
@@ -613,7 +647,7 @@ public sealed partial class GoScreenRenderer
             return;
         }
 
-        FillRect(new Rectangle(0, 0, VirtualScreen.Width, VirtualScreen.Height), new Color(0, 0, 0, 95));
+        FillRect(new Rectangle(0, 0, _drawingContext.ScreenWidth, _drawingContext.ScreenHeight), new Color(0, 0, 0, 95));
         FillRect(new Rectangle(GtpEngineDeleteConfirmationBounds.X + 12, GtpEngineDeleteConfirmationBounds.Y + 14, GtpEngineDeleteConfirmationBounds.Width, GtpEngineDeleteConfirmationBounds.Height), new Color(0, 0, 0, 150));
         FillRect(GtpEngineDeleteConfirmationBounds, new Color(24, 29, 36, 252));
         DrawRect(GtpEngineDeleteConfirmationBounds, 2, new Color(255, 183, 146));
@@ -640,7 +674,7 @@ public sealed partial class GoScreenRenderer
         DrawText($"{index + 1:00}", new Vector2(bounds.X + 14, bounds.Y + 16), inUse ? new Color(177, 255, 215) : new Color(180, 195, 195), 0.4f);
         if (inspected)
             DrawSelectionFingerMark(new Vector2(bounds.X - 55, bounds.Center.Y - 13), 1.65f);
-        _stationeryDrawingContext.DrawPlayerRoleFaceIcon(new Vector2(bounds.X + 72, bounds.Y + 22), isComputer: true);
+        _drawingContext.DrawPlayerRoleFaceIcon(new Vector2(bounds.X + 72, bounds.Y + 22), isComputer: true);
         var nameWidth = inUse ? bounds.Width - 196 : bounds.Width - 106;
         DrawFittedText(profile.DisplayName, new Rectangle(bounds.X + 86, bounds.Y + 6, nameWidth, 30), enabled ? Color.White : new Color(145, 145, 145), 0.5f);
         if (inUse)
@@ -723,7 +757,7 @@ public sealed partial class GoScreenRenderer
                     "GTP プロトコルに対応している",
                     "必要があります。",
                 ],
-                _stationeryDrawingContext,
+                _drawingContext,
                 DrawDynamicOptionText);
         else if (PopupFilePathTooltip.IsHovered(HeadUpDisplay.StickyNoteScreen, StickyNoteKind.GtpEnginePathHint, workingDirectoryRowBounds, displayWorkingDirectory, mousePoint))
             HeadUpDisplay.PopupFilePathTooltip.Draw(
@@ -740,7 +774,7 @@ public sealed partial class GoScreenRenderer
                     "「ワーキングディレクトリー」で",
                     "調べてください。",
                 ],
-                _stationeryDrawingContext,
+                _drawingContext,
                 DrawDynamicOptionText);
     }
 
@@ -914,5 +948,45 @@ public sealed partial class GoScreenRenderer
     private static Rectangle GtpEngineSelectionDialogPropertyRowBounds(int index) =>
         new(GtpEngineSelectionDialogPropertyBounds.X + 18, GtpEngineSelectionDialogPropertyBounds.Y + 22 + index * 70, GtpEngineSelectionDialogPropertyBounds.Width - 36, 52);
 
+
+    private void FillRect(Rectangle bounds, Color color) => _drawingContext.FillRectangle(bounds, color);
+    private void DrawRect(Rectangle bounds, int thickness, Color color) => _drawingContext.DrawRectangle(bounds, thickness, color);
+    private void DrawLine(Vector2 start, Vector2 end, float thickness, Color color) => _drawingContext.DrawLine(start, end, thickness, color);
+    private void DrawCircle(Vector2 center, float radius, Color color) => _drawingContext.DrawCircle(center, radius, color);
+    private void DrawText(string text, Vector2 position, Color color, float scale) => _drawingContext.DrawText(text, position, color, scale);
+    private void DrawFittedText(string text, Rectangle bounds, Color color, float scale) => _drawingContext.DrawFittedText(text, bounds, color, scale);
+    private void DrawCommandButton(Rectangle bounds, string label, bool selected, Point mousePoint, bool enabled = true, float scale = 0.5f) =>
+        _drawingContext.DrawCommandButton(bounds, label, selected, mousePoint, enabled, scale);
+    private void DrawDataRowFrame(Rectangle bounds) => _drawingContext.DrawDataRowFrame(bounds);
+    private void DrawUiLabel(UiLabel label) => DrawFittedText(label.Text, label.Bounds, UiLabel.TextColor, label.Scale);
+    private void DrawTextBoxSelection(string text, int start, int length, Rectangle bounds, float scale) => _drawingContext.DrawTextSelection(text, start, length, bounds, scale);
+    private void DrawTextBoxCaret(string text, int caret, Rectangle bounds, float scale) => _drawingContext.DrawTextCaret(text, caret, bounds, scale);
+    private void DrawRoundedFill(Rectangle bounds, int radius, Color color) => _drawingContext.FillRoundedRectangle(bounds, radius, color);
+    private void DrawPlayerRoleFaceIcon(Vector2 center, bool isComputer) => _drawingContext.DrawPlayerRoleFaceIcon(center, isComputer);
+    private void DrawPathPropertyRow(Rectangle bounds, string label, string value)
+    {
+        DrawDataRowFrame(bounds);
+        DrawUiLabel(UiLabel.InCompactRow(label, bounds));
+        DrawFittedText(value, new Rectangle(bounds.X + 152, bounds.Y + 7, bounds.Width - 168, 38), Color.White, 0.46f);
+    }
+    private void DrawEditableTextEditHint(bool editing, bool hovered, Rectangle bounds)
+    {
+        if (editing || !hovered) { _editActionBadge.Hide(); return; }
+        _editActionBadge.SetAnchorBounds(bounds);
+        _editActionBadge.Show();
+        _editActionBadge.Draw(_drawingContext);
+    }
+    private void DrawTabNavigationHint(Rectangle bounds, int tabIndex, int activeIndex, int stopCount)
+    {
+        if (activeIndex < 0 || tabIndex == activeIndex || stopCount < 2) return;
+        var previous = tabIndex == (activeIndex + stopCount - 1) % stopCount;
+        var next = tabIndex == (activeIndex + 1) % stopCount;
+        if (!previous && !next) return;
+        var text = previous ? "SHIFT + TAB" : "TAB";
+        var width = previous ? 132 : 56;
+        var hint = new Rectangle(bounds.X - width - 6, bounds.Y - 34, width, 28);
+        DrawRoundedFill(hint, 6, new Color(4, 6, 8, 235));
+        DrawFittedText(text, new Rectangle(hint.X + 4, hint.Y + 2, hint.Width - 8, hint.Height - 4), Color.White, 0.32f);
+    }
 
 }

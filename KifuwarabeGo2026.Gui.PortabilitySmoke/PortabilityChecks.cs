@@ -217,8 +217,8 @@ internal static class PortabilityChecks
         Require(BuiltInGtpProfiles.ResolveBase("KataGo", "unknown-profile-id").Id == GenericGtpProfile.Instance.Id,
             "An unknown explicit profile id must safely resolve to Generic GTP.");
         Require(
-            KifuwarabeGo2026.Gui.Presentation.GoScreenRenderer.GetGtpEngineEditPanelInitialPositionProfileButtonHit(new Point(800, 680)) &&
-            KifuwarabeGo2026.Gui.Presentation.GoScreenRenderer.GetGtpEngineEditPanelInitialPositionMethodButtonHit(new Point(1050, 680)),
+            KifuwarabeGo2026.Gui.Presentation.Pages.GtpEngine.GtpEngineRenderer.GetGtpEngineEditPanelInitialPositionProfileButtonHit(new Point(800, 680)) &&
+            KifuwarabeGo2026.Gui.Presentation.Pages.GtpEngine.GtpEngineRenderer.GetGtpEngineEditPanelInitialPositionMethodButtonHit(new Point(1050, 680)),
             "The engine editor initial-position setting button hit areas are incorrect.");
 
         var manuallyPreferred = BuiltInGtpProfiles.Resolve(

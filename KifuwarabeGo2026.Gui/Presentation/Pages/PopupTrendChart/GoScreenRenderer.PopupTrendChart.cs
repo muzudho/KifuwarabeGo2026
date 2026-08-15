@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Gui.Presentation;
+namespace KifuwarabeGo2026.Gui.Presentation.Pages.PopupTrendChart;
 
 using KifuwarabeGo2026.Gui.Presentation.Shared.RightSidePanel;
 
@@ -9,24 +9,33 @@ using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 using KifuwarabeGo2026.Gui.Presentation.Pages.PopupTrendChart;
+using KifuwarabeGo2026.Gui.Presentation.Pages.MoveTrendChart;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 using static KifuwarabeGo2026.Gui.Presentation.Pages.PopupTrendChart.PopupTrendChartScreenBounds;
 using KifuwarabeGo2026.Gui.Presentation.Pages.PopupTrendChart.MoveCommentPanel;
 
-public sealed partial class GoScreenRenderer
+public sealed class PopupTrendChartRenderer
 {
+    private readonly MoveTrendChartRenderer _moveTrendChartRenderer;
+    private StationeryDrawingContext _drawingContext = null!;
+
+    public PopupTrendChartRenderer(MoveTrendChartRenderer moveTrendChartRenderer)
+    {
+        _moveTrendChartRenderer = moveTrendChartRenderer;
+    }
     // シークバーと手順ボタンの少し外側までを含める。ここではパンくずを一時退避する。
 
     public static bool GetReviewChartPopupOpenHit(Point point) =>
-        ReviewTrendChartBounds.Contains(point);
+        MoveTrendChartRenderer.ReviewTrendChartBounds.Contains(point);
 
     public static bool GetLocalLiveChartPopupOpenHit(Point point) =>
-        LocalTrendChartBounds.Contains(point);
+        MoveTrendChartRenderer.LocalTrendChartBounds.Contains(point);
 
     public static bool GetLocalGameOverChartPopupOpenHit(Point point) =>
-        LocalGameOverTrendChartBounds.Contains(point);
+        MoveTrendChartRenderer.LocalGameOverTrendChartBounds.Contains(point);
 
     public static bool GetCgosLiveChartPopupOpenHit(Point point) =>
-        CgosTrendChartBounds.Contains(point);
+        MoveTrendChartRenderer.CgosTrendChartBounds.Contains(point);
 
     public static bool GetReviewChartPopupCloseHit(Point point) =>
         ReviewChartPopupCloseButtonBounds.Contains(point);
@@ -52,7 +61,7 @@ public sealed partial class GoScreenRenderer
     public static MoveTrendDisplayMode? GetReviewChartPopupTrendDisplayModeButtonHit(
         Point point,
         MoveTrendDisplayMode currentMode) =>
-        GetMoveTrendDisplayModeButtonHit(point, ReviewChartPopupChartBounds, currentMode);
+        MoveTrendChartRenderer.GetMoveTrendDisplayModeButtonHit(point, ReviewChartPopupChartBounds, currentMode);
 
     public static int? GetReviewChartPopupCommentPageStepButtonHit(Point point) =>
         PopupTrendChartScreen.Default.MoveCommentPanel.GetPageStepButtonHit(point, PopupTrendChartMoveCommentPanelBounds);
@@ -94,15 +103,17 @@ public sealed partial class GoScreenRenderer
     public static bool GetReplayBackToLiveButtonHit(Point point) =>
         ReplayBackToLiveButtonBounds.Contains(point);
 
-    private void DrawReviewChartPopup(GoAppSession session, Point mousePoint)
+    public void DrawReview(StationeryDrawingContext drawingContext, GoAppSession session, Point mousePoint)
     {
-        FillRect(new Rectangle(0, 0, VirtualScreen.Width, VirtualScreen.Height), new Color(65, 80, 125, 58));
+        _drawingContext = drawingContext;
+        FillRect(new Rectangle(0, 0, drawingContext.ScreenWidth, drawingContext.ScreenHeight), new Color(65, 80, 125, 58));
         FillRect(ReviewChartPopupBounds, new Color(54, 69, 112, 108));
         DrawRect(ReviewChartPopupBounds, 4, new Color(158, 177, 229, 230));
         DrawText("KIFU NAVIGATION", new Vector2(92, 58), new Color(238, 242, 255), 0.62f);
-        PopupTrendChartScreen.Default.CloseButton.Draw(mousePoint, _stationeryDrawingContext);
+        PopupTrendChartScreen.Default.CloseButton.Draw(mousePoint, _drawingContext);
 
-        DrawMoveTrendChart(
+        _moveTrendChartRenderer.Draw(
+            _drawingContext,
             session,
             session.ReviewMoves,
             ReviewChartPopupChartBounds,
@@ -117,7 +128,9 @@ public sealed partial class GoScreenRenderer
         DrawReviewChartPopupSeekBar(session);
     }
 
-    private void DrawLocalChartPopup(GoAppSession session, Point mousePoint) =>
+    public void DrawLocal(StationeryDrawingContext drawingContext, GoAppSession session, Point mousePoint)
+    {
+        _drawingContext = drawingContext;
         DrawReadOnlyChartPopup(
             session,
             session.CurrentGameRecord.Moves,
@@ -133,11 +146,15 @@ public sealed partial class GoScreenRenderer
             showUnsavedNotice:
                 session.CurrentMode.Kind == GoAppModeKind.GameOver &&
                 !session.IsLocalResultSgfSaved);
+    }
 
-    private void DrawCgosLiveChartPopup(
+    public void DrawCgos(
+        StationeryDrawingContext drawingContext,
         GoAppSession session,
         CgosGameObservation observation,
-        Point mousePoint) =>
+        Point mousePoint)
+    {
+        _drawingContext = drawingContext;
         DrawReadOnlyChartPopup(
             session,
             observation.Moves,
@@ -148,6 +165,7 @@ public sealed partial class GoScreenRenderer
             showBackToLive: !observation.IsFinished,
             backToLiveEnabled: observation.IsReplayMode,
             showUnsavedNotice: observation.IsFinished && !session.IsCgosResultSgfSaved);
+    }
 
     private void DrawReadOnlyChartPopup(
         GoAppSession session,
@@ -166,7 +184,7 @@ public sealed partial class GoScreenRenderer
             showBackToLive
                 ? session.GetLiveChartVisibleMoveCount(moves.Count)
                 : moves.Count);
-        FillRect(new Rectangle(0, 0, VirtualScreen.Width, VirtualScreen.Height), new Color(65, 80, 125, 58));
+        FillRect(new Rectangle(0, 0, _drawingContext.ScreenWidth, _drawingContext.ScreenHeight), new Color(65, 80, 125, 58));
         FillRect(ReviewChartPopupBounds, new Color(54, 69, 112, 108));
         DrawRect(ReviewChartPopupBounds, 4, new Color(158, 177, 229, 230));
         DrawText(title, new Vector2(92, 58), new Color(238, 242, 255), 0.62f);
@@ -178,17 +196,18 @@ public sealed partial class GoScreenRenderer
                 new Color(255, 205, 112),
                 0.34f);
         }
-        PopupTrendChartScreen.Default.CloseButton.Draw(mousePoint, _stationeryDrawingContext);
+        PopupTrendChartScreen.Default.CloseButton.Draw(mousePoint, _drawingContext);
         if (showBackToLive)
         {
             DrawLiveChartAutoUpdateCheckBox(session, mousePoint);
             var backToLiveButton = PopupTrendChartScreen.Default.BackToLiveButton;
             backToLiveButton.Label = backToLiveLabel;
             backToLiveButton.IsEnabled = backToLiveEnabled;
-            backToLiveButton.Draw(mousePoint, _stationeryDrawingContext);
+            backToLiveButton.Draw(mousePoint, _drawingContext);
         }
 
-        DrawMoveTrendChart(
+        _moveTrendChartRenderer.Draw(
+            _drawingContext,
             session,
             visibleMoves,
             ReviewChartPopupChartBounds,
@@ -221,29 +240,32 @@ public sealed partial class GoScreenRenderer
         int moveCount,
         Point mousePoint)
     {
-        ReviewMoveNavigation.Draw(StationeryDrawingContext, currentMoveIndex, moveCount, mousePoint, ReviewChartPopupStepButtonBounds);
+        ReviewMoveNavigation.Draw(_drawingContext, currentMoveIndex, moveCount, mousePoint, ReviewChartPopupStepButtonBounds);
     }
 
-    private void DrawReplayNavigationControls(
+    public void DrawReplayNavigationControls(
+        StationeryDrawingContext drawingContext,
         int currentMoveIndex,
         int moveCount,
         Point mousePoint,
         bool showBackToLive,
         string backToLiveLabel)
     {
+        _drawingContext = drawingContext;
         DrawReviewChartPopupStepButtons(currentMoveIndex, moveCount, mousePoint);
         if (showBackToLive)
         {
             var backToLiveButton = PopupTrendChartScreen.Default.ReplayBackToLiveButton;
             backToLiveButton.Label = backToLiveLabel;
-            backToLiveButton.Draw(mousePoint, _stationeryDrawingContext);
+            backToLiveButton.Draw(mousePoint, _drawingContext);
         }
-        DrawReplayEditIconButton(mousePoint);
+        DrawReplayEditIconButton(_drawingContext, mousePoint);
     }
 
 
-    private void DrawReplayEditIconButton(Point mousePoint)
+    public void DrawReplayEditIconButton(StationeryDrawingContext drawingContext, Point mousePoint)
     {
+        _drawingContext = drawingContext;
         var hovered = ReplayEditButtonBounds.Contains(mousePoint);
         FillRect(
             new Rectangle(
@@ -380,5 +402,17 @@ public sealed partial class GoScreenRenderer
             new Vector2(ReviewChartPopupSeekBounds.Center.X, ReviewChartPopupSeekBounds.Y - 25),
             new Color(238, 242, 255),
             0.48f);
+    }
+
+    private void FillRect(Rectangle bounds, Color color) => _drawingContext.FillRectangle(bounds, color);
+    private void DrawRect(Rectangle bounds, int thickness, Color color) => _drawingContext.DrawRectangle(bounds, thickness, color);
+    private void DrawLine(Vector2 start, Vector2 end, float thickness, Color color) => _drawingContext.DrawLine(start, end, thickness, color);
+    private void DrawCircle(Vector2 center, float radius, Color color) => _drawingContext.DrawCircle(center, radius, color);
+    private void DrawText(string text, Vector2 position, Color color, float scale) => _drawingContext.DrawText(text, position, color, scale);
+    private void DrawFittedText(string text, Rectangle bounds, Color color, float scale) => _drawingContext.DrawFittedText(text, bounds, color, scale);
+    private void DrawCenteredText(string text, Vector2 center, Color color, float scale)
+    {
+        var size = _drawingContext.MeasureText(text) * scale;
+        DrawText(text, center - size / 2f, color, scale);
     }
 }

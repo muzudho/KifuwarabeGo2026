@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Gui.Presentation;
+namespace KifuwarabeGo2026.Gui.Presentation.Shared.EntryProfiles;
 
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.StickyNote;
@@ -9,16 +9,33 @@ using System;
 using KifuwarabeGo2026.Gui.Presentation.Shared.EntryProfiles;
 using KifuwarabeGo2026.Gui.Presentation.Pages.LocalMatch;
 using KifuwarabeGo2026.Gui.Presentation.Shared.RightSidePanel;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ActionBadge;
+using KifuwarabeGo2026.Gui.Presentation;
 using static KifuwarabeGo2026.Gui.Presentation.Shared.EntryProfiles.EntryProfilesScreenBounds;
 
 /// <summary>Player 選択欄と選択ダイアログの描画・当たり判定。</summary>
-public sealed partial class GoScreenRenderer
+public sealed class EntryProfilesPresenter
 {
+    public static EntryProfilesPresenter Default { get; } = new();
+    private readonly ActionBadgeComponent _editActionBadge = ActionBadgeComponent.Create("EDIT", Rectangle.Empty);
+    private StationeryDrawingContext _drawingContext = null!;
 
-    public int GetLocalMatchHandleCaretIndex(Point point, GoStone stone, string text, bool isPonnuki) =>
-        GetTextBoxCaretIndex(point.X, text, LocalMatchScreen.Default.GetHandleTextBounds(stone, isPonnuki), 0.32f);
-    public int GetClientIdentityProfileEditCaretIndex(Point point, int index, ClientIdentityProfileEditField field, string text, bool isLocalMatch) =>
-        GetTextBoxCaretIndex(point.X, text, ClientIdentityProfileEditFieldTextBounds(index, field, isLocalMatch), 0.34f);
+    private EntryProfilesPresenter()
+    {
+    }
+
+    public void DrawPanels(StationeryDrawingContext drawingContext, GoAppSession session, Point mousePoint)
+    {
+        _drawingContext = drawingContext;
+        DrawClientIdentityProfileEditPanel(session, mousePoint);
+        DrawQuickClientIdentitySelectionPanel(session, mousePoint);
+    }
+
+    public int GetLocalMatchHandleCaretIndex(StationeryDrawingContext drawingContext, Point point, GoStone stone, string text, bool isPonnuki) =>
+        drawingContext.GetTextCaretIndex(point.X, text, LocalMatchScreen.Default.GetHandleTextBounds(stone, isPonnuki), 0.32f);
+    public int GetClientIdentityProfileEditCaretIndex(StationeryDrawingContext drawingContext, Point point, int index, ClientIdentityProfileEditField field, string text, bool isLocalMatch) =>
+        drawingContext.GetTextCaretIndex(point.X, text, ClientIdentityProfileEditFieldTextBounds(index, field, isLocalMatch), 0.34f);
 
     private void DrawClientIdentityProfileEditPanel(GoAppSession session, Point mousePoint)
     {
@@ -204,13 +221,13 @@ public sealed partial class GoScreenRenderer
     {
         if (isEditing || !isHovered)
         {
-            EditActionBadge.Hide();
+            _editActionBadge.Hide();
             return;
         }
 
-        EditActionBadge.SetAnchorBounds(textBounds);
-        EditActionBadge.Show();
-        EditActionBadge.Draw(_stationeryDrawingContext);
+        _editActionBadge.SetAnchorBounds(textBounds);
+        _editActionBadge.Show();
+        _editActionBadge.Draw(_stationeryDrawingContext);
     }
 
     private static Vector2 ClientIdentityUnderlineConnectorStart(Rectangle textBounds) =>
@@ -292,4 +309,20 @@ public sealed partial class GoScreenRenderer
         PlayerName,
         Engine,
     }
+
+    private StationeryDrawingContext _stationeryDrawingContext => _drawingContext;
+    private void FillRect(Rectangle bounds, Color color) => _drawingContext.FillRectangle(bounds, color);
+    private void DrawRect(Rectangle bounds, int thickness, Color color) => _drawingContext.DrawRectangle(bounds, thickness, color);
+    private void DrawText(string text, Vector2 position, Color color, float scale) => _drawingContext.DrawText(text, position, color, scale);
+    private void DrawFittedText(string text, Rectangle bounds, Color color, float scale) => _drawingContext.DrawFittedText(text, bounds, color, scale);
+    private void DrawRoundedFill(Rectangle bounds, int radius, Color color) => _drawingContext.FillRoundedRectangle(bounds, radius, color);
+    private void DrawTextBoxSelection(string text, int start, int length, Rectangle bounds, float scale) => _drawingContext.DrawTextSelection(text, start, length, bounds, scale);
+    private void DrawTextBoxCaret(string text, int caret, Rectangle bounds, float scale) => _drawingContext.DrawTextCaret(text, caret, bounds, scale);
+    private void DrawDataRowFrame(Rectangle bounds, bool active = false, bool hovered = false) => _drawingContext.DrawDataRowFrame(bounds, active, hovered);
+    private void DrawDynamicOptionText(string text, Rectangle bounds, Color color, float scale) => _drawingContext.DrawDynamicText(text, bounds, color, scale);
+    private void DrawSelectionFingerMark(Vector2 origin, float scale) => _drawingContext.DrawSelectionFinger(origin, scale);
+    private void DrawStickyNote(StickyNoteKind kind, Vector2 connectorStart, Color accent, Color borderColor,
+        string heading, System.Collections.Generic.IReadOnlyList<string> bodyLines, int bodyLineSpacing = 40,
+        Rectangle? anchorBounds = null) =>
+        _drawingContext.DrawStickyNote(kind, connectorStart, accent, borderColor, heading, bodyLines, bodyLineSpacing, anchorBounds);
 }

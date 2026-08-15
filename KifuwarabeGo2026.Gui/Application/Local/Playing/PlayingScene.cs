@@ -11,6 +11,7 @@ using KifuwarabeGo2026.Gui.Infrastructure.Logging;
 using KifuwarabeGo2026.Gui.Presentation;
 using KifuwarabeGo2026.Gui.Presentation.Pages.LocalMatch;
 using KifuwarabeGo2026.Gui.Presentation.Pages.LocalMatch.Play;
+using KifuwarabeGo2026.Gui.Presentation.Pages.Board;
 using InitialPositionConciergePage = KifuwarabeGo2026.Gui.Presentation.Pages.InitialPositionConcierge.InitialPositionConcierge;
 using Microsoft.Xna.Framework;
 using System;
@@ -162,7 +163,7 @@ public sealed class PlayingScene : IDisposable
             return true;
         }
 
-        if (GoScreenRenderer.TryGetBoardIntersection(point, _session.BoardSize, out var intersection))
+        if (BoardRenderer.TryGetBoardIntersection(point, _session.BoardSize, out var intersection))
         {
             var placedBy = _session.CurrentTurn;
             if (_session.TryPlaceStone(intersection.X, intersection.Y))

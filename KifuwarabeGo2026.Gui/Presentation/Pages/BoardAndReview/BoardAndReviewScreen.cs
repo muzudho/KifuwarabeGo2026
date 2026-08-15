@@ -1,5 +1,7 @@
 namespace KifuwarabeGo2026.Gui.Presentation.Pages.BoardAndReview;
 
+using KifuwarabeGo2026.Gui.Application;
+using KifuwarabeGo2026.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Button;
 using KifuwarabeGo2026.Shared.Domain;
 using Microsoft.Xna.Framework;
@@ -28,6 +30,44 @@ public sealed class BoardAndReviewScreen
     public BoardEditingRightSidePanel BoardEditingRightSidePanel { get; } = new();
     public VariationEditingRightSidePanel VariationEditingRightSidePanel { get; } = new();
     public ReviewingRightSidePanel ReviewingRightSidePanel { get; } = new();
+
+    public void DrawEditingHoverStone(
+        BoardLensModel boardLensModel,
+        GoAppSession session,
+        Point intersection,
+        Vector2 start,
+        float cell)
+    {
+        var editingStone = session.CurrentMode.Kind == GoAppModeKind.VariationEditing
+            ? session.VariationEditingStone ?? GoStone.Black
+            : session.BoardEditingStone;
+        var center = boardLensModel.GetBoardPoint(start, cell, intersection.X, intersection.Y);
+        if (editingStone == GoStone.Empty)
+        {
+            var radius = cell * 0.32f;
+            boardLensModel.DrawLine(
+                new Vector2(center.X - radius, center.Y - radius),
+                new Vector2(center.X + radius, center.Y + radius),
+                6,
+                new Color(180, 42, 42, 205));
+            boardLensModel.DrawLine(
+                new Vector2(center.X + radius, center.Y - radius),
+                new Vector2(center.X - radius, center.Y + radius),
+                6,
+                new Color(180, 42, 42, 205));
+            return;
+        }
+
+        var black = editingStone == GoStone.Black;
+        boardLensModel.DrawCircle(
+            center,
+            cell * 0.55f,
+            black ? new Color(8, 10, 14, 105) : new Color(255, 250, 232, 120));
+        boardLensModel.DrawCircle(
+            center,
+            cell * 0.36f,
+            black ? new Color(8, 10, 14, 95) : new Color(255, 250, 232, 105));
+    }
 }
 
 /// <summary>棋譜検討画面の操作と表示領域を所有します。</summary>

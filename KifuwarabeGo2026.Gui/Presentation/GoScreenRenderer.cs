@@ -3,16 +3,27 @@ namespace KifuwarabeGo2026.Gui.Presentation;
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.Gui.Presentation.BoardLens;
+using KifuwarabeGo2026.Gui.Presentation.BoardLens.RenSystem;
 using KifuwarabeGo2026.Gui.Presentation.BoardLens.Shared.RenBoundaries;
 using KifuwarabeGo2026.Gui.Presentation.Pages.EditTournamentRule;
 using KifuwarabeGo2026.Gui.Presentation.Pages.InitialPositionConcierge;
 using KifuwarabeGo2026.Gui.Presentation.Pages.LocalMatch;
+using KifuwarabeGo2026.Gui.Presentation.Pages.MoveTrendChart;
+using KifuwarabeGo2026.Gui.Presentation.Pages.PopupTrendChart.MoveCommentPanel;
+using KifuwarabeGo2026.Gui.Presentation.Pages.PopupTrendChart;
+using KifuwarabeGo2026.Gui.Presentation.Pages.Title;
+using KifuwarabeGo2026.Gui.Presentation.Pages.Board;
+using KifuwarabeGo2026.Gui.Presentation.Pages.OnlineMatch.Cgos.Watch;
+using KifuwarabeGo2026.Gui.Presentation.Pages.GtpEngine;
+using KifuwarabeGo2026.Gui.Presentation.Pages.OnlineMatch.Cgos.Login;
 using KifuwarabeGo2026.Gui.Presentation.Pages.ReviewUnsavedChangesConfirmation;
 using KifuwarabeGo2026.Gui.Presentation.Pages.ScreenshotEffect;
 using KifuwarabeGo2026.Gui.Presentation.Pages.ScreenTransition;
 using KifuwarabeGo2026.Gui.Presentation.Shared.Breadcrumb;
 using KifuwarabeGo2026.Gui.Presentation.Shared.CgosMatchNotification;
 using KifuwarabeGo2026.Gui.Presentation.Shared.EditEntryProfile;
+using KifuwarabeGo2026.Gui.Presentation.Shared.EntryProfiles;
+using KifuwarabeGo2026.Gui.Presentation.Shared.SelectEntry;
 using KifuwarabeGo2026.Gui.Presentation.Shared.HeadUpDisplay;
 using KifuwarabeGo2026.Gui.Presentation.Shared.LiveBoardPreview;
 using KifuwarabeGo2026.Gui.Presentation.Shared.RightSidePanel;
@@ -41,7 +52,7 @@ using System.Linq;
 /// <summary>
 /// ［画面描画］の共通処理
 /// </summary>
-public sealed partial class GoScreenRenderer
+public sealed class GoScreenRenderer
 {
     private const float MinimumTextScale = 0.32f;
 
@@ -56,19 +67,24 @@ public sealed partial class GoScreenRenderer
     private readonly Texture2D _stoneDark;
     private readonly StationeryDrawingContext _stationeryDrawingContext;
     private readonly BoardLensModel _boardLensModel;
+    private readonly MoveCommentPanelRenderer _moveCommentPanelRenderer;
+    private readonly MoveTrendChartRenderer _moveTrendChartRenderer;
+    private readonly PopupTrendChartRenderer _popupTrendChartRenderer;
+    private readonly TitleScreenRenderer _titleScreenRenderer;
+    private readonly BoardRenderer _boardRenderer;
+    public CgosWatchingRenderer CgosWatchingRenderer { get; }
+    public GtpEngineRenderer GtpEngineRenderer { get; }
+    public CgosLoginRenderer CgosLoginRenderer { get; }
     internal StationeryDrawingContext StationeryDrawingContext => _stationeryDrawingContext;
 
     // 移設途中: StationeryDrawingContext の拡張と右側パネル共通部品への分離後に削除する一時的な描画ブリッジです。
-    private readonly LinkUnderline _gtpEngineOptionLinkUnderline = new(
-        new RoundUnderline { TopOffset = -4, Thickness = 4, Radius = 2 });
+    private readonly Dictionary<string, Texture2D> _dynamicOptionTextTextures = [];
     private readonly MultilineTextUnderline _multilineTextUnderline = new(
         new SquareUnderline { Thickness = 1 }, "EDIT");
     private readonly LinkUnderline _compactLinkUnderline = new(
         new RoundUnderline { TopOffset = 1, Thickness = 3, Radius = 1 });
     private readonly LinkUnderline _selectorLinkUnderline = new(
         new RoundUnderline { TopOffset = 2, Thickness = 4, Radius = 2 });
-    private readonly LinkUnderline _tournamentRulesSettingsFileLinkUnderline = new(
-        new RoundUnderline { TopOffset = 2, Thickness = 5, Radius = 2 });
     private readonly SpinBox _spinBox = new();
 
     public HeadUpDisplayComponent HeadUpDisplay { get; } = HeadUpDisplayComponent.Default;
@@ -90,27 +106,53 @@ public sealed partial class GoScreenRenderer
         _boardCoordinateFont = content.Load<SpriteFont>("Fonts/BoardCoordinate");
         _pixel = CreateTexture(1, 1, (_, _) => Color.White);
         _softCircle = CreateCircleTexture(128, new Color(255, 255, 255, 255), softEdge: true);
-        _stoneLight = CreateStoneTexture(128, lightStone: true);
-        _stoneDark = CreateStoneTexture(128, lightStone: false);
+        _stoneLight = BoardRenderer.CreateStoneTexture(graphicsDevice, 128, lightStone: true);
+        _stoneDark = BoardRenderer.CreateStoneTexture(graphicsDevice, 128, lightStone: false);
         _stationeryDrawingContext = new StationeryDrawingContext(
             this,
-            FillRect, DrawRoundedFill, DrawRect, DrawLine, DrawCircle, DrawStone, DrawText, DrawFittedText, DrawSharpCenteredFittedText,
+            VirtualScreen.Width,
+            VirtualScreen.Height,
+            FillRect, DrawRoundedFill, DrawRect, DrawLine, DrawCircle, (center, radius, black) => _boardRenderer!.DrawStone(center, radius, black),
+            (bounds, color) => _spriteBatch.Draw(_softCircle, bounds, color),
+            DrawText, DrawFittedText, DrawSharpCenteredFittedText,
             DrawRotatedCenteredText,
             _font.MeasureString,
             point => VirtualScreen.ToVirtualPoint(_graphicsDevice.Viewport, point),
             () => _spriteBatch.Begin(samplerState: SamplerState.LinearClamp, transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport)),
             _spriteBatch.End,
             DrawBackground,
-            (bounds, label, color) => DrawVerticalResultSection(bounds, label, color));
+            (bounds, label, color) => DrawVerticalResultSection(bounds, label, color),
+            DrawCommandButton,
+            DrawDynamicOptionText,
+            DrawSelectionFingerMark,
+            (kind, connectorStart, accent, border, heading, lines, spacing, anchor) =>
+                DrawStickyNote(kind, connectorStart, accent, border, heading, lines, spacing, anchor),
+            GetTextBoxCaretIndex);
         _boardLensModel = new BoardLensModel(
-            BoardPoint,
-            RenGraphCellColor,
+            BoardRenderer.BoardPoint,
+            BoardRenderer.RenGraphCellColor,
             DrawLine,
             DrawCircle,
             FillRect,
-            (ren, value, color, start, cell, outline) => DrawRenMetricNumber(ren, value, RenMetricUnit.PointCount, color, start, cell, outline),
-            (parse, metrics, start, cell) => DrawDeferredStrongMetrics(parse,
-                new List<(int RenNumber, int Value, Color Color, Color Outline)>(metrics), start, cell));
+            DrawRect,
+            DrawEllipseWire,
+            (number, center, scale) => _boardRenderer!.DrawRenNumber(number, center, scale),
+            (ren, value, color, start, cell, outline) => _boardRenderer!.DrawRenMetricNumber(ren, value, color, start, cell, outline),
+            (parse, metrics, start, cell) => _boardRenderer!.DrawDeferredStrongMetrics(parse, metrics, start, cell));
+        _boardRenderer = new BoardRenderer(_boardLensModel, _spriteBatch, _font, _boardCoordinateFont,
+            _softCircle, _stoneLight, _stoneDark);
+        _moveCommentPanelRenderer = new MoveCommentPanelRenderer(
+            _graphicsDevice,
+            _spriteBatch,
+            _textRasterizer,
+            _stationeryDrawingContext);
+        _moveTrendChartRenderer = new MoveTrendChartRenderer(_moveCommentPanelRenderer);
+        _popupTrendChartRenderer = new PopupTrendChartRenderer(_moveTrendChartRenderer);
+        CgosWatchingRenderer = new CgosWatchingRenderer(_boardRenderer, _moveTrendChartRenderer,
+            _popupTrendChartRenderer, _boardRenderer.DrawBoardRenAnalysis);
+        GtpEngineRenderer = new GtpEngineRenderer(_graphicsDevice, _spriteBatch, _font, _textRasterizer);
+        CgosLoginRenderer = new CgosLoginRenderer(GtpEngineRenderer, DrawPlayerEditPanel);
+        _titleScreenRenderer = new TitleScreenRenderer(DrawEllipseWire, DrawCircumscribedCircleArc);
     }
 
     public void Draw(
@@ -131,20 +173,21 @@ public sealed partial class GoScreenRenderer
                         session.IsGtpEngineSelectionDialogOpen || session.IsGtpEngineEditPanelOpen ||
                         session.IsAppProviderGameSettingsDialogOpen;
         var backgroundMousePoint = modalOpen ? new Point(-1, -1) : mousePoint;
-        DrawBoard(session, backgroundMousePoint);
+        _boardRenderer.Draw(_stationeryDrawingContext, session, backgroundMousePoint);
         if (session.CurrentMode.Kind == GoAppModeKind.Playing &&
             session.CanOpenLocalChartPopup)
         {
-            DrawBroadcastStatusBadge(
+            CgosWatchingRenderer.DrawBroadcastStatusBadge(_stationeryDrawingContext,
                 session.IsLocalReplayMode ? "REPLAY" : "CURRENT",
                 session.IsReviewChartPopupOpen);
         }
         if (!session.IsReviewChartPopupOpen)
         {
-            RightSidePanel.Default.Draw(_stationeryDrawingContext, session, backgroundMousePoint, liveBoardPreview, initialPositionConcierge);
+            RightSidePanel.Default.Draw(_stationeryDrawingContext, _moveTrendChartRenderer, session, backgroundMousePoint, liveBoardPreview, initialPositionConcierge);
             if (session.IsLocalReplayMode)
             {
-                DrawReplayNavigationControls(
+                _popupTrendChartRenderer.DrawReplayNavigationControls(
+                    _stationeryDrawingContext,
                     session.LocalDisplayMoveIndex,
                     session.CurrentGameRecord.Moves.Count,
                     backgroundMousePoint,
@@ -154,26 +197,21 @@ public sealed partial class GoScreenRenderer
             else if (session.CanOpenLocalChartPopup ||
                      session.CurrentMode.Kind == GoAppModeKind.Reviewing)
             {
-                DrawReplayEditIconButton(backgroundMousePoint);
+                _popupTrendChartRenderer.DrawReplayEditIconButton(_stationeryDrawingContext, backgroundMousePoint);
             }
-            DrawTournamentRulesSelectionDialog(session, mousePoint);
-            DrawTournamentRulesAddPanel(session, mousePoint);
-            DrawPlayerSelectionDialog(session, mousePoint);
+            TournamentRulesPresenter.Default.Draw(_stationeryDrawingContext, session, mousePoint);
+            SelectEntryPresenter.Default.Draw(_stationeryDrawingContext, session, mousePoint);
             DrawPlayerEditPanel(session, mousePoint);
-            DrawClientIdentityProfileEditPanel(session, mousePoint);
-            DrawQuickClientIdentitySelectionPanel(session, mousePoint);
-            DrawGtpEngineSelectionDialog(session, mousePoint);
-            DrawGtpEngineEditPanel(session, mousePoint);
-            if (session.IsAppProviderGameSettingsDialogOpen)
-                DrawGtpEngineGuiOptionsDialog(session, mousePoint);
+            EntryProfilesPresenter.Default.DrawPanels(_stationeryDrawingContext, session, mousePoint);
+            GtpEngineRenderer.Draw(_stationeryDrawingContext, session, mousePoint);
         }
         if (session.CurrentMode.Kind == GoAppModeKind.Reviewing && session.IsReviewChartPopupOpen)
         {
-            DrawReviewChartPopup(session, mousePoint);
+            _popupTrendChartRenderer.DrawReview(_stationeryDrawingContext, session, mousePoint);
         }
         else if (session.CanOpenLocalChartPopup && session.IsReviewChartPopupOpen)
         {
-            DrawLocalChartPopup(session, mousePoint);
+            _popupTrendChartRenderer.DrawLocal(_stationeryDrawingContext, session, mousePoint);
         }
 
         _spriteBatch.End();
@@ -188,10 +226,9 @@ public sealed partial class GoScreenRenderer
             transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));
 
         DrawBackground();
-        DrawUseSelectionPanel(session, mousePoint, page, appProviderTabIndex, isAppProviderLoading);
-        DrawPlayerSelectionDialog(session, mousePoint);
-        DrawGtpEngineSelectionDialog(session, mousePoint);
-        DrawGtpEngineEditPanel(session, mousePoint);
+        _titleScreenRenderer.Draw(_stationeryDrawingContext, session, mousePoint, page, appProviderTabIndex, isAppProviderLoading);
+        SelectEntryPresenter.Default.Draw(_stationeryDrawingContext, session, mousePoint);
+        GtpEngineRenderer.Draw(_stationeryDrawingContext, session, mousePoint);
 
         _spriteBatch.End();
     }
@@ -288,52 +325,6 @@ public sealed partial class GoScreenRenderer
             DrawLine(new Vector2(bounds.X, y), new Vector2(bounds.Right, y), 1, color);
         }
     }
-    private void DrawDisplayNameTextBox(GoAppSession session, Point mousePoint)
-    {
-        var bounds = TournamentRulesScreen.Default.AddPanelDisplayNameRowBounds;
-        var active = session.IsTournamentRulesDisplayNameEditing;
-        var displayName = active ? session.TournamentRulesDisplayNameDraft : session.TournamentDisplayName;
-        var textBounds = TournamentRulesScreen.Default.AddPanelDisplayNameTextBounds;
-        var hovered = textBounds.Contains(mousePoint);
-        DrawText("DISPLAY", new Vector2(bounds.X + 16, textBounds.Y + 7), new Color(180, 195, 195), 0.36f);
-        DrawRoundedFill(
-            new Rectangle(textBounds.X, textBounds.Bottom + 2, textBounds.Width, 5),
-            2,
-            active ? new Color(147, 244, 200) : hovered ? new Color(185, 196, 255) : new Color(100, 110, 145));
-        if (active)
-            DrawTextBoxSelection(displayName, session.TournamentRulesDisplayNameSelectionStart, session.TournamentRulesDisplayNameSelectionLength, textBounds, 0.46f);
-        DrawFittedText(string.IsNullOrEmpty(displayName) ? "-" : displayName, textBounds, Color.White, 0.46f);
-        if (active)
-        {
-            DrawTextBoxCaret(displayName, session.TournamentRulesDisplayNameCaretIndex, textBounds, 0.46f);
-        }
-        DrawEditableTextEditHint(active, hovered, textBounds);
-
-        if (!string.IsNullOrWhiteSpace(session.TournamentRulesDisplayNameWarning))
-        {
-            DrawFittedText(
-                session.TournamentRulesDisplayNameWarning,
-                new Rectangle(AddPanelControlX + 132, 740, 536, 28),
-                new Color(255, 183, 146),
-                0.34f);
-        }
-    }
-
-    private void DrawFilePathSelector(GoAppSession session, Point mousePoint)
-    {
-        var bounds = TournamentRulesScreen.Default.AddPanelFileRowBounds;
-        var filePath = string.IsNullOrWhiteSpace(session.CurrentTournamentRules.FilePath) ? "-" : session.CurrentTournamentRules.FilePath;
-        DrawTournamentRulesFieldLabel("SETTINGS", bounds);
-        var textBounds = new Rectangle(bounds.X + 132, bounds.Y + 7, bounds.Width - 152, 42);
-        _tournamentRulesSettingsFileLinkUnderline.Bounds = textBounds;
-        _tournamentRulesSettingsFileLinkUnderline.SetActionBadge(ActionBadgeComponent.Create("OPEN", textBounds));
-        _tournamentRulesSettingsFileLinkUnderline.UpdatePointer(mousePoint);
-        DrawFittedText(filePath, textBounds, Color.White, 0.38f);
-        _tournamentRulesSettingsFileLinkUnderline.Draw(_stationeryDrawingContext);
-    }
-
-    public bool IsTournamentRulesSettingsFileHit(Point point) => _tournamentRulesSettingsFileLinkUnderline.IsHit(point);
-
     private void DrawTextBoxCaret(string text, int caretIndex, Rectangle textBounds, float textScale)
     {
         var clampedCaretIndex = Math.Clamp(caretIndex, 0, text.Length);
@@ -384,15 +375,6 @@ public sealed partial class GoScreenRenderer
     /// <summary>画面固有レイアウトから利用できる、共通の単一行キャレット計測です。</summary>
     public int GetSinglelineTextCaretIndex(int pointX, string text, Rectangle textBounds, float textScale) =>
         GetTextBoxCaretIndex(pointX, text, textBounds, textScale);
-    private void DrawPropertyRow(int y, string label, string value)
-    {
-        var propertyBounds = TournamentRulesScreen.Default.SelectionPropertyBounds;
-        var bounds = new Rectangle(propertyBounds.X + 18, y, propertyBounds.Width - 36, 52);
-        DrawDataRowFrame(bounds);
-        DrawUiLabel(UiLabel.InCompactRow(label, bounds));
-        DrawFittedText(value, new Rectangle(bounds.X + 152, bounds.Y + 7, bounds.Width - 168, 38), Color.White, 0.46f);
-    }
-
     private void DrawPathPropertyRow(Rectangle bounds, string label, string value)
     {
         DrawDataRowFrame(bounds);
@@ -412,29 +394,6 @@ public sealed partial class GoScreenRenderer
             ["対局ルールで利用するファイルの場所です。"],
             _stationeryDrawingContext,
             DrawDynamicOptionText);
-    }
-
-    private void DrawTournamentRulesFieldLabel(string label, Rectangle rowBounds)
-    {
-        const float preferredScale = 0.38f;
-        const int labelRightGap = 20;
-        var labelBounds = new Rectangle(
-            AddPanelControlX,
-            rowBounds.Y,
-            132 - labelRightGap,
-            rowBounds.Height);
-        var measured = _font.MeasureString(label);
-        var scale = MathF.Min(
-            preferredScale,
-            MathF.Min(
-                labelBounds.Width / Math.Max(1f, measured.X),
-                (labelBounds.Height - 8) / Math.Max(1f, measured.Y)));
-        var size = measured * scale;
-        DrawText(
-            label,
-            new Vector2(labelBounds.X, labelBounds.Center.Y - size.Y / 2),
-            new Color(180, 195, 195),
-            scale);
     }
 
     private void DrawRoundedFill(Rectangle bounds, int radius, Color color)
@@ -474,9 +433,6 @@ public sealed partial class GoScreenRenderer
     }
 
     private const int AddPanelControlX = 626;
-
-
-    private static Rectangle TournamentRulesMoveLimitTextBounds => new(AddPanelControlX + 132, 612, 176, 40);
 
 
     private static Rectangle LocalUseButtonBounds => LocalMatchScreen.Default.LocalUseCardBounds;
@@ -1154,184 +1110,6 @@ public sealed partial class GoScreenRenderer
         return new Vector2(Math.Clamp(x, textBounds.X + 18, textBounds.Right - 22), Math.Clamp(y, textBounds.Y + 18, textBounds.Bottom - 48));
     }
 
-    private void DrawRenNumbers(GoRenParseResult renParse, Vector2 start, float cell)
-    {
-        var scale = RenNumberScale(cell);
-        for (var y = 0; y < renParse.Size; y++)
-        for (var x = 0; x < renParse.Size; x++)
-            DrawRenNumber(renParse.GetRenNumber(x, y), BoardPoint(start, cell, x, y), scale);
-    }
-
-    private void DrawBoardRenAnalysis(RenParseDisplayMode displayMode, int boardSize, Func<int, int, GoStone> getStone,
-        Func<GoRenParseResult> parseRens, Action drawPlacedStones, Vector2 start, float cell)
-    {
-        if (displayMode == RenParseDisplayMode.Off) { drawPlacedStones(); return; }
-        var renParse = parseRens();
-        if (displayMode == RenParseDisplayMode.Overlay)
-        {
-            drawPlacedStones(); DrawRenBoundaries(renParse, start, cell); DrawRenNumbers(renParse, start, cell); return;
-        }
-        if (displayMode == RenParseDisplayMode.Graph)
-        {
-            DrawRenGraphCells(boardSize, getStone, start, cell); DrawRenBoundaries(renParse, start, cell);
-            DrawRenRepresentativeNumbers(renParse, start, cell); return;
-        }
-        if (displayMode is RenParseDisplayMode.GraphStep2 or RenParseDisplayMode.Eye)
-        {
-            var nodes = CreateRenGraphNodes(renParse, start, cell, displayMode == RenParseDisplayMode.Eye);
-            FillRect(BoardBounds, new Color(56, 145, 129)); DrawRenGraphEdges(nodes, renParse.Edges, cell); DrawRenGraphNodes(nodes, cell); return;
-        }
-        DrawRenGraphCells(boardSize, getStone, start, cell); DrawRenBoundaries(renParse, start, cell);
-        if (displayMode == RenParseDisplayMode.RenArea) { DrawRenAreaNumbers(renParse, start, cell); return; }
-        RenBoundaryLens.DrawRenBoundaryLens(_boardLensModel, renParse, displayMode, start, cell);
-    }
-
-    private void DrawRenAreaNumbers(GoRenParseResult renParse, Vector2 start, float cell)
-    {
-        for (var renNumber = 1; renNumber <= renParse.Count; renNumber++)
-        {
-            var ren = renParse.GetRen(renNumber);
-            DrawRenMetricNumber(ren, ren.Points.Count, RenMetricUnit.PointCount, RenGraphCellColor(ren.Stone), start,
-                cell, RenGraphCellColor(OpponentOf(ren.Stone)));
-        }
-    }
-
-    private void DrawDeferredStrongMetrics(GoRenParseResult renParse,
-        List<(int RenNumber, int Value, Color Color, Color Outline)> metrics, Vector2 start, float cell)
-    {
-        foreach (var metric in metrics)
-            DrawRenMetricNumber(renParse.GetRen(metric.RenNumber), metric.Value, RenMetricUnit.PointCount,
-                metric.Color, start, cell, metric.Outline);
-    }
-
-    private void DrawRenGraphEyeMarkers(RenGraphNode node, float radius, float scale)
-    {
-        if (node.EyeNumbers.Count == 0) return;
-        var markerScale = Math.Max(0.22f, scale * 0.52f);
-        var markerSize = Math.Max(16f, radius * 0.56f);
-        var spacing = markerSize + 6f;
-        var startX = node.Center.X + radius * 0.34f;
-        var startY = node.Center.Y + radius * 0.62f;
-        for (var i = 0; i < node.EyeNumbers.Count; i++)
-        {
-            var bounds = new Rectangle((int)MathF.Round(startX + i * spacing - markerSize * 0.5f),
-                (int)MathF.Round(startY - markerSize * 0.5f), (int)MathF.Round(markerSize), (int)MathF.Round(markerSize));
-            FillRect(bounds, new Color(255, 238, 0, 245));
-            DrawRect(bounds, 2, new Color(255, 250, 220));
-            DrawRenNumber(node.EyeNumbers[i], new Vector2(bounds.Center.X, bounds.Center.Y), markerScale);
-        }
-    }
-
-    private void DrawRenRepresentativeNumbers(GoRenParseResult renParse, Vector2 start, float cell)
-    {
-        var scale = RenNumberScale(cell); var drawn = new bool[renParse.Count + 1];
-        for (var y = 0; y < renParse.Size; y++) for (var x = 0; x < renParse.Size; x++)
-        {
-            var number = renParse.GetRenNumber(x, y);
-            if (drawn[number]) continue;
-            drawn[number] = true; DrawRenNumber(number, BoardPoint(start, cell, x, y), scale);
-        }
-    }
-    private void DrawRenBoundaries(GoRenParseResult renParse, Vector2 start, float cell)
-    {
-        var size = renParse.Size; var halfCell = cell * 0.5f; var thickness = Math.Max(5, (int)MathF.Round(cell * 0.08f)); var color = new Color(255, 238, 0, 238);
-        for (var y = 0; y < size; y++) for (var x = 0; x < size; x++)
-        {
-            var number = renParse.GetRenNumber(x, y); var center = BoardPoint(start, cell, x, y);
-            var left = center.X - halfCell; var top = center.Y - halfCell; var right = center.X + halfCell; var bottom = center.Y + halfCell;
-            if (x == 0 || renParse.GetRenNumber(x - 1, y) != number) FillRect(CreateVerticalLineRect(left, top, bottom, thickness), color);
-            if (y == 0 || renParse.GetRenNumber(x, y - 1) != number) FillRect(CreateHorizontalLineRect(left, right, top, thickness), color);
-            if (x == size - 1) FillRect(CreateVerticalLineRect(right, top, bottom, thickness), color);
-            if (y == size - 1) FillRect(CreateHorizontalLineRect(left, right, bottom, thickness), color);
-        }
-    }
-
-    private void DrawNobiLens(GoAppSession session, Vector2 start, float cell)
-    {
-        var renParse = session.ParseRens();
-        var legColor = RenGraphCellColor(session.CurrentTurn);
-        var candidateColor = new Color(126, 255, 188);
-        var legThickness = MathHelper.Clamp(cell * 0.045f, 2f, 5f);
-        var markerRadius = MathHelper.Clamp(cell * 0.13f, 5f, 11f);
-        for (var number = 1; number <= renParse.Count; number++)
-        {
-            var ren = renParse.GetRen(number);
-            if (ren.Stone != session.CurrentTurn) continue;
-            var contacts = new List<(GoPoint From, GoPoint To)>();
-            foreach (var point in ren.Points)
-            {
-                AddCandidate(point, point.X - 1, point.Y); AddCandidate(point, point.X + 1, point.Y);
-                AddCandidate(point, point.X, point.Y - 1); AddCandidate(point, point.X, point.Y + 1);
-            }
-            var markers = new HashSet<GoPoint>();
-            foreach (var contact in contacts)
-            {
-                DrawLine(BoardPoint(start, cell, contact.From.X, contact.From.Y), BoardPoint(start, cell, contact.To.X, contact.To.Y), legThickness, legColor);
-                markers.Add(contact.To);
-            }
-            foreach (var marker in markers)
-            {
-                var center = BoardPoint(start, cell, marker.X, marker.Y);
-                DrawCircle(center, markerRadius + 3f, RenGraphCellColor(session.CurrentTurn)); DrawCircle(center, markerRadius, candidateColor);
-            }
-            void AddCandidate(GoPoint from, int x, int y)
-            {
-                if (x < 0 || x >= renParse.Size || y < 0 || y >= renParse.Size ||
-                    renParse.GetRen(renParse.GetRenNumber(x, y)).Stone != GoStone.Empty || !session.IsNobiCandidate(x, y)) return;
-                contacts.Add((from, new GoPoint(x, y)));
-            }
-        }
-    }
-
-    private void DrawRenMetricNumber(GoRen ren, int value, RenMetricUnit unit, Color valueColor, Vector2 start,
-        float cell, Color? valueOutlineColor = null)
-    {
-        var representative = ren.Points[0];
-        var center = BoardPoint(start, cell, representative.X, representative.Y);
-        var valueScale = MathHelper.Clamp(cell / 68f, 0.34f, 0.80f);
-        DrawRenNumber(ren.Number, center - new Vector2(0f, cell * 0.20f), RenNumberScale(cell));
-        var valueText = value.ToString();
-        if (valueText.Length > 2) valueScale *= MathF.Min(1f, _font.MeasureString("88").X / Math.Max(1f, _font.MeasureString(valueText).X));
-        var valueCenter = center + new Vector2(0f, cell * 0.10f);
-        if (valueOutlineColor is { } outline) DrawCenteredOutlinedText(valueText, valueCenter, valueColor, outline, valueScale);
-        else DrawCenteredText(valueText, valueCenter, valueColor, valueScale);
-        if (unit == RenMetricUnit.RenCount) DrawRenMetricUnit(center + new Vector2(0f, cell * 0.37f), unit, valueColor, cell, valueOutlineColor);
-    }
-
-    private static float RenNumberScale(float cell) => MathHelper.Clamp(cell / 120f, 0.18f, 0.46f);
-    private void DrawRenNumber(int number, Vector2 center, float scale) => DrawCenteredOutlinedText($"#{number}", center, new Color(0, 177, 238), new Color(0, 92, 132, 245), scale);
-    private void DrawCenteredOutlinedText(string text, Vector2 center, Color color, Color outlineColor, float scale)
-    {
-        var position = center - _font.MeasureString(text) * scale / 2f;
-        var outline = MathHelper.Clamp(scale * 7f, 1.5f, 3f);
-        for (var i = 0; i < 16; i++)
-        {
-            var angle = MathHelper.TwoPi * i / 16;
-            _spriteBatch.DrawString(_font, text, position + new Vector2(MathF.Cos(angle), MathF.Sin(angle)) * outline, outlineColor, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
-        }
-        _spriteBatch.DrawString(_font, text, position, color, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
-    }
-    private void DrawRenMetricUnit(Vector2 center, RenMetricUnit unit, Color color, float cell, Color? outlineColor = null)
-    {
-        var radius = MathHelper.Clamp(cell * 0.075f, 3f, 6f);
-        var thickness = Math.Max(2, (int)MathF.Round(radius * 0.42f));
-        var backing = new Color(16, 26, 32, 220);
-        if (unit == RenMetricUnit.PointCount)
-        {
-            DrawCircle(center, radius + thickness, outlineColor ?? color);
-            DrawCircle(center, radius, outlineColor is null ? backing : color);
-            if (outlineColor is not null) DrawCircle(center, Math.Max(1f, radius - thickness), backing);
-            return;
-        }
-        var extent = (int)MathF.Round(radius + thickness);
-        var bounds = new Rectangle((int)MathF.Round(center.X) - extent, (int)MathF.Round(center.Y) - extent, extent * 2, extent * 2);
-        FillRect(bounds, backing);
-        DrawRect(bounds, thickness, color);
-    }
-    private static GoStone OpponentOf(GoStone stone) => stone == GoStone.Black ? GoStone.White : GoStone.Black;
-    private enum RenMetricUnit { PointCount, RenCount }
-    private static Color RenGraphNodeColor(GoStone stone) => stone switch { GoStone.Black => Color.Black, GoStone.White => new Color(248, 248, 244), _ => new Color(255, 197, 18) };
-    private static Color RenGraphCellColor(GoStone stone) => stone switch { GoStone.Black => Color.Black, GoStone.White => new Color(248, 248, 244), _ => new Color(255, 197, 18) };
 
     public int GetPlayerEditPanelCaretIndex(Point point, EntryProfileEditField field, string text) =>
         EditEntryProfile.GetCaretIndex(point, field, text, GetTextBoxCaretIndex);
@@ -1342,5 +1120,43 @@ public sealed partial class GoScreenRenderer
                 DrawRect, DrawText, DrawFittedText, _stationeryDrawingContext, _stationeryDrawingContext.DrawIconStone, _stationeryDrawingContext.DrawPlayerRoleFaceIcon,
                 _stationeryDrawingContext.DrawTextSelection, _stationeryDrawingContext.DrawTextCaret,
                 DrawLine, DrawDynamicOptionText, DrawRotatedCenteredText));
+
+    private void DrawEditableTextEditHint(bool isEditing, bool isHovered, Rectangle textBounds)
+    {
+        if (isEditing || !isHovered)
+        {
+            EditActionBadge.Hide();
+            return;
+        }
+
+        EditActionBadge.SetAnchorBounds(textBounds);
+        EditActionBadge.Show();
+        EditActionBadge.Draw(_stationeryDrawingContext);
+    }
+
+    public void DrawDynamicOptionText(string text, Rectangle bounds, Color color, float scale)
+    {
+        if (text.All(character => _font.Characters.Contains(character)))
+        {
+            DrawFittedText(text, bounds, color, scale);
+            return;
+        }
+
+        if (!_dynamicOptionTextTextures.TryGetValue(text, out var texture))
+        {
+            var png = _textRasterizer.RasterizePng(text, pixelHeight: 28, bold: true);
+            using var stream = new System.IO.MemoryStream(png, writable: false);
+            texture = Texture2D.FromStream(_graphicsDevice, stream);
+            _dynamicOptionTextTextures[text] = texture;
+        }
+
+        var targetHeight = MathF.Min(bounds.Height, _font.LineSpacing * scale);
+        var fittedScale = MathF.Min(bounds.Width / (float)texture.Width, targetHeight / texture.Height);
+        _spriteBatch.Draw(texture, new Rectangle(bounds.X, bounds.Y + (bounds.Height - (int)(texture.Height * fittedScale)) / 2,
+            (int)(texture.Width * fittedScale), (int)(texture.Height * fittedScale)), color);
+    }
+
+    private void DrawSelectionFingerMark(Vector2 origin, float scale) =>
+        _stationeryDrawingContext.DrawSelectionFinger(origin, scale);
 
 }

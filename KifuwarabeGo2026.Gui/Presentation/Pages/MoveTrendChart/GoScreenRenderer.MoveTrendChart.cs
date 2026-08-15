@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Gui.Presentation;
+namespace KifuwarabeGo2026.Gui.Presentation.Pages.MoveTrendChart;
 
 using static KifuwarabeGo2026.Gui.Presentation.Pages.PopupTrendChart.PopupTrendChartScreenBounds;
 
@@ -11,14 +11,24 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using KifuwarabeGo2026.Gui.Presentation.Pages.PopupTrendChart;
+using KifuwarabeGo2026.Gui.Presentation.Pages.PopupTrendChart.MoveCommentPanel;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.SectionLabel;
 
-public sealed partial class GoScreenRenderer
+public sealed class MoveTrendChartRenderer
 {
-    private static readonly Rectangle CgosTrendChartBounds = new(1144, 498, 668, 342);
-    private static readonly Rectangle LocalTrendChartBounds = new(1144, 466, 668, 300);
-    private static readonly Rectangle LocalGameOverTrendChartBounds = new(1144, 376, 668, 466);
+    private readonly MoveCommentPanelRenderer _moveCommentPanelRenderer;
+    private StationeryDrawingContext _drawingContext = null!;
+
+    public MoveTrendChartRenderer(MoveCommentPanelRenderer moveCommentPanelRenderer)
+    {
+        _moveCommentPanelRenderer = moveCommentPanelRenderer;
+    }
+    public static readonly Rectangle CgosTrendChartBounds = new(1144, 498, 668, 342);
+    public static readonly Rectangle LocalTrendChartBounds = new(1144, 466, 668, 300);
+    public static readonly Rectangle LocalGameOverTrendChartBounds = new(1144, 376, 668, 466);
     private static readonly Rectangle LocalAppsGameOverTrendChartBounds = new(1144, 376, 668, 280);
-    private static readonly Rectangle ReviewTrendChartBounds = new(1144, 548, 668, 290);
+    public static readonly Rectangle ReviewTrendChartBounds = new(1144, 548, 668, 290);
 
     public static MoveTrendDisplayMode? GetCgosTrendDisplayModeButtonHit(Point point, MoveTrendDisplayMode currentMode)
     {
@@ -50,7 +60,7 @@ public sealed partial class GoScreenRenderer
     public static MoveTrendDisplayMode? GetReviewTrendDisplayModeButtonHit(Point point, MoveTrendDisplayMode currentMode) =>
         GetMoveTrendDisplayModeButtonHit(point, ReviewTrendChartBounds, currentMode);
 
-    private static MoveTrendDisplayMode? GetMoveTrendDisplayModeButtonHit(
+    public static MoveTrendDisplayMode? GetMoveTrendDisplayModeButtonHit(
         Point point,
         Rectangle chartBounds,
         MoveTrendDisplayMode currentMode)
@@ -76,42 +86,62 @@ public sealed partial class GoScreenRenderer
         return null;
     }
 
-    private void DrawCgosTrendChart(GoAppSession session, CgosGameObservation observation, Point mousePoint) =>
+    public void DrawCgos(StationeryDrawingContext drawingContext, GoAppSession session, CgosGameObservation observation, Point mousePoint)
+    {
+        _drawingContext = drawingContext;
         DrawMoveTrendChart(
             session,
             observation.Moves,
             CgosTrendChartBounds,
             mousePoint,
             observation.DisplayMoveIndex);
+    }
 
-    internal void DrawLocalTrendChart(GoAppSession session, Point mousePoint) =>
+    public void DrawLocal(StationeryDrawingContext drawingContext, GoAppSession session, Point mousePoint)
+    {
+        _drawingContext = drawingContext;
         DrawMoveTrendChart(
             session,
             session.CurrentGameRecord.Moves,
             LocalTrendChartBounds,
             mousePoint,
             session.LocalDisplayMoveIndex);
+    }
 
-    internal void DrawLocalGameOverTrendChart(GoAppSession session, Point mousePoint) =>
+    public void DrawLocalGameOver(StationeryDrawingContext drawingContext, GoAppSession session, Point mousePoint)
+    {
+        _drawingContext = drawingContext;
         DrawMoveTrendChart(
             session,
             session.CurrentGameRecord.Moves,
             GetLocalGameOverTrendChartBounds(session),
             mousePoint,
             session.LocalDisplayMoveIndex);
+    }
 
     private static Rectangle GetLocalGameOverTrendChartBounds(GoAppSession session) =>
         session.UseKind == GoAppUseKind.LocalApps
             ? LocalAppsGameOverTrendChartBounds
             : LocalGameOverTrendChartBounds;
 
-    internal void DrawReviewTrendChart(GoAppSession session, Point mousePoint) =>
+    public void DrawReview(StationeryDrawingContext drawingContext, GoAppSession session, Point mousePoint)
+    {
+        _drawingContext = drawingContext;
         DrawMoveTrendChart(
             session,
             session.ReviewMoves,
             ReviewTrendChartBounds,
             mousePoint,
             session.ReviewMoveIndex);
+    }
+
+    public void Draw(StationeryDrawingContext drawingContext, GoAppSession session,
+        IReadOnlyList<GoGameMove> moves, Rectangle bounds, Point mousePoint,
+        int? currentMoveNumber = null, bool popup = false)
+    {
+        _drawingContext = drawingContext;
+        DrawMoveTrendChart(session, moves, bounds, mousePoint, currentMoveNumber, popup);
+    }
 
     private void DrawMoveTrendChart(
         GoAppSession session,
@@ -134,7 +164,7 @@ public sealed partial class GoScreenRenderer
 
             if (session.MoveInformationDisplayMode == MoveInformationDisplayMode.Comment)
             {
-                DrawMoveCommentContent(moves, bounds, session, mousePoint, currentMoveNumber);
+                _moveCommentPanelRenderer.Draw(moves, bounds, session, mousePoint, currentMoveNumber);
                 return;
             }
         }
@@ -144,7 +174,7 @@ public sealed partial class GoScreenRenderer
             if (session.IsPopupCommentVisible)
                 DrawPopupCommentOverlay(moves, session, mousePoint, currentMoveNumber);
             else
-                PopupTrendChartScreen.Default.MoveCommentPanel.DrawSectionLabel(_stationeryDrawingContext, isPanelVisible: false);
+                PopupTrendChartScreen.Default.MoveCommentPanel.DrawSectionLabel(_drawingContext, isPanelVisible: false);
             return;
         }
 
@@ -220,12 +250,12 @@ public sealed partial class GoScreenRenderer
 
         if (popup && drawScore)
             PopupTrendChartScreen.Default.ScoreAxisSectionLabel.DrawAxisLabels(
-                _stationeryDrawingContext, plot,
+                _drawingContext, plot,
                 new[] { FormatTrendScoreAxisValue(scoreAxisMaximum), FormatTrendScoreAxisValue(scoreAxisMaximum / 2.0), "EVEN", FormatTrendScoreAxisValue(scoreAxisMaximum / 2.0), FormatTrendScoreAxisValue(scoreAxisMaximum) },
                 new Color(105, 232, 224), 0.58f);
         if (popup && drawWinRate)
             PopupTrendChartScreen.Default.WinRateAxisSectionLabel.DrawAxisLabels(
-                _stationeryDrawingContext, plot,
+                _drawingContext, plot,
                 new[] { "100%", "50%", "EVEN", "50%", "100%" },
                 new Color(105, 232, 224), 0.58f);
 
@@ -260,7 +290,7 @@ public sealed partial class GoScreenRenderer
         }
         else if (popup)
         {
-            PopupTrendChartScreen.Default.MoveCommentPanel.DrawSectionLabel(_stationeryDrawingContext, isPanelVisible: false);
+            PopupTrendChartScreen.Default.MoveCommentPanel.DrawSectionLabel(_drawingContext, isPanelVisible: false);
         }
     }
 
@@ -272,7 +302,7 @@ public sealed partial class GoScreenRenderer
         Rectangle plot,
         int axisStep)
     {
-        var textSize = _font.MeasureString(text);
+        var textSize = _drawingContext.MeasureText(text);
         if (textSize.X <= 0f || textSize.Y <= 0f) return;
 
         // 上下端はプロットの内側へ揃え、中間目盛りはグリッド線へセンタリングする。
@@ -284,27 +314,8 @@ public sealed partial class GoScreenRenderer
             _ => bounds.Center.Y,
         };
         var center = new Vector2(bounds.Center.X, centerY);
-        var origin = textSize / 2f;
-        _spriteBatch.DrawString(
-            _font,
-            text,
-            center + new Vector2(1, 1),
-            new Color(0, 0, 0, 135),
-            -MathHelper.PiOver2,
-            origin,
-            scale,
-            Microsoft.Xna.Framework.Graphics.SpriteEffects.None,
-            0f);
-        _spriteBatch.DrawString(
-            _font,
-            text,
-            center,
-            color,
-            -MathHelper.PiOver2,
-            origin,
-            scale,
-            Microsoft.Xna.Framework.Graphics.SpriteEffects.None,
-            0f);
+        _drawingContext.DrawRotatedCenteredText(text, center + new Vector2(1, 1), new Color(0, 0, 0, 135), scale);
+        _drawingContext.DrawRotatedCenteredText(text, center, color, scale);
     }
 
     /// <summary>
@@ -350,29 +361,9 @@ public sealed partial class GoScreenRenderer
         var labelBounds = new Rectangle(sectionX - labelWidth, plot.Y, labelWidth, plot.Height);
         const string label = "ADVANTAGE";
         const float scale = 0.34f;
-        var textSize = _font.MeasureString(label);
         var center = new Vector2(labelBounds.Center.X, labelBounds.Center.Y);
-        var origin = textSize / 2f;
-        _spriteBatch.DrawString(
-            _font,
-            label,
-            center + new Vector2(2, 2),
-            new Color(0, 0, 0, 175),
-            -MathHelper.PiOver2,
-            origin,
-            scale,
-            Microsoft.Xna.Framework.Graphics.SpriteEffects.None,
-            0f);
-        _spriteBatch.DrawString(
-            _font,
-            label,
-            center,
-            new Color(105, 232, 224),
-            -MathHelper.PiOver2,
-            origin,
-            scale,
-            Microsoft.Xna.Framework.Graphics.SpriteEffects.None,
-            0f);
+        _drawingContext.DrawRotatedCenteredText(label, center + new Vector2(2, 2), new Color(0, 0, 0, 175), scale);
+        _drawingContext.DrawRotatedCenteredText(label, center, new Color(105, 232, 224), scale);
     }
 
     private void DrawPopupInformationChecks(
@@ -381,8 +372,8 @@ public sealed partial class GoScreenRenderer
         Point mousePoint)
     {
         var screen = PopupTrendChartScreen.Default;
-        screen.ScoreAxisSectionLabel.DrawHeader(_stationeryDrawingContext, session.IsPopupScoreVisible);
-        screen.WinRateAxisSectionLabel.DrawHeader(_stationeryDrawingContext, session.IsPopupWinRateVisible);
+        screen.ScoreAxisSectionLabel.DrawHeader(_drawingContext, session.IsPopupScoreVisible);
+        screen.WinRateAxisSectionLabel.DrawHeader(_drawingContext, session.IsPopupWinRateVisible);
     }
 
     private void DrawPopupCommentOverlay(
@@ -393,8 +384,8 @@ public sealed partial class GoScreenRenderer
     {
         var overlay = PopupTrendChartMoveCommentPanelBounds;
         FillRect(overlay, new Color(10, 18, 31, 170));
-        PopupTrendChartScreen.Default.MoveCommentPanel.DrawSectionLabel(_stationeryDrawingContext, isPanelVisible: true);
-        DrawMoveCommentContent(moves, overlay, session, mousePoint, currentMoveNumber);
+        PopupTrendChartScreen.Default.MoveCommentPanel.DrawSectionLabel(_drawingContext, isPanelVisible: true);
+        _moveCommentPanelRenderer.Draw(moves, overlay, session, mousePoint, currentMoveNumber);
     }
 
     private static MoveInformationDisplayMode? GetMoveInformationDisplayModeButtonHit(Point point, Rectangle bounds)
@@ -415,7 +406,7 @@ public sealed partial class GoScreenRenderer
             "TREND",
             session.MoveInformationDisplayMode == MoveInformationDisplayMode.Trend,
             mousePoint);
-        var hasComment = HasMoveComment(moves, session.CurrentGameRecord.RootComment);
+        var hasComment = MoveCommentPanelRenderer.HasMoveComment(moves, session.CurrentGameRecord.RootComment);
         DrawCgosTrendModeButton(
             MoveInformationCommentButtonBounds(bounds),
             hasComment ? "COMMENT *" : "COMMENT",
@@ -661,4 +652,18 @@ public sealed partial class GoScreenRenderer
         chartBounds.Width > 1000
             ? new(chartBounds.Right - 210, chartBounds.Y + 18, 194, 52)
             : new(chartBounds.Right - 160, chartBounds.Y + 12, 144, 36);
+
+    private void FillRect(Rectangle bounds, Color color) => _drawingContext.FillRectangle(bounds, color);
+    private void DrawRect(Rectangle bounds, int thickness, Color color) => _drawingContext.DrawRectangle(bounds, thickness, color);
+    private void DrawLine(Vector2 start, Vector2 end, float thickness, Color color) => _drawingContext.DrawLine(start, end, thickness, color);
+    private void DrawCircle(Vector2 center, float radius, Color color) => _drawingContext.DrawCircle(center, radius, color);
+    private void DrawFittedText(string text, Rectangle bounds, Color color, float scale) => _drawingContext.DrawFittedText(text, bounds, color, scale);
+
+    private void DrawVerticalResultSection(Rectangle bounds, string title, Color accentColor,
+        Color textColor, int labelWidth, int labelGap)
+    {
+        DrawLine(new Vector2(bounds.X, bounds.Y), new Vector2(bounds.Right, bounds.Y), 1, new Color(58, 78, 86));
+        SectionLabelComponent.CreateVertical(bounds, title, accentColor, textColor, _drawingContext, labelWidth, labelGap)
+            .Draw(_drawingContext);
+    }
 }

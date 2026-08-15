@@ -1,8 +1,11 @@
-namespace KifuwarabeGo2026.Gui.Presentation;
+namespace KifuwarabeGo2026.Gui.Presentation.Pages.EditTournamentRule;
+using KifuwarabeGo2026.Gui.Presentation.Shared.CatalogOrder;
 
 using KifuwarabeGo2026.Gui.Application;
-using KifuwarabeGo2026.Gui.Presentation.Pages.EditTournamentRule;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ActionBadge;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.LinkUnderline;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
 using KifuwarabeGo2026.Gui.Presentation.Shared.PopupFilePathTooltip;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.StickyNote;
 using Microsoft.Xna.Framework;
@@ -13,13 +16,23 @@ using static KifuwarabeGo2026.Gui.Presentation.Pages.EditTournamentRule.Tourname
 /// <summary>
 /// ［大会ルール選択画面］
 /// </summary>
-public sealed partial class GoScreenRenderer
+public sealed class TournamentRulesPresenter
 {
-    public int GetTournamentRulesAddPanelDisplayNameCaretIndex(Point point, string text) =>
-        GetTextBoxCaretIndex(point.X, text, TournamentRulesAddPanelDisplayNameTextBounds, 0.46f);
+    public static TournamentRulesPresenter Default { get; } = new();
+
+    private StationeryDrawingContext _drawingContext = null!;
+    private readonly LinkUnderline _settingsFileLink = new(
+        new RoundUnderline { TopOffset = 2, Thickness = 5, Radius = 2 });
+    private readonly ActionBadgeComponent _editBadge = ActionBadgeComponent.Create("EDIT", Rectangle.Empty);
+    private readonly PopupFilePathTooltip _pathTooltip = new();
+
+    private TournamentRulesPresenter() { }
+
+    public int GetAddPanelDisplayNameCaretIndex(StationeryDrawingContext drawingContext, Point point, string text) =>
+        drawingContext.GetTextCaretIndex(point.X, text, TournamentRulesAddPanelDisplayNameTextBounds, 0.46f);
 
 
-    public static bool TryGetTournamentRulesSelectionDialogPathCopyText(Point point, GoAppSession session, out string text)
+    public static bool TryGetSelectionDialogPathCopyText(Point point, GoAppSession session, out string text)
     {
         if (session.TournamentRulesDialogSelectionIndex < 0 || session.TournamentRulesDialogSelectionIndex >= session.TournamentRulesList.Count)
         {
@@ -38,6 +51,16 @@ public sealed partial class GoScreenRenderer
     }
 
 
+    public void Draw(
+        StationeryDrawingContext drawingContext,
+        GoAppSession session,
+        Point mousePoint)
+    {
+        _drawingContext = drawingContext;
+        DrawTournamentRulesSelectionDialog(session, mousePoint);
+        DrawTournamentRulesAddPanel(session, mousePoint);
+    }
+
     private void DrawTournamentRulesSelectionDialog(GoAppSession session, Point mousePoint)
     {
         if (!session.IsTournamentRulesSelectionDialogOpen)
@@ -53,8 +76,8 @@ public sealed partial class GoScreenRenderer
         DrawRect(TournamentRulesSelectionDialogBounds, 2, new Color(116, 145, 146));
 
         DrawText("TOURNAMENT RULES", new Vector2(TournamentRulesSelectionDialogBounds.X + 30, TournamentRulesSelectionDialogBounds.Y + 24), new Color(244, 238, 218), 0.78f);
-        screen.SelectionCancelButton.Draw(mousePoint, _stationeryDrawingContext);
-        screen.SelectionOkButton.Draw(mousePoint, _stationeryDrawingContext);
+        screen.SelectionCancelButton.Draw(mousePoint, _drawingContext);
+        screen.SelectionOkButton.Draw(mousePoint, _drawingContext);
 
         DrawText("LIST", new Vector2(TournamentRulesSelectionDialogListBounds.X, TournamentRulesSelectionDialogListBounds.Y - 34), new Color(180, 195, 195), 0.46f);
         DrawText("PROPERTIES", new Vector2(TournamentRulesSelectionDialogPropertyBounds.X, TournamentRulesSelectionDialogPropertyBounds.Y - 34), new Color(180, 195, 195), 0.46f);
@@ -78,16 +101,16 @@ public sealed partial class GoScreenRenderer
 
         var pageCount = Math.Max(1, (int)Math.Ceiling(session.TournamentRulesList.Count / (double)GoAppSession.TournamentRulesSelectionPageSize));
         screen.UpdateSelectionState(session.TournamentRulesList.Count, session.CanDeleteSelectedTournamentRules, session.TournamentRulesSelectionPageIndex, pageCount);
-        screen.PreviousPageButton.Draw(mousePoint, _stationeryDrawingContext);
+        screen.PreviousPageButton.Draw(mousePoint, _drawingContext);
         DrawText($"PAGE {session.TournamentRulesSelectionPageIndex + 1} / {pageCount}", new Vector2(600, 817), new Color(227, 224, 210), 0.42f);
-        screen.NextPageButton.Draw(mousePoint, _stationeryDrawingContext);
-        screen.AddButton.Draw(mousePoint, _stationeryDrawingContext);
-        screen.EditButton.Draw(mousePoint, _stationeryDrawingContext);
-        screen.DuplicateButton.Draw(mousePoint, _stationeryDrawingContext);
-        screen.DeleteButton.Draw(mousePoint, _stationeryDrawingContext);
-        screen.OrderButton.Draw(mousePoint, _stationeryDrawingContext);
+        screen.NextPageButton.Draw(mousePoint, _drawingContext);
+        screen.AddButton.Draw(mousePoint, _drawingContext);
+        screen.EditButton.Draw(mousePoint, _drawingContext);
+        screen.DuplicateButton.Draw(mousePoint, _drawingContext);
+        screen.DeleteButton.Draw(mousePoint, _drawingContext);
+        screen.OrderButton.Draw(mousePoint, _drawingContext);
         DrawTournamentRulesDeleteConfirmation(session, mousePoint);
-        DrawCatalogOrderEditor(
+        CatalogOrderPresenter.Default.Draw(_drawingContext,
             session.TournamentRulesOrderEditor,
             "TOURNAMENT RULES",
             mousePoint,
@@ -112,29 +135,29 @@ public sealed partial class GoScreenRenderer
         var rulesScreen = TournamentRulesScreen.Default;
         var page = EditTournamentRulePage.Default;
         page.UpdateState(session.IsTournamentRulesDirty, session.RuleKind, session.BoardSize, session.CurrentMode.Kind);
-        page.DiscardButton.Draw(mousePoint, _stationeryDrawingContext);
-        page.SaveButton.Draw(mousePoint, _stationeryDrawingContext);
+        page.DiscardButton.Draw(mousePoint, _drawingContext);
+        page.SaveButton.Draw(mousePoint, _drawingContext);
 
         FillRect(TournamentRulesAddPanelEditorBounds, new Color(15, 20, 26));
         DrawRect(TournamentRulesAddPanelEditorBounds, 1, new Color(67, 84, 92));
 
         DrawDisplayNameTextBox(session, mousePoint);
-        DrawTournamentRulesFieldLabel("RULE", new Rectangle(AddPanelControlX, 319, 668, 50));
-        page.JapaneseRuleButton.Draw(mousePoint, _stationeryDrawingContext);
-        page.PureGoRuleButton.Draw(mousePoint, _stationeryDrawingContext);
-        page.ChineseRuleButton.Draw(mousePoint, _stationeryDrawingContext);
-        DrawTournamentRulesFieldLabel(
+        DrawFieldLabel("RULE", new Rectangle(626, 319, 668, 50));
+        page.JapaneseRuleButton.Draw(mousePoint, _drawingContext);
+        page.PureGoRuleButton.Draw(mousePoint, _drawingContext);
+        page.ChineseRuleButton.Draw(mousePoint, _drawingContext);
+        DrawFieldLabel(
             "BOARD SIZE",
-            new Rectangle(AddPanelControlX, page.BoardSize9Button.Bounds.Y, 668, 50));
-        page.BoardSize9Button.Draw(mousePoint, _stationeryDrawingContext);
-        page.BoardSize13Button.Draw(mousePoint, _stationeryDrawingContext);
-        page.BoardSize19Button.Draw(mousePoint, _stationeryDrawingContext);
+            new Rectangle(626, page.BoardSize9Button.Bounds.Y, 668, 50));
+        page.BoardSize9Button.Draw(mousePoint, _drawingContext);
+        page.BoardSize13Button.Draw(mousePoint, _drawingContext);
+        page.BoardSize19Button.Draw(mousePoint, _drawingContext);
         TournamentRulesScreen.Default.KomiField.Draw(session.Komi, mousePoint,
-            new TournamentRuleKomiFieldDrawingCallbacks(DrawTournamentRulesFieldLabel, DrawFittedText, _stationeryDrawingContext));
+            new TournamentRuleKomiFieldDrawingCallbacks(DrawFieldLabel, DrawFittedText, _drawingContext));
         TournamentRulesScreen.Default.TimeField.Draw(session.MainTime, mousePoint,
-            new TournamentRuleTimeFieldDrawingCallbacks(DrawTournamentRulesFieldLabel, DrawFittedText, _stationeryDrawingContext));
+            new TournamentRuleTimeFieldDrawingCallbacks(DrawFieldLabel, DrawFittedText, _drawingContext));
         TournamentRulesScreen.Default.MoveLimitField.Draw(session.MoveLimit, mousePoint,
-            new TournamentRuleMoveLimitFieldDrawingCallbacks(DrawTournamentRulesFieldLabel, DrawFittedText, _stationeryDrawingContext));
+            new TournamentRuleMoveLimitFieldDrawingCallbacks(DrawFieldLabel, DrawFittedText, _drawingContext));
         DrawFilePathSelector(session, mousePoint);
     }
 
@@ -174,7 +197,7 @@ public sealed partial class GoScreenRenderer
         var filePath = string.IsNullOrWhiteSpace(rules.FilePath) ? "-" : rules.FilePath;
         var fileRowBounds = TournamentRulesSelectionDialogPropertyRowBounds(6);
         DrawPathPropertyRow(fileRowBounds, "FILE", string.IsNullOrWhiteSpace(rules.FilePath) ? "-" : Path.GetFileName(rules.FilePath));
-        DrawPathTooltipIfHovered(fileRowBounds, filePath, mousePoint);
+        DrawPathTooltip(fileRowBounds, filePath, mousePoint);
     }
 
 
@@ -193,9 +216,77 @@ public sealed partial class GoScreenRenderer
         DrawText("DELETE TOURNAMENT RULES", new Vector2(TournamentRulesDeleteConfirmationBounds.X + 28, TournamentRulesDeleteConfirmationBounds.Y + 24), new Color(255, 230, 160), 0.62f);
         DrawFittedText($"{session.TournamentRulesDeleteConfirmationFileName} will be deleted.", new Rectangle(TournamentRulesDeleteConfirmationBounds.X + 28, TournamentRulesDeleteConfirmationBounds.Y + 92, TournamentRulesDeleteConfirmationBounds.Width - 56, 42), Color.White, 0.5f);
         DrawText("DELETE?", new Vector2(TournamentRulesDeleteConfirmationBounds.X + 28, TournamentRulesDeleteConfirmationBounds.Y + 150), new Color(180, 195, 195), 0.46f);
-        TournamentRulesScreen.Default.DeleteCancelButton.Draw(mousePoint, _stationeryDrawingContext);
-        TournamentRulesScreen.Default.DeleteConfirmButton.Draw(mousePoint, _stationeryDrawingContext);
+        TournamentRulesScreen.Default.DeleteCancelButton.Draw(mousePoint, _drawingContext);
+        TournamentRulesScreen.Default.DeleteConfirmButton.Draw(mousePoint, _drawingContext);
     }
 
+    private void FillRect(Rectangle bounds, Color color) => _drawingContext.FillRectangle(bounds, color);
+    private void DrawRect(Rectangle bounds, int thickness, Color color) => _drawingContext.DrawRectangle(bounds, thickness, color);
+    private void DrawText(string text, Vector2 position, Color color, float scale) => _drawingContext.DrawText(text, position, color, scale);
+    private void DrawFittedText(string text, Rectangle bounds, Color color, float scale) => _drawingContext.DrawFittedText(text, bounds, color, scale);
 
+    public bool IsSettingsFileHit(Point point) => _settingsFileLink.IsHit(point);
+
+    private void DrawDisplayNameTextBox(GoAppSession session, Point mousePoint)
+    {
+        var bounds = TournamentRulesScreen.Default.AddPanelDisplayNameRowBounds;
+        var active = session.IsTournamentRulesDisplayNameEditing;
+        var text = active ? session.TournamentRulesDisplayNameDraft : session.TournamentDisplayName;
+        var textBounds = TournamentRulesScreen.Default.AddPanelDisplayNameTextBounds;
+        var hovered = textBounds.Contains(mousePoint);
+        DrawText("DISPLAY", new Vector2(bounds.X + 16, textBounds.Y + 7), new Color(180, 195, 195), 0.36f);
+        _drawingContext.FillRoundedRectangle(new Rectangle(textBounds.X, textBounds.Bottom + 2, textBounds.Width, 5), 2,
+            active ? new Color(147, 244, 200) : hovered ? new Color(185, 196, 255) : new Color(100, 110, 145));
+        if (active) _drawingContext.DrawTextSelection(text, session.TournamentRulesDisplayNameSelectionStart, session.TournamentRulesDisplayNameSelectionLength, textBounds, 0.46f);
+        DrawFittedText(string.IsNullOrEmpty(text) ? "-" : text, textBounds, Color.White, 0.46f);
+        if (active) _drawingContext.DrawTextCaret(text, session.TournamentRulesDisplayNameCaretIndex, textBounds, 0.46f);
+        if (!active && hovered)
+        {
+            _editBadge.SetAnchorBounds(textBounds);
+            _editBadge.Show();
+            _editBadge.Draw(_drawingContext);
+        }
+        else _editBadge.Hide();
+
+        if (!string.IsNullOrWhiteSpace(session.TournamentRulesDisplayNameWarning))
+            DrawFittedText(session.TournamentRulesDisplayNameWarning, new Rectangle(758, 740, 536, 28), new Color(255, 183, 146), 0.34f);
+    }
+
+    private void DrawFilePathSelector(GoAppSession session, Point mousePoint)
+    {
+        var bounds = TournamentRulesScreen.Default.AddPanelFileRowBounds;
+        var path = string.IsNullOrWhiteSpace(session.CurrentTournamentRules.FilePath) ? "-" : session.CurrentTournamentRules.FilePath;
+        DrawFieldLabel("SETTINGS", bounds);
+        var textBounds = new Rectangle(bounds.X + 132, bounds.Y + 7, bounds.Width - 152, 42);
+        _settingsFileLink.Bounds = textBounds;
+        _settingsFileLink.SetActionBadge(ActionBadgeComponent.Create("OPEN", textBounds));
+        _settingsFileLink.UpdatePointer(mousePoint);
+        DrawFittedText(path, textBounds, Color.White, 0.38f);
+        _settingsFileLink.Draw(_drawingContext);
+    }
+
+    private void DrawPropertyRow(int y, string label, string value) =>
+        DrawPathPropertyRow(new Rectangle(TournamentRulesSelectionDialogPropertyBounds.X + 18, y, TournamentRulesSelectionDialogPropertyBounds.Width - 36, 52), label, value);
+
+    private void DrawPathPropertyRow(Rectangle bounds, string label, string value)
+    {
+        _drawingContext.DrawDataRowFrame(bounds);
+        DrawFittedText(label, new Rectangle(bounds.X + 16, bounds.Y + 7, 120, 38), new Color(180, 195, 195), 0.38f);
+        DrawFittedText(value, new Rectangle(bounds.X + 152, bounds.Y + 7, bounds.Width - 168, 38), Color.White, 0.46f);
+    }
+
+    private void DrawPathTooltip(Rectangle bounds, string path, Point mousePoint) =>
+        _pathTooltip.Draw(StickyNoteScreenId.TournamentRulesSelection, StickyNoteKind.TournamentRulesPathHint,
+            bounds, path, mousePoint, "FILE", ["Tournament rules settings file."], _drawingContext, _drawingContext.DrawDynamicText);
+
+    private void DrawFieldLabel(string label, Rectangle rowBounds)
+    {
+        var labelBounds = new Rectangle(626, rowBounds.Y, 112, rowBounds.Height);
+        var measured = _drawingContext.MeasureText(label);
+        var scale = MathF.Min(0.38f, MathF.Min(labelBounds.Width / Math.Max(1f, measured.X), (labelBounds.Height - 8) / Math.Max(1f, measured.Y)));
+        DrawText(label, new Vector2(labelBounds.X, labelBounds.Center.Y - measured.Y * scale / 2), new Color(180, 195, 195), scale);
+    }
+    private static string FormatKomi(decimal komi) => komi.ToString("0.0");
+    private static string FormatMainTime(TimeSpan value) => value == TimeSpan.Zero ? "NO LIMIT" : value.TotalHours >= 1 ? $"{(int)value.TotalHours}:{value.Minutes:00}:{value.Seconds:00}" : $"{value.Minutes:00}:{value.Seconds:00}";
+    private static string FormatMoveLimit(int value) => value <= 0 ? "NO LIMIT" : value.ToString();
 }

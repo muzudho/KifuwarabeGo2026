@@ -137,7 +137,7 @@ internal static class Program
             Choices: [new("9"), new("13"), new("19")]);
         session.OpenAppProviderGameSettingsDialog([boardSize]);
         session.OpenGtpEngineRandomMoveSelectionDialog(boardSize);
-        Require(GoScreenRenderer.GetGtpEngineRandomMoveSelectionDialogItemHit(new Point(700, 520), session) == 2,
+        Require(KifuwarabeGo2026.Gui.Presentation.Pages.GtpEngine.GtpEngineRenderer.GetGtpEngineRandomMoveSelectionDialogItemHit(new Point(700, 520), session) == 2,
             "The third Provider combo choice was displayed but had no click hit target.");
     }
 

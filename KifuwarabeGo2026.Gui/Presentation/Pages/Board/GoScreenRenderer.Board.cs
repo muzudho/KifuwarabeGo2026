@@ -1,17 +1,44 @@
-namespace KifuwarabeGo2026.Gui.Presentation;
+namespace KifuwarabeGo2026.Gui.Presentation.Pages.Board;
 
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Application.Local.Playing;
+using KifuwarabeGo2026.Gui.Presentation.BoardLens.GlassesSystem;
+using KifuwarabeGo2026.Gui.Presentation.BoardLens;
+using KifuwarabeGo2026.Gui.Presentation.BoardLens.RenSystem;
+using KifuwarabeGo2026.Gui.Presentation.BoardLens.Shared.RenBoundaries;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
+using KifuwarabeGo2026.Gui.Presentation.Pages.BoardAndReview;
 using KifuwarabeGo2026.Shared.Domain;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
+using System.Collections.Generic;
 
 /// <summary>
 /// ［盤］描画処理
 /// </summary>
-public sealed partial class GoScreenRenderer
+public sealed class BoardRenderer
 {
+    private readonly BoardLensModel _boardLensModel;
+    private readonly SpriteBatch _spriteBatch;
+    private readonly SpriteFont _font;
+    private readonly SpriteFont _boardCoordinateFont;
+    private readonly Texture2D _softCircle;
+    private readonly Texture2D _stoneLight;
+    private readonly Texture2D _stoneDark;
+    private StationeryDrawingContext _drawingContext = null!;
+
+    public BoardRenderer(BoardLensModel boardLensModel, SpriteBatch spriteBatch, SpriteFont font,
+        SpriteFont boardCoordinateFont, Texture2D softCircle, Texture2D stoneLight, Texture2D stoneDark)
+    {
+        _boardLensModel = boardLensModel;
+        _spriteBatch = spriteBatch;
+        _font = font;
+        _boardCoordinateFont = boardCoordinateFont;
+        _softCircle = softCircle;
+        _stoneLight = stoneLight;
+        _stoneDark = stoneDark;
+    }
     public static bool TryGetBoardIntersection(Point point, int boardSize, out Point intersection)
     {
         var layout = GetBoardLayout(boardSize);
@@ -34,8 +61,9 @@ public sealed partial class GoScreenRenderer
     /// </summary>
     /// <param name="session"></param>
     /// <param name="mousePoint"></param>
-    private void DrawBoard(GoAppSession session, Point mousePoint)
+    public void Draw(StationeryDrawingContext drawingContext, GoAppSession session, Point mousePoint)
     {
+        _drawingContext = drawingContext;
         var whiteboard = session.CurrentMode.Kind == GoAppModeKind.VariationEditing;
         var surface = DrawBoardSurface(session.BoardSize, whiteboard);
         var start = surface.Start;
@@ -54,7 +82,7 @@ public sealed partial class GoScreenRenderer
             DrawNobiLens(session, start, cell);
 
         if (session.IsGlassesBoardLens)
-            DrawGlassesLens(session, start, cell);
+            ChippedSingleEyeGlassSeedLens.Default.Draw(_boardLensModel, session, start, cell);
 
         if (!session.IsRenParseDisplayEnabled)
             DrawLastMoveMarker(GetLocalDisplayLastMove(session), start, cell);
@@ -63,7 +91,7 @@ public sealed partial class GoScreenRenderer
         {
             DrawSuperKoMarks(session, start, cell);
             DrawKoMark(session, start, cell);
-            DrawHoverStone(session, mousePoint, cell);
+            DrawHoverStone(session, mousePoint, start, cell);
         }
         DrawBoardFrameHighlights(surface.Outer);
     }
@@ -71,7 +99,7 @@ public sealed partial class GoScreenRenderer
     /// <summary>
     /// 対局方式に依存しない碁盤面を描画します。
     /// </summary>
-    private (Vector2 Start, float Cell, Rectangle Outer) DrawBoardSurface(int boardSize, bool whiteboard = false)
+    public (Vector2 Start, float Cell, Rectangle Outer) DrawBoardSurface(int boardSize, bool whiteboard = false)
     {
         var boardOuter = new Rectangle(54, 50, 980, 980);
 
@@ -254,7 +282,7 @@ public sealed partial class GoScreenRenderer
     /// <summary>
     /// 現在表示中の局面における最終着手を、石の上の発光リングで示します。
     /// </summary>
-    private void DrawLastMoveMarker(GoGameMove? move, Vector2 start, float cell)
+    public void DrawLastMoveMarker(GoGameMove? move, Vector2 start, float cell)
     {
         if (move?.Point is not { } point)
             return;
@@ -285,13 +313,21 @@ public sealed partial class GoScreenRenderer
     /// <param name="session"></param>
     /// <param name="mousePoint"></param>
     /// <param name="cell"></param>
-    private void DrawHoverStone(GoAppSession session, Point mousePoint, float cell)
+    private void DrawHoverStone(GoAppSession session, Point mousePoint, Vector2 start, float cell)
     {
         if (session.CurrentMode.Kind == GoAppModeKind.BoardEditing ||
             (session.CurrentMode.Kind == GoAppModeKind.VariationEditing &&
              session.VariationEditingStone is not null))
         {
-            DrawBoardEditingHoverStone(session, mousePoint, cell);
+            if (TryGetBoardIntersection(mousePoint, session.BoardSize, out var editingIntersection))
+            {
+                BoardAndReviewScreen.Default.DrawEditingHoverStone(
+                    _boardLensModel,
+                    session,
+                    editingIntersection,
+                    start,
+                    cell);
+            }
             return;
         }
 
@@ -370,10 +406,10 @@ public sealed partial class GoScreenRenderer
     /// <returns></returns>
 
     // 内部・画面描画座標は左上原点です。人向け／外部の囲碁座標は、入出力境界で左下原点へ変換します。
-    private static Vector2 BoardPoint(Vector2 start, float cell, int x, int y) => new(start.X + cell * x, start.Y + cell * y);
+    public static Vector2 BoardPoint(Vector2 start, float cell, int x, int y) => new(start.X + cell * x, start.Y + cell * y);
 
 
-    private static readonly Rectangle BoardBounds = new(88, 84, 912, 912);
+    public static readonly Rectangle BoardBounds = new(88, 84, 912, 912);
 
     /// <summary>
     /// ［盤面のレイアウト］取得
@@ -417,7 +453,7 @@ public sealed partial class GoScreenRenderer
     /// </summary>
     /// <param name="boardOuter"></param>
 
-    private void DrawBoardFrameHighlights(Rectangle boardOuter)
+    public void DrawBoardFrameHighlights(Rectangle boardOuter)
     {
         FillRect(new Rectangle(boardOuter.X, boardOuter.Y, boardOuter.Width, 5), new Color(255, 220, 128, 90));
         FillRect(new Rectangle(boardOuter.X, boardOuter.Y, 5, boardOuter.Height), new Color(255, 220, 128, 70));
@@ -431,13 +467,196 @@ public sealed partial class GoScreenRenderer
     /// <param name="center"></param>
     /// <param name="radius"></param>
     /// <param name="black"></param>
-    private void DrawStone(Vector2 center, float radius, bool black)
+    public void DrawStone(Vector2 center, float radius, bool black)
     {
         var size = (int)(radius * 2);
         var destination = new Rectangle((int)(center.X - radius), (int)(center.Y - radius), size, size);
         _spriteBatch.Draw(_softCircle, new Rectangle(destination.X + 7, destination.Y + 10, destination.Width, destination.Height), new Color(0, 0, 0, 110));
         _spriteBatch.Draw(black ? _stoneDark : _stoneLight, destination, Color.White);
     }
+
+    public void DrawBoardRenAnalysis(RenParseDisplayMode displayMode, int boardSize,
+        Func<int, int, GoStone> getStone, Func<GoRenParseResult> parseRens, Action drawPlacedStones,
+        Vector2 start, float cell)
+    {
+        if (displayMode == RenParseDisplayMode.Off) { drawPlacedStones(); return; }
+        var renParse = parseRens();
+        if (displayMode == RenParseDisplayMode.Overlay)
+        {
+            drawPlacedStones(); DrawRenBoundaries(renParse, start, cell); DrawRenNumbers(renParse, start, cell); return;
+        }
+        if (displayMode == RenParseDisplayMode.Graph)
+        {
+            RenNetworkBasicLens.Default.DrawCells(_boardLensModel, boardSize, getStone, start, cell);
+            DrawRenBoundaries(renParse, start, cell); DrawRenRepresentativeNumbers(renParse, start, cell); return;
+        }
+        if (displayMode is RenParseDisplayMode.GraphStep2 or RenParseDisplayMode.Eye)
+        {
+            RenNetworkBasicLens.Default.DrawOverlay(_boardLensModel, renParse, BoardBounds, start, cell,
+                displayMode == RenParseDisplayMode.Eye);
+            return;
+        }
+        RenNetworkBasicLens.Default.DrawCells(_boardLensModel, boardSize, getStone, start, cell);
+        DrawRenBoundaries(renParse, start, cell);
+        if (displayMode == RenParseDisplayMode.RenArea) { DrawRenAreaNumbers(renParse, start, cell); return; }
+        RenBoundaryLens.DrawRenBoundaryLens(_boardLensModel, renParse, displayMode, start, cell);
+    }
+
+    private void DrawRenNumbers(GoRenParseResult renParse, Vector2 start, float cell)
+    {
+        var scale = RenNumberScale(cell);
+        for (var y = 0; y < renParse.Size; y++)
+        for (var x = 0; x < renParse.Size; x++)
+            DrawRenNumber(renParse.GetRenNumber(x, y), BoardPoint(start, cell, x, y), scale);
+    }
+
+    private void DrawRenAreaNumbers(GoRenParseResult renParse, Vector2 start, float cell)
+    {
+        for (var renNumber = 1; renNumber <= renParse.Count; renNumber++)
+        {
+            var ren = renParse.GetRen(renNumber);
+            DrawRenMetricNumber(ren, ren.Points.Count, RenGraphCellColor(ren.Stone), start, cell,
+                RenGraphCellColor(OpponentOf(ren.Stone)));
+        }
+    }
+
+    public void DrawDeferredStrongMetrics(GoRenParseResult renParse,
+        IReadOnlyList<(int RenNumber, int Value, Color Color, Color Outline)> metrics, Vector2 start, float cell)
+    {
+        foreach (var metric in metrics)
+            DrawRenMetricNumber(renParse.GetRen(metric.RenNumber), metric.Value, metric.Color, start, cell, metric.Outline);
+    }
+
+    private void DrawRenRepresentativeNumbers(GoRenParseResult renParse, Vector2 start, float cell)
+    {
+        var scale = RenNumberScale(cell);
+        var drawn = new bool[renParse.Count + 1];
+        for (var y = 0; y < renParse.Size; y++)
+        for (var x = 0; x < renParse.Size; x++)
+        {
+            var number = renParse.GetRenNumber(x, y);
+            if (drawn[number]) continue;
+            drawn[number] = true;
+            DrawRenNumber(number, BoardPoint(start, cell, x, y), scale);
+        }
+    }
+
+    private void DrawRenBoundaries(GoRenParseResult renParse, Vector2 start, float cell)
+    {
+        var halfCell = cell * 0.5f;
+        var thickness = Math.Max(5, (int)MathF.Round(cell * 0.08f));
+        var color = new Color(255, 238, 0, 238);
+        for (var y = 0; y < renParse.Size; y++)
+        for (var x = 0; x < renParse.Size; x++)
+        {
+            var number = renParse.GetRenNumber(x, y);
+            var center = BoardPoint(start, cell, x, y);
+            var left = center.X - halfCell; var top = center.Y - halfCell;
+            var right = center.X + halfCell; var bottom = center.Y + halfCell;
+            if (x == 0 || renParse.GetRenNumber(x - 1, y) != number) FillRect(CreateVerticalLineRect(left, top, bottom, thickness), color);
+            if (y == 0 || renParse.GetRenNumber(x, y - 1) != number) FillRect(CreateHorizontalLineRect(left, right, top, thickness), color);
+            if (x == renParse.Size - 1) FillRect(CreateVerticalLineRect(right, top, bottom, thickness), color);
+            if (y == renParse.Size - 1) FillRect(CreateHorizontalLineRect(left, right, bottom, thickness), color);
+        }
+    }
+
+    private void DrawNobiLens(GoAppSession session, Vector2 start, float cell)
+    {
+        var renParse = session.ParseRens();
+        var legColor = RenGraphCellColor(session.CurrentTurn);
+        var candidateColor = new Color(126, 255, 188);
+        var legThickness = MathHelper.Clamp(cell * 0.045f, 2f, 5f);
+        var markerRadius = MathHelper.Clamp(cell * 0.13f, 5f, 11f);
+        for (var number = 1; number <= renParse.Count; number++)
+        {
+            var ren = renParse.GetRen(number);
+            if (ren.Stone != session.CurrentTurn) continue;
+            var contacts = new List<(GoPoint From, GoPoint To)>();
+            foreach (var point in ren.Points)
+            {
+                AddCandidate(point, point.X - 1, point.Y); AddCandidate(point, point.X + 1, point.Y);
+                AddCandidate(point, point.X, point.Y - 1); AddCandidate(point, point.X, point.Y + 1);
+            }
+            var markers = new HashSet<GoPoint>();
+            foreach (var contact in contacts)
+            {
+                DrawLine(BoardPoint(start, cell, contact.From.X, contact.From.Y),
+                    BoardPoint(start, cell, contact.To.X, contact.To.Y), legThickness, legColor);
+                markers.Add(contact.To);
+            }
+            foreach (var marker in markers)
+            {
+                var center = BoardPoint(start, cell, marker.X, marker.Y);
+                DrawCircle(center, markerRadius + 3f, legColor);
+                DrawCircle(center, markerRadius, candidateColor);
+            }
+            void AddCandidate(GoPoint from, int x, int y)
+            {
+                if (x < 0 || x >= renParse.Size || y < 0 || y >= renParse.Size ||
+                    renParse.GetRen(renParse.GetRenNumber(x, y)).Stone != GoStone.Empty || !session.IsNobiCandidate(x, y)) return;
+                contacts.Add((from, new GoPoint(x, y)));
+            }
+        }
+    }
+
+    public void DrawRenMetricNumber(GoRen ren, int value, Color valueColor, Vector2 start, float cell,
+        Color? valueOutlineColor = null)
+    {
+        var center = BoardPoint(start, cell, ren.Points[0].X, ren.Points[0].Y);
+        var valueScale = MathHelper.Clamp(cell / 68f, 0.34f, 0.80f);
+        DrawRenNumber(ren.Number, center - new Vector2(0f, cell * 0.20f), RenNumberScale(cell));
+        var valueText = value.ToString();
+        if (valueText.Length > 2)
+            valueScale *= MathF.Min(1f, _font.MeasureString("88").X / Math.Max(1f, _font.MeasureString(valueText).X));
+        var valueCenter = center + new Vector2(0f, cell * 0.10f);
+        if (valueOutlineColor is { } outline) DrawCenteredOutlinedText(valueText, valueCenter, valueColor, outline, valueScale);
+        else DrawCenteredText(valueText, valueCenter, valueColor, valueScale);
+        DrawRenMetricUnit(center + new Vector2(0f, cell * 0.37f), valueColor, cell, valueOutlineColor);
+    }
+
+    public void DrawRenNumber(int number, Vector2 center, float scale) =>
+        DrawCenteredOutlinedText($"#{number}", center, new Color(0, 177, 238), new Color(0, 92, 132, 245), scale);
+
+    private void DrawCenteredOutlinedText(string text, Vector2 center, Color color, Color outlineColor, float scale)
+    {
+        var position = center - _font.MeasureString(text) * scale / 2f;
+        var outline = MathHelper.Clamp(scale * 7f, 1.5f, 3f);
+        for (var i = 0; i < 16; i++)
+        {
+            var angle = MathHelper.TwoPi * i / 16;
+            _spriteBatch.DrawString(_font, text, position + new Vector2(MathF.Cos(angle), MathF.Sin(angle)) * outline,
+                outlineColor, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+        }
+        _spriteBatch.DrawString(_font, text, position, color, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+    }
+
+    private void DrawCenteredText(string text, Vector2 center, Color color, float scale) =>
+        DrawText(text, center - _font.MeasureString(text) * scale / 2f, color, scale);
+
+    private void DrawRenMetricUnit(Vector2 center, Color color, float cell, Color? outlineColor)
+    {
+        var radius = MathHelper.Clamp(cell * 0.075f, 3f, 6f);
+        var thickness = Math.Max(2, (int)MathF.Round(radius * 0.42f));
+        var backing = new Color(16, 26, 32, 220);
+        DrawCircle(center, radius + thickness, outlineColor ?? color);
+        DrawCircle(center, radius, outlineColor is null ? backing : color);
+        if (outlineColor is not null) DrawCircle(center, Math.Max(1f, radius - thickness), backing);
+    }
+
+    private static float RenNumberScale(float cell) => MathHelper.Clamp(cell / 120f, 0.18f, 0.46f);
+    private static GoStone OpponentOf(GoStone stone) => stone == GoStone.Black ? GoStone.White : GoStone.Black;
+    public static Color RenGraphCellColor(GoStone stone) => stone switch
+    {
+        GoStone.Black => Color.Black,
+        GoStone.White => new Color(248, 248, 244),
+        _ => new Color(255, 197, 18),
+    };
+    private static Rectangle CreateVerticalLineRect(float x, float top, float bottom, int thickness) =>
+        new((int)MathF.Round(x) - thickness / 2, (int)MathF.Round(top) - thickness / 2, thickness,
+            (int)MathF.Round(bottom - top) + thickness);
+    private static Rectangle CreateHorizontalLineRect(float left, float right, float y, int thickness) =>
+        new((int)MathF.Round(left) - thickness / 2, (int)MathF.Round(y) - thickness / 2,
+            (int)MathF.Round(right - left) + thickness, thickness);
 
     /// <summary>
     /// ［石テクスチャー］作成
@@ -446,9 +665,9 @@ public sealed partial class GoScreenRenderer
     /// <param name="lightStone"></param>
     /// <returns></returns>
 
-    private Texture2D CreateStoneTexture(int size, bool lightStone)
+    public static Texture2D CreateStoneTexture(GraphicsDevice graphicsDevice, int size, bool lightStone)
     {
-        return CreateTexture(size, size, (x, y) =>
+        return CreateTexture(graphicsDevice, size, size, (x, y) =>
         {
             var center = (size - 1) * 0.5f;
             var nx = (x - center) / center;
@@ -472,4 +691,21 @@ public sealed partial class GoScreenRenderer
             return new Color((byte)MathHelper.Clamp(baseValue, 8, 92), (byte)MathHelper.Clamp(baseValue + 2, 9, 96), (byte)MathHelper.Clamp(baseValue + 7, 14, 105));
         });
     }
+
+    private static Texture2D CreateTexture(GraphicsDevice graphicsDevice, int width, int height, Func<int, int, Color> colorFactory)
+    {
+        var texture = new Texture2D(graphicsDevice, width, height);
+        var colors = new Color[width * height];
+        for (var y = 0; y < height; y++)
+        for (var x = 0; x < width; x++)
+            colors[y * width + x] = colorFactory(x, y);
+        texture.SetData(colors);
+        return texture;
+    }
+
+    private void FillRect(Rectangle bounds, Color color) => _drawingContext.FillRectangle(bounds, color);
+    private void DrawRect(Rectangle bounds, int thickness, Color color) => _drawingContext.DrawRectangle(bounds, thickness, color);
+    private void DrawLine(Vector2 start, Vector2 end, float thickness, Color color) => _drawingContext.DrawLine(start, end, thickness, color);
+    private void DrawCircle(Vector2 center, float radius, Color color) => _drawingContext.DrawCircle(center, radius, color);
+    private void DrawText(string text, Vector2 position, Color color, float scale) => _drawingContext.DrawText(text, position, color, scale);
 }

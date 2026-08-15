@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Gui.Presentation;
+namespace KifuwarabeGo2026.Gui.Presentation.Pages.Title;
 
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.StickyNote;
@@ -10,11 +10,23 @@ using System.Linq;
 using KifuwarabeGo2026.Gui.Presentation.Pages.Title;
 using KifuwarabeGo2026.Gui.Presentation.Pages.PonnukiProviderSelection;
 using KifuwarabeGo2026.Gui.Presentation.Pages.ApplicationSettings;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 
-public sealed partial class GoScreenRenderer
+public sealed class TitleScreenRenderer
 {
     private readonly TitleGoEquipment _titleGoEquipment = new();
     private readonly TitleScreen _titleScreen = TitleScreen.Default;
+    private readonly Action<Vector2, float, float, Color, int, float> _drawEllipseWire;
+    private readonly Action<Vector2, float, float, Color, int, float, float, float> _drawCircumscribedCircleArc;
+    private StationeryDrawingContext _drawingContext = null!;
+
+    public TitleScreenRenderer(
+        Action<Vector2, float, float, Color, int, float> drawEllipseWire,
+        Action<Vector2, float, float, Color, int, float, float, float> drawCircumscribedCircleArc)
+    {
+        _drawEllipseWire = drawEllipseWire;
+        _drawCircumscribedCircleArc = drawCircumscribedCircleArc;
+    }
 
     #region ［FORMAL APPS 区画］
     #endregion
@@ -22,10 +34,11 @@ public sealed partial class GoScreenRenderer
     #region ［CASUAL APPS 区画］
     #endregion
 
-    private void DrawUseSelectionPanel(GoAppSession session, Point mousePoint, TitleMenuPage page, int appProviderTabIndex, bool isAppProviderLoading)
+    public void Draw(StationeryDrawingContext drawingContext, GoAppSession session, Point mousePoint, TitleMenuPage page, int appProviderTabIndex, bool isAppProviderLoading)
     {
+        _drawingContext = drawingContext;
         // タイトル画面の囲碁用具ワイヤー装飾。
-        _titleGoEquipment.Draw(new TitleGoEquipmentDrawingCallbacks(DrawEllipseWire, DrawCircumscribedCircleArc));
+        _titleGoEquipment.Draw(new TitleGoEquipmentDrawingCallbacks(_drawEllipseWire, _drawCircumscribedCircleArc));
 
         var panel = _titleScreen.PanelBounds;
         FillRect(new Rectangle(panel.X + 18, panel.Y + 20, panel.Width, panel.Height), new Color(0, 0, 0, 130));
@@ -34,12 +47,12 @@ public sealed partial class GoScreenRenderer
 
         // 見出し（ヘッドライン）
         _titleScreen.Headline.Position = new Vector2(panel.X + 58, panel.Y + 58);
-        _titleScreen.Headline.Draw(_stationeryDrawingContext);
+        _titleScreen.Headline.Draw(_drawingContext);
         DrawText(GetDisplayVersion(), new Vector2(panel.X + 790, panel.Y + 91), new Color(99, 223, 185), 0.38f);
         DrawLine(new Vector2(panel.X + 790, panel.Y + 126), new Vector2(panel.X + 958, panel.Y + 126), 2, new Color(99, 223, 185, 120));
         DrawTitleMenuContent(session, page, panel, mousePoint, appProviderTabIndex, isAppProviderLoading);
         DrawUpdateButton(mousePoint);
-        ApplicationSettingsScreen.Default.DrawSettingsButton(_stationeryDrawingContext, mousePoint);
+        ApplicationSettingsScreen.Default.DrawSettingsButton(_drawingContext, mousePoint);
     }
 
     private void DrawTitleMenuContent(GoAppSession session, TitleMenuPage page, Rectangle panel, Point mousePoint, int appProviderTabIndex, bool isAppProviderLoading)
@@ -55,8 +68,8 @@ public sealed partial class GoScreenRenderer
                 var updateBounds = ApplicationSettingsScreen.Default.UpdateButton.Bounds;
                 var settingsHovered = settingsBounds.Contains(mousePoint);
                 var updateHovered = updateBounds.Contains(mousePoint);
-                _titleScreen.FormalAppsLabel.Draw(_stationeryDrawingContext);
-                _titleScreen.CasualAppsLabel.Draw(_stationeryDrawingContext);
+                _titleScreen.FormalAppsLabel.Draw(_drawingContext);
+                _titleScreen.CasualAppsLabel.Draw(_drawingContext);
                 DrawHomeServiceChoice(_titleScreen.LocalMatchButton.Bounds, _titleScreen.LocalMatchButton.Label, "PLAY / REVIEW", new Color(99, 223, 185), mousePoint);
                 DrawHomeServiceChoice(_titleScreen.CgosClientButton.Bounds, _titleScreen.CgosClientButton.Label, "WATCH / CONNECT", new Color(99, 223, 185), mousePoint);
                 DrawAppChoice(_titleScreen.CaptureGameButton.Bounds, _titleScreen.CaptureGameButton.Label, "CAPTURE GAME", mousePoint);
@@ -192,7 +205,7 @@ public sealed partial class GoScreenRenderer
         const float labelScale = 0.48f;
         const int gap = 14;
         var x = connectsToRight
-            ? labelPosition.X + _font.MeasureString(label).X * labelScale + gap
+            ? labelPosition.X + _drawingContext.MeasureText(label).X * labelScale + gap
             : labelPosition.X - gap;
         return new Vector2(x, labelPosition.Y + 15);
     }
@@ -222,7 +235,7 @@ public sealed partial class GoScreenRenderer
     {
         PonnukiProviderSelectionScreen.Default.Draw(session, mousePoint, appProviderTabIndex, isAppProviderLoading,
             new PonnukiProviderSelectionDrawingCallbacks(
-                _stationeryDrawingContext, _stationeryDrawingContext, _stationeryDrawingContext, DrawText, DrawDynamicOptionText, DrawFittedText, DrawLine,
+                _drawingContext, _drawingContext, _drawingContext, DrawText, DrawDynamicOptionText, DrawFittedText, DrawLine,
                 (kind, connectorStart, accent, borderColor, heading, bodyLines) =>
                     DrawStickyNote(kind, connectorStart, accent, borderColor, heading, bodyLines),
                 DrawTabNavigationHint));
@@ -231,12 +244,12 @@ public sealed partial class GoScreenRenderer
     private void DrawTitleBackButton(Point mousePoint, bool focused = false)
     {
         TitleScreen.Default.BackButton.IsSelected = focused;
-        TitleScreen.Default.BackButton.Draw(mousePoint, _stationeryDrawingContext);
+        TitleScreen.Default.BackButton.Draw(mousePoint, _drawingContext);
     }
 
     private static string GetDisplayVersion()
     {
-        var version = typeof(GoScreenRenderer).Assembly.GetName().Version;
+        var version = typeof(TitleScreenRenderer).Assembly.GetName().Version;
         return version is null ? "VERSION" : $"v{version.Major}.{version.Minor}.{version.Build}";
     }
 
@@ -264,4 +277,28 @@ public sealed partial class GoScreenRenderer
         DrawStone(new Vector2(board.X + 31, board.Y + 16), 5, false);
     }
     #endregion
+
+    private void FillRect(Rectangle bounds, Color color) => _drawingContext.FillRectangle(bounds, color);
+    private void DrawRect(Rectangle bounds, int thickness, Color color) => _drawingContext.DrawRectangle(bounds, thickness, color);
+    private void DrawLine(Vector2 start, Vector2 end, float thickness, Color color) => _drawingContext.DrawLine(start, end, thickness, color);
+    private void DrawText(string text, Vector2 position, Color color, float scale) => _drawingContext.DrawText(text, position, color, scale);
+    private void DrawFittedText(string text, Rectangle bounds, Color color, float scale) => _drawingContext.DrawFittedText(text, bounds, color, scale);
+    private void DrawDynamicOptionText(string text, Rectangle bounds, Color color, float scale) => _drawingContext.DrawDynamicText(text, bounds, color, scale);
+    private void DrawStone(Vector2 center, float radius, bool black) => _drawingContext.DrawStone(center, radius, black);
+    private void DrawStickyNote(StickyNoteKind kind, Vector2 connectorStart, Color accent, Color borderColor,
+        string heading, System.Collections.Generic.IReadOnlyList<string> bodyLines) =>
+        _drawingContext.DrawStickyNote(kind, connectorStart, accent, borderColor, heading, bodyLines);
+
+    private void DrawTabNavigationHint(Rectangle bounds, int tabIndex, int activeIndex, int stopCount)
+    {
+        if (activeIndex < 0 || tabIndex == activeIndex || stopCount < 2) return;
+        var previous = tabIndex == (activeIndex + stopCount - 1) % stopCount;
+        var next = tabIndex == (activeIndex + 1) % stopCount;
+        if (!previous && !next) return;
+        var text = previous ? "SHIFT + TAB" : "TAB";
+        var width = previous ? 132 : 56;
+        var hint = new Rectangle(bounds.X - width - 6, bounds.Y - 34, width, 28);
+        _drawingContext.FillRoundedRectangle(hint, 6, new Color(4, 6, 8, 235));
+        DrawFittedText(text, new Rectangle(hint.X + 4, hint.Y + 2, hint.Width - 8, hint.Height - 4), Color.White, 0.32f);
+    }
 }

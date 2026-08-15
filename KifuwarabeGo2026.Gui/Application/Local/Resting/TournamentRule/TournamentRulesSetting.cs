@@ -1,4 +1,5 @@
 namespace KifuwarabeGo2026.Gui.Application.Local.Resting.TournamentRule;
+using KifuwarabeGo2026.Gui.Presentation.Shared.CatalogOrder;
 
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Infrastructure.Logging;
@@ -433,7 +434,7 @@ public sealed class TournamentRulesSetting
             return TryHandleTournamentRulesDeleteConfirmationClick(point);
         }
 
-        if (GoScreenRenderer.TryGetTournamentRulesSelectionDialogPathCopyText(point, _session, out var path))
+        if (TournamentRulesPresenter.TryGetSelectionDialogPathCopyText(point, _session, out var path))
         {
             _clipboardService.TrySetText(path);
             return true;
@@ -507,14 +508,14 @@ public sealed class TournamentRulesSetting
     private bool TryHandleTournamentRulesOrderEditorClick(Point point)
     {
         var editor = _session.TournamentRulesOrderEditor;
-        if (GoScreenRenderer.GetCatalogOrderCancelButtonHit(point) && editor.HasChanges)
+        if (CatalogOrderPresenter.GetCatalogOrderCancelButtonHit(point) && editor.HasChanges)
         {
             _session.CancelTournamentRulesOrderEditor();
             _beginDiscardTransition();
             return true;
         }
 
-        if (GoScreenRenderer.GetCatalogOrderSaveButtonHit(point))
+        if (CatalogOrderPresenter.GetCatalogOrderSaveButtonHit(point))
         {
             if (editor.HasChanges)
             {
@@ -525,14 +526,14 @@ public sealed class TournamentRulesSetting
             return true;
         }
 
-        var moveStep = GoScreenRenderer.GetCatalogOrderMoveStep(point, editor.PageSize);
+        var moveStep = CatalogOrderPresenter.GetCatalogOrderMoveStep(point, editor.PageSize);
         if (moveStep == int.MinValue)
             editor.MoveSelectedToTop();
         else if (moveStep != 0)
             editor.MoveSelected(moveStep);
-        else if (GoScreenRenderer.GetCatalogOrderPageStep(point) is var pageStep && pageStep != 0)
+        else if (CatalogOrderPresenter.GetCatalogOrderPageStep(point) is var pageStep && pageStep != 0)
             editor.MoveVisiblePages(pageStep);
-        else if (GoScreenRenderer.GetCatalogOrderCardHit(point, editor) is { } index)
+        else if (CatalogOrderPresenter.GetCatalogOrderCardHit(point, editor) is { } index)
             editor.BeginDrag(index);
 
         return true;

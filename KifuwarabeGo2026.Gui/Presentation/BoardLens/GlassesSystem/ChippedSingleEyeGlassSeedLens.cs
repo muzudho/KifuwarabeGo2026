@@ -1,17 +1,24 @@
-namespace KifuwarabeGo2026.Gui.Presentation;
+namespace KifuwarabeGo2026.Gui.Presentation.BoardLens.GlassesSystem;
 
 using KifuwarabeGo2026.Gui.Application;
+using KifuwarabeGo2026.Gui.Presentation.BoardLens;
 using KifuwarabeGo2026.Shared.Domain;
 using Microsoft.Xna.Framework;
 using System;
 
-public sealed partial class GoScreenRenderer
+public sealed class ChippedSingleEyeGlassSeedLens
 {
+    public static ChippedSingleEyeGlassSeedLens Default { get; } = new();
+
+    private ChippedSingleEyeGlassSeedLens()
+    {
+    }
+
     /// <summary>
     /// CHIPPED SINGLE EYE GLASS SEED LENS を描画します。
     /// 3 種類の基本形を、回転・反転を含む 8 方向で照合します。
     /// </summary>
-    private void DrawGlassesLens(GoAppSession session, Vector2 start, float cell)
+    public void Draw(BoardLensModel model, GoAppSession session, Vector2 start, float cell)
     {
         // エメラルド色
         // 盤の空点色と同系統で、白い瞳とも区別しやすい濃いオレンジ。
@@ -33,18 +40,18 @@ public sealed partial class GoScreenRenderer
                     !MatchesAnyOrientation(x, y)    // どの形にも一致しない場合は描画しない。
                     ) continue;
 
-                var center = BoardPoint(start, cell, x, y);
+                var center = model.GetBoardPoint(start, cell, x, y);
 
                 // エメラルドの枠と、手番の石色の内側を持つ正方形を描画する。
                 // 眼の外周はエメラルドの楕円、瞳はエメラルドで縁取った手番色の丸で描く。
                 var wireThickness = Math.Max(2, (int)MathF.Round(cell * .045f));
-                DrawEllipseWire(center, cell * .58f, cell * .36f, eyeOutline, wireThickness, 0f);
+                model.DrawEllipseWire(center, cell * .58f, cell * .36f, eyeOutline, wireThickness, 0f);
                 if (!isBlackEye || !isWhiteEye)
                 {
                     // 黒眼・白眼は、エメラルドで縁取った瞳を持つ。
-                    var pupilColor = isBlackEye ? RenGraphCellColor(GoStone.Black) : RenGraphCellColor(GoStone.White);
-                    DrawCircle(center, cell * .19f, eyeOutline);
-                    DrawCircle(center, cell * .14f, pupilColor);
+                    var pupilColor = isBlackEye ? model.GetRenGraphCellColor(GoStone.Black) : model.GetRenGraphCellColor(GoStone.White);
+                    model.DrawCircle(center, cell * .19f, eyeOutline);
+                    model.DrawCircle(center, cell * .14f, pupilColor);
                 }
                 // 両者の候補地は瞳を描かず、エメラルドの眼の外周だけで示す。
             }

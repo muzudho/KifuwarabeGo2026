@@ -4,6 +4,7 @@ using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Button;
 using Microsoft.Xna.Framework;
+using KifuwarabeGo2026.Gui.Presentation.Pages.OnlineMatch.Cgos.Login;
 
 /// <summary>CGOS 接続先選択画面の描画と操作ボタンを所有します。</summary>
 public sealed class CgosSelectConnectionPage
@@ -25,8 +26,8 @@ public sealed class CgosSelectConnectionPage
         EditSaveButton = Button(1288, 156, 162, 48, "SAVE & CLOSE", .27f);
     }
 
-    public void Draw(StationeryDrawingContext drawingContext, GoAppSession session, Point mousePosition) =>
-        drawingContext.ScreenRenderer.DrawCgosClientTop(session, mousePosition);
+    public void Draw(CgosLoginRenderer renderer, StationeryDrawingContext drawingContext, GoAppSession session, Point mousePosition) =>
+        renderer.Draw(drawingContext, session, mousePosition);
 
     public Button CancelButton { get; }
     public Button SelectButton { get; }

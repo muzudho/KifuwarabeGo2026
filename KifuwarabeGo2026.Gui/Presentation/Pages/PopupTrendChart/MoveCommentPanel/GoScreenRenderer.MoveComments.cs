@@ -1,20 +1,40 @@
-namespace KifuwarabeGo2026.Gui.Presentation;
+namespace KifuwarabeGo2026.Gui.Presentation.Pages.PopupTrendChart.MoveCommentPanel;
 
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Application.Local.Playing;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using KifuwarabeGo2026.Gui.Presentation.Pages.PopupTrendChart.MoveCommentPanel;
 using KifuwarabeGo2026.Gui.Presentation.Pages.PopupTrendChart;
 
-public sealed partial class GoScreenRenderer
+public sealed class MoveCommentPanelRenderer
 {
+    private static readonly Rectangle CgosTrendChartBounds = new(1144, 498, 668, 342);
+    private static readonly Rectangle LocalTrendChartBounds = new(1144, 466, 668, 300);
+    private static readonly Rectangle LocalGameOverTrendChartBounds = new(1144, 376, 668, 466);
+    private static readonly Rectangle ReviewTrendChartBounds = new(1144, 548, 668, 290);
     private static MoveCommentPanelComponent MoveComments => PopupTrendChartScreen.Default.MoveCommentPanel;
+    private readonly GraphicsDevice _graphicsDevice;
+    private readonly SpriteBatch _spriteBatch;
+    private readonly ITextRasterizer _textRasterizer;
+    private readonly StationeryDrawingContext _drawingContext;
     private Texture2D? _dynamicCommentTexture;
     private string _dynamicCommentTextureKey = "";
+
+    public MoveCommentPanelRenderer(
+        GraphicsDevice graphicsDevice,
+        SpriteBatch spriteBatch,
+        ITextRasterizer textRasterizer,
+        StationeryDrawingContext drawingContext)
+    {
+        _graphicsDevice = graphicsDevice;
+        _spriteBatch = spriteBatch;
+        _textRasterizer = textRasterizer;
+        _drawingContext = drawingContext;
+    }
 
     public static int? GetCgosCommentPageStepButtonHit(Point point) =>
         MoveComments.GetPageStepButtonHit(point, CgosTrendChartBounds);
@@ -43,7 +63,7 @@ public sealed partial class GoScreenRenderer
     public static bool GetReviewCommentEditButtonHit(Point point) =>
         MoveComments.IsEditButtonHit(point, ReviewTrendChartBounds);
 
-    private static bool HasMoveComment(IReadOnlyList<GoGameMove> moves, string rootComment = "")
+    public static bool HasMoveComment(IReadOnlyList<GoGameMove> moves, string rootComment = "")
     {
         if (!string.IsNullOrWhiteSpace(rootComment)) return true;
 
@@ -55,7 +75,7 @@ public sealed partial class GoScreenRenderer
         return false;
     }
 
-    private void DrawMoveCommentContent(
+    public void Draw(
         IReadOnlyList<GoGameMove> moves,
         Rectangle bounds,
         GoAppSession session,
@@ -85,24 +105,24 @@ public sealed partial class GoScreenRenderer
             : commentOrdinal > 0
                 ? $"COMMENT {commentOrdinal} / {commentCount}   MOVE {moveNumber}"
                 : $"COMMENT - / {commentCount}   MOVE {moveNumber ?? 0}";
-        MoveComments.HeadingLabel.DrawFitted(DrawFittedText);
+        MoveComments.HeadingLabel.DrawFitted(_drawingContext.DrawFittedText);
         MoveComments.PreviousMoveButton.IsEnabled = moveNumber is { } previousAnchor
             && MoveCommentNavigator.FindAdjacent(moves, previousAnchor, -1) is not null;
         MoveComments.PreviousMoveButton.LabelScale = expanded ? 0.28f : 0.19f;
-        MoveComments.PreviousMoveButton.Draw(mousePoint, _stationeryDrawingContext);
+        MoveComments.PreviousMoveButton.Draw(mousePoint, _drawingContext);
         MoveComments.NextMoveButton.IsEnabled = moveNumber is { } nextAnchor
             && MoveCommentNavigator.FindAdjacent(moves, nextAnchor, 1) is not null;
         MoveComments.NextMoveButton.LabelScale = expanded ? 0.28f : 0.19f;
-        MoveComments.NextMoveButton.Draw(mousePoint, _stationeryDrawingContext);
+        MoveComments.NextMoveButton.Draw(mousePoint, _drawingContext);
         if (session.CurrentMode.Kind == GoAppModeKind.Reviewing)
         {
             MoveComments.EditButton.LabelScale = expanded ? 0.25f : 0.17f;
-            MoveComments.EditButton.Draw(mousePoint, _stationeryDrawingContext);
+            MoveComments.EditButton.Draw(mousePoint, _drawingContext);
         }
 
         if (!hasSelectedComment)
         {
-            DrawFittedText(
+            _drawingContext.DrawFittedText(
                 isRootComment ? "NO ROOT COMMENT" : commentCount == 0 ? "NO COMMENT" : "NO COMMENT ON THIS MOVE",
                 MoveComments.GetBodyBounds(bounds),
                 new Color(142, 163, 164),
@@ -117,17 +137,17 @@ public sealed partial class GoScreenRenderer
             session.CommentPageIndex);
         session.UpdateCommentPageCount(pageCount);
 
-        DrawFittedText(
+        _drawingContext.DrawFittedText(
             $"PAGE {session.CommentPageIndex + 1} / {session.CommentPageCount}",
             new Rectangle(bounds.X + 36, bounds.Bottom - (expanded ? 70 : 44), expanded ? 340 : 220, expanded ? 50 : 32),
             new Color(174, 198, 198),
             expanded ? 0.40f : 0.25f);
         MoveComments.PreviousPageButton.IsEnabled = session.CommentPageIndex > 0;
         MoveComments.PreviousPageButton.LabelScale = expanded ? 0.30f : 0.20f;
-        MoveComments.PreviousPageButton.Draw(mousePoint, _stationeryDrawingContext);
+        MoveComments.PreviousPageButton.Draw(mousePoint, _drawingContext);
         MoveComments.NextPageButton.IsEnabled = session.CommentPageIndex + 1 < session.CommentPageCount;
         MoveComments.NextPageButton.LabelScale = expanded ? 0.30f : 0.20f;
-        MoveComments.NextPageButton.Draw(mousePoint, _stationeryDrawingContext);
+        MoveComments.NextPageButton.Draw(mousePoint, _drawingContext);
     }
 
     private int DrawDynamicCommentText(string text, Rectangle bounds, int requestedPage)

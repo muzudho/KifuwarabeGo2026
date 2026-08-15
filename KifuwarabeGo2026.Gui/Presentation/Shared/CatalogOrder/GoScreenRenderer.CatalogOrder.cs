@@ -1,12 +1,18 @@
-namespace KifuwarabeGo2026.Gui.Presentation;
+namespace KifuwarabeGo2026.Gui.Presentation.Shared.CatalogOrder;
 
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Presentation.Shared.CatalogOrder;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 using Microsoft.Xna.Framework;
 using System;
 
-public sealed partial class GoScreenRenderer
+public sealed class CatalogOrderPresenter
 {
+    public static CatalogOrderPresenter Default { get; } = new();
+
+    private CatalogOrderPresenter()
+    {
+    }
     private static readonly CatalogOrder CatalogOrderControl = new();
     private readonly CatalogOrderCard _catalogOrderCard = new();
     private readonly CatalogOrderEditorFrame _catalogOrderEditorFrame = new();
@@ -30,8 +36,7 @@ public sealed partial class GoScreenRenderer
         return CatalogOrderControl.GetCardHit(point, editor);
     }
 
-    private void DrawCatalogOrderEditor<T>(
-        CatalogOrderEditor<T> editor,
+    public void Draw<T>(StationeryDrawingContext drawingContext, CatalogOrderEditor<T> editor,
         string title,
         Point mousePoint,
         Func<T, string> getName,
@@ -44,11 +49,12 @@ public sealed partial class GoScreenRenderer
         }
 
         _catalogOrderEditorFrame.Draw(title, editor.HasChanges, mousePoint,
-            new CatalogOrderEditorFrameDrawingCallbacks(FillRect, DrawRect, DrawText, DrawCommandButton));
+            new CatalogOrderEditorFrameDrawingCallbacks(drawingContext.FillRectangle, drawingContext.DrawRectangle,
+                drawingContext.DrawText, drawingContext.DrawCommandButton));
 
         var firstPage = editor.FirstVisiblePageIndex;
         _catalogOrderPageHeader.Draw(firstPage, editor.PageCount,
-            new CatalogOrderPageHeaderDrawingCallbacks(DrawText, DrawLine));
+            new CatalogOrderPageHeaderDrawingCallbacks(drawingContext.DrawText, drawingContext.DrawLine));
 
         var startIndex = editor.FirstVisiblePageIndex * editor.PageSize;
         for (var visibleIndex = 0; visibleIndex < editor.PageSize * 2; visibleIndex++)
@@ -64,14 +70,15 @@ public sealed partial class GoScreenRenderer
             _catalogOrderCard.Draw(
                 new CatalogOrderCardModel<T>(item, index + 1, cardBounds, index == editor.SelectedIndex,
                     index == editor.DraggedIndex, cardBounds.Contains(mousePoint), getName, getSummary, getComputerRole),
-                new CatalogOrderCardDrawingCallbacks(FillRect, DrawRect, DrawText, DrawFittedText, DrawPlayerRoleFaceIcon));
+                new CatalogOrderCardDrawingCallbacks(drawingContext.FillRectangle, drawingContext.DrawRectangle,
+                    drawingContext.DrawText, drawingContext.DrawFittedText, drawingContext.DrawPlayerRoleFaceIcon));
         }
 
         var hasSelection = editor.SelectedIndex >= 0 && editor.SelectedIndex < editor.Items.Count;
         var selectedItem = hasSelection ? editor.Items[editor.SelectedIndex] : default!;
         _catalogOrderNavigationPanel.Draw(new CatalogOrderNavigationModel(firstPage, editor.PageCount, editor.SelectedIndex,
             editor.Items.Count, hasSelection ? getName(selectedItem) : null, hasSelection ? getSummary(selectedItem) : null, mousePoint),
-            new CatalogOrderNavigationDrawingCallbacks(DrawText, DrawFittedText,
-                (bounds, label, point, enabled, scale) => DrawCommandButton(bounds, label, false, point, enabled, scale)));
+            new CatalogOrderNavigationDrawingCallbacks(drawingContext.DrawText, drawingContext.DrawFittedText,
+                (bounds, label, point, enabled, scale) => drawingContext.DrawCommandButton(bounds, label, false, point, enabled, scale)));
     }
 }

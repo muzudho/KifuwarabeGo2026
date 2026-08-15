@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Gui.Presentation;
+namespace KifuwarabeGo2026.Gui.Presentation.Pages.OnlineMatch.Cgos.Watch;
 
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.Watching;
@@ -8,30 +8,50 @@ using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Headline;
 using KifuwarabeGo2026.Gui.Presentation.Pages.OnlineMatch.Cgos.Watch;
 using Microsoft.Xna.Framework;
 using KifuwarabeGo2026.Gui.Presentation.Shared.RightSidePanel;
+using KifuwarabeGo2026.Gui.Presentation.Shared.PlayersComponent;
 using Microsoft.Xna.Framework.Graphics;
 using System;
+using KifuwarabeGo2026.Gui.Presentation.Pages.Board;
+using KifuwarabeGo2026.Gui.Presentation.BoardLens;
+using KifuwarabeGo2026.Gui.Presentation.Pages.MoveTrendChart;
+using KifuwarabeGo2026.Gui.Presentation.Pages.PopupTrendChart;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 
 /// <summary>
 /// CGOS 対局の観戦・結果画面を描画します。
 /// </summary>
-public sealed partial class GoScreenRenderer
+public sealed class CgosWatchingRenderer
 {
+    private readonly BoardRenderer _boardRenderer;
+    private readonly MoveTrendChartRenderer _moveTrendChartRenderer;
+    private readonly PopupTrendChartRenderer _popupTrendChartRenderer;
+    private readonly Action<RenParseDisplayMode, int, Func<int, int, GoStone>, Func<GoRenParseResult>, Action, Vector2, float> _drawRenAnalysis;
+    private StationeryDrawingContext _drawingContext = null!;
+
+    public CgosWatchingRenderer(BoardRenderer boardRenderer, MoveTrendChartRenderer moveTrendChartRenderer,
+        PopupTrendChartRenderer popupTrendChartRenderer,
+        Action<RenParseDisplayMode, int, Func<int, int, GoStone>, Func<GoRenParseResult>, Action, Vector2, float> drawRenAnalysis)
+    {
+        _boardRenderer = boardRenderer;
+        _moveTrendChartRenderer = moveTrendChartRenderer;
+        _popupTrendChartRenderer = popupTrendChartRenderer;
+        _drawRenAnalysis = drawRenAnalysis;
+    }
     /// <summary>
     /// CGOS 対局の観戦・結果画面を描画します。
     /// </summary>
     /// <param name="session"></param>
     /// <param name="observation"></param>
     /// <param name="mousePosition"></param>
-    public void DrawCgosWatching(GoAppSession session, CgosGameObservation observation, Point mousePosition)
+    public void Draw(StationeryDrawingContext drawingContext, GoAppSession session, CgosGameObservation observation, Point mousePosition)
     {
-        var mousePoint = VirtualScreen.ToVirtualPoint(_graphicsDevice.Viewport, mousePosition);
-        _spriteBatch.Begin(
-            samplerState: SamplerState.LinearClamp,
-            transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));
+        _drawingContext = drawingContext;
+        var mousePoint = drawingContext.ToVirtualPoint(mousePosition);
+        drawingContext.Begin();
 
-        DrawBackground();
-        var surface = DrawBoardSurface(observation.BoardSize);
-        DrawBoardRenAnalysis(
+        drawingContext.DrawBackground();
+        var surface = _boardRenderer.DrawBoardSurface(observation.BoardSize);
+        _drawRenAnalysis(
             session.RenParseDisplayMode,
             observation.BoardSize,
             observation.GetStone,
@@ -44,12 +64,12 @@ public sealed partial class GoScreenRenderer
             ? observation.Moves[displayMoveIndex - 1]
             : null;
         if (!session.IsRenParseDisplayEnabled)
-            DrawLastMoveMarker(displayLastMove, surface.Start, surface.Cell);
+            _boardRenderer.DrawLastMoveMarker(displayLastMove, surface.Start, surface.Cell);
 
-        DrawBoardFrameHighlights(surface.Outer);
+        _boardRenderer.DrawBoardFrameHighlights(surface.Outer);
         if (!observation.IsFinished)
         {
-            DrawBroadcastStatusBadge(
+            DrawBroadcastStatusBadge(_drawingContext,
                 observation.IsReplayMode ? "REPLAY" : "LIVE",
                 session.IsReviewChartPopupOpen);
         }
@@ -58,7 +78,8 @@ public sealed partial class GoScreenRenderer
             DrawCgosWatchingSidePanel(session, observation, mousePoint);
             if (observation.IsReplayMode)
             {
-                DrawReplayNavigationControls(
+                _popupTrendChartRenderer.DrawReplayNavigationControls(
+                    _drawingContext,
                     observation.DisplayMoveIndex,
                     observation.MoveCount,
                     mousePoint,
@@ -67,14 +88,14 @@ public sealed partial class GoScreenRenderer
             }
             else if (observation.IsStarted)
             {
-                DrawReplayEditIconButton(mousePoint);
+                _popupTrendChartRenderer.DrawReplayEditIconButton(_drawingContext, mousePoint);
             }
         }
         else
         {
-            DrawCgosLiveChartPopup(session, observation, mousePoint);
+            _popupTrendChartRenderer.DrawCgos(_drawingContext, session, observation, mousePoint);
         }
-        _spriteBatch.End();
+        drawingContext.End();
     }
 
     /// <summary>
@@ -89,7 +110,7 @@ public sealed partial class GoScreenRenderer
                 var stone = observation.GetStone(x, y);
                 if (stone != GoStone.Empty)
                 {
-                    DrawStone(BoardPoint(start, cell, x, y), cell * 0.44f, stone == GoStone.Black);
+                    _boardRenderer.DrawStone(BoardRenderer.BoardPoint(start, cell, x, y), cell * 0.44f, stone == GoStone.Black);
                 }
             }
         }
@@ -102,9 +123,9 @@ public sealed partial class GoScreenRenderer
         FillRect(panel, new Color(21, 25, 32, 236));
         DrawRect(panel, 2, new Color(82, 111, 114));
 
-        new Headline(observation.IsFinished ? "CGOS RESULT" : "CGOS WATCH", new Vector2(1144, 136), new Color(255, 230, 160), 0.72f).Draw(_stationeryDrawingContext);
+        new Headline(observation.IsFinished ? "CGOS RESULT" : "CGOS WATCH", new Vector2(1144, 136), new Color(255, 230, 160), 0.72f).Draw(_drawingContext);
         var screen = CgosWatchPage.Default;
-        screen.LeaveViewButton.Draw(mousePoint, _stationeryDrawingContext);
+        screen.LeaveViewButton.Draw(mousePoint, _drawingContext);
 
         DrawVerticalResultSection(new Rectangle(1144, 204, 668, 58), "GAME INFO", new Color(66, 104, 116));
         DrawFittedText(
@@ -114,7 +135,7 @@ public sealed partial class GoScreenRenderer
             0.34f);
 
         DrawVerticalResultSection(new Rectangle(1144, 276, 668, 200), "PLAYERS", new Color(76, 91, 126));
-        DrawBothPlayersComponent(
+        PlayersComponent.Default.DrawBothPlayers(_drawingContext,
             1144,
             284,
             668,
@@ -130,7 +151,7 @@ public sealed partial class GoScreenRenderer
             blackLiveElapsed: observation.BlackLiveElapsedTime,
             whiteLiveElapsed: observation.WhiteLiveElapsedTime);
 
-        DrawCgosTrendChart(session, observation, mousePoint);
+        _moveTrendChartRenderer.DrawCgos(_drawingContext, session, observation, mousePoint);
 
         if (observation.IsFinished)
         {
@@ -138,12 +159,12 @@ public sealed partial class GoScreenRenderer
             DrawCgosResultRow(new Rectangle(1164, 852, 628, 42), observation.Result);
 
             DrawVerticalResultSection(new Rectangle(1144, 912, 668, 68), "ACTION", new Color(91, 82, 105));
-            screen.ReviewButton.Draw(mousePoint, _stationeryDrawingContext);
+            screen.ReviewButton.Draw(mousePoint, _drawingContext);
             if (session.IsSgfAutoSaveAvailable)
                 screen.SgfAutoSaveCheckBox.Draw(
-                    screen.ExportSgfButton.Bounds, session, mousePoint, StationeryDrawingContext);
+                    screen.ExportSgfButton.Bounds, session, mousePoint, _drawingContext);
             else
-                screen.ExportSgfButton.Draw(mousePoint, _stationeryDrawingContext);
+                screen.ExportSgfButton.Draw(mousePoint, _drawingContext);
         }
         else
         {
@@ -169,15 +190,16 @@ public sealed partial class GoScreenRenderer
         if (trimmed.Length >= 2 && trimmed[1] == '+' &&
             (trimmed[0] is 'B' or 'b' or 'W' or 'w'))
         {
-            _stationeryDrawingContext.DrawStoneValue(RightSidePanelLayout.PrimaryValueX, bounds.Center.Y, trimmed[2..], trimmed[0] is 'B' or 'b', new Color(99, 223, 185));
+            _drawingContext.DrawStoneValue(RightSidePanelLayout.PrimaryValueX, bounds.Center.Y, trimmed[2..], trimmed[0] is 'B' or 'b', new Color(99, 223, 185));
             return;
         }
 
         DrawFittedText(trimmed, new Rectangle(RightSidePanelLayout.PrimaryValueX, bounds.Y + 6, bounds.Right - RightSidePanelLayout.PrimaryValueX - 18, bounds.Height - 12), new Color(99, 223, 185), 0.58f);
     }
 
-    private void DrawBroadcastStatusBadge(string label, bool chartPopup = false)
+    public void DrawBroadcastStatusBadge(StationeryDrawingContext drawingContext, string label, bool chartPopup = false)
     {
+        _drawingContext = drawingContext;
         var replay = label == "REPLAY";
         var bounds = chartPopup
             ? new Rectangle(850, 55, 164, 48)
@@ -195,6 +217,25 @@ public sealed partial class GoScreenRenderer
             new Vector2(bounds.Center.X + (replay ? 0 : 10), bounds.Center.Y),
             Color.White,
             0.48f);
+    }
+
+    private void FillRect(Rectangle bounds, Color color) => _drawingContext.FillRectangle(bounds, color);
+    private void DrawRect(Rectangle bounds, int thickness, Color color) => _drawingContext.DrawRectangle(bounds, thickness, color);
+    private void DrawCircle(Vector2 center, float radius, Color color) => _drawingContext.DrawCircle(center, radius, color);
+    private void DrawFittedText(string text, Rectangle bounds, Color color, float scale) => _drawingContext.DrawFittedText(text, bounds, color, scale);
+    private void DrawVerticalResultSection(Rectangle bounds, string label, Color color) => _drawingContext.DrawVerticalResultSection(bounds, label, color);
+    private void DrawResultLabel(Rectangle bounds, string label, Color color) => _drawingContext.DrawResultLabel(bounds, label, color);
+    private void DrawResultRow(Rectangle bounds, string label, string value, Color chipColor, Color valueColor)
+    {
+        _drawingContext.DrawDataRowFrame(bounds);
+        _drawingContext.FillRectangle(new Rectangle(bounds.X, bounds.Y, 5, bounds.Height), chipColor);
+        _drawingContext.DrawFittedText(label, new Rectangle(bounds.X + 18, bounds.Y + 7, 180, bounds.Height - 14), new Color(180, 195, 195), 0.38f);
+        _drawingContext.DrawFittedText(value, new Rectangle(bounds.X + 212, bounds.Y + 7, bounds.Width - 230, bounds.Height - 14), valueColor, 0.48f);
+    }
+    private void DrawCenteredText(string text, Vector2 center, Color color, float scale)
+    {
+        var size = _drawingContext.MeasureText(text) * scale;
+        _drawingContext.DrawText(text, center - size / 2f, color, scale);
     }
 
 }

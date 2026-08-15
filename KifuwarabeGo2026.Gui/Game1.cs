@@ -30,6 +30,11 @@ using KifuwarabeGo2026.Gui.Presentation.Pages.Title;
 using KifuwarabeGo2026.Gui.Presentation.Title;
 using KifuwarabeGo2026.Gui.Presentation.Pages.LocalMatch;
 using KifuwarabeGo2026.Gui.Presentation.Pages.LocalMatch.Intermission;
+using KifuwarabeGo2026.Gui.Presentation.Pages.PopupTrendChart.MoveCommentPanel;
+using KifuwarabeGo2026.Gui.Presentation.Pages.MoveTrendChart;
+using KifuwarabeGo2026.Gui.Presentation.Pages.PopupTrendChart;
+using KifuwarabeGo2026.Gui.Presentation.Pages.Board;
+using KifuwarabeGo2026.Gui.Presentation.Pages.GtpEngine;
 using KifuwarabeGo2026.Gui.Presentation.Shared.TextAreaDialog;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.StickyNote;
@@ -39,6 +44,8 @@ using KifuwarabeGo2026.Gui.Presentation.StationeryUI.MessageDialog;
 using KifuwarabeGo2026.Gui.Sgf;
 using Microsoft.Xna.Framework;
 using KifuwarabeGo2026.Gui.Presentation.Pages.LocalMatch.Play;
+using KifuwarabeGo2026.Gui.Presentation.Shared.PlayersComponent;
+using KifuwarabeGo2026.Gui.Presentation.Shared.CatalogOrder;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -238,7 +245,7 @@ public class Game1 : Game
             OpenTournamentRulesSelectionDialog,
             BeginDiscardTransition,
             _clipboardService,
-            point => _renderer?.IsTournamentRulesSettingsFileHit(point) == true,
+            point => TournamentRulesPresenter.Default.IsSettingsFileHit(point),
             OpenTournamentRulesSettingsFile);
         _playingScene = new PlayingScene(
             _session,
@@ -777,15 +784,15 @@ public class Game1 : Game
                 }
                 else if (_session.CgosConnectionFlowKind is CgosConnectionFlowKind.Watching or CgosConnectionFlowKind.Result)
                 {
-                CgosWatchPage.Default.Draw(_renderer.StationeryDrawingContext, _session, _cgosGameObservation, backgroundMousePosition);
+                CgosWatchPage.Default.Draw(_renderer.CgosWatchingRenderer, _renderer.StationeryDrawingContext, _session, _cgosGameObservation, backgroundMousePosition);
                 }
                 else if (_session.CgosConnectionFlowKind == CgosConnectionFlowKind.ConnectionStart)
                 {
-                CgosLoginPage.Default.Draw(_renderer.StationeryDrawingContext, _session, backgroundMousePosition);
+                CgosLoginPage.Default.Draw(_renderer.CgosLoginRenderer, _renderer.StationeryDrawingContext, _session, backgroundMousePosition);
                 }
                 else
                 {
-                CgosSelectConnectionPage.Default.Draw(_renderer.StationeryDrawingContext, _session, backgroundMousePosition);
+                CgosSelectConnectionPage.Default.Draw(_renderer.CgosLoginRenderer, _renderer.StationeryDrawingContext, _session, backgroundMousePosition);
                 }
             }
         }
@@ -947,7 +954,7 @@ public class Game1 : Game
         var virtualMousePosition = VirtualScreen.ToVirtualPoint(GraphicsDevice.Viewport, Mouse.GetState().Position);
         var hideBreadcrumbForReviewControls =
             _session.CurrentMode.Kind == GoAppModeKind.Reviewing &&
-            GoScreenRenderer.IsBottomNavigationControlsNearby(virtualMousePosition);
+            PopupTrendChartRenderer.IsBottomNavigationControlsNearby(virtualMousePosition);
         _renderer?.DrawBreadcrumb(GetScreenBreadcrumb(), visible: !hideBreadcrumbForReviewControls);
 
         base.Draw(gameTime);
@@ -1013,7 +1020,7 @@ public class Game1 : Game
         {
             UpdateCatalogOrderDrag(mouse, point);
         var engineErrorLogHovered = _session.UseKind == GoAppUseKind.LocalPlay &&
-            GoScreenRenderer.GetEngineErrorLogHit(point, _session);
+            PlayersComponent.Default.GetEngineErrorLogHit(point, _session);
         var boardLensButtonHovered = _session.CurrentMode.Kind == GoAppModeKind.Reviewing &&
             BoardAndReviewScreen.Default.Review.BoardLensButton.IsHit(point);
         var boardLensFamilyButtonHovered = _session.CurrentMode.Kind == GoAppModeKind.Reviewing &&
@@ -1218,7 +1225,7 @@ public class Game1 : Game
                 (_session.UseKind == GoAppUseKind.CgosClient &&
                  !_cgosGameObservation.IsFinished &&
                  _cgosGameObservation.IsReplayMode);
-            if (canReturnReplayToLive && GoScreenRenderer.GetReplayBackToLiveButtonHit(point))
+            if (canReturnReplayToLive && PopupTrendChartRenderer.GetReplayBackToLiveButtonHit(point))
             {
                 if (IsLocalPlayUseKind() &&
                     _session.CurrentMode.Kind == GoAppModeKind.Playing)
@@ -1234,14 +1241,14 @@ public class Game1 : Game
                 _previousMouse = mouse;
                 return;
             }
-            if (isVariationEditVisible && GoScreenRenderer.GetReplayEditButtonHit(point))
+            if (isVariationEditVisible && PopupTrendChartRenderer.GetReplayEditButtonHit(point))
             {
                 StartVariationEditingFromDisplayedPosition();
                 _previousMouse = mouse;
                 return;
             }
             if (isReplayNavigationVisible &&
-                GoScreenRenderer.GetReplayStepButtonHit(point) is { } replayStep &&
+                PopupTrendChartRenderer.GetReplayStepButtonHit(point) is { } replayStep &&
                 TryGetReadOnlyChartNavigation(out var replayMoveIndex, out var replayMaximumMoveIndex))
             {
                 var targetMoveIndex = replayStep switch
@@ -1296,7 +1303,7 @@ public class Game1 : Game
                     {
                         _session.MoveCgosAdminPlayerSelectionPage(1);
                     }
-                    else if (GoScreenRenderer.GetCgosAdminPlayerDialogItemHit(point, _session) is { } playerIndex)
+                    else if (CgosLoginRenderer.GetCgosAdminPlayerDialogItemHit(point, _session) is { } playerIndex)
                     {
                         _session.SelectCgosAdminPlayerDialogItem(playerIndex);
                     }
@@ -1307,7 +1314,7 @@ public class Game1 : Game
 
                 if (_session.CgosConnectionFlowKind is CgosConnectionFlowKind.Watching or CgosConnectionFlowKind.Result &&
                     _session.MoveInformationDisplayMode == MoveInformationDisplayMode.Comment &&
-                    GoScreenRenderer.GetCgosCommentMoveStepButtonHit(point) is { } cgosCommentMoveStep)
+                    MoveCommentPanelRenderer.GetCgosCommentMoveStepButtonHit(point) is { } cgosCommentMoveStep)
                 {
                     TrySeekReadOnlyAdjacentComment(cgosCommentMoveStep);
                     _previousMouse = mouse;
@@ -1316,7 +1323,7 @@ public class Game1 : Game
 
                 if (_session.CgosConnectionFlowKind is CgosConnectionFlowKind.Watching or CgosConnectionFlowKind.Result &&
                     _session.MoveInformationDisplayMode == MoveInformationDisplayMode.Comment &&
-                    GoScreenRenderer.GetCgosCommentPageStepButtonHit(point) is { } cgosCommentPageStep)
+                    MoveCommentPanelRenderer.GetCgosCommentPageStepButtonHit(point) is { } cgosCommentPageStep)
                 {
                     _session.ChangeCommentPage(cgosCommentPageStep);
                     _previousMouse = mouse;
@@ -1324,7 +1331,7 @@ public class Game1 : Game
                 }
 
                 if (_session.CgosConnectionFlowKind is CgosConnectionFlowKind.Watching or CgosConnectionFlowKind.Result &&
-                    GoScreenRenderer.GetCgosMoveInformationDisplayModeButtonHit(point) is { } cgosInformationMode)
+                    MoveTrendChartRenderer.GetCgosMoveInformationDisplayModeButtonHit(point) is { } cgosInformationMode)
                 {
                     _session.SetMoveInformationDisplayMode(cgosInformationMode);
                     GuiOperationLog.User("Changed CGOS move information display", $"mode={cgosInformationMode}");
@@ -1333,7 +1340,7 @@ public class Game1 : Game
                 }
 
                 if (_session.CgosConnectionFlowKind is CgosConnectionFlowKind.Watching or CgosConnectionFlowKind.Result &&
-                    GoScreenRenderer.GetCgosTrendDisplayModeButtonHit(point, _session.MoveTrendDisplayMode) is { } trendMode)
+                    MoveTrendChartRenderer.GetCgosTrendDisplayModeButtonHit(point, _session.MoveTrendDisplayMode) is { } trendMode)
                 {
                     _session.SetMoveTrendDisplayMode(trendMode);
                     GuiOperationLog.User("Changed CGOS trend display", $"mode={trendMode}");
@@ -1342,7 +1349,7 @@ public class Game1 : Game
                 }
 
                 if (_session.CgosConnectionFlowKind is CgosConnectionFlowKind.Watching or CgosConnectionFlowKind.Result &&
-                    GoScreenRenderer.GetCgosLiveChartPopupOpenHit(point))
+                    PopupTrendChartRenderer.GetCgosLiveChartPopupOpenHit(point))
                 {
                     ResetReadOnlyChartPopupDoubleClick();
                     _session.OpenCgosLiveChartPopup();
@@ -1420,7 +1427,7 @@ public class Game1 : Game
                         else if (quickSelection.SelectButton.IsHit(point)) _session.CommitQuickClientIdentitySelection();
                         else if (quickSelection.GetItemHit(point, _session.GetQuickClientIdentitySelectionTargets(_session.QuickClientIdentitySelectionStone, _session.QuickClientIdentitySelectionIsCgos).Count) is { } targetIndex) _session.SelectQuickClientIdentity(targetIndex);
                     }
-                    else if (GoScreenRenderer.GetCgosCredentialFieldHit(point) is { } credential &&
+                    else if (CgosLoginRenderer.GetCgosCredentialFieldHit(point) is { } credential &&
                         (credential.Stone == GoStone.Black || _session.IsCgosPlayer2InputEnabled))
                     {
                         BeginOrMoveCgosCredentialEdit(point, credential.Stone, credential.Field);
@@ -1434,15 +1441,15 @@ public class Game1 : Game
                             if (_session.IsAnyCgosProcessRunning) _ = DisconnectAllCgosProcessesAsync();
                             _session.ReturnToCgosConnectionProfiles();
                         }
-                        else if (GoScreenRenderer.GetCgosPlayer2InputCheckHit(point, !_session.IsCgosWhiteConnectionRunning))
+                        else if (CgosLoginRenderer.GetCgosPlayer2InputCheckHit(point, !_session.IsCgosWhiteConnectionRunning))
                         {
                             _session.ToggleCgosPlayer2Input();
                         }
-                        else if (GoScreenRenderer.GetCgosAdminInputCheckHit(point, !_session.IsCgosAdminRunning))
+                        else if (CgosLoginRenderer.GetCgosAdminInputCheckHit(point, !_session.IsCgosAdminRunning))
                         {
                             _session.ToggleCgosAdminInput();
                         }
-                        else if (GoScreenRenderer.GetCgosConnectionEngineSelectButtonHit(point, _session) is { } engineStone)
+                        else if (CgosLoginRenderer.GetCgosConnectionEngineSelectButtonHit(point, _session) is { } engineStone)
                         {
                             _session.OpenCgosPlayerSelectionDialog(engineStone);
                         }
@@ -1572,7 +1579,7 @@ public class Game1 : Game
                 {
                     _session.MoveCgosConnectionSelectionPage(1);
                 }
-                else if (GoScreenRenderer.GetCgosConnectionProfileHit(point, _session) is { } connectionProfileIndex)
+                else if (CgosLoginRenderer.GetCgosConnectionProfileHit(point, _session) is { } connectionProfileIndex)
                 {
                     _session.SelectCgosConnectionProfile(connectionProfileIndex);
                 }
@@ -1640,8 +1647,8 @@ public class Game1 : Game
 
             int? localCommentPageStep = _session.CurrentMode.Kind switch
             {
-                GoAppModeKind.Playing => GoScreenRenderer.GetLocalCommentPageStepButtonHit(point),
-                GoAppModeKind.GameOver => GoScreenRenderer.GetLocalGameOverCommentPageStepButtonHit(point),
+                GoAppModeKind.Playing => MoveCommentPanelRenderer.GetLocalCommentPageStepButtonHit(point),
+                GoAppModeKind.GameOver => MoveCommentPanelRenderer.GetLocalGameOverCommentPageStepButtonHit(point),
                 _ => null,
             };
             if (_session.MoveInformationDisplayMode == MoveInformationDisplayMode.Comment &&
@@ -1649,8 +1656,8 @@ public class Game1 : Game
             {
                 int? localCommentMoveStep = _session.CurrentMode.Kind switch
                 {
-                    GoAppModeKind.Playing => GoScreenRenderer.GetLocalCommentMoveStepButtonHit(point),
-                    GoAppModeKind.GameOver => GoScreenRenderer.GetLocalGameOverCommentMoveStepButtonHit(point),
+                    GoAppModeKind.Playing => MoveCommentPanelRenderer.GetLocalCommentMoveStepButtonHit(point),
+                    GoAppModeKind.GameOver => MoveCommentPanelRenderer.GetLocalGameOverCommentMoveStepButtonHit(point),
                     _ => null,
                 };
                 if (localCommentMoveStep is { } selectedLocalCommentMoveStep)
@@ -1694,8 +1701,8 @@ public class Game1 : Game
 
             MoveInformationDisplayMode? localInformationMode = _session.CurrentMode.Kind switch
             {
-                GoAppModeKind.Playing => GoScreenRenderer.GetLocalMoveInformationDisplayModeButtonHit(point),
-                GoAppModeKind.GameOver => GoScreenRenderer.GetLocalGameOverMoveInformationDisplayModeButtonHit(point, _session),
+                GoAppModeKind.Playing => MoveTrendChartRenderer.GetLocalMoveInformationDisplayModeButtonHit(point),
+                GoAppModeKind.GameOver => MoveTrendChartRenderer.GetLocalGameOverMoveInformationDisplayModeButtonHit(point, _session),
                 _ => null,
             };
             if (localInformationMode is { } selectedLocalInformationMode)
@@ -1708,8 +1715,8 @@ public class Game1 : Game
 
             MoveTrendDisplayMode? localTrendMode = _session.CurrentMode.Kind switch
             {
-                GoAppModeKind.Playing => GoScreenRenderer.GetLocalTrendDisplayModeButtonHit(point, _session.MoveTrendDisplayMode),
-                GoAppModeKind.GameOver => GoScreenRenderer.GetLocalGameOverTrendDisplayModeButtonHit(point, _session, _session.MoveTrendDisplayMode),
+                GoAppModeKind.Playing => MoveTrendChartRenderer.GetLocalTrendDisplayModeButtonHit(point, _session.MoveTrendDisplayMode),
+                GoAppModeKind.GameOver => MoveTrendChartRenderer.GetLocalGameOverTrendDisplayModeButtonHit(point, _session, _session.MoveTrendDisplayMode),
                 _ => null,
             };
             if (localTrendMode is { } selectedLocalTrendMode)
@@ -1722,8 +1729,8 @@ public class Game1 : Game
 
             var localChartPopupOpenHit = _session.CurrentMode.Kind switch
             {
-                GoAppModeKind.Playing => GoScreenRenderer.GetLocalLiveChartPopupOpenHit(point),
-                GoAppModeKind.GameOver => GoScreenRenderer.GetLocalGameOverChartPopupOpenHit(point),
+                GoAppModeKind.Playing => PopupTrendChartRenderer.GetLocalLiveChartPopupOpenHit(point),
+                GoAppModeKind.GameOver => PopupTrendChartRenderer.GetLocalGameOverChartPopupOpenHit(point),
                 _ => false,
             };
             if (_session.CanOpenLocalChartPopup && localChartPopupOpenHit)
@@ -1845,8 +1852,8 @@ public class Game1 : Game
             }
             else if (isPlayerSelectionIntermission && _session.BlackPlayerKind == GoPlayerKind.Computer &&
                      (isLocalAppsIntermission
-                         ? GoScreenRenderer.GetPonnukiBlackGtpEngineBrowseButtonHit(point)
-                         : GoScreenRenderer.GetBlackGtpEngineBrowseButtonHit(point)))
+                         ? GtpEngineRenderer.GetPonnukiBlackGtpEngineBrowseButtonHit(point)
+                         : GtpEngineRenderer.GetBlackGtpEngineBrowseButtonHit(point)))
             {
                 OpenGtpEngineSelectionDialog(GoStone.Black);
             }
@@ -1858,8 +1865,8 @@ public class Game1 : Game
             }
             else if (isPlayerSelectionIntermission && _session.WhitePlayerKind == GoPlayerKind.Computer &&
                      (isLocalAppsIntermission
-                         ? GoScreenRenderer.GetPonnukiWhiteGtpEngineBrowseButtonHit(point)
-                         : GoScreenRenderer.GetWhiteGtpEngineBrowseButtonHit(point)))
+                         ? GtpEngineRenderer.GetPonnukiWhiteGtpEngineBrowseButtonHit(point)
+                         : GtpEngineRenderer.GetWhiteGtpEngineBrowseButtonHit(point)))
             {
                 OpenGtpEngineSelectionDialog(GoStone.White);
             }
@@ -1867,7 +1874,7 @@ public class Game1 : Game
             {
                 BeginHumanPlayerNameEdit(point, playerNameStone);
             }
-            else if (GoScreenRenderer.GetEngineErrorLogHit(point, _session))
+            else if (PlayersComponent.Default.GetEngineErrorLogHit(point, _session))
             {
                 OpenEngineLog();
             }
@@ -1960,7 +1967,7 @@ public class Game1 : Game
             _session.MoveCgosAdminPlayerSelectionPage(-1);
         else if (CgosLoginPage.Default.PlayerDialogNextButton.IsHit(point))
             _session.MoveCgosAdminPlayerSelectionPage(1);
-        else if (GoScreenRenderer.GetCgosAdminPlayerDialogItemHit(point, _session) is { } playerIndex)
+        else if (CgosLoginRenderer.GetCgosAdminPlayerDialogItemHit(point, _session) is { } playerIndex)
             _session.SelectCgosAdminPlayerDialogItem(playerIndex);
 
         return true;
@@ -2092,20 +2099,20 @@ public class Game1 : Game
         if (_session.PlayerOrderEditor.IsOpen)
         {
             var editor = _session.PlayerOrderEditor;
-            if (GoScreenRenderer.GetCatalogOrderCancelButtonHit(point) && editor.HasChanges)
+            if (CatalogOrderPresenter.GetCatalogOrderCancelButtonHit(point) && editor.HasChanges)
             {
                 _session.CancelPlayerOrderEditor();
                 BeginDiscardTransition();
             }
-            else if (GoScreenRenderer.GetCatalogOrderSaveButtonHit(point))
+            else if (CatalogOrderPresenter.GetCatalogOrderSaveButtonHit(point))
             {
                 if (editor.HasChanges) SavePlayerCatalog(_session.CommitPlayerOrderEditor());
                 else _session.CancelPlayerOrderEditor();
             }
-            else if (GoScreenRenderer.GetCatalogOrderMoveStep(point, editor.PageSize) is var step && step == int.MinValue) editor.MoveSelectedToTop();
+            else if (CatalogOrderPresenter.GetCatalogOrderMoveStep(point, editor.PageSize) is var step && step == int.MinValue) editor.MoveSelectedToTop();
             else if (step != 0) editor.MoveSelected(step);
-            else if (GoScreenRenderer.GetCatalogOrderPageStep(point) is var pageStep && pageStep != 0) editor.MoveVisiblePages(pageStep);
-            else if (GoScreenRenderer.GetCatalogOrderCardHit(point, editor) is { } orderIndex) editor.BeginDrag(orderIndex);
+            else if (CatalogOrderPresenter.GetCatalogOrderPageStep(point) is var pageStep && pageStep != 0) editor.MoveVisiblePages(pageStep);
+            else if (CatalogOrderPresenter.GetCatalogOrderCardHit(point, editor) is { } orderIndex) editor.BeginDrag(orderIndex);
             return;
         }
         if (_session.IsPlayerEditPanelOpen)
@@ -2251,7 +2258,7 @@ public class Game1 : Game
             _session.ActiveCgosConnectionEditField is { } connectionField)
         {
             _cgosConnectionEditTextBox.UpdateMouseSelection(
-                _renderer.GetCgosConnectionEditPanelCaretIndex(point, connectionField, _cgosConnectionEditTextBox.Text));
+                _renderer.CgosLoginRenderer.GetCgosConnectionEditPanelCaretIndex(point, connectionField, _cgosConnectionEditTextBox.Text));
             SyncCgosConnectionEditField(connectionField);
         }
         else if (_cgosCredentialTextBox.IsMouseSelecting &&
@@ -2259,7 +2266,7 @@ public class Game1 : Game
                  _session.ActiveCgosCredentialField is { } credentialField)
         {
             _cgosCredentialTextBox.UpdateMouseSelection(
-                _renderer.GetCgosCredentialCaretIndex(point, credentialStone, credentialField, _cgosCredentialTextBox.Text));
+                _renderer.CgosLoginRenderer.GetCgosCredentialCaretIndex(point, credentialStone, credentialField, _cgosCredentialTextBox.Text));
             _session.SetCgosCredential(credentialStone, credentialField, _cgosCredentialTextBox.Text, _cgosCredentialTextBox.CaretIndex);
             SyncCgosCredentialSelection();
         }
@@ -2275,7 +2282,7 @@ public class Game1 : Game
                  _session.ActiveLocalMatchHandleStone is { } localHandleStone)
         {
             _localMatchHandleTextBox.UpdateMouseSelection(
-                _renderer.GetLocalMatchHandleCaretIndex(point, localHandleStone, _localMatchHandleTextBox.Text, _session.UseKind == GoAppUseKind.LocalApps));
+                EntryProfilesPresenter.Default.GetLocalMatchHandleCaretIndex(_renderer.StationeryDrawingContext, point, localHandleStone, _localMatchHandleTextBox.Text, _session.UseKind == GoAppUseKind.LocalApps));
             _session.SetLocalMatchHandleDraft(
                 _localMatchHandleTextBox.Text,
                 _localMatchHandleTextBox.CaretIndex,
@@ -2291,14 +2298,14 @@ public class Game1 : Game
         else if (_targetProfileEditTextBox.IsMouseSelecting && _session.ActiveClientIdentityProfileEditField is { } targetField)
         {
             _targetProfileEditTextBox.UpdateMouseSelection(
-                _renderer.GetClientIdentityProfileEditCaretIndex(point, _session.ClientIdentityProfileEditIndex, targetField, _targetProfileEditTextBox.Text, string.IsNullOrEmpty(_session.ClientIdentityProfileEditDraft.ConnectionProfileId)));
+                EntryProfilesPresenter.Default.GetClientIdentityProfileEditCaretIndex(_renderer.StationeryDrawingContext, point, _session.ClientIdentityProfileEditIndex, targetField, _targetProfileEditTextBox.Text, string.IsNullOrEmpty(_session.ClientIdentityProfileEditDraft.ConnectionProfileId)));
             SyncClientIdentityProfileEditField(targetField);
         }
         else if (_gtpEngineEditTextBox.IsMouseSelecting &&
                  _session.ActiveGtpEngineEditField is { } engineField)
         {
             _gtpEngineEditTextBox.UpdateMouseSelection(
-                _renderer.GetGtpEngineEditPanelCaretIndex(point, engineField, _gtpEngineEditTextBox.Text));
+            _renderer.GtpEngineRenderer.GetGtpEngineEditPanelCaretIndex(point, engineField, _gtpEngineEditTextBox.Text));
             SyncGtpEngineEditField(engineField);
         }
 
@@ -2381,7 +2388,7 @@ public class Game1 : Game
             return;
         }
 
-        if (GoScreenRenderer.GetCatalogOrderCardHit(point, editor) is { } index)
+        if (CatalogOrderPresenter.GetCatalogOrderCardHit(point, editor) is { } index)
         {
             editor.DragTo(index);
         }
@@ -2710,7 +2717,7 @@ public class Game1 : Game
             return true;
         }
 
-        if (GoScreenRenderer.TryGetBoardIntersection(point, _session.BoardSize, out var intersection))
+        if (BoardRenderer.TryGetBoardIntersection(point, _session.BoardSize, out var intersection))
         {
             if (_session.TryEditBoardStone(intersection.X, intersection.Y))
             {
@@ -2771,39 +2778,39 @@ public class Game1 : Game
         }
 
         if (_session.MoveInformationDisplayMode == MoveInformationDisplayMode.Comment &&
-            GoScreenRenderer.GetReviewCommentMoveStepButtonHit(point) is { } reviewCommentMoveStep)
+            MoveCommentPanelRenderer.GetReviewCommentMoveStepButtonHit(point) is { } reviewCommentMoveStep)
         {
             TryMoveReviewAdjacentComment(reviewCommentMoveStep);
             return true;
         }
 
         if (_session.MoveInformationDisplayMode == MoveInformationDisplayMode.Comment &&
-            GoScreenRenderer.GetReviewCommentPageStepButtonHit(point) is { } reviewCommentPageStep)
+            MoveCommentPanelRenderer.GetReviewCommentPageStepButtonHit(point) is { } reviewCommentPageStep)
         {
             _session.ChangeCommentPage(reviewCommentPageStep);
             return true;
         }
 
         if (_session.MoveInformationDisplayMode == MoveInformationDisplayMode.Comment &&
-            GoScreenRenderer.GetReviewCommentEditButtonHit(point))
+            MoveCommentPanelRenderer.GetReviewCommentEditButtonHit(point))
         {
             OpenCommentEditor(_session, _session.ReviewMoveIndex);
             return true;
         }
 
-        if (GoScreenRenderer.GetReviewMoveInformationDisplayModeButtonHit(point) is { } reviewInformationMode)
+        if (MoveTrendChartRenderer.GetReviewMoveInformationDisplayModeButtonHit(point) is { } reviewInformationMode)
         {
             _session.SetMoveInformationDisplayMode(reviewInformationMode);
             return true;
         }
 
-        if (GoScreenRenderer.GetReviewTrendDisplayModeButtonHit(point, _session.MoveTrendDisplayMode) is { } reviewTrendMode)
+        if (MoveTrendChartRenderer.GetReviewTrendDisplayModeButtonHit(point, _session.MoveTrendDisplayMode) is { } reviewTrendMode)
         {
             _session.SetMoveTrendDisplayMode(reviewTrendMode);
             return true;
         }
 
-        if (GoScreenRenderer.GetReviewChartPopupOpenHit(point))
+        if (PopupTrendChartRenderer.GetReviewChartPopupOpenHit(point))
         {
             _session.OpenReviewChartPopup();
             _lastReviewPopupSeekClickAt = double.NegativeInfinity;
@@ -3006,7 +3013,7 @@ public class Game1 : Game
             return true;
         }
 
-        if (GoScreenRenderer.TryGetBoardIntersection(point, variationSession.BoardSize, out var intersection))
+        if (BoardRenderer.TryGetBoardIntersection(point, variationSession.BoardSize, out var intersection))
         {
             if (variationSession.VariationEditingStone is null)
             {
@@ -3086,7 +3093,7 @@ public class Game1 : Game
             return true;
         }
 
-        if (GoScreenRenderer.GetCgosConnectionEditPanelFieldHit(point) is { } field)
+        if (CgosLoginRenderer.GetCgosConnectionEditPanelFieldHit(point) is { } field)
         {
             BeginOrMoveCgosConnectionEditField(point, field);
             return true;
@@ -3359,7 +3366,7 @@ public class Game1 : Game
 
     private void HandleReviewChartPopupClick(Point point)
     {
-        if (GoScreenRenderer.GetReviewChartPopupCloseHit(point))
+        if (PopupTrendChartRenderer.GetReviewChartPopupCloseHit(point))
         {
             _session.CloseReviewChartPopup();
             _reviewPopupSeekDragging = false;
@@ -3367,40 +3374,40 @@ public class Game1 : Game
             return;
         }
 
-        if (GoScreenRenderer.GetReviewChartPopupScoreToggleHit(point))
+        if (PopupTrendChartRenderer.GetReviewChartPopupScoreToggleHit(point))
         {
             _session.TogglePopupScoreVisibility();
             return;
         }
 
-        if (GoScreenRenderer.GetReviewChartPopupWinRateToggleHit(point))
+        if (PopupTrendChartRenderer.GetReviewChartPopupWinRateToggleHit(point))
         {
             _session.TogglePopupWinRateVisibility();
             return;
         }
 
-        if (GoScreenRenderer.GetReviewChartPopupCommentToggleHit(point))
+        if (PopupTrendChartRenderer.GetReviewChartPopupCommentToggleHit(point))
         {
             _session.TogglePopupCommentVisibility();
             return;
         }
 
         if (_session.IsPopupCommentVisible &&
-            GoScreenRenderer.GetReviewChartPopupCommentMoveStepButtonHit(point) is { } commentMoveStep)
+            PopupTrendChartRenderer.GetReviewChartPopupCommentMoveStepButtonHit(point) is { } commentMoveStep)
         {
             TryMoveReviewAdjacentComment(commentMoveStep);
             return;
         }
 
         if (_session.IsPopupCommentVisible &&
-            GoScreenRenderer.GetReviewChartPopupCommentPageStepButtonHit(point) is { } commentPageStep)
+            PopupTrendChartRenderer.GetReviewChartPopupCommentPageStepButtonHit(point) is { } commentPageStep)
         {
             _session.ChangeCommentPage(commentPageStep);
             return;
         }
 
         if (_session.IsPopupCommentVisible &&
-            GoScreenRenderer.GetReviewChartPopupCommentEditButtonHit(point))
+            PopupTrendChartRenderer.GetReviewChartPopupCommentEditButtonHit(point))
         {
             OpenCommentEditor(_session, _session.ReviewMoveIndex);
             return;
@@ -3408,18 +3415,18 @@ public class Game1 : Game
 
         // コメントの半透明パネルは前面要素。余白を押しても背面グラフへ入力を通さない。
         if (_session.IsPopupCommentVisible &&
-            GoScreenRenderer.IsReviewChartPopupCommentOverlayHit(point))
+            PopupTrendChartRenderer.IsReviewChartPopupCommentOverlayHit(point))
         {
             return;
         }
 
-        if (GoScreenRenderer.GetReviewChartPopupStepButtonHit(point) is { } popupStep)
+        if (PopupTrendChartRenderer.GetReviewChartPopupStepButtonHit(point) is { } popupStep)
         {
             ExecuteReviewNavigation(popupStep);
             return;
         }
 
-        if (GoScreenRenderer.GetReviewChartPopupSeekMove(point, _session.ReviewMoveCount) is { } moveIndex)
+        if (PopupTrendChartRenderer.GetReviewChartPopupSeekMove(point, _session.ReviewMoveCount) is { } moveIndex)
         {
             MoveReview(moveIndex - _session.ReviewMoveIndex);
             var deltaX = point.X - _lastReviewPopupSeekClickPoint.X;
@@ -3446,7 +3453,7 @@ public class Game1 : Game
 
     private void HandleReadOnlyChartPopupClick(Point point)
     {
-        if (GoScreenRenderer.GetReviewChartPopupCloseHit(point))
+        if (PopupTrendChartRenderer.GetReviewChartPopupCloseHit(point))
         {
             _session.CloseReviewChartPopup();
             _reviewPopupSeekDragging = false;
@@ -3454,7 +3461,7 @@ public class Game1 : Game
             return;
         }
 
-        if (GoScreenRenderer.GetReviewChartPopupBackToLiveHit(point))
+        if (PopupTrendChartRenderer.GetReviewChartPopupBackToLiveHit(point))
         {
             if (IsLocalPlayUseKind() &&
                 _session.CurrentMode.Kind == GoAppModeKind.Playing &&
@@ -3477,7 +3484,7 @@ public class Game1 : Game
             return;
         }
 
-        if (GoScreenRenderer.GetReviewChartPopupAutoUpdateHit(point))
+        if (PopupTrendChartRenderer.GetReviewChartPopupAutoUpdateHit(point))
         {
             var moveCount = _session.UseKind == GoAppUseKind.CgosClient
                 ? _cgosGameObservation.MoveCount
@@ -3487,26 +3494,26 @@ public class Game1 : Game
             return;
         }
 
-        if (GoScreenRenderer.GetReviewChartPopupScoreToggleHit(point))
+        if (PopupTrendChartRenderer.GetReviewChartPopupScoreToggleHit(point))
         {
             _session.TogglePopupScoreVisibility();
             return;
         }
 
-        if (GoScreenRenderer.GetReviewChartPopupWinRateToggleHit(point))
+        if (PopupTrendChartRenderer.GetReviewChartPopupWinRateToggleHit(point))
         {
             _session.TogglePopupWinRateVisibility();
             return;
         }
 
-        if (GoScreenRenderer.GetReviewChartPopupCommentToggleHit(point))
+        if (PopupTrendChartRenderer.GetReviewChartPopupCommentToggleHit(point))
         {
             _session.TogglePopupCommentVisibility();
             return;
         }
 
         if (_session.IsPopupCommentVisible &&
-            GoScreenRenderer.GetReviewChartPopupCommentMoveStepButtonHit(point) is { } commentMoveStep)
+            PopupTrendChartRenderer.GetReviewChartPopupCommentMoveStepButtonHit(point) is { } commentMoveStep)
         {
             TrySeekReadOnlyAdjacentComment(commentMoveStep);
             ResetReadOnlyChartPopupDoubleClick();
@@ -3514,13 +3521,13 @@ public class Game1 : Game
         }
 
         if (_session.IsPopupCommentVisible &&
-            GoScreenRenderer.GetReviewChartPopupCommentPageStepButtonHit(point) is { } commentPageStep)
+            PopupTrendChartRenderer.GetReviewChartPopupCommentPageStepButtonHit(point) is { } commentPageStep)
         {
             _session.ChangeCommentPage(commentPageStep);
             return;
         }
 
-        if (GoScreenRenderer.GetReviewChartPopupStepButtonHit(point) is { } popupStep &&
+        if (PopupTrendChartRenderer.GetReviewChartPopupStepButtonHit(point) is { } popupStep &&
             TryGetReadOnlyChartNavigation(out var currentMoveIndex, out var maximumMoveIndex))
         {
             var targetMoveIndex = popupStep switch
@@ -3536,7 +3543,7 @@ public class Game1 : Game
 
         if (_session.UseKind == GoAppUseKind.CgosClient &&
             _session.CgosConnectionFlowKind is CgosConnectionFlowKind.Watching or CgosConnectionFlowKind.Result &&
-            GoScreenRenderer.GetReviewChartPopupSeekMove(
+            PopupTrendChartRenderer.GetReviewChartPopupSeekMove(
                 point,
                 _cgosGameObservation.IsFinished
                     ? _cgosGameObservation.MoveCount
@@ -3550,7 +3557,7 @@ public class Game1 : Game
 
         if (IsLocalPlayUseKind() &&
             _session.CurrentMode.Kind is GoAppModeKind.Playing or GoAppModeKind.GameOver &&
-            GoScreenRenderer.GetReviewChartPopupSeekMove(
+            PopupTrendChartRenderer.GetReviewChartPopupSeekMove(
                 point,
                 _session.CurrentMode.Kind == GoAppModeKind.GameOver
                     ? _session.CurrentGameRecord.Moves.Count
@@ -3744,7 +3751,7 @@ public class Game1 : Game
 
         if (_session.CurrentMode.Kind == GoAppModeKind.Reviewing)
         {
-            if (GoScreenRenderer.GetReviewChartPopupSeekMove(point, _session.ReviewMoveCount) is { } reviewMoveIndex &&
+            if (PopupTrendChartRenderer.GetReviewChartPopupSeekMove(point, _session.ReviewMoveCount) is { } reviewMoveIndex &&
                 reviewMoveIndex != _session.ReviewMoveIndex)
             {
                 MoveReview(reviewMoveIndex - _session.ReviewMoveIndex);
@@ -3754,7 +3761,7 @@ public class Game1 : Game
 
         if (_session.UseKind == GoAppUseKind.CgosClient &&
             _session.CgosConnectionFlowKind is CgosConnectionFlowKind.Watching or CgosConnectionFlowKind.Result &&
-            GoScreenRenderer.GetReviewChartPopupSeekMove(
+            PopupTrendChartRenderer.GetReviewChartPopupSeekMove(
                 point,
                 _cgosGameObservation.IsFinished
                     ? _cgosGameObservation.MoveCount
@@ -3766,7 +3773,7 @@ public class Game1 : Game
 
         if (IsLocalPlayUseKind() &&
             _session.CurrentMode.Kind is GoAppModeKind.Playing or GoAppModeKind.GameOver &&
-            GoScreenRenderer.GetReviewChartPopupSeekMove(
+            PopupTrendChartRenderer.GetReviewChartPopupSeekMove(
                 point,
                 _session.CurrentMode.Kind == GoAppModeKind.GameOver
                     ? _session.CurrentGameRecord.Moves.Count
@@ -3994,7 +4001,7 @@ public class Game1 : Game
         var text = _session.ActiveCgosConnectionEditField == field
             ? _cgosConnectionEditTextBox.Text
             : _session.GetCgosConnectionEditFieldText(field);
-        var caretIndex = _renderer?.GetCgosConnectionEditPanelCaretIndex(point, field, text) ?? text.Length;
+        var caretIndex = _renderer?.CgosLoginRenderer.GetCgosConnectionEditPanelCaretIndex(point, field, text) ?? text.Length;
 
         if (_session.ActiveCgosConnectionEditField == field)
         {
@@ -4338,7 +4345,7 @@ public class Game1 : Game
         var text = _session.ActiveCgosCredentialStone == stone && _session.ActiveCgosCredentialField == field
             ? _cgosCredentialTextBox.Text
             : _session.GetCgosCredential(stone, field);
-        var caret = _renderer?.GetCgosCredentialCaretIndex(point, stone, field, text) ?? text.Length;
+        var caret = _renderer?.CgosLoginRenderer.GetCgosCredentialCaretIndex(point, stone, field, text) ?? text.Length;
         if (_session.ActiveCgosCredentialStone != stone || _session.ActiveCgosCredentialField != field)
             _cgosCredentialTextBox.Begin(text, caret);
         _cgosCredentialTextBox.BeginMouseSelection(caret, IsShiftDown());
@@ -4482,7 +4489,7 @@ public class Game1 : Game
         var text = _session.ActiveLocalMatchHandleStone == stone
             ? _localMatchHandleTextBox.Text
             : _session.GetLocalMatchHandleDraft(stone);
-        var caretIndex = _renderer?.GetLocalMatchHandleCaretIndex(point, stone, text, _session.UseKind == GoAppUseKind.LocalApps) ?? text.Length;
+        var caretIndex = _renderer is null ? text.Length : EntryProfilesPresenter.Default.GetLocalMatchHandleCaretIndex(_renderer.StationeryDrawingContext, point, stone, text, _session.UseKind == GoAppUseKind.LocalApps);
         if (_session.ActiveLocalMatchHandleStone != stone)
             _localMatchHandleTextBox.Begin(text, caretIndex);
         _localMatchHandleTextBox.BeginMouseSelection(caretIndex, IsShiftDown());
@@ -4611,7 +4618,7 @@ public class Game1 : Game
         var text = _session.ActiveClientIdentityProfileEditField == field
             ? _targetProfileEditTextBox.Text
             : _session.GetClientIdentityProfileEditField(field);
-        var caretIndex = _renderer?.GetClientIdentityProfileEditCaretIndex(point, _session.ClientIdentityProfileEditIndex, field, text, false) ?? text.Length;
+        var caretIndex = _renderer is null ? text.Length : EntryProfilesPresenter.Default.GetClientIdentityProfileEditCaretIndex(_renderer.StationeryDrawingContext, point, _session.ClientIdentityProfileEditIndex, field, text, false);
         if (_session.ActiveClientIdentityProfileEditField == field)
         {
             _targetProfileEditTextBox.BeginMouseSelection(caretIndex, IsShiftDown());
@@ -5169,13 +5176,13 @@ public class Game1 : Game
             return TryHandleGtpEngineDeleteConfirmationClick(point);
         }
 
-        if (GoScreenRenderer.TryGetGtpEngineSelectionDialogPathCopyText(point, _session, out var path))
+        if (GtpEngineRenderer.TryGetGtpEngineSelectionDialogPathCopyText(point, _session, out var path))
         {
             _clipboardService.TrySetText(path);
             return true;
         }
 
-        if (GoScreenRenderer.GetGtpEngineSelectionDialogCancelButtonHit(point))
+        if (GtpEngineRenderer.GetGtpEngineSelectionDialogCancelButtonHit(point))
         {
             _session.CancelGtpEngineSelectionDialog();
             return true;
@@ -5184,7 +5191,7 @@ public class Game1 : Game
         if (_session.IsGtpEngineCompatibilityLoading)
             return true;
 
-        if (GoScreenRenderer.GetGtpEngineSelectionDialogOkButtonHit(point))
+        if (GtpEngineRenderer.GetGtpEngineSelectionDialogOkButtonHit(point))
         {
             if (_session.CanCommitGtpEngineSelection)
             {
@@ -5200,50 +5207,50 @@ public class Game1 : Game
             return true;
         }
 
-        if (GoScreenRenderer.GetGtpEngineSelectionDialogAddButtonHit(point))
+        if (GtpEngineRenderer.GetGtpEngineSelectionDialogAddButtonHit(point))
         {
             _session.OpenGtpEngineAddPanel();
             return true;
         }
 
-        if (GoScreenRenderer.GetGtpEngineSelectionDialogEditButtonHit(point))
+        if (GtpEngineRenderer.GetGtpEngineSelectionDialogEditButtonHit(point))
         {
             _session.OpenGtpEngineEditPanel();
             return true;
         }
 
-        if (GoScreenRenderer.GetGtpEngineSelectionDialogDuplicateButtonHit(point))
+        if (GtpEngineRenderer.GetGtpEngineSelectionDialogDuplicateButtonHit(point))
         {
             _session.OpenGtpEngineDuplicatePanel();
             return true;
         }
 
-        if (GoScreenRenderer.GetGtpEngineSelectionDialogDeleteButtonHit(point, _session.CanDeleteSelectedGtpEngine))
+        if (GtpEngineRenderer.GetGtpEngineSelectionDialogDeleteButtonHit(point, _session.CanDeleteSelectedGtpEngine))
         {
             _session.OpenGtpEngineDeleteConfirmation();
             return true;
         }
 
         if (_session.GtpEngineProfiles.Count > 1 &&
-            GoScreenRenderer.GetGtpEngineSelectionDialogOrderButtonHit(point))
+            GtpEngineRenderer.GetGtpEngineSelectionDialogOrderButtonHit(point))
         {
             _session.OpenGtpEngineOrderEditor();
             return true;
         }
 
-        if (GoScreenRenderer.GetGtpEngineSelectionDialogPreviousPageButtonHit(point))
+        if (GtpEngineRenderer.GetGtpEngineSelectionDialogPreviousPageButtonHit(point))
         {
             _session.MoveGtpEngineSelectionPage(-1);
             return true;
         }
 
-        if (GoScreenRenderer.GetGtpEngineSelectionDialogNextPageButtonHit(point))
+        if (GtpEngineRenderer.GetGtpEngineSelectionDialogNextPageButtonHit(point))
         {
             _session.MoveGtpEngineSelectionPage(1);
             return true;
         }
 
-        if (GoScreenRenderer.GetGtpEngineSelectionDialogListItemHit(point, _session) is { } index)
+        if (GtpEngineRenderer.GetGtpEngineSelectionDialogListItemHit(point, _session) is { } index)
         {
             _session.SelectGtpEngineDialogItem(index);
             return true;
@@ -5255,14 +5262,14 @@ public class Game1 : Game
     private bool TryHandleCgosConnectionOrderEditorClick(Point point)
     {
         var editor = _session.CgosConnectionOrderEditor;
-        if (GoScreenRenderer.GetCatalogOrderCancelButtonHit(point) && editor.HasChanges)
+        if (CatalogOrderPresenter.GetCatalogOrderCancelButtonHit(point) && editor.HasChanges)
         {
             _session.CancelCgosConnectionOrderEditor();
             BeginDiscardTransition();
             return true;
         }
 
-        if (GoScreenRenderer.GetCatalogOrderSaveButtonHit(point))
+        if (CatalogOrderPresenter.GetCatalogOrderSaveButtonHit(point))
         {
             if (editor.HasChanges)
             {
@@ -5273,14 +5280,14 @@ public class Game1 : Game
             return true;
         }
 
-        var moveStep = GoScreenRenderer.GetCatalogOrderMoveStep(point, editor.PageSize);
+        var moveStep = CatalogOrderPresenter.GetCatalogOrderMoveStep(point, editor.PageSize);
         if (moveStep == int.MinValue)
             editor.MoveSelectedToTop();
         else if (moveStep != 0)
             editor.MoveSelected(moveStep);
-        else if (GoScreenRenderer.GetCatalogOrderPageStep(point) is var pageStep && pageStep != 0)
+        else if (CatalogOrderPresenter.GetCatalogOrderPageStep(point) is var pageStep && pageStep != 0)
             editor.MoveVisiblePages(pageStep);
-        else if (GoScreenRenderer.GetCatalogOrderCardHit(point, editor) is { } index)
+        else if (CatalogOrderPresenter.GetCatalogOrderCardHit(point, editor) is { } index)
             editor.BeginDrag(index);
 
         return true;
@@ -5289,14 +5296,14 @@ public class Game1 : Game
     private bool TryHandleGtpEngineOrderEditorClick(Point point)
     {
         var editor = _session.GtpEngineOrderEditor;
-        if (GoScreenRenderer.GetCatalogOrderCancelButtonHit(point) && editor.HasChanges)
+        if (CatalogOrderPresenter.GetCatalogOrderCancelButtonHit(point) && editor.HasChanges)
         {
             _session.CancelGtpEngineOrderEditor();
             BeginDiscardTransition();
             return true;
         }
 
-        if (GoScreenRenderer.GetCatalogOrderSaveButtonHit(point))
+        if (CatalogOrderPresenter.GetCatalogOrderSaveButtonHit(point))
         {
             if (editor.HasChanges)
             {
@@ -5308,14 +5315,14 @@ public class Game1 : Game
             return true;
         }
 
-        var moveStep = GoScreenRenderer.GetCatalogOrderMoveStep(point, editor.PageSize);
+        var moveStep = CatalogOrderPresenter.GetCatalogOrderMoveStep(point, editor.PageSize);
         if (moveStep == int.MinValue)
             editor.MoveSelectedToTop();
         else if (moveStep != 0)
             editor.MoveSelected(moveStep);
-        else if (GoScreenRenderer.GetCatalogOrderPageStep(point) is var pageStep && pageStep != 0)
+        else if (CatalogOrderPresenter.GetCatalogOrderPageStep(point) is var pageStep && pageStep != 0)
             editor.MoveVisiblePages(pageStep);
-        else if (GoScreenRenderer.GetCatalogOrderCardHit(point, editor) is { } index)
+        else if (CatalogOrderPresenter.GetCatalogOrderCardHit(point, editor) is { } index)
             editor.BeginDrag(index);
 
         return true;
@@ -5323,13 +5330,13 @@ public class Game1 : Game
 
     private bool TryHandleGtpEngineDeleteConfirmationClick(Point point)
     {
-        if (GoScreenRenderer.GetGtpEngineDeleteConfirmationCancelButtonHit(point))
+        if (GtpEngineRenderer.GetGtpEngineDeleteConfirmationCancelButtonHit(point))
         {
             _session.CloseGtpEngineDeleteConfirmation();
             return true;
         }
 
-        if (GoScreenRenderer.GetGtpEngineDeleteConfirmationConfirmButtonHit(point))
+        if (GtpEngineRenderer.GetGtpEngineDeleteConfirmationConfirmButtonHit(point))
         {
             _session.RemoveSelectedGtpEngine();
             _gtpEngineCatalog.Save(_session.GtpEngineProfiles);
@@ -5351,39 +5358,39 @@ public class Game1 : Game
         {
             if (_session.IsGtpEngineRandomMoveSelectionDialogOpen)
             {
-                if (GoScreenRenderer.GetGtpEngineRandomMoveSelectionDialogPagerStep(point) is { } comboPageStep)
+                if (GtpEngineRenderer.GetGtpEngineRandomMoveSelectionDialogPagerStep(point) is { } comboPageStep)
                     _session.MoveGtpEngineRandomMoveSelectionPage(comboPageStep);
-                else if (GoScreenRenderer.GetGtpEngineRandomMoveSelectionDialogCancelButtonHit(point))
+                else if (GtpEngineRenderer.GetGtpEngineRandomMoveSelectionDialogCancelButtonHit(point))
                     _session.CancelGtpEngineRandomMoveSelectionDialog();
-                else if (GoScreenRenderer.GetGtpEngineRandomMoveSelectionDialogSelectButtonHit(point))
+                else if (GtpEngineRenderer.GetGtpEngineRandomMoveSelectionDialogSelectButtonHit(point))
                     _session.CommitGtpEngineRandomMoveSelectionDialog();
-                else if (GoScreenRenderer.GetGtpEngineRandomMoveSelectionDialogItemHit(point, _session) is { } itemIndex)
+                else if (GtpEngineRenderer.GetGtpEngineRandomMoveSelectionDialogItemHit(point, _session) is { } itemIndex)
                     _session.SelectGtpEngineRandomMoveItem(itemIndex);
 
                 return true;
             }
 
-            if (GoScreenRenderer.GetGtpEngineGuiOptionsDialogPagerStep(point) is { } optionPageStep)
+            if (GtpEngineRenderer.GetGtpEngineGuiOptionsDialogPagerStep(point) is { } optionPageStep)
             {
                 _session.MoveGtpEngineGuiOptionsPage(optionPageStep);
                 return true;
             }
 
-            if (GoScreenRenderer.GetGtpEngineGuiOptionsDialogCancelButtonHit(point) && _session.IsGtpEngineGuiOptionsDialogDirty)
+            if (GtpEngineRenderer.GetGtpEngineGuiOptionsDialogCancelButtonHit(point) && _session.IsGtpEngineGuiOptionsDialogDirty)
             {
                 _session.CancelGtpEngineGuiOptionsDialog();
                 BeginDiscardTransition();
                 return true;
             }
 
-            if (GoScreenRenderer.GetGtpEngineGuiOptionsDialogOkButtonHit(point))
+            if (GtpEngineRenderer.GetGtpEngineGuiOptionsDialogOkButtonHit(point))
             {
                 if (_session.IsGtpEngineGuiOptionsDialogDirty) _session.CommitGtpEngineGuiOptionsDialog();
                 else _session.CancelGtpEngineGuiOptionsDialog();
                 return true;
             }
 
-            if (GoScreenRenderer.GetGtpEngineGuiOptionControlHit(point, _session) is { } optionHit)
+            if (GtpEngineRenderer.GetGtpEngineGuiOptionControlHit(point, _session) is { } optionHit)
             {
                 var option = GtpEngineGuiOptions.Specs[optionHit.Index];
                 if (optionHit.Action == 3)
@@ -5421,7 +5428,7 @@ public class Game1 : Game
             return true;
         }
 
-        if (GoScreenRenderer.GetGtpEngineEditPanelCloseButtonHit(point) && _session.IsGtpEngineEditDirty)
+        if (GtpEngineRenderer.GetGtpEngineEditPanelCloseButtonHit(point) && _session.IsGtpEngineEditDirty)
         {
             EndGtpEngineEditField();
             _gtpEngineEditTextBox.Clear();
@@ -5432,47 +5439,47 @@ public class Game1 : Game
             return true;
         }
 
-        if (GoScreenRenderer.GetGtpEngineEditPanelFileBrowseButtonHit(point))
+        if (GtpEngineRenderer.GetGtpEngineEditPanelFileBrowseButtonHit(point))
         {
             BrowseGtpEngineExecutablePath();
             return true;
         }
 
-        if (GoScreenRenderer.GetGtpEngineEditPanelWorkingDirectoryBrowseButtonHit(point))
+        if (GtpEngineRenderer.GetGtpEngineEditPanelWorkingDirectoryBrowseButtonHit(point))
         {
             BrowseGtpEngineWorkingDirectory();
             return true;
         }
 
-        if (GoScreenRenderer.GetGtpEngineEditPanelLogButtonHit(point))
+        if (GtpEngineRenderer.GetGtpEngineEditPanelLogButtonHit(point))
         {
             EndGtpEngineEditField();
             _session.ToggleGtpEngineEditLog();
             return true;
         }
 
-        if (GoScreenRenderer.GetGtpEngineEditPanelInitialPositionProfileButtonHit(point))
+        if (GtpEngineRenderer.GetGtpEngineEditPanelInitialPositionProfileButtonHit(point))
         {
             EndGtpEngineEditField();
             _session.CycleGtpEngineInitialPositionProfile();
             return true;
         }
 
-        if (GoScreenRenderer.GetGtpEngineEditPanelInitialPositionMethodButtonHit(point))
+        if (GtpEngineRenderer.GetGtpEngineEditPanelInitialPositionMethodButtonHit(point))
         {
             EndGtpEngineEditField();
             _session.CycleGtpEngineInitialPositionPreferredMethod();
             return true;
         }
 
-        if (GoScreenRenderer.GetGtpEngineEditPanelGuiOptionsButtonHit(point))
+        if (GtpEngineRenderer.GetGtpEngineEditPanelGuiOptionsButtonHit(point))
         {
             EndGtpEngineEditField();
             _session.OpenGtpEngineGuiOptionsDialog();
             return true;
         }
 
-        if (GoScreenRenderer.GetGtpEngineEditPanelSaveButtonHit(point))
+        if (GtpEngineRenderer.GetGtpEngineEditPanelSaveButtonHit(point))
         {
             if (_session.IsGtpEngineEditDirty)
             {
@@ -5482,7 +5489,7 @@ public class Game1 : Game
             return true;
         }
 
-        if (GoScreenRenderer.GetGtpEngineEditPanelFieldHit(point) is { } field)
+        if (GtpEngineRenderer.GetGtpEngineEditPanelFieldHit(point) is { } field)
         {
             BeginOrMoveGtpEngineEditField(point, field);
             return true;
@@ -5570,7 +5577,7 @@ public class Game1 : Game
         var text = _session.ActiveGtpEngineEditField == field
             ? _gtpEngineEditTextBox.Text
             : _session.GetGtpEngineEditFieldText(field);
-        var caretIndex = _renderer?.GetGtpEngineEditPanelCaretIndex(point, field, text) ?? text.Length;
+        var caretIndex = _renderer?.GtpEngineRenderer.GetGtpEngineEditPanelCaretIndex(point, field, text) ?? text.Length;
 
         if (_session.ActiveGtpEngineEditField == field)
         {
@@ -5590,27 +5597,27 @@ public class Game1 : Game
     {
         if (_session.IsGtpEngineRandomMoveSelectionDialogOpen)
         {
-            if (GoScreenRenderer.GetGtpEngineRandomMoveSelectionDialogPagerStep(point) is { } comboPageStep)
+            if (GtpEngineRenderer.GetGtpEngineRandomMoveSelectionDialogPagerStep(point) is { } comboPageStep)
                 _session.MoveGtpEngineRandomMoveSelectionPage(comboPageStep);
-            else if (GoScreenRenderer.GetGtpEngineRandomMoveSelectionDialogCancelButtonHit(point))
+            else if (GtpEngineRenderer.GetGtpEngineRandomMoveSelectionDialogCancelButtonHit(point))
                 _session.CancelGtpEngineRandomMoveSelectionDialog();
-            else if (GoScreenRenderer.GetGtpEngineRandomMoveSelectionDialogSelectButtonHit(point))
+            else if (GtpEngineRenderer.GetGtpEngineRandomMoveSelectionDialogSelectButtonHit(point))
             {
                 _session.CommitGtpEngineRandomMoveSelectionDialog();
                 QueueAppProviderSettingsEvaluation();
             }
-            else if (GoScreenRenderer.GetGtpEngineRandomMoveSelectionDialogItemHit(point, _session) is { } itemIndex)
+            else if (GtpEngineRenderer.GetGtpEngineRandomMoveSelectionDialogItemHit(point, _session) is { } itemIndex)
                 _session.SelectGtpEngineRandomMoveItem(itemIndex);
             return;
         }
 
-        if (GoScreenRenderer.GetGtpEngineGuiOptionsDialogPagerStep(point) is { } pageStep)
+        if (GtpEngineRenderer.GetGtpEngineGuiOptionsDialogPagerStep(point) is { } pageStep)
         {
             _session.MoveGtpEngineGuiOptionsPage(pageStep);
             return;
         }
 
-        if (GoScreenRenderer.GetGtpEngineGuiOptionsDialogCancelButtonHit(point) && _session.IsGtpEngineGuiOptionsDialogDirty)
+        if (GtpEngineRenderer.GetGtpEngineGuiOptionsDialogCancelButtonHit(point) && _session.IsGtpEngineGuiOptionsDialogDirty)
         {
             _appProviderSettingsEvaluationGeneration++;
             _session.CancelAppProviderGameSettingsDialog();
@@ -5619,7 +5626,7 @@ public class Game1 : Game
             return;
         }
 
-        if (GoScreenRenderer.GetGtpEngineGuiOptionsDialogOkButtonHit(point))
+        if (GtpEngineRenderer.GetGtpEngineGuiOptionsDialogOkButtonHit(point))
         {
             if (_session.IsGtpEngineGuiOptionsDialogDirty)
             {
@@ -5631,7 +5638,7 @@ public class Game1 : Game
             return;
         }
 
-        if (GoScreenRenderer.GetGtpEngineGuiOptionControlHit(point, _session) is not { } optionHit)
+        if (GtpEngineRenderer.GetGtpEngineGuiOptionControlHit(point, _session) is not { } optionHit)
             return;
 
         var option = _session.ActiveGtpEngineGuiOptionSpecs[optionHit.Index];

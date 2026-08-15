@@ -13,6 +13,7 @@ using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.LinkUnderline;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ActionBadge;
 using KifuwarabeGo2026.Gui.Presentation.Shared.SelectEntry;
+using KifuwarabeGo2026.Gui.Presentation.Shared.PlayersComponent;
 using KifuwarabeGo2026.Gui.Presentation.Pages.EditTournamentRule;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Headline;
@@ -22,6 +23,7 @@ using static KifuwarabeGo2026.Gui.Presentation.Pages.PopupTrendChart.PopupTrendC
 using Microsoft.Xna.Framework;
 using System;
 using KifuwarabeGo2026.Gui.Presentation.Shared.LiveBoardPreview;
+using KifuwarabeGo2026.Gui.Presentation.Pages.MoveTrendChart;
 
 public static class RightSidePanelLayout
 {
@@ -51,7 +53,7 @@ public sealed class RightSidePanel
     {
     }
 
-    public void Draw(StationeryDrawingContext drawingContext, GoAppSession session, Point mousePoint,
+    public void Draw(StationeryDrawingContext drawingContext, MoveTrendChartRenderer moveTrendChartRenderer, GoAppSession session, Point mousePoint,
         LiveBoardPreviewModel? liveBoardPreview, InitialPositionConciergeView? initialPositionConcierge)
     {
         var renderer = drawingContext.ScreenRenderer;
@@ -66,10 +68,10 @@ public sealed class RightSidePanel
         switch (session.CurrentMode.Kind)
         {
             case GoAppModeKind.Playing:
-                LocalMatchPlayPage.Default.RightSidePanel.Draw(drawingContext, session, mousePoint);
+                LocalMatchPlayPage.Default.RightSidePanel.Draw(drawingContext, moveTrendChartRenderer, session, mousePoint);
                 return;
             case GoAppModeKind.GameOver:
-                LocalMatchScreen.Default.GameOverRightSidePanel.Draw(drawingContext, session, mousePoint);
+                LocalMatchScreen.Default.GameOverRightSidePanel.Draw(drawingContext, moveTrendChartRenderer, session, mousePoint);
                 return;
             case GoAppModeKind.BoardEditing:
                 BoardAndReviewScreen.Default.BoardEditingRightSidePanel.Draw(drawingContext, session, mousePoint);
@@ -78,7 +80,7 @@ public sealed class RightSidePanel
                 BoardAndReviewScreen.Default.VariationEditingRightSidePanel.Draw(drawingContext, session, mousePoint, liveBoardPreview);
                 return;
             case GoAppModeKind.Reviewing:
-                BoardAndReviewScreen.Default.ReviewingRightSidePanel.Draw(drawingContext, session, mousePoint);
+                BoardAndReviewScreen.Default.ReviewingRightSidePanel.Draw(drawingContext, moveTrendChartRenderer, session, mousePoint);
                 return;
         }
 
@@ -106,11 +108,11 @@ public sealed class LocalMatchPlayRightSidePanel
     internal BoardLensButton? GetBoardLensButtonHit(Point point, bool isLensEnabled) =>
         _boardLensButtons.GetHit(point, isLensEnabled);
 
-    public void Draw(StationeryDrawingContext drawingContext, GoAppSession session, Point mousePoint)
+    public void Draw(StationeryDrawingContext drawingContext, MoveTrendChartRenderer moveTrendChartRenderer, GoAppSession session, Point mousePoint)
     {
         var renderer = drawingContext.ScreenRenderer;
         renderer.DrawVerticalResultSection(new Rectangle(1144, 132, 668, 200), "PLAYERS", new Color(76, 91, 126));
-        renderer.DrawBothPlayersComponent(
+        PlayersComponent.Default.DrawBothPlayers(drawingContext,
             1144,
             PlayersY,
             668,
@@ -130,7 +132,7 @@ public sealed class LocalMatchPlayRightSidePanel
 
         renderer.DrawVerticalResultSection(new Rectangle(1144, 344, 668, 110), "FACTS", new Color(66, 104, 116));
         renderer.DrawInfoStrip(1144, 363, "NEXT", GoScreenRenderer.GetMoveThinkingText(session));
-        renderer.DrawLocalTrendChart(session, mousePoint);
+        moveTrendChartRenderer.DrawLocal(drawingContext, session, mousePoint);
         renderer.DrawVerticalResultSection(new Rectangle(1144, 780, 668, 120), "REVIEW", new Color(76, 91, 126));
         DrawBoardLensButtons(renderer.StationeryDrawingContext, session.IsRenParseDisplayEnabled, mousePoint);
         renderer.DrawVerticalResultSection(new Rectangle(1144, 916, 668, 76), "ACTION", new Color(91, 82, 105));
@@ -296,7 +298,7 @@ public sealed class GameOverRightSidePanel
 {
     public SgfAutoSaveCheckBox SgfAutoSaveCheckBox { get; } = new();
 
-    public void Draw(StationeryDrawingContext drawingContext, GoAppSession session, Point mousePoint)
+    public void Draw(StationeryDrawingContext drawingContext, MoveTrendChartRenderer moveTrendChartRenderer, GoAppSession session, Point mousePoint)
     {
         var renderer = drawingContext.ScreenRenderer;
         new Headline("GAME OVER", new Vector2(1144, 132), new Color(255, 230, 160), 0.9f).Draw(drawingContext);
@@ -308,12 +310,12 @@ public sealed class GameOverRightSidePanel
         renderer.DrawResultRow(new Rectangle(1164, 242, 628, 52), "RULES", session.TournamentDisplayName, new Color(39, 68, 65), Color.White);
         DrawCalculationResultRow(drawingContext, new Rectangle(1164, 300, 628, 52), session);
 
-        renderer.DrawLocalGameOverTrendChart(session, mousePoint);
+        moveTrendChartRenderer.DrawLocalGameOver(drawingContext, session, mousePoint);
 
         if (session.UseKind == GoAppUseKind.LocalApps)
         {
             renderer.DrawVerticalResultSection(new Rectangle(1144, 668, 668, 174), "AGEHAMA", new Color(112, 76, 48));
-            renderer.DrawAgehamaSummaryComponent(new Rectangle(1164, 692, 628, 132), session.BlackAgehama, session.WhiteAgehama);
+            PlayersComponent.Default.DrawAgehamaSummary(drawingContext, new Rectangle(1164, 692, 628, 132), session.BlackAgehama, session.WhiteAgehama);
         }
 
         renderer.DrawVerticalResultSection(new Rectangle(1144, 854, 668, 126), "ACTION", new Color(91, 82, 105));
@@ -453,7 +455,7 @@ public sealed class VariationEditingRightSidePanel
             $"+{session.VariationMoveCount} MOVES", new Color(67, 112, 118), new Color(99, 223, 185));
 
         renderer.DrawVerticalResultSection(new Rectangle(1144, 332, informationWidth, 200), "POSITION", new Color(76, 91, 126));
-        renderer.DrawBothPlayersComponent(1144, 340, informationWidth,
+        PlayersComponent.Default.DrawBothPlayers(drawingContext, 1144, 340, informationWidth,
             string.IsNullOrWhiteSpace(session.CurrentGameRecord.BlackPlayerName) ? "BLACK" : session.CurrentGameRecord.BlackPlayerName,
             string.IsNullOrWhiteSpace(session.CurrentGameRecord.WhitePlayerName) ? "WHITE" : session.CurrentGameRecord.WhitePlayerName,
             null, null, null, session.BlackAgehama, session.WhiteAgehama, session.CurrentTurn, minimal: true);
@@ -547,7 +549,7 @@ public sealed class ReviewingRightSidePanel
     public int? GetStepButtonHit(Point point) =>
         ReviewMoveNavigation.GetButtonHit(point, ReviewChartPopupStepButtonBounds);
 
-    public void Draw(StationeryDrawingContext drawingContext, GoAppSession session, Point mousePoint)
+    public void Draw(StationeryDrawingContext drawingContext, MoveTrendChartRenderer moveTrendChartRenderer, GoAppSession session, Point mousePoint)
     {
         var renderer = drawingContext.ScreenRenderer;
         var controls = BoardAndReviewScreen.Default.Review;
@@ -567,13 +569,13 @@ public sealed class ReviewingRightSidePanel
         renderer.DrawResultRow(new Rectangle(1164, 264, 628, 52), "KOMI", session.Komi.ToString("0.0"), new Color(62, 112, 105), Color.White);
 
         renderer.DrawVerticalResultSection(new Rectangle(1144, 336, 668, 200), "PLAYERS", new Color(76, 91, 126));
-        renderer.DrawBothPlayersComponent(1144, 344, 668,
+        PlayersComponent.Default.DrawBothPlayers(drawingContext, 1144, 344, 668,
             session.ReviewBlackPlayerName, session.ReviewWhitePlayerName,
             session.ReviewBlackUsedTime, session.ReviewWhiteUsedTime, session.ReviewTimeLimit,
             session.BlackAgehama, session.WhiteAgehama, session.CurrentTurn, minimal: true,
             blackLiveElapsed: session.ReviewBlackUsedTime, whiteLiveElapsed: session.ReviewWhiteUsedTime);
 
-        renderer.DrawReviewTrendChart(session, mousePoint);
+        moveTrendChartRenderer.DrawReview(drawingContext, session, mousePoint);
 
         renderer.DrawVerticalResultSection(new Rectangle(1144, 850, 668, 142), "REVIEW", new Color(76, 91, 126));
         drawingContext.DrawResultLabel(new Rectangle(1164, 858, 468, 36),
