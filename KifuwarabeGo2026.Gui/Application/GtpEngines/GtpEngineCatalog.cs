@@ -22,11 +22,13 @@ public sealed class GtpEngineCatalog
         Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
     };
 
-    private GtpEngineCatalog(string listPath, IReadOnlyList<GtpEngineProfile> profiles, bool requiresSave = false)
+    private GtpEngineCatalog(string listPath, IReadOnlyList<GtpEngineProfile> profiles, bool requiresSave = false,
+        bool duplicateIdsRepaired = false)
     {
         ListPath = listPath;
         Profiles = profiles;
         RequiresSave = requiresSave;
+        DuplicateIdsRepaired = duplicateIdsRepaired;
     }
 
     public string ListPath { get; }
@@ -35,6 +37,8 @@ public sealed class GtpEngineCatalog
 
     /// <summary>旧形式の設定を読み込んだため、次回保存時に永続 ID を書き戻す必要があるか。</summary>
     public bool RequiresSave { get; }
+
+    public bool DuplicateIdsRepaired { get; }
 
     public static GtpEngineCatalog LoadFromDefaultLocation()
     {
@@ -56,8 +60,12 @@ public sealed class GtpEngineCatalog
         var catalog = Load(listPath);
         if (catalog.RequiresSave)
         {
+            var duplicateIdsRepaired = catalog.DuplicateIdsRepaired;
             catalog.Save(catalog.Profiles);
             catalog = Load(listPath);
+            if (duplicateIdsRepaired)
+                catalog = new GtpEngineCatalog(catalog.ListPath, catalog.Profiles,
+                    catalog.RequiresSave, duplicateIdsRepaired: true);
         }
         var developmentListPath = FindDevelopmentListPath();
         if (developmentListPath is null) return catalog;
@@ -115,6 +123,7 @@ public sealed class GtpEngineCatalog
         var listDirectory = Path.GetDirectoryName(listPath) ?? AppContext.BaseDirectory;
         var profiles = JsonSerializer.Deserialize<GtpEngineProfileList>(File.ReadAllText(listPath), JsonOptions)?.GtpEngines ?? new();
         var requiresSave = false;
+        var duplicateIdsRepaired = false;
         var usedIds = new HashSet<string>(StringComparer.Ordinal);
         var normalizedProfiles = profiles
             .Where(profile => !string.IsNullOrWhiteSpace(profile.ExecutablePath))
@@ -127,13 +136,14 @@ public sealed class GtpEngineCatalog
                 // 重複している後方のプロファイルだけを安全に再採番する。
                 profile.Id = CreateUniqueId(usedIds);
                 requiresSave = true;
+                duplicateIdsRepaired = true;
                 return profile;
             })
             .ToList();
 
         requiresSave |= profiles.Any(profile => string.IsNullOrWhiteSpace(profile.Id));
 
-        return new GtpEngineCatalog(listPath, normalizedProfiles, requiresSave);
+        return new GtpEngineCatalog(listPath, normalizedProfiles, requiresSave, duplicateIdsRepaired);
     }
 
     public void Save(IEnumerable<GtpEngineProfile> profiles)

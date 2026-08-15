@@ -179,6 +179,7 @@ public class Game1 : Game
     private string _catalogSaveMessage = "";
     private Task<GuiReleaseUpdateResult>? _guiReleaseUpdateTask;
     private MessageDialog? _messageDialog;
+    private bool _exitAfterMessageDialog;
 
     private const double CgosMatchCountdownSeconds = 10d;
     private const double CgosMatchFadeSeconds = 1.2d;
@@ -271,6 +272,16 @@ public class Game1 : Game
         Window.ClientSizeChanged += OnWindowClientSizeChanged;
         Deactivated += OnGameDeactivated;
         RefreshGuiLogFiles();
+        if (_gtpEngineCatalog.DuplicateIdsRepaired)
+        {
+            _messageDialog = new MessageDialog(
+                "ENGINE PROFILE IDS REPAIRED",
+                "Duplicate Engine Profile IDs were found and replaced with unique IDs. Restart the GUI before selecting an engine profile.",
+                "EXIT");
+            _exitAfterMessageDialog = true;
+            _session.ActivateModalWindow(ActiveWindowId.MessageDialog);
+            GuiOperationLog.App("Repaired duplicate GTP engine profile IDs", "GUI restart required");
+        }
     }
 
     private static string CreateWindowTitle()
@@ -997,6 +1008,12 @@ public class Game1 : Game
         {
             if (_previousMouse.LeftButton == ButtonState.Released && mouse.LeftButton == ButtonState.Pressed && _messageDialog.IsCloseHit(point))
             {
+                if (_exitAfterMessageDialog)
+                {
+                    Exit();
+                    _previousMouse = mouse;
+                    return;
+                }
                 _messageDialog = null;
                 _session.DeactivateModalWindow(ActiveWindowId.MessageDialog);
             }

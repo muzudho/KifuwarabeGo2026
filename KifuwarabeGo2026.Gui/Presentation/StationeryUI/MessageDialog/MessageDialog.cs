@@ -10,14 +10,16 @@ public sealed class MessageDialog
     public static readonly Rectangle Bounds = new(510, 336, 900, 408);
     public static readonly Rectangle CloseButtonBounds = new(1218, 366, 154, 48);
 
-    public MessageDialog(string title, string message)
+    public MessageDialog(string title, string message, string closeButtonLabel = "CLOSE")
     {
         Title = title ?? throw new ArgumentNullException(nameof(title));
         Message = message ?? throw new ArgumentNullException(nameof(message));
+        CloseButtonLabel = closeButtonLabel ?? throw new ArgumentNullException(nameof(closeButtonLabel));
     }
 
     public string Title { get; }
     public string Message { get; }
+    public string CloseButtonLabel { get; }
     public bool IsCloseHit(Point point) => CloseButtonBounds.Contains(point);
 
     public void Draw(KfwStationeryDrawingTools drawingContext, Point mousePosition)
@@ -41,7 +43,7 @@ public sealed class MessageDialog
         draw.DrawText(Title, new Rectangle(Bounds.X + 42, Bounds.Y + 38, 620, 48), new Color(244, 238, 218), 0.64f);
         draw.DrawLine(new Vector2(Bounds.X + 42, Bounds.Y + 106), new Vector2(Bounds.Right - 42, Bounds.Y + 106), 1, new Color(82, 111, 114));
         draw.DrawText(Message, new Rectangle(Bounds.X + 56, Bounds.Y + 164, Bounds.Width - 112, 150), Color.White, 0.42f);
-        draw.DrawButton(CloseButtonBounds, "CLOSE", false, mousePoint, 0.32f);
+        draw.DrawButton(CloseButtonBounds, CloseButtonLabel, false, mousePoint, 0.32f);
     }
 }
 
