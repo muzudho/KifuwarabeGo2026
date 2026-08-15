@@ -39,7 +39,7 @@ public sealed partial class GoScreenRenderer
         DrawLine(new Vector2(panel.X + 790, panel.Y + 126), new Vector2(panel.X + 958, panel.Y + 126), 2, new Color(99, 223, 185, 120));
         DrawTitleMenuContent(session, page, panel, mousePoint, appProviderTabIndex, isAppProviderLoading);
         DrawUpdateButton(mousePoint);
-        DrawSettingsButton(mousePoint);
+        ApplicationSettingsScreen.Default.DrawSettingsButton(_stationeryDrawingContext, mousePoint);
     }
 
     private void DrawTitleMenuContent(GoAppSession session, TitleMenuPage page, Rectangle panel, Point mousePoint, int appProviderTabIndex, bool isAppProviderLoading)

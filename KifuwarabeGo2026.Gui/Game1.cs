@@ -752,7 +752,7 @@ public class Game1 : Game
             if (_renderer is not null)
             {
                 if (_isApplicationSettingsOpen)
-                    _renderer.DrawApplicationSettings(backgroundMousePosition, _applicationSettingsPage, ApplicationSettings.Current.LogRootDirectory, ApplicationSettings.Current.SgfSaveDirectory, ApplicationSettings.Current.ScreenshotSaveDirectory, ApplicationSettings.FilePath, _gtpEngineCatalog.ListPath, _guiLogFiles, _selectedGuiLogIndex, _applicationSettingsMessage);
+                    ApplicationSettingsScreen.Default.Draw(_renderer.StationeryDrawingContext, backgroundMousePosition, _applicationSettingsPage, ApplicationSettings.Current.LogRootDirectory, ApplicationSettings.Current.SgfSaveDirectory, ApplicationSettings.Current.ScreenshotSaveDirectory, ApplicationSettings.FilePath, _gtpEngineCatalog.ListPath, _guiLogFiles, _selectedGuiLogIndex, _applicationSettingsMessage);
                 else
                     _renderer.DrawUseSelection(_session, backgroundMousePosition, _titleMenuPage, _appProviderTabIndex, _appProviderSelectionLoadTask is not null);
             }

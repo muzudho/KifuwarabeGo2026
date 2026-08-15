@@ -4,8 +4,18 @@ using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ActionBadge;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Button;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.LinkUnderline;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 using Microsoft.Xna.Framework;
 using System;
+using System.Collections.Generic;
+using System.IO;
+
+public enum ApplicationSettingsPage
+{
+    Log,
+    OtherFolders,
+    Other,
+}
 
 /// <summary>アプリ設定画面と、タイトル右下の設定操作 UI を所有します。</summary>
 public sealed class ApplicationSettingsScreen
@@ -67,6 +77,111 @@ public sealed class ApplicationSettingsScreen
     public bool IsSelectedLogOpenBadgeHit(Point point, int selectedIndex) =>
         selectedIndex >= 0 && selectedIndex < LogItemLinks.Length &&
         LogItemLinks[selectedIndex].ActionBadge is { IsVisible: true } badge && badge.Bounds.Contains(point);
+
+    public void Draw(StationeryDrawingContext drawingContext, Point mousePosition, ApplicationSettingsPage page,
+        string logRoot, string sgfSaveDirectory, string screenshotSaveDirectory,
+        string applicationSettingsPath, string engineSettingsPath,
+        IReadOnlyList<string> logFiles, int selectedIndex, string message)
+    {
+        var mousePoint = drawingContext.ToVirtualPoint(mousePosition);
+        drawingContext.Begin();
+        drawingContext.DrawBackground();
+        var panel = new Rectangle(390, 100, 1180, 860);
+        drawingContext.FillRectangle(new Rectangle(panel.X + 18, panel.Y + 20, panel.Width, panel.Height), new Color(0, 0, 0, 130));
+        drawingContext.FillRectangle(panel, new Color(21, 25, 32, 246));
+        drawingContext.DrawRectangle(panel, 2, new Color(82, 111, 114));
+        drawingContext.DrawText("APPLICATION SETTINGS", new Vector2(440, 148), new Color(244, 238, 218), 0.78f);
+        BackButton.Draw(mousePoint, drawingContext);
+        DrawTabs(drawingContext, page, mousePoint);
+
+        if (page == ApplicationSettingsPage.Log)
+        {
+            foreach (var link in LogItemLinks) link.ActionBadge?.Hide();
+            drawingContext.DrawVerticalResultSection(new Rectangle(440, 354, 1070, 180), "ROOT FOLDER", new Color(67, 112, 118));
+            DrawValueField(drawingContext, string.Empty, logRoot, LogRootLink, mousePoint);
+            drawingContext.DrawFittedText("GUI   " + Path.Combine(logRoot, "Gui"), new Rectangle(440, 452, 1050, 24), new Color(180, 195, 195), 0.30f);
+            drawingContext.DrawFittedText("CGOS  " + Path.Combine(logRoot, "Cgos"), new Rectangle(440, 480, 1050, 24), new Color(180, 195, 195), 0.30f);
+            drawingContext.DrawVerticalResultSection(new Rectangle(440, 548, 1070, 282), "RECENT GUI LOGS", new Color(76, 91, 126));
+            for (var index = 0; index < logFiles.Count; index++)
+            {
+                var link = LogItemLinks[index];
+                var bounds = link.Bounds;
+                var selected = index == selectedIndex;
+                var hovered = bounds.Contains(mousePoint);
+                drawingContext.DrawFittedText(Path.GetFileName(logFiles[index]), new Rectangle(bounds.X + 8, bounds.Y + 6, bounds.Width - 16, 28), Color.White, 0.31f);
+                link.UpdatePointer(mousePoint);
+                link.SetSelected(selected);
+                link.Draw(drawingContext);
+                if (selected && hovered)
+                {
+                    link.ActionBadge?.Show();
+                    link.ActionBadge?.Draw(drawingContext);
+                }
+            }
+        }
+        else if (page == ApplicationSettingsPage.OtherFolders)
+        {
+            drawingContext.DrawVerticalResultSection(new Rectangle(440, 354, 1070, 152), "SGF", new Color(67, 112, 118));
+            DrawValueField(drawingContext, string.Empty, string.IsNullOrWhiteSpace(sgfSaveDirectory) ? "(NOT SET - FIRST SAVE WILL BE REMEMBERED)" : sgfSaveDirectory, SgfFolderLink, mousePoint);
+            drawingContext.DrawVerticalResultSection(new Rectangle(440, 548, 1070, 174), "SCREENSHOT", new Color(76, 91, 126));
+            DrawValueField(drawingContext, string.Empty, screenshotSaveDirectory, ScreenshotFolderLink, mousePoint);
+            drawingContext.DrawFittedText("Ctrl + P captures the whole game window, including its frame.", new Rectangle(440, 656, 1020, 28), new Color(180, 195, 195), 0.30f);
+        }
+        else
+        {
+            drawingContext.DrawVerticalResultSection(new Rectangle(440, 354, 1070, 152), "APPLICATION", new Color(67, 112, 118));
+            DrawValueField(drawingContext, string.Empty, applicationSettingsPath, ApplicationSettingsFileLink, mousePoint);
+            drawingContext.DrawVerticalResultSection(new Rectangle(440, 548, 1070, 152), "ENGINE", new Color(76, 91, 126));
+            DrawValueField(drawingContext, string.Empty, engineSettingsPath, EngineSettingsFileLink, mousePoint);
+        }
+
+        if (!string.IsNullOrWhiteSpace(message))
+            drawingContext.DrawFittedText(message, new Rectangle(440, 910, 780, 24), new Color(255, 205, 140), 0.28f);
+        drawingContext.End();
+    }
+
+    public void DrawSettingsButton(StationeryDrawingContext drawingContext, Point mousePoint)
+    {
+        var bounds = SettingsButton.Bounds;
+        var hovered = bounds.Contains(mousePoint);
+        drawingContext.FillRectangle(bounds, hovered ? new Color(36, 50, 58) : new Color(24, 31, 37));
+        drawingContext.DrawRectangle(bounds, 2, hovered ? new Color(178, 219, 226) : new Color(82, 111, 114));
+        var center = new Vector2(bounds.Center.X, bounds.Center.Y);
+        var color = hovered ? new Color(99, 223, 185) : new Color(180, 195, 195);
+        drawingContext.DrawCircle(center, 16, color);
+        drawingContext.DrawCircle(center, 7, new Color(24, 31, 37));
+        for (var index = 0; index < 8; index++)
+        {
+            var angle = MathHelper.TwoPi * index / 8f;
+            var direction = new Vector2(MathF.Cos(angle), MathF.Sin(angle));
+            drawingContext.DrawLine(center + direction * 15, center + direction * 24, 6, color);
+        }
+    }
+
+    private void DrawTabs(StationeryDrawingContext drawingContext, ApplicationSettingsPage selectedPage, Point mousePoint)
+    {
+        foreach (var page in Enum.GetValues<ApplicationSettingsPage>())
+        {
+            var bounds = GetTabButton(page).Bounds;
+            drawingContext.FillRectangle(bounds, page == selectedPage ? new Color(31, 49, 49) : bounds.Contains(mousePoint) ? new Color(29, 39, 46) : new Color(21, 28, 34));
+            var label = page switch { ApplicationSettingsPage.Log => "LOG", ApplicationSettingsPage.OtherFolders => "OTHER FOLDERS", _ => "OTHER" };
+            drawingContext.DrawFittedText(label, new Rectangle(bounds.X + 18, bounds.Y + 9, bounds.Width - 36, 30), Color.White, 0.34f);
+            drawingContext.FillRoundedRectangle(new Rectangle(bounds.X + 10, bounds.Bottom - 7, bounds.Width - 20, 5), 2,
+                page == selectedPage ? new Color(99, 223, 185) : bounds.Contains(mousePoint) ? new Color(185, 196, 255) : new Color(58, 78, 86));
+        }
+    }
+
+    private static void DrawValueField(StationeryDrawingContext drawingContext, string label, string value, LinkUnderline link, Point mousePoint)
+    {
+        var bounds = link.Bounds;
+        var hovered = bounds.Contains(mousePoint);
+        if (!string.IsNullOrWhiteSpace(label))
+            drawingContext.DrawText(label, new Vector2(bounds.X + 8, bounds.Y), new Color(180, 195, 195), 0.34f);
+        var valueY = string.IsNullOrWhiteSpace(label) ? bounds.Y + 16 : bounds.Y + 30;
+        drawingContext.DrawFittedText(value, new Rectangle(bounds.X + 8, valueY, bounds.Width - (hovered ? 132 : 16), 28), Color.White, 0.32f);
+        link.UpdatePointer(mousePoint);
+        link.Draw(drawingContext);
+    }
 
     private static Rectangle GetLogItemBounds(int index) => new(440, 570 + index * 58, 1070, 48);
 

@@ -18,6 +18,11 @@ public sealed class StationeryDrawingContext
     private readonly Action<string, Rectangle, Color, float> _drawCenteredFittedText;
     private readonly Action<string, Vector2, Color, float> _drawRotatedCenteredText;
     private readonly Func<string, Vector2> _measureText;
+    private readonly Func<Point, Point> _toVirtualPoint;
+    private readonly Action _begin;
+    private readonly Action _end;
+    private readonly Action _drawBackground;
+    private readonly Action<Rectangle, string, Color> _drawVerticalResultSection;
 
     public StationeryDrawingContext(
         GoScreenRenderer screenRenderer,
@@ -31,7 +36,12 @@ public sealed class StationeryDrawingContext
         Action<string, Rectangle, Color, float> drawFittedText,
         Action<string, Rectangle, Color, float> drawCenteredFittedText,
         Action<string, Vector2, Color, float> drawRotatedCenteredText,
-        Func<string, Vector2> measureText)
+        Func<string, Vector2> measureText,
+        Func<Point, Point> toVirtualPoint,
+        Action begin,
+        Action end,
+        Action drawBackground,
+        Action<Rectangle, string, Color> drawVerticalResultSection)
     {
         ScreenRenderer = screenRenderer ?? throw new ArgumentNullException(nameof(screenRenderer));
         _fillRectangle = fillRectangle ?? throw new ArgumentNullException(nameof(fillRectangle));
@@ -45,6 +55,11 @@ public sealed class StationeryDrawingContext
         _drawCenteredFittedText = drawCenteredFittedText ?? throw new ArgumentNullException(nameof(drawCenteredFittedText));
         _drawRotatedCenteredText = drawRotatedCenteredText ?? throw new ArgumentNullException(nameof(drawRotatedCenteredText));
         _measureText = measureText ?? throw new ArgumentNullException(nameof(measureText));
+        _toVirtualPoint = toVirtualPoint ?? throw new ArgumentNullException(nameof(toVirtualPoint));
+        _begin = begin ?? throw new ArgumentNullException(nameof(begin));
+        _end = end ?? throw new ArgumentNullException(nameof(end));
+        _drawBackground = drawBackground ?? throw new ArgumentNullException(nameof(drawBackground));
+        _drawVerticalResultSection = drawVerticalResultSection ?? throw new ArgumentNullException(nameof(drawVerticalResultSection));
     }
 
     public void FillRectangle(Rectangle bounds, Color color) => _fillRectangle(bounds, color);
@@ -148,4 +163,10 @@ public sealed class StationeryDrawingContext
     public void DrawRotatedCenteredText(string text, Vector2 center, Color color, float scale) =>
         _drawRotatedCenteredText(text, center, color, scale);
     public Vector2 MeasureText(string text) => _measureText(text);
+    public Point ToVirtualPoint(Point point) => _toVirtualPoint(point);
+    public void Begin() => _begin();
+    public void End() => _end();
+    public void DrawBackground() => _drawBackground();
+    public void DrawVerticalResultSection(Rectangle bounds, string label, Color color) =>
+        _drawVerticalResultSection(bounds, label, color);
 }

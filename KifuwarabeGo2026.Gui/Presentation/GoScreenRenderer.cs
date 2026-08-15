@@ -95,7 +95,13 @@ public sealed partial class GoScreenRenderer
         _stationeryDrawingContext = new StationeryDrawingContext(
             this,
             FillRect, DrawRoundedFill, DrawRect, DrawLine, DrawCircle, DrawStone, DrawText, DrawFittedText, DrawSharpCenteredFittedText,
-            DrawRotatedCenteredText, _font.MeasureString);
+            DrawRotatedCenteredText,
+            _font.MeasureString,
+            point => VirtualScreen.ToVirtualPoint(_graphicsDevice.Viewport, point),
+            () => _spriteBatch.Begin(samplerState: SamplerState.LinearClamp, transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport)),
+            _spriteBatch.End,
+            DrawBackground,
+            (bounds, label, color) => DrawVerticalResultSection(bounds, label, color));
         _boardLensModel = new BoardLensModel(
             BoardPoint,
             RenGraphCellColor,
