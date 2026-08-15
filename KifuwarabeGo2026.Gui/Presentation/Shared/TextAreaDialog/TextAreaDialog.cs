@@ -23,7 +23,7 @@ public sealed class TextAreaDialog
     public Button ApplyButton { get; }
 
     public void Draw(KfwStationeryDrawingTools drawingContext, Point mousePosition, string title, string text,
-        int caretIndex, string message, bool hasChanges, TextCompositionState composition = default,
+        int caretIndex, int selectionStart, int selectionLength, string message, bool hasChanges, TextCompositionState composition = default,
         TextCompositionDiagnostics compositionDiagnostics = default, bool showCompositionDiagnostics = false)
     {
         SetHasChanges(hasChanges);
@@ -36,7 +36,7 @@ public sealed class TextAreaDialog
         drawingContext.DrawText("COMMENT EDITOR", new Vector2(Bounds.X + 34, Bounds.Y + 28), new Color(244, 238, 218), 0.68f);
         drawingContext.DrawDynamicText(title, new Rectangle(Bounds.X + 36, Bounds.Y + 96, Bounds.Width - 72, 40), new Color(180, 195, 195), 0.42f);
         drawingContext.DrawRectangle(TextBounds, 1, new Color(99, 223, 185));
-        DrawLines(drawingContext, text);
+        DrawLines(drawingContext, text, selectionStart, selectionLength);
         var caret = GetCaretPosition(drawingContext, text, caretIndex);
         if (composition.IsActive && !string.IsNullOrEmpty(composition.Text))
         {
@@ -53,16 +53,41 @@ public sealed class TextAreaDialog
         drawingContext.End();
     }
 
-    private void DrawLines(KfwStationeryDrawingTools drawingContext, string text)
+    private void DrawLines(KfwStationeryDrawingTools drawingContext, string text, int selectionStart, int selectionLength)
     {
         if (string.IsNullOrEmpty(text))
         {
             drawingContext.DrawFittedText("(EMPTY COMMENT)", new Rectangle(TextBounds.X + 18, TextBounds.Y + 18, TextBounds.Width - 36, 34), new Color(112, 132, 136), 0.34f);
             return;
         }
-        var lines = text.Replace("\r", string.Empty).Split('\n');
+        var normalizedText = text.Replace("\r", string.Empty);
+        var lines = normalizedText.Split('\n');
+        var lineStart = 0;
+        var selectionEnd = selectionStart + selectionLength;
         for (var index = 0; index < lines.Length && index < 11; index++)
-            drawingContext.DrawFittedText(lines[index], new Rectangle(TextBounds.X + 18, TextBounds.Y + 18 + index * 32, TextBounds.Width - 36, 30), new Color(226, 232, 225), 0.34f);
+        {
+            var line = lines[index];
+            var bounds = new Rectangle(TextBounds.X + 18, TextBounds.Y + 18 + index * 32, TextBounds.Width - 36, 30);
+            drawingContext.DrawFittedText(line, bounds, new Color(226, 232, 225), 0.34f);
+            var overlapStart = Math.Max(selectionStart, lineStart);
+            var overlapEnd = Math.Min(selectionEnd, lineStart + line.Length);
+            if (overlapEnd > overlapStart)
+                drawingContext.DrawTextSelection(line, overlapStart - lineStart, overlapEnd - overlapStart, bounds, 0.34f);
+            lineStart += line.Length + 1;
+        }
+    }
+
+    public bool IsTextBoxHit(Point point) => TextBounds.Contains(point);
+
+    public int GetCaretIndex(KfwStationeryDrawingTools drawingContext, Point point, string text)
+    {
+        var normalizedText = text.Replace("\r", string.Empty);
+        var lines = normalizedText.Split('\n');
+        var lineIndex = Math.Clamp((point.Y - (TextBounds.Y + 18)) / 32, 0, Math.Min(lines.Length - 1, 10));
+        var lineStart = 0;
+        for (var index = 0; index < lineIndex; index++) lineStart += lines[index].Length + 1;
+        var bounds = new Rectangle(TextBounds.X + 18, TextBounds.Y + 18 + lineIndex * 32, TextBounds.Width - 36, 30);
+        return lineStart + drawingContext.GetTextCaretIndex(point.X, lines[lineIndex], bounds, 0.34f);
     }
 
     private Vector2 GetCaretPosition(KfwStationeryDrawingTools drawingContext, string text, int caretIndex)

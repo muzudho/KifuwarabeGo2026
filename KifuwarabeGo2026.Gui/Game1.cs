@@ -954,6 +954,8 @@ public class Game1 : Game
                 _commentEditorMoveIndex == 0 ? "ROOT COMMENT (INITIAL POSITION)" : $"MOVE {_commentEditorMoveIndex} COMMENT",
                 _commentTextArea.Text,
                 _commentTextArea.CaretIndex,
+                _commentTextArea.SelectionStart,
+                _commentTextArea.SelectionLength,
                 "COMMENT IS SAVED AS STANDARD SGF C[] TEXT.",
                 _commentTextArea.Text != _commentEditorInitialText,
                 _commentEditorComposition,
@@ -998,12 +1000,18 @@ public class Game1 : Game
         }
         if (_isCommentEditorOpen)
         {
-            Mouse.SetCursor(MouseCursor.Arrow);
+            var commentDialog = TextAreaDialog.Default;
+            Mouse.SetCursor(commentDialog.IsTextBoxHit(point) ? MouseCursor.IBeam : MouseCursor.Arrow);
             if (_previousMouse.LeftButton == ButtonState.Released && mouse.LeftButton == ButtonState.Pressed)
             {
-                var commentDialog = TextAreaDialog.Default;
                 commentDialog.SetHasChanges(_commentTextArea.Text != _commentEditorInitialText);
-                if (commentDialog.ApplyButton.IsHit(point))
+                if (commentDialog.IsTextBoxHit(point) && _presentationServices is not null)
+                {
+                    _commentTextArea.BeginMouseSelection(
+                        commentDialog.GetCaretIndex(_presentationServices.Stationery, point, _commentTextArea.Text),
+                        IsShiftDown());
+                }
+                else if (commentDialog.ApplyButton.IsHit(point))
                 {
                     if (_commentTextArea.Text != _commentEditorInitialText) CommitCommentEditor(saveToFile: true);
                     else CancelCommentEditor();
@@ -1013,6 +1021,16 @@ public class Game1 : Game
                     CancelCommentEditor();
                     BeginDiscardTransition();
                 }
+            }
+            else if (mouse.LeftButton == ButtonState.Pressed && _previousMouse.LeftButton == ButtonState.Pressed &&
+                     _commentTextArea.IsMouseSelecting && _presentationServices is not null)
+            {
+                _commentTextArea.UpdateMouseSelection(
+                    commentDialog.GetCaretIndex(_presentationServices.Stationery, point, _commentTextArea.Text));
+            }
+            else if (mouse.LeftButton == ButtonState.Released)
+            {
+                _commentTextArea.EndMouseSelection();
             }
             _previousMouse = mouse;
             return;
