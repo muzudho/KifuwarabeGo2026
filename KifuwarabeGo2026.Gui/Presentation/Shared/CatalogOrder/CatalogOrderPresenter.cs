@@ -50,7 +50,7 @@ public sealed class CatalogOrderPresenter
 
         _catalogOrderEditorFrame.Draw(title, editor.HasChanges, mousePoint,
             new CatalogOrderEditorFrameDrawingCallbacks(drawingContext.FillRectangle, drawingContext.DrawRectangle,
-                drawingContext.DrawText, drawingContext.DrawCommandButton));
+                drawingContext.DrawText, drawingContext.DrawButton));
 
         var firstPage = editor.FirstVisiblePageIndex;
         _catalogOrderPageHeader.Draw(firstPage, editor.PageCount,
@@ -79,6 +79,6 @@ public sealed class CatalogOrderPresenter
         _catalogOrderNavigationPanel.Draw(new CatalogOrderNavigationModel(firstPage, editor.PageCount, editor.SelectedIndex,
             editor.Items.Count, hasSelection ? getName(selectedItem) : null, hasSelection ? getSummary(selectedItem) : null, mousePoint),
             new CatalogOrderNavigationDrawingCallbacks(drawingContext.DrawText, drawingContext.DrawFittedText,
-                (bounds, label, point, enabled, scale) => drawingContext.DrawCommandButton(bounds, label, false, point, enabled, scale)));
+                (bounds, label, point, enabled, scale) => drawingContext.DrawButton(bounds, label, false, point, enabled, scale)));
     }
 }

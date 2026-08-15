@@ -30,7 +30,7 @@ public sealed class MessageDialog
             drawingContext.FillRectangle, drawingContext.DrawRectangle,
             drawingContext.DrawDynamicText, drawingContext.DrawLine,
             (bounds, text, focused, point, scale) =>
-                drawingContext.DrawCommandButton(bounds, text, focused, point, true, scale)));
+                drawingContext.DrawButton(bounds, text, focused, point, true, scale)));
         drawingContext.End();
     }
 

@@ -277,8 +277,8 @@ public sealed class GtpEngineRenderer
 
         DrawText("SELECT ENGINE (GTP)", new Vector2(GtpEngineSelectionDialogBounds.X + 30, GtpEngineSelectionDialogBounds.Y + 24), new Color(244, 238, 218), 0.78f);
         var closeLabel = session.IsGtpEngineSelectionForAppProvider ? "CLOSE" : "CANCEL";
-        DrawCommandButton(GtpEngineSelectionDialogCancelButtonBounds, closeLabel, false, mousePoint, scale: 0.34f);
-        DrawCommandButton(GtpEngineSelectionDialogOkButtonBounds, "USE", false, mousePoint, enabled: !session.IsGtpEngineCompatibilityLoading && session.CanCommitGtpEngineSelection, scale: 0.34f);
+        DrawButton(GtpEngineSelectionDialogCancelButtonBounds, closeLabel, false, mousePoint, scale: 0.34f);
+        DrawButton(GtpEngineSelectionDialogOkButtonBounds, "USE", false, mousePoint, enabled: !session.IsGtpEngineCompatibilityLoading && session.CanCommitGtpEngineSelection, scale: 0.34f);
 
         DrawText("LIST", new Vector2(GtpEngineSelectionDialogListBounds.X, GtpEngineSelectionDialogListBounds.Y - 34), new Color(180, 195, 195), 0.46f);
         DrawText("PROPERTIES", new Vector2(GtpEngineSelectionDialogPropertyBounds.X, GtpEngineSelectionDialogPropertyBounds.Y - 34), new Color(180, 195, 195), 0.46f);
@@ -311,14 +311,14 @@ public sealed class GtpEngineRenderer
             DrawGtpEngineSelectionPropertiesSkeleton();
 
         var pageCount = Math.Max(1, (int)Math.Ceiling(session.GtpEngineProfiles.Count / (double)GoAppSession.GtpEngineSelectionPageSize));
-        DrawCommandButton(GtpEngineSelectionDialogPreviousPageButtonBounds, "PREV", false, mousePoint, enabled: !session.IsGtpEngineCompatibilityLoading && session.GtpEngineSelectionPageIndex > 0, scale: 0.42f);
+        DrawButton(GtpEngineSelectionDialogPreviousPageButtonBounds, "PREV", false, mousePoint, enabled: !session.IsGtpEngineCompatibilityLoading && session.GtpEngineSelectionPageIndex > 0, scale: 0.42f);
         DrawText($"PAGE {session.GtpEngineSelectionPageIndex + 1} / {pageCount}", new Vector2(600, 817), new Color(227, 224, 210), 0.42f);
-        DrawCommandButton(GtpEngineSelectionDialogNextPageButtonBounds, "NEXT", false, mousePoint, enabled: !session.IsGtpEngineCompatibilityLoading && session.GtpEngineSelectionPageIndex < pageCount - 1, scale: 0.42f);
-        DrawCommandButton(GtpEngineSelectionDialogAddButtonBounds, "ADD", false, mousePoint, enabled: !session.IsGtpEngineCompatibilityLoading, scale: 0.42f);
-        DrawCommandButton(GtpEngineSelectionDialogEditButtonBounds, "EDIT", false, mousePoint, enabled: !session.IsGtpEngineCompatibilityLoading && session.GtpEngineProfiles.Count > 0, scale: 0.42f);
-        DrawCommandButton(GtpEngineSelectionDialogDuplicateButtonBounds, "DUPLICATE", false, mousePoint, enabled: !session.IsGtpEngineCompatibilityLoading && session.GtpEngineProfiles.Count > 0, scale: 0.32f);
-        DrawCommandButton(GtpEngineSelectionDialogDeleteButtonBounds, "DELETE", false, mousePoint, enabled: !session.IsGtpEngineCompatibilityLoading && session.CanDeleteSelectedGtpEngine, scale: 0.42f);
-        DrawCommandButton(GtpEngineSelectionDialogOrderButtonBounds, "ORDER", false, mousePoint, enabled: !session.IsGtpEngineCompatibilityLoading && session.GtpEngineProfiles.Count > 1, scale: 0.38f);
+        DrawButton(GtpEngineSelectionDialogNextPageButtonBounds, "NEXT", false, mousePoint, enabled: !session.IsGtpEngineCompatibilityLoading && session.GtpEngineSelectionPageIndex < pageCount - 1, scale: 0.42f);
+        DrawButton(GtpEngineSelectionDialogAddButtonBounds, "ADD", false, mousePoint, enabled: !session.IsGtpEngineCompatibilityLoading, scale: 0.42f);
+        DrawButton(GtpEngineSelectionDialogEditButtonBounds, "EDIT", false, mousePoint, enabled: !session.IsGtpEngineCompatibilityLoading && session.GtpEngineProfiles.Count > 0, scale: 0.42f);
+        DrawButton(GtpEngineSelectionDialogDuplicateButtonBounds, "DUPLICATE", false, mousePoint, enabled: !session.IsGtpEngineCompatibilityLoading && session.GtpEngineProfiles.Count > 0, scale: 0.32f);
+        DrawButton(GtpEngineSelectionDialogDeleteButtonBounds, "DELETE", false, mousePoint, enabled: !session.IsGtpEngineCompatibilityLoading && session.CanDeleteSelectedGtpEngine, scale: 0.42f);
+        DrawButton(GtpEngineSelectionDialogOrderButtonBounds, "ORDER", false, mousePoint, enabled: !session.IsGtpEngineCompatibilityLoading && session.GtpEngineProfiles.Count > 1, scale: 0.38f);
         DrawGtpEngineDeleteConfirmation(session, mousePoint);
         CatalogOrderPresenter.Default.Draw(_drawingContext,
             session.GtpEngineOrderEditor,
@@ -377,8 +377,8 @@ public sealed class GtpEngineRenderer
         DrawRect(GtpEngineEditPanelBounds, 2, new Color(116, 145, 146));
 
         DrawText(session.IsGtpEngineAddPanelMode ? "ADD ENGINE (GTP)" : "EDIT ENGINE (GTP)", new Vector2(GtpEngineEditPanelBounds.X + 30, GtpEngineEditPanelBounds.Y + 24), new Color(244, 238, 218), 0.78f);
-        DrawCommandButton(GtpEngineEditPanelCloseButtonBounds, "DISCARD", false, mousePoint, enabled: session.IsGtpEngineEditDirty, scale: 0.30f);
-        DrawCommandButton(GtpEngineEditPanelSaveButtonBounds, session.IsGtpEngineEditDirty ? "SAVE & CLOSE" : "CLOSE", false, mousePoint,
+        DrawButton(GtpEngineEditPanelCloseButtonBounds, "DISCARD", false, mousePoint, enabled: session.IsGtpEngineEditDirty, scale: 0.30f);
+        DrawButton(GtpEngineEditPanelSaveButtonBounds, session.IsGtpEngineEditDirty ? "SAVE & CLOSE" : "CLOSE", false, mousePoint,
             scale: session.IsGtpEngineEditDirty ? 0.27f : 0.34f);
 
         DrawGtpEngineEditField(session, GtpEngineProfileEditField.DisplayName, "DISPLAY", mousePoint);
@@ -386,18 +386,18 @@ public sealed class GtpEngineRenderer
         DrawGtpEngineEditField(session, GtpEngineProfileEditField.WorkingDirectory, "WORKDIR", mousePoint);
         DrawGtpEngineEditField(session, GtpEngineProfileEditField.Arguments, "ARGS", mousePoint);
 
-        DrawCommandButton(GtpEngineEditPanelGuiOptionsButtonBounds, "ENGINE OPTIONS", false, mousePoint, scale: 0.32f);
+        DrawButton(GtpEngineEditPanelGuiOptionsButtonBounds, "ENGINE OPTIONS", false, mousePoint, scale: 0.32f);
 
         var initialPositionBounds = GtpEngineEditPanelInitialPositionRowBounds;
         DrawDataRowFrame(initialPositionBounds);
         DrawUiLabel(UiLabel.InCompactRow("POSITION", initialPositionBounds));
-        DrawCommandButton(
+        DrawButton(
             GtpEngineEditPanelInitialPositionProfileButtonBounds,
             $"PROFILE {FormatInitialPositionProfile(session.GtpEngineEditDraft.InitialPositionProfileId)}",
             false,
             mousePoint,
             scale: 0.28f);
-        DrawCommandButton(
+        DrawButton(
             GtpEngineEditPanelInitialPositionMethodButtonBounds,
             $"METHOD {FormatInitialPositionMethod(session.GtpEngineEditDraft.InitialPositionManualPreferredMethod)}",
             false,
@@ -407,7 +407,7 @@ public sealed class GtpEngineRenderer
         var logBounds = GtpEngineEditPanelLogRowBounds;
         DrawDataRowFrame(logBounds);
         DrawUiLabel(UiLabel.InCompactRow("GTP LOG", logBounds));
-        DrawCommandButton(GtpEngineEditPanelLogButtonBounds, session.GtpEngineEditDraft.EnableGtpLog ? "ON" : "OFF", session.GtpEngineEditDraft.EnableGtpLog, mousePoint, scale: 0.42f);
+        DrawButton(GtpEngineEditPanelLogButtonBounds, session.GtpEngineEditDraft.EnableGtpLog ? "ON" : "OFF", session.GtpEngineEditDraft.EnableGtpLog, mousePoint, scale: 0.42f);
 
         if (!string.IsNullOrWhiteSpace(session.GtpEngineEditWarning))
         {
@@ -464,8 +464,8 @@ public sealed class GtpEngineRenderer
             GtpEngineGuiOptionsPageLabelBounds,
             mousePoint);
 
-        DrawCommandButton(GtpEngineGuiOptionsDialogCancelButtonBounds, "DISCARD", false, mousePoint, enabled: session.IsGtpEngineGuiOptionsDialogDirty, scale: 0.30f);
-        DrawCommandButton(GtpEngineGuiOptionsDialogOkButtonBounds, session.IsGtpEngineGuiOptionsDialogDirty ? "SAVE & CLOSE" : "CLOSE", false, mousePoint,
+        DrawButton(GtpEngineGuiOptionsDialogCancelButtonBounds, "DISCARD", false, mousePoint, enabled: session.IsGtpEngineGuiOptionsDialogDirty, scale: 0.30f);
+        DrawButton(GtpEngineGuiOptionsDialogOkButtonBounds, session.IsGtpEngineGuiOptionsDialogDirty ? "SAVE & CLOSE" : "CLOSE", false, mousePoint,
             scale: session.IsGtpEngineGuiOptionsDialogDirty ? 0.25f : 0.34f);
         DrawGtpEngineGuiOptionValueTooltip(session, mousePoint);
         DrawGtpEngineRandomMoveSelectionDialog(session, mousePoint);
@@ -481,7 +481,7 @@ public sealed class GtpEngineRenderer
         if (option.Type == "button")
         {
             var queued = bool.TryParse(value, out var isQueued) && isQueued;
-            DrawCommandButton(valueBounds, queued ? "QUEUED" : "EXECUTE", queued, mousePoint, scale: queued ? 0.27f : 0.25f);
+            DrawButton(valueBounds, queued ? "QUEUED" : "EXECUTE", queued, mousePoint, scale: queued ? 0.27f : 0.25f);
             return;
         }
 
@@ -498,7 +498,7 @@ public sealed class GtpEngineRenderer
         if (option.Type == "spin" && option.Min is { } min && option.Max is { } max)
             DrawFittedText($"{min} .. {max}", new Rectangle(valueBounds.Right + 12, valueBounds.Y + 10, 126, 28), new Color(118, 139, 143), 0.24f);
         if (option.Type is not ("button" or "string") && row.Contains(mousePoint))
-            DrawCommandButton(GtpEngineGuiOptionDefaultButtonBounds(slot), "DEFAULT", false, mousePoint, scale: 0.3f);
+            DrawButton(GtpEngineGuiOptionDefaultButtonBounds(slot), "DEFAULT", false, mousePoint, scale: 0.3f);
     }
 
     private static string GetGtpEngineOptionActionLabel(GtpEngineGuiOptionSpec option) => option.Type switch
@@ -592,16 +592,16 @@ public sealed class GtpEngineRenderer
             GtpEngineRandomMoveSelectionPageLabelBounds,
             mousePoint);
 
-        DrawCommandButton(GtpEngineRandomMoveSelectionDialogCancelButtonBounds, "CANCEL", false, mousePoint, scale: 0.38f);
+        DrawButton(GtpEngineRandomMoveSelectionDialogCancelButtonBounds, "CANCEL", false, mousePoint, scale: 0.38f);
         var canSelect = session.GtpEngineRandomMoveSelectionIndex >= 0 && session.GtpEngineRandomMoveSelectionIndex < choices.Count && choices[session.GtpEngineRandomMoveSelectionIndex].IsEnabled;
-        DrawCommandButton(GtpEngineRandomMoveSelectionDialogSelectButtonBounds, "SELECT", false, mousePoint, enabled: canSelect, scale: 0.36f);
+        DrawButton(GtpEngineRandomMoveSelectionDialogSelectButtonBounds, "SELECT", false, mousePoint, enabled: canSelect, scale: 0.36f);
     }
 
     private void DrawPager(int pageIndex, int pageCount, Rectangle previousBounds, Rectangle nextBounds, Rectangle labelBounds, Point mousePoint)
     {
-        DrawCommandButton(previousBounds, "PREV", false, mousePoint, enabled: pageIndex > 0, scale: 0.34f);
+        DrawButton(previousBounds, "PREV", false, mousePoint, enabled: pageIndex > 0, scale: 0.34f);
         DrawFittedText($"PAGE {pageIndex + 1} / {pageCount}", labelBounds, new Color(227, 224, 210), 0.38f);
-        DrawCommandButton(nextBounds, "NEXT", false, mousePoint, enabled: pageIndex < pageCount - 1, scale: 0.34f);
+        DrawButton(nextBounds, "NEXT", false, mousePoint, enabled: pageIndex < pageCount - 1, scale: 0.34f);
     }
 
 
@@ -655,8 +655,8 @@ public sealed class GtpEngineRenderer
         DrawText("DELETE GTP ENGINE", new Vector2(GtpEngineDeleteConfirmationBounds.X + 28, GtpEngineDeleteConfirmationBounds.Y + 24), new Color(255, 230, 160), 0.62f);
         DrawFittedText($"{session.GtpEngineDeleteConfirmationName} will be removed from the list.", new Rectangle(GtpEngineDeleteConfirmationBounds.X + 28, GtpEngineDeleteConfirmationBounds.Y + 92, GtpEngineDeleteConfirmationBounds.Width - 56, 42), Color.White, 0.5f);
         DrawText("DELETE?", new Vector2(GtpEngineDeleteConfirmationBounds.X + 28, GtpEngineDeleteConfirmationBounds.Y + 150), new Color(180, 195, 195), 0.46f);
-        DrawCommandButton(GtpEngineDeleteConfirmationCancelButtonBounds, "CANCEL", false, mousePoint, scale: 0.42f);
-        DrawCommandButton(GtpEngineDeleteConfirmationConfirmButtonBounds, "DELETE", false, mousePoint, scale: 0.42f);
+        DrawButton(GtpEngineDeleteConfirmationCancelButtonBounds, "CANCEL", false, mousePoint, scale: 0.42f);
+        DrawButton(GtpEngineDeleteConfirmationConfirmButtonBounds, "DELETE", false, mousePoint, scale: 0.42f);
     }
 
 
@@ -955,8 +955,8 @@ public sealed class GtpEngineRenderer
     private void DrawCircle(Vector2 center, float radius, Color color) => _drawingContext.DrawCircle(center, radius, color);
     private void DrawText(string text, Vector2 position, Color color, float scale) => _drawingContext.DrawText(text, position, color, scale);
     private void DrawFittedText(string text, Rectangle bounds, Color color, float scale) => _drawingContext.DrawFittedText(text, bounds, color, scale);
-    private void DrawCommandButton(Rectangle bounds, string label, bool selected, Point mousePoint, bool enabled = true, float scale = 0.5f) =>
-        _drawingContext.DrawCommandButton(bounds, label, selected, mousePoint, enabled, scale);
+    private void DrawButton(Rectangle bounds, string label, bool selected, Point mousePoint, bool enabled = true, float scale = 0.5f) =>
+        _drawingContext.DrawButton(bounds, label, selected, mousePoint, enabled, scale);
     private void DrawDataRowFrame(Rectangle bounds) => _drawingContext.DrawDataRowFrame(bounds);
     private void DrawUiLabel(UiLabel label) => DrawFittedText(label.Text, label.Bounds, UiLabel.TextColor, label.Scale);
     private void DrawTextBoxSelection(string text, int start, int length, Rectangle bounds, float scale) => _drawingContext.DrawTextSelection(text, start, length, bounds, scale);

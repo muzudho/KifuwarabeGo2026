@@ -181,19 +181,18 @@ public sealed class KfwStationeryDrawingTools : IDisposable
     public void End() => _canvas.End();
     public void DrawBackground() => BackgroundRenderer.Draw(_canvas);
 
-    public void DrawCommandButton(Rectangle bounds, string label, bool selected, Point mousePoint, bool enabled, float scale)
+    /// <summary>
+    /// 動的に内容が決まるボタンを文房具 UI の <see cref="Controls.Button.Button"/> として描画します。
+    /// 固定ボタンは、画面モデルが Button インスタンスを保持して直接 Draw する方式を優先してください。
+    /// </summary>
+    public void DrawButton(Rectangle bounds, string label, bool selected, Point mousePoint, bool enabled, float scale)
     {
-        var hovered = enabled && bounds.Contains(mousePoint);
-        var fill = !enabled ? new Color(24, 27, 31) : selected ? new Color(31, 151, 112) : hovered ? new Color(58, 82, 94) : new Color(36, 48, 58);
-        var border = !enabled ? new Color(43, 50, 56) : selected ? new Color(151, 255, 215) : hovered ? new Color(178, 219, 226) : new Color(126, 150, 164);
-        FillRectangle(new Rectangle(bounds.X + 4, bounds.Y + 5, bounds.Width, bounds.Height), new Color(0, 0, 0, enabled ? 95 : 28));
-        FillRectangle(bounds, fill);
-        DrawRectangle(bounds, 2, border);
-        if (enabled)
-            DrawRectangle(new Rectangle(bounds.X + 2, bounds.Y + 2, bounds.Width - 4, bounds.Height - 4), 1,
-                selected ? new Color(215, 255, 238, 95) : new Color(255, 255, 255, hovered ? 70 : 36));
-        DrawDynamicText(label, new Rectangle(bounds.X + 10, bounds.Y + 5, bounds.Width - 20, bounds.Height - 10),
-            enabled ? Color.White : new Color(91, 100, 106), MathF.Max(0.36f, scale * 1.25f));
+        var button = new Controls.Button.Button(bounds, label, scale)
+        {
+            IsSelected = selected,
+            IsEnabled = enabled,
+        };
+        button.Draw(mousePoint, this);
     }
 
     public void DrawDynamicText(string text, Rectangle bounds, Color color, float scale) =>

@@ -15,8 +15,8 @@ public sealed class CatalogOrderEditorFrame
         draw.FillRectangle(bounds, new Color(19, 24, 31, 252));
         draw.DrawRectangle(bounds, 2, new Color(116, 145, 146));
         draw.DrawText($"{title} - EDIT ORDER", new Vector2(bounds.X + 30, bounds.Y + 24), new Color(244, 238, 218), 0.68f);
-        draw.DrawCommandButton(CatalogOrderEditorLayout.CancelButtonBounds, "DISCARD", false, mousePoint, hasChanges, 0.28f);
-        draw.DrawCommandButton(CatalogOrderEditorLayout.SaveButtonBounds, hasChanges ? "SAVE & CLOSE" : "CLOSE", false, mousePoint, true,
+        draw.DrawButton(CatalogOrderEditorLayout.CancelButtonBounds, "DISCARD", false, mousePoint, hasChanges, 0.28f);
+        draw.DrawButton(CatalogOrderEditorLayout.SaveButtonBounds, hasChanges ? "SAVE & CLOSE" : "CLOSE", false, mousePoint, true,
             hasChanges ? 0.23f : 0.31f);
         draw.FillRectangle(CatalogOrderEditorLayout.BoardBounds, new Color(15, 20, 26));
         draw.DrawRectangle(CatalogOrderEditorLayout.BoardBounds, 1, new Color(67, 84, 92));
@@ -27,4 +27,4 @@ public sealed class CatalogOrderEditorFrame
 
 public sealed record CatalogOrderEditorFrameDrawingCallbacks(Action<Rectangle, Color> FillRectangle,
     Action<Rectangle, int, Color> DrawRectangle, Action<string, Vector2, Color, float> DrawText,
-    Action<Rectangle, string, bool, Point, bool, float> DrawCommandButton);
+    Action<Rectangle, string, bool, Point, bool, float> DrawButton);

@@ -303,7 +303,7 @@ public sealed class RightSidePanelPlayerSelector
         drawingContext.DrawDataRowFrame(selector.Bounds);
         drawingContext.DrawFittedText(selector.Label, selector.LabelBounds, new Color(158, 178, 178), 0.36f);
         drawingContext.DrawFittedText(selector.Value, selector.ValueBounds, Color.White, 0.52f);
-        renderer.DrawCommandButton(selector.BrowseButtonBounds, selector.ButtonLabel, false, mousePoint,
+        renderer.DrawButton(selector.BrowseButtonBounds, selector.ButtonLabel, false, mousePoint,
             selector.Enabled, PlayerSelectorLayout.SelectButtonLabelScale);
     }
 }
@@ -434,11 +434,11 @@ public sealed class VariationEditingRightSidePanel
 
         renderer.DrawVerticalResultSection(new Rectangle(1144, 802, 668, 74), "BOARD", new Color(76, 91, 126));
         controls.ClearButton.Draw(mousePoint, drawingContext);
-        renderer.DrawCommandButton(controls.BoardLensToggleBounds, "L",
+        renderer.DrawButton(controls.BoardLensToggleBounds, "L",
             session.IsRenParseDisplayEnabled, mousePoint, true, 0.40f);
-        renderer.DrawCommandButton(controls.BoardLensPreviousBounds, "<J", false, mousePoint, session.IsRenParseDisplayEnabled, 0.25f);
-        renderer.DrawCommandButton(controls.BoardLensNextBounds, "K>", false, mousePoint, session.IsRenParseDisplayEnabled, 0.25f);
-        renderer.DrawCommandButton(controls.BoardLensExitBounds, "OFF/1", false, mousePoint, session.IsRenParseDisplayEnabled, 0.22f);
+        renderer.DrawButton(controls.BoardLensPreviousBounds, "<J", false, mousePoint, session.IsRenParseDisplayEnabled, 0.25f);
+        renderer.DrawButton(controls.BoardLensNextBounds, "K>", false, mousePoint, session.IsRenParseDisplayEnabled, 0.25f);
+        renderer.DrawButton(controls.BoardLensExitBounds, "OFF/1", false, mousePoint, session.IsRenParseDisplayEnabled, 0.22f);
 
         renderer.DrawVerticalResultSection(new Rectangle(1144, 916, 668, 76), "ACTION", new Color(91, 82, 105));
         controls.ExportSgfButton.Draw(mousePoint, drawingContext);

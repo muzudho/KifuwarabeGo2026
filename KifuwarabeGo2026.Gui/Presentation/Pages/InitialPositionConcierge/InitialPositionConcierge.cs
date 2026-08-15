@@ -49,7 +49,7 @@ public sealed class InitialPositionConcierge
             drawingContext.DrawText,
             drawingContext.FillRectangle,
             drawingContext.DrawRectangle,
-            drawingContext.DrawCommandButton));
+            drawingContext.DrawButton));
 
     /// <summary>初期局面の確認ページを描画します。</summary>
     public void Draw(InitialPositionConciergeView view, Point mousePoint, InitialPositionConciergeDrawingCallbacks draw)

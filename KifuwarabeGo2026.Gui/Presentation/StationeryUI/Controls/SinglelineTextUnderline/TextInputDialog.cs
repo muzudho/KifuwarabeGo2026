@@ -29,7 +29,7 @@ public sealed class TextInputDialog
                 },
                 drawingContext.MeasureText, drawingContext.DrawLine,
                 (label, x, enabled, color) => DrawCompositionLamp(drawingContext, label, x, enabled, color),
-                drawingContext.DrawCommandButton));
+                drawingContext.DrawButton));
         drawingContext.End();
     }
 
@@ -91,9 +91,9 @@ public sealed class TextInputDialog
         }
         else draw.FillRectangle(new Rectangle(Math.Min(caretX, TextBounds.Right - 24), TextBounds.Y + 14, 2, TextBounds.Height - 28), new Color(147, 244, 200));
         draw.DrawFittedText(message, new Rectangle(Bounds.X + 80, 544, Bounds.Width - 160, 32), new Color(180, 195, 195), 0.32f);
-        if (showDefaultButton) draw.DrawCommandButton(DefaultButtonBounds, "DEFAULT", false, mousePoint, true, 0.30f);
-        draw.DrawCommandButton(CancelButtonBounds, "CANCEL", false, mousePoint, true, 0.34f);
-        draw.DrawCommandButton(OkButtonBounds, "OK", false, mousePoint, true, 0.42f);
+        if (showDefaultButton) draw.DrawButton(DefaultButtonBounds, "DEFAULT", false, mousePoint, true, 0.30f);
+        draw.DrawButton(CancelButtonBounds, "CANCEL", false, mousePoint, true, 0.34f);
+        draw.DrawButton(OkButtonBounds, "OK", false, mousePoint, true, 0.42f);
     }
 }
 
@@ -107,4 +107,4 @@ public sealed record TextInputDialogDrawingCallbacks(
     Func<string, Vector2> MeasureText,
     Action<Vector2, Vector2, float, Color> DrawLine,
     Action<string, int, bool, Color> DrawCompositionLamp,
-    Action<Rectangle, string, bool, Point, bool, float> DrawCommandButton);
+    Action<Rectangle, string, bool, Point, bool, float> DrawButton);
