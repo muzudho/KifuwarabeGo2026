@@ -2,6 +2,7 @@ namespace KifuwarabeGo2026.Gui.Presentation.Pages.LocalMatch.Intermission;
 
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Presentation;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 using KifuwarabeGo2026.Gui.Application.GoApps.Casual.Ponnuki;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Button;
 using KifuwarabeGo2026.Shared.Domain;
@@ -34,10 +35,10 @@ public sealed class LocalMatchIntermissionPage
         Player1SeedAutoChangeButton.IsHit(point) ? PonnukiRandomSeedRole.Player1 :
         Player2SeedAutoChangeButton.IsHit(point) ? PonnukiRandomSeedRole.Player2 : null;
 
-    internal void DrawRightSidePanelContent(GoScreenRenderer renderer, GoAppSession session, Point mousePoint)
+    internal void DrawRightSidePanelContent(StationeryDrawingContext drawingContext, GoAppSession session, Point mousePoint)
     {
+        var renderer = drawingContext.ScreenRenderer;
         var screen = LocalMatchScreen.Default;
-        var drawingContext = renderer.StationeryDrawingContext;
         screen.BackToTitleButton.Draw(mousePoint, drawingContext);
 
         renderer.DrawVerticalResultSection(new Rectangle(1144, 184, 668, 176), "LOCAL APPS", new Color(99, 76, 48));
@@ -62,8 +63,8 @@ public sealed class LocalMatchIntermissionPage
         ChangeAppProviderButton.Draw(mousePoint, drawingContext);
 
         renderer.DrawVerticalResultSection(new Rectangle(1144, 632, 668, 216), "PLAYERS", new Color(76, 91, 126));
-        RightSidePanel.PlayerSelector.DrawPlayerRow(renderer, session, GoStone.Black, mousePoint, LocalMatchIntermissionRightSidePanel.BlackPlayerKindButtonY);
-        RightSidePanel.PlayerSelector.DrawPlayerRow(renderer, session, GoStone.White, mousePoint, LocalMatchIntermissionRightSidePanel.WhitePlayerKindButtonY);
+        RightSidePanel.PlayerSelector.DrawPlayerRow(drawingContext, session, GoStone.Black, mousePoint, LocalMatchIntermissionRightSidePanel.BlackPlayerKindButtonY);
+        RightSidePanel.PlayerSelector.DrawPlayerRow(drawingContext, session, GoStone.White, mousePoint, LocalMatchIntermissionRightSidePanel.WhitePlayerKindButtonY);
 
         renderer.DrawVerticalResultSection(new Rectangle(1144, 856, 668, 52), "SEED AUTO", new Color(112, 76, 48), labelWidth: 56);
         ProviderSeedAutoChangeButton.Label = session.PonnukiProviderSeedAutoChange ? "[x] PROVIDER" : "[ ] PROVIDER";

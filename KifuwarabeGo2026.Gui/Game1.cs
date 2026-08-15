@@ -752,7 +752,7 @@ public class Game1 : Game
                 if (_isApplicationSettingsOpen)
                     _renderer.DrawApplicationSettings(backgroundMousePosition, _applicationSettingsPage, ApplicationSettings.Current.LogRootDirectory, ApplicationSettings.Current.SgfSaveDirectory, ApplicationSettings.Current.ScreenshotSaveDirectory, ApplicationSettings.FilePath, _gtpEngineCatalog.ListPath, _guiLogFiles, _selectedGuiLogIndex, _applicationSettingsMessage);
                 else
-                    TitleRenderer.Draw(_renderer, _session, backgroundMousePosition, _titleMenuPage, _appProviderTabIndex, _appProviderSelectionLoadTask is not null);
+                    TitleRenderer.Draw(_renderer.StationeryDrawingContext, _session, backgroundMousePosition, _titleMenuPage, _appProviderTabIndex, _appProviderSelectionLoadTask is not null);
             }
         }
         else if (_variationSession is not null)
@@ -760,7 +760,7 @@ public class Game1 : Game
             if (_renderer is not null)
             {
                 LocalIntermissionRenderer.Draw(
-                    _renderer,
+                    _renderer.StationeryDrawingContext,
                     _variationSession,
                     backgroundMousePosition,
                     CreateLiveBoardPreview());
@@ -772,19 +772,19 @@ public class Game1 : Game
             {
                 if (_session.CurrentMode.Kind == GoAppModeKind.Reviewing)
                 {
-                LocalIntermissionRenderer.Draw(_renderer, _session, backgroundMousePosition);
+                LocalIntermissionRenderer.Draw(_renderer.StationeryDrawingContext, _session, backgroundMousePosition);
                 }
                 else if (_session.CgosConnectionFlowKind is CgosConnectionFlowKind.Watching or CgosConnectionFlowKind.Result)
                 {
-                CgosWatchPage.Default.Draw(_renderer, _session, _cgosGameObservation, backgroundMousePosition);
+                CgosWatchPage.Default.Draw(_renderer.StationeryDrawingContext, _session, _cgosGameObservation, backgroundMousePosition);
                 }
                 else if (_session.CgosConnectionFlowKind == CgosConnectionFlowKind.ConnectionStart)
                 {
-                CgosLoginPage.Default.Draw(_renderer, _session, backgroundMousePosition);
+                CgosLoginPage.Default.Draw(_renderer.StationeryDrawingContext, _session, backgroundMousePosition);
                 }
                 else
                 {
-                CgosSelectConnectionPage.Default.Draw(_renderer, _session, backgroundMousePosition);
+                CgosSelectConnectionPage.Default.Draw(_renderer.StationeryDrawingContext, _session, backgroundMousePosition);
                 }
             }
         }
@@ -793,7 +793,7 @@ public class Game1 : Game
             if (_renderer is not null)
             {
                 LocalIntermissionRenderer.Draw(
-                    _renderer,
+                    _renderer.StationeryDrawingContext,
                     _session,
                     backgroundMousePosition,
                     initialPositionConcierge: _playingScene.InitialPositionConciergeView);
@@ -1604,7 +1604,7 @@ public class Game1 : Game
             var handledByGtpEngineSelectionDialog = !handledByGtpEngineEditPanel && isPlayerSelectionIntermission && !isBoardEditing && TryHandleGtpEngineSelectionDialogClick(point);
             Func<Point, string, int>? getDisplayNameCaretIndex = _renderer is null
                 ? null
-                : (caretPoint, text) => TournamentRuleRenderer.GetDisplayNameCaretIndex(_renderer, caretPoint, text);
+                : (caretPoint, text) => TournamentRuleRenderer.GetDisplayNameCaretIndex(_renderer.StationeryDrawingContext, caretPoint, text);
             Func<Point, TournamentRulesNumericField, string, int>? getNumericCaretIndex = _renderer is null
                 ? null
                 : (caretPoint, field, text) => TournamentRuleEditorLayout.GetNumericCaretIndex(caretPoint, field, text, _renderer.GetSinglelineTextCaretIndex);
@@ -1915,7 +1915,7 @@ public class Game1 : Game
             case ActiveWindowId.TournamentRulesEdit:
                 return _tournamentRulesSetting.TryHandleMouseClick(
                     point,
-                    _renderer is null ? null : (caretPoint, text) => TournamentRuleRenderer.GetDisplayNameCaretIndex(_renderer, caretPoint, text),
+                    _renderer is null ? null : (caretPoint, text) => TournamentRuleRenderer.GetDisplayNameCaretIndex(_renderer.StationeryDrawingContext, caretPoint, text),
                     _renderer is null ? null : (caretPoint, field, text) => TournamentRuleEditorLayout.GetNumericCaretIndex(caretPoint, field, text, _renderer.GetSinglelineTextCaretIndex));
             case ActiveWindowId.TournamentRulesDeleteConfirmation:
                 return _tournamentRulesSetting.TryHandleMouseClick(point);
@@ -2304,7 +2304,7 @@ public class Game1 : Game
 
         _tournamentRulesSetting.UpdateMouseSelection(
             point,
-            (caretPoint, text) => TournamentRuleRenderer.GetDisplayNameCaretIndex(_renderer, caretPoint, text),
+            (caretPoint, text) => TournamentRuleRenderer.GetDisplayNameCaretIndex(_renderer.StationeryDrawingContext, caretPoint, text),
             (caretPoint, field, text) => TournamentRuleEditorLayout.GetNumericCaretIndex(caretPoint, field, text, _renderer.GetSinglelineTextCaretIndex));
     }
 

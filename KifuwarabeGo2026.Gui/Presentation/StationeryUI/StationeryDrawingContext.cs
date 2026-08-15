@@ -6,6 +6,7 @@ using System;
 /// <summary>画面rendererと文房具UIを分離する共通描画境界です。</summary>
 public sealed class StationeryDrawingContext
 {
+    internal GoScreenRenderer ScreenRenderer { get; }
     private readonly Action<Rectangle, Color> _fillRectangle;
     private readonly Action<Rectangle, int, Color> _fillRoundedRectangle;
     private readonly Action<Rectangle, int, Color> _drawRectangle;
@@ -17,6 +18,7 @@ public sealed class StationeryDrawingContext
     private readonly Func<string, Vector2> _measureText;
 
     public StationeryDrawingContext(
+        GoScreenRenderer screenRenderer,
         Action<Rectangle, Color> fillRectangle,
         Action<Rectangle, int, Color> fillRoundedRectangle,
         Action<Rectangle, int, Color> drawRectangle,
@@ -27,6 +29,7 @@ public sealed class StationeryDrawingContext
         Action<string, Vector2, Color, float> drawRotatedCenteredText,
         Func<string, Vector2> measureText)
     {
+        ScreenRenderer = screenRenderer ?? throw new ArgumentNullException(nameof(screenRenderer));
         _fillRectangle = fillRectangle ?? throw new ArgumentNullException(nameof(fillRectangle));
         _fillRoundedRectangle = fillRoundedRectangle ?? throw new ArgumentNullException(nameof(fillRoundedRectangle));
         _drawRectangle = drawRectangle ?? throw new ArgumentNullException(nameof(drawRectangle));

@@ -1,6 +1,7 @@
 namespace KifuwarabeGo2026.Gui.Presentation.Pages.OnlineMatch.Cgos.Watch;
 
 using KifuwarabeGo2026.Gui.Application;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 using KifuwarabeGo2026.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.Watching;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Button;
 using Microsoft.Xna.Framework;
@@ -18,8 +19,8 @@ public sealed class CgosWatchPage
         ReviewButton = new Button(new Rectangle(1164, 920, 306, 52), "KIFU REVIEW", 0.36f);
     }
 
-    public void Draw(GoScreenRenderer renderer, GoAppSession session, CgosGameObservation observation, Point mousePosition) =>
-        renderer.DrawCgosWatching(session, observation, mousePosition);
+    public void Draw(StationeryDrawingContext drawingContext, GoAppSession session, CgosGameObservation observation, Point mousePosition) =>
+        drawingContext.ScreenRenderer.DrawCgosWatching(session, observation, mousePosition);
 
     public Button LeaveViewButton { get; }
     public Button ExportSgfButton { get; }

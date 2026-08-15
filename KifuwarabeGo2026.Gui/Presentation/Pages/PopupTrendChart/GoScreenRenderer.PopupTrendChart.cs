@@ -221,7 +221,7 @@ public sealed partial class GoScreenRenderer
         int moveCount,
         Point mousePoint)
     {
-        ReviewMoveNavigation.Draw(this, currentMoveIndex, moveCount, mousePoint, ReviewChartPopupStepButtonBounds);
+        ReviewMoveNavigation.Draw(StationeryDrawingContext, currentMoveIndex, moveCount, mousePoint, ReviewChartPopupStepButtonBounds);
     }
 
     private void DrawReplayNavigationControls(

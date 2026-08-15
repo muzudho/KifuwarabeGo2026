@@ -2,12 +2,10 @@ namespace KifuwarabeGo2026.Gui.Presentation;
 
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Application.Local.Playing;
-using KifuwarabeGo2026.Gui.Presentation.BoardLens;
 using KifuwarabeGo2026.Gui.Presentation.BoardLens.Shared.RenBoundaries;
 using KifuwarabeGo2026.Gui.Presentation.Pages.EditTournamentRule;
 using KifuwarabeGo2026.Gui.Presentation.Pages.InitialPositionConcierge;
 using KifuwarabeGo2026.Gui.Presentation.Pages.LocalMatch;
-using KifuwarabeGo2026.Gui.Presentation.Pages.LocalMatch.Play;
 using KifuwarabeGo2026.Gui.Presentation.Pages.ReviewUnsavedChangesConfirmation;
 using KifuwarabeGo2026.Gui.Presentation.Pages.ScreenshotEffect;
 using KifuwarabeGo2026.Gui.Presentation.Pages.ScreenTransition;
@@ -120,6 +118,7 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         _stoneLight = CreateStoneTexture(128, lightStone: true);
         _stoneDark = CreateStoneTexture(128, lightStone: false);
         _stationeryDrawingContext = new StationeryDrawingContext(
+            this,
             FillRect, DrawRoundedFill, DrawRect, DrawLine, DrawText, DrawFittedText, DrawSharpCenteredFittedText,
             DrawRotatedCenteredText, _font.MeasureString);
     }
@@ -152,7 +151,7 @@ public sealed partial class GoScreenRenderer : IGoScreenRenderer
         }
         if (!session.IsReviewChartPopupOpen)
         {
-            RightSidePanel.Default.Draw(this, session, backgroundMousePoint, liveBoardPreview, initialPositionConcierge);
+            RightSidePanel.Default.Draw(_stationeryDrawingContext, session, backgroundMousePoint, liveBoardPreview, initialPositionConcierge);
             if (session.IsLocalReplayMode)
             {
                 DrawReplayNavigationControls(

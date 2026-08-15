@@ -1,6 +1,7 @@
 namespace KifuwarabeGo2026.Gui.Presentation.Pages.OnlineMatch.Cgos.Login;
 
 using KifuwarabeGo2026.Gui.Application;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Button;
 using Microsoft.Xna.Framework;
 
@@ -39,8 +40,8 @@ public sealed class CgosLoginPage
         PlayerDialogNextButton = Button(1160, 810, 100, 44, "NEXT", .42f);
     }
 
-    public void Draw(GoScreenRenderer renderer, GoAppSession session, Point mousePosition) =>
-        renderer.DrawCgosClientTop(session, mousePosition);
+    public void Draw(StationeryDrawingContext drawingContext, GoAppSession session, Point mousePosition) =>
+        drawingContext.ScreenRenderer.DrawCgosClientTop(session, mousePosition);
 
     public void UpdateGameInProgressButtons(bool gameInProgress)
     {

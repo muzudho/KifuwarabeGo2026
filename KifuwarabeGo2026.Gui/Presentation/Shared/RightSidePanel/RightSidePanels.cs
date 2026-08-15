@@ -31,8 +31,9 @@ public static class RightSidePanelLayout
 
 public static class RightSidePanelFrame
 {
-    public static void Draw(GoScreenRenderer renderer)
+    public static void Draw(StationeryDrawingContext drawingContext)
     {
+        var renderer = drawingContext.ScreenRenderer;
         var panel = RightSidePanelLayout.Bounds;
         renderer.FillRectangle(new Rectangle(panel.X + 16, panel.Y + 18, panel.Width, panel.Height), new Color(0, 0, 0, 120));
         renderer.FillRectangle(panel, new Color(21, 25, 32, 236));
@@ -49,40 +50,41 @@ public sealed class RightSidePanel
     {
     }
 
-    public void Draw(GoScreenRenderer renderer, GoAppSession session, Point mousePoint,
+    public void Draw(StationeryDrawingContext drawingContext, GoAppSession session, Point mousePoint,
         LiveBoardPreview? liveBoardPreview, InitialPositionConciergeView? initialPositionConcierge)
     {
-        RightSidePanelFrame.Draw(renderer);
+        var renderer = drawingContext.ScreenRenderer;
+        RightSidePanelFrame.Draw(drawingContext);
 
         if (initialPositionConcierge is { IsVisible: true })
         {
-            LocalMatchScreen.Default.InitialPositionConciergeRightSidePanel.Draw(renderer, initialPositionConcierge, mousePoint);
+            LocalMatchScreen.Default.InitialPositionConciergeRightSidePanel.Draw(drawingContext, initialPositionConcierge, mousePoint);
             return;
         }
 
         switch (session.CurrentMode.Kind)
         {
             case GoAppModeKind.Playing:
-                LocalMatchPlayPage.Default.RightSidePanel.Draw(renderer, session, mousePoint);
+                LocalMatchPlayPage.Default.RightSidePanel.Draw(drawingContext, session, mousePoint);
                 return;
             case GoAppModeKind.GameOver:
-                LocalMatchScreen.Default.GameOverRightSidePanel.Draw(renderer, session, mousePoint);
+                LocalMatchScreen.Default.GameOverRightSidePanel.Draw(drawingContext, session, mousePoint);
                 return;
             case GoAppModeKind.BoardEditing:
-                BoardAndReviewScreen.Default.BoardEditingRightSidePanel.Draw(renderer, session, mousePoint);
+                BoardAndReviewScreen.Default.BoardEditingRightSidePanel.Draw(drawingContext, session, mousePoint);
                 return;
             case GoAppModeKind.VariationEditing:
-                BoardAndReviewScreen.Default.VariationEditingRightSidePanel.Draw(renderer, session, mousePoint, liveBoardPreview);
+                BoardAndReviewScreen.Default.VariationEditingRightSidePanel.Draw(drawingContext, session, mousePoint, liveBoardPreview);
                 return;
             case GoAppModeKind.Reviewing:
-                BoardAndReviewScreen.Default.ReviewingRightSidePanel.Draw(renderer, session, mousePoint);
+                BoardAndReviewScreen.Default.ReviewingRightSidePanel.Draw(drawingContext, session, mousePoint);
                 return;
         }
 
         if (session.UseKind == GoAppUseKind.LocalApps)
-            LocalMatchIntermissionPage.Default.RightSidePanel.Draw(renderer, session, mousePoint);
+            LocalMatchIntermissionPage.Default.RightSidePanel.Draw(drawingContext, session, mousePoint);
         else
-            LocalMatchScreen.Default.SetupRightSidePanel.Draw(renderer, session, mousePoint);
+            LocalMatchScreen.Default.SetupRightSidePanel.Draw(drawingContext, session, mousePoint);
     }
 }
 
@@ -103,8 +105,9 @@ public sealed class LocalMatchPlayRightSidePanel
     internal BoardLensButton? GetBoardLensButtonHit(Point point, bool isLensEnabled) =>
         _boardLensButtons.GetHit(point, isLensEnabled);
 
-    public void Draw(GoScreenRenderer renderer, GoAppSession session, Point mousePoint)
+    public void Draw(StationeryDrawingContext drawingContext, GoAppSession session, Point mousePoint)
     {
+        var renderer = drawingContext.ScreenRenderer;
         renderer.DrawVerticalResultSection(new Rectangle(1144, 132, 668, 200), "PLAYERS", new Color(76, 91, 126));
         renderer.DrawBothPlayersComponent(
             1144,
@@ -131,7 +134,6 @@ public sealed class LocalMatchPlayRightSidePanel
         DrawBoardLensButtons(renderer.StationeryDrawingContext, session.IsRenParseDisplayEnabled, mousePoint);
         renderer.DrawVerticalResultSection(new Rectangle(1144, 916, 668, 76), "ACTION", new Color(91, 82, 105));
 
-        var drawingContext = renderer.StationeryDrawingContext;
         if (session.CanAcceptHumanMove)
         {
             PassButton.Draw(mousePoint, drawingContext);
@@ -166,8 +168,8 @@ public sealed class LocalMatchIntermissionRightSidePanel
 
     internal RightSidePanelPlayerSelector PlayerSelector { get; } = new();
 
-    public void Draw(GoScreenRenderer renderer, GoAppSession session, Point mousePoint) =>
-        LocalMatchIntermissionPage.Default.DrawRightSidePanelContent(renderer, session, mousePoint);
+    public void Draw(StationeryDrawingContext drawingContext, GoAppSession session, Point mousePoint) =>
+        LocalMatchIntermissionPage.Default.DrawRightSidePanelContent(drawingContext, session, mousePoint);
 }
 
 public sealed class SetupRightSidePanel
@@ -179,10 +181,10 @@ public sealed class SetupRightSidePanel
 
     internal RightSidePanelPlayerSelector PlayerSelector { get; } = new();
 
-    public void Draw(GoScreenRenderer renderer, GoAppSession session, Point mousePoint)
+    public void Draw(StationeryDrawingContext drawingContext, GoAppSession session, Point mousePoint)
     {
+        var renderer = drawingContext.ScreenRenderer;
         var screen = LocalMatchScreen.Default;
-        var drawingContext = renderer.StationeryDrawingContext;
         screen.BackToTitleButton.Draw(mousePoint, drawingContext);
 
         renderer.DrawVerticalResultSection(new Rectangle(1144, 184, 668, 176), "TOURNAMENT", new Color(62, 112, 105));
@@ -198,8 +200,8 @@ public sealed class SetupRightSidePanel
         renderer.DrawInfoStrip(1144, 600, "MOVES", session.MoveLimit <= 0 ? "UNLIMITED" : session.MoveLimit.ToString());
 
         renderer.DrawVerticalResultSection(new Rectangle(1144, 696, 668, 216), "PLAYERS", new Color(76, 91, 126));
-        PlayerSelector.DrawPlayerRow(renderer, session, GoStone.Black, mousePoint, BlackPlayerKindButtonY);
-        PlayerSelector.DrawPlayerRow(renderer, session, GoStone.White, mousePoint, WhitePlayerKindButtonY);
+        PlayerSelector.DrawPlayerRow(drawingContext, session, GoStone.Black, mousePoint, BlackPlayerKindButtonY);
+        PlayerSelector.DrawPlayerRow(drawingContext, session, GoStone.White, mousePoint, WhitePlayerKindButtonY);
 
         renderer.DrawVerticalResultSection(new Rectangle(1144, 916, 668, 76), "ACTION", new Color(91, 82, 105));
         var boardAndReviewScreen = BoardAndReviewScreen.Default;
@@ -218,11 +220,12 @@ public sealed class RightSidePanelPlayerSelector
     internal LinkUnderline Underline { get; } = new(
         new RoundUnderline { TopOffset = 2, Thickness = 5, Radius = 2 });
 
-    public void DrawPlayerRow(GoScreenRenderer renderer, GoAppSession session, GoStone stone, Point mousePoint, int y)
+    public void DrawPlayerRow(StationeryDrawingContext drawingContext, GoAppSession session, GoStone stone, Point mousePoint, int y)
     {
+        var renderer = drawingContext.ScreenRenderer;
         var player = session.GetSelectedEntryProfile(stone);
         var label = stone == GoStone.Black ? "BLACK PLAYER" : "WHITE PLAYER";
-        Draw(renderer,
+        Draw(drawingContext,
             PlayerSelectorLayout.CreatePlayerSelector(y) with
             {
                 Label = label,
@@ -257,8 +260,9 @@ public sealed class RightSidePanelPlayerSelector
         }
     }
 
-    private void Draw(GoScreenRenderer renderer, PlayerSelector selector, Point mousePoint)
+    private void Draw(StationeryDrawingContext drawingContext, PlayerSelector selector, Point mousePoint)
     {
+        var renderer = drawingContext.ScreenRenderer;
         if (selector.Bounds.X == 1144 && selector.Bounds.Width == 668)
         {
             var isBlack = selector.Label.StartsWith("BLACK", StringComparison.Ordinal);
@@ -291,9 +295,9 @@ public sealed class GameOverRightSidePanel
 {
     public SgfAutoSaveCheckBox SgfAutoSaveCheckBox { get; } = new();
 
-    public void Draw(GoScreenRenderer renderer, GoAppSession session, Point mousePoint)
+    public void Draw(StationeryDrawingContext drawingContext, GoAppSession session, Point mousePoint)
     {
-        var drawingContext = renderer.StationeryDrawingContext;
+        var renderer = drawingContext.ScreenRenderer;
         new Headline("GAME OVER", new Vector2(1144, 132), new Color(255, 230, 160), 0.9f).Draw(drawingContext);
         drawingContext.DrawText($"{session.PlayedMoveCount}手で終局", new Vector2(1144, 196), new Color(99, 223, 185), 0.58f);
         var screen = LocalMatchScreen.Default;
@@ -301,7 +305,7 @@ public sealed class GameOverRightSidePanel
 
         renderer.DrawVerticalResultSection(new Rectangle(1144, 236, 668, 128), "RESULT", new Color(80, 48, 38));
         renderer.DrawResultRow(new Rectangle(1164, 242, 628, 52), "RULES", session.TournamentDisplayName, new Color(39, 68, 65), Color.White);
-        DrawCalculationResultRow(renderer, new Rectangle(1164, 300, 628, 52), session);
+        DrawCalculationResultRow(drawingContext, new Rectangle(1164, 300, 628, 52), session);
 
         renderer.DrawRightSidePanelGameOverTrendChart(session, mousePoint);
 
@@ -319,8 +323,9 @@ public sealed class GameOverRightSidePanel
             screen.ExportSgfButton.Draw(mousePoint, drawingContext);
     }
 
-    private static void DrawCalculationResultRow(GoScreenRenderer renderer, Rectangle bounds, GoAppSession session)
+    private static void DrawCalculationResultRow(StationeryDrawingContext drawingContext, Rectangle bounds, GoAppSession session)
     {
+        var renderer = drawingContext.ScreenRenderer;
         renderer.DrawRightSidePanelResultLabel(bounds, "RESULT", new Color(80, 48, 38));
         const string pureGoPrefix = "PURE GO ";
         var result = string.IsNullOrWhiteSpace(session.GameOverReason) ? "GAME OVER" : session.GameOverReason;
@@ -375,10 +380,10 @@ public sealed class SgfAutoSaveCheckBox
 
 public sealed class BoardEditingRightSidePanel
 {
-    public void Draw(GoScreenRenderer renderer, GoAppSession session, Point mousePoint)
+    public void Draw(StationeryDrawingContext drawingContext, GoAppSession session, Point mousePoint)
     {
+        var renderer = drawingContext.ScreenRenderer;
         var controls = BoardAndReviewScreen.Default.BoardEditing;
-        var drawingContext = renderer.StationeryDrawingContext;
         controls.UpdateState(session.BoardEditingStone, session.CanUndoBoardEditing, session.CanRedoBoardEditing);
         new Headline("BOARD EDIT", new Vector2(1144, 136), new Color(255, 230, 160), 0.72f).Draw(drawingContext);
         controls.CancelButton.Draw(mousePoint, drawingContext);
@@ -400,11 +405,12 @@ public sealed class BoardEditingRightSidePanel
 
         renderer.DrawVerticalResultSection(new Rectangle(1144, 564, 668, 220), "POSITION", new Color(62, 112, 105));
         renderer.DrawRightSidePanelStoneCountStrip(session, 584, showLeader: false, minimal: true);
-        DrawCurrentStoneResultRow(renderer, new Rectangle(1164, 690, 628, 64), session);
+        DrawCurrentStoneResultRow(drawingContext, new Rectangle(1164, 690, 628, 64), session);
     }
 
-    private static void DrawCurrentStoneResultRow(GoScreenRenderer renderer, Rectangle bounds, GoAppSession session)
+    private static void DrawCurrentStoneResultRow(StationeryDrawingContext drawingContext, Rectangle bounds, GoAppSession session)
     {
+        var renderer = drawingContext.ScreenRenderer;
         renderer.DrawRightSidePanelResultLabel(bounds, "RESULT", new Color(80, 48, 38));
         var difference = session.BlackStoneCount - session.WhiteStoneCount;
         if (difference == 0)
@@ -426,10 +432,10 @@ public sealed class VariationEditingRightSidePanel
     // 機能
     // ========================================
 
-    public void Draw(GoScreenRenderer renderer, GoAppSession session, Point mousePoint, LiveBoardPreview? preview)
+    public void Draw(StationeryDrawingContext drawingContext, GoAppSession session, Point mousePoint, LiveBoardPreview? preview)
     {
+        var renderer = drawingContext.ScreenRenderer;
         var controls = BoardAndReviewScreen.Default.VariationEditing;
-        var drawingContext = renderer.StationeryDrawingContext;
         controls.UpdateState(session.VariationEditingStone, session.CanAdoptVariationPosition, session.CanUndoVariation);
         new Headline("ANALYSIS BOARD", new Vector2(1144, 136), new Color(42, 62, 68), 0.68f).Draw(drawingContext);
         controls.DiscardButton.Draw(mousePoint, drawingContext);
@@ -452,7 +458,7 @@ public sealed class VariationEditingRightSidePanel
             null, null, null, session.BlackAgehama, session.WhiteAgehama, session.CurrentTurn, minimal: true);
 
         if (preview is not null)
-            DrawLiveBoardWipe(renderer, preview);
+            DrawLiveBoardWipe(drawingContext, preview);
 
         renderer.DrawVerticalResultSection(new Rectangle(1144, 548, 668, 112), "TOOL", new Color(67, 112, 118));
         controls.PlayButton.Draw(mousePoint, drawingContext);
@@ -480,9 +486,9 @@ public sealed class VariationEditingRightSidePanel
         controls.PassButton.Draw(mousePoint, drawingContext);
     }
 
-    private static void DrawLiveBoardWipe(GoScreenRenderer renderer, LiveBoardPreview preview)
+    private static void DrawLiveBoardWipe(StationeryDrawingContext drawingContext, LiveBoardPreview preview)
     {
-        var drawingContext = renderer.StationeryDrawingContext;
+        var renderer = drawingContext.ScreenRenderer;
         var bounds = BoardAndReviewScreen.Default.VariationEditing.LiveBoardBounds;
         drawingContext.FillRectangle(new Rectangle(bounds.X + 7, bounds.Y + 8, bounds.Width, bounds.Height), new Color(0, 0, 0, 95));
         drawingContext.FillRectangle(bounds, new Color(31, 43, 45));
@@ -540,10 +546,10 @@ public sealed class ReviewingRightSidePanel
     public int? GetStepButtonHit(Point point) =>
         ReviewMoveNavigation.GetButtonHit(point, ReviewChartPopupStepButtonBounds);
 
-    public void Draw(GoScreenRenderer renderer, GoAppSession session, Point mousePoint)
+    public void Draw(StationeryDrawingContext drawingContext, GoAppSession session, Point mousePoint)
     {
+        var renderer = drawingContext.ScreenRenderer;
         var controls = BoardAndReviewScreen.Default.Review;
-        var drawingContext = renderer.StationeryDrawingContext;
         controls.UpdateBoardLensState(session.IsRenParseDisplayEnabled, session.IsMeasureBoardLens);
         new Headline("KIFU REVIEW", new Vector2(1144, 136), new Color(255, 230, 160), 0.72f).Draw(drawingContext);
         if (session.HasUnsavedReviewCommentChanges)
@@ -575,7 +581,7 @@ public sealed class ReviewingRightSidePanel
         controls.BoardLensPreviousButton.Draw(mousePoint, drawingContext);
         controls.BoardLensExitButton.Draw(mousePoint, drawingContext);
         controls.BoardLensButton.Draw(mousePoint, drawingContext);
-        ReviewMoveNavigation.Draw(renderer, session.ReviewMoveIndex, session.ReviewMoveCount,
+        ReviewMoveNavigation.Draw(drawingContext, session.ReviewMoveIndex, session.ReviewMoveCount,
             mousePoint, ReviewChartPopupStepButtonBounds);
         drawingContext.DrawFittedText(
             "[L] BOARD LENS    HOME/END    ARROWS: -/+1,10    PGDN/PGUP: -/+50",
@@ -604,9 +610,10 @@ public static class ReviewMoveNavigation
         return null;
     }
 
-    internal static void Draw(GoScreenRenderer renderer, int currentMoveIndex, int moveCount,
+    internal static void Draw(StationeryDrawingContext drawingContext, int currentMoveIndex, int moveCount,
         Point mousePoint, Func<int, Rectangle> getButtonBounds)
     {
+        var renderer = drawingContext.ScreenRenderer;
         for (var index = 0; index < StepButtonValues.Length; index++)
         {
             var step = StepButtonValues[index];
@@ -626,6 +633,6 @@ public static class ReviewMoveNavigation
 
 public sealed class InitialPositionConciergeRightSidePanel
 {
-    public void Draw(GoScreenRenderer renderer, InitialPositionConciergeView view, Point mousePoint) =>
-        renderer.DrawInitialPositionConciergeContent(view, mousePoint);
+    public void Draw(StationeryDrawingContext drawingContext, InitialPositionConciergeView view, Point mousePoint) =>
+        drawingContext.ScreenRenderer.DrawInitialPositionConciergeContent(view, mousePoint);
 }
