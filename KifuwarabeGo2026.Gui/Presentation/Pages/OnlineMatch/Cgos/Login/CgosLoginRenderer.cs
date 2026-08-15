@@ -13,6 +13,7 @@ using KifuwarabeGo2026.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.Connection
 using KifuwarabeGo2026.Shared.Domain;
 using KifuwarabeGo2026.Gui.Presentation.Shared.SelectEntry;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.StickyNote;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Button;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -303,12 +304,9 @@ public sealed class CgosLoginRenderer
         page.UpdateGameInProgressButtons(session.IsCgosGameInProgress);
         var profile = session.SelectedCgosConnectionProfile;
         DrawText("USE CONNECTION", new Vector2(288, 300), new Color(180, 195, 195), 0.54f);
-        DrawCommandButton(
-            page.BackButton.Bounds,
-            session.IsAnyCgosProcessRunning ? "DISCONNECT ALL & BACK" : "BACK",
-            false,
-            mousePoint,
-            scale: session.IsAnyCgosProcessRunning ? 0.25f : 0.42f);
+        page.BackButton.Label = session.IsAnyCgosProcessRunning ? "DISCONNECT ALL & BACK" : "BACK";
+        page.BackButton.LabelScale = session.IsAnyCgosProcessRunning ? 0.25f : 0.42f;
+        page.BackButton.Draw(mousePoint, _drawingContext);
 
         DrawCgosSelectedProfileBar(profile);
         DrawCgosProcessPanel(
@@ -318,11 +316,11 @@ public sealed class CgosLoginRenderer
             null,
             null,
             null,
-            page.AdminConnectButton.Bounds,
+            page.AdminConnectButton,
             session.IsCgosAdminRunning ? "DISCONNECT" : "CONNECT",
             session.IsCgosAdminInputEnabled,
-            page.AdminTailButton.Bounds,
-            page.AdminCodeButton.Bounds,
+            page.AdminTailButton,
+            page.AdminCodeButton,
             session.IsCgosAdminInputEnabled && !string.IsNullOrWhiteSpace(session.CgosAdminLogDirectory),
             mousePoint);
         page.AdminWhoButton.IsEnabled = session.IsCgosAdminInputEnabled && session.IsCgosAdminRunning;
@@ -351,13 +349,13 @@ public sealed class CgosLoginRenderer
             string.IsNullOrWhiteSpace(session.CgosBlackGtpResponseWaitDisplay)
                 ? session.CgosBlackConnectionElapsedDisplay
                 : session.CgosBlackGtpResponseWaitDisplay,
-            page.BlackConnectButton.Bounds,
+            page.BlackConnectButton,
             session.IsCgosBlackConnectionRunning
                 ? session.IsCgosGameInProgress ? "ABORT" : "DISCONNECT"
                 : "CONNECT",
             session.IsCgosBlackConnectionRunning || session.SelectedCgosBlackGtpEngineProfile is not null,
-            page.BlackTailButton.Bounds,
-            page.BlackCodeButton.Bounds,
+            page.BlackTailButton,
+            page.BlackCodeButton,
             !string.IsNullOrWhiteSpace(session.CgosBlackConnectionLogDirectory),
             mousePoint);
         if (session.IsCgosGameInProgress && session.IsCgosBlackConnectionRunning)
@@ -375,14 +373,14 @@ public sealed class CgosLoginRenderer
             string.IsNullOrWhiteSpace(session.CgosWhiteGtpResponseWaitDisplay)
                 ? session.CgosWhiteConnectionElapsedDisplay
                 : session.CgosWhiteGtpResponseWaitDisplay,
-            page.WhiteConnectButton.Bounds,
+            page.WhiteConnectButton,
             session.IsCgosWhiteConnectionRunning
                 ? session.IsCgosGameInProgress ? "ABORT" : "DISCONNECT"
                 : "CONNECT",
             session.IsCgosPlayer2InputEnabled &&
             (session.IsCgosWhiteConnectionRunning || session.SelectedCgosWhiteGtpEngineProfile is not null),
-            page.WhiteTailButton.Bounds,
-            page.WhiteCodeButton.Bounds,
+            page.WhiteTailButton,
+            page.WhiteCodeButton,
             session.IsCgosPlayer2InputEnabled && !string.IsNullOrWhiteSpace(session.CgosWhiteConnectionLogDirectory),
             mousePoint);
         if (session.IsCgosGameInProgress && session.IsCgosWhiteConnectionRunning)
@@ -529,11 +527,11 @@ public sealed class CgosLoginRenderer
     /// <param name="status"></param>
     /// <param name="engineName"></param>
     /// <param name="elapsedDisplay"></param>
-    /// <param name="startButtonBounds"></param>
+    /// <param name="startButton"></param>
     /// <param name="startLabel"></param>
     /// <param name="startEnabled"></param>
-    /// <param name="tailButtonBounds"></param>
-    /// <param name="codeButtonBounds"></param>
+    /// <param name="tailButton"></param>
+    /// <param name="codeButton"></param>
     /// <param name="logToolsEnabled"></param>
     /// <param name="mousePoint"></param>
     private void DrawCgosProcessPanel(
@@ -543,11 +541,11 @@ public sealed class CgosLoginRenderer
         string? engineName,
         PlayerSelector? engineSelector,
         string? elapsedDisplay,
-        Rectangle startButtonBounds,
+        Button startButton,
         string startLabel,
         bool startEnabled,
-        Rectangle tailButtonBounds,
-        Rectangle codeButtonBounds,
+        Button tailButton,
+        Button codeButton,
         bool logToolsEnabled,
         Point mousePoint)
     {
@@ -569,10 +567,14 @@ public sealed class CgosLoginRenderer
             DrawCgosPlayerSelector(selector with { Value = engineName ?? "-" }, mousePoint);
         }
 
-        DrawCommandButton(startButtonBounds, startLabel, false, mousePoint, enabled: startEnabled, scale: 0.36f);
-        DrawText("LOG:", new Vector2(bounds.X + 18, tailButtonBounds.Y + 15), new Color(180, 195, 195), 0.22f);
-        DrawCommandButton(tailButtonBounds, "VIEW", false, mousePoint, enabled: logToolsEnabled, scale: 0.24f);
-        DrawCommandButton(codeButtonBounds, "EDIT", false, mousePoint, enabled: logToolsEnabled, scale: 0.24f);
+        startButton.Label = startLabel;
+        startButton.IsEnabled = startEnabled;
+        startButton.Draw(mousePoint, _drawingContext);
+        DrawText("LOG:", new Vector2(bounds.X + 18, tailButton.Bounds.Y + 15), new Color(180, 195, 195), 0.22f);
+        tailButton.IsEnabled = logToolsEnabled;
+        tailButton.Draw(mousePoint, _drawingContext);
+        codeButton.IsEnabled = logToolsEnabled;
+        codeButton.Draw(mousePoint, _drawingContext);
     }
 
     private void DrawCgosPlayerSelector(PlayerSelector selector, Point mousePoint)
@@ -985,7 +987,6 @@ public sealed class CgosLoginRenderer
     private void DrawLine(Vector2 start, Vector2 end, float thickness, Color color) => _drawingContext.DrawLine(start, end, thickness, color);
     private void DrawText(string text, Vector2 position, Color color, float scale) => _drawingContext.DrawText(text, position, color, scale);
     private void DrawFittedText(string text, Rectangle bounds, Color color, float scale) => _drawingContext.DrawFittedText(text, bounds, color, scale);
-    private void DrawCommandButton(Rectangle bounds, string label, bool selected, Point mousePoint, bool enabled = true, float scale = 0.5f) => _drawingContext.DrawCommandButton(bounds, label, selected, mousePoint, enabled, scale);
     private void DrawDataRowFrame(Rectangle bounds) => _drawingContext.DrawDataRowFrame(bounds);
     private void DrawUiLabel(UiLabel label) => DrawFittedText(label.Text, label.Bounds, UiLabel.TextColor, label.Scale);
     private void DrawTextBoxSelection(string text, int start, int length, Rectangle bounds, float scale) => _drawingContext.DrawTextSelection(text, start, length, bounds, scale);
