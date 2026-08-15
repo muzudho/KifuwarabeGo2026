@@ -165,9 +165,10 @@ public sealed class MoveTrendChartRenderer
         {
             DrawMoveInformationTabs(session, moves, bounds, mousePoint);
 
-            if (allowComment && session.MoveInformationDisplayMode == MoveInformationDisplayMode.Comment)
+            if (session.MoveInformationDisplayMode == MoveInformationDisplayMode.Comment)
             {
-                _moveCommentPanelRenderer.Draw(moves, bounds, session, mousePoint, currentMoveNumber);
+                if (allowComment)
+                    _moveCommentPanelRenderer.Draw(moves, bounds, session, mousePoint, currentMoveNumber);
                 return;
             }
         }
