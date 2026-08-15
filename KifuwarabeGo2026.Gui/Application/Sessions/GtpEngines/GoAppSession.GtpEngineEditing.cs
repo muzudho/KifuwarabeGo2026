@@ -245,6 +245,8 @@ public sealed partial class GoAppSession
         GtpEngineEditProfileIndex = index;
         CloseGtpEngineDeleteConfirmation();
         GtpEngineEditDraft = _gtpEngineProfiles[index].Clone();
+        // A duplicated profile must be independently addressable by EntryProfile references.
+        GtpEngineEditDraft.Id = Guid.NewGuid().ToString("N");
         GtpEngineEditDraft.DisplayName = string.IsNullOrWhiteSpace(GtpEngineEditDraft.DisplayName)
             ? "Unnamed GTP Engine Copy"
             : $"{GtpEngineEditDraft.DisplayName.Trim()} Copy";

@@ -5338,7 +5338,11 @@ public class Game1 : Game
         {
             if (_session.CanCommitGtpEngineSelection)
             {
+                var selectionPurpose = _session.EngineSelectionPurpose;
+                var selectedEngine = _session.GtpEngineProfiles[_session.GtpEngineDialogSelectionIndex];
                 _session.CommitGtpEngineSelectionDialog();
+                GuiOperationLog.User("Selected GTP engine",
+                    $"purpose={selectionPurpose}; name={selectedEngine.DisplayName}; id={selectedEngine.Id}");
                 if (_session.EngineSelectionPurpose == GtpEngineSelectionPurpose.AppProvider)
                 {
                     ApplicationSettings.SaveLastSelectedAppProviderEngine(
