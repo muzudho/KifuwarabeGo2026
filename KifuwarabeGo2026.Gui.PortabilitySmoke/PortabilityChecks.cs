@@ -1134,6 +1134,17 @@ internal static class PortabilityChecks
             "Seeking to the post-game timeline end must return to RESULT without adding a record move.");
         Require(passSession.CurrentGameRecord.Moves.Count == 2,
             "The RESULT timeline position must not be stored as a fictitious game-record move.");
+        var completedRecord = passSession.CurrentGameRecord.Clone();
+        Require(passSession.StartReviewingGameRecord(completedRecord, out _),
+            "A completed record must open in the standard review flow.");
+        Require(passSession.MoveReview(passSession.ReviewTimelineMaximum, out _),
+            "The standard review flow must advance beyond its final move to RESULT.");
+        Require(passSession.IsReviewResultPosition && passSession.ReviewTimelineIndex == 3,
+            "The standard review next button must remain enabled on move two of a two-move record.");
+        Require(passSession.MoveReview(-1, out _) && !passSession.IsReviewResultPosition && passSession.ReviewMoveIndex == 2,
+            "Stepping back from the standard review RESULT must return to the final move.");
+        Require(passSession.ReviewMoveCount == 2,
+            "The standard review RESULT must not increase the game-record move count.");
 
         var resignSession = new GoAppSession();
         resignSession.SetPlayerKind(GoStone.Black, GoPlayerKind.Human);

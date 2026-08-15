@@ -17,6 +17,10 @@ public sealed partial class GoAppSession
     public bool HasReviewGameRecord => _reviewGameRecord is not null;
     public int ReviewMoveIndex { get; private set; }
     public int ReviewMoveCount => _reviewGameRecord?.Moves.Count ?? 0;
+    public bool IsReviewResultPosition { get; private set; }
+    public int ReviewTimelineIndex => IsReviewResultPosition ? ReviewMoveCount + 1 : ReviewMoveIndex;
+    public int ReviewTimelineMaximum => ReviewMoveCount + 1;
+    public string ReviewResult => _reviewGameRecord?.Result ?? CurrentGameRecord.Result;
     public IReadOnlyList<GoGameMove> ReviewMoves =>
         _reviewGameRecord is null ? Array.Empty<GoGameMove>() : _reviewGameRecord.Moves;
     /// <summary>レビュー対象 SGF の 0 手目コメントです。</summary>
@@ -37,9 +41,12 @@ public sealed partial class GoAppSession
         warning = "";
         if (CurrentMode.Kind != GoAppModeKind.Reviewing || _reviewGameRecord is null) return false;
 
-        var moved = ApplyReviewPosition(Math.Clamp(ReviewMoveIndex + step, 0, ReviewMoveCount), out warning);
+        var target = Math.Clamp(ReviewTimelineIndex + step, 0, ReviewTimelineMaximum);
+        var showResult = target == ReviewTimelineMaximum;
+        var moved = ApplyReviewPosition(showResult ? ReviewMoveCount : target, out warning);
         if (moved)
         {
+            IsReviewResultPosition = showResult;
             CommentPageIndex = 0;
             CommentPageCount = 1;
         }

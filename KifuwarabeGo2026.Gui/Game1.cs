@@ -711,11 +711,11 @@ public class Game1 : Game
 
         if (navigation == int.MinValue)
         {
-            MoveReview(-_session.ReviewMoveIndex);
+            MoveReview(-_session.ReviewTimelineIndex);
         }
         else if (navigation == int.MaxValue)
         {
-            MoveReview(_session.ReviewMoveCount - _session.ReviewMoveIndex);
+            MoveReview(_session.ReviewTimelineMaximum - _session.ReviewTimelineIndex);
         }
         else
         {
@@ -971,7 +971,7 @@ public class Game1 : Game
 
         var virtualMousePosition = VirtualScreen.ToVirtualPoint(GraphicsDevice.Viewport, Mouse.GetState().Position);
         var hideBreadcrumbForReviewControls =
-            _session.CurrentMode.Kind == GoAppModeKind.Reviewing &&
+            _session.CurrentMode.Kind is GoAppModeKind.Reviewing or GoAppModeKind.GameOver &&
             PopupTrendChartRenderer.IsBottomNavigationControlsNearby(virtualMousePosition);
         if (_presentationServices is not null)
             HeadUpDisplayComponent.Default.Breadcrumb.Draw(_presentationServices.Stationery,
@@ -2776,6 +2776,13 @@ public class Game1 : Game
         if (_session.IsReviewChartPopupOpen)
         {
             HandleReviewChartPopupClick(point);
+            return true;
+        }
+
+        if (_session.IsReviewResultPosition &&
+            BoardAndReviewScreen.Default.Review.ExportSgfButton.IsHit(point))
+        {
+            ExportSgf();
             return true;
         }
 

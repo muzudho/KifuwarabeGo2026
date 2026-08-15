@@ -43,6 +43,7 @@ public sealed partial class GoAppSession
     {
         _reviewGameRecord = null;
         ReviewMoveIndex = 0;
+        IsReviewResultPosition = false;
         ClearBoard();
         ChangeMode(GoAppModeKind.Resting);
     }

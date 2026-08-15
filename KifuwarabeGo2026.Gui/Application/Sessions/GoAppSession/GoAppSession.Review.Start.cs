@@ -17,6 +17,7 @@ public sealed partial class GoAppSession
         _reviewGameRecord = record.Clone();
         HasUnsavedReviewCommentChanges = false;
         ReviewMoveIndex = 0;
+        IsReviewResultPosition = false;
         if (!ApplyReviewPosition(record.Moves.Count, out warning))
         {
             ClearFailedReviewStart();
@@ -47,6 +48,7 @@ public sealed partial class GoAppSession
         }
 
         _beforeReviewGameRecord = CurrentGameRecord.Clone();
+        IsReviewResultPosition = false;
         if (!ApplyReviewPosition(Math.Clamp(ReviewMoveIndex, 0, ReviewMoveCount), out warning))
         {
             _beforeReviewGameRecord = null;
@@ -62,5 +64,6 @@ public sealed partial class GoAppSession
         _beforeReviewGameRecord = null;
         _reviewGameRecord = null;
         ReviewMoveIndex = 0;
+        IsReviewResultPosition = false;
     }
 }

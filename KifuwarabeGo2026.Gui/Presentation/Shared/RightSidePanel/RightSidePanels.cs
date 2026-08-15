@@ -502,7 +502,7 @@ public sealed class ReviewingRightSidePanel
 
     public void Draw(KfwStationeryDrawingTools drawingContext, MoveTrendChartRenderer moveTrendChartRenderer, GoAppSession session, Point mousePoint)
     {
-        if (session.CurrentMode.Kind == GoAppModeKind.GameOver)
+        if (session.CurrentMode.Kind == GoAppModeKind.GameOver || session.IsReviewResultPosition)
         {
             DrawCompletedLocalGame(drawingContext, moveTrendChartRenderer, session, mousePoint);
             return;
@@ -541,7 +541,7 @@ public sealed class ReviewingRightSidePanel
         controls.BoardLensPreviousButton.Draw(mousePoint, drawingContext);
         controls.BoardLensExitButton.Draw(mousePoint, drawingContext);
         controls.BoardLensButton.Draw(mousePoint, drawingContext);
-        ReviewMoveNavigation.Draw(drawingContext, session.ReviewMoveIndex, session.ReviewMoveCount,
+        ReviewMoveNavigation.Draw(drawingContext, session.ReviewTimelineIndex, session.ReviewTimelineMaximum,
             mousePoint, ReviewChartPopupStepButtonBounds);
         drawingContext.DrawFittedText(
             "[L] BOARD LENS    HOME/END    ARROWS: -/+1,10    PGDN/PGUP: -/+50",
@@ -552,7 +552,8 @@ public sealed class ReviewingRightSidePanel
         MoveTrendChartRenderer moveTrendChartRenderer, GoAppSession session, Point mousePoint)
     {
         var controls = BoardAndReviewScreen.Default.Review;
-        var isResult = session.IsLocalResultPosition;
+        var isCompletedGame = session.CurrentMode.Kind == GoAppModeKind.GameOver;
+        var isResult = isCompletedGame ? session.IsLocalResultPosition : session.IsReviewResultPosition;
         new Headline(isResult ? "GAME RESULT" : "KIFU REVIEW", new Vector2(1144, 132),
             new Color(255, 230, 160), isResult ? 0.82f : 0.72f).Draw(drawingContext);
         controls.BackToHomeButton.Draw(mousePoint, drawingContext);
@@ -568,7 +569,8 @@ public sealed class ReviewingRightSidePanel
             drawingContext.DrawVerticalResultSection(new Rectangle(1144, 236, 668, 128), "RESULT", new Color(80, 48, 38));
             drawingContext.DrawResultRow(new Rectangle(1164, 242, 628, 52), "RULES", session.TournamentDisplayName,
                 new Color(39, 68, 65), Color.White);
-            DrawResultRow(drawingContext, new Rectangle(1164, 300, 628, 52), session);
+            DrawResultRow(drawingContext, new Rectangle(1164, 300, 628, 52), session,
+                isCompletedGame ? session.GameOverReason : session.ReviewResult);
         }
         else
         {
@@ -583,18 +585,21 @@ public sealed class ReviewingRightSidePanel
         drawingContext.DrawResultLabel(new Rectangle(1164, 858, 280, 36),
             isResult ? "RESULT" : $"STEP {session.LocalDisplayMoveIndex} / {session.CurrentGameRecord.Moves.Count}",
             new Color(76, 91, 126));
-        ReviewMoveNavigation.Draw(drawingContext, session.LocalReviewTimelineIndex,
-            session.LocalReviewTimelineMaximum, mousePoint, ReviewChartPopupStepButtonBounds);
+        var timelineIndex = isCompletedGame ? session.LocalReviewTimelineIndex : session.ReviewTimelineIndex;
+        var timelineMaximum = isCompletedGame ? session.LocalReviewTimelineMaximum : session.ReviewTimelineMaximum;
+        ReviewMoveNavigation.Draw(drawingContext, timelineIndex, timelineMaximum,
+            mousePoint, ReviewChartPopupStepButtonBounds);
         drawingContext.DrawFittedText(
             "HOME/END    ARROWS: -/+1,10    PGDN/PGUP: -/+50    END: RESULT",
             new Rectangle(1168, 950, 624, 24), new Color(147, 201, 190), 0.23f);
     }
 
-    private static void DrawResultRow(KfwStationeryDrawingTools drawingContext, Rectangle bounds, GoAppSession session)
+    private static void DrawResultRow(KfwStationeryDrawingTools drawingContext, Rectangle bounds,
+        GoAppSession session, string resultText)
     {
         drawingContext.DrawResultLabel(bounds, "RESULT", new Color(80, 48, 38));
         const string prefix = "PURE GO ";
-        var result = string.IsNullOrWhiteSpace(session.GameOverReason) ? "GAME OVER" : session.GameOverReason;
+        var result = string.IsNullOrWhiteSpace(resultText) ? "GAME OVER" : resultText;
         if (result.StartsWith(prefix, StringComparison.Ordinal)) result = result[prefix.Length..];
         var black = result.StartsWith("BLACK ", StringComparison.Ordinal);
         var white = result.StartsWith("WHITE ", StringComparison.Ordinal);

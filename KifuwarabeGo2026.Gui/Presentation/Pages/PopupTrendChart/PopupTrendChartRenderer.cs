@@ -122,8 +122,8 @@ public sealed class PopupTrendChartRenderer
             popup: true);
 
         DrawReviewChartPopupStepButtons(
-            session.ReviewMoveIndex,
-            session.ReviewMoveCount,
+            session.ReviewTimelineIndex,
+            session.ReviewTimelineMaximum,
             mousePoint);
         DrawReviewChartPopupSeekBar(session);
     }
