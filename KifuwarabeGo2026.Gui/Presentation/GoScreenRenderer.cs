@@ -3,35 +3,30 @@ namespace KifuwarabeGo2026.Gui.Presentation;
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.Gui.Presentation.BoardLens;
-using KifuwarabeGo2026.Gui.Presentation.BoardLens.RenSystem;
-using KifuwarabeGo2026.Gui.Presentation.BoardLens.Shared.RenBoundaries;
+using KifuwarabeGo2026.Gui.Presentation.Pages.Board;
 using KifuwarabeGo2026.Gui.Presentation.Pages.EditTournamentRule;
+using KifuwarabeGo2026.Gui.Presentation.Pages.GtpEngine;
 using KifuwarabeGo2026.Gui.Presentation.Pages.InitialPositionConcierge;
 using KifuwarabeGo2026.Gui.Presentation.Pages.LocalMatch;
 using KifuwarabeGo2026.Gui.Presentation.Pages.MoveTrendChart;
-using KifuwarabeGo2026.Gui.Presentation.Pages.PopupTrendChart.MoveCommentPanel;
-using KifuwarabeGo2026.Gui.Presentation.Pages.PopupTrendChart;
-using KifuwarabeGo2026.Gui.Presentation.Pages.Title;
-using KifuwarabeGo2026.Gui.Presentation.Pages.Board;
-using KifuwarabeGo2026.Gui.Presentation.Pages.OnlineMatch.Cgos.Watch;
-using KifuwarabeGo2026.Gui.Presentation.Pages.GtpEngine;
 using KifuwarabeGo2026.Gui.Presentation.Pages.OnlineMatch.Cgos.Login;
+using KifuwarabeGo2026.Gui.Presentation.Pages.OnlineMatch.Cgos.Watch;
+using KifuwarabeGo2026.Gui.Presentation.Pages.PopupTrendChart;
+using KifuwarabeGo2026.Gui.Presentation.Pages.PopupTrendChart.MoveCommentPanel;
 using KifuwarabeGo2026.Gui.Presentation.Pages.ReviewUnsavedChangesConfirmation;
 using KifuwarabeGo2026.Gui.Presentation.Pages.ScreenshotEffect;
 using KifuwarabeGo2026.Gui.Presentation.Pages.ScreenTransition;
+using KifuwarabeGo2026.Gui.Presentation.Pages.Title;
 using KifuwarabeGo2026.Gui.Presentation.Shared.Breadcrumb;
 using KifuwarabeGo2026.Gui.Presentation.Shared.CgosMatchNotification;
 using KifuwarabeGo2026.Gui.Presentation.Shared.EditEntryProfile;
 using KifuwarabeGo2026.Gui.Presentation.Shared.EntryProfiles;
-using KifuwarabeGo2026.Gui.Presentation.Shared.SelectEntry;
 using KifuwarabeGo2026.Gui.Presentation.Shared.HeadUpDisplay;
 using KifuwarabeGo2026.Gui.Presentation.Shared.LiveBoardPreview;
 using KifuwarabeGo2026.Gui.Presentation.Shared.RightSidePanel;
-using KifuwarabeGo2026.Gui.Presentation.Shared.SpinBox;
+using KifuwarabeGo2026.Gui.Presentation.Shared.SelectEntry;
 using KifuwarabeGo2026.Gui.Presentation.Shared.TextAreaDialog;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ActionBadge;
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.LinkUnderline;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.MultilineTextUnderline;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.PopupNumberUnderline;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.PopupTimeUnderline;
@@ -54,8 +49,6 @@ using System.Linq;
 /// </summary>
 public sealed class GoScreenRenderer
 {
-    private const float MinimumTextScale = 0.32f;
-
     private readonly GraphicsDevice _graphicsDevice;
     private readonly SpriteBatch _spriteBatch;
     private readonly ITextRasterizer _textRasterizer;
@@ -81,18 +74,10 @@ public sealed class GoScreenRenderer
     private readonly Dictionary<string, Texture2D> _dynamicOptionTextTextures = [];
     private readonly MultilineTextUnderline _multilineTextUnderline = new(
         new SquareUnderline { Thickness = 1 }, "EDIT");
-    private readonly LinkUnderline _compactLinkUnderline = new(
-        new RoundUnderline { TopOffset = 1, Thickness = 3, Radius = 1 });
-    private readonly LinkUnderline _selectorLinkUnderline = new(
-        new RoundUnderline { TopOffset = 2, Thickness = 4, Radius = 2 });
-    private readonly SpinBox _spinBox = new();
-
     public HeadUpDisplayComponent HeadUpDisplay { get; } = HeadUpDisplayComponent.Default;
     public InitialPositionConcierge InitialPositionConcierge { get; } = new();
     private readonly CgosMatchNotification _cgosMatchNotification = CgosMatchNotification.Default;
     public EditEntryProfile EditEntryProfile { get; } = new();
-    public ActionBadgeComponent EditActionBadge { get; } = ActionBadgeComponent.Create("EDIT", Rectangle.Empty);
-    public ActionBadgeComponent ChangeActionBadge { get; } = ActionBadgeComponent.Create("CHANGE", Rectangle.Empty);
 
     public GoScreenRenderer(
         GraphicsDevice graphicsDevice,
@@ -302,39 +287,6 @@ public sealed class GoScreenRenderer
         DrawGlow(new Vector2(1030, 90), 520, new Color(39, 122, 104, 80));
         DrawGlow(new Vector2(1700, 850), 360, new Color(144, 59, 48, 72));
     }
-    private void DrawLocalClosedBox(Rectangle bounds)
-    {
-        FillRect(new Rectangle(bounds.X + 8, bounds.Y + 10, bounds.Width, bounds.Height), new Color(0, 0, 0, 70));
-        FillRect(bounds, new Color(17, 24, 29));
-        DrawRect(bounds, 4, new Color(126, 150, 164));
-        DrawMiniBoardGrid(new Rectangle(bounds.X + 22, bounds.Y + 20, bounds.Width - 44, bounds.Height - 40), new Color(88, 102, 112, 85));
-
-        var left = new Vector2(bounds.X + 94, bounds.Y + 76);
-        var right = new Vector2(bounds.X + 206, bounds.Y + 76);
-        DrawLine(left, right, 5, new Color(99, 223, 185));
-        _stationeryDrawingContext.DrawIconStone(left, 24, black: true);
-        _stationeryDrawingContext.DrawIconStone(right, 24, black: false);
-    }
-    private void DrawMiniBoardGrid(Rectangle bounds, Color color)
-    {
-        for (var i = 0; i < 7; i++)
-        {
-            var x = bounds.X + i * bounds.Width / 6f;
-            DrawLine(new Vector2(x, bounds.Y), new Vector2(x, bounds.Bottom), 1, color);
-            var y = bounds.Y + i * bounds.Height / 6f;
-            DrawLine(new Vector2(bounds.X, y), new Vector2(bounds.Right, y), 1, color);
-        }
-    }
-    private void DrawTextBoxCaret(string text, int caretIndex, Rectangle textBounds, float textScale)
-    {
-        var clampedCaretIndex = Math.Clamp(caretIndex, 0, text.Length);
-        var prefix = text[..clampedCaretIndex];
-        var measuredText = _font.MeasureString(text);
-        var fittedScale = MathF.Min(textScale, MathF.Min(textBounds.Width / Math.Max(1f, measuredText.X), textBounds.Height / Math.Max(1f, measuredText.Y)));
-        var x = textBounds.X + MathF.Min(textBounds.Width - 2, _font.MeasureString(prefix).X * fittedScale);
-        DrawLine(new Vector2(x, textBounds.Y + 5), new Vector2(x, textBounds.Bottom - 5), 2, new Color(147, 244, 200));
-    }
-
     private void DrawTextBoxSelection(string text, int selectionStart, int selectionLength, Rectangle textBounds, float textScale)
     {
         if (selectionLength <= 0 || selectionStart < 0 || selectionStart >= text.Length) return;
@@ -375,27 +327,6 @@ public sealed class GoScreenRenderer
     /// <summary>画面固有レイアウトから利用できる、共通の単一行キャレット計測です。</summary>
     public int GetSinglelineTextCaretIndex(int pointX, string text, Rectangle textBounds, float textScale) =>
         GetTextBoxCaretIndex(pointX, text, textBounds, textScale);
-    private void DrawPathPropertyRow(Rectangle bounds, string label, string value)
-    {
-        DrawDataRowFrame(bounds);
-        DrawUiLabel(UiLabel.InCompactRow(label, bounds));
-        DrawFittedText(value, new Rectangle(bounds.X + 152, bounds.Y + 7, bounds.Width - 168, 38), Color.White, 0.46f);
-    }
-
-    private void DrawPathTooltipIfHovered(Rectangle rowBounds, string fullPath, Point mousePoint)
-    {
-        HeadUpDisplay.PopupFilePathTooltip.Draw(
-            HeadUpDisplay.StickyNoteScreen,
-            StickyNoteKind.TournamentRulesPathHint,
-            rowBounds,
-            fullPath,
-            mousePoint,
-            "FILE とは？",
-            ["対局ルールで利用するファイルの場所です。"],
-            _stationeryDrawingContext,
-            DrawDynamicOptionText);
-    }
-
     private void DrawRoundedFill(Rectangle bounds, int radius, Color color)
     {
         radius = Math.Min(radius, Math.Min(bounds.Width, bounds.Height) / 2);
@@ -407,57 +338,12 @@ public sealed class GoScreenRenderer
         DrawCircle(new Vector2(bounds.Right - radius, bounds.Bottom - radius), radius, color);
     }
 
-    private void DrawTabNavigationHint(Rectangle bounds, int tabIndex, int activeIndex, int stopCount)
-    {
-        if (activeIndex < 0 || tabIndex == activeIndex || stopCount < 2)
-        {
-            return;
-        }
-
-        var isPrevious = tabIndex == (activeIndex + stopCount - 1) % stopCount;
-        var isNext = tabIndex == (activeIndex + 1) % stopCount;
-        if (!isPrevious && !isNext)
-        {
-            return;
-        }
-        var hintText = isPrevious ? "SHIFT + TAB" : "TAB";
-        var hintWidth = isPrevious ? 132 : 56;
-        var hintHeight = 28;
-        var hintBounds = new Rectangle(bounds.X - hintWidth - 6, bounds.Y - hintHeight - 6, hintWidth, hintHeight);
-        DrawRoundedFill(hintBounds, 6, new Color(4, 6, 8, 235));
-        DrawFittedText(
-            hintText,
-            new Rectangle(hintBounds.X + 4, hintBounds.Y + 2, hintBounds.Width - 8, hintBounds.Height - 4),
-            Color.White,
-            MinimumTextScale);
-    }
-
-    private const int AddPanelControlX = 626;
-
-
-    private static Rectangle LocalUseButtonBounds => LocalMatchScreen.Default.LocalUseCardBounds;
-
-    private static string FormatElapsedTime(TimeSpan elapsed)
-    {
-        var totalHours = (int)elapsed.TotalHours;
-        return totalHours > 0
-            ? $"{totalHours}:{elapsed.Minutes:00}:{elapsed.Seconds:00}"
-            : $"{elapsed.Minutes:00}:{elapsed.Seconds:00}";
-    }
-
-    private static string FormatMainTime(TimeSpan mainTime) =>
-        mainTime == TimeSpan.Zero ? "NO LIMIT" : FormatElapsedTime(mainTime);
-
-    private static string FormatMoveLimit(int moveLimit) =>
-        moveLimit <= 0 ? "NO LIMIT" : moveLimit.ToString();
-
     internal static string GetMoveThinkingText(GoAppSession session)
     {
         var text = $"{session.NextMoveNumber}手目を思考中";
         return session.MoveLimit <= 0 ? text : $"{text} / {session.MoveLimit}";
     }
 
-    private static string FormatKomi(decimal komi) => komi.ToString("0.0");
     private const float MinimumCommandButtonLabelScale = 0.36f;
     private const float CommandButtonLabelScaleMultiplier = 1.25f;
 
@@ -607,19 +493,6 @@ public sealed class GoScreenRenderer
         }
     }
 
-    private void DrawDataRowFrame(Rectangle bounds, bool active = false, bool hovered = false)
-    {
-        var fill = active ? new Color(28, 41, 45) : hovered ? new Color(28, 36, 43) : new Color(21, 28, 34);
-        var line = active ? new Color(104, 191, 165) : hovered ? new Color(58, 77, 85) : new Color(43, 56, 63);
-        FillRect(bounds, fill);
-        FillRect(new Rectangle(bounds.X, bounds.Y, bounds.Width, 1), line);
-        FillRect(new Rectangle(bounds.X, bounds.Bottom - 1, bounds.Width, 1), line);
-        if (active)
-        {
-            FillRect(new Rectangle(bounds.X, bounds.Y, 3, bounds.Height), new Color(99, 223, 185));
-        }
-    }
-
     internal void DrawInfoStrip(int x, int y, string label, string value)
     {
         var bounds = new Rectangle(x, y, 668, 72);
@@ -734,26 +607,12 @@ public sealed class GoScreenRenderer
 
     internal void DrawRectangle(Rectangle rect, int thickness, Color color) => DrawRect(rect, thickness, color);
 
-    private static Rectangle CreateVerticalLineRect(float x, float top, float bottom, int thickness) =>
-        new((int)MathF.Round(x - thickness / 2f), (int)MathF.Round(top), thickness, (int)MathF.Round(bottom - top));
-
-    private static Rectangle CreateHorizontalLineRect(float left, float right, float y, int thickness) =>
-        new((int)MathF.Round(left), (int)MathF.Round(y - thickness / 2f), (int)MathF.Round(right - left), thickness);
-
     private void DrawText(string text, Vector2 position, Color color, float scale)
     {
         var shadowAlpha = (int)MathF.Round(125f * color.A / 255f);
         _spriteBatch.DrawString(_font, text, position + new Vector2(2, 2), new Color(0, 0, 0, shadowAlpha), 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
         _spriteBatch.DrawString(_font, text, position, color, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
     }
-
-    private void DrawCenteredText(string text, Vector2 center, Color color, float scale)
-    {
-        var size = _font.MeasureString(text) * scale;
-        DrawText(text, new Vector2(center.X - size.X / 2, center.Y - size.Y / 2), color, scale);
-    }
-
-    private void DrawUiLabel(UiLabel label) => DrawFittedText(label.Text, label.Bounds, UiLabel.TextColor, label.Scale);
 
     private void DrawFittedText(string text, Rectangle bounds, Color color, float scale)
     {
@@ -862,14 +721,6 @@ public sealed class GoScreenRenderer
         _spriteBatch.Begin(samplerState: SamplerState.LinearClamp, transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));
         HeadUpDisplay.Breadcrumb.Draw(path, VirtualScreen.Width, _font.MeasureString, new BreadcrumbDrawingCallbacks(FillRect, DrawFittedText));
         _spriteBatch.End();
-    }
-
-    private void DrawCenteredFittedText(string text, Rectangle bounds, Color color, float preferredScale)
-    {
-        var measured = _font.MeasureString(text);
-        var scale = MathF.Min(preferredScale, MathF.Min(bounds.Width / Math.Max(1f, measured.X), bounds.Height / Math.Max(1f, measured.Y)));
-        var size = measured * scale;
-        DrawText(text, new Vector2(bounds.Center.X - size.X / 2, bounds.Center.Y - size.Y / 2), color, scale);
     }
 
     internal void DrawVerticalResultSection(Rectangle bounds, string title, Color accentColor,
@@ -1120,19 +971,6 @@ public sealed class GoScreenRenderer
                 DrawRect, DrawText, DrawFittedText, _stationeryDrawingContext, _stationeryDrawingContext.DrawIconStone, _stationeryDrawingContext.DrawPlayerRoleFaceIcon,
                 _stationeryDrawingContext.DrawTextSelection, _stationeryDrawingContext.DrawTextCaret,
                 DrawLine, DrawDynamicOptionText, DrawRotatedCenteredText));
-
-    private void DrawEditableTextEditHint(bool isEditing, bool isHovered, Rectangle textBounds)
-    {
-        if (isEditing || !isHovered)
-        {
-            EditActionBadge.Hide();
-            return;
-        }
-
-        EditActionBadge.SetAnchorBounds(textBounds);
-        EditActionBadge.Show();
-        EditActionBadge.Draw(_stationeryDrawingContext);
-    }
 
     public void DrawDynamicOptionText(string text, Rectangle bounds, Color color, float scale)
     {
