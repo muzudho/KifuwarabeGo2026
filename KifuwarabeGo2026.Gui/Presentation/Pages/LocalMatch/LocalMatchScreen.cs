@@ -6,6 +6,7 @@ using KifuwarabeGo2026.Shared.Domain;
 using Microsoft.Xna.Framework;
 using KifuwarabeGo2026.Gui.Presentation.Shared.SelectEntry;
 using KifuwarabeGo2026.Gui.Presentation.Shared.RightSidePanel;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 
 /// <summary>ローカル対局のセットアップ、対局中、終局後に共通する操作 UI を所有します。</summary>
 public sealed class LocalMatchScreen
@@ -49,6 +50,11 @@ public sealed class LocalMatchScreen
             (GoStone.Black, true) => PonnukiBlackPlayerKindRow,
             _ => PonnukiWhitePlayerKindRow,
         };
+
+    public int GetHumanPlayerNameCaretIndex(StationeryDrawingContext drawingContext, Point point,
+        GoStone stone, string text, bool isPonnuki) =>
+        drawingContext.GetTextCaretIndex(point.X, text,
+            GetPlayerKindRow(stone, isPonnuki).HumanNameTextBounds, 0.42f);
 
     public GoStone? GetHumanPlayerNameHit(Point point, GoPlayerKind blackKind, GoPlayerKind whiteKind, bool isPonnuki)
     {

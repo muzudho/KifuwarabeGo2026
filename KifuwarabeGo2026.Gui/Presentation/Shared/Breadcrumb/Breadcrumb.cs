@@ -2,10 +2,20 @@ namespace KifuwarabeGo2026.Gui.Presentation.Shared.Breadcrumb;
 
 using Microsoft.Xna.Framework;
 using System;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 
 /// <summary>画面下部に表示する現在位置パンくずのレイアウトを所有します。</summary>
 public sealed class Breadcrumb
 {
+    public void Draw(StationeryDrawingContext drawingContext, string path, bool visible = true)
+    {
+        if (!visible) return;
+        drawingContext.Begin();
+        Draw(path, drawingContext.ScreenWidth, drawingContext.MeasureText,
+            new BreadcrumbDrawingCallbacks(drawingContext.FillRectangle, drawingContext.DrawFittedText));
+        drawingContext.End();
+    }
+
     private const int Left = 24;
     private const int Top = 1036;
     private const int Height = 36;

@@ -15,6 +15,8 @@ using System;
 /// <summary>［EDIT ENTRY PROFILE］画面の構成、操作判定、描画を担当します。</summary>
 public sealed class EditEntryProfile
 {
+    public static EditEntryProfile Default { get; } = new();
+
     #region レイアウト
 
     /// <summary>表のラベル、アイコン、値をそろえるための基準位置です。</summary>
@@ -130,9 +132,32 @@ public sealed class EditEntryProfile
     public int GetCaretIndex(Point point, EntryProfileEditField field, string text, Func<int, string, Rectangle, float, int> getCaretIndex) =>
         (getCaretIndex ?? throw new ArgumentNullException(nameof(getCaretIndex)))(point.X, text, PlayerFieldTextBounds(field), 0.42f);
 
+    public int GetCaretIndex(StationeryDrawingContext drawingContext, Point point, EntryProfileEditField field, string text) =>
+        drawingContext.GetTextCaretIndex(point.X, text, PlayerFieldTextBounds(field), 0.42f);
+
     #endregion
 
     #region Drawing
+
+    public void Draw(StationeryDrawingContext drawingContext, GoAppSession session, Point mousePoint,
+        StickyNoteScreenId stickyNoteScreen) =>
+        Draw(session, mousePoint, stickyNoteScreen,
+            new EditEntryProfileDrawingCallbacks(
+                drawingContext.ScreenWidth,
+                drawingContext.ScreenHeight,
+                drawingContext.FillRectangle,
+                drawingContext.FillRoundedRectangle,
+                drawingContext.DrawRectangle,
+                drawingContext.DrawText,
+                drawingContext.DrawFittedText,
+                drawingContext,
+                drawingContext.DrawIconStone,
+                drawingContext.DrawPlayerRoleFaceIcon,
+                drawingContext.DrawTextSelection,
+                drawingContext.DrawTextCaret,
+                drawingContext.DrawLine,
+                drawingContext.DrawDynamicText,
+                drawingContext.DrawRotatedCenteredText));
 
     /// <summary>［EDIT ENTRY PROFILE］画面を描画します。</summary>
     public void Draw(GoAppSession session, Point mousePoint, StickyNoteScreenId stickyNoteScreen, EditEntryProfileDrawingCallbacks draw)

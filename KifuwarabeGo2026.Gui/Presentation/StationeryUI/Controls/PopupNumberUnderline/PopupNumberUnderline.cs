@@ -11,6 +11,25 @@ using System.Collections.Generic;
 /// <summary>リンクから開く整数入力用のモーダル画面です。</summary>
 public sealed class PopupNumberUnderline
 {
+    public void Draw(StationeryDrawingContext drawingContext, Point mousePosition, string title, string text,
+        int caretIndex, int selectionStart, int selectionLength, string message,
+        PopupNumberUnderlineOptions options = default)
+    {
+        var mousePoint = drawingContext.ToVirtualPoint(mousePosition);
+        drawingContext.Begin();
+        Draw(mousePoint, title, text, caretIndex, selectionStart, selectionLength, message,
+            new PopupNumberUnderlineDrawingCallbacks(
+                drawingContext.ScreenWidth, drawingContext.ScreenHeight,
+                drawingContext.FillRectangle, drawingContext.DrawRectangle,
+                drawingContext.DrawText, drawingContext.DrawFittedText,
+                drawingContext.DrawTextSelection, value => drawingContext.MeasureText(value).X,
+                drawingContext, drawingContext.DrawLine, drawingContext.DrawCenteredFittedText), options);
+        drawingContext.End();
+    }
+
+    public int GetCaretIndex(StationeryDrawingContext drawingContext, Point point, string text) =>
+        GetCaretIndex(point, text, drawingContext.GetTextCaretIndex);
+
     #region Layout
 
     private static readonly Rectangle DialogBounds = new(610, 300, 700, 390);

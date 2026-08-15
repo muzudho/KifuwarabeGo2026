@@ -9,6 +9,17 @@ using System;
 /// <summary>未保存の棋譜コメントを確認してからレビュー画面を離れるためのページです。</summary>
 public sealed class ReviewUnsavedChangesConfirmation
 {
+    public void Draw(StationeryDrawingContext drawingContext, Point mousePosition)
+    {
+        var mousePoint = drawingContext.ToVirtualPoint(mousePosition);
+        drawingContext.Begin();
+        Draw(mousePoint, new ReviewUnsavedChangesConfirmationDrawingCallbacks(
+            drawingContext.ScreenWidth, drawingContext.ScreenHeight,
+            drawingContext.FillRectangle, drawingContext.DrawRectangle,
+            drawingContext.DrawText, drawingContext.DrawFittedText, drawingContext));
+        drawingContext.End();
+    }
+
     #region Layout
 
     private static readonly Rectangle DialogBounds = new(570, 370, 780, 340);

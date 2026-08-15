@@ -6,10 +6,13 @@ using KifuwarabeGo2026.Shared.Domain;
 using Microsoft.Xna.Framework;
 using System;
 using System.Linq;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 
 /// <summary>エンジンの初期局面設定を確認し、操作を案内するページです。</summary>
 public sealed class InitialPositionConcierge
 {
+    public static InitialPositionConcierge Default { get; } = new();
+
     #region Layout
 
     private static readonly Rectangle BlackCardBounds = new(1144, 190, 668, 310);
@@ -38,6 +41,15 @@ public sealed class InitialPositionConcierge
     #endregion
 
     #region Drawing
+
+    public void Draw(StationeryDrawingContext drawingContext, InitialPositionConciergeView view, Point mousePoint) =>
+        Draw(view, mousePoint, new InitialPositionConciergeDrawingCallbacks(
+            drawingContext.DrawDynamicText,
+            drawingContext.DrawFittedText,
+            drawingContext.DrawText,
+            drawingContext.FillRectangle,
+            drawingContext.DrawRectangle,
+            drawingContext.DrawCommandButton));
 
     /// <summary>初期局面の確認ページを描画します。</summary>
     public void Draw(InitialPositionConciergeView view, Point mousePoint, InitialPositionConciergeDrawingCallbacks draw)

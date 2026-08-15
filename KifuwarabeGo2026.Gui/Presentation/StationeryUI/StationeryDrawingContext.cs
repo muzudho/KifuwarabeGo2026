@@ -1,6 +1,8 @@
 namespace KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 
 using Microsoft.Xna.Framework;
+using KifuwarabeGo2026.Gui.Application;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.SectionLabel;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.StickyNote;
 using System.Collections.Generic;
 using System;
@@ -8,7 +10,6 @@ using System;
 /// <summary>画面rendererと文房具UIを分離する共通描画境界です。</summary>
 public sealed class StationeryDrawingContext
 {
-    internal GoScreenRenderer ScreenRenderer { get; }
     public int ScreenWidth { get; }
     public int ScreenHeight { get; }
     private readonly Action<Rectangle, Color> _fillRectangle;
@@ -27,7 +28,6 @@ public sealed class StationeryDrawingContext
     private readonly Action _begin;
     private readonly Action _end;
     private readonly Action _drawBackground;
-    private readonly Action<Rectangle, string, Color> _drawVerticalResultSection;
     private readonly Action<Rectangle, string, bool, Point, bool, float> _drawCommandButton;
     private readonly Action<string, Rectangle, Color, float> _drawDynamicText;
     private readonly Action<Vector2, float> _drawSelectionFinger;
@@ -35,7 +35,6 @@ public sealed class StationeryDrawingContext
     private readonly Func<int, string, Rectangle, float, int> _getTextCaretIndex;
 
     public StationeryDrawingContext(
-        GoScreenRenderer screenRenderer,
         int screenWidth,
         int screenHeight,
         Action<Rectangle, Color> fillRectangle,
@@ -54,14 +53,12 @@ public sealed class StationeryDrawingContext
         Action begin,
         Action end,
         Action drawBackground,
-        Action<Rectangle, string, Color> drawVerticalResultSection,
         Action<Rectangle, string, bool, Point, bool, float> drawCommandButton,
         Action<string, Rectangle, Color, float> drawDynamicText,
         Action<Vector2, float> drawSelectionFinger,
         Action<StickyNoteKind, Vector2, Color, Color, string, IReadOnlyList<string>, int, Rectangle?> drawStickyNote,
         Func<int, string, Rectangle, float, int> getTextCaretIndex)
     {
-        ScreenRenderer = screenRenderer ?? throw new ArgumentNullException(nameof(screenRenderer));
         ScreenWidth = screenWidth;
         ScreenHeight = screenHeight;
         _fillRectangle = fillRectangle ?? throw new ArgumentNullException(nameof(fillRectangle));
@@ -80,7 +77,6 @@ public sealed class StationeryDrawingContext
         _begin = begin ?? throw new ArgumentNullException(nameof(begin));
         _end = end ?? throw new ArgumentNullException(nameof(end));
         _drawBackground = drawBackground ?? throw new ArgumentNullException(nameof(drawBackground));
-        _drawVerticalResultSection = drawVerticalResultSection ?? throw new ArgumentNullException(nameof(drawVerticalResultSection));
         _drawCommandButton = drawCommandButton ?? throw new ArgumentNullException(nameof(drawCommandButton));
         _drawDynamicText = drawDynamicText ?? throw new ArgumentNullException(nameof(drawDynamicText));
         _drawSelectionFinger = drawSelectionFinger ?? throw new ArgumentNullException(nameof(drawSelectionFinger));
@@ -163,6 +159,51 @@ public sealed class StationeryDrawingContext
         DrawText(label, new Vector2(bounds.X - 8, bounds.Y + 14), new Color(180, 195, 195), 0.38f);
     }
 
+    public void DrawVerticalResultSection(Rectangle bounds, string title, Color accentColor,
+        Color? textColor = null, int labelWidth = 38, int labelGap = 8)
+    {
+        DrawLine(new Vector2(bounds.X, bounds.Y), new Vector2(bounds.Right, bounds.Y), 1, new Color(58, 78, 86));
+        SectionLabelComponent.CreateVertical(bounds, title, accentColor,
+            textColor ?? new Color(205, 218, 218), this, labelWidth, labelGap).Draw(this);
+    }
+
+    public void DrawInfoStrip(int x, int y, string label, string value)
+    {
+        var bounds = new Rectangle(x, y, 668, 72);
+        DrawResultLabel(new Rectangle(x + 20, y, bounds.Width - 40, bounds.Height), label, new Color(62, 112, 105));
+        DrawFittedText(value, new Rectangle(x + 218, y + 14, 566, 44), Color.White, 0.46f);
+    }
+
+    public void DrawResultRow(Rectangle bounds, string label, string value, Color chipColor, Color valueColor)
+    {
+        FillRectangle(new Rectangle(bounds.X, bounds.Y + 8, 6, bounds.Height - 16), chipColor);
+        DrawFittedText(label, new Rectangle(bounds.X + 20, bounds.Y + 8, 170, bounds.Height - 16), new Color(180, 195, 195), 0.34f);
+        DrawFittedText(value, new Rectangle(bounds.X + 196, bounds.Y + 6, bounds.Width - 210, bounds.Height - 12), valueColor, 0.43f);
+    }
+
+    public void DrawStoneCountStrip(GoAppSession session, int y, bool showLeader = true, bool minimal = false)
+    {
+        var black = session.BlackAgehama;
+        var white = session.WhiteAgehama;
+        var blackBounds = new Rectangle(1164, y, minimal ? 260 : 300, 54);
+        var whiteBounds = new Rectangle(blackBounds.Right + 16, y, minimal ? 260 : 300, 54);
+        FillRectangle(blackBounds, new Color(24, 30, 36));
+        FillRectangle(whiteBounds, new Color(238, 238, 232));
+        DrawRectangle(blackBounds, 2, new Color(72, 82, 88));
+        DrawRectangle(whiteBounds, 2, new Color(142, 148, 148));
+        DrawIconStone(new Vector2(blackBounds.X + 30, blackBounds.Center.Y), 16, true);
+        DrawIconStone(new Vector2(whiteBounds.X + 30, whiteBounds.Center.Y), 16, false);
+        DrawFittedText(black.ToString(), new Rectangle(blackBounds.X + 58, blackBounds.Y + 8, blackBounds.Width - 72, 38), Color.White, 0.46f);
+        DrawFittedText(white.ToString(), new Rectangle(whiteBounds.X + 58, whiteBounds.Y + 8, whiteBounds.Width - 72, 38), new Color(30, 35, 38), 0.46f);
+        if (!showLeader || black == white) return;
+        var leader = black > white ? blackBounds : whiteBounds;
+        DrawFittedText("LEAD", new Rectangle(leader.Right - 78, leader.Y + 15, 62, 24),
+            black > white ? new Color(147, 244, 200) : new Color(43, 92, 80), 0.24f);
+    }
+
+    public void DrawDynamicOptionText(string text, Rectangle bounds, Color color, float scale) =>
+        DrawDynamicText(text, bounds, color, scale);
+
     public void DrawStoneValue(int x, int centerY, string value, bool black, Color valueColor)
     {
         DrawIconStone(new Vector2(x + 18, centerY), 16, black);
@@ -198,8 +239,6 @@ public sealed class StationeryDrawingContext
     public void Begin() => _begin();
     public void End() => _end();
     public void DrawBackground() => _drawBackground();
-    public void DrawVerticalResultSection(Rectangle bounds, string label, Color color) =>
-        _drawVerticalResultSection(bounds, label, color);
     public void DrawCommandButton(Rectangle bounds, string label, bool selected, Point mousePoint, bool enabled, float scale) =>
         _drawCommandButton(bounds, label, selected, mousePoint, enabled, scale);
     public void DrawDynamicText(string text, Rectangle bounds, Color color, float scale) => _drawDynamicText(text, bounds, color, scale);

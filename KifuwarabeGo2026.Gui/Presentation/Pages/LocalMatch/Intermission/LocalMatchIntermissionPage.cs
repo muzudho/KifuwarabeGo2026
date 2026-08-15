@@ -37,7 +37,7 @@ public sealed class LocalMatchIntermissionPage
 
     internal void DrawRightSidePanelContent(StationeryDrawingContext drawingContext, GoAppSession session, Point mousePoint)
     {
-        var renderer = drawingContext.ScreenRenderer;
+        var renderer = drawingContext;
         var screen = LocalMatchScreen.Default;
         screen.BackToTitleButton.Draw(mousePoint, drawingContext);
 

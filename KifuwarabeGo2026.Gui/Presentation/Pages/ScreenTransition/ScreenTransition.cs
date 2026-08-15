@@ -2,10 +2,19 @@ namespace KifuwarabeGo2026.Gui.Presentation.Pages.ScreenTransition;
 
 using Microsoft.Xna.Framework;
 using System;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 
 /// <summary>画面遷移時に表示する稲妻付きの分割フレーム演出です。</summary>
 public sealed class ScreenTransition
 {
+    public void Draw(StationeryDrawingContext drawingContext, float progress)
+    {
+        drawingContext.Begin();
+        Draw(progress, new ScreenTransitionDrawingCallbacks(
+            drawingContext.ScreenWidth, drawingContext.ScreenHeight, drawingContext.DrawLine));
+        drawingContext.End();
+    }
+
     /// <summary>演出の進行度を 0 から 1 の範囲で描画します。</summary>
     public void Draw(float progress, ScreenTransitionDrawingCallbacks draw)
     {

@@ -24,6 +24,10 @@ using KifuwarabeGo2026.Gui.Presentation.Pages.BoardAndReview;
 using KifuwarabeGo2026.Gui.Presentation.Shared.SelectEntry;
 using KifuwarabeGo2026.Gui.Presentation.Shared.EntryProfiles;
 using KifuwarabeGo2026.Gui.Presentation.Shared.CgosMatchNotification;
+using KifuwarabeGo2026.Gui.Presentation.Shared.EditEntryProfile;
+using KifuwarabeGo2026.Gui.Presentation.Shared.HeadUpDisplay;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.SinglelineTextUnderline;
+using KifuwarabeGo2026.Gui.Presentation.Shared.SavingOverlay;
 using KifuwarabeGo2026.Gui.Presentation.Pages.ApplicationSettings;
 using KifuwarabeGo2026.Gui.Presentation.Pages.PonnukiProviderSelection;
 using KifuwarabeGo2026.Gui.Presentation.Pages.Title;
@@ -750,7 +754,7 @@ public class Game1 : Game
     protected override void Draw(GameTime gameTime)
     {
         GraphicsDevice.Clear(new Color(11, 13, 18));
-        _renderer?.SetStickyNoteScreen(GetStickyNoteScreen());
+        HeadUpDisplayComponent.Default.StickyNoteScreen = GetStickyNoteScreen();
         var backgroundMousePosition = _activeGtpEngineIntegerOption is not null || _activeGtpEngineStringOption is not null
             ? new Point(-1, -1)
             : Mouse.GetState().Position;
@@ -761,14 +765,15 @@ public class Game1 : Game
                 if (_isApplicationSettingsOpen)
                     ApplicationSettingsScreen.Default.Draw(_renderer.StationeryDrawingContext, backgroundMousePosition, _applicationSettingsPage, ApplicationSettings.Current.LogRootDirectory, ApplicationSettings.Current.SgfSaveDirectory, ApplicationSettings.Current.ScreenshotSaveDirectory, ApplicationSettings.FilePath, _gtpEngineCatalog.ListPath, _guiLogFiles, _selectedGuiLogIndex, _applicationSettingsMessage);
                 else
-                    _renderer.DrawUseSelection(_session, backgroundMousePosition, _titleMenuPage, _appProviderTabIndex, _appProviderSelectionLoadTask is not null);
+                    _renderer.Presentation.TitleScreenRenderer.DrawScreen(_renderer.StationeryDrawingContext, _renderer.Presentation.GtpEngineRenderer, _session,
+                        backgroundMousePosition, _titleMenuPage, _appProviderTabIndex, _appProviderSelectionLoadTask is not null);
             }
         }
         else if (_variationSession is not null)
         {
             if (_renderer is not null)
             {
-                _renderer.Draw(
+                _renderer.Presentation.Draw(
                     _variationSession,
                     backgroundMousePosition,
                     CreateLiveBoardPreview());
@@ -780,19 +785,19 @@ public class Game1 : Game
             {
                 if (_session.CurrentMode.Kind == GoAppModeKind.Reviewing)
                 {
-                _renderer.Draw(_session, backgroundMousePosition);
+                _renderer.Presentation.Draw(_session, backgroundMousePosition);
                 }
                 else if (_session.CgosConnectionFlowKind is CgosConnectionFlowKind.Watching or CgosConnectionFlowKind.Result)
                 {
-                CgosWatchPage.Default.Draw(_renderer.CgosWatchingRenderer, _renderer.StationeryDrawingContext, _session, _cgosGameObservation, backgroundMousePosition);
+                CgosWatchPage.Default.Draw(_renderer.Presentation.CgosWatchingRenderer, _renderer.StationeryDrawingContext, _session, _cgosGameObservation, backgroundMousePosition);
                 }
                 else if (_session.CgosConnectionFlowKind == CgosConnectionFlowKind.ConnectionStart)
                 {
-                CgosLoginPage.Default.Draw(_renderer.CgosLoginRenderer, _renderer.StationeryDrawingContext, _session, backgroundMousePosition);
+                CgosLoginPage.Default.Draw(_renderer.Presentation.CgosLoginRenderer, _renderer.StationeryDrawingContext, _session, backgroundMousePosition);
                 }
                 else
                 {
-                CgosSelectConnectionPage.Default.Draw(_renderer.CgosLoginRenderer, _renderer.StationeryDrawingContext, _session, backgroundMousePosition);
+                CgosSelectConnectionPage.Default.Draw(_renderer.Presentation.CgosLoginRenderer, _renderer.StationeryDrawingContext, _session, backgroundMousePosition);
                 }
             }
         }
@@ -800,7 +805,7 @@ public class Game1 : Game
         {
             if (_renderer is not null)
             {
-                _renderer.Draw(
+                _renderer.Presentation.Draw(
                     _session,
                     backgroundMousePosition,
                     initialPositionConcierge: _playingScene.InitialPositionConciergeView);
@@ -839,7 +844,7 @@ public class Game1 : Game
                     BoardLensBannerCompactDurationSeconds,
                     0d,
                     1d);
-                _renderer.DrawBoardLensBanner(
+                BoardLensBanner.Draw(_renderer.StationeryDrawingContext,
                     _session.BoardLensDisplayName,
                     _session.BoardLensAlias,
                     _session.BoardLensGuide,
@@ -852,7 +857,7 @@ public class Game1 : Game
                     (BoardLensBannerDurationSeconds - boardLensBannerAge) / 0.35d,
                     0d,
                     1d);
-                _renderer.DrawBoardLensBanner(
+                BoardLensBanner.Draw(_renderer.StationeryDrawingContext,
                     _session.BoardLensDisplayName,
                     _session.BoardLensAlias,
                     _session.BoardLensGuide,
@@ -862,15 +867,15 @@ public class Game1 : Game
 
             var screenshotEffectAge = _inputClockSeconds - _screenshotEffectStartedAt;
             if (screenshotEffectAge >= 0d && screenshotEffectAge < ScreenshotEffectDurationSeconds)
-                _renderer.DrawScreenshotCaptureEffect((float)(screenshotEffectAge / ScreenshotEffectDurationSeconds));
+                HeadUpDisplayComponent.Default.ScreenshotEffect.Draw(_renderer.StationeryDrawingContext, (float)(screenshotEffectAge / ScreenshotEffectDurationSeconds));
 
             var screenTransitionAge = _inputClockSeconds - _screenTransitionStartedAt;
             if (screenTransitionAge >= 0d && screenTransitionAge < ScreenTransitionDurationSeconds)
-                _renderer.DrawLightningScreenTransition((float)(screenTransitionAge / ScreenTransitionDurationSeconds));
+                HeadUpDisplayComponent.Default.ScreenTransition.Draw(_renderer.StationeryDrawingContext, (float)(screenTransitionAge / ScreenTransitionDurationSeconds));
         }
 
         if (_renderer is not null && _activeGtpEngineIntegerOption is { } integerOption)
-            _renderer.DrawPopupNumberUnderline(
+            HeadUpDisplayComponent.Default.PopupNumberUnderline.Draw(_renderer.StationeryDrawingContext,
                 backgroundMousePosition,
                 integerOption.Label,
                 _gtpEngineIntegerOptionTextBox.Text,
@@ -881,7 +886,7 @@ public class Game1 : Game
 
         // ［大会ルール設定　＞　コミ］
         if (_renderer is not null && _tournamentRulesSetting.IsMoveLimitInputOpen)
-            _renderer.DrawPopupNumberUnderline(
+            HeadUpDisplayComponent.Default.PopupNumberUnderline.Draw(_renderer.StationeryDrawingContext,
                 backgroundMousePosition,
                 "MOVES",
                 _tournamentRulesSetting.MoveLimitInputText,
@@ -898,7 +903,7 @@ public class Game1 : Game
                     ]));
 
         if (_renderer is not null && _tournamentRulesSetting.IsTimeInputOpen)
-            _renderer.DrawPopupTimeUnderline(
+            HeadUpDisplayComponent.Default.PopupTimeUnderline.Draw(_renderer.StationeryDrawingContext,
                 backgroundMousePosition,
                 _tournamentRulesSetting.TimeInputTexts,
                 _tournamentRulesSetting.TimeInputCaretIndices,
@@ -906,7 +911,7 @@ public class Game1 : Game
                 _tournamentRulesSetting.TimeInputMessage);
 
         if (_renderer is not null && _tournamentRulesSetting.IsKomiInputOpen)
-            _renderer.DrawPopupNumberUnderline(
+            HeadUpDisplayComponent.Default.PopupNumberUnderline.Draw(_renderer.StationeryDrawingContext,
                 backgroundMousePosition,
                 "KOMI",
                 _tournamentRulesSetting.KomiInputText,
@@ -918,7 +923,7 @@ public class Game1 : Game
                     SpinButtons: [new SpinButton(new Rectangle(700, 516, 82, 100), "0.5")]));
 
         if (_renderer is not null && _activeGtpEngineStringOption is { } stringOption)
-            _renderer.DrawTextInputDialog(
+            HeadUpDisplayComponent.Default.TextInputDialog.Draw(_renderer.StationeryDrawingContext,
                 Mouse.GetState().Position,
                 stringOption.Label,
                 _gtpEngineStringOptionTextBox.Text,
@@ -932,7 +937,7 @@ public class Game1 : Game
                 showCompositionDiagnostics: _textCompositionService.SupportsDiagnosticAdornment);
 
         if (_renderer is not null && _isCommentEditorOpen)
-            _renderer.DrawTextAreaDialog(
+            TextAreaDialog.Default.Draw(_renderer.StationeryDrawingContext,
                 Mouse.GetState().Position,
                 _commentEditorMoveIndex == 0 ? "ROOT COMMENT (INITIAL POSITION)" : $"MOVE {_commentEditorMoveIndex} COMMENT",
                 _commentTextArea.Text,
@@ -944,19 +949,21 @@ public class Game1 : Game
                 _textCompositionService.SupportsDiagnosticAdornment);
 
         if (_renderer is not null && _isReviewUnsavedChangesConfirmationOpen)
-            _renderer.DrawReviewUnsavedChangesConfirmation(Mouse.GetState().Position);
+            HeadUpDisplayComponent.Default.ReviewUnsavedChangesConfirmation.Draw(_renderer.StationeryDrawingContext, Mouse.GetState().Position);
 
         if (_renderer is not null && _messageDialog is not null)
-            _renderer.DrawMessageDialog(_messageDialog, Mouse.GetState().Position);
+            _messageDialog.Draw(_renderer.StationeryDrawingContext, Mouse.GetState().Position);
 
         if (_renderer is not null && IsCatalogSaveInProgress)
-            _renderer.DrawSavingOverlay(_catalogSaveMessage);
+            SavingOverlay.Default.Draw(_renderer.StationeryDrawingContext, _catalogSaveMessage);
 
         var virtualMousePosition = VirtualScreen.ToVirtualPoint(GraphicsDevice.Viewport, Mouse.GetState().Position);
         var hideBreadcrumbForReviewControls =
             _session.CurrentMode.Kind == GoAppModeKind.Reviewing &&
             PopupTrendChartRenderer.IsBottomNavigationControlsNearby(virtualMousePosition);
-        _renderer?.DrawBreadcrumb(GetScreenBreadcrumb(), visible: !hideBreadcrumbForReviewControls);
+        if (_renderer is not null)
+            HeadUpDisplayComponent.Default.Breadcrumb.Draw(_renderer.StationeryDrawingContext,
+                GetScreenBreadcrumb(), visible: !hideBreadcrumbForReviewControls);
 
         base.Draw(gameTime);
     }
@@ -1002,9 +1009,9 @@ public class Game1 : Game
         {
             if (_previousMouse.LeftButton == ButtonState.Released && mouse.LeftButton == ButtonState.Pressed)
             {
-                if (_renderer?.HeadUpDisplay.ReviewUnsavedChangesConfirmation.SaveButton.IsHit(point) == true) SavePendingReviewExit();
-                else if (_renderer?.HeadUpDisplay.ReviewUnsavedChangesConfirmation.DiscardButton.IsHit(point) == true) CompletePendingReviewExit(discardChanges: true);
-                else if (_renderer?.HeadUpDisplay.ReviewUnsavedChangesConfirmation.CancelButton.IsHit(point) == true) CancelPendingReviewExit();
+                if (HeadUpDisplayComponent.Default.ReviewUnsavedChangesConfirmation.SaveButton.IsHit(point) == true) SavePendingReviewExit();
+                else if (HeadUpDisplayComponent.Default.ReviewUnsavedChangesConfirmation.DiscardButton.IsHit(point) == true) CompletePendingReviewExit(discardChanges: true);
+                else if (HeadUpDisplayComponent.Default.ReviewUnsavedChangesConfirmation.CancelButton.IsHit(point) == true) CancelPendingReviewExit();
             }
             _previousMouse = mouse;
             return;
@@ -1051,9 +1058,9 @@ public class Game1 : Game
 
             if (_tournamentRulesSetting.IsTimeInputOpen)
             {
-                if (_renderer?.HeadUpDisplay.PopupTimeUnderline.IsTextBoxHit(point, out var part) == true)
+                if (HeadUpDisplayComponent.Default.PopupTimeUnderline.IsTextBoxHit(point, out var part) == true)
                     _tournamentRulesSetting.BeginTimeInputSelection(part,
-                        _renderer.GetPopupTimeUnderlineCaretIndex(part, point, _tournamentRulesSetting.TimeInputTexts[part]));
+                        HeadUpDisplayComponent.Default.PopupTimeUnderline.GetCaretIndex(_renderer!.StationeryDrawingContext, part, point, _tournamentRulesSetting.TimeInputTexts[part]));
                 else
                 {
                     var spinHandled = false;
@@ -1061,15 +1068,15 @@ public class Game1 : Game
                     {
                         for (var index = 0; index < 3; index++)
                         {
-                            var spin = _renderer.HeadUpDisplay.PopupTimeUnderline.SpinButtons[index];
+                            var spin = HeadUpDisplayComponent.Default.PopupTimeUnderline.SpinButtons[index];
                             var step = index == 0 ? 1 : 1;
                             if (spin.UpButton.IsHit(point)) { _tournamentRulesSetting.ChangeTimeInput(index, step); spinHandled = true; break; }
                             if (spin.DownButton.IsHit(point)) { _tournamentRulesSetting.ChangeTimeInput(index, -step); spinHandled = true; break; }
                         }
                     }
-                    if (!spinHandled && _renderer?.HeadUpDisplay.PopupTimeUnderline.OkButton.IsHit(point) == true)
+                    if (!spinHandled && HeadUpDisplayComponent.Default.PopupTimeUnderline.OkButton.IsHit(point) == true)
                         _tournamentRulesSetting.CommitTimeInput();
-                    else if (!spinHandled && _renderer?.HeadUpDisplay.PopupTimeUnderline.CancelButton.IsHit(point) == true)
+                    else if (!spinHandled && HeadUpDisplayComponent.Default.PopupTimeUnderline.CancelButton.IsHit(point) == true)
                         _tournamentRulesSetting.CancelTimeInput();
                 }
                 _previousMouse = mouse;
@@ -1078,17 +1085,17 @@ public class Game1 : Game
 
             if (_tournamentRulesSetting.IsMoveLimitInputOpen)
             {
-                if (_renderer?.HeadUpDisplay.PopupNumberUnderline.IsTextBoxHit(point) == true)
+                if (HeadUpDisplayComponent.Default.PopupNumberUnderline.IsTextBoxHit(point) == true)
                     _tournamentRulesSetting.BeginMoveLimitInputSelection(
-                        _renderer.GetPopupNumberUnderlineCaretIndex(point, _tournamentRulesSetting.MoveLimitInputText), IsShiftDown());
+                        HeadUpDisplayComponent.Default.PopupNumberUnderline.GetCaretIndex(_renderer!.StationeryDrawingContext, point, _tournamentRulesSetting.MoveLimitInputText), IsShiftDown());
                 else
                 {
                     var spinHandled = false;
-                    if (_renderer?.HeadUpDisplay.PopupNumberUnderline.SpinButtons.Count >= 3)
+                    if (HeadUpDisplayComponent.Default.PopupNumberUnderline.SpinButtons.Count >= 3)
                     for (var index = 0; index < 3; index++)
                     {
                         var step = index switch { 0 => 100, 1 => 10, _ => 1 };
-                        var spinButton = _renderer.HeadUpDisplay.PopupNumberUnderline.SpinButtons[index];
+                        var spinButton = HeadUpDisplayComponent.Default.PopupNumberUnderline.SpinButtons[index];
                         if (spinButton.UpButton.IsHit(point))
                         {
                             _tournamentRulesSetting.ChangeMoveLimitInput(step);
@@ -1102,9 +1109,9 @@ public class Game1 : Game
                             break;
                         }
                     }
-                    if (!spinHandled && _renderer?.HeadUpDisplay.PopupNumberUnderline.OkButton.IsHit(point) == true)
+                    if (!spinHandled && HeadUpDisplayComponent.Default.PopupNumberUnderline.OkButton.IsHit(point) == true)
                         _tournamentRulesSetting.CommitMoveLimitInput();
-                    else if (!spinHandled && _renderer?.HeadUpDisplay.PopupNumberUnderline.CancelButton.IsHit(point) == true)
+                    else if (!spinHandled && HeadUpDisplayComponent.Default.PopupNumberUnderline.CancelButton.IsHit(point) == true)
                         _tournamentRulesSetting.CancelMoveLimitInput();
                 }
                 _previousMouse = mouse;
@@ -1113,48 +1120,48 @@ public class Game1 : Game
 
             if (_tournamentRulesSetting.IsKomiInputOpen)
             {
-                if (_renderer?.HeadUpDisplay.PopupNumberUnderline.IsTextBoxHit(point) == true)
+                if (HeadUpDisplayComponent.Default.PopupNumberUnderline.IsTextBoxHit(point) == true)
                     _tournamentRulesSetting.BeginKomiInputSelection(
-                        _renderer.GetPopupNumberUnderlineCaretIndex(point, _tournamentRulesSetting.KomiInputText), IsShiftDown());
-                else if (_renderer?.HeadUpDisplay.PopupNumberUnderline.StepUpButton?.IsHit(point) == true)
+                        HeadUpDisplayComponent.Default.PopupNumberUnderline.GetCaretIndex(_renderer!.StationeryDrawingContext, point, _tournamentRulesSetting.KomiInputText), IsShiftDown());
+                else if (HeadUpDisplayComponent.Default.PopupNumberUnderline.StepUpButton?.IsHit(point) == true)
                     _tournamentRulesSetting.ChangeKomiInput(0.5m);
-                else if (_renderer?.HeadUpDisplay.PopupNumberUnderline.StepDownButton?.IsHit(point) == true)
+                else if (HeadUpDisplayComponent.Default.PopupNumberUnderline.StepDownButton?.IsHit(point) == true)
                     _tournamentRulesSetting.ChangeKomiInput(-0.5m);
-                else if (_renderer?.HeadUpDisplay.PopupNumberUnderline.OkButton.IsHit(point) == true)
+                else if (HeadUpDisplayComponent.Default.PopupNumberUnderline.OkButton.IsHit(point) == true)
                     _tournamentRulesSetting.CommitKomiInput();
-                else if (_renderer?.HeadUpDisplay.PopupNumberUnderline.CancelButton.IsHit(point) == true)
+                else if (HeadUpDisplayComponent.Default.PopupNumberUnderline.CancelButton.IsHit(point) == true)
                     _tournamentRulesSetting.CancelKomiInput();
                 _previousMouse = mouse;
                 return;
             }
             if (_activeGtpEngineIntegerOption is not null)
             {
-                if (_renderer?.HeadUpDisplay.PopupNumberUnderline.IsTextBoxHit(point) == true)
+                if (HeadUpDisplayComponent.Default.PopupNumberUnderline.IsTextBoxHit(point) == true)
                 {
                     _gtpEngineIntegerOptionTextBox.BeginMouseSelection(
-                        _renderer.GetPopupNumberUnderlineCaretIndex(point, _gtpEngineIntegerOptionTextBox.Text),
+                        HeadUpDisplayComponent.Default.PopupNumberUnderline.GetCaretIndex(_renderer!.StationeryDrawingContext, point, _gtpEngineIntegerOptionTextBox.Text),
                         IsShiftDown());
                 }
-                else if (_renderer?.HeadUpDisplay.PopupNumberUnderline.OkButton.IsHit(point) == true)
+                else if (HeadUpDisplayComponent.Default.PopupNumberUnderline.OkButton.IsHit(point) == true)
                     CommitGtpEngineIntegerInput();
-                else if (_renderer?.HeadUpDisplay.PopupNumberUnderline.CancelButton.IsHit(point) == true)
+                else if (HeadUpDisplayComponent.Default.PopupNumberUnderline.CancelButton.IsHit(point) == true)
                     CancelGtpEngineIntegerInput();
                 _previousMouse = mouse;
                 return;
             }
             if (_activeGtpEngineStringOption is not null)
             {
-                if (_renderer is not null && GoScreenRenderer.IsTextInputDialogTextBoxHit(point))
+                if (_renderer is not null && TextInputDialog.IsTextBoxHit(point))
                 {
                     _gtpEngineStringOptionTextBox.BeginMouseSelection(
-                        _renderer.GetTextInputDialogCaretIndex(point, _gtpEngineStringOptionTextBox.Text),
+                        HeadUpDisplayComponent.Default.TextInputDialog.GetCaretIndex(_renderer!.StationeryDrawingContext, point, _gtpEngineStringOptionTextBox.Text),
                         IsShiftDown());
                 }
-                else if (GoScreenRenderer.GetTextInputDialogDefaultButtonHit(point))
+                else if (TextInputDialog.IsDefaultButtonHit(point))
                     RestoreGtpEngineStringInputDefault();
-                else if (GoScreenRenderer.GetTextInputDialogOkButtonHit(point))
+                else if (TextInputDialog.IsOkButtonHit(point))
                     CommitGtpEngineStringInput();
-                else if (GoScreenRenderer.GetTextInputDialogCancelButtonHit(point))
+                else if (TextInputDialog.IsCancelButtonHit(point))
                     CancelGtpEngineStringInput();
                 _previousMouse = mouse;
                 return;
@@ -1615,7 +1622,7 @@ public class Game1 : Game
                 : (caretPoint, text) => TournamentRuleRenderer.GetDisplayNameCaretIndex(_renderer.StationeryDrawingContext, caretPoint, text);
             Func<Point, TournamentRulesNumericField, string, int>? getNumericCaretIndex = _renderer is null
                 ? null
-                : (caretPoint, field, text) => TournamentRuleEditorLayout.GetNumericCaretIndex(caretPoint, field, text, _renderer.GetSinglelineTextCaretIndex);
+                : (caretPoint, field, text) => TournamentRuleEditorLayout.GetNumericCaretIndex(caretPoint, field, text, _renderer.StationeryDrawingContext.GetTextCaretIndex);
             var handledByTournamentRulesSetting = !handledByGtpEngineEditPanel &&
                 !handledByGtpEngineSelectionDialog &&
                 isSetupMode &&
@@ -1924,7 +1931,7 @@ public class Game1 : Game
                 return _tournamentRulesSetting.TryHandleMouseClick(
                     point,
                     _renderer is null ? null : (caretPoint, text) => TournamentRuleRenderer.GetDisplayNameCaretIndex(_renderer.StationeryDrawingContext, caretPoint, text),
-                    _renderer is null ? null : (caretPoint, field, text) => TournamentRuleEditorLayout.GetNumericCaretIndex(caretPoint, field, text, _renderer.GetSinglelineTextCaretIndex));
+                    _renderer is null ? null : (caretPoint, field, text) => TournamentRuleEditorLayout.GetNumericCaretIndex(caretPoint, field, text, _renderer.StationeryDrawingContext.GetTextCaretIndex));
             case ActiveWindowId.TournamentRulesDeleteConfirmation:
                 return _tournamentRulesSetting.TryHandleMouseClick(point);
             case ActiveWindowId.CgosAdminPlayerSelection:
@@ -2118,16 +2125,16 @@ public class Game1 : Game
         }
         if (_session.IsPlayerEditPanelOpen)
         {
-            if (_renderer?.EditEntryProfile.TryToggleClientIdentityPasswordVisibility(point, !_session.IsPlayerEditClientIdentityPasswordDisabled) == true)
+            if (EditEntryProfile.Default.TryToggleClientIdentityPasswordVisibility(point, !_session.IsPlayerEditClientIdentityPasswordDisabled))
                 return;
-            else if (_renderer?.EditEntryProfile.IsClientIdentityChangeHit(point) == true)
+            else if (EditEntryProfile.Default.IsClientIdentityChangeHit(point))
                 _session.OpenClientIdentityProfileSelectionPanel();
-            else if (_renderer?.EditEntryProfile.DiscardButton.IsHit(point) == true)
+            else if (EditEntryProfile.Default.DiscardButton.IsHit(point))
             {
                 _session.CancelPlayerEditPanel();
                 BeginDiscardTransition();
             }
-            else if (_renderer?.EditEntryProfile.SaveAndCloseButton.IsHit(point) == true)
+            else if (EditEntryProfile.Default.SaveAndCloseButton.IsHit(point))
             {
                 if (_session.HasPlayerEditChanges)
                 {
@@ -2136,9 +2143,9 @@ public class Game1 : Game
                 else _session.CancelPlayerEditPanel();
             }
             else if (_session.PlayerEditDraft.Kind == EntryProfileKind.Computer &&
-                      _renderer?.EditEntryProfile.IsEngineChangeHit(point) == true)
+                      EditEntryProfile.Default.IsEngineChangeHit(point))
                 _session.OpenPlayerEditGtpEngineSelectionDialog();
-            else if (_renderer?.EditEntryProfile.GetFieldHit(point, !_session.IsPlayerEditClientIdentityPasswordDisabled) is { } field)
+            else if (EditEntryProfile.Default.GetFieldHit(point, !_session.IsPlayerEditClientIdentityPasswordDisabled) is { } field)
                 BeginOrMovePlayerEditField(point, field);
             return;
         }
@@ -2242,7 +2249,7 @@ public class Game1 : Game
             if (_gtpEngineIntegerOptionTextBox.IsMouseSelecting)
             {
                 _gtpEngineIntegerOptionTextBox.UpdateMouseSelection(
-                    _renderer.GetPopupNumberUnderlineCaretIndex(point, _gtpEngineIntegerOptionTextBox.Text));
+                    HeadUpDisplayComponent.Default.PopupNumberUnderline.GetCaretIndex(_renderer.StationeryDrawingContext, point, _gtpEngineIntegerOptionTextBox.Text));
             }
             return;
         }
@@ -2251,7 +2258,7 @@ public class Game1 : Game
             if (_gtpEngineStringOptionTextBox.IsMouseSelecting)
             {
                 _gtpEngineStringOptionTextBox.UpdateMouseSelection(
-                    _renderer.GetTextInputDialogCaretIndex(point, _gtpEngineStringOptionTextBox.Text));
+                    HeadUpDisplayComponent.Default.TextInputDialog.GetCaretIndex(_renderer.StationeryDrawingContext, point, _gtpEngineStringOptionTextBox.Text));
             }
             return;
         }
@@ -2259,7 +2266,7 @@ public class Game1 : Game
             _session.ActiveCgosConnectionEditField is { } connectionField)
         {
             _cgosConnectionEditTextBox.UpdateMouseSelection(
-                _renderer.CgosLoginRenderer.GetCgosConnectionEditPanelCaretIndex(point, connectionField, _cgosConnectionEditTextBox.Text));
+                _renderer.Presentation.CgosLoginRenderer.GetCgosConnectionEditPanelCaretIndex(point, connectionField, _cgosConnectionEditTextBox.Text));
             SyncCgosConnectionEditField(connectionField);
         }
         else if (_cgosCredentialTextBox.IsMouseSelecting &&
@@ -2267,7 +2274,7 @@ public class Game1 : Game
                  _session.ActiveCgosCredentialField is { } credentialField)
         {
             _cgosCredentialTextBox.UpdateMouseSelection(
-                _renderer.CgosLoginRenderer.GetCgosCredentialCaretIndex(point, credentialStone, credentialField, _cgosCredentialTextBox.Text));
+                _renderer.Presentation.CgosLoginRenderer.GetCgosCredentialCaretIndex(point, credentialStone, credentialField, _cgosCredentialTextBox.Text));
             _session.SetCgosCredential(credentialStone, credentialField, _cgosCredentialTextBox.Text, _cgosCredentialTextBox.CaretIndex);
             SyncCgosCredentialSelection();
         }
@@ -2275,7 +2282,7 @@ public class Game1 : Game
                  _session.ActiveHumanPlayerNameStone is { } humanStone)
         {
             _humanPlayerNameTextBox.UpdateMouseSelection(
-                _renderer.GetHumanPlayerNameCaretIndex(point, humanStone, _humanPlayerNameTextBox.Text, _session.UseKind == GoAppUseKind.LocalApps));
+                LocalMatchScreen.Default.GetHumanPlayerNameCaretIndex(_renderer.StationeryDrawingContext, point, humanStone, _humanPlayerNameTextBox.Text, _session.UseKind == GoAppUseKind.LocalApps));
             _session.SetHumanPlayerNameDraft(_humanPlayerNameTextBox.Text, _humanPlayerNameTextBox.CaretIndex);
             _session.SetHumanPlayerNameSelection(_humanPlayerNameTextBox.SelectionStart, _humanPlayerNameTextBox.SelectionLength);
         }
@@ -2293,7 +2300,7 @@ public class Game1 : Game
         else if (_playerEditTextBox.IsMouseSelecting && _session.ActivePlayerEditField is { } playerField)
         {
             _playerEditTextBox.UpdateMouseSelection(
-                _renderer.GetPlayerEditPanelCaretIndex(point, playerField, _playerEditTextBox.Text));
+                EditEntryProfile.Default.GetCaretIndex(_renderer.StationeryDrawingContext, point, playerField, _playerEditTextBox.Text));
             SyncPlayerEditField(playerField);
         }
         else if (_targetProfileEditTextBox.IsMouseSelecting && _session.ActiveClientIdentityProfileEditField is { } targetField)
@@ -2306,14 +2313,14 @@ public class Game1 : Game
                  _session.ActiveGtpEngineEditField is { } engineField)
         {
             _gtpEngineEditTextBox.UpdateMouseSelection(
-            _renderer.GtpEngineRenderer.GetGtpEngineEditPanelCaretIndex(point, engineField, _gtpEngineEditTextBox.Text));
+            _renderer.Presentation.GtpEngineRenderer.GetGtpEngineEditPanelCaretIndex(point, engineField, _gtpEngineEditTextBox.Text));
             SyncGtpEngineEditField(engineField);
         }
 
         _tournamentRulesSetting.UpdateMouseSelection(
             point,
             (caretPoint, text) => TournamentRuleRenderer.GetDisplayNameCaretIndex(_renderer.StationeryDrawingContext, caretPoint, text),
-            (caretPoint, field, text) => TournamentRuleEditorLayout.GetNumericCaretIndex(caretPoint, field, text, _renderer.GetSinglelineTextCaretIndex));
+            (caretPoint, field, text) => TournamentRuleEditorLayout.GetNumericCaretIndex(caretPoint, field, text, _renderer.StationeryDrawingContext.GetTextCaretIndex));
     }
 
     private static bool IsShiftDown()
@@ -4002,7 +4009,7 @@ public class Game1 : Game
         var text = _session.ActiveCgosConnectionEditField == field
             ? _cgosConnectionEditTextBox.Text
             : _session.GetCgosConnectionEditFieldText(field);
-        var caretIndex = _renderer?.CgosLoginRenderer.GetCgosConnectionEditPanelCaretIndex(point, field, text) ?? text.Length;
+        var caretIndex = _renderer?.Presentation.CgosLoginRenderer.GetCgosConnectionEditPanelCaretIndex(point, field, text) ?? text.Length;
 
         if (_session.ActiveCgosConnectionEditField == field)
         {
@@ -4346,7 +4353,7 @@ public class Game1 : Game
         var text = _session.ActiveCgosCredentialStone == stone && _session.ActiveCgosCredentialField == field
             ? _cgosCredentialTextBox.Text
             : _session.GetCgosCredential(stone, field);
-        var caret = _renderer?.CgosLoginRenderer.GetCgosCredentialCaretIndex(point, stone, field, text) ?? text.Length;
+        var caret = _renderer?.Presentation.CgosLoginRenderer.GetCgosCredentialCaretIndex(point, stone, field, text) ?? text.Length;
         if (_session.ActiveCgosCredentialStone != stone || _session.ActiveCgosCredentialField != field)
             _cgosCredentialTextBox.Begin(text, caret);
         _cgosCredentialTextBox.BeginMouseSelection(caret, IsShiftDown());
@@ -4416,7 +4423,7 @@ public class Game1 : Game
         var text = _session.ActiveHumanPlayerNameStone == stone
             ? _humanPlayerNameTextBox.Text
             : _session.GetHumanPlayerName(stone);
-        var caretIndex = _renderer?.GetHumanPlayerNameCaretIndex(point, stone, text, _session.UseKind == GoAppUseKind.LocalApps) ?? text.Length;
+        var caretIndex = _renderer is null ? text.Length : LocalMatchScreen.Default.GetHumanPlayerNameCaretIndex(_renderer.StationeryDrawingContext, point, stone, text, _session.UseKind == GoAppUseKind.LocalApps);
         if (_session.ActiveHumanPlayerNameStone == stone)
         {
             _humanPlayerNameTextBox.BeginMouseSelection(caretIndex, IsShiftDown());
@@ -4541,7 +4548,7 @@ public class Game1 : Game
         var text = _session.ActivePlayerEditField == field
             ? _playerEditTextBox.Text
             : _session.GetPlayerEditFieldText(field);
-        var caretIndex = _renderer?.GetPlayerEditPanelCaretIndex(point, field, text) ?? text.Length;
+        var caretIndex = _renderer is null ? text.Length : EditEntryProfile.Default.GetCaretIndex(_renderer.StationeryDrawingContext, point, field, text);
         if (_session.ActivePlayerEditField == field)
         {
             _playerEditTextBox.BeginMouseSelection(caretIndex, IsShiftDown());
@@ -5578,7 +5585,7 @@ public class Game1 : Game
         var text = _session.ActiveGtpEngineEditField == field
             ? _gtpEngineEditTextBox.Text
             : _session.GetGtpEngineEditFieldText(field);
-        var caretIndex = _renderer?.GtpEngineRenderer.GetGtpEngineEditPanelCaretIndex(point, field, text) ?? text.Length;
+        var caretIndex = _renderer?.Presentation.GtpEngineRenderer.GetGtpEngineEditPanelCaretIndex(point, field, text) ?? text.Length;
 
         if (_session.ActiveGtpEngineEditField == field)
         {

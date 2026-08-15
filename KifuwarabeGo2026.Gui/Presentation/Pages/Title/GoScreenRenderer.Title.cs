@@ -11,9 +11,24 @@ using KifuwarabeGo2026.Gui.Presentation.Pages.Title;
 using KifuwarabeGo2026.Gui.Presentation.Pages.PonnukiProviderSelection;
 using KifuwarabeGo2026.Gui.Presentation.Pages.ApplicationSettings;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
+using KifuwarabeGo2026.Gui.Presentation.Pages.GtpEngine;
+using KifuwarabeGo2026.Gui.Presentation.Shared.SelectEntry;
 
 public sealed class TitleScreenRenderer
 {
+    public void DrawScreen(StationeryDrawingContext drawingContext, GtpEngineRenderer gtpEngineRenderer,
+        GoAppSession session, Point mousePosition,
+        TitleMenuPage page, int appProviderTabIndex, bool isAppProviderLoading)
+    {
+        var mousePoint = drawingContext.ToVirtualPoint(mousePosition);
+        drawingContext.Begin();
+        drawingContext.DrawBackground();
+        Draw(drawingContext, session, mousePoint, page, appProviderTabIndex, isAppProviderLoading);
+        SelectEntryPresenter.Default.Draw(drawingContext, session, mousePoint);
+        gtpEngineRenderer.Draw(drawingContext, session, mousePoint);
+        drawingContext.End();
+    }
+
     private readonly TitleGoEquipment _titleGoEquipment = new();
     private readonly TitleScreen _titleScreen = TitleScreen.Default;
     private readonly Action<Vector2, float, float, Color, int, float> _drawEllipseWire;

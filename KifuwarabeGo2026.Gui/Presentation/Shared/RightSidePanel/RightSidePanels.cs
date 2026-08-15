@@ -36,7 +36,7 @@ public static class RightSidePanelFrame
 {
     public static void Draw(StationeryDrawingContext drawingContext)
     {
-        var renderer = drawingContext.ScreenRenderer;
+        var renderer = drawingContext;
         var panel = RightSidePanelLayout.Bounds;
         renderer.FillRectangle(new Rectangle(panel.X + 16, panel.Y + 18, panel.Width, panel.Height), new Color(0, 0, 0, 120));
         renderer.FillRectangle(panel, new Color(21, 25, 32, 236));
@@ -56,7 +56,7 @@ public sealed class RightSidePanel
     public void Draw(StationeryDrawingContext drawingContext, MoveTrendChartRenderer moveTrendChartRenderer, GoAppSession session, Point mousePoint,
         LiveBoardPreviewModel? liveBoardPreview, InitialPositionConciergeView? initialPositionConcierge)
     {
-        var renderer = drawingContext.ScreenRenderer;
+        var renderer = drawingContext;
         RightSidePanelFrame.Draw(drawingContext);
 
         if (initialPositionConcierge is { IsVisible: true })
@@ -110,7 +110,7 @@ public sealed class LocalMatchPlayRightSidePanel
 
     public void Draw(StationeryDrawingContext drawingContext, MoveTrendChartRenderer moveTrendChartRenderer, GoAppSession session, Point mousePoint)
     {
-        var renderer = drawingContext.ScreenRenderer;
+        var renderer = drawingContext;
         renderer.DrawVerticalResultSection(new Rectangle(1144, 132, 668, 200), "PLAYERS", new Color(76, 91, 126));
         PlayersComponent.Default.DrawBothPlayers(drawingContext,
             1144,
@@ -131,10 +131,10 @@ public sealed class LocalMatchPlayRightSidePanel
             whiteLiveElapsed: session.WhiteElapsedTime);
 
         renderer.DrawVerticalResultSection(new Rectangle(1144, 344, 668, 110), "FACTS", new Color(66, 104, 116));
-        renderer.DrawInfoStrip(1144, 363, "NEXT", GoScreenRenderer.GetMoveThinkingText(session));
+        renderer.DrawInfoStrip(1144, 363, "NEXT", GetMoveThinkingText(session));
         moveTrendChartRenderer.DrawLocal(drawingContext, session, mousePoint);
         renderer.DrawVerticalResultSection(new Rectangle(1144, 780, 668, 120), "REVIEW", new Color(76, 91, 126));
-        DrawBoardLensButtons(renderer.StationeryDrawingContext, session.IsRenParseDisplayEnabled, mousePoint);
+        DrawBoardLensButtons(drawingContext, session.IsRenParseDisplayEnabled, mousePoint);
         renderer.DrawVerticalResultSection(new Rectangle(1144, 916, 668, 76), "ACTION", new Color(91, 82, 105));
 
         if (session.CanAcceptHumanMove)
@@ -146,6 +146,12 @@ public sealed class LocalMatchPlayRightSidePanel
         {
             CancelButton.Draw(mousePoint, drawingContext);
         }
+    }
+
+    private static string GetMoveThinkingText(GoAppSession session)
+    {
+        var text = $"{session.NextMoveNumber}手目を思考中";
+        return session.MoveLimit <= 0 ? text : $"{text} / {session.MoveLimit}";
     }
 
     private void DrawBoardLensButtons(StationeryDrawingContext drawingContext, bool isLensEnabled, Point mousePoint)
@@ -186,7 +192,7 @@ public sealed class SetupRightSidePanel
 
     public void Draw(StationeryDrawingContext drawingContext, GoAppSession session, Point mousePoint)
     {
-        var renderer = drawingContext.ScreenRenderer;
+        var renderer = drawingContext;
         var screen = LocalMatchScreen.Default;
         screen.BackToTitleButton.Draw(mousePoint, drawingContext);
 
@@ -225,7 +231,7 @@ public sealed class RightSidePanelPlayerSelector
 
     public void DrawPlayerRow(StationeryDrawingContext drawingContext, GoAppSession session, GoStone stone, Point mousePoint, int y)
     {
-        var renderer = drawingContext.ScreenRenderer;
+        var renderer = drawingContext;
         var player = session.GetSelectedEntryProfile(stone);
         var label = stone == GoStone.Black ? "BLACK PLAYER" : "WHITE PLAYER";
         Draw(drawingContext,
@@ -265,7 +271,7 @@ public sealed class RightSidePanelPlayerSelector
 
     private void Draw(StationeryDrawingContext drawingContext, PlayerSelector selector, Point mousePoint)
     {
-        var renderer = drawingContext.ScreenRenderer;
+        var renderer = drawingContext;
         if (selector.Bounds.X == 1144 && selector.Bounds.Width == 668)
         {
             var isBlack = selector.Label.StartsWith("BLACK", StringComparison.Ordinal);
@@ -282,7 +288,7 @@ public sealed class RightSidePanelPlayerSelector
             Underline.Bounds = fieldBounds;
             Underline.SetActionBadge(ActionBadgeComponent.Create("CHANGE", fieldBounds));
             Underline.UpdatePointer(mousePoint);
-            Underline.Draw(renderer.StationeryDrawingContext);
+            Underline.Draw(drawingContext);
             return;
         }
 
@@ -300,7 +306,7 @@ public sealed class GameOverRightSidePanel
 
     public void Draw(StationeryDrawingContext drawingContext, MoveTrendChartRenderer moveTrendChartRenderer, GoAppSession session, Point mousePoint)
     {
-        var renderer = drawingContext.ScreenRenderer;
+        var renderer = drawingContext;
         new Headline("GAME OVER", new Vector2(1144, 132), new Color(255, 230, 160), 0.9f).Draw(drawingContext);
         drawingContext.DrawText($"{session.PlayedMoveCount}手で終局", new Vector2(1144, 196), new Color(99, 223, 185), 0.58f);
         var screen = LocalMatchScreen.Default;
@@ -328,7 +334,7 @@ public sealed class GameOverRightSidePanel
 
     private static void DrawCalculationResultRow(StationeryDrawingContext drawingContext, Rectangle bounds, GoAppSession session)
     {
-        var renderer = drawingContext.ScreenRenderer;
+        var renderer = drawingContext;
         drawingContext.DrawResultLabel(bounds, "RESULT", new Color(80, 48, 38));
         const string pureGoPrefix = "PURE GO ";
         var result = string.IsNullOrWhiteSpace(session.GameOverReason) ? "GAME OVER" : session.GameOverReason;
@@ -343,7 +349,7 @@ public sealed class GameOverRightSidePanel
             return;
         }
 
-        renderer.StationeryDrawingContext.DrawFittedText(result,
+        drawingContext.DrawFittedText(result,
             new Rectangle(RightSidePanelLayout.PrimaryValueX, bounds.Y + 6,
                 bounds.Right - RightSidePanelLayout.PrimaryValueX - 18, bounds.Height - 12),
             new Color(99, 223, 185), 0.58f);
@@ -385,7 +391,7 @@ public sealed class BoardEditingRightSidePanel
 {
     public void Draw(StationeryDrawingContext drawingContext, GoAppSession session, Point mousePoint)
     {
-        var renderer = drawingContext.ScreenRenderer;
+        var renderer = drawingContext;
         var controls = BoardAndReviewScreen.Default.BoardEditing;
         controls.UpdateState(session.BoardEditingStone, session.CanUndoBoardEditing, session.CanRedoBoardEditing);
         new Headline("BOARD EDIT", new Vector2(1144, 136), new Color(255, 230, 160), 0.72f).Draw(drawingContext);
@@ -413,12 +419,12 @@ public sealed class BoardEditingRightSidePanel
 
     private static void DrawCurrentStoneResultRow(StationeryDrawingContext drawingContext, Rectangle bounds, GoAppSession session)
     {
-        var renderer = drawingContext.ScreenRenderer;
+        var renderer = drawingContext;
         drawingContext.DrawResultLabel(bounds, "RESULT", new Color(80, 48, 38));
         var difference = session.BlackStoneCount - session.WhiteStoneCount;
         if (difference == 0)
         {
-            renderer.StationeryDrawingContext.DrawText("EVEN",
+            drawingContext.DrawText("EVEN",
                 new Vector2(RightSidePanelLayout.PrimaryValueX, bounds.Center.Y - 14),
                 new Color(99, 223, 185), 0.5f);
             return;
@@ -437,7 +443,7 @@ public sealed class VariationEditingRightSidePanel
 
     public void Draw(StationeryDrawingContext drawingContext, GoAppSession session, Point mousePoint, LiveBoardPreviewModel? preview)
     {
-        var renderer = drawingContext.ScreenRenderer;
+        var renderer = drawingContext;
         var controls = BoardAndReviewScreen.Default.VariationEditing;
         controls.UpdateState(session.VariationEditingStone, session.CanAdoptVariationPosition, session.CanUndoVariation);
         new Headline("ANALYSIS BOARD", new Vector2(1144, 136), new Color(42, 62, 68), 0.68f).Draw(drawingContext);
@@ -491,7 +497,7 @@ public sealed class VariationEditingRightSidePanel
 
     private static void DrawLiveBoardWipe(StationeryDrawingContext drawingContext, LiveBoardPreviewModel preview)
     {
-        var renderer = drawingContext.ScreenRenderer;
+        var renderer = drawingContext;
         var bounds = BoardAndReviewScreen.Default.VariationEditing.LiveBoardBounds;
         drawingContext.FillRectangle(new Rectangle(bounds.X + 7, bounds.Y + 8, bounds.Width, bounds.Height), new Color(0, 0, 0, 95));
         drawingContext.FillRectangle(bounds, new Color(31, 43, 45));
@@ -551,7 +557,7 @@ public sealed class ReviewingRightSidePanel
 
     public void Draw(StationeryDrawingContext drawingContext, MoveTrendChartRenderer moveTrendChartRenderer, GoAppSession session, Point mousePoint)
     {
-        var renderer = drawingContext.ScreenRenderer;
+        var renderer = drawingContext;
         var controls = BoardAndReviewScreen.Default.Review;
         controls.UpdateBoardLensState(session.IsRenParseDisplayEnabled, session.IsMeasureBoardLens);
         new Headline("KIFU REVIEW", new Vector2(1144, 136), new Color(255, 230, 160), 0.72f).Draw(drawingContext);
@@ -616,7 +622,7 @@ public static class ReviewMoveNavigation
     internal static void Draw(StationeryDrawingContext drawingContext, int currentMoveIndex, int moveCount,
         Point mousePoint, Func<int, Rectangle> getButtonBounds)
     {
-        var renderer = drawingContext.ScreenRenderer;
+        var renderer = drawingContext;
         for (var index = 0; index < StepButtonValues.Length; index++)
         {
             var step = StepButtonValues[index];
@@ -637,5 +643,5 @@ public static class ReviewMoveNavigation
 public sealed class InitialPositionConciergeRightSidePanel
 {
     public void Draw(StationeryDrawingContext drawingContext, InitialPositionConciergeView view, Point mousePoint) =>
-        drawingContext.ScreenRenderer.DrawInitialPositionConciergeContent(view, mousePoint);
+        InitialPositionConcierge.Default.Draw(drawingContext, view, mousePoint);
 }

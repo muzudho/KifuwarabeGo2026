@@ -11,6 +11,24 @@ using System.Collections.Generic;
 /// <summary>時・分・秒を 2 桁ずつ入力する、タイム用ポップアップです。</summary>
 public sealed class PopupTimeUnderline
 {
+    public void Draw(StationeryDrawingContext drawingContext, Point mousePosition, string[] values,
+        int[] carets, int activePart, string message)
+    {
+        var mousePoint = drawingContext.ToVirtualPoint(mousePosition);
+        drawingContext.Begin();
+        Draw(mousePoint, values, carets, activePart, message,
+            new PopupTimeUnderlineDrawingCallbacks(
+                drawingContext.ScreenWidth, drawingContext.ScreenHeight,
+                drawingContext.FillRectangle, drawingContext.DrawRectangle,
+                drawingContext.DrawText, drawingContext.DrawFittedText,
+                value => drawingContext.MeasureText(value).X, drawingContext,
+                drawingContext.DrawLine, drawingContext.DrawCenteredFittedText));
+        drawingContext.End();
+    }
+
+    public int GetCaretIndex(StationeryDrawingContext drawingContext, int part, Point point, string text) =>
+        GetCaretIndex(part, point, text, drawingContext.GetTextCaretIndex);
+
     private static readonly Rectangle DialogBounds = new(610, 300, 700, 390);
     private static readonly Rectangle[] ValueBounds =
     [

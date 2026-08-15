@@ -2,6 +2,7 @@ namespace KifuwarabeGo2026.Gui.Presentation.StationeryUI.MessageDialog;
 
 using Microsoft.Xna.Framework;
 using System;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 
 /// <summary>アプリ内で表示する、本文と CLOSE ボタンだけを持つメッセージダイアログ。</summary>
 public sealed class MessageDialog
@@ -18,6 +19,18 @@ public sealed class MessageDialog
     public string Title { get; }
     public string Message { get; }
     public bool IsCloseHit(Point point) => CloseButtonBounds.Contains(point);
+
+    public void Draw(StationeryDrawingContext drawingContext, Point mousePosition)
+    {
+        var mousePoint = drawingContext.ToVirtualPoint(mousePosition);
+        drawingContext.Begin();
+        Draw(mousePoint, new MessageDialogDrawingCallbacks(
+            drawingContext.FillRectangle, drawingContext.DrawRectangle,
+            drawingContext.DrawDynamicText, drawingContext.DrawLine,
+            (bounds, text, focused, point, scale) =>
+                drawingContext.DrawCommandButton(bounds, text, focused, point, true, scale)));
+        drawingContext.End();
+    }
 
     public void Draw(Point mousePoint, MessageDialogDrawingCallbacks draw)
     {

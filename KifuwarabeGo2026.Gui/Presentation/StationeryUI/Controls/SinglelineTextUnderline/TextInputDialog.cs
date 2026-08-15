@@ -3,10 +3,49 @@ namespace KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.SinglelineText
 using KifuwarabeGo2026.Gui.Application;
 using Microsoft.Xna.Framework;
 using System;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 
 /// <summary>一行テキスト入力ダイアログのレイアウトと操作領域を所有します。</summary>
 public sealed class TextInputDialog
 {
+    public void Draw(StationeryDrawingContext drawingContext, Point mousePosition, string title, string text,
+        int caretIndex, int selectionStart, int selectionLength, string message, bool showDefaultButton = false,
+        TextCompositionState composition = default, TextCompositionDiagnostics compositionDiagnostics = default,
+        bool showCompositionDiagnostics = false)
+    {
+        var mousePoint = drawingContext.ToVirtualPoint(mousePosition);
+        drawingContext.Begin();
+        Draw(mousePoint, title, text, caretIndex, selectionStart, selectionLength, message, showDefaultButton,
+            composition, compositionDiagnostics, showCompositionDiagnostics,
+            new TextInputDialogDrawingCallbacks(
+                drawingContext.FillRectangle, drawingContext.DrawRectangle, drawingContext.DrawText,
+                drawingContext.DrawFittedText, drawingContext.DrawTextSelection,
+                (value, position, color, scale) =>
+                {
+                    var width = drawingContext.MeasureText(value).X * scale;
+                    drawingContext.DrawDynamicText(value, new Rectangle((int)position.X, (int)position.Y,
+                        Math.Max(1, (int)MathF.Ceiling(width)), 40), color, scale);
+                    return width;
+                },
+                drawingContext.MeasureText, drawingContext.DrawLine,
+                (label, x, enabled, color) => DrawCompositionLamp(drawingContext, label, x, enabled, color),
+                drawingContext.DrawCommandButton));
+        drawingContext.End();
+    }
+
+    public int GetCaretIndex(StationeryDrawingContext drawingContext, Point point, string text) =>
+        drawingContext.GetTextCaretIndex(point.X, text, TextContentBounds, 0.55f);
+
+    private static void DrawCompositionLamp(StationeryDrawingContext drawingContext, string label, int x,
+        bool enabled, Color activeColor)
+    {
+        var center = new Vector2(x, Bounds.Y + 47);
+        drawingContext.DrawCircle(center, 8, enabled ? activeColor : new Color(79, 89, 98));
+        drawingContext.DrawText(label,
+            new Vector2(center.X - drawingContext.MeasureText(label).X * 0.11f, Bounds.Y + 66),
+            new Color(180, 195, 195), 0.22f);
+    }
+
     public static Rectangle Bounds => new(510, 310, 900, 400);
     public static Rectangle TextBounds => new(590, 455, 740, 70);
     public static Rectangle DefaultButtonBounds => new(820, 590, 150, 54);
