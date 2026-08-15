@@ -11,6 +11,9 @@ using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 /// <summary>ローカル対局のセットアップ、対局中、終局後に共通する操作 UI を所有します。</summary>
 public sealed class LocalMatchScreen
 {
+    internal const int SetupBlackPlayerRowY = 646;
+    internal const int SetupWhitePlayerRowY = 750;
+
     public static LocalMatchScreen Default { get; } = new();
 
     private LocalMatchScreen()
@@ -18,8 +21,8 @@ public sealed class LocalMatchScreen
         StartPlayingButton = new Button(new Rectangle(1658, 920, 154, 56), "START", 0.48f);
         ImportSgfButton = new Button(new Rectangle(1492, 184, 320, 56), "KIFU INPUT (SGF)", 0.34f);
         BackToTitleButton = new Button(new Rectangle(1642, 104, 170, 52), "BACK TO TITLE", 0.32f);
-        BlackPlayerKindRow = new PlayerKindSelectionRow(710);
-        WhitePlayerKindRow = new PlayerKindSelectionRow(814);
+        BlackPlayerKindRow = new PlayerKindSelectionRow(SetupBlackPlayerRowY);
+        WhitePlayerKindRow = new PlayerKindSelectionRow(SetupWhitePlayerRowY);
         PonnukiBlackPlayerKindRow = new PlayerKindSelectionRow(646);
         PonnukiWhitePlayerKindRow = new PlayerKindSelectionRow(750);
         BlackSeedAutoChangeButton = new Button(new Rectangle(1164, 870, 307, 32), "BLACK", 0.22f);
@@ -86,8 +89,8 @@ public sealed class LocalMatchScreen
     private static int GetPlayerRowY(GoStone stone, bool isPonnuki) =>
         (stone, isPonnuki) switch
         {
-            (GoStone.Black, false) => 710,
-            (GoStone.White, false) => 814,
+            (GoStone.Black, false) => SetupBlackPlayerRowY,
+            (GoStone.White, false) => SetupWhitePlayerRowY,
             (GoStone.Black, true) => 646,
             _ => 750,
         };

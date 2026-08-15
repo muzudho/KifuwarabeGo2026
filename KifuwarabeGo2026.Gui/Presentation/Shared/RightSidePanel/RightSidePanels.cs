@@ -171,9 +171,9 @@ public sealed class LocalMatchPlayRightSidePanel
 
 public sealed class LocalMatchIntermissionRightSidePanel
 {
-    internal const int BlackPlayerKindButtonY = 646;
+    internal const int BlackPlayerKindButtonY = LocalMatchScreen.SetupBlackPlayerRowY;
     internal const int BlackEngineButtonY = 704;
-    internal const int WhitePlayerKindButtonY = 750;
+    internal const int WhitePlayerKindButtonY = LocalMatchScreen.SetupWhitePlayerRowY;
     internal const int WhiteEngineButtonY = 808;
 
     internal RightSidePanelPlayerSelector PlayerSelector { get; } = new();
