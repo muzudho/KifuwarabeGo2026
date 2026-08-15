@@ -18,7 +18,6 @@ using KifuwarabeGo2026.Gui.Presentation.BoardLens;
 using KifuwarabeGo2026.Gui.Presentation.Pages.OnlineMatch.Cgos.Login;
 using KifuwarabeGo2026.Gui.Presentation.Pages.OnlineMatch.Cgos.SelectConnection;
 using KifuwarabeGo2026.Gui.Presentation.Pages.OnlineMatch.Cgos.Watch;
-using KifuwarabeGo2026.Gui.Presentation.GoApps.Formal.LocalMatch.Interval;
 using KifuwarabeGo2026.Gui.Presentation.GoApps.Formal.LocalMatch.Interval.TournamentRules;
 using KifuwarabeGo2026.Gui.Presentation.Pages.EditTournamentRule;
 using KifuwarabeGo2026.Gui.Presentation.Pages.BoardAndReview;
@@ -760,8 +759,7 @@ public class Game1 : Game
         {
             if (_renderer is not null)
             {
-                LocalIntermissionRenderer.Draw(
-                    _renderer.StationeryDrawingContext,
+                _renderer.Draw(
                     _variationSession,
                     backgroundMousePosition,
                     CreateLiveBoardPreview());
@@ -773,7 +771,7 @@ public class Game1 : Game
             {
                 if (_session.CurrentMode.Kind == GoAppModeKind.Reviewing)
                 {
-                LocalIntermissionRenderer.Draw(_renderer.StationeryDrawingContext, _session, backgroundMousePosition);
+                _renderer.Draw(_session, backgroundMousePosition);
                 }
                 else if (_session.CgosConnectionFlowKind is CgosConnectionFlowKind.Watching or CgosConnectionFlowKind.Result)
                 {
@@ -793,8 +791,7 @@ public class Game1 : Game
         {
             if (_renderer is not null)
             {
-                LocalIntermissionRenderer.Draw(
-                    _renderer.StationeryDrawingContext,
+                _renderer.Draw(
                     _session,
                     backgroundMousePosition,
                     initialPositionConcierge: _playingScene.InitialPositionConciergeView);
