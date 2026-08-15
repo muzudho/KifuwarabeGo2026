@@ -181,6 +181,7 @@ public class Game1 : Game
     private Task? _catalogSaveTask;
     private string _catalogSaveMessage = "";
     private Task<GuiReleaseUpdateResult>? _guiReleaseUpdateTask;
+    private GuiUpdateProgressDialog? _guiUpdateProgressDialog;
     private MessageDialog? _messageDialog;
     private bool _exitAfterMessageDialog;
 
@@ -988,6 +989,9 @@ public class Game1 : Game
         if (_presentationServices is not null && _messageDialog is not null)
             _messageDialog.Draw(_presentationServices.Stationery, Mouse.GetState().Position);
 
+        if (_presentationServices is not null && _guiUpdateProgressDialog is not null)
+            _guiUpdateProgressDialog.Draw(_presentationServices.Stationery, Mouse.GetState().Position);
+
         if (_presentationServices is not null && IsCatalogSaveInProgress)
             SavingOverlay.Default.Draw(_presentationServices.Stationery, _catalogSaveMessage);
 
@@ -1008,6 +1012,17 @@ public class Game1 : Game
 
         var mouse = Mouse.GetState();
         var point = VirtualScreen.ToVirtualPoint(GraphicsDevice.Viewport, mouse.Position);
+        if (_guiUpdateProgressDialog is not null)
+        {
+            if (_previousMouse.LeftButton == ButtonState.Released && mouse.LeftButton == ButtonState.Pressed &&
+                _guiUpdateProgressDialog.IsCloseHit(point))
+            {
+                _guiUpdateProgressDialog = null;
+                _session.DeactivateModalWindow(ActiveWindowId.MessageDialog);
+            }
+            _previousMouse = mouse;
+            return;
+        }
         if (_messageDialog is not null)
         {
             if (_previousMouse.LeftButton == ButtonState.Released && mouse.LeftButton == ButtonState.Pressed && _messageDialog.IsCloseHit(point))
@@ -2604,7 +2619,9 @@ public class Game1 : Game
     {
         if (_guiReleaseUpdateTask is not null) return;
         GuiOperationLog.User("Pressed GUI update button");
-        _guiReleaseUpdateTask = GuiReleaseUpdater.DownloadLatestAndStartAsync();
+        _guiUpdateProgressDialog = new GuiUpdateProgressDialog();
+        _session.ActivateModalWindow(ActiveWindowId.MessageDialog);
+        _guiReleaseUpdateTask = GuiReleaseUpdater.DownloadLatestAndStartAsync(_guiUpdateProgressDialog.Report);
     }
 
     private void CompleteGuiReleaseUpdate()
@@ -2617,12 +2634,16 @@ public class Game1 : Game
             var result = task.GetAwaiter().GetResult();
             GuiOperationLog.User("GUI update completed", result.Message);
             if (result.DidStartUpdatedGui) Exit();
-            else ShowMessage(result.Message, "GUI UPDATE");
+            else
+            {
+                _guiUpdateProgressDialog = null;
+                ShowMessage(result.Message, "GUI UPDATE");
+            }
         }
         catch (Exception ex)
         {
             GuiOperationLog.App("GUI update failed", ex.ToString());
-            ShowMessage("最新GUIの取得に失敗しました。ネットワーク接続とGitHub Releaseを確認してください。", "GUI UPDATE FAILED");
+            (_guiUpdateProgressDialog ??= new GuiUpdateProgressDialog()).Fail(GuiOperationLog.FilePath);
         }
     }
 

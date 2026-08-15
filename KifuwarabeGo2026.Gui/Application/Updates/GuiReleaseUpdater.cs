@@ -19,8 +19,11 @@ public static class GuiReleaseUpdater
     private const string AssetPrefix = "KifuwarabeGo2026.Gui-v";
     private const string AssetSuffix = "-win-x64.zip";
 
-    public static async Task<GuiReleaseUpdateResult> DownloadLatestAndStartAsync(CancellationToken cancellationToken = default)
+    public static async Task<GuiReleaseUpdateResult> DownloadLatestAndStartAsync(
+        Action<GuiReleaseUpdateProgress>? reportProgress = null,
+        CancellationToken cancellationToken = default)
     {
+        Report(GuiReleaseUpdateStep.CheckingRelease, "GitHub Release を確認しています。", reportProgress);
         using var client = new HttpClient();
         client.DefaultRequestHeaders.UserAgent.ParseAdd("KifuwarabeGo2026.Gui-Updater");
         using var response = await client.GetAsync(LatestReleaseApi, cancellationToken).ConfigureAwait(false);
@@ -35,7 +38,10 @@ public static class GuiReleaseUpdater
             throw new InvalidDataException("The latest release does not have a version tag.");
 
         if (IsCurrentOrNewer(release.TagName))
+        {
+            Report(GuiReleaseUpdateStep.Completed, $"{release.TagName} はインストール済みです。", reportProgress);
             return GuiReleaseUpdateResult.AlreadyLatest(release.TagName);
+        }
 
         var root = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "KifuwarabeGo2026", "Updates");
         var versionDirectory = Path.Combine(root, SanitizeDirectoryName(release.TagName));
@@ -48,11 +54,14 @@ public static class GuiReleaseUpdater
             var zipPath = Path.Combine(stagingDirectory, asset.Name);
             try
             {
+                Report(GuiReleaseUpdateStep.DownloadingPackage, $"{asset.Name} をダウンロードしています。", reportProgress);
                 using var zipResponse = await client.GetAsync(asset.BrowserDownloadUrl, cancellationToken).ConfigureAwait(false);
                 zipResponse.EnsureSuccessStatusCode();
                 await using (var output = File.Create(zipPath))
                     await zipResponse.Content.CopyToAsync(output, cancellationToken).ConfigureAwait(false);
+                Report(GuiReleaseUpdateStep.ExtractingPackage, "ダウンロードしたファイルを展開しています。", reportProgress);
                 ZipFile.ExtractToDirectory(zipPath, stagingDirectory, overwriteFiles: true);
+                Report(GuiReleaseUpdateStep.VerifyingPackage, "更新版の実行ファイルを確認しています。", reportProgress);
                 var stagedExecutablePath = Path.Combine(stagingDirectory, "KifuwarabeGo2026.Gui.exe");
                 if (!File.Exists(stagedExecutablePath)) throw new InvalidDataException("The downloaded ZIP does not contain KifuwarabeGo2026.Gui.exe.");
                 if (Directory.Exists(versionDirectory)) Directory.Delete(versionDirectory, recursive: true);
@@ -65,10 +74,15 @@ public static class GuiReleaseUpdater
             }
         }
 
+        Report(GuiReleaseUpdateStep.StartingUpdatedGui, $"{release.TagName} を起動しています。", reportProgress);
         var updatedProcess = Process.Start(new ProcessStartInfo { FileName = executablePath, WorkingDirectory = versionDirectory, UseShellExecute = true });
         if (updatedProcess is null) throw new InvalidOperationException("The updated GUI could not be started.");
+        Report(GuiReleaseUpdateStep.Completed, $"{release.TagName} を起動しました。", reportProgress);
         return GuiReleaseUpdateResult.Started(release.TagName);
     }
+
+    private static void Report(GuiReleaseUpdateStep step, string message, Action<GuiReleaseUpdateProgress>? reportProgress) =>
+        reportProgress?.Invoke(new GuiReleaseUpdateProgress(step, message));
 
     private static bool IsCurrentOrNewer(string tagName)
     {
@@ -83,6 +97,18 @@ public static class GuiReleaseUpdater
     private sealed class Release { [JsonPropertyName("tag_name")] public string TagName { get; set; } = ""; [JsonPropertyName("assets")] public ReleaseAsset[]? Assets { get; set; } }
     private sealed class ReleaseAsset { [JsonPropertyName("name")] public string Name { get; set; } = ""; [JsonPropertyName("browser_download_url")] public string BrowserDownloadUrl { get; set; } = ""; }
 }
+
+public enum GuiReleaseUpdateStep
+{
+    CheckingRelease,
+    DownloadingPackage,
+    ExtractingPackage,
+    VerifyingPackage,
+    StartingUpdatedGui,
+    Completed,
+}
+
+public sealed record GuiReleaseUpdateProgress(GuiReleaseUpdateStep Step, string Message);
 
 public sealed record GuiReleaseUpdateResult(bool DidStartUpdatedGui, string Message)
 {
