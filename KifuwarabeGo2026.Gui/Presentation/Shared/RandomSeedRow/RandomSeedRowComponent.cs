@@ -6,16 +6,20 @@ using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.LinkUnderline;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
 using Microsoft.Xna.Framework;
 using System;
+using KifuwarabeGo2026.Shared.Domain;
 
 /// <summary>Local Match と Ponnuki で共有するランダムシード入力行です。</summary>
 public sealed class RandomSeedRowComponent
 {
     public static RandomSeedRowComponent LocalMatch { get; } = new(includeProvider: false);
     public static RandomSeedRowComponent Ponnuki { get; } = new(includeProvider: true);
+    public static RandomSeedRowComponent Cgos { get; } = new(includeProvider: false);
 
     private readonly LinkUnderline? _providerLink;
     private readonly LinkUnderline _blackLink;
     private readonly LinkUnderline _whiteLink;
+    private readonly LinkUnderline _cgosBlackLink = CreateLink(new Rectangle(436, 710, 264, 32));
+    private readonly LinkUnderline _cgosWhiteLink = CreateLink(new Rectangle(894, 710, 264, 32));
 
     private RandomSeedRowComponent(bool includeProvider)
     {
@@ -53,6 +57,30 @@ public sealed class RandomSeedRowComponent
         }
         if (model.BlackVisible) DrawLink(drawingContext, mousePoint, _blackLink, model.BlackValue, iconBlack: true);
         if (model.WhiteVisible) DrawLink(drawingContext, mousePoint, _whiteLink, model.WhiteValue, iconBlack: false);
+    }
+
+    public GoStone? GetCgosHit(Point point, bool blackEnabled, bool whiteEnabled) =>
+        blackEnabled && _cgosBlackLink.IsHit(point) ? GoStone.Black :
+        whiteEnabled && _cgosWhiteLink.IsHit(point) ? GoStone.White : null;
+
+    public void DrawCgos(KfwStationeryDrawingTools drawingContext, Point mousePoint,
+        bool blackVisible, string blackValue, bool blackEnabled,
+        bool whiteVisible, string whiteValue, bool whiteEnabled)
+    {
+        if (blackVisible) DrawCgosLink(drawingContext, mousePoint, _cgosBlackLink, blackValue, blackEnabled);
+        if (whiteVisible) DrawCgosLink(drawingContext, mousePoint, _cgosWhiteLink, whiteValue, whiteEnabled);
+    }
+
+    private static void DrawCgosLink(KfwStationeryDrawingTools drawingContext, Point mousePoint,
+        LinkUnderline link, string value, bool enabled)
+    {
+        drawingContext.DrawFittedText("RANDOM SEED", new Rectangle(link.Bounds.X - 132, link.Bounds.Y + 5, 120, 22),
+            enabled ? new Color(180, 195, 195) : new Color(90, 100, 104), 0.23f);
+        link.UpdatePointer(enabled ? mousePoint : new Point(-1, -1));
+        drawingContext.DrawFittedText(link.GetDisplayText(value),
+            new Rectangle(link.Bounds.X + 6, link.Bounds.Y + 2, link.Bounds.Width - 12, 26),
+            enabled ? Color.White : new Color(100, 108, 112), 0.29f);
+        link.Draw(drawingContext);
     }
 
     private static LinkUnderline CreateLink(Rectangle bounds)

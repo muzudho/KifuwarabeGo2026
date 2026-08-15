@@ -22,6 +22,7 @@ using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ActionBadge;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Headline;
 using KifuwarabeGo2026.Gui.Presentation.Pages.OnlineMatch.Cgos.Login;
 using KifuwarabeGo2026.Gui.Presentation.Pages.OnlineMatch.Cgos.SelectConnection;
+using KifuwarabeGo2026.Gui.Presentation.Shared.RandomSeedRow;
 
 /// <summary>CGOS の接続選択・ログイン画面を描画します。</summary>
 public sealed class CgosLoginRenderer
@@ -389,6 +390,9 @@ public sealed class CgosLoginRenderer
             page.WhiteResignButton.Draw(mousePoint, _drawingContext);
         }
         DrawCgosCredentialFields(session, GoStone.White, mousePoint);
+        RandomSeedRowComponent.Cgos.DrawCgos(_drawingContext, mousePoint,
+            session.SupportsCgosRandomSeed(GoStone.Black), session.GetCgosRandomSeedText(GoStone.Black), !session.IsCgosBlackConnectionRunning,
+            session.IsCgosPlayer2InputEnabled && session.SupportsCgosRandomSeed(GoStone.White), session.GetCgosRandomSeedText(GoStone.White), !session.IsCgosWhiteConnectionRunning);
         if (!session.IsCgosPlayer2InputEnabled)
             FillRect(CgosWhiteProcessPanelBounds, new Color(8, 11, 15, 176));
         DrawCgosOptionalInputCheck(
@@ -910,13 +914,13 @@ public sealed class CgosLoginRenderer
     private static Rectangle CgosCredentialRowBounds(GoStone stone, CgosPlayerCredentialField field)
     {
         var panel = stone == GoStone.Black ? CgosBlackProcessPanelBounds : CgosWhiteProcessPanelBounds;
-        return new Rectangle(panel.X + 16, panel.Y + (field == CgosPlayerCredentialField.LoginName ? 176 : 228), panel.Width - 32, 44);
+        return new Rectangle(panel.X + 16, panel.Y + (field == CgosPlayerCredentialField.LoginName ? 170 : 206), panel.Width - 32, 34);
     }
 
     private static Rectangle CgosCredentialTextBounds(GoStone stone, CgosPlayerCredentialField field)
     {
         var row = CgosCredentialRowBounds(stone, field);
-        return new Rectangle(row.X + 132, row.Y + 6, row.Width - 148, 32);
+        return new Rectangle(row.X + 132, row.Y + 1, row.Width - 148, 28);
     }
 
 

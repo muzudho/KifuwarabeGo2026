@@ -106,6 +106,7 @@ public class Game1 : Game
     private GtpEngineGuiOptionSpec? _activeGtpEngineIntegerOption;
     private GoStone? _activeLocalMatchRandomSeedStone;
     private PonnukiRandomSeedRole? _activePonnukiRandomSeedRole;
+    private GoStone? _activeCgosRandomSeedStone;
     private KeyboardState _previousGtpEngineIntegerKeyboard;
     private string _gtpEngineIntegerInputMessage = "";
     private readonly TextBoxController _gtpEngineStringOptionTextBox = new(GtpEngineGuiOptions.MaximumTextLength);
@@ -910,10 +911,10 @@ public class Game1 : Game
                 _gtpEngineIntegerOptionTextBox.SelectionLength,
                 _gtpEngineIntegerInputMessage,
                 new PopupNumberUnderlineOptions(
-                    Caption: _activeLocalMatchRandomSeedStone is null && _activePonnukiRandomSeedRole is null ? null : "RANDOM SEED INPUT",
-                    ShowTitle: _activeLocalMatchRandomSeedStone is null && _activePonnukiRandomSeedRole is null,
-                    AllowEmpty: _activeLocalMatchRandomSeedStone is not null || _activePonnukiRandomSeedRole is not null,
-                    ShowClearButton: _activeLocalMatchRandomSeedStone is not null || _activePonnukiRandomSeedRole is not null));
+                    Caption: _activeLocalMatchRandomSeedStone is null && _activePonnukiRandomSeedRole is null && _activeCgosRandomSeedStone is null ? null : "RANDOM SEED INPUT",
+                    ShowTitle: _activeLocalMatchRandomSeedStone is null && _activePonnukiRandomSeedRole is null && _activeCgosRandomSeedStone is null,
+                    AllowEmpty: _activeLocalMatchRandomSeedStone is not null || _activePonnukiRandomSeedRole is not null || _activeCgosRandomSeedStone is not null,
+                    ShowClearButton: _activeLocalMatchRandomSeedStone is not null || _activePonnukiRandomSeedRole is not null || _activeCgosRandomSeedStone is not null));
 
         // ［大会ルール設定　＞　コミ］
         if (_presentationServices is not null && _tournamentRulesSetting.IsMoveLimitInputOpen)
@@ -1200,7 +1201,7 @@ public class Game1 : Game
                 else if (HeadUpDisplayComponent.Default.PopupNumberUnderline.OkButton.IsHit(point) == true)
                     CommitGtpEngineIntegerInput();
                 else if (HeadUpDisplayComponent.Default.PopupNumberUnderline.ClearButton.IsHit(point) == true &&
-                         (_activeLocalMatchRandomSeedStone is not null || _activePonnukiRandomSeedRole is not null))
+                         (_activeLocalMatchRandomSeedStone is not null || _activePonnukiRandomSeedRole is not null || _activeCgosRandomSeedStone is not null))
                 {
                     _gtpEngineIntegerOptionTextBox.Begin("");
                     _gtpEngineIntegerInputMessage = "EMPTY: AUTO";
@@ -1495,6 +1496,14 @@ public class Game1 : Game
                         if (quickSelection.CancelButton.IsHit(point)) _session.CancelQuickClientIdentitySelectionPanel();
                         else if (quickSelection.SelectButton.IsHit(point)) _session.CommitQuickClientIdentitySelection();
                         else if (quickSelection.GetItemHit(point, _session.GetQuickClientIdentitySelectionTargets(_session.QuickClientIdentitySelectionStone, _session.QuickClientIdentitySelectionIsCgos).Count) is { } targetIndex) _session.SelectQuickClientIdentity(targetIndex);
+                    }
+                    else if (RandomSeedRowComponent.Cgos.GetCgosHit(point,
+                                 _session.SupportsCgosRandomSeed(GoStone.Black) && !_session.IsCgosBlackConnectionRunning,
+                                 _session.IsCgosPlayer2InputEnabled &&
+                                 _session.SupportsCgosRandomSeed(GoStone.White) &&
+                                 !_session.IsCgosWhiteConnectionRunning) is { } cgosSeedStone)
+                    {
+                        EditCgosRandomSeed(cgosSeedStone);
                     }
                     else if (CgosLoginRenderer.GetCgosCredentialFieldHit(point) is { } credential &&
                         (credential.Stone == GoStone.Black || _session.IsCgosPlayer2InputEnabled))
@@ -3287,10 +3296,11 @@ public class Game1 : Game
 
         try
         {
+            _gtpEngineCatalog.Save(_session.GtpEngineProfiles);
             var status = process.Start(
                 _session.SelectedCgosConnectionProfile,
-                stone == GoStone.Black ? _session.SelectedCgosBlackGtpEngineProfile : null,
-                stone == GoStone.White ? _session.SelectedCgosWhiteGtpEngineProfile : null,
+                stone == GoStone.Black ? _session.GetCgosEngineProfileForStart(stone) : null,
+                stone == GoStone.White ? _session.GetCgosEngineProfileForStart(stone) : null,
                 _session.GetCgosCredential(stone, CgosPlayerCredentialField.LoginName),
                 _session.GetCgosCredential(stone, CgosPlayerCredentialField.Password));
             SetCgosPlayerConnectionProcessStatus(stone, status, process.IsRunning, process);
@@ -6053,6 +6063,7 @@ public class Game1 : Game
     {
         _activeLocalMatchRandomSeedStone = null;
         _activePonnukiRandomSeedRole = null;
+        _activeCgosRandomSeedStone = null;
         _activeGtpEngineIntegerOption = option;
         _session.ActivateModalWindow(ActiveWindowId.IntegerInput);
         _gtpEngineIntegerOptionTextBox.Begin(_session.GetGtpEngineGuiOptionDraft(option));
@@ -6064,6 +6075,8 @@ public class Game1 : Game
     {
         var option = GtpEngineGuiOptions.Specs.First(spec => spec.Id == GtpEngineGuiOptions.RandomSeedId);
         _activeLocalMatchRandomSeedStone = stone;
+        _activePonnukiRandomSeedRole = null;
+        _activeCgosRandomSeedStone = null;
         _activeGtpEngineIntegerOption = option;
         _session.ActivateModalWindow(ActiveWindowId.IntegerInput);
         _gtpEngineIntegerOptionTextBox.Begin(_session.GetLocalMatchRandomSeedText(stone));
@@ -6076,9 +6089,23 @@ public class Game1 : Game
         var option = GtpEngineGuiOptions.Specs.First(spec => spec.Id == GtpEngineGuiOptions.RandomSeedId);
         _activeLocalMatchRandomSeedStone = null;
         _activePonnukiRandomSeedRole = role;
+        _activeCgosRandomSeedStone = null;
         _activeGtpEngineIntegerOption = option;
         _session.ActivateModalWindow(ActiveWindowId.IntegerInput);
         _gtpEngineIntegerOptionTextBox.Begin(_session.GetPonnukiRandomSeedText(role));
+        _previousGtpEngineIntegerKeyboard = Keyboard.GetState();
+        _gtpEngineIntegerInputMessage = $"EMPTY: AUTO   RANGE  {option.Min ?? int.MinValue} .. {option.Max ?? int.MaxValue}";
+    }
+
+    private void EditCgosRandomSeed(GoStone stone)
+    {
+        var option = GtpEngineGuiOptions.Specs.First(spec => spec.Id == GtpEngineGuiOptions.RandomSeedId);
+        _activeLocalMatchRandomSeedStone = null;
+        _activePonnukiRandomSeedRole = null;
+        _activeCgosRandomSeedStone = stone;
+        _activeGtpEngineIntegerOption = option;
+        _session.ActivateModalWindow(ActiveWindowId.IntegerInput);
+        _gtpEngineIntegerOptionTextBox.Begin(_session.GetCgosRandomSeedText(stone));
         _previousGtpEngineIntegerKeyboard = Keyboard.GetState();
         _gtpEngineIntegerInputMessage = $"EMPTY: AUTO   RANGE  {option.Min ?? int.MinValue} .. {option.Max ?? int.MaxValue}";
     }
@@ -6114,6 +6141,12 @@ public class Game1 : Game
             CancelGtpEngineIntegerInput();
             return;
         }
+        if (_activeCgosRandomSeedStone is { } cgosStone && string.IsNullOrWhiteSpace(_gtpEngineIntegerOptionTextBox.Text))
+        {
+            _session.SetCgosRandomSeedText(cgosStone, "");
+            CancelGtpEngineIntegerInput();
+            return;
+        }
         if (!int.TryParse(_gtpEngineIntegerOptionTextBox.Text, out var value))
         {
             _gtpEngineIntegerInputMessage = "ENTER A VALID INTEGER";
@@ -6130,6 +6163,8 @@ public class Game1 : Game
             _session.SetLocalMatchRandomSeedText(localMatchStone, value.ToString());
         else if (_activePonnukiRandomSeedRole is { } ponnukiRole)
             _session.SetPonnukiRandomSeedText(ponnukiRole, value.ToString());
+        else if (_activeCgosRandomSeedStone is { } fixedCgosStone)
+            _session.SetCgosRandomSeedText(fixedCgosStone, value.ToString());
         else
         {
             _session.SetGtpEngineGuiOptionDraft(option, value.ToString());
@@ -6144,6 +6179,7 @@ public class Game1 : Game
         _activeGtpEngineIntegerOption = null;
         _activeLocalMatchRandomSeedStone = null;
         _activePonnukiRandomSeedRole = null;
+        _activeCgosRandomSeedStone = null;
         _session.DeactivateModalWindow(ActiveWindowId.IntegerInput);
         _gtpEngineIntegerOptionTextBox.Clear();
         _gtpEngineIntegerInputMessage = "";

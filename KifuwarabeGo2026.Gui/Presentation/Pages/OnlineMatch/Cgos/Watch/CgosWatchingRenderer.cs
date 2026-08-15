@@ -50,7 +50,7 @@ public sealed class CgosWatchingRenderer
         drawingContext.Begin();
 
         drawingContext.DrawBackground();
-        var surface = _boardRenderer.DrawBoardSurface(observation.BoardSize);
+        var surface = _boardRenderer.DrawBoardSurface(drawingContext, observation.BoardSize);
         _drawRenAnalysis(
             session.RenParseDisplayMode,
             observation.BoardSize,

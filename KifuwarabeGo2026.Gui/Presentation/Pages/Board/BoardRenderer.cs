@@ -71,7 +71,7 @@ public sealed class BoardRenderer : IDisposable
     {
         _drawingContext = drawingContext;
         var whiteboard = session.CurrentMode.Kind == GoAppModeKind.VariationEditing;
-        var surface = DrawBoardSurface(session.BoardSize, whiteboard);
+        var surface = DrawBoardSurface(drawingContext, session.BoardSize, whiteboard);
         var start = surface.Start;
         var cell = surface.Cell;
 
@@ -105,8 +105,12 @@ public sealed class BoardRenderer : IDisposable
     /// <summary>
     /// 対局方式に依存しない碁盤面を描画します。
     /// </summary>
-    public (Vector2 Start, float Cell, Rectangle Outer) DrawBoardSurface(int boardSize, bool whiteboard = false)
+    public (Vector2 Start, float Cell, Rectangle Outer) DrawBoardSurface(
+        KfwStationeryDrawingTools drawingContext,
+        int boardSize,
+        bool whiteboard = false)
     {
+        _drawingContext = drawingContext;
         var boardOuter = new Rectangle(54, 50, 980, 980);
 
         FillRect(new Rectangle(boardOuter.X + 18, boardOuter.Y + 22, boardOuter.Width, boardOuter.Height), new Color(0, 0, 0, 125));
