@@ -168,7 +168,8 @@ public sealed class MoveTrendChartRenderer
             if (session.MoveInformationDisplayMode == MoveInformationDisplayMode.Comment)
             {
                 if (allowComment)
-                    _moveCommentPanelRenderer.Draw(moves, bounds, session, mousePoint, currentMoveNumber);
+                    _moveCommentPanelRenderer.Draw(moves, bounds, session, mousePoint, currentMoveNumber,
+                        canEdit: CanEditLocalComment(session));
                 return;
             }
         }
@@ -389,8 +390,15 @@ public sealed class MoveTrendChartRenderer
         var overlay = PopupTrendChartMoveCommentPanelBounds;
         FillRect(overlay, new Color(10, 18, 31, 170));
         PopupTrendChartScreen.Default.MoveCommentPanel.DrawSectionLabel(_drawingContext, isPanelVisible: true);
-        _moveCommentPanelRenderer.Draw(moves, overlay, session, mousePoint, currentMoveNumber);
+        _moveCommentPanelRenderer.Draw(moves, overlay, session, mousePoint, currentMoveNumber,
+            canEdit: CanEditLocalComment(session));
     }
+
+    private static bool CanEditLocalComment(GoAppSession session) =>
+        session.CurrentMode.Kind == GoAppModeKind.Reviewing ||
+        session.CurrentMode.Kind == GoAppModeKind.GameOver &&
+        session.UseKind is GoAppUseKind.LocalPlay or GoAppUseKind.LocalApps &&
+        session.IsSgfAutoSaveAvailable;
 
     private static MoveInformationDisplayMode? GetMoveInformationDisplayModeButtonHit(Point point, Rectangle bounds)
     {

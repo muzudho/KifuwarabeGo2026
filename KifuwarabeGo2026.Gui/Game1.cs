@@ -1702,6 +1702,15 @@ public class Game1 : Game
                 return;
             }
 
+            if (_session.MoveInformationDisplayMode == MoveInformationDisplayMode.Comment &&
+                CanEditCompletedLocalGameComment() &&
+                MoveCommentPanelRenderer.GetCompletedLocalGameCommentEditButtonHit(point))
+            {
+                OpenCommentEditor(_session, _session.LocalDisplayMoveIndex);
+                _previousMouse = mouse;
+                return;
+            }
+
             if (_session.CurrentMode.Kind == GoAppModeKind.Playing &&
                 LocalMatchPlayPage.Default.RightSidePanel.GetBoardLensButtonHit(point, _session.IsRenParseDisplayEnabled) is { } boardLensButton)
             {
@@ -3589,6 +3598,14 @@ public class Game1 : Game
             return;
         }
 
+        if (_session.IsPopupCommentVisible &&
+            CanEditCompletedLocalGameComment() &&
+            PopupTrendChartRenderer.GetReviewChartPopupCommentEditButtonHit(point))
+        {
+            OpenCommentEditor(_session, _session.LocalDisplayMoveIndex);
+            return;
+        }
+
         if (PopupTrendChartRenderer.GetReviewChartPopupStepButtonHit(point) is { } popupStep &&
             TryGetReadOnlyChartNavigation(out var currentMoveIndex, out var maximumMoveIndex))
         {
@@ -4278,7 +4295,9 @@ public class Game1 : Game
     {
         if (session.CurrentMode.Kind == GoAppModeKind.Reviewing && !session.HasReviewGameRecord)
             return;
-        if (session.CurrentMode.Kind is not (GoAppModeKind.Reviewing or GoAppModeKind.VariationEditing))
+        if (session.CurrentMode.Kind == GoAppModeKind.GameOver && !CanEditCompletedLocalGameComment())
+            return;
+        if (session.CurrentMode.Kind is not (GoAppModeKind.Reviewing or GoAppModeKind.VariationEditing or GoAppModeKind.GameOver))
             return;
 
         _commentEditorSession = session;
@@ -4316,15 +4335,19 @@ public class Game1 : Game
         {
             GoAppModeKind.Reviewing => _commentEditorSession.TrySetReviewComment(_commentEditorMoveIndex, _commentTextArea.Text),
             GoAppModeKind.VariationEditing => _commentEditorSession.TrySetVariationComment(_commentEditorMoveIndex, _commentTextArea.Text),
+            GoAppModeKind.GameOver => _commentEditorSession.CurrentGameRecord.TrySetComment(_commentEditorMoveIndex, _commentTextArea.Text),
             _ => false,
         };
         if (saved)
         {
             GuiOperationLog.User("Applied SGF comment", $"move={_commentEditorMoveIndex}; characters={_commentTextArea.Text.Length}");
-            if (saveToFile && _commentEditorSession is not null &&
-                SaveReviewSgf() &&
-                _commentEditorSession.CurrentMode.Kind == GoAppModeKind.Reviewing)
-                _commentEditorSession.MarkReviewCommentsSaved();
+            if (saveToFile && _commentEditorSession is not null)
+            {
+                if (_commentEditorSession.CurrentMode.Kind == GoAppModeKind.GameOver)
+                    SaveCompletedLocalGameCommentSgf();
+                else if (SaveReviewSgf() && _commentEditorSession.CurrentMode.Kind == GoAppModeKind.Reviewing)
+                    _commentEditorSession.MarkReviewCommentsSaved();
+            }
         }
         CancelCommentEditor();
     }
@@ -5216,6 +5239,36 @@ public class Game1 : Game
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
+            ShowMessage(ex.Message, "SGF output");
+            return false;
+        }
+    }
+
+    private bool CanEditCompletedLocalGameComment() =>
+        _session.CurrentMode.Kind == GoAppModeKind.GameOver &&
+        _session.UseKind is GoAppUseKind.LocalPlay or GoAppUseKind.LocalApps &&
+        Directory.Exists(ApplicationSettings.Current.SgfSaveDirectory) &&
+        !string.IsNullOrWhiteSpace(_session.LocalMatchSgfFileName);
+
+    private bool SaveCompletedLocalGameCommentSgf()
+    {
+        if (!CanEditCompletedLocalGameComment()) return false;
+
+        var path = Path.Combine(
+            ApplicationSettings.Current.SgfSaveDirectory,
+            Path.GetFileName(_session.LocalMatchSgfFileName));
+        try
+        {
+            File.WriteAllText(path, SgfGameRecordConverter.ToSgf(_session.CurrentGameRecord), Encoding.UTF8);
+            _session.SetLocalResultSgfSaved(true);
+            _session.SetSgfAutoSaveStatus("SAVED");
+            GuiOperationLog.User("Saved edited local SGF comment", path);
+            return true;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException)
+        {
+            _session.SetSgfAutoSaveStatus("SAVE FAILED");
+            ApplicationErrorLog.Write("SGF COMMENT SAVE", "Could not save the edited local game comment.", ex);
             ShowMessage(ex.Message, "SGF output");
             return false;
         }

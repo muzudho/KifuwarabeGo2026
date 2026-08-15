@@ -63,6 +63,9 @@ public sealed class MoveCommentPanelRenderer
     public static bool GetReviewCommentEditButtonHit(Point point) =>
         MoveComments.IsEditButtonHit(point, ReviewTrendChartBounds);
 
+    public static bool GetCompletedLocalGameCommentEditButtonHit(Point point) =>
+        MoveComments.IsEditButtonHit(point, CompletedLocalGameTrendChartBounds);
+
     public static bool HasMoveComment(IReadOnlyList<GoGameMove> moves, string rootComment = "")
     {
         if (!string.IsNullOrWhiteSpace(rootComment)) return true;
@@ -80,7 +83,8 @@ public sealed class MoveCommentPanelRenderer
         Rectangle bounds,
         GoAppSession session,
         Point mousePoint,
-        int? preferredMoveNumber = null)
+        int? preferredMoveNumber = null,
+        bool canEdit = false)
     {
         MoveComments.UpdateLayout(bounds);
         var moveNumber = preferredMoveNumber
@@ -114,7 +118,7 @@ public sealed class MoveCommentPanelRenderer
             && MoveCommentNavigator.FindAdjacent(moves, nextAnchor, 1) is not null;
         MoveComments.NextMoveButton.LabelScale = expanded ? 0.28f : 0.19f;
         MoveComments.NextMoveButton.Draw(mousePoint, _drawingContext);
-        if (session.CurrentMode.Kind == GoAppModeKind.Reviewing)
+        if (canEdit)
         {
             MoveComments.EditButton.LabelScale = expanded ? 0.25f : 0.17f;
             MoveComments.EditButton.Draw(mousePoint, _drawingContext);
