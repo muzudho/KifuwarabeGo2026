@@ -30,6 +30,7 @@
     <Folder Include="Application\Sessions\VariationSession\" />
     <Folder Include="Application\Sessions\GameRecords\Go\" />
     <Folder Include="Application\Sessions\GameRecords\" />
+    <Folder Include="Docs\開発\中止\" />
     <Folder Include="Presentation\BoardLens\RenSystem\" />
     <Folder Include="Presentation\BoardLens\LibertySystem\" />
     <Folder Include="Presentation\BoardLens\GlassesSystem\" />
