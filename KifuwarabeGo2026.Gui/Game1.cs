@@ -104,6 +104,7 @@ public class Game1 : Game
     private readonly TextBoxController _gtpEngineIntegerOptionTextBox = new(11);
     private GtpEngineGuiOptionSpec? _activeGtpEngineIntegerOption;
     private GoStone? _activeLocalMatchRandomSeedStone;
+    private PonnukiRandomSeedRole? _activePonnukiRandomSeedRole;
     private KeyboardState _previousGtpEngineIntegerKeyboard;
     private string _gtpEngineIntegerInputMessage = "";
     private readonly TextBoxController _gtpEngineStringOptionTextBox = new(GtpEngineGuiOptions.MaximumTextLength);
@@ -908,9 +909,9 @@ public class Game1 : Game
                 _gtpEngineIntegerOptionTextBox.SelectionLength,
                 _gtpEngineIntegerInputMessage,
                 new PopupNumberUnderlineOptions(
-                    Caption: _activeLocalMatchRandomSeedStone is null ? null : "RANDOM SEED INPUT",
-                    ShowTitle: _activeLocalMatchRandomSeedStone is null,
-                    AllowEmpty: _activeLocalMatchRandomSeedStone is not null));
+                    Caption: _activeLocalMatchRandomSeedStone is null && _activePonnukiRandomSeedRole is null ? null : "RANDOM SEED INPUT",
+                    ShowTitle: _activeLocalMatchRandomSeedStone is null && _activePonnukiRandomSeedRole is null,
+                    AllowEmpty: _activeLocalMatchRandomSeedStone is not null || _activePonnukiRandomSeedRole is not null));
 
         // ［大会ルール設定　＞　コミ］
         if (_presentationServices is not null && _tournamentRulesSetting.IsMoveLimitInputOpen)
@@ -1823,11 +1824,9 @@ public class Game1 : Game
                 return;
             }
             if (isLocalAppsIntermission &&
-                LocalMatchIntermissionPage.Default.GetRandomSeedAutoChangeHit(point) is { } seedRole &&
-                (seedRole != PonnukiRandomSeedRole.Player1 || _session.CanAutoChangePonnukiPlayer1Seed) &&
-                (seedRole != PonnukiRandomSeedRole.Player2 || _session.CanAutoChangePonnukiPlayer2Seed))
+                LocalMatchIntermissionPage.Default.GetRandomSeedHit(point, _session) is { } seedRole)
             {
-                _session.TogglePonnukiRandomSeedAutoChange(seedRole);
+                EditPonnukiRandomSeed(seedRole);
                 _previousMouse = mouse;
                 return;
             }
@@ -2481,7 +2480,7 @@ public class Game1 : Game
         {
             var seeds = _session.ApplyPonnukiRandomSeedsAtStart();
             _gtpEngineCatalog.Save(_session.GtpEngineProfiles);
-            var provider = _session.SelectedAppProviderEngine;
+            var provider = _session.GetPonnukiProviderProfileForStart(seeds.Provider);
             StopPonnukiProviderGame();
             _ponnukiProviderGameSession = new PonnukiProviderGameSession(provider);
             var record = _ponnukiProviderGameSession.StartAsync().GetAwaiter().GetResult();
@@ -6036,6 +6035,7 @@ public class Game1 : Game
     private void EditGtpEngineSpinOption(GtpEngineGuiOptionSpec option)
     {
         _activeLocalMatchRandomSeedStone = null;
+        _activePonnukiRandomSeedRole = null;
         _activeGtpEngineIntegerOption = option;
         _session.ActivateModalWindow(ActiveWindowId.IntegerInput);
         _gtpEngineIntegerOptionTextBox.Begin(_session.GetGtpEngineGuiOptionDraft(option));
@@ -6050,6 +6050,18 @@ public class Game1 : Game
         _activeGtpEngineIntegerOption = option;
         _session.ActivateModalWindow(ActiveWindowId.IntegerInput);
         _gtpEngineIntegerOptionTextBox.Begin(_session.GetLocalMatchRandomSeedText(stone));
+        _previousGtpEngineIntegerKeyboard = Keyboard.GetState();
+        _gtpEngineIntegerInputMessage = $"EMPTY: AUTO   RANGE  {option.Min ?? int.MinValue} .. {option.Max ?? int.MaxValue}";
+    }
+
+    private void EditPonnukiRandomSeed(PonnukiRandomSeedRole role)
+    {
+        var option = GtpEngineGuiOptions.Specs.First(spec => spec.Id == GtpEngineGuiOptions.RandomSeedId);
+        _activeLocalMatchRandomSeedStone = null;
+        _activePonnukiRandomSeedRole = role;
+        _activeGtpEngineIntegerOption = option;
+        _session.ActivateModalWindow(ActiveWindowId.IntegerInput);
+        _gtpEngineIntegerOptionTextBox.Begin(_session.GetPonnukiRandomSeedText(role));
         _previousGtpEngineIntegerKeyboard = Keyboard.GetState();
         _gtpEngineIntegerInputMessage = $"EMPTY: AUTO   RANGE  {option.Min ?? int.MinValue} .. {option.Max ?? int.MaxValue}";
     }
@@ -6079,6 +6091,12 @@ public class Game1 : Game
             CancelGtpEngineIntegerInput();
             return;
         }
+        if (_activePonnukiRandomSeedRole is { } role && string.IsNullOrWhiteSpace(_gtpEngineIntegerOptionTextBox.Text))
+        {
+            _session.SetPonnukiRandomSeedText(role, "");
+            CancelGtpEngineIntegerInput();
+            return;
+        }
         if (!int.TryParse(_gtpEngineIntegerOptionTextBox.Text, out var value))
         {
             _gtpEngineIntegerInputMessage = "ENTER A VALID INTEGER";
@@ -6093,6 +6111,8 @@ public class Game1 : Game
         }
         if (_activeLocalMatchRandomSeedStone is { } localMatchStone)
             _session.SetLocalMatchRandomSeedText(localMatchStone, value.ToString());
+        else if (_activePonnukiRandomSeedRole is { } ponnukiRole)
+            _session.SetPonnukiRandomSeedText(ponnukiRole, value.ToString());
         else
         {
             _session.SetGtpEngineGuiOptionDraft(option, value.ToString());
@@ -6106,6 +6126,7 @@ public class Game1 : Game
     {
         _activeGtpEngineIntegerOption = null;
         _activeLocalMatchRandomSeedStone = null;
+        _activePonnukiRandomSeedRole = null;
         _session.DeactivateModalWindow(ActiveWindowId.IntegerInput);
         _gtpEngineIntegerOptionTextBox.Clear();
         _gtpEngineIntegerInputMessage = "";

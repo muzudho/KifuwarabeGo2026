@@ -8,6 +8,10 @@ using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Button;
 using KifuwarabeGo2026.Shared.Domain;
 using Microsoft.Xna.Framework;
 using KifuwarabeGo2026.Gui.Presentation.Shared.RightSidePanel;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.LinkUnderline;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ActionBadge;
+using System;
 
 /// <summary>ローカルアプリ対局の休憩ページを描画します。</summary>
 public sealed class LocalMatchIntermissionPage
@@ -18,22 +22,29 @@ public sealed class LocalMatchIntermissionPage
     {
         ChangeAppProviderButton = new Button(new Rectangle(1658, 556, 154, 52), "CHANGE", 0.28f);
         AppProviderGameSettingsButton = new Button(new Rectangle(1328, 556, 320, 52), "GAME SETTINGS", 0.32f);
-        ProviderSeedAutoChangeButton = new Button(new Rectangle(1164, 870, 200, 32), "PROVIDER", 0.22f);
-        Player1SeedAutoChangeButton = new Button(new Rectangle(1378, 870, 200, 32), "BLACK", 0.22f);
-        Player2SeedAutoChangeButton = new Button(new Rectangle(1592, 870, 200, 32), "WHITE", 0.22f);
+        ProviderSeedLink = CreateSeedLink(new Rectangle(1248, 870, 116, 32));
+        Player1SeedLink = CreateSeedLink(new Rectangle(1408, 870, 170, 32));
+        Player2SeedLink = CreateSeedLink(new Rectangle(1622, 870, 170, 32));
     }
 
     public Button ChangeAppProviderButton { get; }
     public Button AppProviderGameSettingsButton { get; }
-    public Button ProviderSeedAutoChangeButton { get; }
-    public Button Player1SeedAutoChangeButton { get; }
-    public Button Player2SeedAutoChangeButton { get; }
+    public LinkUnderline ProviderSeedLink { get; }
+    public LinkUnderline Player1SeedLink { get; }
+    public LinkUnderline Player2SeedLink { get; }
     public LocalMatchIntermissionRightSidePanel RightSidePanel { get; } = new();
 
-    public PonnukiRandomSeedRole? GetRandomSeedAutoChangeHit(Point point) =>
-        ProviderSeedAutoChangeButton.IsHit(point) ? PonnukiRandomSeedRole.Provider :
-        Player1SeedAutoChangeButton.IsHit(point) ? PonnukiRandomSeedRole.Player1 :
-        Player2SeedAutoChangeButton.IsHit(point) ? PonnukiRandomSeedRole.Player2 : null;
+    public PonnukiRandomSeedRole? GetRandomSeedHit(Point point, GoAppSession session) =>
+        session.SupportsPonnukiRandomSeed(PonnukiRandomSeedRole.Provider) && ProviderSeedLink.IsHit(point) ? PonnukiRandomSeedRole.Provider :
+        session.SupportsPonnukiRandomSeed(PonnukiRandomSeedRole.Player1) && Player1SeedLink.IsHit(point) ? PonnukiRandomSeedRole.Player1 :
+        session.SupportsPonnukiRandomSeed(PonnukiRandomSeedRole.Player2) && Player2SeedLink.IsHit(point) ? PonnukiRandomSeedRole.Player2 : null;
+
+    private static LinkUnderline CreateSeedLink(Rectangle bounds)
+    {
+        var link = new LinkUnderline(new RoundUnderline()) { Bounds = bounds, Placeholder = "AUTO" };
+        link.SetActionBadge(ActionBadgeComponent.Create("CHANGE", bounds, 0.24f));
+        return link;
+    }
 
     internal void DrawRightSidePanelContent(KfwStationeryDrawingTools drawingContext, GoAppSession session, Point mousePoint)
     {
@@ -66,23 +77,30 @@ public sealed class LocalMatchIntermissionPage
         RightSidePanel.PlayerSelector.DrawPlayerRow(drawingContext, session, GoStone.Black, mousePoint, LocalMatchIntermissionRightSidePanel.BlackPlayerKindButtonY);
         RightSidePanel.PlayerSelector.DrawPlayerRow(drawingContext, session, GoStone.White, mousePoint, LocalMatchIntermissionRightSidePanel.WhitePlayerKindButtonY);
 
-        renderer.DrawVerticalResultSection(new Rectangle(1144, 856, 668, 52), "SEED AUTO", new Color(112, 76, 48), labelWidth: 56);
-        ProviderSeedAutoChangeButton.Label = session.PonnukiProviderSeedAutoChange ? "[x] PROVIDER" : "[ ] PROVIDER";
-        ProviderSeedAutoChangeButton.IsSelected = session.PonnukiProviderSeedAutoChange;
-        ProviderSeedAutoChangeButton.Draw(mousePoint, drawingContext);
-        Player1SeedAutoChangeButton.Label = session.PonnukiBlackPlayerSeedAutoChange ? "[x] BLACK" : "[ ] BLACK";
-        Player1SeedAutoChangeButton.IsSelected = session.PonnukiBlackPlayerSeedAutoChange;
-        Player1SeedAutoChangeButton.IsEnabled = session.CanAutoChangePonnukiPlayer1Seed;
-        Player1SeedAutoChangeButton.Draw(mousePoint, drawingContext);
-        Player2SeedAutoChangeButton.Label = session.PonnukiWhitePlayerSeedAutoChange ? "[x] WHITE" : "[ ] WHITE";
-        Player2SeedAutoChangeButton.IsSelected = session.PonnukiWhitePlayerSeedAutoChange;
-        Player2SeedAutoChangeButton.IsEnabled = session.CanAutoChangePonnukiPlayer2Seed;
-        Player2SeedAutoChangeButton.Draw(mousePoint, drawingContext);
+        renderer.DrawVerticalResultSection(new Rectangle(1144, 856, 668, 52), "RANDOM SEED", new Color(112, 76, 48), labelWidth: 56);
+        DrawSeedLink(drawingContext, session, mousePoint, PonnukiRandomSeedRole.Provider, ProviderSeedLink);
+        DrawSeedLink(drawingContext, session, mousePoint, PonnukiRandomSeedRole.Player1, Player1SeedLink);
+        DrawSeedLink(drawingContext, session, mousePoint, PonnukiRandomSeedRole.Player2, Player2SeedLink);
 
         renderer.DrawVerticalResultSection(new Rectangle(1144, 916, 668, 76), "ACTION", new Color(91, 82, 105));
         screen.StartPlayingButton.Label = session.CanStartPlaying ? "START" : "ENGINE REQUIRED";
         screen.StartPlayingButton.LabelScale = session.CanStartPlaying ? 0.48f : 0.28f;
         screen.StartPlayingButton.IsEnabled = session.CanStartPlaying;
         screen.StartPlayingButton.Draw(mousePoint, drawingContext);
+    }
+
+    private static void DrawSeedLink(KfwStationeryDrawingTools drawingContext, GoAppSession session,
+        Point mousePoint, PonnukiRandomSeedRole role, LinkUnderline link)
+    {
+        if (!session.SupportsPonnukiRandomSeed(role)) return;
+        link.UpdatePointer(mousePoint);
+        if (role == PonnukiRandomSeedRole.Provider)
+            drawingContext.DrawFittedText("PROVIDER", new Rectangle(1164, 874, 76, 22), new Color(180, 195, 195), 0.22f);
+        else
+            drawingContext.DrawIconStone(new Vector2(link.Bounds.X - 24, link.Bounds.Center.Y), 12,
+                role == PonnukiRandomSeedRole.Player1);
+        drawingContext.DrawFittedText(link.GetDisplayText(session.GetPonnukiRandomSeedText(role)),
+            new Rectangle(link.Bounds.X + 6, link.Bounds.Y + 2, Math.Max(1, link.Bounds.Width - 108), 26), Color.White, 0.28f);
+        link.Draw(drawingContext);
     }
 }

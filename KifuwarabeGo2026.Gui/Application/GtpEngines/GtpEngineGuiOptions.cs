@@ -50,7 +50,7 @@ public static class GtpEngineGuiOptions
         new(BoardSizeId, "BoardSize", "combo", "9", Values: ["9"], Binding: GtpBoardSizeBinding,
             Choices: [new("9")]),
         new(InitialMoveCountId, "InitialMoveCount", "spin", "20", 0, 20),
-        new(RandomSeedId, "RandomSeed", "spin", "0", 0, int.MaxValue),
+        new(RandomSeedId, "RandomSeed", "spin", "", 0, int.MaxValue),
     ];
 
     public static int KnownOptionCount => Specs.Length;
