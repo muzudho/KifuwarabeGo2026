@@ -34,7 +34,7 @@ public sealed class CgosLoginRenderer
     private readonly LinkUnderline _selectorLinkUnderline = new(
         new RoundUnderline { TopOffset = 2, Thickness = 4, Radius = 2 });
     private readonly ActionBadgeComponent _editActionBadge = ActionBadgeComponent.Create("EDIT", Rectangle.Empty);
-    private StationeryDrawingContext _drawingContext = null!;
+    private KfwStationeryDrawingTools _drawingContext = null!;
 
     public CgosLoginRenderer(GtpEngineRenderer gtpEngineRenderer, Action<GoAppSession, Point> drawPlayerEditPanel)
     {
@@ -42,7 +42,7 @@ public sealed class CgosLoginRenderer
         _drawPlayerEditPanel = drawPlayerEditPanel;
     }
 
-    public void Draw(StationeryDrawingContext drawingContext, GoAppSession session, Point mousePosition)
+    public void Draw(KfwStationeryDrawingTools drawingContext, GoAppSession session, Point mousePosition)
     {
         _drawingContext = drawingContext;
         var mousePoint = drawingContext.ToVirtualPoint(mousePosition);

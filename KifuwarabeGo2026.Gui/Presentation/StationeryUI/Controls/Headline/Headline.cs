@@ -36,7 +36,7 @@ public sealed class Headline
     // 機能
     // ========================================
 
-    public void Draw(StationeryDrawingContext surface)
+    public void Draw(KfwStationeryDrawingTools surface)
     {
         ArgumentNullException.ThrowIfNull(surface);
         surface.DrawText(Text, Position, Color, TextScale);

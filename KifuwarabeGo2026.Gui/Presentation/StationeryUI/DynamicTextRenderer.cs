@@ -9,30 +9,23 @@ using System.IO;
 using System.Linq;
 
 /// <summary>SpriteFont にない文字を含む動的テキストを描画し、生成テクスチャを再利用します。</summary>
-internal sealed class DynamicTextRenderer
+internal sealed class DynamicTextRenderer : IDisposable
 {
-    private readonly GraphicsDevice _graphicsDevice;
-    private readonly SpriteBatch _spriteBatch;
-    private readonly SpriteFont _font;
+    private readonly KfwScreenCanvas _canvas;
     private readonly ITextRasterizer _textRasterizer;
-    private readonly Action<string, Rectangle, Color, float> _drawFittedText;
     private readonly Dictionary<string, Texture2D> _textures = [];
 
-    public DynamicTextRenderer(GraphicsDevice graphicsDevice, SpriteBatch spriteBatch, SpriteFont font,
-        ITextRasterizer textRasterizer, Action<string, Rectangle, Color, float> drawFittedText)
+    public DynamicTextRenderer(KfwScreenCanvas canvas, ITextRasterizer textRasterizer)
     {
-        _graphicsDevice = graphicsDevice;
-        _spriteBatch = spriteBatch;
-        _font = font;
+        _canvas = canvas;
         _textRasterizer = textRasterizer;
-        _drawFittedText = drawFittedText;
     }
 
     public void Draw(string text, Rectangle bounds, Color color, float scale)
     {
-        if (text.All(character => _font.Characters.Contains(character)))
+        if (_canvas.CanDrawText(text))
         {
-            _drawFittedText(text, bounds, color, scale);
+            _canvas.DrawFittedText(text, bounds, color, scale);
             return;
         }
 
@@ -40,14 +33,20 @@ internal sealed class DynamicTextRenderer
         {
             var png = _textRasterizer.RasterizePng(text, pixelHeight: 28, bold: true);
             using var stream = new MemoryStream(png, writable: false);
-            texture = Texture2D.FromStream(_graphicsDevice, stream);
+            texture = Texture2D.FromStream(_canvas.GraphicsDevice, stream);
             _textures[text] = texture;
         }
 
-        var targetHeight = MathF.Min(bounds.Height, _font.LineSpacing * scale);
+        var targetHeight = MathF.Min(bounds.Height, _canvas.FontLineSpacing * scale);
         var fittedScale = MathF.Min(bounds.Width / (float)texture.Width, targetHeight / texture.Height);
-        _spriteBatch.Draw(texture, new Rectangle(bounds.X,
+        _canvas.DrawTexture(texture, new Rectangle(bounds.X,
             bounds.Y + (bounds.Height - (int)(texture.Height * fittedScale)) / 2,
             (int)(texture.Width * fittedScale), (int)(texture.Height * fittedScale)), color);
+    }
+
+    public void Dispose()
+    {
+        foreach (var texture in _textures.Values) texture.Dispose();
+        _textures.Clear();
     }
 }

@@ -51,7 +51,7 @@ public sealed class LocalMatchScreen
             _ => PonnukiWhitePlayerKindRow,
         };
 
-    public int GetHumanPlayerNameCaretIndex(StationeryDrawingContext drawingContext, Point point,
+    public int GetHumanPlayerNameCaretIndex(KfwStationeryDrawingTools drawingContext, Point point,
         GoStone stone, string text, bool isPonnuki) =>
         drawingContext.GetTextCaretIndex(point.X, text,
             GetPlayerKindRow(stone, isPonnuki).HumanNameTextBounds, 0.42f);

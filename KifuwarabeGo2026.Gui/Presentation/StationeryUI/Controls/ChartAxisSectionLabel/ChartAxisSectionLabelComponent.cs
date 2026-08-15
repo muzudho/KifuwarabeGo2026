@@ -20,7 +20,7 @@ public sealed class ChartAxisSectionLabelComponent
     public ChartAxisSide Side { get; }
     public SectionLabelComponent? SectionLabel { get; private set; }
 
-    public void DrawHeader(StationeryDrawingContext draw, bool isPinned)
+    public void DrawHeader(KfwStationeryDrawingTools draw, bool isPinned)
     {
         SectionLabel = SectionLabelComponent.CreateHorizontal(
             new Rectangle(Bounds.X, Bounds.Bottom + 8, Bounds.Width, 1),
@@ -35,7 +35,7 @@ public sealed class ChartAxisSectionLabelComponent
     }
 
     public void DrawAxisLabels(
-        StationeryDrawingContext draw,
+        KfwStationeryDrawingTools draw,
         Rectangle plot,
         IReadOnlyList<string> labels,
         Color color,

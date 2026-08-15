@@ -20,7 +20,7 @@ public sealed class MoveCommentPanelRenderer
     private readonly GraphicsDevice _graphicsDevice;
     private readonly SpriteBatch _spriteBatch;
     private readonly ITextRasterizer _textRasterizer;
-    private readonly StationeryDrawingContext _drawingContext;
+    private readonly KfwStationeryDrawingTools _drawingContext;
     private Texture2D? _dynamicCommentTexture;
     private string _dynamicCommentTextureKey = "";
 
@@ -28,7 +28,7 @@ public sealed class MoveCommentPanelRenderer
         GraphicsDevice graphicsDevice,
         SpriteBatch spriteBatch,
         ITextRasterizer textRasterizer,
-        StationeryDrawingContext drawingContext)
+        KfwStationeryDrawingTools drawingContext)
     {
         _graphicsDevice = graphicsDevice;
         _spriteBatch = spriteBatch;

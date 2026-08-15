@@ -7,7 +7,7 @@ using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 /// <summary>画面下部に表示する現在位置パンくずのレイアウトを所有します。</summary>
 public sealed class Breadcrumb
 {
-    public void Draw(StationeryDrawingContext drawingContext, string path, bool visible = true)
+    public void Draw(KfwStationeryDrawingTools drawingContext, string path, bool visible = true)
     {
         if (!visible) return;
         drawingContext.Begin();

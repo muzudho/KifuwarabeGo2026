@@ -18,7 +18,7 @@ using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.SectionLabel;
 public sealed class MoveTrendChartRenderer
 {
     private readonly MoveCommentPanelRenderer _moveCommentPanelRenderer;
-    private StationeryDrawingContext _drawingContext = null!;
+    private KfwStationeryDrawingTools _drawingContext = null!;
 
     public MoveTrendChartRenderer(MoveCommentPanelRenderer moveCommentPanelRenderer)
     {
@@ -86,7 +86,7 @@ public sealed class MoveTrendChartRenderer
         return null;
     }
 
-    public void DrawCgos(StationeryDrawingContext drawingContext, GoAppSession session, CgosGameObservation observation, Point mousePoint)
+    public void DrawCgos(KfwStationeryDrawingTools drawingContext, GoAppSession session, CgosGameObservation observation, Point mousePoint)
     {
         _drawingContext = drawingContext;
         DrawMoveTrendChart(
@@ -97,7 +97,7 @@ public sealed class MoveTrendChartRenderer
             observation.DisplayMoveIndex);
     }
 
-    public void DrawLocal(StationeryDrawingContext drawingContext, GoAppSession session, Point mousePoint)
+    public void DrawLocal(KfwStationeryDrawingTools drawingContext, GoAppSession session, Point mousePoint)
     {
         _drawingContext = drawingContext;
         DrawMoveTrendChart(
@@ -108,7 +108,7 @@ public sealed class MoveTrendChartRenderer
             session.LocalDisplayMoveIndex);
     }
 
-    public void DrawLocalGameOver(StationeryDrawingContext drawingContext, GoAppSession session, Point mousePoint)
+    public void DrawLocalGameOver(KfwStationeryDrawingTools drawingContext, GoAppSession session, Point mousePoint)
     {
         _drawingContext = drawingContext;
         DrawMoveTrendChart(
@@ -124,7 +124,7 @@ public sealed class MoveTrendChartRenderer
             ? LocalAppsGameOverTrendChartBounds
             : LocalGameOverTrendChartBounds;
 
-    public void DrawReview(StationeryDrawingContext drawingContext, GoAppSession session, Point mousePoint)
+    public void DrawReview(KfwStationeryDrawingTools drawingContext, GoAppSession session, Point mousePoint)
     {
         _drawingContext = drawingContext;
         DrawMoveTrendChart(
@@ -135,7 +135,7 @@ public sealed class MoveTrendChartRenderer
             session.ReviewMoveIndex);
     }
 
-    public void Draw(StationeryDrawingContext drawingContext, GoAppSession session,
+    public void Draw(KfwStationeryDrawingTools drawingContext, GoAppSession session,
         IReadOnlyList<GoGameMove> moves, Rectangle bounds, Point mousePoint,
         int? currentMoveNumber = null, bool popup = false)
     {

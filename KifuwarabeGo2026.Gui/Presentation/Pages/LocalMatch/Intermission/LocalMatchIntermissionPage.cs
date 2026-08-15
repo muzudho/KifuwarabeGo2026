@@ -35,7 +35,7 @@ public sealed class LocalMatchIntermissionPage
         Player1SeedAutoChangeButton.IsHit(point) ? PonnukiRandomSeedRole.Player1 :
         Player2SeedAutoChangeButton.IsHit(point) ? PonnukiRandomSeedRole.Player2 : null;
 
-    internal void DrawRightSidePanelContent(StationeryDrawingContext drawingContext, GoAppSession session, Point mousePoint)
+    internal void DrawRightSidePanelContent(KfwStationeryDrawingTools drawingContext, GoAppSession session, Point mousePoint)
     {
         var renderer = drawingContext;
         var screen = LocalMatchScreen.Default;

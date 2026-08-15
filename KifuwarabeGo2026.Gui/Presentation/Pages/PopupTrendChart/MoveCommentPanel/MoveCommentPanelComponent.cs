@@ -51,7 +51,7 @@ public sealed class MoveCommentPanelComponent
     // 機能
     // ========================================
 
-    public void DrawSectionLabel(StationeryDrawingContext drawingContext, bool isPanelVisible)
+    public void DrawSectionLabel(KfwStationeryDrawingTools drawingContext, bool isPanelVisible)
     {
         var targetSectionBounds = isPanelVisible
             ? new Rectangle(Bounds.X, Bounds.Y, Bounds.Width, 330)

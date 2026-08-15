@@ -7,7 +7,7 @@ using System;
 /// <summary>現在選択中の Board Lens 通知を描画します。</summary>
 public static class BoardLensBanner
 {
-    public static void Draw(StationeryDrawingContext drawingContext, string lensName, string lensAlias,
+    public static void Draw(KfwStationeryDrawingTools drawingContext, string lensName, string lensAlias,
         string guide, float opacity, float compactProgress)
     {
         opacity = Math.Clamp(opacity, 0f, 1f);

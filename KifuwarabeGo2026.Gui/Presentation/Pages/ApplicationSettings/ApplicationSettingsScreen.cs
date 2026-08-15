@@ -78,7 +78,7 @@ public sealed class ApplicationSettingsScreen
         selectedIndex >= 0 && selectedIndex < LogItemLinks.Length &&
         LogItemLinks[selectedIndex].ActionBadge is { IsVisible: true } badge && badge.Bounds.Contains(point);
 
-    public void Draw(StationeryDrawingContext drawingContext, Point mousePosition, ApplicationSettingsPage page,
+    public void Draw(KfwStationeryDrawingTools drawingContext, Point mousePosition, ApplicationSettingsPage page,
         string logRoot, string sgfSaveDirectory, string screenshotSaveDirectory,
         string applicationSettingsPath, string engineSettingsPath,
         IReadOnlyList<string> logFiles, int selectedIndex, string message)
@@ -140,7 +140,7 @@ public sealed class ApplicationSettingsScreen
         drawingContext.End();
     }
 
-    public void DrawSettingsButton(StationeryDrawingContext drawingContext, Point mousePoint)
+    public void DrawSettingsButton(KfwStationeryDrawingTools drawingContext, Point mousePoint)
     {
         var bounds = SettingsButton.Bounds;
         var hovered = bounds.Contains(mousePoint);
@@ -158,7 +158,7 @@ public sealed class ApplicationSettingsScreen
         }
     }
 
-    private void DrawTabs(StationeryDrawingContext drawingContext, ApplicationSettingsPage selectedPage, Point mousePoint)
+    private void DrawTabs(KfwStationeryDrawingTools drawingContext, ApplicationSettingsPage selectedPage, Point mousePoint)
     {
         foreach (var page in Enum.GetValues<ApplicationSettingsPage>())
         {
@@ -171,7 +171,7 @@ public sealed class ApplicationSettingsScreen
         }
     }
 
-    private static void DrawValueField(StationeryDrawingContext drawingContext, string label, string value, LinkUnderline link, Point mousePoint)
+    private static void DrawValueField(KfwStationeryDrawingTools drawingContext, string label, string value, LinkUnderline link, Point mousePoint)
     {
         var bounds = link.Bounds;
         var hovered = bounds.Contains(mousePoint);

@@ -62,7 +62,7 @@ public sealed class ActionBadgeComponent
         Bounds = CalculateBounds(Label, anchorBounds);
     }
 
-    public void Draw(StationeryDrawingContext drawingContext)
+    public void Draw(KfwStationeryDrawingTools drawingContext)
     {
         ArgumentNullException.ThrowIfNull(drawingContext);
         if (!IsVisible) return;

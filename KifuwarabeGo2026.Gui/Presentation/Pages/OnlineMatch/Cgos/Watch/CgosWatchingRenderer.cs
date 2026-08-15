@@ -26,7 +26,7 @@ public sealed class CgosWatchingRenderer
     private readonly MoveTrendChartRenderer _moveTrendChartRenderer;
     private readonly PopupTrendChartRenderer _popupTrendChartRenderer;
     private readonly Action<RenParseDisplayMode, int, Func<int, int, GoStone>, Func<GoRenParseResult>, Action, Vector2, float> _drawRenAnalysis;
-    private StationeryDrawingContext _drawingContext = null!;
+    private KfwStationeryDrawingTools _drawingContext = null!;
 
     public CgosWatchingRenderer(BoardRenderer boardRenderer, MoveTrendChartRenderer moveTrendChartRenderer,
         PopupTrendChartRenderer popupTrendChartRenderer,
@@ -43,7 +43,7 @@ public sealed class CgosWatchingRenderer
     /// <param name="session"></param>
     /// <param name="observation"></param>
     /// <param name="mousePosition"></param>
-    public void Draw(StationeryDrawingContext drawingContext, GoAppSession session, CgosGameObservation observation, Point mousePosition)
+    public void Draw(KfwStationeryDrawingTools drawingContext, GoAppSession session, CgosGameObservation observation, Point mousePosition)
     {
         _drawingContext = drawingContext;
         var mousePoint = drawingContext.ToVirtualPoint(mousePosition);
@@ -197,7 +197,7 @@ public sealed class CgosWatchingRenderer
         DrawFittedText(trimmed, new Rectangle(RightSidePanelLayout.PrimaryValueX, bounds.Y + 6, bounds.Right - RightSidePanelLayout.PrimaryValueX - 18, bounds.Height - 12), new Color(99, 223, 185), 0.58f);
     }
 
-    public void DrawBroadcastStatusBadge(StationeryDrawingContext drawingContext, string label, bool chartPopup = false)
+    public void DrawBroadcastStatusBadge(KfwStationeryDrawingTools drawingContext, string label, bool chartPopup = false)
     {
         _drawingContext = drawingContext;
         var replay = label == "REPLAY";

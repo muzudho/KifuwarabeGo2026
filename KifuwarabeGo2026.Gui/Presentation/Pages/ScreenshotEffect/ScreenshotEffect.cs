@@ -7,7 +7,7 @@ using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 /// <summary>スクリーンショット撮影時のフラッシュとシャッター演出です。</summary>
 public sealed class ScreenshotEffect
 {
-    public void Draw(StationeryDrawingContext drawingContext, float progress)
+    public void Draw(KfwStationeryDrawingTools drawingContext, float progress)
     {
         drawingContext.Begin();
         Draw(progress, new ScreenshotEffectDrawingCallbacks(

@@ -151,9 +151,9 @@ public sealed class PonnukiProviderSelectionScreen
 
 /// <summary>ポン抜きプロバイダー選択画面が必要とする描画機能です。</summary>
 public sealed record PonnukiProviderSelectionDrawingCallbacks(
-    StationeryDrawingContext HeadlineSurface,
-    StationeryDrawingContext ButtonSurface,
-    StationeryDrawingContext UnderlineSurface,
+    KfwStationeryDrawingTools HeadlineSurface,
+    KfwStationeryDrawingTools ButtonSurface,
+    KfwStationeryDrawingTools UnderlineSurface,
     Action<string, Vector2, Color, float> DrawText,
     Action<string, Rectangle, Color, float> DrawDynamicText,
     Action<string, Rectangle, Color, float> DrawFittedText,

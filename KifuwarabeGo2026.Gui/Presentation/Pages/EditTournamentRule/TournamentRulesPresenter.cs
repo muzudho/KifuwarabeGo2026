@@ -20,7 +20,7 @@ public sealed class TournamentRulesPresenter
 {
     public static TournamentRulesPresenter Default { get; } = new();
 
-    private StationeryDrawingContext _drawingContext = null!;
+    private KfwStationeryDrawingTools _drawingContext = null!;
     private readonly LinkUnderline _settingsFileLink = new(
         new RoundUnderline { TopOffset = 2, Thickness = 5, Radius = 2 });
     private readonly ActionBadgeComponent _editBadge = ActionBadgeComponent.Create("EDIT", Rectangle.Empty);
@@ -28,7 +28,7 @@ public sealed class TournamentRulesPresenter
 
     private TournamentRulesPresenter() { }
 
-    public int GetAddPanelDisplayNameCaretIndex(StationeryDrawingContext drawingContext, Point point, string text) =>
+    public int GetAddPanelDisplayNameCaretIndex(KfwStationeryDrawingTools drawingContext, Point point, string text) =>
         drawingContext.GetTextCaretIndex(point.X, text, TournamentRulesAddPanelDisplayNameTextBounds, 0.46f);
 
 
@@ -52,7 +52,7 @@ public sealed class TournamentRulesPresenter
 
 
     public void Draw(
-        StationeryDrawingContext drawingContext,
+        KfwStationeryDrawingTools drawingContext,
         GoAppSession session,
         Point mousePoint)
     {

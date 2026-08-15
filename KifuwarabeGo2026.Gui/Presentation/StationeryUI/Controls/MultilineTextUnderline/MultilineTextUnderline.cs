@@ -67,7 +67,7 @@ public sealed class MultilineTextUnderline
             ActionBadge?.Hide();
     }
 
-    public void Draw(StationeryDrawingContext surface)
+    public void Draw(KfwStationeryDrawingTools surface)
     {
         ArgumentNullException.ThrowIfNull(surface);
 

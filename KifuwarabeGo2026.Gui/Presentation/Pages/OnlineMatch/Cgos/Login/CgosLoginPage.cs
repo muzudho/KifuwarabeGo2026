@@ -40,7 +40,7 @@ public sealed class CgosLoginPage
         PlayerDialogNextButton = Button(1160, 810, 100, 44, "NEXT", .42f);
     }
 
-    public void Draw(CgosLoginRenderer renderer, StationeryDrawingContext drawingContext, GoAppSession session, Point mousePosition) =>
+    public void Draw(CgosLoginRenderer renderer, KfwStationeryDrawingTools drawingContext, GoAppSession session, Point mousePosition) =>
         renderer.Draw(drawingContext, session, mousePosition);
 
     public void UpdateGameInProgressButtons(bool gameInProgress)

@@ -12,6 +12,6 @@ public sealed class RoundUnderline : AbstractUnderline
     /// </summary>
     public int Radius { get; set; } = 2;
 
-    protected override void DrawCore(StationeryDrawingContext surface) =>
+    protected override void DrawCore(KfwStationeryDrawingTools surface) =>
         surface.FillRoundedRectangle(UnderlineBounds, Radius, Color);
 }

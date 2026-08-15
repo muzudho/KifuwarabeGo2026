@@ -7,6 +7,6 @@ using Microsoft.Xna.Framework;
 
 public static class TournamentRuleRenderer
 {
-    public static int GetDisplayNameCaretIndex(StationeryDrawingContext drawingContext, Point point, string text) =>
+    public static int GetDisplayNameCaretIndex(KfwStationeryDrawingTools drawingContext, Point point, string text) =>
         TournamentRulesPresenter.Default.GetAddPanelDisplayNameCaretIndex(drawingContext, point, text);
 }

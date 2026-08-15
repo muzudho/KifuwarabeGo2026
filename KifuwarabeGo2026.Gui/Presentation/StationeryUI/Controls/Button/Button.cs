@@ -42,7 +42,7 @@ public sealed class Button
     // 機能
     // ========================================
 
-    public void Draw(Point mousePoint, StationeryDrawingContext surface)
+    public void Draw(Point mousePoint, KfwStationeryDrawingTools surface)
     {
         ArgumentNullException.ThrowIfNull(surface);
 

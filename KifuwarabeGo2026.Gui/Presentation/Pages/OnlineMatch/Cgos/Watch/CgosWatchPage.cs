@@ -19,7 +19,7 @@ public sealed class CgosWatchPage
         ReviewButton = new Button(new Rectangle(1164, 920, 306, 52), "KIFU REVIEW", 0.36f);
     }
 
-    public void Draw(CgosWatchingRenderer renderer, StationeryDrawingContext drawingContext, GoAppSession session, CgosGameObservation observation, Point mousePosition) =>
+    public void Draw(CgosWatchingRenderer renderer, KfwStationeryDrawingTools drawingContext, GoAppSession session, CgosGameObservation observation, Point mousePosition) =>
         renderer.Draw(drawingContext, session, observation, mousePosition);
 
     public Button LeaveViewButton { get; }

@@ -132,14 +132,14 @@ public sealed class EditEntryProfile
     public int GetCaretIndex(Point point, EntryProfileEditField field, string text, Func<int, string, Rectangle, float, int> getCaretIndex) =>
         (getCaretIndex ?? throw new ArgumentNullException(nameof(getCaretIndex)))(point.X, text, PlayerFieldTextBounds(field), 0.42f);
 
-    public int GetCaretIndex(StationeryDrawingContext drawingContext, Point point, EntryProfileEditField field, string text) =>
+    public int GetCaretIndex(KfwStationeryDrawingTools drawingContext, Point point, EntryProfileEditField field, string text) =>
         drawingContext.GetTextCaretIndex(point.X, text, PlayerFieldTextBounds(field), 0.42f);
 
     #endregion
 
     #region Drawing
 
-    public void Draw(StationeryDrawingContext drawingContext, GoAppSession session, Point mousePoint,
+    public void Draw(KfwStationeryDrawingTools drawingContext, GoAppSession session, Point mousePoint,
         StickyNoteScreenId stickyNoteScreen) =>
         Draw(session, mousePoint, stickyNoteScreen,
             new EditEntryProfileDrawingCallbacks(
@@ -178,8 +178,8 @@ public sealed class EditEntryProfile
         DiscardButton.IsEnabled = session.HasPlayerEditChanges;
         SaveAndCloseButton.Label = session.HasPlayerEditChanges ? "SAVE & CLOSE" : "CLOSE";
         SaveAndCloseButton.LabelScale = session.HasPlayerEditChanges ? 0.26f : 0.34f;
-        DiscardButton.Draw(mousePoint, draw.StationeryDrawingContext);
-        SaveAndCloseButton.Draw(mousePoint, draw.StationeryDrawingContext);
+        DiscardButton.Draw(mousePoint, draw.KfwStationeryDrawingTools);
+        SaveAndCloseButton.Draw(mousePoint, draw.KfwStationeryDrawingTools);
         DrawPlayerNameField(session, mousePoint, draw);
         DrawClientIdentitySection(session, mousePoint, draw);
         if (session.PlayerEditDraft.Kind == EntryProfileKind.Computer)
@@ -209,7 +209,7 @@ public sealed class EditEntryProfile
         PlayerNameTextUnderline.Bounds = textBounds;
         PlayerNameTextUnderline.SetEditing(active);
         PlayerNameTextUnderline.UpdatePointer(mousePoint);
-        PlayerNameTextUnderline.Draw(draw.StationeryDrawingContext);
+        PlayerNameTextUnderline.Draw(draw.KfwStationeryDrawingTools);
 
         // 選択範囲
         var text = session.GetPlayerEditFieldText(field);
@@ -259,7 +259,7 @@ public sealed class EditEntryProfile
         PlayerNameTextUnderline.Bounds = bounds;
         PlayerNameTextUnderline.SetEditing(active);
         PlayerNameTextUnderline.UpdatePointer(mousePoint);
-        PlayerNameTextUnderline.Draw(draw.StationeryDrawingContext);
+        PlayerNameTextUnderline.Draw(draw.KfwStationeryDrawingTools);
         var text = session.GetPlayerEditFieldText(field);
         if (active) draw.DrawTextSelection(text, session.PlayerEditSelectionStart, session.PlayerEditSelectionLength, bounds, 0.42f);
         draw.DrawFittedText(mask ? new string('●', text.Length) : text, bounds, Color.White, 0.42f);
@@ -268,7 +268,7 @@ public sealed class EditEntryProfile
 
     private void DrawClientIdentityListButton(Point mousePoint, EditEntryProfileDrawingCallbacks draw)
     {
-        ClientIdentityListButton.Draw(mousePoint, draw.StationeryDrawingContext);
+        ClientIdentityListButton.Draw(mousePoint, draw.KfwStationeryDrawingTools);
         var bounds = ClientIdentityListButton.Bounds;
         var color = bounds.Contains(mousePoint) ? new Color(222, 243, 246) : new Color(178, 219, 226);
 
@@ -290,7 +290,7 @@ public sealed class EditEntryProfile
     {
         var button = ClientIdentityPasswordVisibilityButton;
         button.IsEnabled = enabled;
-        button.Draw(mousePoint, draw.StationeryDrawingContext);
+        button.Draw(mousePoint, draw.KfwStationeryDrawingTools);
         var bounds = button.Bounds;
         var color = !enabled ? new Color(76, 88, 92) : bounds.Contains(mousePoint) ? new Color(222, 243, 246) : new Color(178, 219, 226);
         var center = new Vector2(bounds.Center.X, bounds.Center.Y);
@@ -323,13 +323,13 @@ public sealed class EditEntryProfile
         draw.DrawFittedText(value, textBounds, Color.White, 0.42f);
         PopupFieldUnderline.Bounds = textBounds;
         PopupFieldUnderline.UpdatePointer(mousePoint);
-        PopupFieldUnderline.Draw(draw.StationeryDrawingContext);
+        PopupFieldUnderline.Draw(draw.KfwStationeryDrawingTools);
         if (icon != FieldIcon.None) DrawIcon(icon, IconBounds(textBounds), draw);
         if (hovered)
         {
             ChangeActionBadge.SetAnchorBounds(textBounds);
             ChangeActionBadge.Show();
-            ChangeActionBadge.Draw(draw.StationeryDrawingContext);
+            ChangeActionBadge.Draw(draw.KfwStationeryDrawingTools);
         }
         else
         {
@@ -382,7 +382,7 @@ public sealed record EditEntryProfileDrawingCallbacks(
     Action<Rectangle, int, Color> DrawRectangle,
     Action<string, Vector2, Color, float> DrawText,
     Action<string, Rectangle, Color, float> DrawFittedText,
-    StationeryDrawingContext StationeryDrawingContext,
+    KfwStationeryDrawingTools KfwStationeryDrawingTools,
     Action<Vector2, float, bool> DrawStone,
     Action<Vector2, bool> DrawPlayerRoleFace,
     Action<string, int, int, Rectangle, float> DrawTextSelection,

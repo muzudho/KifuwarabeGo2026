@@ -7,7 +7,7 @@ using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 /// <summary>画面遷移時に表示する稲妻付きの分割フレーム演出です。</summary>
 public sealed class ScreenTransition
 {
-    public void Draw(StationeryDrawingContext drawingContext, float progress)
+    public void Draw(KfwStationeryDrawingTools drawingContext, float progress)
     {
         drawingContext.Begin();
         Draw(progress, new ScreenTransitionDrawingCallbacks(

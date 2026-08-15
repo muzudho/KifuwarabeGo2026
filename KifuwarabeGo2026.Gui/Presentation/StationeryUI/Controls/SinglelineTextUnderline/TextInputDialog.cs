@@ -8,7 +8,7 @@ using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 /// <summary>一行テキスト入力ダイアログのレイアウトと操作領域を所有します。</summary>
 public sealed class TextInputDialog
 {
-    public void Draw(StationeryDrawingContext drawingContext, Point mousePosition, string title, string text,
+    public void Draw(KfwStationeryDrawingTools drawingContext, Point mousePosition, string title, string text,
         int caretIndex, int selectionStart, int selectionLength, string message, bool showDefaultButton = false,
         TextCompositionState composition = default, TextCompositionDiagnostics compositionDiagnostics = default,
         bool showCompositionDiagnostics = false)
@@ -33,10 +33,10 @@ public sealed class TextInputDialog
         drawingContext.End();
     }
 
-    public int GetCaretIndex(StationeryDrawingContext drawingContext, Point point, string text) =>
+    public int GetCaretIndex(KfwStationeryDrawingTools drawingContext, Point point, string text) =>
         drawingContext.GetTextCaretIndex(point.X, text, TextContentBounds, 0.55f);
 
-    private static void DrawCompositionLamp(StationeryDrawingContext drawingContext, string label, int x,
+    private static void DrawCompositionLamp(KfwStationeryDrawingTools drawingContext, string label, int x,
         bool enabled, Color activeColor)
     {
         var center = new Vector2(x, Bounds.Y + 47);

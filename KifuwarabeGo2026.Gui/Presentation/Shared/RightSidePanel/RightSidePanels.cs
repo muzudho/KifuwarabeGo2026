@@ -34,7 +34,7 @@ public static class RightSidePanelLayout
 
 public static class RightSidePanelFrame
 {
-    public static void Draw(StationeryDrawingContext drawingContext)
+    public static void Draw(KfwStationeryDrawingTools drawingContext)
     {
         var renderer = drawingContext;
         var panel = RightSidePanelLayout.Bounds;
@@ -53,7 +53,7 @@ public sealed class RightSidePanel
     {
     }
 
-    public void Draw(StationeryDrawingContext drawingContext, MoveTrendChartRenderer moveTrendChartRenderer, GoAppSession session, Point mousePoint,
+    public void Draw(KfwStationeryDrawingTools drawingContext, MoveTrendChartRenderer moveTrendChartRenderer, GoAppSession session, Point mousePoint,
         LiveBoardPreviewModel? liveBoardPreview, InitialPositionConciergeView? initialPositionConcierge)
     {
         var renderer = drawingContext;
@@ -108,7 +108,7 @@ public sealed class LocalMatchPlayRightSidePanel
     internal BoardLensButton? GetBoardLensButtonHit(Point point, bool isLensEnabled) =>
         _boardLensButtons.GetHit(point, isLensEnabled);
 
-    public void Draw(StationeryDrawingContext drawingContext, MoveTrendChartRenderer moveTrendChartRenderer, GoAppSession session, Point mousePoint)
+    public void Draw(KfwStationeryDrawingTools drawingContext, MoveTrendChartRenderer moveTrendChartRenderer, GoAppSession session, Point mousePoint)
     {
         var renderer = drawingContext;
         renderer.DrawVerticalResultSection(new Rectangle(1144, 132, 668, 200), "PLAYERS", new Color(76, 91, 126));
@@ -154,7 +154,7 @@ public sealed class LocalMatchPlayRightSidePanel
         return session.MoveLimit <= 0 ? text : $"{text} / {session.MoveLimit}";
     }
 
-    private void DrawBoardLensButtons(StationeryDrawingContext drawingContext, bool isLensEnabled, Point mousePoint)
+    private void DrawBoardLensButtons(KfwStationeryDrawingTools drawingContext, bool isLensEnabled, Point mousePoint)
     {
         drawingContext.DrawFittedText("BOARD LENS  [L] / [J] / [K] / [1]", new Rectangle(1164, 812, 316, 36), new Color(147, 201, 190), 0.26f);
         _boardLensToggleButton.IsSelected = isLensEnabled;
@@ -177,7 +177,7 @@ public sealed class LocalMatchIntermissionRightSidePanel
 
     internal RightSidePanelPlayerSelector PlayerSelector { get; } = new();
 
-    public void Draw(StationeryDrawingContext drawingContext, GoAppSession session, Point mousePoint) =>
+    public void Draw(KfwStationeryDrawingTools drawingContext, GoAppSession session, Point mousePoint) =>
         LocalMatchIntermissionPage.Default.DrawRightSidePanelContent(drawingContext, session, mousePoint);
 }
 
@@ -190,7 +190,7 @@ public sealed class SetupRightSidePanel
 
     internal RightSidePanelPlayerSelector PlayerSelector { get; } = new();
 
-    public void Draw(StationeryDrawingContext drawingContext, GoAppSession session, Point mousePoint)
+    public void Draw(KfwStationeryDrawingTools drawingContext, GoAppSession session, Point mousePoint)
     {
         var renderer = drawingContext;
         var screen = LocalMatchScreen.Default;
@@ -229,7 +229,7 @@ public sealed class RightSidePanelPlayerSelector
     internal LinkUnderline Underline { get; } = new(
         new RoundUnderline { TopOffset = 2, Thickness = 5, Radius = 2 });
 
-    public void DrawPlayerRow(StationeryDrawingContext drawingContext, GoAppSession session, GoStone stone, Point mousePoint, int y)
+    public void DrawPlayerRow(KfwStationeryDrawingTools drawingContext, GoAppSession session, GoStone stone, Point mousePoint, int y)
     {
         var renderer = drawingContext;
         var player = session.GetSelectedEntryProfile(stone);
@@ -269,7 +269,7 @@ public sealed class RightSidePanelPlayerSelector
         }
     }
 
-    private void Draw(StationeryDrawingContext drawingContext, PlayerSelector selector, Point mousePoint)
+    private void Draw(KfwStationeryDrawingTools drawingContext, PlayerSelector selector, Point mousePoint)
     {
         var renderer = drawingContext;
         if (selector.Bounds.X == 1144 && selector.Bounds.Width == 668)
@@ -304,7 +304,7 @@ public sealed class GameOverRightSidePanel
 {
     public SgfAutoSaveCheckBox SgfAutoSaveCheckBox { get; } = new();
 
-    public void Draw(StationeryDrawingContext drawingContext, MoveTrendChartRenderer moveTrendChartRenderer, GoAppSession session, Point mousePoint)
+    public void Draw(KfwStationeryDrawingTools drawingContext, MoveTrendChartRenderer moveTrendChartRenderer, GoAppSession session, Point mousePoint)
     {
         var renderer = drawingContext;
         new Headline("GAME OVER", new Vector2(1144, 132), new Color(255, 230, 160), 0.9f).Draw(drawingContext);
@@ -332,7 +332,7 @@ public sealed class GameOverRightSidePanel
             screen.ExportSgfButton.Draw(mousePoint, drawingContext);
     }
 
-    private static void DrawCalculationResultRow(StationeryDrawingContext drawingContext, Rectangle bounds, GoAppSession session)
+    private static void DrawCalculationResultRow(KfwStationeryDrawingTools drawingContext, Rectangle bounds, GoAppSession session)
     {
         var renderer = drawingContext;
         drawingContext.DrawResultLabel(bounds, "RESULT", new Color(80, 48, 38));
@@ -358,7 +358,7 @@ public sealed class GameOverRightSidePanel
 
 public sealed class SgfAutoSaveCheckBox
 {
-    public void Draw(Rectangle bounds, GoAppSession session, Point mousePoint, StationeryDrawingContext drawingContext)
+    public void Draw(Rectangle bounds, GoAppSession session, Point mousePoint, KfwStationeryDrawingTools drawingContext)
     {
         var hovered = bounds.Contains(mousePoint);
         drawingContext.FillRectangle(bounds, hovered ? new Color(47, 65, 91, 230) : new Color(31, 45, 70, 220));
@@ -389,7 +389,7 @@ public sealed class SgfAutoSaveCheckBox
 
 public sealed class BoardEditingRightSidePanel
 {
-    public void Draw(StationeryDrawingContext drawingContext, GoAppSession session, Point mousePoint)
+    public void Draw(KfwStationeryDrawingTools drawingContext, GoAppSession session, Point mousePoint)
     {
         var renderer = drawingContext;
         var controls = BoardAndReviewScreen.Default.BoardEditing;
@@ -413,11 +413,11 @@ public sealed class BoardEditingRightSidePanel
         controls.ClearButton.Draw(mousePoint, drawingContext);
 
         renderer.DrawVerticalResultSection(new Rectangle(1144, 564, 668, 220), "POSITION", new Color(62, 112, 105));
-        renderer.DrawStoneCountStrip(session, 584, showLeader: false, minimal: true);
+        renderer.DrawStoneCountStrip(session.BlackAgehama, session.WhiteAgehama, 584, showLeader: false, minimal: true);
         DrawCurrentStoneResultRow(drawingContext, new Rectangle(1164, 690, 628, 64), session);
     }
 
-    private static void DrawCurrentStoneResultRow(StationeryDrawingContext drawingContext, Rectangle bounds, GoAppSession session)
+    private static void DrawCurrentStoneResultRow(KfwStationeryDrawingTools drawingContext, Rectangle bounds, GoAppSession session)
     {
         var renderer = drawingContext;
         drawingContext.DrawResultLabel(bounds, "RESULT", new Color(80, 48, 38));
@@ -441,7 +441,7 @@ public sealed class VariationEditingRightSidePanel
     // 機能
     // ========================================
 
-    public void Draw(StationeryDrawingContext drawingContext, GoAppSession session, Point mousePoint, LiveBoardPreviewModel? preview)
+    public void Draw(KfwStationeryDrawingTools drawingContext, GoAppSession session, Point mousePoint, LiveBoardPreviewModel? preview)
     {
         var renderer = drawingContext;
         var controls = BoardAndReviewScreen.Default.VariationEditing;
@@ -495,7 +495,7 @@ public sealed class VariationEditingRightSidePanel
         controls.PassButton.Draw(mousePoint, drawingContext);
     }
 
-    private static void DrawLiveBoardWipe(StationeryDrawingContext drawingContext, LiveBoardPreviewModel preview)
+    private static void DrawLiveBoardWipe(KfwStationeryDrawingTools drawingContext, LiveBoardPreviewModel preview)
     {
         var renderer = drawingContext;
         var bounds = BoardAndReviewScreen.Default.VariationEditing.LiveBoardBounds;
@@ -555,7 +555,7 @@ public sealed class ReviewingRightSidePanel
     public int? GetStepButtonHit(Point point) =>
         ReviewMoveNavigation.GetButtonHit(point, ReviewChartPopupStepButtonBounds);
 
-    public void Draw(StationeryDrawingContext drawingContext, MoveTrendChartRenderer moveTrendChartRenderer, GoAppSession session, Point mousePoint)
+    public void Draw(KfwStationeryDrawingTools drawingContext, MoveTrendChartRenderer moveTrendChartRenderer, GoAppSession session, Point mousePoint)
     {
         var renderer = drawingContext;
         var controls = BoardAndReviewScreen.Default.Review;
@@ -619,7 +619,7 @@ public static class ReviewMoveNavigation
         return null;
     }
 
-    internal static void Draw(StationeryDrawingContext drawingContext, int currentMoveIndex, int moveCount,
+    internal static void Draw(KfwStationeryDrawingTools drawingContext, int currentMoveIndex, int moveCount,
         Point mousePoint, Func<int, Rectangle> getButtonBounds)
     {
         var renderer = drawingContext;
@@ -642,6 +642,6 @@ public static class ReviewMoveNavigation
 
 public sealed class InitialPositionConciergeRightSidePanel
 {
-    public void Draw(StationeryDrawingContext drawingContext, InitialPositionConciergeView view, Point mousePoint) =>
+    public void Draw(KfwStationeryDrawingTools drawingContext, InitialPositionConciergeView view, Point mousePoint) =>
         InitialPositionConcierge.Default.Draw(drawingContext, view, mousePoint);
 }

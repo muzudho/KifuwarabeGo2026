@@ -39,11 +39,11 @@ public abstract class AbstractUnderline : IUnderline
     /// 描画
     /// </summary>
     /// <param name="surface">描画先</param>
-    public void Draw(StationeryDrawingContext surface)
+    public void Draw(KfwStationeryDrawingTools surface)
     {
         ArgumentNullException.ThrowIfNull(surface);
         DrawCore(surface);
     }
 
-    protected abstract void DrawCore(StationeryDrawingContext surface);
+    protected abstract void DrawCore(KfwStationeryDrawingTools surface);
 }

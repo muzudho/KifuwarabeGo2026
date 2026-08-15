@@ -11,7 +11,7 @@ using System.Collections.Generic;
 /// <summary>時・分・秒を 2 桁ずつ入力する、タイム用ポップアップです。</summary>
 public sealed class PopupTimeUnderline
 {
-    public void Draw(StationeryDrawingContext drawingContext, Point mousePosition, string[] values,
+    public void Draw(KfwStationeryDrawingTools drawingContext, Point mousePosition, string[] values,
         int[] carets, int activePart, string message)
     {
         var mousePoint = drawingContext.ToVirtualPoint(mousePosition);
@@ -26,7 +26,7 @@ public sealed class PopupTimeUnderline
         drawingContext.End();
     }
 
-    public int GetCaretIndex(StationeryDrawingContext drawingContext, int part, Point point, string text) =>
+    public int GetCaretIndex(KfwStationeryDrawingTools drawingContext, int part, Point point, string text) =>
         GetCaretIndex(part, point, text, drawingContext.GetTextCaretIndex);
 
     private static readonly Rectangle DialogBounds = new(610, 300, 700, 390);
@@ -96,5 +96,5 @@ public sealed record PopupTimeUnderlineDrawingCallbacks(
     int VirtualScreenWidth, int VirtualScreenHeight,
     Action<Rectangle, Color> FillRectangle, Action<Rectangle, int, Color> DrawRectangle,
     Action<string, Vector2, Color, float> DrawText, Action<string, Rectangle, Color, float> DrawFittedText,
-    Func<string, float> MeasureTextWidth, StationeryDrawingContext ButtonSurface,
+    Func<string, float> MeasureTextWidth, KfwStationeryDrawingTools ButtonSurface,
     Action<Vector2, Vector2, float, Color> DrawLine, Action<string, Rectangle, Color, float> DrawCenteredText);

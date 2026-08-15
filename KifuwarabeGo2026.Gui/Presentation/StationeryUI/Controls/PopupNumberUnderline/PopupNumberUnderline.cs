@@ -11,7 +11,7 @@ using System.Collections.Generic;
 /// <summary>リンクから開く整数入力用のモーダル画面です。</summary>
 public sealed class PopupNumberUnderline
 {
-    public void Draw(StationeryDrawingContext drawingContext, Point mousePosition, string title, string text,
+    public void Draw(KfwStationeryDrawingTools drawingContext, Point mousePosition, string title, string text,
         int caretIndex, int selectionStart, int selectionLength, string message,
         PopupNumberUnderlineOptions options = default)
     {
@@ -27,7 +27,7 @@ public sealed class PopupNumberUnderline
         drawingContext.End();
     }
 
-    public int GetCaretIndex(StationeryDrawingContext drawingContext, Point point, string text) =>
+    public int GetCaretIndex(KfwStationeryDrawingTools drawingContext, Point point, string text) =>
         GetCaretIndex(point, text, drawingContext.GetTextCaretIndex);
 
     #region Layout
@@ -157,6 +157,6 @@ public sealed record PopupNumberUnderlineDrawingCallbacks(
     Action<string, Rectangle, Color, float> DrawFittedText,
     Action<string, int, int, Rectangle, float> DrawTextSelection,
     Func<string, float> MeasureTextWidth,
-    StationeryDrawingContext ButtonSurface,
+    KfwStationeryDrawingTools ButtonSurface,
     Action<Vector2, Vector2, float, Color> DrawLine,
     Action<string, Rectangle, Color, float> DrawCenteredText);

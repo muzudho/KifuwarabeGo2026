@@ -36,7 +36,7 @@ public sealed class GtpEngineRenderer
         new RoundUnderline { TopOffset = -4, Thickness = 4, Radius = 2 });
     private readonly ActionBadgeComponent _changeActionBadge = ActionBadgeComponent.Create("CHANGE", Rectangle.Empty);
     private readonly ActionBadgeComponent _editActionBadge = ActionBadgeComponent.Create("EDIT", Rectangle.Empty);
-    private StationeryDrawingContext _drawingContext = null!;
+    private KfwStationeryDrawingTools _drawingContext = null!;
     private HeadUpDisplayComponent HeadUpDisplay { get; } = HeadUpDisplayComponent.Default;
 
     public GtpEngineRenderer(GraphicsDevice graphicsDevice, SpriteBatch spriteBatch, SpriteFont font, ITextRasterizer textRasterizer)
@@ -47,7 +47,7 @@ public sealed class GtpEngineRenderer
         _textRasterizer = textRasterizer;
     }
 
-    public void Draw(StationeryDrawingContext drawingContext, GoAppSession session, Point mousePoint)
+    public void Draw(KfwStationeryDrawingTools drawingContext, GoAppSession session, Point mousePoint)
     {
         _drawingContext = drawingContext;
         DrawGtpEngineSelectionDialog(session, mousePoint);

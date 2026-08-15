@@ -20,7 +20,7 @@ public sealed class MessageDialog
     public string Message { get; }
     public bool IsCloseHit(Point point) => CloseButtonBounds.Contains(point);
 
-    public void Draw(StationeryDrawingContext drawingContext, Point mousePosition)
+    public void Draw(KfwStationeryDrawingTools drawingContext, Point mousePosition)
     {
         var mousePoint = drawingContext.ToVirtualPoint(mousePosition);
         drawingContext.Begin();

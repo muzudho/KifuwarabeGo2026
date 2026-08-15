@@ -9,7 +9,7 @@ using System;
 /// <summary>未保存の棋譜コメントを確認してからレビュー画面を離れるためのページです。</summary>
 public sealed class ReviewUnsavedChangesConfirmation
 {
-    public void Draw(StationeryDrawingContext drawingContext, Point mousePosition)
+    public void Draw(KfwStationeryDrawingTools drawingContext, Point mousePosition)
     {
         var mousePoint = drawingContext.ToVirtualPoint(mousePosition);
         drawingContext.Begin();
@@ -67,4 +67,4 @@ public sealed record ReviewUnsavedChangesConfirmationDrawingCallbacks(
     Action<Rectangle, int, Color> DrawRectangle,
     Action<string, Vector2, Color, float> DrawText,
     Action<string, Rectangle, Color, float> DrawFittedText,
-    StationeryDrawingContext ButtonSurface);
+    KfwStationeryDrawingTools ButtonSurface);

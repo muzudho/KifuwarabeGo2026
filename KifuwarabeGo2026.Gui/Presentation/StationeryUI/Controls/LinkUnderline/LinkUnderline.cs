@@ -8,7 +8,7 @@ using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 
 /// <summary>
 /// 非同期アクションへ接続する文房具 UI のリンクアンダーラインです。
-/// 描画方法はホストがコールバックで渡すため、GoScreenRenderer には依存しません。
+/// 描画方法は共通UI道具を利用するため、画面固有Rendererには依存しません。
 /// </summary>
 public sealed class LinkUnderline
 {
@@ -82,7 +82,7 @@ public sealed class LinkUnderline
     public void ClearSelection() => IsSelected = false;
 
     /// <summary>同期リンク向けに、ホバー状態だけで所有する Underline を描画します。</summary>
-    public void Draw(StationeryDrawingContext surface)
+    public void Draw(KfwStationeryDrawingTools surface)
     {
         Underline.ContentBounds = Bounds;
         Underline.Color = IsSelected
@@ -103,7 +103,7 @@ public sealed class LinkUnderline
         double nowSeconds,
         Action<Rectangle, string, Color> drawText,
         Action<Vector2, Color> drawSpinner,
-        StationeryDrawingContext surface)
+        KfwStationeryDrawingTools surface)
     {
         ArgumentNullException.ThrowIfNull(controller);
         ArgumentNullException.ThrowIfNull(drawText);

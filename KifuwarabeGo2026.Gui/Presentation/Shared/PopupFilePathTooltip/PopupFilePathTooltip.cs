@@ -58,7 +58,7 @@ public sealed class PopupFilePathTooltip
         Point mousePoint,
         string heading,
         IReadOnlyList<string> descriptionLines,
-        StationeryDrawingContext drawingContext,
+        KfwStationeryDrawingTools drawingContext,
         Action<string, Rectangle, Color, float> drawText)
     {
         ArgumentNullException.ThrowIfNull(descriptionLines);

@@ -49,7 +49,7 @@ public sealed class SinglelineTextUnderline
             ActionBadge?.Hide();
     }
 
-    public void Draw(StationeryDrawingContext surface)
+    public void Draw(KfwStationeryDrawingTools surface)
     {
         Underline.ContentBounds = Bounds;
         Underline.Color = IsEditing

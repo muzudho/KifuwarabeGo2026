@@ -39,7 +39,7 @@ public sealed class PlayersComponent
     /// <summary>
     /// 黒番と白番の名前、時間、アゲハマを共通レイアウトで描画します。
     /// </summary>
-    public void DrawBothPlayers(StationeryDrawingContext drawingContext,
+    public void DrawBothPlayers(KfwStationeryDrawingTools drawingContext,
         int x,
         int y,
         int width,
@@ -61,7 +61,7 @@ public sealed class PlayersComponent
         DrawPlayer(drawingContext, new Rectangle(x, y + 96, width, 88), whiteName, whiteElapsed, whiteLiveElapsed, mainTime, whiteAgehama, black: false, currentTurn == GoStone.White, engineErrorStone == GoStone.White, mousePoint, minimal);
     }
 
-    private void DrawPlayer(StationeryDrawingContext drawingContext,
+    private void DrawPlayer(KfwStationeryDrawingTools drawingContext,
         Rectangle bounds,
         string playerName,
         TimeSpan? elapsed,
@@ -81,19 +81,19 @@ public sealed class PlayersComponent
                 drawingContext.DrawFittedText, FormatElapsedTime, drawingContext.DrawCircleSurface, drawingContext.DrawLine));
     }
 
-    private void DrawAgehamaPlate(StationeryDrawingContext drawingContext, Rectangle bounds, int agehama, bool capturedBlack)
+    private void DrawAgehamaPlate(KfwStationeryDrawingTools drawingContext, Rectangle bounds, int agehama, bool capturedBlack)
     {
         _agehamaPlate.Draw(bounds, agehama, capturedBlack,
             new AgehamaPlateDrawingCallbacks(drawingContext.DrawCircleSurface, drawingContext.DrawStone, drawingContext.DrawFittedText));
     }
 
-    public void DrawAgehamaSummary(StationeryDrawingContext drawingContext, Rectangle bounds, int blackAgehama, int whiteAgehama)
+    public void DrawAgehamaSummary(KfwStationeryDrawingTools drawingContext, Rectangle bounds, int blackAgehama, int whiteAgehama)
     {
         DrawAgehamaSummaryRow(drawingContext, new Rectangle(bounds.X, bounds.Y, bounds.Width, 60), "BLACK CAPTURES", blackAgehama, capturedBlack: false);
         DrawAgehamaSummaryRow(drawingContext, new Rectangle(bounds.X, bounds.Y + 68, bounds.Width, 60), "WHITE CAPTURES", whiteAgehama, capturedBlack: true);
     }
 
-    private void DrawAgehamaSummaryRow(StationeryDrawingContext drawingContext, Rectangle bounds, string label, int agehama, bool capturedBlack)
+    private void DrawAgehamaSummaryRow(KfwStationeryDrawingTools drawingContext, Rectangle bounds, string label, int agehama, bool capturedBlack)
     {
         drawingContext.DrawDataRowFrame(bounds);
         drawingContext.DrawFittedText(label, new Rectangle(bounds.X + 20, bounds.Y + 13, bounds.Width - 190, 34), new Color(204, 211, 206), 0.38f);

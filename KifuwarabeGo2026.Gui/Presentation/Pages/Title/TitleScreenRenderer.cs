@@ -16,7 +16,7 @@ using KifuwarabeGo2026.Gui.Presentation.Shared.SelectEntry;
 
 public sealed class TitleScreenRenderer
 {
-    public void DrawScreen(StationeryDrawingContext drawingContext, GtpEngineRenderer gtpEngineRenderer,
+    public void DrawScreen(KfwStationeryDrawingTools drawingContext, GtpEngineRenderer gtpEngineRenderer,
         GoAppSession session, Point mousePosition,
         TitleMenuPage page, int appProviderTabIndex, bool isAppProviderLoading)
     {
@@ -33,7 +33,7 @@ public sealed class TitleScreenRenderer
     private readonly TitleScreen _titleScreen = TitleScreen.Default;
     private readonly Action<Vector2, float, float, Color, int, float> _drawEllipseWire;
     private readonly Action<Vector2, float, float, Color, int, float, float, float> _drawCircumscribedCircleArc;
-    private StationeryDrawingContext _drawingContext = null!;
+    private KfwStationeryDrawingTools _drawingContext = null!;
 
     public TitleScreenRenderer(
         Action<Vector2, float, float, Color, int, float> drawEllipseWire,
@@ -49,7 +49,7 @@ public sealed class TitleScreenRenderer
     #region ［CASUAL APPS 区画］
     #endregion
 
-    public void Draw(StationeryDrawingContext drawingContext, GoAppSession session, Point mousePoint, TitleMenuPage page, int appProviderTabIndex, bool isAppProviderLoading)
+    public void Draw(KfwStationeryDrawingTools drawingContext, GoAppSession session, Point mousePoint, TitleMenuPage page, int appProviderTabIndex, bool isAppProviderLoading)
     {
         _drawingContext = drawingContext;
         // タイトル画面の囲碁用具ワイヤー装飾。

@@ -32,4 +32,4 @@ public sealed class TournamentRuleKomiField
 public sealed record TournamentRuleKomiFieldDrawingCallbacks(
     Action<string, Rectangle> DrawFieldLabel,
     Action<string, Rectangle, Color, float> DrawFittedText,
-    StationeryDrawingContext UnderlineSurface);
+    KfwStationeryDrawingTools UnderlineSurface);

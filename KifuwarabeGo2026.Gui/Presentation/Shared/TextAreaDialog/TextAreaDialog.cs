@@ -22,7 +22,7 @@ public sealed class TextAreaDialog
     public Button DiscardButton { get; }
     public Button ApplyButton { get; }
 
-    public void Draw(StationeryDrawingContext drawingContext, Point mousePosition, string title, string text,
+    public void Draw(KfwStationeryDrawingTools drawingContext, Point mousePosition, string title, string text,
         int caretIndex, string message, bool hasChanges, TextCompositionState composition = default,
         TextCompositionDiagnostics compositionDiagnostics = default, bool showCompositionDiagnostics = false)
     {
@@ -53,7 +53,7 @@ public sealed class TextAreaDialog
         drawingContext.End();
     }
 
-    private void DrawLines(StationeryDrawingContext drawingContext, string text)
+    private void DrawLines(KfwStationeryDrawingTools drawingContext, string text)
     {
         if (string.IsNullOrEmpty(text))
         {
@@ -65,7 +65,7 @@ public sealed class TextAreaDialog
             drawingContext.DrawFittedText(lines[index], new Rectangle(TextBounds.X + 18, TextBounds.Y + 18 + index * 32, TextBounds.Width - 36, 30), new Color(226, 232, 225), 0.34f);
     }
 
-    private Vector2 GetCaretPosition(StationeryDrawingContext drawingContext, string text, int caretIndex)
+    private Vector2 GetCaretPosition(KfwStationeryDrawingTools drawingContext, string text, int caretIndex)
     {
         var before = text[..Math.Clamp(caretIndex, 0, text.Length)].Replace("\r", string.Empty);
         var lines = before.Split('\n');

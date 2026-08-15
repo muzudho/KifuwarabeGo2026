@@ -17,7 +17,7 @@ public sealed class SectionLabelComponent
         string text,
         Color accentColor,
         Color textColor,
-        StationeryDrawingContext drawingContext,
+        KfwStationeryDrawingTools drawingContext,
         int labelWidth = 38,
         int labelGap = 8)
     {
@@ -58,7 +58,7 @@ public sealed class SectionLabelComponent
         string text,
         Color accentColor,
         Color textColor,
-        StationeryDrawingContext drawingContext,
+        KfwStationeryDrawingTools drawingContext,
         int labelWidth = 38,
         int leftProtrusion = 4)
     {
@@ -81,7 +81,7 @@ public sealed class SectionLabelComponent
         string text,
         Color accentColor,
         Color textColor,
-        StationeryDrawingContext drawingContext)
+        KfwStationeryDrawingTools drawingContext)
     {
         ArgumentNullException.ThrowIfNull(drawingContext);
         var usesSplitHorizontalText = drawingContext.MeasureText(text).X * VerticalScale > bounds.Height - 12;
@@ -138,7 +138,7 @@ public sealed class SectionLabelComponent
     // 機能
     // ========================================
 
-    public void Draw(StationeryDrawingContext draw)
+    public void Draw(KfwStationeryDrawingTools draw)
     {
         ArgumentNullException.ThrowIfNull(draw);
         DrawSurface(draw);
@@ -175,7 +175,7 @@ public sealed class SectionLabelComponent
 
     public bool IsVisibilityPinHit(Point point) => HasVisibilityPin && VisibilityPinBounds.Contains(point);
 
-    private void DrawVisibilityPin(StationeryDrawingContext draw)
+    private void DrawVisibilityPin(KfwStationeryDrawingTools draw)
     {
         if (!HasVisibilityPin) return;
         var pin = VisibilityPinBounds;
@@ -194,7 +194,7 @@ public sealed class SectionLabelComponent
             draw.DrawLine(center + new Vector2(-9, 9), center + new Vector2(9, -9), 3, new Color(220, 150, 145));
     }
 
-    private void DrawSurface(StationeryDrawingContext draw)
+    private void DrawSurface(KfwStationeryDrawingTools draw)
     {
         if (_surfaceOpacity == 0) return;
         draw.FillRectangle(Bounds, new Color(AccentColor, _surfaceOpacity));

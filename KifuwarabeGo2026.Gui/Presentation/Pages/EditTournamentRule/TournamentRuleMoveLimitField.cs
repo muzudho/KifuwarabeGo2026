@@ -30,4 +30,4 @@ public sealed class TournamentRuleMoveLimitField
 public sealed record TournamentRuleMoveLimitFieldDrawingCallbacks(
     Action<string, Rectangle> DrawFieldLabel,
     Action<string, Rectangle, Color, float> DrawFittedText,
-    StationeryDrawingContext UnderlineSurface);
+    KfwStationeryDrawingTools UnderlineSurface);

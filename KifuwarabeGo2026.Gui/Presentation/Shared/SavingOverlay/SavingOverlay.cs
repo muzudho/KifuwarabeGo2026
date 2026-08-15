@@ -11,7 +11,7 @@ public sealed class SavingOverlay
 
     private SavingOverlay() { }
 
-    public void Draw(StationeryDrawingContext drawingContext, string message)
+    public void Draw(KfwStationeryDrawingTools drawingContext, string message)
     {
         drawingContext.Begin();
         drawingContext.FillRectangle(new Rectangle(0, 0, drawingContext.ScreenWidth, drawingContext.ScreenHeight), new Color(0, 0, 0, 145));

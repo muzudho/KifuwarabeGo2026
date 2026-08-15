@@ -2,95 +2,38 @@ namespace KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 
 using Microsoft.Xna.Framework;
 using KifuwarabeGo2026.Gui.Application;
+using KifuwarabeGo2026.Gui.Presentation.Shared.HeadUpDisplay;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.SectionLabel;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.StickyNote;
 using System.Collections.Generic;
 using System;
 
 /// <summary>画面rendererと文房具UIを分離する共通描画境界です。</summary>
-public sealed class StationeryDrawingContext
+public sealed class KfwStationeryDrawingTools : IDisposable
 {
-    public int ScreenWidth { get; }
-    public int ScreenHeight { get; }
-    private readonly Action<Rectangle, Color> _fillRectangle;
-    private readonly Action<Rectangle, int, Color> _fillRoundedRectangle;
-    private readonly Action<Rectangle, int, Color> _drawRectangle;
-    private readonly Action<Vector2, Vector2, float, Color> _drawLine;
-    private readonly Action<Vector2, float, Color> _drawCircle;
+    private readonly KfwScreenCanvas _canvas;
     private readonly Action<Vector2, float, bool> _drawStone;
-    private readonly Action<Rectangle, Color> _drawCircleSurface;
-    private readonly Action<string, Vector2, Color, float> _drawText;
-    private readonly Action<string, Rectangle, Color, float> _drawFittedText;
-    private readonly Action<string, Rectangle, Color, float> _drawCenteredFittedText;
-    private readonly Action<string, Vector2, Color, float> _drawRotatedCenteredText;
-    private readonly Func<string, Vector2> _measureText;
-    private readonly Func<Point, Point> _toVirtualPoint;
-    private readonly Action _begin;
-    private readonly Action _end;
-    private readonly Action _drawBackground;
-    private readonly Action<Rectangle, string, bool, Point, bool, float> _drawCommandButton;
-    private readonly Action<string, Rectangle, Color, float> _drawDynamicText;
-    private readonly Action<Vector2, float> _drawSelectionFinger;
-    private readonly Action<StickyNoteKind, Vector2, Color, Color, string, IReadOnlyList<string>, int, Rectangle?> _drawStickyNote;
-    private readonly Func<int, string, Rectangle, float, int> _getTextCaretIndex;
+    private readonly DynamicTextRenderer _dynamicTextRenderer;
 
-    public StationeryDrawingContext(
-        int screenWidth,
-        int screenHeight,
-        Action<Rectangle, Color> fillRectangle,
-        Action<Rectangle, int, Color> fillRoundedRectangle,
-        Action<Rectangle, int, Color> drawRectangle,
-        Action<Vector2, Vector2, float, Color> drawLine,
-        Action<Vector2, float, Color> drawCircle,
-        Action<Vector2, float, bool> drawStone,
-        Action<Rectangle, Color> drawCircleSurface,
-        Action<string, Vector2, Color, float> drawText,
-        Action<string, Rectangle, Color, float> drawFittedText,
-        Action<string, Rectangle, Color, float> drawCenteredFittedText,
-        Action<string, Vector2, Color, float> drawRotatedCenteredText,
-        Func<string, Vector2> measureText,
-        Func<Point, Point> toVirtualPoint,
-        Action begin,
-        Action end,
-        Action drawBackground,
-        Action<Rectangle, string, bool, Point, bool, float> drawCommandButton,
-        Action<string, Rectangle, Color, float> drawDynamicText,
-        Action<Vector2, float> drawSelectionFinger,
-        Action<StickyNoteKind, Vector2, Color, Color, string, IReadOnlyList<string>, int, Rectangle?> drawStickyNote,
-        Func<int, string, Rectangle, float, int> getTextCaretIndex)
+    public KfwStationeryDrawingTools(
+        KfwScreenCanvas canvas,
+        ITextRasterizer textRasterizer,
+        Action<Vector2, float, bool> drawStone)
     {
-        ScreenWidth = screenWidth;
-        ScreenHeight = screenHeight;
-        _fillRectangle = fillRectangle ?? throw new ArgumentNullException(nameof(fillRectangle));
-        _fillRoundedRectangle = fillRoundedRectangle ?? throw new ArgumentNullException(nameof(fillRoundedRectangle));
-        _drawRectangle = drawRectangle ?? throw new ArgumentNullException(nameof(drawRectangle));
-        _drawLine = drawLine ?? throw new ArgumentNullException(nameof(drawLine));
-        _drawCircle = drawCircle ?? throw new ArgumentNullException(nameof(drawCircle));
+        _canvas = canvas ?? throw new ArgumentNullException(nameof(canvas));
         _drawStone = drawStone ?? throw new ArgumentNullException(nameof(drawStone));
-        _drawCircleSurface = drawCircleSurface ?? throw new ArgumentNullException(nameof(drawCircleSurface));
-        _drawText = drawText ?? throw new ArgumentNullException(nameof(drawText));
-        _drawFittedText = drawFittedText ?? throw new ArgumentNullException(nameof(drawFittedText));
-        _drawCenteredFittedText = drawCenteredFittedText ?? throw new ArgumentNullException(nameof(drawCenteredFittedText));
-        _drawRotatedCenteredText = drawRotatedCenteredText ?? throw new ArgumentNullException(nameof(drawRotatedCenteredText));
-        _measureText = measureText ?? throw new ArgumentNullException(nameof(measureText));
-        _toVirtualPoint = toVirtualPoint ?? throw new ArgumentNullException(nameof(toVirtualPoint));
-        _begin = begin ?? throw new ArgumentNullException(nameof(begin));
-        _end = end ?? throw new ArgumentNullException(nameof(end));
-        _drawBackground = drawBackground ?? throw new ArgumentNullException(nameof(drawBackground));
-        _drawCommandButton = drawCommandButton ?? throw new ArgumentNullException(nameof(drawCommandButton));
-        _drawDynamicText = drawDynamicText ?? throw new ArgumentNullException(nameof(drawDynamicText));
-        _drawSelectionFinger = drawSelectionFinger ?? throw new ArgumentNullException(nameof(drawSelectionFinger));
-        _drawStickyNote = drawStickyNote ?? throw new ArgumentNullException(nameof(drawStickyNote));
-        _getTextCaretIndex = getTextCaretIndex ?? throw new ArgumentNullException(nameof(getTextCaretIndex));
+        _dynamicTextRenderer = new DynamicTextRenderer(canvas, textRasterizer);
     }
 
-    public void FillRectangle(Rectangle bounds, Color color) => _fillRectangle(bounds, color);
-    public void FillRoundedRectangle(Rectangle bounds, int radius, Color color) => _fillRoundedRectangle(bounds, radius, color);
-    public void DrawRectangle(Rectangle bounds, int thickness, Color color) => _drawRectangle(bounds, thickness, color);
-    public void DrawLine(Vector2 start, Vector2 end, float thickness, Color color) => _drawLine(start, end, thickness, color);
-    public void DrawCircle(Vector2 center, float radius, Color color) => _drawCircle(center, radius, color);
+    public int ScreenWidth => _canvas.ScreenWidth;
+    public int ScreenHeight => _canvas.ScreenHeight;
+    public void FillRectangle(Rectangle bounds, Color color) => _canvas.FillRectangle(bounds, color);
+    public void FillRoundedRectangle(Rectangle bounds, int radius, Color color) => _canvas.FillRoundedRectangle(bounds, radius, color);
+    public void DrawRectangle(Rectangle bounds, int thickness, Color color) => _canvas.DrawRectangle(bounds, thickness, color);
+    public void DrawLine(Vector2 start, Vector2 end, float thickness, Color color) => _canvas.DrawLine(start, end, thickness, color);
+    public void DrawCircle(Vector2 center, float radius, Color color) => _canvas.DrawCircle(center, radius, color);
     public void DrawStone(Vector2 center, float radius, bool black) => _drawStone(center, radius, black);
-    public void DrawCircleSurface(Rectangle bounds, Color color) => _drawCircleSurface(bounds, color);
+    public void DrawCircleSurface(Rectangle bounds, Color color) => _canvas.DrawCircleSurface(bounds, color);
 
     public void DrawIconStone(Vector2 center, float radius, bool black)
     {
@@ -181,10 +124,8 @@ public sealed class StationeryDrawingContext
         DrawFittedText(value, new Rectangle(bounds.X + 196, bounds.Y + 6, bounds.Width - 210, bounds.Height - 12), valueColor, 0.43f);
     }
 
-    public void DrawStoneCountStrip(GoAppSession session, int y, bool showLeader = true, bool minimal = false)
+    public void DrawStoneCountStrip(int black, int white, int y, bool showLeader = true, bool minimal = false)
     {
-        var black = session.BlackAgehama;
-        var white = session.WhiteAgehama;
         var blackBounds = new Rectangle(1164, y, minimal ? 260 : 300, 54);
         var whiteBounds = new Rectangle(blackBounds.Right + 16, y, minimal ? 260 : 300, 54);
         FillRectangle(blackBounds, new Color(24, 30, 36));
@@ -228,24 +169,77 @@ public sealed class StationeryDrawingContext
             previous = current;
         }
     }
-    public void DrawText(string text, Vector2 position, Color color, float scale) => _drawText(text, position, color, scale);
-    public void DrawFittedText(string text, Rectangle bounds, Color color, float scale) => _drawFittedText(text, bounds, color, scale);
+    public void DrawText(string text, Vector2 position, Color color, float scale) => _canvas.DrawText(text, position, color, scale);
+    public void DrawFittedText(string text, Rectangle bounds, Color color, float scale) => _canvas.DrawFittedText(text, bounds, color, scale);
     public void DrawCenteredFittedText(string text, Rectangle bounds, Color color, float scale) =>
-        _drawCenteredFittedText(text, bounds, color, scale);
+        _canvas.DrawCenteredFittedText(text, bounds, color, scale);
     public void DrawRotatedCenteredText(string text, Vector2 center, Color color, float scale) =>
-        _drawRotatedCenteredText(text, center, color, scale);
-    public Vector2 MeasureText(string text) => _measureText(text);
-    public Point ToVirtualPoint(Point point) => _toVirtualPoint(point);
-    public void Begin() => _begin();
-    public void End() => _end();
-    public void DrawBackground() => _drawBackground();
-    public void DrawCommandButton(Rectangle bounds, string label, bool selected, Point mousePoint, bool enabled, float scale) =>
-        _drawCommandButton(bounds, label, selected, mousePoint, enabled, scale);
-    public void DrawDynamicText(string text, Rectangle bounds, Color color, float scale) => _drawDynamicText(text, bounds, color, scale);
-    public void DrawSelectionFinger(Vector2 origin, float scale) => _drawSelectionFinger(origin, scale);
+        _canvas.DrawRotatedCenteredText(text, center, color, scale);
+    public Vector2 MeasureText(string text) => _canvas.MeasureText(text);
+    public Point ToVirtualPoint(Point point) => _canvas.ToVirtualPoint(point);
+    public void Begin() => _canvas.Begin();
+    public void End() => _canvas.End();
+    public void DrawBackground() => BackgroundRenderer.Draw(_canvas);
+
+    public void DrawCommandButton(Rectangle bounds, string label, bool selected, Point mousePoint, bool enabled, float scale)
+    {
+        var hovered = enabled && bounds.Contains(mousePoint);
+        var fill = !enabled ? new Color(24, 27, 31) : selected ? new Color(31, 151, 112) : hovered ? new Color(58, 82, 94) : new Color(36, 48, 58);
+        var border = !enabled ? new Color(43, 50, 56) : selected ? new Color(151, 255, 215) : hovered ? new Color(178, 219, 226) : new Color(126, 150, 164);
+        FillRectangle(new Rectangle(bounds.X + 4, bounds.Y + 5, bounds.Width, bounds.Height), new Color(0, 0, 0, enabled ? 95 : 28));
+        FillRectangle(bounds, fill);
+        DrawRectangle(bounds, 2, border);
+        if (enabled)
+            DrawRectangle(new Rectangle(bounds.X + 2, bounds.Y + 2, bounds.Width - 4, bounds.Height - 4), 1,
+                selected ? new Color(215, 255, 238, 95) : new Color(255, 255, 255, hovered ? 70 : 36));
+        DrawDynamicText(label, new Rectangle(bounds.X + 10, bounds.Y + 5, bounds.Width - 20, bounds.Height - 10),
+            enabled ? Color.White : new Color(91, 100, 106), MathF.Max(0.36f, scale * 1.25f));
+    }
+
+    public void DrawDynamicText(string text, Rectangle bounds, Color color, float scale) =>
+        _dynamicTextRenderer.Draw(text, bounds, color, scale);
+
+    public void DrawSelectionFinger(Vector2 origin, float scale)
+    {
+        var color = new Color(125, 225, 255);
+        var thickness = 2f * scale;
+        var points = new[]
+        {
+            origin + new Vector2(0, 2) * scale, origin + new Vector2(5, 2) * scale,
+            origin + new Vector2(7, -3) * scale, origin + new Vector2(9, -3) * scale,
+            origin + new Vector2(10, 0) * scale, origin + new Vector2(21, 0) * scale,
+            origin + new Vector2(24, 3) * scale, origin + new Vector2(21, 6) * scale,
+            origin + new Vector2(12, 6) * scale, origin + new Vector2(15, 9) * scale,
+            origin + new Vector2(13, 12) * scale, origin + new Vector2(10, 10) * scale,
+            origin + new Vector2(11, 14) * scale, origin + new Vector2(8, 16) * scale,
+            origin + new Vector2(5, 12) * scale, origin + new Vector2(0, 10) * scale,
+            origin + new Vector2(0, 2) * scale,
+        };
+        for (var index = 1; index < points.Length; index++)
+            DrawLine(points[index - 1], points[index], thickness, color);
+    }
+
     public void DrawStickyNote(StickyNoteKind kind, Vector2 connectorStart, Color accent, Color borderColor,
-        string heading, IReadOnlyList<string> bodyLines, int bodyLineSpacing = 40, Rectangle? anchorBounds = null) =>
-        _drawStickyNote(kind, connectorStart, accent, borderColor, heading, bodyLines, bodyLineSpacing, anchorBounds);
-    public int GetTextCaretIndex(int pointX, string text, Rectangle bounds, float scale) =>
-        _getTextCaretIndex(pointX, text, bounds, scale);
+        string heading, IReadOnlyList<string> bodyLines, int bodyLineSpacing = 40, Rectangle? anchorBounds = null)
+    {
+        var note = new StickyNote(kind, connectorStart, accent, borderColor, heading, bodyLines, bodyLineSpacing, anchorBounds);
+        if (!note.TryPlace(HeadUpDisplayComponent.Default.StickyNoteScreen)) return;
+        note.Draw(new StickyNoteDrawingCallbacks(DrawLine, FillRectangle, DrawRectangle, DrawDynamicText));
+    }
+
+    public int GetTextCaretIndex(int pointX, string text, Rectangle bounds, float scale)
+    {
+        if (string.IsNullOrEmpty(text) || pointX <= bounds.X) return 0;
+        var fittedScale = GetFittedScale(text, bounds, scale);
+        var previousX = (float)bounds.X;
+        for (var index = 0; index < text.Length; index++)
+        {
+            var nextX = bounds.X + MathF.Min(bounds.Width - 2, MeasureText(text[..(index + 1)]).X * fittedScale);
+            if (pointX < (previousX + nextX) * 0.5f) return index;
+            previousX = nextX;
+        }
+        return text.Length;
+    }
+
+    public void Dispose() => _dynamicTextRenderer.Dispose();
 }

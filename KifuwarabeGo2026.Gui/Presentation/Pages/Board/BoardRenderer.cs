@@ -17,7 +17,7 @@ using System.Collections.Generic;
 /// <summary>
 /// ［盤］描画処理
 /// </summary>
-public sealed class BoardRenderer
+public sealed class BoardRenderer : IDisposable
 {
     private readonly BoardLensModel _boardLensModel;
     private readonly SpriteBatch _spriteBatch;
@@ -26,7 +26,7 @@ public sealed class BoardRenderer
     private readonly Texture2D _softCircle;
     private readonly Texture2D _stoneLight;
     private readonly Texture2D _stoneDark;
-    private StationeryDrawingContext _drawingContext = null!;
+    private KfwStationeryDrawingTools _drawingContext = null!;
 
     public BoardRenderer(BoardLensModel boardLensModel, SpriteBatch spriteBatch, SpriteFont font,
         SpriteFont boardCoordinateFont, Texture2D softCircle, Texture2D stoneLight, Texture2D stoneDark)
@@ -38,6 +38,12 @@ public sealed class BoardRenderer
         _softCircle = softCircle;
         _stoneLight = stoneLight;
         _stoneDark = stoneDark;
+    }
+
+    public void Dispose()
+    {
+        _stoneLight.Dispose();
+        _stoneDark.Dispose();
     }
     public static bool TryGetBoardIntersection(Point point, int boardSize, out Point intersection)
     {
@@ -61,7 +67,7 @@ public sealed class BoardRenderer
     /// </summary>
     /// <param name="session"></param>
     /// <param name="mousePoint"></param>
-    public void Draw(StationeryDrawingContext drawingContext, GoAppSession session, Point mousePoint)
+    public void Draw(KfwStationeryDrawingTools drawingContext, GoAppSession session, Point mousePoint)
     {
         _drawingContext = drawingContext;
         var whiteboard = session.CurrentMode.Kind == GoAppModeKind.VariationEditing;

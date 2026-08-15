@@ -7,6 +7,6 @@ using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 /// </summary>
 public sealed class SquareUnderline : AbstractUnderline
 {
-    protected override void DrawCore(StationeryDrawingContext surface) =>
+    protected override void DrawCore(KfwStationeryDrawingTools surface) =>
         surface.FillRectangle(UnderlineBounds, Color);
 }

@@ -19,22 +19,22 @@ public sealed class EntryProfilesPresenter
 {
     public static EntryProfilesPresenter Default { get; } = new();
     private readonly ActionBadgeComponent _editActionBadge = ActionBadgeComponent.Create("EDIT", Rectangle.Empty);
-    private StationeryDrawingContext _drawingContext = null!;
+    private KfwStationeryDrawingTools _drawingContext = null!;
 
     private EntryProfilesPresenter()
     {
     }
 
-    public void DrawPanels(StationeryDrawingContext drawingContext, GoAppSession session, Point mousePoint)
+    public void DrawPanels(KfwStationeryDrawingTools drawingContext, GoAppSession session, Point mousePoint)
     {
         _drawingContext = drawingContext;
         DrawClientIdentityProfileEditPanel(session, mousePoint);
         DrawQuickClientIdentitySelectionPanel(session, mousePoint);
     }
 
-    public int GetLocalMatchHandleCaretIndex(StationeryDrawingContext drawingContext, Point point, GoStone stone, string text, bool isPonnuki) =>
+    public int GetLocalMatchHandleCaretIndex(KfwStationeryDrawingTools drawingContext, Point point, GoStone stone, string text, bool isPonnuki) =>
         drawingContext.GetTextCaretIndex(point.X, text, LocalMatchScreen.Default.GetHandleTextBounds(stone, isPonnuki), 0.32f);
-    public int GetClientIdentityProfileEditCaretIndex(StationeryDrawingContext drawingContext, Point point, int index, ClientIdentityProfileEditField field, string text, bool isLocalMatch) =>
+    public int GetClientIdentityProfileEditCaretIndex(KfwStationeryDrawingTools drawingContext, Point point, int index, ClientIdentityProfileEditField field, string text, bool isLocalMatch) =>
         drawingContext.GetTextCaretIndex(point.X, text, ClientIdentityProfileEditFieldTextBounds(index, field, isLocalMatch), 0.34f);
 
     private void DrawClientIdentityProfileEditPanel(GoAppSession session, Point mousePoint)
@@ -310,7 +310,7 @@ public sealed class EntryProfilesPresenter
         Engine,
     }
 
-    private StationeryDrawingContext _stationeryDrawingContext => _drawingContext;
+    private KfwStationeryDrawingTools _stationeryDrawingContext => _drawingContext;
     private void FillRect(Rectangle bounds, Color color) => _drawingContext.FillRectangle(bounds, color);
     private void DrawRect(Rectangle bounds, int thickness, Color color) => _drawingContext.DrawRectangle(bounds, thickness, color);
     private void DrawText(string text, Vector2 position, Color color, float scale) => _drawingContext.DrawText(text, position, color, scale);

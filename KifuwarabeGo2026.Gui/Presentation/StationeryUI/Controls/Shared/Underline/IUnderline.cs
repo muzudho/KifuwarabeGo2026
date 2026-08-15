@@ -32,5 +32,5 @@ public interface IUnderline
     /// 描画
     /// </summary>
     /// <param name="surface">描画先</param>
-    void Draw(StationeryDrawingContext surface);
+    void Draw(KfwStationeryDrawingTools surface);
 }

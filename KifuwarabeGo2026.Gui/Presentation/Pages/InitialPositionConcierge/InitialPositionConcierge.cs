@@ -42,7 +42,7 @@ public sealed class InitialPositionConcierge
 
     #region Drawing
 
-    public void Draw(StationeryDrawingContext drawingContext, InitialPositionConciergeView view, Point mousePoint) =>
+    public void Draw(KfwStationeryDrawingTools drawingContext, InitialPositionConciergeView view, Point mousePoint) =>
         Draw(view, mousePoint, new InitialPositionConciergeDrawingCallbacks(
             drawingContext.DrawDynamicText,
             drawingContext.DrawFittedText,

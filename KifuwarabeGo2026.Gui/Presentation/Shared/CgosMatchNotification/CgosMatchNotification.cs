@@ -27,7 +27,7 @@ public sealed class CgosMatchNotification
     public static bool IsDeferredBannerHit(Point point) => DeferredBounds.Contains(point);
 
     /// <summary>物理座標を受け取り、CGOS 対局通知の描画サイクル全体を実行します。</summary>
-    public void Draw(StationeryDrawingContext drawingContext, Point mousePosition, bool deferred, bool finished,
+    public void Draw(KfwStationeryDrawingTools drawingContext, Point mousePosition, bool deferred, bool finished,
         int secondsRemaining, float opacity, float buttonOpacity, bool buttonsEnabled, bool showDeferredAction)
     {
         ArgumentNullException.ThrowIfNull(drawingContext);

@@ -26,7 +26,7 @@ public sealed class CgosSelectConnectionPage
         EditSaveButton = Button(1288, 156, 162, 48, "SAVE & CLOSE", .27f);
     }
 
-    public void Draw(CgosLoginRenderer renderer, StationeryDrawingContext drawingContext, GoAppSession session, Point mousePosition) =>
+    public void Draw(CgosLoginRenderer renderer, KfwStationeryDrawingTools drawingContext, GoAppSession session, Point mousePosition) =>
         renderer.Draw(drawingContext, session, mousePosition);
 
     public Button CancelButton { get; }

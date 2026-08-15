@@ -26,4 +26,4 @@ public sealed class TournamentRuleTimeField
 }
 
 public sealed record TournamentRuleTimeFieldDrawingCallbacks(Action<string, Rectangle> DrawFieldLabel,
-    Action<string, Rectangle, Color, float> DrawFittedText, StationeryDrawingContext UnderlineSurface);
+    Action<string, Rectangle, Color, float> DrawFittedText, KfwStationeryDrawingTools UnderlineSurface);

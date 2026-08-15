@@ -17,7 +17,7 @@ using KifuwarabeGo2026.Gui.Presentation.Pages.PopupTrendChart.MoveCommentPanel;
 public sealed class PopupTrendChartRenderer
 {
     private readonly MoveTrendChartRenderer _moveTrendChartRenderer;
-    private StationeryDrawingContext _drawingContext = null!;
+    private KfwStationeryDrawingTools _drawingContext = null!;
 
     public PopupTrendChartRenderer(MoveTrendChartRenderer moveTrendChartRenderer)
     {
@@ -103,7 +103,7 @@ public sealed class PopupTrendChartRenderer
     public static bool GetReplayBackToLiveButtonHit(Point point) =>
         ReplayBackToLiveButtonBounds.Contains(point);
 
-    public void DrawReview(StationeryDrawingContext drawingContext, GoAppSession session, Point mousePoint)
+    public void DrawReview(KfwStationeryDrawingTools drawingContext, GoAppSession session, Point mousePoint)
     {
         _drawingContext = drawingContext;
         FillRect(new Rectangle(0, 0, drawingContext.ScreenWidth, drawingContext.ScreenHeight), new Color(65, 80, 125, 58));
@@ -128,7 +128,7 @@ public sealed class PopupTrendChartRenderer
         DrawReviewChartPopupSeekBar(session);
     }
 
-    public void DrawLocal(StationeryDrawingContext drawingContext, GoAppSession session, Point mousePoint)
+    public void DrawLocal(KfwStationeryDrawingTools drawingContext, GoAppSession session, Point mousePoint)
     {
         _drawingContext = drawingContext;
         DrawReadOnlyChartPopup(
@@ -149,7 +149,7 @@ public sealed class PopupTrendChartRenderer
     }
 
     public void DrawCgos(
-        StationeryDrawingContext drawingContext,
+        KfwStationeryDrawingTools drawingContext,
         GoAppSession session,
         CgosGameObservation observation,
         Point mousePoint)
@@ -244,7 +244,7 @@ public sealed class PopupTrendChartRenderer
     }
 
     public void DrawReplayNavigationControls(
-        StationeryDrawingContext drawingContext,
+        KfwStationeryDrawingTools drawingContext,
         int currentMoveIndex,
         int moveCount,
         Point mousePoint,
@@ -263,7 +263,7 @@ public sealed class PopupTrendChartRenderer
     }
 
 
-    public void DrawReplayEditIconButton(StationeryDrawingContext drawingContext, Point mousePoint)
+    public void DrawReplayEditIconButton(KfwStationeryDrawingTools drawingContext, Point mousePoint)
     {
         _drawingContext = drawingContext;
         var hovered = ReplayEditButtonBounds.Contains(mousePoint);

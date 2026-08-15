@@ -36,7 +36,7 @@ public sealed class CatalogOrderPresenter
         return CatalogOrderControl.GetCardHit(point, editor);
     }
 
-    public void Draw<T>(StationeryDrawingContext drawingContext, CatalogOrderEditor<T> editor,
+    public void Draw<T>(KfwStationeryDrawingTools drawingContext, CatalogOrderEditor<T> editor,
         string title,
         Point mousePoint,
         Func<T, string> getName,

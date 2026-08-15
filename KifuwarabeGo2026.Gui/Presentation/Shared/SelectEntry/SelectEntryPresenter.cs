@@ -18,7 +18,7 @@ public sealed class SelectEntryPresenter
     {
     }
 
-    public void Draw(StationeryDrawingContext drawingContext, GoAppSession session, Point mousePoint)
+    public void Draw(KfwStationeryDrawingTools drawingContext, GoAppSession session, Point mousePoint)
     {
         if (!session.IsPlayerSelectionDialogOpen) return;
         var screen = SelectEntryScreen.Default;
