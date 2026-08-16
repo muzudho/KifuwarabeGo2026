@@ -40,6 +40,8 @@ public sealed class LauncherScreen : IDisposable
     private bool _settingsPage;
     private bool _confirming;
     private bool _busy;
+    private bool _loadingVersions;
+    private float _spinnerAngle;
     private string _status = "READY";
     private IReadOnlyList<InstalledVersion> _installed = [];
     private readonly HashSet<string> _markedForRemoval = new(StringComparer.OrdinalIgnoreCase);
@@ -56,11 +58,11 @@ public sealed class LauncherScreen : IDisposable
         _catalog = new InstalledVersionCatalog(platform, platform);
         _launcher = new ProductLauncher(_paths, _settings, log, platform);
         _updates = new LauncherUpdateService(new GitHubReleaseClient(httpClient), new PackageInstaller(_paths, httpClient, log), _settings, log);
-        RefreshVersions();
     }
 
     public void Update()
     {
+        if (_loadingVersions) _spinnerAngle = (_spinnerAngle + 0.11f) % MathHelper.TwoPi;
         var mouse = Mouse.GetState();
         var keyboard = Keyboard.GetState();
         var gamePad = GamePad.GetState(PlayerIndex.One);
@@ -195,6 +197,22 @@ public sealed class LauncherScreen : IDisposable
         _remove.Draw(mouse, _draw);
         _draw.DrawFittedText("CLICK/SPACE: MARK   UP/DOWN: MOVE   O: OPEN   DELETE: UNINSTALL   ESC: BACK",
             new Rectangle(120, 850, 1360, 58), new Color(150, 171, 178), 0.50f);
+        if (_loadingVersions) DrawLoadingSpinner();
+    }
+
+    private void DrawLoadingSpinner()
+    {
+        _draw.FillRectangle(new Rectangle(650, 430, 620, 220), new Color(12, 18, 23, 235));
+        _draw.DrawRectangle(new Rectangle(650, 430, 620, 220), 2, new Color(82, 111, 114));
+        var center = new Vector2(960, 510);
+        for (var index = 0; index < 12; index++)
+        {
+            var angle = _spinnerAngle + MathHelper.TwoPi * index / 12f;
+            var direction = new Vector2(MathF.Cos(angle), MathF.Sin(angle));
+            var color = index < 4 ? new Color(99, 223, 185) : index < 8 ? new Color(178, 219, 226) : new Color(68, 91, 98);
+            _draw.DrawLine(center + direction * 28, center + direction * 58, 7, color);
+        }
+        _draw.DrawFittedText("SCANNING INSTALLED VERSIONS...", new Rectangle(720, 585, 480, 42), Color.White, 0.46f);
     }
 
     private void DrawStatus()
@@ -226,7 +244,7 @@ public sealed class LauncherScreen : IDisposable
         else if ((click && _engineUpdate.IsHit(point)) || Pressed(keyboard, Keys.E)) _ = UpdateProductAsync(LauncherProduct.Engine);
         else if ((click && _allUpdate.IsHit(point)) || Pressed(keyboard, Keys.A)) _ = UpdateAllAsync();
         else if ((click && _engineFolder.IsHit(point)) || Pressed(keyboard, Keys.O)) OpenCurrentEngine();
-        else if ((click && _versionsButton.IsHit(point)) || Pressed(keyboard, Keys.I) || GamePadPressed(gamePad, Buttons.A)) { RefreshVersions(); _versionsPage = true; }
+        else if ((click && _versionsButton.IsHit(point)) || Pressed(keyboard, Keys.I) || GamePadPressed(gamePad, Buttons.A)) { _versionsPage = true; _ = LoadVersionsAsync(); }
         else if (click && _settingsButton.IsHit(point)) _settingsPage = true;
     }
 
@@ -250,6 +268,11 @@ public sealed class LauncherScreen : IDisposable
 
     private void UpdateVersions(Point point, bool click, KeyboardState keyboard, GamePadState gamePad)
     {
+        if (_loadingVersions)
+        {
+            if ((click && _back.IsHit(point)) || Pressed(keyboard, Keys.Escape) || GamePadPressed(gamePad, Buttons.B)) _versionsPage = false;
+            return;
+        }
         for (var row = 0; row < 9; row++) if (click && new Rectangle(120, 290 + row * 65, 1360, 56).Contains(point)) { Select(_firstVisible + row); ToggleMark(); }
         if (Pressed(keyboard, Keys.Up) || GamePadPressed(gamePad, Buttons.DPadUp)) Select(_selectedIndex - 1);
         if (Pressed(keyboard, Keys.Down) || GamePadPressed(gamePad, Buttons.DPadDown)) Select(_selectedIndex + 1);
@@ -287,6 +310,24 @@ public sealed class LauncherScreen : IDisposable
         try { var version = await _updates.UpdateAsync(product, SetStatus); SetStatus($"{product.DisplayName()} v{version} UPDATE COMPLETE"); }
         catch (Exception exception) { SetStatus("UPDATE FAILED: " + exception.Message); }
         finally { _busy = false; RefreshVersions(); }
+    }
+
+    private async Task LoadVersionsAsync()
+    {
+        if (_loadingVersions) return;
+        _busy = true;
+        _loadingVersions = true;
+        SetStatus("SCANNING INSTALLED VERSIONS...");
+        try
+        {
+            var versions = await Task.Run(_catalog.ReadAll);
+            _installed = versions;
+            _markedForRemoval.IntersectWith(_installed.Where(item => item.CanUninstall).Select(Identity));
+            Select(Math.Min(_selectedIndex, _installed.Count - 1));
+            SetStatus($"FOUND {_installed.Count} INSTALLED VERSION(S)");
+        }
+        catch (Exception exception) { SetStatus("VERSION SCAN FAILED: " + exception.Message); }
+        finally { _loadingVersions = false; _busy = false; }
     }
 
     private async Task UpdateAllAsync() { await UpdateProductAsync(LauncherProduct.Gui); await UpdateProductAsync(LauncherProduct.Engine); }
