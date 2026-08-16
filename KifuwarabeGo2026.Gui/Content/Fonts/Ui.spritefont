@@ -105,6 +105,18 @@
         <Start>&#20013;</Start>
         <End>&#20013;</End>
       </CharacterRegion>
+      <!-- Launcher product/status labels: 旧更新機能・実行中・現在使用中 -->
+      <CharacterRegion><Start>&#26087;</Start><End>&#26087;</End></CharacterRegion>
+      <CharacterRegion><Start>&#26356;</Start><End>&#26356;</End></CharacterRegion>
+      <CharacterRegion><Start>&#26032;</Start><End>&#26032;</End></CharacterRegion>
+      <CharacterRegion><Start>&#27231;</Start><End>&#27231;</End></CharacterRegion>
+      <CharacterRegion><Start>&#33021;</Start><End>&#33021;</End></CharacterRegion>
+      <CharacterRegion><Start>&#23455;</Start><End>&#23455;</End></CharacterRegion>
+      <CharacterRegion><Start>&#34892;</Start><End>&#34892;</End></CharacterRegion>
+      <CharacterRegion><Start>&#29694;</Start><End>&#29694;</End></CharacterRegion>
+      <CharacterRegion><Start>&#22312;</Start><End>&#22312;</End></CharacterRegion>
+      <CharacterRegion><Start>&#20351;</Start><End>&#20351;</End></CharacterRegion>
+      <CharacterRegion><Start>&#29992;</Start><End>&#29992;</End></CharacterRegion>
       <CharacterRegion>
         <Start>&#23550;</Start>
         <End>&#23550;</End>

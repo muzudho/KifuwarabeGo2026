@@ -23,7 +23,7 @@ public sealed class LauncherScreen : IDisposable
     private readonly StationeryButton _engineUpdate = new(new Rectangle(800, 390, 250, 66), "ENGINE UPDATE", 0.30f);
     private readonly StationeryButton _allUpdate = new(new Rectangle(960, 570, 480, 66), "CHECK GUI + ENGINE UPDATES", 0.27f);
     private readonly StationeryButton _versionsButton = new(new Rectangle(480, 570, 430, 66), "MANAGE INSTALLED VERSIONS", 0.27f);
-    private readonly StationeryButton _back = new(new Rectangle(100, 930, 170, 58), "BACK", 0.34f);
+    private readonly StationeryButton _back = new(new Rectangle(1310, 205, 170, 58), "BACK", 0.34f);
     private readonly StationeryButton _open = new(new Rectangle(850, 930, 220, 58), "OPEN FOLDER", 0.28f);
     private readonly StationeryButton _remove = new(new Rectangle(1100, 930, 300, 58), "UNINSTALL", 0.32f);
     private readonly StationeryButton _confirm = new(new Rectangle(1010, 700, 210, 58), "UNINSTALL", 0.28f);
@@ -154,7 +154,7 @@ public sealed class LauncherScreen : IDisposable
         _remove.IsEnabled = RemovalTargets.Count > 0 && !_busy;
         _remove.Draw(mouse, _draw);
         _draw.DrawFittedText("CLICK/SPACE: MARK   UP/DOWN: MOVE   O: OPEN   DELETE: UNINSTALL   ESC: BACK",
-            new Rectangle(300, 930, 520, 58), new Color(150, 171, 178), 0.25f);
+            new Rectangle(120, 850, 1360, 58), new Color(150, 171, 178), 0.50f);
     }
 
     private void DrawStatus()
