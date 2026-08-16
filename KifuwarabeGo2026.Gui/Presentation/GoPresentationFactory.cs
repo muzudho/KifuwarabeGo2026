@@ -41,7 +41,8 @@ internal static class GoPresentationFactory
         boardRenderer = new BoardRenderer(boardLensModel, canvas.SpriteBatch, canvas.Font, coordinateFont,
             canvas.SoftCircle, stoneLight, stoneDark);
 
-        var stationery = new KfwStationeryDrawingTools(canvas, textRasterizer, boardRenderer.DrawStone);
+        var stationery = new KfwStationeryDrawingTools(canvas, textRasterizer, boardRenderer.DrawStone,
+            () => HeadUpDisplayComponent.Default.StickyNoteScreen);
         var moveCommentPanelRenderer = new MoveCommentPanelRenderer(
             graphicsDevice, canvas.SpriteBatch, textRasterizer, stationery);
         var moveTrendChartRenderer = new MoveTrendChartRenderer(moveCommentPanelRenderer);

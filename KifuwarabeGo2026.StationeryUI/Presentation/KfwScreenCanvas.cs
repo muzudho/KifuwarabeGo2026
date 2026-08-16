@@ -26,10 +26,10 @@ public sealed class KfwScreenCanvas : IDisposable
 
     public int ScreenWidth => VirtualScreen.Width;
     public int ScreenHeight => VirtualScreen.Height;
-    internal GraphicsDevice GraphicsDevice => _graphicsDevice;
-    internal SpriteBatch SpriteBatch => _spriteBatch;
-    internal SpriteFont Font => _font;
-    internal Texture2D SoftCircle => _softCircle;
+    public GraphicsDevice GraphicsDevice => _graphicsDevice;
+    public SpriteBatch SpriteBatch => _spriteBatch;
+    public SpriteFont Font => _font;
+    public Texture2D SoftCircle => _softCircle;
 
     public void Begin() => _spriteBatch.Begin(samplerState: SamplerState.LinearClamp,
         transformMatrix: VirtualScreen.GetTransform(_graphicsDevice.Viewport));

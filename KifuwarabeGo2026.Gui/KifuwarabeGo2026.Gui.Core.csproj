@@ -13,6 +13,7 @@
     <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.*" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\KifuwarabeGo2026.StationeryUI\KifuwarabeGo2026.StationeryUI.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.GtpExtensions\KifuwarabeGo2026.GtpExtensions.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.Match\KifuwarabeGo2026.Match.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.Shared\KifuwarabeGo2026.Shared.csproj" />
@@ -50,17 +51,5 @@
     <Folder Include="Presentation\Shared\RightSidePanel\" />
     <Folder Include="Presentation\Shared\SeekButtonStrip\" />
     <Folder Include="Presentation\Shared\RandomSeedRow\" />
-    <Folder Include="Presentation\StationeryUI\Controls\PopupNumberUnderline\" />
-    <Folder Include="Presentation\StationeryUI\Controls\StickyNote\" />
-    <Folder Include="Presentation\StationeryUI\Controls\TableRowLabel\" />
-    <Folder Include="Presentation\StationeryUI\Controls\Button\" />
-    <Folder Include="Presentation\StationeryUI\Controls\MultilineTextUnderline\" />
-    <Folder Include="Presentation\StationeryUI\Controls\SinglelineTextUnderline\" />
-    <Folder Include="Presentation\StationeryUI\Controls\Shared\Underline\" />
-    <Folder Include="Presentation\StationeryUI\Controls\LinkUnderline\" />
-    <Folder Include="Presentation\StationeryUI\Controls\PopupTimeUnderline\" />
-    <Folder Include="Presentation\StationeryUI\Controls\Headline\" />
-    <Folder Include="Presentation\StationeryUI\MessageDialog\" />
-    <Folder Include="Presentation\StationeryUI\SpinButton\" />
   </ItemGroup>
 </Project>

@@ -2,7 +2,6 @@ namespace KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 
 using Microsoft.Xna.Framework;
 using KifuwarabeGo2026.Gui.Application;
-using KifuwarabeGo2026.Gui.Presentation.Shared.HeadUpDisplay;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.SectionLabel;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.StickyNote;
 using System.Collections.Generic;
@@ -13,15 +12,18 @@ public sealed class KfwStationeryDrawingTools : IDisposable
 {
     private readonly KfwScreenCanvas _canvas;
     private readonly Action<Vector2, float, bool> _drawStone;
+    private readonly Func<StickyNoteScreenId> _getStickyNoteScreen;
     private readonly DynamicTextRenderer _dynamicTextRenderer;
 
     public KfwStationeryDrawingTools(
         KfwScreenCanvas canvas,
         ITextRasterizer textRasterizer,
-        Action<Vector2, float, bool> drawStone)
+        Action<Vector2, float, bool> drawStone,
+        Func<StickyNoteScreenId>? getStickyNoteScreen = null)
     {
         _canvas = canvas ?? throw new ArgumentNullException(nameof(canvas));
         _drawStone = drawStone ?? throw new ArgumentNullException(nameof(drawStone));
+        _getStickyNoteScreen = getStickyNoteScreen ?? (() => StickyNoteScreenId.Unknown);
         _dynamicTextRenderer = new DynamicTextRenderer(canvas, textRasterizer);
     }
 
@@ -222,7 +224,7 @@ public sealed class KfwStationeryDrawingTools : IDisposable
         string heading, IReadOnlyList<string> bodyLines, int bodyLineSpacing = 40, Rectangle? anchorBounds = null)
     {
         var note = new StickyNote(kind, connectorStart, accent, borderColor, heading, bodyLines, bodyLineSpacing, anchorBounds);
-        if (!note.TryPlace(HeadUpDisplayComponent.Default.StickyNoteScreen)) return;
+        if (!note.TryPlace(_getStickyNoteScreen())) return;
         note.Draw(new StickyNoteDrawingCallbacks(DrawLine, FillRectangle, DrawRectangle, DrawDynamicText));
     }
 
