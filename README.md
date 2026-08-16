@@ -20,6 +20,11 @@
 
 - [最新版をダウンロードする](https://github.com/muzudho/KifuwarabeGo2026/releases/latest)
 
+> [!IMPORTANT]
+> 通常利用者がダウンロードするのは、`KifuwarabeGo2026.Launcher-v～-win-x64.zip` だけです。ZIPを展開して `KifuwarabeGo2026.Launcher.exe` を起動し、ランチャーの［CHECK GUI + ENGINE UPDATES］からGUIとEngineを取得してください。
+>
+> `.zip.sha256` はランチャーがダウンロードの破損・改ざん検証へ使用する機械向けファイルです。利用者がダウンロードしたり開いたりする必要はありません。GUI版・Engine版のZIPは、単独利用や互換運用が必要な方向けです。
+
 ### v3.10.0 以前から更新する方へ
 
 v3.10.0 の［最新バージョンへ更新］は GUI 用 ZIP だけを取得する旧方式のため、共通ランチャーへ自動移行できません。
@@ -88,13 +93,13 @@ v3.10.0 の［最新バージョンへ更新］は GUI 用 ZIP だけを取得�
 ## 起動方法
 
 1. [リリースページ](https://github.com/muzudho/KifuwarabeGo2026/releases/latest)を開きます。
-2. 画面を使う場合は `KifuwarabeGo2026.Gui-v～-win-x64.zip` をダウンロードします。
-3. 思考エンジンも使う場合は `KifuwarabeGo2026.Engine-v～-win-x64.zip` もダウンロードします。
-4. ZIPファイルを右クリックし、［すべて展開］で展開します。
-5. `KifuwarabeGo2026.Gui.exe` をダブルクリックします。
+2. `KifuwarabeGo2026.Launcher-v～-win-x64.zip` をダウンロードします。末尾が `.zip.sha256` のファイルではありません。
+3. ZIPファイルを右クリックし、［すべて展開］で展開します。
+4. `KifuwarabeGo2026.Launcher.exe` をダブルクリックします。
+5. ［CHECK GUI + ENGINE UPDATES］を押し、GUIとEngineを取得します。
+6. ［START］を押してGUIを起動します。以後もランチャーを入口として使用します。
 
-GUI版とEngine版の両方を使う場合は、両方のZIPが必要です。
-
-思考エンジンを別のフォルダーへ展開した場合は、GUIのエンジン設定画面で `KifuwarabeGo2026.Engine.exe` を選択してください。
+> [!IMPORTANT]
+> リリースページで似た名前が2つ並んでいる場合、ダウンロードするのはサイズが大きい `.zip` の方です。小さい `.zip.sha256` はランチャー用の検証データです。
 
 起動時にWindowsから確認画面が出た場合は、ダウンロード元がこのGitHubリポジトリのリリースページであることを確認してから操作してください。
