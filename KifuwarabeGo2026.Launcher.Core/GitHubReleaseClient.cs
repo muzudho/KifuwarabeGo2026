@@ -16,7 +16,9 @@ internal sealed class GitHubReleaseClient(HttpClient client)
         var expected = product.AssetName(version);
         var asset = release.Assets.SingleOrDefault(item => string.Equals(item.Name, expected, StringComparison.OrdinalIgnoreCase))
             ?? throw new InvalidDataException($"最新リリースに {expected} がありません。");
-        return new ReleasePackage(product, version, asset.Name, new Uri(asset.DownloadUrl));
+        var checksum = release.Assets.SingleOrDefault(item => string.Equals(item.Name, expected + ".sha256", StringComparison.OrdinalIgnoreCase));
+        return new ReleasePackage(product, version, asset.Name, new Uri(asset.DownloadUrl),
+            string.IsNullOrWhiteSpace(checksum?.DownloadUrl) ? null : new Uri(checksum.DownloadUrl));
     }
 
     private sealed class Release
@@ -31,4 +33,4 @@ internal sealed class GitHubReleaseClient(HttpClient client)
     }
 }
 
-internal sealed record ReleasePackage(LauncherProduct Product, string Version, string AssetName, Uri DownloadUri);
+internal sealed record ReleasePackage(LauncherProduct Product, string Version, string AssetName, Uri DownloadUri, Uri? ChecksumUri);

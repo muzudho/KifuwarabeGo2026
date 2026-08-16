@@ -1,5 +1,6 @@
 using System.IO.Compression;
 using KifuwarabeGo2026.Launcher;
+using KifuwarabeGo2026.Launcher.Platform;
 
 var root = Path.Combine(Path.GetTempPath(), "KifuwarabeGo2026-LauncherSmoke-" + Guid.NewGuid().ToString("N"));
 Directory.CreateDirectory(root);
@@ -31,7 +32,19 @@ try
     catch (InvalidDataException) { rejected = true; }
     Require(rejected && !File.Exists(Path.Combine(root, "outside.txt")), "ZIP Slip rejection");
 
-    Console.WriteLine("PASS: launcher settings, atomic save, safe extraction, and ZIP Slip checks.");
+    var hashFile = Path.Combine(root, "hash.txt");
+    File.WriteAllText(hashFile, "kifuwarabe");
+    PackageInstaller.VerifySha256(hashFile, Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(hashFile))));
+    var hashRejected = false;
+    try { PackageInstaller.VerifySha256(hashFile, new string('0', 64)); }
+    catch (InvalidDataException) { hashRejected = true; }
+    Require(hashRejected, "SHA-256 mismatch rejection");
+
+    var platform = new DesktopPlatformServices();
+    Require(!string.IsNullOrWhiteSpace(platform.LocalApplicationData), "OS application-data path");
+    Require(platform.IsProcessRunningFrom(AppContext.BaseDirectory), "running process detection");
+
+    Console.WriteLine("PASS: launcher core and platform checks, including safe extraction and SHA-256.");
     return 0;
 }
 finally { if (Directory.Exists(root)) Directory.Delete(root, true); }

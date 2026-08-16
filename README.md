@@ -44,6 +44,8 @@ v3.10.0 の［最新バージョンへ更新］は GUI 用 ZIP だけを取得�
 更新中はcurrentを変更しません。ダウンロード、展開、必須ファイル、ファイルバージョンの検証にすべて成功した後だけ、`launcher-settings.json` のcurrentとpreviousを切り替えます。
 旧更新機能の `%LOCALAPPDATA%\KifuwarabeGo2026\Updates` は自動移行しません。不要ならランチャーで削除し、必要な版はランチャーから正式に再取得してください。
 
+ランチャー画面はWindows Formsではなく、GUI本体と共有する文房具UIとMonoGame DesktopGLで構成しています。更新・版管理を行う `Launcher.Core`、文房具UI画面、Windows／Linux／macOSのOSアダプターを分離しており、正式配布対象は当面Windows x64のまま、他OSへ移植できる構造です。
+
 
 ## 囲碁エンジンを作りたい人向け
 

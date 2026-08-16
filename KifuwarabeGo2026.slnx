@@ -7,6 +7,9 @@
   <Project Path="KifuwarabeGo2026.Gui.WindowsSmoke/KifuwarabeGo2026.Gui.WindowsSmoke.csproj" />
   <Project Path="KifuwarabeGo2026.Gui/KifuwarabeGo2026.Gui.Core.csproj" />
   <Project Path="KifuwarabeGo2026.Launcher/KifuwarabeGo2026.Launcher.csproj" />
+  <Project Path="KifuwarabeGo2026.Launcher.Core/KifuwarabeGo2026.Launcher.Core.csproj" />
+  <Project Path="KifuwarabeGo2026.Launcher.Platform/KifuwarabeGo2026.Launcher.Platform.csproj" />
+  <Project Path="KifuwarabeGo2026.Launcher.Presentation/KifuwarabeGo2026.Launcher.Presentation.csproj" />
   <Project Path="KifuwarabeGo2026.LauncherSmoke/KifuwarabeGo2026.LauncherSmoke.csproj" />
   <Project Path="KifuwarabeGo2026.Match/KifuwarabeGo2026.Match.csproj" />
   <Project Path="KifuwarabeGo2026.Shared/KifuwarabeGo2026.Shared.csproj" />

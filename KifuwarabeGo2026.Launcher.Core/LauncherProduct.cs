@@ -1,8 +1,8 @@
 namespace KifuwarabeGo2026.Launcher;
 
-internal enum LauncherProduct { Gui, Engine }
+public enum LauncherProduct { Gui, Engine }
 
-internal static class LauncherProductExtensions
+public static class LauncherProductExtensions
 {
     public static string DisplayName(this LauncherProduct product) => product == LauncherProduct.Gui ? "GUI" : "ENGINE";
     public static string AssetName(this LauncherProduct product, string version) =>

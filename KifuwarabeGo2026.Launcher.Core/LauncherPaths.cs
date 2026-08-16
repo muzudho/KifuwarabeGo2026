@@ -2,10 +2,10 @@ namespace KifuwarabeGo2026.Launcher;
 
 internal sealed class LauncherPaths
 {
-    public LauncherPaths(string? localApplicationData = null)
+    public LauncherPaths(string localApplicationData)
     {
-        var local = localApplicationData ?? Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        Root = Path.GetFullPath(Path.Combine(local, "KifuwarabeGo2026"));
+        ArgumentException.ThrowIfNullOrWhiteSpace(localApplicationData);
+        Root = Path.GetFullPath(Path.Combine(localApplicationData, "KifuwarabeGo2026"));
     }
 
     public string Root { get; }

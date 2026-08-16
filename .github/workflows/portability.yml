@@ -38,6 +38,15 @@ jobs:
       - name: Run portability checks
         run: dotnet run --project KifuwarabeGo2026.Gui.PortabilitySmoke/KifuwarabeGo2026.Gui.PortabilitySmoke.csproj --configuration Release --no-build
 
+      - name: Restore cross-platform launcher checks
+        run: dotnet restore KifuwarabeGo2026.LauncherSmoke/KifuwarabeGo2026.LauncherSmoke.csproj
+
+      - name: Build launcher Core, Presentation, and platform adapters
+        run: dotnet build KifuwarabeGo2026.Launcher.Presentation/KifuwarabeGo2026.Launcher.Presentation.csproj --configuration Release
+
+      - name: Run launcher Core and OS adapter checks
+        run: dotnet run --project KifuwarabeGo2026.LauncherSmoke/KifuwarabeGo2026.LauncherSmoke.csproj --configuration Release
+
   windows-distribution:
     name: Windows solution and GUI publish
     runs-on: windows-latest
@@ -53,6 +62,10 @@ jobs:
 
       - name: Restore solution
         run: dotnet restore KifuwarabeGo2026.slnx
+
+      - name: Restore MonoGame content tools
+        working-directory: KifuwarabeGo2026.Launcher
+        run: dotnet tool restore
 
       - name: Build all projects
         run: dotnet build KifuwarabeGo2026.slnx --configuration Release --no-restore

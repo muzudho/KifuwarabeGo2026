@@ -1,17 +1,15 @@
 namespace KifuwarabeGo2026.Launcher;
 
+using KifuwarabeGo2026.Launcher.Platform;
+
 internal static class Program
 {
     [STAThread]
-    private static void Main()
+    private static void Main(string[] args)
     {
-        ApplicationConfiguration.Initialize();
-        using var singleInstance = new Mutex(initiallyOwned: true, "Local\\KifuwarabeGo2026.Launcher", out var createdNew);
-        if (!createdNew)
-        {
-            MessageBox.Show("KifuwarabeGo2026 Launcher は既に起動しています。", "KifuwarabeGo2026 Launcher");
-            return;
-        }
-        Application.Run(new LauncherForm());
+        using var singleInstance = new Mutex(initiallyOwned: true, "KifuwarabeGo2026.Launcher", out var createdNew);
+        if (!createdNew && !args.Contains("--allow-multiple", StringComparer.OrdinalIgnoreCase)) return;
+        using var game = new LauncherGame(new DesktopPlatformServices());
+        game.Run();
     }
 }

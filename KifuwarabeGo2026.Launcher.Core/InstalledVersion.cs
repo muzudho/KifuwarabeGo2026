@@ -1,13 +1,13 @@
 namespace KifuwarabeGo2026.Launcher;
 
-internal enum InstalledProduct
+public enum InstalledProduct
 {
     Gui,
     Engine,
     LegacyGuiUpdate,
 }
 
-internal sealed record InstalledVersion(
+public sealed record InstalledVersion(
     InstalledProduct Product,
     string Version,
     string DirectoryPath,

@@ -1,17 +1,18 @@
 namespace KifuwarabeGo2026.Launcher;
 
-using System.Diagnostics;
 
 internal sealed class InstalledVersionCatalog
 {
     private readonly string _applicationRoot;
     private readonly LauncherSettingsStore _settingsStore;
+    private readonly IRunningProcessCatalog _runningProcesses;
 
-    public InstalledVersionCatalog(string? localApplicationData = null)
+    public InstalledVersionCatalog(ILauncherPathProvider paths, IRunningProcessCatalog runningProcesses)
     {
-        var localRoot = localApplicationData ?? Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        var localRoot = paths.LocalApplicationData;
         _applicationRoot = Path.GetFullPath(Path.Combine(localRoot, "KifuwarabeGo2026"));
         _settingsStore = new LauncherSettingsStore(new LauncherPaths(localRoot));
+        _runningProcesses = runningProcesses;
     }
 
     public IReadOnlyList<InstalledVersion> ReadAll()
@@ -60,7 +61,7 @@ internal sealed class InstalledVersionCatalog
                 CalculateDirectorySize(directory),
                 VersionEquals(name, current),
                 VersionEquals(name, previous),
-                IsProcessRunningFrom(directory)));
+                _runningProcesses.IsProcessRunningFrom(directory)));
         }
     }
 
@@ -92,22 +93,5 @@ internal sealed class InstalledVersionCatalog
 
     private static Version ParseVersion(string value) =>
         Version.TryParse(value.TrimStart('v', 'V'), out var version) ? version : new Version(0, 0);
-
-    private static bool IsProcessRunningFrom(string directory)
-    {
-        var prefix = Path.GetFullPath(directory).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
-        foreach (var process in Process.GetProcesses())
-        {
-            try
-            {
-                var executable = process.MainModule?.FileName;
-                if (executable is not null && Path.GetFullPath(executable).StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) return true;
-            }
-            catch (System.ComponentModel.Win32Exception) { }
-            catch (InvalidOperationException) { }
-            finally { process.Dispose(); }
-        }
-        return false;
-    }
 
 }

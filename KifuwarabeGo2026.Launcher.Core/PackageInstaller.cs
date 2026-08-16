@@ -2,6 +2,7 @@ namespace KifuwarabeGo2026.Launcher;
 
 using System.Diagnostics;
 using System.IO.Compression;
+using System.Security.Cryptography;
 
 internal sealed class PackageInstaller(LauncherPaths paths, HttpClient client, LauncherLog log)
 {
@@ -26,6 +27,12 @@ internal sealed class PackageInstaller(LauncherPaths paths, HttpClient client, L
                 response.EnsureSuccessStatusCode();
                 await using var output = File.Create(zip);
                 await response.Content.CopyToAsync(output, cancellationToken);
+            }
+            if (package.ChecksumUri is not null)
+            {
+                progress?.Invoke("SHA-256を検証しています…");
+                var checksumText = await client.GetStringAsync(package.ChecksumUri, cancellationToken);
+                VerifySha256(zip, checksumText.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)[0]);
             }
             if (Directory.Exists(staging)) Directory.Delete(staging, true);
             Directory.CreateDirectory(staging);
@@ -59,6 +66,14 @@ internal sealed class PackageInstaller(LauncherPaths paths, HttpClient client, L
             Directory.CreateDirectory(Path.GetDirectoryName(target)!);
             entry.ExtractToFile(target, overwrite: true);
         }
+    }
+
+    internal static void VerifySha256(string filePath, string expected)
+    {
+        using var stream = File.OpenRead(filePath);
+        var actual = Convert.ToHexString(SHA256.HashData(stream));
+        if (!string.Equals(actual, expected.Trim(), StringComparison.OrdinalIgnoreCase))
+            throw new InvalidDataException($"SHA-256が一致しません。expected={expected}; actual={actual}");
     }
 
     internal static void Validate(LauncherProduct product, string expectedVersion, string directory)

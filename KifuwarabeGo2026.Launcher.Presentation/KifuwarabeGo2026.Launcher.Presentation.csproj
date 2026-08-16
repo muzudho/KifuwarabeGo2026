@@ -1,12 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>KifuwarabeGo2026.Launcher.Presentation</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.*" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\KifuwarabeGo2026.Launcher.Core\KifuwarabeGo2026.Launcher.Core.csproj" />
-    <ProjectReference Include="..\KifuwarabeGo2026.Launcher.Platform\KifuwarabeGo2026.Launcher.Platform.csproj" />
+    <ProjectReference Include="..\KifuwarabeGo2026.StationeryUI\KifuwarabeGo2026.StationeryUI.csproj" />
   </ItemGroup>
 </Project>

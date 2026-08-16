@@ -1,12 +1,26 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
-    <UseWindowsForms>true</UseWindowsForms>
+    <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>KifuwarabeGo2026.Launcher</AssemblyName>
     <RootNamespace>KifuwarabeGo2026.Launcher</RootNamespace>
     <RollForward>Major</RollForward>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.*" />
+    <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.*" />
+  </ItemGroup>
+  <ItemGroup>
+    <MonoGameContentReference Include="..\KifuwarabeGo2026.Gui\Content\Content.mgcb">
+      <Link>Content\Content.mgcb</Link>
+    </MonoGameContentReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\KifuwarabeGo2026.Launcher.Core\KifuwarabeGo2026.Launcher.Core.csproj" />
+    <ProjectReference Include="..\KifuwarabeGo2026.Launcher.Presentation\KifuwarabeGo2026.Launcher.Presentation.csproj" />
+    <ProjectReference Include="..\KifuwarabeGo2026.Launcher.Platform\KifuwarabeGo2026.Launcher.Platform.csproj" />
+    <ProjectReference Include="..\KifuwarabeGo2026.StationeryUI\KifuwarabeGo2026.StationeryUI.csproj" />
+  </ItemGroup>
 </Project>

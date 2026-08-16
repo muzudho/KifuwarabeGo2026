@@ -1,8 +1,6 @@
 namespace KifuwarabeGo2026.Launcher;
 
-using System.Diagnostics;
-
-internal sealed class ProductLauncher(LauncherPaths paths, LauncherSettingsStore settingsStore, LauncherLog log)
+internal sealed class ProductLauncher(LauncherPaths paths, LauncherSettingsStore settingsStore, LauncherLog log, IPlatformProcessService platform)
 {
     public LaunchResult StartGui()
     {
@@ -28,7 +26,7 @@ internal sealed class ProductLauncher(LauncherPaths paths, LauncherSettingsStore
         if (!File.Exists(executable)) return new(false, false, $"{executable} がありません。");
         try
         {
-            Process.Start(new ProcessStartInfo(executable) { WorkingDirectory = directory, UseShellExecute = true });
+            if (!platform.Start(executable, directory)) throw new InvalidOperationException("プロセスを起動できませんでした。");
             log.Write($"GUI START v{version} {executable}");
             return new(true, false, $"GUI v{version} を起動しました。");
         }
