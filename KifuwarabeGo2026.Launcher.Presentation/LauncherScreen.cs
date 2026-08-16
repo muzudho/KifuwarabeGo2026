@@ -158,6 +158,16 @@ public sealed class LauncherScreen : IDisposable
         _draw.DrawLine(new Vector2(face.X + 14, face.Bottom - 10), new Vector2(face.Right - 14, face.Bottom - 10), 3, color);
     }
 
+    private void DrawCheckbox(Rectangle bounds, bool isChecked, bool enabled)
+    {
+        var color = enabled ? new Color(178, 219, 226) : new Color(92, 112, 118);
+        _draw.DrawRectangle(bounds, 3, color);
+        if (!isChecked) return;
+        var checkColor = new Color(99, 223, 185);
+        _draw.DrawLine(new Vector2(bounds.X + 6, bounds.Y + 16), new Vector2(bounds.X + 13, bounds.Bottom - 6), 4, checkColor);
+        _draw.DrawLine(new Vector2(bounds.X + 13, bounds.Bottom - 6), new Vector2(bounds.Right - 5, bounds.Y + 6), 4, checkColor);
+    }
+
     private void DrawVersions(Point mouse)
     {
         _draw.DrawText("INSTALLED VERSIONS", new Vector2(120, 220), Color.White, 0.56f);
@@ -170,7 +180,16 @@ public sealed class LauncherScreen : IDisposable
             var bounds = new Rectangle(120, 290 + row * 65, 1360, 56);
             var marked = _markedForRemoval.Contains(Identity(item));
             _draw.DrawDataRowFrame(bounds, active: index == _selectedIndex || marked, hovered: bounds.Contains(mouse));
-            _draw.DrawFittedText(marked ? "[X] " + item.ProductName : "[ ] " + item.ProductName, new Rectangle(145, bounds.Y + 4, 240, 48), Color.White, 0.64f);
+            DrawCheckbox(new Rectangle(145, bounds.Y + 13, 30, 30), marked, item.CanUninstall);
+            var iconX = item.Product switch
+            {
+                InstalledProduct.Gui => 255,
+                InstalledProduct.Engine => 300,
+                _ => 350,
+            };
+            _draw.DrawFittedText(item.ProductName, new Rectangle(190, bounds.Y + 4, iconX - 198, 48), Color.White, 0.64f);
+            if (item.Product == InstalledProduct.Engine) DrawRobotIcon(new Rectangle(iconX, bounds.Y + 9, 38, 38));
+            else DrawBoardIcon(new Rectangle(iconX, bounds.Y + 9, 38, 38));
             _draw.DrawFittedText(item.Version, new Rectangle(410, bounds.Y + 4, 160, 48), new Color(178, 219, 226), 0.64f);
             _draw.DrawFittedText(FormatSize(item.SizeInBytes), new Rectangle(590, bounds.Y + 4, 140, 48), Color.White, 0.60f);
             _draw.DrawFittedText(string.IsNullOrEmpty(item.Protection) ? "AVAILABLE" : item.Protection,
