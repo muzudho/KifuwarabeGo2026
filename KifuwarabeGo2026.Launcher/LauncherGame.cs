@@ -3,6 +3,7 @@ namespace KifuwarabeGo2026.Launcher;
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Presentation;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Effects;
 using KifuwarabeGo2026.Launcher.Presentation;
 using KifuwarabeGo2026.Shared;
 using Microsoft.Xna.Framework;
@@ -15,8 +16,12 @@ internal sealed class LauncherGame : Game
     private readonly IPlatformServices _platform;
     private LauncherScreen? _screen;
     private KfwScreenCanvas? _canvas;
+    private KfwStationeryDrawingTools? _stationery;
     private KeyboardState _previousKeyboard;
     private bool _screenshotRequested;
+    private readonly ScreenshotEffect _screenshotEffect = new();
+    private double _screenshotEffectStartedAt = double.NegativeInfinity;
+    private const double ScreenshotEffectDurationSeconds = 0.42d;
 
     public LauncherGame(IPlatformServices platform)
     {
@@ -36,9 +41,9 @@ internal sealed class LauncherGame : Game
     protected override void LoadContent()
     {
         _canvas = new KfwScreenCanvas(GraphicsDevice, Content);
-        var stationery = new KfwStationeryDrawingTools(_canvas, new ApproximateTextRasterizer(),
+        _stationery = new KfwStationeryDrawingTools(_canvas, new ApproximateTextRasterizer(),
             (center, radius, black) => _canvas.DrawCircle(center, radius, black ? new Color(20, 24, 28) : new Color(235, 235, 228)));
-        _screen = new LauncherScreen(stationery, _platform, new HttpClient { Timeout = TimeSpan.FromMinutes(15) });
+        _screen = new LauncherScreen(_stationery, _platform, new HttpClient { Timeout = TimeSpan.FromMinutes(15) });
     }
 
     protected override void Update(GameTime gameTime)
@@ -59,12 +64,15 @@ internal sealed class LauncherGame : Game
         if (_screenshotRequested)
         {
             _screenshotRequested = false;
-            CaptureScreenshot();
+            CaptureScreenshot(gameTime.TotalGameTime.TotalSeconds);
         }
+        var effectAge = gameTime.TotalGameTime.TotalSeconds - _screenshotEffectStartedAt;
+        if (_stationery is not null && effectAge >= 0d && effectAge < ScreenshotEffectDurationSeconds)
+            _screenshotEffect.Draw(_stationery, (float)(effectAge / ScreenshotEffectDurationSeconds));
         base.Draw(gameTime);
     }
 
-    private void CaptureScreenshot()
+    private void CaptureScreenshot(double now)
     {
         try
         {
@@ -79,6 +87,7 @@ internal sealed class LauncherGame : Game
             texture.SetData(pixels);
             using var stream = File.Create(path);
             texture.SaveAsPng(stream, width, height);
+            _screenshotEffectStartedAt = now;
             _screen?.ShowStatus("SCREENSHOT SAVED: " + path);
         }
         catch (Exception exception)

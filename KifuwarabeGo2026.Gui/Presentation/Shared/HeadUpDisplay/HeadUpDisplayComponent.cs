@@ -2,7 +2,7 @@ namespace KifuwarabeGo2026.Gui.Presentation.Shared.HeadUpDisplay;
 
 using KifuwarabeGo2026.Gui.Presentation.Pages.ReviewUnsavedChangesConfirmation;
 using KifuwarabeGo2026.Gui.Presentation.Pages.ScreenTransition;
-using KifuwarabeGo2026.Gui.Presentation.Pages.ScreenshotEffect;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Effects;
 using KifuwarabeGo2026.Gui.Presentation.Shared.Breadcrumb;
 using KifuwarabeGo2026.Gui.Presentation.Shared.PopupFilePathTooltip;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.PopupNumberUnderline;

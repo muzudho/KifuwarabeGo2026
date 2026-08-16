@@ -1,10 +1,9 @@
-namespace KifuwarabeGo2026.Gui.Presentation.Pages.ScreenshotEffect;
+namespace KifuwarabeGo2026.Gui.Presentation.StationeryUI.Effects;
 
 using Microsoft.Xna.Framework;
 using System;
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 
-/// <summary>スクリーンショット撮影時のフラッシュとシャッター演出です。</summary>
+/// <summary>GUIとランチャーで共有するスクリーンショット撮影時の演出です。</summary>
 public sealed class ScreenshotEffect
 {
     public void Draw(KfwStationeryDrawingTools drawingContext, float progress)
@@ -15,7 +14,6 @@ public sealed class ScreenshotEffect
         drawingContext.End();
     }
 
-    /// <summary>演出の進行度を 0 から 1 の範囲で描画します。</summary>
     public void Draw(float progress, ScreenshotEffectDrawingCallbacks draw)
     {
         ArgumentNullException.ThrowIfNull(draw);
@@ -41,7 +39,6 @@ public sealed class ScreenshotEffect
     }
 }
 
-/// <summary>ScreenshotEffect に渡す描画機能です。</summary>
 public sealed record ScreenshotEffectDrawingCallbacks(
     int VirtualScreenWidth,
     int VirtualScreenHeight,
