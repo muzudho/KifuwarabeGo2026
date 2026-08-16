@@ -21,8 +21,8 @@ public sealed class LauncherScreen : IDisposable
     private readonly StationeryButton _guiUpdate = new(new Rectangle(800, 280, 250, 66), "GUI UPDATE", 0.34f);
     private readonly StationeryButton _engineFolder = new(new Rectangle(560, 390, 210, 66), "OPEN FOLDER", 0.30f);
     private readonly StationeryButton _engineUpdate = new(new Rectangle(800, 390, 250, 66), "ENGINE UPDATE", 0.30f);
-    private readonly StationeryButton _allUpdate = new(new Rectangle(1120, 280, 310, 66), "CHECK ALL UPDATES", 0.28f);
-    private readonly StationeryButton _versionsButton = new(new Rectangle(1120, 390, 310, 66), "INSTALLED VERSIONS", 0.27f);
+    private readonly StationeryButton _allUpdate = new(new Rectangle(960, 570, 480, 66), "CHECK GUI + ENGINE UPDATES", 0.27f);
+    private readonly StationeryButton _versionsButton = new(new Rectangle(480, 570, 430, 66), "MANAGE INSTALLED VERSIONS", 0.27f);
     private readonly StationeryButton _back = new(new Rectangle(100, 930, 170, 58), "BACK", 0.34f);
     private readonly StationeryButton _open = new(new Rectangle(850, 930, 220, 58), "OPEN FOLDER", 0.28f);
     private readonly StationeryButton _remove = new(new Rectangle(1100, 930, 300, 58), "UNINSTALL", 0.32f);
@@ -93,13 +93,14 @@ public sealed class LauncherScreen : IDisposable
         var settings = _settings.Load();
         DrawProductRow("GUI", settings.GuiCurrentVersion, 280);
         DrawProductRow("ENGINE", settings.EngineCurrentVersion, 390);
+        _draw.DrawText("COMMON OPERATIONS", new Vector2(480, 510), new Color(99, 223, 185), 0.38f);
         SetButtonsEnabled(!_busy, _start, _guiUpdate, _engineFolder, _engineUpdate, _allUpdate, _versionsButton);
         _start.Draw(mouse, _draw); _guiUpdate.Draw(mouse, _draw); _engineFolder.Draw(mouse, _draw);
         _engineUpdate.Draw(mouse, _draw); _allUpdate.Draw(mouse, _draw); _versionsButton.Draw(mouse, _draw);
         _draw.DrawFittedText("S: START   G: GUI UPDATE   E: ENGINE UPDATE   A: ALL   I: VERSIONS",
-            new Rectangle(480, 500, 980, 55), new Color(150, 171, 178), 0.56f);
+            new Rectangle(480, 665, 980, 55), new Color(150, 171, 178), 0.56f);
         _draw.DrawFittedText("CTRL + P: SCREENSHOT (SHARED APPLICATION SETTING)",
-            new Rectangle(480, 555, 980, 55), new Color(150, 171, 178), 0.52f);
+            new Rectangle(480, 720, 980, 55), new Color(150, 171, 178), 0.52f);
         _settingsButton.Draw(_draw, mouse);
     }
 
