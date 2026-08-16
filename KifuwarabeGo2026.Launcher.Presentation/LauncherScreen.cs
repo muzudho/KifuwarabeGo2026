@@ -126,9 +126,36 @@ public sealed class LauncherScreen : IDisposable
     private void DrawProductRow(string product, string? version, int y)
     {
         _draw.DrawDataRowFrame(new Rectangle(120, y - 8, 1360, 82));
-        _draw.DrawText(product, new Vector2(160, y + 8), Color.White, 0.48f);
+        if (product == "GUI") DrawBoardIcon(new Rectangle(150, y + 2, 54, 54));
+        else DrawRobotIcon(new Rectangle(150, y + 2, 54, 54));
+        _draw.DrawText(product, new Vector2(230, y + 8), Color.White, 0.48f);
         _draw.DrawText(string.IsNullOrWhiteSpace(version) ? "NOT INSTALLED" : "v" + version.TrimStart('v', 'V'),
-            new Vector2(330, y + 8), new Color(178, 219, 226), 0.44f);
+            new Vector2(400, y + 8), new Color(178, 219, 226), 0.44f);
+    }
+
+    private void DrawBoardIcon(Rectangle bounds)
+    {
+        var color = new Color(178, 219, 226);
+        _draw.DrawRectangle(bounds, 3, color);
+        for (var index = 1; index < 4; index++)
+        {
+            var offset = index * bounds.Width / 4;
+            _draw.DrawLine(new Vector2(bounds.X + offset, bounds.Y + 5), new Vector2(bounds.X + offset, bounds.Bottom - 5), 2, color);
+            _draw.DrawLine(new Vector2(bounds.X + 5, bounds.Y + offset), new Vector2(bounds.Right - 5, bounds.Y + offset), 2, color);
+        }
+        _draw.DrawCircle(new Vector2(bounds.Center.X, bounds.Center.Y), 6, new Color(99, 223, 185));
+    }
+
+    private void DrawRobotIcon(Rectangle bounds)
+    {
+        var color = new Color(178, 219, 226);
+        var face = new Rectangle(bounds.X + 3, bounds.Y + 11, bounds.Width - 6, bounds.Height - 14);
+        _draw.DrawRectangle(face, 3, color);
+        _draw.DrawLine(new Vector2(bounds.Center.X, bounds.Y + 11), new Vector2(bounds.Center.X, bounds.Y + 2), 3, color);
+        _draw.DrawCircle(new Vector2(bounds.Center.X, bounds.Y + 2), 4, new Color(99, 223, 185));
+        _draw.DrawCircle(new Vector2(face.X + 14, face.Y + 15), 5, color);
+        _draw.DrawCircle(new Vector2(face.Right - 14, face.Y + 15), 5, color);
+        _draw.DrawLine(new Vector2(face.X + 14, face.Bottom - 10), new Vector2(face.Right - 14, face.Bottom - 10), 3, color);
     }
 
     private void DrawVersions(Point mouse)
@@ -143,11 +170,11 @@ public sealed class LauncherScreen : IDisposable
             var bounds = new Rectangle(120, 290 + row * 65, 1360, 56);
             var marked = _markedForRemoval.Contains(Identity(item));
             _draw.DrawDataRowFrame(bounds, active: index == _selectedIndex || marked, hovered: bounds.Contains(mouse));
-            _draw.DrawFittedText(marked ? "[X] " + item.ProductName : "[ ] " + item.ProductName, new Rectangle(145, bounds.Y + 8, 240, 40), Color.White, 0.32f);
-            _draw.DrawFittedText(item.Version, new Rectangle(410, bounds.Y + 8, 160, 40), new Color(178, 219, 226), 0.32f);
-            _draw.DrawFittedText(FormatSize(item.SizeInBytes), new Rectangle(590, bounds.Y + 8, 140, 40), Color.White, 0.30f);
+            _draw.DrawFittedText(marked ? "[X] " + item.ProductName : "[ ] " + item.ProductName, new Rectangle(145, bounds.Y + 4, 240, 48), Color.White, 0.64f);
+            _draw.DrawFittedText(item.Version, new Rectangle(410, bounds.Y + 4, 160, 48), new Color(178, 219, 226), 0.64f);
+            _draw.DrawFittedText(FormatSize(item.SizeInBytes), new Rectangle(590, bounds.Y + 4, 140, 48), Color.White, 0.60f);
             _draw.DrawFittedText(string.IsNullOrEmpty(item.Protection) ? "AVAILABLE" : item.Protection,
-                new Rectangle(750, bounds.Y + 8, 210, 40), item.CanUninstall ? new Color(151, 255, 215) : new Color(255, 190, 150), 0.27f);
+                new Rectangle(750, bounds.Y + 4, 210, 48), item.CanUninstall ? new Color(151, 255, 215) : new Color(255, 190, 150), 0.54f);
             _draw.DrawFittedText(item.DirectoryPath, new Rectangle(980, bounds.Y + 8, 470, 40), new Color(150, 171, 178), 0.24f);
         }
         _back.Draw(mouse, _draw); _open.Draw(mouse, _draw);

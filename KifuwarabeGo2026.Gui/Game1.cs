@@ -2449,7 +2449,7 @@ public class Game1 : Game
         {
             var directory = ApplicationSettings.Current.ScreenshotSaveDirectory;
             Directory.CreateDirectory(directory);
-            var filePath = Path.Combine(directory, $"kifuwarabe-go-screenshot-{DateTime.Now:yyyyMMdd-HHmmss-fff}.png");
+            var filePath = Path.Combine(directory, $"screenshot-{DateTime.Now:yyyyMMdd-HHmmss-fff}.png");
             var result = _windowScreenshotService.SaveActiveWindow(filePath);
             _screenshotEffectStartedAt = _inputClockSeconds;
             PlayScreenshotShutterSound();

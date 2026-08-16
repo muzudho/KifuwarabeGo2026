@@ -84,7 +84,7 @@ internal sealed class LauncherGame : Game
         {
             var directory = ApplicationFamilySettings.ScreenshotSaveDirectory;
             Directory.CreateDirectory(directory);
-            var path = Path.Combine(directory, $"kifuwarabe-go-launcher-screenshot-{DateTime.Now:yyyyMMdd-HHmmss-fff}.png");
+            var path = Path.Combine(directory, $"screenshot-{DateTime.Now:yyyyMMdd-HHmmss-fff}.png");
             var width = GraphicsDevice.PresentationParameters.BackBufferWidth;
             var height = GraphicsDevice.PresentationParameters.BackBufferHeight;
             var pixels = new Color[width * height];
