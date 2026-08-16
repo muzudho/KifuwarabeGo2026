@@ -22,5 +22,6 @@
     <ProjectReference Include="..\KifuwarabeGo2026.Launcher.Presentation\KifuwarabeGo2026.Launcher.Presentation.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.Launcher.Platform\KifuwarabeGo2026.Launcher.Platform.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.StationeryUI\KifuwarabeGo2026.StationeryUI.csproj" />
+    <ProjectReference Include="..\KifuwarabeGo2026.Shared\KifuwarabeGo2026.Shared.csproj" />
   </ItemGroup>
 </Project>

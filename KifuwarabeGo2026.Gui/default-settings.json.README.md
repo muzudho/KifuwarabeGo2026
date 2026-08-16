@@ -15,6 +15,8 @@
 
 ```text
 %LOCALAPPDATA%\KifuwarabeGo2026\application-settings.json
+
+このファイルはGUIの特定バージョン専用ではなく、インストールされているGUI各バージョンと共通ランチャーが共有する「アプリケーションファミリー設定」です。互換性維持のためファイル名は変更しません。`ScreenshotSaveDirectory` はGUIとランチャーの `Ctrl + P` スクリーンショット保存先へ共通に適用されます。
 %LOCALAPPDATA%\KifuwarabeGo2026\GtpEngines\gtp-engine-list.json
 ```
 

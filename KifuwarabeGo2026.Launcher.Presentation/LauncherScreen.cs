@@ -89,6 +89,8 @@ public sealed class LauncherScreen : IDisposable
         _engineUpdate.Draw(mouse, _draw); _allUpdate.Draw(mouse, _draw); _versionsButton.Draw(mouse, _draw);
         _draw.DrawFittedText("S: START   G: GUI UPDATE   E: ENGINE UPDATE   A: ALL   I: VERSIONS",
             new Rectangle(480, 510, 980, 42), new Color(150, 171, 178), 0.28f);
+        _draw.DrawFittedText("CTRL + P: SCREENSHOT (SHARED APPLICATION SETTING)",
+            new Rectangle(480, 555, 980, 42), new Color(150, 171, 178), 0.26f);
     }
 
     private void DrawProductRow(string product, string? version, int y)
@@ -209,6 +211,7 @@ public sealed class LauncherScreen : IDisposable
     private IReadOnlyList<InstalledVersion> RemovalTargets => _installed.Where(item => item.CanUninstall && _markedForRemoval.Contains(Identity(item))).ToArray();
     private static string Identity(InstalledVersion item) => $"{item.Product}|{item.DirectoryPath}";
     private void SetStatus(string text) { lock (_stateGate) _status = text; }
+    public void ShowStatus(string text) => SetStatus(text);
     private bool Pressed(KeyboardState state, Keys key) => state.IsKeyDown(key) && _previousKeyboard.IsKeyUp(key);
     private bool GamePadPressed(GamePadState state, Buttons button) => state.IsButtonDown(button) && _previousGamePad.IsButtonUp(button);
     private static void SetButtonsEnabled(bool enabled, params StationeryButton[] buttons) { foreach (var button in buttons) button.IsEnabled = enabled; }

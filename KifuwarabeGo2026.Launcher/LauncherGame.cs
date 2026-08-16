@@ -4,8 +4,10 @@ using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Presentation;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 using KifuwarabeGo2026.Launcher.Presentation;
+using KifuwarabeGo2026.Shared;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 
 internal sealed class LauncherGame : Game
 {
@@ -13,6 +15,8 @@ internal sealed class LauncherGame : Game
     private readonly IPlatformServices _platform;
     private LauncherScreen? _screen;
     private KfwScreenCanvas? _canvas;
+    private KeyboardState _previousKeyboard;
+    private bool _screenshotRequested;
 
     public LauncherGame(IPlatformServices platform)
     {
@@ -39,6 +43,11 @@ internal sealed class LauncherGame : Game
 
     protected override void Update(GameTime gameTime)
     {
+        var keyboard = Keyboard.GetState();
+        var controlDown = keyboard.IsKeyDown(Keys.LeftControl) || keyboard.IsKeyDown(Keys.RightControl);
+        if (controlDown && keyboard.IsKeyDown(Keys.P) && _previousKeyboard.IsKeyUp(Keys.P))
+            _screenshotRequested = true;
+        _previousKeyboard = keyboard;
         _screen?.Update();
         base.Update(gameTime);
     }
@@ -47,7 +56,35 @@ internal sealed class LauncherGame : Game
     {
         GraphicsDevice.Clear(new Color(12, 18, 23));
         _screen?.Draw();
+        if (_screenshotRequested)
+        {
+            _screenshotRequested = false;
+            CaptureScreenshot();
+        }
         base.Draw(gameTime);
+    }
+
+    private void CaptureScreenshot()
+    {
+        try
+        {
+            var directory = ApplicationFamilySettings.ScreenshotSaveDirectory;
+            Directory.CreateDirectory(directory);
+            var path = Path.Combine(directory, $"kifuwarabe-go-launcher-screenshot-{DateTime.Now:yyyyMMdd-HHmmss-fff}.png");
+            var width = GraphicsDevice.PresentationParameters.BackBufferWidth;
+            var height = GraphicsDevice.PresentationParameters.BackBufferHeight;
+            var pixels = new Color[width * height];
+            GraphicsDevice.GetBackBufferData(pixels);
+            using var texture = new Texture2D(GraphicsDevice, width, height);
+            texture.SetData(pixels);
+            using var stream = File.Create(path);
+            texture.SaveAsPng(stream, width, height);
+            _screen?.ShowStatus("SCREENSHOT SAVED: " + path);
+        }
+        catch (Exception exception)
+        {
+            _screen?.ShowStatus("SCREENSHOT FAILED: " + exception.Message);
+        }
     }
 
     protected override void Dispose(bool disposing)

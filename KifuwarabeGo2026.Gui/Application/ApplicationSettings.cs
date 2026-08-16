@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using KifuwarabeGo2026.Shared;
 
 public sealed class ApplicationSettings
 {
@@ -25,10 +26,7 @@ public sealed class ApplicationSettings
             .ToList();
     }
 
-    public static string FilePath { get; } = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "KifuwarabeGo2026",
-        "application-settings.json");
+    public static string FilePath { get; } = ApplicationFamilySettings.FilePath;
 
     public static ApplicationSettings Current { get; private set; } = Load();
 
@@ -169,10 +167,7 @@ public sealed class ApplicationSettings
     private static string NormalizeScreenshotDirectory(string? directory) =>
         string.IsNullOrWhiteSpace(directory) ? GetDefaultScreenshotSaveDirectory() : Path.GetFullPath(directory);
 
-    private static string GetDefaultScreenshotSaveDirectory() => Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
-        "KifuwarabeGo2026",
-        "Screenshots");
+    private static string GetDefaultScreenshotSaveDirectory() => ApplicationFamilySettings.DefaultScreenshotSaveDirectory;
 
     private static string GetDefaultLogRootDirectory()
     {
