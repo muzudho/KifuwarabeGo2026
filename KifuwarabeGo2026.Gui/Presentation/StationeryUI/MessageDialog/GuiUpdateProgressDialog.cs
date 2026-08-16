@@ -27,10 +27,10 @@ public sealed class GuiUpdateProgressDialog
 
     public void Report(GuiReleaseUpdateProgress progress) => _progress = progress ?? throw new ArgumentNullException(nameof(progress));
 
-    public void Fail(string logPath)
+    public void Fail(string logPath, string? reason = null)
     {
         HasFailed = true;
-        FailureMessage = $"最新バージョンへの更新は失敗しました。\nログファイル: {logPath}\nGUI を再起動してやり直してください。";
+        FailureMessage = $"更新操作は失敗しました。\n{reason ?? "GUI を再起動してやり直してください。"}\nログファイル: {logPath}";
     }
 
     public bool IsCloseHit(Point point) => CanClose && CloseButtonBounds.Contains(point);

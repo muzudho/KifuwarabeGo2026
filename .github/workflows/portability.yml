@@ -60,11 +60,17 @@ jobs:
       - name: Run Windows platform checks
         run: dotnet run --project KifuwarabeGo2026.Gui.WindowsSmoke/KifuwarabeGo2026.Gui.WindowsSmoke.csproj --configuration Release --no-build
 
+      - name: Run launcher checks
+        run: dotnet run --project KifuwarabeGo2026.LauncherSmoke/KifuwarabeGo2026.LauncherSmoke.csproj --configuration Release --no-build
+
       - name: Restore Windows GUI for win-x64
         run: dotnet restore KifuwarabeGo2026.Gui.Windows/KifuwarabeGo2026.Gui.Windows.csproj --runtime win-x64
 
       - name: Publish Windows GUI
         run: dotnet publish KifuwarabeGo2026.Gui.Windows/KifuwarabeGo2026.Gui.Windows.csproj --configuration Release --runtime win-x64 --self-contained false --no-restore
+
+      - name: Publish Windows launcher
+        run: dotnet publish KifuwarabeGo2026.Launcher/KifuwarabeGo2026.Launcher.csproj --configuration Release --runtime win-x64 --self-contained false
 
       - name: Verify GUI distribution
         shell: pwsh
@@ -73,6 +79,7 @@ jobs:
           $required = @(
             'KifuwarabeGo2026.Gui.exe',
             'KifuwarabeGo2026.Gui.Core.dll',
+            'KifuwarabeGo2026.StationeryUI.dll',
             'KifuwarabeGo2026.Shared.dll',
             'Content/Fonts/Ui.xnb',
             'Content/Fonts/BoardCoordinate.xnb',

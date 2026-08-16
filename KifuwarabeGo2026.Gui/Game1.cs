@@ -2652,7 +2652,7 @@ public class Game1 : Game
         catch (Exception ex)
         {
             GuiOperationLog.App("GUI update failed", ex.ToString());
-            (_guiUpdateProgressDialog ??= new GuiUpdateProgressDialog()).Fail(GuiOperationLog.FilePath);
+            (_guiUpdateProgressDialog ??= new GuiUpdateProgressDialog()).Fail(GuiOperationLog.FilePath, ex.Message);
         }
     }
 

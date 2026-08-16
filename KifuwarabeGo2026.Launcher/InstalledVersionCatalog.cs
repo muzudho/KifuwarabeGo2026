@@ -1,21 +1,22 @@
 namespace KifuwarabeGo2026.Launcher;
 
 using System.Diagnostics;
-using System.Text.Json;
 
 internal sealed class InstalledVersionCatalog
 {
     private readonly string _applicationRoot;
+    private readonly LauncherSettingsStore _settingsStore;
 
     public InstalledVersionCatalog(string? localApplicationData = null)
     {
         var localRoot = localApplicationData ?? Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         _applicationRoot = Path.GetFullPath(Path.Combine(localRoot, "KifuwarabeGo2026"));
+        _settingsStore = new LauncherSettingsStore(new LauncherPaths(localRoot));
     }
 
     public IReadOnlyList<InstalledVersion> ReadAll()
     {
-        var settings = ReadSettings();
+        var settings = _settingsStore.Load();
         var versions = new List<InstalledVersion>();
         AddProductVersions(versions, InstalledProduct.Gui, Path.Combine(_applicationRoot, "Packages", "Gui"), settings.GuiCurrentVersion, settings.GuiPreviousVersion);
         AddProductVersions(versions, InstalledProduct.Engine, Path.Combine(_applicationRoot, "Packages", "Engine"), settings.EngineCurrentVersion, settings.EnginePreviousVersion);
@@ -60,23 +61,6 @@ internal sealed class InstalledVersionCatalog
                 VersionEquals(name, current),
                 VersionEquals(name, previous),
                 IsProcessRunningFrom(directory)));
-        }
-    }
-
-    private LauncherSettings ReadSettings()
-    {
-        var path = Path.Combine(_applicationRoot, "launcher-settings.json");
-        if (!File.Exists(path)) return new LauncherSettings();
-        try
-        {
-            return JsonSerializer.Deserialize<LauncherSettings>(File.ReadAllText(path), new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true,
-            }) ?? new LauncherSettings();
-        }
-        catch (JsonException)
-        {
-            return new LauncherSettings();
         }
     }
 
@@ -126,11 +110,4 @@ internal sealed class InstalledVersionCatalog
         return false;
     }
 
-    private sealed class LauncherSettings
-    {
-        public string? GuiCurrentVersion { get; set; }
-        public string? GuiPreviousVersion { get; set; }
-        public string? EngineCurrentVersion { get; set; }
-        public string? EnginePreviousVersion { get; set; }
-    }
 }

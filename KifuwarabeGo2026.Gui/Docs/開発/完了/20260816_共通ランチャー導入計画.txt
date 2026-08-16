@@ -1,8 +1,9 @@
 ［KifuwarabeGo2026 共通ランチャー導入計画］
 
 作成日：2026-08-16
-状態：未着手
-優先度：次回の最優先候補
+状態：初版実装完了
+完了日：2026-08-16
+優先度：完了
 
 
 ■ 背景
@@ -252,3 +253,48 @@ HTTP取得、バージョン比較、ZIP検証、設定保存、プロセス起�
 ・KifuwarabeGo2026.Gui/Docs/開発/リリース手順.md
 ・KifuwarabeGo2026.Gui/Docs/開発/Windows GUI手動スモークテスト手順.md
 
+
+■ 完了記録
+
+実装したもの：
+
+・固定の KifuwarabeGo2026.Launcher.exe と最小管理画面。
+・GUI START、current起動失敗時のpreviousフォールバック。
+・GUI／Engineの独立UPDATEとCHECK ALL UPDATES。
+・GitHub Releases latestの取得と、完全一致する配布ZIP名の選択。
+・Downloads一時フォルダーへの取得、安全なZIP展開、ZIP Slip拒否。
+・exe、deps.json、runtimeconfig.json、GUI Content、Tools\Cgosの検査。
+・配布タグと実行ファイルバージョンの一致検査。
+・stagingから正式フォルダーへの移動後だけ行うcurrent／previous切替。
+・一時ファイルとFile.Replaceを使うlauncher-settings.jsonの原子的保存。
+・複数同時更新を防ぐゲートと、ランチャーの多重起動防止。
+・current、previous、実行中の版を保護するアンインストール。
+・旧Updates版の一覧、容量表示、確認付き削除。
+・Engine currentフォルダー表示とランチャーログ。
+・GUI内更新ボタンから共通ランチャーを開く薄い移行窓口。
+・ランチャーがない旧配布物で手動再インストールを案内するエラー表示とREADME。
+・Launcher独立ZIPのpublish手順とCI publish。
+・ランチャー専用スモークテスト。
+
+今回固定した判断：
+
+1. Launcherは独立したLauncher ZIPとして配布し、GUI／Engine単独ZIPも互換期間中は維持する。
+2. Engine初版はcurrentフォルダーを開いてGTPクライアントへ登録してもらう。
+3. 起動成功判定は初版ではプロセス生成成功までとする。
+4. 旧Updates版は自動移行せず、不要版を削除して正式版をランチャーから再取得する。
+5. Launcher自身の自動更新は後続版へ送り、GUI／Engine本体の安全な更新を初版で完成させる。
+
+検証結果：
+
+・ソリューション12プロジェクトのReleaseビルド成功。警告0、エラー0。
+・Launcher専用スモーク PASS。
+・PortabilitySmoke PASS。
+・WindowsSmoke PASS。
+・Launcher win-x64 framework-dependent publish成功。
+
+後続候補：
+
+・GUI起動成功を確定するハンドシェイクまたは短時間生存確認。
+・Launcher自身の自動更新。
+・リリースノートに機械可読なSHA-256を付けた場合の照合。
+・Engine currentへの固定起動ブリッジ。

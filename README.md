@@ -31,6 +31,19 @@ v3.10.0 の［最新バージョンへ更新］は GUI 用 ZIP だけを取得�
 `KifuwarabeGo2026.Launcher.exe` のインストール済みバージョン画面では、GUI、Engine、および旧更新機能が `%LOCALAPPDATA%\KifuwarabeGo2026\Updates` に保存した版をアンインストールできます。
 現在使用中の版とロールバック用の直前版は、誤削除を防ぐためアンインストールできません。
 
+### 共通ランチャー
+
+`KifuwarabeGo2026.Launcher.exe` を毎回の起点として使用します。ランチャーでは次の操作ができます。
+
+- current GUIの起動。起動できない場合はprevious GUIへフォールバックします。
+- GUIとEngineの個別更新、または両方の更新確認。
+- current Engineの保存場所を開く。
+- インストール済み版と旧更新機能が残した版の確認・アンインストール。
+- `%LOCALAPPDATA%\KifuwarabeGo2026\Logs\launcher.log` による障害調査。
+
+更新中はcurrentを変更しません。ダウンロード、展開、必須ファイル、ファイルバージョンの検証にすべて成功した後だけ、`launcher-settings.json` のcurrentとpreviousを切り替えます。
+旧更新機能の `%LOCALAPPDATA%\KifuwarabeGo2026\Updates` は自動移行しません。不要ならランチャーで削除し、必要な版はランチャーから正式に再取得してください。
+
 
 ## 囲碁エンジンを作りたい人向け
 
