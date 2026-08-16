@@ -47,7 +47,7 @@ internal sealed class LauncherGame : Game
         _canvas = new KfwScreenCanvas(GraphicsDevice, Content);
         _stationery = new KfwStationeryDrawingTools(_canvas, new ApproximateTextRasterizer(),
             (center, radius, black) => _canvas.DrawCircle(center, radius, black ? new Color(20, 24, 28) : new Color(235, 235, 228)));
-        _screen = new LauncherScreen(_stationery, _platform, new HttpClient { Timeout = TimeSpan.FromMinutes(15) });
+        _screen = new LauncherScreen(_stationery, _platform, new HttpClient { Timeout = TimeSpan.FromMinutes(15) }, Exit);
         _screenshotShutterSound = ScreenshotShutterSound.Create();
         _screenshotShutterSoundInstance = _screenshotShutterSound.CreateInstance();
     }

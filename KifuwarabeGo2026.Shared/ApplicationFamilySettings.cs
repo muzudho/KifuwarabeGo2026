@@ -40,15 +40,40 @@ public static class ApplicationFamilySettings
         }
     }
 
+    public static bool CloseLauncherAfterStartingGui
+    {
+        get
+        {
+            try
+            {
+                if (File.Exists(FilePath))
+                {
+                    var values = JsonSerializer.Deserialize<SharedValues>(File.ReadAllText(FilePath), JsonOptions);
+                    return values?.CloseLauncherAfterStartingGui ?? true;
+                }
+            }
+            catch (Exception) { }
+            return true;
+        }
+    }
+
     public static void SaveScreenshotDirectory(string directory)
     {
         var fullPath = Path.GetFullPath(directory.Trim());
         Directory.CreateDirectory(fullPath);
+        UpdateSetting(root => root[nameof(ScreenshotSaveDirectory)] = fullPath);
+    }
+
+    public static void SaveCloseLauncherAfterStartingGui(bool value) =>
+        UpdateSetting(root => root[nameof(CloseLauncherAfterStartingGui)] = value);
+
+    private static void UpdateSetting(Action<JsonObject> update)
+    {
         Directory.CreateDirectory(Path.GetDirectoryName(FilePath)!);
         JsonObject root;
         try { root = File.Exists(FilePath) ? JsonNode.Parse(File.ReadAllText(FilePath)) as JsonObject ?? [] : []; }
         catch (JsonException) { root = []; }
-        root[nameof(ScreenshotSaveDirectory)] = fullPath;
+        update(root);
         var temporaryPath = FilePath + ".tmp";
         File.WriteAllText(temporaryPath, root.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
         File.Move(temporaryPath, FilePath, overwrite: true);
@@ -57,5 +82,6 @@ public static class ApplicationFamilySettings
     private sealed class SharedValues
     {
         public string? ScreenshotSaveDirectory { get; init; }
+        public bool? CloseLauncherAfterStartingGui { get; init; }
     }
 }

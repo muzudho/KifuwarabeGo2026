@@ -17,6 +17,8 @@
 %LOCALAPPDATA%\KifuwarabeGo2026\application-settings.json
 
 このファイルはGUIの特定バージョン専用ではなく、インストールされているGUI各バージョンと共通ランチャーが共有する「アプリケーションファミリー設定」です。互換性維持のためファイル名は変更しません。`ScreenshotSaveDirectory` はGUIとランチャーの `Ctrl + P` スクリーンショット保存先へ共通に適用されます。
+
+共通ランチャーは `CloseLauncherAfterStartingGui` を保存します。未設定時の既定値は `true` で、GUIの起動に成功したときだけランチャーを終了します。`false` ではGUI起動後もランチャーを残します。
 %LOCALAPPDATA%\KifuwarabeGo2026\GtpEngines\gtp-engine-list.json
 ```
 

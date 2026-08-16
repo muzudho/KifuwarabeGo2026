@@ -16,6 +16,7 @@ public sealed class LauncherScreen : IDisposable
     private readonly ProductLauncher _launcher;
     private readonly LauncherUpdateService _updates;
     private readonly KfwStationeryDrawingTools _draw;
+    private readonly Action _exitApplication;
     private readonly object _stateGate = new();
     private readonly StationeryButton _start = new(new Rectangle(560, 280, 210, 66), "START", 0.38f);
     private readonly StationeryButton _guiUpdate = new(new Rectangle(800, 280, 250, 66), "GUI UPDATE", 0.34f);
@@ -29,7 +30,7 @@ public sealed class LauncherScreen : IDisposable
     private readonly StationeryButton _confirm = new(new Rectangle(1010, 700, 210, 58), "UNINSTALL", 0.28f);
     private readonly StationeryButton _cancel = new(new Rectangle(760, 700, 210, 58), "CANCEL", 0.34f);
     private readonly GearButton _settingsButton = new(new Rectangle(1740, 920, 90, 72));
-    private readonly StationeryButton _settingsBack = new(new Rectangle(120, 880, 190, 62), "BACK", 0.34f);
+    private readonly StationeryButton _settingsBack = new(new Rectangle(1310, 205, 170, 58), "BACK", 0.34f);
     private readonly StationeryButton _browseScreenshots = new(new Rectangle(1260, 430, 240, 62), "BROWSE", 0.34f);
     private readonly StationeryButton _openScreenshots = new(new Rectangle(1260, 520, 240, 62), "OPEN FOLDER", 0.28f);
     private readonly StationeryButton _openSettingsFile = new(new Rectangle(1260, 650, 240, 62), "OPEN FILE", 0.32f);
@@ -48,9 +49,10 @@ public sealed class LauncherScreen : IDisposable
     private int _selectedIndex;
     private int _firstVisible;
 
-    public LauncherScreen(KfwStationeryDrawingTools drawingTools, IPlatformServices platform, HttpClient httpClient)
+    public LauncherScreen(KfwStationeryDrawingTools drawingTools, IPlatformServices platform, HttpClient httpClient, Action exitApplication)
     {
         _draw = drawingTools;
+        _exitApplication = exitApplication;
         _platform = platform;
         _paths = new LauncherPaths(platform.LocalApplicationData);
         _settings = new LauncherSettingsStore(_paths);
@@ -120,6 +122,10 @@ public sealed class LauncherScreen : IDisposable
         _draw.DrawFittedText(ApplicationFamilySettings.FilePath,
             new Rectangle(200, 658, 1010, 46), Color.White, 0.44f);
         _openSettingsFile.Draw(mouse, _draw);
+        var closeBounds = new Rectangle(180, 770, 36, 36);
+        DrawCheckbox(closeBounds, ApplicationFamilySettings.CloseLauncherAfterStartingGui, enabled: true);
+        _draw.DrawFittedText("CLOSE LAUNCHER AFTER STARTING GUI",
+            new Rectangle(240, 758, 780, 60), Color.White, 0.54f);
         _settingsBack.Draw(mouse, _draw);
         _draw.DrawFittedText("THIS SETTING IS SHARED BY THE LAUNCHER AND EVERY GUI VERSION.",
             new Rectangle(380, 870, 1120, 72), new Color(150, 171, 178), 0.42f);
@@ -264,6 +270,16 @@ public sealed class LauncherScreen : IDisposable
             SetStatus(_platform.OpenFolder(ApplicationFamilySettings.ScreenshotSaveDirectory) ? "SCREENSHOT FOLDER OPENED" : "SCREENSHOT FOLDER COULD NOT BE OPENED");
         else if (click && _openSettingsFile.IsHit(point))
             SetStatus(_platform.OpenFile(ApplicationFamilySettings.FilePath) ? "SETTINGS FILE OPENED" : "SETTINGS FILE COULD NOT BE OPENED");
+        else if (click && new Rectangle(170, 748, 870, 80).Contains(point))
+        {
+            try
+            {
+                var value = !ApplicationFamilySettings.CloseLauncherAfterStartingGui;
+                ApplicationFamilySettings.SaveCloseLauncherAfterStartingGui(value);
+                SetStatus(value ? "LAUNCHER WILL CLOSE AFTER GUI START" : "LAUNCHER WILL REMAIN OPEN AFTER GUI START");
+            }
+            catch (Exception exception) { SetStatus("SETTINGS SAVE FAILED: " + exception.Message); }
+        }
     }
 
     private void UpdateVersions(Point point, bool click, KeyboardState keyboard, GamePadState gamePad)
@@ -331,7 +347,7 @@ public sealed class LauncherScreen : IDisposable
     }
 
     private async Task UpdateAllAsync() { await UpdateProductAsync(LauncherProduct.Gui); await UpdateProductAsync(LauncherProduct.Engine); }
-    private void StartGui() { var result = _launcher.StartGui(); SetStatus(result.Message); }
+    private void StartGui() { var result = _launcher.StartGui(); SetStatus(result.Message); if (result.Success && ApplicationFamilySettings.CloseLauncherAfterStartingGui) _exitApplication(); }
     private void OpenCurrentEngine() { var directory = _launcher.CurrentDirectory(LauncherProduct.Engine); SetStatus(directory is not null && _platform.OpenFolder(directory) ? "ENGINE FOLDER OPENED" : "ENGINE IS NOT INSTALLED"); }
     private void OpenSelected() { var item = Selected; if (item is not null) SetStatus(_platform.OpenFolder(item.DirectoryPath) ? "FOLDER OPENED" : "FOLDER COULD NOT BE OPENED"); }
     private void RefreshVersions() { _installed = _catalog.ReadAll(); _markedForRemoval.IntersectWith(_installed.Where(item => item.CanUninstall).Select(Identity)); Select(Math.Min(_selectedIndex, _installed.Count - 1)); }
