@@ -1,6 +1,7 @@
 namespace KifuwarabeGo2026.Shared;
 
 using System.Text.Json;
+using System.Text.Json.Nodes;
 
 /// <summary>きふわらべの碁アプリケーション群と全バージョンで共有する利用者設定を読みます。</summary>
 public static class ApplicationFamilySettings
@@ -37,6 +38,20 @@ public static class ApplicationFamilySettings
 
             return DefaultScreenshotSaveDirectory;
         }
+    }
+
+    public static void SaveScreenshotDirectory(string directory)
+    {
+        var fullPath = Path.GetFullPath(directory.Trim());
+        Directory.CreateDirectory(fullPath);
+        Directory.CreateDirectory(Path.GetDirectoryName(FilePath)!);
+        JsonObject root;
+        try { root = File.Exists(FilePath) ? JsonNode.Parse(File.ReadAllText(FilePath)) as JsonObject ?? [] : []; }
+        catch (JsonException) { root = []; }
+        root[nameof(ScreenshotSaveDirectory)] = fullPath;
+        var temporaryPath = FilePath + ".tmp";
+        File.WriteAllText(temporaryPath, root.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+        File.Move(temporaryPath, FilePath, overwrite: true);
     }
 
     private sealed class SharedValues

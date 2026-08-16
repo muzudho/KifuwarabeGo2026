@@ -4,6 +4,8 @@ using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 using StationeryButton = KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Button.Button;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls;
+using KifuwarabeGo2026.Shared;
 
 public sealed class LauncherScreen : IDisposable
 {
@@ -26,10 +28,16 @@ public sealed class LauncherScreen : IDisposable
     private readonly StationeryButton _remove = new(new Rectangle(1100, 930, 300, 58), "UNINSTALL", 0.32f);
     private readonly StationeryButton _confirm = new(new Rectangle(1010, 700, 210, 58), "UNINSTALL", 0.28f);
     private readonly StationeryButton _cancel = new(new Rectangle(760, 700, 210, 58), "CANCEL", 0.34f);
+    private readonly GearButton _settingsButton = new(new Rectangle(1740, 920, 90, 72));
+    private readonly StationeryButton _settingsBack = new(new Rectangle(120, 880, 190, 62), "BACK", 0.34f);
+    private readonly StationeryButton _browseScreenshots = new(new Rectangle(1260, 430, 240, 62), "BROWSE", 0.34f);
+    private readonly StationeryButton _openScreenshots = new(new Rectangle(1260, 520, 240, 62), "OPEN FOLDER", 0.28f);
+    private readonly StationeryButton _openSettingsFile = new(new Rectangle(1260, 650, 240, 62), "OPEN FILE", 0.32f);
     private MouseState _previousMouse;
     private KeyboardState _previousKeyboard;
     private GamePadState _previousGamePad;
     private bool _versionsPage;
+    private bool _settingsPage;
     private bool _confirming;
     private bool _busy;
     private string _status = "READY";
@@ -59,6 +67,7 @@ public sealed class LauncherScreen : IDisposable
         var point = _draw.ToVirtualPoint(mouse.Position);
         var click = mouse.LeftButton == ButtonState.Pressed && _previousMouse.LeftButton == ButtonState.Released;
         if (_confirming) UpdateConfirmation(point, click, keyboard, gamePad);
+        else if (_settingsPage) UpdateSettings(point, click, keyboard, gamePad);
         else if (_versionsPage) UpdateVersions(point, click, keyboard, gamePad);
         else UpdateMain(point, click, keyboard, gamePad);
         _previousMouse = mouse;
@@ -73,7 +82,7 @@ public sealed class LauncherScreen : IDisposable
         _draw.DrawBackground();
         _draw.DrawText("KIFUWARABE GO 2026", new Vector2(120, 92), new Color(244, 238, 218), 0.92f);
         _draw.DrawText("COMMON LAUNCHER", new Vector2(124, 158), new Color(99, 223, 185), 0.38f);
-        if (_versionsPage) DrawVersions(mouse); else DrawMain(mouse);
+        if (_settingsPage) DrawSettings(mouse); else if (_versionsPage) DrawVersions(mouse); else DrawMain(mouse);
         DrawStatus();
         if (_confirming) DrawConfirmation(mouse);
         _draw.End();
@@ -91,6 +100,26 @@ public sealed class LauncherScreen : IDisposable
             new Rectangle(480, 500, 980, 55), new Color(150, 171, 178), 0.56f);
         _draw.DrawFittedText("CTRL + P: SCREENSHOT (SHARED APPLICATION SETTING)",
             new Rectangle(480, 555, 980, 55), new Color(150, 171, 178), 0.52f);
+        _settingsButton.Draw(_draw, mouse);
+    }
+
+    private void DrawSettings(Point mouse)
+    {
+        _draw.DrawText("APPLICATION SETTINGS", new Vector2(120, 220), Color.White, 0.62f);
+        _draw.DrawText("SCREENSHOT FOLDER", new Vector2(180, 370), new Color(99, 223, 185), 0.42f);
+        _draw.DrawDataRowFrame(new Rectangle(160, 420, 1360, 82));
+        _draw.DrawFittedText(ApplicationFamilySettings.ScreenshotSaveDirectory,
+            new Rectangle(200, 438, 1010, 46), Color.White, 0.48f);
+        _browseScreenshots.Draw(mouse, _draw);
+        _openScreenshots.Draw(mouse, _draw);
+        _draw.DrawText("SHARED SETTINGS FILE", new Vector2(180, 600), new Color(99, 223, 185), 0.42f);
+        _draw.DrawDataRowFrame(new Rectangle(160, 640, 1360, 82));
+        _draw.DrawFittedText(ApplicationFamilySettings.FilePath,
+            new Rectangle(200, 658, 1010, 46), Color.White, 0.44f);
+        _openSettingsFile.Draw(mouse, _draw);
+        _settingsBack.Draw(mouse, _draw);
+        _draw.DrawFittedText("THIS SETTING IS SHARED BY THE LAUNCHER AND EVERY GUI VERSION.",
+            new Rectangle(380, 870, 1120, 72), new Color(150, 171, 178), 0.42f);
     }
 
     private void DrawProductRow(string product, string? version, int y)
@@ -157,6 +186,25 @@ public sealed class LauncherScreen : IDisposable
         else if ((click && _allUpdate.IsHit(point)) || Pressed(keyboard, Keys.A)) _ = UpdateAllAsync();
         else if ((click && _engineFolder.IsHit(point)) || Pressed(keyboard, Keys.O)) OpenCurrentEngine();
         else if ((click && _versionsButton.IsHit(point)) || Pressed(keyboard, Keys.I) || GamePadPressed(gamePad, Buttons.A)) { RefreshVersions(); _versionsPage = true; }
+        else if (click && _settingsButton.IsHit(point)) _settingsPage = true;
+    }
+
+    private void UpdateSettings(Point point, bool click, KeyboardState keyboard, GamePadState gamePad)
+    {
+        if ((click && _settingsBack.IsHit(point)) || Pressed(keyboard, Keys.Escape) || GamePadPressed(gamePad, Buttons.B)) { _settingsPage = false; return; }
+        if (click && _browseScreenshots.IsHit(point))
+        {
+            var selected = _platform.SelectFolder("Select the folder for screenshots.", ApplicationFamilySettings.ScreenshotSaveDirectory);
+            if (selected is not null)
+            {
+                try { ApplicationFamilySettings.SaveScreenshotDirectory(selected); SetStatus("SCREENSHOT FOLDER SAVED: " + selected); }
+                catch (Exception exception) { SetStatus("SETTINGS SAVE FAILED: " + exception.Message); }
+            }
+        }
+        else if (click && _openScreenshots.IsHit(point))
+            SetStatus(_platform.OpenFolder(ApplicationFamilySettings.ScreenshotSaveDirectory) ? "SCREENSHOT FOLDER OPENED" : "SCREENSHOT FOLDER COULD NOT BE OPENED");
+        else if (click && _openSettingsFile.IsHit(point))
+            SetStatus(_platform.OpenFile(ApplicationFamilySettings.FilePath) ? "SETTINGS FILE OPENED" : "SETTINGS FILE COULD NOT BE OPENED");
     }
 
     private void UpdateVersions(Point point, bool click, KeyboardState keyboard, GamePadState gamePad)

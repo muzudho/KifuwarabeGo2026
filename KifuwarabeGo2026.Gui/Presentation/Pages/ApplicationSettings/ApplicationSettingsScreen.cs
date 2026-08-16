@@ -4,6 +4,7 @@ using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ActionBadge;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Button;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.LinkUnderline;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 using Microsoft.Xna.Framework;
 using System;
@@ -24,7 +25,7 @@ public sealed class ApplicationSettingsScreen
 
     private ApplicationSettingsScreen()
     {
-        SettingsButton = new Button(new Rectangle(1780, 972, 70, 62), "SETTINGS", 0.20f);
+        SettingsButton = new GearButton(new Rectangle(1780, 972, 70, 62));
         UpdateButton = new Button(new Rectangle(1698, 972, 70, 62), "UPDATE", 0.20f);
         BackButton = new Button(new Rectangle(1390, 138, 140, 52), "BACK", 0.32f);
         LogTabButton = new Button(new Rectangle(440, 242, 250, 52), "LOG", 0.34f);
@@ -40,7 +41,7 @@ public sealed class ApplicationSettingsScreen
             LogItemLinks[index] = CreateLink(GetLogItemBounds(index), "OPEN", inset: true);
     }
 
-    public Button SettingsButton { get; }
+    public GearButton SettingsButton { get; }
     public Button UpdateButton { get; }
     public Button BackButton { get; }
     public Button LogTabButton { get; }
@@ -142,20 +143,7 @@ public sealed class ApplicationSettingsScreen
 
     public void DrawSettingsButton(KfwStationeryDrawingTools drawingContext, Point mousePoint)
     {
-        var bounds = SettingsButton.Bounds;
-        var hovered = bounds.Contains(mousePoint);
-        drawingContext.FillRectangle(bounds, hovered ? new Color(36, 50, 58) : new Color(24, 31, 37));
-        drawingContext.DrawRectangle(bounds, 2, hovered ? new Color(178, 219, 226) : new Color(82, 111, 114));
-        var center = new Vector2(bounds.Center.X, bounds.Center.Y);
-        var color = hovered ? new Color(99, 223, 185) : new Color(180, 195, 195);
-        drawingContext.DrawCircle(center, 16, color);
-        drawingContext.DrawCircle(center, 7, new Color(24, 31, 37));
-        for (var index = 0; index < 8; index++)
-        {
-            var angle = MathHelper.TwoPi * index / 8f;
-            var direction = new Vector2(MathF.Cos(angle), MathF.Sin(angle));
-            drawingContext.DrawLine(center + direction * 15, center + direction * 24, 6, color);
-        }
+        SettingsButton.Draw(drawingContext, mousePoint);
     }
 
     private void DrawTabs(KfwStationeryDrawingTools drawingContext, ApplicationSettingsPage selectedPage, Point mousePoint)

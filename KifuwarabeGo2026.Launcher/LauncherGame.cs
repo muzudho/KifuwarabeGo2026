@@ -4,11 +4,13 @@ using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Presentation;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Effects;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Audio;
 using KifuwarabeGo2026.Launcher.Presentation;
 using KifuwarabeGo2026.Shared;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Microsoft.Xna.Framework.Audio;
 
 internal sealed class LauncherGame : Game
 {
@@ -22,6 +24,8 @@ internal sealed class LauncherGame : Game
     private readonly ScreenshotEffect _screenshotEffect = new();
     private double _screenshotEffectStartedAt = double.NegativeInfinity;
     private const double ScreenshotEffectDurationSeconds = 0.42d;
+    private SoundEffect? _screenshotShutterSound;
+    private SoundEffectInstance? _screenshotShutterSoundInstance;
 
     public LauncherGame(IPlatformServices platform)
     {
@@ -44,6 +48,8 @@ internal sealed class LauncherGame : Game
         _stationery = new KfwStationeryDrawingTools(_canvas, new ApproximateTextRasterizer(),
             (center, radius, black) => _canvas.DrawCircle(center, radius, black ? new Color(20, 24, 28) : new Color(235, 235, 228)));
         _screen = new LauncherScreen(_stationery, _platform, new HttpClient { Timeout = TimeSpan.FromMinutes(15) });
+        _screenshotShutterSound = ScreenshotShutterSound.Create();
+        _screenshotShutterSoundInstance = _screenshotShutterSound.CreateInstance();
     }
 
     protected override void Update(GameTime gameTime)
@@ -88,6 +94,12 @@ internal sealed class LauncherGame : Game
             using var stream = File.Create(path);
             texture.SaveAsPng(stream, width, height);
             _screenshotEffectStartedAt = now;
+            if (_screenshotShutterSoundInstance is not null)
+            {
+                if (_screenshotShutterSoundInstance.State == SoundState.Playing) _screenshotShutterSoundInstance.Stop();
+                _screenshotShutterSoundInstance.Volume = 0.72f;
+                _screenshotShutterSoundInstance.Play();
+            }
             _screen?.ShowStatus("SCREENSHOT SAVED: " + path);
         }
         catch (Exception exception)
@@ -98,7 +110,7 @@ internal sealed class LauncherGame : Game
 
     protected override void Dispose(bool disposing)
     {
-        if (disposing) { _screen?.Dispose(); _canvas?.Dispose(); }
+        if (disposing) { _screenshotShutterSoundInstance?.Dispose(); _screenshotShutterSound?.Dispose(); _screen?.Dispose(); _canvas?.Dispose(); }
         base.Dispose(disposing);
     }
 }

@@ -19,6 +19,7 @@ public interface IPlatformProcessService
 
 public interface IPlatformServices : ILauncherPathProvider, IRunningProcessCatalog, IPlatformProcessService
 {
+    string? SelectFolder(string title, string initialDirectory);
 }
 
 public interface IFileSystem
