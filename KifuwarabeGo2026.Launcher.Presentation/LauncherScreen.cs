@@ -181,15 +181,9 @@ public sealed class LauncherScreen : IDisposable
             var marked = _markedForRemoval.Contains(Identity(item));
             _draw.DrawDataRowFrame(bounds, active: index == _selectedIndex || marked, hovered: bounds.Contains(mouse));
             DrawCheckbox(new Rectangle(145, bounds.Y + 13, 30, 30), marked, item.CanUninstall);
-            var iconX = item.Product switch
-            {
-                InstalledProduct.Gui => 255,
-                InstalledProduct.Engine => 300,
-                _ => 350,
-            };
-            _draw.DrawFittedText(item.ProductName, new Rectangle(190, bounds.Y + 4, iconX - 198, 48), Color.White, 0.64f);
-            if (item.Product == InstalledProduct.Engine) DrawRobotIcon(new Rectangle(iconX, bounds.Y + 9, 38, 38));
-            else DrawBoardIcon(new Rectangle(iconX, bounds.Y + 9, 38, 38));
+            if (item.Product == InstalledProduct.Engine) DrawRobotIcon(new Rectangle(190, bounds.Y + 9, 38, 38));
+            else DrawBoardIcon(new Rectangle(190, bounds.Y + 9, 38, 38));
+            _draw.DrawFittedText(item.ProductName, new Rectangle(245, bounds.Y + 4, 150, 48), Color.White, 0.64f);
             _draw.DrawFittedText(item.Version, new Rectangle(410, bounds.Y + 4, 160, 48), new Color(178, 219, 226), 0.64f);
             _draw.DrawFittedText(FormatSize(item.SizeInBytes), new Rectangle(590, bounds.Y + 4, 140, 48), Color.White, 0.60f);
             _draw.DrawFittedText(string.IsNullOrEmpty(item.Protection) ? "AVAILABLE" : item.Protection,
