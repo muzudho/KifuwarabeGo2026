@@ -10,11 +10,13 @@ using KifuwarabeGo2026.Shared;
 public sealed class LauncherScreen : IDisposable
 {
     private readonly IPlatformServices _platform;
-    private readonly LauncherPaths _paths;
+    private LauncherPaths _paths;
     private readonly LauncherSettingsStore _settings;
-    private readonly InstalledVersionCatalog _catalog;
-    private readonly ProductLauncher _launcher;
-    private readonly LauncherUpdateService _updates;
+    private InstalledVersionCatalog _catalog;
+    private ProductLauncher _launcher;
+    private LauncherUpdateService _updates;
+    private readonly HttpClient _httpClient;
+    private readonly LauncherLog _log;
     private readonly KfwStationeryDrawingTools _draw;
     private readonly Action _exitApplication;
     private readonly object _stateGate = new();
@@ -31,9 +33,12 @@ public sealed class LauncherScreen : IDisposable
     private readonly StationeryButton _cancel = new(new Rectangle(760, 700, 210, 58), "CANCEL", 0.34f);
     private readonly GearButton _settingsButton = new(new Rectangle(1740, 920, 90, 72));
     private readonly StationeryButton _settingsBack = new(new Rectangle(1310, 205, 170, 58), "BACK", 0.34f);
-    private readonly StationeryButton _browseScreenshots = new(new Rectangle(1260, 430, 240, 62), "BROWSE", 0.34f);
-    private readonly StationeryButton _openScreenshots = new(new Rectangle(1260, 520, 240, 62), "OPEN FOLDER", 0.28f);
-    private readonly StationeryButton _openSettingsFile = new(new Rectangle(1260, 650, 240, 62), "OPEN FILE", 0.32f);
+    private readonly StationeryButton _browseInstall = new(new Rectangle(1260, 315, 240, 62), "BROWSE", 0.34f);
+    private readonly StationeryButton _defaultInstall = new(new Rectangle(990, 315, 240, 62), "AUTOMATIC", 0.29f);
+    private readonly StationeryButton _openInstall = new(new Rectangle(720, 315, 240, 62), "OPEN FOLDER", 0.25f);
+    private readonly StationeryButton _browseScreenshots = new(new Rectangle(1260, 500, 240, 62), "BROWSE", 0.34f);
+    private readonly StationeryButton _openScreenshots = new(new Rectangle(990, 500, 240, 62), "OPEN FOLDER", 0.25f);
+    private readonly StationeryButton _openSettingsFile = new(new Rectangle(1260, 685, 240, 62), "OPEN FILE", 0.32f);
     private MouseState _previousMouse;
     private KeyboardState _previousKeyboard;
     private GamePadState _previousGamePad;
@@ -54,12 +59,16 @@ public sealed class LauncherScreen : IDisposable
         _draw = drawingTools;
         _exitApplication = exitApplication;
         _platform = platform;
-        _paths = new LauncherPaths(platform.LocalApplicationData);
-        _settings = new LauncherSettingsStore(_paths);
-        var log = new LauncherLog(_paths);
-        _catalog = new InstalledVersionCatalog(platform, platform);
-        _launcher = new ProductLauncher(_paths, _settings, log, platform);
-        _updates = new LauncherUpdateService(new GitHubReleaseClient(httpClient), new PackageInstaller(_paths, httpClient, log), _settings, log);
+        _httpClient = httpClient;
+        var settingsPaths = new LauncherPaths(platform.LocalApplicationData);
+        _settings = new LauncherSettingsStore(settingsPaths);
+        _log = new LauncherLog(settingsPaths);
+        _paths = new LauncherPaths(platform.LocalApplicationData, _settings.Load().InstallationDirectory);
+        Directory.CreateDirectory(_paths.InstallationRoot);
+        _catalog = null!;
+        _launcher = null!;
+        _updates = null!;
+        RebuildInstallationServices();
     }
 
     public void Update()
@@ -111,24 +120,28 @@ public sealed class LauncherScreen : IDisposable
     private void DrawSettings(Point mouse)
     {
         _draw.DrawText("APPLICATION SETTINGS", new Vector2(120, 220), Color.White, 0.62f);
-        _draw.DrawText("SCREENSHOT FOLDER", new Vector2(180, 370), new Color(99, 223, 185), 0.42f);
-        _draw.DrawDataRowFrame(new Rectangle(160, 420, 1360, 82));
+        _draw.DrawText("INSTALLATION FOLDER", new Vector2(180, 275), new Color(99, 223, 185), 0.42f);
+        _draw.DrawDataRowFrame(new Rectangle(160, 305, 1360, 82));
+        _draw.DrawFittedText(_paths.InstallationRoot,
+            new Rectangle(190, 323, 500, 46), Color.White, 0.38f);
+        _openInstall.Draw(mouse, _draw); _defaultInstall.Draw(mouse, _draw); _browseInstall.Draw(mouse, _draw);
+        _draw.DrawText("SCREENSHOT FOLDER", new Vector2(180, 460), new Color(99, 223, 185), 0.42f);
+        _draw.DrawDataRowFrame(new Rectangle(160, 490, 1360, 82));
         _draw.DrawFittedText(ApplicationFamilySettings.ScreenshotSaveDirectory,
-            new Rectangle(200, 438, 1010, 46), Color.White, 0.48f);
-        _browseScreenshots.Draw(mouse, _draw);
-        _openScreenshots.Draw(mouse, _draw);
-        _draw.DrawText("SHARED SETTINGS FILE", new Vector2(180, 600), new Color(99, 223, 185), 0.42f);
-        _draw.DrawDataRowFrame(new Rectangle(160, 640, 1360, 82));
+            new Rectangle(190, 508, 770, 46), Color.White, 0.42f);
+        _openScreenshots.Draw(mouse, _draw); _browseScreenshots.Draw(mouse, _draw);
+        _draw.DrawText("SHARED SETTINGS FILE", new Vector2(180, 645), new Color(99, 223, 185), 0.42f);
+        _draw.DrawDataRowFrame(new Rectangle(160, 675, 1360, 82));
         _draw.DrawFittedText(ApplicationFamilySettings.FilePath,
-            new Rectangle(200, 658, 1010, 46), Color.White, 0.44f);
+            new Rectangle(190, 693, 1040, 46), Color.White, 0.40f);
         _openSettingsFile.Draw(mouse, _draw);
-        var closeBounds = new Rectangle(180, 770, 36, 36);
+        var closeBounds = new Rectangle(180, 800, 36, 36);
         DrawCheckbox(closeBounds, ApplicationFamilySettings.CloseLauncherAfterStartingGui, enabled: true);
         _draw.DrawFittedText("CLOSE LAUNCHER AFTER STARTING GUI",
-            new Rectangle(240, 758, 780, 60), Color.White, 0.54f);
+            new Rectangle(240, 788, 780, 60), Color.White, 0.54f);
         _settingsBack.Draw(mouse, _draw);
         _draw.DrawFittedText("THIS SETTING IS SHARED BY THE LAUNCHER AND EVERY GUI VERSION.",
-            new Rectangle(380, 870, 1120, 72), new Color(150, 171, 178), 0.42f);
+            new Rectangle(380, 890, 1120, 60), new Color(150, 171, 178), 0.38f);
     }
 
     private void DrawProductRow(string product, string? version, int y)
@@ -257,7 +270,15 @@ public sealed class LauncherScreen : IDisposable
     private void UpdateSettings(Point point, bool click, KeyboardState keyboard, GamePadState gamePad)
     {
         if ((click && _settingsBack.IsHit(point)) || Pressed(keyboard, Keys.Escape) || GamePadPressed(gamePad, Buttons.B)) { _settingsPage = false; return; }
-        if (click && _browseScreenshots.IsHit(point))
+        if (click && _browseInstall.IsHit(point))
+        {
+            var selected = _platform.SelectFolder("Select the installation folder for Kifuwarabe Go 2026.", _paths.InstallationRoot);
+            if (selected is not null) ApplyInstallationDirectory(selected);
+        }
+        else if (click && _defaultInstall.IsHit(point)) ApplyInstallationDirectory(null);
+        else if (click && _openInstall.IsHit(point))
+            SetStatus(_platform.OpenFolder(_paths.InstallationRoot) ? "INSTALLATION FOLDER OPENED" : "INSTALLATION FOLDER COULD NOT BE OPENED");
+        else if (click && _browseScreenshots.IsHit(point))
         {
             var selected = _platform.SelectFolder("Select the folder for screenshots.", ApplicationFamilySettings.ScreenshotSaveDirectory);
             if (selected is not null)
@@ -270,7 +291,7 @@ public sealed class LauncherScreen : IDisposable
             SetStatus(_platform.OpenFolder(ApplicationFamilySettings.ScreenshotSaveDirectory) ? "SCREENSHOT FOLDER OPENED" : "SCREENSHOT FOLDER COULD NOT BE OPENED");
         else if (click && _openSettingsFile.IsHit(point))
             SetStatus(_platform.OpenFile(ApplicationFamilySettings.FilePath) ? "SETTINGS FILE OPENED" : "SETTINGS FILE COULD NOT BE OPENED");
-        else if (click && new Rectangle(170, 748, 870, 80).Contains(point))
+        else if (click && new Rectangle(170, 778, 870, 80).Contains(point))
         {
             try
             {
@@ -280,6 +301,32 @@ public sealed class LauncherScreen : IDisposable
             }
             catch (Exception exception) { SetStatus("SETTINGS SAVE FAILED: " + exception.Message); }
         }
+    }
+
+    private void ApplyInstallationDirectory(string? directory)
+    {
+        try
+        {
+            var settings = _settings.Load();
+            settings.InstallationDirectory = string.IsNullOrWhiteSpace(directory) ? null : Path.GetFullPath(directory);
+            var nextPaths = new LauncherPaths(_platform.LocalApplicationData, settings.InstallationDirectory);
+            Directory.CreateDirectory(nextPaths.InstallationRoot);
+            _settings.Save(settings);
+            _paths = nextPaths;
+            RebuildInstallationServices();
+            RefreshVersions();
+            SetStatus(settings.InstallationDirectory is null
+                ? "AUTOMATIC INSTALLATION FOLDER CREATED: " + _paths.InstallationRoot
+                : "INSTALLATION FOLDER SAVED: " + _paths.InstallationRoot);
+        }
+        catch (Exception exception) { SetStatus("INSTALLATION FOLDER SAVE FAILED: " + exception.Message); }
+    }
+
+    private void RebuildInstallationServices()
+    {
+        _catalog = new InstalledVersionCatalog(_paths, _settings, _platform);
+        _launcher = new ProductLauncher(_paths, _settings, _log, _platform);
+        _updates = new LauncherUpdateService(new GitHubReleaseClient(_httpClient), new PackageInstaller(_paths, _httpClient, _log), _settings, _log);
     }
 
     private void UpdateVersions(Point point, bool click, KeyboardState keyboard, GamePadState gamePad)

@@ -2,6 +2,7 @@ namespace KifuwarabeGo2026.Launcher;
 
 internal sealed class LauncherSettings
 {
+    public string? InstallationDirectory { get; set; }
     public string? GuiCurrentVersion { get; set; }
     public string? GuiPreviousVersion { get; set; }
     public string? EngineCurrentVersion { get; set; }

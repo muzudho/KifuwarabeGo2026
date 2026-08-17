@@ -15,6 +15,11 @@ try
     var loaded = store.Load();
     Require(loaded.GuiCurrentVersion == "3.14.0" && loaded.GuiPreviousVersion == "3.13.0", "current/previous setting");
     Require(!File.Exists(paths.SettingsFile + ".tmp"), "atomic settings temporary cleanup");
+    var customInstall = Path.Combine(root, "custom-install");
+    var customPaths = new LauncherPaths(root, customInstall);
+    Require(customPaths.InstallationRoot == Path.GetFullPath(customInstall), "custom installation root");
+    Require(customPaths.ProductRoot(LauncherProduct.Gui).StartsWith(Path.GetFullPath(customInstall), StringComparison.OrdinalIgnoreCase), "GUI uses custom installation root");
+    Require(customPaths.SettingsFile == paths.SettingsFile, "settings remain in application-data root");
     Require(LauncherProduct.Gui.AssetName("v3.14.0") == "KifuwarabeGo2026.Gui-v3.14.0-win-x64.zip", "GUI exact asset name");
     Require(LauncherProduct.Engine.AssetName("3.14.0") == "KifuwarabeGo2026.Engine-v3.14.0-win-x64.zip", "Engine exact asset name");
 

@@ -3,15 +3,14 @@ namespace KifuwarabeGo2026.Launcher;
 
 internal sealed class InstalledVersionCatalog
 {
-    private readonly string _applicationRoot;
+    private readonly LauncherPaths _paths;
     private readonly LauncherSettingsStore _settingsStore;
     private readonly IRunningProcessCatalog _runningProcesses;
 
-    public InstalledVersionCatalog(ILauncherPathProvider paths, IRunningProcessCatalog runningProcesses)
+    public InstalledVersionCatalog(LauncherPaths paths, LauncherSettingsStore settingsStore, IRunningProcessCatalog runningProcesses)
     {
-        var localRoot = paths.LocalApplicationData;
-        _applicationRoot = Path.GetFullPath(Path.Combine(localRoot, "KifuwarabeGo2026"));
-        _settingsStore = new LauncherSettingsStore(new LauncherPaths(localRoot));
+        _paths = paths;
+        _settingsStore = settingsStore;
         _runningProcesses = runningProcesses;
     }
 
@@ -19,9 +18,9 @@ internal sealed class InstalledVersionCatalog
     {
         var settings = _settingsStore.Load();
         var versions = new List<InstalledVersion>();
-        AddProductVersions(versions, InstalledProduct.Gui, Path.Combine(_applicationRoot, "Packages", "Gui"), settings.GuiCurrentVersion, settings.GuiPreviousVersion);
-        AddProductVersions(versions, InstalledProduct.Engine, Path.Combine(_applicationRoot, "Packages", "Engine"), settings.EngineCurrentVersion, settings.EnginePreviousVersion);
-        AddProductVersions(versions, InstalledProduct.LegacyGuiUpdate, Path.Combine(_applicationRoot, "Updates"), null, null);
+        AddProductVersions(versions, InstalledProduct.Gui, _paths.ProductRoot(LauncherProduct.Gui), settings.GuiCurrentVersion, settings.GuiPreviousVersion);
+        AddProductVersions(versions, InstalledProduct.Engine, _paths.ProductRoot(LauncherProduct.Engine), settings.EngineCurrentVersion, settings.EnginePreviousVersion);
+        AddProductVersions(versions, InstalledProduct.LegacyGuiUpdate, Path.Combine(_paths.InstallationRoot, "Updates"), null, null);
         return versions
             .OrderBy(version => version.Product)
             .ThenByDescending(version => ParseVersion(version.Version))
@@ -36,9 +35,9 @@ internal sealed class InstalledVersionCatalog
 
         var expectedRoot = installedVersion.Product switch
         {
-            InstalledProduct.Gui => Path.Combine(_applicationRoot, "Packages", "Gui"),
-            InstalledProduct.Engine => Path.Combine(_applicationRoot, "Packages", "Engine"),
-            _ => Path.Combine(_applicationRoot, "Updates"),
+            InstalledProduct.Gui => _paths.ProductRoot(LauncherProduct.Gui),
+            InstalledProduct.Engine => _paths.ProductRoot(LauncherProduct.Engine),
+            _ => Path.Combine(_paths.InstallationRoot, "Updates"),
         };
         var expectedPath = Path.GetFullPath(Path.Combine(expectedRoot, Path.GetFileName(installedVersion.DirectoryPath)));
         var actualPath = Path.GetFullPath(installedVersion.DirectoryPath);
