@@ -60,13 +60,20 @@ public sealed class SelectEntryPresenter
             var selected = index == session.PlayerDialogSelectionIndex;
             var hovered = bounds.Contains(mousePoint);
             var player = session.EntryProfiles[index];
-            drawingContext.FillRectangle(bounds, selected ? new Color(38, 91, 78) : hovered ? new Color(42, 53, 61) : new Color(27, 35, 42));
-            drawingContext.DrawRectangle(bounds, selected ? 2 : 1, selected ? new Color(190, 255, 229) : new Color(73, 91, 98));
-            drawingContext.DrawFittedText(player.DisplayName, new Rectangle(bounds.X + 20, bounds.Y + 6, bounds.Width - 40, 32), Color.White, 0.50f);
-            drawingContext.DrawEntryIcon(new Vector2(bounds.X + 34, bounds.Y + 55));
+            var inspected = management && selected;
+            drawingContext.FillRectangle(bounds, selected && !management ? new Color(38, 91, 78) : hovered ? new Color(42, 53, 61) : new Color(27, 35, 42));
+            drawingContext.DrawRectangle(bounds, selected ? 2 : 1, inspected ? new Color(125, 225, 255) : selected ? new Color(190, 255, 229) : new Color(73, 91, 98));
+            if (inspected)
+                drawingContext.DrawSelectionFingerIcon(new Vector2(bounds.X - 42, bounds.Center.Y - 6), 1.15f);
+            drawingContext.DrawEntryIcon(new Vector2(bounds.X + 34, bounds.Y + 21));
+            drawingContext.DrawFittedText(player.DisplayName, new Rectangle(bounds.X + 58, bounds.Y + 6, bounds.Width - 78, 32), Color.White, 0.50f);
             var detail = session.GetPlayerSelectionDetail(index);
             var detailText = player.Kind == EntryProfileKind.Computer ? $"ENGINE: {detail}" : detail;
-            drawingContext.DrawFittedText(detailText, new Rectangle(bounds.X + 58, bounds.Y + 45, bounds.Width - 78, 24), new Color(180, 195, 195), 0.30f);
+            if (player.Kind == EntryProfileKind.Computer)
+                drawingContext.DrawEngineIcon(new Vector2(bounds.X + 66, bounds.Y + 55));
+            else
+                drawingContext.DrawHumanIcon(new Vector2(bounds.X + 66, bounds.Y + 55));
+            drawingContext.DrawFittedText(detailText, new Rectangle(bounds.X + 90, bounds.Y + 45, bounds.Width - 110, 24), new Color(180, 195, 195), 0.30f);
         }
 
         drawingContext.FillRectangle(PlayerSelectionClientIdentityListBounds, new Color(15, 20, 26));

@@ -116,6 +116,30 @@ public sealed class KfwStationeryDrawingTools : IDisposable
         }
     }
 
+    public void DrawSelectionFingerIcon(Vector2 origin, float scale = 1f)
+    {
+        var color = new Color(125, 225, 255);
+        var thickness = 2f * scale;
+        var points = new[]
+        {
+            origin + new Vector2(0, 2) * scale,
+            origin + new Vector2(5, 2) * scale,
+            origin + new Vector2(7, -3) * scale,
+            origin + new Vector2(9, -3) * scale,
+            origin + new Vector2(10, 0) * scale,
+            origin + new Vector2(21, 0) * scale,
+            origin + new Vector2(24, 3) * scale,
+            origin + new Vector2(21, 6) * scale,
+            origin + new Vector2(12, 6) * scale,
+            origin + new Vector2(10, 12) * scale,
+            origin + new Vector2(7, 12) * scale,
+            origin + new Vector2(6, 7) * scale,
+            origin + new Vector2(0, 7) * scale,
+        };
+        for (var i = 0; i < points.Length - 1; i++)
+            DrawLine(points[i], points[i + 1], thickness, color);
+    }
+
     public void DrawTextSelection(string text, int start, int length, Rectangle bounds, float scale)
     {
         if (length <= 0 || start < 0 || start >= text.Length) return;
