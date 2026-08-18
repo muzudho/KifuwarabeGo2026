@@ -22,9 +22,12 @@ public sealed class SelectEntryPresenter
     {
         if (!session.IsPlayerSelectionDialogOpen) return;
         var screen = SelectEntryScreen.Default;
+        var management = session.PlayerSelectionPurpose == PlayerSelectionPurpose.Management;
+        screen.SelectButton.Label = management ? "CLOSE" : "SELECT";
+        screen.CancelButton.IsEnabled = !management;
         var pageCount = Math.Max(1, (int)Math.Ceiling(session.EntryProfiles.Count / (double)GoAppSession.PlayerSelectionPageSize));
         screen.UpdateState(
-            session.CanCommitPlayerSelection,
+            management || session.CanCommitPlayerSelection,
             session.GtpEngineProfiles.Count > 0,
             session.PlayerDialogSelectionIndex >= 0,
             session.CanDeleteSelectedEntryProfile,
@@ -37,14 +40,16 @@ public sealed class SelectEntryPresenter
         drawingContext.DrawRectangle(PlayerSelectionDialogBounds, 2, new Color(116, 145, 146));
 
         var stone = session.PlayerSelectionTargetStone == GoStone.Black ? "BLACK" : "WHITE";
-        drawingContext.DrawText($"SELECT ENTRY ({stone})", new Vector2(PlayerSelectionDialogBounds.X + 34, PlayerSelectionDialogBounds.Y + 28), new Color(244, 238, 218), 0.78f);
-        drawingContext.DrawText("Select an Entry Profile on the left, then a Client Identity on the right.", new Vector2(PlayerSelectionDialogBounds.X + 36, PlayerSelectionDialogBounds.Y + 88), new Color(180, 195, 195), 0.38f);
-        screen.CancelButton.Draw(mousePoint, drawingContext);
+        drawingContext.DrawText(management ? "ENTRY PROFILES" : $"SELECT ENTRY ({stone})", new Vector2(PlayerSelectionDialogBounds.X + 34, PlayerSelectionDialogBounds.Y + 28), new Color(244, 238, 218), 0.78f);
+        drawingContext.DrawText(management ? "Add, edit, remove, and order match entry profiles." : "Select an entry profile for this player. Computer entries use a registered engine profile.", new Vector2(PlayerSelectionDialogBounds.X + 36, PlayerSelectionDialogBounds.Y + 88), new Color(180, 195, 195), 0.38f);
+        if (!management) screen.CancelButton.Draw(mousePoint, drawingContext);
         screen.SelectButton.Draw(mousePoint, drawingContext);
 
         drawingContext.FillRectangle(PlayerSelectionListBounds, new Color(15, 20, 26));
         drawingContext.DrawRectangle(PlayerSelectionListBounds, 1, new Color(67, 84, 92));
         drawingContext.DrawText("ENTRY PROFILES", new Vector2(PlayerSelectionListBounds.X, PlayerSelectionListBounds.Y - 34), new Color(147, 244, 200), 0.34f);
+        if (session.EntryProfiles.Count == 0)
+            drawingContext.DrawFittedText(management ? "NO ENTRY PROFILE - ADD HUMAN OR COMPUTER BELOW." : "NO ENTRY PROFILE - Register one from TITLE > ENTRY PROFILES.", new Rectangle(PlayerSelectionListBounds.X + 24, PlayerSelectionListBounds.Center.Y - 20, PlayerSelectionListBounds.Width - 48, 40), new Color(255, 211, 138), 0.34f);
         drawingContext.DrawFittedText("PLAYER NAME", new Rectangle(PlayerSelectionListBounds.X + 210, PlayerSelectionListBounds.Y - 30, 180, 22), new Color(180, 210, 215), 0.30f);
         var start = session.PlayerSelectionPageIndex * GoAppSession.PlayerSelectionPageSize;
         for (var slot = 0; slot < GoAppSession.PlayerSelectionPageSize; slot++)
@@ -58,7 +63,7 @@ public sealed class SelectEntryPresenter
             drawingContext.FillRectangle(bounds, selected ? new Color(38, 91, 78) : hovered ? new Color(42, 53, 61) : new Color(27, 35, 42));
             drawingContext.DrawRectangle(bounds, selected ? 2 : 1, selected ? new Color(190, 255, 229) : new Color(73, 91, 98));
             drawingContext.DrawFittedText(player.DisplayName, new Rectangle(bounds.X + 20, bounds.Y + 6, bounds.Width - 40, 32), Color.White, 0.50f);
-            drawingContext.DrawPlayerRoleFaceIcon(new Vector2(bounds.X + 34, bounds.Y + 55), player.Kind == EntryProfileKind.Computer);
+            drawingContext.DrawEntryIcon(new Vector2(bounds.X + 34, bounds.Y + 55));
             var detail = session.GetPlayerSelectionDetail(index);
             var detailText = player.Kind == EntryProfileKind.Computer ? $"ENGINE: {detail}" : detail;
             drawingContext.DrawFittedText(detailText, new Rectangle(bounds.X + 58, bounds.Y + 45, bounds.Width - 78, 24), new Color(180, 195, 195), 0.30f);
@@ -79,6 +84,8 @@ public sealed class SelectEntryPresenter
         }
 
         var addHeaderBounds = new Rectangle(270, 846, 272, 26);
+        if (management)
+        {
         drawingContext.FillRectangle(addHeaderBounds, new Color(56, 54, 84));
         drawingContext.DrawRectangle(addHeaderBounds, 1, new Color(133, 128, 177));
         var addLabelSize = drawingContext.MeasureText("ADD") * 0.34f;
@@ -89,6 +96,7 @@ public sealed class SelectEntryPresenter
         screen.EditButton.Draw(mousePoint, drawingContext);
         screen.DeleteButton.Draw(mousePoint, drawingContext);
         screen.OrderButton.Draw(mousePoint, drawingContext);
+        }
         screen.PreviousButton.Draw(mousePoint, drawingContext);
         drawingContext.DrawFittedText($"{session.PlayerSelectionPageIndex + 1} / {pageCount}", PlayerSelectionPageNumberBounds, new Color(227, 224, 210), 0.44f);
         screen.NextButton.Draw(mousePoint, drawingContext);

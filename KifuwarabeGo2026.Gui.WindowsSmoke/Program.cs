@@ -32,6 +32,7 @@ internal static class Program
             VerifyExecutableNaming();
             VerifyGuiExecutableGuard();
             VerifyProviderSelectionEditingAndThirdComboChoice();
+            VerifyEngineManagementEditCloseReturnsToManagement();
             VerifyTextRasterizer();
             VerifyWindowsAssembly();
             VerifyGoAppsDiscoveryProtocol();
@@ -139,6 +140,21 @@ internal static class Program
         session.OpenGtpEngineRandomMoveSelectionDialog(boardSize);
         Require(KifuwarabeGo2026.Gui.Presentation.Pages.GtpEngine.GtpEngineRenderer.GetGtpEngineRandomMoveSelectionDialogItemHit(new Point(700, 520), session) == 2,
             "The third Provider combo choice was displayed but had no click hit target.");
+    }
+
+    private static void VerifyEngineManagementEditCloseReturnsToManagement()
+    {
+        var session = new GoAppSession();
+        session.SetGtpEngineProfiles([new GtpEngineProfile { DisplayName = "Management smoke", ExecutablePath = "engine.exe" }]);
+        session.OpenGtpEngineManagementDialog();
+        session.OpenGtpEngineEditPanel();
+        session.CloseGtpEngineEditPanel();
+
+        Require(session.IsGtpEngineSelectionDialogOpen &&
+                !session.IsGtpEngineEditPanelOpen &&
+                session.EngineSelectionPurpose == GtpEngineSelectionPurpose.Management &&
+                session.GtpEngineSelectionTargetStone == GoStone.Empty,
+            "Closing an Engine Profile edit did not return to Engine Profile management.");
     }
 
     private static void VerifyGoAppsDiscoveryProtocol()

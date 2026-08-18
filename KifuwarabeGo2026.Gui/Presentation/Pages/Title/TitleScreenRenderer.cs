@@ -13,6 +13,9 @@ using KifuwarabeGo2026.Gui.Presentation.Pages.ApplicationSettings;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 using KifuwarabeGo2026.Gui.Presentation.Pages.GtpEngine;
 using KifuwarabeGo2026.Gui.Presentation.Shared.SelectEntry;
+using KifuwarabeGo2026.Gui.Presentation.Shared.EditEntryProfile;
+using KifuwarabeGo2026.Gui.Presentation.Shared.EntryProfiles;
+using KifuwarabeGo2026.Gui.Presentation.Shared.HeadUpDisplay;
 
 public sealed class TitleScreenRenderer
 {
@@ -25,6 +28,8 @@ public sealed class TitleScreenRenderer
         drawingContext.DrawBackground();
         Draw(drawingContext, session, mousePoint, page, appProviderTabIndex, isAppProviderLoading);
         SelectEntryPresenter.Default.Draw(drawingContext, session, mousePoint);
+        EditEntryProfile.Default.Draw(drawingContext, session, mousePoint, HeadUpDisplayComponent.Default.StickyNoteScreen);
+        EntryProfilesPresenter.Default.DrawPanels(drawingContext, session, mousePoint);
         gtpEngineRenderer.Draw(drawingContext, session, mousePoint);
         drawingContext.End();
     }
@@ -79,6 +84,8 @@ public sealed class TitleScreenRenderer
                 var casualAppsHovered = _titleScreen.CasualAppsLabelBounds.Contains(mousePoint);
                 var localMatchHovered = _titleScreen.LocalMatchButton.IsHit(mousePoint);
                 var onlineMatchHovered = _titleScreen.CgosClientButton.IsHit(mousePoint);
+                var engineProfilesHovered = _titleScreen.EngineProfilesButton.IsHit(mousePoint);
+                var entryProfilesHovered = _titleScreen.EntryProfilesButton.IsHit(mousePoint);
                 var settingsBounds = ApplicationSettingsScreen.Default.SettingsButton.Bounds;
                 var updateBounds = ApplicationSettingsScreen.Default.UpdateButton.Bounds;
                 var settingsHovered = settingsBounds.Contains(mousePoint);
@@ -88,7 +95,9 @@ public sealed class TitleScreenRenderer
                 DrawHomeServiceChoice(_titleScreen.LocalMatchButton.Bounds, _titleScreen.LocalMatchButton.Label, "PLAY / REVIEW", new Color(99, 223, 185), mousePoint);
                 DrawHomeServiceChoice(_titleScreen.CgosClientButton.Bounds, _titleScreen.CgosClientButton.Label, "WATCH / CONNECT", new Color(99, 223, 185), mousePoint);
                 DrawAppChoice(_titleScreen.CaptureGameButton.Bounds, _titleScreen.CaptureGameButton.Label, "CAPTURE GAME", mousePoint);
-                DrawDynamicOptionText("対局、観戦、問題演習をここから直接選べます。", new Rectangle(500, 700, 890, 38), new Color(180, 195, 195), 0.34f);
+                DrawProfileChoice(_titleScreen.EngineProfilesButton.Bounds, "ENGINE PROFILES", "ADD / EDIT / REMOVE", mousePoint, true);
+                DrawProfileChoice(_titleScreen.EntryProfilesButton.Bounds, "ENTRY PROFILES", "PREPARE MATCH ENTRIES", mousePoint, false);
+                DrawDynamicOptionText("対局、観戦、事前準備をここから選べます。", new Rectangle(500, 716, 890, 38), new Color(180, 195, 195), 0.34f);
                 if (formalAppsHovered)
                     DrawTitleHomeHint("FORMAL APPS", "他のコンピュータ碁ソフトとできるだけ連携します！", new Color(99, 223, 185));
                 else if (casualAppsHovered)
@@ -101,6 +110,10 @@ public sealed class TitleScreenRenderer
                     DrawTitleHomeHint("LOCAL MATCH", "ローカルPCで、人間や碁エンジンが対局！ など。", new Color(99, 223, 185));
                 else if (onlineMatchHovered)
                     DrawTitleHomeHint("ONLINE MATCH", "インターネット上の碁サーバーにお邪魔して碁エンジンが対局！", new Color(99, 223, 185));
+                else if (engineProfilesHovered)
+                    DrawTitleHomeHint("ENGINE PROFILES", "GTPエンジンの起動設定を管理します。", new Color(125, 225, 255));
+                else if (entryProfilesHovered)
+                    DrawTitleHomeHint("ENTRY PROFILES", "対局へ参加させる候補を準備します。", new Color(147, 244, 200));
                 else if (_titleScreen.CaptureGameButton.IsHit(mousePoint))
                 {
                     DrawCaptureGamePreview();
@@ -254,6 +267,14 @@ public sealed class TitleScreenRenderer
                 (kind, connectorStart, accent, borderColor, heading, bodyLines) =>
                     DrawStickyNote(kind, connectorStart, accent, borderColor, heading, bodyLines),
                 DrawTabNavigationHint));
+    }
+
+    private void DrawProfileChoice(Rectangle bounds, string title, string caption, Point mousePoint, bool engine)
+    {
+        DrawAppChoice(bounds, title, caption, mousePoint);
+        var center = new Vector2(bounds.Right - 118, bounds.Center.Y);
+        if (engine) _drawingContext.DrawEngineIcon(center);
+        else _drawingContext.DrawEntryIcon(center);
     }
 
     private void DrawTitleBackButton(Point mousePoint, bool focused = false)

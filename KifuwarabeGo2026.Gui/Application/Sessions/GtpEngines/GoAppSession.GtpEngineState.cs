@@ -20,6 +20,7 @@ public sealed partial class GoAppSession
     public bool IsGtpEngineSelectionDialogOpen { get; private set; }
     public bool IsGtpEngineSelectionForCgos { get; private set; }
     public bool IsGtpEngineSelectionForAppProvider => EngineSelectionPurpose == GtpEngineSelectionPurpose.AppProvider;
+    public bool IsGtpEngineManagement => EngineSelectionPurpose == GtpEngineSelectionPurpose.Management;
     public GtpEngineSelectionPurpose EngineSelectionPurpose { get; private set; }
     public string GtpEngineSelectionAppId { get; private set; } = "play";
     public int GtpEngineDialogSelectionIndex { get; private set; }

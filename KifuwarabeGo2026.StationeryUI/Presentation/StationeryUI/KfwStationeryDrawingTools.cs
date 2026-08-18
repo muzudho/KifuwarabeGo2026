@@ -46,10 +46,24 @@ public sealed class KfwStationeryDrawingTools : IDisposable
     }
 
     public void DrawPlayerRoleFaceIcon(Vector2 center, bool isComputer)
+        => (isComputer ? (Action<Vector2>)DrawEngineIcon : DrawHumanIcon)(center);
+
+    public void DrawMatchedPlayersIcon(Vector2 center)
     {
-        var color = isComputer ? new Color(125, 225, 255) : new Color(255, 211, 138);
-        if (isComputer)
-        {
+        DrawIconStone(center + new Vector2(-9, 0), 7, true);
+        DrawIconStone(center + new Vector2(9, 0), 7, false);
+    }
+
+    public void DrawEntryIcon(Vector2 center)
+    {
+        var color = new Color(147, 244, 200);
+        DrawCircleOutline(center + new Vector2(0, -7), 7, 2, color);
+        DrawCircleOutline(center + new Vector2(0, 11), 13, 2, color);
+    }
+
+    public void DrawEngineIcon(Vector2 center)
+    {
+        var color = new Color(125, 225, 255);
             var head = new Rectangle((int)center.X - 10, (int)center.Y - 10, 20, 20);
             FillRectangle(head, new Color(28, 49, 61));
             DrawRectangle(head, 2, color);
@@ -58,9 +72,11 @@ public sealed class KfwStationeryDrawingTools : IDisposable
             DrawLine(center + new Vector2(-5, 5), center + new Vector2(5, 5), 2, color);
             DrawLine(center + new Vector2(0, -10), center + new Vector2(0, -14), 2, color);
             DrawCircle(center + new Vector2(0, -15), 2, color);
-            return;
-        }
+    }
 
+    public void DrawHumanIcon(Vector2 center)
+    {
+        var color = new Color(255, 211, 138);
         DrawCircleOutline(center + new Vector2(0, -2), 12, 2, color);
         DrawLine(center + new Vector2(-6, -4), center + new Vector2(-4, -7), 2, color);
         DrawLine(center + new Vector2(-4, -7), center + new Vector2(-2, -4), 2, color);
@@ -69,6 +85,18 @@ public sealed class KfwStationeryDrawingTools : IDisposable
         DrawLine(center + new Vector2(-6, 3), center + new Vector2(-2, 1), 2, color);
         DrawLine(center + new Vector2(-2, 1), center + new Vector2(2, 4), 2, color);
         DrawLine(center + new Vector2(2, 4), center + new Vector2(6, 1), 2, color);
+    }
+
+    public void DrawGuiIcon(Vector2 center)
+    {
+        var color = new Color(180, 195, 195);
+        var board = new Rectangle((int)center.X - 13, (int)center.Y - 13, 26, 26);
+        DrawRectangle(board, 2, color);
+        for (var i = 1; i < 3; i++)
+        {
+            DrawLine(new Vector2(board.X + i * 9, board.Y), new Vector2(board.X + i * 9, board.Bottom), 1, color);
+            DrawLine(new Vector2(board.X, board.Y + i * 9), new Vector2(board.Right, board.Y + i * 9), 1, color);
+        }
     }
 
     public void DrawTextSelection(string text, int start, int length, Rectangle bounds, float scale)

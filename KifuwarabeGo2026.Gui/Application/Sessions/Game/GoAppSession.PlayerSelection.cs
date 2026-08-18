@@ -46,6 +46,16 @@ public sealed partial class GoAppSession
         SelectDialogDefaultClientIdentity();
     }
 
+    public void OpenEntryProfileManagementDialog()
+    {
+        IsPlayerSelectionDialogOpen = true;
+        ActivateWindow(ActiveWindowId.PlayerSelection);
+        PlayerSelectionPurpose = PlayerSelectionPurpose.Management;
+        PlayerDialogSelectionIndex = _playerProfiles.Count > 0 ? 0 : -1;
+        PlayerSelectionPageIndex = 0;
+        ClientIdentityDialogSelectionIndex = -1;
+    }
+
     public void SelectPlayerDialogItem(int index)
     {
         if (index < 0 || index >= _playerProfiles.Count)
@@ -74,6 +84,11 @@ public sealed partial class GoAppSession
 
     public bool CommitPlayerSelectionDialog()
     {
+        if (PlayerSelectionPurpose == PlayerSelectionPurpose.Management)
+        {
+            CancelPlayerSelectionDialog();
+            return true;
+        }
         if (PlayerDialogSelectionIndex < 0 || PlayerDialogSelectionIndex >= _playerProfiles.Count)
             return false;
         var playerId = _playerProfiles[PlayerDialogSelectionIndex].Id;
@@ -263,4 +278,5 @@ public enum PlayerSelectionPurpose
 {
     LocalMatch,
     Cgos,
+    Management,
 }

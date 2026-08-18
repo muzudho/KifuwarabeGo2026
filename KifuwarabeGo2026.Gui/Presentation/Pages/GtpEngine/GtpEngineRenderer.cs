@@ -275,16 +275,19 @@ public sealed class GtpEngineRenderer
         FillRect(GtpEngineSelectionDialogBounds, new Color(19, 24, 31, 248));
         DrawRect(GtpEngineSelectionDialogBounds, 2, new Color(116, 145, 146));
 
-        DrawText("SELECT ENGINE (GTP)", new Vector2(GtpEngineSelectionDialogBounds.X + 30, GtpEngineSelectionDialogBounds.Y + 24), new Color(244, 238, 218), 0.78f);
-        var closeLabel = session.IsGtpEngineSelectionForAppProvider ? "CLOSE" : "CANCEL";
+        var management = session.IsGtpEngineManagement;
+        DrawText(management ? "ENGINE PROFILES" : "SELECT ENGINE (GTP)", new Vector2(GtpEngineSelectionDialogBounds.X + 30, GtpEngineSelectionDialogBounds.Y + 24), new Color(244, 238, 218), 0.78f);
+        var closeLabel = session.IsGtpEngineSelectionForAppProvider || management ? "CLOSE" : "CANCEL";
         DrawButton(GtpEngineSelectionDialogCancelButtonBounds, closeLabel, false, mousePoint, scale: 0.34f);
-        DrawButton(GtpEngineSelectionDialogOkButtonBounds, "USE", false, mousePoint, enabled: !session.IsGtpEngineCompatibilityLoading && session.CanCommitGtpEngineSelection, scale: 0.34f);
+        if (!management) DrawButton(GtpEngineSelectionDialogOkButtonBounds, "USE", false, mousePoint, enabled: !session.IsGtpEngineCompatibilityLoading && session.CanCommitGtpEngineSelection, scale: 0.34f);
 
         DrawText("LIST", new Vector2(GtpEngineSelectionDialogListBounds.X, GtpEngineSelectionDialogListBounds.Y - 34), new Color(180, 195, 195), 0.46f);
         DrawText("PROPERTIES", new Vector2(GtpEngineSelectionDialogPropertyBounds.X, GtpEngineSelectionDialogPropertyBounds.Y - 34), new Color(180, 195, 195), 0.46f);
 
         FillRect(GtpEngineSelectionDialogListBounds, new Color(15, 20, 26));
         DrawRect(GtpEngineSelectionDialogListBounds, 1, new Color(67, 84, 92));
+        if (session.GtpEngineProfiles.Count == 0)
+            DrawFittedText(management ? "NO ENGINE PROFILE - ADD ONE BELOW." : "NO ENGINE PROFILE - Register an engine from TITLE > ENGINE PROFILES.", new Rectangle(GtpEngineSelectionDialogListBounds.X + 20, GtpEngineSelectionDialogListBounds.Center.Y - 24, GtpEngineSelectionDialogListBounds.Width - 40, 48), new Color(255, 211, 138), 0.34f);
 
         if (session.IsGtpEngineCompatibilityLoading)
         {
@@ -314,11 +317,14 @@ public sealed class GtpEngineRenderer
         DrawButton(GtpEngineSelectionDialogPreviousPageButtonBounds, "PREV", false, mousePoint, enabled: !session.IsGtpEngineCompatibilityLoading && session.GtpEngineSelectionPageIndex > 0, scale: 0.42f);
         DrawText($"PAGE {session.GtpEngineSelectionPageIndex + 1} / {pageCount}", new Vector2(600, 817), new Color(227, 224, 210), 0.42f);
         DrawButton(GtpEngineSelectionDialogNextPageButtonBounds, "NEXT", false, mousePoint, enabled: !session.IsGtpEngineCompatibilityLoading && session.GtpEngineSelectionPageIndex < pageCount - 1, scale: 0.42f);
+        if (session.EngineSelectionPurpose != GtpEngineSelectionPurpose.PlayerEdit)
+        {
         DrawButton(GtpEngineSelectionDialogAddButtonBounds, "ADD", false, mousePoint, enabled: !session.IsGtpEngineCompatibilityLoading, scale: 0.42f);
         DrawButton(GtpEngineSelectionDialogEditButtonBounds, "EDIT", false, mousePoint, enabled: !session.IsGtpEngineCompatibilityLoading && session.GtpEngineProfiles.Count > 0, scale: 0.42f);
         DrawButton(GtpEngineSelectionDialogDuplicateButtonBounds, "DUPLICATE", false, mousePoint, enabled: !session.IsGtpEngineCompatibilityLoading && session.GtpEngineProfiles.Count > 0, scale: 0.32f);
         DrawButton(GtpEngineSelectionDialogDeleteButtonBounds, "DELETE", false, mousePoint, enabled: !session.IsGtpEngineCompatibilityLoading && session.CanDeleteSelectedGtpEngine, scale: 0.42f);
         DrawButton(GtpEngineSelectionDialogOrderButtonBounds, "ORDER", false, mousePoint, enabled: !session.IsGtpEngineCompatibilityLoading && session.GtpEngineProfiles.Count > 1, scale: 0.38f);
+        }
         DrawGtpEngineDeleteConfirmation(session, mousePoint);
         CatalogOrderPresenter.Default.Draw(_drawingContext,
             session.GtpEngineOrderEditor,
@@ -674,7 +680,7 @@ public sealed class GtpEngineRenderer
         DrawText($"{index + 1:00}", new Vector2(bounds.X + 14, bounds.Y + 16), inUse ? new Color(177, 255, 215) : new Color(180, 195, 195), 0.4f);
         if (inspected)
             DrawSelectionFingerMark(new Vector2(bounds.X - 55, bounds.Center.Y - 13), 1.65f);
-        _drawingContext.DrawPlayerRoleFaceIcon(new Vector2(bounds.X + 72, bounds.Y + 22), isComputer: true);
+        _drawingContext.DrawEngineIcon(new Vector2(bounds.X + 72, bounds.Y + 22));
         var nameWidth = inUse ? bounds.Width - 196 : bounds.Width - 106;
         DrawFittedText(profile.DisplayName, new Rectangle(bounds.X + 86, bounds.Y + 6, nameWidth, 30), enabled ? Color.White : new Color(145, 145, 145), 0.5f);
         if (inUse)

@@ -21,4 +21,5 @@ public enum GtpEngineSelectionPurpose
     CgosPlayer,
     PlayerEdit,
     AppProvider,
+    Management,
 }

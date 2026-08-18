@@ -2246,7 +2246,8 @@ public class Game1 : Game
         }
 
         var selectEntryScreen = SelectEntryScreen.Default;
-        if (selectEntryScreen.CancelButton.IsHit(point))
+        var isManagement = _session.PlayerSelectionPurpose == PlayerSelectionPurpose.Management;
+        if (!isManagement && selectEntryScreen.CancelButton.IsHit(point))
         {
             _session.CancelPlayerSelectionDialog();
             return;
@@ -2270,47 +2271,47 @@ public class Game1 : Game
             return;
         }
 
-        if (selectEntryScreen.AddHumanButton.IsHit(point))
+        if (isManagement && selectEntryScreen.AddHumanButton.IsHit(point))
         {
             if (_session.AddEntryProfile(EntryProfileKind.Human))
                 SavePlayerAndClientIdentityCatalogs();
             return;
         }
 
-        if (selectEntryScreen.AddComputerButton.IsHit(point))
+        if (isManagement && selectEntryScreen.AddComputerButton.IsHit(point))
         {
             if (_session.AddEntryProfile(EntryProfileKind.Computer))
                 SavePlayerAndClientIdentityCatalogs();
             return;
         }
 
-        if (selectEntryScreen.DuplicateButton.IsHit(point))
+        if (isManagement && selectEntryScreen.DuplicateButton.IsHit(point))
         {
             if (_session.DuplicateSelectedEntryProfile())
                 SavePlayerAndClientIdentityCatalogs();
             return;
         }
 
-        if (selectEntryScreen.DeleteButton.IsHit(point))
+        if (isManagement && selectEntryScreen.DeleteButton.IsHit(point))
         {
             if (_session.DeleteSelectedEntryProfile())
                 SavePlayerAndClientIdentityCatalogs();
             return;
         }
 
-        if (selectEntryScreen.EditButton.IsHit(point))
+        if (isManagement && selectEntryScreen.EditButton.IsHit(point))
         {
             _session.OpenSelectedPlayerEditPanel();
             return;
         }
 
-        if (selectEntryScreen.OrderButton.IsHit(point))
+        if (isManagement && selectEntryScreen.OrderButton.IsHit(point))
         {
             _session.OpenPlayerOrderEditor();
             return;
         }
 
-        if (selectEntryScreen.GetClientIdentityItemHit(point, _session.GetPlayerSelectionClientIdentities().Count) is { } clientIdentityIndex)
+        if (!isManagement && selectEntryScreen.GetClientIdentityItemHit(point, _session.GetPlayerSelectionClientIdentities().Count) is { } clientIdentityIndex)
         {
             _session.SelectPlayerSelectionClientIdentity(clientIdentityIndex);
             return;
@@ -2679,6 +2680,20 @@ public class Game1 : Game
             {
                 GuiOperationLog.User("Pressed CGOS button", "Navigate from title to CGOS connection selection");
                 _session.SelectUseKind(GoAppUseKind.CgosClient);
+                return true;
+            }
+
+            if (TitleScreen.Default.EngineProfilesButton.IsHit(point))
+            {
+                _session.OpenGtpEngineManagementDialog();
+                GuiOperationLog.User("Opened engine profile management", "source=title");
+                return true;
+            }
+
+            if (TitleScreen.Default.EntryProfilesButton.IsHit(point))
+            {
+                _session.OpenEntryProfileManagementDialog();
+                GuiOperationLog.User("Opened entry profile management", "source=title");
                 return true;
             }
 
@@ -5396,10 +5411,18 @@ public class Game1 : Game
             MoveReview(_session.ReviewTimelineMaximum - _session.ReviewTimelineIndex);
     }
 
-    private void RefreshCurrentGtpEngineAppCompatibilities() =>
+    private void RefreshCurrentGtpEngineAppCompatibilities()
+    {
+        if (_session.IsGtpEngineManagement)
+        {
+            _session.SetGtpEngineAppCompatibilities(_session.GtpEngineProfiles.Select(_ =>
+                new GtpEngineAppCompatibility(GtpEngineAppCompatibilityKind.Supported, "MANAGEMENT")));
+            return;
+        }
         RefreshGtpEngineAppCompatibilities(
             _session.GtpEngineSelectionAppId,
             _session.EngineSelectionPurpose == GtpEngineSelectionPurpose.AppProvider ? "provider" : "player");
+    }
 
     private bool TryHandleGtpEngineSelectionDialogClick(Point point)
     {
@@ -5433,7 +5456,7 @@ public class Game1 : Game
         if (_session.IsGtpEngineCompatibilityLoading)
             return true;
 
-        if (GtpEngineRenderer.GetGtpEngineSelectionDialogOkButtonHit(point))
+        if (!_session.IsGtpEngineManagement && GtpEngineRenderer.GetGtpEngineSelectionDialogOkButtonHit(point))
         {
             if (_session.CanCommitGtpEngineSelection)
             {
@@ -5453,31 +5476,32 @@ public class Game1 : Game
             return true;
         }
 
-        if (GtpEngineRenderer.GetGtpEngineSelectionDialogAddButtonHit(point))
+        var canManage = _session.EngineSelectionPurpose != GtpEngineSelectionPurpose.PlayerEdit;
+        if (canManage && GtpEngineRenderer.GetGtpEngineSelectionDialogAddButtonHit(point))
         {
             _session.OpenGtpEngineAddPanel();
             return true;
         }
 
-        if (GtpEngineRenderer.GetGtpEngineSelectionDialogEditButtonHit(point))
+        if (canManage && GtpEngineRenderer.GetGtpEngineSelectionDialogEditButtonHit(point))
         {
             _session.OpenGtpEngineEditPanel();
             return true;
         }
 
-        if (GtpEngineRenderer.GetGtpEngineSelectionDialogDuplicateButtonHit(point))
+        if (canManage && GtpEngineRenderer.GetGtpEngineSelectionDialogDuplicateButtonHit(point))
         {
             _session.OpenGtpEngineDuplicatePanel();
             return true;
         }
 
-        if (GtpEngineRenderer.GetGtpEngineSelectionDialogDeleteButtonHit(point, _session.CanDeleteSelectedGtpEngine))
+        if (canManage && GtpEngineRenderer.GetGtpEngineSelectionDialogDeleteButtonHit(point, _session.CanDeleteSelectedGtpEngine))
         {
             _session.OpenGtpEngineDeleteConfirmation();
             return true;
         }
 
-        if (_session.GtpEngineProfiles.Count > 1 &&
+        if (canManage && _session.GtpEngineProfiles.Count > 1 &&
             GtpEngineRenderer.GetGtpEngineSelectionDialogOrderButtonHit(point))
         {
             _session.OpenGtpEngineOrderEditor();

@@ -53,9 +53,17 @@ public sealed partial class GoAppSession
         OpenGtpEngineSelectionDialogCore(GoStone.Empty);
     }
 
+    public void OpenGtpEngineManagementDialog()
+    {
+        IsGtpEngineSelectionForCgos = false;
+        EngineSelectionPurpose = GtpEngineSelectionPurpose.Management;
+        GtpEngineSelectionAppId = "";
+        OpenGtpEngineSelectionDialogCore(GoStone.Empty);
+    }
+
     private void OpenGtpEngineSelectionDialogCore(GoStone stone)
     {
-        if (EngineSelectionPurpose is not (GtpEngineSelectionPurpose.AppProvider or GtpEngineSelectionPurpose.PlayerEdit) &&
+        if (EngineSelectionPurpose is not (GtpEngineSelectionPurpose.AppProvider or GtpEngineSelectionPurpose.PlayerEdit or GtpEngineSelectionPurpose.Management) &&
             stone is not (GoStone.Black or GoStone.White))
         {
             throw new ArgumentOutOfRangeException(nameof(stone), stone, "GTP engine can be selected only for black or white.");
@@ -85,7 +93,9 @@ public sealed partial class GoAppSession
             selectedIndex = -1;
         }
 
-        GtpEngineDialogSelectionIndex = EngineSelectionPurpose is GtpEngineSelectionPurpose.AppProvider or GtpEngineSelectionPurpose.PlayerEdit
+        if (EngineSelectionPurpose == GtpEngineSelectionPurpose.Management)
+            selectedIndex = _gtpEngineProfiles.Count > 0 ? 0 : -1;
+        GtpEngineDialogSelectionIndex = EngineSelectionPurpose is GtpEngineSelectionPurpose.AppProvider or GtpEngineSelectionPurpose.PlayerEdit or GtpEngineSelectionPurpose.Management
             ? selectedIndex >= 0 && selectedIndex < _gtpEngineProfiles.Count ? selectedIndex : -1
             : CanSelectGtpEngineForCurrentApp(selectedIndex) ? selectedIndex : -1;
         GtpEngineSelectionPageIndex = Math.Max(0, selectedIndex) / GtpEngineSelectionPageSize;
@@ -95,7 +105,7 @@ public sealed partial class GoAppSession
     {
         if (index < 0 || index >= _gtpEngineProfiles.Count)
             throw new ArgumentOutOfRangeException(nameof(index), index, "GTP engine index is out of range.");
-        if (EngineSelectionPurpose == GtpEngineSelectionPurpose.AppProvider || CanSelectGtpEngineForCurrentApp(index))
+        if (EngineSelectionPurpose is GtpEngineSelectionPurpose.AppProvider or GtpEngineSelectionPurpose.Management || CanSelectGtpEngineForCurrentApp(index))
             GtpEngineDialogSelectionIndex = index;
     }
 

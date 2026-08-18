@@ -17,6 +17,8 @@ public sealed class TitleScreen
         LocalMatchButton = new Button(new Rectangle(500, 390, 400, 126), "Local Match", 0.52f);
         CgosClientButton = new Button(new Rectangle(500, 536, 400, 126), "Online Match (CGOS)", 0.52f);
         CaptureGameButton = new Button(new Rectangle(950, 390, 440, 84), "ポン抜きゲーム", 0.43f);
+        EngineProfilesButton = new Button(new Rectangle(950, 494, 440, 84), "ENGINE PROFILES", 0.40f);
+        EntryProfilesButton = new Button(new Rectangle(950, 598, 440, 84), "ENTRY PROFILES", 0.40f);
         BackButton = new Button(new Rectangle(1260, 316, 152, 54), "BACK", 0.36f);
         UpdateButton = new Button(new Rectangle(1698, 972, 70, 62), string.Empty, 0.1f);
         SettingsButton = new Button(new Rectangle(1780, 972, 70, 62), string.Empty, 0.1f);
@@ -40,6 +42,8 @@ public sealed class TitleScreen
     public Headline CasualAppsLabel { get; }
 
     public Button CaptureGameButton { get; }
+    public Button EngineProfilesButton { get; }
+    public Button EntryProfilesButton { get; }
 
     public int? GetAppHit(Point point) => CaptureGameButton.IsHit(point) ? 0 : null;
     #endregion

@@ -274,6 +274,8 @@ public sealed partial class GoAppSession
         IsGtpEngineEditDirty = false;
         if (EngineSelectionPurpose == GtpEngineSelectionPurpose.AppProvider)
             OpenAppProviderGtpEngineSelectionDialog(GtpEngineSelectionAppId);
+        else if (EngineSelectionPurpose == GtpEngineSelectionPurpose.Management)
+            OpenGtpEngineManagementDialog();
         else if (EngineSelectionPurpose == GtpEngineSelectionPurpose.PlayerEdit)
         {
             // Player 編集モーダルはそのまま背後に残る。
