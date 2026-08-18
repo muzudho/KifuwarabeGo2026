@@ -271,7 +271,7 @@ public sealed partial class GoAppSession
 
     public void OpenPlayerOrderEditor()
     {
-        PlayerOrderEditor.Open(_playerProfiles, PlayerDialogSelectionIndex, PlayerSelectionPageSize);
+        PlayerOrderEditor.Open(_playerProfiles, PlayerDialogSelectionIndex, PlayerSelectionPageSize, selectInitially: false);
         ActivateWindow(ActiveWindowId.CatalogOrderEditor);
     }
 

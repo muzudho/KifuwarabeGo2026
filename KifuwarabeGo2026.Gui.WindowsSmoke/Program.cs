@@ -34,6 +34,7 @@ internal static class Program
             VerifyProviderSelectionEditingAndThirdComboChoice();
             VerifyEngineManagementEditCloseReturnsToManagement();
             VerifyEngineOrderStartsWithoutInheritedSelection();
+            VerifyEntryOrderStartsWithoutInheritedSelection();
             VerifyTextRasterizer();
             VerifyWindowsAssembly();
             VerifyGoAppsDiscoveryProtocol();
@@ -171,6 +172,21 @@ internal static class Program
 
         Require(session.GtpEngineOrderEditor.SelectedIndex == -1,
             "Engine ordering inherited the selection from the management list.");
+    }
+
+    private static void VerifyEntryOrderStartsWithoutInheritedSelection()
+    {
+        var session = new GoAppSession();
+        session.SetEntryProfiles([
+            new EntryProfile { DisplayName = "First", Kind = EntryProfileKind.Human },
+            new EntryProfile { DisplayName = "Second", Kind = EntryProfileKind.Human },
+        ]);
+        session.OpenEntryProfileManagementDialog();
+        session.SelectPlayerDialogItem(1);
+        session.OpenPlayerOrderEditor();
+
+        Require(session.PlayerOrderEditor.SelectedIndex == -1,
+            "Entry ordering inherited the selection from the management list.");
     }
 
     private static void VerifyGoAppsDiscoveryProtocol()
