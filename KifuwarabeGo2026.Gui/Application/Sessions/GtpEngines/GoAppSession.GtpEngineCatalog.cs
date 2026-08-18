@@ -38,7 +38,7 @@ public sealed partial class GoAppSession
 
     public void OpenGtpEngineOrderEditor()
     {
-        GtpEngineOrderEditor.Open(_gtpEngineProfiles, GtpEngineDialogSelectionIndex, GtpEngineSelectionPageSize);
+        GtpEngineOrderEditor.Open(_gtpEngineProfiles, GtpEngineDialogSelectionIndex, GtpEngineSelectionPageSize, selectInitially: false);
         ActivateWindow(ActiveWindowId.CatalogOrderEditor);
     }
 

@@ -29,7 +29,7 @@ public sealed class CatalogOrderEditor<T>
 
     public int PageCount => Math.Max(1, (int)Math.Ceiling(_items.Count / (double)PageSize));
 
-    public void Open(IEnumerable<T> items, int selectedIndex, int pageSize)
+    public void Open(IEnumerable<T> items, int selectedIndex, int pageSize, bool selectInitially = true)
     {
         ArgumentNullException.ThrowIfNull(items);
         _items.Clear();
@@ -37,8 +37,9 @@ public sealed class CatalogOrderEditor<T>
         _originalItems.Clear();
         _originalItems.AddRange(_items);
         PageSize = Math.Max(1, pageSize);
-        SelectedIndex = _items.Count == 0 ? -1 : Math.Clamp(selectedIndex, 0, _items.Count - 1);
-        FirstVisiblePageIndex = SelectedIndex < 0 ? 0 : SelectedIndex / PageSize;
+        var initialIndex = _items.Count == 0 ? -1 : Math.Clamp(selectedIndex, 0, _items.Count - 1);
+        SelectedIndex = selectInitially ? initialIndex : -1;
+        FirstVisiblePageIndex = initialIndex < 0 ? 0 : initialIndex / PageSize;
         DraggedIndex = -1;
         IsOpen = true;
     }

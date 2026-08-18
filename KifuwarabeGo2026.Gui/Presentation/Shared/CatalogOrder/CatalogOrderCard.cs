@@ -9,11 +9,11 @@ public sealed class CatalogOrderCard
     public void Draw<T>(CatalogOrderCardModel<T> model, CatalogOrderCardDrawingCallbacks draw)
     {
         ArgumentNullException.ThrowIfNull(draw);
-        var background = model.IsDragged ? new Color(57, 82, 118) : model.IsSelected ? new Color(38, 103, 86) : model.IsHovered ? new Color(43, 52, 62) : new Color(24, 31, 37);
-        var border = model.IsDragged ? new Color(176, 194, 242) : model.IsSelected ? new Color(147, 244, 200) : new Color(70, 85, 94);
+        var background = model.IsDragged ? new Color(57, 82, 118) : model.IsSelected ? new Color(31, 65, 82) : model.IsHovered ? new Color(43, 52, 62) : new Color(24, 31, 37);
+        var border = model.IsDragged ? new Color(176, 194, 242) : model.IsSelected ? new Color(125, 225, 255) : new Color(70, 85, 94);
         draw.FillRectangle(model.Bounds, background);
         draw.DrawRectangle(model.Bounds, model.IsDragged ? 3 : 1, border);
-        draw.DrawText($"{model.DisplayIndex:00}", new Vector2(model.Bounds.X + 12, model.Bounds.Y + 14), model.IsSelected ? new Color(177, 255, 215) : new Color(180, 195, 195), 0.36f);
+        draw.DrawText($"{model.DisplayIndex:00}", new Vector2(model.Bounds.X + 12, model.Bounds.Y + 14), model.IsSelected ? new Color(190, 235, 255) : new Color(180, 195, 195), 0.36f);
         draw.DrawFittedText(model.GetName(model.Item), new Rectangle(model.Bounds.X + 58, model.Bounds.Y + 4, model.Bounds.Width - 70, 30), Color.White, 0.39f);
         var isComputer = model.GetComputerRole?.Invoke(model.Item);
         if (isComputer is { } computer)

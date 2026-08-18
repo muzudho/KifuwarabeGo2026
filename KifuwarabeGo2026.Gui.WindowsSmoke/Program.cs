@@ -33,6 +33,7 @@ internal static class Program
             VerifyGuiExecutableGuard();
             VerifyProviderSelectionEditingAndThirdComboChoice();
             VerifyEngineManagementEditCloseReturnsToManagement();
+            VerifyEngineOrderStartsWithoutInheritedSelection();
             VerifyTextRasterizer();
             VerifyWindowsAssembly();
             VerifyGoAppsDiscoveryProtocol();
@@ -155,6 +156,21 @@ internal static class Program
                 session.EngineSelectionPurpose == GtpEngineSelectionPurpose.Management &&
                 session.GtpEngineSelectionTargetStone == GoStone.Empty,
             "Closing an Engine Profile edit did not return to Engine Profile management.");
+    }
+
+    private static void VerifyEngineOrderStartsWithoutInheritedSelection()
+    {
+        var session = new GoAppSession();
+        session.SetGtpEngineProfiles([
+            new GtpEngineProfile { DisplayName = "First", ExecutablePath = "first.exe" },
+            new GtpEngineProfile { DisplayName = "Second", ExecutablePath = "second.exe" },
+        ]);
+        session.OpenGtpEngineManagementDialog();
+        session.SelectGtpEngineDialogItem(1);
+        session.OpenGtpEngineOrderEditor();
+
+        Require(session.GtpEngineOrderEditor.SelectedIndex == -1,
+            "Engine ordering inherited the selection from the management list.");
     }
 
     private static void VerifyGoAppsDiscoveryProtocol()

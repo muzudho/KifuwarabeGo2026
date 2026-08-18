@@ -670,7 +670,9 @@ public sealed class GtpEngineRenderer
     {
         var profile = session.GtpEngineProfiles[index];
         var inspected = index == session.GtpEngineDialogSelectionIndex;
-        var inUse = index == session.SelectedGtpEngineIndex;
+        // Management has an inspected row (finger + cyan frame), but does not
+        // choose an engine for any play/provider role.
+        var inUse = !session.IsGtpEngineManagement && index == session.SelectedGtpEngineIndex;
         var compatibility = session.GetGtpEngineAppCompatibility(index);
         var enabled = compatibility.CanSelect;
         var rowSelectable = session.IsGtpEngineSelectionForAppProvider || enabled;
