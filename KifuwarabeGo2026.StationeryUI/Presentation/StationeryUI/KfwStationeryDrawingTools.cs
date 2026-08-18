@@ -57,8 +57,18 @@ public sealed class KfwStationeryDrawingTools : IDisposable
     public void DrawEntryIcon(Vector2 center)
     {
         var color = new Color(147, 244, 200);
-        DrawCircleOutline(center + new Vector2(0, -7), 7, 2, color);
-        DrawCircleOutline(center + new Vector2(0, 11), 13, 2, color);
+        DrawCircleOutline(center + new Vector2(0, -8), 7, 2, color);
+
+        // Bust silhouette: broad shoulders taper toward an open lower edge so
+        // the Entry symbol cannot be mistaken for two stacked circles.
+        DrawLine(center + new Vector2(-4, 0), center + new Vector2(-12, 5), 2, color);
+        DrawLine(center + new Vector2(-12, 5), center + new Vector2(-10, 18), 2, color);
+        DrawLine(center + new Vector2(4, 0), center + new Vector2(12, 5), 2, color);
+        DrawLine(center + new Vector2(12, 5), center + new Vector2(10, 18), 2, color);
+
+        // Shirt neckline.
+        DrawLine(center + new Vector2(-5, 2), center + new Vector2(0, 8), 2, color);
+        DrawLine(center + new Vector2(0, 8), center + new Vector2(5, 2), 2, color);
     }
 
     public void DrawEngineIcon(Vector2 center)
