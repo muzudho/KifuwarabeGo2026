@@ -61,14 +61,21 @@ public sealed class KfwStationeryDrawingTools : IDisposable
 
         // Bust silhouette: broad shoulders taper toward an open lower edge so
         // the Entry symbol cannot be mistaken for two stacked circles.
-        DrawLine(center + new Vector2(-4, 0), center + new Vector2(-12, 5), 2, color);
+        DrawLine(center + new Vector2(-4, -1), center + new Vector2(-12, 5), 2, color);
         DrawLine(center + new Vector2(-12, 5), center + new Vector2(-10, 18), 2, color);
-        DrawLine(center + new Vector2(4, 0), center + new Vector2(12, 5), 2, color);
+        DrawLine(center + new Vector2(4, -1), center + new Vector2(12, 5), 2, color);
         DrawLine(center + new Vector2(12, 5), center + new Vector2(10, 18), 2, color);
 
         // Shirt neckline.
-        DrawLine(center + new Vector2(-5, 2), center + new Vector2(0, 8), 2, color);
-        DrawLine(center + new Vector2(0, 8), center + new Vector2(5, 2), 2, color);
+        DrawLine(center + new Vector2(-4, -1), center + new Vector2(0, 8), 2, color);
+        DrawLine(center + new Vector2(0, 8), center + new Vector2(4, -1), 2, color);
+
+        // Cover line-cap seams at this small icon size.
+        DrawCircle(center + new Vector2(-4, -1), 1.2f, color);
+        DrawCircle(center + new Vector2(-12, 5), 1.2f, color);
+        DrawCircle(center + new Vector2(4, -1), 1.2f, color);
+        DrawCircle(center + new Vector2(12, 5), 1.2f, color);
+        DrawCircle(center + new Vector2(0, 8), 1.2f, color);
     }
 
     public void DrawEngineIcon(Vector2 center)

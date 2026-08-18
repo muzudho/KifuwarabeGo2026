@@ -94,8 +94,8 @@ public sealed class TitleScreenRenderer
                 _titleScreen.EntrySettingsLabel.Draw(_drawingContext);
                 _titleScreen.FormalAppsLabel.Draw(_drawingContext);
                 _titleScreen.CasualAppsLabel.Draw(_drawingContext);
-                DrawProfileChoice(_titleScreen.EngineProfilesButton.Bounds, "ENGINE PROFILES", "ADD / EDIT / REMOVE", mousePoint, true);
-                DrawProfileChoice(_titleScreen.EntryProfilesButton.Bounds, "ENTRY PROFILES", "PREPARE MATCH ENTRIES", mousePoint, false);
+                DrawProfileChoice(_titleScreen.EngineProfilesButton.Bounds, "エンジン登録", "REGISTER ENGINES", mousePoint, true);
+                DrawProfileChoice(_titleScreen.EntryProfilesButton.Bounds, "エントリー登録", "REGISTER ENTRIES", mousePoint, false);
                 DrawHomeServiceChoice(_titleScreen.LocalMatchButton.Bounds, _titleScreen.LocalMatchButton.Label, "PLAY / REVIEW", new Color(99, 223, 185), mousePoint);
                 DrawHomeServiceChoice(_titleScreen.CgosClientButton.Bounds, _titleScreen.CgosClientButton.Label, "WATCH / CONNECT", new Color(99, 223, 185), mousePoint);
                 DrawAppChoice(_titleScreen.CaptureGameButton.Bounds, _titleScreen.CaptureGameButton.Label, "CAPTURE GAME", mousePoint);
@@ -276,7 +276,7 @@ public sealed class TitleScreenRenderer
                 DrawTabNavigationHint));
     }
 
-    private void DrawProfileChoice(Rectangle bounds, string title, string caption, Point mousePoint, bool engine)
+    private void DrawProfileChoice(Rectangle bounds, string title, string englishTitle, Point mousePoint, bool engine)
     {
         var hovered = bounds.Contains(mousePoint);
         var accent = engine ? new Color(125, 225, 255) : new Color(147, 244, 200);
@@ -284,8 +284,8 @@ public sealed class TitleScreenRenderer
         FillRect(bounds, hovered ? new Color(36, 50, 58) : new Color(24, 31, 37));
         DrawRect(bounds, 2, hovered ? new Color(178, 219, 226) : new Color(88, 102, 112));
         FillRect(new Rectangle(bounds.X, bounds.Y, 6, bounds.Height), hovered ? accent : new Color(accent.R, accent.G, accent.B, (byte)100));
-        DrawFittedText(title, new Rectangle(bounds.X + 22, bounds.Y + 20, bounds.Width - 76, 42), Color.White, 0.40f);
-        DrawFittedText(caption, new Rectangle(bounds.X + 22, bounds.Y + 74, bounds.Width - 44, 30), accent, 0.29f);
+        DrawDynamicOptionText(title, new Rectangle(bounds.X + 22, bounds.Y + 18, bounds.Width - 76, 44), Color.White, 0.43f);
+        DrawFittedText(englishTitle, new Rectangle(bounds.X + 22, bounds.Y + 72, bounds.Width - 44, 30), accent, 0.30f);
         var center = new Vector2(bounds.Right - 36, bounds.Y + 42);
         if (engine) _drawingContext.DrawEngineIcon(center);
         else _drawingContext.DrawEntryIcon(center);

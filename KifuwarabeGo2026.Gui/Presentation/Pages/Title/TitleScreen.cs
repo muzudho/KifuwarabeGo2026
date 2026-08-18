@@ -15,8 +15,8 @@ public sealed class TitleScreen
         EntrySettingsLabel = new Headline("ENTRY SETTINGS", new Vector2(460, 338), new Color(125, 225, 255), 0.43f);
         FormalAppsLabel = new Headline("FORMAL APPS", new Vector2(800, 338), new Color(99, 223, 185), 0.43f);
         CasualAppsLabel = new Headline("CASUAL APPS", new Vector2(1140, 338), new Color(255, 190, 92), 0.43f);
-        EngineProfilesButton = new Button(new Rectangle(460, 390, 300, 126), "ENGINE PROFILES", 0.38f);
-        EntryProfilesButton = new Button(new Rectangle(460, 536, 300, 126), "ENTRY PROFILES", 0.38f);
+        EngineProfilesButton = new Button(new Rectangle(460, 390, 300, 126), "エンジン登録", 0.38f);
+        EntryProfilesButton = new Button(new Rectangle(460, 536, 300, 126), "エントリー登録", 0.38f);
         LocalMatchButton = new Button(new Rectangle(800, 390, 300, 126), "Local Match", 0.46f);
         CgosClientButton = new Button(new Rectangle(800, 536, 300, 126), "Online Match (CGOS)", 0.42f);
         CaptureGameButton = new Button(new Rectangle(1140, 390, 300, 126), "ポン抜きゲーム", 0.40f);
