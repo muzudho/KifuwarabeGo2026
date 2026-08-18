@@ -376,6 +376,8 @@ public class Game1 : Game
         if (_session.UseKind is null)
         {
             UpdateAppProviderSelectionKeyboard(keyboard);
+            UpdatePlayerEditTextBox(keyboard, gameTime);
+            UpdateClientIdentityProfileEditTextBox(keyboard, gameTime);
             UpdateGtpEngineEditPanelByKeyboard(keyboard, gameTime);
         }
 
@@ -486,6 +488,8 @@ public class Game1 : Game
             _previousLocalMatchHandleKeyboard = keyboard;
             _previousCgosConnectionKeyboard = keyboard;
             _previousCgosCredentialKeyboard = keyboard;
+            _previousPlayerEditKeyboard = keyboard;
+            _previousClientIdentityProfileEditKeyboard = keyboard;
             _tournamentRulesSetting.SynchronizeKeyboardState(keyboard);
         }
 
