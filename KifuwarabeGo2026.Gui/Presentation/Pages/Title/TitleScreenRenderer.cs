@@ -80,6 +80,7 @@ public sealed class TitleScreenRenderer
         switch (page)
         {
             case TitleMenuPage.Home:
+                var entrySettingsHovered = _titleScreen.EntrySettingsLabelBounds.Contains(mousePoint);
                 var formalAppsHovered = _titleScreen.FormalAppsLabelBounds.Contains(mousePoint);
                 var casualAppsHovered = _titleScreen.CasualAppsLabelBounds.Contains(mousePoint);
                 var localMatchHovered = _titleScreen.LocalMatchButton.IsHit(mousePoint);
@@ -90,15 +91,18 @@ public sealed class TitleScreenRenderer
                 var updateBounds = ApplicationSettingsScreen.Default.UpdateButton.Bounds;
                 var settingsHovered = settingsBounds.Contains(mousePoint);
                 var updateHovered = updateBounds.Contains(mousePoint);
+                _titleScreen.EntrySettingsLabel.Draw(_drawingContext);
                 _titleScreen.FormalAppsLabel.Draw(_drawingContext);
                 _titleScreen.CasualAppsLabel.Draw(_drawingContext);
+                DrawProfileChoice(_titleScreen.EngineProfilesButton.Bounds, "ENGINE PROFILES", "ADD / EDIT / REMOVE", mousePoint, true);
+                DrawProfileChoice(_titleScreen.EntryProfilesButton.Bounds, "ENTRY PROFILES", "PREPARE MATCH ENTRIES", mousePoint, false);
                 DrawHomeServiceChoice(_titleScreen.LocalMatchButton.Bounds, _titleScreen.LocalMatchButton.Label, "PLAY / REVIEW", new Color(99, 223, 185), mousePoint);
                 DrawHomeServiceChoice(_titleScreen.CgosClientButton.Bounds, _titleScreen.CgosClientButton.Label, "WATCH / CONNECT", new Color(99, 223, 185), mousePoint);
                 DrawAppChoice(_titleScreen.CaptureGameButton.Bounds, _titleScreen.CaptureGameButton.Label, "CAPTURE GAME", mousePoint);
-                DrawProfileChoice(_titleScreen.EngineProfilesButton.Bounds, "ENGINE PROFILES", "ADD / EDIT / REMOVE", mousePoint, true);
-                DrawProfileChoice(_titleScreen.EntryProfilesButton.Bounds, "ENTRY PROFILES", "PREPARE MATCH ENTRIES", mousePoint, false);
-                DrawDynamicOptionText("対局、観戦、事前準備をここから選べます。", new Rectangle(500, 716, 890, 38), new Color(180, 195, 195), 0.34f);
-                if (formalAppsHovered)
+                DrawDynamicOptionText("左で対局候補を準備し、利用するアプリを選べます。", new Rectangle(460, 716, 980, 38), new Color(180, 195, 195), 0.34f);
+                if (entrySettingsHovered)
+                    DrawTitleHomeHint("ENTRY SETTINGS", "エンジンと対局候補を準備します！", new Color(125, 225, 255));
+                else if (formalAppsHovered)
                     DrawTitleHomeHint("FORMAL APPS", "他のコンピュータ碁ソフトとできるだけ連携します！", new Color(99, 223, 185));
                 else if (casualAppsHovered)
                     DrawTitleHomeHint("CASUAL APPS", "独自実装で機能追加を進めます！", new Color(255, 190, 92));
@@ -200,10 +204,12 @@ public sealed class TitleScreenRenderer
     {
         var (kind, target) = heading switch
         {
+            "ENTRY SETTINGS" =>
+                (StickyNoteKind.TitleSettingsHint, GetTitleSectionLabelConnectorTarget("ENTRY SETTINGS", new Vector2(460, 338), connectsToRight: false)),
             "FORMAL APPS" =>
-                (StickyNoteKind.TitleFormalAppsHint, GetTitleSectionLabelConnectorTarget("FORMAL APPS", new Vector2(500, 338), connectsToRight: false)),
+                (StickyNoteKind.TitleFormalAppsHint, GetTitleSectionLabelConnectorTarget("FORMAL APPS", new Vector2(800, 338), connectsToRight: false)),
             "CASUAL APPS" =>
-                (StickyNoteKind.TitleCasualAppsHint, GetTitleSectionLabelConnectorTarget("CASUAL APPS", new Vector2(950, 338), connectsToRight: true)),
+                (StickyNoteKind.TitleCasualAppsHint, GetTitleSectionLabelConnectorTarget("CASUAL APPS", new Vector2(1140, 338), connectsToRight: true)),
             "LOCAL MATCH" =>
                 (StickyNoteKind.TitleLocalMatchHint, new Vector2(_titleScreen.LocalMatchButton.Bounds.Left, _titleScreen.LocalMatchButton.Bounds.Center.Y)),
             "ONLINE MATCH" =>
@@ -215,6 +221,7 @@ public sealed class TitleScreenRenderer
         {
             "FORMAL APPS" => new[] { "他のコンピュータ碁ソフトと", "できるだけ連携します！" },
             "CASUAL APPS" => new[] { "独自実装で", "機能追加を進めます！" },
+            "ENTRY SETTINGS" => new[] { "エンジンを登録し、", "対局へ参加させる候補を準備します！" },
             "LOCAL MATCH" => new[] { "ローカルPCで、人間や碁エンジンが", "対局！ など。" },
             "ONLINE MATCH" => new[] { "インターネット上の碁サーバーにお邪魔して", "碁エンジンが対局！" },
             _ => new[] { message },
@@ -271,8 +278,15 @@ public sealed class TitleScreenRenderer
 
     private void DrawProfileChoice(Rectangle bounds, string title, string caption, Point mousePoint, bool engine)
     {
-        DrawAppChoice(bounds, title, caption, mousePoint);
-        var center = new Vector2(bounds.Right - 118, bounds.Center.Y);
+        var hovered = bounds.Contains(mousePoint);
+        var accent = engine ? new Color(125, 225, 255) : new Color(147, 244, 200);
+        FillRect(new Rectangle(bounds.X + 6, bounds.Y + 8, bounds.Width, bounds.Height), new Color(0, 0, 0, 95));
+        FillRect(bounds, hovered ? new Color(36, 50, 58) : new Color(24, 31, 37));
+        DrawRect(bounds, 2, hovered ? new Color(178, 219, 226) : new Color(88, 102, 112));
+        FillRect(new Rectangle(bounds.X, bounds.Y, 6, bounds.Height), hovered ? accent : new Color(accent.R, accent.G, accent.B, (byte)100));
+        DrawFittedText(title, new Rectangle(bounds.X + 22, bounds.Y + 20, bounds.Width - 76, 42), Color.White, 0.40f);
+        DrawFittedText(caption, new Rectangle(bounds.X + 22, bounds.Y + 74, bounds.Width - 44, 30), accent, 0.29f);
+        var center = new Vector2(bounds.Right - 36, bounds.Y + 42);
         if (engine) _drawingContext.DrawEngineIcon(center);
         else _drawingContext.DrawEntryIcon(center);
     }

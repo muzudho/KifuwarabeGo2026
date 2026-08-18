@@ -12,25 +12,28 @@ public sealed class TitleScreen
     private TitleScreen()
     {
         Headline = new Headline("KIFUWARABE GO 2026", new Vector2(478, 230), new Color(244, 238, 218), 1.05f);
-        FormalAppsLabel = new Headline("FORMAL APPS", new Vector2(500, 338), new Color(99, 223, 185), 0.48f);
-        CasualAppsLabel = new Headline("CASUAL APPS", new Vector2(950, 338), new Color(255, 190, 92), 0.48f);
-        LocalMatchButton = new Button(new Rectangle(500, 390, 400, 126), "Local Match", 0.52f);
-        CgosClientButton = new Button(new Rectangle(500, 536, 400, 126), "Online Match (CGOS)", 0.52f);
-        CaptureGameButton = new Button(new Rectangle(950, 390, 440, 84), "ポン抜きゲーム", 0.43f);
-        EngineProfilesButton = new Button(new Rectangle(950, 494, 440, 84), "ENGINE PROFILES", 0.40f);
-        EntryProfilesButton = new Button(new Rectangle(950, 598, 440, 84), "ENTRY PROFILES", 0.40f);
+        EntrySettingsLabel = new Headline("ENTRY SETTINGS", new Vector2(460, 338), new Color(125, 225, 255), 0.43f);
+        FormalAppsLabel = new Headline("FORMAL APPS", new Vector2(800, 338), new Color(99, 223, 185), 0.43f);
+        CasualAppsLabel = new Headline("CASUAL APPS", new Vector2(1140, 338), new Color(255, 190, 92), 0.43f);
+        EngineProfilesButton = new Button(new Rectangle(460, 390, 300, 126), "ENGINE PROFILES", 0.38f);
+        EntryProfilesButton = new Button(new Rectangle(460, 536, 300, 126), "ENTRY PROFILES", 0.38f);
+        LocalMatchButton = new Button(new Rectangle(800, 390, 300, 126), "Local Match", 0.46f);
+        CgosClientButton = new Button(new Rectangle(800, 536, 300, 126), "Online Match (CGOS)", 0.42f);
+        CaptureGameButton = new Button(new Rectangle(1140, 390, 300, 126), "ポン抜きゲーム", 0.40f);
         BackButton = new Button(new Rectangle(1260, 316, 152, 54), "BACK", 0.36f);
         UpdateButton = new Button(new Rectangle(1698, 972, 70, 62), string.Empty, 0.1f);
         SettingsButton = new Button(new Rectangle(1780, 972, 70, 62), string.Empty, 0.1f);
     }
 
     public Rectangle PanelBounds { get; } = new(420, 172, 1080, 736);
-    public Rectangle FormalAppsLabelBounds { get; } = new(480, 322, 310, 62);
-    public Rectangle CasualAppsLabelBounds { get; } = new(930, 322, 310, 62);
+    public Rectangle EntrySettingsLabelBounds { get; } = new(450, 322, 300, 62);
+    public Rectangle FormalAppsLabelBounds { get; } = new(790, 322, 300, 62);
+    public Rectangle CasualAppsLabelBounds { get; } = new(1130, 322, 300, 62);
 
     public Headline Headline { get; }
 
     #region ［FORMAL APPS］
+    public Headline EntrySettingsLabel { get; }
     public Headline FormalAppsLabel { get; }
 
     public Button LocalMatchButton { get; }
