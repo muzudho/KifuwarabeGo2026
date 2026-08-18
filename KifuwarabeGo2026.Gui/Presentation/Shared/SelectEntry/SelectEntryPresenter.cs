@@ -50,7 +50,6 @@ public sealed class SelectEntryPresenter
         drawingContext.DrawText("ENTRY PROFILES", new Vector2(PlayerSelectionListBounds.X, PlayerSelectionListBounds.Y - 34), new Color(147, 244, 200), 0.34f);
         if (session.EntryProfiles.Count == 0)
             drawingContext.DrawFittedText(management ? "NO ENTRY PROFILE - ADD HUMAN OR COMPUTER BELOW." : "NO ENTRY PROFILE - Register one from TITLE > ENTRY PROFILES.", new Rectangle(PlayerSelectionListBounds.X + 24, PlayerSelectionListBounds.Center.Y - 20, PlayerSelectionListBounds.Width - 48, 40), new Color(255, 211, 138), 0.34f);
-        drawingContext.DrawFittedText("PLAYER NAME", new Rectangle(PlayerSelectionListBounds.X + 210, PlayerSelectionListBounds.Y - 30, 180, 22), new Color(180, 210, 215), 0.30f);
         var start = session.PlayerSelectionPageIndex * GoAppSession.PlayerSelectionPageSize;
         for (var slot = 0; slot < GoAppSession.PlayerSelectionPageSize; slot++)
         {
