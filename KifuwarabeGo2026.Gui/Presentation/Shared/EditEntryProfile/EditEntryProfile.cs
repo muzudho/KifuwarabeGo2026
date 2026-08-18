@@ -15,8 +15,6 @@ using System;
 /// <summary>［EDIT ENTRY PROFILE］画面の構成、操作判定、描画を担当します。</summary>
 public sealed class EditEntryProfile
 {
-    public static EditEntryProfile Default { get; } = new();
-
     #region レイアウト
 
     /// <summary>表のラベル、アイコン、値をそろえるための基準位置です。</summary>
@@ -34,7 +32,7 @@ public sealed class EditEntryProfile
     private static readonly Rectangle ClientIdentityHandleTextBounds = new(ClientIdentityValueX, FieldRowTop + FieldRowPitch, ClientIdentityValueWidth, 36);
     private static readonly Rectangle ClientIdentityPasswordTextBounds = new(ClientIdentityValueX, FieldRowTop + FieldRowPitch * 2, ClientIdentityValueWidth, 36);
     private static readonly Rectangle ClientIdentityPasswordVisibilityButtonBounds = new(ClientIdentityPasswordTextBounds.Right - 46, ClientIdentityPasswordTextBounds.Y, 42, 36);
-    private static readonly Rectangle ClientIdentityListButtonBounds = new(1270, FieldRowTop + FieldRowPitch + 29, 58, 58);
+    private static readonly Rectangle ClientIdentityListButtonBounds = new(704, FieldRowTop + FieldRowPitch - 24, 48, 36);
     private static readonly Rectangle EngineTextBounds = new(FieldValueX, FieldRowTop + FieldRowPitch * 3, FieldValueWidth, 42);
 
     #endregion
@@ -229,20 +227,12 @@ public sealed class EditEntryProfile
     {
         var sectionBounds = new Rectangle(ClientIdentityLabelX - 24, ClientIdentityHandleTextBounds.Y - 9, 804, 138);
         draw.DrawLine(new Vector2(sectionBounds.X, sectionBounds.Y), new Vector2(sectionBounds.Right, sectionBounds.Y), 1, new Color(58, 78, 86));
+        draw.DrawText("CLIENT IDENTITY", new Vector2(ClientIdentityLabelX, sectionBounds.Y - 25), new Color(147, 201, 190), 0.30f);
         DrawEditableIdentityField(HandleLabel, EntryProfileEditField.ClientIdentityHandle, session, ClientIdentityHandleTextBounds, mousePoint, draw, mask: false);
         DrawEditableIdentityField(PasswordLabel, EntryProfileEditField.ClientIdentityPassword, session, ClientIdentityPasswordTextBounds, mousePoint, draw,
             mask: !IsClientIdentityPasswordVisible, enabled: !session.IsPlayerEditClientIdentityPasswordDisabled);
         DrawClientIdentityPasswordVisibilityButton(mousePoint, !session.IsPlayerEditClientIdentityPasswordDisabled, draw);
         DrawClientIdentityListButton(mousePoint, draw);
-        // Rotated text is drawn last so it cannot affect following SpriteBatch items.
-        DrawVerticalSectionLabel(sectionBounds, "CLIENT IDENTITY", new Color(66, 104, 116), draw);
-    }
-
-    private static void DrawVerticalSectionLabel(Rectangle sectionBounds, string title, Color accent, EditEntryProfileDrawingCallbacks draw)
-    {
-        var labelBounds = new Rectangle(sectionBounds.X - 48, sectionBounds.Y, 40, sectionBounds.Height);
-        draw.FillRectangle(labelBounds, new Color(accent, 150)); draw.DrawRectangle(labelBounds, 1, new Color(accent, 230));
-        draw.DrawVerticalText(title, new Vector2(labelBounds.Center.X, labelBounds.Center.Y), new Color(205, 218, 218), 0.30f);
     }
 
     private void DrawEditableIdentityField(TableRowLabel label, EntryProfileEditField field, GoAppSession session,
@@ -274,14 +264,14 @@ public sealed class EditEntryProfile
         var color = bounds.Contains(mousePoint) ? new Color(222, 243, 246) : new Color(178, 219, 226);
 
         // 箇条書きの紙。既存のワイヤーフレーム調に合わせ、塗りを最小限にします。
-        var paper = new Rectangle(bounds.X + 16, bounds.Y + 12, 26, 32);
+        var paper = new Rectangle(bounds.X + 13, bounds.Y + 5, 22, 26);
         draw.DrawRectangle(paper, 2, color);
         draw.DrawLine(new Vector2(paper.Right - 8, paper.Y), new Vector2(paper.Right, paper.Y + 8), 1, color);
         draw.DrawLine(new Vector2(paper.Right - 8, paper.Y), new Vector2(paper.Right - 8, paper.Y + 8), 1, color);
         draw.DrawLine(new Vector2(paper.Right - 8, paper.Y + 8), new Vector2(paper.Right, paper.Y + 8), 1, color);
         for (var row = 0; row < 3; row++)
         {
-            var y = paper.Y + 10 + row * 7;
+            var y = paper.Y + 8 + row * 6;
             draw.FillRectangle(new Rectangle(paper.X + 4, y, 3, 3), color);
             draw.DrawLine(new Vector2(paper.X + 10, y + 1), new Vector2(paper.Right - 4, y + 1), 1, color);
         }
@@ -371,6 +361,9 @@ public sealed class EditEntryProfile
     private enum FieldIcon { None, EntryName, Engine }
 
     #endregion
+
+    // Static layout rectangles must be initialized before controls capture them.
+    public static EditEntryProfile Default { get; } = new();
 }
 
 /// <summary>画面コンポーネントに渡す描画機能です。</summary>
