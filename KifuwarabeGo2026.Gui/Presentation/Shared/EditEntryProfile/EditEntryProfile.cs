@@ -56,10 +56,10 @@ public sealed class EditEntryProfile
 
     #endregion
 
-    #region ［Table　＞　PLAYER NAME］
+    #region ［Table　＞　ENTRY NAME］
 
-    /// <summary>［PLAYER NAME］のラベル</summary>
-    TableRowLabel PlayerNameLabel { get; init; } = new("PLAYER NAME", new Rectangle(FieldLabelX, FieldRowTop + 7, 180, 32), new Color(180, 195, 195));
+    /// <summary>［ENTRY NAME］のラベル</summary>
+    TableRowLabel PlayerNameLabel { get; init; } = new("ENTRY NAME", new Rectangle(FieldLabelX, FieldRowTop + 7, 180, 32), new Color(180, 195, 195));
 
     /// <summary>［PLAYER NAME］の単一行テキスト入力用アンダーラインです。</summary>
     
@@ -67,7 +67,7 @@ public sealed class EditEntryProfile
 
     /// <summary>［PLAYER NAME］の付箋</summary>
     
-    StickyNote PlayerNameStickyNote { get; init; } = new(StickyNoteKind.EntryProfileFieldHint, new Vector2(FieldValueX + FieldValueWidth - 24, FieldRowTop + 46), new Color(185, 196, 255), new Color(116, 145, 178), "PLAYER NAME とは？", ["画面に表示され、対局者に識別されるプレイヤーの呼び名です。"], 26);
+    StickyNote PlayerNameStickyNote { get; init; } = new(StickyNoteKind.EntryProfileFieldHint, new Vector2(FieldValueX + FieldValueWidth - 24, FieldRowTop + 46), new Color(185, 196, 255), new Color(116, 145, 178), "ENTRY NAME とは？", ["対局候補の一覧に表示される名前です。"], 26);
 
     #endregion
 
@@ -222,19 +222,20 @@ public sealed class EditEntryProfile
         if (active) draw.DrawTextCaret(text, session.PlayerEditCaretIndex, textBounds, 0.42f);
 
         // アイコン
-        DrawIcon(FieldIcon.PlayerName, IconBounds(textBounds), draw);
+        DrawIcon(FieldIcon.EntryName, IconBounds(textBounds), draw);
     }
 
     private void DrawClientIdentitySection(GoAppSession session, Point mousePoint, EditEntryProfileDrawingCallbacks draw)
     {
         var sectionBounds = new Rectangle(ClientIdentityLabelX - 24, ClientIdentityHandleTextBounds.Y - 9, 804, 138);
         draw.DrawLine(new Vector2(sectionBounds.X, sectionBounds.Y), new Vector2(sectionBounds.Right, sectionBounds.Y), 1, new Color(58, 78, 86));
-        DrawVerticalSectionLabel(sectionBounds, "CLIENT IDENTITY", new Color(66, 104, 116), draw);
         DrawEditableIdentityField(HandleLabel, EntryProfileEditField.ClientIdentityHandle, session, ClientIdentityHandleTextBounds, mousePoint, draw, mask: false);
         DrawEditableIdentityField(PasswordLabel, EntryProfileEditField.ClientIdentityPassword, session, ClientIdentityPasswordTextBounds, mousePoint, draw,
             mask: !IsClientIdentityPasswordVisible, enabled: !session.IsPlayerEditClientIdentityPasswordDisabled);
         DrawClientIdentityPasswordVisibilityButton(mousePoint, !session.IsPlayerEditClientIdentityPasswordDisabled, draw);
         DrawClientIdentityListButton(mousePoint, draw);
+        // Rotated text is drawn last so it cannot affect following SpriteBatch items.
+        DrawVerticalSectionLabel(sectionBounds, "CLIENT IDENTITY", new Color(66, 104, 116), draw);
     }
 
     private static void DrawVerticalSectionLabel(Rectangle sectionBounds, string title, Color accent, EditEntryProfileDrawingCallbacks draw)
@@ -355,10 +356,9 @@ public sealed class EditEntryProfile
 
     private static void DrawIcon(FieldIcon icon, Rectangle bounds, EditEntryProfileDrawingCallbacks draw)
     {
-        if (icon == FieldIcon.PlayerName)
+        if (icon == FieldIcon.EntryName)
         {
-            draw.DrawStone(new Vector2(bounds.Center.X - 7, bounds.Center.Y), 7, true);
-            draw.DrawStone(new Vector2(bounds.Center.X + 7, bounds.Center.Y), 7, false);
+            draw.KfwStationeryDrawingTools.DrawEntryIcon(new Vector2(bounds.Center.X, bounds.Center.Y));
             return;
         }
         if (icon == FieldIcon.Engine) draw.DrawPlayerRoleFace(new Vector2(bounds.Center.X, bounds.Center.Y), true);
@@ -368,7 +368,7 @@ public sealed class EditEntryProfile
 
     #region Private types
 
-    private enum FieldIcon { None, PlayerName, Engine }
+    private enum FieldIcon { None, EntryName, Engine }
 
     #endregion
 }
