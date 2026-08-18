@@ -261,6 +261,7 @@ public sealed class TextBoxController
                 PushUndoSnapshot();
                 Text = Text.Remove(CaretIndex - 1, 1);
                 CaretIndex--;
+                ClearSelection();
             }
         }
 
@@ -275,6 +276,7 @@ public sealed class TextBoxController
             {
                 PushUndoSnapshot();
                 Text = Text.Remove(CaretIndex, 1);
+                ClearSelection();
             }
         }
 

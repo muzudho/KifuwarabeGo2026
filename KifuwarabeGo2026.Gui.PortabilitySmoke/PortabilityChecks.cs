@@ -1537,6 +1537,13 @@ internal static class PortabilityChecks
         controller.HandleKeyboard(new KeyboardState(Keys.Back), new KeyboardState(), frame, clipboard);
         Require(controller.Text == "", "Backspace must delete the complete selection.");
 
+        controller.Begin("abcd", 2);
+        controller.BeginMouseSelection(2, false);
+        controller.EndMouseSelection();
+        controller.HandleKeyboard(new KeyboardState(Keys.Back), new KeyboardState(), frame, clipboard);
+        Require(controller.Text == "acd", "Backspace must delete the character before the caret.");
+        Require(controller.SelectionLength == 0, "Backspace must not create a selection after a click.");
+
         clipboard.Text = "paste";
         controller.Begin("ab", 1);
         controller.HandleKeyboard(
