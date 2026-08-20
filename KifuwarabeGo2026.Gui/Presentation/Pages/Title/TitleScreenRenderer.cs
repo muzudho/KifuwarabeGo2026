@@ -219,7 +219,14 @@ public sealed class TitleScreenRenderer
         };
         var bodyLines = heading switch
         {
-            "FORMAL APPS" => new[] { "他のコンピュータ碁ソフトと", "できるだけ連携します！" },
+            "FORMAL APPS" => new[]
+            {
+                "他の人が作った GTP対応の",
+                "コンピュータ碁の思考エンジンを",
+                "動かせるよう、",
+                "有名なエンジンの拡張仕様は",
+                "取り込んでいます！",
+            },
             "CASUAL APPS" => new[] { "独自実装で", "機能追加を進めます！" },
             "ENTRY SETTINGS" => new[] { "エンジンを登録し、", "対局へ参加させる候補を準備します！" },
             "LOCAL MATCH" => new[] { "ローカルPCで、人間や碁エンジンが", "対局！ など。" },
