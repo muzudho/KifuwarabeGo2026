@@ -2245,6 +2245,10 @@ public class Game1 : Game
                 }
                 else _session.CancelPlayerEditPanel();
             }
+            else if (entryEditor.HumanTypeButton.IsHit(point))
+                _session.SetPlayerEditKind(EntryProfileKind.Human);
+            else if (entryEditor.EngineTypeButton.IsHit(point))
+                _session.SetPlayerEditKind(EntryProfileKind.Computer);
             else if (_session.PlayerEditDraft.Kind == EntryProfileKind.Computer &&
                       EditEntryProfile.Default.IsEngineChangeHit(point))
                 _session.OpenPlayerEditGtpEngineSelectionDialog();
@@ -2284,16 +2288,9 @@ public class Game1 : Game
             return;
         }
 
-        if (isManagement && selectEntryScreen.AddHumanButton.IsHit(point))
+        if (isManagement && selectEntryScreen.AddButton.IsHit(point))
         {
             if (_session.AddEntryProfile(EntryProfileKind.Human))
-                SavePlayerAndClientIdentityCatalogs();
-            return;
-        }
-
-        if (isManagement && selectEntryScreen.AddComputerButton.IsHit(point))
-        {
-            if (_session.AddEntryProfile(EntryProfileKind.Computer))
                 SavePlayerAndClientIdentityCatalogs();
             return;
         }

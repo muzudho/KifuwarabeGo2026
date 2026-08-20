@@ -28,7 +28,6 @@ public sealed class SelectEntryPresenter
         var pageCount = Math.Max(1, (int)Math.Ceiling(session.EntryProfiles.Count / (double)GoAppSession.PlayerSelectionPageSize));
         screen.UpdateState(
             management || session.CanCommitPlayerSelection,
-            session.GtpEngineProfiles.Count > 0,
             session.PlayerDialogSelectionIndex >= 0,
             session.CanDeleteSelectedEntryProfile,
             session.EntryProfiles.Count > 1,
@@ -49,7 +48,7 @@ public sealed class SelectEntryPresenter
         drawingContext.DrawRectangle(PlayerSelectionListBounds, 1, new Color(67, 84, 92));
         drawingContext.DrawText("ENTRY PROFILES", new Vector2(PlayerSelectionListBounds.X, PlayerSelectionListBounds.Y - 34), new Color(147, 244, 200), 0.34f);
         if (session.EntryProfiles.Count == 0)
-            drawingContext.DrawFittedText(management ? "NO ENTRY PROFILE - ADD HUMAN OR COMPUTER BELOW." : "NO ENTRY PROFILE - Register one from TITLE > ENTRY PROFILES.", new Rectangle(PlayerSelectionListBounds.X + 24, PlayerSelectionListBounds.Center.Y - 20, PlayerSelectionListBounds.Width - 48, 40), new Color(255, 211, 138), 0.34f);
+            drawingContext.DrawFittedText(management ? "NO ENTRY PROFILE - ADD ONE BELOW." : "NO ENTRY PROFILE - Register one from TITLE > ENTRY PROFILES.", new Rectangle(PlayerSelectionListBounds.X + 24, PlayerSelectionListBounds.Center.Y - 20, PlayerSelectionListBounds.Width - 48, 40), new Color(255, 211, 138), 0.34f);
         var start = session.PlayerSelectionPageIndex * GoAppSession.PlayerSelectionPageSize;
         for (var slot = 0; slot < GoAppSession.PlayerSelectionPageSize; slot++)
         {
@@ -89,15 +88,9 @@ public sealed class SelectEntryPresenter
             drawingContext.DrawFittedText($"HANDLE: {identity.LoginName}", new Rectangle(bounds.X + 18, bounds.Y + 39, bounds.Width - 36, 22), new Color(180, 195, 195), 0.27f);
         }
 
-        var addHeaderBounds = new Rectangle(270, 846, 272, 26);
         if (management)
         {
-        drawingContext.FillRectangle(addHeaderBounds, new Color(56, 54, 84));
-        drawingContext.DrawRectangle(addHeaderBounds, 1, new Color(133, 128, 177));
-        var addLabelSize = drawingContext.MeasureText("ADD") * 0.34f;
-        drawingContext.DrawText("ADD", new Vector2(addHeaderBounds.Center.X - addLabelSize.X / 2f, addHeaderBounds.Center.Y - addLabelSize.Y / 2f), Color.White, 0.34f);
-        screen.AddHumanButton.Draw(mousePoint, drawingContext);
-        screen.AddComputerButton.Draw(mousePoint, drawingContext);
+        screen.AddButton.Draw(mousePoint, drawingContext);
         screen.DuplicateButton.Draw(mousePoint, drawingContext);
         screen.EditButton.Draw(mousePoint, drawingContext);
         screen.DeleteButton.Draw(mousePoint, drawingContext);

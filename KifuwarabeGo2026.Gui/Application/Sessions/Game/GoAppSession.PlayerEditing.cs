@@ -180,6 +180,23 @@ public sealed partial class GoAppSession
         return loaded;
     }
 
+    public bool SetPlayerEditKind(EntryProfileKind kind)
+    {
+        if (PlayerEditDraft.Kind == kind) return true;
+
+        if (kind == EntryProfileKind.Computer)
+        {
+            if (_gtpEngineProfiles.Count == 0) return false;
+            if (FindGtpEngineIndex(PlayerEditDraft.EngineProfileId) < 0)
+                PlayerEditDraft.EngineProfileId = _gtpEngineProfiles[0].Id;
+        }
+
+        PlayerEditDraft.Kind = kind;
+        ActivePlayerEditField = null;
+        IsPlayerEditDirty = true;
+        return true;
+    }
+
     public bool AddPlayerEditClientIdentity()
     {
         if (PlayerEditDraft.ClientIdentityProfileIds.Count >= 5) return false;

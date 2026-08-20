@@ -7,7 +7,7 @@ using System;
 /// <summary>HANDLE と PASSWORD を一組として表示する、Entry Profile 共通行です。</summary>
 internal static class ClientIdentityCredentialPair
 {
-    public const int Top = 470;
+    public const int Top = 560;
     public const int Pitch = 62;
     public static Rectangle RowBounds(int index) => new(548, Top + index * Pitch, 812, 54);
     public static Rectangle HandleBounds(int index) => new(610, Top + index * Pitch + 8, 270, 36);

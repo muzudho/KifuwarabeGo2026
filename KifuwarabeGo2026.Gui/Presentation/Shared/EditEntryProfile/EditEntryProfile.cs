@@ -30,14 +30,16 @@ public sealed class EditEntryProfile
     private const int ClientIdentityLabelX = FieldLabelX;
     private const int ClientIdentityValueX = 785;
     private const int ClientIdentityValueWidth = 470;
-    private static readonly Rectangle ClientIdentityHandleTextBounds = new(ClientIdentityValueX, FieldRowTop + FieldRowPitch, ClientIdentityValueWidth, 36);
-    private static readonly Rectangle ClientIdentityPasswordTextBounds = new(ClientIdentityValueX, FieldRowTop + FieldRowPitch * 2, ClientIdentityValueWidth, 36);
+    private static readonly Rectangle ClientIdentityHandleTextBounds = new(ClientIdentityValueX, 568, ClientIdentityValueWidth, 36);
+    private static readonly Rectangle ClientIdentityPasswordTextBounds = new(ClientIdentityValueX, 630, ClientIdentityValueWidth, 36);
     private static readonly Rectangle ClientIdentityPasswordVisibilityButtonBounds = new(ClientIdentityPasswordTextBounds.Right - 4, ClientIdentityPasswordTextBounds.Y, 42, 36);
     private static readonly Rectangle ClientIdentityListButtonBounds = new(1312, FieldRowTop + FieldRowPitch + 29, 58, 58);
-    private static readonly Rectangle EngineTextBounds = new(FieldValueX, 850, FieldValueWidth, 42);
-    private static readonly Rectangle AddClientIdentityButtonBounds = new(869, 536, 170, 42);
-    private static readonly Rectangle HandleHeadingBounds = new(600, 438, 280, 32);
-    private static readonly Rectangle PasswordHeadingBounds = new(890, 438, 280, 32);
+    private static readonly Rectangle EntryTypeHumanButtonBounds = new(FieldValueX, 365, 170, 46);
+    private static readonly Rectangle EntryTypeEngineButtonBounds = new(FieldValueX + 182, 365, 170, 46);
+    private static readonly Rectangle EngineTextBounds = new(FieldValueX, 430, FieldValueWidth, 42);
+    private static readonly Rectangle AddClientIdentityButtonBounds = new(869, 876, 170, 42);
+    private static readonly Rectangle HandleHeadingBounds = new(600, 526, 280, 32);
+    private static readonly Rectangle PasswordHeadingBounds = new(890, 526, 280, 32);
 
     #endregion
 
@@ -70,6 +72,14 @@ public sealed class EditEntryProfile
     /// <summary>［PLAYER NAME］の付箋</summary>
     
     StickyNote PlayerNameStickyNote { get; init; } = new(StickyNoteKind.EntryProfileFieldHint, new Vector2(FieldValueX + FieldValueWidth - 24, FieldRowTop + 46), new Color(185, 196, 255), new Color(116, 145, 178), "ENTRY NAME とは？", ["画面に表示されたり、棋譜に保存されたり", "する対局者の名前です。", "『もし記事に掲載されたり、配信で", "呼び出されることになったら？』", "ということも考慮して、長すぎず、", "発音もしやすい名前にすると良いでしょう。"], 26);
+
+    #endregion
+
+    #region ［Table　＞　ENTRY TYPE］
+
+    TableRowLabel EntryTypeLabel { get; init; } = new("ENTRY TYPE", new Rectangle(FieldLabelX, EntryTypeHumanButtonBounds.Y + 7, 180, 32), new Color(180, 195, 195));
+    public Button HumanTypeButton { get; } = new(EntryTypeHumanButtonBounds, "HUMAN", 0.34f);
+    public Button EngineTypeButton { get; } = new(EntryTypeEngineButtonBounds, "ENGINE", 0.34f);
 
     #endregion
 
@@ -207,9 +217,10 @@ public sealed class EditEntryProfile
         DiscardButton.Draw(mousePoint, draw.KfwStationeryDrawingTools);
         SaveAndCloseButton.Draw(mousePoint, draw.KfwStationeryDrawingTools);
         DrawPlayerNameField(session, mousePoint, draw);
-        DrawClientIdentitySection(session, mousePoint, draw);
+        DrawEntryTypeField(session, mousePoint, draw);
         if (session.PlayerEditDraft.Kind == EntryProfileKind.Computer)
             DrawPopupField(EngineLabel, session.PlayerEditEngineDisplayName, EngineTextBounds, mousePoint, FieldIcon.Engine, draw);
+        DrawClientIdentitySection(session, mousePoint, draw);
 
         // 付箋（一番前景に描画するために、最後に描画します）
         var stickyNote = FieldHoverBounds(PlayerFieldTextBounds(EntryProfileEditField.DisplayName)).Contains(mousePoint)
@@ -253,11 +264,21 @@ public sealed class EditEntryProfile
         DrawIcon(FieldIcon.EntryName, IconBounds(textBounds), draw);
     }
 
+    private void DrawEntryTypeField(GoAppSession session, Point mousePoint, EditEntryProfileDrawingCallbacks draw)
+    {
+        EntryTypeLabel.Draw(draw.DrawText);
+        HumanTypeButton.IsSelected = session.PlayerEditDraft.Kind == EntryProfileKind.Human;
+        EngineTypeButton.IsSelected = session.PlayerEditDraft.Kind == EntryProfileKind.Computer;
+        EngineTypeButton.IsEnabled = session.GtpEngineProfiles.Count > 0;
+        HumanTypeButton.Draw(mousePoint, draw.KfwStationeryDrawingTools);
+        EngineTypeButton.Draw(mousePoint, draw.KfwStationeryDrawingTools);
+    }
+
     private void DrawClientIdentitySection(GoAppSession session, Point mousePoint, EditEntryProfileDrawingCallbacks draw)
     {
         var identities = session.PlayerEditClientIdentities;
-        var sectionBounds = new Rectangle(ClientIdentityLabelX - 24, 452, 836, Math.Max(70, identities.Count * ClientIdentityCredentialPair.Pitch + 18));
-        draw.DrawText($"CLIENT IDENTITIES  {identities.Count} / 5", new Vector2(ClientIdentityLabelX, 420), new Color(99, 223, 185), 0.34f);
+        var sectionBounds = new Rectangle(ClientIdentityLabelX - 24, 552, 836, Math.Max(70, identities.Count * ClientIdentityCredentialPair.Pitch + 18));
+        draw.DrawText($"CLIENT IDENTITIES  {identities.Count} / 5", new Vector2(ClientIdentityLabelX, 500), new Color(99, 223, 185), 0.34f);
         draw.DrawFittedText("HANDLE", HandleHeadingBounds, new Color(180, 195, 195), 0.50f);
         draw.DrawFittedText("PASSWORD", PasswordHeadingBounds, new Color(180, 195, 195), 0.50f);
         var listBottom = identities.Count == 0
@@ -267,7 +288,7 @@ public sealed class EditEntryProfile
         AddClientIdentityButton.IsEnabled = identities.Count < 5;
         AddClientIdentityButton.Draw(mousePoint, draw.KfwStationeryDrawingTools);
         for (var index = 0; index < identities.Count; index++) DrawClientIdentityPair(index, identities[index], session, mousePoint, draw);
-        var warningTop = session.PlayerEditDraft.Kind == EntryProfileKind.Computer ? 910 : AddClientIdentityButton.Bounds.Bottom + 12;
+        var warningTop = AddClientIdentityButton.Bounds.Bottom + 8;
         draw.DrawDynamicText("パスワードの内容は接続先から見える可能性があります。",
             new Rectangle(ClientIdentityLabelX, warningTop, 812, 26), new Color(255, 190, 132), 0.28f);
         draw.DrawDynamicText("他のサービスで使用しているパスワードは絶対に入力しないでください。",

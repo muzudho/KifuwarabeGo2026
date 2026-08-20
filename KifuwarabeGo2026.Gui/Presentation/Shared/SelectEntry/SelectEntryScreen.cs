@@ -14,12 +14,11 @@ public sealed class SelectEntryScreen
         SelectButton = new Button(new Rectangle(1302, 180, 180, 50), "SELECT", 0.34f);
         PreviousButton = new Button(new Rectangle(686, 782, 104, 48), "PREV", 0.34f);
         NextButton = new Button(new Rectangle(802, 782, 116, 48), "NEXT", 0.42f);
-        AddHumanButton = new Button(new Rectangle(270, 880, 110, 48), "HUMAN", 0.34f);
-        AddComputerButton = new Button(new Rectangle(392, 880, 150, 48), "COMPUTER", 0.34f);
-        DuplicateButton = new Button(new Rectangle(554, 880, 128, 48), "DUPLICATE", 0.29f);
-        EditButton = new Button(new Rectangle(694, 880, 120, 48), "EDIT", 0.34f);
-        DeleteButton = new Button(new Rectangle(826, 880, 120, 48), "DELETE", 0.34f);
-        OrderButton = new Button(new Rectangle(958, 880, 140, 48), "ORDER", 0.34f);
+        AddButton = new Button(new Rectangle(270, 880, 110, 48), "ADD", 0.34f);
+        DuplicateButton = new Button(new Rectangle(392, 880, 128, 48), "DUPLICATE", 0.29f);
+        EditButton = new Button(new Rectangle(532, 880, 120, 48), "EDIT", 0.34f);
+        DeleteButton = new Button(new Rectangle(664, 880, 120, 48), "DELETE", 0.34f);
+        OrderButton = new Button(new Rectangle(796, 880, 140, 48), "ORDER", 0.34f);
     }
 
     public Rectangle DialogBounds { get; } = new(210, 120, 1500, 840);
@@ -30,8 +29,7 @@ public sealed class SelectEntryScreen
     public Button SelectButton { get; }
     public Button PreviousButton { get; }
     public Button NextButton { get; }
-    public Button AddHumanButton { get; }
-    public Button AddComputerButton { get; }
+    public Button AddButton { get; }
     public Button DuplicateButton { get; }
     public Button EditButton { get; }
     public Button DeleteButton { get; }
@@ -62,10 +60,9 @@ public sealed class SelectEntryScreen
         return null;
     }
 
-    public void UpdateState(bool canSelect, bool canAddComputer, bool hasSelection, bool canDelete, bool canOrder, bool canGoPrevious, bool canGoNext)
+    public void UpdateState(bool canSelect, bool hasSelection, bool canDelete, bool canOrder, bool canGoPrevious, bool canGoNext)
     {
         SelectButton.IsEnabled = canSelect;
-        AddComputerButton.IsEnabled = canAddComputer;
         DuplicateButton.IsEnabled = hasSelection;
         EditButton.IsEnabled = hasSelection;
         DeleteButton.IsEnabled = canDelete;
