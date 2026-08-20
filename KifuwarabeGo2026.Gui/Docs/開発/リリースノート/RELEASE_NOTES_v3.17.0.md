@@ -41,12 +41,14 @@
 
 ## テスト状況
 
-- Releaseビルド
-- LauncherSmoke
-- PortabilitySmoke
-- WindowsSmoke
-- Windows x64向けLauncher版・GUI版・Engine版のpublish
+- Releaseビルド成功（警告0、エラー0）
+- LauncherSmoke成功
+- PortabilitySmoke成功
+- WindowsSmoke成功
+- Windows x64向けLauncher版・GUI版・Engine版のpublish成功
 
 ## SHA-256
 
-リリース成果物の作成後に記録します。
+- Launcher版: `BD6D16C8295E1D44609EAA8679E116325261A2F3DE858B35868550135C20F86C`
+- GUI版: `6978EFF5275A93B76BBC71E0235BA65F9C770A96514D58D949DEECE4A08B76D6`
+- Engine版: `4DE97288EF368CC9233079102187AAAC051C7A989D08942D70A342925183EC48`
