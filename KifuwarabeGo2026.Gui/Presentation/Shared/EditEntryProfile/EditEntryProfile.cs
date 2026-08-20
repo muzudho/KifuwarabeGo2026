@@ -36,6 +36,8 @@ public sealed class EditEntryProfile
     private static readonly Rectangle ClientIdentityListButtonBounds = new(1312, FieldRowTop + FieldRowPitch + 29, 58, 58);
     private static readonly Rectangle EngineTextBounds = new(FieldValueX, 850, FieldValueWidth, 42);
     private static readonly Rectangle AddClientIdentityButtonBounds = new(869, 536, 170, 42);
+    private static readonly Rectangle HandleHeadingBounds = new(600, 438, 280, 32);
+    private static readonly Rectangle PasswordHeadingBounds = new(890, 438, 280, 32);
 
     #endregion
 
@@ -67,7 +69,7 @@ public sealed class EditEntryProfile
 
     /// <summary>［PLAYER NAME］の付箋</summary>
     
-    StickyNote PlayerNameStickyNote { get; init; } = new(StickyNoteKind.EntryProfileFieldHint, new Vector2(FieldValueX + FieldValueWidth - 24, FieldRowTop + 46), new Color(185, 196, 255), new Color(116, 145, 178), "ENTRY NAME とは？", ["対局候補の一覧に表示される名前です。"], 26);
+    StickyNote PlayerNameStickyNote { get; init; } = new(StickyNoteKind.EntryProfileFieldHint, new Vector2(FieldValueX + FieldValueWidth - 24, FieldRowTop + 46), new Color(185, 196, 255), new Color(116, 145, 178), "ENTRY NAME とは？", ["画面に表示されたり、棋譜に保存されたり", "する対局者の名前です。", "『もし記事に掲載されたり、配信で", "呼び出されることになったら？』", "ということも考慮して、長すぎず、", "発音もしやすい名前にすると良いでしょう。"], 26);
 
     #endregion
 
@@ -78,7 +80,9 @@ public sealed class EditEntryProfile
     TableRowLabel PasswordLabel { get; init; } = new("PASSWORD", new Rectangle(ClientIdentityLabelX, ClientIdentityPasswordTextBounds.Y + 7, 180, 32), new Color(180, 195, 195));
 
     /// <summary>［HANDLE］の付箋</summary>
-    StickyNote HandleStickyNote { get; init; } = new(StickyNoteKind.EntryProfileFieldHint, new Vector2(ClientIdentityHandleTextBounds.Right, ClientIdentityHandleTextBounds.Bottom + 2), new Color(185, 196, 255), new Color(116, 145, 178), "HANDLE とは？", ["対局サーバーにログインするときのプレイヤー名です。", "接続する環境ごとにプロフィールへ設定できます。"], 26);
+    StickyNote HandleStickyNote { get; init; } = new(StickyNoteKind.EntryProfileFieldHint, new Vector2(HandleHeadingBounds.Right, HandleHeadingBounds.Bottom), new Color(185, 196, 255), new Color(116, 145, 178), "HANDLE とは？", ["対局者の名前です。", "接続先の機械に入力できるフォーマットに", "合わせたものを言います。", "使える文字や、文字数の上限は", "確認しておいてください。"], 26);
+
+    StickyNote PasswordStickyNote { get; init; } = new(StickyNoteKind.EntryProfileFieldHint, new Vector2(PasswordHeadingBounds.Right, PasswordHeadingBounds.Bottom), new Color(255, 218, 168), new Color(178, 116, 82), "PASSWORD とは？", ["他の人に知られてはいけない秘密の文字列です。", "パスワードの内容は接続先から", "見える可能性があります。", "他のサービスで使用しているパスワードは", "絶対に入力しないでください。"], 26);
 
     #endregion
 
@@ -210,8 +214,10 @@ public sealed class EditEntryProfile
         // 付箋（一番前景に描画するために、最後に描画します）
         var stickyNote = FieldHoverBounds(PlayerFieldTextBounds(EntryProfileEditField.DisplayName)).Contains(mousePoint)
             ? PlayerNameStickyNote
-            : FieldHoverBounds(ClientIdentityHandleTextBounds).Contains(mousePoint)
+            : HandleHeadingBounds.Contains(mousePoint)
                 ? HandleStickyNote
+                : PasswordHeadingBounds.Contains(mousePoint)
+                    ? PasswordStickyNote
                 : session.PlayerEditDraft.Kind == EntryProfileKind.Computer && FieldHoverBounds(EngineTextBounds).Contains(mousePoint)
                     ? EngineStickyNote : null;
         if (stickyNote?.TryPlace(stickyNoteScreen) == true)
@@ -253,8 +259,8 @@ public sealed class EditEntryProfile
         var sectionBounds = new Rectangle(ClientIdentityLabelX - 24, 452, 836, Math.Max(70, identities.Count * ClientIdentityCredentialPair.Pitch + 18));
         draw.DrawLine(new Vector2(sectionBounds.X, sectionBounds.Y), new Vector2(sectionBounds.Right, sectionBounds.Y), 1, new Color(58, 78, 86));
         draw.DrawText($"CLIENT IDENTITIES  {identities.Count} / 5", new Vector2(ClientIdentityLabelX, 420), new Color(99, 223, 185), 0.34f);
-        draw.DrawText("HANDLE", new Vector2(610, 447), new Color(180, 195, 195), 0.25f);
-        draw.DrawText("PASSWORD", new Vector2(900, 447), new Color(180, 195, 195), 0.25f);
+        draw.DrawFittedText("HANDLE", HandleHeadingBounds, new Color(180, 195, 195), 0.50f);
+        draw.DrawFittedText("PASSWORD", PasswordHeadingBounds, new Color(180, 195, 195), 0.50f);
         var listBottom = identities.Count == 0
             ? ClientIdentityCredentialPair.Top
             : ClientIdentityCredentialPair.RowBounds(identities.Count - 1).Bottom;
