@@ -94,7 +94,7 @@ public sealed class LauncherScreen : IDisposable
         _draw.Begin();
         _draw.DrawBackground();
         _draw.DrawText("KIFUWARABE GO 2026", new Vector2(120, 92), new Color(244, 238, 218), 0.92f);
-        _draw.DrawText("COMMON LAUNCHER", new Vector2(124, 158), new Color(99, 223, 185), 0.38f);
+        _draw.DrawText("LAUNCHER", new Vector2(124, 158), new Color(99, 223, 185), 0.38f);
         if (_settingsPage) DrawSettings(mouse); else if (_versionsPage) DrawVersions(mouse); else DrawMain(mouse);
         DrawStatus();
         if (_confirming) DrawConfirmation(mouse);
@@ -146,12 +146,13 @@ public sealed class LauncherScreen : IDisposable
 
     private void DrawProductRow(string product, string? version, int y)
     {
-        _draw.DrawDataRowFrame(new Rectangle(120, y - 8, 1360, 82));
+        var rowBounds = new Rectangle(120, y - 8, 1360, 82);
+        _draw.DrawDataRowFrame(rowBounds);
         if (product == "GUI") DrawBoardIcon(new Rectangle(150, y + 2, 54, 54));
         else DrawRobotIcon(new Rectangle(150, y + 2, 54, 54));
-        _draw.DrawText(product, new Vector2(230, y + 8), Color.White, 0.48f);
-        _draw.DrawText(string.IsNullOrWhiteSpace(version) ? "NOT INSTALLED" : "v" + version.TrimStart('v', 'V'),
-            new Vector2(400, y + 8), new Color(178, 219, 226), 0.44f);
+        _draw.DrawFittedText(product, new Rectangle(230, rowBounds.Y, 145, rowBounds.Height), Color.White, 0.48f);
+        _draw.DrawFittedText(string.IsNullOrWhiteSpace(version) ? "NOT INSTALLED" : "v" + version.TrimStart('v', 'V'),
+            new Rectangle(400, rowBounds.Y, 140, rowBounds.Height), new Color(178, 219, 226), 0.44f);
     }
 
     private void DrawBoardIcon(Rectangle bounds)

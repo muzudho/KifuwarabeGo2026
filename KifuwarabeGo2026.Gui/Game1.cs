@@ -65,7 +65,7 @@ using KifuwarabeGo2026.Gui.Presentation.Shared.RandomSeedRow;
 
 public class Game1 : Game
 {
-    private const string ProductTitle = "Kifuwarabe Go 2026";
+    private const string ProductTitle = "Kifuwarabe Go 2026 GUI";
     private readonly GraphicsDeviceManager _graphics;
     private readonly IClipboardService _clipboardService;
     private readonly ITextCompositionService _textCompositionService;

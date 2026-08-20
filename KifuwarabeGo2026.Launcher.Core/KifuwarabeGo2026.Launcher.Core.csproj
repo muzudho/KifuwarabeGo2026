@@ -5,8 +5,5 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>KifuwarabeGo2026.Launcher.Core</AssemblyName>
     <RootNamespace>KifuwarabeGo2026.Launcher</RootNamespace>
-    <Version>3.15.0</Version>
-    <AssemblyVersion>3.15.0.0</AssemblyVersion>
-    <FileVersion>3.15.0.0</FileVersion>
   </PropertyGroup>
 </Project>

@@ -6,9 +6,6 @@
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>3.15.0</Version>
-    <AssemblyVersion>3.15.0.0</AssemblyVersion>
-    <FileVersion>3.15.0.0</FileVersion>
     <ApplicationIcon>EngineIcon.ico</ApplicationIcon>
   </PropertyGroup>
 

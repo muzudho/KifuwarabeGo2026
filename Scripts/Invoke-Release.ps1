@@ -45,13 +45,10 @@ function Assert-FileExists {
 function Assert-ProjectVersion {
     param([Parameter(Mandatory)] [string] $ProjectPath)
 
-    [xml] $project = Get-Content -Raw -LiteralPath $ProjectPath
-    $actualVersion = @(
-        $project.Project.PropertyGroup |
-            ForEach-Object { $_.Version } |
-            Where-Object { $null -ne $_ } |
-            Select-Object -First 1
-    )[0]
+    $actualVersion = (& dotnet msbuild $ProjectPath -nologo -getProperty:Version).Trim()
+    if ($LASTEXITCODE -ne 0) {
+        throw "Unable to read the effective version from ${ProjectPath}"
+    }
     if ($actualVersion -ne $Version) {
         throw "Version mismatch in ${ProjectPath}: expected $Version, found $actualVersion"
     }

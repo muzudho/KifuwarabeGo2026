@@ -39,7 +39,15 @@ internal sealed class LauncherGame : Game
         Content.RootDirectory = "Content";
         IsMouseVisible = true;
         Window.AllowUserResizing = true;
-        Window.Title = "KIFUWARABE GO 2026 - COMMON LAUNCHER";
+        Window.Title = CreateWindowTitle();
+    }
+
+    private static string CreateWindowTitle()
+    {
+        var version = typeof(LauncherGame).Assembly.GetName().Version;
+        return version is null
+            ? "Kifuwarabe Go 2026 Launcher"
+            : $"Kifuwarabe Go 2026 Launcher | v{version.Major}.{version.Minor}.{version.Build}";
     }
 
     protected override void LoadContent()
