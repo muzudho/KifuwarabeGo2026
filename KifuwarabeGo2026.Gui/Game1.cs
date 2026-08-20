@@ -6439,6 +6439,33 @@ public class Game1 : Game
             return;
         }
 
+        if (_applicationSettingsPage == ApplicationSettingsPage.Sound)
+        {
+            if (settingsScreen.StoneSoundTestButton.IsHit(point))
+            {
+                PlayPlaceStoneSound();
+                _applicationSettingsMessage = "PLAYED: STONE";
+            }
+            else if (settingsScreen.DiscardSoundTestButton.IsHit(point))
+            {
+                PlayScreenTransitionSound();
+                _applicationSettingsMessage = "PLAYED: DISCARD";
+            }
+            else if (settingsScreen.ShutterSoundTestButton.IsHit(point))
+            {
+                PlayScreenshotShutterSound();
+                _applicationSettingsMessage = "PLAYED: SHUTTER";
+            }
+            else if (settingsScreen.MatchAlarmSoundTestButton.IsHit(point))
+            {
+                PlayUpcomingMatchChime();
+                _applicationSettingsMessage = "PLAYED: MATCH ALARM";
+            }
+            else return;
+            GuiOperationLog.User("Tested application sound", _applicationSettingsMessage);
+            return;
+        }
+
         if (_applicationSettingsPage == ApplicationSettingsPage.Log && settingsScreen.LogRootLink.IsHit(point))
         {
             GuiOperationLog.User("Pressed log folder Browse button");

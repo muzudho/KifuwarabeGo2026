@@ -16,6 +16,7 @@ public enum ApplicationSettingsPage
     Log,
     OtherFolders,
     Other,
+    Sound,
 }
 
 /// <summary>アプリ設定画面と、タイトル右下の設定操作 UI を所有します。</summary>
@@ -31,6 +32,11 @@ public sealed class ApplicationSettingsScreen
         LogTabButton = new Button(new Rectangle(440, 242, 250, 52), "LOG", 0.34f);
         OtherFoldersTabButton = new Button(new Rectangle(702, 242, 360, 52), "OTHER FOLDERS", 0.34f);
         OtherTabButton = new Button(new Rectangle(1074, 242, 250, 52), "OTHER", 0.34f);
+        SoundTabButton = new Button(new Rectangle(1336, 242, 174, 52), "SOUND", 0.34f);
+        StoneSoundTestButton = new Button(new Rectangle(1240, 374, 220, 54), "TEST", 0.34f);
+        DiscardSoundTestButton = new Button(new Rectangle(1240, 494, 220, 54), "TEST", 0.34f);
+        ShutterSoundTestButton = new Button(new Rectangle(1240, 614, 220, 54), "TEST", 0.34f);
+        MatchAlarmSoundTestButton = new Button(new Rectangle(1240, 734, 220, 54), "TEST", 0.34f);
         LogRootLink = CreateLink(new Rectangle(440, 374, 1070, 58), "BROWSE");
         SgfFolderLink = CreateLink(new Rectangle(440, 374, 1070, 70), "BROWSE");
         ScreenshotFolderLink = CreateLink(new Rectangle(440, 564, 1070, 70), "BROWSE");
@@ -47,6 +53,11 @@ public sealed class ApplicationSettingsScreen
     public Button LogTabButton { get; }
     public Button OtherFoldersTabButton { get; }
     public Button OtherTabButton { get; }
+    public Button SoundTabButton { get; }
+    public Button StoneSoundTestButton { get; }
+    public Button DiscardSoundTestButton { get; }
+    public Button ShutterSoundTestButton { get; }
+    public Button MatchAlarmSoundTestButton { get; }
     public LinkUnderline LogRootLink { get; }
     public LinkUnderline SgfFolderLink { get; }
     public LinkUnderline ScreenshotFolderLink { get; }
@@ -58,7 +69,8 @@ public sealed class ApplicationSettingsScreen
     {
         ApplicationSettingsPage.Log => LogTabButton,
         ApplicationSettingsPage.OtherFolders => OtherFoldersTabButton,
-        _ => OtherTabButton,
+        ApplicationSettingsPage.Other => OtherTabButton,
+        _ => SoundTabButton,
     };
 
     public ApplicationSettingsPage? GetTabHit(Point point)
@@ -128,12 +140,21 @@ public sealed class ApplicationSettingsScreen
             DrawValueField(drawingContext, string.Empty, screenshotSaveDirectory, ScreenshotFolderLink, mousePoint);
             drawingContext.DrawFittedText("Ctrl + P captures the whole game window, including its frame.", new Rectangle(440, 656, 1020, 28), new Color(180, 195, 195), 0.30f);
         }
-        else
+        else if (page == ApplicationSettingsPage.Other)
         {
             drawingContext.DrawVerticalResultSection(new Rectangle(440, 354, 1070, 152), "APPLICATION", new Color(67, 112, 118));
             DrawValueField(drawingContext, string.Empty, applicationSettingsPath, ApplicationSettingsFileLink, mousePoint);
             drawingContext.DrawVerticalResultSection(new Rectangle(440, 548, 1070, 152), "ENGINE", new Color(76, 91, 126));
             DrawValueField(drawingContext, string.Empty, engineSettingsPath, EngineSettingsFileLink, mousePoint);
+        }
+        else
+        {
+            DrawSoundTestRow(drawingContext, mousePoint, new Rectangle(440, 354, 1070, 94), "STONE", "Stone placement sound", StoneSoundTestButton, new Color(67, 112, 118));
+            DrawSoundTestRow(drawingContext, mousePoint, new Rectangle(440, 474, 1070, 94), "DISCARD", "Discard and screen transition sound", DiscardSoundTestButton, new Color(76, 91, 126));
+            DrawSoundTestRow(drawingContext, mousePoint, new Rectangle(440, 594, 1070, 94), "SHUTTER", "Screenshot shutter sound", ShutterSoundTestButton, new Color(105, 91, 72));
+            DrawSoundTestRow(drawingContext, mousePoint, new Rectangle(440, 714, 1070, 94), "MATCH ALARM", "Upcoming match call alarm", MatchAlarmSoundTestButton, new Color(87, 107, 82));
+            drawingContext.DrawFittedText("If you cannot hear a test, check the Windows volume mixer and this app's output device.",
+                new Rectangle(440, 842, 1070, 34), new Color(255, 205, 140), 0.30f);
         }
 
         if (!string.IsNullOrWhiteSpace(message))
@@ -152,11 +173,19 @@ public sealed class ApplicationSettingsScreen
         {
             var bounds = GetTabButton(page).Bounds;
             drawingContext.FillRectangle(bounds, page == selectedPage ? new Color(31, 49, 49) : bounds.Contains(mousePoint) ? new Color(29, 39, 46) : new Color(21, 28, 34));
-            var label = page switch { ApplicationSettingsPage.Log => "LOG", ApplicationSettingsPage.OtherFolders => "OTHER FOLDERS", _ => "OTHER" };
+            var label = page switch { ApplicationSettingsPage.Log => "LOG", ApplicationSettingsPage.OtherFolders => "OTHER FOLDERS", ApplicationSettingsPage.Other => "OTHER", _ => "SOUND" };
             drawingContext.DrawFittedText(label, new Rectangle(bounds.X + 18, bounds.Y + 9, bounds.Width - 36, 30), Color.White, 0.34f);
             drawingContext.FillRoundedRectangle(new Rectangle(bounds.X + 10, bounds.Bottom - 7, bounds.Width - 20, 5), 2,
                 page == selectedPage ? new Color(99, 223, 185) : bounds.Contains(mousePoint) ? new Color(185, 196, 255) : new Color(58, 78, 86));
         }
+    }
+
+    private static void DrawSoundTestRow(KfwStationeryDrawingTools drawingContext, Point mousePoint, Rectangle bounds,
+        string heading, string description, Button testButton, Color accent)
+    {
+        drawingContext.DrawVerticalResultSection(bounds, heading, accent);
+        drawingContext.DrawFittedText(description, new Rectangle(bounds.X + 48, bounds.Y + 30, 700, 34), Color.White, 0.38f);
+        testButton.Draw(mousePoint, drawingContext);
     }
 
     private static void DrawValueField(KfwStationeryDrawingTools drawingContext, string label, string value, LinkUnderline link, Point mousePoint)
