@@ -257,7 +257,6 @@ public sealed class EditEntryProfile
     {
         var identities = session.PlayerEditClientIdentities;
         var sectionBounds = new Rectangle(ClientIdentityLabelX - 24, 452, 836, Math.Max(70, identities.Count * ClientIdentityCredentialPair.Pitch + 18));
-        draw.DrawLine(new Vector2(sectionBounds.X, sectionBounds.Y), new Vector2(sectionBounds.Right, sectionBounds.Y), 1, new Color(58, 78, 86));
         draw.DrawText($"CLIENT IDENTITIES  {identities.Count} / 5", new Vector2(ClientIdentityLabelX, 420), new Color(99, 223, 185), 0.34f);
         draw.DrawFittedText("HANDLE", HandleHeadingBounds, new Color(180, 195, 195), 0.50f);
         draw.DrawFittedText("PASSWORD", PasswordHeadingBounds, new Color(180, 195, 195), 0.50f);

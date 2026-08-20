@@ -50,7 +50,12 @@ public sealed class StickyNote
                 out var placement))
             return false;
 
-        Bounds = placement.Bounds;
+        var requiredHeight = 68 + Math.Max(1, BodyLines.Count) * BodyLineSpacing + 18;
+        Bounds = new Rectangle(
+            placement.Bounds.X,
+            placement.Bounds.Y,
+            placement.Bounds.Width,
+            Math.Max(placement.Bounds.Height, requiredHeight));
         ConnectorEnd = placement.ConnectorEnd;
         return true;
     }
