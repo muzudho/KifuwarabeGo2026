@@ -2224,10 +2224,14 @@ public class Game1 : Game
         }
         if (_session.IsPlayerEditPanelOpen)
         {
-            if (EditEntryProfile.Default.TryToggleClientIdentityPasswordVisibility(point))
+            var entryEditor = EditEntryProfile.Default;
+            var identities = _session.PlayerEditClientIdentities;
+            if (entryEditor.TryToggleClientIdentityPasswordVisibility(point, identities))
                 return;
-            else if (EditEntryProfile.Default.IsClientIdentityChangeHit(point))
-                _session.OpenClientIdentityProfileSelectionPanel();
+            else if (entryEditor.AddClientIdentityButton.IsHit(point))
+                _session.AddPlayerEditClientIdentity();
+            else if (entryEditor.GetClientIdentityRemoveHit(point, identities.Count) is var removeIndex && removeIndex >= 0)
+                _session.RemovePlayerEditClientIdentity(removeIndex);
             else if (EditEntryProfile.Default.DiscardButton.IsHit(point))
             {
                 _session.CancelPlayerEditPanel();
@@ -2244,7 +2248,12 @@ public class Game1 : Game
             else if (_session.PlayerEditDraft.Kind == EntryProfileKind.Computer &&
                       EditEntryProfile.Default.IsEngineChangeHit(point))
                 _session.OpenPlayerEditGtpEngineSelectionDialog();
-            else if (EditEntryProfile.Default.GetFieldHit(point) is { } field)
+            else if (entryEditor.GetClientIdentityFieldHit(point, identities.Count) is { } identityField)
+            {
+                _session.SelectPlayerEditClientIdentity(identityField.Index);
+                BeginOrMovePlayerEditField(point, identityField.Field);
+            }
+            else if (entryEditor.GetFieldHit(point) is { } field)
                 BeginOrMovePlayerEditField(point, field);
             return;
         }
@@ -4762,7 +4771,9 @@ public class Game1 : Game
         var text = _session.ActivePlayerEditField == field
             ? _playerEditTextBox.Text
             : _session.GetPlayerEditFieldText(field);
-        var caretIndex = _presentationServices is null ? text.Length : EditEntryProfile.Default.GetCaretIndex(_presentationServices.Stationery, point, field, text);
+        var caretIndex = _presentationServices is null ? text.Length : field is EntryProfileEditField.ClientIdentityHandle or EntryProfileEditField.ClientIdentityPassword
+            ? EditEntryProfile.Default.GetClientIdentityCaretIndex(_presentationServices.Stationery, point, _session.ClientIdentityProfileEditIndex, field, text)
+            : EditEntryProfile.Default.GetCaretIndex(_presentationServices.Stationery, point, field, text);
         if (_session.ActivePlayerEditField == field)
         {
             _playerEditTextBox.BeginMouseSelection(caretIndex, IsShiftDown());

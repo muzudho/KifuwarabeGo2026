@@ -2,6 +2,7 @@ namespace KifuwarabeGo2026.Gui.Application;
 
 using KifuwarabeGo2026.Shared.Domain;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 /// <summary>
@@ -23,11 +24,14 @@ public sealed partial class GoAppSession
     public ClientIdentityProfile PlayerEditClientIdentityDraft { get; private set; } = new();
     private EntryProfile PlayerEditOriginalProfile { get; set; } = new();
     private ClientIdentityProfile PlayerEditOriginalClientIdentityProfile { get; set; } = new();
+    private List<ClientIdentityProfile> PlayerEditOriginalClientIdentities { get; set; } = [];
 
     /// <summary>Entry Profile または表示中の Client Identity に、開始時からの変更があるかを返します。</summary>
     public bool HasPlayerEditChanges =>
         !AreSame(PlayerEditDraft, PlayerEditOriginalProfile) ||
-        !AreSame(PlayerEditClientIdentityDraft, PlayerEditOriginalClientIdentityProfile);
+        !AreSame(PlayerEditClientIdentityDraft, PlayerEditOriginalClientIdentityProfile) ||
+        PlayerEditOriginalClientIdentities.Any(original =>
+            _clientIdentityProfiles.FirstOrDefault(item => item.Id == original.Id) is not { } current || !AreSame(current, original));
 
     public bool OpenSelectedPlayerEditPanel()
     {
@@ -42,6 +46,8 @@ public sealed partial class GoAppSession
         ClientIdentityProfileEditIndex = 0;
         LoadPlayerEditClientIdentityDraft();
         PlayerEditOriginalClientIdentityProfile = PlayerEditClientIdentityDraft.Clone();
+        PlayerEditOriginalClientIdentities = PlayerEditDraft.ClientIdentityProfileIds
+            .Select(id => _clientIdentityProfiles.First(profile => profile.Id == id).Clone()).ToList();
         IsPlayerEditPanelOpen = true;
         ActivateWindow(ActiveWindowId.PlayerEdit);
         return true;
@@ -159,6 +165,49 @@ public sealed partial class GoAppSession
 
     public string PlayerEditClientIdentityPassword => PlayerEditClientIdentityDraft.LoginPass;
 
+    public IReadOnlyList<ClientIdentityProfile> PlayerEditClientIdentities => PlayerEditDraft.ClientIdentityProfileIds
+        .Select(id => id == PlayerEditClientIdentityDraft.Id
+            ? PlayerEditClientIdentityDraft
+            : _clientIdentityProfiles.First(profile => profile.Id == id)).ToArray();
+
+    public bool SelectPlayerEditClientIdentity(int index)
+    {
+        if (index < 0 || index >= PlayerEditDraft.ClientIdentityProfileIds.Count) return false;
+        CommitPlayerEditClientIdentityDraft();
+        ClientIdentityProfileEditIndex = index;
+        var loaded = LoadPlayerEditClientIdentityDraft();
+        if (loaded) PlayerEditOriginalClientIdentityProfile = PlayerEditClientIdentityDraft.Clone();
+        return loaded;
+    }
+
+    public bool AddPlayerEditClientIdentity()
+    {
+        if (PlayerEditDraft.ClientIdentityProfileIds.Count >= 5) return false;
+        CommitPlayerEditClientIdentityDraft();
+        var identity = new ClientIdentityProfile { DisplayName = "Client Identity" };
+        _clientIdentityProfiles.Add(identity);
+        PlayerEditDraft.ClientIdentityProfileIds.Add(identity.Id);
+        ClientIdentityProfileEditIndex = PlayerEditDraft.ClientIdentityProfileIds.Count - 1;
+        LoadPlayerEditClientIdentityDraft();
+        PlayerEditOriginalClientIdentityProfile = new ClientIdentityProfile { Id = identity.Id };
+        IsPlayerEditDirty = true;
+        return true;
+    }
+
+    public bool RemovePlayerEditClientIdentity(int index)
+    {
+        if (PlayerEditDraft.ClientIdentityProfileIds.Count <= 1 || index < 0 || index >= PlayerEditDraft.ClientIdentityProfileIds.Count) return false;
+        CommitPlayerEditClientIdentityDraft();
+        var id = PlayerEditDraft.ClientIdentityProfileIds[index];
+        PlayerEditDraft.ClientIdentityProfileIds.RemoveAt(index);
+        if (!PlayerEditOriginalClientIdentities.Any(item => item.Id == id)) _clientIdentityProfiles.RemoveAll(item => item.Id == id);
+        ClientIdentityProfileEditIndex = Math.Clamp(index, 0, PlayerEditDraft.ClientIdentityProfileIds.Count - 1);
+        LoadPlayerEditClientIdentityDraft();
+        PlayerEditOriginalClientIdentityProfile = PlayerEditClientIdentityDraft.Clone();
+        IsPlayerEditDirty = true;
+        return true;
+    }
+
     public void ReloadPlayerEditClientIdentityDraft() => LoadPlayerEditClientIdentityDraft();
 
     public bool SavePlayerEditDraft()
@@ -172,9 +221,10 @@ public sealed partial class GoAppSession
         if (draft.Kind == EntryProfileKind.Computer && FindGtpEngineIndex(draft.EngineProfileId) < 0)
             return false;
 
-        var identityIndex = _clientIdentityProfiles.FindIndex(profile => string.Equals(profile.Id, PlayerEditClientIdentityDraft.Id, StringComparison.Ordinal));
-        if (identityIndex >= 0) _clientIdentityProfiles[identityIndex] = PlayerEditClientIdentityDraft.Clone();
+        CommitPlayerEditClientIdentityDraft();
         _playerProfiles[PlayerEditProfileIndex] = draft;
+        var referencedIds = _playerProfiles.SelectMany(profile => profile.ClientIdentityProfileIds).ToHashSet(StringComparer.Ordinal);
+        _clientIdentityProfiles.RemoveAll(profile => !referencedIds.Contains(profile.Id));
         IsPlayerEditDirty = false;
         IsPlayerEditPanelOpen = false;
         DeactivateWindow(ActiveWindowId.PlayerEdit);
@@ -187,11 +237,24 @@ public sealed partial class GoAppSession
 
     public void CancelPlayerEditPanel()
     {
+        foreach (var original in PlayerEditOriginalClientIdentities)
+        {
+            var index = _clientIdentityProfiles.FindIndex(item => item.Id == original.Id);
+            if (index >= 0) _clientIdentityProfiles[index] = original.Clone();
+        }
+        var originalIds = PlayerEditOriginalClientIdentities.Select(item => item.Id).ToHashSet(StringComparer.Ordinal);
+        _clientIdentityProfiles.RemoveAll(item => PlayerEditDraft.ClientIdentityProfileIds.Contains(item.Id) && !originalIds.Contains(item.Id));
         IsPlayerEditPanelOpen = false;
         DeactivateWindow(ActiveWindowId.PlayerEdit);
         IsPlayerEditDirty = false;
         IsCreatingEngineProfileForPlayerEdit = false;
         ActivePlayerEditField = null;
+    }
+
+    private void CommitPlayerEditClientIdentityDraft()
+    {
+        var index = _clientIdentityProfiles.FindIndex(profile => profile.Id == PlayerEditClientIdentityDraft.Id);
+        if (index >= 0) _clientIdentityProfiles[index] = PlayerEditClientIdentityDraft.Clone();
     }
 
     private bool LoadPlayerEditClientIdentityDraft()

@@ -11,6 +11,7 @@ using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.TableRowLabel;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 using Microsoft.Xna.Framework;
 using System;
+using System.Collections.Generic;
 
 /// <summary>［EDIT ENTRY PROFILE］画面の構成、操作判定、描画を担当します。</summary>
 public sealed class EditEntryProfile
@@ -23,7 +24,7 @@ public sealed class EditEntryProfile
     private const int FieldIconX = 742;
     private const int FieldValueX = 785;
     private const int FieldValueWidth = 575;
-    private const int FieldRowTop = 375;
+    private const int FieldRowTop = 295;
     private const int FieldRowPitch = 80;
 
     private const int ClientIdentityLabelX = FieldLabelX;
@@ -33,21 +34,22 @@ public sealed class EditEntryProfile
     private static readonly Rectangle ClientIdentityPasswordTextBounds = new(ClientIdentityValueX, FieldRowTop + FieldRowPitch * 2, ClientIdentityValueWidth, 36);
     private static readonly Rectangle ClientIdentityPasswordVisibilityButtonBounds = new(ClientIdentityPasswordTextBounds.Right - 4, ClientIdentityPasswordTextBounds.Y, 42, 36);
     private static readonly Rectangle ClientIdentityListButtonBounds = new(1312, FieldRowTop + FieldRowPitch + 29, 58, 58);
-    private static readonly Rectangle EngineTextBounds = new(FieldValueX, FieldRowTop + FieldRowPitch * 3, FieldValueWidth, 42);
+    private static readonly Rectangle EngineTextBounds = new(FieldValueX, 850, FieldValueWidth, 42);
+    private static readonly Rectangle AddClientIdentityButtonBounds = new(869, 536, 170, 42);
 
     #endregion
 
     #region ［DISCARD］ボタン
 
     /// <summary>編集内容を破棄して画面を閉じます。</summary>
-    public Button DiscardButton { get; } = new(new Rectangle(1080, 288, 132, 42), "DISCARD", 0.30f);
+    public Button DiscardButton { get; } = new(new Rectangle(1080, 188, 132, 42), "DISCARD", 0.30f);
 
     #endregion
 
     #region ［SAVE & CLOSE］ボタン
 
     /// <summary>編集内容を保存して画面を閉じます。</summary>
-    public Button SaveAndCloseButton { get; } = new(new Rectangle(1224, 288, 148, 42), "SAVE & CLOSE", 0.26f);
+    public Button SaveAndCloseButton { get; } = new(new Rectangle(1224, 188, 148, 42), "SAVE & CLOSE", 0.26f);
 
     /// <summary>ポップアップ選択フィールドへ表示する操作バッジです。</summary>
     public ActionBadgeComponent ChangeActionBadge { get; } = ActionBadgeComponent.Create("CHANGE", EngineTextBounds);
@@ -101,6 +103,8 @@ public sealed class EditEntryProfile
     /// <summary>PASSWORD の平文表示を切り替える目アイコンです。</summary>
     Button ClientIdentityPasswordVisibilityButton { get; } = new(ClientIdentityPasswordVisibilityButtonBounds, string.Empty, 0.1f);
     bool IsClientIdentityPasswordVisible { get; set; }
+    HashSet<string> VisibleClientIdentityPasswords { get; } = new(StringComparer.Ordinal);
+    public Button AddClientIdentityButton { get; } = new(AddClientIdentityButtonBounds, "ADD", 0.32f);
 
     #endregion
 
@@ -108,6 +112,26 @@ public sealed class EditEntryProfile
 
     /// <summary>HANDLE の変更リンクがクリックされたかを判定します。</summary>
     public bool IsClientIdentityChangeHit(Point point) => ClientIdentityListButton.IsHit(point);
+
+    public (int Index, EntryProfileEditField Field)? GetClientIdentityFieldHit(Point point, int count) =>
+        ClientIdentityCredentialPair.GetFieldHit(point, count);
+
+    public int GetClientIdentityRemoveHit(Point point, int count) => ClientIdentityCredentialPair.GetRemoveHit(point, count);
+
+    public int GetClientIdentityCaretIndex(KfwStationeryDrawingTools drawingContext, Point point, int index,
+        EntryProfileEditField field, string text) => drawingContext.GetTextCaretIndex(point.X, text,
+            field == EntryProfileEditField.ClientIdentityHandle
+                ? ClientIdentityCredentialPair.HandleBounds(index)
+                : ClientIdentityCredentialPair.PasswordBounds(index), 0.36f);
+
+    public bool TryToggleClientIdentityPasswordVisibility(Point point, IReadOnlyList<ClientIdentityProfile> identities)
+    {
+        var index = ClientIdentityCredentialPair.GetVisibilityHit(point, identities.Count);
+        if (index < 0) return false;
+        var id = identities[index].Id;
+        if (!VisibleClientIdentityPasswords.Add(id)) VisibleClientIdentityPasswords.Remove(id);
+        return true;
+    }
 
     /// <summary>目アイコンのクリックで PASSWORD の表示方法を切り替えます。</summary>
     public bool TryToggleClientIdentityPasswordVisibility(Point point)
@@ -168,7 +192,7 @@ public sealed class EditEntryProfile
             return;
         }
 
-        var bounds = new Rectangle(510, 270, 900, 528);
+        var bounds = new Rectangle(510, 170, 900, 820);
         draw.FillRectangle(new Rectangle(0, 0, draw.VirtualScreenWidth, draw.VirtualScreenHeight), new Color(0, 0, 0, 140));
         draw.FillRectangle(bounds, new Color(24, 29, 36, 252));
         draw.DrawRectangle(bounds, 2, new Color(116, 145, 146));
@@ -225,21 +249,64 @@ public sealed class EditEntryProfile
 
     private void DrawClientIdentitySection(GoAppSession session, Point mousePoint, EditEntryProfileDrawingCallbacks draw)
     {
-        var sectionBounds = new Rectangle(ClientIdentityLabelX - 24, ClientIdentityHandleTextBounds.Y - 9, 804, 138);
+        var identities = session.PlayerEditClientIdentities;
+        var sectionBounds = new Rectangle(ClientIdentityLabelX - 24, 452, 836, Math.Max(70, identities.Count * ClientIdentityCredentialPair.Pitch + 18));
         draw.DrawLine(new Vector2(sectionBounds.X, sectionBounds.Y), new Vector2(sectionBounds.Right, sectionBounds.Y), 1, new Color(58, 78, 86));
-        DrawVerticalSectionLabel(sectionBounds, "CLIENT IDENTITY", new Color(66, 104, 116), draw);
-        DrawEditableIdentityField(HandleLabel, EntryProfileEditField.ClientIdentityHandle, session, ClientIdentityHandleTextBounds, mousePoint, draw, mask: false);
-        DrawEditableIdentityField(PasswordLabel, EntryProfileEditField.ClientIdentityPassword, session, ClientIdentityPasswordTextBounds, mousePoint, draw,
-            mask: !IsClientIdentityPasswordVisible);
-        DrawClientIdentityPasswordVisibilityButton(mousePoint, draw);
-        var warningTop = session.PlayerEditDraft.Kind == EntryProfileKind.Computer
-            ? EngineTextBounds.Bottom + 16
-            : ClientIdentityPasswordTextBounds.Bottom + 16;
+        draw.DrawText($"CLIENT IDENTITIES  {identities.Count} / 5", new Vector2(ClientIdentityLabelX, 420), new Color(99, 223, 185), 0.34f);
+        draw.DrawText("HANDLE", new Vector2(610, 447), new Color(180, 195, 195), 0.25f);
+        draw.DrawText("PASSWORD", new Vector2(900, 447), new Color(180, 195, 195), 0.25f);
+        var listBottom = identities.Count == 0
+            ? ClientIdentityCredentialPair.Top
+            : ClientIdentityCredentialPair.RowBounds(identities.Count - 1).Bottom;
+        AddClientIdentityButton.Bounds = new Rectangle(ClientIdentityCredentialPair.RowBounds(0).Center.X - 85, listBottom + 14, 170, 42);
+        AddClientIdentityButton.IsEnabled = identities.Count < 5;
+        AddClientIdentityButton.Draw(mousePoint, draw.KfwStationeryDrawingTools);
+        for (var index = 0; index < identities.Count; index++) DrawClientIdentityPair(index, identities[index], session, mousePoint, draw);
+        var warningTop = session.PlayerEditDraft.Kind == EntryProfileKind.Computer ? 910 : AddClientIdentityButton.Bounds.Bottom + 12;
         draw.DrawDynamicText("パスワードの内容は接続先から見える可能性があります。",
-            new Rectangle(ClientIdentityValueX, warningTop, ClientIdentityValueWidth, 26), new Color(255, 190, 132), 0.28f);
+            new Rectangle(ClientIdentityLabelX, warningTop, 812, 26), new Color(255, 190, 132), 0.28f);
         draw.DrawDynamicText("他のサービスで使用しているパスワードは絶対に入力しないでください。",
-            new Rectangle(ClientIdentityValueX, warningTop + 26, ClientIdentityValueWidth, 26), new Color(255, 190, 132), 0.28f);
-        DrawClientIdentityListButton(mousePoint, draw);
+            new Rectangle(ClientIdentityLabelX, warningTop + 26, 812, 26), new Color(255, 190, 132), 0.28f);
+    }
+
+    private void DrawClientIdentityPair(int index, ClientIdentityProfile identity, GoAppSession session, Point mousePoint, EditEntryProfileDrawingCallbacks draw)
+    {
+        var row = ClientIdentityCredentialPair.RowBounds(index);
+        var selected = index == session.ClientIdentityProfileEditIndex;
+        draw.FillRectangle(row, selected ? new Color(35, 48, 57, 235) : new Color(27, 34, 40, 220));
+        draw.DrawRectangle(row, 1, selected ? new Color(99, 223, 185) : new Color(66, 86, 94));
+        draw.DrawFittedText($"{index + 1}", new Rectangle(row.X + 16, row.Y + 8, 28, 36), new Color(178, 219, 226), 0.34f);
+        DrawIdentityValue(index, EntryProfileEditField.ClientIdentityHandle, identity.LoginName, false, selected, session, mousePoint, draw);
+        DrawIdentityValue(index, EntryProfileEditField.ClientIdentityPassword, identity.LoginPass,
+            !VisibleClientIdentityPasswords.Contains(identity.Id), selected, session, mousePoint, draw);
+        DrawEyeButton(ClientIdentityCredentialPair.VisibilityBounds(index), VisibleClientIdentityPasswords.Contains(identity.Id), mousePoint, draw);
+        var remove = new Button(ClientIdentityCredentialPair.RemoveBounds(index), "REMOVE", 0.25f) { IsEnabled = session.PlayerEditClientIdentities.Count > 1 };
+        remove.Draw(mousePoint, draw.KfwStationeryDrawingTools);
+    }
+
+    private void DrawIdentityValue(int index, EntryProfileEditField field, string text, bool mask, bool selected,
+        GoAppSession session, Point mousePoint, EditEntryProfileDrawingCallbacks draw)
+    {
+        var bounds = field == EntryProfileEditField.ClientIdentityHandle
+            ? ClientIdentityCredentialPair.HandleBounds(index) : ClientIdentityCredentialPair.PasswordBounds(index);
+        var active = selected && session.ActivePlayerEditField == field;
+        PlayerNameTextUnderline.Bounds = bounds;
+        PlayerNameTextUnderline.SetEditing(active);
+        PlayerNameTextUnderline.UpdatePointer(mousePoint);
+        PlayerNameTextUnderline.Draw(draw.KfwStationeryDrawingTools);
+        if (active) draw.DrawTextSelection(text, session.PlayerEditSelectionStart, session.PlayerEditSelectionLength, bounds, 0.36f);
+        draw.DrawFittedText(mask ? new string('●', text.Length) : string.IsNullOrEmpty(text) ? "-" : text, bounds, Color.White, 0.36f);
+        if (active) draw.DrawTextCaret(text, session.PlayerEditCaretIndex, bounds, 0.36f);
+    }
+
+    private static void DrawEyeButton(Rectangle bounds, bool visible, Point mousePoint, EditEntryProfileDrawingCallbacks draw)
+    {
+        new Button(bounds, string.Empty, 0.1f).Draw(mousePoint, draw.KfwStationeryDrawingTools);
+        var color = bounds.Contains(mousePoint) ? new Color(222, 243, 246) : new Color(178, 219, 226);
+        var center = new Vector2(bounds.Center.X, bounds.Center.Y);
+        draw.DrawLine(new Vector2(bounds.X + 7, center.Y), new Vector2(center.X, visible ? bounds.Y + 8 : center.Y + 2), 2, color);
+        draw.DrawLine(new Vector2(center.X, visible ? bounds.Y + 8 : center.Y + 2), new Vector2(bounds.Right - 7, center.Y), 2, color);
+        if (visible) draw.FillRectangle(new Rectangle(bounds.Center.X - 3, bounds.Center.Y - 3, 6, 6), color);
     }
 
     private static void DrawVerticalSectionLabel(Rectangle sectionBounds, string title, Color accent, EditEntryProfileDrawingCallbacks draw)
