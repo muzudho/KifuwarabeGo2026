@@ -2224,7 +2224,7 @@ public class Game1 : Game
         }
         if (_session.IsPlayerEditPanelOpen)
         {
-            if (EditEntryProfile.Default.TryToggleClientIdentityPasswordVisibility(point, !_session.IsPlayerEditClientIdentityPasswordDisabled))
+            if (EditEntryProfile.Default.TryToggleClientIdentityPasswordVisibility(point))
                 return;
             else if (EditEntryProfile.Default.IsClientIdentityChangeHit(point))
                 _session.OpenClientIdentityProfileSelectionPanel();
@@ -2244,7 +2244,7 @@ public class Game1 : Game
             else if (_session.PlayerEditDraft.Kind == EntryProfileKind.Computer &&
                       EditEntryProfile.Default.IsEngineChangeHit(point))
                 _session.OpenPlayerEditGtpEngineSelectionDialog();
-            else if (EditEntryProfile.Default.GetFieldHit(point, !_session.IsPlayerEditClientIdentityPasswordDisabled) is { } field)
+            else if (EditEntryProfile.Default.GetFieldHit(point) is { } field)
                 BeginOrMovePlayerEditField(point, field);
             return;
         }

@@ -31,8 +31,8 @@ public sealed class EditEntryProfile
     private const int ClientIdentityValueWidth = 470;
     private static readonly Rectangle ClientIdentityHandleTextBounds = new(ClientIdentityValueX, FieldRowTop + FieldRowPitch, ClientIdentityValueWidth, 36);
     private static readonly Rectangle ClientIdentityPasswordTextBounds = new(ClientIdentityValueX, FieldRowTop + FieldRowPitch * 2, ClientIdentityValueWidth, 36);
-    private static readonly Rectangle ClientIdentityPasswordVisibilityButtonBounds = new(ClientIdentityPasswordTextBounds.Right - 46, ClientIdentityPasswordTextBounds.Y, 42, 36);
-    private static readonly Rectangle ClientIdentityListButtonBounds = new(1270, FieldRowTop + FieldRowPitch + 29, 58, 58);
+    private static readonly Rectangle ClientIdentityPasswordVisibilityButtonBounds = new(ClientIdentityPasswordTextBounds.Right - 4, ClientIdentityPasswordTextBounds.Y, 42, 36);
+    private static readonly Rectangle ClientIdentityListButtonBounds = new(1312, FieldRowTop + FieldRowPitch + 29, 58, 58);
     private static readonly Rectangle EngineTextBounds = new(FieldValueX, FieldRowTop + FieldRowPitch * 3, FieldValueWidth, 42);
 
     #endregion
@@ -110,9 +110,9 @@ public sealed class EditEntryProfile
     public bool IsClientIdentityChangeHit(Point point) => ClientIdentityListButton.IsHit(point);
 
     /// <summary>目アイコンのクリックで PASSWORD の表示方法を切り替えます。</summary>
-    public bool TryToggleClientIdentityPasswordVisibility(Point point, bool passwordEnabled)
+    public bool TryToggleClientIdentityPasswordVisibility(Point point)
     {
-        if (!passwordEnabled || !ClientIdentityPasswordVisibilityButton.IsHit(point)) return false;
+        if (!ClientIdentityPasswordVisibilityButton.IsHit(point)) return false;
         IsClientIdentityPasswordVisible = !IsClientIdentityPasswordVisible;
         return true;
     }
@@ -121,10 +121,10 @@ public sealed class EditEntryProfile
     public bool IsEngineChangeHit(Point point) => EngineTextBounds.Contains(point);
 
     /// <summary>入力編集を開始するフィールドを取得します。</summary>
-    public EntryProfileEditField? GetFieldHit(Point point, bool passwordEnabled) =>
+    public EntryProfileEditField? GetFieldHit(Point point) =>
         PlayerFieldTextBounds(EntryProfileEditField.DisplayName).Contains(point) ? EntryProfileEditField.DisplayName :
         ClientIdentityHandleTextBounds.Contains(point) ? EntryProfileEditField.ClientIdentityHandle :
-        passwordEnabled && ClientIdentityPasswordTextBounds.Contains(point) ? EntryProfileEditField.ClientIdentityPassword : null;
+        ClientIdentityPasswordTextBounds.Contains(point) ? EntryProfileEditField.ClientIdentityPassword : null;
 
     /// <summary>外部から渡された文字幅計算を使ってキャレット位置を求めます。</summary>
     public int GetCaretIndex(Point point, EntryProfileEditField field, string text, Func<int, string, Rectangle, float, int> getCaretIndex) =>
@@ -230,8 +230,15 @@ public sealed class EditEntryProfile
         DrawVerticalSectionLabel(sectionBounds, "CLIENT IDENTITY", new Color(66, 104, 116), draw);
         DrawEditableIdentityField(HandleLabel, EntryProfileEditField.ClientIdentityHandle, session, ClientIdentityHandleTextBounds, mousePoint, draw, mask: false);
         DrawEditableIdentityField(PasswordLabel, EntryProfileEditField.ClientIdentityPassword, session, ClientIdentityPasswordTextBounds, mousePoint, draw,
-            mask: !IsClientIdentityPasswordVisible, enabled: !session.IsPlayerEditClientIdentityPasswordDisabled);
-        DrawClientIdentityPasswordVisibilityButton(mousePoint, !session.IsPlayerEditClientIdentityPasswordDisabled, draw);
+            mask: !IsClientIdentityPasswordVisible);
+        DrawClientIdentityPasswordVisibilityButton(mousePoint, draw);
+        var warningTop = session.PlayerEditDraft.Kind == EntryProfileKind.Computer
+            ? EngineTextBounds.Bottom + 16
+            : ClientIdentityPasswordTextBounds.Bottom + 16;
+        draw.DrawDynamicText("パスワードの内容は接続先から見える可能性があります。",
+            new Rectangle(ClientIdentityValueX, warningTop, ClientIdentityValueWidth, 26), new Color(255, 190, 132), 0.28f);
+        draw.DrawDynamicText("他のサービスで使用しているパスワードは絶対に入力しないでください。",
+            new Rectangle(ClientIdentityValueX, warningTop + 26, ClientIdentityValueWidth, 26), new Color(255, 190, 132), 0.28f);
         DrawClientIdentityListButton(mousePoint, draw);
     }
 
@@ -244,16 +251,9 @@ public sealed class EditEntryProfile
     }
 
     private void DrawEditableIdentityField(TableRowLabel label, EntryProfileEditField field, GoAppSession session,
-        Rectangle bounds, Point mousePoint, EditEntryProfileDrawingCallbacks draw, bool mask, bool enabled = true)
+        Rectangle bounds, Point mousePoint, EditEntryProfileDrawingCallbacks draw, bool mask)
     {
         label.Draw(draw.DrawText);
-        if (!enabled)
-        {
-            draw.FillRectangle(bounds, new Color(28, 34, 40, 235));
-            draw.DrawLine(new Vector2(bounds.X, bounds.Bottom - 2), new Vector2(bounds.Right, bounds.Bottom - 2), 2, new Color(53, 65, 70));
-            draw.DrawFittedText("NOT USED FOR LOCAL MATCH", bounds, new Color(90, 104, 108), 0.30f);
-            return;
-        }
         var active = session.ActivePlayerEditField == field;
         PlayerNameTextUnderline.Bounds = bounds;
         PlayerNameTextUnderline.SetEditing(active);
@@ -285,13 +285,13 @@ public sealed class EditEntryProfile
         }
     }
 
-    private void DrawClientIdentityPasswordVisibilityButton(Point mousePoint, bool enabled, EditEntryProfileDrawingCallbacks draw)
+    private void DrawClientIdentityPasswordVisibilityButton(Point mousePoint, EditEntryProfileDrawingCallbacks draw)
     {
         var button = ClientIdentityPasswordVisibilityButton;
-        button.IsEnabled = enabled;
+        button.IsEnabled = true;
         button.Draw(mousePoint, draw.KfwStationeryDrawingTools);
         var bounds = button.Bounds;
-        var color = !enabled ? new Color(76, 88, 92) : bounds.Contains(mousePoint) ? new Color(222, 243, 246) : new Color(178, 219, 226);
+        var color = bounds.Contains(mousePoint) ? new Color(222, 243, 246) : new Color(178, 219, 226);
         var center = new Vector2(bounds.Center.X, bounds.Center.Y);
 
         if (IsClientIdentityPasswordVisible)
