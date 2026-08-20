@@ -84,7 +84,14 @@ $versionProjects = @(
 $versionProjects | ForEach-Object { Assert-ProjectVersion -ProjectPath $_ }
 
 if ([string]::IsNullOrWhiteSpace($ReleaseNotes)) {
-    $ReleaseNotes = "KifuwarabeGo2026.Gui\Docs\開発\リリースノート\RELEASE_NOTES_v$Version.md"
+    # Keep the script compatible with Windows PowerShell 5.1, which can decode a
+    # UTF-8 script without BOM using the active ANSI code page. Avoid non-ASCII
+    # path literals and discover the uniquely named release notes instead.
+    $releaseNoteMatches = @(Get-ChildItem -LiteralPath 'KifuwarabeGo2026.Gui\Docs' -Recurse -File -Filter "RELEASE_NOTES_v$Version.md")
+    if ($releaseNoteMatches.Count -ne 1) {
+        throw "Expected exactly one release notes file for v$Version, found $($releaseNoteMatches.Count)."
+    }
+    $ReleaseNotes = $releaseNoteMatches[0].FullName
 }
 Assert-FileExists -LiteralPath $ReleaseNotes
 

@@ -9,8 +9,12 @@ from its own location.
 Update the project versions and create the matching release notes first, then run:
 
 ```powershell
-.\Scripts\Invoke-Release.ps1 -Version 3.16.0
+powershell -NoProfile -ExecutionPolicy Bypass -File .\Scripts\Invoke-Release.ps1 -Version 3.17.0
 ```
+
+The explicit execution policy makes this work on Windows installations that
+disable direct `.ps1` execution. It applies only to this PowerShell process and
+does not change the machine or user policy.
 
 This performs the Release build, three smoke tests, publishes Launcher/GUI/Engine,
 and creates ZIP and SHA-256 files under `Uploads`. Existing assets are never
@@ -22,7 +26,7 @@ After reviewing the generated files, run the command again. Matching existing
 assets are reused only after their SHA-256 values have been verified:
 
 ```powershell
-.\Scripts\Invoke-Release.ps1 -Version 3.16.0 -Publish -SkipBuild
+powershell -NoProfile -ExecutionPolicy Bypass -File .\Scripts\Invoke-Release.ps1 -Version 3.17.0 -Publish -SkipBuild
 ```
 
 Publishing requires GitHub CLI authentication, a clean working tree, and local
