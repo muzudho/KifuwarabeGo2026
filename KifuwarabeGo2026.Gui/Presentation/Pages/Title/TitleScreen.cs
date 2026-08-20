@@ -21,7 +21,7 @@ public sealed class TitleScreen
         CgosClientButton = new Button(new Rectangle(800, 536, 300, 126), "Online Match (CGOS)", 0.42f);
         CaptureGameButton = new Button(new Rectangle(1140, 390, 300, 126), "ポン抜きゲーム", 0.40f);
         BackButton = new Button(new Rectangle(1260, 316, 152, 54), "BACK", 0.36f);
-        UpdateButton = new Button(new Rectangle(1698, 972, 70, 62), string.Empty, 0.1f);
+        UpdateButton = new Button(new Rectangle(1548, 972, 220, 62), "ランチャーを開く", 0.20f);
         SettingsButton = new Button(new Rectangle(1780, 972, 70, 62), string.Empty, 0.1f);
     }
 

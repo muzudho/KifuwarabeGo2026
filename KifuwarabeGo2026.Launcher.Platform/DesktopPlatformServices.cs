@@ -7,11 +7,18 @@ public sealed class DesktopPlatformServices : IPlatformServices
 {
     public string LocalApplicationData => Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
 
-    public bool Start(string executable, string workingDirectory) => TryStart(new ProcessStartInfo(executable)
+    public bool Start(string executable, string workingDirectory)
     {
-        WorkingDirectory = workingDirectory,
-        UseShellExecute = true,
-    });
+        var info = new ProcessStartInfo(executable)
+        {
+            WorkingDirectory = workingDirectory,
+            UseShellExecute = false,
+        };
+        var launcherPath = Environment.ProcessPath;
+        if (!string.IsNullOrWhiteSpace(launcherPath))
+            info.Environment["KIFUWARABE_LAUNCHER_PATH"] = launcherPath;
+        return TryStart(info);
+    }
 
     public bool OpenFolder(string directory)
     {

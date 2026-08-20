@@ -5,21 +5,18 @@ using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 using Microsoft.Xna.Framework;
 using System;
 
-/// <summary>GUI 自動更新の現在位置と完了した工程を表示するモーダルダイアログ。</summary>
+/// <summary>共通ランチャーを開く工程を表示するモーダルダイアログ。</summary>
 public sealed class GuiUpdateProgressDialog
 {
     private static readonly (GuiReleaseUpdateStep Step, string Label)[] Steps =
     [
-        (GuiReleaseUpdateStep.CheckingRelease, "最新リリースを確認"),
-        (GuiReleaseUpdateStep.DownloadingPackage, "GUI パッケージをダウンロード"),
-        (GuiReleaseUpdateStep.ExtractingPackage, "パッケージを展開"),
-        (GuiReleaseUpdateStep.VerifyingPackage, "更新版を検証"),
-        (GuiReleaseUpdateStep.StartingUpdatedGui, "更新版 GUI を起動"),
+        (GuiReleaseUpdateStep.CheckingRelease, "共通ランチャーを確認"),
+        (GuiReleaseUpdateStep.StartingLauncher, "共通ランチャーを前面に起動"),
     ];
 
     public static readonly Rectangle Bounds = new(510, 260, 900, 560);
     public static readonly Rectangle CloseButtonBounds = new(1218, 742, 154, 48);
-    private volatile GuiReleaseUpdateProgress _progress = new(GuiReleaseUpdateStep.CheckingRelease, "更新を開始しています。");
+    private volatile GuiReleaseUpdateProgress _progress = new(GuiReleaseUpdateStep.CheckingRelease, "共通ランチャーを探しています。");
 
     public bool HasFailed { get; private set; }
     public string FailureMessage { get; private set; } = "";
@@ -30,7 +27,7 @@ public sealed class GuiUpdateProgressDialog
     public void Fail(string logPath, string? reason = null)
     {
         HasFailed = true;
-        FailureMessage = $"更新操作は失敗しました。\n{reason ?? "GUI を再起動してやり直してください。"}\nログファイル: {logPath}";
+        FailureMessage = $"ランチャーを開けませんでした。\n{reason ?? "GitHub Releasesを確認してください。"}\nログファイル: {logPath}";
     }
 
     public bool IsCloseHit(Point point) => CanClose && CloseButtonBounds.Contains(point);
@@ -43,7 +40,7 @@ public sealed class GuiUpdateProgressDialog
         drawingContext.FillRectangle(new Rectangle(Bounds.X + 14, Bounds.Y + 16, Bounds.Width, Bounds.Height), new Color(0, 0, 0, 120));
         drawingContext.FillRectangle(Bounds, new Color(21, 25, 32, 252));
         drawingContext.DrawRectangle(Bounds, 2, HasFailed ? new Color(255, 145, 151) : new Color(99, 223, 185));
-        drawingContext.DrawDynamicText(HasFailed ? "GUI UPDATE FAILED" : "GUI UPDATE IN PROGRESS",
+        drawingContext.DrawDynamicText(HasFailed ? "OPEN LAUNCHER FAILED" : "OPENING LAUNCHER",
             new Rectangle(Bounds.X + 42, Bounds.Y + 30, 700, 48), new Color(244, 238, 218), 0.58f);
         drawingContext.DrawLine(new Vector2(Bounds.X + 42, Bounds.Y + 94), new Vector2(Bounds.Right - 42, Bounds.Y + 94), 1, new Color(82, 111, 114));
 

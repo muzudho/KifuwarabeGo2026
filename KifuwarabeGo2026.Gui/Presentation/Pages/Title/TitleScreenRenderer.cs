@@ -107,7 +107,7 @@ public sealed class TitleScreenRenderer
                 else if (casualAppsHovered)
                     DrawTitleHomeHint("CASUAL APPS", "独自実装で機能追加を進めます！", new Color(255, 190, 92));
                 else if (updateHovered)
-                    DrawStickyNote(StickyNoteKind.TitleUpdateHint, new Vector2(updateBounds.Left, updateBounds.Center.Y), new Color(99, 223, 185), new Color(82, 111, 114), "このボタンは？", ["このGUIを最新バージョンに更新します。", "アプリを再起動します。"]);
+                    DrawStickyNote(StickyNoteKind.TitleUpdateHint, new Vector2(updateBounds.Left, updateBounds.Center.Y), new Color(99, 223, 185), new Color(82, 111, 114), "ランチャーを開くとは？", ["共通ランチャーを前面に開き、", "このGUIを閉じます。", "GUIとEngineの更新は", "ランチャーから行います！"]);
                 else if (settingsHovered)
                     DrawTitleHomeHint("SETTINGS", "アプリケーションを設定します！", new Color(147, 201, 190));
                 else if (localMatchHovered)
@@ -310,9 +310,9 @@ public sealed class TitleScreenRenderer
         return version is null ? "VERSION" : $"v{version.Major}.{version.Minor}.{version.Build}";
     }
 
-    #region ［最新バージョンへ更新］ボタン
+    #region ［ランチャーを開く］ボタン
     /// <summary>
-    /// ［最新バージョンへ更新］ボタンを描画します。
+    /// ［ランチャーを開く］ボタンを描画します。
     /// </summary>
     /// <param name="mousePoint"></param>
     private void DrawUpdateButton(Point mousePoint)
@@ -322,7 +322,7 @@ public sealed class TitleScreenRenderer
         var color = hovered ? new Color(99, 223, 185) : new Color(180, 195, 195);
         FillRect(bounds, hovered ? new Color(36, 50, 58) : new Color(24, 31, 37));
         DrawRect(bounds, 2, hovered ? new Color(178, 219, 226) : new Color(82, 111, 114));
-        var board = new Rectangle(bounds.X + 15, bounds.Y + 11, 40, 40);
+        var board = new Rectangle(bounds.X + 12, bounds.Y + 11, 40, 40);
         DrawRect(board, 2, color);
         for (var index = 1; index < 5; index++)
         {
@@ -332,6 +332,7 @@ public sealed class TitleScreenRenderer
         }
         DrawStone(new Vector2(board.X + 16, board.Y + 24), 5, true);
         DrawStone(new Vector2(board.X + 31, board.Y + 16), 5, false);
+        DrawDynamicOptionText("ランチャーを開く", new Rectangle(bounds.X + 60, bounds.Y + 15, bounds.Width - 70, 34), color, 0.26f);
     }
     #endregion
 

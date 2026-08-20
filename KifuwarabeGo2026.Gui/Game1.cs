@@ -2639,10 +2639,10 @@ public class Game1 : Game
     private void BeginGuiReleaseUpdate()
     {
         if (_guiReleaseUpdateTask is not null) return;
-        GuiOperationLog.User("Pressed GUI update button");
+        GuiOperationLog.User("Pressed open launcher button");
         _guiUpdateProgressDialog = new GuiUpdateProgressDialog();
         _session.ActivateModalWindow(ActiveWindowId.MessageDialog);
-        _guiReleaseUpdateTask = GuiReleaseUpdater.DownloadLatestAndStartAsync(_guiUpdateProgressDialog.Report);
+        _guiReleaseUpdateTask = GuiReleaseUpdater.OpenLauncherAsync(_guiUpdateProgressDialog.Report);
     }
 
     private void CompleteGuiReleaseUpdate()
@@ -2653,17 +2653,17 @@ public class Game1 : Game
         try
         {
             var result = task.GetAwaiter().GetResult();
-            GuiOperationLog.User("GUI update completed", result.Message);
-            if (result.DidStartUpdatedGui) Exit();
+            GuiOperationLog.User("Open launcher completed", result.Message);
+            if (result.DidStartLauncher) Exit();
             else
             {
                 _guiUpdateProgressDialog = null;
-                ShowMessage(result.Message, "GUI UPDATE");
+                ShowMessage(result.Message, "OPEN LAUNCHER");
             }
         }
         catch (Exception ex)
         {
-            GuiOperationLog.App("GUI update failed", ex.ToString());
+            GuiOperationLog.App("Open launcher failed", ex.ToString());
             (_guiUpdateProgressDialog ??= new GuiUpdateProgressDialog()).Fail(GuiOperationLog.FilePath, ex.Message);
         }
     }
