@@ -31,7 +31,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\Scripts\Invoke-Release.ps1
 
 Publishing requires GitHub CLI authentication, a clean working tree, and local
 `HEAD` matching its upstream branch. PowerShell asks for confirmation before the
-GitHub release is created. Add `-Confirm:$false` only when intentional.
+GitHub release is created. Add `-Force` only when intentional or when running
+non-interactively.
 
 Useful options:
 
@@ -41,6 +42,7 @@ Useful options:
 - `-SkipBuild` reuses existing publish output.
 - `-SkipSmokeTests` skips smoke tests but still builds and publishes.
 - `-AllowDirty` permits a dirty working tree for local package preparation.
+- `-Force` publishes without the interactive confirmation prompt.
 - `-WhatIf -Publish` checks the workflow without creating a GitHub release.
 
 Authentication tokens are not stored in the script. Sign in separately with

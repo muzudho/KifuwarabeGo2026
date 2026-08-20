@@ -11,7 +11,8 @@ param(
     [switch] $Prerelease,
     [switch] $SkipBuild,
     [switch] $SkipSmokeTests,
-    [switch] $AllowDirty
+    [switch] $AllowDirty,
+    [switch] $Force
 )
 
 Set-StrictMode -Version Latest
@@ -192,12 +193,22 @@ git rev-parse --verify --quiet "refs/tags/$tag" | Out-Null
 if ($LASTEXITCODE -eq 0) {
     throw "Local tag already exists: $tag"
 }
-gh release view $tag --repo muzudho/KifuwarabeGo2026 2>$null | Out-Null
-if ($LASTEXITCODE -eq 0) {
+$previousErrorActionPreference = $ErrorActionPreference
+try {
+    # A missing release is the expected result. Windows PowerShell 5.1 turns
+    # native stderr into an ErrorRecord when ErrorActionPreference is Stop.
+    $ErrorActionPreference = 'SilentlyContinue'
+    gh release view $tag --repo muzudho/KifuwarabeGo2026 2>$null | Out-Null
+    $releaseExists = $LASTEXITCODE -eq 0
+}
+finally {
+    $ErrorActionPreference = $previousErrorActionPreference
+}
+if ($releaseExists) {
     throw "GitHub release already exists: $tag"
 }
 
-if ($PSCmdlet.ShouldProcess("GitHub release $tag at $localCommit", 'Create and publish release')) {
+if ($Force -or $PSCmdlet.ShouldProcess("GitHub release $tag at $localCommit", 'Create and publish release')) {
     $releaseArguments = @(
         'release', 'create', $tag
     ) + $assets + @(
