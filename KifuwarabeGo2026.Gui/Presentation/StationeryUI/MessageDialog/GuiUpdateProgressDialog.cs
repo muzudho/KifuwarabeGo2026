@@ -51,13 +51,18 @@ public sealed class GuiUpdateProgressDialog
             var status = index < currentIndex ? "[DONE]" : index == currentIndex && HasFailed ? "[FAIL]" : index == currentIndex ? "[....]" : "[    ]";
             var color = index < currentIndex ? new Color(151, 255, 215) : index == currentIndex && HasFailed ? new Color(255, 145, 151) : index == currentIndex ? Color.White : new Color(112, 126, 132);
             drawingContext.DrawDynamicText($"{status}  {Steps[index].Label}",
-                new Rectangle(Bounds.X + 62, Bounds.Y + 122 + index * 48, Bounds.Width - 124, 38), color, 0.38f);
+                new Rectangle(Bounds.X + 62, Bounds.Y + 122 + index * 52, Bounds.Width - 124, 42), color, 0.44f);
         }
 
         var detail = HasFailed ? FailureMessage : _progress.Message;
-        drawingContext.DrawDynamicText(detail,
-            new Rectangle(Bounds.X + 62, Bounds.Y + 380, Bounds.Width - 124, 92),
-            HasFailed ? new Color(255, 190, 180) : new Color(180, 195, 195), HasFailed ? 0.29f : 0.34f);
+        var detailColor = HasFailed ? new Color(255, 190, 180) : new Color(180, 195, 195);
+        var detailLines = detail.Replace("\r\n", "\n", StringComparison.Ordinal).Split('\n');
+        for (var index = 0; index < detailLines.Length; index++)
+        {
+            drawingContext.DrawDynamicText(detailLines[index],
+                new Rectangle(Bounds.X + 62, Bounds.Y + 306 + index * 48, Bounds.Width - 124, 42),
+                detailColor, 0.42f);
+        }
         if (CanClose)
             drawingContext.DrawButton(CloseButtonBounds, "CLOSE", false, mousePoint, true, 0.32f);
         drawingContext.End();
