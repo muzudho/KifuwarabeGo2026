@@ -108,14 +108,15 @@ public sealed class CgosConnectionProcess : IDisposable
         GtpEngineProfile? blackEngineProfile,
         GtpEngineProfile? whiteEngineProfile,
         string loginName = "",
-        string password = "")
+        string password = "",
+        bool humanMode = false)
     {
         if (IsRunning)
         {
             return "RUNNING";
         }
 
-        if (blackEngineProfile is null && whiteEngineProfile is null)
+        if (!humanMode && blackEngineProfile is null && whiteEngineProfile is null)
         {
             throw new InvalidOperationException("Select at least one CGOS engine.");
         }
@@ -129,7 +130,9 @@ public sealed class CgosConnectionProcess : IDisposable
 
         var repositoryRoot = FindRepositoryRoot();
         var executablePath = GetCgosCommunicationExecutablePath(repositoryRoot);
-        var runLabel = blackEngineProfile is not null && whiteEngineProfile is null
+        var runLabel = humanMode
+            ? "HumanPlayer"
+            : blackEngineProfile is not null && whiteEngineProfile is null
             ? "BlackPlayer"
             : whiteEngineProfile is not null && blackEngineProfile is null
                 ? "PracticePlayer"
@@ -142,6 +145,10 @@ public sealed class CgosConnectionProcess : IDisposable
 
         try
         {
+            if (humanMode)
+            {
+                StartProcess(profile, "black", null, loginName, password, repositoryRoot, executablePath, humanMode: true);
+            }
             if (blackEngineProfile is not null)
             {
                 StartProcess(profile, "black", blackEngineProfile, loginName, password, repositoryRoot, executablePath);
@@ -253,7 +260,7 @@ public sealed class CgosConnectionProcess : IDisposable
         return "SENT " + command.ToUpperInvariant();
     }
 
-    private void StartProcess(CgosConnectionProfile profile, string account, GtpEngineProfile engineProfile, string loginName, string password, string repositoryRoot, string executablePath)
+    private void StartProcess(CgosConnectionProfile profile, string account, GtpEngineProfile? engineProfile, string loginName, string password, string repositoryRoot, string executablePath, bool humanMode = false)
     {
         var startInfo = new ProcessStartInfo
         {
@@ -283,13 +290,21 @@ public sealed class CgosConnectionProcess : IDisposable
         }
         startInfo.ArgumentList.Add("--log-directory");
         startInfo.ArgumentList.Add(LogDirectory);
-        var engineCommand = CreateEngineCommand(engineProfile);
-        startInfo.ArgumentList.Add("--engine-command");
-        startInfo.ArgumentList.Add(engineCommand);
-        foreach (var option in engineProfile.GuiOptions)
+        var engineCommand = "";
+        if (humanMode)
         {
-            startInfo.ArgumentList.Add("--engine-option");
-            startInfo.ArgumentList.Add($"{option.Key}={option.Value}");
+            startInfo.ArgumentList.Add("--human");
+        }
+        else if (engineProfile is not null)
+        {
+            engineCommand = CreateEngineCommand(engineProfile);
+            startInfo.ArgumentList.Add("--engine-command");
+            startInfo.ArgumentList.Add(engineCommand);
+            foreach (var option in engineProfile.GuiOptions)
+            {
+                startInfo.ArgumentList.Add("--engine-option");
+                startInfo.ArgumentList.Add($"{option.Key}={option.Value}");
+            }
         }
         AddParentProcessArguments(startInfo);
 
@@ -313,7 +328,7 @@ public sealed class CgosConnectionProcess : IDisposable
         process.BeginErrorReadLine();
         AddOutput($"# Started CGOS {account} communication process. pid={process.Id}");
         AddOutput("# Communication executable: " + executablePath);
-        AddOutput("# Engine command: " + engineCommand);
+        AddOutput(humanMode ? "# Human player mode" : "# Engine command: " + engineCommand);
     }
 
     public string RefreshStatus()

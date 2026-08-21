@@ -260,6 +260,23 @@ public sealed class EditEntryProfile
 
         // テキスト
         draw.DrawFittedText(string.IsNullOrEmpty(text) ? "-" : text, textBounds, Color.White, 0.42f);
+        if (active && session.PlayerEditComposition.IsActive && !string.IsNullOrEmpty(session.PlayerEditComposition.Text))
+        {
+            var caret = Math.Clamp(session.PlayerEditCaretIndex, 0, text.Length);
+            var prefixWidth = draw.KfwStationeryDrawingTools.MeasureText(text[..caret]).X * 0.42f;
+            var compositionBounds = new Rectangle(
+                textBounds.X + (int)prefixWidth,
+                textBounds.Y,
+                Math.Max(1, textBounds.Width - (int)prefixWidth),
+                textBounds.Height);
+            draw.DrawDynamicText(session.PlayerEditComposition.Text, compositionBounds, new Color(255, 225, 128), 0.42f);
+            var compositionWidth = draw.KfwStationeryDrawingTools.MeasureText(session.PlayerEditComposition.Text).X * 0.42f;
+            draw.DrawLine(
+                new Vector2(compositionBounds.X, textBounds.Bottom - 1),
+                new Vector2(Math.Min(textBounds.Right, compositionBounds.X + compositionWidth), textBounds.Bottom - 1),
+                2,
+                new Color(255, 225, 128));
+        }
 
         // キャレット
         if (active) draw.DrawTextCaret(text, session.PlayerEditCaretIndex, textBounds, 0.42f);

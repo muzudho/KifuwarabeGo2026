@@ -134,13 +134,15 @@ public sealed partial class GoAppSession
     public bool TrySelectCgosEntryProfile(GoStone stone, string playerProfileId)
     {
         var player = FindEntryProfile(playerProfileId);
-        if (player is null || player.Kind != EntryProfileKind.Computer || FindGtpEngineIndex(player.EngineProfileId) < 0 ||
+        var isPrimaryHuman = stone == GoStone.Black && player?.Kind == EntryProfileKind.Human;
+        var isEngine = player?.Kind == EntryProfileKind.Computer && FindGtpEngineIndex(player.EngineProfileId) >= 0;
+        if (player is null || (!isPrimaryHuman && !isEngine) ||
             GetPlayerClientIdentityProfiles(player.Id).Count == 0)
         {
             return false;
         }
 
-        var engineIndex = FindGtpEngineIndex(player.EngineProfileId);
+        var engineIndex = player.Kind == EntryProfileKind.Computer ? FindGtpEngineIndex(player.EngineProfileId) : -1;
         if (stone == GoStone.Black)
         {
             CgosBlackEntryProfileId = player.Id;

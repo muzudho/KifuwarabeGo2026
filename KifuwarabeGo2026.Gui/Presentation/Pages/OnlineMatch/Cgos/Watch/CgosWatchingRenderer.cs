@@ -2,6 +2,7 @@ namespace KifuwarabeGo2026.Gui.Presentation.Pages.OnlineMatch.Cgos.Watch;
 
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.Watching;
+using KifuwarabeGo2026.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.ConnectionTarget;
 using KifuwarabeGo2026.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.Shared.Domain;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Headline;
@@ -175,6 +176,15 @@ public sealed class CgosWatchingRenderer
                 observation.IsReplayMode ? "WATCHING REPLAY" : "WATCHING LIVE GAME",
                 new Color(62, 112, 105),
                 observation.IsReplayMode ? new Color(137, 201, 255) : new Color(99, 223, 185));
+            if (session.SelectedCgosBlackEntryProfile?.Kind == EntryProfileKind.Human)
+            {
+                var loginName = session.GetCgosCredential(GoStone.Black, CgosPlayerCredentialField.LoginName);
+                var humanColor = observation.GetPlayerColor(loginName);
+                screen.HumanPassButton.IsEnabled = !observation.IsReplayMode && humanColor == observation.CurrentTurn;
+                screen.HumanResignButton.IsEnabled = !observation.IsReplayMode;
+                screen.HumanPassButton.Draw(mousePoint, _drawingContext);
+                screen.HumanResignButton.Draw(mousePoint, _drawingContext);
+            }
         }
 
     }

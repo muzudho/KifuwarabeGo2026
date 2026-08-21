@@ -354,7 +354,7 @@ public sealed class CgosLoginRenderer
             session.IsCgosBlackConnectionRunning
                 ? session.IsCgosGameInProgress ? "ABORT" : "DISCONNECT"
                 : "CONNECT",
-            session.IsCgosBlackConnectionRunning || session.SelectedCgosBlackGtpEngineProfile is not null,
+            session.IsCgosBlackConnectionRunning || session.SelectedCgosBlackEntryProfile is not null,
             page.BlackTailButton,
             page.BlackCodeButton,
             !string.IsNullOrWhiteSpace(session.CgosBlackConnectionLogDirectory),

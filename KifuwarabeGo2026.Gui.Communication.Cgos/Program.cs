@@ -71,6 +71,10 @@ internal static class Program
                     {
                         playerControl.RequestResign(gameId);
                     }
+                    else if (TryParseMoveCommand(line, out gameId, out var vertex))
+                    {
+                        playerControl.RequestHumanMove(gameId!.Value, vertex);
+                    }
 
                     return Task.CompletedTask;
                 },
@@ -106,6 +110,18 @@ internal static class Program
             return true;
         }
         return false;
+    }
+
+    private static bool TryParseMoveCommand(string line, out int? gameId, out string vertex)
+    {
+        gameId = null;
+        vertex = "";
+        var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (parts.Length != 3 || !parts[0].Equals("move", StringComparison.OrdinalIgnoreCase) ||
+            !int.TryParse(parts[1], out var parsedGameId)) return false;
+        gameId = parsedGameId;
+        vertex = parts[2];
+        return true;
     }
 
     private static async Task WatchParentProcessAsync(CgosClientOptions options, CancellationTokenSource cancellation)
@@ -188,6 +204,9 @@ internal sealed class CgosPlayerControl
     private readonly object _sync = new();
     private bool _resignRequested;
     private int? _expectedGameId;
+    private int? _humanMoveGameId;
+    private string? _humanMove;
+    private TaskCompletionSource<string>? _humanMoveWaiter;
 
     public void RequestResign(int? expectedGameId)
     {
@@ -195,7 +214,51 @@ internal sealed class CgosPlayerControl
         {
             _resignRequested = true;
             _expectedGameId = expectedGameId;
+            if (_humanMoveWaiter is not null && (expectedGameId is null || expectedGameId == _humanMoveGameId))
+            {
+                _humanMoveWaiter.TrySetResult("resign");
+                _humanMoveWaiter = null;
+            }
         }
+    }
+
+    public void RequestHumanMove(int gameId, string vertex)
+    {
+        lock (_sync)
+        {
+            if (_humanMoveWaiter is not null && _humanMoveGameId == gameId)
+            {
+                _humanMoveWaiter.TrySetResult(vertex);
+                _humanMoveWaiter = null;
+                return;
+            }
+            _humanMoveGameId = gameId;
+            _humanMove = vertex;
+        }
+    }
+
+    public async Task<string> WaitForHumanMoveAsync(int gameId, CancellationToken cancellationToken)
+    {
+        Task<string> task;
+        lock (_sync)
+        {
+            if (_resignRequested && (_expectedGameId is null || _expectedGameId == gameId))
+            {
+                _resignRequested = false;
+                _expectedGameId = null;
+                return "resign";
+            }
+            if (_humanMoveGameId == gameId && !string.IsNullOrWhiteSpace(_humanMove))
+            {
+                var move = _humanMove;
+                _humanMove = null;
+                return move;
+            }
+            _humanMoveGameId = gameId;
+            _humanMoveWaiter = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+            task = _humanMoveWaiter.Task;
+        }
+        return await task.WaitAsync(cancellationToken);
     }
 
     public bool ConsumeResignRequest(int currentGameId)
@@ -288,6 +351,7 @@ internal sealed class CgosClientOptions
     public bool ShowHelp { get; private set; }
 
     public bool AdminMode { get; private set; }
+    public bool HumanMode { get; private set; }
 
     public int? ParentProcessId { get; private set; }
 
@@ -340,6 +404,9 @@ internal sealed class CgosClientOptions
                     break;
                 case "--admin":
                     options.AdminMode = true;
+                    break;
+                case "--human":
+                    options.HumanMode = true;
                     break;
                 case "--parent-process-id":
                     var parentProcessIdText = ReadValue(args, ref index, arg);
@@ -413,6 +480,7 @@ internal sealed class CgosClientOptions
         writer.WriteLine("  --engine-option ID=VALUE   GUI option sent to a supporting GTP engine.");
         writer.WriteLine("  --log-directory DIR        Log directory. Default: Logs\\Cgos");
         writer.WriteLine("  --admin                    Login without a GTP engine and relay admin commands from stdin.");
+        writer.WriteLine("  --human                    Wait for GUI move commands instead of starting a GTP engine.");
         writer.WriteLine("  --parent-process-id PID    Exit when the parent GUI process exits.");
         writer.WriteLine("  --parent-process-start-time TICKS");
         writer.WriteLine("                             Parent process UTC start time ticks (required with PID).");
@@ -799,7 +867,7 @@ internal sealed class CgosClient
                 await HandleSetupAsync(parameters, cancellationToken);
                 return;
             case "play":
-                await RequireEngine().PlayAsync(parameters, cancellationToken);
+                if (!_options.HumanMode) await RequireEngine().PlayAsync(parameters, cancellationToken);
                 return;
             case "genmove":
                 var move = await HandleGenMoveAsync(parameters, session.ServerSupportsAnalyze, cancellationToken);
@@ -830,10 +898,13 @@ internal sealed class CgosClient
         }
 
         await ShutdownEngineAsync();
-        _engine = new GtpEngineProcess(_options.EngineCommand, _options.LogDirectory, _account.Label, Log);
-        await _engine.StartAsync(cancellationToken);
-        await ApplyEngineOptionsAsync(_engine, cancellationToken);
-        _engineSupportsCgosAnalyze = await SupportsCommandAsync(_engine, "cgos-genmove_analyze", cancellationToken);
+        if (!_options.HumanMode)
+        {
+            _engine = new GtpEngineProcess(_options.EngineCommand, _options.LogDirectory, _account.Label, Log);
+            await _engine.StartAsync(cancellationToken);
+            await ApplyEngineOptionsAsync(_engine, cancellationToken);
+            _engineSupportsCgosAnalyze = await SupportsCommandAsync(_engine, "cgos-genmove_analyze", cancellationToken);
+        }
 
         var boardSize = parameters[1];
         var komi = parameters[2];
@@ -843,14 +914,18 @@ internal sealed class CgosClient
 
         Log($"# Setup game. board={boardSize}, komi={komi}, localColor={_engineColor}, programA={programA}, programB={programB}");
 
-        await _engine.CommandAsync("boardsize " + boardSize, cancellationToken);
-        await _engine.CommandAsync("komi " + komi, cancellationToken);
-        await _engine.CommandAsync("clear_board", cancellationToken);
+        if (_engine is not null)
+        {
+            await _engine.CommandAsync("boardsize " + boardSize, cancellationToken);
+            await _engine.CommandAsync("komi " + komi, cancellationToken);
+            await _engine.CommandAsync("clear_board", cancellationToken);
+        }
 
         var replayColor = "b";
         for (var index = 6; index + 1 < parameters.Length; index += 2)
         {
-            await _engine.PlayAsync(new[] { replayColor, parameters[index], parameters[index + 1] }, cancellationToken);
+            if (_engine is not null)
+                await _engine.PlayAsync(new[] { replayColor, parameters[index], parameters[index + 1] }, cancellationToken);
             replayColor = replayColor == "b" ? "w" : "b";
         }
     }
@@ -866,6 +941,14 @@ internal sealed class CgosClient
         {
             Log("# GUI requested resignation.");
             return "resign";
+        }
+
+        if (_options.HumanMode)
+        {
+            Log($"# Waiting for GUI human move. game={_gameId} color={parameters[0]}");
+            var humanMove = await _playerControl.WaitForHumanMoveAsync(_gameId, cancellationToken);
+            Log($"# GUI human move: {humanMove}");
+            return humanMove.ToLowerInvariant();
         }
 
         var engine = RequireEngine();

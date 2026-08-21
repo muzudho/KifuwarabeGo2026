@@ -126,7 +126,9 @@ public sealed partial class GoAppSession
         PlayerDialogSelectionIndex < _playerProfiles.Count &&
         GetPlayerSelectionClientIdentities().Count > 0 &&
         ClientIdentityDialogSelectionIndex >= 0 &&
-        ClientIdentityDialogSelectionIndex < GetPlayerSelectionClientIdentities().Count;
+        ClientIdentityDialogSelectionIndex < GetPlayerSelectionClientIdentities().Count &&
+        (PlayerSelectionPurpose != PlayerSelectionPurpose.Cgos ||
+         CanSelectPlayerForCgos(_playerProfiles[PlayerDialogSelectionIndex], PlayerSelectionTargetStone));
 
     private void SelectDialogDefaultClientIdentity()
     {
@@ -250,9 +252,9 @@ public sealed partial class GoAppSession
             : engineName;
     }
 
-    private bool CanSelectPlayerForCgos(EntryProfile player) =>
-        player.Kind == EntryProfileKind.Computer &&
-        FindGtpEngineIndex(player.EngineProfileId) >= 0 &&
+    private bool CanSelectPlayerForCgos(EntryProfile player, GoStone stone) =>
+        ((stone == GoStone.Black && player.Kind == EntryProfileKind.Human) ||
+         (player.Kind == EntryProfileKind.Computer && FindGtpEngineIndex(player.EngineProfileId) >= 0)) &&
         GetPlayerClientIdentityProfiles(player.Id).Count > 0;
 
     private void AddDefaultClientIdentityProfiles(EntryProfile player)

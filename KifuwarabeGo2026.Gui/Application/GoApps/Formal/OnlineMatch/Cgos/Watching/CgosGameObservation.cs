@@ -46,6 +46,12 @@ public sealed class CgosGameObservation
 
     public GoStone GetStone(int x, int y) => (_replayBoard ?? _board).GetStone(x, y);
     public GoStone GetLiveStone(int x, int y) => _board.GetStone(x, y);
+    public bool CanPlayLiveMove(int x, int y, GoStone stone)
+    {
+        if (!IsStarted || IsFinished || IsReplayMode || stone != CurrentTurn) return false;
+        var candidate = BuildBoardAt(_moves.Count);
+        return candidate.TryPlaceStone(x, y, stone, _koPoint, out _, out _);
+    }
     public GoGameMove? LatestMove => _moves.Count == 0 ? null : _moves[^1];
 
     public GoStone GetPlayerColor(string loginName)

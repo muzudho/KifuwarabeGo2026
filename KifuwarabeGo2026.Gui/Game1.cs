@@ -13,6 +13,7 @@ using KifuwarabeGo2026.Shared.Domain;
 using KifuwarabeGo2026.Gui.Infrastructure.FileSystem;
 using KifuwarabeGo2026.Gui.Infrastructure.Logging;
 using KifuwarabeGo2026.Gui.Infrastructure;
+using KifuwarabeGo2026.Gui.Gtp;
 using KifuwarabeGo2026.Gui.Presentation;
 using KifuwarabeGo2026.Gui.Presentation.BoardLens;
 using KifuwarabeGo2026.Gui.Presentation.Pages.OnlineMatch.Cgos.Login;
@@ -89,6 +90,8 @@ public class Game1 : Game
     private readonly CgosConnectionProcess _cgosAdminProcess;
     private readonly CgosGameObservation _cgosGameObservation = new();
     private readonly CgosGameObservation _cgosPracticeUnexpectedGame = new();
+    private int? _cgosHumanSubmittedGameId;
+    private int _cgosHumanSubmittedMoveCount = -1;
     private GoAppSession? _variationSession;
     private GoPresentationServices? _presentationServices;
     private SoundEffect? _placeStoneSound;
@@ -1459,6 +1462,13 @@ public class Game1 : Game
                 }
 
                 if (_session.CgosConnectionFlowKind == CgosConnectionFlowKind.Watching &&
+                    TryHandleCgosHumanPlayerClick(point))
+                {
+                    _previousMouse = mouse;
+                    return;
+                }
+
+                if (_session.CgosConnectionFlowKind == CgosConnectionFlowKind.Watching &&
                     CgosWatchPage.Default.LeaveViewButton.IsHit(point))
                 {
                     RestoreCgosMatchNotificationAfterLeavingView();
@@ -1624,7 +1634,7 @@ public class Game1 : Game
                         {
                             _session.RequestCgosPracticeResignConfirmation();
                         }
-                        else if ((_session.IsCgosBlackConnectionRunning || _session.SelectedCgosBlackGtpEngineProfile is not null) &&
+                        else if ((_session.IsCgosBlackConnectionRunning || _session.SelectedCgosBlackEntryProfile is not null) &&
                                  CgosLoginPage.Default.BlackConnectButton.IsHit(point))
                         {
                             ToggleCgosPlayerConnectionProcess(GoStone.Black);
@@ -3368,7 +3378,8 @@ public class Game1 : Game
                 stone == GoStone.Black ? _session.GetCgosEngineProfileForStart(stone) : null,
                 stone == GoStone.White ? _session.GetCgosEngineProfileForStart(stone) : null,
                 _session.GetCgosCredential(stone, CgosPlayerCredentialField.LoginName),
-                _session.GetCgosCredential(stone, CgosPlayerCredentialField.Password));
+                _session.GetCgosCredential(stone, CgosPlayerCredentialField.Password),
+                humanMode: stone == GoStone.Black && _session.SelectedCgosBlackEntryProfile?.Kind == EntryProfileKind.Human);
             SetCgosPlayerConnectionProcessStatus(stone, status, process.IsRunning, process);
         }
         catch (Exception ex) when (ex is InvalidOperationException or IOException or System.ComponentModel.Win32Exception)
@@ -4587,6 +4598,67 @@ public class Game1 : Game
             _session.ReturnFromReviewingToResting();
             if (_session.UseKind == GoAppUseKind.CgosClient)
                 _session.ReturnToCgosConnectionScreen();
+        }
+    }
+
+    private bool TryHandleCgosHumanPlayerClick(Point point)
+    {
+        if (_session.SelectedCgosBlackEntryProfile?.Kind != EntryProfileKind.Human ||
+            !_cgosBlackConnectionProcess.IsRunning ||
+            !_cgosGameObservation.IsStarted ||
+            _cgosGameObservation.IsFinished ||
+            _cgosGameObservation.IsReplayMode)
+        {
+            return false;
+        }
+
+        var screen = CgosWatchPage.Default;
+        if (screen.HumanResignButton.IsHit(point))
+        {
+            SendCgosPlayerResign(GoStone.Black);
+            return true;
+        }
+
+        var loginName = _session.GetCgosCredential(GoStone.Black, CgosPlayerCredentialField.LoginName);
+        var humanColor = _cgosGameObservation.GetPlayerColor(loginName);
+        if (humanColor == GoStone.Empty || humanColor != _cgosGameObservation.CurrentTurn ||
+            (_cgosHumanSubmittedGameId == _cgosGameObservation.GameId &&
+             _cgosHumanSubmittedMoveCount == _cgosGameObservation.MoveCount))
+        {
+            return screen.HumanPassButton.IsHit(point);
+        }
+
+        if (screen.HumanPassButton.IsHit(point))
+        {
+            SendCgosHumanMove("pass");
+            return true;
+        }
+
+        if (!BoardRenderer.TryGetBoardIntersection(point, _cgosGameObservation.BoardSize, out var intersection))
+            return false;
+        if (!_cgosGameObservation.CanPlayLiveMove(intersection.X, intersection.Y, humanColor))
+        {
+            GuiOperationLog.User("Rejected illegal CGOS human move", $"gameId={_cgosGameObservation.GameId}; x={intersection.X}; y={intersection.Y}");
+            return true;
+        }
+
+        SendCgosHumanMove(GtpCoordinate.FormatVertex(new GoPoint(intersection.X, intersection.Y), _cgosGameObservation.BoardSize));
+        return true;
+    }
+
+    private void SendCgosHumanMove(string vertex)
+    {
+        try
+        {
+            var status = _cgosBlackConnectionProcess.SendCommand($"move {_cgosGameObservation.GameId} {vertex}");
+            _cgosHumanSubmittedGameId = _cgosGameObservation.GameId;
+            _cgosHumanSubmittedMoveCount = _cgosGameObservation.MoveCount;
+            SetCgosPlayerConnectionProcessStatus(GoStone.Black, status, _cgosBlackConnectionProcess.IsRunning, _cgosBlackConnectionProcess);
+            GuiOperationLog.User("Submitted CGOS human move", $"gameId={_cgosGameObservation.GameId}; vertex={vertex}");
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or IOException or System.ComponentModel.Win32Exception)
+        {
+            SetCgosPlayerConnectionProcessStatus(GoStone.Black, "ERROR: " + ex.Message, _cgosBlackConnectionProcess.IsRunning, _cgosBlackConnectionProcess);
         }
     }
 

@@ -69,13 +69,15 @@ public sealed partial class GoAppSession
     public ClientIdentityProfile? GetSelectedCgosClientIdentityProfile(GoStone stone)
     {
         var engine = stone == GoStone.Black ? SelectedCgosBlackGtpEngineProfile : SelectedCgosWhiteGtpEngineProfile;
-        if (engine is null || _cgosConnectionProfiles.Count == 0)
+        if (_cgosConnectionProfiles.Count == 0)
             return null;
 
         var selectedPlayerId = stone == GoStone.Black ? CgosBlackEntryProfileId : CgosWhiteEntryProfileId;
         var players = FindEntryProfile(selectedPlayerId) is { } selectedPlayer
             ? new[] { selectedPlayer }
-            : _playerProfiles.Where(player => player.Kind == EntryProfileKind.Computer &&
+            : engine is null
+                ? Array.Empty<EntryProfile>()
+                : _playerProfiles.Where(player => player.Kind == EntryProfileKind.Computer &&
                                                string.Equals(player.EngineProfileId, engine.Id, StringComparison.Ordinal));
         var selectedClientIdentityId = stone == GoStone.Black ? CgosBlackClientIdentityProfileId : CgosWhiteClientIdentityProfileId;
         var selectedClientIdentity = players
