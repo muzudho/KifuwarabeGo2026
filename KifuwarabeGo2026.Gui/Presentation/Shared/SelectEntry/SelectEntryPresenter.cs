@@ -76,16 +76,36 @@ public sealed class SelectEntryPresenter
 
         drawingContext.FillRectangle(PlayerSelectionClientIdentityListBounds, new Color(15, 20, 26));
         drawingContext.DrawRectangle(PlayerSelectionClientIdentityListBounds, 1, new Color(67, 84, 92));
-        drawingContext.DrawText("CLIENT IDENTITIES", new Vector2(PlayerSelectionClientIdentityListBounds.X, PlayerSelectionClientIdentityListBounds.Y - 34), new Color(147, 244, 200), 0.34f);
-        var identities = session.GetPlayerSelectionClientIdentities();
+        drawingContext.DrawText(management ? "HANDLE / PASSWORD" : "CLIENT IDENTITIES", new Vector2(PlayerSelectionClientIdentityListBounds.X, PlayerSelectionClientIdentityListBounds.Y - 34), new Color(147, 244, 200), 0.34f);
+        var identities = management
+            ? session.GetManagedPlayerClientIdentities()
+            : session.GetPlayerSelectionClientIdentities();
+        if (management)
+        {
+            var headingBounds = new Rectangle(PlayerSelectionClientIdentityListBounds.X + 16, PlayerSelectionClientIdentityListBounds.Y + 12, PlayerSelectionClientIdentityListBounds.Width - 32, 34);
+            drawingContext.DrawFittedText("HANDLE", new Rectangle(headingBounds.X + 54, headingBounds.Y, 278, headingBounds.Height), new Color(180, 195, 195), 0.32f);
+            drawingContext.DrawFittedText("PASSWORD", new Rectangle(headingBounds.X + 350, headingBounds.Y, headingBounds.Width - 366, headingBounds.Height), new Color(180, 195, 195), 0.32f);
+        }
         for (var index = 0; index < identities.Count; index++)
         {
             var identity = identities[index];
-            var bounds = PlayerSelectionClientIdentityItemBounds(index);
+            var bounds = management
+                ? PlayerSelectionClientIdentityItemBounds(index) with { Y = PlayerSelectionClientIdentityItemBounds(index).Y + 34, Height = 62 }
+                : PlayerSelectionClientIdentityItemBounds(index);
+            if (bounds.Bottom > PlayerSelectionClientIdentityListBounds.Bottom - 8) break;
             var selected = index == session.ClientIdentityDialogSelectionIndex;
-            drawingContext.DrawDataRowFrame(bounds, active: selected, hovered: bounds.Contains(mousePoint));
-            drawingContext.DrawFittedText(identity.DisplayName, new Rectangle(bounds.X + 18, bounds.Y + 8, bounds.Width - 36, 28), Color.White, 0.40f);
-            drawingContext.DrawFittedText($"HANDLE: {identity.LoginName}", new Rectangle(bounds.X + 18, bounds.Y + 39, bounds.Width - 36, 22), new Color(180, 195, 195), 0.27f);
+            drawingContext.DrawDataRowFrame(bounds, active: !management && selected, hovered: !management && bounds.Contains(mousePoint));
+            if (management)
+            {
+                drawingContext.DrawFittedText($"{index + 1}", new Rectangle(bounds.X + 16, bounds.Y + 13, 28, 34), new Color(178, 219, 226), 0.30f);
+                drawingContext.DrawFittedText(string.IsNullOrEmpty(identity.LoginName) ? "-" : identity.LoginName, new Rectangle(bounds.X + 54, bounds.Y + 10, 278, 40), Color.White, 0.36f);
+                drawingContext.DrawFittedText(string.IsNullOrEmpty(identity.LoginPass) ? "-" : identity.LoginPass, new Rectangle(bounds.X + 350, bounds.Y + 10, bounds.Width - 366, 40), Color.White, 0.36f);
+            }
+            else
+            {
+                drawingContext.DrawFittedText(identity.DisplayName, new Rectangle(bounds.X + 18, bounds.Y + 8, bounds.Width - 36, 28), Color.White, 0.40f);
+                drawingContext.DrawFittedText($"HANDLE: {identity.LoginName}", new Rectangle(bounds.X + 18, bounds.Y + 39, bounds.Width - 36, 22), new Color(180, 195, 195), 0.27f);
+            }
         }
 
         if (management)

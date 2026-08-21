@@ -75,6 +75,15 @@ public sealed partial class GoAppSession
             : identities.Where(identity => string.IsNullOrEmpty(identity.ConnectionProfileId)).ToArray();
     }
 
+    /// <summary>管理画面で、選択中の Entry Profile に紐づく認証情報をすべて返します。</summary>
+    public IReadOnlyList<ClientIdentityProfile> GetManagedPlayerClientIdentities()
+    {
+        if (PlayerDialogSelectionIndex < 0 || PlayerDialogSelectionIndex >= _playerProfiles.Count)
+            return Array.Empty<ClientIdentityProfile>();
+
+        return GetPlayerClientIdentityProfiles(_playerProfiles[PlayerDialogSelectionIndex].Id);
+    }
+
     public void SelectPlayerSelectionClientIdentity(int index)
     {
         if (index < 0 || index >= GetPlayerSelectionClientIdentities().Count)
