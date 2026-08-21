@@ -108,12 +108,12 @@ public sealed class SelectEntryPresenter
                 drawingContext.DrawFittedText($"{index + 1}", new Rectangle(bounds.X + 16, bounds.Y + 13, 28, 34), new Color(178, 219, 226), 0.30f);
                 drawingContext.DrawFittedText(string.IsNullOrEmpty(identity.LoginName) ? "-" : identity.LoginName, new Rectangle(bounds.X + 54, bounds.Y + 10, 190, 40), Color.White, 0.36f);
                 drawingContext.DrawFittedText(string.IsNullOrEmpty(identity.LoginPass) ? "-" : identity.LoginPass, new Rectangle(bounds.X + 260, bounds.Y + 10, 170, 40), Color.White, 0.36f);
-                drawingContext.DrawFittedText(string.IsNullOrEmpty(identity.Comment) ? "-" : identity.Comment, new Rectangle(bounds.X + 446, bounds.Y + 10, bounds.Width - 462, 40), Color.White, 0.34f);
+                drawingContext.DrawDynamicText(string.IsNullOrEmpty(identity.Comment) ? "-" : identity.Comment, new Rectangle(bounds.X + 446, bounds.Y + 10, bounds.Width - 462, 40), Color.White, 0.34f);
             }
             else
             {
                 drawingContext.DrawFittedText(identity.LoginName, new Rectangle(bounds.X + 18, bounds.Y + 8, bounds.Width - 36, 28), Color.White, 0.40f);
-                drawingContext.DrawFittedText(string.IsNullOrEmpty(identity.Comment) ? "COMMENT: -" : $"COMMENT: {identity.Comment}", new Rectangle(bounds.X + 18, bounds.Y + 39, bounds.Width - 36, 22), new Color(180, 195, 195), 0.27f);
+                drawingContext.DrawDynamicText(string.IsNullOrEmpty(identity.Comment) ? "COMMENT: -" : $"COMMENT: {identity.Comment}", new Rectangle(bounds.X + 18, bounds.Y + 39, bounds.Width - 36, 22), new Color(180, 195, 195), 0.27f);
             }
         }
 

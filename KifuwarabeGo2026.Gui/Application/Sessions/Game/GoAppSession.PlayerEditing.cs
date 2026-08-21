@@ -20,6 +20,7 @@ public sealed partial class GoAppSession
     public int PlayerEditCaretIndex { get; private set; }
     public int PlayerEditSelectionStart { get; private set; }
     public int PlayerEditSelectionLength { get; private set; }
+    public TextCompositionState PlayerEditComposition { get; private set; } = TextCompositionState.Empty;
     private string PlayerEditOriginalFieldText { get; set; } = "";
     public ClientIdentityProfile PlayerEditClientIdentityDraft { get; private set; } = new();
     private EntryProfile PlayerEditOriginalProfile { get; set; } = new();
@@ -67,6 +68,7 @@ public sealed partial class GoAppSession
 
     public void BeginPlayerEditField(EntryProfileEditField field, int caretIndex)
     {
+        if (ActivePlayerEditField != field) PlayerEditComposition = TextCompositionState.Empty;
         ActivePlayerEditField = field;
         PlayerEditOriginalFieldText = GetPlayerEditFieldText(field);
         PlayerEditCaretIndex = Math.Clamp(caretIndex, 0, GetPlayerEditFieldText(field).Length);
@@ -74,12 +76,16 @@ public sealed partial class GoAppSession
         PlayerEditSelectionLength = 0;
     }
 
+    public void SetPlayerEditComposition(TextCompositionState composition) =>
+        PlayerEditComposition = ActivePlayerEditField is null ? TextCompositionState.Empty : composition;
+
     public void SetPlayerEditFieldText(EntryProfileEditField field, string value, int caretIndex, int selectionStart, int selectionLength)
     {
         if (field == EntryProfileEditField.DisplayName) SetPlayerEditDisplayName(value);
         else if (field == EntryProfileEditField.Identifier) SetPlayerEditIdentifier(value);
         else if (field == EntryProfileEditField.ClientIdentityHandle) PlayerEditClientIdentityDraft.LoginName = value;
-        else PlayerEditClientIdentityDraft.LoginPass = value;
+        else if (field == EntryProfileEditField.ClientIdentityPassword) PlayerEditClientIdentityDraft.LoginPass = value;
+        else if (field == EntryProfileEditField.ClientIdentityComment) PlayerEditClientIdentityDraft.Comment = value;
 
         PlayerEditCaretIndex = Math.Clamp(caretIndex, 0, value.Length);
         PlayerEditSelectionStart = Math.Clamp(selectionStart, 0, value.Length);
@@ -92,10 +98,16 @@ public sealed partial class GoAppSession
         EntryProfileEditField.Identifier => PlayerEditDraft.Identifier,
         EntryProfileEditField.ClientIdentityHandle => PlayerEditClientIdentityDraft.LoginName,
         EntryProfileEditField.ClientIdentityPassword => PlayerEditClientIdentityDraft.LoginPass,
+        EntryProfileEditField.ClientIdentityComment => PlayerEditClientIdentityDraft.Comment,
         _ => throw new ArgumentOutOfRangeException(nameof(field), field, "Unknown player edit field."),
     };
 
-    public void EndPlayerEditField() => ActivePlayerEditField = null;
+    public void EndPlayerEditField()
+    {
+        ActivePlayerEditField = null;
+        PlayerEditComposition = TextCompositionState.Empty;
+        PlayerEditComposition = TextCompositionState.Empty;
+    }
 
     public void CancelPlayerEditField()
     {
@@ -104,7 +116,8 @@ public sealed partial class GoAppSession
             if (field == EntryProfileEditField.DisplayName) PlayerEditDraft.DisplayName = PlayerEditOriginalFieldText;
             else if (field == EntryProfileEditField.Identifier) PlayerEditDraft.Identifier = PlayerEditOriginalFieldText;
             else if (field == EntryProfileEditField.ClientIdentityHandle) PlayerEditClientIdentityDraft.LoginName = PlayerEditOriginalFieldText;
-            else PlayerEditClientIdentityDraft.LoginPass = PlayerEditOriginalFieldText;
+            else if (field == EntryProfileEditField.ClientIdentityPassword) PlayerEditClientIdentityDraft.LoginPass = PlayerEditOriginalFieldText;
+            else if (field == EntryProfileEditField.ClientIdentityComment) PlayerEditClientIdentityDraft.Comment = PlayerEditOriginalFieldText;
         }
         ActivePlayerEditField = null;
     }
@@ -193,6 +206,7 @@ public sealed partial class GoAppSession
 
         PlayerEditDraft.Kind = kind;
         ActivePlayerEditField = null;
+        PlayerEditComposition = TextCompositionState.Empty;
         IsPlayerEditDirty = true;
         return true;
     }
@@ -247,6 +261,7 @@ public sealed partial class GoAppSession
         DeactivateWindow(ActiveWindowId.PlayerEdit);
         IsCreatingEngineProfileForPlayerEdit = false;
         ActivePlayerEditField = null;
+        PlayerEditComposition = TextCompositionState.Empty;
         ApplySelectedEntryProfile(GoStone.Black);
         ApplySelectedEntryProfile(GoStone.White);
         return true;
@@ -266,6 +281,7 @@ public sealed partial class GoAppSession
         IsPlayerEditDirty = false;
         IsCreatingEngineProfileForPlayerEdit = false;
         ActivePlayerEditField = null;
+        PlayerEditComposition = TextCompositionState.Empty;
     }
 
     private void CommitPlayerEditClientIdentityDraft()
@@ -307,4 +323,5 @@ public enum EntryProfileEditField
     Identifier,
     ClientIdentityHandle,
     ClientIdentityPassword,
+    ClientIdentityComment,
 }

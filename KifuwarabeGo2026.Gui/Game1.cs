@@ -2390,8 +2390,21 @@ public class Game1 : Game
         }
         else if (_playerEditTextBox.IsMouseSelecting && _session.ActivePlayerEditField is { } playerField)
         {
-            _playerEditTextBox.UpdateMouseSelection(
-                EditEntryProfile.Default.GetCaretIndex(_presentationServices.Stationery, point, playerField, _playerEditTextBox.Text));
+            var caretIndex = playerField is EntryProfileEditField.ClientIdentityHandle or
+                EntryProfileEditField.ClientIdentityPassword or
+                EntryProfileEditField.ClientIdentityComment
+                ? EditEntryProfile.Default.GetClientIdentityCaretIndex(
+                    _presentationServices.Stationery,
+                    point,
+                    _session.ClientIdentityProfileEditIndex,
+                    playerField,
+                    _playerEditTextBox.Text)
+                : EditEntryProfile.Default.GetCaretIndex(
+                    _presentationServices.Stationery,
+                    point,
+                    playerField,
+                    _playerEditTextBox.Text);
+            _playerEditTextBox.UpdateMouseSelection(caretIndex);
             SyncPlayerEditField(playerField);
         }
         else if (_targetProfileEditTextBox.IsMouseSelecting && _session.ActiveClientIdentityProfileEditField is { } targetField)
@@ -4443,6 +4456,12 @@ public class Game1 : Game
             _commentEditorComposition = composition;
             return;
         }
+        if (_session.IsPlayerEditPanelOpen && _session.ActivePlayerEditField is not null)
+        {
+            _session.SetPlayerEditComposition(composition);
+            return;
+        }
+        _session.SetPlayerEditComposition(TextCompositionState.Empty);
         _gtpEngineStringComposition = _activeGtpEngineStringOption is null
             ? TextCompositionState.Empty
             : composition;
@@ -4817,7 +4836,7 @@ public class Game1 : Game
         var text = _session.ActivePlayerEditField == field
             ? _playerEditTextBox.Text
             : _session.GetPlayerEditFieldText(field);
-        var caretIndex = _presentationServices is null ? text.Length : field is EntryProfileEditField.ClientIdentityHandle or EntryProfileEditField.ClientIdentityPassword
+        var caretIndex = _presentationServices is null ? text.Length : field is EntryProfileEditField.ClientIdentityHandle or EntryProfileEditField.ClientIdentityPassword or EntryProfileEditField.ClientIdentityComment
             ? EditEntryProfile.Default.GetClientIdentityCaretIndex(_presentationServices.Stationery, point, _session.ClientIdentityProfileEditIndex, field, text)
             : EditEntryProfile.Default.GetCaretIndex(_presentationServices.Stationery, point, field, text);
         if (_session.ActivePlayerEditField == field)
@@ -4867,7 +4886,7 @@ public class Game1 : Game
 
     private void MovePlayerEditFocus(EntryProfileEditField field, int step)
     {
-        var fields = new[] { EntryProfileEditField.DisplayName, EntryProfileEditField.ClientIdentityHandle, EntryProfileEditField.ClientIdentityPassword };
+        var fields = new[] { EntryProfileEditField.DisplayName, EntryProfileEditField.ClientIdentityHandle, EntryProfileEditField.ClientIdentityPassword, EntryProfileEditField.ClientIdentityComment };
         var index = Array.IndexOf(fields, field);
         var next = fields[(index + step + fields.Length) % fields.Length];
         var text = _session.GetPlayerEditFieldText(next);

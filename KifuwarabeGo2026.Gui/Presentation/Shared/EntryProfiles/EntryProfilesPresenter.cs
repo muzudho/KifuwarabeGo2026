@@ -128,7 +128,7 @@ public sealed class EntryProfilesPresenter
             if (operated) DrawSelectionFingerMark(new Vector2(row.X - 55, row.Center.Y - 13), 1.65f);
             DrawFittedText(target.LoginName, new Rectangle(row.X + 18, row.Y + 25, 300, 30), Color.White, 0.42f);
             DrawFittedText(string.IsNullOrEmpty(target.LoginPass) ? "NONE" : "SET", new Rectangle(row.X + 335, row.Y + 25, 150, 30), Color.White, 0.34f);
-            DrawFittedText(target.Comment, new Rectangle(row.X + 500, row.Y + 25, 310, 30), new Color(180, 195, 195), 0.32f);
+            DrawDynamicOptionText(target.Comment, new Rectangle(row.X + 500, row.Y + 25, 310, 30), new Color(180, 195, 195), 0.32f);
             if (selected)
                 DrawFittedText("IN DEFAULT", new Rectangle(row.X + 825, row.Y + 25, 145, 30), new Color(147, 244, 200), 0.28f);
         }

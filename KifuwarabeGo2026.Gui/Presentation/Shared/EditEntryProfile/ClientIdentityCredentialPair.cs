@@ -8,12 +8,13 @@ using System;
 internal static class ClientIdentityCredentialPair
 {
     public const int Top = 560;
-    public const int Pitch = 62;
-    public static Rectangle RowBounds(int index) => new(548, Top + index * Pitch, 812, 54);
-    public static Rectangle HandleBounds(int index) => new(610, Top + index * Pitch + 8, 270, 36);
-    public static Rectangle PasswordBounds(int index) => new(900, Top + index * Pitch + 8, 260, 36);
-    public static Rectangle VisibilityBounds(int index) => new(1170, Top + index * Pitch + 8, 42, 36);
-    public static Rectangle RemoveBounds(int index) => new(1222, Top + index * Pitch + 6, 120, 40);
+    public const int Pitch = 70;
+    public static Rectangle RowBounds(int index) => new(548, Top + index * Pitch, 812, 66);
+    public static Rectangle HandleBounds(int index) => new(610, Top + index * Pitch + 5, 270, 27);
+    public static Rectangle PasswordBounds(int index) => new(900, Top + index * Pitch + 5, 260, 27);
+    public static Rectangle CommentBounds(int index) => new(675, Top + index * Pitch + 36, 485, 25);
+    public static Rectangle VisibilityBounds(int index) => new(1170, Top + index * Pitch + 4, 42, 30);
+    public static Rectangle RemoveBounds(int index) => new(1222, Top + index * Pitch + 4, 120, 32);
 
     public static (int Index, EntryProfileEditField Field)? GetFieldHit(Point point, int count)
     {
@@ -21,6 +22,7 @@ internal static class ClientIdentityCredentialPair
         {
             if (HandleBounds(index).Contains(point)) return (index, EntryProfileEditField.ClientIdentityHandle);
             if (PasswordBounds(index).Contains(point)) return (index, EntryProfileEditField.ClientIdentityPassword);
+            if (CommentBounds(index).Contains(point)) return (index, EntryProfileEditField.ClientIdentityComment);
         }
         return null;
     }

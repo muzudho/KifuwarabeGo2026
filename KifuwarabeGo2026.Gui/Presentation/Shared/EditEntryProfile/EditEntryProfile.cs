@@ -134,9 +134,13 @@ public sealed class EditEntryProfile
 
     public int GetClientIdentityCaretIndex(KfwStationeryDrawingTools drawingContext, Point point, int index,
         EntryProfileEditField field, string text) => drawingContext.GetTextCaretIndex(point.X, text,
-            field == EntryProfileEditField.ClientIdentityHandle
-                ? ClientIdentityCredentialPair.HandleBounds(index)
-                : ClientIdentityCredentialPair.PasswordBounds(index), 0.36f);
+            field switch
+            {
+                EntryProfileEditField.ClientIdentityHandle => ClientIdentityCredentialPair.HandleBounds(index),
+                EntryProfileEditField.ClientIdentityPassword => ClientIdentityCredentialPair.PasswordBounds(index),
+                EntryProfileEditField.ClientIdentityComment => ClientIdentityCredentialPair.CommentBounds(index),
+                _ => throw new ArgumentOutOfRangeException(nameof(field), field, "Unknown client identity field."),
+            }, 0.36f);
 
     public bool TryToggleClientIdentityPasswordVisibility(Point point, IReadOnlyList<ClientIdentityProfile> identities)
     {
@@ -206,7 +210,7 @@ public sealed class EditEntryProfile
             return;
         }
 
-        var bounds = new Rectangle(510, 170, 900, 820);
+        var bounds = new Rectangle(510, 145, 900, 900);
         draw.FillRectangle(new Rectangle(0, 0, draw.VirtualScreenWidth, draw.VirtualScreenHeight), new Color(0, 0, 0, 140));
         draw.FillRectangle(bounds, new Color(24, 29, 36, 252));
         draw.DrawRectangle(bounds, 2, new Color(116, 145, 146));
@@ -305,6 +309,8 @@ public sealed class EditEntryProfile
         DrawIdentityValue(index, EntryProfileEditField.ClientIdentityHandle, identity.LoginName, false, selected, session, mousePoint, draw);
         DrawIdentityValue(index, EntryProfileEditField.ClientIdentityPassword, identity.LoginPass,
             !VisibleClientIdentityPasswords.Contains(identity.Id), selected, session, mousePoint, draw);
+        draw.DrawFittedText("COMMENT", new Rectangle(row.X + 62, row.Y + 37, 62, 24), new Color(180, 195, 195), 0.24f);
+        DrawIdentityValue(index, EntryProfileEditField.ClientIdentityComment, identity.Comment, false, selected, session, mousePoint, draw);
         DrawEyeButton(ClientIdentityCredentialPair.VisibilityBounds(index), VisibleClientIdentityPasswords.Contains(identity.Id), mousePoint, draw);
         var remove = new Button(ClientIdentityCredentialPair.RemoveBounds(index), "REMOVE", 0.25f) { IsEnabled = session.PlayerEditClientIdentities.Count > 1 };
         remove.Draw(mousePoint, draw.KfwStationeryDrawingTools);
@@ -313,8 +319,13 @@ public sealed class EditEntryProfile
     private void DrawIdentityValue(int index, EntryProfileEditField field, string text, bool mask, bool selected,
         GoAppSession session, Point mousePoint, EditEntryProfileDrawingCallbacks draw)
     {
-        var bounds = field == EntryProfileEditField.ClientIdentityHandle
-            ? ClientIdentityCredentialPair.HandleBounds(index) : ClientIdentityCredentialPair.PasswordBounds(index);
+        var bounds = field switch
+        {
+            EntryProfileEditField.ClientIdentityHandle => ClientIdentityCredentialPair.HandleBounds(index),
+            EntryProfileEditField.ClientIdentityPassword => ClientIdentityCredentialPair.PasswordBounds(index),
+            EntryProfileEditField.ClientIdentityComment => ClientIdentityCredentialPair.CommentBounds(index),
+            _ => throw new ArgumentOutOfRangeException(nameof(field), field, "Unknown client identity field."),
+        };
         var active = selected && session.ActivePlayerEditField == field;
         PlayerNameTextUnderline.Bounds = bounds;
         PlayerNameTextUnderline.SetEditing(active);
@@ -322,6 +333,36 @@ public sealed class EditEntryProfile
         PlayerNameTextUnderline.Draw(draw.KfwStationeryDrawingTools);
         if (active) draw.DrawTextSelection(text, session.PlayerEditSelectionStart, session.PlayerEditSelectionLength, bounds, 0.36f);
         draw.DrawFittedText(mask ? new string('●', text.Length) : string.IsNullOrEmpty(text) ? "-" : text, bounds, Color.White, 0.36f);
+        if (field == EntryProfileEditField.ClientIdentityComment)
+        {
+            draw.FillRectangle(bounds, selected ? new Color(35, 48, 57, 235) : new Color(27, 34, 40, 220));
+            if (active) draw.DrawTextSelection(text, session.PlayerEditSelectionStart, session.PlayerEditSelectionLength, bounds, 0.36f);
+            draw.DrawDynamicText(string.IsNullOrEmpty(text) ? "-" : text, bounds, Color.White, 0.36f);
+            PlayerNameTextUnderline.Bounds = bounds;
+            PlayerNameTextUnderline.SetEditing(active);
+            PlayerNameTextUnderline.UpdatePointer(mousePoint);
+            PlayerNameTextUnderline.Draw(draw.KfwStationeryDrawingTools);
+        }
+        if (active && session.PlayerEditComposition.IsActive && !string.IsNullOrEmpty(session.PlayerEditComposition.Text))
+        {
+            var caret = Math.Clamp(session.PlayerEditCaretIndex, 0, text.Length);
+            var prefixWidth = draw.KfwStationeryDrawingTools.MeasureText(text[..caret]).X * 0.36f;
+            var compositionText = mask
+                ? new string('●', session.PlayerEditComposition.Text.Length)
+                : session.PlayerEditComposition.Text;
+            var compositionBounds = new Rectangle(
+                bounds.X + (int)prefixWidth,
+                bounds.Y,
+                Math.Max(1, bounds.Width - (int)prefixWidth),
+                bounds.Height);
+            draw.DrawDynamicText(compositionText, compositionBounds, new Color(255, 225, 128), 0.36f);
+            var compositionWidth = draw.KfwStationeryDrawingTools.MeasureText(compositionText).X * 0.36f;
+            draw.DrawLine(
+                new Vector2(compositionBounds.X, bounds.Bottom - 1),
+                new Vector2(Math.Min(bounds.Right, compositionBounds.X + compositionWidth), bounds.Bottom - 1),
+                2,
+                new Color(255, 225, 128));
+        }
         if (active) draw.DrawTextCaret(text, session.PlayerEditCaretIndex, bounds, 0.36f);
     }
 
