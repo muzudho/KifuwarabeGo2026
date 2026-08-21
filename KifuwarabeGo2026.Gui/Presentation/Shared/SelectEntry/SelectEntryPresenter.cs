@@ -38,8 +38,15 @@ public sealed class SelectEntryPresenter
         drawingContext.FillRectangle(PlayerSelectionDialogBounds, new Color(19, 24, 31, 250));
         drawingContext.DrawRectangle(PlayerSelectionDialogBounds, 2, new Color(116, 145, 146));
 
-        var stone = session.PlayerSelectionTargetStone == GoStone.Black ? "BLACK" : "WHITE";
-        drawingContext.DrawText(management ? "ENTRY PROFILES" : $"SELECT ENTRY ({stone})", new Vector2(PlayerSelectionDialogBounds.X + 34, PlayerSelectionDialogBounds.Y + 28), new Color(244, 238, 218), 0.78f);
+        var targetLabel = session.PlayerSelectionPurpose == PlayerSelectionPurpose.Cgos
+            ? session.PlayerSelectionTargetStone == GoStone.Black ? "PLAYER 1" : "PRACTICE PLAYER"
+            : session.PlayerSelectionTargetStone == GoStone.Black ? "BLACK" : "WHITE";
+        var title = management
+            ? "ENTRY PROFILES"
+            : session.PlayerSelectionPurpose == PlayerSelectionPurpose.Cgos
+                ? $"ENTRY ({targetLabel})"
+                : $"SELECT ENTRY ({targetLabel})";
+        drawingContext.DrawText(title, new Vector2(PlayerSelectionDialogBounds.X + 34, PlayerSelectionDialogBounds.Y + 28), new Color(244, 238, 218), 0.78f);
         drawingContext.DrawText(management ? "Add, edit, remove, and order match entry profiles." : "Select an entry profile for this player. Computer entries use a registered engine profile.", new Vector2(PlayerSelectionDialogBounds.X + 36, PlayerSelectionDialogBounds.Y + 88), new Color(180, 195, 195), 0.38f);
         if (!management) screen.CancelButton.Draw(mousePoint, drawingContext);
         screen.SelectButton.Draw(mousePoint, drawingContext);
