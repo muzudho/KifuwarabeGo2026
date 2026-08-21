@@ -6,10 +6,10 @@ from its own location.
 
 ## Prepare release assets
 
-Update the project versions and create the matching release notes first, then run:
+Create the matching release notes first, then update the central version and prepare the assets:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\Scripts\Invoke-Release.ps1 -Version 3.17.0
+powershell -NoProfile -ExecutionPolicy Bypass -File .\Scripts\Invoke-Release.ps1 -Version 3.18.0 -UpdateVersion -AllowDirty
 ```
 
 The explicit execution policy makes this work on Windows installations that
@@ -26,7 +26,7 @@ After reviewing the generated files, run the command again. Matching existing
 assets are reused only after their SHA-256 values have been verified:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\Scripts\Invoke-Release.ps1 -Version 3.17.0 -Publish -SkipBuild
+powershell -NoProfile -ExecutionPolicy Bypass -File .\Scripts\Invoke-Release.ps1 -Version 3.18.0 -Publish -SkipBuild
 ```
 
 Publishing requires GitHub CLI authentication, a clean working tree, and local
@@ -41,6 +41,7 @@ Useful options:
 - `-ReleaseNotes <path>` uses another notes file.
 - `-SkipBuild` reuses existing publish output.
 - `-SkipSmokeTests` skips smoke tests but still builds and publishes.
+- `-UpdateVersion` updates `Directory.Build.props` before validating all project versions.
 - `-AllowDirty` permits a dirty working tree for local package preparation.
 - `-Force` publishes without the interactive confirmation prompt.
 - `-WhatIf -Publish` checks the workflow without creating a GitHub release.

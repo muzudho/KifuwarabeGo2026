@@ -11,6 +11,7 @@ param(
     [switch] $Prerelease,
     [switch] $SkipBuild,
     [switch] $SkipSmokeTests,
+    [switch] $UpdateVersion,
     [switch] $AllowDirty,
     [switch] $Force
 )
@@ -55,12 +56,25 @@ function Assert-ProjectVersion {
     }
 }
 
+function Update-CentralVersion {
+    $propsPath = Join-Path $repositoryRoot 'Directory.Build.props'
+    $numericVersion = ($Version -split '-', 2)[0]
+    $content = Get-Content -Raw -LiteralPath $propsPath
+    $content = [regex]::Replace($content, '<Version>[^<]+</Version>', "<Version>$Version</Version>", 1)
+    $content = [regex]::Replace($content, '<AssemblyVersion>[^<]+</AssemblyVersion>', "<AssemblyVersion>$numericVersion.0</AssemblyVersion>", 1)
+    $content = [regex]::Replace($content, '<FileVersion>[^<]+</FileVersion>', "<FileVersion>$numericVersion.0</FileVersion>", 1)
+    Set-Content -LiteralPath $propsPath -Value $content -Encoding utf8
+    Write-Host "Updated central project version to $Version"
+}
+
 if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
     throw 'git was not found on PATH.'
 }
 if (-not (Get-Command dotnet -ErrorAction SilentlyContinue)) {
     throw 'dotnet was not found on PATH.'
 }
+
+if ($UpdateVersion) { Update-CentralVersion }
 
 $status = @(git status --short)
 if ($LASTEXITCODE -ne 0) {
@@ -95,6 +109,10 @@ if ([string]::IsNullOrWhiteSpace($ReleaseNotes)) {
     $ReleaseNotes = $releaseNoteMatches[0].FullName
 }
 Assert-FileExists -LiteralPath $ReleaseNotes
+$releaseNotesText = Get-Content -Raw -LiteralPath $ReleaseNotes
+if ($releaseNotesText -notmatch "(?m)^# Kifuwarabe Go 2026 v$([regex]::Escape($Version))\s*$") {
+    throw "Release notes do not contain the expected v$Version title: $ReleaseNotes"
+}
 
 $launcherPublish = 'KifuwarabeGo2026.Launcher\bin\Release\net8.0\win-x64\publish'
 $guiPublish = 'KifuwarabeGo2026.Gui.Windows\bin\Release\net8.0-windows\win-x64\publish'
@@ -192,6 +210,13 @@ $tag = "v$Version"
 git rev-parse --verify --quiet "refs/tags/$tag" | Out-Null
 if ($LASTEXITCODE -eq 0) {
     throw "Local tag already exists: $tag"
+}
+$remoteTag = @(git ls-remote --tags origin "refs/tags/$tag" "refs/tags/$tag^{}")
+if ($LASTEXITCODE -ne 0) {
+    throw "Unable to inspect remote tag: $tag"
+}
+if ($remoteTag.Count -gt 0) {
+    throw "Remote tag already exists: $tag"
 }
 $previousErrorActionPreference = $ErrorActionPreference
 try {
