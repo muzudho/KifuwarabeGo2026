@@ -27,6 +27,8 @@ public sealed class CgosLoginPage
         BlackCodeButton = Button(582, 806, 120, 44, "CODE", .24f);
         WhiteConnectButton = Button(762, 748, 396, 48, "CONNECT", .34f);
         WhiteResignButton = Button(966, 748, 192, 48, "RESIGN", .34f);
+        PracticeResignCancelButton = Button(966, 692, 92, 40, "NO", .30f);
+        PracticeResignConfirmButton = Button(1066, 692, 92, 40, "YES", .30f);
         WhiteTailButton = Button(906, 806, 120, 44, "TAIL", .28f);
         WhiteCodeButton = Button(1040, 806, 120, 44, "CODE", .24f);
         BeginButton = Button(1134, 800, 302, 58, "BEGIN", .34f);
@@ -43,10 +45,10 @@ public sealed class CgosLoginPage
     public void Draw(CgosLoginRenderer renderer, KfwStationeryDrawingTools drawingContext, GoAppSession session, Point mousePosition) =>
         renderer.Draw(drawingContext, session, mousePosition);
 
-    public void UpdateGameInProgressButtons(bool gameInProgress)
+    public void UpdateGameInProgressButtons(bool primaryGameInProgress, bool practiceUnexpectedGameInProgress)
     {
-        BlackConnectButton.Bounds = new Rectangle(304, 748, gameInProgress ? 192 : 396, 48);
-        WhiteConnectButton.Bounds = new Rectangle(762, 748, gameInProgress ? 192 : 396, 48);
+        BlackConnectButton.Bounds = new Rectangle(304, 748, primaryGameInProgress ? 192 : 396, 48);
+        WhiteConnectButton.Bounds = new Rectangle(762, 748, practiceUnexpectedGameInProgress ? 192 : 396, 48);
     }
 
     public Button BackButton { get; }
@@ -64,6 +66,8 @@ public sealed class CgosLoginPage
     public Button BlackCodeButton { get; }
     public Button WhiteConnectButton { get; }
     public Button WhiteResignButton { get; }
+    public Button PracticeResignCancelButton { get; }
+    public Button PracticeResignConfirmButton { get; }
     public Button WhiteTailButton { get; }
     public Button WhiteCodeButton { get; }
     public Button BeginButton { get; }

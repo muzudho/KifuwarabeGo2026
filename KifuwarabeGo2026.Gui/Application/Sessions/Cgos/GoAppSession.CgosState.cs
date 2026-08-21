@@ -65,7 +65,55 @@ public sealed partial class GoAppSession
     public bool HasSelectedCgosGtpEngine => SelectedCgosBlackGtpEngineProfile is not null || SelectedCgosWhiteGtpEngineProfile is not null;
     public bool IsAnyCgosProcessRunning => IsCgosConnectionRunning || IsCgosBlackConnectionRunning || IsCgosWhiteConnectionRunning || IsCgosAdminRunning;
     public bool IsCgosGameInProgress { get; private set; }
+    public bool IsCgosPracticeUnexpectedGameInProgress { get; private set; }
+    public bool IsCgosPracticeResignConfirmationPending { get; private set; }
+    public bool IsCgosPracticeResignRequested { get; private set; }
+    public int CgosPracticeUnexpectedGameId { get; private set; }
+    public string CgosPracticeUnexpectedOpponent { get; private set; } = "-";
+    public string CgosPracticeUnexpectedColor { get; private set; } = "-";
+    public int CgosPracticeUnexpectedMoveCount { get; private set; }
+    public string CgosPracticeUnexpectedTimeDisplay { get; private set; } = "";
     public bool IsCgosConnectionRunning { get; private set; }
+
+    public void SetCgosPracticeUnexpectedGame(
+        bool inProgress,
+        int gameId,
+        string opponent,
+        GoStone color,
+        int moveCount,
+        TimeSpan remainingTime)
+    {
+        IsCgosPracticeUnexpectedGameInProgress = inProgress;
+        CgosPracticeUnexpectedGameId = gameId;
+        CgosPracticeUnexpectedOpponent = string.IsNullOrWhiteSpace(opponent) ? "-" : opponent;
+        CgosPracticeUnexpectedColor = color switch
+        {
+            GoStone.Black => "BLACK",
+            GoStone.White => "WHITE",
+            _ => "-",
+        };
+        CgosPracticeUnexpectedMoveCount = moveCount;
+        CgosPracticeUnexpectedTimeDisplay = $"{Math.Max(0, (int)remainingTime.TotalMinutes):00}:{Math.Max(0, remainingTime.Seconds):00}";
+        if (!inProgress)
+        {
+            IsCgosPracticeResignConfirmationPending = false;
+            IsCgosPracticeResignRequested = false;
+        }
+    }
+
+    public void RequestCgosPracticeResignConfirmation()
+    {
+        if (IsCgosPracticeUnexpectedGameInProgress && !IsCgosPracticeResignRequested)
+            IsCgosPracticeResignConfirmationPending = true;
+    }
+
+    public void CancelCgosPracticeResignConfirmation() => IsCgosPracticeResignConfirmationPending = false;
+
+    public void MarkCgosPracticeResignRequested()
+    {
+        IsCgosPracticeResignConfirmationPending = false;
+        IsCgosPracticeResignRequested = true;
+    }
     public int SelectedCgosConnectionProfileIndex { get; private set; }
     public CgosConnectionProfile SelectedCgosConnectionProfile => _cgosConnectionProfiles[SelectedCgosConnectionProfileIndex];
     public bool IsCgosConnectionEditPanelOpen { get; private set; }

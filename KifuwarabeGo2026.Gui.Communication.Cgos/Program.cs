@@ -67,9 +67,9 @@ internal static class Program
                     {
                         cancellation.Cancel();
                     }
-                    else if (line.Equals("resign", StringComparison.OrdinalIgnoreCase))
+                    else if (TryParseResignCommand(line, out var gameId))
                     {
-                        playerControl.RequestResign();
+                        playerControl.RequestResign(gameId);
                     }
 
                     return Task.CompletedTask;
@@ -93,6 +93,19 @@ internal static class Program
             cancellation.Cancel();
             await parentWatcher;
         }
+    }
+
+    private static bool TryParseResignCommand(string line, out int? gameId)
+    {
+        gameId = null;
+        var parts = line.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (parts.Length == 1 && parts[0].Equals("resign", StringComparison.OrdinalIgnoreCase)) return true;
+        if (parts.Length == 2 && parts[0].Equals("resign", StringComparison.OrdinalIgnoreCase) && int.TryParse(parts[1], out var parsedGameId))
+        {
+            gameId = parsedGameId;
+            return true;
+        }
+        return false;
     }
 
     private static async Task WatchParentProcessAsync(CgosClientOptions options, CancellationTokenSource cancellation)
@@ -172,11 +185,35 @@ internal static class Program
 
 internal sealed class CgosPlayerControl
 {
-    private int _resignRequested;
+    private readonly object _sync = new();
+    private bool _resignRequested;
+    private int? _expectedGameId;
 
-    public void RequestResign() => Interlocked.Exchange(ref _resignRequested, 1);
+    public void RequestResign(int? expectedGameId)
+    {
+        lock (_sync)
+        {
+            _resignRequested = true;
+            _expectedGameId = expectedGameId;
+        }
+    }
 
-    public bool ConsumeResignRequest() => Interlocked.Exchange(ref _resignRequested, 0) != 0;
+    public bool ConsumeResignRequest(int currentGameId)
+    {
+        lock (_sync)
+        {
+            if (!_resignRequested) return false;
+            if (_expectedGameId is not null && _expectedGameId != currentGameId)
+            {
+                _resignRequested = false;
+                _expectedGameId = null;
+                return false;
+            }
+            _resignRequested = false;
+            _expectedGameId = null;
+            return true;
+        }
+    }
 }
 
 internal static class CgosStandardInputRelay
@@ -719,6 +756,7 @@ internal sealed class CgosClient
     private GtpEngineProcess? _engine;
     private string _engineColor = "black";
     private bool _engineSupportsCgosAnalyze;
+    private int _gameId;
 
     public CgosClient(
         CgosClientOptions options,
@@ -786,6 +824,11 @@ internal sealed class CgosClient
             throw new InvalidOperationException("CGOS setup requires at least 6 parameters.");
         }
 
+        if (!int.TryParse(parameters[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out _gameId))
+        {
+            throw new InvalidOperationException("CGOS setup has an invalid game ID.");
+        }
+
         await ShutdownEngineAsync();
         _engine = new GtpEngineProcess(_options.EngineCommand, _options.LogDirectory, _account.Label, Log);
         await _engine.StartAsync(cancellationToken);
@@ -819,7 +862,7 @@ internal sealed class CgosClient
             throw new InvalidOperationException("CGOS genmove requires 2 parameters.");
         }
 
-        if (_playerControl.ConsumeResignRequest())
+        if (_playerControl.ConsumeResignRequest(_gameId))
         {
             Log("# GUI requested resignation.");
             return "resign";
@@ -829,7 +872,7 @@ internal sealed class CgosClient
         var color = parameters[0];
         var useAnalyze = serverSupportsAnalyze && _engineSupportsCgosAnalyze;
         var response = await engine.CommandAsync((useAnalyze ? "cgos-genmove_analyze " : "genmove ") + color, cancellationToken);
-        if (_playerControl.ConsumeResignRequest())
+        if (_playerControl.ConsumeResignRequest(_gameId))
         {
             Log("# GUI requested resignation while the engine was thinking.");
             return "resign";

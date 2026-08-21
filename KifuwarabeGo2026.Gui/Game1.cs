@@ -88,6 +88,7 @@ public class Game1 : Game
     private readonly CgosConnectionProcess _cgosWhiteConnectionProcess;
     private readonly CgosConnectionProcess _cgosAdminProcess;
     private readonly CgosGameObservation _cgosGameObservation = new();
+    private readonly CgosGameObservation _cgosPracticeUnexpectedGame = new();
     private GoAppSession? _variationSession;
     private GoPresentationServices? _presentationServices;
     private SoundEffect? _placeStoneSound;
@@ -171,6 +172,7 @@ public class Game1 : Game
     private int? _lastReadOnlyChartPopupSeekMoveIndex;
     private GoGameRecord? _lastAutoSavedLocalGameRecord;
     private int? _lastAutoSavedCgosGameId;
+    private int? _lastAutoSavedCgosPracticeGameId;
     private PonnukiProviderGameSession? _ponnukiProviderGameSession;
     private int _ponnukiProviderObservedMoveCount;
     private Task<GtpEngineAppCompatibility[]>? _appProviderSelectionLoadTask;
@@ -228,7 +230,7 @@ public class Game1 : Game
         _platformExecutableService = platformExecutableService;
         _windowScreenshotService = windowScreenshotService;
         _cgosBlackConnectionProcess = new CgosConnectionProcess(_desktopLauncher, _platformExecutableService, "BlackPlayer");
-        _cgosWhiteConnectionProcess = new CgosConnectionProcess(_desktopLauncher, _platformExecutableService, "WhitePlayer");
+        _cgosWhiteConnectionProcess = new CgosConnectionProcess(_desktopLauncher, _platformExecutableService, "PracticePlayer");
         _cgosAdminProcess = new CgosConnectionProcess(_desktopLauncher, _platformExecutableService, "Admin");
         _tournamentRulesCatalog = TournamentRulesCatalog.LoadFromDefaultLocation();
         _gtpEngineCatalog = GtpEngineCatalog.LoadFromDefaultLocation();
@@ -1519,7 +1521,18 @@ public class Game1 : Game
 
                 if (_session.CgosConnectionFlowKind == CgosConnectionFlowKind.ConnectionStart)
                 {
-                    if (_session.IsQuickClientIdentitySelectionPanelOpen)
+                    if (_session.IsCgosPracticeResignConfirmationPending)
+                    {
+                        if (CgosLoginPage.Default.PracticeResignCancelButton.IsHit(point))
+                        {
+                            _session.CancelCgosPracticeResignConfirmation();
+                        }
+                        else if (CgosLoginPage.Default.PracticeResignConfirmButton.IsHit(point))
+                        {
+                            SendCgosPracticeUnexpectedGameResign();
+                        }
+                    }
+                    else if (_session.IsQuickClientIdentitySelectionPanelOpen)
                     {
                         var quickSelection = EntryProfilesScreen.Default.QuickSelection;
                         if (quickSelection.CancelButton.IsHit(point)) _session.CancelQuickClientIdentitySelectionPanel();
@@ -1542,7 +1555,7 @@ public class Game1 : Game
                     else
                     {
                         EndCgosCredentialEdit();
-                        CgosLoginPage.Default.UpdateGameInProgressButtons(_session.IsCgosGameInProgress);
+                        CgosLoginPage.Default.UpdateGameInProgressButtons(_session.IsCgosGameInProgress, _session.IsCgosPracticeUnexpectedGameInProgress);
                         if (CgosLoginPage.Default.BackButton.IsHit(point))
                         {
                             if (_session.IsAnyCgosProcessRunning) _ = DisconnectAllCgosProcessesAsync();
@@ -1605,11 +1618,11 @@ public class Game1 : Game
                             SendCgosPlayerResign(GoStone.Black);
                         }
                         else if (_session.IsCgosPlayer2InputEnabled &&
-                                     _session.IsCgosGameInProgress &&
+                                     _session.IsCgosPracticeUnexpectedGameInProgress &&
                                      _session.IsCgosWhiteConnectionRunning &&
                                      CgosLoginPage.Default.WhiteResignButton.IsHit(point))
                         {
-                            SendCgosPlayerResign(GoStone.White);
+                            _session.RequestCgosPracticeResignConfirmation();
                         }
                         else if ((_session.IsCgosBlackConnectionRunning || _session.SelectedCgosBlackGtpEngineProfile is not null) &&
                                  CgosLoginPage.Default.BlackConnectButton.IsHit(point))
@@ -3453,7 +3466,7 @@ public class Game1 : Game
     }
 
     /// <summary>
-    /// CGOS の Admin・プレイヤー1・プレイヤー2をすべて切断します。
+    /// CGOS の Admin・プレイヤー1・プラクティスプレイヤーをすべて切断します。
     /// </summary>
     private async Task StopCgosPlayerConnectionProcessAsync(GoStone stone, CgosConnectionProcess process)
     {
@@ -3503,6 +3516,7 @@ public class Game1 : Game
     {
         var previousGameId = _cgosGameObservation.GameId;
         var wasFinished = _cgosGameObservation.IsFinished;
+        var practiceWasFinished = _cgosPracticeUnexpectedGame.IsFinished;
 
         foreach (var line in _cgosBlackConnectionProcess.DrainOutput())
         {
@@ -3511,8 +3525,19 @@ public class Game1 : Game
 
         foreach (var line in _cgosWhiteConnectionProcess.DrainOutput())
         {
-            if (_cgosGameObservation.ProcessLogLine(line)) PlayPlaceStoneSound();
+            _cgosPracticeUnexpectedGame.ProcessLogLine(line);
         }
+
+        if (_cgosGameObservation.IsStarted &&
+            _cgosPracticeUnexpectedGame.IsStarted &&
+            _cgosGameObservation.GameId == _cgosPracticeUnexpectedGame.GameId)
+        {
+            // The practice player is the opponent in the primary game. The primary
+            // connection already reports every move, so discard this duplicate view.
+            _cgosPracticeUnexpectedGame.Reset();
+        }
+
+        UpdateCgosPracticeUnexpectedGameStatus();
 
         _session.SetCgosGameInProgress(
             _cgosGameObservation.IsStarted &&
@@ -3531,6 +3556,35 @@ public class Game1 : Game
             if (_cgosMatchNotificationMode == CgosMatchNotificationMode.None)
                 StartReviewingCgosResult();
         }
+
+        if (!practiceWasFinished && _cgosPracticeUnexpectedGame.IsFinished)
+        {
+            TryAutoSaveCgosPracticeUnexpectedGame();
+        }
+    }
+
+    private void UpdateCgosPracticeUnexpectedGameStatus()
+    {
+        if (!_cgosPracticeUnexpectedGame.IsStarted)
+        {
+            _session.SetCgosPracticeUnexpectedGame(false, 0, "-", GoStone.Empty, 0, TimeSpan.Zero);
+            return;
+        }
+
+        var loginName = _session.GetCgosCredential(GoStone.White, CgosPlayerCredentialField.LoginName);
+        var color = _cgosPracticeUnexpectedGame.GetPlayerColor(loginName);
+        var remaining = color == GoStone.Black
+            ? _cgosPracticeUnexpectedGame.BlackRemainingTime
+            : color == GoStone.White
+                ? _cgosPracticeUnexpectedGame.WhiteRemainingTime
+                : TimeSpan.Zero;
+        _session.SetCgosPracticeUnexpectedGame(
+            !_cgosPracticeUnexpectedGame.IsFinished,
+            _cgosPracticeUnexpectedGame.GameId,
+            _cgosPracticeUnexpectedGame.GetOpponentName(loginName),
+            color,
+            _cgosPracticeUnexpectedGame.MoveCount,
+            remaining);
     }
 
     private void SendCgosPlayerResign(GoStone stone)
@@ -4545,6 +4599,29 @@ public class Game1 : Game
         }
     }
 
+    private void SendCgosPracticeUnexpectedGameResign()
+    {
+        if (!_session.IsCgosPracticeUnexpectedGameInProgress ||
+            !_cgosWhiteConnectionProcess.IsRunning)
+        {
+            _session.CancelCgosPracticeResignConfirmation();
+            return;
+        }
+
+        try
+        {
+            var status = _cgosWhiteConnectionProcess.SendCommand($"resign {_cgosPracticeUnexpectedGame.GameId}");
+            _session.MarkCgosPracticeResignRequested();
+            SetCgosPlayerConnectionProcessStatus(GoStone.White, status, _cgosWhiteConnectionProcess.IsRunning, _cgosWhiteConnectionProcess);
+            GuiOperationLog.User("Requested unexpected CGOS practice match resignation", $"gameId={_cgosPracticeUnexpectedGame.GameId}");
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or IOException or System.ComponentModel.Win32Exception)
+        {
+            _session.CancelCgosPracticeResignConfirmation();
+            SetCgosPlayerConnectionProcessStatus(GoStone.White, "ERROR: " + ex.Message, _cgosWhiteConnectionProcess.IsRunning, _cgosWhiteConnectionProcess);
+        }
+    }
+
     private enum ReviewExitAction { BackToHome, UsePosition }
 
     private bool TryInputCgosCredentialCharacter(char character)
@@ -5383,6 +5460,21 @@ public class Game1 : Game
             ShowMessage(ex.Message, "SGF output");
             return false;
         }
+    }
+
+    private void TryAutoSaveCgosPracticeUnexpectedGame()
+    {
+        if (!_session.IsSgfAutoSaveEnabled ||
+            !_cgosPracticeUnexpectedGame.IsFinished ||
+            _lastAutoSavedCgosPracticeGameId == _cgosPracticeUnexpectedGame.GameId)
+        {
+            return;
+        }
+
+        _lastAutoSavedCgosPracticeGameId = _cgosPracticeUnexpectedGame.GameId;
+        AutoSaveSgf(
+            _cgosPracticeUnexpectedGame.CreateGameRecord(),
+            "unexpected-practice-" + CgosSgfFileNameBuilder.Create(_session.SelectedCgosConnectionProfile, _cgosPracticeUnexpectedGame));
     }
 
     private bool CanEditCompletedLocalGameComment() =>

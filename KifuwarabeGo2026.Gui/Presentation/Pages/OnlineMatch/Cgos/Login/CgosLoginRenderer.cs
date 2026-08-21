@@ -54,7 +54,7 @@ public sealed class CgosLoginRenderer
         drawingContext.DrawBackground();
         var modalOpen = session.IsPlayerSelectionDialogOpen || session.IsPlayerEditPanelOpen || session.IsClientIdentityProfileSelectionPanelOpen || session.IsClientIdentityProfileEditPanelOpen || session.IsQuickClientIdentitySelectionPanelOpen ||
                         session.IsGtpEngineSelectionDialogOpen || session.IsGtpEngineEditPanelOpen ||
-                        session.IsCgosConnectionEditPanelOpen || session.IsCgosAdminPlayerSelectionDialogOpen;
+                        session.IsCgosConnectionEditPanelOpen || session.IsCgosAdminPlayerSelectionDialogOpen || session.IsCgosPracticeResignConfirmationPending;
         DrawCgosClientTopPanel(session, modalOpen ? new Point(-1, -1) : mousePoint);
         SelectEntryPresenter.Default.Draw(_drawingContext, session, mousePoint);
         _drawPlayerEditPanel(session, mousePoint);
@@ -62,6 +62,7 @@ public sealed class CgosLoginRenderer
         _gtpEngineRenderer.Draw(_drawingContext, session, mousePoint);
         DrawCgosConnectionEditPanel(session, mousePoint);
         DrawCgosAdminPlayerSelectionDialog(session, mousePoint);
+        DrawCgosPracticeResignConfirmation(session, mousePoint);
 
         drawingContext.End();
     }
@@ -301,7 +302,7 @@ public sealed class CgosLoginRenderer
     private void DrawCgosConnectionStartPanel(GoAppSession session, Point mousePoint)
     {
         var page = CgosLoginPage.Default;
-        page.UpdateGameInProgressButtons(session.IsCgosGameInProgress);
+        page.UpdateGameInProgressButtons(session.IsCgosGameInProgress, session.IsCgosPracticeUnexpectedGameInProgress);
         var profile = session.SelectedCgosConnectionProfile;
         DrawText("USE CONNECTION", new Vector2(288, 300), new Color(180, 195, 195), 0.54f);
         page.BackButton.Label = session.IsAnyCgosProcessRunning ? "DISCONNECT ALL & BACK" : "BACK";
@@ -366,7 +367,7 @@ public sealed class CgosLoginRenderer
 
         DrawCgosProcessPanel(
             CgosWhiteProcessPanelBounds,
-            "PLAYER 2",
+            "PRACTICE PLAYER",
             session.CgosWhiteConnectionStatusMessage,
             session.SelectedCgosWhiteEntryProfile?.DisplayName ?? session.SelectedCgosWhiteGtpEngineProfile?.DisplayName,
             CgosWhiteEngineSelector with { Enabled = session.IsCgosPlayer2InputEnabled && !session.IsCgosWhiteConnectionRunning },
@@ -375,7 +376,7 @@ public sealed class CgosLoginRenderer
                 : session.CgosWhiteGtpResponseWaitDisplay,
             page.WhiteConnectButton,
             session.IsCgosWhiteConnectionRunning
-                ? session.IsCgosGameInProgress ? "ABORT" : "DISCONNECT"
+                ? "DISCONNECT"
                 : "CONNECT",
             session.IsCgosPlayer2InputEnabled &&
             (session.IsCgosWhiteConnectionRunning || session.SelectedCgosWhiteGtpEngineProfile is not null),
@@ -383,9 +384,17 @@ public sealed class CgosLoginRenderer
             page.WhiteCodeButton,
             session.IsCgosPlayer2InputEnabled && !string.IsNullOrWhiteSpace(session.CgosWhiteConnectionLogDirectory),
             mousePoint);
-        if (session.IsCgosGameInProgress && session.IsCgosWhiteConnectionRunning)
+        if (session.IsCgosPracticeUnexpectedGameInProgress && session.IsCgosWhiteConnectionRunning)
         {
+            page.WhiteResignButton.Label = session.IsCgosPracticeResignRequested ? "REQUESTED" : "RESIGN";
+            page.WhiteResignButton.IsEnabled = !session.IsCgosPracticeResignRequested;
             page.WhiteResignButton.Draw(mousePoint, _drawingContext);
+        }
+        if (session.IsCgosPracticeUnexpectedGameInProgress)
+        {
+            var unexpected = $"UNEXPECTED #{session.CgosPracticeUnexpectedGameId}  {session.CgosPracticeUnexpectedColor}  MOVE {session.CgosPracticeUnexpectedMoveCount}";
+            DrawFittedText(unexpected, new Rectangle(CgosWhiteProcessPanelBounds.X + 18, CgosWhiteProcessPanelBounds.Y + 250, CgosWhiteProcessPanelBounds.Width - 36, 28), new Color(255, 183, 146), 0.24f);
+            DrawFittedText($"VS {session.CgosPracticeUnexpectedOpponent}  {session.CgosPracticeUnexpectedTimeDisplay}", new Rectangle(CgosWhiteProcessPanelBounds.X + 18, CgosWhiteProcessPanelBounds.Y + 278, CgosWhiteProcessPanelBounds.Width - 36, 28), Color.White, 0.24f);
         }
         DrawCgosCredentialFields(session, GoStone.White, mousePoint);
         RandomSeedRowComponent.Cgos.DrawCgos(_drawingContext, mousePoint,
@@ -395,12 +404,30 @@ public sealed class CgosLoginRenderer
             FillRect(CgosWhiteProcessPanelBounds, new Color(8, 11, 15, 176));
         DrawCgosOptionalInputCheck(
             CgosPlayer2InputCheckBounds,
-            "Player2を入力する",
+            "プラクティスプレイヤーを入力する",
             session.IsCgosPlayer2InputEnabled,
             !session.IsCgosWhiteConnectionRunning,
             mousePoint);
 
         DrawCgosConnectionTooltips(session, mousePoint);
+    }
+
+    private void DrawCgosPracticeResignConfirmation(GoAppSession session, Point mousePoint)
+    {
+        if (!session.IsCgosPracticeResignConfirmationPending) return;
+
+        var bounds = new Rectangle(560, 300, 800, 360);
+        FillRect(new Rectangle(0, 0, 1920, 1080), new Color(0, 0, 0, 165));
+        FillRect(bounds, new Color(21, 25, 32));
+        DrawRect(bounds, 2, new Color(255, 183, 146));
+        DrawText("PRACTICE PLAYER RESIGN?", new Vector2(bounds.X + 42, bounds.Y + 42), new Color(255, 230, 160), 0.58f);
+        DrawFittedText($"GAME #{session.CgosPracticeUnexpectedGameId}  VS {session.CgosPracticeUnexpectedOpponent}", new Rectangle(bounds.X + 42, bounds.Y + 120, bounds.Width - 84, 44), Color.White, 0.42f);
+        DrawFittedText("Only the unexpected practice match will resign.", new Rectangle(bounds.X + 42, bounds.Y + 174, bounds.Width - 84, 40), new Color(180, 195, 195), 0.34f);
+        var page = CgosLoginPage.Default;
+        page.PracticeResignCancelButton.Bounds = new Rectangle(bounds.Right - 264, bounds.Bottom - 80, 92, 40);
+        page.PracticeResignConfirmButton.Bounds = new Rectangle(bounds.Right - 156, bounds.Bottom - 80, 92, 40);
+        page.PracticeResignCancelButton.Draw(mousePoint, _drawingContext);
+        page.PracticeResignConfirmButton.Draw(mousePoint, _drawingContext);
     }
 
 

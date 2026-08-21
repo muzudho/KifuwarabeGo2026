@@ -73,6 +73,7 @@ internal static class PortabilityChecks
         VerifyInitialWindowLayout();
         VerifyDefaultCgosConnection();
         VerifyCgosResultReviewRecord();
+        VerifyCgosPracticeUnexpectedGameState();
         VerifyLocalMatchSgfFileName();
         VerifyTournamentRulesJsonCompatibility();
         VerifyComposition();
@@ -96,6 +97,39 @@ internal static class PortabilityChecks
         Require(session.MoveReview(session.ReviewTimelineMaximum - session.ReviewTimelineIndex, out warning) &&
                 session.IsReviewResultPosition && session.ReviewResult == "B+R",
             $"The CGOS review did not reach its terminal RESULT position: {warning}");
+    }
+
+    private static void VerifyCgosPracticeUnexpectedGameState()
+    {
+        var primary = new CgosGameObservation();
+        var practice = new CgosGameObservation();
+        primary.ProcessLogLine("[primary] > setup 100 9 7.0 300000 Opponent PrimaryLogin");
+        practice.ProcessLogLine("[practice] > setup 200 9 7.0 300000 PracticeLogin OtherOpponent");
+        primary.ProcessLogLine("[primary] > play black D4 290000");
+        practice.ProcessLogLine("[practice] > play black E5 280000");
+
+        Require(primary.GameId == 100 && practice.GameId == 200 &&
+                primary.GetStone(3, 5) == GoStone.Black &&
+                practice.GetStone(4, 4) == GoStone.Black,
+            "Primary and unexpected practice CGOS games were not kept in independent boards.");
+        Require(practice.GetPlayerColor("PracticeLogin") == GoStone.White &&
+                practice.GetOpponentName("PracticeLogin") == "OtherOpponent",
+            "The practice player's color or opponent was not identified from CGOS setup.");
+
+        var session = new GoAppSession();
+        session.SetCgosPracticeUnexpectedGame(true, practice.GameId, "OtherOpponent", GoStone.White, practice.MoveCount, practice.WhiteRemainingTime);
+        session.RequestCgosPracticeResignConfirmation();
+        Require(session.IsCgosPracticeUnexpectedGameInProgress &&
+                session.IsCgosPracticeResignConfirmationPending &&
+                session.CgosPracticeUnexpectedGameId == 200,
+            "The unexpected practice match did not expose a safe resignation confirmation state.");
+        session.MarkCgosPracticeResignRequested();
+        Require(session.IsCgosPracticeResignRequested && !session.IsCgosPracticeResignConfirmationPending,
+            "The unexpected practice resignation state was not committed safely.");
+
+        practice.Reset();
+        Require(!practice.IsStarted && practice.GameId == 0 && practice.MoveCount == 0,
+            "Reset did not clear the duplicate practice observation.");
     }
 
     private static void VerifyGoAppEngineSelectionCompatibility()

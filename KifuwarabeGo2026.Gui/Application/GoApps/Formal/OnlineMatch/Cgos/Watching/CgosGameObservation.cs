@@ -48,6 +48,45 @@ public sealed class CgosGameObservation
     public GoStone GetLiveStone(int x, int y) => _board.GetStone(x, y);
     public GoGameMove? LatestMove => _moves.Count == 0 ? null : _moves[^1];
 
+    public GoStone GetPlayerColor(string loginName)
+    {
+        if (string.Equals(BlackPlayerName, loginName, StringComparison.OrdinalIgnoreCase)) return GoStone.Black;
+        if (string.Equals(WhitePlayerName, loginName, StringComparison.OrdinalIgnoreCase)) return GoStone.White;
+        return GoStone.Empty;
+    }
+
+    public string GetOpponentName(string loginName) => GetPlayerColor(loginName) switch
+    {
+        GoStone.Black => WhitePlayerName,
+        GoStone.White => BlackPlayerName,
+        _ => "-",
+    };
+
+    public void Reset()
+    {
+        _board = new GoBoard(9);
+        _replayBoard = null;
+        _koPoint = null;
+        _moves.Clear();
+        _replayMoveIndex = null;
+        IsStarted = false;
+        IsFinished = false;
+        GameId = 0;
+        Komi = 0m;
+        WhitePlayerName = "-";
+        BlackPlayerName = "-";
+        CurrentTurn = GoStone.Black;
+        MoveCount = 0;
+        Result = "";
+        StartedAt = default;
+        MainTime = TimeSpan.Zero;
+        BlackRemainingTime = TimeSpan.Zero;
+        WhiteRemainingTime = TimeSpan.Zero;
+        BlackAgehama = 0;
+        WhiteAgehama = 0;
+        _lastClockSyncAt = DateTimeOffset.UtcNow;
+    }
+
     /// <summary>
     /// 現在の観戦盤面を連解析します。
     /// </summary>

@@ -132,7 +132,7 @@ public sealed class CgosConnectionProcess : IDisposable
         var runLabel = blackEngineProfile is not null && whiteEngineProfile is null
             ? "BlackPlayer"
             : whiteEngineProfile is not null && blackEngineProfile is null
-                ? "WhitePlayer"
+                ? "PracticePlayer"
                 : "Players";
         LogDirectory = Path.Combine(ApplicationSettings.Current.LogRootDirectory, "Cgos", runLabel);
         Directory.CreateDirectory(LogDirectory);
