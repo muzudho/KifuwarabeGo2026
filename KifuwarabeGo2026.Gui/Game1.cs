@@ -4662,10 +4662,15 @@ public class Game1 : Game
         try
         {
             var status = _cgosBlackConnectionProcess.SendCommand($"move {_cgosGameObservation.GameId} {vertex}");
-            if (!_cgosGameObservation.ApplyHumanMove(humanColor, vertex))
+            var reflectedLocally = _cgosGameObservation.ApplyHumanMove(humanColor, vertex);
+            if (!reflectedLocally)
             {
                 GuiOperationLog.App("CGOS human move was sent but could not be reflected locally",
                     $"gameId={_cgosGameObservation.GameId}; vertex={vertex}; color={humanColor}");
+            }
+            else if (!GtpCoordinate.IsPass(vertex))
+            {
+                PlayPlaceStoneSound();
             }
             _cgosHumanSubmittedGameId = _cgosGameObservation.GameId;
             _cgosHumanSubmittedMoveCount = _cgosGameObservation.MoveCount;

@@ -108,7 +108,9 @@ internal static class PortabilityChecks
 
         Require(observation.ApplyHumanMove(GoStone.White, "C3") &&
                 observation.GetStone(2, 6) == GoStone.White &&
-                observation.CurrentTurn == GoStone.Black,
+                observation.CurrentTurn == GoStone.Black &&
+                observation.LatestMove?.TimeLeftAfterMove is { } humanTimeLeft &&
+                humanTimeLeft <= observation.MainTime,
             "A submitted CGOS human move was not reflected on the local live board.");
         Require(observation.ProcessLogLine("[human] > play black D4 280000") &&
                 observation.CurrentTurn == GoStone.White,

@@ -59,14 +59,21 @@ public sealed class CgosGameObservation
     /// </summary>
     public bool ApplyHumanMove(GoStone stone, string vertex)
     {
+        if (!IsStarted || IsFinished || IsReplayMode || stone != CurrentTurn) return false;
+
+        var currentRemainingTime = stone == GoStone.Black ? BlackRemainingTime : WhiteRemainingTime;
+        var elapsedSinceClockSync = DateTimeOffset.UtcNow - _lastClockSyncAt;
+        var remainingTime = currentRemainingTime - elapsedSinceClockSync;
+        if (remainingTime < TimeSpan.Zero) remainingTime = TimeSpan.Zero;
+        var remainingTimeMilliseconds = ((long)remainingTime.TotalMilliseconds).ToString(CultureInfo.InvariantCulture);
+
         if (GtpCoordinate.IsPass(vertex))
         {
-            if (!IsStarted || IsFinished || IsReplayMode || stone != CurrentTurn) return false;
-            ApplyMove(stone, vertex, null, null);
+            ApplyMove(stone, vertex, remainingTimeMilliseconds, null);
             return true;
         }
 
-        return ApplyMove(stone, vertex, null, null);
+        return ApplyMove(stone, vertex, remainingTimeMilliseconds, null);
     }
     public GoGameMove? LatestMove => _moves.Count == 0 ? null : _moves[^1];
 
