@@ -69,10 +69,7 @@ public sealed partial class GoAppSession
         if (PlayerDialogSelectionIndex < 0 || PlayerDialogSelectionIndex >= _playerProfiles.Count)
             return Array.Empty<ClientIdentityProfile>();
 
-        var identities = GetPlayerClientIdentityProfiles(_playerProfiles[PlayerDialogSelectionIndex].Id);
-        return PlayerSelectionPurpose == PlayerSelectionPurpose.Cgos
-            ? identities.Where(identity => string.Equals(identity.ConnectionProfileId, SelectedCgosConnectionProfile.Id, StringComparison.Ordinal)).ToArray()
-            : identities.Where(identity => string.IsNullOrEmpty(identity.ConnectionProfileId)).ToArray();
+        return GetPlayerClientIdentityProfiles(_playerProfiles[PlayerDialogSelectionIndex].Id);
     }
 
     /// <summary>管理画面で、選択中の Entry Profile に紐づく認証情報をすべて返します。</summary>
@@ -256,30 +253,20 @@ public sealed partial class GoAppSession
     private bool CanSelectPlayerForCgos(EntryProfile player) =>
         player.Kind == EntryProfileKind.Computer &&
         FindGtpEngineIndex(player.EngineProfileId) >= 0 &&
-        GetPlayerClientIdentityProfiles(player.Id).Any(target =>
-            string.Equals(target.ConnectionProfileId, SelectedCgosConnectionProfile.Id, StringComparison.Ordinal));
+        GetPlayerClientIdentityProfiles(player.Id).Count > 0;
 
     private void AddDefaultClientIdentityProfiles(EntryProfile player)
     {
-        var localMatch = new ClientIdentityProfile { DisplayName = "LocalMatch", LoginName = new string(player.Identifier.Where(character => !char.IsWhiteSpace(character)).ToArray()) };
-        _clientIdentityProfiles.Add(localMatch);
-        player.ClientIdentityProfileIds.Add(localMatch.Id);
-
-        if (player.Kind != EntryProfileKind.Computer || _cgosConnectionProfiles.Count == 0)
-            return;
-
-        var engineIndex = FindGtpEngineIndex(player.EngineProfileId);
-        if (engineIndex < 0) return;
-        var engine = _gtpEngineProfiles[engineIndex];
-        var cgos = new ClientIdentityProfile
+        var engineIndex = player.Kind == EntryProfileKind.Computer ? FindGtpEngineIndex(player.EngineProfileId) : -1;
+        var engine = engineIndex >= 0 ? _gtpEngineProfiles[engineIndex] : null;
+        var identity = new ClientIdentityProfile
         {
-            DisplayName = "OnlineMatch (CGOS)",
-            ConnectionProfileId = SelectedCgosConnectionProfile.Id,
-            LoginName = engine.DefaultCgosLoginName,
-            LoginPass = engine.DefaultCgosPlainTextPassword,
+            DisplayName = "Client Identity",
+            LoginName = engine?.DefaultCgosLoginName ?? new string(player.Identifier.Where(character => !char.IsWhiteSpace(character)).ToArray()),
+            LoginPass = engine?.DefaultCgosPlainTextPassword ?? "",
         };
-        _clientIdentityProfiles.Add(cgos);
-        player.ClientIdentityProfileIds.Add(cgos.Id);
+        _clientIdentityProfiles.Add(identity);
+        player.ClientIdentityProfileIds.Add(identity.Id);
     }
 }
 

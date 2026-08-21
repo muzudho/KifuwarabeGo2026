@@ -41,7 +41,7 @@ public sealed class ClientIdentityCatalog
         var targetProfiles = loaded.Profiles.Select(profile => profile.Clone()).ToList();
         var playerProfiles = players.Select(profile => profile.Clone()).ToList();
         var enginesById = engines.ToDictionary(profile => profile.Id, StringComparer.Ordinal);
-        var defaultCgosConnectionId = cgosConnections.FirstOrDefault()?.Id ?? "";
+        var connectionNamesById = cgosConnections.ToDictionary(profile => profile.Id, profile => profile.DisplayName, StringComparer.Ordinal);
         var playerProfilesChanged = false;
 
         foreach (var player in playerProfiles)
@@ -52,14 +52,12 @@ public sealed class ClientIdentityCatalog
                 .Distinct(StringComparer.Ordinal)
                 .ToList();
 
-            EnsureLocalMatchClientIdentity(player, targetProfiles);
-            if (player.Kind == EntryProfileKind.Computer && enginesById.TryGetValue(player.EngineProfileId, out var engine))
-                EnsureCgosClientIdentity(player, targetProfiles, engine, defaultCgosConnectionId);
+            EnsureClientIdentity(player, targetProfiles, enginesById.GetValueOrDefault(player.EngineProfileId));
 
             playerProfilesChanged |= !originalIds.SequenceEqual(player.ClientIdentityProfileIds, StringComparer.Ordinal);
         }
 
-        var normalizedTargets = targetProfiles.Select(Normalize).ToList();
+        var normalizedTargets = targetProfiles.Select(target => Normalize(target, connectionNamesById)).ToList();
         var targetsChanged = !ClientIdentityListsAreEqual(loaded.Profiles, normalizedTargets);
         var result = new ClientIdentityCatalog(listPath, normalizedTargets, playerProfiles, playerProfilesChanged);
         if (targetsChanged)
@@ -73,41 +71,25 @@ public sealed class ClientIdentityCatalog
             return new ClientIdentityCatalog(listPath, Array.Empty<ClientIdentityProfile>(), Array.Empty<EntryProfile>(), false);
 
         var profiles = JsonSerializer.Deserialize<ClientIdentityProfileList>(File.ReadAllText(listPath), JsonOptions)?.Targets ?? [];
-        return new ClientIdentityCatalog(listPath, profiles.Select(Normalize).ToList(), Array.Empty<EntryProfile>(), false);
+        return new ClientIdentityCatalog(listPath, profiles.Select(profile => Normalize(profile, null)).ToList(), Array.Empty<EntryProfile>(), false);
     }
 
     public void Save(IEnumerable<ClientIdentityProfile> profiles)
     {
-        var list = profiles.Select(Normalize).ToList();
+        var list = profiles.Select(profile => Normalize(profile, null)).ToList();
         Directory.CreateDirectory(Path.GetDirectoryName(ListPath) ?? AppContext.BaseDirectory);
         File.WriteAllText(ListPath, JsonSerializer.Serialize(new ClientIdentityProfileList { Targets = list }, JsonOptions));
     }
 
-    private static void EnsureLocalMatchClientIdentity(EntryProfile player, ICollection<ClientIdentityProfile> targets)
+    private static void EnsureClientIdentity(EntryProfile player, ICollection<ClientIdentityProfile> targets, GtpEngineProfile? engine)
     {
-        if (GetPlayerClientIdentities(player, targets).Any(target => string.IsNullOrEmpty(target.ConnectionProfileId))) return;
+        if (GetPlayerClientIdentities(player, targets).Any()) return;
 
         var target = new ClientIdentityProfile
         {
-            DisplayName = "LocalMatch",
-            LoginName = new string(player.Identifier.Where(character => !char.IsWhiteSpace(character)).ToArray()),
-        };
-        targets.Add(target);
-        player.ClientIdentityProfileIds.Add(target.Id);
-    }
-
-    private static void EnsureCgosClientIdentity(EntryProfile player, ICollection<ClientIdentityProfile> targets, GtpEngineProfile engine, string connectionProfileId)
-    {
-        // ConnectionProfileId がない状態で作ると LocalMatch Target と区別できない。
-        if (string.IsNullOrWhiteSpace(connectionProfileId)) return;
-        if (GetPlayerClientIdentities(player, targets).Any(target => !string.IsNullOrEmpty(target.ConnectionProfileId))) return;
-
-        var target = new ClientIdentityProfile
-        {
-            DisplayName = "OnlineMatch (CGOS)",
-            ConnectionProfileId = connectionProfileId,
-            LoginName = engine.DefaultCgosLoginName,
-            LoginPass = engine.DefaultCgosPlainTextPassword,
+            DisplayName = "Client Identity",
+            LoginName = engine?.DefaultCgosLoginName ?? new string(player.Identifier.Where(character => !char.IsWhiteSpace(character)).ToArray()),
+            LoginPass = engine?.DefaultCgosPlainTextPassword ?? "",
         };
         targets.Add(target);
         player.ClientIdentityProfileIds.Add(target.Id);
@@ -116,7 +98,7 @@ public sealed class ClientIdentityCatalog
     private static IEnumerable<ClientIdentityProfile> GetPlayerClientIdentities(EntryProfile player, IEnumerable<ClientIdentityProfile> targets) =>
         targets.Where(target => player.ClientIdentityProfileIds.Contains(target.Id, StringComparer.Ordinal));
 
-    private static ClientIdentityProfile Normalize(ClientIdentityProfile profile)
+    private static ClientIdentityProfile Normalize(ClientIdentityProfile profile, IReadOnlyDictionary<string, string>? connectionNamesById)
     {
         var normalized = profile.Clone();
         normalized.Id = string.IsNullOrWhiteSpace(normalized.Id) ? Guid.NewGuid().ToString("N") : normalized.Id;
@@ -128,6 +110,13 @@ public sealed class ClientIdentityCatalog
         normalized.ConnectionProfileId ??= "";
         normalized.LoginName ??= "";
         normalized.LoginPass ??= "";
+        normalized.Comment ??= "";
+        if (string.IsNullOrWhiteSpace(normalized.Comment) &&
+            !string.IsNullOrWhiteSpace(normalized.ConnectionProfileId) &&
+            connectionNamesById?.GetValueOrDefault(normalized.ConnectionProfileId) is { } connectionName)
+        {
+            normalized.Comment = connectionName;
+        }
         return normalized;
     }
 
@@ -137,7 +126,8 @@ public sealed class ClientIdentityCatalog
             pair.First.DisplayName == pair.Second.DisplayName &&
             pair.First.ConnectionProfileId == pair.Second.ConnectionProfileId &&
             pair.First.LoginName == pair.Second.LoginName &&
-            pair.First.LoginPass == pair.Second.LoginPass);
+            pair.First.LoginPass == pair.Second.LoginPass &&
+            pair.First.Comment == pair.Second.Comment);
 
     private sealed class ClientIdentityProfileList
     {

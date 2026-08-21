@@ -297,7 +297,8 @@ public sealed partial class GoAppSession
         left.DisplayName == right.DisplayName &&
         left.ConnectionProfileId == right.ConnectionProfileId &&
         left.LoginName == right.LoginName &&
-        left.LoginPass == right.LoginPass;
+        left.LoginPass == right.LoginPass &&
+        left.Comment == right.Comment;
 }
 
 public enum EntryProfileEditField

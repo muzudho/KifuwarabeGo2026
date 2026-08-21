@@ -40,8 +40,7 @@ public sealed partial class GoAppSession
     public bool CanDeleteSelectedCgosConnectionProfile =>
         _cgosConnectionProfiles.Count > 1 &&
         SelectedCgosConnectionProfileIndex >= 0 &&
-        SelectedCgosConnectionProfileIndex < _cgosConnectionProfiles.Count &&
-        !_clientIdentityProfiles.Any(target => string.Equals(target.ConnectionProfileId, SelectedCgosConnectionProfile.Id, StringComparison.Ordinal));
+        SelectedCgosConnectionProfileIndex < _cgosConnectionProfiles.Count;
 
     public bool CanMoveCgosConnectionSelectionPage(int step) =>
         Math.Clamp(CgosConnectionSelectionPageIndex + step, 0, GetCgosConnectionSelectionPageCount() - 1) != CgosConnectionSelectionPageIndex;
@@ -108,8 +107,7 @@ public sealed partial class GoAppSession
 
         var player = _playerProfiles.FirstOrDefault(candidate =>
             candidate.Kind == EntryProfileKind.Computer &&
-            GetPlayerClientIdentityProfiles(candidate.Id).Any(target =>
-                string.Equals(target.ConnectionProfileId, SelectedCgosConnectionProfile.Id, StringComparison.Ordinal)));
+            GetPlayerClientIdentityProfiles(candidate.Id).Count > 0);
         if (player is not null)
             TrySelectCgosEntryProfile(stone, player.Id);
     }

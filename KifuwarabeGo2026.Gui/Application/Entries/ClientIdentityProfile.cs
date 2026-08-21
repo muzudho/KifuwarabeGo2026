@@ -13,6 +13,7 @@ public sealed class ClientIdentityProfile
     public string ConnectionProfileId { get; set; } = "";
     public string LoginName { get; set; } = "";
     public string LoginPass { get; set; } = "";
+    public string Comment { get; set; } = "";
 
     public ClientIdentityProfile Clone() => new()
     {
@@ -21,5 +22,6 @@ public sealed class ClientIdentityProfile
         ConnectionProfileId = ConnectionProfileId,
         LoginName = LoginName,
         LoginPass = LoginPass,
+        Comment = Comment,
     };
 }

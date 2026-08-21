@@ -58,7 +58,9 @@ public sealed class EntryProfilesPresenter
         profileEdit.SaveButton.Draw(mousePoint, _stationeryDrawingContext);
         DrawClientIdentityProfileEditField(session, 0, ClientIdentityProfileEditField.LoginName, "HANDLE", mousePoint, false);
         DrawClientIdentityProfileEditField(session, 0, ClientIdentityProfileEditField.LoginPass, "PASSWORD", mousePoint, false);
-        if (!session.IsClientIdentityProfileConnectionSelectionPanelOpen) return;
+        DrawClientIdentityProfileEditField(session, 0, ClientIdentityProfileEditField.Comment, "COMMENT", mousePoint, false);
+    }
+#if false
         for (var index = 0; index < targets.Count; index++)
         {
             // 編集画面には、操作対象の一件だけを表示する。選択リストは別画面へ分離する。
@@ -88,6 +90,7 @@ public sealed class EntryProfilesPresenter
         }
     }
 
+#endif
     private void DrawClientIdentityProfileSelectionPanel(GoAppSession session, Point mousePoint)
     {
         var bounds = new Rectangle(430, 150, 1080, 760);
@@ -109,9 +112,10 @@ public sealed class EntryProfilesPresenter
         selection.DeleteButton.Draw(mousePoint, _stationeryDrawingContext);
 
         var firstRow = new Rectangle(bounds.X + 36, bounds.Y + 140, bounds.Width - 72, 78);
-        DrawFittedText("HANDLE", new Rectangle(firstRow.X + 18, firstRow.Y - 27, 410, 24), new Color(180, 210, 215), 0.30f);
-        DrawFittedText("PASSWORD", new Rectangle(firstRow.X + 460, firstRow.Y - 27, 250, 24), new Color(180, 210, 215), 0.30f);
-        DrawFittedText("IN DEFAULT", new Rectangle(firstRow.X + 730, firstRow.Y - 27, 240, 24), new Color(180, 210, 215), 0.30f);
+        DrawFittedText("HANDLE", new Rectangle(firstRow.X + 18, firstRow.Y - 27, 300, 24), new Color(180, 210, 215), 0.30f);
+        DrawFittedText("PASSWORD", new Rectangle(firstRow.X + 335, firstRow.Y - 27, 150, 24), new Color(180, 210, 215), 0.30f);
+        DrawFittedText("COMMENT", new Rectangle(firstRow.X + 500, firstRow.Y - 27, 310, 24), new Color(180, 210, 215), 0.30f);
+        DrawFittedText("IN DEFAULT", new Rectangle(firstRow.X + 825, firstRow.Y - 27, 145, 24), new Color(180, 210, 215), 0.30f);
 
         for (var index = 0; index < targets.Count; index++)
         {
@@ -122,16 +126,18 @@ public sealed class EntryProfilesPresenter
             FillRect(row, selected ? new Color(38, 103, 86) : row.Contains(mousePoint) ? new Color(43, 52, 62) : new Color(24, 31, 37));
             DrawRect(row, operated ? 3 : selected ? 2 : 1, operated ? new Color(125, 225, 255) : selected ? new Color(147, 244, 200) : new Color(70, 85, 94));
             if (operated) DrawSelectionFingerMark(new Vector2(row.X - 55, row.Center.Y - 13), 1.65f);
-            DrawFittedText(target.LoginName, new Rectangle(row.X + 18, row.Y + 25, 410, 30), Color.White, 0.42f);
-            DrawFittedText(string.IsNullOrEmpty(target.LoginPass) ? "NONE" : "SET", new Rectangle(row.X + 460, row.Y + 25, 250, 30), Color.White, 0.34f);
+            DrawFittedText(target.LoginName, new Rectangle(row.X + 18, row.Y + 25, 300, 30), Color.White, 0.42f);
+            DrawFittedText(string.IsNullOrEmpty(target.LoginPass) ? "NONE" : "SET", new Rectangle(row.X + 335, row.Y + 25, 150, 30), Color.White, 0.34f);
+            DrawFittedText(target.Comment, new Rectangle(row.X + 500, row.Y + 25, 310, 30), new Color(180, 195, 195), 0.32f);
             if (selected)
-                DrawFittedText("IN DEFAULT", new Rectangle(row.X + 730, row.Y + 25, 240, 30), new Color(147, 244, 200), 0.30f);
+                DrawFittedText("IN DEFAULT", new Rectangle(row.X + 825, row.Y + 25, 145, 30), new Color(147, 244, 200), 0.28f);
         }
     }
 
+#if false
     private void DrawClientIdentityProfileConnectionSelectionPanel(GoAppSession session, Point mousePoint)
     {
-        if (!session.IsClientIdentityProfileConnectionSelectionPanelOpen) return;
+        DrawClientIdentityProfileEditField(session, 0, ClientIdentityProfileEditField.Comment, "COMMENT", mousePoint, false);
 
         var connectionControls = EntryProfilesScreen.Default.ConnectionSelection;
         connectionControls.UpdateState(session.ClientIdentityProfileConnectionSelectionPageIndex, session.ClientIdentityProfileConnectionSelectionPageCount);
@@ -161,6 +167,7 @@ public sealed class EntryProfilesPresenter
         connectionControls.NextButton.Draw(mousePoint, _stationeryDrawingContext);
     }
 
+#endif
     private void DrawQuickClientIdentitySelectionPanel(GoAppSession session, Point mousePoint)
     {
         if (!session.IsQuickClientIdentitySelectionPanelOpen) return;

@@ -11,13 +11,11 @@ public sealed class EntryProfilesScreen
 
     private EntryProfilesScreen()
     {
-        ConnectionSelection = new ClientIdentityConnectionSelectionControls();
         QuickSelection = new QuickClientIdentitySelectionControls();
         ProfileSelection = new ClientIdentityProfileSelectionControls();
         ProfileEdit = new ClientIdentityProfileEditControls();
     }
 
-    public ClientIdentityConnectionSelectionControls ConnectionSelection { get; }
     public QuickClientIdentitySelectionControls QuickSelection { get; }
     public ClientIdentityProfileSelectionControls ProfileSelection { get; }
     public ClientIdentityProfileEditControls ProfileEdit { get; }
@@ -71,16 +69,14 @@ public sealed class ClientIdentityProfileEditControls
         DiscardButton = new Button(new Rectangle(1158, 182, 150, 48), "DISCARD", 0.30f);
         SaveButton = new Button(new Rectangle(1320, 182, 150, 48), "CLOSE", 0.34f);
         UseButton = new Button(new Rectangle(1158, 182, 150, 48), "USE", 0.34f);
-        AddCgosButton = new Button(new Rectangle(628, 820, 160, 48), "ADD CGOS", 0.30f);
-        AddLocalButton = new Button(new Rectangle(466, 820, 150, 48), "ADD LOCAL", 0.30f);
+        AddButton = new Button(new Rectangle(466, 820, 180, 48), "ADD", 0.34f);
         RemoveButton = new Button(new Rectangle(962, 820, 150, 48), "REMOVE", 0.34f);
     }
 
     public Button DiscardButton { get; }
     public Button SaveButton { get; }
     public Button UseButton { get; }
-    public Button AddCgosButton { get; }
-    public Button AddLocalButton { get; }
+    public Button AddButton { get; }
     public Button RemoveButton { get; }
 
     public Rectangle GetFieldTextBounds(ClientIdentityProfileEditField field) => field switch
@@ -88,6 +84,7 @@ public sealed class ClientIdentityProfileEditControls
         ClientIdentityProfileEditField.DisplayName => new Rectangle(760, 365, 600, 42),
         ClientIdentityProfileEditField.LoginName => new Rectangle(760, 365, 600, 42),
         ClientIdentityProfileEditField.LoginPass => new Rectangle(760, 429, 600, 42),
+        ClientIdentityProfileEditField.Comment => new Rectangle(760, 493, 600, 42),
         _ => throw new System.ArgumentOutOfRangeException(nameof(field), field, "Unknown target edit field."),
     };
 
@@ -99,50 +96,14 @@ public sealed class ClientIdentityProfileEditControls
 
     public ClientIdentityProfileEditField? GetFieldHit(Point point) =>
         GetFieldTextBounds(ClientIdentityProfileEditField.LoginName).Contains(point) ? ClientIdentityProfileEditField.LoginName :
-        GetFieldTextBounds(ClientIdentityProfileEditField.LoginPass).Contains(point) ? ClientIdentityProfileEditField.LoginPass : null;
+        GetFieldTextBounds(ClientIdentityProfileEditField.LoginPass).Contains(point) ? ClientIdentityProfileEditField.LoginPass :
+        GetFieldTextBounds(ClientIdentityProfileEditField.Comment).Contains(point) ? ClientIdentityProfileEditField.Comment : null;
 
     public void UpdateState(bool isDirty)
     {
         DiscardButton.IsEnabled = isDirty;
         SaveButton.Label = isDirty ? "SAVE & CLOSE" : "CLOSE";
         SaveButton.LabelScale = isDirty ? 0.26f : 0.34f;
-    }
-}
-
-public sealed class ClientIdentityConnectionSelectionControls
-{
-    public ClientIdentityConnectionSelectionControls()
-    {
-        CancelButton = new Button(new Rectangle(1050, 236, 140, 48), "CANCEL", 0.34f);
-        SelectButton = new Button(new Rectangle(1202, 236, 170, 48), "SELECT", 0.34f);
-        PreviousButton = new Button(new Rectangle(1060, 798, 120, 44), "PREV", 0.34f);
-        NextButton = new Button(new Rectangle(1192, 798, 120, 44), "NEXT", 0.34f);
-    }
-
-    public Rectangle PanelBounds { get; } = new(510, 210, 900, 660);
-    public Button CancelButton { get; }
-    public Button SelectButton { get; }
-    public Button PreviousButton { get; }
-    public Button NextButton { get; }
-
-    public Rectangle GetItemBounds(int slot) => new(544, 332 + slot * 82, 832, 70);
-
-    public int? GetItemHit(Point point, int pageIndex, int pageSize, int itemCount)
-    {
-        var start = pageIndex * pageSize;
-        for (var slot = 0; slot < pageSize; slot++)
-        {
-            var index = start + slot;
-            if (index >= itemCount) break;
-            if (GetItemBounds(slot).Contains(point)) return index;
-        }
-        return null;
-    }
-
-    public void UpdateState(int pageIndex, int pageCount)
-    {
-        PreviousButton.IsEnabled = pageIndex > 0;
-        NextButton.IsEnabled = pageIndex < pageCount - 1;
     }
 }
 
@@ -171,14 +132,11 @@ public sealed class QuickClientIdentitySelectionControls
 internal static class EntryProfilesScreenBounds
 {
     private static EntryProfilesScreen Screen => EntryProfilesScreen.Default;
-    private static ClientIdentityConnectionSelectionControls Connection => Screen.ConnectionSelection;
     private static QuickClientIdentitySelectionControls Quick => Screen.QuickSelection;
     private static ClientIdentityProfileSelectionControls Selection => Screen.ProfileSelection;
     private static ClientIdentityProfileEditControls Edit => Screen.ProfileEdit;
     internal static Rectangle ClientIdentityProfileEditFieldTextBounds(int index, ClientIdentityProfileEditField field, bool isLocalMatch) => Edit.GetFieldTextBounds(field);
     internal static Rectangle ClientIdentityFieldHoverBounds(Rectangle textBounds) => new(536, textBounds.Y, textBounds.Right - 536, textBounds.Height);
-    internal static Rectangle ClientIdentityProfileConnectionSelectionPanelBounds => Connection.PanelBounds;
-    internal static Rectangle ClientIdentityProfileConnectionSelectionItemBounds(int slot) => Connection.GetItemBounds(slot);
     internal static Rectangle QuickClientIdentitySelectionPanelBounds => Quick.PanelBounds;
     internal static Rectangle QuickClientIdentitySelectionItemBounds(int index) => Quick.GetItemBounds(index);
 }

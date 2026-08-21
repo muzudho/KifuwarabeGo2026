@@ -2025,8 +2025,6 @@ public class Game1 : Game
             case ActiveWindowId.ClientIdentityEdit:
                 TryHandlePlayerSelectionDialogClick(point);
                 return true;
-            case ActiveWindowId.ClientIdentityConnectionSelection:
-                return TryHandleClientIdentityConnectionSelectionClick(point);
             case ActiveWindowId.QuickClientIdentitySelection:
                 return TryHandleQuickClientIdentitySelectionClick(point);
             case ActiveWindowId.GtpEngineGuiOptions:
@@ -2131,28 +2129,6 @@ public class Game1 : Game
         return true;
     }
 
-    private bool TryHandleClientIdentityConnectionSelectionClick(Point point)
-    {
-        if (!_session.IsClientIdentityProfileConnectionSelectionPanelOpen)
-            return false;
-
-        var connectionSelection = EntryProfilesScreen.Default.ConnectionSelection;
-        connectionSelection.UpdateState(
-            _session.ClientIdentityProfileConnectionSelectionPageIndex,
-            _session.ClientIdentityProfileConnectionSelectionPageCount);
-        if (connectionSelection.CancelButton.IsHit(point))
-            _session.CancelClientIdentityProfileConnectionSelectionPanel();
-        else if (connectionSelection.SelectButton.IsHit(point))
-            _session.CommitClientIdentityProfileConnectionSelection();
-        else if (connectionSelection.PreviousButton.IsHit(point))
-            _session.MoveClientIdentityProfileConnectionSelectionPage(-1);
-        else if (connectionSelection.NextButton.IsHit(point))
-            _session.MoveClientIdentityProfileConnectionSelectionPage(1);
-        else if (connectionSelection.GetItemHit(point, _session.ClientIdentityProfileConnectionSelectionPageIndex, GoAppSession.ClientIdentityProfileConnectionSelectionPageSize, _session.CgosConnectionProfiles.Count) is { } index)
-            _session.SelectClientIdentityProfileConnection(index);
-        return true;
-    }
-
     private void TryHandlePlayerSelectionDialogClick(Point point)
     {
         if (_session.IsQuickClientIdentitySelectionPanelOpen)
@@ -2182,10 +2158,6 @@ public class Game1 : Game
             else if (profileSelection.EditButton.IsHit(point))
                 _session.OpenClientIdentityProfileEditPanel();
             else if (profileSelection.DuplicateButton.IsHit(point) && _session.DuplicateSelectedClientIdentityProfile())
-                SavePlayerAndClientIdentityCatalogs();
-            else if (profileEdit.AddLocalButton.IsHit(point) && _session.AddClientIdentityProfile(false))
-                SavePlayerAndClientIdentityCatalogs();
-            else if (profileEdit.AddCgosButton.IsHit(point) && _session.AddClientIdentityProfile(true))
                 SavePlayerAndClientIdentityCatalogs();
             else if (profileSelection.DeleteButton.IsHit(point) && _session.RemoveSelectedClientIdentityProfile())
                 SavePlayerAndClientIdentityCatalogs();
@@ -2425,7 +2397,7 @@ public class Game1 : Game
         else if (_targetProfileEditTextBox.IsMouseSelecting && _session.ActiveClientIdentityProfileEditField is { } targetField)
         {
             _targetProfileEditTextBox.UpdateMouseSelection(
-                EntryProfilesPresenter.Default.GetClientIdentityProfileEditCaretIndex(_presentationServices.Stationery, point, _session.ClientIdentityProfileEditIndex, targetField, _targetProfileEditTextBox.Text, string.IsNullOrEmpty(_session.ClientIdentityProfileEditDraft.ConnectionProfileId)));
+                EntryProfilesPresenter.Default.GetClientIdentityProfileEditCaretIndex(_presentationServices.Stationery, point, _session.ClientIdentityProfileEditIndex, targetField, _targetProfileEditTextBox.Text, false));
             SyncClientIdentityProfileEditField(targetField);
         }
         else if (_gtpEngineEditTextBox.IsMouseSelecting &&
@@ -5012,7 +4984,7 @@ public class Game1 : Game
     {
         SyncClientIdentityProfileEditField(field);
         SaveClientIdentityProfileEditDraft();
-        var fields = new[] { ClientIdentityProfileEditField.LoginName, ClientIdentityProfileEditField.LoginPass };
+        var fields = new[] { ClientIdentityProfileEditField.LoginName, ClientIdentityProfileEditField.LoginPass, ClientIdentityProfileEditField.Comment };
         var index = Array.IndexOf(fields, field);
         var next = fields[(index + step + fields.Length) % fields.Length];
         var text = _session.GetClientIdentityProfileEditField(next);

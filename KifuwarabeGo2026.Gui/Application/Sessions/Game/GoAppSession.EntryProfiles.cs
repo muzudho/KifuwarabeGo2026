@@ -72,7 +72,6 @@ public sealed partial class GoAppSession
         if (engine is null || _cgosConnectionProfiles.Count == 0)
             return null;
 
-        var connectionId = SelectedCgosConnectionProfile.Id;
         var selectedPlayerId = stone == GoStone.Black ? CgosBlackEntryProfileId : CgosWhiteEntryProfileId;
         var players = FindEntryProfile(selectedPlayerId) is { } selectedPlayer
             ? new[] { selectedPlayer }
@@ -81,11 +80,10 @@ public sealed partial class GoAppSession
         var selectedClientIdentityId = stone == GoStone.Black ? CgosBlackClientIdentityProfileId : CgosWhiteClientIdentityProfileId;
         var selectedClientIdentity = players
             .SelectMany(player => GetPlayerClientIdentityProfiles(player.Id))
-            .FirstOrDefault(target => string.Equals(target.Id, selectedClientIdentityId, StringComparison.Ordinal) &&
-                                      string.Equals(target.ConnectionProfileId, connectionId, StringComparison.Ordinal));
+            .FirstOrDefault(target => string.Equals(target.Id, selectedClientIdentityId, StringComparison.Ordinal));
         return selectedClientIdentity ?? players
             .SelectMany(player => GetPlayerClientIdentityProfiles(player.Id))
-            .FirstOrDefault(target => string.Equals(target.ConnectionProfileId, connectionId, StringComparison.Ordinal));
+            .FirstOrDefault();
     }
 
     /// <summary>
@@ -106,8 +104,7 @@ public sealed partial class GoAppSession
             ? null
             : GetPlayerClientIdentityProfiles(player.Id).FirstOrDefault(target =>
                   string.Equals(target.Id, stone == GoStone.Black ? BlackLocalMatchClientIdentityProfileId : WhiteLocalMatchClientIdentityProfileId, StringComparison.Ordinal))
-              ?? GetPlayerClientIdentityProfiles(player.Id)
-                  .FirstOrDefault(target => string.IsNullOrEmpty(target.ConnectionProfileId));
+              ?? GetPlayerClientIdentityProfiles(player.Id).FirstOrDefault();
 
     /// <summary>LocalMatch のファイル名など、外部へ提示する名前を返す。</summary>
     public string GetLocalMatchPresentedName(GoStone stone)
@@ -193,8 +190,7 @@ public sealed partial class GoAppSession
     {
         var player = GetSelectedEntryProfile(stone);
         if (player is null || !GetPlayerClientIdentityProfiles(player.Id).Any(target =>
-                string.Equals(target.Id, targetProfileId, StringComparison.Ordinal) &&
-                string.IsNullOrEmpty(target.ConnectionProfileId)))
+                string.Equals(target.Id, targetProfileId, StringComparison.Ordinal)))
             return false;
 
         if (stone == GoStone.Black) BlackLocalMatchClientIdentityProfileId = targetProfileId;
@@ -206,8 +202,7 @@ public sealed partial class GoAppSession
 
     private void SetDefaultLocalMatchClientIdentity(GoStone stone, EntryProfile profile)
     {
-        var targetId = GetPlayerClientIdentityProfiles(profile.Id)
-            .FirstOrDefault(target => string.IsNullOrEmpty(target.ConnectionProfileId))?.Id ?? "";
+        var targetId = GetPlayerClientIdentityProfiles(profile.Id).FirstOrDefault()?.Id ?? "";
         if (stone == GoStone.Black) BlackLocalMatchClientIdentityProfileId = targetId;
         else WhiteLocalMatchClientIdentityProfileId = targetId;
         ResetLocalMatchHandleDraft(stone);

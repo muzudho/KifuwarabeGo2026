@@ -83,15 +83,16 @@ public sealed class SelectEntryPresenter
 
         drawingContext.FillRectangle(PlayerSelectionClientIdentityListBounds, new Color(15, 20, 26));
         drawingContext.DrawRectangle(PlayerSelectionClientIdentityListBounds, 1, new Color(67, 84, 92));
-        drawingContext.DrawText(management ? "HANDLE / PASSWORD" : "CLIENT IDENTITIES", new Vector2(PlayerSelectionClientIdentityListBounds.X, PlayerSelectionClientIdentityListBounds.Y - 34), new Color(147, 244, 200), 0.34f);
+        drawingContext.DrawText(management ? "HANDLE / PASSWORD / COMMENT" : "CLIENT IDENTITIES", new Vector2(PlayerSelectionClientIdentityListBounds.X, PlayerSelectionClientIdentityListBounds.Y - 34), new Color(147, 244, 200), 0.34f);
         var identities = management
             ? session.GetManagedPlayerClientIdentities()
             : session.GetPlayerSelectionClientIdentities();
         if (management)
         {
             var headingBounds = new Rectangle(PlayerSelectionClientIdentityListBounds.X + 16, PlayerSelectionClientIdentityListBounds.Y + 12, PlayerSelectionClientIdentityListBounds.Width - 32, 34);
-            drawingContext.DrawFittedText("HANDLE", new Rectangle(headingBounds.X + 54, headingBounds.Y, 278, headingBounds.Height), new Color(180, 195, 195), 0.32f);
-            drawingContext.DrawFittedText("PASSWORD", new Rectangle(headingBounds.X + 350, headingBounds.Y, headingBounds.Width - 366, headingBounds.Height), new Color(180, 195, 195), 0.32f);
+            drawingContext.DrawFittedText("HANDLE", new Rectangle(headingBounds.X + 54, headingBounds.Y, 190, headingBounds.Height), new Color(180, 195, 195), 0.32f);
+            drawingContext.DrawFittedText("PASSWORD", new Rectangle(headingBounds.X + 260, headingBounds.Y, 170, headingBounds.Height), new Color(180, 195, 195), 0.32f);
+            drawingContext.DrawFittedText("COMMENT", new Rectangle(headingBounds.X + 446, headingBounds.Y, headingBounds.Width - 446, headingBounds.Height), new Color(180, 195, 195), 0.32f);
         }
         for (var index = 0; index < identities.Count; index++)
         {
@@ -105,13 +106,14 @@ public sealed class SelectEntryPresenter
             if (management)
             {
                 drawingContext.DrawFittedText($"{index + 1}", new Rectangle(bounds.X + 16, bounds.Y + 13, 28, 34), new Color(178, 219, 226), 0.30f);
-                drawingContext.DrawFittedText(string.IsNullOrEmpty(identity.LoginName) ? "-" : identity.LoginName, new Rectangle(bounds.X + 54, bounds.Y + 10, 278, 40), Color.White, 0.36f);
-                drawingContext.DrawFittedText(string.IsNullOrEmpty(identity.LoginPass) ? "-" : identity.LoginPass, new Rectangle(bounds.X + 350, bounds.Y + 10, bounds.Width - 366, 40), Color.White, 0.36f);
+                drawingContext.DrawFittedText(string.IsNullOrEmpty(identity.LoginName) ? "-" : identity.LoginName, new Rectangle(bounds.X + 54, bounds.Y + 10, 190, 40), Color.White, 0.36f);
+                drawingContext.DrawFittedText(string.IsNullOrEmpty(identity.LoginPass) ? "-" : identity.LoginPass, new Rectangle(bounds.X + 260, bounds.Y + 10, 170, 40), Color.White, 0.36f);
+                drawingContext.DrawFittedText(string.IsNullOrEmpty(identity.Comment) ? "-" : identity.Comment, new Rectangle(bounds.X + 446, bounds.Y + 10, bounds.Width - 462, 40), Color.White, 0.34f);
             }
             else
             {
-                drawingContext.DrawFittedText(identity.DisplayName, new Rectangle(bounds.X + 18, bounds.Y + 8, bounds.Width - 36, 28), Color.White, 0.40f);
-                drawingContext.DrawFittedText($"HANDLE: {identity.LoginName}", new Rectangle(bounds.X + 18, bounds.Y + 39, bounds.Width - 36, 22), new Color(180, 195, 195), 0.27f);
+                drawingContext.DrawFittedText(identity.LoginName, new Rectangle(bounds.X + 18, bounds.Y + 8, bounds.Width - 36, 28), Color.White, 0.40f);
+                drawingContext.DrawFittedText(string.IsNullOrEmpty(identity.Comment) ? "COMMENT: -" : $"COMMENT: {identity.Comment}", new Rectangle(bounds.X + 18, bounds.Y + 39, bounds.Width - 36, 22), new Color(180, 195, 195), 0.27f);
             }
         }
 

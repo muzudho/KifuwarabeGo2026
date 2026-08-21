@@ -8,12 +8,8 @@ using System.Linq;
 /// <summary>Player が参照する ClientIdentityProfile の編集状態。</summary>
 public sealed partial class GoAppSession
 {
-    public const int ClientIdentityProfileConnectionSelectionPageSize = 5;
     public bool IsClientIdentityProfileSelectionPanelOpen { get; private set; }
     public bool IsClientIdentityProfileEditPanelOpen { get; private set; }
-    public bool IsClientIdentityProfileConnectionSelectionPanelOpen { get; private set; }
-    public int ClientIdentityProfileConnectionSelectionIndex { get; private set; }
-    public int ClientIdentityProfileConnectionSelectionPageIndex { get; private set; }
     public bool IsQuickClientIdentitySelectionPanelOpen { get; private set; }
     public GoStone QuickClientIdentitySelectionStone { get; private set; }
     public bool QuickClientIdentitySelectionIsCgos { get; private set; }
@@ -31,9 +27,9 @@ public sealed partial class GoAppSession
     /// <summary>編集開始時から未保存の変更があるかを返します。</summary>
     public bool IsClientIdentityProfileEditDirty =>
         ClientIdentityProfileEditDraft.DisplayName != ClientIdentityProfileEditOriginalProfile.DisplayName ||
-        ClientIdentityProfileEditDraft.ConnectionProfileId != ClientIdentityProfileEditOriginalProfile.ConnectionProfileId ||
         ClientIdentityProfileEditDraft.LoginName != ClientIdentityProfileEditOriginalProfile.LoginName ||
-        ClientIdentityProfileEditDraft.LoginPass != ClientIdentityProfileEditOriginalProfile.LoginPass;
+        ClientIdentityProfileEditDraft.LoginPass != ClientIdentityProfileEditOriginalProfile.LoginPass ||
+        ClientIdentityProfileEditDraft.Comment != ClientIdentityProfileEditOriginalProfile.Comment;
 
     public bool OpenClientIdentityProfileSelectionPanel()
     {
@@ -92,9 +88,8 @@ public sealed partial class GoAppSession
 
     public void CloseClientIdentityProfileEditPanel()
     {
-        (IsClientIdentityProfileEditPanelOpen, IsClientIdentityProfileConnectionSelectionPanelOpen, ActiveClientIdentityProfileEditField) = (false, false, null);
+        (IsClientIdentityProfileEditPanelOpen, ActiveClientIdentityProfileEditField) = (false, null);
         DeactivateWindow(ActiveWindowId.ClientIdentityEdit);
-        DeactivateWindow(ActiveWindowId.ClientIdentityConnectionSelection);
     }
 
     public bool ReturnToClientIdentityProfileSelectionPanel()
@@ -173,12 +168,7 @@ public sealed partial class GoAppSession
             ? stone == GoStone.Black ? SelectedCgosBlackEntryProfile : SelectedCgosWhiteEntryProfile
             : GetSelectedEntryProfile(stone);
         if (player is null) return [];
-        var connectionId = cgos ? SelectedCgosConnectionProfile.Id : "";
-        return GetPlayerClientIdentityProfiles(player.Id)
-            .Where(target => cgos
-                ? string.Equals(target.ConnectionProfileId, connectionId, StringComparison.Ordinal)
-                : string.IsNullOrEmpty(target.ConnectionProfileId))
-            .ToList();
+        return GetPlayerClientIdentityProfiles(player.Id).ToList();
     }
 
     public bool MoveClientIdentityProfileEditSelection(int step)
@@ -189,14 +179,13 @@ public sealed partial class GoAppSession
         return LoadClientIdentityProfileEditDraft();
     }
 
-    public bool AddClientIdentityProfile(bool cgos)
+    public bool AddClientIdentityProfile()
     {
         var owner = GetClientIdentityEditOwner();
         if (owner.ClientIdentityProfileIds.Count >= 5) return false;
         var target = new ClientIdentityProfile
         {
-            DisplayName = cgos ? "OnlineMatch (CGOS)" : "LocalMatch",
-            ConnectionProfileId = cgos ? _cgosConnectionProfiles.ElementAtOrDefault(SelectedCgosConnectionProfileIndex)?.Id ?? "" : "",
+            DisplayName = "Client Identity",
             LoginName = new string(owner.Identifier.Where(character => !char.IsWhiteSpace(character)).ToArray()),
         };
         _clientIdentityProfiles.Add(target);
@@ -304,7 +293,8 @@ public sealed partial class GoAppSession
     {
         if (field == ClientIdentityProfileEditField.DisplayName) ClientIdentityProfileEditDraft.DisplayName = value;
         else if (field == ClientIdentityProfileEditField.LoginName) ClientIdentityProfileEditDraft.LoginName = value;
-        else ClientIdentityProfileEditDraft.LoginPass = value;
+        else if (field == ClientIdentityProfileEditField.LoginPass) ClientIdentityProfileEditDraft.LoginPass = value;
+        else if (field == ClientIdentityProfileEditField.Comment) ClientIdentityProfileEditDraft.Comment = value;
     }
 
     public string GetClientIdentityProfileEditField(ClientIdentityProfileEditField field) => field switch
@@ -312,6 +302,7 @@ public sealed partial class GoAppSession
         ClientIdentityProfileEditField.DisplayName => ClientIdentityProfileEditDraft.DisplayName,
         ClientIdentityProfileEditField.LoginName => ClientIdentityProfileEditDraft.LoginName,
         ClientIdentityProfileEditField.LoginPass => ClientIdentityProfileEditDraft.LoginPass,
+        ClientIdentityProfileEditField.Comment => ClientIdentityProfileEditDraft.Comment,
         _ => "",
     };
 
@@ -349,57 +340,6 @@ public sealed partial class GoAppSession
         _clientIdentityProfiles[index] = ClientIdentityProfileEditDraft.Clone();
     }
 
-    public bool OpenClientIdentityProfileConnectionSelectionPanel()
-    {
-        if (_cgosConnectionProfiles.Count == 0 || string.IsNullOrEmpty(ClientIdentityProfileEditDraft.ConnectionProfileId))
-            return false;
-
-        ClientIdentityProfileConnectionSelectionIndex = Math.Max(0, _cgosConnectionProfiles.FindIndex(profile =>
-            string.Equals(profile.Id, ClientIdentityProfileEditDraft.ConnectionProfileId, StringComparison.Ordinal)));
-        ClientIdentityProfileConnectionSelectionPageIndex = ClientIdentityProfileConnectionSelectionIndex / ClientIdentityProfileConnectionSelectionPageSize;
-        IsClientIdentityProfileConnectionSelectionPanelOpen = true;
-        ActivateWindow(ActiveWindowId.ClientIdentityConnectionSelection);
-        return true;
-    }
-
-    public void CancelClientIdentityProfileConnectionSelectionPanel()
-    {
-        IsClientIdentityProfileConnectionSelectionPanelOpen = false;
-        DeactivateWindow(ActiveWindowId.ClientIdentityConnectionSelection);
-    }
-
-    public void SelectClientIdentityProfileConnection(int index)
-    {
-        if (index < 0 || index >= _cgosConnectionProfiles.Count)
-            throw new ArgumentOutOfRangeException(nameof(index));
-        ClientIdentityProfileConnectionSelectionIndex = index;
-    }
-
-    public bool CommitClientIdentityProfileConnectionSelection()
-    {
-        if (ClientIdentityProfileConnectionSelectionIndex < 0 || ClientIdentityProfileConnectionSelectionIndex >= _cgosConnectionProfiles.Count)
-            return false;
-        ClientIdentityProfileEditDraft.ConnectionProfileId = _cgosConnectionProfiles[ClientIdentityProfileConnectionSelectionIndex].Id;
-        IsClientIdentityProfileConnectionSelectionPanelOpen = false;
-        DeactivateWindow(ActiveWindowId.ClientIdentityConnectionSelection);
-        return true;
-    }
-
-    public void MoveClientIdentityProfileConnectionSelectionPage(int step)
-    {
-        var pageCount = Math.Max(1, (int)Math.Ceiling(_cgosConnectionProfiles.Count / (double)ClientIdentityProfileConnectionSelectionPageSize));
-        ClientIdentityProfileConnectionSelectionPageIndex = Math.Clamp(ClientIdentityProfileConnectionSelectionPageIndex + step, 0, pageCount - 1);
-    }
-
-    public int ClientIdentityProfileConnectionSelectionPageCount =>
-        Math.Max(1, (int)Math.Ceiling(_cgosConnectionProfiles.Count / (double)ClientIdentityProfileConnectionSelectionPageSize));
-
-    public string ClientIdentityProfileEditConnectionDisplayName =>
-        GetClientIdentityProfileConnectionDisplayName(ClientIdentityProfileEditDraft);
-
-    public string GetClientIdentityProfileConnectionDisplayName(ClientIdentityProfile target) =>
-        _cgosConnectionProfiles.FirstOrDefault(profile => string.Equals(profile.Id, target.ConnectionProfileId, StringComparison.Ordinal))?.DisplayName ?? "LOCAL MATCH";
-
     private EntryProfile GetClientIdentityEditOwner() => _playerProfiles[PlayerEditProfileIndex];
 
     private bool LoadClientIdentityProfileEditDraft()
@@ -415,4 +355,4 @@ public sealed partial class GoAppSession
     }
 }
 
-public enum ClientIdentityProfileEditField { DisplayName, LoginName, LoginPass }
+public enum ClientIdentityProfileEditField { DisplayName, LoginName, LoginPass, Comment }

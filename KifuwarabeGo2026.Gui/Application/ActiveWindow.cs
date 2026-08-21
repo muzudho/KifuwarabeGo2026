@@ -15,7 +15,6 @@ public enum ActiveWindowId
     PlayerEdit,
     ClientIdentitySelection,
     ClientIdentityEdit,
-    ClientIdentityConnectionSelection,
     QuickClientIdentitySelection,
     TournamentRulesSelection,
     TournamentRulesEdit,
