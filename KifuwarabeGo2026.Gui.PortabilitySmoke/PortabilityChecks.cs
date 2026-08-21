@@ -73,6 +73,7 @@ internal static class PortabilityChecks
         VerifyInitialWindowLayout();
         VerifyDefaultCgosConnection();
         VerifyCgosResultReviewRecord();
+        VerifyCgosHumanMoveReflection();
         VerifyCgosPracticeUnexpectedGameState();
         VerifyLocalMatchSgfFileName();
         VerifyTournamentRulesJsonCompatibility();
@@ -97,6 +98,24 @@ internal static class PortabilityChecks
         Require(session.MoveReview(session.ReviewTimelineMaximum - session.ReviewTimelineIndex, out warning) &&
                 session.IsReviewResultPosition && session.ReviewResult == "B+R",
             $"The CGOS review did not reach its terminal RESULT position: {warning}");
+    }
+
+    private static void VerifyCgosHumanMoveReflection()
+    {
+        var observation = new CgosGameObservation();
+        observation.ProcessLogLine("[human] > setup 321 9 7.0 300000 HumanLogin Opponent");
+        observation.ProcessLogLine("[human] > play black E6 290000");
+
+        Require(observation.ApplyHumanMove(GoStone.White, "C3") &&
+                observation.GetStone(2, 6) == GoStone.White &&
+                observation.CurrentTurn == GoStone.Black,
+            "A submitted CGOS human move was not reflected on the local live board.");
+        Require(observation.ProcessLogLine("[human] > play black D4 280000") &&
+                observation.CurrentTurn == GoStone.White,
+            "The opponent move after a CGOS human move was rejected by stale turn state.");
+        Require(observation.ApplyHumanMove(GoStone.White, "pass") &&
+                observation.CurrentTurn == GoStone.Black && observation.MoveCount == 4,
+            "A submitted CGOS human pass was not reflected in the local turn state.");
     }
 
     private static void VerifyCgosPracticeUnexpectedGameState()

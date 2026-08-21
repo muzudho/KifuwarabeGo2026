@@ -4,18 +4,37 @@ using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Shared.Domain;
 using Microsoft.Xna.Framework;
 using System;
+using System.Collections.Generic;
 using KifuwarabeGo2026.Gui.Presentation.Shared.SelectEntry;
 using KifuwarabeGo2026.Gui.Presentation.Shared.CatalogOrder;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
+using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Button;
 using static KifuwarabeGo2026.Gui.Presentation.Shared.SelectEntry.SelectEntryScreenBounds;
 
 /// <summary>［SELECT ENTRY］画面の表示と操作判定を担当します。</summary>
 public sealed class SelectEntryPresenter
 {
     public static SelectEntryPresenter Default { get; } = new();
+    private readonly HashSet<string> _visibleClientIdentityPasswords = new(StringComparer.Ordinal);
 
     private SelectEntryPresenter()
     {
+    }
+
+    public bool TryToggleClientIdentityPasswordVisibility(Point point, IReadOnlyList<ClientIdentityProfile> identities)
+    {
+        for (var index = 0; index < identities.Count; index++)
+        {
+            var rowBounds = GetManagementIdentityBounds(index);
+            if (rowBounds.Bottom > PlayerSelectionClientIdentityListBounds.Bottom - 8) break;
+            if (!GetPasswordVisibilityBounds(rowBounds).Contains(point)) continue;
+
+            var id = identities[index].Id;
+            if (!_visibleClientIdentityPasswords.Add(id))
+                _visibleClientIdentityPasswords.Remove(id);
+            return true;
+        }
+        return false;
     }
 
     public void Draw(KfwStationeryDrawingTools drawingContext, GoAppSession session, Point mousePoint)
@@ -98,7 +117,7 @@ public sealed class SelectEntryPresenter
         {
             var identity = identities[index];
             var bounds = management
-                ? PlayerSelectionClientIdentityItemBounds(index) with { Y = PlayerSelectionClientIdentityItemBounds(index).Y + 34, Height = 62 }
+                ? GetManagementIdentityBounds(index)
                 : PlayerSelectionClientIdentityItemBounds(index);
             if (bounds.Bottom > PlayerSelectionClientIdentityListBounds.Bottom - 8) break;
             var selected = index == session.ClientIdentityDialogSelectionIndex;
@@ -107,7 +126,12 @@ public sealed class SelectEntryPresenter
             {
                 drawingContext.DrawFittedText($"{index + 1}", new Rectangle(bounds.X + 16, bounds.Y + 13, 28, 34), new Color(178, 219, 226), 0.30f);
                 drawingContext.DrawFittedText(string.IsNullOrEmpty(identity.LoginName) ? "-" : identity.LoginName, new Rectangle(bounds.X + 54, bounds.Y + 10, 190, 40), Color.White, 0.36f);
-                drawingContext.DrawFittedText(string.IsNullOrEmpty(identity.LoginPass) ? "-" : identity.LoginPass, new Rectangle(bounds.X + 260, bounds.Y + 10, 170, 40), Color.White, 0.36f);
+                var passwordVisible = _visibleClientIdentityPasswords.Contains(identity.Id);
+                var passwordText = string.IsNullOrEmpty(identity.LoginPass)
+                    ? "-"
+                    : passwordVisible ? identity.LoginPass : new string('●', identity.LoginPass.Length);
+                drawingContext.DrawFittedText(passwordText, new Rectangle(bounds.X + 260, bounds.Y + 10, 132, 40), Color.White, 0.36f);
+                DrawEyeButton(GetPasswordVisibilityBounds(bounds), passwordVisible, mousePoint, drawingContext);
                 drawingContext.DrawDynamicText(string.IsNullOrEmpty(identity.Comment) ? "-" : identity.Comment, new Rectangle(bounds.X + 446, bounds.Y + 10, bounds.Width - 462, 40), Color.White, 0.34f);
             }
             else
@@ -137,6 +161,27 @@ public sealed class SelectEntryPresenter
                 ? $"ENGINE: {session.GetEntryProfileSummary(player)}"
                 : session.GetEntryProfileSummary(player),
             player => player.Kind == EntryProfileKind.Computer);
+    }
+
+    private static Rectangle GetManagementIdentityBounds(int index) =>
+        PlayerSelectionClientIdentityItemBounds(index) with
+        {
+            Y = PlayerSelectionClientIdentityItemBounds(index).Y + 34,
+            Height = 62,
+        };
+
+    private static Rectangle GetPasswordVisibilityBounds(Rectangle rowBounds) =>
+        new(rowBounds.X + 396, rowBounds.Y + 13, 32, 34);
+
+    private static void DrawEyeButton(Rectangle bounds, bool visible, Point mousePoint, KfwStationeryDrawingTools drawingContext)
+    {
+        new Button(bounds, string.Empty, 0.1f).Draw(mousePoint, drawingContext);
+        var color = bounds.Contains(mousePoint) ? new Color(222, 243, 246) : new Color(178, 219, 226);
+        var center = new Vector2(bounds.Center.X, bounds.Center.Y);
+        drawingContext.DrawLine(new Vector2(bounds.X + 6, center.Y), new Vector2(center.X, visible ? bounds.Y + 7 : center.Y + 2), 2, color);
+        drawingContext.DrawLine(new Vector2(center.X, visible ? bounds.Y + 7 : center.Y + 2), new Vector2(bounds.Right - 6, center.Y), 2, color);
+        if (visible)
+            drawingContext.FillRectangle(new Rectangle(bounds.Center.X - 3, bounds.Center.Y - 3, 6, 6), color);
     }
 
 }

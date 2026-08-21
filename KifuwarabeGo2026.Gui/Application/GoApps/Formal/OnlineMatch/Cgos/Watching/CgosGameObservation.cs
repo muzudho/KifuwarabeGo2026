@@ -52,6 +52,22 @@ public sealed class CgosGameObservation
         var candidate = BuildBoardAt(_moves.Count);
         return candidate.TryPlaceStone(x, y, stone, _koPoint, out _, out _);
     }
+
+    /// <summary>
+    /// CGOS は自分が返した着手を play コマンドでは送り返さないため、
+    /// GUI から送信できた人間の着手を観戦盤へ直ちに反映します。
+    /// </summary>
+    public bool ApplyHumanMove(GoStone stone, string vertex)
+    {
+        if (GtpCoordinate.IsPass(vertex))
+        {
+            if (!IsStarted || IsFinished || IsReplayMode || stone != CurrentTurn) return false;
+            ApplyMove(stone, vertex, null, null);
+            return true;
+        }
+
+        return ApplyMove(stone, vertex, null, null);
+    }
     public GoGameMove? LatestMove => _moves.Count == 0 ? null : _moves[^1];
 
     public GoStone GetPlayerColor(string loginName)

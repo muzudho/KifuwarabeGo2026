@@ -71,6 +71,9 @@ public sealed class GoPresentationRenderer : System.IDisposable
     public int GetCgosCredentialCaretIndex(Point point, GoStone stone, CgosPlayerCredentialField field, string text) =>
         _cgosLoginRenderer.GetCgosCredentialCaretIndex(point, stone, field, text);
 
+    public bool TryToggleCgosPasswordVisibility(Point point, bool player2Enabled) =>
+        _cgosLoginRenderer.TryToggleCgosPasswordVisibility(point, player2Enabled);
+
     public int GetGtpEngineEditPanelCaretIndex(Point point, GtpEngineProfileEditField field, string text) =>
         _gtpEngineRenderer.GetGtpEngineEditPanelCaretIndex(point, field, text);
 

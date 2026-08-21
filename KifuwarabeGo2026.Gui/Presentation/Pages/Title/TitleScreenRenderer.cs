@@ -136,9 +136,9 @@ public sealed class TitleScreenRenderer
         FillRect(bounds, hovered ? new Color(36, 50, 58) : new Color(24, 31, 37));
         DrawRect(bounds, 2, hovered ? new Color(178, 219, 226) : new Color(88, 102, 112));
         FillRect(new Rectangle(bounds.X, bounds.Y, 6, bounds.Height), hovered ? accent : new Color(accent.R, accent.G, accent.B, (byte)100));
-        DrawFittedText(title, new Rectangle(bounds.X + 28, bounds.Y + 20, bounds.Width - 124, 42), Color.White, 0.52f);
-        DrawFittedText(caption, new Rectangle(bounds.X + 28, bounds.Y + 74, bounds.Width - 100, 30), new Color(204, 241, 226), 0.34f);
-        DrawFittedText("OPEN  >", new Rectangle(bounds.Right - 92, bounds.Y + 46, 68, 28), hovered ? accent : new Color(180, 195, 195), 0.28f);
+        DrawFittedText(title, new Rectangle(bounds.X + 28, bounds.Y + 20, bounds.Width - 56, 42), Color.White, 0.52f);
+        DrawFittedText(caption, new Rectangle(bounds.X + 28, bounds.Y + 74, bounds.Width - 120, 30), new Color(204, 241, 226), 0.34f);
+        DrawFittedText("OPEN  >", new Rectangle(bounds.Right - 92, bounds.Y + 76, 68, 28), hovered ? accent : new Color(180, 195, 195), 0.28f);
     }
 
     private void DrawTitleBreadcrumb(string text, Rectangle panel)

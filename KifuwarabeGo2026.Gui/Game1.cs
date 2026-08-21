@@ -1557,6 +1557,10 @@ public class Game1 : Game
                     {
                         EditCgosRandomSeed(cgosSeedStone);
                     }
+                    else if (_presentationServices!.Presentation.TryToggleCgosPasswordVisibility(point, _session.IsCgosPlayer2InputEnabled))
+                    {
+                        // Password visibility changes without moving the text-edit caret.
+                    }
                     else if (CgosLoginRenderer.GetCgosCredentialFieldHit(point) is { } credential &&
                         (credential.Stone == GoStone.Black || _session.IsCgosPlayer2InputEnabled))
                     {
@@ -2259,6 +2263,11 @@ public class Game1 : Game
 
         var selectEntryScreen = SelectEntryScreen.Default;
         var isManagement = _session.PlayerSelectionPurpose == PlayerSelectionPurpose.Management;
+        if (isManagement && SelectEntryPresenter.Default.TryToggleClientIdentityPasswordVisibility(
+                point, _session.GetManagedPlayerClientIdentities()))
+        {
+            return;
+        }
         if (!isManagement && selectEntryScreen.CancelButton.IsHit(point))
         {
             _session.CancelPlayerSelectionDialog();
@@ -4630,7 +4639,7 @@ public class Game1 : Game
 
         if (screen.HumanPassButton.IsHit(point))
         {
-            SendCgosHumanMove("pass");
+            SendCgosHumanMove("pass", humanColor);
             return true;
         }
 
@@ -4642,15 +4651,22 @@ public class Game1 : Game
             return true;
         }
 
-        SendCgosHumanMove(GtpCoordinate.FormatVertex(new GoPoint(intersection.X, intersection.Y), _cgosGameObservation.BoardSize));
+        SendCgosHumanMove(
+            GtpCoordinate.FormatVertex(new GoPoint(intersection.X, intersection.Y), _cgosGameObservation.BoardSize),
+            humanColor);
         return true;
     }
 
-    private void SendCgosHumanMove(string vertex)
+    private void SendCgosHumanMove(string vertex, GoStone humanColor)
     {
         try
         {
             var status = _cgosBlackConnectionProcess.SendCommand($"move {_cgosGameObservation.GameId} {vertex}");
+            if (!_cgosGameObservation.ApplyHumanMove(humanColor, vertex))
+            {
+                GuiOperationLog.App("CGOS human move was sent but could not be reflected locally",
+                    $"gameId={_cgosGameObservation.GameId}; vertex={vertex}; color={humanColor}");
+            }
             _cgosHumanSubmittedGameId = _cgosGameObservation.GameId;
             _cgosHumanSubmittedMoveCount = _cgosGameObservation.MoveCount;
             SetCgosPlayerConnectionProcessStatus(GoStone.Black, status, _cgosBlackConnectionProcess.IsRunning, _cgosBlackConnectionProcess);

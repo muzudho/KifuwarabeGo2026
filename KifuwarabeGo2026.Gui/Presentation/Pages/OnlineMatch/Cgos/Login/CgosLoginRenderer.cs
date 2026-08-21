@@ -36,6 +36,7 @@ public sealed class CgosLoginRenderer
     private readonly LinkUnderline _selectorLinkUnderline = new(
         new RoundUnderline { TopOffset = 2, Thickness = 4, Radius = 2 });
     private readonly ActionBadgeComponent _editActionBadge = ActionBadgeComponent.Create("EDIT", Rectangle.Empty);
+    private readonly HashSet<GoStone> _visibleCgosPasswords = [];
     private KfwStationeryDrawingTools _drawingContext = null!;
 
     public CgosLoginRenderer(GtpEngineRenderer gtpEngineRenderer, Action<GoAppSession, Point> drawPlayerEditPanel)
@@ -80,6 +81,19 @@ public sealed class CgosLoginRenderer
         foreach (var field in new[] { CgosPlayerCredentialField.LoginName, CgosPlayerCredentialField.Password })
             if (CgosCredentialTextBounds(stone, field).Contains(point)) return (stone, field);
         return null;
+    }
+
+    public bool TryToggleCgosPasswordVisibility(Point point, bool player2Enabled)
+    {
+        foreach (var stone in new[] { GoStone.Black, GoStone.White })
+        {
+            if (stone == GoStone.White && !player2Enabled) continue;
+            if (!CgosPasswordVisibilityBounds(stone).Contains(point)) continue;
+            if (!_visibleCgosPasswords.Add(stone)) _visibleCgosPasswords.Remove(stone);
+            return true;
+        }
+
+        return false;
     }
 
 
@@ -469,12 +483,28 @@ public sealed class CgosLoginRenderer
                 : -1;
             DrawTabNavigationHint(bounds, tabIndex, activeTabIndex, 4);
             var text = session.GetCgosCredential(stone, field);
+            var passwordVisible = field != CgosPlayerCredentialField.Password || _visibleCgosPasswords.Contains(stone);
+            var displayText = field == CgosPlayerCredentialField.Password && !passwordVisible
+                ? new string('●', text.Length)
+                : text;
             if (active)
-                DrawTextBoxSelection(text, session.CgosCredentialSelectionStart, session.CgosCredentialSelectionLength, textBounds, 0.32f);
-            DrawFittedText(string.IsNullOrEmpty(text) ? "-" : text, textBounds, Color.White, 0.32f);
-            if (active) DrawTextBoxCaret(text, session.CgosCredentialCaretIndex, textBounds, 0.32f);
+                DrawTextBoxSelection(displayText, session.CgosCredentialSelectionStart, session.CgosCredentialSelectionLength, textBounds, 0.32f);
+            DrawFittedText(string.IsNullOrEmpty(displayText) ? "-" : displayText, textBounds, Color.White, 0.32f);
+            if (active) DrawTextBoxCaret(displayText, session.CgosCredentialCaretIndex, textBounds, 0.32f);
             DrawEditableTextEditHint(active, hovered, textBounds);
+            if (field == CgosPlayerCredentialField.Password)
+                DrawCgosPasswordEyeButton(CgosPasswordVisibilityBounds(stone), passwordVisible, mousePoint);
         }
+    }
+
+    private void DrawCgosPasswordEyeButton(Rectangle bounds, bool visible, Point mousePoint)
+    {
+        new Button(bounds, string.Empty, 0.1f).Draw(mousePoint, _drawingContext);
+        var color = bounds.Contains(mousePoint) ? new Color(222, 243, 246) : new Color(178, 219, 226);
+        var center = new Vector2(bounds.Center.X, bounds.Center.Y);
+        DrawLine(new Vector2(bounds.X + 6, center.Y), new Vector2(center.X, visible ? bounds.Y + 6 : center.Y + 2), 2, color);
+        DrawLine(new Vector2(center.X, visible ? bounds.Y + 6 : center.Y + 2), new Vector2(bounds.Right - 6, center.Y), 2, color);
+        if (visible) FillRect(new Rectangle(bounds.Center.X - 3, bounds.Center.Y - 3, 6, 6), color);
     }
 
     private void DrawCgosOptionalInputCheck(
@@ -579,15 +609,18 @@ public sealed class CgosLoginRenderer
         FillRect(bounds, new Color(15, 20, 26));
         DrawRect(bounds, 1, new Color(67, 84, 92));
         DrawText(title, new Vector2(bounds.X + 18, bounds.Y + 18), new Color(255, 230, 160), 0.42f);
-        if (!string.IsNullOrEmpty(elapsedDisplay))
-        {
-            DrawFittedText(elapsedDisplay, new Rectangle(bounds.X + 158, bounds.Y + 14, bounds.Width - 174, 32), new Color(146, 220, 255), 0.27f);
-        }
 
         var stateRow = new Rectangle(bounds.X + 16, bounds.Y + 62, bounds.Width - 32, 48);
         DrawDataRowFrame(stateRow);
         DrawUiLabel(UiLabel.InCompactRow("STATE", stateRow));
-        DrawFittedText(status, new Rectangle(stateRow.X + 132, stateRow.Y + 7, stateRow.Width - 148, 34), Color.White, 0.34f);
+        var statusBounds = string.IsNullOrEmpty(elapsedDisplay)
+            ? new Rectangle(stateRow.X + 132, stateRow.Y + 7, stateRow.Width - 148, 34)
+            : new Rectangle(stateRow.X + 132, stateRow.Y + 7, 116, 34);
+        DrawFittedText(status, statusBounds, Color.White, 0.34f);
+        if (!string.IsNullOrEmpty(elapsedDisplay))
+        {
+            DrawFittedText(elapsedDisplay, new Rectangle(stateRow.X + 258, stateRow.Y + 3, stateRow.Width - 274, 42), new Color(146, 220, 255), 0.54f);
+        }
 
         if (engineSelector is { } selector)
         {
@@ -949,7 +982,13 @@ public sealed class CgosLoginRenderer
     private static Rectangle CgosCredentialTextBounds(GoStone stone, CgosPlayerCredentialField field)
     {
         var row = CgosCredentialRowBounds(stone, field);
-        return new Rectangle(row.X + 132, row.Y + 1, row.Width - 148, 28);
+        return new Rectangle(row.X + 132, row.Y + 1, row.Width - (field == CgosPlayerCredentialField.Password ? 188 : 148), 28);
+    }
+
+    private static Rectangle CgosPasswordVisibilityBounds(GoStone stone)
+    {
+        var row = CgosCredentialRowBounds(stone, CgosPlayerCredentialField.Password);
+        return new Rectangle(row.Right - 48, row.Y, 32, 30);
     }
 
 
