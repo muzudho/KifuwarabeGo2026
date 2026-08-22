@@ -337,6 +337,7 @@ public class Game1 : Game
         CompleteAppProviderSettingsEvaluation();
         CompleteCatalogSave();
         CompleteGameOasisComposition();
+        CompleteGameOasisPlayingOperation();
         var keyboard = Keyboard.GetState();
         var mouse = Mouse.GetState();
         SynchronizeOrArmWindowInput(keyboard, mouse);
@@ -2569,6 +2570,17 @@ public class Game1 : Game
         {
             GuiOperationLog.App("Game Oasis GUI connection failed", task.Exception?.GetBaseException().ToString() ?? "Unknown error");
         }
+    }
+
+    private void CompleteGameOasisPlayingOperation()
+    {
+        var bridge = _gameOasisComposition?.PlayingBridge;
+        if (bridge is null || !bridge.Update()) return;
+
+        var detail = bridge.LastError is null
+            ? $"state={bridge.State}"
+            : $"state={bridge.State}; code={bridge.LastError.Code}; message={bridge.LastError.Message}";
+        GuiOperationLog.App("Game Oasis GUI operation completed", detail);
     }
 
     private static string FormatLocalMatchSeed(int? seed) => seed?.ToString() ?? "HUMAN";
@@ -7053,6 +7065,7 @@ public class Game1 : Game
             _cgosBlackConnectionProcess.Dispose();
             _cgosWhiteConnectionProcess.Dispose();
             _cgosAdminProcess.Dispose();
+            _gameOasisComposition?.Dispose();
             _playingScene.Dispose();
             _upcomingMatchChimeInstance?.Dispose();
             _upcomingMatchChime?.Dispose();

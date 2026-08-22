@@ -93,6 +93,40 @@ internal static class PortabilityChecks
             "The current GUI composition exposed an unexpected play-space.");
         Require(!composition.GetActiveBoard().IsSuccess,
             "The current GUI composition must not expose a board before a Protocol G session opens.");
+
+        var bridge = composition.PlayingBridge;
+        var configuration = new ContractDocument(
+            "application/json",
+            GameOasisOfficialNames.Ponnuki + ".configuration.v1",
+            """{"version":1,"boardSize":9,"initialMoveCount":0,"randomSeed":99,"captureTarget":1,"startingPlayer":"black","setupStones":[{"x":0,"y":0,"color":"black"},{"x":2,"y":0,"color":"black"},{"x":1,"y":0,"color":"white"}]}""");
+        Require(bridge.BeginOpen(new(GameOasisOfficialNames.Ponnuki), configuration),
+            "The GUI playing bridge must begin opening a Protocol G session from the idle state.");
+        Require(!bridge.BeginOpen(new(GameOasisOfficialNames.Ponnuki), configuration),
+            "The GUI playing bridge must reject a second operation while one is pending.");
+        CompleteBridgeOperation(bridge);
+        Require(bridge.State == GameOasisPlayingState.Ready && bridge.Board is { IsTerminal: false },
+            "The GUI playing bridge must publish the opened board on the frame thread.");
+
+        Require(bridge.BeginPlay(1, 1),
+            "The GUI playing bridge must submit a legal board action.");
+        Require(!bridge.BeginPlay(1, 2),
+            "The GUI playing bridge must reject duplicate input while an action is pending.");
+        CompleteBridgeOperation(bridge);
+        Require(bridge.State == GameOasisPlayingState.Terminal && bridge.Board is { IsTerminal: true, BlackCaptures: 1 },
+            "The GUI playing bridge must publish the terminal Ponnuki board.");
+
+        Require(bridge.BeginClose(),
+            "The GUI playing bridge must begin closing its active session.");
+        CompleteBridgeOperation(bridge);
+        Require(bridge.State == GameOasisPlayingState.Idle && bridge.Board is null && bridge.LastError is null,
+            "The GUI playing bridge must return to idle after closing the session.");
+        bridge.Dispose();
+    }
+
+    private static void CompleteBridgeOperation(GameOasisPlayingBridge bridge)
+    {
+        Require(SpinWait.SpinUntil(() => bridge.Update(), TimeSpan.FromSeconds(5)),
+            "The GUI playing bridge operation did not complete within the smoke-test timeout.");
     }
 
     private static void VerifyCgosResultReviewRecord()

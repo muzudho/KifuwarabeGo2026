@@ -10,22 +10,29 @@ using System.Threading;
 using System.Threading.Tasks;
 
 /// <summary>現行GUIがGame Oasis参照実装へ接続するための段階移行用コンポジションです。</summary>
-public sealed class GameOasisGuiComposition
+public sealed class GameOasisGuiComposition : IDisposable
 {
     private GameOasisGuiComposition(GameOasisConcierge concierge, GameOasisGuiClient client)
     {
         Concierge = concierge;
         Client = client;
         BoardController = new(client);
+        PlayingBridge = new(BoardController);
     }
 
     public GameOasisConcierge Concierge { get; }
     public GameOasisGuiClient Client { get; }
     public GameOasisBoardController BoardController { get; }
+    public GameOasisPlayingBridge PlayingBridge { get; }
 
     public ProtocolResponse<GuiBoardView> GetActiveBoard()
     {
         return BoardController.GetBoard();
+    }
+
+    public void Dispose()
+    {
+        PlayingBridge.Dispose();
     }
 
     public static async ValueTask<GameOasisGuiComposition> CreateAsync(CancellationToken cancellationToken = default)
