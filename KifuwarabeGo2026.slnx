@@ -20,4 +20,5 @@
   <Project Path="KifuwarabeGo2026.Tests.Reference.PlaySpace.Ponnuki/KifuwarabeGo2026.Tests.Reference.PlaySpace.Ponnuki.csproj" />
   <Project Path="KifuwarabeGo2026.Tests.GameOasis.Concierge/KifuwarabeGo2026.Tests.GameOasis.Concierge.csproj" />
   <Project Path="KifuwarabeGo2026.Tests.GameOasis.ProtocolG/KifuwarabeGo2026.Tests.GameOasis.ProtocolG.csproj" />
+  <Project Path="KifuwarabeGo2026.Tests.GameOasis.ProtocolP/KifuwarabeGo2026.Tests.GameOasis.ProtocolP.csproj" />
 </Solution>

@@ -19,7 +19,7 @@ KifuwarabeGo2026.GameOasis.Contracts.ProtocolG
 KifuwarabeGo2026.GameOasis.Contracts.ProtocolS
 ```
 
-v4.0.0では、プレイスペースを接続するProtocol Sと、GUIを接続するProtocol Gの最小契約を実装済みです。Protocol PとMは利用シナリオを整理してから追加します。
+v4.0.0では、プレイスペースを接続するProtocol S、GUIを接続するProtocol G、プレイヤーを接続するProtocol Pの最小契約を実装済みです。Protocol Mは利用シナリオを整理してから追加します。
 
 ## 互換性
 
