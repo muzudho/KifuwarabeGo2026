@@ -16,6 +16,27 @@ public static class GameBoardActionFactory
         var point = new GuiBoardPoint(x, y);
         if (board.Black.Contains(point) || board.White.Contains(point))
             return Failure("gui-point-occupied", $"Point ({x},{y}) is already occupied.");
+        return Create(board, "play", x, y);
+    }
+
+    public static ProtocolResponse<ContractDocument> CreatePass(GuiBoardView board) =>
+        CreateGoOnly(board, "pass");
+
+    public static ProtocolResponse<ContractDocument> CreateResign(GuiBoardView board) =>
+        CreateGoOnly(board, "resign");
+
+    private static ProtocolResponse<ContractDocument> CreateGoOnly(GuiBoardView board, string type)
+    {
+        ArgumentNullException.ThrowIfNull(board);
+        if (board.PlaySpaceTypeId.Value != GameOasisOfficialNames.Go)
+            return Failure("unsupported-gui-action", $"Play-space '{board.PlaySpaceTypeId}' does not support GUI action '{type}'.");
+        if (board.IsTerminal)
+            return Failure("gui-game-terminal", $"Action '{type}' cannot be created after the game has ended.");
+        return Create(board, type, null, null);
+    }
+
+    private static ProtocolResponse<ContractDocument> Create(GuiBoardView board, string type, int? x, int? y)
+    {
         var schema = board.PlaySpaceTypeId.Value switch
         {
             GameOasisOfficialNames.Go => GameOasisOfficialNames.Go + ".action.v1",
@@ -24,14 +45,11 @@ public static class GameBoardActionFactory
         };
         if (schema is null)
             return Failure("unsupported-gui-action", $"Play-space '{board.PlaySpaceTypeId}' has no official GUI action factory.");
-        var content = JsonSerializer.Serialize(new
-        {
-            version = 1,
-            type = "play",
-            player = board.NextToPlay,
-            x,
-            y,
-        }, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+        var content = JsonSerializer.Serialize(new { version = 1, type, player = board.NextToPlay, x, y },
+            new JsonSerializerOptions(JsonSerializerDefaults.Web)
+            {
+                DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+            });
         return ProtocolResponse<ContractDocument>.Success(new("application/json", schema, content));
     }
 

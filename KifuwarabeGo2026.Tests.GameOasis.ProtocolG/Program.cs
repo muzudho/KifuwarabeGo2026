@@ -41,6 +41,8 @@ var opened = RequireSuccess(await gui.OpenSessionAsync(new GuiOpenSessionRequest
 Require(opened.InitialSnapshot.PlaySpaceTypeId == ponnuki.TypeId, "GUI snapshot must identify the selected play-space.");
 var initialBoard = RequireSuccess(GameBoardProjection.Project(opened.InitialSnapshot));
 Require(initialBoard.BoardSize == 9 && initialBoard.Black.Count == 2 && initialBoard.White.Count == 1 && initialBoard.NextToPlay == "black", "The Ponnuki state must project to the common GUI board.");
+var unsupportedPonnukiPass = GameBoardActionFactory.CreatePass(initialBoard);
+Require(!unsupportedPonnukiPass.IsSuccess && unsupportedPonnukiPass.Error?.Code == "unsupported-gui-action", "The GUI action factory must not invent a Ponnuki pass action.");
 var invalidProjection = GameBoardProjection.Project(opened.InitialSnapshot with
 {
     State = new ContractDocument("application/json", opened.InitialSnapshot.State.SchemaId,
@@ -76,13 +78,16 @@ var goConfiguration = new ContractDocument(
 var goOpened = RequireSuccess(await gui.OpenSessionAsync(new(normalGo.TypeId, goConfiguration)));
 var goBoard = RequireSuccess(GameBoardProjection.Project(goOpened.InitialSnapshot));
 Require(goBoard.BoardSize == 9 && goBoard.Black.Count == 0 && goBoard.White.Count == 0, "The normal Go state must project through the same GUI board model.");
+var blackPassAction = RequireSuccess(GameBoardActionFactory.CreatePass(goBoard));
 var blackPass = RequireSuccess(await gui.SubmitActionAsync(new(
     goOpened.InitialSnapshot.SessionId,
-    new ContractDocument("application/json", GoSchemas.Action, """{"version":1,"type":"pass","player":"black"}"""),
+    blackPassAction,
     0)));
+var afterBlackPassBoard = RequireSuccess(GameBoardProjection.Project(blackPass.Snapshot));
+var whitePassAction = RequireSuccess(GameBoardActionFactory.CreatePass(afterBlackPassBoard));
 var whitePass = RequireSuccess(await gui.SubmitActionAsync(new(
     goOpened.InitialSnapshot.SessionId,
-    new ContractDocument("application/json", GoSchemas.Action, """{"version":1,"type":"pass","player":"white"}"""),
+    whitePassAction,
     blackPass.Snapshot.Revision)));
 Require(whitePass.Snapshot.IsTerminal, "The same Protocol G lifecycle must operate normal Go.");
 using (var goOutcome = JsonDocument.Parse(whitePass.Snapshot.Outcome!.Content))
