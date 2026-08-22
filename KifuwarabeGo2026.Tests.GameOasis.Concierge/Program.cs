@@ -8,7 +8,7 @@ var concierge = new GameOasisConcierge();
 IPlaySpaceProtocol externalPlaySpace = new PonnukiPlaySpaceProtocol();
 
 var registered = RequireSuccess(await concierge.RegisterPlaySpaceAsync(externalPlaySpace));
-Require(registered.Descriptor.TypeId.Value == "org.kifuwarabe.games.ponnuki", "Ponnuki must register through Protocol S.");
+Require(registered.Descriptor.TypeId.Value == GameOasisOfficialNames.Ponnuki, "Ponnuki must register through Protocol S.");
 Require(concierge.GetPlaySpaces().Count == 1, "The catalog must contain the registered play-space.");
 
 var duplicate = await concierge.RegisterPlaySpaceAsync(new PonnukiPlaySpaceProtocol());

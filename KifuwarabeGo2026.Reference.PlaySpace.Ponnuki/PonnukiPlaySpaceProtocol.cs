@@ -18,7 +18,7 @@ public sealed class PonnukiPlaySpaceProtocol : IPlaySpaceProtocol
     {
         cancellationToken.ThrowIfCancellationRequested();
         return ValueTask.FromResult(ProtocolResponse<PlaySpaceDescriptor>.Success(new PlaySpaceDescriptor(
-            new PlaySpaceTypeId("org.kifuwarabe.games.ponnuki"),
+            new PlaySpaceTypeId(GameOasisOfficialNames.Ponnuki),
             "ポン抜き",
             ContractVersion.V1_0,
             "KifuwarabeGo2026.Reference.PlaySpace.Ponnuki",

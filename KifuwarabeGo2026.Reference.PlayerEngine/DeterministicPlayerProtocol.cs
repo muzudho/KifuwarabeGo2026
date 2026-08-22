@@ -8,14 +8,14 @@ using KifuwarabeGo2026.GameOasis.Contracts.ProtocolP;
 /// <summary>通常囲碁とポン抜きへ参加できる、決定的なProtocol P参照プレイヤーです。</summary>
 public sealed class DeterministicPlayerProtocol : IPlayerProtocol
 {
-    public static readonly PlayerEngineId StableEngineId = new("org.kifuwarabe.reference.deterministic-player");
-    public static readonly PlaySpaceTypeId GoTypeId = new("org.kifuwarabe.games.go");
-    public static readonly PlaySpaceTypeId PonnukiTypeId = new("org.kifuwarabe.games.ponnuki");
+    public static readonly PlayerEngineId StableEngineId = new(GameOasisOfficialNames.Root + ".reference.deterministic-player");
+    public static readonly PlaySpaceTypeId GoTypeId = new(GameOasisOfficialNames.Go);
+    public static readonly PlaySpaceTypeId PonnukiTypeId = new(GameOasisOfficialNames.Ponnuki);
 
-    private const string GoStateSchema = "org.kifuwarabe.games.go.state.v1";
-    private const string GoActionSchema = "org.kifuwarabe.games.go.action.v1";
-    private const string PonnukiStateSchema = "org.kifuwarabe.games.ponnuki.state.v1";
-    private const string PonnukiActionSchema = "org.kifuwarabe.games.ponnuki.action.v1";
+    private const string GoStateSchema = GameOasisOfficialNames.Go + ".state.v1";
+    private const string GoActionSchema = GameOasisOfficialNames.Go + ".action.v1";
+    private const string PonnukiStateSchema = GameOasisOfficialNames.Ponnuki + ".state.v1";
+    private const string PonnukiActionSchema = GameOasisOfficialNames.Ponnuki + ".action.v1";
     private readonly ConcurrentDictionary<PlayerBindingId, BindingState> _bindings = new();
 
     public ValueTask<ProtocolResponse<PlayerEngineDescriptor>> DescribeAsync(CancellationToken cancellationToken = default)

@@ -3,6 +3,7 @@ namespace KifuwarabeGo2026.Gui.PortabilitySmoke;
 using KifuwarabeGo2026.Gui;
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Application.GameOasis;
+using KifuwarabeGo2026.GameOasis.Contracts.Common;
 using KifuwarabeGo2026.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.ConnectionTarget;
 using KifuwarabeGo2026.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.Watching;
 using KifuwarabeGo2026.Gui.Application.Local.Playing;
@@ -88,7 +89,7 @@ internal static class PortabilityChecks
         Require(composition.Client.State.PlaySpaces.Count == 2,
             "The current GUI composition must discover normal Go and Ponnuki through Protocol G.");
         Require(composition.Client.State.PlaySpaces.All(entry =>
-                entry.TypeId.Value is "org.kifuwarabe.games.go" or "org.kifuwarabe.games.ponnuki"),
+                entry.TypeId.Value is GameOasisOfficialNames.Go or GameOasisOfficialNames.Ponnuki),
             "The current GUI composition exposed an unexpected play-space.");
         Require(!composition.GetActiveBoard().IsSuccess,
             "The current GUI composition must not expose a board before a Protocol G session opens.");

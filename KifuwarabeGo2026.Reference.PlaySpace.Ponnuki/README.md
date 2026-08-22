@@ -13,11 +13,11 @@ GUI、MonoGame、ゲームコンシェルジュ、現行`Engine`、`Match`、`Sh
 ## 文書スキーマID
 
 ```text
-org.kifuwarabe.games.ponnuki.configuration.v1
-org.kifuwarabe.games.ponnuki.action.v1
-org.kifuwarabe.games.ponnuki.state.v1
-org.kifuwarabe.games.ponnuki.event.v1
-org.kifuwarabe.games.ponnuki.outcome.v1
+io.github.muzudho.kifuwarabego2026.games.ponnuki.configuration.v1
+io.github.muzudho.kifuwarabego2026.games.ponnuki.action.v1
+io.github.muzudho.kifuwarabego2026.games.ponnuki.state.v1
+io.github.muzudho.kifuwarabego2026.games.ponnuki.event.v1
+io.github.muzudho.kifuwarabego2026.games.ponnuki.outcome.v1
 ```
 
 設定では、盤サイズ、ランダム初期着手数、乱数シード、捕獲目標数、開始手番、明示的な初期配置を指定できます。明示的な初期配置とランダム初期着手を組み合わせることもできます。

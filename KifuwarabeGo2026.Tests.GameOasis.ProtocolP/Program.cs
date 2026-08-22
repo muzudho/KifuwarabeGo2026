@@ -67,7 +67,7 @@ static void Require(bool condition, string message)
 
 internal sealed class ScriptedPlayer : IPlayerProtocol
 {
-    public static readonly PlayerEngineId EngineId = new("org.kifuwarabe.tests.scripted-player");
+    public static readonly PlayerEngineId EngineId = new(GameOasisOfficialNames.Root + ".tests.scripted-player");
 
     public int StartCount { get; private set; }
     public int NotificationCount { get; private set; }
@@ -82,7 +82,7 @@ internal sealed class ScriptedPlayer : IPlayerProtocol
             ContractVersion.V1_0,
             nameof(ScriptedPlayer),
             "1.0.0",
-            [new PlaySpaceTypeId("org.kifuwarabe.games.ponnuki")],
+            [new PlaySpaceTypeId(GameOasisOfficialNames.Ponnuki)],
             ["select-action"])));
     }
 

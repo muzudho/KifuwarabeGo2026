@@ -7,7 +7,7 @@ var playSpace = new PonnukiPlaySpaceProtocol();
 
 var descriptor = RequireSuccess(await playSpace.DescribeAsync());
 Require(descriptor.ProtocolVersion == ContractVersion.V1_0, "Protocol version must be 1.0.");
-Require(descriptor.TypeId.Value == "org.kifuwarabe.games.ponnuki", "Unexpected play-space type ID.");
+Require(descriptor.TypeId.Value == GameOasisOfficialNames.Ponnuki, "Unexpected play-space type ID.");
 
 var invalid = RequireSuccess(await playSpace.ValidateConfigurationAsync(new(
     Configuration("""{"version":1,"boardSize":8,"initialMoveCount":0,"captureTarget":1}"""))));

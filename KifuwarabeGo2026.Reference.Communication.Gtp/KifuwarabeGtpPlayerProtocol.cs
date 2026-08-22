@@ -13,9 +13,9 @@ public sealed class KifuwarabeGtpPlayerProtocol(
     string displayName = "きふわらべGTPプレイヤー",
     IGtpSgfFileStore? sgfFileStore = null) : IPlayerProtocol
 {
-    public static readonly PlaySpaceTypeId GoTypeId = new("org.kifuwarabe.games.go");
-    private const string GoStateSchema = "org.kifuwarabe.games.go.state.v1";
-    private const string GoActionSchema = "org.kifuwarabe.games.go.action.v1";
+    public static readonly PlaySpaceTypeId GoTypeId = new(GameOasisOfficialNames.Go);
+    private const string GoStateSchema = GameOasisOfficialNames.Go + ".state.v1";
+    private const string GoActionSchema = GameOasisOfficialNames.Go + ".action.v1";
     private readonly IGtpCommandTransport _transport = transport ?? throw new ArgumentNullException(nameof(transport));
     private readonly IGtpSgfFileStore _sgfFileStore = sgfFileStore ?? TemporaryGtpSgfFileStore.Shared;
     private readonly object _sync = new();

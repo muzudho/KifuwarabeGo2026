@@ -9,8 +9,8 @@ public static class GameBoardProjection
 {
     private static readonly HashSet<string> SupportedSchemas =
     [
-        "org.kifuwarabe.games.go.state.v1",
-        "org.kifuwarabe.games.ponnuki.state.v1",
+        GameOasisOfficialNames.Go + ".state.v1",
+        GameOasisOfficialNames.Ponnuki + ".state.v1",
     ];
 
     public static ProtocolResponse<GuiBoardView> Project(GuiGameSnapshot snapshot)

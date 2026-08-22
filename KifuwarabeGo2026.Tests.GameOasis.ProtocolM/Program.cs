@@ -22,7 +22,7 @@ var boundPlayer = RequireSuccess(await playerCoordinator.BindPlayerAsync(
     registeredPlayer.Descriptor.EngineId,
     opened.SessionId,
     "black"));
-var failingPlayer = new ObservingPlayer("org.kifuwarabe.tests.failing-end-player", failEnd: true);
+var failingPlayer = new ObservingPlayer(GameOasisOfficialNames.Root + ".tests.failing-end-player", failEnd: true);
 var registeredFailingPlayer = RequireSuccess(await playerCoordinator.RegisterPlayerAsync(failingPlayer));
 var boundFailingPlayer = RequireSuccess(await playerCoordinator.BindPlayerAsync(
     registeredFailingPlayer.Descriptor.EngineId,
@@ -134,7 +134,7 @@ static void Require(bool condition, string message)
 
 internal sealed class ScriptedGameMaster : IGameMasterProtocol
 {
-    public static readonly GameMasterEngineId EngineId = new("org.kifuwarabe.tests.scripted-game-master");
+    public static readonly GameMasterEngineId EngineId = new(GameOasisOfficialNames.Root + ".tests.scripted-game-master");
 
     public int StartCount { get; private set; }
     public int NotificationCount { get; private set; }
@@ -221,7 +221,7 @@ internal sealed class ObservingPlayer : IPlayerProtocol
     private readonly bool _failEnd;
 
     public ObservingPlayer(
-        string engineId = "org.kifuwarabe.tests.observing-player",
+        string engineId = GameOasisOfficialNames.Root + ".tests.observing-player",
         bool failEnd = false)
     {
         _engineId = new(engineId);
@@ -239,7 +239,7 @@ internal sealed class ObservingPlayer : IPlayerProtocol
             ContractVersion.V1_0,
             nameof(ObservingPlayer),
             "1.0.0",
-            [new PlaySpaceTypeId("org.kifuwarabe.games.ponnuki")],
+            [new PlaySpaceTypeId(GameOasisOfficialNames.Ponnuki)],
             ["state-notification"])));
 
     public ValueTask<ProtocolResponse<PlayerSessionStarted>> StartSessionAsync(

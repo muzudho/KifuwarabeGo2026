@@ -5,7 +5,7 @@ using KifuwarabeGo2026.Reference.PlaySpace.Go;
 
 IPlaySpaceProtocol go = new GoPlaySpaceProtocol();
 var descriptor = RequireSuccess(await go.DescribeAsync());
-Require(descriptor.TypeId.Value == "org.kifuwarabe.games.go", "The normal Go type ID must be stable.");
+Require(descriptor.TypeId.Value == GameOasisOfficialNames.Go, "The normal Go type ID must be stable.");
 Require(descriptor.Capabilities.Contains("chinese-area-scoring"), "The ruleset capability must be advertised.");
 Require(descriptor.Capabilities.Contains("move-history-observation"), "The additive move-history observation capability must be advertised.");
 

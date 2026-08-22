@@ -14,12 +14,12 @@ RequireSuccess(await concierge.RegisterPlaySpaceAsync(new GoPlaySpaceProtocol())
 IGuiProtocol gui = new GameOasisGuiProtocol(concierge);
 var catalog = RequireSuccess(await gui.GetPlaySpacesAsync());
 Require(catalog.Count == 2, "Protocol G must expose both replaceable play-spaces.");
-var ponnuki = catalog.Single(entry => entry.TypeId.Value == "org.kifuwarabe.games.ponnuki");
-Require(ponnuki.TypeId.Value == "org.kifuwarabe.games.ponnuki", "Protocol G must preserve the stable play-space type ID.");
-var normalGo = catalog.Single(entry => entry.TypeId.Value == "org.kifuwarabe.games.go");
+var ponnuki = catalog.Single(entry => entry.TypeId.Value == GameOasisOfficialNames.Ponnuki);
+Require(ponnuki.TypeId.Value == GameOasisOfficialNames.Ponnuki, "Protocol G must preserve the stable play-space type ID.");
+var normalGo = catalog.Single(entry => entry.TypeId.Value == GameOasisOfficialNames.Go);
 
 var schema = RequireSuccess(await gui.GetConfigurationSchemaAsync(ponnuki.TypeId));
-Require(schema.SchemaId == "org.kifuwarabe.games.ponnuki.configuration.v1", "Protocol G must expose the selected play-space configuration schema.");
+Require(schema.SchemaId == GameOasisOfficialNames.Ponnuki + ".configuration.v1", "Protocol G must expose the selected play-space configuration schema.");
 
 const string configurationJson = """
     {
@@ -50,7 +50,7 @@ Require(!invalidProjection.IsSuccess && invalidProjection.Error?.Code == "duplic
 
 var action = new ContractDocument(
     "application/json",
-    "org.kifuwarabe.games.ponnuki.action.v1",
+    GameOasisOfficialNames.Ponnuki + ".action.v1",
     """{"version":1,"type":"play","player":"black","x":1,"y":1}""");
 var submitted = RequireSuccess(await gui.SubmitActionAsync(new GuiSubmitActionRequest(
     opened.InitialSnapshot.SessionId,
@@ -96,7 +96,12 @@ var clientOpened = RequireSuccess(await client.OpenSessionAsync(ponnuki.TypeId, 
 Require(client.State.ActiveSnapshot?.SessionId == clientOpened.InitialSnapshot.SessionId, "The reference GUI client must retain its active snapshot.");
 var duplicateOpen = await client.OpenSessionAsync(ponnuki.TypeId, configuration);
 Require(!duplicateOpen.IsSuccess && client.State.LastError?.Code == "gui-session-already-open", "The reference GUI client must reject a second local active session.");
-var clientSubmitted = RequireSuccess(await client.SubmitActionAsync(action));
+var clientBoard = RequireSuccess(GameBoardProjection.Project(client.State.ActiveSnapshot!));
+var occupiedAction = GameBoardActionFactory.CreatePlay(clientBoard, 0, 0);
+Require(!occupiedAction.IsSuccess && occupiedAction.Error?.Code == "gui-point-occupied", "The GUI action factory must reject an occupied point before Protocol G submission.");
+var generatedAction = RequireSuccess(GameBoardActionFactory.CreatePlay(clientBoard, 1, 1));
+Require(generatedAction.SchemaId == GameOasisOfficialNames.Ponnuki + ".action.v1", "The GUI action factory must select the official Ponnuki action schema.");
+var clientSubmitted = RequireSuccess(await client.SubmitActionAsync(generatedAction));
 Require(clientSubmitted.IsAccepted && client.State.ActiveSnapshot?.IsTerminal == true, "The reference GUI client must advance its snapshot using the current revision.");
 var terminalBoard = RequireSuccess(GameBoardProjection.Project(client.State.ActiveSnapshot!));
 Require(terminalBoard.IsTerminal && terminalBoard.BlackCaptures == 1 && terminalBoard.Outcome is not null, "The common GUI board must preserve Ponnuki terminal captures and outcome.");

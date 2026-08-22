@@ -16,7 +16,7 @@ public sealed class GoPlaySpaceProtocol : IPlaySpaceProtocol
     {
         cancellationToken.ThrowIfCancellationRequested();
         return ValueTask.FromResult(ProtocolResponse<PlaySpaceDescriptor>.Success(new(
-            new PlaySpaceTypeId("org.kifuwarabe.games.go"),
+            new PlaySpaceTypeId(GameOasisOfficialNames.Go),
             "通常囲碁",
             ContractVersion.V1_0,
             "KifuwarabeGo2026.Reference.PlaySpace.Go",
@@ -32,7 +32,7 @@ public sealed class GoPlaySpaceProtocol : IPlaySpaceProtocol
             """
             {
               "$schema":"https://json-schema.org/draft/2020-12/schema",
-              "$id":"org.kifuwarabe.games.go.configuration.v1",
+              "$id":"io.github.muzudho.kifuwarabego2026.games.go.configuration.v1",
               "type":"object",
               "required":["version","boardSize","komi","ruleset","startingPlayer"],
               "properties":{

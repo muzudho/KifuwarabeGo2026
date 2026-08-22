@@ -36,7 +36,7 @@ var opened = RequireSuccess(await concierge.OpenSessionAsync(
 var transport = new RecordingGtpTransport(["A9", "D4"]);
 var gtpPlayer = new KifuwarabeGtpPlayerProtocol(
     transport,
-    new PlayerEngineId("org.kifuwarabe.tests.gtp-player"));
+    new PlayerEngineId(GameOasisOfficialNames.Root + ".tests.gtp-player"));
 var players = new GameOasisPlayerCoordinator(concierge);
 var registeredPlayer = RequireSuccess(await players.RegisterPlayerAsync(gtpPlayer));
 var bound = RequireSuccess(await players.BindPlayerAsync(
@@ -62,7 +62,7 @@ RequireSequence(
 var genericTransport = new GenericRecordingGtpTransport();
 var genericPlayer = new KifuwarabeGtpPlayerProtocol(
     genericTransport,
-    new PlayerEngineId("org.kifuwarabe.tests.generic-gtp-player"));
+    new PlayerEngineId(GameOasisOfficialNames.Root + ".tests.generic-gtp-player"));
 var genericRegistered = RequireSuccess(await players.RegisterPlayerAsync(genericPlayer));
 var genericBound = RequireSuccess(await players.BindPlayerAsync(
     genericRegistered.Descriptor.EngineId,
@@ -194,7 +194,7 @@ var sgfStore = new RecordingSgfFileStore();
 var loadSgfTransport = new LoadSgfRecordingTransport();
 var loadSgfPlayer = new KifuwarabeGtpPlayerProtocol(
     loadSgfTransport,
-    new PlayerEngineId("org.kifuwarabe.tests.loadsgf-player"),
+    new PlayerEngineId(GameOasisOfficialNames.Root + ".tests.loadsgf-player"),
     sgfFileStore: sgfStore);
 var loadSgfRegistered = RequireSuccess(await players.RegisterPlayerAsync(loadSgfPlayer));
 var loadSgfBound = RequireSuccess(await players.BindPlayerAsync(
