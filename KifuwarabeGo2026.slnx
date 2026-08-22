@@ -16,10 +16,12 @@
   <Project Path="KifuwarabeGo2026.Match/KifuwarabeGo2026.Match.csproj" />
   <Project Path="KifuwarabeGo2026.Reference.PlaySpace.Ponnuki/KifuwarabeGo2026.Reference.PlaySpace.Ponnuki.csproj" />
   <Project Path="KifuwarabeGo2026.Reference.PlaySpace.Go/KifuwarabeGo2026.Reference.PlaySpace.Go.csproj" />
+  <Project Path="KifuwarabeGo2026.Reference.PlayerEngine/KifuwarabeGo2026.Reference.PlayerEngine.csproj" />
   <Project Path="KifuwarabeGo2026.Shared/KifuwarabeGo2026.Shared.csproj" />
   <Project Path="KifuwarabeGo2026.StationeryUI/KifuwarabeGo2026.StationeryUI.csproj" />
   <Project Path="KifuwarabeGo2026.Tests.Reference.PlaySpace.Ponnuki/KifuwarabeGo2026.Tests.Reference.PlaySpace.Ponnuki.csproj" />
   <Project Path="KifuwarabeGo2026.Tests.Reference.PlaySpace.Go/KifuwarabeGo2026.Tests.Reference.PlaySpace.Go.csproj" />
+  <Project Path="KifuwarabeGo2026.Tests.Reference.PlayerEngine/KifuwarabeGo2026.Tests.Reference.PlayerEngine.csproj" />
   <Project Path="KifuwarabeGo2026.Tests.GameOasis.Concierge/KifuwarabeGo2026.Tests.GameOasis.Concierge.csproj" />
   <Project Path="KifuwarabeGo2026.Tests.GameOasis.Contracts/KifuwarabeGo2026.Tests.GameOasis.Contracts.csproj" />
   <Project Path="KifuwarabeGo2026.Tests.GameOasis.ProtocolM/KifuwarabeGo2026.Tests.GameOasis.ProtocolM.csproj" />

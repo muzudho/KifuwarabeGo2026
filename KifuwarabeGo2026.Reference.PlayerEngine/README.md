@@ -1,0 +1,7 @@
+# KifuwarabeGo2026.Reference.PlayerEngine
+
+Protocol Pへ接続する公式参照プレイヤー実装です。`GameOasis.Contracts`だけを参照し、GUI、コンシェルジュ、プレイスペースの具象実装、現行GTP実行ファイルには依存しません。
+
+`DeterministicPlayerProtocol`は通常囲碁とポン抜きの公開状態文書を読み、左上から決定的に空点を選びます。プレイスペースに拒否された候補は同じリビジョン中に再選択せず、候補が尽きた場合はパスします。強さを目的とせず、第三者が思考方策だけを交換してProtocol Pへ参加するための最小参照です。
+
+現行GTPエンジンとの接続は、このプロジェクトへプロセス管理を混ぜず、別の`Reference.Communication.Gtp`またはProtocol Pアダプターとして追加します。
