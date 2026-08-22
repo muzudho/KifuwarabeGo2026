@@ -14,6 +14,8 @@ StartSession
 
 `StartSession`は、一つのプレイヤー実装をGame Oasisセッション内の一つの役割へ割り当てます。同じ実装が複数のゲームまたは複数の役割を担当できるよう、割り当てごとに`PlayerBindingId`を発行します。
 
+ゲームマスターがProtocol Mの`end-session`を実行した場合、コンシェルジュはゲームを閉じる前に、そのゲームへ参加中の全プレイヤーへ`EndSession`と最終観測状態を送ります。
+
 ## ゲーム固有データ
 
 プレイヤーは`PlayerGameObservation`で現在状態を受け取り、`ContractDocument`として行動を返します。Contractsは黒石、白石、盤座標などを所有しません。

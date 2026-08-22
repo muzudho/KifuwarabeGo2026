@@ -7,7 +7,7 @@ using KifuwarabeGo2026.GameOasis.Contracts.ProtocolM;
 /// <summary>Protocol Mのゲームマスター登録、参加、運営命令を調整します。</summary>
 public sealed class GameOasisGameMasterCoordinator(
     GameOasisConcierge concierge,
-    GameOasisPlayerCoordinator? playerCoordinator = null)
+    GameOasisPlayerCoordinator playerCoordinator)
 {
     /// <summary>セッションを終了するGame Oasis共通命令名です。</summary>
     public const string EndSessionCommand = "end-session";
@@ -22,7 +22,7 @@ public sealed class GameOasisGameMasterCoordinator(
     public const string AdjudicateCommand = GameOasisConcierge.AdjudicateOperation;
 
     private readonly GameOasisConcierge _concierge = concierge ?? throw new ArgumentNullException(nameof(concierge));
-    private readonly GameOasisPlayerCoordinator? _playerCoordinator = playerCoordinator;
+    private readonly GameOasisPlayerCoordinator _playerCoordinator = playerCoordinator ?? throw new ArgumentNullException(nameof(playerCoordinator));
     private readonly ConcurrentDictionary<GameMasterEngineId, RegisteredGameMaster> _gameMasters = new();
     private readonly ConcurrentDictionary<GameMasterBindingId, GameMasterBinding> _bindings = new();
 
@@ -108,6 +108,22 @@ public sealed class GameOasisGameMasterCoordinator(
                     "game-master-operation-revision-mismatch",
                     $"The game master based its command on operation revision {selected.Value.BasedOnOperationRevision}, expected {snapshot.Value.OperationRevision}.");
 
+            IReadOnlyList<PlayerSessionEndFailure> playerEndFailures = [];
+            ProtocolError? playerEndError = null;
+            if (selected.Value.Command.Name == EndSessionCommand)
+            {
+                var playersEnded = await _playerCoordinator.EndSessionPlayersAsync(
+                    binding.SessionId,
+                    selected.Value.Command.Reason,
+                    cancellationToken);
+                if (playersEnded.IsSuccess && playersEnded.Value is not null)
+                    playerEndFailures = playersEnded.Value.Failures;
+                else
+                    playerEndError = playersEnded.Error ?? new ProtocolError(
+                        "player-session-end-broadcast-failed",
+                        "The player session-end broadcast returned an invalid failure response.");
+            }
+
             var result = await ExecuteAsync(
                 binding,
                 selected.Value.Command,
@@ -135,7 +151,7 @@ public sealed class GameOasisGameMasterCoordinator(
             var endFailures = new List<GameMasterBindingId>();
             IReadOnlyList<PlayerBindingId> playerNotificationFailures = [];
             ProtocolError? playerBroadcastError = null;
-            if (result.WasAccepted && result.CommandName is PauseCommand or ResumeCommand or AdjudicateCommand && _playerCoordinator is not null)
+            if (result.WasAccepted && result.CommandName is PauseCommand or ResumeCommand or AdjudicateCommand)
             {
                 var broadcast = await _playerCoordinator.BroadcastStateAsync(
                     binding.SessionId,
@@ -167,7 +183,9 @@ public sealed class GameOasisGameMasterCoordinator(
                 notificationFailures,
                 endFailures,
                 playerNotificationFailures,
-                playerBroadcastError));
+                playerBroadcastError,
+                playerEndFailures,
+                playerEndError));
         }
         finally
         {

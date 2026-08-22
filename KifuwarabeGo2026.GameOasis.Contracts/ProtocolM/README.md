@@ -20,6 +20,8 @@ StartSession
 
 コンシェルジュは、ゲームマスターが命令の前提にしたプレイスペース・リビジョンと運営リビジョンを現在状態と照合してから実行し、受理または拒否を`NotifyCommand`で返します。停止・再開は盤面を変更しないため、プレイスペースとは独立した`OperationRevision`で競合を検出します。停止中はプレイヤーへの着手要求とプレイスペースへの行動適用を拒否します。
 
+`end-session`は、Protocol Pプレイヤーへの最終状態通知と参加終了、プレイスペースセッション終了、Protocol Mゲームマスター参加終了の順に処理します。外部実装が終了通知に失敗しても、その失敗を結果へ残したうえで閉じたゲームの参加割り当てを破棄します。
+
 `adjudicate`は、勝者、引き分け、無勝負、中止、失格理由などを表すGame Oasis共通裁定結果文書を確定します。文書スキーマは`urn:kifuwarabe:game-oasis:adjudication-result:v1`です。結果種別は`winner`、`draw`、`void`、`cancelled`で、`winner`だけが`winnerRoleId`を必須とします。裁定後のGame Oasisスナップショットは終局となり、行動適用を拒否します。結果文書はProtocol G、P、Mへ同じ内容で渡されます。
 
 ## 今後追加する運営領域

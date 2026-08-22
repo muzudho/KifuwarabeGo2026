@@ -21,4 +21,6 @@ public sealed record GameMasterTurnCompleted(
     IReadOnlyList<GameMasterBindingId> NotificationFailures,
     IReadOnlyList<GameMasterBindingId> EndFailures,
     IReadOnlyList<PlayerBindingId> PlayerNotificationFailures,
-    ProtocolError? PlayerBroadcastError);
+    ProtocolError? PlayerBroadcastError,
+    IReadOnlyList<PlayerSessionEndFailure> PlayerEndFailures,
+    ProtocolError? PlayerEndError);

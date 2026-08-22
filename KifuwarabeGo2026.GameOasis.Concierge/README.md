@@ -31,7 +31,8 @@ GameOasis.Concierge ──×──→ Reference.GUI
 - 停止中のプレイヤー着手要求と行動適用の拒否
 - ゲーム固有型へ依存しない裁定結果の確定、終局化、裁定後の行動拒否
 - Protocol P参加者への停止・再開・裁定状態通知
-- `end-session`によるゲームとゲームマスター参加の一括終了
+- `end-session`によるプレイヤー、ゲーム、ゲームマスターの順序付き一括終了
+- 外部参加者の終了通知失敗を結果へ記録しつつ、幽霊参加を残さない割り当て破棄
 
 ## まだ含まないもの
 
@@ -42,4 +43,6 @@ GameOasis.Concierge ──×──→ Reference.GUI
 
 現在のProtocol G `SubmitActionAsync`は、Protocol P、Mを接続する前の中核確認用APIです。将来は参加者と権限を確認したコマンドだけがこの経路へ到達するようにします。
 
-Protocol Mの`end-session`は、そのゲームに割り当てたゲームマスターを一括参加終了させます。Protocol Pプレイヤーの一括参加終了はまだ統合していないため、現段階では先に`UnbindPlayerAsync`を呼ぶ必要があります。
+Protocol Mの`end-session`は、そのゲームに割り当てたProtocol Pプレイヤーへ最終状態を渡して参加終了し、プレイスペースセッションを閉じ、最後にProtocol Mゲームマスターを参加終了します。個別通知の失敗は`GameMasterTurnCompleted`へ記録し、失敗した外部実装の割り当ても閉じたゲームには残しません。
+
+この順序を組み立て側の渡し忘れで欠落させないため、`GameOasisGameMasterCoordinator`は`GameOasisConcierge`と`GameOasisPlayerCoordinator`の両方を必須依存として受け取ります。プレイヤーがいないゲームでは空の一括終了として処理します。

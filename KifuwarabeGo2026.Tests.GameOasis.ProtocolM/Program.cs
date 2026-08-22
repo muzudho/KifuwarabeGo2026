@@ -22,6 +22,12 @@ var boundPlayer = RequireSuccess(await playerCoordinator.BindPlayerAsync(
     registeredPlayer.Descriptor.EngineId,
     opened.SessionId,
     "black"));
+var failingPlayer = new ObservingPlayer("org.kifuwarabe.tests.failing-end-player", failEnd: true);
+var registeredFailingPlayer = RequireSuccess(await playerCoordinator.RegisterPlayerAsync(failingPlayer));
+var boundFailingPlayer = RequireSuccess(await playerCoordinator.BindPlayerAsync(
+    registeredFailingPlayer.Descriptor.EngineId,
+    opened.SessionId,
+    "white"));
 var externalGameMaster = new ScriptedGameMaster();
 var coordinator = new GameOasisGameMasterCoordinator(concierge, playerCoordinator);
 var registered = RequireSuccess(await coordinator.RegisterGameMasterAsync(externalGameMaster));
@@ -88,16 +94,22 @@ var actionAfterAdjudication = RequireSuccess(await concierge.ApplyActionAsync(ne
     new ContractDocument("application/json", PonnukiSchemas.Action, """{"version":1,"type":"play","player":"black","x":1,"y":1}"""),
     adjudicatedForGui.Revision)));
 Require(!actionAfterAdjudication.IsAccepted && actionAfterAdjudication.Rejection?.Code == "game-session-adjudicated", "Player actions must be rejected after adjudication.");
-RequireSuccess(await playerCoordinator.UnbindPlayerAsync(boundPlayer.BindingId, "adjudication-received"));
-Require(observingPlayer.EndCount == 1, "The player must end participation before the game session closes.");
 
 var completed = RequireSuccess(await coordinator.RequestAndExecuteCommandAsync(bound.BindingId));
 Require(completed.Result.WasAccepted, "The end-session command must be accepted.");
 Require(completed.Result.CommandName == GameOasisGameMasterCoordinator.EndSessionCommand, "The executed command name must be preserved.");
 Require(completed.NotificationFailures.Count == 0, "The command result notification must succeed.");
 Require(completed.EndFailures.Count == 0, "Automatic game-master participation end must succeed.");
+Require(completed.PlayerEndFailures.Count == 1 && completed.PlayerEndFailures[0].BindingId == boundFailingPlayer.BindingId, "A player session-end failure must be reported with its binding ID.");
+Require(completed.PlayerEndError is null, "The player end broadcast itself must complete.");
 Require(externalGameMaster.NotificationCount == 4, "The game master must receive pause, resume, adjudication, and end results.");
 Require(externalGameMaster.EndCount == 1, "The game master must receive participation end after closing the game.");
+Require(observingPlayer.EndCount == 1, "The player must receive participation end before the game closes.");
+Require(failingPlayer.EndCount == 1, "The failing player must still receive one participation-end attempt.");
+var playerAfterAutomaticUnbind = await playerCoordinator.UnbindPlayerAsync(boundPlayer.BindingId, "must-already-be-ended");
+Require(!playerAfterAutomaticUnbind.IsSuccess && playerAfterAutomaticUnbind.Error?.Code == "player-binding-not-found", "Closing the game must remove its player binding.");
+var failingPlayerAfterAutomaticUnbind = await playerCoordinator.UnbindPlayerAsync(boundFailingPlayer.BindingId, "must-not-remain-as-ghost");
+Require(!failingPlayerAfterAutomaticUnbind.IsSuccess && failingPlayerAfterAutomaticUnbind.Error?.Code == "player-binding-not-found", "A failed end notification must not leave a ghost player binding.");
 
 var afterClose = await concierge.GetSnapshotAsync(opened.SessionId);
 Require(!afterClose.IsSuccess && afterClose.Error?.Code == "game-oasis-session-not-found", "The game master command must close the Game Oasis session.");
@@ -105,7 +117,7 @@ var afterAutomaticUnbind = await coordinator.UnbindGameMasterAsync(bound.Binding
 Require(!afterAutomaticUnbind.IsSuccess && afterAutomaticUnbind.Error?.Code == "game-master-binding-not-found", "Closing the game must remove its game-master binding.");
 RequireSuccess(await concierge.UnregisterPlaySpaceAsync(playSpace.Descriptor.TypeId));
 
-Console.WriteLine("PASS: Protocol M paused, resumed, adjudicated, notified GUI/player, conflict-checked, and ended a Protocol S Ponnuki session.");
+Console.WriteLine("PASS: Protocol M paused, resumed, adjudicated, notified participants, and ended players/game masters without ghost bindings.");
 return;
 
 static T RequireSuccess<T>(ProtocolResponse<T> response)
@@ -205,7 +217,16 @@ internal sealed class ScriptedGameMaster : IGameMasterProtocol
 
 internal sealed class ObservingPlayer : IPlayerProtocol
 {
-    private static readonly PlayerEngineId EngineId = new("org.kifuwarabe.tests.observing-player");
+    private readonly PlayerEngineId _engineId;
+    private readonly bool _failEnd;
+
+    public ObservingPlayer(
+        string engineId = "org.kifuwarabe.tests.observing-player",
+        bool failEnd = false)
+    {
+        _engineId = new(engineId);
+        _failEnd = failEnd;
+    }
 
     public int StateNotificationCount { get; private set; }
     public int EndCount { get; private set; }
@@ -213,7 +234,7 @@ internal sealed class ObservingPlayer : IPlayerProtocol
 
     public ValueTask<ProtocolResponse<PlayerEngineDescriptor>> DescribeAsync(CancellationToken cancellationToken = default) =>
         ValueTask.FromResult(ProtocolResponse<PlayerEngineDescriptor>.Success(new(
-            EngineId,
+            _engineId,
             "Observing player",
             ContractVersion.V1_0,
             nameof(ObservingPlayer),
@@ -258,6 +279,10 @@ internal sealed class ObservingPlayer : IPlayerProtocol
     {
         EndCount++;
         LastObservation = request.FinalObservation;
+        if (_failEnd)
+            return ValueTask.FromResult(ProtocolResponse<PlayerSessionEnded>.Failure(new(
+                "simulated-player-end-failure",
+                "The smoke player intentionally rejected participation end.")));
         return ValueTask.FromResult(ProtocolResponse<PlayerSessionEnded>.Success(new(request.BindingId)));
     }
 }

@@ -190,6 +190,48 @@ public sealed class GameOasisPlayerCoordinator(GameOasisConcierge concierge)
         return ProtocolResponse<PlayerStateBroadcast>.Success(new(sessionId, failures));
     }
 
+    /// <summary>一つのゲームに割り当てられた全プレイヤーへ参加終了を通知して割り当てを破棄します。</summary>
+    public async ValueTask<ProtocolResponse<PlayerSessionEndBroadcast>> EndSessionPlayersAsync(
+        GameOasisSessionId sessionId,
+        string reason,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var snapshot = await _concierge.GetSnapshotAsync(sessionId, cancellationToken);
+        if (!snapshot.IsSuccess || snapshot.Value is null)
+            return ForwardFailure<PlayerSessionEndBroadcast>(snapshot.Error, "player-session-end-snapshot-failed");
+
+        var endedBindings = new List<PlayerBindingId>();
+        var failures = new List<PlayerSessionEndFailure>();
+        foreach (var binding in _bindings.Values.Where(value => value.SessionId == sessionId).ToArray())
+        {
+            await binding.Gate.WaitAsync(cancellationToken);
+            try
+            {
+                if (!IsCurrentBinding(binding.BindingId, binding))
+                    continue;
+                var ended = await binding.Player.Protocol.EndSessionAsync(new(
+                    binding.BindingId,
+                    ToObservation(snapshot.Value),
+                    reason), cancellationToken);
+                if (ended.IsSuccess)
+                    endedBindings.Add(binding.BindingId);
+                else
+                    failures.Add(new(
+                        binding.BindingId,
+                        ended.Error ?? new ProtocolError(
+                            "player-session-end-failed",
+                            "The player returned an invalid session-end failure response.")));
+                _bindings.TryRemove(new KeyValuePair<PlayerBindingId, PlayerBinding>(binding.BindingId, binding));
+            }
+            finally
+            {
+                binding.Gate.Release();
+            }
+        }
+        return ProtocolResponse<PlayerSessionEndBroadcast>.Success(new(sessionId, endedBindings, failures));
+    }
+
     private bool IsCurrentBinding(PlayerBindingId bindingId, PlayerBinding binding) =>
         _bindings.TryGetValue(bindingId, out var current) && ReferenceEquals(current, binding);
 

@@ -31,3 +31,14 @@ public sealed record PlayerTurnCompleted(
 public sealed record PlayerStateBroadcast(
     GameOasisSessionId SessionId,
     IReadOnlyList<PlayerBindingId> NotificationFailures);
+
+/// <summary>セッション終了時にプレイヤーへ参加終了を通知できなかった詳細です。</summary>
+public sealed record PlayerSessionEndFailure(
+    PlayerBindingId BindingId,
+    ProtocolError Error);
+
+/// <summary>一つのゲームに参加する全プレイヤーを終了した結果です。</summary>
+public sealed record PlayerSessionEndBroadcast(
+    GameOasisSessionId SessionId,
+    IReadOnlyList<PlayerBindingId> EndedBindings,
+    IReadOnlyList<PlayerSessionEndFailure> Failures);
