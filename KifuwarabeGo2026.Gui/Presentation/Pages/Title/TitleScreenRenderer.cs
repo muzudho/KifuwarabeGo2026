@@ -83,6 +83,8 @@ public sealed class TitleScreenRenderer
                 var entrySettingsHovered = _titleScreen.EntrySettingsLabelBounds.Contains(mousePoint);
                 var formalAppsHovered = _titleScreen.FormalAppsLabelBounds.Contains(mousePoint);
                 var casualAppsHovered = _titleScreen.CasualAppsLabelBounds.Contains(mousePoint);
+                var gamePlatformHovered = _titleScreen.GamePlatformLabelBounds.Contains(mousePoint) ||
+                    _titleScreen.GameOasisButton.IsHit(mousePoint);
                 var localMatchHovered = _titleScreen.LocalMatchButton.IsHit(mousePoint);
                 var onlineMatchHovered = _titleScreen.CgosClientButton.IsHit(mousePoint);
                 var engineProfilesHovered = _titleScreen.EngineProfilesButton.IsHit(mousePoint);
@@ -94,19 +96,22 @@ public sealed class TitleScreenRenderer
                 _titleScreen.EntrySettingsLabel.Draw(_drawingContext);
                 _titleScreen.FormalAppsLabel.Draw(_drawingContext);
                 _titleScreen.CasualAppsLabel.Draw(_drawingContext);
+                _titleScreen.GamePlatformLabel.Draw(_drawingContext);
                 DrawProfileChoice(_titleScreen.EngineProfilesButton.Bounds, "エンジン登録", "REGISTER ENGINES", mousePoint, true);
                 DrawProfileChoice(_titleScreen.EntryProfilesButton.Bounds, "エントリー登録", "REGISTER ENTRIES", mousePoint, false);
                 DrawHomeServiceChoice(_titleScreen.LocalMatchButton.Bounds, _titleScreen.LocalMatchButton.Label, "PLAY / REVIEW", new Color(99, 223, 185), mousePoint);
                 DrawHomeServiceChoice(_titleScreen.CgosClientButton.Bounds, _titleScreen.CgosClientButton.Label, "WATCH / CONNECT", new Color(99, 223, 185), mousePoint);
                 DrawAppChoice(_titleScreen.CaptureGameButton.Bounds, _titleScreen.CaptureGameButton.Label, "CAPTURE GAME", mousePoint);
-                DrawAppChoice(_titleScreen.GameOasisButton.Bounds, _titleScreen.GameOasisButton.Label, "REFERENCE PLAY-SPACES", mousePoint);
-                DrawDynamicOptionText("左で対局候補を準備し、利用するアプリを選べます。", new Rectangle(460, 716, 980, 38), new Color(180, 195, 195), 0.34f);
+                DrawAppChoice(_titleScreen.GameOasisButton.Bounds, _titleScreen.GameOasisButton.Label, "REFERENCE PLAY-SPACES", mousePoint, new Color(178, 145, 255));
+                DrawDynamicOptionText("左で対局候補を準備し、利用するアプリを選べます。", new Rectangle(460, 676, 980, 30), new Color(180, 195, 195), 0.34f);
                 if (entrySettingsHovered)
                     DrawTitleHomeHint("ENTRY SETTINGS", "エンジンと対局候補を準備します！", new Color(125, 225, 255));
                 else if (formalAppsHovered)
                     DrawTitleHomeHint("FORMAL APPS", "他のコンピュータ碁ソフトとできるだけ連携します！", new Color(99, 223, 185));
                 else if (casualAppsHovered)
                     DrawTitleHomeHint("CASUAL APPS", "独自実装で機能追加を進めます！", new Color(255, 190, 92));
+                else if (gamePlatformHovered)
+                    DrawTitleHomeHint("GAME PLATFORM", "Replaceable play-spaces connect through Game Oasis.", new Color(178, 145, 255));
                 else if (updateHovered)
                     DrawStickyNote(StickyNoteKind.TitleUpdateHint, new Vector2(updateBounds.Left, updateBounds.Center.Y), new Color(99, 223, 185), new Color(82, 111, 114), "ランチャーを開くとは？", ["共通ランチャーを前面に開き、", "このGUIを閉じます。", "GUIとEngineの更新は", "ランチャーから行います！"]);
                 else if (settingsHovered)
@@ -155,15 +160,16 @@ public sealed class TitleScreenRenderer
         DrawLine(new Vector2(panel.X + 62, panel.Y + 184), new Vector2(panel.Right - 62, panel.Y + 184), 1, new Color(82, 111, 114));
     }
 
-    private void DrawAppChoice(Rectangle bounds, string title, string caption, Point mousePoint)
+    private void DrawAppChoice(Rectangle bounds, string title, string caption, Point mousePoint, Color? accentOverride = null)
     {
+        var accent = accentOverride ?? new Color(255, 190, 92);
         var hovered = bounds.Contains(mousePoint);
         FillRect(new Rectangle(bounds.X + 7, bounds.Y + 9, bounds.Width, bounds.Height), new Color(0, 0, 0, 90));
         FillRect(bounds, hovered ? new Color(42, 55, 63) : new Color(24, 31, 37));
-        DrawRect(bounds, 2, hovered ? new Color(255, 214, 132) : new Color(88, 102, 112));
-        FillRect(new Rectangle(bounds.X, bounds.Y, bounds.Width, 7), hovered ? new Color(255, 190, 92) : new Color(99, 76, 48));
+        DrawRect(bounds, 2, hovered ? accent : new Color(accent.R, accent.G, accent.B, (byte)135));
+        FillRect(new Rectangle(bounds.X, bounds.Y, bounds.Width, 7), hovered ? accent : new Color(accent.R, accent.G, accent.B, (byte)105));
         DrawDynamicOptionText(title, new Rectangle(bounds.X + 18, bounds.Y + 12, 250, 38), Color.White, 0.43f);
-        DrawFittedText(caption, new Rectangle(bounds.X + 18, bounds.Y + 52, 260, 22), new Color(255, 221, 164), 0.27f);
+        DrawFittedText(caption, new Rectangle(bounds.X + 18, bounds.Y + 52, 260, 22), accent, 0.27f);
         DrawFittedText("OPEN  >", new Rectangle(bounds.Right - 92, bounds.Y + 28, 68, 28), new Color(180, 195, 195), 0.28f);
     }
 
@@ -218,6 +224,8 @@ public sealed class TitleScreenRenderer
                 (StickyNoteKind.TitleFormalAppsHint, GetTitleSectionLabelConnectorTarget("FORMAL APPS", new Vector2(800, 338), connectsToRight: false)),
             "CASUAL APPS" =>
                 (StickyNoteKind.TitleCasualAppsHint, GetTitleSectionLabelConnectorTarget("CASUAL APPS", new Vector2(1140, 338), connectsToRight: true)),
+            "GAME PLATFORM" =>
+                (StickyNoteKind.TitleFormalAppsHint, new Vector2(_titleScreen.GameOasisButton.Bounds.Left, _titleScreen.GameOasisButton.Bounds.Center.Y)),
             "LOCAL MATCH" =>
                 (StickyNoteKind.TitleLocalMatchHint, new Vector2(_titleScreen.LocalMatchButton.Bounds.Left, _titleScreen.LocalMatchButton.Bounds.Center.Y)),
             "ONLINE MATCH" =>

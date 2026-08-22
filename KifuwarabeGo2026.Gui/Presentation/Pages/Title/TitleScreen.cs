@@ -29,6 +29,7 @@ public sealed class TitleScreen
     public Rectangle EntrySettingsLabelBounds { get; } = new(450, 322, 300, 62);
     public Rectangle FormalAppsLabelBounds { get; } = new(790, 322, 300, 62);
     public Rectangle CasualAppsLabelBounds { get; } = new(1130, 322, 300, 62);
+    public Rectangle GamePlatformLabelBounds { get; } = new(450, 704, 980, 46);
 
     public Headline Headline { get; }
 
@@ -43,9 +44,10 @@ public sealed class TitleScreen
 
     #region ［CASUAL APPS］
     public Headline CasualAppsLabel { get; }
+    public Headline GamePlatformLabel { get; } = new("GAME PLATFORM", new Vector2(460, 716), new Color(178, 145, 255), 0.43f);
 
     public Button CaptureGameButton { get; }
-    public Button GameOasisButton { get; } = new(new Rectangle(1140, 536, 300, 126), "Game Oasis", 0.44f);
+    public Button GameOasisButton { get; } = new(new Rectangle(460, 758, 980, 74), "Kifuwarabe Game Oasis", 0.44f);
     public Button GameOasisGoButton { get; } = new(new Rectangle(560, 430, 380, 180), "GO", 0.62f);
     public Button GameOasisPonnukiButton { get; } = new(new Rectangle(980, 430, 380, 180), "PONNUKI", 0.52f);
     public Button EngineProfilesButton { get; }
