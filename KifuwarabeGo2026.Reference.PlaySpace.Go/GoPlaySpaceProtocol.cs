@@ -21,7 +21,8 @@ public sealed class GoPlaySpaceProtocol : IPlaySpaceProtocol
             ContractVersion.V1_0,
             "KifuwarabeGo2026.Reference.PlaySpace.Go",
             typeof(GoPlaySpaceProtocol).Assembly.GetName().Version?.ToString() ?? "4.0.0",
-            ["explicit-setup", "move-history-observation", "simple-ko", "positional-superko", "two-pass-scoring", "resignation", "chinese-area-scoring"])));
+            [GameOasisCapabilityIds.ActionPlayPoint, GameOasisCapabilityIds.ActionPass, GameOasisCapabilityIds.ActionResign,
+                "explicit-setup", "move-history-observation", "simple-ko", "positional-superko", "two-pass-scoring", "resignation", "chinese-area-scoring"])));
     }
 
     public ValueTask<ProtocolResponse<ContractDocument>> GetConfigurationSchemaAsync(CancellationToken cancellationToken = default)

@@ -93,6 +93,15 @@ internal static class PortabilityChecks
         Require(composition.Client.State.PlaySpaces.All(entry =>
                 entry.TypeId.Value is GameOasisOfficialNames.Go or GameOasisOfficialNames.Ponnuki),
             "The current GUI composition exposed an unexpected play-space.");
+        var goEntry = composition.Client.State.PlaySpaces.Single(entry => entry.TypeId.Value == GameOasisOfficialNames.Go);
+        var ponnukiEntry = composition.Client.State.PlaySpaces.Single(entry => entry.TypeId.Value == GameOasisOfficialNames.Ponnuki);
+        Require(goEntry.Capabilities.Contains(GameOasisCapabilityIds.ActionPlayPoint) &&
+                goEntry.Capabilities.Contains(GameOasisCapabilityIds.ActionPass) &&
+                goEntry.Capabilities.Contains(GameOasisCapabilityIds.ActionResign) &&
+                ponnukiEntry.Capabilities.Contains(GameOasisCapabilityIds.ActionPlayPoint) &&
+                !ponnukiEntry.Capabilities.Contains(GameOasisCapabilityIds.ActionPass) &&
+                !ponnukiEntry.Capabilities.Contains(GameOasisCapabilityIds.ActionResign),
+            "Protocol G must expose stable action capabilities for GUI control selection.");
         Require(!composition.GetActiveBoard().IsSuccess,
             "The current GUI composition must not expose a board before a Protocol G session opens.");
 
@@ -163,9 +172,7 @@ internal static class PortabilityChecks
             "The GUI playing bridge must open normal Go after closing Ponnuki.");
         CompleteBridgeOperation(bridge);
         var goBoard = bridge.Board ?? throw new InvalidOperationException("The normal Go GUI board was not published.");
-        Require(GameOasisBoardPanel.SupportsPassAndResign(goBoard) &&
-                !GameOasisBoardPanel.SupportsPassAndResign(openedBoard) &&
-                GameOasisBoardPanel.IsPassHit(GameOasisBoardPanel.PassBounds.Center) &&
+        Require(GameOasisBoardPanel.IsPassHit(GameOasisBoardPanel.PassBounds.Center) &&
                 GameOasisBoardPanel.IsResignHit(GameOasisBoardPanel.ResignBounds.Center) &&
                 GameOasisBoardPanel.IsCloseHit(GameOasisBoardPanel.CloseBounds.Center),
             "The Game Oasis panel must expose only the actions supported by the selected game.");

@@ -122,13 +122,13 @@ public sealed class GoPresentationRenderer : System.IDisposable
         _drawingContext.End();
     }
 
-    public void DrawGameOasis(GuiBoardView board, Point mousePosition, bool canSubmit, bool canClose, ProtocolError? error)
+    public void DrawGameOasis(GuiBoardView board, Point mousePosition, bool canPlayPoint, bool canPass, bool canResign, bool canClose, ProtocolError? error)
     {
         var mousePoint = _drawingContext.ToVirtualPoint(mousePosition);
         _drawingContext.Begin();
         _drawingContext.DrawBackground();
-        _boardRenderer.Draw(_drawingContext, board, mousePoint, canSubmit);
-        GameOasisBoardPanel.Draw(_drawingContext, board, mousePoint, canSubmit, canClose, error);
+        _boardRenderer.Draw(_drawingContext, board, mousePoint, canPlayPoint);
+        GameOasisBoardPanel.Draw(_drawingContext, board, mousePoint, canPlayPoint, canPass, canResign, canClose, error);
         _drawingContext.End();
     }
 

@@ -23,7 +23,7 @@ public sealed class PonnukiPlaySpaceProtocol : IPlaySpaceProtocol
             ContractVersion.V1_0,
             "KifuwarabeGo2026.Reference.PlaySpace.Ponnuki",
             typeof(PonnukiPlaySpaceProtocol).Assembly.GetName().Version?.ToString() ?? "4.0.0",
-            ["deterministic-seed", "explicit-setup", "optimistic-revision", "capture-target"]
+            [GameOasisCapabilityIds.ActionPlayPoint, "deterministic-seed", "explicit-setup", "optimistic-revision", "capture-target"]
         )));
     }
 

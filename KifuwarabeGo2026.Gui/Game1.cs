@@ -66,6 +66,7 @@ using KifuwarabeGo2026.Gui.Presentation.Shared.LiveBoardPreview;
 using KifuwarabeGo2026.Gui.Presentation.Shared.RandomSeedRow;
 using KifuwarabeGo2026.Gui.Application.GameOasis;
 using KifuwarabeGo2026.GameOasis.Contracts.Common;
+using KifuwarabeGo2026.Reference.GUI;
 
 public class Game1 : Game
 {
@@ -811,10 +812,13 @@ public class Game1 : Game
         var gameOasisBridge = _gameOasisComposition?.PlayingBridge;
         if (_presentationServices is not null && gameOasisBridge?.Board is { } gameOasisBoard)
         {
+            var canSubmit = gameOasisBridge.State == GameOasisPlayingState.Ready && !gameOasisBridge.IsBusy;
             _presentationServices.Presentation.DrawGameOasis(
                 gameOasisBoard,
                 backgroundMousePosition,
-                gameOasisBridge.State == GameOasisPlayingState.Ready && !gameOasisBridge.IsBusy,
+                canSubmit && SupportsGameOasisCapability(gameOasisBoard, GameOasisCapabilityIds.ActionPlayPoint),
+                canSubmit && SupportsGameOasisCapability(gameOasisBoard, GameOasisCapabilityIds.ActionPass),
+                canSubmit && SupportsGameOasisCapability(gameOasisBoard, GameOasisCapabilityIds.ActionResign),
                 gameOasisBridge.State is GameOasisPlayingState.Ready or GameOasisPlayingState.Terminal && !gameOasisBridge.IsBusy,
                 gameOasisBridge.LastError);
         }
@@ -2646,21 +2650,26 @@ public class Game1 : Game
             if (bridge.State is GameOasisPlayingState.Ready or GameOasisPlayingState.Terminal &&
                 GameOasisBoardPanel.IsCloseHit(point))
                 bridge.BeginClose();
-            else if (bridge.State == GameOasisPlayingState.Ready && GameOasisBoardPanel.SupportsPassAndResign(board))
+            else if (bridge.State == GameOasisPlayingState.Ready)
             {
-                if (GameOasisBoardPanel.IsPassHit(point)) bridge.BeginPass();
-                else if (GameOasisBoardPanel.IsResignHit(point)) bridge.BeginResign();
-                else if (BoardRenderer.TryGetBoardIntersection(point, board.BoardSize, out var intersection))
+                if (SupportsGameOasisCapability(board, GameOasisCapabilityIds.ActionPass) &&
+                    GameOasisBoardPanel.IsPassHit(point)) bridge.BeginPass();
+                else if (SupportsGameOasisCapability(board, GameOasisCapabilityIds.ActionResign) &&
+                         GameOasisBoardPanel.IsResignHit(point)) bridge.BeginResign();
+                else if (SupportsGameOasisCapability(board, GameOasisCapabilityIds.ActionPlayPoint) &&
+                         BoardRenderer.TryGetBoardIntersection(point, board.BoardSize, out var intersection))
                     bridge.BeginPlay(intersection.X, intersection.Y);
             }
-            else if (bridge.State == GameOasisPlayingState.Ready &&
-                     BoardRenderer.TryGetBoardIntersection(point, board.BoardSize, out var intersection))
-                bridge.BeginPlay(intersection.X, intersection.Y);
         }
 
         // An active Game Oasis board owns the screen, including clicks outside the board.
         return true;
     }
+
+    private bool SupportsGameOasisCapability(GuiBoardView board, string capabilityId) =>
+        _gameOasisComposition?.Client.State.PlaySpaces
+            .FirstOrDefault(entry => entry.TypeId == board.PlaySpaceTypeId)?
+            .Capabilities.Contains(capabilityId, StringComparer.Ordinal) == true;
 
     private static string FormatLocalMatchSeed(int? seed) => seed?.ToString() ?? "HUMAN";
 

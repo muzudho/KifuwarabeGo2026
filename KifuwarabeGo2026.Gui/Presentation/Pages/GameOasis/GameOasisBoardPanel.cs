@@ -12,9 +12,6 @@ public static class GameOasisBoardPanel
     public static readonly Rectangle ResignBounds = new(1492, 828, 320, 72);
     public static readonly Rectangle CloseBounds = new(1144, 920, 668, 72);
 
-    public static bool SupportsPassAndResign(GuiBoardView board) =>
-        board.PlaySpaceTypeId.Value == GameOasisOfficialNames.Go;
-
     public static bool IsPassHit(Point point) => PassBounds.Contains(point);
     public static bool IsResignHit(Point point) => ResignBounds.Contains(point);
     public static bool IsCloseHit(Point point) => CloseBounds.Contains(point);
@@ -23,7 +20,9 @@ public static class GameOasisBoardPanel
         KfwStationeryDrawingTools drawingContext,
         GuiBoardView board,
         Point mousePoint,
-        bool canSubmit,
+        bool canPlayPoint,
+        bool canPass,
+        bool canResign,
         bool canClose,
         ProtocolError? error)
     {
@@ -44,11 +43,11 @@ public static class GameOasisBoardPanel
             drawingContext.DrawFittedText($"{error.Code}: {error.Message}", new Rectangle(1164, 630, 628, 82), new Color(255, 198, 174), 0.28f);
         }
 
-        if (SupportsPassAndResign(board) && !board.IsTerminal)
+        if ((canPass || canResign) && !board.IsTerminal)
         {
             drawingContext.DrawVerticalResultSection(new Rectangle(1144, 824, 668, 76), "ACTION", new Color(91, 82, 105));
-            drawingContext.DrawButton(PassBounds, "PASS", false, mousePoint, canSubmit, 0.62f);
-            drawingContext.DrawButton(ResignBounds, "RESIGN", false, mousePoint, canSubmit, 0.62f);
+            drawingContext.DrawButton(PassBounds, "PASS", false, mousePoint, canPass, 0.62f);
+            drawingContext.DrawButton(ResignBounds, "RESIGN", false, mousePoint, canResign, 0.62f);
         }
 
         drawingContext.DrawButton(CloseBounds, "CLOSE SESSION", false, mousePoint, canClose, 0.48f);
