@@ -2,8 +2,8 @@
 
 Protocol PとGTPエンジンを接続する参照アダプターです。`IGtpCommandTransport`により、標準入出力プロセス、TCP、インメモリテストなどの配送方法を分離します。
 
-最初の`KifuwarabeGtpPlayerProtocol`は通常囲碁専用です。`known_command`で能力を確認し、きふわらべGTPエンジンでは原子的初期配置拡張`kfw-begin-position`、`kfw-add-black`、`kfw-add-white`、`kfw-set-to-play`、`kfw-commit-position`を使用します。拡張を持たない汎用エンジンでは、標準GTPの`boardsize`、`clear_board`、`komi`、`play`へ自動的にフォールバックします。一つのGTPトランスポートは一つの参加割り当てだけを担当します。
+最初の`KifuwarabeGtpPlayerProtocol`は通常囲碁専用です。`known_command`で能力を確認し、きふわらべGTPエンジンでは原子的初期配置拡張`kfw-begin-position`、`kfw-add-black`、`kfw-add-white`、`kfw-set-to-play`、`kfw-commit-position`を使用します。拡張を持たない汎用エンジンでは、黒石だけを置いて白番から始める局面なら`set_free_handicap`、それ以外の静的局面なら標準GTPの`boardsize`、`clear_board`、`komi`、`play`へ自動的にフォールバックします。一つのGTPトランスポートは一つの参加割り当てだけを担当します。
 
 `ProcessGtpCommandTransport` は外部 GTP エンジンを非シェル起動し、標準入出力のコマンドを直列化して、成功・失敗・複数行応答を解析します。標準エラーはデッドロック防止のため並行して排出し、破棄時は `quit` を送り、終了しないプロセスを停止します。コマンド単位のタイムアウトは呼び出し側の `CancellationToken` で指定します。応答待ちが中断されるとコマンドと応答の対応を保証できないため、プロセスを停止し、そのトランスポートを再利用不可にします。
 
-標準GTPフォールバックは、盤上の石を捕獲なしに順次再現できる静的初期局面を対象にします。局面へ至る履歴や再現途中の捕獲が必要な局面には対応しません。プロセスの再起動と標準エラーの永続的な収集、`fixed_handicap`、`set_free_handicap`、`loadsgf`による高精度な初期局面戦略は次段で追加します。
+標準`play`フォールバックは、盤上の石を捕獲なしに順次再現できる静的初期局面を対象にします。局面へ至る履歴や再現途中の捕獲が必要な局面には対応しません。プロセスの再起動と標準エラーの永続的な収集、`fixed_handicap`、`loadsgf`による高精度な初期局面戦略は次段で追加します。

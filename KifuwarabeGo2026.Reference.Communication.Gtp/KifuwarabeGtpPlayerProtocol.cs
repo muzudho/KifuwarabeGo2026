@@ -17,7 +17,7 @@ public sealed class KifuwarabeGtpPlayerProtocol(
     private readonly IGtpCommandTransport _transport = transport ?? throw new ArgumentNullException(nameof(transport));
     private readonly object _sync = new();
     private ActiveBinding? _binding;
-    private InitialPositionMode? _initialPositionMode;
+    private GtpInitialPositionCapabilities? _initialPositionCapabilities;
 
     public ValueTask<ProtocolResponse<PlayerEngineDescriptor>> DescribeAsync(CancellationToken cancellationToken = default) =>
         ValueTask.FromResult(ProtocolResponse<PlayerEngineDescriptor>.Success(new(
@@ -143,7 +143,12 @@ public sealed class KifuwarabeGtpPlayerProtocol(
         if (!parsed.IsSuccess || parsed.Value is null)
             return ProtocolResponse<bool>.Failure(parsed.Error!);
         var state = parsed.Value;
-        var mode = await ResolveInitialPositionModeAsync(cancellationToken);
+        var capabilities = await ResolveInitialPositionCapabilitiesAsync(cancellationToken);
+        var mode = capabilities.SupportsAtomic
+            ? InitialPositionMode.KifuwarabeAtomic
+            : capabilities.SupportsSetFreeHandicap && state.Black.Count > 0 && state.White.Count == 0 && state.NextToPlay == "white"
+                ? InitialPositionMode.SetFreeHandicap
+                : InitialPositionMode.StandardSequentialPlay;
         var commands = new List<string>
         {
             $"boardsize {state.BoardSize}",
@@ -156,6 +161,11 @@ public sealed class KifuwarabeGtpPlayerProtocol(
             commands.AddRange(state.White.Select(point => $"kfw-add-white {FormatVertex(point.X, point.Y, state.BoardSize)}"));
             commands.Add($"kfw-set-to-play {state.NextToPlay}");
             commands.Add("kfw-commit-position");
+        }
+        else if (mode == InitialPositionMode.SetFreeHandicap)
+        {
+            commands.Insert(1, "clear_board");
+            commands.Add($"set_free_handicap {string.Join(' ', state.Black.Select(point => FormatVertex(point.X, point.Y, state.BoardSize)))}");
         }
         else
         {
@@ -176,14 +186,19 @@ public sealed class KifuwarabeGtpPlayerProtocol(
         return ProtocolResponse<bool>.Success(true);
     }
 
-    private async ValueTask<InitialPositionMode> ResolveInitialPositionModeAsync(CancellationToken cancellationToken)
+    private async ValueTask<GtpInitialPositionCapabilities> ResolveInitialPositionCapabilitiesAsync(CancellationToken cancellationToken)
     {
-        if (_initialPositionMode is { } resolved) return resolved;
-        var response = await _transport.SendAsync("known_command kfw-begin-position", cancellationToken);
-        _initialPositionMode = response.IsSuccess && bool.TryParse(response.Payload.Trim(), out var supported) && supported
-            ? InitialPositionMode.KifuwarabeAtomic
-            : InitialPositionMode.StandardSequentialPlay;
-        return _initialPositionMode.Value;
+        if (_initialPositionCapabilities is { } resolved) return resolved;
+        var atomic = await SupportsCommandAsync("kfw-begin-position", cancellationToken);
+        var setFreeHandicap = !atomic && await SupportsCommandAsync("set_free_handicap", cancellationToken);
+        _initialPositionCapabilities = new(atomic, setFreeHandicap);
+        return _initialPositionCapabilities;
+    }
+
+    private async ValueTask<bool> SupportsCommandAsync(string command, CancellationToken cancellationToken)
+    {
+        var response = await _transport.SendAsync($"known_command {command}", cancellationToken);
+        return response.IsSuccess && bool.TryParse(response.Payload.Trim(), out var supported) && supported;
     }
 
     private ProtocolResponse<ActiveBinding> GetBinding(PlayerBindingId bindingId)
@@ -298,7 +313,8 @@ public sealed class KifuwarabeGtpPlayerProtocol(
 
     private sealed record Point(int X, int Y);
     private sealed record GoState(int BoardSize, decimal Komi, string NextToPlay, IReadOnlyList<Point> Black, IReadOnlyList<Point> White);
-    private enum InitialPositionMode { KifuwarabeAtomic, StandardSequentialPlay }
+    private sealed record GtpInitialPositionCapabilities(bool SupportsAtomic, bool SupportsSetFreeHandicap);
+    private enum InitialPositionMode { KifuwarabeAtomic, SetFreeHandicap, StandardSequentialPlay }
     private sealed class ActiveBinding(PlayerBindingId bindingId, string roleId)
     {
         public PlayerBindingId BindingId { get; } = bindingId;

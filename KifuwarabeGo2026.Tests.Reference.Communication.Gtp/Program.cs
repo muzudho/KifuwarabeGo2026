@@ -71,6 +71,7 @@ RequireSequence(
     genericTransport.Commands,
     [
         "known_command kfw-begin-position",
+        "known_command set_free_handicap",
         "boardsize 9",
         "clear_board",
         "komi 6.5",
@@ -79,6 +80,36 @@ RequireSequence(
     ],
     "A generic GTP engine must receive the standard sequential setup fallback.");
 RequireSuccess(await players.UnbindPlayerAsync(genericBound.BindingId, "generic-fallback-verified"));
+
+genericTransport.Commands.Clear();
+var handicapSession = RequireSuccess(await concierge.OpenSessionAsync(
+    registeredGo.Descriptor.TypeId,
+    new ContractDocument(
+        "application/json",
+        GoSchemas.Configuration,
+        """
+        {
+          "version":1,
+          "boardSize":9,
+          "komi":0.5,
+          "ruleset":"chinese-area",
+          "startingPlayer":"white",
+          "setupStones":[
+            {"x":2,"y":2,"color":"black"},
+            {"x":6,"y":6,"color":"black"}
+          ]
+        }
+        """)));
+var handicapBound = RequireSuccess(await players.BindPlayerAsync(
+    genericRegistered.Descriptor.EngineId,
+    handicapSession.SessionId,
+    "white"));
+RequireSequence(
+    genericTransport.Commands,
+    ["boardsize 9", "clear_board", "komi 0.5", "set_free_handicap C7 G3"],
+    "A supported set_free_handicap command must be preferred for a black-only handicap position.");
+RequireSuccess(await players.UnbindPlayerAsync(handicapBound.BindingId, "set-free-handicap-verified"));
+RequireSuccess(await concierge.CloseSessionAsync(handicapSession.SessionId));
 
 var rejected = RequireSuccess(await players.RequestAndApplyActionAsync(bound.BindingId));
 Require(!rejected.Applied.IsAccepted, "The occupied A9 generated move must be rejected by the play-space.");
@@ -197,8 +228,8 @@ internal sealed class GenericRecordingGtpTransport : IGtpCommandTransport
     {
         cancellationToken.ThrowIfCancellationRequested();
         Commands.Add(command);
-        return ValueTask.FromResult(command == "known_command kfw-begin-position"
-            ? new GtpCommandResponse(true, "false")
+        return ValueTask.FromResult(command.StartsWith("known_command ", StringComparison.Ordinal)
+            ? new GtpCommandResponse(true, command.EndsWith("set_free_handicap", StringComparison.Ordinal) ? "true" : "false")
             : new GtpCommandResponse(true, string.Empty));
     }
 }
