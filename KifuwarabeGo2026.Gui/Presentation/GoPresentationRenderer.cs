@@ -23,6 +23,8 @@ using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 using KifuwarabeGo2026.Gui.Presentation.Title;
 using Microsoft.Xna.Framework;
 using KifuwarabeGo2026.Shared.Domain;
+using KifuwarabeGo2026.GameOasis.Contracts.Common;
+using KifuwarabeGo2026.Reference.GUI;
 
 /// <summary>各画面 Renderer の所有と、盤面・レビュー画面の描画順序を担当します。</summary>
 public sealed class GoPresentationRenderer : System.IDisposable
@@ -114,6 +116,22 @@ public sealed class GoPresentationRenderer : System.IDisposable
             _popupTrendChartRenderer.DrawReview(_drawingContext, session, mousePoint);
         else if (session.CanOpenLocalChartPopup && session.IsReviewChartPopupOpen)
             _popupTrendChartRenderer.DrawLocal(_drawingContext, session, mousePoint);
+        _drawingContext.End();
+    }
+
+    public void DrawGameOasis(GuiBoardView board, Point mousePosition, bool canAcceptInput, ProtocolError? error)
+    {
+        var mousePoint = _drawingContext.ToVirtualPoint(mousePosition);
+        _drawingContext.Begin();
+        _drawingContext.DrawBackground();
+        _boardRenderer.Draw(_drawingContext, board, mousePoint, canAcceptInput);
+        _drawingContext.DrawText(
+            board.IsTerminal ? "GAME OASIS  /  TERMINAL" : $"GAME OASIS  /  {board.NextToPlay.ToUpperInvariant()} TO PLAY",
+            new Vector2(1135, 110),
+            new Color(210, 224, 220),
+            0.34f);
+        if (error is not null)
+            _drawingContext.DrawText($"{error.Code}: {error.Message}", new Vector2(1135, 170), new Color(255, 180, 150), 0.26f);
         _drawingContext.End();
     }
 

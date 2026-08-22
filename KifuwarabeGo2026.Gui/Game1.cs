@@ -806,7 +806,16 @@ public class Game1 : Game
         var backgroundMousePosition = _activeGtpEngineIntegerOption is not null || _activeGtpEngineStringOption is not null
             ? new Point(-1, -1)
             : Mouse.GetState().Position;
-        if (_session.UseKind is null)
+        var gameOasisBridge = _gameOasisComposition?.PlayingBridge;
+        if (_presentationServices is not null && gameOasisBridge?.Board is { } gameOasisBoard)
+        {
+            _presentationServices.Presentation.DrawGameOasis(
+                gameOasisBoard,
+                backgroundMousePosition,
+                gameOasisBridge.State == GameOasisPlayingState.Ready && !gameOasisBridge.IsBusy,
+                gameOasisBridge.LastError);
+        }
+        else if (_session.UseKind is null)
         {
             if (_presentationServices is not null)
             {
@@ -1147,6 +1156,11 @@ public class Game1 : Game
             _lastScreenInput = new ScreenInputTrace(pressedAt, inputScreen, point.X, point.Y);
             GuiOperationLog.User("Mouse click", $"screen={inputScreen} x={point.X} y={point.Y}; pressedAt={pressedAt:O}");
             if (TryHandleActiveWindowClick(point))
+            {
+                _previousMouse = mouse;
+                return;
+            }
+            if (TryHandleGameOasisClick(point))
             {
                 _previousMouse = mouse;
                 return;
@@ -2581,6 +2595,21 @@ public class Game1 : Game
             ? $"state={bridge.State}"
             : $"state={bridge.State}; code={bridge.LastError.Code}; message={bridge.LastError.Message}";
         GuiOperationLog.App("Game Oasis GUI operation completed", detail);
+    }
+
+    private bool TryHandleGameOasisClick(Point point)
+    {
+        var bridge = _gameOasisComposition?.PlayingBridge;
+        var board = bridge?.Board;
+        if (bridge is null || board is null) return false;
+
+        if (bridge.State == GameOasisPlayingState.Ready &&
+            !bridge.IsBusy &&
+            BoardRenderer.TryGetBoardIntersection(point, board.BoardSize, out var intersection))
+            bridge.BeginPlay(intersection.X, intersection.Y);
+
+        // An active Game Oasis board owns the screen, including clicks outside the board.
+        return true;
     }
 
     private static string FormatLocalMatchSeed(int? seed) => seed?.ToString() ?? "HUMAN";

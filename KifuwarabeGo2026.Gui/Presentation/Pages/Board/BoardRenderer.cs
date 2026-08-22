@@ -9,10 +9,12 @@ using KifuwarabeGo2026.Gui.Presentation.BoardLens.Shared.RenBoundaries;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 using KifuwarabeGo2026.Gui.Presentation.Pages.BoardAndReview;
 using KifuwarabeGo2026.Shared.Domain;
+using KifuwarabeGo2026.Reference.GUI;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 /// <summary>
 /// ［盤］描画処理
@@ -99,6 +101,22 @@ public sealed class BoardRenderer : IDisposable
             DrawKoMark(session, start, cell);
             DrawHoverStone(session, mousePoint, start, cell);
         }
+        DrawBoardFrameHighlights(surface.Outer);
+    }
+
+    public void Draw(KfwStationeryDrawingTools drawingContext, GuiBoardView board, Point mousePoint, bool canAcceptInput)
+    {
+        _drawingContext = drawingContext;
+        var surface = DrawBoardSurface(drawingContext, board.BoardSize);
+        foreach (var point in board.Black)
+            DrawStone(BoardPoint(surface.Start, surface.Cell, point.X, point.Y), surface.Cell * 0.44f, black: true);
+        foreach (var point in board.White)
+            DrawStone(BoardPoint(surface.Start, surface.Cell, point.X, point.Y), surface.Cell * 0.44f, black: false);
+
+        if (board.KoPoint is { } ko)
+            DrawKoMark(ko.X, ko.Y, surface.Start, surface.Cell);
+        if (canAcceptInput)
+            DrawGameOasisHoverStone(board, mousePoint, surface.Start, surface.Cell);
         DrawBoardFrameHighlights(surface.Outer);
     }
 
@@ -395,7 +413,12 @@ public sealed class BoardRenderer : IDisposable
             return;
         }
 
-        var center = BoardPoint(start, cell, ko.X, ko.Y);
+        DrawKoMark(ko.X, ko.Y, start, cell);
+    }
+
+    private void DrawKoMark(int x, int y, Vector2 start, float cell)
+    {
+        var center = BoardPoint(start, cell, x, y);
         var radius = Math.Max(12f, cell * 0.26f);
         var bounds = new Rectangle((int)(center.X - radius), (int)(center.Y - radius), (int)(radius * 2), (int)(radius * 2));
         FillRect(bounds, new Color(143, 38, 38, 210));
@@ -404,6 +427,20 @@ public sealed class BoardRenderer : IDisposable
         const string label = "KO";
         var size = _font.MeasureString(label) * 0.34f;
         DrawText(label, new Vector2(center.X - size.X / 2, center.Y - size.Y / 2), Color.White, 0.34f);
+    }
+
+    private void DrawGameOasisHoverStone(GuiBoardView board, Point mousePoint, Vector2 start, float cell)
+    {
+        if (!TryGetBoardIntersection(mousePoint, board.BoardSize, out var intersection) ||
+            board.Black.Any(point => point.X == intersection.X && point.Y == intersection.Y) ||
+            board.White.Any(point => point.X == intersection.X && point.Y == intersection.Y) ||
+            board.KoPoint is { } ko && ko.X == intersection.X && ko.Y == intersection.Y)
+            return;
+
+        var center = BoardPoint(start, cell, intersection.X, intersection.Y);
+        var black = string.Equals(board.NextToPlay, "black", StringComparison.Ordinal);
+        DrawCircle(center, cell * 0.55f, black ? new Color(8, 10, 14, 95) : new Color(255, 250, 232, 110));
+        DrawCircle(center, cell * 0.36f, black ? new Color(8, 10, 14, 90) : new Color(255, 250, 232, 95));
     }
 
     /// <summary>
