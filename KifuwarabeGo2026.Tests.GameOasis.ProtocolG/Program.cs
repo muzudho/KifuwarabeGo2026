@@ -4,6 +4,7 @@ using KifuwarabeGo2026.GameOasis.Contracts.Common;
 using KifuwarabeGo2026.GameOasis.Contracts.ProtocolG;
 using KifuwarabeGo2026.Reference.PlaySpace.Go;
 using KifuwarabeGo2026.Reference.PlaySpace.Ponnuki;
+using KifuwarabeGo2026.Reference.GUI;
 
 var concierge = new GameOasisConcierge();
 RequireSuccess(await concierge.RegisterPlaySpaceAsync(new PonnukiPlaySpaceProtocol()));
@@ -78,7 +79,22 @@ using (var goOutcome = JsonDocument.Parse(whitePass.Snapshot.Outcome!.Content))
     Require(goOutcome.RootElement.GetProperty("winner").GetString() == "white", "Protocol G must preserve the normal Go outcome.");
 RequireSuccess(await gui.CloseSessionAsync(new(goOpened.InitialSnapshot.SessionId)));
 
-Console.WriteLine("PASS: Protocol G selected both Ponnuki and normal Go through one Concierge without concrete GUI coupling.");
+var client = new GameOasisGuiClient(gui);
+var clientCatalog = RequireSuccess(await client.InitializeAsync());
+Require(clientCatalog.Count == 2 && client.State.PlaySpaces.Count == 2, "The reference GUI client must retain the Protocol G catalog.");
+var clientOpened = RequireSuccess(await client.OpenSessionAsync(ponnuki.TypeId, configuration));
+Require(client.State.ActiveSnapshot?.SessionId == clientOpened.InitialSnapshot.SessionId, "The reference GUI client must retain its active snapshot.");
+var duplicateOpen = await client.OpenSessionAsync(ponnuki.TypeId, configuration);
+Require(!duplicateOpen.IsSuccess && client.State.LastError?.Code == "gui-session-already-open", "The reference GUI client must reject a second local active session.");
+var clientSubmitted = RequireSuccess(await client.SubmitActionAsync(action));
+Require(clientSubmitted.IsAccepted && client.State.ActiveSnapshot?.IsTerminal == true, "The reference GUI client must advance its snapshot using the current revision.");
+RequireSuccess(await client.RefreshAsync());
+RequireSuccess(await client.CloseSessionAsync());
+Require(client.State.ActiveSnapshot is null && client.State.LastError is null, "Closing must clear the active GUI session and error.");
+var submitWithoutSession = await client.SubmitActionAsync(action);
+Require(!submitWithoutSession.IsSuccess && submitWithoutSession.Error?.Code == "gui-session-not-open", "A semantic action without a session must fail locally.");
+
+Console.WriteLine("PASS: Protocol G and the Contracts-only reference GUI client selected and operated both replaceable play-spaces.");
 return;
 
 static T RequireSuccess<T>(ProtocolResponse<T> response)
