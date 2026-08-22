@@ -88,6 +88,8 @@ public sealed class GameOasisPlayerCoordinator(GameOasisConcierge concierge)
                 return ForwardFailure<PlayerTurnCompleted>(snapshot.Error, "player-snapshot-failed");
             if (snapshot.Value.IsTerminal)
                 return Failure<PlayerTurnCompleted>("game-already-terminal", "A terminal game cannot request another player action.");
+            if (snapshot.Value.OperationalState == GameOasisOperationalState.Paused)
+                return Failure<PlayerTurnCompleted>("game-session-paused", "A paused game cannot request another player action.");
 
             var selected = await binding.Player.Protocol.SelectActionAsync(new PlayerActionRequest(
                 binding.BindingId, binding.RoleId, ToObservation(snapshot.Value)), cancellationToken);
@@ -172,6 +174,8 @@ public sealed class GameOasisPlayerCoordinator(GameOasisConcierge concierge)
             snapshot.SessionId,
             snapshot.PlaySpaceTypeId,
             snapshot.Revision,
+            snapshot.OperationRevision,
+            snapshot.OperationalState,
             snapshot.State,
             snapshot.IsTerminal,
             snapshot.Outcome);

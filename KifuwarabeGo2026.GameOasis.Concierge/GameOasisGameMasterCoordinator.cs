@@ -10,6 +10,12 @@ public sealed class GameOasisGameMasterCoordinator(GameOasisConcierge concierge)
     /// <summary>セッションを終了するGame Oasis共通命令名です。</summary>
     public const string EndSessionCommand = "end-session";
 
+    /// <summary>ゲームを一時停止するGame Oasis共通命令名です。</summary>
+    public const string PauseCommand = GameOasisConcierge.PauseOperation;
+
+    /// <summary>一時停止中のゲームを再開するGame Oasis共通命令名です。</summary>
+    public const string ResumeCommand = GameOasisConcierge.ResumeOperation;
+
     private readonly GameOasisConcierge _concierge = concierge ?? throw new ArgumentNullException(nameof(concierge));
     private readonly ConcurrentDictionary<GameMasterEngineId, RegisteredGameMaster> _gameMasters = new();
     private readonly ConcurrentDictionary<GameMasterBindingId, GameMasterBinding> _bindings = new();
@@ -91,8 +97,16 @@ public sealed class GameOasisGameMasterCoordinator(GameOasisConcierge concierge)
                 return Failure<GameMasterTurnCompleted>(
                     "game-master-revision-mismatch",
                     $"The game master based its command on revision {selected.Value.BasedOnRevision}, expected {snapshot.Value.Revision}.");
+            if (selected.Value.BasedOnOperationRevision != snapshot.Value.OperationRevision)
+                return Failure<GameMasterTurnCompleted>(
+                    "game-master-operation-revision-mismatch",
+                    $"The game master based its command on operation revision {selected.Value.BasedOnOperationRevision}, expected {snapshot.Value.OperationRevision}.");
 
-            var result = await ExecuteAsync(binding, selected.Value.Command, cancellationToken);
+            var result = await ExecuteAsync(
+                binding,
+                selected.Value.Command,
+                selected.Value.BasedOnOperationRevision,
+                cancellationToken);
             var notificationFailures = new List<GameMasterBindingId>();
             var recipients = _bindings.Values.Where(value => value.SessionId == binding.SessionId).ToArray();
             foreach (var recipient in recipients)
@@ -159,11 +173,22 @@ public sealed class GameOasisGameMasterCoordinator(GameOasisConcierge concierge)
     private async ValueTask<GameMasterCommandResult> ExecuteAsync(
         GameMasterBinding binding,
         GameMasterCommand command,
+        long expectedOperationRevision,
         CancellationToken cancellationToken)
     {
         if (command.Name != EndSessionCommand)
-            return new(binding.BindingId, binding.SessionId, command.Name, false,
-                new ProtocolError("unsupported-game-master-command", $"Command '{command.Name}' is not supported."));
+        {
+            if (command.Name is not (PauseCommand or ResumeCommand))
+                return new(binding.BindingId, binding.SessionId, command.Name, false,
+                    new ProtocolError("unsupported-game-master-command", $"Command '{command.Name}' is not supported."));
+            var applied = await _concierge.ApplyOperationAsync(new(
+                binding.SessionId,
+                command.Name,
+                expectedOperationRevision), cancellationToken);
+            return applied.IsSuccess && applied.Value is not null
+                ? new(binding.BindingId, binding.SessionId, command.Name, applied.Value.IsAccepted, applied.Value.Rejection)
+                : new(binding.BindingId, binding.SessionId, command.Name, false, applied.Error);
+        }
         var closed = await _concierge.CloseSessionAsync(binding.SessionId, cancellationToken);
         return closed.IsSuccess
             ? new(binding.BindingId, binding.SessionId, command.Name, true, null)
@@ -177,6 +202,8 @@ public sealed class GameOasisGameMasterCoordinator(GameOasisConcierge concierge)
         snapshot.SessionId,
         snapshot.PlaySpaceTypeId,
         snapshot.Revision,
+        snapshot.OperationRevision,
+        snapshot.OperationalState,
         snapshot.State,
         snapshot.IsTerminal,
         snapshot.Outcome);

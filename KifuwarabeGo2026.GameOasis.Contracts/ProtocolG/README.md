@@ -32,6 +32,8 @@ Concierge ── PlaySpaceSessionId ──→ PlaySpace
 
 Protocol GはGUI向けのカタログ項目とスナップショットを定義し、Protocol Sの具象応答をそのまま公開しません。
 
+GUI向けスナップショットには、盤面側の`Revision`とは別に、ゲームマスターによる停止・再開を表す`OperationalState`と`OperationRevision`を含めます。これによりGUIは特定プレイスペースの状態文書を解釈しなくても、運営上の停止状態を表示できます。
+
 ## v1.0で未確定の事項
 
 - プッシュ通知またはイベント購読

@@ -1,9 +1,11 @@
 using KifuwarabeGo2026.GameOasis.Concierge;
 using KifuwarabeGo2026.GameOasis.Contracts.Common;
+using KifuwarabeGo2026.GameOasis.Contracts.ProtocolG;
 using KifuwarabeGo2026.GameOasis.Contracts.ProtocolM;
 using KifuwarabeGo2026.Reference.PlaySpace.Ponnuki;
 
 var concierge = new GameOasisConcierge();
+IGuiProtocol gui = new GameOasisGuiProtocol(concierge);
 var playSpace = RequireSuccess(await concierge.RegisterPlaySpaceAsync(new PonnukiPlaySpaceProtocol()));
 var configuration = new ContractDocument(
     "application/json",
@@ -18,12 +20,39 @@ Require(registered.Descriptor.EngineId == ScriptedGameMaster.EngineId, "The exte
 var bound = RequireSuccess(await coordinator.BindGameMasterAsync(registered.Descriptor.EngineId, opened.SessionId));
 Require(externalGameMaster.StartCount == 1, "The game master must receive the session start.");
 
+var paused = RequireSuccess(await coordinator.RequestAndExecuteCommandAsync(bound.BindingId));
+Require(paused.Result.WasAccepted && paused.Result.CommandName == GameOasisGameMasterCoordinator.PauseCommand, "The pause command must be accepted.");
+var pausedSnapshot = RequireSuccess(await concierge.GetSnapshotAsync(opened.SessionId));
+Require(pausedSnapshot.OperationalState == GameOasisOperationalState.Paused, "The Concierge must own the paused state.");
+Require(pausedSnapshot.OperationRevision == 1, "Pausing must advance the operation revision.");
+var pausedForGui = RequireSuccess(await gui.GetSnapshotAsync(new(opened.SessionId)));
+Require(pausedForGui.OperationalState == GameOasisOperationalState.Paused && pausedForGui.OperationRevision == 1, "Protocol G must expose the operational state without interpreting play-space data.");
+
+var blockedAction = RequireSuccess(await concierge.ApplyActionAsync(new(
+    opened.SessionId,
+    new ContractDocument("application/json", PonnukiSchemas.Action, """{"version":1,"type":"play","player":"black","x":1,"y":1}"""),
+    pausedSnapshot.Revision)));
+Require(!blockedAction.IsAccepted && blockedAction.Rejection?.Code == "game-session-paused", "Player actions must be rejected while paused.");
+Require(blockedAction.Snapshot.Revision == pausedSnapshot.Revision, "A blocked action must not change the play-space revision.");
+
+var resumed = RequireSuccess(await coordinator.RequestAndExecuteCommandAsync(bound.BindingId));
+Require(resumed.Result.WasAccepted && resumed.Result.CommandName == GameOasisGameMasterCoordinator.ResumeCommand, "The resume command must be accepted.");
+var resumedSnapshot = RequireSuccess(await concierge.GetSnapshotAsync(opened.SessionId));
+Require(resumedSnapshot.OperationalState == GameOasisOperationalState.Running, "The Concierge must return to running state.");
+Require(resumedSnapshot.OperationRevision == 2, "Resuming must advance the operation revision.");
+
+var staleOperation = RequireSuccess(await concierge.ApplyOperationAsync(new(
+    opened.SessionId,
+    GameOasisConcierge.PauseOperation,
+    0)));
+Require(!staleOperation.IsAccepted && staleOperation.Rejection?.Code == "operation-revision-conflict", "A stale game-master operation must be rejected.");
+
 var completed = RequireSuccess(await coordinator.RequestAndExecuteCommandAsync(bound.BindingId));
 Require(completed.Result.WasAccepted, "The end-session command must be accepted.");
 Require(completed.Result.CommandName == GameOasisGameMasterCoordinator.EndSessionCommand, "The executed command name must be preserved.");
 Require(completed.NotificationFailures.Count == 0, "The command result notification must succeed.");
 Require(completed.EndFailures.Count == 0, "Automatic game-master participation end must succeed.");
-Require(externalGameMaster.NotificationCount == 1, "The game master must receive the command result.");
+Require(externalGameMaster.NotificationCount == 3, "The game master must receive pause, resume, and end results.");
 Require(externalGameMaster.EndCount == 1, "The game master must receive participation end after closing the game.");
 
 var afterClose = await concierge.GetSnapshotAsync(opened.SessionId);
@@ -32,7 +61,7 @@ var afterAutomaticUnbind = await coordinator.UnbindGameMasterAsync(bound.Binding
 Require(!afterAutomaticUnbind.IsSuccess && afterAutomaticUnbind.Error?.Code == "game-master-binding-not-found", "Closing the game must remove its game-master binding.");
 RequireSuccess(await concierge.UnregisterPlaySpaceAsync(playSpace.Descriptor.TypeId));
 
-Console.WriteLine("PASS: An external-style Protocol M game master ended a Protocol S Ponnuki session through Concierge.");
+Console.WriteLine("PASS: Protocol M paused, protected, resumed, conflict-checked, and ended a Protocol S Ponnuki session through Concierge.");
 return;
 
 static T RequireSuccess<T>(ProtocolResponse<T> response)
@@ -54,6 +83,10 @@ internal sealed class ScriptedGameMaster : IGameMasterProtocol
     public int StartCount { get; private set; }
     public int NotificationCount { get; private set; }
     public int EndCount { get; private set; }
+    private readonly Queue<string> _commands = new([
+        GameOasisGameMasterCoordinator.PauseCommand,
+        GameOasisGameMasterCoordinator.ResumeCommand,
+        GameOasisGameMasterCoordinator.EndSessionCommand]);
 
     public ValueTask<ProtocolResponse<GameMasterEngineDescriptor>> DescribeAsync(CancellationToken cancellationToken = default)
     {
@@ -64,7 +97,11 @@ internal sealed class ScriptedGameMaster : IGameMasterProtocol
             ContractVersion.V1_0,
             nameof(ScriptedGameMaster),
             "1.0.0",
-            [GameOasisGameMasterCoordinator.EndSessionCommand])));
+            [
+                GameOasisGameMasterCoordinator.PauseCommand,
+                GameOasisGameMasterCoordinator.ResumeCommand,
+                GameOasisGameMasterCoordinator.EndSessionCommand,
+            ])));
     }
 
     public ValueTask<ProtocolResponse<GameMasterSessionStarted>> StartSessionAsync(
@@ -81,10 +118,12 @@ internal sealed class ScriptedGameMaster : IGameMasterProtocol
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        var command = _commands.Dequeue();
         return ValueTask.FromResult(ProtocolResponse<GameMasterCommandSelected>.Success(new(
             request.BindingId,
             request.Observation.Revision,
-            new GameMasterCommand(GameOasisGameMasterCoordinator.EndSessionCommand, "broadcast-finished"))));
+            request.Observation.OperationRevision,
+            new GameMasterCommand(command, command == GameOasisGameMasterCoordinator.EndSessionCommand ? "broadcast-finished" : "operator-request"))));
     }
 
     public ValueTask<ProtocolResponse<GameMasterCommandNotified>> NotifyCommandAsync(

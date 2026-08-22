@@ -16,6 +16,8 @@ public sealed record GameMasterGameObservation(
     GameOasisSessionId SessionId,
     PlaySpaceTypeId PlaySpaceTypeId,
     long Revision,
+    long OperationRevision,
+    GameOasisOperationalState OperationalState,
     ContractDocument State,
     bool IsTerminal,
     ContractDocument? Outcome);
@@ -37,6 +39,7 @@ public sealed record GameMasterCommandRequest(
 public sealed record GameMasterCommandSelected(
     GameMasterBindingId BindingId,
     long BasedOnRevision,
+    long BasedOnOperationRevision,
     GameMasterCommand Command);
 
 /// <summary>Game Oasis共通の運営命令です。</summary>

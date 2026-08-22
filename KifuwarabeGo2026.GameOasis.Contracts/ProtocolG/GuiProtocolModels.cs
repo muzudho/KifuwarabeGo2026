@@ -15,6 +15,8 @@ public sealed record GuiGameSnapshot(
     GameOasisSessionId SessionId,
     PlaySpaceTypeId PlaySpaceTypeId,
     long Revision,
+    long OperationRevision,
+    GameOasisOperationalState OperationalState,
     ContractDocument State,
     bool IsTerminal,
     ContractDocument? Outcome);

@@ -9,6 +9,12 @@ using KifuwarabeGo2026.GameOasis.Contracts.ProtocolS;
 /// </summary>
 public sealed class GameOasisConcierge
 {
+    /// <summary>ゲームを一時停止する共通運営操作名です。</summary>
+    public const string PauseOperation = "pause";
+
+    /// <summary>一時停止中のゲームを再開する共通運営操作名です。</summary>
+    public const string ResumeOperation = "resume";
+
     private readonly ConcurrentDictionary<PlaySpaceTypeId, RegisteredPlaySpace> _playSpaces = new();
     private readonly ConcurrentDictionary<GameOasisSessionId, ManagedSession> _sessions = new();
 
@@ -183,6 +189,18 @@ public sealed class GameOasisConcierge
         {
             if (!IsCurrentSession(request.SessionId, session))
                 return SessionNotFound<GameOasisActionApplied>(request.SessionId);
+            if (session.OperationalState == GameOasisOperationalState.Paused)
+            {
+                var current = await session.PlaySpace.Protocol.GetSnapshotAsync(
+                    new GetPlaySpaceSnapshotRequest(session.PlaySpaceSessionId), cancellationToken);
+                if (!current.IsSuccess || current.Value is null)
+                    return ForwardFailure<GameOasisActionApplied>(current.Error, "play-space-snapshot-failed");
+                return ProtocolResponse<GameOasisActionApplied>.Success(new(
+                    false,
+                    ToSnapshot(request.SessionId, session, current.Value),
+                    [],
+                    new ProtocolError("game-session-paused", "Player actions are not accepted while the game is paused.")));
+            }
             var applied = await session.PlaySpace.Protocol.ApplyActionAsync(new ApplyPlaySpaceActionRequest(
                 session.PlaySpaceSessionId, request.Action, request.ExpectedRevision), cancellationToken);
             return applied.IsSuccess && applied.Value is not null
@@ -192,6 +210,66 @@ public sealed class GameOasisConcierge
                     applied.Value.Events,
                     applied.Value.Rejection))
                 : ForwardFailure<GameOasisActionApplied>(applied.Error, "play-space-action-failed");
+        }
+        finally
+        {
+            session.Gate.Release();
+        }
+    }
+
+    /// <summary>コンシェルジュが所有する停止・再開状態を変更します。</summary>
+    public async ValueTask<ProtocolResponse<GameOasisOperationApplied>> ApplyOperationAsync(
+        ApplyGameOasisOperationRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        if (!_sessions.TryGetValue(request.SessionId, out var session))
+            return SessionNotFound<GameOasisOperationApplied>(request.SessionId);
+
+        await session.Gate.WaitAsync(cancellationToken);
+        try
+        {
+            if (!IsCurrentSession(request.SessionId, session))
+                return SessionNotFound<GameOasisOperationApplied>(request.SessionId);
+            var playSpaceSnapshot = await session.PlaySpace.Protocol.GetSnapshotAsync(
+                new GetPlaySpaceSnapshotRequest(session.PlaySpaceSessionId), cancellationToken);
+            if (!playSpaceSnapshot.IsSuccess || playSpaceSnapshot.Value is null)
+                return ForwardFailure<GameOasisOperationApplied>(playSpaceSnapshot.Error, "play-space-snapshot-failed");
+            if (request.ExpectedOperationRevision != session.OperationRevision)
+                return RejectedOperation(
+                    request.SessionId,
+                    session,
+                    playSpaceSnapshot.Value,
+                    "operation-revision-conflict",
+                    $"Expected operation revision {request.ExpectedOperationRevision}, current revision is {session.OperationRevision}.");
+
+            var target = request.OperationName switch
+            {
+                PauseOperation => GameOasisOperationalState.Paused,
+                ResumeOperation => GameOasisOperationalState.Running,
+                _ => (GameOasisOperationalState?)null,
+            };
+            if (target is null)
+                return RejectedOperation(
+                    request.SessionId,
+                    session,
+                    playSpaceSnapshot.Value,
+                    "unsupported-game-oasis-operation",
+                    $"Operation '{request.OperationName}' is not supported.");
+            if (session.OperationalState == target.Value)
+                return RejectedOperation(
+                    request.SessionId,
+                    session,
+                    playSpaceSnapshot.Value,
+                    "game-oasis-operation-not-applicable",
+                    $"The game is already {target.Value.ToString().ToLowerInvariant()}.");
+
+            session.OperationalState = target.Value;
+            session.OperationRevision++;
+            return ProtocolResponse<GameOasisOperationApplied>.Success(new(
+                true,
+                ToSnapshot(request.SessionId, session, playSpaceSnapshot.Value),
+                null));
         }
         finally
         {
@@ -236,6 +314,20 @@ public sealed class GameOasisConcierge
     private static ProtocolResponse<T> Failure<T>(string code, string message) =>
         ProtocolResponse<T>.Failure(new ProtocolError(code, message));
 
+    private static ProtocolResponse<GameOasisOperationApplied> RejectedOperation(
+        GameOasisSessionId sessionId,
+        ManagedSession session,
+        PlaySpaceSnapshot snapshot,
+        string code,
+        string message)
+    {
+        var error = new ProtocolError(code, message);
+        return ProtocolResponse<GameOasisOperationApplied>.Success(new(
+            false,
+            ToSnapshot(sessionId, session, snapshot),
+            error));
+    }
+
     private bool IsCurrentSession(GameOasisSessionId sessionId, ManagedSession session) =>
         _sessions.TryGetValue(sessionId, out var current) && ReferenceEquals(current, session);
 
@@ -247,6 +339,8 @@ public sealed class GameOasisConcierge
             sessionId,
             session.PlaySpace.Descriptor.TypeId,
             snapshot.Revision,
+            session.OperationRevision,
+            session.OperationalState,
             snapshot.State,
             snapshot.IsTerminal,
             snapshot.Outcome);
@@ -262,6 +356,8 @@ public sealed class GameOasisConcierge
     {
         public RegisteredPlaySpace PlaySpace { get; } = playSpace;
         public PlaySpaceSessionId PlaySpaceSessionId { get; } = playSpaceSessionId;
+        public long OperationRevision { get; set; }
+        public GameOasisOperationalState OperationalState { get; set; } = GameOasisOperationalState.Running;
         public SemaphoreSlim Gate { get; } = new(1, 1);
     }
 }

@@ -17,6 +17,8 @@ public sealed record GameOasisSnapshot(
     GameOasisSessionId SessionId,
     PlaySpaceTypeId PlaySpaceTypeId,
     long Revision,
+    long OperationRevision,
+    GameOasisOperationalState OperationalState,
     ContractDocument State,
     bool IsTerminal,
     ContractDocument? Outcome);
@@ -39,3 +41,15 @@ public sealed record ApplyGameOasisActionRequest(
     GameOasisSessionId SessionId,
     ContractDocument Action,
     long ExpectedRevision);
+
+/// <summary>コンシェルジュが所有するゲーム運営状態の変更要求です。</summary>
+public sealed record ApplyGameOasisOperationRequest(
+    GameOasisSessionId SessionId,
+    string OperationName,
+    long ExpectedOperationRevision);
+
+/// <summary>ゲーム運営状態の変更結果です。</summary>
+public sealed record GameOasisOperationApplied(
+    bool IsAccepted,
+    GameOasisSnapshot Snapshot,
+    ProtocolError? Rejection);

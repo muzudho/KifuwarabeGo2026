@@ -1,5 +1,15 @@
 namespace KifuwarabeGo2026.GameOasis.Contracts.Common;
 
+/// <summary>コンシェルジュが管理するゲームの運営状態です。</summary>
+public enum GameOasisOperationalState
+{
+    /// <summary>プレイヤーの行動を受け付ける通常状態です。</summary>
+    Running,
+
+    /// <summary>ゲームマスターによって一時停止された状態です。</summary>
+    Paused,
+}
+
 /// <summary>プレイスペースの種類を表す、実装者が定める安定したIDです。</summary>
 public readonly record struct PlaySpaceTypeId(string Value)
 {

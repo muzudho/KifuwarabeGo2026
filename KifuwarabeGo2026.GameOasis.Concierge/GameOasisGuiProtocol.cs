@@ -80,6 +80,8 @@ public sealed class GameOasisGuiProtocol(GameOasisConcierge concierge) : IGuiPro
             snapshot.SessionId,
             snapshot.PlaySpaceTypeId,
             snapshot.Revision,
+            snapshot.OperationRevision,
+            snapshot.OperationalState,
             snapshot.State,
             snapshot.IsTerminal,
             snapshot.Outcome);
