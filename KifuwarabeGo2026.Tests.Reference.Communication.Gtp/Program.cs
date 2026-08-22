@@ -45,9 +45,10 @@ var bound = RequireSuccess(await players.BindPlayerAsync(
     "black"));
 
 RequireSequence(
-    transport.Commands.Take(8),
+    transport.Commands.Take(9),
     [
         "known_command kfw-begin-position",
+        "known_command loadsgf",
         "boardsize 9",
         "komi 6.5",
         "kfw-begin-position",
@@ -73,6 +74,7 @@ RequireSequence(
         "known_command kfw-begin-position",
         "known_command fixed_handicap",
         "known_command set_free_handicap",
+        "known_command loadsgf",
         "boardsize 9",
         "clear_board",
         "komi 6.5",
@@ -188,6 +190,22 @@ var notified = RequireSuccess(await gtpPlayer.NotifyActionAsync(new(
 Require(notified.Revision == whiteApplied.Snapshot.Revision, "The GTP adapter must acknowledge the opponent revision.");
 Require(transport.Commands.Last() == "play white E5", "The opponent move must be converted to a standard GTP play command.");
 
+var sgfStore = new RecordingSgfFileStore();
+var loadSgfTransport = new LoadSgfRecordingTransport();
+var loadSgfPlayer = new KifuwarabeGtpPlayerProtocol(
+    loadSgfTransport,
+    new PlayerEngineId("org.kifuwarabe.tests.loadsgf-player"),
+    sgfFileStore: sgfStore);
+var loadSgfRegistered = RequireSuccess(await players.RegisterPlayerAsync(loadSgfPlayer));
+var loadSgfBound = RequireSuccess(await players.BindPlayerAsync(
+    loadSgfRegistered.Descriptor.EngineId,
+    opened.SessionId,
+    "white"));
+Require(loadSgfTransport.Commands.Last() == "loadsgf memory-position.sgf", "A session with move history must be synchronized through loadsgf.");
+Require(sgfStore.Content == "(;GM[1]FF[4]CA[UTF-8]SZ[9]KM[6.5]PL[B]AB[aa]AW[ba];B[df];W[ee])\n", "The SGF must preserve original setup and accepted move history without duplicating the current board.");
+Require(sgfStore.LeaseWasDisposed, "The materialized SGF lease must be released after loadsgf responds.");
+RequireSuccess(await players.UnbindPlayerAsync(loadSgfBound.BindingId, "loadsgf-verified"));
+
 RequireSuccess(await players.UnbindPlayerAsync(bound.BindingId, "smoke-test-complete"));
 RequireSuccess(await concierge.CloseSessionAsync(opened.SessionId));
 RequireSuccess(await concierge.UnregisterPlaySpaceAsync(registeredGo.Descriptor.TypeId));
@@ -284,5 +302,42 @@ internal sealed class GenericRecordingGtpTransport : IGtpCommandTransport
             : command == "fixed_handicap 2"
             ? new GtpCommandResponse(true, ReturnMismatchedFixedHandicap ? "C3 C7" : "C3 G7")
             : new GtpCommandResponse(true, string.Empty));
+    }
+}
+
+internal sealed class LoadSgfRecordingTransport : IGtpCommandTransport
+{
+    public List<string> Commands { get; } = [];
+
+    public ValueTask<GtpCommandResponse> SendAsync(string command, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        Commands.Add(command);
+        return ValueTask.FromResult(command.StartsWith("known_command ", StringComparison.Ordinal)
+            ? new GtpCommandResponse(true, command == "known_command loadsgf" ? "true" : "false")
+            : new GtpCommandResponse(true, string.Empty));
+    }
+}
+
+internal sealed class RecordingSgfFileStore : IGtpSgfFileStore
+{
+    public string? Content { get; private set; }
+    public bool LeaseWasDisposed { get; private set; }
+
+    public ValueTask<IGtpSgfFileLease> MaterializeAsync(string content, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        Content = content;
+        return ValueTask.FromResult<IGtpSgfFileLease>(new Lease(this));
+    }
+
+    private sealed class Lease(RecordingSgfFileStore owner) : IGtpSgfFileLease
+    {
+        public string FilePath => "memory-position.sgf";
+        public ValueTask DisposeAsync()
+        {
+            owner.LeaseWasDisposed = true;
+            return ValueTask.CompletedTask;
+        }
     }
 }

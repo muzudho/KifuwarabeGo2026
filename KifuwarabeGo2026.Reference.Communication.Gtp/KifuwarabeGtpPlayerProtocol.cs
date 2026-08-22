@@ -1,6 +1,7 @@
 namespace KifuwarabeGo2026.Reference.Communication.Gtp;
 
 using System.Globalization;
+using System.Text;
 using System.Text.Json;
 using KifuwarabeGo2026.GameOasis.Contracts.Common;
 using KifuwarabeGo2026.GameOasis.Contracts.ProtocolP;
@@ -9,12 +10,14 @@ using KifuwarabeGo2026.GameOasis.Contracts.ProtocolP;
 public sealed class KifuwarabeGtpPlayerProtocol(
     IGtpCommandTransport transport,
     PlayerEngineId engineId,
-    string displayName = "きふわらべGTPプレイヤー") : IPlayerProtocol
+    string displayName = "きふわらべGTPプレイヤー",
+    IGtpSgfFileStore? sgfFileStore = null) : IPlayerProtocol
 {
     public static readonly PlaySpaceTypeId GoTypeId = new("org.kifuwarabe.games.go");
     private const string GoStateSchema = "org.kifuwarabe.games.go.state.v1";
     private const string GoActionSchema = "org.kifuwarabe.games.go.action.v1";
     private readonly IGtpCommandTransport _transport = transport ?? throw new ArgumentNullException(nameof(transport));
+    private readonly IGtpSgfFileStore _sgfFileStore = sgfFileStore ?? TemporaryGtpSgfFileStore.Shared;
     private readonly object _sync = new();
     private ActiveBinding? _binding;
     private GtpInitialPositionCapabilities? _initialPositionCapabilities;
@@ -145,12 +148,16 @@ public sealed class KifuwarabeGtpPlayerProtocol(
         var state = parsed.Value;
         var capabilities = await ResolveInitialPositionCapabilitiesAsync(cancellationToken);
         var mode = capabilities.SupportsAtomic
-            ? InitialPositionMode.KifuwarabeAtomic
+            ? state.MoveHistory.Count > 0 && capabilities.SupportsLoadSgf ? InitialPositionMode.LoadSgf : InitialPositionMode.KifuwarabeAtomic
+            : state.MoveHistory.Count > 0 && capabilities.SupportsLoadSgf
+                ? InitialPositionMode.LoadSgf
             : capabilities.SupportsFixedHandicap && IsStandardFixedHandicap(state)
                 ? InitialPositionMode.FixedHandicap
             : capabilities.SupportsSetFreeHandicap && IsBlackHandicap(state)
                 ? InitialPositionMode.SetFreeHandicap
                 : InitialPositionMode.StandardSequentialPlay;
+        if (mode == InitialPositionMode.LoadSgf)
+            return await SynchronizeWithSgfAsync(state, cancellationToken);
         var commands = new List<string>
         {
             $"boardsize {state.BoardSize}",
@@ -202,7 +209,8 @@ public sealed class KifuwarabeGtpPlayerProtocol(
         var atomic = await SupportsCommandAsync("kfw-begin-position", cancellationToken);
         var fixedHandicap = !atomic && await SupportsCommandAsync("fixed_handicap", cancellationToken);
         var setFreeHandicap = !atomic && await SupportsCommandAsync("set_free_handicap", cancellationToken);
-        _initialPositionCapabilities = new(atomic, fixedHandicap, setFreeHandicap);
+        var loadSgf = await SupportsCommandAsync("loadsgf", cancellationToken);
+        _initialPositionCapabilities = new(atomic, fixedHandicap, setFreeHandicap, loadSgf);
         return _initialPositionCapabilities;
     }
 
@@ -210,6 +218,53 @@ public sealed class KifuwarabeGtpPlayerProtocol(
     {
         var response = await _transport.SendAsync($"known_command {command}", cancellationToken);
         return response.IsSuccess && bool.TryParse(response.Payload.Trim(), out var supported) && supported;
+    }
+
+    private async ValueTask<ProtocolResponse<bool>> SynchronizeWithSgfAsync(GoState state, CancellationToken cancellationToken)
+    {
+        await using var lease = await _sgfFileStore.MaterializeAsync(BuildSgf(state), cancellationToken);
+        var path = FormatFilePath(lease.FilePath);
+        var response = await _transport.SendAsync($"loadsgf {path}", cancellationToken);
+        return response.IsSuccess
+            ? ProtocolResponse<bool>.Success(true)
+            : Failure<bool>("gtp-loadsgf-failed", response.Payload);
+    }
+
+    private static string BuildSgf(GoState state)
+    {
+        var builder = new StringBuilder("(;GM[1]FF[4]CA[UTF-8]");
+        builder.Append("SZ[").Append(state.BoardSize).Append(']');
+        builder.Append("KM[").Append(state.Komi.ToString(CultureInfo.InvariantCulture)).Append(']');
+        builder.Append("PL[").Append(state.MoveHistory.Count == 0 ? (state.NextToPlay == "black" ? 'B' : 'W') : state.MoveHistory[0].Player == "black" ? 'B' : 'W').Append(']');
+        AppendSetup(builder, "AB", state.SetupBlack, state.BoardSize);
+        AppendSetup(builder, "AW", state.SetupWhite, state.BoardSize);
+        foreach (var move in state.MoveHistory)
+        {
+            builder.Append(';').Append(move.Player == "black" ? 'B' : 'W').Append('[');
+            if (move.Type == "play" && move.X is { } x && move.Y is { } y) builder.Append(FormatSgfPoint(x, y, state.BoardSize));
+            builder.Append(']');
+        }
+        return builder.Append(")\n").ToString();
+    }
+
+    private static void AppendSetup(StringBuilder builder, string property, IReadOnlyList<Point> points, int boardSize)
+    {
+        if (points.Count == 0) return;
+        builder.Append(property);
+        foreach (var point in points) builder.Append('[').Append(FormatSgfPoint(point.X, point.Y, boardSize)).Append(']');
+    }
+
+    private static string FormatSgfPoint(int x, int y, int boardSize)
+    {
+        if (x < 0 || x >= boardSize || y < 0 || y >= boardSize) throw new InvalidDataException("A Go point is outside the SGF board.");
+        return $"{(char)('a' + x)}{(char)('a' + y)}";
+    }
+
+    private static string FormatFilePath(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path) || path.IndexOfAny(['\r', '\n', '\0', '"']) >= 0)
+            throw new InvalidDataException("The SGF file path cannot be represented safely as a GTP argument.");
+        return path.Any(char.IsWhiteSpace) ? $"\"{path}\"" : path;
     }
 
     private static bool IsBlackHandicap(GoState state) =>
@@ -324,7 +379,10 @@ public sealed class KifuwarabeGtpPlayerProtocol(
                 root.GetProperty("komi").GetDecimal(),
                 root.GetProperty("nextToPlay").GetString()!,
                 ReadPoints(root.GetProperty("black")),
-                ReadPoints(root.GetProperty("white"))));
+                ReadPoints(root.GetProperty("white")),
+                root.TryGetProperty("setupBlack", out var setupBlack) ? ReadPoints(setupBlack) : [],
+                root.TryGetProperty("setupWhite", out var setupWhite) ? ReadPoints(setupWhite) : [],
+                root.TryGetProperty("moveHistory", out var history) ? ReadMoves(history) : []));
         }
         catch (Exception exception) when (exception is JsonException or InvalidOperationException or KeyNotFoundException or FormatException)
         {
@@ -336,6 +394,13 @@ public sealed class KifuwarabeGtpPlayerProtocol(
         array.EnumerateArray().Select(value => new Point(
             value.GetProperty("x").GetInt32(),
             value.GetProperty("y").GetInt32())).ToArray();
+
+    private static IReadOnlyList<Move> ReadMoves(JsonElement array) =>
+        array.EnumerateArray().Select(value => new Move(
+            value.GetProperty("player").GetString()!,
+            value.GetProperty("type").GetString()!,
+            value.TryGetProperty("x", out var x) && x.ValueKind == JsonValueKind.Number ? x.GetInt32() : null,
+            value.TryGetProperty("y", out var y) && y.ValueKind == JsonValueKind.Number ? y.GetInt32() : null)).ToArray();
 
     private static ContractDocument Action(string type, string player, int? x = null, int? y = null) => new(
         "application/json",
@@ -367,9 +432,10 @@ public sealed class KifuwarabeGtpPlayerProtocol(
         ProtocolResponse<T>.Failure(new(code, message));
 
     private sealed record Point(int X, int Y);
-    private sealed record GoState(int BoardSize, decimal Komi, string NextToPlay, IReadOnlyList<Point> Black, IReadOnlyList<Point> White);
-    private sealed record GtpInitialPositionCapabilities(bool SupportsAtomic, bool SupportsFixedHandicap, bool SupportsSetFreeHandicap);
-    private enum InitialPositionMode { KifuwarabeAtomic, FixedHandicap, SetFreeHandicap, StandardSequentialPlay }
+    private sealed record Move(string Player, string Type, int? X, int? Y);
+    private sealed record GoState(int BoardSize, decimal Komi, string NextToPlay, IReadOnlyList<Point> Black, IReadOnlyList<Point> White, IReadOnlyList<Point> SetupBlack, IReadOnlyList<Point> SetupWhite, IReadOnlyList<Move> MoveHistory);
+    private sealed record GtpInitialPositionCapabilities(bool SupportsAtomic, bool SupportsFixedHandicap, bool SupportsSetFreeHandicap, bool SupportsLoadSgf);
+    private enum InitialPositionMode { KifuwarabeAtomic, LoadSgf, FixedHandicap, SetFreeHandicap, StandardSequentialPlay }
     private sealed class ActiveBinding(PlayerBindingId bindingId, string roleId)
     {
         public PlayerBindingId BindingId { get; } = bindingId;
