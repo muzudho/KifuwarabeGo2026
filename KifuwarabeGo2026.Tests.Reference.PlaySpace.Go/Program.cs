@@ -7,6 +7,7 @@ IPlaySpaceProtocol go = new GoPlaySpaceProtocol();
 var descriptor = RequireSuccess(await go.DescribeAsync());
 Require(descriptor.TypeId.Value == "org.kifuwarabe.games.go", "The normal Go type ID must be stable.");
 Require(descriptor.Capabilities.Contains("chinese-area-scoring"), "The ruleset capability must be advertised.");
+Require(descriptor.Capabilities.Contains("move-history-observation"), "The additive move-history observation capability must be advertised.");
 
 var schema = RequireSuccess(await go.GetConfigurationSchemaAsync());
 using (var schemaJson = JsonDocument.Parse(schema.Content))
@@ -43,12 +44,19 @@ using (var state = JsonDocument.Parse(capture.Snapshot.State.Content))
     Require(state.RootElement.GetProperty("blackCaptures").GetInt32() == 1, "The capture count must advance.");
     var ko = state.RootElement.GetProperty("koPoint");
     Require(ko.GetProperty("x").GetInt32() == 1 && ko.GetProperty("y").GetInt32() == 0, "The simple ko point must be exposed.");
+    Require(state.RootElement.GetProperty("setupBlack").GetArrayLength() == 2, "The original black setup must remain distinguishable from the current board.");
+    Require(state.RootElement.GetProperty("setupWhite").GetArrayLength() == 4, "The original white setup must remain distinguishable from the current board.");
+    var history = state.RootElement.GetProperty("moveHistory");
+    Require(history.GetArrayLength() == 1, "Only accepted moves must enter the move history.");
+    Require(history[0].GetProperty("player").GetString() == "black" && history[0].GetProperty("x").GetInt32() == 1, "The move history must preserve player and point.");
 }
 var recapture = RequireSuccess(await go.ApplyActionAsync(new(
     koSession.SessionId,
     Action("""{"version":1,"type":"play","player":"white","x":1,"y":0}"""),
     1)));
 Require(!recapture.IsAccepted && recapture.Rejection?.Code == "illegal-action", "Immediate ko recapture must be rejected.");
+using (var rejectedState = JsonDocument.Parse(recapture.Snapshot.State.Content))
+    Require(rejectedState.RootElement.GetProperty("moveHistory").GetArrayLength() == 1, "A rejected move must not enter the move history.");
 var stale = await go.ApplyActionAsync(new(
     koSession.SessionId,
     Action("""{"version":1,"type":"pass","player":"white"}"""),
@@ -69,6 +77,11 @@ var whitePass = RequireSuccess(await go.ApplyActionAsync(new(
     Action("""{"version":1,"type":"pass","player":"white"}"""),
     1)));
 Require(whitePass.IsAccepted && whitePass.Snapshot.IsTerminal, "Two consecutive passes must end and score the game.");
+using (var state = JsonDocument.Parse(whitePass.Snapshot.State.Content))
+{
+    var history = state.RootElement.GetProperty("moveHistory");
+    Require(history.GetArrayLength() == 2 && history[0].GetProperty("type").GetString() == "pass", "Accepted passes must be preserved for SGF reconstruction.");
+}
 using (var outcome = JsonDocument.Parse(whitePass.Snapshot.Outcome!.Content))
 {
     Require(outcome.RootElement.GetProperty("winner").GetString() == "white", "Komi must make white the winner on an empty board.");

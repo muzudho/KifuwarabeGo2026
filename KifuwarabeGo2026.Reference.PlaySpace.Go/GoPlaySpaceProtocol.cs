@@ -21,7 +21,7 @@ public sealed class GoPlaySpaceProtocol : IPlaySpaceProtocol
             ContractVersion.V1_0,
             "KifuwarabeGo2026.Reference.PlaySpace.Go",
             typeof(GoPlaySpaceProtocol).Assembly.GetName().Version?.ToString() ?? "4.0.0",
-            ["explicit-setup", "simple-ko", "positional-superko", "two-pass-scoring", "resignation", "chinese-area-scoring"])));
+            ["explicit-setup", "move-history-observation", "simple-ko", "positional-superko", "two-pass-scoring", "resignation", "chinese-area-scoring"])));
     }
 
     public ValueTask<ProtocolResponse<ContractDocument>> GetConfigurationSchemaAsync(CancellationToken cancellationToken = default)
@@ -83,6 +83,13 @@ public sealed class GoPlaySpaceProtocol : IPlaySpaceProtocol
             NextToPlay = nextToPlay,
             Komi = configuration.Komi,
         };
+        foreach (var setup in configuration.SetupStones ?? [])
+        {
+            var point = new GoPointDocument(setup.X, setup.Y);
+            (string.Equals(setup.Color, "black", StringComparison.OrdinalIgnoreCase)
+                ? session.SetupBlack
+                : session.SetupWhite).Add(point);
+        }
         session.PositionHistory.Add(board.PositionKey());
         var sessionId = new PlaySpaceSessionId(Guid.NewGuid().ToString("N"));
         session.SessionId = sessionId;
@@ -167,6 +174,13 @@ public sealed class GoPlaySpaceProtocol : IPlaySpaceProtocol
             {
                 return ValueTask.FromResult(Rejected(session, "unsupported-action", "Supported actions are play, pass, and resign."));
             }
+
+            if (actionType is "play" or "pass")
+                session.MoveHistory.Add(new(
+                    StoneName(player),
+                    actionType,
+                    point?.X,
+                    point?.Y));
 
             session.NextToPlay = Opposite(player);
             session.Revision++;
@@ -271,7 +285,10 @@ public sealed class GoPlaySpaceProtocol : IPlaySpaceProtocol
             session.WhiteCaptures,
             session.ConsecutivePasses,
             session.KoPoint is { } ko ? new(ko.X, ko.Y) : null,
-            session.IsTerminal));
+            session.IsTerminal,
+            session.SetupBlack,
+            session.SetupWhite,
+            session.MoveHistory));
         var outcome = session.Outcome is null ? null : Document(GoSchemas.Outcome, session.Outcome);
         return new(session.SessionId, session.Revision, state, session.IsTerminal, outcome);
     }
@@ -309,6 +326,9 @@ public sealed class GoPlaySpaceProtocol : IPlaySpaceProtocol
         public required GoStone NextToPlay { get; set; }
         public required decimal Komi { get; init; }
         public HashSet<string> PositionHistory { get; } = [];
+        public List<GoPointDocument> SetupBlack { get; } = [];
+        public List<GoPointDocument> SetupWhite { get; } = [];
+        public List<GoMoveDocument> MoveHistory { get; } = [];
         public GoPoint? KoPoint { get; set; }
         public int BlackCaptures { get; set; }
         public int WhiteCaptures { get; set; }

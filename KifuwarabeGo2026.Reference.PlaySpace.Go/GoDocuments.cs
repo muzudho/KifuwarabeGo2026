@@ -19,6 +19,8 @@ internal sealed record GoActionDocument(
 
 internal sealed record GoPointDocument(int X, int Y);
 
+internal sealed record GoMoveDocument(string Player, string Type, int? X = null, int? Y = null);
+
 internal sealed record GoStateDocument(
     int Version,
     int BoardSize,
@@ -31,7 +33,10 @@ internal sealed record GoStateDocument(
     int WhiteCaptures,
     int ConsecutivePasses,
     GoPointDocument? KoPoint,
-    bool IsTerminal);
+    bool IsTerminal,
+    IReadOnlyList<GoPointDocument> SetupBlack,
+    IReadOnlyList<GoPointDocument> SetupWhite,
+    IReadOnlyList<GoMoveDocument> MoveHistory);
 
 internal sealed record GoEventDocument(
     int Version,
