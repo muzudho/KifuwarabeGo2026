@@ -16,17 +16,16 @@ public sealed class GameOasisGuiComposition
     {
         Concierge = concierge;
         Client = client;
+        BoardController = new(client);
     }
 
     public GameOasisConcierge Concierge { get; }
     public GameOasisGuiClient Client { get; }
+    public GameOasisBoardController BoardController { get; }
 
     public ProtocolResponse<GuiBoardView> GetActiveBoard()
     {
-        var snapshot = Client.State.ActiveSnapshot;
-        return snapshot is null
-            ? ProtocolResponse<GuiBoardView>.Failure(new("gui-session-not-open", "No Game Oasis GUI session is active."))
-            : GameBoardProjection.Project(snapshot);
+        return BoardController.GetBoard();
     }
 
     public static async ValueTask<GameOasisGuiComposition> CreateAsync(CancellationToken cancellationToken = default)
