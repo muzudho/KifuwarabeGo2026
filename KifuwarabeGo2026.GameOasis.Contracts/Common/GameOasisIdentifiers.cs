@@ -27,3 +27,17 @@ public readonly record struct PlayerBindingId(string Value)
     /// <inheritdoc />
     public override string ToString() => Value;
 }
+
+/// <summary>登録されたゲームマスター実装の安定したIDです。</summary>
+public readonly record struct GameMasterEngineId(string Value)
+{
+    /// <inheritdoc />
+    public override string ToString() => Value;
+}
+
+/// <summary>ゲームマスター実装を一つのゲームへ割り当てた参加IDです。</summary>
+public readonly record struct GameMasterBindingId(string Value)
+{
+    /// <inheritdoc />
+    public override string ToString() => Value;
+}
