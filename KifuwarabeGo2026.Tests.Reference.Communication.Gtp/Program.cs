@@ -4,6 +4,14 @@ using KifuwarabeGo2026.GameOasis.Contracts.ProtocolP;
 using KifuwarabeGo2026.Reference.Communication.Gtp;
 using KifuwarabeGo2026.Reference.PlaySpace.Go;
 
+if (args is ["--fake-gtp"])
+{
+    await RunFakeGtpAsync();
+    return;
+}
+
+await VerifyProcessTransportAsync();
+
 var concierge = new GameOasisConcierge();
 var registeredGo = RequireSuccess(await concierge.RegisterPlaySpaceAsync(new GoPlaySpaceProtocol()));
 var opened = RequireSuccess(await concierge.OpenSessionAsync(
@@ -82,6 +90,36 @@ RequireSuccess(await concierge.UnregisterPlaySpaceAsync(registeredGo.Descriptor.
 
 Console.WriteLine("PASS: Protocol P synchronized a Kifuwarabe GTP engine, recovered from a rejected genmove, and relayed the opponent move.");
 return;
+
+static async Task VerifyProcessTransportAsync()
+{
+    var assemblyPath = typeof(RecordingGtpTransport).Assembly.Location;
+    await using var transport = ProcessGtpCommandTransport.Start(new("dotnet", [assemblyPath, "--fake-gtp"]));
+    var name = await transport.SendAsync("name");
+    Require(name == new GtpCommandResponse(true, "Kifuwarabe Fake GTP"), "The process transport must parse a successful response.");
+    var list = await transport.SendAsync("list_commands");
+    Require(list.IsSuccess && list.Payload == "name\nlist_commands\nknown_command", "The process transport must preserve a multiline payload.");
+    var unknown = await transport.SendAsync("unknown");
+    Require(!unknown.IsSuccess && unknown.Payload == "unknown command", "The process transport must parse an error response.");
+}
+
+static async Task RunFakeGtpAsync()
+{
+    while (await Console.In.ReadLineAsync() is { } command)
+    {
+        var response = command switch
+        {
+            "name" => "= Kifuwarabe Fake GTP",
+            "list_commands" => "= name\nlist_commands\nknown_command",
+            "quit" => "=",
+            _ => "? unknown command",
+        };
+        await Console.Out.WriteLineAsync(response);
+        await Console.Out.WriteLineAsync();
+        await Console.Out.FlushAsync();
+        if (command == "quit") return;
+    }
+}
 
 static PlayerGameObservation ToObservation(GameOasisSnapshot snapshot) => new(
     snapshot.SessionId,
