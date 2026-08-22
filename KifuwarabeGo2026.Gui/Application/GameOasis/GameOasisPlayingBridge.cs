@@ -37,7 +37,7 @@ public sealed class GameOasisPlayingBridge(GameOasisBoardController controller) 
     {
         if (!CanBegin(GameOasisPlayingState.Ready, GameOasisPlayingState.Terminal)) return false;
         State = GameOasisPlayingState.Refreshing;
-        _pending = RefreshAsync(_cancellation.Token);
+        _pending = RefreshAsync(Board!, _cancellation.Token);
         return true;
     }
 
@@ -82,7 +82,7 @@ public sealed class GameOasisPlayingBridge(GameOasisBoardController controller) 
     {
         if (!CanBegin(GameOasisPlayingState.Ready)) return false;
         State = GameOasisPlayingState.Submitting;
-        _pending = SubmitAsync(submit, _cancellation.Token);
+        _pending = SubmitAsync(submit, Board!, _cancellation.Token);
         return true;
     }
 
@@ -94,24 +94,27 @@ public sealed class GameOasisPlayingBridge(GameOasisBoardController controller) 
         var response = await _controller.OpenAsync(typeId, configuration, cancellationToken);
         return response.IsSuccess && response.Value is not null
             ? Success(response.Value)
-            : Failure(response.Error);
+            : new(GameOasisPlayingState.Idle, null, NormalizeError(response.Error));
     }
 
     private async Task<BridgeCompletion> SubmitAsync(
         Func<ValueTask<ProtocolResponse<GuiActionSubmitted>>> submit,
+        GuiBoardView currentBoard,
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         var response = await submit();
-        if (!response.IsSuccess || response.Value is null) return Failure(response.Error);
+        if (!response.IsSuccess || response.Value is null) return Success(currentBoard, NormalizeError(response.Error));
         var board = _controller.GetBoard();
         return board.IsSuccess && board.Value is not null ? Success(board.Value, response.Value.Rejection) : Failure(board.Error);
     }
 
-    private async Task<BridgeCompletion> RefreshAsync(CancellationToken cancellationToken)
+    private async Task<BridgeCompletion> RefreshAsync(GuiBoardView currentBoard, CancellationToken cancellationToken)
     {
         var response = await _controller.RefreshAsync(cancellationToken);
-        return response.IsSuccess && response.Value is not null ? Success(response.Value) : Failure(response.Error);
+        return response.IsSuccess && response.Value is not null
+            ? Success(response.Value)
+            : Success(currentBoard, NormalizeError(response.Error));
     }
 
     private async Task<BridgeCompletion> CloseAsync(CancellationToken cancellationToken)
@@ -119,14 +122,19 @@ public sealed class GameOasisPlayingBridge(GameOasisBoardController controller) 
         var response = await _controller.CloseAsync(cancellationToken);
         return response.IsSuccess
             ? new(GameOasisPlayingState.Idle, null, null)
-            : Failure(response.Error);
+            : Board is { } board
+                ? Success(board, NormalizeError(response.Error))
+                : Failure(response.Error);
     }
 
     private static BridgeCompletion Success(GuiBoardView board, ProtocolError? warning = null) =>
         new(board.IsTerminal ? GameOasisPlayingState.Terminal : GameOasisPlayingState.Ready, board, warning);
 
     private static BridgeCompletion Failure(ProtocolError? error) =>
-        new(GameOasisPlayingState.Faulted, null, error ?? new("gui-operation-failed", "The GUI operation returned an invalid failure response."));
+        new(GameOasisPlayingState.Faulted, null, NormalizeError(error));
+
+    private static ProtocolError NormalizeError(ProtocolError? error) =>
+        error ?? new("gui-operation-failed", "The GUI operation returned an invalid failure response.");
 
     private sealed record BridgeCompletion(GameOasisPlayingState State, GuiBoardView? Board, ProtocolError? Error);
 }

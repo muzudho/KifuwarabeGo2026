@@ -95,6 +95,16 @@ internal static class PortabilityChecks
             "The current GUI composition must not expose a board before a Protocol G session opens.");
 
         var bridge = composition.PlayingBridge;
+        var invalidConfiguration = new ContractDocument(
+            "application/json",
+            GameOasisOfficialNames.Ponnuki + ".configuration.v1",
+            """{"version":1,"boardSize":8,"initialMoveCount":0,"captureTarget":1}""");
+        Require(bridge.BeginOpen(new(GameOasisOfficialNames.Ponnuki), invalidConfiguration),
+            "The GUI playing bridge must submit a configuration attempt from the idle state.");
+        CompleteBridgeOperation(bridge);
+        Require(bridge.State == GameOasisPlayingState.Idle && bridge.Board is null && bridge.LastError is not null,
+            "A rejected configuration must return the GUI playing bridge to retryable idle state.");
+
         var configuration = new ContractDocument(
             "application/json",
             GameOasisOfficialNames.Ponnuki + ".configuration.v1",
@@ -107,6 +117,16 @@ internal static class PortabilityChecks
         Require(bridge.State == GameOasisPlayingState.Ready && bridge.Board is { IsTerminal: false },
             "The GUI playing bridge must publish the opened board on the frame thread.");
 
+        var openedBoard = bridge.Board ?? throw new InvalidOperationException("The opened GUI board was not published.");
+        var openedRevision = openedBoard.Revision;
+        Require(bridge.BeginPlay(0, 0),
+            "The GUI playing bridge must accept an input attempt while ready.");
+        CompleteBridgeOperation(bridge);
+        Require(bridge.State == GameOasisPlayingState.Ready &&
+                bridge.Board is { IsTerminal: false } && bridge.Board.Revision == openedRevision &&
+                bridge.LastError?.Code == "gui-point-occupied",
+            "A rejected GUI input must preserve the current board and allow another input.");
+
         Require(bridge.BeginPlay(1, 1),
             "The GUI playing bridge must submit a legal board action.");
         Require(!bridge.BeginPlay(1, 2),
@@ -114,6 +134,8 @@ internal static class PortabilityChecks
         CompleteBridgeOperation(bridge);
         Require(bridge.State == GameOasisPlayingState.Terminal && bridge.Board is { IsTerminal: true, BlackCaptures: 1 },
             "The GUI playing bridge must publish the terminal Ponnuki board.");
+        Require(bridge.LastError is null,
+            "A successful retry must clear the preceding local input error.");
 
         Require(bridge.BeginClose(),
             "The GUI playing bridge must begin closing its active session.");
