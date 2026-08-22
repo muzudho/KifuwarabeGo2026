@@ -26,3 +26,8 @@ public sealed record PlayerTurnCompleted(
     PlayerBindingId ActingBindingId,
     GameOasisActionApplied Applied,
     IReadOnlyList<PlayerNotificationFailure> NotificationFailures);
+
+/// <summary>着手以外の状態変更を参加プレイヤーへ配信した結果です。</summary>
+public sealed record PlayerStateBroadcast(
+    GameOasisSessionId SessionId,
+    IReadOnlyList<PlayerBindingId> NotificationFailures);

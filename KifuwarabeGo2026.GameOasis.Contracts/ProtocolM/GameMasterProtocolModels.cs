@@ -59,7 +59,8 @@ public sealed record GameMasterCommandResult(
 /// <summary>ゲームマスターへ通知する運営命令の実行結果です。</summary>
 public sealed record GameMasterCommandNotification(
     GameMasterBindingId BindingId,
-    GameMasterCommandResult Result);
+    GameMasterCommandResult Result,
+    GameMasterGameObservation Observation);
 
 /// <summary>ゲームマスターが実行結果通知を受理した結果です。</summary>
 public sealed record GameMasterCommandNotified(GameMasterBindingId BindingId);

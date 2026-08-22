@@ -15,6 +15,9 @@ public sealed class GameOasisConcierge
     /// <summary>一時停止中のゲームを再開する共通運営操作名です。</summary>
     public const string ResumeOperation = "resume";
 
+    /// <summary>ゲームマスターの裁定結果を確定する共通運営操作名です。</summary>
+    public const string AdjudicateOperation = "adjudicate";
+
     private readonly ConcurrentDictionary<PlaySpaceTypeId, RegisteredPlaySpace> _playSpaces = new();
     private readonly ConcurrentDictionary<GameOasisSessionId, ManagedSession> _sessions = new();
 
@@ -201,6 +204,18 @@ public sealed class GameOasisConcierge
                     [],
                     new ProtocolError("game-session-paused", "Player actions are not accepted while the game is paused.")));
             }
+            if (session.OperationalState == GameOasisOperationalState.Adjudicated)
+            {
+                var current = await session.PlaySpace.Protocol.GetSnapshotAsync(
+                    new GetPlaySpaceSnapshotRequest(session.PlaySpaceSessionId), cancellationToken);
+                if (!current.IsSuccess || current.Value is null)
+                    return ForwardFailure<GameOasisActionApplied>(current.Error, "play-space-snapshot-failed");
+                return ProtocolResponse<GameOasisActionApplied>.Success(new(
+                    false,
+                    ToSnapshot(request.SessionId, session, current.Value),
+                    [],
+                    new ProtocolError("game-session-adjudicated", "Player actions are not accepted after a game-master adjudication.")));
+            }
             var applied = await session.PlaySpace.Protocol.ApplyActionAsync(new ApplyPlaySpaceActionRequest(
                 session.PlaySpaceSessionId, request.Action, request.ExpectedRevision), cancellationToken);
             return applied.IsSuccess && applied.Value is not null
@@ -242,6 +257,38 @@ public sealed class GameOasisConcierge
                     playSpaceSnapshot.Value,
                     "operation-revision-conflict",
                     $"Expected operation revision {request.ExpectedOperationRevision}, current revision is {session.OperationRevision}.");
+            if (playSpaceSnapshot.Value.IsTerminal)
+                return RejectedOperation(
+                    request.SessionId,
+                    session,
+                    playSpaceSnapshot.Value,
+                    "game-result-already-final",
+                    "The play-space has already finalized the game result.");
+
+            if (request.OperationName == AdjudicateOperation)
+            {
+                if (request.Parameters is null)
+                    return RejectedOperation(
+                        request.SessionId,
+                        session,
+                        playSpaceSnapshot.Value,
+                        "adjudication-result-required",
+                        "The adjudicate operation requires a self-describing result document.");
+                if (session.OperationalState == GameOasisOperationalState.Adjudicated)
+                    return RejectedOperation(
+                        request.SessionId,
+                        session,
+                        playSpaceSnapshot.Value,
+                        "game-result-already-final",
+                        "The game result is already final.");
+                session.AdjudicatedOutcome = request.Parameters;
+                session.OperationalState = GameOasisOperationalState.Adjudicated;
+                session.OperationRevision++;
+                return ProtocolResponse<GameOasisOperationApplied>.Success(new(
+                    true,
+                    ToSnapshot(request.SessionId, session, playSpaceSnapshot.Value),
+                    null));
+            }
 
             var target = request.OperationName switch
             {
@@ -263,6 +310,13 @@ public sealed class GameOasisConcierge
                     playSpaceSnapshot.Value,
                     "game-oasis-operation-not-applicable",
                     $"The game is already {target.Value.ToString().ToLowerInvariant()}.");
+            if (session.OperationalState == GameOasisOperationalState.Adjudicated)
+                return RejectedOperation(
+                    request.SessionId,
+                    session,
+                    playSpaceSnapshot.Value,
+                    "game-result-already-final",
+                    "An adjudicated game cannot be paused or resumed.");
 
             session.OperationalState = target.Value;
             session.OperationRevision++;
@@ -342,8 +396,8 @@ public sealed class GameOasisConcierge
             session.OperationRevision,
             session.OperationalState,
             snapshot.State,
-            snapshot.IsTerminal,
-            snapshot.Outcome);
+            snapshot.IsTerminal || session.AdjudicatedOutcome is not null,
+            session.AdjudicatedOutcome ?? snapshot.Outcome);
 
     private sealed class RegisteredPlaySpace(PlaySpaceDescriptor descriptor, IPlaySpaceProtocol protocol)
     {
@@ -358,6 +412,7 @@ public sealed class GameOasisConcierge
         public PlaySpaceSessionId PlaySpaceSessionId { get; } = playSpaceSessionId;
         public long OperationRevision { get; set; }
         public GameOasisOperationalState OperationalState { get; set; } = GameOasisOperationalState.Running;
+        public ContractDocument? AdjudicatedOutcome { get; set; }
         public SemaphoreSlim Gate { get; } = new(1, 1);
     }
 }

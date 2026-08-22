@@ -166,6 +166,30 @@ public sealed class GameOasisPlayerCoordinator(GameOasisConcierge concierge)
         }
     }
 
+    /// <summary>停止、再開、裁定などによる最新状態を同じゲームの全プレイヤーへ通知します。</summary>
+    public async ValueTask<ProtocolResponse<PlayerStateBroadcast>> BroadcastStateAsync(
+        GameOasisSessionId sessionId,
+        string reason,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var snapshot = await _concierge.GetSnapshotAsync(sessionId, cancellationToken);
+        if (!snapshot.IsSuccess || snapshot.Value is null)
+            return ForwardFailure<PlayerStateBroadcast>(snapshot.Error, "player-state-broadcast-snapshot-failed");
+
+        var failures = new List<PlayerBindingId>();
+        foreach (var recipient in _bindings.Values.Where(value => value.SessionId == sessionId).ToArray())
+        {
+            var notified = await recipient.Player.Protocol.NotifyStateAsync(new(
+                recipient.BindingId,
+                ToObservation(snapshot.Value),
+                reason), cancellationToken);
+            if (!notified.IsSuccess)
+                failures.Add(recipient.BindingId);
+        }
+        return ProtocolResponse<PlayerStateBroadcast>.Success(new(sessionId, failures));
+    }
+
     private bool IsCurrentBinding(PlayerBindingId bindingId, PlayerBinding binding) =>
         _bindings.TryGetValue(bindingId, out var current) && ReferenceEquals(current, binding);
 

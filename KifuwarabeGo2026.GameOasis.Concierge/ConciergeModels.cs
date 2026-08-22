@@ -46,7 +46,8 @@ public sealed record ApplyGameOasisActionRequest(
 public sealed record ApplyGameOasisOperationRequest(
     GameOasisSessionId SessionId,
     string OperationName,
-    long ExpectedOperationRevision);
+    long ExpectedOperationRevision,
+    ContractDocument? Parameters = null);
 
 /// <summary>ゲーム運営状態の変更結果です。</summary>
 public sealed record GameOasisOperationApplied(

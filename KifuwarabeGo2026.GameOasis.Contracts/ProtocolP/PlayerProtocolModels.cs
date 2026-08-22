@@ -56,6 +56,18 @@ public sealed record PlayerActionNotification(
 /// <summary>行動通知を受理した結果です。</summary>
 public sealed record PlayerActionNotified(PlayerBindingId BindingId, long Revision);
 
+/// <summary>停止、再開、裁定など、着手以外による状態変更を通知します。</summary>
+public sealed record PlayerStateNotification(
+    PlayerBindingId BindingId,
+    PlayerGameObservation Observation,
+    string Reason);
+
+/// <summary>プレイヤーが状態変更通知を受理した結果です。</summary>
+public sealed record PlayerStateNotified(
+    PlayerBindingId BindingId,
+    long Revision,
+    long OperationRevision);
+
 /// <summary>プレイヤーのゲーム参加を終了します。</summary>
 public sealed record PlayerSessionEndRequest(
     PlayerBindingId BindingId,

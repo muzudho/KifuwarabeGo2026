@@ -28,6 +28,7 @@ StartSession
 - 拒否された行動も、現在状態と拒否理由を通知できます。
 - `OperationalState`が`Paused`の間、コンシェルジュは新しい着手要求を行いません。
 - 盤面の`Revision`と、停止・再開を管理する`OperationRevision`は独立しています。
+- 停止、再開、裁定など着手以外の変更は`NotifyState`で通知され、裁定結果も通常の`Outcome`として受け取ります。
 
 ## v1.0で未確定の事項
 

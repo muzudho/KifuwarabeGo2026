@@ -121,6 +121,17 @@ internal sealed class ScriptedPlayer : IPlayerProtocol
             notification.Observation.Revision)));
     }
 
+    public ValueTask<ProtocolResponse<PlayerStateNotified>> NotifyStateAsync(
+        PlayerStateNotification notification,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return ValueTask.FromResult(ProtocolResponse<PlayerStateNotified>.Success(new(
+            notification.BindingId,
+            notification.Observation.Revision,
+            notification.Observation.OperationRevision)));
+    }
+
     public ValueTask<ProtocolResponse<PlayerSessionEnded>> EndSessionAsync(
         PlayerSessionEndRequest request,
         CancellationToken cancellationToken = default)

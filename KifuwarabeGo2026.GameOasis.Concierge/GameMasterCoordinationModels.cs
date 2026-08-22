@@ -19,4 +19,6 @@ public sealed record GameMasterUnbound(GameMasterBindingId BindingId);
 public sealed record GameMasterTurnCompleted(
     GameMasterCommandResult Result,
     IReadOnlyList<GameMasterBindingId> NotificationFailures,
-    IReadOnlyList<GameMasterBindingId> EndFailures);
+    IReadOnlyList<GameMasterBindingId> EndFailures,
+    IReadOnlyList<PlayerBindingId> PlayerNotificationFailures,
+    ProtocolError? PlayerBroadcastError);

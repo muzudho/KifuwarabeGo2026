@@ -8,6 +8,9 @@ public enum GameOasisOperationalState
 
     /// <summary>ゲームマスターによって一時停止された状態です。</summary>
     Paused,
+
+    /// <summary>ゲームマスターの裁定または運営判断によって結果が確定した状態です。</summary>
+    Adjudicated,
 }
 
 /// <summary>プレイスペースの種類を表す、実装者が定める安定したIDです。</summary>

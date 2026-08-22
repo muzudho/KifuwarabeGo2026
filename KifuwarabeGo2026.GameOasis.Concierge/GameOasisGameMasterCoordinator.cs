@@ -5,7 +5,9 @@ using KifuwarabeGo2026.GameOasis.Contracts.Common;
 using KifuwarabeGo2026.GameOasis.Contracts.ProtocolM;
 
 /// <summary>Protocol Mのゲームマスター登録、参加、運営命令を調整します。</summary>
-public sealed class GameOasisGameMasterCoordinator(GameOasisConcierge concierge)
+public sealed class GameOasisGameMasterCoordinator(
+    GameOasisConcierge concierge,
+    GameOasisPlayerCoordinator? playerCoordinator = null)
 {
     /// <summary>セッションを終了するGame Oasis共通命令名です。</summary>
     public const string EndSessionCommand = "end-session";
@@ -16,7 +18,11 @@ public sealed class GameOasisGameMasterCoordinator(GameOasisConcierge concierge)
     /// <summary>一時停止中のゲームを再開するGame Oasis共通命令名です。</summary>
     public const string ResumeCommand = GameOasisConcierge.ResumeOperation;
 
+    /// <summary>ゲームマスターの裁定結果を確定するGame Oasis共通命令名です。</summary>
+    public const string AdjudicateCommand = GameOasisConcierge.AdjudicateOperation;
+
     private readonly GameOasisConcierge _concierge = concierge ?? throw new ArgumentNullException(nameof(concierge));
+    private readonly GameOasisPlayerCoordinator? _playerCoordinator = playerCoordinator;
     private readonly ConcurrentDictionary<GameMasterEngineId, RegisteredGameMaster> _gameMasters = new();
     private readonly ConcurrentDictionary<GameMasterBindingId, GameMasterBinding> _bindings = new();
 
@@ -107,16 +113,41 @@ public sealed class GameOasisGameMasterCoordinator(GameOasisConcierge concierge)
                 selected.Value.Command,
                 selected.Value.BasedOnOperationRevision,
                 cancellationToken);
+            var resultObservation = snapshot.Value;
+            if (result.WasAccepted && result.CommandName != EndSessionCommand)
+            {
+                var current = await _concierge.GetSnapshotAsync(binding.SessionId, cancellationToken);
+                if (current.IsSuccess && current.Value is not null)
+                    resultObservation = current.Value;
+            }
             var notificationFailures = new List<GameMasterBindingId>();
             var recipients = _bindings.Values.Where(value => value.SessionId == binding.SessionId).ToArray();
             foreach (var recipient in recipients)
             {
-                var notified = await recipient.GameMaster.Protocol.NotifyCommandAsync(new(recipient.BindingId, result), cancellationToken);
+                var notified = await recipient.GameMaster.Protocol.NotifyCommandAsync(new(
+                    recipient.BindingId,
+                    result,
+                    ToObservation(resultObservation)), cancellationToken);
                 if (!notified.IsSuccess)
                     notificationFailures.Add(recipient.BindingId);
             }
 
             var endFailures = new List<GameMasterBindingId>();
+            IReadOnlyList<PlayerBindingId> playerNotificationFailures = [];
+            ProtocolError? playerBroadcastError = null;
+            if (result.WasAccepted && result.CommandName is PauseCommand or ResumeCommand or AdjudicateCommand && _playerCoordinator is not null)
+            {
+                var broadcast = await _playerCoordinator.BroadcastStateAsync(
+                    binding.SessionId,
+                    result.CommandName,
+                    cancellationToken);
+                if (broadcast.IsSuccess && broadcast.Value is not null)
+                    playerNotificationFailures = broadcast.Value.NotificationFailures;
+                else
+                    playerBroadcastError = broadcast.Error ?? new ProtocolError(
+                        "player-state-broadcast-failed",
+                        "The player state broadcast returned an invalid failure response.");
+            }
             if (result.WasAccepted && result.CommandName == EndSessionCommand)
             {
                 foreach (var recipient in recipients)
@@ -131,7 +162,12 @@ public sealed class GameOasisGameMasterCoordinator(GameOasisConcierge concierge)
                 }
             }
 
-            return ProtocolResponse<GameMasterTurnCompleted>.Success(new(result, notificationFailures, endFailures));
+            return ProtocolResponse<GameMasterTurnCompleted>.Success(new(
+                result,
+                notificationFailures,
+                endFailures,
+                playerNotificationFailures,
+                playerBroadcastError));
         }
         finally
         {
@@ -178,13 +214,14 @@ public sealed class GameOasisGameMasterCoordinator(GameOasisConcierge concierge)
     {
         if (command.Name != EndSessionCommand)
         {
-            if (command.Name is not (PauseCommand or ResumeCommand))
+            if (command.Name is not (PauseCommand or ResumeCommand or AdjudicateCommand))
                 return new(binding.BindingId, binding.SessionId, command.Name, false,
                     new ProtocolError("unsupported-game-master-command", $"Command '{command.Name}' is not supported."));
             var applied = await _concierge.ApplyOperationAsync(new(
                 binding.SessionId,
                 command.Name,
-                expectedOperationRevision), cancellationToken);
+                expectedOperationRevision,
+                command.Parameters), cancellationToken);
             return applied.IsSuccess && applied.Value is not null
                 ? new(binding.BindingId, binding.SessionId, command.Name, applied.Value.IsAccepted, applied.Value.Rejection)
                 : new(binding.BindingId, binding.SessionId, command.Name, false, applied.Error);

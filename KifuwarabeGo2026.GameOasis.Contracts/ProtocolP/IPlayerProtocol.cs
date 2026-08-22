@@ -24,6 +24,11 @@ public interface IPlayerProtocol
         PlayerActionNotification notification,
         CancellationToken cancellationToken = default);
 
+    /// <summary>停止、再開、裁定など、着手以外による状態変更を通知します。</summary>
+    ValueTask<ProtocolResponse<PlayerStateNotified>> NotifyStateAsync(
+        PlayerStateNotification notification,
+        CancellationToken cancellationToken = default);
+
     /// <summary>ゲームへの参加を終了します。</summary>
     ValueTask<ProtocolResponse<PlayerSessionEnded>> EndSessionAsync(
         PlayerSessionEndRequest request,
