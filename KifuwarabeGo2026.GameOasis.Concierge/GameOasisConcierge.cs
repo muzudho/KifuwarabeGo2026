@@ -2,6 +2,7 @@ namespace KifuwarabeGo2026.GameOasis.Concierge;
 
 using System.Collections.Concurrent;
 using KifuwarabeGo2026.GameOasis.Contracts.Common;
+using KifuwarabeGo2026.GameOasis.Contracts.ProtocolM;
 using KifuwarabeGo2026.GameOasis.Contracts.ProtocolS;
 
 /// <summary>
@@ -274,6 +275,19 @@ public sealed class GameOasisConcierge
                         playSpaceSnapshot.Value,
                         "adjudication-result-required",
                         "The adjudicate operation requires a self-describing result document.");
+                var validated = GameOasisAdjudicationDocuments.ValidateResult(request.Parameters);
+                if (!validated.IsSuccess)
+                {
+                    var error = validated.Error ?? new ProtocolError(
+                        "invalid-adjudication-result",
+                        "The adjudication result validator returned an invalid failure response.");
+                    return RejectedOperation(
+                        request.SessionId,
+                        session,
+                        playSpaceSnapshot.Value,
+                        error.Code,
+                        error.Message);
+                }
                 if (session.OperationalState == GameOasisOperationalState.Adjudicated)
                     return RejectedOperation(
                         request.SessionId,

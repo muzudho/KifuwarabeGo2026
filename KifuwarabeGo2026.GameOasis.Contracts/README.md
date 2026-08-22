@@ -21,6 +21,8 @@ KifuwarabeGo2026.GameOasis.Contracts.ProtocolS
 
 v4.0.0では、プレイスペースを接続するProtocol S、GUIを接続するProtocol G、プレイヤーを接続するProtocol P、ゲームマスターを接続するProtocol Mの最小契約を実装済みです。
 
+Protocol Mには、交換可能なゲームマスターとGUIが共通解釈できる裁定結果v1を定義しています。勝者、引き分け、無勝負、中止を表現し、JSON Schemaの公開と外部依存のない実行時検証を提供します。
+
 ## 互換性
 
 `ContractVersion`は製品バージョンとは独立した契約バージョンです。外部実装との互換性判定には契約バージョンを使用します。

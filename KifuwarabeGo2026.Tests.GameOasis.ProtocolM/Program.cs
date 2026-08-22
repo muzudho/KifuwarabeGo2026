@@ -57,6 +57,16 @@ var staleOperation = RequireSuccess(await concierge.ApplyOperationAsync(new(
     GameOasisConcierge.PauseOperation,
     0)));
 Require(!staleOperation.IsAccepted && staleOperation.Rejection?.Code == "operation-revision-conflict", "A stale game-master operation must be rejected.");
+var invalidAdjudication = RequireSuccess(await concierge.ApplyOperationAsync(new(
+    opened.SessionId,
+    GameOasisConcierge.AdjudicateOperation,
+    resumedSnapshot.OperationRevision,
+    new ContractDocument(
+        GameOasisAdjudicationDocuments.MediaType,
+        GameOasisAdjudicationDocuments.ResultSchemaId,
+        """{"version":1,"kind":"winner","reasonCode":"missing-winner"}"""))));
+Require(!invalidAdjudication.IsAccepted && invalidAdjudication.Rejection?.Code == "adjudication-winner-required", "Concierge must reject an invalid standard adjudication result.");
+Require(invalidAdjudication.Snapshot.OperationRevision == resumedSnapshot.OperationRevision, "A rejected adjudication must not advance the operation revision.");
 
 var adjudicated = RequireSuccess(await coordinator.RequestAndExecuteCommandAsync(bound.BindingId));
 Require(adjudicated.Result.WasAccepted && adjudicated.Result.CommandName == GameOasisGameMasterCoordinator.AdjudicateCommand, "The adjudication command must be accepted.");
@@ -66,8 +76,9 @@ Require(adjudicatedForGui.IsTerminal, "A game-master adjudication must make the 
 Require(adjudicatedForGui.OperationRevision == 3, "Adjudication must advance the operation revision.");
 using (var outcome = JsonDocument.Parse(adjudicatedForGui.Outcome!.Content))
 {
-    Require(outcome.RootElement.GetProperty("winner").GetString() == "white", "The adjudicated winner must be preserved.");
-    Require(outcome.RootElement.GetProperty("reason").GetString() == "black-disqualified", "The adjudication reason must be preserved.");
+    Require(outcome.RootElement.GetProperty("kind").GetString() == "winner", "The adjudication kind must be preserved.");
+    Require(outcome.RootElement.GetProperty("winnerRoleId").GetString() == "white", "The adjudicated winner must be preserved.");
+    Require(outcome.RootElement.GetProperty("reasonCode").GetString() == "disqualification", "The adjudication reason must be preserved.");
 }
 Require(observingPlayer.StateNotificationCount == 3, "Protocol P must notify the player about adjudication.");
 Require(observingPlayer.LastObservation?.IsTerminal == true && observingPlayer.LastObservation.Outcome?.Content == adjudicatedForGui.Outcome.Content, "The player and GUI must receive the same adjudicated outcome.");
@@ -156,10 +167,11 @@ internal sealed class ScriptedGameMaster : IGameMasterProtocol
         cancellationToken.ThrowIfCancellationRequested();
         var command = _commands.Dequeue();
         var parameters = command == GameOasisGameMasterCoordinator.AdjudicateCommand
-            ? new ContractDocument(
-                "application/json",
-                "urn:kifuwarabe:game-oasis:adjudication-result:v1",
-                """{"version":1,"winner":"white","reason":"black-disqualified"}""")
+            ? GameOasisAdjudicationDocuments.CreateResult(
+                GameOasisAdjudicationKind.Winner,
+                "disqualification",
+                "white",
+                "Black was disqualified by the game master.")
             : null;
         return ValueTask.FromResult(ProtocolResponse<GameMasterCommandSelected>.Success(new(
             request.BindingId,
