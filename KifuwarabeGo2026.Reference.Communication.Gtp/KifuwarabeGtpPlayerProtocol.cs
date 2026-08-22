@@ -17,6 +17,7 @@ public sealed class KifuwarabeGtpPlayerProtocol(
     private readonly IGtpCommandTransport _transport = transport ?? throw new ArgumentNullException(nameof(transport));
     private readonly object _sync = new();
     private ActiveBinding? _binding;
+    private InitialPositionMode? _initialPositionMode;
 
     public ValueTask<ProtocolResponse<PlayerEngineDescriptor>> DescribeAsync(CancellationToken cancellationToken = default) =>
         ValueTask.FromResult(ProtocolResponse<PlayerEngineDescriptor>.Success(new(
@@ -26,7 +27,7 @@ public sealed class KifuwarabeGtpPlayerProtocol(
             "KifuwarabeGo2026.Reference.Communication.Gtp",
             typeof(KifuwarabeGtpPlayerProtocol).Assembly.GetName().Version?.ToString() ?? "4.0.0",
             [GoTypeId],
-            ["gtp", "kifuwarabe-atomic-position", "single-session"])));
+            ["gtp", "kifuwarabe-atomic-position", "standard-static-position-fallback", "single-session"])));
 
     public async ValueTask<ProtocolResponse<PlayerSessionStarted>> StartSessionAsync(
         PlayerSessionStartRequest request,
@@ -142,26 +143,47 @@ public sealed class KifuwarabeGtpPlayerProtocol(
         if (!parsed.IsSuccess || parsed.Value is null)
             return ProtocolResponse<bool>.Failure(parsed.Error!);
         var state = parsed.Value;
+        var mode = await ResolveInitialPositionModeAsync(cancellationToken);
         var commands = new List<string>
         {
             $"boardsize {state.BoardSize}",
             $"komi {state.Komi.ToString(CultureInfo.InvariantCulture)}",
-            "kfw-begin-position",
         };
-        commands.AddRange(state.Black.Select(point => $"kfw-add-black {FormatVertex(point.X, point.Y, state.BoardSize)}"));
-        commands.AddRange(state.White.Select(point => $"kfw-add-white {FormatVertex(point.X, point.Y, state.BoardSize)}"));
-        commands.Add($"kfw-set-to-play {state.NextToPlay}");
-        commands.Add("kfw-commit-position");
+        if (mode == InitialPositionMode.KifuwarabeAtomic)
+        {
+            commands.Add("kfw-begin-position");
+            commands.AddRange(state.Black.Select(point => $"kfw-add-black {FormatVertex(point.X, point.Y, state.BoardSize)}"));
+            commands.AddRange(state.White.Select(point => $"kfw-add-white {FormatVertex(point.X, point.Y, state.BoardSize)}"));
+            commands.Add($"kfw-set-to-play {state.NextToPlay}");
+            commands.Add("kfw-commit-position");
+        }
+        else
+        {
+            commands.Insert(1, "clear_board");
+            commands.AddRange(state.Black.Select(point => $"play black {FormatVertex(point.X, point.Y, state.BoardSize)}"));
+            commands.AddRange(state.White.Select(point => $"play white {FormatVertex(point.X, point.Y, state.BoardSize)}"));
+        }
         foreach (var command in commands)
         {
             var response = await _transport.SendAsync(command, cancellationToken);
             if (!response.IsSuccess)
             {
-                await _transport.SendAsync("kfw-abort-position", CancellationToken.None);
+                if (mode == InitialPositionMode.KifuwarabeAtomic)
+                    await _transport.SendAsync("kfw-abort-position", CancellationToken.None);
                 return Failure<bool>("gtp-position-sync-failed", $"Command '{command}' failed: {response.Payload}");
             }
         }
         return ProtocolResponse<bool>.Success(true);
+    }
+
+    private async ValueTask<InitialPositionMode> ResolveInitialPositionModeAsync(CancellationToken cancellationToken)
+    {
+        if (_initialPositionMode is { } resolved) return resolved;
+        var response = await _transport.SendAsync("known_command kfw-begin-position", cancellationToken);
+        _initialPositionMode = response.IsSuccess && bool.TryParse(response.Payload.Trim(), out var supported) && supported
+            ? InitialPositionMode.KifuwarabeAtomic
+            : InitialPositionMode.StandardSequentialPlay;
+        return _initialPositionMode.Value;
     }
 
     private ProtocolResponse<ActiveBinding> GetBinding(PlayerBindingId bindingId)
@@ -276,6 +298,7 @@ public sealed class KifuwarabeGtpPlayerProtocol(
 
     private sealed record Point(int X, int Y);
     private sealed record GoState(int BoardSize, decimal Komi, string NextToPlay, IReadOnlyList<Point> Black, IReadOnlyList<Point> White);
+    private enum InitialPositionMode { KifuwarabeAtomic, StandardSequentialPlay }
     private sealed class ActiveBinding(PlayerBindingId bindingId, string roleId)
     {
         public PlayerBindingId BindingId { get; } = bindingId;

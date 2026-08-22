@@ -45,8 +45,9 @@ var bound = RequireSuccess(await players.BindPlayerAsync(
     "black"));
 
 RequireSequence(
-    transport.Commands.Take(7),
+    transport.Commands.Take(8),
     [
+        "known_command kfw-begin-position",
         "boardsize 9",
         "komi 6.5",
         "kfw-begin-position",
@@ -56,6 +57,28 @@ RequireSequence(
         "kfw-commit-position",
     ],
     "The initial observation must be synchronized atomically.");
+
+var genericTransport = new GenericRecordingGtpTransport();
+var genericPlayer = new KifuwarabeGtpPlayerProtocol(
+    genericTransport,
+    new PlayerEngineId("org.kifuwarabe.tests.generic-gtp-player"));
+var genericRegistered = RequireSuccess(await players.RegisterPlayerAsync(genericPlayer));
+var genericBound = RequireSuccess(await players.BindPlayerAsync(
+    genericRegistered.Descriptor.EngineId,
+    opened.SessionId,
+    "white"));
+RequireSequence(
+    genericTransport.Commands,
+    [
+        "known_command kfw-begin-position",
+        "boardsize 9",
+        "clear_board",
+        "komi 6.5",
+        "play black A9",
+        "play white B9",
+    ],
+    "A generic GTP engine must receive the standard sequential setup fallback.");
+RequireSuccess(await players.UnbindPlayerAsync(genericBound.BindingId, "generic-fallback-verified"));
 
 var rejected = RequireSuccess(await players.RequestAndApplyActionAsync(bound.BindingId));
 Require(!rejected.Applied.IsAccepted, "The occupied A9 generated move must be rejected by the play-space.");
@@ -158,8 +181,24 @@ internal sealed class RecordingGtpTransport(IEnumerable<string> generatedMoves) 
     {
         cancellationToken.ThrowIfCancellationRequested();
         Commands.Add(command);
-        return ValueTask.FromResult(command.StartsWith("genmove ", StringComparison.Ordinal)
+        return ValueTask.FromResult(command == "known_command kfw-begin-position"
+            ? new GtpCommandResponse(true, "true")
+            : command.StartsWith("genmove ", StringComparison.Ordinal)
             ? new GtpCommandResponse(true, _generatedMoves.Dequeue())
+            : new GtpCommandResponse(true, string.Empty));
+    }
+}
+
+internal sealed class GenericRecordingGtpTransport : IGtpCommandTransport
+{
+    public List<string> Commands { get; } = [];
+
+    public ValueTask<GtpCommandResponse> SendAsync(string command, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        Commands.Add(command);
+        return ValueTask.FromResult(command == "known_command kfw-begin-position"
+            ? new GtpCommandResponse(true, "false")
             : new GtpCommandResponse(true, string.Empty));
     }
 }
