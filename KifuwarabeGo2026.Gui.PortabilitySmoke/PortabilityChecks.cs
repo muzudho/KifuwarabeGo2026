@@ -21,6 +21,7 @@ using KifuwarabeGo2026.GtpExtensions.Protocol;
 using KifuwarabeGo2026.GtpExtensions.Sgf;
 using KifuwarabeGo2026.GtpExtensions.Strategies;
 using KifuwarabeGo2026.Match;
+using KifuwarabeGo2026.Reference.GUI;
 using KifuwarabeGo2026.Shared.Domain;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
@@ -113,6 +114,24 @@ internal static class PortabilityChecks
             "The title quick-start presets must use the official configuration schemas.");
         Require(!GameOasisSessionPresets.TryCreate(new("external.example.game"), out _),
             "An external play-space without a configuration UI must not receive an invented preset.");
+        var externalTypeId = new PlaySpaceTypeId("external.example.game");
+        var externalAdapters = new GameBoardActionAdapters(
+        [
+            new JsonGameBoardActionAdapter(
+                externalTypeId,
+                "external.example.game.action.v1",
+                new HashSet<string>(StringComparer.Ordinal) { GameOasisCapabilityIds.ActionPlayPoint }),
+        ]);
+        var externalBoard = new GuiBoardView(
+            new("external-session"), externalTypeId, 0, 9, [], [], "black", 0, 0, null, false, null);
+        Require(externalAdapters.Supports(externalTypeId, GameOasisCapabilityIds.ActionPlayPoint) &&
+                !externalAdapters.Supports(externalTypeId, GameOasisCapabilityIds.ActionPass),
+            "An external GUI action adapter must expose only its registered capabilities.");
+        var externalPlay = externalAdapters.CreatePlay(externalBoard, 3, 4);
+        Require(externalPlay.IsSuccess && externalPlay.Value?.SchemaId == "external.example.game.action.v1",
+            "An external GUI action adapter must be able to supply its own action schema.");
+        Require(externalAdapters.CreatePass(externalBoard).Error?.Code == "unsupported-gui-action",
+            "An external GUI action adapter must not gain unregistered actions.");
         Require(TitleScreen.GetGameOasisPlaySpaceHit(TitleScreen.GetGameOasisPlaySpaceBounds(0).Center, 2) == 0 &&
                 TitleScreen.GetGameOasisPlaySpaceHit(TitleScreen.GetGameOasisPlaySpaceBounds(1).Center, 2) == 1,
             "The catalog-driven Game Oasis title choices must map each visible card to its catalog index.");

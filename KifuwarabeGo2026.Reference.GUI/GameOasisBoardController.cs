@@ -4,9 +4,13 @@ using KifuwarabeGo2026.GameOasis.Contracts.Common;
 using KifuwarabeGo2026.GameOasis.Contracts.ProtocolG;
 
 /// <summary>C#参照GUIの盤面画面からProtocol Gを利用する操作窓口です。</summary>
-public sealed class GameOasisBoardController(GameOasisGuiClient client)
+public sealed class GameOasisBoardController(GameOasisGuiClient client, GameBoardActionAdapters? actionAdapters = null)
 {
     private readonly GameOasisGuiClient _client = client ?? throw new ArgumentNullException(nameof(client));
+    private readonly GameBoardActionAdapters _actionAdapters = actionAdapters ?? GameBoardActionAdapters.Official;
+
+    public bool SupportsAction(PlaySpaceTypeId playSpaceTypeId, string capabilityId) =>
+        _actionAdapters.Supports(playSpaceTypeId, capabilityId);
 
     public ProtocolResponse<GuiBoardView> GetBoard()
     {
@@ -29,13 +33,13 @@ public sealed class GameOasisBoardController(GameOasisGuiClient client)
         int x,
         int y,
         CancellationToken cancellationToken = default) =>
-        SubmitAsync(board => GameBoardActionFactory.CreatePlay(board, x, y), cancellationToken);
+        SubmitAsync(board => _actionAdapters.CreatePlay(board, x, y), cancellationToken);
 
     public ValueTask<ProtocolResponse<GuiActionSubmitted>> PassAsync(CancellationToken cancellationToken = default) =>
-        SubmitAsync(GameBoardActionFactory.CreatePass, cancellationToken);
+        SubmitAsync(_actionAdapters.CreatePass, cancellationToken);
 
     public ValueTask<ProtocolResponse<GuiActionSubmitted>> ResignAsync(CancellationToken cancellationToken = default) =>
-        SubmitAsync(GameBoardActionFactory.CreateResign, cancellationToken);
+        SubmitAsync(_actionAdapters.CreateResign, cancellationToken);
 
     public async ValueTask<ProtocolResponse<GuiBoardView>> RefreshAsync(CancellationToken cancellationToken = default)
     {

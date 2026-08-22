@@ -21,6 +21,9 @@ public sealed class GameOasisPlayingBridge(GameOasisBoardController controller) 
     public GuiBoardView? Board { get; private set; }
     public bool IsBusy => _pending is not null;
 
+    public bool SupportsAction(PlaySpaceTypeId playSpaceTypeId, string capabilityId) =>
+        _controller.SupportsAction(playSpaceTypeId, capabilityId);
+
     public bool BeginOpen(PlaySpaceTypeId playSpaceTypeId, ContractDocument configuration)
     {
         if (!CanBegin(GameOasisPlayingState.Idle)) return false;

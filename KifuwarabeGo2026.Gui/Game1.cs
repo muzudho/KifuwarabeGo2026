@@ -2669,7 +2669,8 @@ public class Game1 : Game
     private bool SupportsGameOasisCapability(GuiBoardView board, string capabilityId) =>
         _gameOasisComposition?.Client.State.PlaySpaces
             .FirstOrDefault(entry => entry.TypeId == board.PlaySpaceTypeId)?
-            .Capabilities.Contains(capabilityId, StringComparer.Ordinal) == true;
+            .Capabilities.Contains(capabilityId, StringComparer.Ordinal) == true &&
+        _gameOasisComposition.PlayingBridge.SupportsAction(board.PlaySpaceTypeId, capabilityId);
 
     private static string FormatLocalMatchSeed(int? seed) => seed?.ToString() ?? "HUMAN";
 
