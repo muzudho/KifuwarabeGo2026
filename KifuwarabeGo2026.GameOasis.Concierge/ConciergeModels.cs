@@ -3,13 +3,6 @@ namespace KifuwarabeGo2026.GameOasis.Concierge;
 using KifuwarabeGo2026.GameOasis.Contracts.Common;
 using KifuwarabeGo2026.GameOasis.Contracts.ProtocolS;
 
-/// <summary>Game Oasisが公開するセッションIDです。</summary>
-public readonly record struct GameOasisSessionId(string Value)
-{
-    /// <inheritdoc />
-    public override string ToString() => Value;
-}
-
 /// <summary>プレイスペースが登録された結果です。</summary>
 public sealed record PlaySpaceRegistered(PlaySpaceDescriptor Descriptor);
 
@@ -17,7 +10,23 @@ public sealed record PlaySpaceRegistered(PlaySpaceDescriptor Descriptor);
 public sealed record GameOasisSessionOpened(
     GameOasisSessionId SessionId,
     PlaySpaceDescriptor PlaySpace,
-    PlaySpaceSnapshot InitialSnapshot);
+    GameOasisSnapshot InitialSnapshot);
+
+/// <summary>コンシェルジュが公開する、Protocol Sの内部IDを含まない状態です。</summary>
+public sealed record GameOasisSnapshot(
+    GameOasisSessionId SessionId,
+    PlaySpaceTypeId PlaySpaceTypeId,
+    long Revision,
+    ContractDocument State,
+    bool IsTerminal,
+    ContractDocument? Outcome);
+
+/// <summary>コンシェルジュによる行動適用結果です。</summary>
+public sealed record GameOasisActionApplied(
+    bool IsAccepted,
+    GameOasisSnapshot Snapshot,
+    IReadOnlyList<ContractDocument> Events,
+    ProtocolError? Rejection);
 
 /// <summary>登録解除の結果です。</summary>
 public sealed record PlaySpaceUnregistered(PlaySpaceTypeId TypeId);

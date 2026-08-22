@@ -23,14 +23,14 @@ GameOasis.Concierge ──×──→ Reference.GUI
 - 状態取得と行動適用の仲介
 - セッション終了
 - 同一セッション内の操作直列化
+- Protocol Gによるカタログ、設定スキーマ、セッション、状態、行動、終了の公開
 
 ## まだ含まないもの
 
-- Protocol GによるGUI接続
 - Protocol Pによるプレイヤー接続
 - Protocol Mによるゲームマスター接続
 - 参加者の認証、権限、手番要求
 - 時計、棋譜、操作監査
 - 別プロセス探索、起動、再接続
 
-現在の`ApplyActionAsync`は、Protocol G、P、Mを接続する前の中核確認用APIです。将来は参加者と権限を確認したコマンドだけがこの経路へ到達するようにします。
+現在のProtocol G `SubmitActionAsync`は、Protocol P、Mを接続する前の中核確認用APIです。将来は参加者と権限を確認したコマンドだけがこの経路へ到達するようにします。

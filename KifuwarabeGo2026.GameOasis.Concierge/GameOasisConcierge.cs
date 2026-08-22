@@ -45,6 +45,28 @@ public sealed class GameOasisConcierge
             .OrderBy(value => value.TypeId.Value, StringComparer.Ordinal)
             .ToArray();
 
+    /// <summary>登録されたプレイスペースのゲーム設定スキーマを取得します。</summary>
+    public async ValueTask<ProtocolResponse<ContractDocument>> GetConfigurationSchemaAsync(
+        PlaySpaceTypeId typeId,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        if (!_playSpaces.TryGetValue(typeId, out var playSpace))
+            return Failure<ContractDocument>("play-space-not-found", $"Play-space type '{typeId}' is not registered.");
+
+        await playSpace.Gate.WaitAsync(cancellationToken);
+        try
+        {
+            if (!_playSpaces.TryGetValue(typeId, out var current) || !ReferenceEquals(current, playSpace))
+                return Failure<ContractDocument>("play-space-not-found", $"Play-space type '{typeId}' is no longer registered.");
+            return await playSpace.Protocol.GetConfigurationSchemaAsync(cancellationToken);
+        }
+        finally
+        {
+            playSpace.Gate.Release();
+        }
+    }
+
     /// <summary>利用中でないプレイスペース実装を登録解除します。</summary>
     public async ValueTask<ProtocolResponse<PlaySpaceUnregistered>> UnregisterPlaySpaceAsync(
         PlaySpaceTypeId typeId,
@@ -113,7 +135,7 @@ public sealed class GameOasisConcierge
             }
 
             return ProtocolResponse<GameOasisSessionOpened>.Success(new GameOasisSessionOpened(
-                sessionId, playSpace.Descriptor, created.Value.InitialSnapshot));
+                sessionId, playSpace.Descriptor, ToSnapshot(sessionId, managed, created.Value.InitialSnapshot)));
         }
         finally
         {
@@ -122,21 +144,24 @@ public sealed class GameOasisConcierge
     }
 
     /// <summary>現在のプレイスペース状態を取得します。</summary>
-    public async ValueTask<ProtocolResponse<PlaySpaceSnapshot>> GetSnapshotAsync(
+    public async ValueTask<ProtocolResponse<GameOasisSnapshot>> GetSnapshotAsync(
         GameOasisSessionId sessionId,
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
         if (!_sessions.TryGetValue(sessionId, out var session))
-            return SessionNotFound<PlaySpaceSnapshot>(sessionId);
+            return SessionNotFound<GameOasisSnapshot>(sessionId);
 
         await session.Gate.WaitAsync(cancellationToken);
         try
         {
             if (!IsCurrentSession(sessionId, session))
-                return SessionNotFound<PlaySpaceSnapshot>(sessionId);
-            return await session.PlaySpace.Protocol.GetSnapshotAsync(
+                return SessionNotFound<GameOasisSnapshot>(sessionId);
+            var snapshot = await session.PlaySpace.Protocol.GetSnapshotAsync(
                 new GetPlaySpaceSnapshotRequest(session.PlaySpaceSessionId), cancellationToken);
+            return snapshot.IsSuccess && snapshot.Value is not null
+                ? ProtocolResponse<GameOasisSnapshot>.Success(ToSnapshot(sessionId, session, snapshot.Value))
+                : ForwardFailure<GameOasisSnapshot>(snapshot.Error, "play-space-snapshot-failed");
         }
         finally
         {
@@ -145,21 +170,28 @@ public sealed class GameOasisConcierge
     }
 
     /// <summary>行動をプレイスペースへ適用します。</summary>
-    public async ValueTask<ProtocolResponse<PlaySpaceActionApplied>> ApplyActionAsync(
+    public async ValueTask<ProtocolResponse<GameOasisActionApplied>> ApplyActionAsync(
         ApplyGameOasisActionRequest request,
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
         if (!_sessions.TryGetValue(request.SessionId, out var session))
-            return SessionNotFound<PlaySpaceActionApplied>(request.SessionId);
+            return SessionNotFound<GameOasisActionApplied>(request.SessionId);
 
         await session.Gate.WaitAsync(cancellationToken);
         try
         {
             if (!IsCurrentSession(request.SessionId, session))
-                return SessionNotFound<PlaySpaceActionApplied>(request.SessionId);
-            return await session.PlaySpace.Protocol.ApplyActionAsync(new ApplyPlaySpaceActionRequest(
+                return SessionNotFound<GameOasisActionApplied>(request.SessionId);
+            var applied = await session.PlaySpace.Protocol.ApplyActionAsync(new ApplyPlaySpaceActionRequest(
                 session.PlaySpaceSessionId, request.Action, request.ExpectedRevision), cancellationToken);
+            return applied.IsSuccess && applied.Value is not null
+                ? ProtocolResponse<GameOasisActionApplied>.Success(new GameOasisActionApplied(
+                    applied.Value.IsAccepted,
+                    ToSnapshot(request.SessionId, session, applied.Value.Snapshot),
+                    applied.Value.Events,
+                    applied.Value.Rejection))
+                : ForwardFailure<GameOasisActionApplied>(applied.Error, "play-space-action-failed");
         }
         finally
         {
@@ -206,6 +238,18 @@ public sealed class GameOasisConcierge
 
     private bool IsCurrentSession(GameOasisSessionId sessionId, ManagedSession session) =>
         _sessions.TryGetValue(sessionId, out var current) && ReferenceEquals(current, session);
+
+    private static GameOasisSnapshot ToSnapshot(
+        GameOasisSessionId sessionId,
+        ManagedSession session,
+        PlaySpaceSnapshot snapshot) =>
+        new(
+            sessionId,
+            session.PlaySpace.Descriptor.TypeId,
+            snapshot.Revision,
+            snapshot.State,
+            snapshot.IsTerminal,
+            snapshot.Outcome);
 
     private sealed class RegisteredPlaySpace(PlaySpaceDescriptor descriptor, IPlaySpaceProtocol protocol)
     {
