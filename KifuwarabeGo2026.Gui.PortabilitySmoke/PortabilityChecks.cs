@@ -90,6 +90,8 @@ internal static class PortabilityChecks
         Require(composition.Client.State.PlaySpaces.All(entry =>
                 entry.TypeId.Value is "org.kifuwarabe.games.go" or "org.kifuwarabe.games.ponnuki"),
             "The current GUI composition exposed an unexpected play-space.");
+        Require(!composition.GetActiveBoard().IsSuccess,
+            "The current GUI composition must not expose a board before a Protocol G session opens.");
     }
 
     private static void VerifyCgosResultReviewRecord()

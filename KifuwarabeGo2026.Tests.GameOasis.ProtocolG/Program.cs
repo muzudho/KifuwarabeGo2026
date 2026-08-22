@@ -39,6 +39,14 @@ const string configurationJson = """
 var configuration = new ContractDocument("application/json", schema.SchemaId, configurationJson);
 var opened = RequireSuccess(await gui.OpenSessionAsync(new GuiOpenSessionRequest(ponnuki.TypeId, configuration)));
 Require(opened.InitialSnapshot.PlaySpaceTypeId == ponnuki.TypeId, "GUI snapshot must identify the selected play-space.");
+var initialBoard = RequireSuccess(GameBoardProjection.Project(opened.InitialSnapshot));
+Require(initialBoard.BoardSize == 9 && initialBoard.Black.Count == 2 && initialBoard.White.Count == 1 && initialBoard.NextToPlay == "black", "The Ponnuki state must project to the common GUI board.");
+var invalidProjection = GameBoardProjection.Project(opened.InitialSnapshot with
+{
+    State = new ContractDocument("application/json", opened.InitialSnapshot.State.SchemaId,
+        """{"boardSize":9,"black":[{"x":1,"y":1}],"white":[{"x":1,"y":1}],"nextToPlay":"black","koPoint":null}""")
+});
+Require(!invalidProjection.IsSuccess && invalidProjection.Error?.Code == "duplicate-gui-board-point", "The GUI projection must reject overlapping black and white stones.");
 
 var action = new ContractDocument(
     "application/json",
@@ -66,6 +74,8 @@ var goConfiguration = new ContractDocument(
     goSchema.SchemaId,
     """{"version":1,"boardSize":9,"komi":6.5,"ruleset":"chinese-area","startingPlayer":"black","setupStones":[]}""");
 var goOpened = RequireSuccess(await gui.OpenSessionAsync(new(normalGo.TypeId, goConfiguration)));
+var goBoard = RequireSuccess(GameBoardProjection.Project(goOpened.InitialSnapshot));
+Require(goBoard.BoardSize == 9 && goBoard.Black.Count == 0 && goBoard.White.Count == 0, "The normal Go state must project through the same GUI board model.");
 var blackPass = RequireSuccess(await gui.SubmitActionAsync(new(
     goOpened.InitialSnapshot.SessionId,
     new ContractDocument("application/json", GoSchemas.Action, """{"version":1,"type":"pass","player":"black"}"""),
@@ -88,6 +98,8 @@ var duplicateOpen = await client.OpenSessionAsync(ponnuki.TypeId, configuration)
 Require(!duplicateOpen.IsSuccess && client.State.LastError?.Code == "gui-session-already-open", "The reference GUI client must reject a second local active session.");
 var clientSubmitted = RequireSuccess(await client.SubmitActionAsync(action));
 Require(clientSubmitted.IsAccepted && client.State.ActiveSnapshot?.IsTerminal == true, "The reference GUI client must advance its snapshot using the current revision.");
+var terminalBoard = RequireSuccess(GameBoardProjection.Project(client.State.ActiveSnapshot!));
+Require(terminalBoard.IsTerminal && terminalBoard.BlackCaptures == 1 && terminalBoard.Outcome is not null, "The common GUI board must preserve Ponnuki terminal captures and outcome.");
 RequireSuccess(await client.RefreshAsync());
 RequireSuccess(await client.CloseSessionAsync());
 Require(client.State.ActiveSnapshot is null && client.State.LastError is null, "Closing must clear the active GUI session and error.");
