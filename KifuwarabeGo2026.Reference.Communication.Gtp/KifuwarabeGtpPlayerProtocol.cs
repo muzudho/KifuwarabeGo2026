@@ -146,7 +146,9 @@ public sealed class KifuwarabeGtpPlayerProtocol(
         var capabilities = await ResolveInitialPositionCapabilitiesAsync(cancellationToken);
         var mode = capabilities.SupportsAtomic
             ? InitialPositionMode.KifuwarabeAtomic
-            : capabilities.SupportsSetFreeHandicap && state.Black.Count > 0 && state.White.Count == 0 && state.NextToPlay == "white"
+            : capabilities.SupportsFixedHandicap && IsStandardFixedHandicap(state)
+                ? InitialPositionMode.FixedHandicap
+            : capabilities.SupportsSetFreeHandicap && IsBlackHandicap(state)
                 ? InitialPositionMode.SetFreeHandicap
                 : InitialPositionMode.StandardSequentialPlay;
         var commands = new List<string>
@@ -162,10 +164,12 @@ public sealed class KifuwarabeGtpPlayerProtocol(
             commands.Add($"kfw-set-to-play {state.NextToPlay}");
             commands.Add("kfw-commit-position");
         }
-        else if (mode == InitialPositionMode.SetFreeHandicap)
+        else if (mode is InitialPositionMode.FixedHandicap or InitialPositionMode.SetFreeHandicap)
         {
             commands.Insert(1, "clear_board");
-            commands.Add($"set_free_handicap {string.Join(' ', state.Black.Select(point => FormatVertex(point.X, point.Y, state.BoardSize)))}");
+            commands.Add(mode == InitialPositionMode.FixedHandicap
+                ? $"fixed_handicap {state.Black.Count}"
+                : $"set_free_handicap {string.Join(' ', state.Black.Select(point => FormatVertex(point.X, point.Y, state.BoardSize)))}");
         }
         else
         {
@@ -182,6 +186,12 @@ public sealed class KifuwarabeGtpPlayerProtocol(
                     await _transport.SendAsync("kfw-abort-position", CancellationToken.None);
                 return Failure<bool>("gtp-position-sync-failed", $"Command '{command}' failed: {response.Payload}");
             }
+            if (mode == InitialPositionMode.FixedHandicap && command.StartsWith("fixed_handicap ", StringComparison.Ordinal) &&
+                !FixedHandicapResponseMatches(response.Payload, state))
+            {
+                await _transport.SendAsync("clear_board", CancellationToken.None);
+                return Failure<bool>("gtp-fixed-handicap-mismatch", "fixed_handicap returned vertices that do not match the requested setup.");
+            }
         }
         return ProtocolResponse<bool>.Success(true);
     }
@@ -190,8 +200,9 @@ public sealed class KifuwarabeGtpPlayerProtocol(
     {
         if (_initialPositionCapabilities is { } resolved) return resolved;
         var atomic = await SupportsCommandAsync("kfw-begin-position", cancellationToken);
+        var fixedHandicap = !atomic && await SupportsCommandAsync("fixed_handicap", cancellationToken);
         var setFreeHandicap = !atomic && await SupportsCommandAsync("set_free_handicap", cancellationToken);
-        _initialPositionCapabilities = new(atomic, setFreeHandicap);
+        _initialPositionCapabilities = new(atomic, fixedHandicap, setFreeHandicap);
         return _initialPositionCapabilities;
     }
 
@@ -199,6 +210,50 @@ public sealed class KifuwarabeGtpPlayerProtocol(
     {
         var response = await _transport.SendAsync($"known_command {command}", cancellationToken);
         return response.IsSuccess && bool.TryParse(response.Payload.Trim(), out var supported) && supported;
+    }
+
+    private static bool IsBlackHandicap(GoState state) =>
+        state.Black.Count > 0 && state.White.Count == 0 && state.NextToPlay == "white";
+
+    private static bool IsStandardFixedHandicap(GoState state)
+    {
+        if (!IsBlackHandicap(state) || state.Black.Count is < 2 or > 9 || state.BoardSize is not (9 or 13 or 19))
+            return false;
+        var low = state.BoardSize == 9 ? 2 : 3;
+        var high = state.BoardSize - low - 1;
+        var middle = state.BoardSize / 2;
+        var lowerLeft = new Point(low, high);
+        var upperRight = new Point(high, low);
+        var upperLeft = new Point(low, low);
+        var lowerRight = new Point(high, high);
+        var middleLeft = new Point(low, middle);
+        var middleRight = new Point(high, middle);
+        var upperMiddle = new Point(middle, low);
+        var lowerMiddle = new Point(middle, high);
+        var center = new Point(middle, middle);
+        IReadOnlyList<Point> expected = state.Black.Count switch
+        {
+            2 => [lowerLeft, upperRight],
+            3 => [lowerLeft, upperRight, upperLeft],
+            4 => [lowerLeft, upperRight, upperLeft, lowerRight],
+            5 => [lowerLeft, upperRight, upperLeft, lowerRight, center],
+            6 => [lowerLeft, upperRight, upperLeft, lowerRight, middleLeft, middleRight],
+            7 => [lowerLeft, upperRight, upperLeft, lowerRight, middleLeft, middleRight, center],
+            8 => [lowerLeft, upperRight, upperLeft, lowerRight, middleLeft, middleRight, upperMiddle, lowerMiddle],
+            9 => [lowerLeft, upperRight, upperLeft, lowerRight, middleLeft, middleRight, upperMiddle, lowerMiddle, center],
+            _ => [],
+        };
+        return expected.ToHashSet().SetEquals(state.Black);
+    }
+
+    private static bool FixedHandicapResponseMatches(string payload, GoState state)
+    {
+        var actual = new HashSet<Point>();
+        foreach (var vertex in payload.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        {
+            if (!TryParseVertex(vertex, state.BoardSize, out var x, out var y) || !actual.Add(new(x, y))) return false;
+        }
+        return actual.SetEquals(state.Black);
     }
 
     private ProtocolResponse<ActiveBinding> GetBinding(PlayerBindingId bindingId)
@@ -313,8 +368,8 @@ public sealed class KifuwarabeGtpPlayerProtocol(
 
     private sealed record Point(int X, int Y);
     private sealed record GoState(int BoardSize, decimal Komi, string NextToPlay, IReadOnlyList<Point> Black, IReadOnlyList<Point> White);
-    private sealed record GtpInitialPositionCapabilities(bool SupportsAtomic, bool SupportsSetFreeHandicap);
-    private enum InitialPositionMode { KifuwarabeAtomic, SetFreeHandicap, StandardSequentialPlay }
+    private sealed record GtpInitialPositionCapabilities(bool SupportsAtomic, bool SupportsFixedHandicap, bool SupportsSetFreeHandicap);
+    private enum InitialPositionMode { KifuwarabeAtomic, FixedHandicap, SetFreeHandicap, StandardSequentialPlay }
     private sealed class ActiveBinding(PlayerBindingId bindingId, string roleId)
     {
         public PlayerBindingId BindingId { get; } = bindingId;

@@ -71,6 +71,7 @@ RequireSequence(
     genericTransport.Commands,
     [
         "known_command kfw-begin-position",
+        "known_command fixed_handicap",
         "known_command set_free_handicap",
         "boardsize 9",
         "clear_board",
@@ -110,6 +111,55 @@ RequireSequence(
     "A supported set_free_handicap command must be preferred for a black-only handicap position.");
 RequireSuccess(await players.UnbindPlayerAsync(handicapBound.BindingId, "set-free-handicap-verified"));
 RequireSuccess(await concierge.CloseSessionAsync(handicapSession.SessionId));
+
+genericTransport.Commands.Clear();
+var fixedHandicapSession = RequireSuccess(await concierge.OpenSessionAsync(
+    registeredGo.Descriptor.TypeId,
+    new ContractDocument(
+        "application/json",
+        GoSchemas.Configuration,
+        """
+        {
+          "version":1,
+          "boardSize":9,
+          "komi":0.5,
+          "ruleset":"chinese-area",
+          "startingPlayer":"white",
+          "setupStones":[
+            {"x":2,"y":6,"color":"black"},
+            {"x":6,"y":2,"color":"black"}
+          ]
+        }
+        """)));
+var fixedHandicapBound = RequireSuccess(await players.BindPlayerAsync(
+    genericRegistered.Descriptor.EngineId,
+    fixedHandicapSession.SessionId,
+    "white"));
+RequireSequence(
+    genericTransport.Commands,
+    ["boardsize 9", "clear_board", "komi 0.5", "fixed_handicap 2"],
+    "A standard star-point setup must prefer fixed_handicap.");
+RequireSuccess(await players.UnbindPlayerAsync(fixedHandicapBound.BindingId, "fixed-handicap-verified"));
+RequireSuccess(await concierge.CloseSessionAsync(fixedHandicapSession.SessionId));
+
+genericTransport.Commands.Clear();
+genericTransport.ReturnMismatchedFixedHandicap = true;
+var mismatchedSession = RequireSuccess(await concierge.OpenSessionAsync(
+    registeredGo.Descriptor.TypeId,
+    new ContractDocument(
+        "application/json",
+        GoSchemas.Configuration,
+        """
+        {"version":1,"boardSize":9,"komi":0.5,"ruleset":"chinese-area","startingPlayer":"white",
+         "setupStones":[{"x":2,"y":6,"color":"black"},{"x":6,"y":2,"color":"black"}]}
+        """)));
+var mismatched = await players.BindPlayerAsync(
+    genericRegistered.Descriptor.EngineId,
+    mismatchedSession.SessionId,
+    "white");
+Require(!mismatched.IsSuccess && mismatched.Error?.Code == "gtp-fixed-handicap-mismatch", "A mismatched fixed_handicap response must reject the binding.");
+Require(genericTransport.Commands.Last() == "clear_board", "A mismatched fixed_handicap response must clear the engine board.");
+RequireSuccess(await concierge.CloseSessionAsync(mismatchedSession.SessionId));
 
 var rejected = RequireSuccess(await players.RequestAndApplyActionAsync(bound.BindingId));
 Require(!rejected.Applied.IsAccepted, "The occupied A9 generated move must be rejected by the play-space.");
@@ -223,13 +273,16 @@ internal sealed class RecordingGtpTransport(IEnumerable<string> generatedMoves) 
 internal sealed class GenericRecordingGtpTransport : IGtpCommandTransport
 {
     public List<string> Commands { get; } = [];
+    public bool ReturnMismatchedFixedHandicap { get; set; }
 
     public ValueTask<GtpCommandResponse> SendAsync(string command, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
         Commands.Add(command);
         return ValueTask.FromResult(command.StartsWith("known_command ", StringComparison.Ordinal)
-            ? new GtpCommandResponse(true, command.EndsWith("set_free_handicap", StringComparison.Ordinal) ? "true" : "false")
+            ? new GtpCommandResponse(true, command is "known_command fixed_handicap" or "known_command set_free_handicap" ? "true" : "false")
+            : command == "fixed_handicap 2"
+            ? new GtpCommandResponse(true, ReturnMismatchedFixedHandicap ? "C3 C7" : "C3 G7")
             : new GtpCommandResponse(true, string.Empty));
     }
 }
