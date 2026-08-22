@@ -3,6 +3,7 @@ namespace KifuwarabeGo2026.Gui.PortabilitySmoke;
 using KifuwarabeGo2026.Gui;
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Application.GameOasis;
+using KifuwarabeGo2026.Gui.Presentation.Pages.GameOasis;
 using KifuwarabeGo2026.GameOasis.Contracts.Common;
 using KifuwarabeGo2026.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.ConnectionTarget;
 using KifuwarabeGo2026.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.Watching;
@@ -142,6 +143,31 @@ internal static class PortabilityChecks
         CompleteBridgeOperation(bridge);
         Require(bridge.State == GameOasisPlayingState.Idle && bridge.Board is null && bridge.LastError is null,
             "The GUI playing bridge must return to idle after closing the session.");
+
+        var goConfiguration = new ContractDocument(
+            "application/json",
+            GameOasisOfficialNames.Go + ".configuration.v1",
+            """{"version":1,"boardSize":9,"komi":6.5,"ruleset":"chinese-area","startingPlayer":"black","setupStones":[]}""");
+        Require(bridge.BeginOpen(new(GameOasisOfficialNames.Go), goConfiguration),
+            "The GUI playing bridge must open normal Go after closing Ponnuki.");
+        CompleteBridgeOperation(bridge);
+        var goBoard = bridge.Board ?? throw new InvalidOperationException("The normal Go GUI board was not published.");
+        Require(GameOasisBoardPanel.SupportsPassAndResign(goBoard) &&
+                !GameOasisBoardPanel.SupportsPassAndResign(openedBoard) &&
+                GameOasisBoardPanel.IsPassHit(GameOasisBoardPanel.PassBounds.Center) &&
+                GameOasisBoardPanel.IsResignHit(GameOasisBoardPanel.ResignBounds.Center) &&
+                GameOasisBoardPanel.IsCloseHit(GameOasisBoardPanel.CloseBounds.Center),
+            "The Game Oasis panel must expose only the actions supported by the selected game.");
+        Require(bridge.BeginPass(), "The normal Go GUI bridge must submit pass.");
+        CompleteBridgeOperation(bridge);
+        Require(bridge.State == GameOasisPlayingState.Ready && bridge.Board?.NextToPlay == "white",
+            "A normal Go pass must advance the common GUI board turn.");
+        Require(bridge.BeginResign(), "The normal Go GUI bridge must submit resign.");
+        CompleteBridgeOperation(bridge);
+        Require(bridge.State == GameOasisPlayingState.Terminal && bridge.Board?.IsTerminal == true,
+            "A normal Go resignation must publish a terminal common GUI board.");
+        Require(bridge.BeginClose(), "The terminal normal Go GUI session must be closable.");
+        CompleteBridgeOperation(bridge);
         bridge.Dispose();
     }
 

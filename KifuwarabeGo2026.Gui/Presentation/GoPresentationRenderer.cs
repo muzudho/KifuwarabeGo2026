@@ -7,6 +7,7 @@ using KifuwarabeGo2026.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.Connection
 using KifuwarabeGo2026.Gui.Presentation.Pages.Board;
 using KifuwarabeGo2026.Gui.Presentation.Pages.EditTournamentRule;
 using KifuwarabeGo2026.Gui.Presentation.Pages.GtpEngine;
+using KifuwarabeGo2026.Gui.Presentation.Pages.GameOasis;
 using KifuwarabeGo2026.Gui.Presentation.Pages.MoveTrendChart;
 using KifuwarabeGo2026.Gui.Presentation.Pages.OnlineMatch.Cgos.Login;
 using KifuwarabeGo2026.Gui.Presentation.Pages.OnlineMatch.Cgos.SelectConnection;
@@ -119,19 +120,13 @@ public sealed class GoPresentationRenderer : System.IDisposable
         _drawingContext.End();
     }
 
-    public void DrawGameOasis(GuiBoardView board, Point mousePosition, bool canAcceptInput, ProtocolError? error)
+    public void DrawGameOasis(GuiBoardView board, Point mousePosition, bool canSubmit, bool canClose, ProtocolError? error)
     {
         var mousePoint = _drawingContext.ToVirtualPoint(mousePosition);
         _drawingContext.Begin();
         _drawingContext.DrawBackground();
-        _boardRenderer.Draw(_drawingContext, board, mousePoint, canAcceptInput);
-        _drawingContext.DrawText(
-            board.IsTerminal ? "GAME OASIS  /  TERMINAL" : $"GAME OASIS  /  {board.NextToPlay.ToUpperInvariant()} TO PLAY",
-            new Vector2(1135, 110),
-            new Color(210, 224, 220),
-            0.34f);
-        if (error is not null)
-            _drawingContext.DrawText($"{error.Code}: {error.Message}", new Vector2(1135, 170), new Color(255, 180, 150), 0.26f);
+        _boardRenderer.Draw(_drawingContext, board, mousePoint, canSubmit);
+        GameOasisBoardPanel.Draw(_drawingContext, board, mousePoint, canSubmit, canClose, error);
         _drawingContext.End();
     }
 

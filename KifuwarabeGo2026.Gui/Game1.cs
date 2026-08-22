@@ -41,6 +41,7 @@ using KifuwarabeGo2026.Gui.Presentation.Pages.MoveTrendChart;
 using KifuwarabeGo2026.Gui.Presentation.Pages.PopupTrendChart;
 using KifuwarabeGo2026.Gui.Presentation.Pages.Board;
 using KifuwarabeGo2026.Gui.Presentation.Pages.GtpEngine;
+using KifuwarabeGo2026.Gui.Presentation.Pages.GameOasis;
 using KifuwarabeGo2026.Gui.Presentation.Shared.TextAreaDialog;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.StickyNote;
@@ -813,6 +814,7 @@ public class Game1 : Game
                 gameOasisBoard,
                 backgroundMousePosition,
                 gameOasisBridge.State == GameOasisPlayingState.Ready && !gameOasisBridge.IsBusy,
+                gameOasisBridge.State is GameOasisPlayingState.Ready or GameOasisPlayingState.Terminal && !gameOasisBridge.IsBusy,
                 gameOasisBridge.LastError);
         }
         else if (_session.UseKind is null)
@@ -2603,10 +2605,22 @@ public class Game1 : Game
         var board = bridge?.Board;
         if (bridge is null || board is null) return false;
 
-        if (bridge.State == GameOasisPlayingState.Ready &&
-            !bridge.IsBusy &&
-            BoardRenderer.TryGetBoardIntersection(point, board.BoardSize, out var intersection))
-            bridge.BeginPlay(intersection.X, intersection.Y);
+        if (!bridge.IsBusy)
+        {
+            if (bridge.State is GameOasisPlayingState.Ready or GameOasisPlayingState.Terminal &&
+                GameOasisBoardPanel.IsCloseHit(point))
+                bridge.BeginClose();
+            else if (bridge.State == GameOasisPlayingState.Ready && GameOasisBoardPanel.SupportsPassAndResign(board))
+            {
+                if (GameOasisBoardPanel.IsPassHit(point)) bridge.BeginPass();
+                else if (GameOasisBoardPanel.IsResignHit(point)) bridge.BeginResign();
+                else if (BoardRenderer.TryGetBoardIntersection(point, board.BoardSize, out var intersection))
+                    bridge.BeginPlay(intersection.X, intersection.Y);
+            }
+            else if (bridge.State == GameOasisPlayingState.Ready &&
+                     BoardRenderer.TryGetBoardIntersection(point, board.BoardSize, out var intersection))
+                bridge.BeginPlay(intersection.X, intersection.Y);
+        }
 
         // An active Game Oasis board owns the screen, including clicks outside the board.
         return true;
