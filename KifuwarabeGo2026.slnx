@@ -1,6 +1,7 @@
 <Solution>
   <Project Path="KifuwarabeGo2026.Engine/KifuwarabeGo2026.Engine.csproj" />
   <Project Path="KifuwarabeGo2026.GameOasis.Contracts/KifuwarabeGo2026.GameOasis.Contracts.csproj" />
+  <Project Path="KifuwarabeGo2026.GameOasis.Concierge/KifuwarabeGo2026.GameOasis.Concierge.csproj" />
   <Project Path="KifuwarabeGo2026.GtpExtensions/KifuwarabeGo2026.GtpExtensions.csproj" />
   <Project Path="KifuwarabeGo2026.Gui.Communication.Cgos/KifuwarabeGo2026.Gui.Communication.Cgos.csproj" />
   <Project Path="KifuwarabeGo2026.Gui.PortabilitySmoke/KifuwarabeGo2026.Gui.PortabilitySmoke.csproj" />
@@ -17,4 +18,5 @@
   <Project Path="KifuwarabeGo2026.Shared/KifuwarabeGo2026.Shared.csproj" />
   <Project Path="KifuwarabeGo2026.StationeryUI/KifuwarabeGo2026.StationeryUI.csproj" />
   <Project Path="KifuwarabeGo2026.Tests.Reference.PlaySpace.Ponnuki/KifuwarabeGo2026.Tests.Reference.PlaySpace.Ponnuki.csproj" />
+  <Project Path="KifuwarabeGo2026.Tests.GameOasis.Concierge/KifuwarabeGo2026.Tests.GameOasis.Concierge.csproj" />
 </Solution>
