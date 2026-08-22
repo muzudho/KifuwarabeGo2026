@@ -63,6 +63,7 @@ using System.Text;
 using System.Threading.Tasks;
 using KifuwarabeGo2026.Gui.Presentation.Shared.LiveBoardPreview;
 using KifuwarabeGo2026.Gui.Presentation.Shared.RandomSeedRow;
+using KifuwarabeGo2026.Gui.Application.GameOasis;
 
 public class Game1 : Game
 {
@@ -78,6 +79,8 @@ public class Game1 : Game
     private readonly IPlatformExecutableService _platformExecutableService;
     private readonly IWindowScreenshotService _windowScreenshotService;
     private readonly GoAppSession _session = new();
+    private Task<GameOasisGuiComposition>? _gameOasisCompositionTask;
+    private GameOasisGuiComposition? _gameOasisComposition;
     private readonly TournamentRulesCatalog _tournamentRulesCatalog;
     private readonly GtpEngineCatalog _gtpEngineCatalog;
     private readonly EntryCatalog _playerCatalog;
@@ -232,6 +235,7 @@ public class Game1 : Game
         _initialWindowLayoutService = initialWindowLayoutService;
         _platformExecutableService = platformExecutableService;
         _windowScreenshotService = windowScreenshotService;
+        _gameOasisCompositionTask = GameOasisGuiComposition.CreateAsync().AsTask();
         _cgosBlackConnectionProcess = new CgosConnectionProcess(_desktopLauncher, _platformExecutableService, "BlackPlayer");
         _cgosWhiteConnectionProcess = new CgosConnectionProcess(_desktopLauncher, _platformExecutableService, "PracticePlayer");
         _cgosAdminProcess = new CgosConnectionProcess(_desktopLauncher, _platformExecutableService, "Admin");
@@ -332,6 +336,7 @@ public class Game1 : Game
         CompleteRestoredAppProviderCheck();
         CompleteAppProviderSettingsEvaluation();
         CompleteCatalogSave();
+        CompleteGameOasisComposition();
         var keyboard = Keyboard.GetState();
         var mouse = Mouse.GetState();
         SynchronizeOrArmWindowInput(keyboard, mouse);
@@ -2548,6 +2553,22 @@ public class Game1 : Game
             : $"{_session.CurrentGameRecord.RootComment}\n\n{seedComment}";
         GuiOperationLog.User("Started Local Match",
             $"blackSeed={FormatLocalMatchSeed(seeds.Black)}; whiteSeed={FormatLocalMatchSeed(seeds.White)}");
+    }
+
+    private void CompleteGameOasisComposition()
+    {
+        var task = _gameOasisCompositionTask;
+        if (task is null || !task.IsCompleted) return;
+        _gameOasisCompositionTask = null;
+        if (task.IsCompletedSuccessfully)
+        {
+            _gameOasisComposition = task.Result;
+            GuiOperationLog.App("Game Oasis GUI connected", $"playSpaces={_gameOasisComposition.Client.State.PlaySpaces.Count}");
+        }
+        else
+        {
+            GuiOperationLog.App("Game Oasis GUI connection failed", task.Exception?.GetBaseException().ToString() ?? "Unknown error");
+        }
     }
 
     private static string FormatLocalMatchSeed(int? seed) => seed?.ToString() ?? "HUMAN";

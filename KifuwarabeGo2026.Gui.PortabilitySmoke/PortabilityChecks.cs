@@ -2,6 +2,7 @@ namespace KifuwarabeGo2026.Gui.PortabilitySmoke;
 
 using KifuwarabeGo2026.Gui;
 using KifuwarabeGo2026.Gui.Application;
+using KifuwarabeGo2026.Gui.Application.GameOasis;
 using KifuwarabeGo2026.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.ConnectionTarget;
 using KifuwarabeGo2026.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.Watching;
 using KifuwarabeGo2026.Gui.Application.Local.Playing;
@@ -78,6 +79,17 @@ internal static class PortabilityChecks
         VerifyLocalMatchSgfFileName();
         VerifyTournamentRulesJsonCompatibility();
         VerifyComposition();
+        VerifyGameOasisGuiComposition();
+    }
+
+    private static void VerifyGameOasisGuiComposition()
+    {
+        var composition = GameOasisGuiComposition.CreateAsync().AsTask().GetAwaiter().GetResult();
+        Require(composition.Client.State.PlaySpaces.Count == 2,
+            "The current GUI composition must discover normal Go and Ponnuki through Protocol G.");
+        Require(composition.Client.State.PlaySpaces.All(entry =>
+                entry.TypeId.Value is "org.kifuwarabe.games.go" or "org.kifuwarabe.games.ponnuki"),
+            "The current GUI composition exposed an unexpected play-space.");
     }
 
     private static void VerifyCgosResultReviewRecord()

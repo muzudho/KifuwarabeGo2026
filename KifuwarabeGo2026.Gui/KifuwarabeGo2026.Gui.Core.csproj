@@ -14,6 +14,10 @@
     <ProjectReference Include="..\KifuwarabeGo2026.GtpExtensions\KifuwarabeGo2026.GtpExtensions.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.Match\KifuwarabeGo2026.Match.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.Shared\KifuwarabeGo2026.Shared.csproj" />
+    <ProjectReference Include="..\KifuwarabeGo2026.GameOasis.Concierge\KifuwarabeGo2026.GameOasis.Concierge.csproj" />
+    <ProjectReference Include="..\KifuwarabeGo2026.Reference.GUI\KifuwarabeGo2026.Reference.GUI.csproj" />
+    <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlaySpace.Go\KifuwarabeGo2026.Reference.PlaySpace.Go.csproj" />
+    <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlaySpace.Ponnuki\KifuwarabeGo2026.Reference.PlaySpace.Ponnuki.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Update="default-settings.json">
