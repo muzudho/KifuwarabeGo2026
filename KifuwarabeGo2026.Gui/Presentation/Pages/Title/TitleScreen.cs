@@ -45,6 +45,9 @@ public sealed class TitleScreen
     public Headline CasualAppsLabel { get; }
 
     public Button CaptureGameButton { get; }
+    public Button GameOasisButton { get; } = new(new Rectangle(1140, 536, 300, 126), "Game Oasis", 0.44f);
+    public Button GameOasisGoButton { get; } = new(new Rectangle(560, 430, 380, 180), "GO", 0.62f);
+    public Button GameOasisPonnukiButton { get; } = new(new Rectangle(980, 430, 380, 180), "PONNUKI", 0.52f);
     public Button EngineProfilesButton { get; }
     public Button EntryProfilesButton { get; }
 

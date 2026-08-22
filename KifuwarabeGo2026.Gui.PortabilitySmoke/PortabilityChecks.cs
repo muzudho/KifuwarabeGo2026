@@ -96,6 +96,11 @@ internal static class PortabilityChecks
             "The current GUI composition must not expose a board before a Protocol G session opens.");
 
         var bridge = composition.PlayingBridge;
+        var goPreset = GameOasisSessionPresets.Create(new(GameOasisOfficialNames.Go));
+        var ponnukiPreset = GameOasisSessionPresets.Create(new(GameOasisOfficialNames.Ponnuki));
+        Require(goPreset.SchemaId == GameOasisOfficialNames.Go + ".configuration.v1" &&
+                ponnukiPreset.SchemaId == GameOasisOfficialNames.Ponnuki + ".configuration.v1",
+            "The title quick-start presets must use the official configuration schemas.");
         var invalidConfiguration = new ContractDocument(
             "application/json",
             GameOasisOfficialNames.Ponnuki + ".configuration.v1",

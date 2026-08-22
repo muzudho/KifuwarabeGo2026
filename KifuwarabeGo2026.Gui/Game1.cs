@@ -65,6 +65,7 @@ using System.Threading.Tasks;
 using KifuwarabeGo2026.Gui.Presentation.Shared.LiveBoardPreview;
 using KifuwarabeGo2026.Gui.Presentation.Shared.RandomSeedRow;
 using KifuwarabeGo2026.Gui.Application.GameOasis;
+using KifuwarabeGo2026.GameOasis.Contracts.Common;
 
 public class Game1 : Game
 {
@@ -2599,6 +2600,32 @@ public class Game1 : Game
         GuiOperationLog.App("Game Oasis GUI operation completed", detail);
     }
 
+    private bool BeginGameOasisSession(PlaySpaceTypeId playSpaceTypeId)
+    {
+        var composition = _gameOasisComposition;
+        if (composition is null)
+        {
+            ShowMessage("Game Oasis is still connecting. Please try again.", "GAME OASIS");
+            return true;
+        }
+
+        if (!composition.Client.State.PlaySpaces.Any(entry => entry.TypeId == playSpaceTypeId))
+        {
+            ShowMessage($"The play-space is not available: {playSpaceTypeId.Value}", "GAME OASIS");
+            return true;
+        }
+
+        var bridge = composition.PlayingBridge;
+        if (!bridge.BeginOpen(playSpaceTypeId, GameOasisSessionPresets.Create(playSpaceTypeId)))
+        {
+            ShowMessage($"Game Oasis cannot start while its state is {bridge.State}.", "GAME OASIS");
+            return true;
+        }
+
+        GuiOperationLog.User("Started Game Oasis session", $"playSpace={playSpaceTypeId.Value}");
+        return true;
+    }
+
     private bool TryHandleGameOasisClick(Point point)
     {
         var bridge = _gameOasisComposition?.PlayingBridge;
@@ -2800,6 +2827,13 @@ public class Game1 : Game
                 return true;
             }
 
+            if (TitleScreen.Default.GameOasisButton.IsHit(point))
+            {
+                _titleMenuPage = TitleMenuPage.GameOasis;
+                GuiOperationLog.User("Opened Game Oasis", "Navigate from title to play-space selection");
+                return true;
+            }
+
             if (TitleScreen.Default.GetAppHit(point) is { } appIndex)
             {
                 _titleMenuPage = appIndex switch
@@ -2811,6 +2845,14 @@ public class Game1 : Game
                 GuiOperationLog.User("Opened Casual Apps entry", $"page={_titleMenuPage}");
                 return true;
             }
+        }
+
+        if (_titleMenuPage == TitleMenuPage.GameOasis)
+        {
+            if (TitleScreen.Default.GameOasisGoButton.IsHit(point))
+                return BeginGameOasisSession(new(GameOasisOfficialNames.Go));
+            if (TitleScreen.Default.GameOasisPonnukiButton.IsHit(point))
+                return BeginGameOasisSession(new(GameOasisOfficialNames.Ponnuki));
         }
 
         if (_titleMenuPage == TitleMenuPage.CaptureGame)
@@ -7023,6 +7065,7 @@ public class Game1 : Game
             return _titleMenuPage switch
             {
                 TitleMenuPage.Home => "TITLE",
+                TitleMenuPage.GameOasis => "TITLE  >  GAME OASIS  >  PLAY-SPACE SELECT",
                 TitleMenuPage.CaptureGame => "TITLE  >  CASUAL APPS  >  PONNUKI",
                 TitleMenuPage.Tsumego => "TITLE  >  CASUAL APPS  >  TSUMEGO",
                 TitleMenuPage.NextMove => "TITLE  >  CASUAL APPS  >  NEXT MOVE",

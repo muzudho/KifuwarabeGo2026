@@ -99,6 +99,7 @@ public sealed class TitleScreenRenderer
                 DrawHomeServiceChoice(_titleScreen.LocalMatchButton.Bounds, _titleScreen.LocalMatchButton.Label, "PLAY / REVIEW", new Color(99, 223, 185), mousePoint);
                 DrawHomeServiceChoice(_titleScreen.CgosClientButton.Bounds, _titleScreen.CgosClientButton.Label, "WATCH / CONNECT", new Color(99, 223, 185), mousePoint);
                 DrawAppChoice(_titleScreen.CaptureGameButton.Bounds, _titleScreen.CaptureGameButton.Label, "CAPTURE GAME", mousePoint);
+                DrawAppChoice(_titleScreen.GameOasisButton.Bounds, _titleScreen.GameOasisButton.Label, "REFERENCE PLAY-SPACES", mousePoint);
                 DrawDynamicOptionText("左で対局候補を準備し、利用するアプリを選べます。", new Rectangle(460, 716, 980, 38), new Color(180, 195, 195), 0.34f);
                 if (entrySettingsHovered)
                     DrawTitleHomeHint("ENTRY SETTINGS", "エンジンと対局候補を準備します！", new Color(125, 225, 255));
@@ -122,6 +123,13 @@ public sealed class TitleScreenRenderer
                 {
                     DrawCaptureGamePreview();
                 }
+                break;
+            case TitleMenuPage.GameOasis:
+                DrawTitleBreadcrumb("GAME OASIS  >  SELECT PLAY-SPACE", panel);
+                DrawHomeServiceChoice(_titleScreen.GameOasisGoButton.Bounds, "GO", "9 x 9 / CHINESE AREA", new Color(99, 223, 185), mousePoint);
+                DrawHomeServiceChoice(_titleScreen.GameOasisPonnukiButton.Bounds, "PONNUKI", "9 x 9 / FIRST CAPTURE", new Color(255, 190, 92), mousePoint);
+                DrawFittedText("C# REFERENCE PRESETS", new Rectangle(560, 650, 800, 42), new Color(180, 195, 195), 0.34f);
+                DrawTitleBackButton(mousePoint);
                 break;
             default:
                 DrawAppPage(session, page, panel, mousePoint, appProviderTabIndex, isAppProviderLoading);
