@@ -826,7 +826,8 @@ public class Game1 : Game
                     ApplicationSettingsScreen.Default.Draw(_presentationServices.Stationery, backgroundMousePosition, _applicationSettingsPage, ApplicationSettings.Current.LogRootDirectory, ApplicationSettings.Current.SgfSaveDirectory, ApplicationSettings.Current.ScreenshotSaveDirectory, ApplicationSettings.FilePath, _gtpEngineCatalog.ListPath, _guiLogFiles, _selectedGuiLogIndex, _applicationSettingsMessage);
                 else
                     _presentationServices.Presentation.DrawTitle(_session, backgroundMousePosition, _titleMenuPage,
-                        _appProviderTabIndex, _appProviderSelectionLoadTask is not null);
+                        _appProviderTabIndex, _appProviderSelectionLoadTask is not null,
+                        _gameOasisComposition?.Client.State.PlaySpaces ?? []);
             }
         }
         else if (_variationSession is not null)
@@ -2615,8 +2616,16 @@ public class Game1 : Game
             return true;
         }
 
+        if (!GameOasisSessionPresets.TryCreate(playSpaceTypeId, out var configuration))
+        {
+            ShowMessage(
+                $"This play-space is registered, but its configuration screen is not implemented yet: {playSpaceTypeId.Value}",
+                "GAME OASIS");
+            return true;
+        }
+
         var bridge = composition.PlayingBridge;
-        if (!bridge.BeginOpen(playSpaceTypeId, GameOasisSessionPresets.Create(playSpaceTypeId)))
+        if (!bridge.BeginOpen(playSpaceTypeId, configuration))
         {
             ShowMessage($"Game Oasis cannot start while its state is {bridge.State}.", "GAME OASIS");
             return true;
@@ -2849,10 +2858,10 @@ public class Game1 : Game
 
         if (_titleMenuPage == TitleMenuPage.GameOasis)
         {
-            if (TitleScreen.Default.GameOasisGoButton.IsHit(point))
-                return BeginGameOasisSession(new(GameOasisOfficialNames.Go));
-            if (TitleScreen.Default.GameOasisPonnukiButton.IsHit(point))
-                return BeginGameOasisSession(new(GameOasisOfficialNames.Ponnuki));
+            var playSpaces = _gameOasisComposition?.Client.State.PlaySpaces;
+            if (playSpaces is not null &&
+                TitleScreen.GetGameOasisPlaySpaceHit(point, playSpaces.Count) is { } playSpaceIndex)
+                return BeginGameOasisSession(playSpaces[playSpaceIndex].TypeId);
         }
 
         if (_titleMenuPage == TitleMenuPage.CaptureGame)

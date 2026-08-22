@@ -3,6 +3,7 @@ namespace KifuwarabeGo2026.Gui.Presentation.Pages.Title;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Button;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Headline;
 using Microsoft.Xna.Framework;
+using System;
 
 /// <summary>タイトル画面のレイアウトと操作コントロールを所有します。</summary>
 public sealed class TitleScreen
@@ -54,6 +55,20 @@ public sealed class TitleScreen
     public Button EntryProfilesButton { get; }
 
     public int? GetAppHit(Point point) => CaptureGameButton.IsHit(point) ? 0 : null;
+
+    public static Rectangle GetGameOasisPlaySpaceBounds(int index)
+    {
+        var column = index % 2;
+        var row = index / 2;
+        return new Rectangle(520 + column * 450, 420 + row * 190, 410, 160);
+    }
+
+    public static int? GetGameOasisPlaySpaceHit(Point point, int count)
+    {
+        for (var index = 0; index < Math.Min(count, 4); index++)
+            if (GetGameOasisPlaySpaceBounds(index).Contains(point)) return index;
+        return null;
+    }
     #endregion
 
     public Button BackButton { get; }

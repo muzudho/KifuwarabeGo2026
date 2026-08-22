@@ -4,6 +4,7 @@ using KifuwarabeGo2026.Gui;
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Application.GameOasis;
 using KifuwarabeGo2026.Gui.Presentation.Pages.GameOasis;
+using KifuwarabeGo2026.Gui.Presentation.Pages.Title;
 using KifuwarabeGo2026.GameOasis.Contracts.Common;
 using KifuwarabeGo2026.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.ConnectionTarget;
 using KifuwarabeGo2026.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.Watching;
@@ -101,6 +102,11 @@ internal static class PortabilityChecks
         Require(goPreset.SchemaId == GameOasisOfficialNames.Go + ".configuration.v1" &&
                 ponnukiPreset.SchemaId == GameOasisOfficialNames.Ponnuki + ".configuration.v1",
             "The title quick-start presets must use the official configuration schemas.");
+        Require(!GameOasisSessionPresets.TryCreate(new("external.example.game"), out _),
+            "An external play-space without a configuration UI must not receive an invented preset.");
+        Require(TitleScreen.GetGameOasisPlaySpaceHit(TitleScreen.GetGameOasisPlaySpaceBounds(0).Center, 2) == 0 &&
+                TitleScreen.GetGameOasisPlaySpaceHit(TitleScreen.GetGameOasisPlaySpaceBounds(1).Center, 2) == 1,
+            "The catalog-driven Game Oasis title choices must map each visible card to its catalog index.");
         var invalidConfiguration = new ContractDocument(
             "application/json",
             GameOasisOfficialNames.Ponnuki + ".configuration.v1",

@@ -5,16 +5,25 @@ using System;
 
 public static class GameOasisSessionPresets
 {
-    public static ContractDocument Create(PlaySpaceTypeId playSpaceTypeId) => playSpaceTypeId.Value switch
+    public static bool TryCreate(PlaySpaceTypeId playSpaceTypeId, out ContractDocument configuration)
     {
-        GameOasisOfficialNames.Go => new(
-            "application/json",
-            GameOasisOfficialNames.Go + ".configuration.v1",
-            """{"version":1,"boardSize":9,"komi":6.5,"ruleset":"chinese-area","startingPlayer":"black","setupStones":[]}"""),
-        GameOasisOfficialNames.Ponnuki => new(
-            "application/json",
-            GameOasisOfficialNames.Ponnuki + ".configuration.v1",
-            """{"version":1,"boardSize":9,"initialMoveCount":20,"captureTarget":1,"startingPlayer":"black","setupStones":[]}"""),
-        _ => throw new ArgumentOutOfRangeException(nameof(playSpaceTypeId), playSpaceTypeId.Value, "No reference GUI preset is available for this play-space."),
-    };
+        configuration = playSpaceTypeId.Value switch
+        {
+            GameOasisOfficialNames.Go => new(
+                "application/json",
+                GameOasisOfficialNames.Go + ".configuration.v1",
+                """{"version":1,"boardSize":9,"komi":6.5,"ruleset":"chinese-area","startingPlayer":"black","setupStones":[]}"""),
+            GameOasisOfficialNames.Ponnuki => new(
+                "application/json",
+                GameOasisOfficialNames.Ponnuki + ".configuration.v1",
+                """{"version":1,"boardSize":9,"initialMoveCount":20,"captureTarget":1,"startingPlayer":"black","setupStones":[]}"""),
+            _ => null!,
+        };
+        return configuration is not null;
+    }
+
+    public static ContractDocument Create(PlaySpaceTypeId playSpaceTypeId) =>
+        TryCreate(playSpaceTypeId, out var configuration)
+            ? configuration
+            : throw new ArgumentOutOfRangeException(nameof(playSpaceTypeId), playSpaceTypeId.Value, "No reference GUI preset is available for this play-space.");
 }

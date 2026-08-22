@@ -16,17 +16,20 @@ using KifuwarabeGo2026.Gui.Presentation.Shared.SelectEntry;
 using KifuwarabeGo2026.Gui.Presentation.Shared.EditEntryProfile;
 using KifuwarabeGo2026.Gui.Presentation.Shared.EntryProfiles;
 using KifuwarabeGo2026.Gui.Presentation.Shared.HeadUpDisplay;
+using KifuwarabeGo2026.GameOasis.Contracts.ProtocolG;
+using System.Collections.Generic;
 
 public sealed class TitleScreenRenderer
 {
     public void DrawScreen(KfwStationeryDrawingTools drawingContext, GtpEngineRenderer gtpEngineRenderer,
         GoAppSession session, Point mousePosition,
-        TitleMenuPage page, int appProviderTabIndex, bool isAppProviderLoading)
+        TitleMenuPage page, int appProviderTabIndex, bool isAppProviderLoading,
+        IReadOnlyList<GuiPlaySpaceEntry> gameOasisPlaySpaces)
     {
         var mousePoint = drawingContext.ToVirtualPoint(mousePosition);
         drawingContext.Begin();
         drawingContext.DrawBackground();
-        Draw(drawingContext, session, mousePoint, page, appProviderTabIndex, isAppProviderLoading);
+        Draw(drawingContext, session, mousePoint, page, appProviderTabIndex, isAppProviderLoading, gameOasisPlaySpaces);
         SelectEntryPresenter.Default.Draw(drawingContext, session, mousePoint);
         EditEntryProfile.Default.Draw(drawingContext, session, mousePoint, HeadUpDisplayComponent.Default.StickyNoteScreen);
         EntryProfilesPresenter.Default.DrawPanels(drawingContext, session, mousePoint);
@@ -54,7 +57,8 @@ public sealed class TitleScreenRenderer
     #region ［CASUAL APPS 区画］
     #endregion
 
-    public void Draw(KfwStationeryDrawingTools drawingContext, GoAppSession session, Point mousePoint, TitleMenuPage page, int appProviderTabIndex, bool isAppProviderLoading)
+    public void Draw(KfwStationeryDrawingTools drawingContext, GoAppSession session, Point mousePoint, TitleMenuPage page, int appProviderTabIndex, bool isAppProviderLoading,
+        IReadOnlyList<GuiPlaySpaceEntry> gameOasisPlaySpaces)
     {
         _drawingContext = drawingContext;
         // タイトル画面の囲碁用具ワイヤー装飾。
@@ -70,12 +74,13 @@ public sealed class TitleScreenRenderer
         _titleScreen.Headline.Draw(_drawingContext);
         DrawText(GetDisplayVersion(), new Vector2(panel.X + 790, panel.Y + 91), new Color(99, 223, 185), 0.38f);
         DrawLine(new Vector2(panel.X + 790, panel.Y + 126), new Vector2(panel.X + 958, panel.Y + 126), 2, new Color(99, 223, 185, 120));
-        DrawTitleMenuContent(session, page, panel, mousePoint, appProviderTabIndex, isAppProviderLoading);
+        DrawTitleMenuContent(session, page, panel, mousePoint, appProviderTabIndex, isAppProviderLoading, gameOasisPlaySpaces);
         DrawUpdateButton(mousePoint);
         ApplicationSettingsScreen.Default.DrawSettingsButton(_drawingContext, mousePoint);
     }
 
-    private void DrawTitleMenuContent(GoAppSession session, TitleMenuPage page, Rectangle panel, Point mousePoint, int appProviderTabIndex, bool isAppProviderLoading)
+    private void DrawTitleMenuContent(GoAppSession session, TitleMenuPage page, Rectangle panel, Point mousePoint, int appProviderTabIndex, bool isAppProviderLoading,
+        IReadOnlyList<GuiPlaySpaceEntry> gameOasisPlaySpaces)
     {
         switch (page)
         {
@@ -131,9 +136,18 @@ public sealed class TitleScreenRenderer
                 break;
             case TitleMenuPage.GameOasis:
                 DrawTitleBreadcrumb("GAME OASIS  >  SELECT PLAY-SPACE", panel);
-                DrawHomeServiceChoice(_titleScreen.GameOasisGoButton.Bounds, "GO", "9 x 9 / CHINESE AREA", new Color(99, 223, 185), mousePoint);
-                DrawHomeServiceChoice(_titleScreen.GameOasisPonnukiButton.Bounds, "PONNUKI", "9 x 9 / FIRST CAPTURE", new Color(255, 190, 92), mousePoint);
-                DrawFittedText("C# REFERENCE PRESETS", new Rectangle(560, 650, 800, 42), new Color(180, 195, 195), 0.34f);
+                for (var index = 0; index < Math.Min(gameOasisPlaySpaces.Count, 4); index++)
+                {
+                    var entry = gameOasisPlaySpaces[index];
+                    DrawGameOasisPlaySpaceChoice(
+                        TitleScreen.GetGameOasisPlaySpaceBounds(index),
+                        entry,
+                        mousePoint);
+                }
+                if (gameOasisPlaySpaces.Count == 0)
+                    DrawFittedText("CONNECTING TO GAME OASIS...", new Rectangle(560, 500, 800, 52), new Color(180, 195, 195), 0.42f);
+                else if (gameOasisPlaySpaces.Count > 4)
+                    DrawFittedText($"+ {gameOasisPlaySpaces.Count - 4} MORE PLAY-SPACES", new Rectangle(560, 790, 800, 32), new Color(180, 195, 195), 0.3f);
                 DrawTitleBackButton(mousePoint);
                 break;
             default:
@@ -152,6 +166,46 @@ public sealed class TitleScreenRenderer
         DrawFittedText(title, new Rectangle(bounds.X + 28, bounds.Y + 20, bounds.Width - 56, 42), Color.White, 0.52f);
         DrawFittedText(caption, new Rectangle(bounds.X + 28, bounds.Y + 74, bounds.Width - 120, 30), new Color(204, 241, 226), 0.34f);
         DrawFittedText("OPEN  >", new Rectangle(bounds.Right - 92, bounds.Y + 76, 68, 28), hovered ? accent : new Color(180, 195, 195), 0.28f);
+    }
+
+    private void DrawGameOasisPlaySpaceChoice(Rectangle bounds, GuiPlaySpaceEntry entry, Point mousePoint)
+    {
+        var hovered = bounds.Contains(mousePoint);
+        var accent = new Color(178, 145, 255);
+        FillRect(new Rectangle(bounds.X + 6, bounds.Y + 8, bounds.Width, bounds.Height), new Color(0, 0, 0, 95));
+        FillRect(bounds, hovered ? new Color(42, 45, 60) : new Color(24, 31, 37));
+        DrawRect(bounds, 2, hovered ? new Color(212, 194, 255) : new Color(103, 87, 142));
+        FillRect(new Rectangle(bounds.X, bounds.Y, 6, bounds.Height), hovered ? accent : new Color(126, 96, 192));
+
+        DrawDynamicOptionText(entry.DisplayName,
+            new Rectangle(bounds.X + 28, bounds.Y + 14, bounds.Width - 126, 44), Color.White, 0.52f);
+        DrawDynamicOptionText($"v{entry.ImplementationVersion}",
+            new Rectangle(bounds.Right - 92, bounds.Y + 18, 68, 30), new Color(210, 198, 242), 0.3f);
+
+        DrawDynamicOptionText("IMPLEMENTATION",
+            new Rectangle(bounds.X + 28, bounds.Y + 64, bounds.Width - 56, 22), new Color(148, 130, 194), 0.24f);
+        var (firstLine, secondLine) = SplitImplementationName(entry.ImplementationName);
+        DrawDynamicOptionText(firstLine,
+            new Rectangle(bounds.X + 28, bounds.Y + 87, bounds.Width - 56, 28), new Color(205, 213, 214), 0.31f);
+        if (secondLine.Length > 0)
+            DrawDynamicOptionText(secondLine,
+                new Rectangle(bounds.X + 28, bounds.Y + 113, bounds.Width - 130, 28), new Color(205, 213, 214), 0.31f);
+
+        DrawFittedText("OPEN  >", new Rectangle(bounds.Right - 92, bounds.Bottom - 40, 68, 28),
+            hovered ? new Color(220, 205, 255) : new Color(180, 195, 195), 0.28f);
+    }
+
+    internal static (string FirstLine, string SecondLine) SplitImplementationName(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return ("-", "");
+        var center = value.Length / 2;
+        var separators = value.Select((character, index) => (character, index))
+            .Where(item => item.character == '.' && item.index > 0 && item.index < value.Length - 1)
+            .Select(item => item.index)
+            .ToArray();
+        if (separators.Length == 0) return (value, "");
+        var split = separators.MinBy(index => Math.Abs(index - center));
+        return (value[..split], value[(split + 1)..]);
     }
 
     private void DrawTitleBreadcrumb(string text, Rectangle panel)
