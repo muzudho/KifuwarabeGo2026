@@ -116,6 +116,9 @@ internal static class PortabilityChecks
         Require(typeof(CgosConnectionCatalog).Assembly == applicationAssembly &&
                 typeof(CgosConnectionProfile).Assembly == applicationAssembly,
             "Persistent CGOS connection profiles and catalog use cases must be owned by GameOasis.Application.");
+        Require(typeof(PlaySpaceConfigurationCatalog).Assembly == applicationAssembly &&
+                typeof(PlaySpaceConfigurationProfile).Assembly == applicationAssembly,
+            "Named play-space configuration catalog use cases must be owned by GameOasis.Application.");
         Require(typeof(ICatalogPathProvider).Assembly == applicationAssembly,
             "The catalog path boundary must be owned by GameOasis.Application.");
 
@@ -172,6 +175,17 @@ internal static class PortabilityChecks
                 connection.EndpointKey == "cgos://uec-go.com:65535" &&
                 connection.Event == "event" && connection.Note == "note",
             "GameOasis.Application must normalize CGOS connection destinations independently of the GUI.");
+
+        const string opaqueConfiguration = "{\"gameSpecific\":{\"boardSize\":19}}";
+        var configuration = PlaySpaceConfigurationProfilePolicy.Normalize(new PlaySpaceConfigurationProfile
+        {
+            DisplayName = "  Main tournament  ",
+            PlaySpaceId = "io.example.games.unknown",
+            ConfigurationDocument = opaqueConfiguration,
+        });
+        Require(configuration.Id.Length > 0 && configuration.DisplayName == "Main tournament" &&
+                configuration.ConfigurationDocument == opaqueConfiguration,
+            "GameOasis.Application must preserve an opaque play-space configuration without interpreting game rules.");
     }
 
     private static void VerifyGameOasisPlayerParticipation()
