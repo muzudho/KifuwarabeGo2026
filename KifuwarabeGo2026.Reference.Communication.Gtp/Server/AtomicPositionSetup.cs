@@ -1,11 +1,11 @@
-namespace KifuwarabeGo2026.Engine;
+namespace KifuwarabeGo2026.Reference.Communication.Gtp.Server;
 
 using KifuwarabeGo2026.Shared.Domain;
 
 /// <summary>
 /// Builds an edited position away from the live board and exposes it only after a successful commit.
 /// </summary>
-internal sealed class AtomicPositionSetup
+public sealed class AtomicPositionSetup
 {
     private GoBoard? _pendingBoard;
     private GoStone? _pendingTurn;

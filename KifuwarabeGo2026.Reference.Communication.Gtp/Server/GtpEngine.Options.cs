@@ -1,9 +1,9 @@
-namespace KifuwarabeGo2026.Engine;
+namespace KifuwarabeGo2026.Reference.Communication.Gtp.Server;
 
 using KifuwarabeGo2026.Reference.PlayerEngine.Strategies;
 using System.Text.Json;
 
-internal sealed partial class GtpEngine
+public sealed partial class GtpEngine
 {
     private const int OptionsProtocolVersion = 1;
     private const int MaximumOptionTextLength = 10_000;

@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Engine;
+namespace KifuwarabeGo2026.Reference.Communication.Gtp.Server;
 
 using KifuwarabeGo2026.Shared.Domain;
 using System.Security.Cryptography;
@@ -7,7 +7,7 @@ using System.Text.Json;
 /// <summary>
 /// Casual App であるポン抜きの局面生成、進行、および終局判定を担当します。
 /// </summary>
-internal sealed partial class GtpEngine
+public sealed partial class GtpEngine
 {
     private const int PonnukiCaptureTarget = 20;
     private int _ponnukiBoardSize = 9;
