@@ -91,8 +91,10 @@ $versionProjects = @(
     'KifuwarabeGo2026.Launcher.Presentation\KifuwarabeGo2026.Launcher.Presentation.csproj',
     'KifuwarabeGo2026.Gui.Windows\KifuwarabeGo2026.Gui.Windows.csproj',
     'KifuwarabeGo2026.Gui\KifuwarabeGo2026.Gui.Core.csproj',
-    'KifuwarabeGo2026.Engine\KifuwarabeGo2026.Engine.csproj',
-    'KifuwarabeGo2026.Shared\KifuwarabeGo2026.Shared.csproj',
+    'KifuwarabeGo2026.Reference.Communication.Gtp.Host\KifuwarabeGo2026.Reference.Communication.Gtp.Host.csproj',
+    'KifuwarabeGo2026.Reference.Communication.Gtp\KifuwarabeGo2026.Reference.Communication.Gtp.csproj',
+    'KifuwarabeGo2026.Reference.PlayerEngine\KifuwarabeGo2026.Reference.PlayerEngine.csproj',
+    'KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation\KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation.csproj',
     'KifuwarabeGo2026.StationeryUI\KifuwarabeGo2026.StationeryUI.csproj',
     'KifuwarabeGo2026.Gui.Communication.Cgos\KifuwarabeGo2026.Gui.Communication.Cgos.csproj'
 )
@@ -116,7 +118,7 @@ if ($releaseNotesText -notmatch "(?m)^# Kifuwarabe Go 2026 v$([regex]::Escape($V
 
 $launcherPublish = 'KifuwarabeGo2026.Launcher\bin\Release\net8.0\win-x64\publish'
 $guiPublish = 'KifuwarabeGo2026.Gui.Windows\bin\Release\net8.0-windows\win-x64\publish'
-$enginePublish = 'KifuwarabeGo2026.Engine\bin\Release\net8.0\win-x64\publish'
+$enginePublish = 'KifuwarabeGo2026.Reference.Communication.Gtp.Host\bin\Release\net8.0\win-x64\publish'
 
 if (-not $SkipBuild) {
     Invoke-CheckedCommand -Command dotnet -Arguments @('build', 'KifuwarabeGo2026.slnx', '-c', 'Release')
@@ -129,7 +131,7 @@ if (-not $SkipBuild) {
 
     Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.Launcher\KifuwarabeGo2026.Launcher.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false')
     Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.Gui.Windows\KifuwarabeGo2026.Gui.Windows.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false')
-    Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.Engine\KifuwarabeGo2026.Engine.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false')
+    Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.Reference.Communication.Gtp.Host\KifuwarabeGo2026.Reference.Communication.Gtp.Host.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false')
 }
 
 Assert-FileExists -LiteralPath @(
@@ -137,13 +139,15 @@ Assert-FileExists -LiteralPath @(
     "$guiPublish\KifuwarabeGo2026.Gui.exe",
     "$guiPublish\KifuwarabeGo2026.Gui.Core.dll",
     "$guiPublish\KifuwarabeGo2026.StationeryUI.dll",
-    "$guiPublish\KifuwarabeGo2026.Shared.dll",
+    "$guiPublish\KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation.dll",
     "$guiPublish\Tools\Cgos\KifuwarabeGo2026.Gui.Communication.Cgos.exe",
     "$guiPublish\Tools\Cgos\KifuwarabeGo2026.Gui.Communication.Cgos.dll",
     "$guiPublish\Tools\Cgos\KifuwarabeGo2026.Gui.Communication.Cgos.deps.json",
     "$guiPublish\Tools\Cgos\KifuwarabeGo2026.Gui.Communication.Cgos.runtimeconfig.json",
     "$enginePublish\KifuwarabeGo2026.Engine.exe",
-    "$enginePublish\KifuwarabeGo2026.Shared.dll"
+    "$enginePublish\KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation.dll",
+    "$enginePublish\KifuwarabeGo2026.Reference.PlayerEngine.dll",
+    "$enginePublish\KifuwarabeGo2026.Reference.Communication.Gtp.dll"
 )
 
 $uploads = Join-Path $repositoryRoot 'Uploads'

@@ -4,8 +4,8 @@
       "displayName": "Kifuwarabe GTP - CGF Open 2026",
       "defaultCgosLoginName": "kifuwarabe",
       "defaultCgosPlainTextPassword": "kifuwarabePass",
-      "executablePath": "..\\..\\..\\KifuwarabeGo2026.Engine\\bin\\Release\\net8.0\\win-x64\\KifuwarabeGo2026.Engine.exe",
-      "workingDirectory": "..\\..\\..\\KifuwarabeGo2026.Engine\\bin\\Release\\net8.0\\win-x64",
+      "executablePath": "..\\..\\..\\KifuwarabeGo2026.Reference.Communication.Gtp.Host\\bin\\Release\\net8.0\\win-x64\\KifuwarabeGo2026.Engine.exe",
+      "workingDirectory": "..\\..\\..\\KifuwarabeGo2026.Reference.Communication.Gtp.Host\\bin\\Release\\net8.0\\win-x64",
       "arguments": "",
       "enableGtpLog": true,
       "guiOptions": {
@@ -23,7 +23,7 @@
       "defaultCgosPlainTextPassword": "",
       "executablePath": "dotnet",
       "workingDirectory": "..\\..\\..",
-      "arguments": "run --project \u0022KifuwarabeGo2026.Engine/KifuwarabeGo2026.Engine.csproj\u0022",
+      "arguments": "run --project \u0022KifuwarabeGo2026.Reference.Communication.Gtp.Host/KifuwarabeGo2026.Reference.Communication.Gtp.Host.csproj\u0022",
       "enableGtpLog": true,
       "guiOptions": {
         "RandomMove": "ChebyshevDistanceFromStar",
@@ -72,8 +72,8 @@
       "displayName": "Kifuwarabe Normal Random GTP",
       "defaultCgosLoginName": "",
       "defaultCgosPlainTextPassword": "",
-      "executablePath": "..\\..\\..\\KifuwarabeGo2026.Engine\\bin\\Debug\\net8.0\\KifuwarabeGo2026.Engine.exe",
-      "workingDirectory": "..\\..\\..\\KifuwarabeGo2026.Engine\\bin\\Debug\\net8.0",
+      "executablePath": "..\\..\\..\\KifuwarabeGo2026.Reference.Communication.Gtp.Host\\bin\\Debug\\net8.0\\win-x64\\KifuwarabeGo2026.Engine.exe",
+      "workingDirectory": "..\\..\\..\\KifuwarabeGo2026.Reference.Communication.Gtp.Host\\bin\\Debug\\net8.0\\win-x64",
       "arguments": "",
       "enableGtpLog": true,
       "guiOptions": {

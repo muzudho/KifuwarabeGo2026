@@ -1,5 +1,5 @@
 <Solution>
-  <Project Path="KifuwarabeGo2026.Engine/KifuwarabeGo2026.Engine.csproj" />
+  <Project Path="KifuwarabeGo2026.Reference.Communication.Gtp.Host/KifuwarabeGo2026.Reference.Communication.Gtp.Host.csproj" />
   <Project Path="KifuwarabeGo2026.GameOasis.Contracts/KifuwarabeGo2026.GameOasis.Contracts.csproj" />
   <Project Path="KifuwarabeGo2026.GameOasis.Concierge/KifuwarabeGo2026.GameOasis.Concierge.csproj" />
   <Project Path="KifuwarabeGo2026.GtpExtensions/KifuwarabeGo2026.GtpExtensions.csproj" />

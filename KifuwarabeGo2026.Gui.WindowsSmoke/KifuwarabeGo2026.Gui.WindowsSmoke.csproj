@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\KifuwarabeGo2026.Engine\KifuwarabeGo2026.Engine.csproj" />
+    <ProjectReference Include="..\KifuwarabeGo2026.Reference.Communication.Gtp.Host\KifuwarabeGo2026.Reference.Communication.Gtp.Host.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.Gui.Windows\KifuwarabeGo2026.Gui.Windows.csproj" />
   </ItemGroup>
 </Project>

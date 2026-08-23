@@ -1,6 +1,6 @@
-# KifuwarabeGo2026.Engine
+# KifuwarabeGo2026.Reference.Communication.Gtp.Host
 
-`KifuwarabeGo2026.Engine` は、Kifuwarabe Go 2026 から起動できる GTP（Go Text Protocol）対応の囲碁思考エンジンです。
+`KifuwarabeGo2026.Reference.Communication.Gtp.Host` は、Kifuwarabe Go 2026から起動できるGTP参照サーバーの実行ホストです。互換性のため、出力実行ファイル名は`KifuwarabeGo2026.Engine`を維持します。
 
 現在は合法手の中からランダムに着手する小さなエンジンですが、思考処理やエンジンオプションを改造するためのサンプルとしても利用できます。ライセンスはリポジトリ直下の [LICENSE.txt](../LICENSE.txt)（MIT License）を参照してください。
 
@@ -9,8 +9,8 @@
 リポジトリ直下で次のコマンドを実行します。
 
 ```powershell
-dotnet build KifuwarabeGo2026.Engine/KifuwarabeGo2026.Engine.csproj
-dotnet run --project KifuwarabeGo2026.Engine/KifuwarabeGo2026.Engine.csproj
+dotnet build KifuwarabeGo2026.Reference.Communication.Gtp.Host/KifuwarabeGo2026.Reference.Communication.Gtp.Host.csproj
+dotnet run --project KifuwarabeGo2026.Reference.Communication.Gtp.Host/KifuwarabeGo2026.Reference.Communication.Gtp.Host.csproj
 ```
 
 起動後は標準入力へ GTP コマンドを入力できます。

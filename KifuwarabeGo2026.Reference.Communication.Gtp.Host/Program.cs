@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Engine;
+namespace KifuwarabeGo2026.Reference.Communication.Gtp.Host;
 
 using KifuwarabeGo2026.Reference.Communication.Gtp.Server;
 

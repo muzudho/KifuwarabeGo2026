@@ -331,7 +331,7 @@ internal sealed record CgosAccount(string Label, string UserName, string Passwor
 
 internal sealed class CgosClientOptions
 {
-    private const string DefaultEngineCommand = "dotnet run --project KifuwarabeGo2026.Engine\\KifuwarabeGo2026.Engine.csproj";
+    private const string DefaultEngineCommand = "dotnet run --project KifuwarabeGo2026.Reference.Communication.Gtp.Host\\KifuwarabeGo2026.Reference.Communication.Gtp.Host.csproj";
 
     private readonly List<CgosAccount> _accounts = new();
     private readonly Dictionary<string, string> _engineOptions = new(StringComparer.Ordinal);

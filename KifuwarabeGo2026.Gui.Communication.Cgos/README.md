@@ -34,7 +34,7 @@ dotnet run --project KifuwarabeGo2026.Gui.Communication.Cgos -- --both
 publish 済みエンジンを使う場合:
 
 ```powershell
-dotnet run --project KifuwarabeGo2026.Gui.Communication.Cgos -- --account black --engine-command ".\KifuwarabeGo2026.Engine\bin\Release\net8.0\win-x64\publish\KifuwarabeGo2026.Engine.exe"
+dotnet run --project KifuwarabeGo2026.Gui.Communication.Cgos -- --account black --engine-command ".\KifuwarabeGo2026.Reference.Communication.Gtp.Host\bin\Release\net8.0\win-x64\publish\KifuwarabeGo2026.Engine.exe"
 ```
 
 ログは既定で `Logs\Cgos` に出力します。GUI から起動した通信プロセスの標準エラー出力は `standard-error-*.log` に、GTP エンジンの標準エラー出力は `gtp-*.log` に、それぞれ `# [StandardError] ` 付きで保存します。パスワードはログに出しません。
