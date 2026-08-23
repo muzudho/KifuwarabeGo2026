@@ -1,14 +1,14 @@
-namespace KifuwarabeGo2026.Engine.Shared;
+namespace KifuwarabeGo2026.Reference.PlayerEngine.Strategies;
 
 using KifuwarabeGo2026.Shared.Domain;
 
 /// <summary>アプリごとの着手生成戦略です。</summary>
-internal interface IGenerateMoveStrategy
+public interface IGenerateMoveStrategy
 {
     GoPoint? GenerateMove(GenerateMoveRequest request);
 }
 
-internal sealed record GenerateMoveRequest(
+public sealed record GenerateMoveRequest(
     GoBoard Board,
     GoStone Color,
     GoPoint? KoPoint,
@@ -16,15 +16,15 @@ internal sealed record GenerateMoveRequest(
     MoveSelectionMode SelectionMode,
     Random Random);
 
-internal readonly record struct LegalMoveCandidate(GoPoint Move, GoBoard BoardAfterMove, int CapturedStones);
+public readonly record struct LegalMoveCandidate(GoPoint Move, GoBoard BoardAfterMove, int CapturedStones);
 
-internal enum MoveSelectionMode
+public enum MoveSelectionMode
 {
     Normal,
     ChebyshevDistanceFromStar,
 }
 
-internal static class LegalMoveCandidates
+public static class LegalMoveCandidates
 {
     public static List<LegalMoveCandidate> Collect(GenerateMoveRequest request)
     {
@@ -47,7 +47,7 @@ internal static class LegalMoveCandidates
     }
 }
 
-internal static class MoveSelector
+public static class MoveSelector
 {
     public static GoPoint Select(IReadOnlyList<GoPoint> moves, GenerateMoveRequest request) =>
         request.SelectionMode == MoveSelectionMode.Normal

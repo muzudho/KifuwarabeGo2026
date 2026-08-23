@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation\KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation.csproj" />
+    <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlayerEngine\KifuwarabeGo2026.Reference.PlayerEngine.csproj" />
   </ItemGroup>
 
   <ItemGroup>

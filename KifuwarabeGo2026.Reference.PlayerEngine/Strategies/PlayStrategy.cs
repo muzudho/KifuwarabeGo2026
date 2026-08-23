@@ -1,11 +1,10 @@
-namespace KifuwarabeGo2026.Engine.GoApps.Formal.Play;
+namespace KifuwarabeGo2026.Reference.PlayerEngine.Strategies;
 
-using KifuwarabeGo2026.Engine.Shared;
 using KifuwarabeGo2026.Shared.Domain;
 using System.Linq;
 
 /// <summary>Formal App の共通対局用の着手生成戦略です。</summary>
-internal sealed class PlayStrategy : IGenerateMoveStrategy
+public sealed class PlayStrategy : IGenerateMoveStrategy
 {
     public GoPoint? GenerateMove(GenerateMoveRequest request) =>
         GenerateMoveWithDecision(request)?.Move;
@@ -42,7 +41,7 @@ internal sealed class PlayStrategy : IGenerateMoveStrategy
 }
 
 /// <summary>Formal Play の着手選択理由です。</summary>
-internal enum PlayDecisionReason
+public enum PlayDecisionReason
 {
     CaptureAtari,
     DefendThreatenedRen,
@@ -50,7 +49,7 @@ internal enum PlayDecisionReason
 }
 
 /// <summary>棋譜コメントに残す Formal Play の着手決定情報です。</summary>
-internal readonly record struct PlayMoveDecision(
+public readonly record struct PlayMoveDecision(
     GoPoint Move,
     int CandidateCount,
     MoveSelectionMode SelectionMode,

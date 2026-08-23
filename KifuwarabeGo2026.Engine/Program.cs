@@ -2,8 +2,7 @@ namespace KifuwarabeGo2026.Engine;
 
 using KifuwarabeGo2026.Shared.Domain;
 using KifuwarabeGo2026.Engine.GoApps.Casual.Ponnuki;
-using KifuwarabeGo2026.Engine.GoApps.Formal.Play;
-using KifuwarabeGo2026.Engine.Shared;
+using KifuwarabeGo2026.Reference.PlayerEngine.Strategies;
 using System.Reflection;
 using System.Text.Json;
 

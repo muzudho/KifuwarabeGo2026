@@ -1,6 +1,6 @@
 namespace KifuwarabeGo2026.Engine;
 
-using KifuwarabeGo2026.Engine.Shared;
+using KifuwarabeGo2026.Reference.PlayerEngine.Strategies;
 using System.Text.Json;
 
 internal sealed partial class GtpEngine

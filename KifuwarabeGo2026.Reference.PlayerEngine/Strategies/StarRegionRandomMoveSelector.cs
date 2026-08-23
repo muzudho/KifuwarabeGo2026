@@ -1,11 +1,11 @@
-namespace KifuwarabeGo2026.Engine.Shared;
+namespace KifuwarabeGo2026.Reference.PlayerEngine.Strategies;
 
 using KifuwarabeGo2026.Shared.Domain;
 
 /// <summary>
 /// 星を基準に盤面を A・B・C の領域へ分け、領域と着手点を順番に抽選します。
 /// </summary>
-internal static class StarRegionRandomMoveSelector
+public static class StarRegionRandomMoveSelector
 {
     /// <summary>
     /// 合法手が存在する領域を等確率で選び、その領域から着手点を選びます。

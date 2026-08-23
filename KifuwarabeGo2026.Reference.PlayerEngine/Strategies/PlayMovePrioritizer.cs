@@ -1,12 +1,11 @@
-namespace KifuwarabeGo2026.Engine.GoApps.Formal.Play;
+namespace KifuwarabeGo2026.Reference.PlayerEngine.Strategies;
 
-using KifuwarabeGo2026.Engine.Shared;
 using KifuwarabeGo2026.Shared.Domain;
 using System.Collections.Generic;
 using System.Linq;
 
 /// <summary>Formal Play 用の着手優先順位を収集します。</summary>
-internal static class PlayMovePrioritizer
+public static class PlayMovePrioritizer
 {
     /// <summary>相手の連がアタリなら、その唯一の呼吸点へ打つ候補を返します。</summary>
     public static List<LegalMoveCandidate> CollectAtariCaptureCandidates(

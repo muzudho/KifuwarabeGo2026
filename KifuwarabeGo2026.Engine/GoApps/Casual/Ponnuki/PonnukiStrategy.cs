@@ -1,6 +1,6 @@
 namespace KifuwarabeGo2026.Engine.GoApps.Casual.Ponnuki;
 
-using KifuwarabeGo2026.Engine.Shared;
+using KifuwarabeGo2026.Reference.PlayerEngine.Strategies;
 using KifuwarabeGo2026.Shared.Domain;
 
 /// <summary>Casual App のポン抜き用着手戦略です。</summary>
