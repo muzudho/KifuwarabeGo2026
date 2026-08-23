@@ -108,6 +108,10 @@ internal static class PortabilityChecks
             "GameOasis.Application must not depend on its Storage implementation.");
         Require(storageReferences.Contains("KifuwarabeGo2026.GameOasis.Application"),
             "GameOasis.Storage must implement the Application-owned persistence boundary.");
+        Require(typeof(GtpEngineCatalog).Assembly == applicationAssembly,
+            "The persistent GTP engine catalog use cases must be owned by GameOasis.Application.");
+        Require(typeof(ICatalogPathProvider).Assembly == applicationAssembly,
+            "The catalog path boundary must be owned by GameOasis.Application.");
     }
 
     private static void VerifyGameOasisProfilePolicies()
@@ -739,9 +743,9 @@ internal static class PortabilityChecks
         var listPath = Path.Combine(temporaryRoot, "gtp-engine-list.json");
         try
         {
-            var catalog = GtpEngineCatalog.Load(listPath);
+            var catalog = GtpEngineCatalog.Load(CatalogDocumentStorage.Default, listPath);
             catalog.Save([profile]);
-            var restored = GtpEngineCatalog.Load(listPath).Profiles.Single();
+            var restored = GtpEngineCatalog.Load(CatalogDocumentStorage.Default, listPath).Profiles.Single();
             Require(restored.InitialPositionProfileId == BuiltInGtpProfiles.AutoId &&
                     restored.InitialPositionManualPreferredMethod == InitialPositionMethod.SequentialPlay &&
                     restored.InitialPositionDetectedMethod == InitialPositionMethod.LoadSgf &&
