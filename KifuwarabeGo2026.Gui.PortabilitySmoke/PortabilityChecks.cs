@@ -99,17 +99,19 @@ internal static class PortabilityChecks
         playingScene.AttachGameOasisPlayerBridge(composition.PlayerParticipationBridge);
         playingScene.Update();
 
-        var playSpaceTypeId = new PlaySpaceTypeId(GameOasisOfficialNames.Go);
         var localMatch = new MatchSession(new MatchConfiguration(
             9,
             startingTurn: GoStone.Black,
             setupStones: [new MatchSetupStone(GoStone.White, new GoPoint(8, 8))]));
-        var configuration = LocalMatchGameOasisConfiguration.Create(localMatch.Snapshot, 6.5m);
-        var opened = composition.BoardController.OpenAsync(
-            playSpaceTypeId,
-            configuration).AsTask().GetAwaiter().GetResult();
-        Require(opened.IsSuccess, "Protocol G must open a play-space before a Protocol P player joins.");
-        Require(opened.Value is { White.Count: 1, NextToPlay: "black" },
+        var localLifecycle = composition.LocalMatchLifecycle;
+        Require(localLifecycle.BeginStart(localMatch.Snapshot, 6.5m),
+            "The local-match lifecycle must begin opening its Protocol S play-space.");
+        Require(!localLifecycle.BeginStart(localMatch.Snapshot, 6.5m),
+            "The local-match lifecycle must reject a second start while opening.");
+        CompleteLocalMatchLifecycleOperation(localLifecycle);
+        Require(localLifecycle.State == LocalMatchGameOasisState.Ready,
+            "Protocol G must open a play-space before a Protocol P player joins.");
+        Require(localLifecycle.Board is { White.Count: 1, NextToPlay: "black" },
             "The local-match initial position must cross the Protocol S configuration boundary without losing setup stones or turn.");
         Require(localMatch.Play(new GoPoint(0, 0)).Succeeded,
             "The local compatibility match must advance for the configuration guard smoke test.");
@@ -146,8 +148,10 @@ internal static class PortabilityChecks
         CompletePlayerBridgeOperation(playerBridge);
         Require(playerBridge.State == GameOasisPlayerParticipationState.Idle && playerBridge.BindingId is null,
             "The frame bridge must return to idle after player participation ends.");
-        Require(composition.BoardController.CloseAsync().AsTask().GetAwaiter().GetResult().IsSuccess,
-            "The shared Game Oasis session must close cleanly.");
+        Require(localLifecycle.BeginClose(), "The Game Oasis local-match lifecycle must begin closing its session.");
+        CompleteLocalMatchLifecycleOperation(localLifecycle);
+        Require(localLifecycle.State == LocalMatchGameOasisState.Idle && localLifecycle.Board is null,
+            "The shared Game Oasis session must close cleanly and return the local-match lifecycle to idle.");
     }
 
     private static void VerifyGameOasisGuiComposition()
@@ -282,6 +286,12 @@ internal static class PortabilityChecks
     {
         Require(SpinWait.SpinUntil(() => bridge.Update(), TimeSpan.FromSeconds(5)),
             "The GUI player participation bridge operation did not complete within the smoke-test timeout.");
+    }
+
+    private static void CompleteLocalMatchLifecycleOperation(LocalMatchGameOasisLifecycle lifecycle)
+    {
+        Require(SpinWait.SpinUntil(() => lifecycle.Update(), TimeSpan.FromSeconds(5)),
+            "The Game Oasis local-match lifecycle operation did not complete within the smoke-test timeout.");
     }
 
     private static void VerifyCgosResultReviewRecord()
