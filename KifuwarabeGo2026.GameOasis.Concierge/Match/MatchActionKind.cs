@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Match;
+namespace KifuwarabeGo2026.GameOasis.Concierge.Match;
 
 /// <summary>
 /// Identifies an action requested by the player whose turn it is.

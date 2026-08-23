@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Match;
+namespace KifuwarabeGo2026.GameOasis.Concierge.Match;
 
 /// <summary>
 /// Represents a structured result without presentation-specific result text.

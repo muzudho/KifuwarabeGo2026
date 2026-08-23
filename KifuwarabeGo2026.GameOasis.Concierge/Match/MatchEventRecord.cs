@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Match;
+namespace KifuwarabeGo2026.GameOasis.Concierge.Match;
 
 using KifuwarabeGo2026.Shared.Domain;
 

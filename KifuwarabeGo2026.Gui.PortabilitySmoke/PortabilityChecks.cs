@@ -20,7 +20,7 @@ using KifuwarabeGo2026.GtpExtensions.InitialPosition;
 using KifuwarabeGo2026.GtpExtensions.Protocol;
 using KifuwarabeGo2026.GtpExtensions.Sgf;
 using KifuwarabeGo2026.GtpExtensions.Strategies;
-using KifuwarabeGo2026.Match;
+using KifuwarabeGo2026.GameOasis.Concierge.Match;
 using KifuwarabeGo2026.Reference.GUI;
 using KifuwarabeGo2026.Shared.Domain;
 using Microsoft.Xna.Framework;

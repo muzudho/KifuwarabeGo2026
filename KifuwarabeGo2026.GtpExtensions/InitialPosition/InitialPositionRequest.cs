@@ -1,6 +1,6 @@
 namespace KifuwarabeGo2026.GtpExtensions.InitialPosition;
 
-using KifuwarabeGo2026.Match;
+using KifuwarabeGo2026.GameOasis.Concierge.Match;
 using KifuwarabeGo2026.Shared.Domain;
 using System.Collections.ObjectModel;
 

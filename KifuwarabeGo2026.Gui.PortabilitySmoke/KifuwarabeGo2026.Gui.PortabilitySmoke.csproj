@@ -7,6 +7,6 @@
   <ItemGroup>
     <ProjectReference Include="..\KifuwarabeGo2026.GtpExtensions\KifuwarabeGo2026.GtpExtensions.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.Gui\KifuwarabeGo2026.Gui.Core.csproj" />
-    <ProjectReference Include="..\KifuwarabeGo2026.Match\KifuwarabeGo2026.Match.csproj" />
+    <ProjectReference Include="..\KifuwarabeGo2026.GameOasis.Concierge\KifuwarabeGo2026.GameOasis.Concierge.csproj" />
   </ItemGroup>
 </Project>

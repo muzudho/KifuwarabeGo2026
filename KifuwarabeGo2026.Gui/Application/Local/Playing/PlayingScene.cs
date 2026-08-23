@@ -296,7 +296,7 @@ public sealed class PlayingScene : IDisposable
 
     private void StartInitialPositionConcierge(
         IReadOnlyList<EngineEntry> engines,
-        KifuwarabeGo2026.Match.MatchSnapshot matchSnapshot)
+        KifuwarabeGo2026.GameOasis.Concierge.Match.MatchSnapshot matchSnapshot)
     {
         _isInitialPositionConciergeActive = true;
         _session.ActivateModalWindow(ActiveWindowId.InitialPositionConcierge);
