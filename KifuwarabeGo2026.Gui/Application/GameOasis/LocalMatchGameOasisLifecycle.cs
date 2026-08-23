@@ -24,7 +24,7 @@ public sealed class LocalMatchGameOasisLifecycle(GameOasisBoardController boardC
     public ProtocolError? LastError { get; private set; }
     public bool IsBusy => _pending is not null;
 
-    public bool BeginStart(MatchSnapshot initialSnapshot, decimal komi)
+    public bool BeginStart(MatchSnapshot initialSnapshot, decimal komi, TimeSpan mainTime)
     {
         ArgumentNullException.ThrowIfNull(initialSnapshot);
         if (!CanBegin(LocalMatchGameOasisState.Idle)) return false;
@@ -32,7 +32,7 @@ public sealed class LocalMatchGameOasisLifecycle(GameOasisBoardController boardC
         ContractDocument configuration;
         try
         {
-            configuration = LocalMatchGameOasisConfiguration.Create(initialSnapshot, komi);
+            configuration = LocalMatchGameOasisConfiguration.Create(initialSnapshot, komi, mainTime);
         }
         catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
         {

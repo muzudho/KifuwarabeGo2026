@@ -49,6 +49,7 @@ public sealed partial class GoAppSession
         BlackAgehama = view.BlackCaptures;
         WhiteAgehama = view.WhiteCaptures;
         KoPoint = view.KoPoint is { } ko ? new GoPoint(ko.X, ko.Y) : null;
+        ApplyGameOasisClockProjection(view);
         ApplyGameOasisRecordProjection(view, firstProjection);
         ResetPositionHistory();
         if (view.IsTerminal)
@@ -77,7 +78,7 @@ public sealed partial class GoAppSession
             var samePoint = projected.Type == "pass"
                 ? recorded.Point is null
                 : projected.Point is { } point && recorded.Point == new GoPoint(point.X, point.Y);
-            if (recorded.Stone != projectedStone || !samePoint)
+            if (recorded.Stone != projectedStone || !samePoint || recorded.TimeLeftAfterMove != projected.TimeLeftAfterMove)
                 throw new InvalidOperationException($"The Game Oasis move history changed at index {index}.");
         }
 
@@ -91,10 +92,29 @@ public sealed partial class GoAppSession
             CurrentGameRecord.Moves.Add(new GoGameMove(
                 stone,
                 point,
-                timeLeftAfterMove: GetRemainingTimeAfterMove(stone)));
+                timeLeftAfterMove: move.TimeLeftAfterMove));
         }
         _gameOasisProjectedMoveCount = view.MoveHistory.Count;
         PlayedMoveCount = _gameOasisProjectedMoveCount;
+    }
+
+    private void ApplyGameOasisClockProjection(GuiBoardView view)
+    {
+        if (view.MainTime is not { } mainTime) return;
+        if (mainTime != MainTime)
+            throw new InvalidOperationException($"The Game Oasis main time {mainTime} does not match the local match main time {MainTime}.");
+        if (view.BlackTimeLeft is { } blackLeft)
+        {
+            if (blackLeft > mainTime) throw new InvalidOperationException("The Game Oasis black remaining time exceeds the main time.");
+            BlackElapsedTime = mainTime - blackLeft;
+        }
+        if (view.WhiteTimeLeft is { } whiteLeft)
+        {
+            if (whiteLeft > mainTime) throw new InvalidOperationException("The Game Oasis white remaining time exceeds the main time.");
+            WhiteElapsedTime = mainTime - whiteLeft;
+        }
+        BlackUsedTime = BlackElapsedTime;
+        WhiteUsedTime = WhiteElapsedTime;
     }
 
     private void ApplyGameOasisOutcome(ContractDocument? outcome)

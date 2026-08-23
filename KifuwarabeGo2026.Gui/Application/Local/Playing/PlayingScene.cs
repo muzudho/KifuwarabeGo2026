@@ -135,7 +135,7 @@ public sealed class PlayingScene : IDisposable
         }
 
         _session.SetEngineReady(false);
-        if (lifecycle.BeginStart(snapshot, _session.Komi))
+        if (lifecycle.BeginStart(snapshot, _session.Komi, _session.MainTime))
             return true;
         _session.SetEngineReady(true);
         return false;

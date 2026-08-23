@@ -13,13 +13,15 @@ using System.Text.Json;
 /// </summary>
 public static class LocalMatchGameOasisConfiguration
 {
-    public static ContractDocument Create(MatchSnapshot initialSnapshot, decimal komi)
+    public static ContractDocument Create(MatchSnapshot initialSnapshot, decimal komi, TimeSpan mainTime)
     {
         ArgumentNullException.ThrowIfNull(initialSnapshot);
         if (initialSnapshot.Revision != 0 || initialSnapshot.Actions.Count != 0)
             throw new ArgumentException("Only an initial local-match snapshot can become a play-space configuration.", nameof(initialSnapshot));
         if (komi is < -100m or > 100m)
             throw new ArgumentOutOfRangeException(nameof(komi), komi, "Komi must be between -100 and 100.");
+        if (mainTime < TimeSpan.Zero)
+            throw new ArgumentOutOfRangeException(nameof(mainTime), mainTime, "Main time cannot be negative.");
 
         var document = new ConfigurationDocument(
             1,
@@ -32,7 +34,8 @@ public static class LocalMatchGameOasisConfiguration
                     stone.Point.X,
                     stone.Point.Y,
                     FormatStone(stone.Stone)))
-                .ToArray());
+                .ToArray(),
+            checked((long)mainTime.TotalMilliseconds));
 
         return new ContractDocument(
             "application/json",
@@ -55,7 +58,8 @@ public static class LocalMatchGameOasisConfiguration
         decimal Komi,
         string Ruleset,
         string StartingPlayer,
-        SetupStoneDocument[] SetupStones);
+        SetupStoneDocument[] SetupStones,
+        long MainTimeMilliseconds);
 
     private sealed record SetupStoneDocument(int X, int Y, string Color);
 }

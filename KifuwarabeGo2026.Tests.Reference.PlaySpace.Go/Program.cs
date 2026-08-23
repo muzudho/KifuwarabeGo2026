@@ -8,6 +8,7 @@ var descriptor = RequireSuccess(await go.DescribeAsync());
 Require(descriptor.TypeId.Value == GameOasisOfficialNames.Go, "The normal Go type ID must be stable.");
 Require(descriptor.Capabilities.Contains("chinese-area-scoring"), "The ruleset capability must be advertised.");
 Require(descriptor.Capabilities.Contains("move-history-observation"), "The additive move-history observation capability must be advertised.");
+Require(descriptor.Capabilities.Contains("main-time-observation"), "The authoritative main-time observation capability must be advertised.");
 
 var schema = RequireSuccess(await go.GetConfigurationSchemaAsync());
 using (var schemaJson = JsonDocument.Parse(schema.Content))
@@ -65,13 +66,21 @@ Require(!stale.IsSuccess && stale.Error?.Code == "revision-conflict", "A stale p
 RequireSuccess(await go.CloseSessionAsync(new(koSession.SessionId)));
 
 var scoringConfiguration = Configuration(
-    """{"version":1,"boardSize":9,"komi":6.5,"ruleset":"chinese-area","startingPlayer":"black","setupStones":[]}""");
+    """{"version":1,"boardSize":9,"komi":6.5,"ruleset":"chinese-area","startingPlayer":"black","setupStones":[],"mainTimeMilliseconds":300000}""");
 var scoringSession = RequireSuccess(await go.CreateSessionAsync(new(scoringConfiguration)));
 var blackPass = RequireSuccess(await go.ApplyActionAsync(new(
     scoringSession.SessionId,
     Action("""{"version":1,"type":"pass","player":"black"}"""),
     0)));
 Require(blackPass.IsAccepted && !blackPass.Snapshot.IsTerminal, "One pass must not end the game.");
+using (var state = JsonDocument.Parse(blackPass.Snapshot.State.Content))
+{
+    var blackTimeLeft = state.RootElement.GetProperty("blackTimeLeftMilliseconds").GetInt64();
+    Require(blackTimeLeft is >= 0 and <= 300000, "The play-space must publish black's authoritative remaining time.");
+    Require(state.RootElement.GetProperty("whiteTimeLeftMilliseconds").GetInt64() == 300000, "Black's move must not consume white's clock.");
+    Require(state.RootElement.GetProperty("moveHistory")[0].GetProperty("timeLeftMilliseconds").GetInt64() == blackTimeLeft,
+        "A move must preserve the same authoritative remaining time as the state.");
+}
 var whitePass = RequireSuccess(await go.ApplyActionAsync(new(
     scoringSession.SessionId,
     Action("""{"version":1,"type":"pass","player":"white"}"""),

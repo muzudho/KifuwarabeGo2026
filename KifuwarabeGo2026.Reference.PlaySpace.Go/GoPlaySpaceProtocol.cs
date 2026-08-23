@@ -22,7 +22,7 @@ public sealed class GoPlaySpaceProtocol : IPlaySpaceProtocol
             "KifuwarabeGo2026.Reference.PlaySpace.Go",
             typeof(GoPlaySpaceProtocol).Assembly.GetName().Version?.ToString() ?? "4.0.0",
             [GameOasisCapabilityIds.ActionPlayPoint, GameOasisCapabilityIds.ActionPass, GameOasisCapabilityIds.ActionResign,
-                "explicit-setup", "move-history-observation", "simple-ko", "positional-superko", "two-pass-scoring", "resignation", "chinese-area-scoring"])));
+                "explicit-setup", "move-history-observation", "main-time-observation", "simple-ko", "positional-superko", "two-pass-scoring", "resignation", "chinese-area-scoring"])));
     }
 
     public ValueTask<ProtocolResponse<ContractDocument>> GetConfigurationSchemaAsync(CancellationToken cancellationToken = default)
@@ -42,7 +42,8 @@ public sealed class GoPlaySpaceProtocol : IPlaySpaceProtocol
                 "komi":{"type":"number"},
                 "ruleset":{"const":"chinese-area"},
                 "startingPlayer":{"enum":["black","white"]},
-                "setupStones":{"type":"array","items":{"type":"object","required":["x","y","color"],"properties":{"x":{"type":"integer","minimum":0},"y":{"type":"integer","minimum":0},"color":{"enum":["black","white"]}},"additionalProperties":false}}
+                "setupStones":{"type":"array","items":{"type":"object","required":["x","y","color"],"properties":{"x":{"type":"integer","minimum":0},"y":{"type":"integer","minimum":0},"color":{"enum":["black","white"]}},"additionalProperties":false}},
+                "mainTimeMilliseconds":{"type":"integer","minimum":0}
               },
               "additionalProperties":false
             }
@@ -83,6 +84,10 @@ public sealed class GoPlaySpaceProtocol : IPlaySpaceProtocol
             Board = board,
             NextToPlay = nextToPlay,
             Komi = configuration.Komi,
+            MainTimeMilliseconds = configuration.MainTimeMilliseconds,
+            BlackTimeLeftMilliseconds = configuration.MainTimeMilliseconds,
+            WhiteTimeLeftMilliseconds = configuration.MainTimeMilliseconds,
+            TurnStartedAt = DateTimeOffset.UtcNow,
         };
         foreach (var setup in configuration.SetupStones ?? [])
         {
@@ -176,14 +181,17 @@ public sealed class GoPlaySpaceProtocol : IPlaySpaceProtocol
                 return ValueTask.FromResult(Rejected(session, "unsupported-action", "Supported actions are play, pass, and resign."));
             }
 
+            ApplyElapsedTime(session, player);
             if (actionType is "play" or "pass")
                 session.MoveHistory.Add(new(
                     StoneName(player),
                     actionType,
                     point?.X,
-                    point?.Y));
+                    point?.Y,
+                    player == GoStone.Black ? session.BlackTimeLeftMilliseconds : session.WhiteTimeLeftMilliseconds));
 
             session.NextToPlay = Opposite(player);
+            session.TurnStartedAt = DateTimeOffset.UtcNow;
             session.Revision++;
             if (!session.IsTerminal && session.ConsecutivePasses >= 2)
                 FinalizeByAreaScore(session);
@@ -238,6 +246,7 @@ public sealed class GoPlaySpaceProtocol : IPlaySpaceProtocol
         if (configuration.Version != 1) return Failure<GoConfigurationDocument>("unsupported-configuration-version", "Only Go configuration version 1 is supported.");
         if (configuration.BoardSize is not (9 or 13 or 19)) return Failure<GoConfigurationDocument>("invalid-board-size", "BoardSize must be 9, 13, or 19.");
         if (configuration.Komi < -100 || configuration.Komi > 100) return Failure<GoConfigurationDocument>("invalid-komi", "Komi must be between -100 and 100.");
+        if (configuration.MainTimeMilliseconds is < 0) return Failure<GoConfigurationDocument>("invalid-main-time", "MainTimeMilliseconds cannot be negative.");
         if (configuration.Ruleset != "chinese-area") return Failure<GoConfigurationDocument>("unsupported-ruleset", "Only chinese-area is supported in v1.");
         if (!TryStone(configuration.StartingPlayer, out _)) return Failure<GoConfigurationDocument>("invalid-starting-player", "StartingPlayer must be black or white.");
         var occupied = new HashSet<GoPoint>();
@@ -289,7 +298,10 @@ public sealed class GoPlaySpaceProtocol : IPlaySpaceProtocol
             session.IsTerminal,
             session.SetupBlack,
             session.SetupWhite,
-            session.MoveHistory));
+            session.MoveHistory,
+            session.MainTimeMilliseconds,
+            session.BlackTimeLeftMilliseconds,
+            session.WhiteTimeLeftMilliseconds));
         var outcome = session.Outcome is null ? null : Document(GoSchemas.Outcome, session.Outcome);
         return new(session.SessionId, session.Revision, state, session.IsTerminal, outcome);
     }
@@ -319,6 +331,16 @@ public sealed class GoPlaySpaceProtocol : IPlaySpaceProtocol
     private static string StoneName(GoStone stone) => stone == GoStone.Black ? "black" : "white";
     private static GoStone Opposite(GoStone stone) => stone == GoStone.Black ? GoStone.White : GoStone.Black;
 
+    private static void ApplyElapsedTime(Session session, GoStone player)
+    {
+        if (session.MainTimeMilliseconds is null) return;
+        var elapsed = Math.Max(0L, (long)(DateTimeOffset.UtcNow - session.TurnStartedAt).TotalMilliseconds);
+        if (player == GoStone.Black)
+            session.BlackTimeLeftMilliseconds = Math.Max(0L, session.BlackTimeLeftMilliseconds!.Value - elapsed);
+        else
+            session.WhiteTimeLeftMilliseconds = Math.Max(0L, session.WhiteTimeLeftMilliseconds!.Value - elapsed);
+    }
+
     private sealed class Session
     {
         public object Sync { get; } = new();
@@ -326,6 +348,10 @@ public sealed class GoPlaySpaceProtocol : IPlaySpaceProtocol
         public required GoBoard Board { get; set; }
         public required GoStone NextToPlay { get; set; }
         public required decimal Komi { get; init; }
+        public long? MainTimeMilliseconds { get; init; }
+        public long? BlackTimeLeftMilliseconds { get; set; }
+        public long? WhiteTimeLeftMilliseconds { get; set; }
+        public DateTimeOffset TurnStartedAt { get; set; }
         public HashSet<string> PositionHistory { get; } = [];
         public List<GoPointDocument> SetupBlack { get; } = [];
         public List<GoPointDocument> SetupWhite { get; } = [];

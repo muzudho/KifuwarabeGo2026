@@ -136,7 +136,7 @@ internal static class PortabilityChecks
         var advancedSnapshotRejected = false;
         try
         {
-            _ = LocalMatchGameOasisConfiguration.Create(localMatch.Snapshot, 6.5m);
+            _ = LocalMatchGameOasisConfiguration.Create(localMatch.Snapshot, 6.5m, TimeSpan.FromMinutes(5));
         }
         catch (ArgumentException)
         {
@@ -180,7 +180,8 @@ internal static class PortabilityChecks
             "The current board renderer must receive the Protocol G projection after a human action.");
         Require(projectedSession.CurrentGameRecord.Moves.Count == 2 &&
                 projectedSession.CurrentGameRecord.Moves[0].Point == new GoPoint(0, 0) &&
-                projectedSession.CurrentGameRecord.Moves[1].Point == new GoPoint(1, 0),
+                projectedSession.CurrentGameRecord.Moves[1].Point == new GoPoint(1, 0) &&
+                projectedSession.CurrentGameRecord.Moves.All(move => move.TimeLeftAfterMove is not null),
             "Protocol G move history must be appended once to the current game record.");
 
         Require(localLifecycle.BeginPass(), "A Game Oasis pass must be submitted through Protocol G.");
@@ -199,8 +200,10 @@ internal static class PortabilityChecks
         Require(gameOasisSgf.Contains(";B[aa]", StringComparison.Ordinal) &&
                 gameOasisSgf.Contains(";W[ba]", StringComparison.Ordinal) &&
                 gameOasisSgf.Contains(";B[]", StringComparison.Ordinal) &&
+                gameOasisSgf.Contains("BL[", StringComparison.Ordinal) &&
+                gameOasisSgf.Contains("WL[", StringComparison.Ordinal) &&
                 gameOasisRoundTrip.Moves.Count == 3,
-            "Game Oasis play and pass history must survive the existing SGF save/load boundary.");
+            "Game Oasis play, pass, and authoritative clock history must survive the existing SGF save/load boundary.");
 
         Require(playerBridge.BeginUnbind("portability-smoke"),
             "The frame bridge must begin ending the Protocol P participation.");
@@ -272,7 +275,7 @@ internal static class PortabilityChecks
                 new HashSet<string>(StringComparer.Ordinal) { GameOasisCapabilityIds.ActionPlayPoint }),
         ]);
         var externalBoard = new GuiBoardView(
-            new("external-session"), externalTypeId, 0, 9, [], [], "black", 0, 0, null, false, null, [], [], []);
+            new("external-session"), externalTypeId, 0, 9, [], [], "black", 0, 0, null, false, null, [], [], [], null, null, null);
         Require(externalAdapters.Supports(externalTypeId, GameOasisCapabilityIds.ActionPlayPoint) &&
                 !externalAdapters.Supports(externalTypeId, GameOasisCapabilityIds.ActionPass),
             "An external GUI action adapter must expose only its registered capabilities.");

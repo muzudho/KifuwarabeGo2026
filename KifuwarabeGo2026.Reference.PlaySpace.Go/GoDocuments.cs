@@ -6,7 +6,8 @@ internal sealed record GoConfigurationDocument(
     decimal Komi = 6.5m,
     string Ruleset = "chinese-area",
     string StartingPlayer = "black",
-    IReadOnlyList<GoSetupStoneDocument>? SetupStones = null);
+    IReadOnlyList<GoSetupStoneDocument>? SetupStones = null,
+    long? MainTimeMilliseconds = null);
 
 internal sealed record GoSetupStoneDocument(int X, int Y, string Color);
 
@@ -19,7 +20,7 @@ internal sealed record GoActionDocument(
 
 internal sealed record GoPointDocument(int X, int Y);
 
-internal sealed record GoMoveDocument(string Player, string Type, int? X = null, int? Y = null);
+internal sealed record GoMoveDocument(string Player, string Type, int? X = null, int? Y = null, long? TimeLeftMilliseconds = null);
 
 internal sealed record GoStateDocument(
     int Version,
@@ -36,7 +37,10 @@ internal sealed record GoStateDocument(
     bool IsTerminal,
     IReadOnlyList<GoPointDocument> SetupBlack,
     IReadOnlyList<GoPointDocument> SetupWhite,
-    IReadOnlyList<GoMoveDocument> MoveHistory);
+    IReadOnlyList<GoMoveDocument> MoveHistory,
+    long? MainTimeMilliseconds,
+    long? BlackTimeLeftMilliseconds,
+    long? WhiteTimeLeftMilliseconds);
 
 internal sealed record GoEventDocument(
     int Version,

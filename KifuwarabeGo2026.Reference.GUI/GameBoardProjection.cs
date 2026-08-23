@@ -58,7 +58,10 @@ public static class GameBoardProjection
                 snapshot.Outcome,
                 setupBlack,
                 setupWhite,
-                moveHistory));
+                moveHistory,
+                ReadOptionalTime(root, "mainTimeMilliseconds"),
+                ReadOptionalTime(root, "blackTimeLeftMilliseconds"),
+                ReadOptionalTime(root, "whiteTimeLeftMilliseconds")));
         }
         catch (Exception exception) when (exception is JsonException or InvalidOperationException or KeyNotFoundException)
         {
@@ -81,7 +84,7 @@ public static class GameBoardProjection
             GuiBoardPoint? point = type == "play"
                 ? ReadPoint(value, boardSize, "move")
                 : null;
-            return new GuiBoardMove(player, type, point);
+            return new GuiBoardMove(player, type, point, ReadOptionalTime(value, "timeLeftMilliseconds"));
         }).ToArray();
 
     private static GuiBoardPoint ReadPoint(JsonElement value, int boardSize, string field)
@@ -95,13 +98,21 @@ public static class GameBoardProjection
     private static int ReadOptionalInt(JsonElement root, string property) =>
         root.TryGetProperty(property, out var value) && value.ValueKind == JsonValueKind.Number ? value.GetInt32() : 0;
 
+    private static TimeSpan? ReadOptionalTime(JsonElement root, string property)
+    {
+        if (!root.TryGetProperty(property, out var value) || value.ValueKind == JsonValueKind.Null) return null;
+        var milliseconds = value.GetInt64();
+        if (milliseconds < 0) throw new InvalidOperationException($"The {property} value cannot be negative.");
+        return TimeSpan.FromMilliseconds(milliseconds);
+    }
+
     private static ProtocolResponse<GuiBoardView> Failure(string code, string message) =>
         ProtocolResponse<GuiBoardView>.Failure(new(code, message));
 }
 
 public readonly record struct GuiBoardPoint(int X, int Y);
 
-public sealed record GuiBoardMove(string Player, string Type, GuiBoardPoint? Point);
+public sealed record GuiBoardMove(string Player, string Type, GuiBoardPoint? Point, TimeSpan? TimeLeftAfterMove);
 
 public sealed record GuiBoardView(
     GameOasisSessionId SessionId,
@@ -118,4 +129,7 @@ public sealed record GuiBoardView(
     ContractDocument? Outcome,
     IReadOnlyList<GuiBoardPoint> SetupBlack,
     IReadOnlyList<GuiBoardPoint> SetupWhite,
-    IReadOnlyList<GuiBoardMove> MoveHistory);
+    IReadOnlyList<GuiBoardMove> MoveHistory,
+    TimeSpan? MainTime,
+    TimeSpan? BlackTimeLeft,
+    TimeSpan? WhiteTimeLeft);
