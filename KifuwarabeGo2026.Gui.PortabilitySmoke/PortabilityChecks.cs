@@ -48,7 +48,7 @@ internal static class PortabilityChecks
     {
         var coreAssembly = typeof(Game1).Assembly;
         var gtpExtensionsAssembly = typeof(GtpExtensionsAssembly).Assembly;
-        var matchAssembly = typeof(MatchSession).Assembly;
+        var conciergeAssembly = typeof(MatchSession).Assembly;
 
         VerifyTargetFramework(coreAssembly);
         VerifyAssemblyReferences(coreAssembly);
@@ -65,7 +65,7 @@ internal static class PortabilityChecks
         VerifyInitialPositionEngineProfiles();
         VerifyGoAppEngineSelectionCompatibility();
         VerifyKifuwarabeAtomicSetupStrategy();
-        VerifyMatchAssembly(matchAssembly);
+        VerifyConciergeMatchAssembly(conciergeAssembly);
         VerifyGuiMatchIntegration();
         VerifyGtpMatchAdapter();
         VerifyPortableFallbacks();
@@ -1124,32 +1124,32 @@ internal static class PortabilityChecks
     private static GtpCommandCapability Capability(string command, GtpCommandSupport support) =>
         new(command, support, GtpCapabilityEvidence.KnownCommand);
 
-    private static void VerifyMatchAssembly(Assembly matchAssembly)
+    private static void VerifyConciergeMatchAssembly(Assembly conciergeAssembly)
     {
-        VerifyTargetFramework(matchAssembly, "Match");
-        VerifyNoPlatformInvokes(matchAssembly, "Match");
+        VerifyTargetFramework(conciergeAssembly, "GameOasis.Concierge");
+        VerifyNoPlatformInvokes(conciergeAssembly, "GameOasis.Concierge");
 
-        var references = matchAssembly
+        var references = conciergeAssembly
             .GetReferencedAssemblies()
             .Select(reference => reference.Name)
             .Where(name => name is not null)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         Require(
-            references.Contains("KifuwarabeGo2026.Shared"),
-            "Match must reference KifuwarabeGo2026.Shared.");
+            references.Contains("KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation"),
+            "Concierge match support must reference the Go foundation assembly.");
         Require(
             !references.Contains("KifuwarabeGo2026.Gui.Core"),
-            "Match must not reference the GUI assembly.");
+            "Concierge must not reference the GUI assembly.");
         Require(
             !references.Contains("MonoGame.Framework"),
-            "Match must not reference MonoGame.");
+            "Concierge must not reference MonoGame.");
 
         foreach (var forbiddenReference in ForbiddenAssemblyReferences)
         {
             Require(
                 !references.Contains(forbiddenReference),
-                $"Match directly references Windows-only assembly '{forbiddenReference}'.");
+                $"Concierge directly references Windows-only assembly '{forbiddenReference}'.");
         }
 
         VerifyMatchStateTransitions();

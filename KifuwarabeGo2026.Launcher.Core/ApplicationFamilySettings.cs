@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Shared;
+namespace KifuwarabeGo2026.Launcher;
 
 using System.Text.Json;
 using System.Text.Json.Nodes;

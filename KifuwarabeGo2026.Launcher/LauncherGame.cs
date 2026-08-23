@@ -6,7 +6,6 @@ using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Effects;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Audio;
 using KifuwarabeGo2026.Launcher.Presentation;
-using KifuwarabeGo2026.Shared;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;

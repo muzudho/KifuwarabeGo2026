@@ -5,7 +5,6 @@ using StationeryButton = KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls;
-using KifuwarabeGo2026.Shared;
 
 public sealed class LauncherScreen : IDisposable
 {

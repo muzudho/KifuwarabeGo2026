@@ -1,14 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <RootNamespace>KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation</RootNamespace>
+    <AssemblyName>KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation</AssemblyName>
   </PropertyGroup>
-
-  <ItemGroup>
-    <Folder Include="BoardLens\LibertySystem\Strong\" />
-    <Folder Include="BoardLens\LibertySystem\" />
-  </ItemGroup>
-
 </Project>

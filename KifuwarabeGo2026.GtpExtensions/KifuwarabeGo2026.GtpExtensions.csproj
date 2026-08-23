@@ -11,7 +11,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\KifuwarabeGo2026.GameOasis.Concierge\KifuwarabeGo2026.GameOasis.Concierge.csproj" />
-    <ProjectReference Include="..\KifuwarabeGo2026.Shared\KifuwarabeGo2026.Shared.csproj" />
+    <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation\KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation.csproj" />
   </ItemGroup>
 
 </Project>

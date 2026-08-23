@@ -11,6 +11,5 @@
   <ItemGroup>
     <ProjectReference Include="..\KifuwarabeGo2026.Launcher.Core\KifuwarabeGo2026.Launcher.Core.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.StationeryUI\KifuwarabeGo2026.StationeryUI.csproj" />
-    <ProjectReference Include="..\KifuwarabeGo2026.Shared\KifuwarabeGo2026.Shared.csproj" />
   </ItemGroup>
 </Project>
