@@ -15,7 +15,8 @@ using KifuwarabeGo2026.GameOasis.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.
 using KifuwarabeGo2026.GameOasis.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.Watching;
 using KifuwarabeGo2026.GameOasis.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.GameOasis.Gui.Application.Local.Resting.TournamentRule;
-using KifuwarabeGo2026.GameOasis.Gui.Gtp;
+using KifuwarabeGo2026.Reference.Communication.Gtp;
+using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Integration;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls;
 using KifuwarabeGo2026.GameOasis.Gui.Sgf;
 using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions;
@@ -64,6 +65,12 @@ internal static class PortabilityChecks
         VerifyAssemblyReferences(coreAssembly);
         VerifyNoPlatformInvokes(coreAssembly);
         VerifyGtpExtensionsAssembly(gtpExtensionsAssembly, gtpCommunicationAssembly);
+        Require(typeof(GtpEngineClient).Assembly == gtpCommunicationAssembly &&
+                typeof(GtpOptionSchemaDocument).Assembly == gtpCommunicationAssembly,
+            "GTP process communication and option documents must be owned by Reference.Communication.Gtp.");
+        Require(typeof(GtpInitialPositionExecutionHost).Assembly == gtpExtensionsAssembly &&
+                typeof(GtpInitialPositionSgfFile).Assembly == gtpExtensionsAssembly,
+            "Go initial-position GTP adaptation must be owned by Reference.PlaySpace.Go.GtpExtensions.");
         VerifyGtpExtensionsInitialPositionPlanning();
         VerifyGtpCapabilityProbe();
         VerifyStandardHandicapStrategies();

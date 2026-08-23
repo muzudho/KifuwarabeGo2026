@@ -2,7 +2,7 @@ namespace KifuwarabeGo2026.GameOasis.Gui.Sgf;
 
 using KifuwarabeGo2026.GameOasis.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.GameOasis.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.Watching;
-using KifuwarabeGo2026.GameOasis.Gui.Gtp;
+using KifuwarabeGo2026.Reference.Communication.Gtp.Protocol;
 using KifuwarabeGo2026.Shared.Domain;
 using System;
 using System.Collections.Generic;

@@ -13,7 +13,7 @@ using KifuwarabeGo2026.Shared.Domain;
 using KifuwarabeGo2026.GameOasis.Gui.Infrastructure.FileSystem;
 using KifuwarabeGo2026.GameOasis.Gui.Infrastructure.Logging;
 using KifuwarabeGo2026.GameOasis.Gui.Infrastructure;
-using KifuwarabeGo2026.GameOasis.Gui.Gtp;
+using KifuwarabeGo2026.Reference.Communication.Gtp.Protocol;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.BoardLens;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.OnlineMatch.Cgos.Login;
@@ -2746,7 +2746,7 @@ public class Game1 : Game
             {
                 var move = _session.CurrentGameRecord.Moves[_ponnukiProviderObservedMoveCount];
                 var vertex = move.Point is { } point
-                    ? KifuwarabeGo2026.GameOasis.Gui.Gtp.GtpCoordinate.FormatVertex(point, _session.BoardSize)
+                    ? GtpCoordinate.FormatVertex(point, _session.BoardSize)
                     : "pass";
                 var result = _ponnukiProviderGameSession.ListenMoveAsync(vertex).GetAwaiter().GetResult();
                 _ponnukiProviderObservedMoveCount++;

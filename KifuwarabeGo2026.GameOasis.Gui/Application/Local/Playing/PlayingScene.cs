@@ -7,7 +7,9 @@ using KifuwarabeGo2026.GameOasis.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.
 using KifuwarabeGo2026.GameOasis.Gui.Application.GameOasis;
 using KifuwarabeGo2026.GameOasis.Gui.Domain;
 using KifuwarabeGo2026.Shared.Domain;
-using KifuwarabeGo2026.GameOasis.Gui.Gtp;
+using KifuwarabeGo2026.Reference.Communication.Gtp;
+using KifuwarabeGo2026.Reference.Communication.Gtp.Protocol;
+using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Integration;
 using KifuwarabeGo2026.GameOasis.Gui.Infrastructure.Logging;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.LocalMatch;
@@ -15,7 +17,6 @@ using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.LocalMatch.Play;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.Board;
 using KifuwarabeGo2026.GameOasis.Contracts.Common;
 using KifuwarabeGo2026.GameOasis.Contracts.ProtocolP;
-using KifuwarabeGo2026.Reference.Communication.Gtp;
 using InitialPositionConciergePage = KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.InitialPositionConcierge.InitialPositionConcierge;
 using Microsoft.Xna.Framework;
 using System;
@@ -1173,7 +1174,7 @@ public sealed class PlayingScene : IDisposable
         return new GtpEngineSettings(
             profile.DisplayName,
             profile.ExecutablePath,
-            profile.WorkingDirectoryModel,
+            profile.WorkingDirectoryModel.Value,
             profile.Arguments,
             profile.EnableGtpLog,
             logPrefix,

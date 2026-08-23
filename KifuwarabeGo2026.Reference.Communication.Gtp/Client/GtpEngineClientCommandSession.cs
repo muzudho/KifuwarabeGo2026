@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.GameOasis.Gui.Gtp;
+namespace KifuwarabeGo2026.Reference.Communication.Gtp;
 
 using KifuwarabeGo2026.Reference.Communication.Gtp.Protocol;
 using System;

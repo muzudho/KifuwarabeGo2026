@@ -10,4 +10,10 @@ public interface IGtpCommandTransport
 }
 
 /// <summary>GTP応答の意味的な最小表現です。</summary>
-public sealed record GtpCommandResponse(bool IsSuccess, string Payload);
+public sealed record GtpCommandResponse(bool IsSuccess, string Payload)
+{
+    public void ThrowIfError(string command)
+    {
+        if (!IsSuccess) throw new InvalidOperationException($"GTP command failed: {command}: {Payload}");
+    }
+}

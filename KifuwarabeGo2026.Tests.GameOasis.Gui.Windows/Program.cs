@@ -8,7 +8,8 @@ using KifuwarabeGo2026.GameOasis.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.GameOasis.Gui.Infrastructure.Windows;
 using KifuwarabeGo2026.Reference.Communication.Gtp.Server;
 using KifuwarabeGo2026.Reference.PlayerEngine.Strategies.Ponnuki;
-using KifuwarabeGo2026.GameOasis.Gui.Gtp;
+using KifuwarabeGo2026.Reference.Communication.Gtp;
+using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Integration;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation;
 using Microsoft.Xna.Framework;
 using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Capabilities;
@@ -288,7 +289,7 @@ internal static class Program
         var settings = new GtpEngineSettings(
             "Bundled Kifuwarabe smoke",
             executablePath,
-            workingDirectoryProfile.WorkingDirectoryModel,
+            workingDirectoryProfile.WorkingDirectoryModel.Value,
             "",
             EnableGtpLog: false,
             LogPrefix: "[atomic-smoke]",

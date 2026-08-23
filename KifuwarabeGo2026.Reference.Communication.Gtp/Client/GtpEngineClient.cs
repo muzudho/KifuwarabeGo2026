@@ -1,7 +1,5 @@
-namespace KifuwarabeGo2026.GameOasis.Gui.Gtp;
+namespace KifuwarabeGo2026.Reference.Communication.Gtp;
 
-using KifuwarabeGo2026.GameOasis.Gui.Application;
-using KifuwarabeGo2026.Reference.Communication.Gtp;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -36,7 +34,7 @@ public sealed class GtpEngineClient : IAsyncDisposable, IGtpCommandTransport
         {
             FileName = _settings.ExecutablePath,
             Arguments = _settings.Arguments,
-            WorkingDirectory = _settings.WorkingDirectory.Value,
+            WorkingDirectory = _settings.WorkingDirectory,
             RedirectStandardInput = true,
             RedirectStandardOutput = true,
             UseShellExecute = false,
@@ -65,7 +63,7 @@ public sealed class GtpEngineClient : IAsyncDisposable, IGtpCommandTransport
         await ApplyGuiOptionsAsync(cancellationToken);
     }
 
-    public async Task<GtpResponse> SendCommandAsync(string command, CancellationToken cancellationToken = default)
+    public async Task<GtpCommandResponse> SendCommandAsync(string command, CancellationToken cancellationToken = default)
     {
         if (_process is null)
         {
@@ -132,7 +130,7 @@ public sealed class GtpEngineClient : IAsyncDisposable, IGtpCommandTransport
         }
     }
 
-    private async Task<GtpResponse> ReadResponseAsync(StreamReader reader, CancellationToken cancellationToken)
+    private async Task<GtpCommandResponse> ReadResponseAsync(StreamReader reader, CancellationToken cancellationToken)
     {
         var lines = new List<string>();
         while (true)
@@ -159,7 +157,7 @@ public sealed class GtpEngineClient : IAsyncDisposable, IGtpCommandTransport
 
         var payloadLines = new List<string> { firstLine[1..].Trim() };
         payloadLines.AddRange(lines.Skip(1));
-        return new GtpResponse(success, string.Join('\n', payloadLines).Trim());
+        return new GtpCommandResponse(success, string.Join('\n', payloadLines).Trim());
     }
 
     /// <summary>
@@ -246,7 +244,7 @@ public sealed class GtpEngineClient : IAsyncDisposable, IGtpCommandTransport
             if (TryConvertSavedOption(definition, savedOption.Value, out var typedValue))
             {
                 values[definition.Id] = typedValue;
-                if (definition.Binding.Equals(GtpEngineGuiOptions.GtpBoardSizeBinding, StringComparison.OrdinalIgnoreCase) &&
+                if (definition.Binding.Equals("gtp.boardsize", StringComparison.OrdinalIgnoreCase) &&
                     int.TryParse(savedOption.Value, out var boardSize))
                     boundBoardSize = boardSize;
             }
@@ -261,7 +259,7 @@ public sealed class GtpEngineClient : IAsyncDisposable, IGtpCommandTransport
 
         if (boundBoardSize is { } selectedBoardSize)
         {
-            if (!GtpEngineGuiOptions.IsSupportedBoardSize(selectedBoardSize))
+            if (selectedBoardSize is not (9 or 13 or 19))
                 throw new InvalidOperationException($"Board size {selectedBoardSize} is not supported by this GUI.");
             await SendCommandExpectSuccessAsync($"boardsize {selectedBoardSize}", cancellationToken);
         }

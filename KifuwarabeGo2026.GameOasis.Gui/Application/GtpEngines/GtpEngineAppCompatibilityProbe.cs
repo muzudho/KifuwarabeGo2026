@@ -1,6 +1,6 @@
 namespace KifuwarabeGo2026.GameOasis.Gui.Application;
 
-using KifuwarabeGo2026.GameOasis.Gui.Gtp;
+using KifuwarabeGo2026.Reference.Communication.Gtp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,7 +24,7 @@ public static class GtpEngineAppCompatibilityProbe
             var settings = new GtpEngineSettings(
                 profile.DisplayName,
                 profile.ExecutablePath,
-                profile.WorkingDirectoryModel,
+                profile.WorkingDirectoryModel.Value,
                 profile.Arguments,
                 profile.EnableGtpLog,
                 "app-discovery",
