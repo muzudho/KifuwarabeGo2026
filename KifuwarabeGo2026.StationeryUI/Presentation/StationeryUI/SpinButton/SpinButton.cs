@@ -1,6 +1,6 @@
-namespace KifuwarabeGo2026.Gui.Presentation.StationeryUI.SpinButton;
+namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.SpinButton;
 
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Button;
+using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.Button;
 using Microsoft.Xna.Framework;
 using System;
 

@@ -1,10 +1,10 @@
-namespace KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.SinglelineTextUnderline;
+namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.SinglelineTextUnderline;
 
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
+using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
 using Microsoft.Xna.Framework;
 using System;
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ActionBadge;
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
+using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.ActionBadge;
+using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
 
 /// <summary>単一行テキスト入力のアンダーライン表示を担当します。</summary>
 public sealed class SinglelineTextUnderline

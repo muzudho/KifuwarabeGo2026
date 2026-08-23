@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
-    <RootNamespace>KifuwarabeGo2026.Gui.Presentation.StationeryUI</RootNamespace>
+    <RootNamespace>KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI</RootNamespace>
     <AssemblyName>KifuwarabeGo2026.StationeryUI</AssemblyName>
     <RollForward>Major</RollForward>
     <Nullable>enable</Nullable>

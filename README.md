@@ -56,8 +56,8 @@ v3.10.0 の［最新バージョンへ更新］は GUI 用 ZIP だけを取得�
 
 ［きふわらべの碁２０２６］で動くGTPエンジンを作るための目次です。外部のGTP仕様書を探さなくても実装へ取り掛かれる公開リファレンスを用意しています。
 
-1. [Play（通常の囲碁対局）](./KifuwarabeGo2026.Gui/PublicDocs/GoApps/Play/README.md)
-2. [ポン抜き](./KifuwarabeGo2026.Gui/PublicDocs/GoApps/Ponnuki/README.md)
+1. [Play（通常の囲碁対局）](./KifuwarabeGo2026.GameOasis.Gui/PublicDocs/GoApps/Play/README.md)
+2. [ポン抜き](./KifuwarabeGo2026.GameOasis.Gui/PublicDocs/GoApps/Ponnuki/README.md)
 
 
 ## きふわらべの碁２０２６の開発に参加したい方

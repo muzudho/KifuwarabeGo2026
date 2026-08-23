@@ -1,0 +1,856 @@
+KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions 指定局面実装計画
+=================================================
+
+作成日: 2026-07-31
+整理状態: 完了（ファイル名の日付は開始日）
+
+
+1. 目的
+-------
+
+KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions を追加し、Matchが保持する指定局面を、
+さまざまなGTP思考エンジンへ可能な限り自動で設定できるようにする。
+
+対象とする局面は次のとおり。
+
+・標準位置の置き碁
+・利用者が位置を決めた自由置き碁
+・黒石と白石が混在する編集局面
+・開始手番が黒とは限らない局面
+
+利用者にGTPコマンドの知識を要求しない。
+自動で成功しなかった場合も、試した方式と失敗理由を表示し、
+利用者が「別の方法を試す」を選べるようにする。
+
+
+2. 完成条件
+-----------
+
+次の状態を、この計画の完成とする。
+
+・KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions が net8.0 クラスライブラリとして存在する。
+・Windows、MonoGame、GUI、Process、HTTP、WebSocketへ依存しない。
+・MatchSnapshotの指定局面から、利用可能な設定方式を優先順に作れる。
+・known_commandとlist_commandsを利用して、エンジン能力を調べられる。
+・標準置き碁、自由置き碁、SGF読込、連続playを独立したStrategyとして扱う。
+・KataGo、Leela Zero、GNU Go、きふわらべ、未知のGTPエンジンに対するProfileを持つ。
+・失敗した方式の後始末を行ってから、次の方式を試せる。
+・GUIに「別の方法を試す」操作と、方式名、確認状態、失敗理由を表示できる。
+・成功した方式をエンジンプロファイルへ記憶し、次回の優先候補にできる。
+・MatchへGTP固有型やエンジン固有処理を追加しない。
+・同梱エンジンと模擬エンジンを使った回帰検査が通る。
+
+
+3. 責務の境界
+-------------
+
+KifuwarabeGo2026.Match
+    初期配置、開始手番、盤サイズなど、対局そのものの情報を保持する。
+    GTPコマンドや外部エンジンを知らない。
+
+KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions
+    指定局面を分類する。
+    エンジン能力を調べる。
+    利用可能なStrategyを選び、コマンドまたはSGF内容を組み立てる。
+    試行結果を、GUIに依存しない構造化データとして返す。
+    外部プロセスを直接起動しない。
+
+KifuwarabeGo2026.GameOasis.Gui
+    GtpEngineClientを使ってエンジンプロセスを起動する。
+    GtpExtensionsが要求するコマンド送受信を実行する。
+    一時SGFファイルが必要なら作成、削除する。
+    状況、ログ、エラー、「別の方法を試す」ボタンを表示する。
+    必要に応じてエンジンプロセスを安全に再起動する。
+
+KifuwarabeGo2026.Engine
+    標準GTPと、きふわらべ用の原子的な指定局面拡張を実装する。
+    独自拡張は標準コマンドと区別し、known_commandとlist_commandsで公開する。
+
+将来のWeb囲碁サーバー
+    GUIとは別のホストとして、同じGtpExtensions APIを利用できる。
+    認証、プロセス隔離、一時ファイル、タイムアウトをサーバー側で管理する。
+
+
+4. プロジェクト依存
+-------------------
+
+推奨する依存方向は次のとおり。
+
+    KifuwarabeGo2026.GameOasis.Gui
+              |
+              v
+    KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions
+          |                 |
+          v                 v
+    KifuwarabeGo2026.Match   KifuwarabeGo2026.Shared
+              |
+              v
+    KifuwarabeGo2026.Shared
+
+GtpExtensionsが参照する自作プロジェクトは、MatchとSharedだけにする。
+GUIからGtpExtensionsを参照し、逆参照は作らない。
+
+GtpExtensionsは、GtpEngineClientそのものを受け取らない。
+コマンド送受信の最小インターフェースを定義し、GUI側でアダプターを実装する。
+
+候補:
+
+    public interface IGtpCommandSession
+    {
+        Task<GtpCommandResult> SendAsync(
+            string command,
+            CancellationToken cancellationToken = default);
+    }
+
+このインターフェースは、プロセス、標準入出力、ログ保存先を公開しない。
+
+
+5. 内部フォルダー構成
+---------------------
+
+    KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions
+    |
+    +-- InitialPosition
+    |   +-- InitialPositionConcierge.cs
+    |   +-- InitialPositionRequest.cs
+    |   +-- InitialPositionClassification.cs
+    |   +-- InitialPositionAttempt.cs
+    |   +-- InitialPositionResult.cs
+    |   +-- InitialPositionMethod.cs
+    |
+    +-- Capabilities
+    |   +-- GtpCapabilityProbe.cs
+    |   +-- GtpCapabilitySet.cs
+    |   +-- GtpCommandSupport.cs
+    |
+    +-- Strategies
+    |   +-- IInitialPositionStrategy.cs
+    |   +-- FixedHandicapStrategy.cs
+    |   +-- SetFreeHandicapStrategy.cs
+    |   +-- LoadSgfStrategy.cs
+    |   +-- KifuwarabeAtomicSetupStrategy.cs
+    |   +-- SequentialPlayStrategy.cs
+    |
+    +-- Engines
+    |   +-- IGtpEngineCompatibilityProfile.cs
+    |   +-- GenericGtpProfile.cs
+    |   +-- KifuwarabeProfile.cs
+    |   +-- KataGoProfile.cs
+    |   +-- LeelaZeroProfile.cs
+    |   +-- GnuGoProfile.cs
+    |
+    +-- Protocol
+    |   +-- GtpCommandResult.cs
+    |   +-- IGtpCommandSession.cs
+    |
+    +-- Sgf
+        +-- InitialPositionSgfBuilder.cs
+        +-- InitialPositionDocument.cs
+
+Strategiesは「局面を設定する方法」を実装する。
+Enginesは実装を複製せず、「既知の特徴」と「Strategyの推奨順」だけを持つ。
+
+
+6. 指定局面の分類
+-----------------
+
+Strategyを選ぶ前に、指定局面を次のように分類する。
+
+Empty
+    初期配置石がない通常対局。
+
+StandardFixedHandicap
+    黒石だけで構成され、個数と位置が盤サイズの標準置石配置に一致する。
+
+SpecifiedBlackHandicap
+    黒石だけで構成されるが、標準配置ではない、または配置位置を利用者が指定している。
+
+MixedSetup
+    黒石と白石が混在する。
+
+HistorySensitivePosition
+    単なる石配置だけでは、コウや履歴依存ルールを復元できない局面。
+    現在のMatchConfigurationで表現できない情報が必要なら、当面は非対応として明示する。
+
+開始手番も分類結果に含める。
+「黒石だけだから置き碁」とは決めつけず、対局設定が持つ意図を将来渡せる余地を残す。
+
+
+7. Strategyごとの役割
+---------------------
+
+7.1 FixedHandicapStrategy
+
+使用条件:
+    fixed_handicapに対応し、指定位置が標準置石配置と一致する。
+
+方式:
+    fixed_handicap N
+
+注意:
+    応答に置石座標が返る場合は、要求した位置集合と比較する。
+    一致しなければ「送信成功・局面不一致」として次候補へ進める。
+
+
+7.2 SetFreeHandicapStrategy
+
+使用条件:
+    set_free_handicapに対応し、初期配置が黒石だけである。
+
+方式:
+    set_free_handicap D4 Q16 ...
+
+注意:
+    利用者が指定した位置を再現できる。
+    白石混在局面には使わない。
+
+
+7.3 LoadSgfStrategy
+
+使用条件:
+    loadsgfに対応する。
+
+方式:
+    AB、AW、PL、SZ、KMを含む最小SGFを生成し、ホストが一時ファイルへ保存する。
+    そのパスを使ってloadsgfを送る。
+
+注意:
+    GtpExtensionsはSGF文字列と必要情報を返すだけにする。
+    一時ファイルの作成、権限、削除はGUIまたはWebサーバーが担当する。
+    パスの空白、文字コード、手数引数の解釈について、実エンジン別の検証を行う。
+
+
+7.4 KifuwarabeAtomicSetupStrategy
+
+使用条件:
+    同梱きふわらべエンジンが、原子的な指定局面拡張へ対応する。
+
+独自コマンド案:
+
+    begin_position
+    add_black D4
+    add_black Q16
+    add_white Q4
+    set_to_play white
+    commit_position
+
+begin_positionからcommit_positionまでは準備領域だけを変更し、
+commit_position成功時に局面全体を一度に反映する。
+
+途中失敗時のためにabort_positionも用意する。
+
+    abort_position
+
+add_blackとadd_whiteは、SGFのAB、AWに意味を合わせる。
+正式なコマンド名、応答、エラー時の状態、コウ情報の扱いは、実装前に独立した拡張仕様書で確定する。
+
+
+7.5 SequentialPlayStrategy
+
+使用条件:
+    他の方法を利用できない場合の最終候補。
+
+方式:
+    play black D4
+    play black Q16
+    play white Q4
+
+注意:
+    現行のGtpInitialPositionCommandBuilderと同じ互換方式である。
+    同色連続着手、配置途中の合法性、置き碁認識に問題があり得る。
+    「成功応答あり」だけで「局面確認済み」とは扱わない。
+
+
+8. エンジンProfile
+-----------------
+
+Profileは、エンジン別Strategy実装の置き場所ではない。
+共通Strategyの推奨順、既知の制限、独自コマンド名だけを定義する。
+
+GenericGtpProfile
+    能力検査結果だけを信用する。
+    標準方式を優先し、最後に連続playを置く。
+
+KifuwarabeProfile
+    原子的なきふわらべ拡張を第一候補にする。
+    未対応の旧バージョンでは標準方式へ戻る。
+
+KataGoProfile
+    KataGoで検証済みの標準コマンドとloadsgfを優先する。
+    設定によって複数開始黒着手の意味が変わる場合は注意情報を持つ。
+
+LeelaZeroProfile
+    Tournament subsetとloadsgfを候補にする。
+    実機検証で判明した制限だけをProfileへ記録する。
+
+GnuGoProfile
+    対応が確認できた置き碁コマンドを優先する。
+    GNU Go固有拡張が必要になった場合だけ固有情報を追加する。
+
+エンジン判定は、実行ファイル名だけで確定しない。
+name、version、利用者が選んだプロファイル、能力検査結果を組み合わせる。
+不明な場合はGenericGtpProfileを使う。
+
+
+9. 能力検査
+-----------
+
+最初に、次の標準コマンドを利用する。
+
+    known_command fixed_handicap
+    known_command set_free_handicap
+    known_command place_free_handicap
+    known_command loadsgf
+
+きふわらべ独自拡張についてもknown_commandで調べる。
+
+known_command自体が正しく動かない場合はlist_commandsを試す。
+両方が利用できない場合は、能力をUnknownとして扱い、
+利用者の明示操作がある場合だけ安全な候補を試す。
+
+能力状態は、少なくとも次の3値で保持する。
+
+Supported
+    対応するとエンジンが回答した。
+
+Unsupported
+    非対応と回答した、またはlist_commandsに存在しない。
+
+Unknown
+    検査できない、タイムアウト、矛盾した回答など。
+
+Supportedは「コマンドが存在する」という意味であり、
+指定局面が意味どおり設定されたことまでは保証しない。
+
+
+10. Conciergeの試行手順
+----------------------
+
+InitialPositionConciergeは、次の順序で動作する。
+
+1. MatchSnapshotとコミからInitialPositionRequestを作る。
+2. 局面を分類する。
+3. エンジンのname、version、コマンド能力を取得する。
+4. Profileと局面分類から、適用可能なStrategy一覧を作る。
+5. 利用者が以前成功させた方式が現在も適用可能なら、優先順位を上げる。
+6. 一つのStrategyだけを実行する。
+7. 応答をInitialPositionAttemptとして記録する。
+8. 明確なコマンド拒否なら、安全に初期化して次候補を自動で試す。
+9. 全コマンドが成功しても意味検証できない場合は、UnverifiedSuccessとしてGUIへ返す。
+10. 利用者が「別の方法を試す」を押したら、次候補を新しいエンジン状態で試す。
+
+重要:
+    失敗したStrategyが、盤面を途中まで変更している可能性がある。
+    次候補を試す前にclear_boardだけで十分かをProfileで判断する。
+    安全性が不明なら、GUIへエンジンプロセスの再起動を要求する。
+    局面が汚れたまま次のStrategyを重ねてはならない。
+
+
+11. 試行結果モデル
+------------------
+
+画面表示文言ではなく、構造化された結果を返す。
+
+候補状態:
+
+NotApplicable
+    局面の種類に合わない。
+
+Unsupported
+    必要なコマンドがない。
+
+CommandRejected
+    エンジンが ? 応答を返した。
+
+TransportFailure
+    タイムアウト、プロセス終了、応答形式異常。
+
+PositionMismatch
+    取得または応答できた配置が要求と一致しない。
+
+UnverifiedSuccess
+    全コマンドは成功したが、局面の意味を照合する手段がない。
+
+VerifiedSuccess
+    要求局面との一致を確認できた。
+
+各Attemptには、次の情報を持たせる。
+
+・Strategy識別子
+・利用者向け方式名
+・送信したコマンドの概要
+・開始時刻と所要時間
+・成功、失敗、未検証の区分
+・失敗したコマンド
+・エンジン応答
+・次の方式を試せるか
+・次回も利用できる恒久的情報か、一時的な通信失敗か
+
+ログには完全なコマンドを残してよいが、GUIの通常表示は簡潔にする。
+
+
+12. GUIの利用者体験
+-------------------
+
+自動成功時:
+
+    指定局面を設定しました
+    方法: 自由置き碁（set_free_handicap）
+
+意味検証できない成功時:
+
+    指定局面をエンジンへ送信しました
+    方法: 連続着手による互換設定
+    エンジンの盤面がおかしい場合は、別の方法を試してください
+
+    [別の方法を試す]  [このまま対局する]  [ログを見る]
+
+失敗時:
+
+    この方法では指定局面を設定できませんでした
+    方法: SGF読込
+    理由: loadsgfが拒否されました
+
+    [別の方法を試す]  [対局設定へ戻る]  [ログを見る]
+
+ボタンを押した際は、同じ失敗方式を繰り返さず、次の候補名を表示する。
+候補を使い切った場合は、通常局面へ黙って変更せず、対局開始を止める。
+
+
+13. 成功方式の記憶
+-------------------
+
+既存GtpEngineProfileへ、次の情報を追加する案とする。
+
+・利用者が明示的に選んだ優先方式
+・最後に成功した方式
+・その成功がVerifiedかUnverifiedか
+・検査したエンジンnameとversion
+・能力検査日時または能力キャッシュの版
+
+一時的なタイムアウトやプロセス異常を、恒久的な非対応として保存しない。
+エンジンのversionが変わった場合は、能力と成功方式を再検査する。
+設定画面から「自動選択へ戻す」と「能力を再検査」を実行できるようにする。
+
+
+14. 実装段階
+------------
+
+第1段階: 空プロジェクトと依存境界
+
+状態: 2026-08-01 実装完了。GUIの指定局面動作は変更していない。
+
+・KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.csprojをnet8.0で追加する。
+・MatchとSharedだけを参照する。
+・ソリューション、GUI、移植性スモークから参照する。
+・Windows、MonoGame、Process、GUIへの依存がないことを検査する。
+・この段階ではGUI動作を変更しない。
+
+完了確認:
+    ソリューション全体のビルド成功。
+    移植性スモーク成功。
+
+実施結果:
+    KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensionsをnet8.0クラスライブラリとして追加した。
+    自作プロジェクト参照はMatchとSharedだけにした。
+    ソリューション、GUI、移植性スモークから参照した。
+    GtpExtensionsAssemblyを、機能を持たないアセンブリ識別子として追加した。
+    移植性スモークへ、net8.0、P/Invokeなし、GUI、Engine、MonoGame、
+    System.Diagnostics.Process、Windows専用アセンブリを参照しない検査を追加した。
+    現行GtpInitialPositionCommandBuilderとGUIの対局開始処理は移動・変更していない。
+    9プロジェクト全体のDebugビルドは警告0・エラー0で成功した。
+    移植性スモークはGtpExtensionsを含む検査でPASS、終了コード0だった。
+
+
+第2段階: 要求、分類、Strategy計画
+
+状態: 2026-08-01 実装完了。エンジン能力検査と複数方式の選択は第3段階以降で行う。
+
+・InitialPositionRequestと局面分類を実装する。
+・Strategyインターフェースと適用可否判定を実装する。
+・現行GtpInitialPositionCommandBuilder相当をSequentialPlayStrategyへ移す。
+・GTP座標変換のうちGUI非依存部分をGtpExtensionsへ移す。
+
+完了確認:
+    空局面、標準置き碁、自由置き碁、黒白混在、開始手番を分類できる。
+    現行の連続playコマンド列が変わらない。
+
+実施結果:
+    InitialPositionRequestを追加し、盤サイズ、コミ、開始手番、初期配置を防御的にコピーして保持するようにした。
+    InitialPositionClassifierとInitialPositionClassificationを追加し、Empty、StandardFixedHandicap、
+    SpecifiedBlackHandicap、MixedSetupへ分類できるようにした。
+    HistorySensitivePositionは将来の履歴情報向けに列挙値だけを予約した。
+    9路、13路、19路の2子から9子までの標準置石位置をFixedHandicapPointsへ定義した。
+    IInitialPositionStrategy、InitialPositionMethod、SequentialPlayStrategyを追加した。
+    現行のboardsize、komi、clear_board、連続play生成をSequentialPlayStrategyへ移した。
+    GUI側のGtpInitialPositionCommandBuilderは、新Strategyを呼ぶ互換窓口として残した。
+    GTP座標変換の本体をGtpExtensions.Protocolへ移し、GUI側のGtpCoordinateは互換窓口として残した。
+    GTPでは使わないI列を解析時にも拒否するようにした。
+    標準置き碁全盤サイズ・全石数、空局面、自由置き碁、黒白混在、開始手番、
+    防御的コピー、Strategy適用可否、従来コマンド列、座標往復を移植性スモークへ追加した。
+    GUIの対局開始順序と表示は変更していない。
+    9プロジェクト全体のDebugビルドは警告0・エラー0で成功した。
+    移植性スモークは追加した分類・Strategy検査を含めてPASS、終了コード0だった。
+
+
+第3段階: 能力検査
+
+状態: 2026-08-01 実装完了。対局開始時の自動検査への接続は第6段階以降で行う。
+
+・IGtpCommandSessionとGUI側アダプターを追加する。
+・known_commandを優先し、list_commandsを補助にするProbeを実装する。
+・Supported、Unsupported、Unknownを区別する。
+・nameとversionも取得する。
+
+完了確認:
+    模擬応答で正常、非対応、矛盾、タイムアウトを検査できる。
+    既存GtpEngineClientのログとタイムアウトを壊さない。
+
+実施結果:
+    GtpCommandResultとIGtpCommandSessionをGtpExtensions.Protocolへ追加した。
+    GUI側へGtpEngineClientCommandSessionを追加し、既存GtpEngineClientのSendCommandAsyncへ委譲した。
+    GtpEngineClient本体を変更していないため、既存の送受信ログ、タイムアウト、プロセス管理を維持した。
+    GtpCapabilityProbeを追加し、name、version、known_command、list_commandsを取得するようにした。
+    known_commandを各対象コマンドで先に試し、list_commandsで補助確認する。
+    known_commandが拒否または不正応答の場合は、list_commandsの結果へフォールバックする。
+    両者が矛盾した場合は対応・非対応を推測せずUnknownとし、ContradictoryResponsesを根拠に残す。
+    タイムアウト、通信例外、利用不能な応答はUnsupportedにせずUnknownとして診断を保持する。
+    呼び出し元によるCancellationTokenのキャンセルはUnknownへ変換せず、そのまま伝播する。
+    GtpCapabilitySet、GtpCommandCapability、GtpCommandSupport、GtpCapabilityEvidenceを追加し、
+    エンジン名、version、コマンド別状態、判定根拠、診断メッセージを変更不能な結果として返すようにした。
+    指定局面用の初期検査対象としてfixed_handicap、set_free_handicap、place_free_handicap、loadsgfと、
+    将来のきふわらべ原子的指定局面コマンド群を定義した。
+    正常、非対応、known_command拒否後のlist_commands成功、回答矛盾、タイムアウト、
+    呼び出し元キャンセルを模擬GTPセッションで移植性スモークへ追加した。
+    GUI表示と対局開始時のコマンド列はまだ変更していない。
+    9プロジェクト全体のDebugビルドは警告0・エラー0で成功した。
+    移植性スモークは能力検査の全追加ケースを含めてPASS、終了コード0だった。
+
+
+第4段階: 標準置き碁Strategy
+
+状態: 2026-08-01 実装完了。実エンジンへの自動送信は第6段階でConciergeへ接続する。
+
+・FixedHandicapStrategyを実装する。
+・SetFreeHandicapStrategyを実装する。
+・標準置石位置の判定を盤サイズ別に検査する。
+・固定置き碁の応答座標を要求位置と比較する。
+
+完了確認:
+    適用できない局面ではコマンドを送らない。
+    黒白混在局面へset_free_handicapを使わない。
+
+実施結果:
+    IInitialPositionStrategyへRequiredCommandsとBuildCommandsを追加した。
+    全Strategy共通のCanAttemptを拡張メソッドとして追加し、局面へ適用可能で、
+    必須コマンドが明確にUnsupportedではない場合だけ試行候補にするようにした。
+    能力がUnknownの場合は、利用者が試せる可能性を残すため候補から除外しない。
+    FixedHandicapStrategyを追加し、標準2子から9子、白番開始、白石なしの場合だけ適用する。
+    boardsize、komi、clear_board、fixed_handicap Nのコマンド列を生成する。
+    fixed_handicap成功応答の座標を解析し、要求した初期配置と集合比較するようにした。
+    一致はVerified、石の不足・余分はPositionMismatch、不正座標と重複はInvalidResponseとして、
+    説明、期待座標、実座標をInitialPositionVerificationResultへ保持する。
+    SetFreeHandicapStrategyを追加し、黒石だけの標準置き碁または自由置き碁で、
+    白番開始の場合にset_free_handicapと全指定座標を生成するようにした。
+    黒白混在、空局面、黒番開始ではfixed_handicapとset_free_handicapを適用しない。
+    共通のboardsize、komi、clear_board生成をInitialPositionCommandPreambleへ集約した。
+    既存SequentialPlayStrategyも共通Preambleと新しいStrategy契約へ接続した。
+    対応、明確な非対応、能力不明、標準固定置き碁、自由置き碁、黒番開始、黒白混在、
+    応答順序違い、石不足、不正座標、重複座標を移植性スモークへ追加した。
+    GUI表示と対局開始時の送信方式はまだ変更していない。
+    9プロジェクト全体のDebugビルドは警告0・エラー0で成功した。
+    移植性スモークは標準置き碁Strategyの全追加ケースを含めてPASS、終了コード0だった。
+
+
+第5段階: SGF Strategy
+
+状態: 2026-08-01 実装完了。外部エンジン実機ごとのパス形式検証は第10段階で行う。
+
+・最小SGF生成を実装する。
+・GUI側へ一時文書の保存と削除を実装する。
+・loadsgfのパスと手数指定をエンジン別に検証する。
+・一時ファイルを例外時にも回収する。
+
+完了確認:
+    AB、AW、PL、SZ、KMが要求どおり生成される。
+    空白を含むパスとUTF-8ファイルを検査する。
+
+実施結果:
+    InitialPositionDocumentとInitialPositionSgfBuilderをGtpExtensions.Sgfへ追加した。
+    Matchの指定局面から、GM[1]、FF[4]、CA[UTF-8]、SZ、KM、PL、AB、AWを持つ
+    最小SGFルートノードを生成するようにした。
+    黒石と白石をAB、AWへ分離し、開始手番をPL[B]またはPL[W]として保持する。
+    空の石色プロパティは出力せず、コミはカルチャー非依存の小数表記にした。
+    LoadSgfStrategyを追加し、HistorySensitivePosition以外をloadsgf候補にできるようにした。
+    SGFファイルパスはGUIまたはWebサーバーが作成してStrategyContextへ渡す。
+    GtpExtensionsはファイルI/Oを行わない。
+    GtpFilePathArgumentStyleを追加し、Auto、Unquoted、DoubleQuotedをエンジンProfileから選べるようにした。
+    Autoでは空白を含むパスを二重引用符で囲み、改行、NUL、二重引用符を含む危険なパスを拒否する。
+    エンジン差へ対応するため、loadsgfの任意手数引数もStrategyContextへ保持できるようにした。
+    GUI側へGtpInitialPositionSgfFileを追加し、一意な一時SGFをUTF-8 BOMなしで保存し、
+    Dispose時にそのファイルだけを削除するようにした。
+    loadsgf成功後も標準GTPだけでは盤面照合できないため、Unverifiedとして診断を返す。
+    AB、AW、PL、SZ、KM、黒番開始、空局面、空白パス、自動引用、明示引用、非引用、
+    手数引数、コマンド行注入拒否、UTF-8日本語、BOMなし、Dispose後削除を移植性スモークへ追加した。
+    GUIの対局開始処理はまだLoadSgfStrategyへ接続していない。
+    9プロジェクト全体のDebugビルドは警告0・エラー0で成功した。
+    移植性スモークはSGF Strategyと一時ファイルの全追加ケースを含めてPASS、終了コード0だった。
+
+
+第6段階: Conciergeと安全なフォールバック
+
+状態: 2026-08-01 実装完了。GUI表示と実エンジンプロセスへの接続は第7段階で行う。
+
+・Profile、能力、局面分類から候補順を作る。
+・一試行ごとの結果を保存する。
+・明確な拒否だけを自動フォールバック対象にする。
+・局面汚染時はclear_boardまたはプロセス再起動を要求する。
+・UnverifiedSuccessで自動的に次候補へ進まない。
+
+完了確認:
+    途中失敗後の石が次の試行へ残らない。
+    すべて失敗した場合に通常局面で対局を始めない。
+
+実施結果:
+    InitialPositionConciergeを追加し、ProfileのStrategy順、局面分類、能力検査結果から、
+    各方式を対象外、非対応、実行対象へ分類するようにした。
+    GenericGtpProfileを追加し、fixed_handicap、set_free_handicap、loadsgf、連続playの順で試す。
+    Genericでは局面汚染を避けるため、次方式の前にRestartSessionを要求する。
+    エンジン別Profileは第8段階で追加し、安全性が確認できた場合だけClearBoardへ変更できる。
+    IInitialPositionExecutionHostを追加し、コマンド送信、ClearBoardまたはRestartSessionによる回復、
+    一時SGFの物質化をGUIやWebサーバー側へ委譲した。
+    明確なコマンド拒否だけを自動フォールバック対象とし、回復成功後に次方式を実行する。
+    UnverifiedSuccess、PositionMismatch、InvalidResponse、TransportFailureでは自動継続せず停止する。
+    InitialPositionConciergeCursorを返し、利用者が「別の方法を試す」を選んだときだけ、
+    必要な回復を行って次のStrategyから再開できるようにした。
+    回復に失敗した場合は次方式を実行せず、同じ回復要求を持つCursorと診断を返す。
+    InitialPositionAttemptへ方式、表示名、状態、開始時刻、所要時間、実際に送信を試みたコマンド、
+    失敗コマンド、エンジン応答、説明を変更不能な進捗情報として保持するようにした。
+    対象外と非対応もAttemptへ残すため、画面で「何を検討し、なぜ試さなかったか」を表示できる。
+    Attempt状態としてNotApplicable、Unsupported、CommandRejected、TransportFailure、
+    PositionMismatch、InvalidResponse、UnverifiedSuccess、VerifiedSuccessを定義した。
+    LoadSgfStrategy実行時は一時SGF Leaseを必ずDisposeしてから結果を返す。
+    黒番・白番の各エンジンは、別々のExecutionHost、CapabilitySet、Cursor、Resultを持つことで、
+    独立した方式選択、進捗、診断、継続位置を保持できる。
+    黒白混在局面の対象外表示、loadsgf未検証停止、手動継続、再起動要求、固定置き碁成功、
+    コマンド拒否後の自動フォールバック、ClearBoard回復、局面不一致停止、既知非対応の送信抑止、
+    通信失敗停止、回復失敗、SGF Lease解放、全方式非対応を移植性スモークへ追加した。
+    GUI対局開始処理はまだConciergeへ接続していない。
+    9プロジェクト全体のDebugビルドは警告0・エラー0で成功した。
+    移植性スモークはConciergeと安全なフォールバックの全追加ケースを含めてPASS、終了コード0だった。
+
+
+第7段階: GUIの「別の方法を試す」
+
+状態: 2026-08-01 実装完了。実エンジン別の成功方式保存は第8段階、外部エンジン実機検証は第10段階で行う。
+
+・対局開始準備中の状態をGUIへ追加する。
+・現在の方式、結果、次候補を表示する。
+・「別の方法を試す」「このまま対局する」「戻る」「ログを見る」を接続する。
+・UnverifiedSuccessの場合だけ、利用者が続行を判断できるようにする。
+
+完了確認:
+    マウスとキーボードの双方で操作できる。
+    エンジン思考開始前に指定局面設定が確定する。
+
+実装結果:
+    編集盤面に初期石があり、少なくとも一方がComputerの場合だけ、対局画面の右側へ
+    「指定局面コンシェルジュ」を表示するようにした。通常の空局面開始経路は変更しない。
+    黒番用と白番用のカードは、能力、試行履歴、診断、Cursor、利用者承認を別々に保持する。
+    各カードへ方式名、成功・未確認・不適用・非対応・拒否・局面不一致・想定外応答・通信失敗を表示する。
+    VerifiedSuccessだけ自動承認し、UnverifiedSuccessだけ「このまま続ける」を押せる。
+    次Cursorがある場合だけ「別の方法を試す」を押せる。起動・能力検査自体の例外もカード診断へ表示する。
+    全Computerエンジンが検証済みまたは利用者承認済みになるまでIsEngineReadyをfalseに保ち、
+    genmoveおよびcgos-genmove_analyzeを開始しない。
+    マウスでカード選択、別方式、続行、GTPログ、中止を操作できる。
+    キーボードでは矢印、Space、Enter、L、Escapeで同じ操作ができる。
+    GTPログボタンはlogs/gtp.logを開き、中止はエンジンを停止して対局設定へ戻る。
+    GUIモデルと黒白別ボタン領域を移植性スモークへ追加した。
+    9プロジェクト全体のDebugビルドは警告0・エラー0だった。
+    移植性スモークとWindows非対話スモークはいずれもPASS、終了コード0だった。
+    実際の外部GTPエンジンを使った画面操作は第10段階の実機検証へ残す。
+    利用者の実画面確認で、日本語を英数字用SpriteFontへ渡したことによる文字化けと、
+    背後の小型チャートへクリックが伝播する問題が見つかった。
+    日本語表示を既存のOS文字ラスタライズ経路へ切り替え、コンシェルジュ表示中は
+    そのクリック処理を最優先で完結させるよう修正した。
+    修正後も9プロジェクトDebugビルドは警告0・エラー0、両スモークはPASSだった。
+
+
+第8段階: エンジンProfileと成功方式の保存
+
+状態: 2026-08-01 実装完了。Profileごとの実エンジン確認結果は第10段階で追記する。
+
+・Generic、Kifuwarabe、KataGo、Leela Zero、GNU GoのProfileを追加する。
+・既存GtpEngineProfileへ選択結果を保存する。
+・version変更時の再検査を実装する。
+・手動の優先方式と自動検出結果を区別する。
+
+完了確認:
+    エンジンごとに別の成功方式を保持できる。
+    未知のエンジンがGenericとして安全に動く。
+
+実装結果:
+    GtpExtensionsへGeneric、Kifuwarabe、KataGo、Leela Zero、GNU Goの組み込みProfile解決を追加した。
+    auto指定では能力検査で得たnameからProfileを選び、未知の名前と未知の明示Profile IDはGenericへ戻す。
+    現段階の既知Profileは実機成功を仮定せず、再起動回復と既存の保守的Strategyだけを使用する。
+    GtpEngineProfileへ手動Profile、手動優先方式、自動成功方式、検査時name、version、Profile IDを追加した。
+    エンジン編集画面のPOSITION欄からProfileと手動優先方式を循環選択できる。
+    手動優先方式を最優先し、未指定なら同じname・version・Profileで前回成功した方式を先頭へ移す。
+    VerifiedSuccessまたは利用者が「このまま続ける」を選んだ方式だけを自動結果として保存する。
+    nameまたはversionが変わった場合は自動結果だけを破棄して再検査し、手動優先方式は保持する。
+    既存JSONに新項目がなくてもautoと未検出として読み込める。編集、複製、並べ替えでも設定を保持する。
+    既知Profile判定、未知Generic、優先順、version無効化、手動設定保持、JSON往復、GUIボタン領域を
+    移植性スモークへ追加した。
+
+
+第9段階: きふわらべ原子的指定局面拡張
+
+状態: 2026-08-01 実装完了。同梱エンジン以外の実機検証は第10段階で行う。
+
+・先にGTP拡張仕様書を作成する。
+・begin_position、add_black、add_white、set_to_play、commit_position、abort_positionを実装する。
+・commit前は実対局盤を変更しない。
+・失敗とabortで準備領域を破棄する。
+・known_commandとlist_commandsへ追加する。
+・KifuwarabeAtomicSetupStrategyを接続する。
+
+完了確認:
+    黒白混在局面を途中の合法性に影響されず設定できる。
+    不正座標、重複、盤外、commit失敗で実対局盤が変化しない。
+
+実装結果:
+    先に「きふわらべ原子的指定局面GTP拡張仕様」を作成し、トランザクション境界、
+    コマンド引数、失敗時の準備盤破棄、通常盤保護、abortの冪等性を定義した。
+    Engineへbegin_position、add_black、add_white、set_to_play、commit_position、abort_positionを追加した。
+    準備盤はGoBoard.TrySetSetupStoneで直接構築するため、呼吸点、自殺、劫、着手順を要求しない。
+    commit成功時だけ実対局盤を準備盤へ交換し、劫点を解除して開始手番を保持する。
+    拡張コマンドの不正引数、盤外、重複、開始手番なし、二重beginでは準備盤を破棄する。
+    準備中のboardsize、clear_board、play、genmove、cgos-genmove_analyzeは拒否して通常盤を保護する。
+    abort_positionは準備中でなくても成功する。
+    全6コマンドをknown_commandとlist_commandsへ追加した。
+    GtpExtensionsへKifuwarabeAtomicSetupStrategyを追加し、きふわらべProfileの最優先方式にした。
+    全コマンドの成功応答を受けた場合は、原子的commit契約によりVerifiedSuccessとして扱う。
+    Strategyのコマンド列、必須能力、Profile優先順位、ConciergeのVerifiedSuccessを移植性スモークへ追加した。
+    Engineを直接動かすWindowsスモークへ、正常commit、黒白混在、呼吸点のない編集形、重複、盤外、
+    開始手番なし、準備中の通常着手拒否、abort、失敗後の通常盤維持を追加した。
+
+
+第10段階: 実エンジン検証と文書化
+
+状態: 2026-08-01 実装完了。外部3エンジンはこの環境に実行可能ファイルがなく、未実機であることを明記した。
+
+・利用可能なKataGo、Leela Zero、GNU Goで手動スモークを行う。
+・エンジン名、version、OS、使用方式、結果を記録する。
+・推測と実機確認済み情報をProfile内でも区別する。
+・ユーザー向け説明とトラブルシューティングを追加する。
+
+完了確認:
+    同梱エンジンの自動検査成功。
+    外部エンジンは入手できたものだけ結果を明記し、未検証を成功扱いしない。
+
+実装結果:
+    WindowsSmokeへ、同梱Engine.exeをGUI本番と同じGtpEngineClientで外部プロセス起動する統合検査を追加した。
+    name、version、known_command、list_commands、Kifuwarabe Profile自動選択、Concierge、
+    KifuwarabeAtomicSetupStrategy、黒白混在局面のVerifiedSuccessまでを一続きで検査する。
+    ProfileへEvidenceを追加し、ConservativeFallback、OfficialDocumentationOnly、
+    BundledEngineVerifiedをコード上でも区別した。優先方式を包むProfileもEvidenceを引き継ぐ。
+    リポジトリ、PATH、ビルド出力にKataGo、Leela Zero、GNU Go実行ファイルはなかった。
+    外部3エンジンは公式資料だけを確認し、未実機・未成功として記録した。
+    KataGoはGTP起動方法とモデル・設定要件、Leela ZeroはGTP v2とloadsgf、
+    GNU Goはfixed_handicap、set_free_handicap、loadsgfの公式記載を確認した。
+    外部エンジンの未実機確認は、現役の ../指定局面エンジン検証結果.md で継続する。
+    「指定局面コンシェルジュ利用ガイド」を追加し、操作、結果表示、方式、自動保存、
+    Profile設定、GTPログ、loadsgf・連続play・起動失敗のトラブル対応をまとめた。
+    「指定局面エンジン検証結果」を追加し、判定区分、version、OS、方式、Evidence、
+    外部エンジン追試時に残す項目をまとめた。
+
+
+15. テスト計画
+-------------
+
+純粋ロジック検査:
+
+・9路、13路、19路の標準置石判定
+・自由配置と標準配置の区別
+・黒白混在判定
+・GTP座標変換。I列を飛ばすこと、pass、盤外
+・Strategy適用可否と優先順位
+・能力のSupported、Unsupported、Unknown
+・SGFのAB、AW、PL、SZ、KMとエスケープ
+・試行結果と次候補
+
+模擬GTPセッション検査:
+
+・known_command成功
+・known_command非対応時のlist_commands
+・途中コマンド拒否
+・タイムアウトとプロセス終了相当
+・部分変更後のclear_board
+・再起動要求後の次Strategy
+・UnverifiedSuccessで自動継続しないこと
+
+統合検査:
+
+・同梱きふわらべエンジンで通常局面
+・標準置き碁
+・24子などの自由置き碁
+・黒白混在局面
+・開始手番が白の局面
+・一つ目の方式失敗後、別方式で成功
+・全方式失敗時に対局を開始しないこと
+
+回帰検査:
+
+・指定局面なしの人間対コンピューター
+・コンピューター同士
+・通常の着手、パス、投了
+・GTPログ
+・既存エンジンプロファイルの読込
+
+
+16. 先に決めないこと
+-------------------
+
+・外部エンジンが実装していない独自コマンドを、共通規格として扱わない。
+・エンジン名だけで動作を保証しない。
+・成功応答だけで局面一致を断定しない。
+・HistorySensitivePositionを、石配置だけで完全再現できると見なさない。
+・GtpExtensionsへGUI表示文言、MonoGame型、Process、ファイル保存先を入れない。
+・最初からすべてのエンジンを網羅しようとしない。
+
+
+17. 実装時に残す記録
+-------------------
+
+各段階の完了時に、この文書へ次を追記する。
+
+・実装日と状態
+・実際に確定したクラス名
+・変更した依存関係
+・ビルドとスモークの結果
+・実機確認したエンジン名とversion
+・既知の制限
+・次に試す一手
+
+
+18. 最初の一手
+--------------
+
+第1段階として空のKifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensionsプロジェクトを追加し、
+MatchとSharedだけを参照させる。
+
+その段階では現行GtpInitialPositionCommandBuilderを動かさない。
+依存境界と移植性スモークを先に確立してから、第2段階で機能を移す。
+
+
+19. 関連文書
+------------
+
+調査/指定局面とGTPエンジンの互換性.txt
+    GTP v2の置き碁コマンド、外部エンジンの見通し、任意局面の難しさ。
+
+開発/完了/20260731_Matchプロジェクト分離実装計画.md
+    Matchの責務と、GTPアダプターをMatchの外側へ置く方針。
+
+開発/GTPエンジン連携実装計画.md
+    現在のGtpEngineClientとローカル対局接続の実装経緯。

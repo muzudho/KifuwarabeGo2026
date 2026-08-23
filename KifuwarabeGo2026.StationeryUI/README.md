@@ -8,6 +8,6 @@
 依存方向は利用側から本ライブラリーへの一方向です。
 
 ```text
-KifuwarabeGo2026.Gui.Core  --->  KifuwarabeGo2026.StationeryUI
+KifuwarabeGo2026.GameOasis.Gui  --->  KifuwarabeGo2026.StationeryUI
 KifuwarabeGo2026.Launcher  --->  KifuwarabeGo2026.StationeryUI（今後）
 ```

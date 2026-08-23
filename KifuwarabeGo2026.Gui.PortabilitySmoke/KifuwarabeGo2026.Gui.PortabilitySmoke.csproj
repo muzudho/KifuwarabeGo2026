@@ -6,7 +6,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions\KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.csproj" />
-    <ProjectReference Include="..\KifuwarabeGo2026.Gui\KifuwarabeGo2026.Gui.Core.csproj" />
+    <ProjectReference Include="..\KifuwarabeGo2026.GameOasis.Gui\KifuwarabeGo2026.GameOasis.Gui.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.GameOasis.Concierge\KifuwarabeGo2026.GameOasis.Concierge.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlayerEngine\KifuwarabeGo2026.Reference.PlayerEngine.csproj" />
   </ItemGroup>

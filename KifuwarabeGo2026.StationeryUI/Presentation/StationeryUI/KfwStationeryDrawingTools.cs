@@ -1,9 +1,9 @@
-namespace KifuwarabeGo2026.Gui.Presentation.StationeryUI;
+namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
 
 using Microsoft.Xna.Framework;
-using KifuwarabeGo2026.Gui.Application;
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.SectionLabel;
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.StickyNote;
+using KifuwarabeGo2026.GameOasis.Gui.Application;
+using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.SectionLabel;
+using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.StickyNote;
 using System.Collections.Generic;
 using System;
 

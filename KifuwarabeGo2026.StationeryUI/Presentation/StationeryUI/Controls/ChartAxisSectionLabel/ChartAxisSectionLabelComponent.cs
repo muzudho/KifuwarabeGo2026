@@ -1,6 +1,6 @@
-namespace KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ChartAxisSectionLabel;
+namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.ChartAxisSectionLabel;
 
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.SectionLabel;
+using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.SectionLabel;
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;

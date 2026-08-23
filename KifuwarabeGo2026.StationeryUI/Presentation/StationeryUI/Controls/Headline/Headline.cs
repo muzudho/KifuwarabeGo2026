@@ -1,8 +1,8 @@
-namespace KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Headline;
+namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.Headline;
 
 using Microsoft.Xna.Framework;
 using System;
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
+using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
 
 /// <summary>
 /// 画面内で最も強く伝えたいメッセージを表示する、大見出し用の文房具 UI です。

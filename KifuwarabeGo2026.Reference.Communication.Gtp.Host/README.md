@@ -70,7 +70,7 @@ Kifuwarabe Go 2026 は、通常のGTPコマンドに加えて次の独自コマ�
 
 `kfw-patch-options`は、要求された全項目を検証してから一度に反映します。一項目でも不正なら何も変更せず、詳細をJSONで含むGTPエラーを返します。
 
-外部エンジン作者向けの完全な形式と例は、[Playのエンジンオプション公開仕様](../KifuwarabeGo2026.Gui/PublicDocs/GoApps/Play/エンジンオプション.md)を参照してください。
+外部エンジン作者向けの完全な形式と例は、[Playのエンジンオプション公開仕様](../KifuwarabeGo2026.GameOasis.Gui/PublicDocs/GoApps/Play/エンジンオプション.md)を参照してください。
 
 ### 移行期間の旧コマンド
 
@@ -98,7 +98,7 @@ kfw-commit-position
 
 途中で座標不正や重複などが起きた場合、準備盤全体を破棄し、実対局盤は変更しません。明示的に中止する場合は `kfw-abort-position` を送ります。旧snake_case名も互換エイリアスとして受け付けます。
 
-これは標準GTPではなくKifuwarabeGo2026独自拡張です。厳密な引数、失敗時の動作、準備中に利用できるコマンドは、[きふわらべ原子的指定局面GTP拡張仕様](../KifuwarabeGo2026.Gui/Docs/設計/きふわらべ原子的指定局面GTP拡張仕様.md)を参照してください。
+これは標準GTPではなくKifuwarabeGo2026独自拡張です。厳密な引数、失敗時の動作、準備中に利用できるコマンドは、[きふわらべ原子的指定局面GTP拡張仕様](../KifuwarabeGo2026.GameOasis.Gui/Docs/設計/きふわらべ原子的指定局面GTP拡張仕様.md)を参照してください。
 
 新プロトコルでは、GUIに保存されたオプションをエンジン起動時に次の順序で送信します。
 
@@ -217,7 +217,7 @@ kfw-get-option RandomMove
 3. `ExecuteGuiSetOption()` で値を検証・反映する。
 4. `ExecuteGenMove()` などで新しい値の動作を実装する。
 
-GUI側では、`KifuwarabeGo2026.Gui/Application/GtpEngineGuiOptions.cs` の `RandomMoveValues` に同じ文字列を追加します。エンジンの `vars` とGUIの候補配列で、文字列と大文字・小文字を一致させてください。
+GUI側では、`KifuwarabeGo2026.GameOasis.Gui/Application/GtpEngineGuiOptions.cs` の `RandomMoveValues` に同じ文字列を追加します。エンジンの `vars` とGUIの候補配列で、文字列と大文字・小文字を一致させてください。
 
 候補選択画面は1ページ4件で、候補数に応じてページ数を自動計算します。候補が20件なら5ページ表示になります。
 
@@ -241,11 +241,11 @@ GUI側では、`KifuwarabeGo2026.Gui/Application/GtpEngineGuiOptions.cs` の `Ra
 
 | ファイル | 役割 |
 |---|---|
-| `KifuwarabeGo2026.Gui/Application/GtpEngineGuiOptions.cs` | 既知オプションのIDと候補値 |
-| `KifuwarabeGo2026.Gui/Application/GoAppSession.cs` | 編集中の値、選択、ページ状態 |
-| `KifuwarabeGo2026.Gui/Presentation/Local/Resting/EngineSelect/GoScreenRenderer.GtpEngine.cs` | オプション画面とcombo選択画面 |
-| `KifuwarabeGo2026.Gui/Game1.cs` | マウス入力処理 |
-| `KifuwarabeGo2026.Gui/Gtp/GtpEngineClient.cs` | 起動時の定義取得、検証、値送信 |
+| `KifuwarabeGo2026.GameOasis.Gui/Application/GtpEngineGuiOptions.cs` | 既知オプションのIDと候補値 |
+| `KifuwarabeGo2026.GameOasis.Gui/Application/GoAppSession.cs` | 編集中の値、選択、ページ状態 |
+| `KifuwarabeGo2026.GameOasis.Gui/Presentation/Local/Resting/EngineSelect/GoScreenRenderer.GtpEngine.cs` | オプション画面とcombo選択画面 |
+| `KifuwarabeGo2026.GameOasis.Gui/Game1.cs` | マウス入力処理 |
+| `KifuwarabeGo2026.GameOasis.Gui/Gtp/GtpEngineClient.cs` | 起動時の定義取得、検証、値送信 |
 
 親のエンジンオプション画面とcombo選択画面にはページャーがあり、どちらも項目数からページ数を計算する構造です。
 

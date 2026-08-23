@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Gui.Application;
+namespace KifuwarabeGo2026.GameOasis.Gui.Application;
 
 /// <summary>
 /// OS のフォント描画機能を使い、文字列を透明背景の PNG へ変換します。

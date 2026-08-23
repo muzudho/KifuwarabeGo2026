@@ -1,8 +1,8 @@
-namespace KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.SectionLabel;
+namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.SectionLabel;
 
 using Microsoft.Xna.Framework;
 using System;
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
+using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
 
 /// <summary>対象区画とラベル自身の位置、サイズ、表示方向を生成時から所有する文房具UIです。</summary>
 public sealed class SectionLabelComponent

@@ -1,8 +1,8 @@
-namespace KifuwarabeGo2026.Gui.Presentation.StationeryUI.MessageDialog;
+namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.MessageDialog;
 
 using Microsoft.Xna.Framework;
 using System;
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
+using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
 
 /// <summary>アプリ内で表示する、本文と CLOSE ボタンだけを持つメッセージダイアログ。</summary>
 public sealed class MessageDialog

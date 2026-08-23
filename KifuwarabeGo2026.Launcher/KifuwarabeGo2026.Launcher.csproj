@@ -7,14 +7,14 @@
     <AssemblyName>KifuwarabeGo2026.Launcher</AssemblyName>
     <RootNamespace>KifuwarabeGo2026.Launcher</RootNamespace>
     <RollForward>Major</RollForward>
-    <ApplicationIcon>..\KifuwarabeGo2026.Gui\GuiIcon.ico</ApplicationIcon>
+    <ApplicationIcon>..\KifuwarabeGo2026.GameOasis.Gui\GuiIcon.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.*" />
     <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.*" />
   </ItemGroup>
   <ItemGroup>
-    <MonoGameContentReference Include="..\KifuwarabeGo2026.Gui\Content\Content.mgcb">
+    <MonoGameContentReference Include="..\KifuwarabeGo2026.GameOasis.Gui\Content\Content.mgcb">
       <Link>Content\Content.mgcb</Link>
     </MonoGameContentReference>
   </ItemGroup>

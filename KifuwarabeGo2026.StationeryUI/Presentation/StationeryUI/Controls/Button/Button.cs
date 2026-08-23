@@ -1,8 +1,8 @@
-namespace KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Button;
+namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.Button;
 
 using Microsoft.Xna.Framework;
 using System;
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
+using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
 
 /// <summary>位置、ラベル、有効状態、ヒット判定を所有する文房具 UI のボタンです。</summary>
 public sealed class Button

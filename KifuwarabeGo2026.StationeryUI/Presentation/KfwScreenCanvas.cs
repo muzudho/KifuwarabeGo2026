@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Gui.Presentation;
+namespace KifuwarabeGo2026.GameOasis.Gui.Presentation;
 
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;

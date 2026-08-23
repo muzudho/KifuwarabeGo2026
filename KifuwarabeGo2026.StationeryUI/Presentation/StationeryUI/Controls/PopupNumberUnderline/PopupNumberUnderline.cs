@@ -1,9 +1,9 @@
-namespace KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.PopupNumberUnderline;
+namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.PopupNumberUnderline;
 
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
+using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
 
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Button;
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI.SpinButton;
+using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.Button;
+using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.SpinButton;
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;

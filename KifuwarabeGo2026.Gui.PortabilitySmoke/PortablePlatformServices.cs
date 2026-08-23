@@ -1,6 +1,6 @@
 namespace KifuwarabeGo2026.Gui.PortabilitySmoke;
 
-using KifuwarabeGo2026.Gui.Application;
+using KifuwarabeGo2026.GameOasis.Gui.Application;
 using System;
 using System.Collections.Generic;
 

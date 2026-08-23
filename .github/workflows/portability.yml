@@ -71,16 +71,16 @@ jobs:
         run: dotnet build KifuwarabeGo2026.slnx --configuration Release --no-restore
 
       - name: Run Windows platform checks
-        run: dotnet run --project KifuwarabeGo2026.Gui.WindowsSmoke/KifuwarabeGo2026.Gui.WindowsSmoke.csproj --configuration Release --no-build
+        run: dotnet run --project KifuwarabeGo2026.Tests.GameOasis.Gui.Windows/KifuwarabeGo2026.Tests.GameOasis.Gui.Windows.csproj --configuration Release --no-build
 
       - name: Run launcher checks
         run: dotnet run --project KifuwarabeGo2026.LauncherSmoke/KifuwarabeGo2026.LauncherSmoke.csproj --configuration Release --no-build
 
       - name: Restore Windows GUI for win-x64
-        run: dotnet restore KifuwarabeGo2026.Gui.Windows/KifuwarabeGo2026.Gui.Windows.csproj --runtime win-x64
+        run: dotnet restore KifuwarabeGo2026.GameOasis.Gui.Windows/KifuwarabeGo2026.GameOasis.Gui.Windows.csproj --runtime win-x64
 
       - name: Publish Windows GUI
-        run: dotnet publish KifuwarabeGo2026.Gui.Windows/KifuwarabeGo2026.Gui.Windows.csproj --configuration Release --runtime win-x64 --self-contained false --no-restore
+        run: dotnet publish KifuwarabeGo2026.GameOasis.Gui.Windows/KifuwarabeGo2026.GameOasis.Gui.Windows.csproj --configuration Release --runtime win-x64 --self-contained false --no-restore
 
       - name: Publish Windows launcher
         run: dotnet publish KifuwarabeGo2026.Launcher/KifuwarabeGo2026.Launcher.csproj --configuration Release --runtime win-x64 --self-contained false
@@ -88,22 +88,22 @@ jobs:
       - name: Verify GUI distribution
         shell: pwsh
         run: |
-          $publish = 'KifuwarabeGo2026.Gui.Windows/bin/Release/net8.0-windows/win-x64/publish'
+          $publish = 'KifuwarabeGo2026.GameOasis.Gui.Windows/bin/Release/net8.0-windows/win-x64/publish'
           $required = @(
-            'KifuwarabeGo2026.Gui.exe',
-            'KifuwarabeGo2026.Gui.Core.dll',
+            'KifuwarabeGo2026.GameOasis.Gui.exe',
+            'KifuwarabeGo2026.GameOasis.Gui.dll',
             'KifuwarabeGo2026.StationeryUI.dll',
             'KifuwarabeGo2026.Shared.dll',
             'Content/Fonts/Ui.xnb',
             'Content/Fonts/BoardCoordinate.xnb',
-            'Tools/Cgos/KifuwarabeGo2026.Gui.Communication.Cgos.exe',
-            'Tools/Cgos/KifuwarabeGo2026.Gui.Communication.Cgos.dll',
-            'Tools/Cgos/KifuwarabeGo2026.Gui.Communication.Cgos.deps.json',
-            'Tools/Cgos/KifuwarabeGo2026.Gui.Communication.Cgos.runtimeconfig.json'
+            'Tools/Cgos/KifuwarabeGo2026.GameOasis.Gui.Communication.Cgos.exe',
+            'Tools/Cgos/KifuwarabeGo2026.GameOasis.Gui.Communication.Cgos.dll',
+            'Tools/Cgos/KifuwarabeGo2026.GameOasis.Gui.Communication.Cgos.deps.json',
+            'Tools/Cgos/KifuwarabeGo2026.GameOasis.Gui.Communication.Cgos.runtimeconfig.json'
           )
           $missing = $required |
             Where-Object { -not (Test-Path -LiteralPath (Join-Path $publish $_)) }
           if ($missing.Count -gt 0) {
             throw "Missing GUI distribution files: $($missing -join ', ')"
           }
-          & (Join-Path $publish 'Tools/Cgos/KifuwarabeGo2026.Gui.Communication.Cgos.exe') --help
+          & (Join-Path $publish 'Tools/Cgos/KifuwarabeGo2026.GameOasis.Gui.Communication.Cgos.exe') --help

@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Gui.Presentation.StationeryUI;
+namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
 
 using Microsoft.Xna.Framework;
 using System;

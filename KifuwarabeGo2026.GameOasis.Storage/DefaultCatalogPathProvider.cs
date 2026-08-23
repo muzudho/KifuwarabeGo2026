@@ -25,7 +25,7 @@ public sealed class DefaultCatalogPathProvider : ICatalogPathProvider
         {
             if (File.Exists(Path.Combine(directory.FullName, "KifuwarabeGo2026.slnx")))
             {
-                var path = Path.Combine(directory.FullName, "KifuwarabeGo2026.Gui", "Content",
+                var path = Path.Combine(directory.FullName, "KifuwarabeGo2026.GameOasis.Gui", "Content",
                     "GtpEngines", "gtp-engine-list.json");
                 return File.Exists(path) ? path : null;
             }

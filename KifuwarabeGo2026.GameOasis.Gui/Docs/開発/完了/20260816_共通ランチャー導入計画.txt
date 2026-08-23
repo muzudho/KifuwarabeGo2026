@@ -1,0 +1,300 @@
+［KifuwarabeGo2026 共通ランチャー導入計画］
+
+作成日：2026-08-16
+状態：初版実装完了
+完了日：2026-08-16
+優先度：完了
+
+
+■ 背景
+
+GUI v3.10.0 の［最新バージョンへ更新］から v3.14.0 を取得すると、更新直後は
+v3.14.0 が起動する。しかし、元のショートカットから再起動すると v3.10.0 に戻る。
+
+現在の更新処理は、最新版を次のバージョン別フォルダーへ展開して直接起動するだけである。
+
+  %LOCALAPPDATA%\KifuwarabeGo2026\Updates\v3.14.0\KifuwarabeGo2026.GameOasis.Gui.exe
+
+元の GUI 実行ファイル、ショートカット、次回の起動経路は変更しない。そのため、現在の
+［最新バージョンへ更新］という名前から期待される恒久的な更新になっていない。
+
+
+■ 目標
+
+利用者が毎回起動する固定の実行ファイルを、次の共通ランチャーにする。
+
+  KifuwarabeGo2026.Launcher.exe
+
+GUI と Engine の実体はランチャーとは別のバージョン別フォルダーへ置く。ランチャーが
+現在使用するバージョンを選び、GUI の起動、Engine の場所の案内、両方の更新を担当する。
+
+ランチャー自身とアプリ本体を分離し、起動中の本体を本体自身が置換する問題を避ける。
+
+
+■ 推奨フォルダー構成
+
+利用者が展開した固定フォルダー：
+
+  KifuwarabeGo2026\
+  ├─ KifuwarabeGo2026.Launcher.exe
+  ├─ KifuwarabeGo2026.Launcher.dll
+  └─ Launcher用の依存ファイル
+
+バージョン別の実体：
+
+  %LOCALAPPDATA%\KifuwarabeGo2026\
+  ├─ launcher-settings.json
+  ├─ Packages\
+  │  ├─ Gui\
+  │  │  ├─ v3.14.0\
+  │  │  └─ v3.15.0\
+  │  └─ Engine\
+  │     ├─ v3.14.0\
+  │     └─ v3.15.0\
+  └─ Downloads\
+
+GUI と Engine は別々に current version を持てるようにする。同じリリース番号で公開していても、
+将来まで両者のバージョンが必ず一致するとは仮定しない。
+
+
+■ launcher-settings.json の案
+
+  {
+    "GuiCurrentVersion": "3.14.0",
+    "GuiPreviousVersion": "3.13.0",
+    "EngineCurrentVersion": "3.14.0",
+    "EnginePreviousVersion": "3.13.0"
+  }
+
+設定は一時ファイルへ書いてから同一ボリューム内で置換し、中断時に壊れにくくする。
+パスは保存せず、管理ルートとバージョンから決定する。外部の任意 exe を起動対象にしない。
+
+
+■ ランチャーの最小画面
+
+  KIFUWARABE GO 2026
+
+  GUI       v3.14.0  [START]  [UPDATE]
+  ENGINE    v3.14.0  [OPEN FOLDER]  [UPDATE]
+
+  [CHECK ALL UPDATES]
+
+最初の版では GUI 起動と GUI／Engine 更新だけに絞る。バージョン選択、削除、詳細な診断は
+後続でもよい。GUI を使わず Engine だけ欲しい利用者も扱える構成にする。
+
+
+■ 更新の基本フロー
+
+1. GitHub Releases の latest を取得する。
+2. GUI／Engineそれぞれについて、名前が完全に一致する配布 ZIP を選ぶ。
+3. ZIP を Downloads の一時フォルダーへ保存する。
+4. 可能ならリリースノートに記録した SHA-256 と照合する。
+5. ZIP Entry の展開先を正規化し、`..` や絶対パスによる管理ルート外への展開を拒否する。
+6. 一時フォルダーへ展開する。
+7. 必須 exe、deps.json、runtimeconfig.json、GUI の Content と Tools\Cgos を検査する。
+8. GUI／Engineのファイルバージョンが取得したタグと一致することを検査する。
+9. 完成した一時フォルダーを対象バージョンの正式フォルダーへ移す。
+10. current version を原子的に更新する。
+11. GUI の場合は新しい本体を起動する。
+
+ダウンロード、展開、検証の途中では current version を変更しない。
+
+
+■ 起動の基本フロー
+
+1. launcher-settings.json の current version を読む。
+2. 対象フォルダーと実行ファイルが存在するか確認する。
+3. GUI の場合は WorkingDirectory を GUI 本体のフォルダーにして起動する。
+4. 起動できなければ previous version を検査する。
+5. previous version が正常なら、利用者へ理由を示して旧版を起動する。
+6. どちらも起動できなければ、修復または最新版の再取得を案内する。
+
+プロセス生成に成功しただけでは完全な起動成功とは限らない。後続段階では、本体が起動成功を
+記録するハンドシェイクファイル、名前付きパイプ、または短時間の生存確認を検討する。
+
+
+■ GUI と Engine の扱い
+
+GUI：
+
+・［START］でバージョン別フォルダーの KifuwarabeGo2026.GameOasis.Gui.exe を起動する。
+・現在 GUI 内にある［最新バージョンへ更新］は、最終的にランチャーを開く操作へ変更する。
+・GUI 本体が直接 GitHub ZIP を取得して別版を起動する現在の GuiReleaseUpdater は廃止するか、
+  ランチャー起動用の薄い窓口へ置き換える。
+
+Engine：
+
+・Engine は通常のデスクトップアプリのように単独起動して使うとは限らない。
+・［OPEN FOLDER］で、GTP クライアントへ登録する exe の場所を開けるようにする。
+・更新後に GUI のエンジンカタログが旧バージョンの絶対パスを参照している場合の扱いを決める。
+・推奨案は、ランチャー管理下に Engine の固定起動ブリッジを設けるか、GUI がランチャー設定から
+  current Engine のパスを解決する方式である。
+
+
+■ 配布方針の移行案
+
+第1段階では、既存利用者を壊さない。
+
+・従来の GUI ZIP と Engine ZIP は維持する。
+・新しく Launcher ZIP を追加するか、GUI ZIP の直下へランチャーを同梱する。
+・どの exe を起動するか README と画面で明示する。
+・既存の KifuwarabeGo2026.GameOasis.Gui.exe を突然ランチャーへ差し替えない。
+
+ランチャーが安定した後に、配布物を次の3種類にするか検討する。
+
+  KifuwarabeGo2026.Launcher-v<version>-win-x64.zip
+  KifuwarabeGo2026.GameOasis.Gui-v<version>-win-x64.zip
+  KifuwarabeGo2026.Engine-v<version>-win-x64.zip
+
+Launcher ZIP は小さくし、初回起動後に GUI／Engine の必要な方だけ取得できる形が望ましい。
+オフライン利用者向けに、従来の単独 ZIP は当面残す。
+
+
+■ プロジェクト案
+
+新規プロジェクト：
+
+  KifuwarabeGo2026.Launcher\KifuwarabeGo2026.Launcher.csproj
+
+最初は Windows x64 専用でよい。GUI本体の MonoGame や画面クラスへ依存させない。
+HTTP取得、バージョン比較、ZIP検証、設定保存、プロセス起動は小さな独立クラスへ分ける。
+
+候補クラス：
+
+  LauncherSettings
+  LauncherSettingsStore
+  GitHubReleaseClient
+  PackageDescriptor
+  PackageDownloader
+  PackageInstaller
+  InstalledVersionCatalog
+  ProductLauncher
+  LauncherLog
+
+
+■ 実装段階
+
+第1段階：仕様固定と非UIロジック
+
+・管理フォルダー、設定JSON、GUI／Engineの識別方法を決める。
+・バージョン比較、リリースアセット選択、インストール済み版列挙を実装する。
+・ZIPの安全な展開と必須ファイル検査を実装する。
+・一時展開から正式フォルダーへの切替を実装する。
+
+第2段階：最小ランチャー
+
+・current GUI の START を実装する。
+・GUI と Engine の UPDATE を実装する。
+・進捗、成功、失敗、ログファイルの場所を表示する。
+・同時に複数の更新を開始できないようにする。
+
+第3段階：既存 GUI からの移行
+
+・GUI の更新ボタンからランチャーを起動する。
+・ランチャーが見つからない旧配布物では、移行方法を案内する。
+・現在の GuiReleaseUpdater によって Updates 以下へ置かれた版を検出・移行するか決める。
+・v3.10.0 等の古いショートカットから起動しても、最新版への恒久的な入口が得られることを確認する。
+
+第4段階：ロールバックと保守
+
+・previous version への自動または手動ロールバックを実装する。
+・使用中の版と直前版は削除しない。
+・古い版を削除する場合は、対象を表示して利用者の確認を取る。
+・壊れたダウンロード、一部展開、ネットワーク切断、ディスク不足を検査する。
+
+第5段階：リリース方式の更新
+
+・Launcherのpublish、ZIP、リリースアセット、リリース手順を追加する。
+・README、画面説明、トラブルシューティングを更新する。
+・GUI／Engine単独配布との互換期間を明記する。
+
+
+■ テスト項目
+
+・未インストール状態からGUIを取得して起動できる。
+・v3.10.0相当からv3.14.0以降へ更新後、PC再起動後もランチャーから最新版が起動する。
+・GUIだけ、Engineだけ、両方を別々に更新できる。
+・最新版取得済みの場合は再ダウンロードせず起動できる。
+・ダウンロード中断後も旧版を起動できる。
+・不正ZIP、必須ファイル不足、バージョン不一致をcurrentに設定しない。
+・ZIP Slipを拒否し、管理ルート外へファイルを書かない。
+・新版が起動できない場合にprevious versionへ戻れる。
+・GUIとEngineを実行中に対象フォルダーを破壊しない。
+・パスに空白、日本語、長い名前があっても起動できる。
+・複数回起動や同時更新で設定ファイルを壊さない。
+・ランチャーのログだけで取得、検証、切替、起動失敗を追跡できる。
+
+
+■ 完了条件
+
+・利用者が毎回 KifuwarabeGo2026.Launcher.exe を起動すれば、選択中の最新版GUIが開く。
+・更新後に以前のショートカット経由で旧GUIへ戻る問題の解消方法が利用者へ明示されている。
+・GUIとEngineを独立して更新できる。
+・失敗した更新が現行の正常版を壊さない。
+・最低1世代前へ戻れる。
+・従来のGUI／Engine単独ZIPを使う利用者への移行方法が文書化されている。
+・Releaseビルド、PortabilitySmoke、WindowsSmoke、ランチャー専用テストが成功する。
+
+
+■ 次回、最初に決めること
+
+1. ランチャーをGUI ZIPへ同梱するか、独立したLauncher ZIPとして配布するか。
+2. Engineのcurrentパスを固定ブリッジで提供するか、GUIが設定から解決するか。
+3. 起動成功判定を第1版から入れるか、まずはプロセス生成成功までにするか。
+4. 旧GuiReleaseUpdaterで取得済みの版を移行対象にするか、再ダウンロードするか。
+5. ランチャー自身の更新方法を、初版に含めるか後回しにするか。
+
+
+■ 関連ファイル
+
+・KifuwarabeGo2026.GameOasis.Gui/Docs/続きはここから.md
+・KifuwarabeGo2026.GameOasis.Gui/Application/Updates/GuiReleaseUpdater.cs
+・KifuwarabeGo2026.GameOasis.Gui/Presentation/StationeryUI/MessageDialog/GuiUpdateProgressDialog.cs
+・KifuwarabeGo2026.GameOasis.Gui/Docs/開発/リリース手順.md
+・KifuwarabeGo2026.GameOasis.Gui/Docs/開発/Windows GUI手動スモークテスト手順.md
+
+
+■ 完了記録
+
+実装したもの：
+
+・固定の KifuwarabeGo2026.Launcher.exe と最小管理画面。
+・GUI START、current起動失敗時のpreviousフォールバック。
+・GUI／Engineの独立UPDATEとCHECK ALL UPDATES。
+・GitHub Releases latestの取得と、完全一致する配布ZIP名の選択。
+・Downloads一時フォルダーへの取得、安全なZIP展開、ZIP Slip拒否。
+・exe、deps.json、runtimeconfig.json、GUI Content、Tools\Cgosの検査。
+・配布タグと実行ファイルバージョンの一致検査。
+・stagingから正式フォルダーへの移動後だけ行うcurrent／previous切替。
+・一時ファイルとFile.Replaceを使うlauncher-settings.jsonの原子的保存。
+・複数同時更新を防ぐゲートと、ランチャーの多重起動防止。
+・current、previous、実行中の版を保護するアンインストール。
+・旧Updates版の一覧、容量表示、確認付き削除。
+・Engine currentフォルダー表示とランチャーログ。
+・GUI内更新ボタンから共通ランチャーを開く薄い移行窓口。
+・ランチャーがない旧配布物で手動再インストールを案内するエラー表示とREADME。
+・Launcher独立ZIPのpublish手順とCI publish。
+・ランチャー専用スモークテスト。
+
+今回固定した判断：
+
+1. Launcherは独立したLauncher ZIPとして配布し、GUI／Engine単独ZIPも互換期間中は維持する。
+2. Engine初版はcurrentフォルダーを開いてGTPクライアントへ登録してもらう。
+3. 起動成功判定は初版ではプロセス生成成功までとする。
+4. 旧Updates版は自動移行せず、不要版を削除して正式版をランチャーから再取得する。
+5. Launcher自身の自動更新は後続版へ送り、GUI／Engine本体の安全な更新を初版で完成させる。
+
+検証結果：
+
+・ソリューション12プロジェクトのReleaseビルド成功。警告0、エラー0。
+・Launcher専用スモーク PASS。
+・PortabilitySmoke PASS。
+・WindowsSmoke PASS。
+・Launcher win-x64 framework-dependent publish成功。
+
+後続候補：
+
+・GUI起動成功を確定するハンドシェイクまたは短時間生存確認。
+・Launcher自身の自動更新。
+・リリースノートに機械可読なSHA-256を付けた場合の照合。
+・Engine currentへの固定起動ブリッジ。

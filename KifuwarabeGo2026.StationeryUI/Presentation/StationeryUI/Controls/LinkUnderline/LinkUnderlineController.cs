@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.LinkUnderline;
+namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.LinkUnderline;
 
 using System;
 using System.Threading;

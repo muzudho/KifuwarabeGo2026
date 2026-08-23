@@ -89,14 +89,14 @@ $versionProjects = @(
     'KifuwarabeGo2026.Launcher.Core\KifuwarabeGo2026.Launcher.Core.csproj',
     'KifuwarabeGo2026.Launcher.Platform\KifuwarabeGo2026.Launcher.Platform.csproj',
     'KifuwarabeGo2026.Launcher.Presentation\KifuwarabeGo2026.Launcher.Presentation.csproj',
-    'KifuwarabeGo2026.Gui.Windows\KifuwarabeGo2026.Gui.Windows.csproj',
-    'KifuwarabeGo2026.Gui\KifuwarabeGo2026.Gui.Core.csproj',
+    'KifuwarabeGo2026.GameOasis.Gui.Windows\KifuwarabeGo2026.GameOasis.Gui.Windows.csproj',
+    'KifuwarabeGo2026.GameOasis.Gui\KifuwarabeGo2026.GameOasis.Gui.csproj',
     'KifuwarabeGo2026.Reference.Communication.Gtp.Host\KifuwarabeGo2026.Reference.Communication.Gtp.Host.csproj',
     'KifuwarabeGo2026.Reference.Communication.Gtp\KifuwarabeGo2026.Reference.Communication.Gtp.csproj',
     'KifuwarabeGo2026.Reference.PlayerEngine\KifuwarabeGo2026.Reference.PlayerEngine.csproj',
     'KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation\KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation.csproj',
     'KifuwarabeGo2026.StationeryUI\KifuwarabeGo2026.StationeryUI.csproj',
-    'KifuwarabeGo2026.Gui.Communication.Cgos\KifuwarabeGo2026.Gui.Communication.Cgos.csproj'
+    'KifuwarabeGo2026.GameOasis.Gui.Communication.Cgos\KifuwarabeGo2026.GameOasis.Gui.Communication.Cgos.csproj'
 )
 $versionProjects | ForEach-Object { Assert-ProjectVersion -ProjectPath $_ }
 
@@ -104,7 +104,7 @@ if ([string]::IsNullOrWhiteSpace($ReleaseNotes)) {
     # Keep the script compatible with Windows PowerShell 5.1, which can decode a
     # UTF-8 script without BOM using the active ANSI code page. Avoid non-ASCII
     # path literals and discover the uniquely named release notes instead.
-    $releaseNoteMatches = @(Get-ChildItem -LiteralPath 'KifuwarabeGo2026.Gui\Docs' -Recurse -File -Filter "RELEASE_NOTES_v$Version.md")
+    $releaseNoteMatches = @(Get-ChildItem -LiteralPath 'KifuwarabeGo2026.GameOasis.Gui\Docs' -Recurse -File -Filter "RELEASE_NOTES_v$Version.md")
     if ($releaseNoteMatches.Count -ne 1) {
         throw "Expected exactly one release notes file for v$Version, found $($releaseNoteMatches.Count)."
     }
@@ -117,7 +117,7 @@ if ($releaseNotesText -notmatch "(?m)^# Kifuwarabe Go 2026 v$([regex]::Escape($V
 }
 
 $launcherPublish = 'KifuwarabeGo2026.Launcher\bin\Release\net8.0\win-x64\publish'
-$guiPublish = 'KifuwarabeGo2026.Gui.Windows\bin\Release\net8.0-windows\win-x64\publish'
+$guiPublish = 'KifuwarabeGo2026.GameOasis.Gui.Windows\bin\Release\net8.0-windows\win-x64\publish'
 $enginePublish = 'KifuwarabeGo2026.Reference.Communication.Gtp.Host\bin\Release\net8.0\win-x64\publish'
 
 if (-not $SkipBuild) {
@@ -126,24 +126,24 @@ if (-not $SkipBuild) {
     if (-not $SkipSmokeTests) {
         Invoke-CheckedCommand -Command dotnet -Arguments @('run', '--project', 'KifuwarabeGo2026.LauncherSmoke\KifuwarabeGo2026.LauncherSmoke.csproj', '-c', 'Release', '--no-build')
         Invoke-CheckedCommand -Command dotnet -Arguments @('run', '--project', 'KifuwarabeGo2026.Gui.PortabilitySmoke\KifuwarabeGo2026.Gui.PortabilitySmoke.csproj', '-c', 'Release', '--no-build')
-        Invoke-CheckedCommand -Command dotnet -Arguments @('run', '--project', 'KifuwarabeGo2026.Gui.WindowsSmoke\KifuwarabeGo2026.Gui.WindowsSmoke.csproj', '-c', 'Release', '--no-build')
+        Invoke-CheckedCommand -Command dotnet -Arguments @('run', '--project', 'KifuwarabeGo2026.Tests.GameOasis.Gui.Windows\KifuwarabeGo2026.Tests.GameOasis.Gui.Windows.csproj', '-c', 'Release', '--no-build')
     }
 
     Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.Launcher\KifuwarabeGo2026.Launcher.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false')
-    Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.Gui.Windows\KifuwarabeGo2026.Gui.Windows.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false')
+    Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.GameOasis.Gui.Windows\KifuwarabeGo2026.GameOasis.Gui.Windows.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false')
     Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.Reference.Communication.Gtp.Host\KifuwarabeGo2026.Reference.Communication.Gtp.Host.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false')
 }
 
 Assert-FileExists -LiteralPath @(
     "$launcherPublish\KifuwarabeGo2026.Launcher.exe",
-    "$guiPublish\KifuwarabeGo2026.Gui.exe",
-    "$guiPublish\KifuwarabeGo2026.Gui.Core.dll",
+    "$guiPublish\KifuwarabeGo2026.GameOasis.Gui.exe",
+    "$guiPublish\KifuwarabeGo2026.GameOasis.Gui.dll",
     "$guiPublish\KifuwarabeGo2026.StationeryUI.dll",
     "$guiPublish\KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation.dll",
-    "$guiPublish\Tools\Cgos\KifuwarabeGo2026.Gui.Communication.Cgos.exe",
-    "$guiPublish\Tools\Cgos\KifuwarabeGo2026.Gui.Communication.Cgos.dll",
-    "$guiPublish\Tools\Cgos\KifuwarabeGo2026.Gui.Communication.Cgos.deps.json",
-    "$guiPublish\Tools\Cgos\KifuwarabeGo2026.Gui.Communication.Cgos.runtimeconfig.json",
+    "$guiPublish\Tools\Cgos\KifuwarabeGo2026.GameOasis.Gui.Communication.Cgos.exe",
+    "$guiPublish\Tools\Cgos\KifuwarabeGo2026.GameOasis.Gui.Communication.Cgos.dll",
+    "$guiPublish\Tools\Cgos\KifuwarabeGo2026.GameOasis.Gui.Communication.Cgos.deps.json",
+    "$guiPublish\Tools\Cgos\KifuwarabeGo2026.GameOasis.Gui.Communication.Cgos.runtimeconfig.json",
     "$enginePublish\KifuwarabeGo2026.Engine.exe",
     "$enginePublish\KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation.dll",
     "$enginePublish\KifuwarabeGo2026.Reference.PlayerEngine.dll",

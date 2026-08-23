@@ -1,10 +1,10 @@
-namespace KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.LinkUnderline;
+namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.LinkUnderline;
 
 using Microsoft.Xna.Framework;
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
+using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
 using System;
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.ActionBadge;
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
+using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.ActionBadge;
+using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
 
 /// <summary>
 /// 非同期アクションへ接続する文房具 UI のリンクアンダーラインです。

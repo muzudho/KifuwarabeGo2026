@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Gui.Application;
+namespace KifuwarabeGo2026.GameOasis.Gui.Application;
 
 /// <summary>
 /// OS のクリップボードへテキストを書き込みます。

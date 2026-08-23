@@ -1,0 +1,55 @@
+namespace KifuwarabeGo2026.GameOasis.Gui;
+
+using KifuwarabeGo2026.GameOasis.Gui.Infrastructure.Logging;
+using KifuwarabeGo2026.GameOasis.Gui.Infrastructure.Windows;
+using System;
+
+internal static class Program
+{
+    [System.STAThread]
+    private static void Main()
+    {
+        var startedAt = DateTimeOffset.Now;
+        GuiOperationLog.Initialize(startedAt);
+        ApplicationErrorLog.Initialize(startedAt);
+        AppDomain.CurrentDomain.UnhandledException += (_, args) =>
+            ApplicationErrorLog.Write("UNHANDLED EXCEPTION", "An unhandled application error occurred.", args.ExceptionObject as Exception);
+        System.Threading.Tasks.TaskScheduler.UnobservedTaskException += (_, args) =>
+            ApplicationErrorLog.Write("UNOBSERVED TASK EXCEPTION", "An unobserved task error occurred.", args.Exception);
+
+        try
+        {
+            GuiOperationLog.App("Application session started");
+            var platformExecutableService = new WindowsPlatformExecutableService();
+            using var textCompositionService = new WindowsTextCompositionService();
+            using var game = new Game1(
+                new WindowsClipboardService(),
+                textCompositionService,
+                new WindowsFileDialogService(),
+                new WindowsDesktopLauncher(),
+                new WindowsTextRasterizer(),
+                new WindowsWindowIconService(),
+                new WindowsInitialWindowLayoutService(),
+                platformExecutableService,
+                new WindowsWindowScreenshotService());
+            textCompositionService.Attach(game.Window.Handle);
+            try
+            {
+                game.Run();
+            }
+            finally
+            {
+                textCompositionService.Detach();
+            }
+        }
+        catch (Exception ex)
+        {
+            ApplicationErrorLog.Write("FATAL ERROR", "The application terminated because of an error.", ex);
+            throw;
+        }
+        finally
+        {
+            GuiOperationLog.Close();
+        }
+    }
+}

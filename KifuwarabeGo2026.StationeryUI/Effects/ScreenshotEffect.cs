@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Gui.Presentation.StationeryUI.Effects;
+namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Effects;
 
 using Microsoft.Xna.Framework;
 using System;

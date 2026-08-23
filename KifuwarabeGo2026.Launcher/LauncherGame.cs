@@ -1,10 +1,10 @@
 namespace KifuwarabeGo2026.Launcher;
 
-using KifuwarabeGo2026.Gui.Application;
-using KifuwarabeGo2026.Gui.Presentation;
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Effects;
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Audio;
+using KifuwarabeGo2026.GameOasis.Gui.Application;
+using KifuwarabeGo2026.GameOasis.Gui.Presentation;
+using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
+using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Effects;
+using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Audio;
 using KifuwarabeGo2026.Launcher.Presentation;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;

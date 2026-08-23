@@ -1,7 +1,7 @@
-namespace KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
+namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
 
 using Microsoft.Xna.Framework;
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
+using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
 
 /// <summary>
 /// 下線

@@ -1,10 +1,10 @@
 namespace KifuwarabeGo2026.Launcher.Presentation;
 
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI;
-using StationeryButton = KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls.Button.Button;
+using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
+using StationeryButton = KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.Button.Button;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls;
+using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls;
 
 public sealed class LauncherScreen : IDisposable
 {

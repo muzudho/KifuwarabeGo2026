@@ -1,23 +1,23 @@
 namespace KifuwarabeGo2026.Gui.PortabilitySmoke;
 
-using KifuwarabeGo2026.Gui;
-using KifuwarabeGo2026.Gui.Application;
-using KifuwarabeGo2026.Gui.Application.GameOasis;
-using KifuwarabeGo2026.Gui.Presentation.Pages.GameOasis;
-using KifuwarabeGo2026.Gui.Presentation.Pages.Title;
+using KifuwarabeGo2026.GameOasis.Gui;
+using KifuwarabeGo2026.GameOasis.Gui.Application;
+using KifuwarabeGo2026.GameOasis.Gui.Application.GameOasis;
+using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.GameOasis;
+using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.Title;
 using KifuwarabeGo2026.GameOasis.Contracts.Common;
 using KifuwarabeGo2026.GameOasis.Concierge;
 using KifuwarabeGo2026.GameOasis.Application.Catalogs;
 using KifuwarabeGo2026.GameOasis.Application.Profiles;
 using KifuwarabeGo2026.GameOasis.Application.Storage;
 using KifuwarabeGo2026.GameOasis.Storage;
-using KifuwarabeGo2026.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.ConnectionTarget;
-using KifuwarabeGo2026.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.Watching;
-using KifuwarabeGo2026.Gui.Application.Local.Playing;
-using KifuwarabeGo2026.Gui.Application.Local.Resting.TournamentRule;
-using KifuwarabeGo2026.Gui.Gtp;
-using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls;
-using KifuwarabeGo2026.Gui.Sgf;
+using KifuwarabeGo2026.GameOasis.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.ConnectionTarget;
+using KifuwarabeGo2026.GameOasis.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.Watching;
+using KifuwarabeGo2026.GameOasis.Gui.Application.Local.Playing;
+using KifuwarabeGo2026.GameOasis.Gui.Application.Local.Resting.TournamentRule;
+using KifuwarabeGo2026.GameOasis.Gui.Gtp;
+using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls;
+using KifuwarabeGo2026.GameOasis.Gui.Sgf;
 using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions;
 using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Capabilities;
 using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Engines;
@@ -663,17 +663,17 @@ internal static class PortabilityChecks
         Require(view.Engines[0].CanTryAnotherMethod && view.Engines[1].CanContinueAsIs,
             "Each engine card must expose its own available action.");
         Require(
-            KifuwarabeGo2026.Gui.Presentation.Pages.InitialPositionConcierge.InitialPositionConcierge.GetTryAnotherButtonHit(new Point(1170, 455)) == GoStone.Black,
+            KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.InitialPositionConcierge.InitialPositionConcierge.GetTryAnotherButtonHit(new Point(1170, 455)) == GoStone.Black,
             "The black-engine fallback button hit area is incorrect.");
         Require(
-            KifuwarabeGo2026.Gui.Presentation.Pages.InitialPositionConcierge.InitialPositionConcierge.GetContinueButtonHit(new Point(1500, 781)) == GoStone.White,
+            KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.InitialPositionConcierge.InitialPositionConcierge.GetContinueButtonHit(new Point(1500, 781)) == GoStone.White,
             "The white-engine continue button hit area is incorrect.");
         Require(
-            KifuwarabeGo2026.Gui.Presentation.Pages.InitialPositionConcierge.InitialPositionConcierge.GetEngineCardHit(new Point(1200, 550)) == GoStone.White,
+            KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.InitialPositionConcierge.InitialPositionConcierge.GetEngineCardHit(new Point(1200, 550)) == GoStone.White,
             "The white-engine card selection hit area is incorrect.");
         Require(
-            KifuwarabeGo2026.Gui.Presentation.Pages.InitialPositionConcierge.InitialPositionConcierge.IsCancelButtonHit(new Point(1200, 940)) &&
-            KifuwarabeGo2026.Gui.Presentation.Pages.InitialPositionConcierge.InitialPositionConcierge.IsLogButtonHit(new Point(1550, 940)),
+            KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.InitialPositionConcierge.InitialPositionConcierge.IsCancelButtonHit(new Point(1200, 940)) &&
+            KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.InitialPositionConcierge.InitialPositionConcierge.IsLogButtonHit(new Point(1550, 940)),
             "The concierge footer button hit areas are incorrect.");
     }
 
@@ -701,8 +701,8 @@ internal static class PortabilityChecks
         Require(BuiltInGtpProfiles.ResolveBase("KataGo", "unknown-profile-id").Id == GenericGtpProfile.Instance.Id,
             "An unknown explicit profile id must safely resolve to Generic GTP.");
         Require(
-            KifuwarabeGo2026.Gui.Presentation.Pages.GtpEngine.GtpEngineRenderer.GetGtpEngineEditPanelInitialPositionProfileButtonHit(new Point(800, 680)) &&
-            KifuwarabeGo2026.Gui.Presentation.Pages.GtpEngine.GtpEngineRenderer.GetGtpEngineEditPanelInitialPositionMethodButtonHit(new Point(1050, 680)),
+            KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.GtpEngine.GtpEngineRenderer.GetGtpEngineEditPanelInitialPositionProfileButtonHit(new Point(800, 680)) &&
+            KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.GtpEngine.GtpEngineRenderer.GetGtpEngineEditPanelInitialPositionMethodButtonHit(new Point(1050, 680)),
             "The engine editor initial-position setting button hit areas are incorrect.");
 
         var manuallyPreferred = BuiltInGtpProfiles.Resolve(
@@ -822,7 +822,7 @@ internal static class PortabilityChecks
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         Require(
-            !references.Contains("KifuwarabeGo2026.Gui.Core"),
+            !references.Contains("KifuwarabeGo2026.GameOasis.Gui"),
             "GtpExtensions must not reference the GUI assembly.");
         Require(
             !references.Contains("KifuwarabeGo2026.Engine"),
@@ -1417,7 +1417,7 @@ internal static class PortabilityChecks
             references.Contains("KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation"),
             "Legacy Go match support must reference the Go foundation assembly.");
         Require(
-            !references.Contains("KifuwarabeGo2026.Gui.Core"),
+            !references.Contains("KifuwarabeGo2026.GameOasis.Gui"),
             "Reference.PlaySpace.Go must not reference the GUI assembly.");
         Require(
             !references.Contains("MonoGame.Framework"),

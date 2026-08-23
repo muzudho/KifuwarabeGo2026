@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Gui.Presentation.StationeryUI.Audio;
+namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Audio;
 
 using Microsoft.Xna.Framework.Audio;
 using System;
