@@ -84,7 +84,7 @@ public sealed class EntryCatalog
             });
         }
 
-        var changed = !ProfileListsAreEqual(catalog.Profiles, profiles);
+        var changed = !EntryProfilePolicy.ListsAreEqual(catalog.Profiles, profiles);
         var result = new EntryCatalog(listPath, profiles);
         if (changed)
             result.Save(profiles);
@@ -97,40 +97,14 @@ public sealed class EntryCatalog
             return new EntryCatalog(listPath, Array.Empty<EntryProfile>());
 
         var profiles = JsonSerializer.Deserialize<EntryProfileList>(CatalogDocumentStorage.Default.ReadAllText(listPath), JsonOptions)?.Players ?? [];
-        return new EntryCatalog(listPath, profiles.Select(Normalize).ToList());
+        return new EntryCatalog(listPath, profiles.Select(EntryProfilePolicy.Normalize).ToList());
     }
 
     public void Save(IEnumerable<EntryProfile> profiles)
     {
-        var list = profiles.Select(Normalize).ToList();
+        var list = profiles.Select(EntryProfilePolicy.Normalize).ToList();
         CatalogDocumentStorage.Default.WriteAllText(ListPath, JsonSerializer.Serialize(new EntryProfileList { Players = list }, JsonOptions));
     }
-
-    private static EntryProfile Normalize(EntryProfile profile)
-    {
-        var normalized = profile.Clone();
-        normalized.Id = string.IsNullOrWhiteSpace(normalized.Id) ? Guid.NewGuid().ToString("N") : normalized.Id;
-        normalized.DisplayName = string.IsNullOrWhiteSpace(normalized.DisplayName) ? "New Player" : normalized.DisplayName.Trim();
-        normalized.Identifier ??= "";
-        normalized.EngineProfileId ??= "";
-        normalized.ClientIdentityProfileIds = (normalized.ClientIdentityProfileIds ?? [])
-            .Where(id => !string.IsNullOrWhiteSpace(id))
-            .Distinct(StringComparer.Ordinal)
-            .ToList();
-        if (normalized.Kind == EntryProfileKind.Human)
-            normalized.EngineProfileId = "";
-        return normalized;
-    }
-
-    private static bool ProfileListsAreEqual(IReadOnlyList<EntryProfile> left, IReadOnlyList<EntryProfile> right) =>
-        left.Count == right.Count &&
-        left.Zip(right).All(pair =>
-            pair.First.Id == pair.Second.Id &&
-            pair.First.DisplayName == pair.Second.DisplayName &&
-            pair.First.Identifier == pair.Second.Identifier &&
-            pair.First.Kind == pair.Second.Kind &&
-            pair.First.EngineProfileId == pair.Second.EngineProfileId &&
-            pair.First.ClientIdentityProfileIds.SequenceEqual(pair.Second.ClientIdentityProfileIds, StringComparer.Ordinal));
 
     private sealed class EntryProfileList
     {

@@ -1,11 +1,8 @@
-namespace KifuwarabeGo2026.Gui.Application;
+namespace KifuwarabeGo2026.GameOasis.Application.Profiles;
 
 using System;
 
-/// <summary>
-/// Player が用途・接続先ごとに使う識別情報。認証情報は Player ごとに独立し、
-/// EngineProfile や接続先プロファイルには保存しない。
-/// </summary>
+/// <summary>エントリーが用途・接続先ごとに使う常用の識別・認証情報です。</summary>
 public sealed class ClientIdentityProfile
 {
     public string Id { get; set; } = Guid.NewGuid().ToString("N");

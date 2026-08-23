@@ -2,6 +2,7 @@ namespace KifuwarabeGo2026.Gui.WindowsSmoke;
 
 using KifuwarabeGo2026.Gui;
 using KifuwarabeGo2026.Gui.Application;
+using KifuwarabeGo2026.GameOasis.Application.Profiles;
 using KifuwarabeGo2026.Gui.Application.GameOasis;
 using KifuwarabeGo2026.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.Gui.Infrastructure.Windows;

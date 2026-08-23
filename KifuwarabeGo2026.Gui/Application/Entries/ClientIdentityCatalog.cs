@@ -58,8 +58,8 @@ public sealed class ClientIdentityCatalog
             playerProfilesChanged |= !originalIds.SequenceEqual(player.ClientIdentityProfileIds, StringComparer.Ordinal);
         }
 
-        var normalizedTargets = targetProfiles.Select(target => Normalize(target, connectionNamesById)).ToList();
-        var targetsChanged = !ClientIdentityListsAreEqual(loaded.Profiles, normalizedTargets);
+        var normalizedTargets = targetProfiles.Select(target => ClientIdentityProfilePolicy.Normalize(target, connectionNamesById)).ToList();
+        var targetsChanged = !ClientIdentityProfilePolicy.ListsAreEqual(loaded.Profiles, normalizedTargets);
         var result = new ClientIdentityCatalog(listPath, normalizedTargets, playerProfiles, playerProfilesChanged);
         if (targetsChanged)
             result.Save(normalizedTargets);
@@ -72,12 +72,12 @@ public sealed class ClientIdentityCatalog
             return new ClientIdentityCatalog(listPath, Array.Empty<ClientIdentityProfile>(), Array.Empty<EntryProfile>(), false);
 
         var profiles = JsonSerializer.Deserialize<ClientIdentityProfileList>(CatalogDocumentStorage.Default.ReadAllText(listPath), JsonOptions)?.Targets ?? [];
-        return new ClientIdentityCatalog(listPath, profiles.Select(profile => Normalize(profile, null)).ToList(), Array.Empty<EntryProfile>(), false);
+        return new ClientIdentityCatalog(listPath, profiles.Select(profile => ClientIdentityProfilePolicy.Normalize(profile)).ToList(), Array.Empty<EntryProfile>(), false);
     }
 
     public void Save(IEnumerable<ClientIdentityProfile> profiles)
     {
-        var list = profiles.Select(profile => Normalize(profile, null)).ToList();
+        var list = profiles.Select(profile => ClientIdentityProfilePolicy.Normalize(profile)).ToList();
         CatalogDocumentStorage.Default.WriteAllText(ListPath, JsonSerializer.Serialize(new ClientIdentityProfileList { Targets = list }, JsonOptions));
     }
 
@@ -97,37 +97,6 @@ public sealed class ClientIdentityCatalog
 
     private static IEnumerable<ClientIdentityProfile> GetPlayerClientIdentities(EntryProfile player, IEnumerable<ClientIdentityProfile> targets) =>
         targets.Where(target => player.ClientIdentityProfileIds.Contains(target.Id, StringComparer.Ordinal));
-
-    private static ClientIdentityProfile Normalize(ClientIdentityProfile profile, IReadOnlyDictionary<string, string>? connectionNamesById)
-    {
-        var normalized = profile.Clone();
-        normalized.Id = string.IsNullOrWhiteSpace(normalized.Id) ? Guid.NewGuid().ToString("N") : normalized.Id;
-        normalized.DisplayName = string.IsNullOrWhiteSpace(normalized.DisplayName) ? "New Client Identity" : normalized.DisplayName.Trim();
-        // 旧 UI では用途分類とプロトコル名を同一視して "CGOS" と表示していた。
-        // Target の分類は OnlineMatch、詳細な実装は CGOS として表示する。
-        if (string.Equals(normalized.DisplayName, "CGOS", StringComparison.Ordinal))
-            normalized.DisplayName = "OnlineMatch (CGOS)";
-        normalized.ConnectionProfileId ??= "";
-        normalized.LoginName ??= "";
-        normalized.LoginPass ??= "";
-        normalized.Comment ??= "";
-        if (string.IsNullOrWhiteSpace(normalized.Comment) &&
-            !string.IsNullOrWhiteSpace(normalized.ConnectionProfileId) &&
-            connectionNamesById?.GetValueOrDefault(normalized.ConnectionProfileId) is { } connectionName)
-        {
-            normalized.Comment = connectionName;
-        }
-        return normalized;
-    }
-
-    private static bool ClientIdentityListsAreEqual(IReadOnlyList<ClientIdentityProfile> left, IReadOnlyList<ClientIdentityProfile> right) =>
-        left.Count == right.Count && left.Zip(right).All(pair =>
-            pair.First.Id == pair.Second.Id &&
-            pair.First.DisplayName == pair.Second.DisplayName &&
-            pair.First.ConnectionProfileId == pair.Second.ConnectionProfileId &&
-            pair.First.LoginName == pair.Second.LoginName &&
-            pair.First.LoginPass == pair.Second.LoginPass &&
-            pair.First.Comment == pair.Second.Comment);
 
     private sealed class ClientIdentityProfileList
     {

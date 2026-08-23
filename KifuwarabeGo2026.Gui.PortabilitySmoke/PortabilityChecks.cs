@@ -8,6 +8,7 @@ using KifuwarabeGo2026.Gui.Presentation.Pages.Title;
 using KifuwarabeGo2026.GameOasis.Contracts.Common;
 using KifuwarabeGo2026.GameOasis.Concierge;
 using KifuwarabeGo2026.GameOasis.Application.Catalogs;
+using KifuwarabeGo2026.GameOasis.Application.Profiles;
 using KifuwarabeGo2026.GameOasis.Application.Storage;
 using KifuwarabeGo2026.GameOasis.Storage;
 using KifuwarabeGo2026.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.ConnectionTarget;
@@ -82,6 +83,7 @@ internal static class PortabilityChecks
         VerifyScoreAxisScaling();
         VerifyCommentNavigation();
         VerifyCatalogOrderEditor();
+        VerifyGameOasisProfilePolicies();
         VerifyCgosConnectionOrder();
         VerifyOptionalCgosInputs();
         VerifyTextBoxEditing();
@@ -105,6 +107,24 @@ internal static class PortabilityChecks
             "GameOasis.Application must not depend on its Storage implementation.");
         Require(storageReferences.Contains("KifuwarabeGo2026.GameOasis.Application"),
             "GameOasis.Storage must implement the Application-owned persistence boundary.");
+    }
+
+    private static void VerifyGameOasisProfilePolicies()
+    {
+        var normalized = EntryProfilePolicy.Normalize(new EntryProfile
+        {
+            Id = "entry-1",
+            DisplayName = "  Human  ",
+            Kind = EntryProfileKind.Human,
+            EngineProfileId = "must-be-cleared",
+            ClientIdentityProfileIds = ["target-1", "target-1", ""],
+        });
+        Require(normalized.DisplayName == "Human" && normalized.EngineProfileId == "" &&
+                normalized.ClientIdentityProfileIds.SequenceEqual(["target-1"]),
+            "GameOasis.Application must normalize entry identity references independently of the GUI.");
+        var json = JsonSerializer.Serialize(normalized, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+        Require(json.Contains("\"targetProfileIds\"", StringComparison.Ordinal),
+            "The Application-owned entry profile must preserve the existing targetProfileIds JSON key.");
     }
 
     private static void VerifyGameOasisPlayerParticipation()
