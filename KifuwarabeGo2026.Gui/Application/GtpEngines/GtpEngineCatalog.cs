@@ -1,6 +1,7 @@
 namespace KifuwarabeGo2026.Gui.Application;
 
 using KifuwarabeGo2026.Gui.Domain;
+using KifuwarabeGo2026.GameOasis.Storage;
 using KifuwarabeGo2026.Shared.Domain;
 using System;
 using System.Collections.Generic;
@@ -45,9 +46,8 @@ public sealed class GtpEngineCatalog
         var localApplicationData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         var directory = Path.Combine(localApplicationData, "KifuwarabeGo2026", "GtpEngines");
         var listPath = Path.Combine(directory, "gtp-engine-list.json");
-        if (!File.Exists(listPath))
+        if (!CatalogDocumentStorage.Default.Exists(listPath))
         {
-            Directory.CreateDirectory(directory);
             var defaultDirectory =
                 Path.GetDirectoryName(ReleaseDefaultSettings.FilePath) ??
                 AppContext.BaseDirectory;
@@ -96,7 +96,7 @@ public sealed class GtpEngineCatalog
         var directory = new DirectoryInfo(AppContext.BaseDirectory);
         while (directory is not null)
         {
-            if (File.Exists(Path.Combine(directory.FullName, "KifuwarabeGo2026.slnx")))
+            if (CatalogDocumentStorage.Default.Exists(Path.Combine(directory.FullName, "KifuwarabeGo2026.slnx")))
             {
                 var path = Path.Combine(
                     directory.FullName,
@@ -104,7 +104,7 @@ public sealed class GtpEngineCatalog
                     "Content",
                     "GtpEngines",
                     "gtp-engine-list.json");
-                return File.Exists(path) ? path : null;
+                return CatalogDocumentStorage.Default.Exists(path) ? path : null;
             }
 
             directory = directory.Parent;
@@ -115,13 +115,13 @@ public sealed class GtpEngineCatalog
 
     public static GtpEngineCatalog Load(string listPath)
     {
-        if (!File.Exists(listPath))
+        if (!CatalogDocumentStorage.Default.Exists(listPath))
         {
             return new GtpEngineCatalog(listPath, Array.Empty<GtpEngineProfile>());
         }
 
         var listDirectory = Path.GetDirectoryName(listPath) ?? AppContext.BaseDirectory;
-        var profiles = JsonSerializer.Deserialize<GtpEngineProfileList>(File.ReadAllText(listPath), JsonOptions)?.GtpEngines ?? new();
+        var profiles = JsonSerializer.Deserialize<GtpEngineProfileList>(CatalogDocumentStorage.Default.ReadAllText(listPath), JsonOptions)?.GtpEngines ?? new();
         var requiresSave = false;
         var duplicateIdsRepaired = false;
         var usedIds = new HashSet<string>(StringComparer.Ordinal);
@@ -149,7 +149,6 @@ public sealed class GtpEngineCatalog
     public void Save(IEnumerable<GtpEngineProfile> profiles)
     {
         var listDirectory = Path.GetDirectoryName(ListPath) ?? AppContext.BaseDirectory;
-        Directory.CreateDirectory(listDirectory);
         var list = new GtpEngineProfileList
         {
             GtpEngines = profiles
@@ -157,7 +156,7 @@ public sealed class GtpEngineCatalog
                 .ToList(),
         };
 
-        File.WriteAllText(ListPath, JsonSerializer.Serialize(list, JsonOptions));
+        CatalogDocumentStorage.Default.WriteAllText(ListPath, JsonSerializer.Serialize(list, JsonOptions));
     }
 
     private static GtpEngineProfile Normalize(GtpEngineProfile profile, string baseDirectory)

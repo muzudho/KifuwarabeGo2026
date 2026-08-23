@@ -15,6 +15,8 @@
     <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation\KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.Launcher.Core\KifuwarabeGo2026.Launcher.Core.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.GameOasis.Concierge\KifuwarabeGo2026.GameOasis.Concierge.csproj" />
+    <ProjectReference Include="..\KifuwarabeGo2026.GameOasis.Application\KifuwarabeGo2026.GameOasis.Application.csproj" />
+    <ProjectReference Include="..\KifuwarabeGo2026.GameOasis.Storage\KifuwarabeGo2026.GameOasis.Storage.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.Reference.GUI\KifuwarabeGo2026.Reference.GUI.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.Reference.Communication.Gtp\KifuwarabeGo2026.Reference.Communication.Gtp.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlaySpace.Go\KifuwarabeGo2026.Reference.PlaySpace.Go.csproj" />

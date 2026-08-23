@@ -7,6 +7,9 @@ using KifuwarabeGo2026.Gui.Presentation.Pages.GameOasis;
 using KifuwarabeGo2026.Gui.Presentation.Pages.Title;
 using KifuwarabeGo2026.GameOasis.Contracts.Common;
 using KifuwarabeGo2026.GameOasis.Concierge;
+using KifuwarabeGo2026.GameOasis.Application.Catalogs;
+using KifuwarabeGo2026.GameOasis.Application.Storage;
+using KifuwarabeGo2026.GameOasis.Storage;
 using KifuwarabeGo2026.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.ConnectionTarget;
 using KifuwarabeGo2026.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.Watching;
 using KifuwarabeGo2026.Gui.Application.Local.Playing;
@@ -52,6 +55,8 @@ internal static class PortabilityChecks
         var gtpExtensionsAssembly = typeof(GtpExtensionsAssembly).Assembly;
         var legacyGoMatchAssembly = typeof(MatchSession).Assembly;
         var conciergeAssembly = typeof(GameOasisConcierge).Assembly;
+        var gameOasisApplicationAssembly = typeof(ICatalogDocumentStore).Assembly;
+        var gameOasisStorageAssembly = typeof(FileCatalogDocumentStore).Assembly;
 
         VerifyTargetFramework(coreAssembly);
         VerifyAssemblyReferences(coreAssembly);
@@ -70,6 +75,7 @@ internal static class PortabilityChecks
         VerifyKifuwarabeAtomicSetupStrategy();
         VerifyLegacyGoMatchAssembly(legacyGoMatchAssembly);
         VerifyGameAgnosticConciergeAssembly(conciergeAssembly);
+        VerifyGameOasisCatalogLayering(gameOasisApplicationAssembly, gameOasisStorageAssembly);
         VerifyGuiMatchIntegration();
         VerifyGtpMatchAdapter();
         VerifyPortableFallbacks();
@@ -89,6 +95,16 @@ internal static class PortabilityChecks
         VerifyComposition();
         VerifyGameOasisGuiComposition();
         VerifyGameOasisPlayerParticipation();
+    }
+
+    private static void VerifyGameOasisCatalogLayering(Assembly applicationAssembly, Assembly storageAssembly)
+    {
+        var applicationReferences = applicationAssembly.GetReferencedAssemblies().Select(reference => reference.Name).ToHashSet(StringComparer.Ordinal);
+        var storageReferences = storageAssembly.GetReferencedAssemblies().Select(reference => reference.Name).ToHashSet(StringComparer.Ordinal);
+        Require(!applicationReferences.Contains("KifuwarabeGo2026.GameOasis.Storage"),
+            "GameOasis.Application must not depend on its Storage implementation.");
+        Require(storageReferences.Contains("KifuwarabeGo2026.GameOasis.Application"),
+            "GameOasis.Storage must implement the Application-owned persistence boundary.");
     }
 
     private static void VerifyGameOasisPlayerParticipation()

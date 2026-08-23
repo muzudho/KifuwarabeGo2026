@@ -1,5 +1,6 @@
 namespace KifuwarabeGo2026.Gui.Application;
 
+using KifuwarabeGo2026.GameOasis.Storage;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -92,18 +93,17 @@ public sealed class EntryCatalog
 
     public static EntryCatalog Load(string listPath)
     {
-        if (!File.Exists(listPath))
+        if (!CatalogDocumentStorage.Default.Exists(listPath))
             return new EntryCatalog(listPath, Array.Empty<EntryProfile>());
 
-        var profiles = JsonSerializer.Deserialize<EntryProfileList>(File.ReadAllText(listPath), JsonOptions)?.Players ?? [];
+        var profiles = JsonSerializer.Deserialize<EntryProfileList>(CatalogDocumentStorage.Default.ReadAllText(listPath), JsonOptions)?.Players ?? [];
         return new EntryCatalog(listPath, profiles.Select(Normalize).ToList());
     }
 
     public void Save(IEnumerable<EntryProfile> profiles)
     {
         var list = profiles.Select(Normalize).ToList();
-        Directory.CreateDirectory(Path.GetDirectoryName(ListPath) ?? AppContext.BaseDirectory);
-        File.WriteAllText(ListPath, JsonSerializer.Serialize(new EntryProfileList { Players = list }, JsonOptions));
+        CatalogDocumentStorage.Default.WriteAllText(ListPath, JsonSerializer.Serialize(new EntryProfileList { Players = list }, JsonOptions));
     }
 
     private static EntryProfile Normalize(EntryProfile profile)

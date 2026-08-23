@@ -2,6 +2,8 @@
   <Project Path="KifuwarabeGo2026.Reference.Communication.Gtp.Host/KifuwarabeGo2026.Reference.Communication.Gtp.Host.csproj" />
   <Project Path="KifuwarabeGo2026.GameOasis.Contracts/KifuwarabeGo2026.GameOasis.Contracts.csproj" />
   <Project Path="KifuwarabeGo2026.GameOasis.Concierge/KifuwarabeGo2026.GameOasis.Concierge.csproj" />
+  <Project Path="KifuwarabeGo2026.GameOasis.Application/KifuwarabeGo2026.GameOasis.Application.csproj" />
+  <Project Path="KifuwarabeGo2026.GameOasis.Storage/KifuwarabeGo2026.GameOasis.Storage.csproj" />
   <Project Path="KifuwarabeGo2026.GtpExtensions/KifuwarabeGo2026.GtpExtensions.csproj" />
   <Project Path="KifuwarabeGo2026.Gui.Communication.Cgos/KifuwarabeGo2026.Gui.Communication.Cgos.csproj" />
   <Project Path="KifuwarabeGo2026.Gui.PortabilitySmoke/KifuwarabeGo2026.Gui.PortabilitySmoke.csproj" />

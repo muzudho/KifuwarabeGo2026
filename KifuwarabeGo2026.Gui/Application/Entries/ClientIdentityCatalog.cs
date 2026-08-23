@@ -1,6 +1,7 @@
 namespace KifuwarabeGo2026.Gui.Application;
 
 using KifuwarabeGo2026.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.ConnectionTarget;
+using KifuwarabeGo2026.GameOasis.Storage;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -67,18 +68,17 @@ public sealed class ClientIdentityCatalog
 
     public static ClientIdentityCatalog Load(string listPath)
     {
-        if (!File.Exists(listPath))
+        if (!CatalogDocumentStorage.Default.Exists(listPath))
             return new ClientIdentityCatalog(listPath, Array.Empty<ClientIdentityProfile>(), Array.Empty<EntryProfile>(), false);
 
-        var profiles = JsonSerializer.Deserialize<ClientIdentityProfileList>(File.ReadAllText(listPath), JsonOptions)?.Targets ?? [];
+        var profiles = JsonSerializer.Deserialize<ClientIdentityProfileList>(CatalogDocumentStorage.Default.ReadAllText(listPath), JsonOptions)?.Targets ?? [];
         return new ClientIdentityCatalog(listPath, profiles.Select(profile => Normalize(profile, null)).ToList(), Array.Empty<EntryProfile>(), false);
     }
 
     public void Save(IEnumerable<ClientIdentityProfile> profiles)
     {
         var list = profiles.Select(profile => Normalize(profile, null)).ToList();
-        Directory.CreateDirectory(Path.GetDirectoryName(ListPath) ?? AppContext.BaseDirectory);
-        File.WriteAllText(ListPath, JsonSerializer.Serialize(new ClientIdentityProfileList { Targets = list }, JsonOptions));
+        CatalogDocumentStorage.Default.WriteAllText(ListPath, JsonSerializer.Serialize(new ClientIdentityProfileList { Targets = list }, JsonOptions));
     }
 
     private static void EnsureClientIdentity(EntryProfile player, ICollection<ClientIdentityProfile> targets, GtpEngineProfile? engine)
