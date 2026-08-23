@@ -16,6 +16,7 @@
     <ProjectReference Include="..\KifuwarabeGo2026.Launcher.Core\KifuwarabeGo2026.Launcher.Core.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.GameOasis.Concierge\KifuwarabeGo2026.GameOasis.Concierge.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.Reference.GUI\KifuwarabeGo2026.Reference.GUI.csproj" />
+    <ProjectReference Include="..\KifuwarabeGo2026.Reference.Communication.Gtp\KifuwarabeGo2026.Reference.Communication.Gtp.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlaySpace.Go\KifuwarabeGo2026.Reference.PlaySpace.Go.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlaySpace.Ponnuki\KifuwarabeGo2026.Reference.PlaySpace.Ponnuki.csproj" />
   </ItemGroup>

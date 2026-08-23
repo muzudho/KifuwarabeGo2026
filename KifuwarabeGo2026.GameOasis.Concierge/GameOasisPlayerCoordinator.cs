@@ -28,8 +28,13 @@ public sealed class GameOasisPlayerCoordinator(GameOasisConcierge concierge)
                 $"Protocol P {descriptor.ProtocolVersion} is not compatible with {ContractVersion.V1_0}.");
         if (string.IsNullOrWhiteSpace(descriptor.EngineId.Value))
             return Failure<PlayerRegistered>("empty-player-engine-id", "The player engine ID must not be empty.");
-        if (!_players.TryAdd(descriptor.EngineId, new RegisteredPlayer(descriptor, protocol)))
-            return Failure<PlayerRegistered>("player-already-registered", $"Player engine '{descriptor.EngineId}' is already registered.");
+        var registration = new RegisteredPlayer(descriptor, protocol);
+        if (!_players.TryAdd(descriptor.EngineId, registration))
+        {
+            if (_bindings.Values.Any(binding => binding.Player.Descriptor.EngineId == descriptor.EngineId))
+                return Failure<PlayerRegistered>("player-already-registered", $"Player engine '{descriptor.EngineId}' is currently in use.");
+            _players[descriptor.EngineId] = registration;
+        }
         return ProtocolResponse<PlayerRegistered>.Success(new PlayerRegistered(descriptor));
     }
 

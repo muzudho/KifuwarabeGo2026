@@ -13,6 +13,9 @@ using KifuwarabeGo2026.Gui.Presentation;
 using KifuwarabeGo2026.Gui.Presentation.Pages.LocalMatch;
 using KifuwarabeGo2026.Gui.Presentation.Pages.LocalMatch.Play;
 using KifuwarabeGo2026.Gui.Presentation.Pages.Board;
+using KifuwarabeGo2026.GameOasis.Contracts.Common;
+using KifuwarabeGo2026.GameOasis.Contracts.ProtocolP;
+using KifuwarabeGo2026.Reference.Communication.Gtp;
 using InitialPositionConciergePage = KifuwarabeGo2026.Gui.Presentation.Pages.InitialPositionConcierge.InitialPositionConcierge;
 using Microsoft.Xna.Framework;
 using System;
@@ -42,6 +45,8 @@ public sealed class PlayingScene : IDisposable
     private GoStone? _selectedInitialPositionEngine;
     private GameOasisPlayerParticipationBridge? _gameOasisPlayerBridge;
     private LocalMatchGameOasisLifecycle? _gameOasisLocalMatchLifecycle;
+    private bool _gameOasisCloseRequested;
+    private GoStone? _gameOasisComputerStone;
 
     public PlayingScene(
         GoAppSession session,
@@ -140,6 +145,7 @@ public sealed class PlayingScene : IDisposable
             _session.CurrentMode.Kind == GoAppModeKind.Playing)
         {
             _session.ApplyGameOasisBoardProjection(board);
+            BeginGameOasisComputerBindingIfNeeded();
         }
     }
 
@@ -154,6 +160,11 @@ public sealed class PlayingScene : IDisposable
         {
             _session.ApplyGameOasisBoardProjection(board);
         }
+        if (_gameOasisCloseRequested && bridge.State == GameOasisPlayerParticipationState.Idle &&
+            _gameOasisLocalMatchLifecycle is { IsBusy: false, State: LocalMatchGameOasisState.Ready } lifecycle)
+        {
+            lifecycle.BeginClose();
+        }
     }
 
     /// <summary>
@@ -166,8 +177,14 @@ public sealed class PlayingScene : IDisposable
     {
         _computerMoveAwaitingDraw = false;
         _session.StartPlaying();
-        if (_session.UseKind == GoAppUseKind.LocalPlay && !HasComputerPlayer() && BeginGameOasisLocalMatch())
+        var computerCount = GetComputerPlayerCount();
+        if (_session.UseKind == GoAppUseKind.LocalPlay && computerCount <= 1 && BeginGameOasisLocalMatch())
+        {
+            _gameOasisComputerStone = computerCount == 1
+                ? _session.BlackPlayerKind == GoPlayerKind.Computer ? GoStone.Black : GoStone.White
+                : null;
             return;
+        }
         StartGtpGameIfNeeded();
     }
 
@@ -177,6 +194,12 @@ public sealed class PlayingScene : IDisposable
         var lifecycle = _gameOasisLocalMatchLifecycle;
         if (lifecycle is null || lifecycle.IsBusy)
             return;
+        _gameOasisCloseRequested = true;
+        if (_gameOasisPlayerBridge is { BindingId: not null } playerBridge)
+        {
+            playerBridge.BeginUnbind("local-match-ended");
+            return;
+        }
         if (lifecycle.State is LocalMatchGameOasisState.Ready or LocalMatchGameOasisState.Faulted)
             lifecycle.BeginClose();
     }
@@ -726,6 +749,16 @@ public sealed class PlayingScene : IDisposable
     private void RequestComputerMoveIfReady()
     {
         var currentTurn = _session.CurrentTurn;
+        if (_session.IsGameOasisProjectedLocalGame)
+        {
+            if (_session.CurrentMode.Kind == GoAppModeKind.Playing &&
+                _session.GetPlayerKind(currentTurn) == GoPlayerKind.Computer &&
+                _gameOasisPlayerBridge is { State: GameOasisPlayerParticipationState.Ready, LastError: null } bridge)
+            {
+                bridge.BeginTurn();
+            }
+            return;
+        }
         if (_pendingEngineCommand is not null ||
             _computerMoveAwaitingDraw ||
             _session.CurrentMode.Kind != GoAppModeKind.Playing ||
@@ -821,6 +854,14 @@ public sealed class PlayingScene : IDisposable
             }
 
             SetEngineError(result.Error.Message, result.ErrorStone ?? _session.CurrentTurn, result.Error);
+            return;
+        }
+
+        if (result.GameOasisPlayerProtocol is { } playerProtocol && result.PlayedBy is { } playerStone)
+        {
+            var roleId = FormatColor(playerStone);
+            if (_gameOasisPlayerBridge is null || !_gameOasisPlayerBridge.BeginBind(playerProtocol, roleId))
+                SetEngineError($"Could not bind the {roleId} engine through Protocol P.", playerStone);
             return;
         }
 
@@ -930,6 +971,34 @@ public sealed class PlayingScene : IDisposable
 
     private bool HasComputerPlayer() =>
         _session.BlackPlayerKind == GoPlayerKind.Computer || _session.WhitePlayerKind == GoPlayerKind.Computer;
+
+    private int GetComputerPlayerCount() =>
+        (_session.BlackPlayerKind == GoPlayerKind.Computer ? 1 : 0) +
+        (_session.WhitePlayerKind == GoPlayerKind.Computer ? 1 : 0);
+
+    private void BeginGameOasisComputerBindingIfNeeded()
+    {
+        if (_gameOasisComputerStone is not { } stone ||
+            _gameOasisPlayerBridge is not { State: GameOasisPlayerParticipationState.Idle } ||
+            _pendingEngineCommand is not null ||
+            GetEngine(stone) is not null)
+        {
+            return;
+        }
+
+        EnsureGtpEngineForComputerPlayer(stone);
+        var engine = GetEngine(stone)!;
+        var profile = _session.GetGtpEngineProfile(stone);
+        BeginEngineCommand(async cancellationToken =>
+        {
+            await engine.StartAsync(cancellationToken);
+            IPlayerProtocol protocol = new KifuwarabeGtpPlayerProtocol(
+                engine,
+                new PlayerEngineId(GameOasisOfficialNames.Root + ".gui-gtp." + profile.Id),
+                profile.DisplayName);
+            return EngineCommandResult.GameOasisPlayerReady(protocol, stone);
+        });
+    }
 
     private void EnsureGtpEngineForComputerPlayer(GoStone stone)
     {
@@ -1086,7 +1155,8 @@ public sealed class PlayingScene : IDisposable
         GoMoveAnalysis? Analysis = null,
         string Comment = "",
         string? CommonAnalysisJson = null,
-        IReadOnlyList<EngineInitialPositionUpdate>? InitialPositionUpdates = null)
+        IReadOnlyList<EngineInitialPositionUpdate>? InitialPositionUpdates = null,
+        IPlayerProtocol? GameOasisPlayerProtocol = null)
     {
         public static EngineCommandResult Success(bool closesEngine = false) => new(null, null, null, ClosesEngine: closesEngine);
 
@@ -1094,6 +1164,9 @@ public sealed class PlayingScene : IDisposable
 
         public static EngineCommandResult InitialPositionProgress(IReadOnlyList<EngineInitialPositionUpdate> updates) =>
             new(null, null, null, InitialPositionUpdates: updates);
+
+        public static EngineCommandResult GameOasisPlayerReady(IPlayerProtocol protocol, GoStone stone) =>
+            new(null, stone, null, GameOasisPlayerProtocol: protocol);
 
         public static EngineCommandResult EngineMove(
             string moveText,

@@ -1,6 +1,7 @@
 namespace KifuwarabeGo2026.Gui.Gtp;
 
 using KifuwarabeGo2026.Gui.Application;
+using KifuwarabeGo2026.Reference.Communication.Gtp;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -11,7 +12,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
-public sealed class GtpEngineClient : IAsyncDisposable
+public sealed class GtpEngineClient : IAsyncDisposable, IGtpCommandTransport
 {
     private readonly GtpEngineSettings _settings;
     private readonly TimeSpan _commandTimeout;
@@ -83,6 +84,14 @@ public sealed class GtpEngineClient : IAsyncDisposable
         var response = await ReadResponseAsync(_process.StandardOutput, cancellationToken);
         await LogAsync($"<- {(response.IsSuccess ? "=" : "?")} {response.Payload}".TrimEnd(), cancellationToken);
         return response;
+    }
+
+    async ValueTask<GtpCommandResponse> IGtpCommandTransport.SendAsync(
+        string command,
+        CancellationToken cancellationToken)
+    {
+        var response = await SendCommandAsync(command, cancellationToken);
+        return new(response.IsSuccess, response.Payload);
     }
 
     public async Task SendCommandExpectSuccessAsync(string command, CancellationToken cancellationToken = default)

@@ -2,6 +2,8 @@ namespace KifuwarabeGo2026.Gui.WindowsSmoke;
 
 using KifuwarabeGo2026.Gui;
 using KifuwarabeGo2026.Gui.Application;
+using KifuwarabeGo2026.Gui.Application.GameOasis;
+using KifuwarabeGo2026.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.Gui.Infrastructure.Windows;
 using KifuwarabeGo2026.Reference.Communication.Gtp.Server;
 using KifuwarabeGo2026.Reference.PlayerEngine.Strategies.Ponnuki;
@@ -18,6 +20,7 @@ using System.Buffers.Binary;
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
+using System.Threading;
 
 internal static class Program
 {
@@ -43,6 +46,7 @@ internal static class Program
             VerifyBoardLensStepCycle();
             VerifyPonnukiMovePriorities();
             VerifyBundledEngineInitialPositionPipeline();
+            VerifyGameOasisComputerPlayerPipeline();
             Console.WriteLine("PASS: Windows platform services passed non-interactive checks.");
             return 0;
         }
@@ -142,6 +146,50 @@ internal static class Program
         session.OpenGtpEngineRandomMoveSelectionDialog(boardSize);
         Require(KifuwarabeGo2026.Gui.Presentation.Pages.GtpEngine.GtpEngineRenderer.GetGtpEngineRandomMoveSelectionDialogItemHit(new Point(700, 520), session) == 2,
             "The third Provider combo choice was displayed but had no click hit target.");
+    }
+
+    private static void VerifyGameOasisComputerPlayerPipeline()
+    {
+        var executablePath = Path.Combine(AppContext.BaseDirectory, "KifuwarabeGo2026.Engine.exe");
+        Require(File.Exists(executablePath), "The bundled engine executable was not copied for the Game Oasis computer-player smoke test.");
+        using var composition = GameOasisGuiComposition.CreateAsync().AsTask().GetAwaiter().GetResult();
+        var session = new GoAppSession();
+        session.SelectUseKind(GoAppUseKind.LocalPlay);
+        session.SetPlayerKind(GoStone.Black, GoPlayerKind.Computer);
+        session.SetPlayerKind(GoStone.White, GoPlayerKind.Human);
+        session.SetGtpEngineProfiles([
+            new GtpEngineProfile
+            {
+                Id = "windows-smoke-game-oasis-engine",
+                DisplayName = "Bundled Game Oasis computer smoke",
+                ExecutablePath = executablePath,
+                WorkingDirectoryStr = AppContext.BaseDirectory,
+                EnableGtpLog = false,
+            },
+        ]);
+        using var scene = new PlayingScene(session, (_, _, _) => { }, () => { }, () => { });
+        scene.AttachGameOasisPlayerBridge(composition.PlayerParticipationBridge);
+        scene.AttachGameOasisLocalMatchLifecycle(composition.LocalMatchLifecycle);
+        scene.StartPlaying();
+        Require(SpinWait.SpinUntil(() =>
+            {
+                scene.Update();
+                return session.BlackStoneCount == 1 || !string.IsNullOrWhiteSpace(session.EngineErrorMessage);
+            }, TimeSpan.FromSeconds(15)),
+            "The bundled computer did not complete its first Game Oasis Protocol P turn.");
+        Require(string.IsNullOrWhiteSpace(session.EngineErrorMessage) &&
+                session.IsGameOasisProjectedLocalGame &&
+                !session.IsMatchBackedLocalGame &&
+                session.BlackStoneCount == 1 &&
+                session.CurrentTurn == GoStone.White,
+            "The bundled computer turn did not return through Protocol P, Protocol S, and the Protocol G board projection.");
+        scene.CloseGameOasisLocalMatchIfNeeded();
+        Require(SpinWait.SpinUntil(() =>
+            {
+                scene.Update();
+                return composition.LocalMatchLifecycle.State == LocalMatchGameOasisState.Idle;
+            }, TimeSpan.FromSeconds(10)),
+            "The Game Oasis computer-player binding and play-space did not close in order.");
     }
 
     private static void VerifyEngineManagementEditCloseReturnsToManagement()
