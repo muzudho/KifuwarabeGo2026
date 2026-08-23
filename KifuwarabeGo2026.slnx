@@ -26,7 +26,7 @@
   <Project Path="KifuwarabeGo2026.Tests.Reference.Communication.Gtp/KifuwarabeGo2026.Tests.Reference.Communication.Gtp.csproj" />
   <Project Path="KifuwarabeGo2026.Tests.GameOasis.Concierge/KifuwarabeGo2026.Tests.GameOasis.Concierge.csproj" />
   <Project Path="KifuwarabeGo2026.Tests.GameOasis.Contracts/KifuwarabeGo2026.Tests.GameOasis.Contracts.csproj" />
-  <Project Path="KifuwarabeGo2026.Tests.GameOasis.ProtocolM/KifuwarabeGo2026.Tests.GameOasis.ProtocolM.csproj" />
-  <Project Path="KifuwarabeGo2026.Tests.GameOasis.ProtocolG/KifuwarabeGo2026.Tests.GameOasis.ProtocolG.csproj" />
-  <Project Path="KifuwarabeGo2026.Tests.GameOasis.ProtocolP/KifuwarabeGo2026.Tests.GameOasis.ProtocolP.csproj" />
+  <Project Path="KifuwarabeGo2026.Tests.GameOasis.Integration.ProtocolM/KifuwarabeGo2026.Tests.GameOasis.Integration.ProtocolM.csproj" />
+  <Project Path="KifuwarabeGo2026.Tests.GameOasis.Integration.ProtocolG/KifuwarabeGo2026.Tests.GameOasis.Integration.ProtocolG.csproj" />
+  <Project Path="KifuwarabeGo2026.Tests.GameOasis.Integration.ProtocolP/KifuwarabeGo2026.Tests.GameOasis.Integration.ProtocolP.csproj" />
 </Solution>
