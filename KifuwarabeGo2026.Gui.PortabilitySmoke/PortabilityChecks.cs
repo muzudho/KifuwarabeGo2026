@@ -100,10 +100,30 @@ internal static class PortabilityChecks
         playingScene.Update();
 
         var playSpaceTypeId = new PlaySpaceTypeId(GameOasisOfficialNames.Go);
+        var localMatch = new MatchSession(new MatchConfiguration(
+            9,
+            startingTurn: GoStone.Black,
+            setupStones: [new MatchSetupStone(GoStone.White, new GoPoint(8, 8))]));
+        var configuration = LocalMatchGameOasisConfiguration.Create(localMatch.Snapshot, 6.5m);
         var opened = composition.BoardController.OpenAsync(
             playSpaceTypeId,
-            GameOasisSessionPresets.Create(playSpaceTypeId)).AsTask().GetAwaiter().GetResult();
+            configuration).AsTask().GetAwaiter().GetResult();
         Require(opened.IsSuccess, "Protocol G must open a play-space before a Protocol P player joins.");
+        Require(opened.Value is { White.Count: 1, NextToPlay: "black" },
+            "The local-match initial position must cross the Protocol S configuration boundary without losing setup stones or turn.");
+        Require(localMatch.Play(new GoPoint(0, 0)).Succeeded,
+            "The local compatibility match must advance for the configuration guard smoke test.");
+        var advancedSnapshotRejected = false;
+        try
+        {
+            _ = LocalMatchGameOasisConfiguration.Create(localMatch.Snapshot, 6.5m);
+        }
+        catch (ArgumentException)
+        {
+            advancedSnapshotRejected = true;
+        }
+        Require(advancedSnapshotRejected,
+            "A progressed compatibility match must not be copied into a new play-space as if it were an initial position.");
 
         var playerBridge = composition.PlayerParticipationBridge;
         Require(playerBridge.BeginBind(new DeterministicPlayerProtocol(), "black"),
