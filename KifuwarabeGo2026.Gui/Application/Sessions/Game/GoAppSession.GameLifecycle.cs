@@ -13,7 +13,19 @@ public sealed partial class GoAppSession
 
     public void StartPlaying()
     {
+        StartPlayingCore(createCompatibilityMatch: true);
+    }
+
+    /// <summary>Protocol Sを正本にする対局を、旧MatchSessionを生成せず開始します。</summary>
+    public void StartPlayingForGameOasis()
+    {
+        StartPlayingCore(createCompatibilityMatch: false);
+    }
+
+    private void StartPlayingCore(bool createCompatibilityMatch)
+    {
         _isGameOasisProjectedLocalGame = false;
+        _isGameOasisLocalGame = !createCompatibilityMatch;
         _gameOasisProjectedMoveCount = 0;
         ResetLiveChartAutoUpdate();
         IsLocalResultSgfSaved = false;
@@ -30,7 +42,7 @@ public sealed partial class GoAppSession
         BlackUsedTime = TimeSpan.Zero;
         WhiteUsedTime = TimeSpan.Zero;
         _timingTurn = CurrentTurn;
-        _matchSession = new MatchSession(CreateMatchConfiguration());
+        _matchSession = createCompatibilityMatch ? new MatchSession(CreateMatchConfiguration()) : null;
         ChangeMode(GoAppModeKind.Playing);
     }
 

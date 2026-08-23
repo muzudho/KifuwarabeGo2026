@@ -18,6 +18,7 @@ public sealed partial class GoAppSession
     private void ClearBoard()
     {
         _isGameOasisProjectedLocalGame = false;
+        _isGameOasisLocalGame = false;
         _gameOasisProjectedMoveCount = 0;
         _matchSession = null;
         _board = new GoBoard(BoardSize);

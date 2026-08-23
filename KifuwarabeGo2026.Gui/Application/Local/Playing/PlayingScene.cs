@@ -128,14 +128,25 @@ public sealed class PlayingScene : IDisposable
     public bool BeginGameOasisLocalMatch()
     {
         if (_gameOasisLocalMatchLifecycle is not { } lifecycle ||
-            _session.CurrentMode.Kind != GoAppModeKind.Playing ||
-            _session.CurrentMatchSnapshot is not { } snapshot)
+            _session.CurrentMode.Kind != GoAppModeKind.Playing)
         {
             return false;
         }
 
+        var setupStones = new List<LocalMatchSetupStone>();
+        for (var y = 0; y < _session.BoardSize; y++)
+        for (var x = 0; x < _session.BoardSize; x++)
+        {
+            var stone = _session.GetStone(x, y);
+            if (stone != GoStone.Empty)
+                setupStones.Add(new(stone, new GoPoint(x, y)));
+        }
+        var initialPosition = new LocalMatchInitialPosition(
+            _session.BoardSize,
+            _session.CurrentTurn,
+            setupStones);
         _session.SetEngineReady(false);
-        if (lifecycle.BeginStart(snapshot, _session.Komi, _session.MainTime))
+        if (lifecycle.BeginStart(initialPosition, _session.Komi, _session.MainTime))
             return true;
         _session.SetEngineReady(true);
         return false;
@@ -181,17 +192,21 @@ public sealed class PlayingScene : IDisposable
         _computerMoveAwaitingDraw = false;
         _gameOasisCloseRequested = false;
         _gameOasisComputerBridges.Clear();
-        _session.StartPlaying();
         var computerStones = GetComputerPlayerStones();
-        if (_session.UseKind == GoAppUseKind.LocalPlay &&
-            computerStones.Count <= _gameOasisPlayerBridges.Count &&
-            BeginGameOasisLocalMatch())
+        var useGameOasis = _session.UseKind == GoAppUseKind.LocalPlay &&
+            _gameOasisLocalMatchLifecycle is not null &&
+            computerStones.Count <= _gameOasisPlayerBridges.Count;
+        if (useGameOasis)
         {
+            _session.StartPlayingForGameOasis();
+            if (!BeginGameOasisLocalMatch())
+                throw new InvalidOperationException("The available Game Oasis local-match lifecycle could not begin a session.");
             _gameOasisComputerBridges.Clear();
             for (var index = 0; index < computerStones.Count; index++)
                 _gameOasisComputerBridges[computerStones[index]] = _gameOasisPlayerBridges[index];
             return;
         }
+        _session.StartPlaying();
         StartGtpGameIfNeeded();
     }
 

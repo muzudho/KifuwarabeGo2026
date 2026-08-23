@@ -9,7 +9,7 @@ public sealed partial class GoAppSession
 {
     public bool TryPlaceStone(int x, int y, GoMoveAnalysis? analysis = null, string comment = "", string? commonAnalysisJson = null)
     {
-        if (_isGameOasisProjectedLocalGame)
+        if (_isGameOasisLocalGame)
             return false;
         if (_matchSession is not null)
             return TryPlaceStoneWithMatch(x, y, analysis, comment, commonAnalysisJson);
@@ -47,7 +47,7 @@ public sealed partial class GoAppSession
 
     public bool Pass(string comment = "", GoMoveAnalysis? analysis = null, string? commonAnalysisJson = null)
     {
-        if (_isGameOasisProjectedLocalGame)
+        if (_isGameOasisLocalGame)
             return false;
         if (_matchSession is not null)
             return PassWithMatch(comment, analysis, commonAnalysisJson);
@@ -96,7 +96,7 @@ public sealed partial class GoAppSession
 
     public bool Resign()
     {
-        if (_isGameOasisProjectedLocalGame)
+        if (_isGameOasisLocalGame)
             return false;
         if (_matchSession is not null)
             return ResignWithMatch();

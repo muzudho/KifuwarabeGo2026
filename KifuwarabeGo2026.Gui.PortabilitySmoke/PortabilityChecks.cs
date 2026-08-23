@@ -114,6 +114,11 @@ internal static class PortabilityChecks
         playingScene.StartPlaying();
         Require(localLifecycle.State == LocalMatchGameOasisState.Opening,
             "A human local match must begin opening its Protocol S play-space from the current start path.");
+        Require(!projectedSession.IsMatchBackedLocalGame,
+            "A Game Oasis local match must not create a legacy MatchSession while Protocol S is opening.");
+        Require(projectedSession.IsGameOasisLocalGame &&
+                !projectedSession.TryPlaceStone(0, 0) && !projectedSession.Pass() && !projectedSession.Resign(),
+            "Legacy local actions must be closed for the entire Game Oasis opening interval.");
         Require(!playingScene.BeginGameOasisLocalMatch(),
             "The local-match lifecycle must reject a second start while opening.");
         Require(SpinWait.SpinUntil(() =>
@@ -131,19 +136,16 @@ internal static class PortabilityChecks
             "A Protocol G projection must replace the legacy Match state used by the current board renderer.");
         Require(!projectedSession.TryPlaceStone(0, 0) && !projectedSession.Pass() && !projectedSession.Resign(),
             "Legacy local actions must remain closed after Protocol S becomes the only game-state authority.");
-        Require(localMatch.Play(new GoPoint(0, 0)).Succeeded,
-            "The local compatibility match must advance for the configuration guard smoke test.");
-        var advancedSnapshotRejected = false;
-        try
-        {
-            _ = LocalMatchGameOasisConfiguration.Create(localMatch.Snapshot, 6.5m, TimeSpan.FromMinutes(5));
-        }
-        catch (ArgumentException)
-        {
-            advancedSnapshotRejected = true;
-        }
-        Require(advancedSnapshotRejected,
-            "A progressed compatibility match must not be copied into a new play-space as if it were an initial position.");
+        var initialConfiguration = LocalMatchGameOasisConfiguration.Create(
+            new LocalMatchInitialPosition(
+                19,
+                GoStone.Black,
+                [new LocalMatchSetupStone(GoStone.White, new GoPoint(8, 8))]),
+            6.5m,
+            TimeSpan.FromMinutes(5));
+        Require(initialConfiguration.Content.Contains("\"mainTimeMilliseconds\":300000", StringComparison.Ordinal) &&
+                initialConfiguration.Content.Contains("\"color\":\"white\"", StringComparison.Ordinal),
+            "The Game Oasis initial-position value must preserve setup stones and main time without a Match snapshot.");
 
         var playerBridge = composition.PlayerParticipationBridge;
         Require(playerBridge.BeginBind(new DeterministicPlayerProtocol(), "black"),

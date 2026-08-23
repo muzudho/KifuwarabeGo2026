@@ -3,7 +3,6 @@ namespace KifuwarabeGo2026.Gui.Application.GameOasis;
 using KifuwarabeGo2026.GameOasis.Contracts.Common;
 using KifuwarabeGo2026.GameOasis.Contracts.ProtocolG;
 using KifuwarabeGo2026.Reference.GUI;
-using KifuwarabeGo2026.Reference.PlaySpace.Go.LegacyMatch;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -24,15 +23,15 @@ public sealed class LocalMatchGameOasisLifecycle(GameOasisBoardController boardC
     public ProtocolError? LastError { get; private set; }
     public bool IsBusy => _pending is not null;
 
-    public bool BeginStart(MatchSnapshot initialSnapshot, decimal komi, TimeSpan mainTime)
+    public bool BeginStart(LocalMatchInitialPosition initialPosition, decimal komi, TimeSpan mainTime)
     {
-        ArgumentNullException.ThrowIfNull(initialSnapshot);
+        ArgumentNullException.ThrowIfNull(initialPosition);
         if (!CanBegin(LocalMatchGameOasisState.Idle)) return false;
 
         ContractDocument configuration;
         try
         {
-            configuration = LocalMatchGameOasisConfiguration.Create(initialSnapshot, komi, mainTime);
+            configuration = LocalMatchGameOasisConfiguration.Create(initialPosition, komi, mainTime);
         }
         catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
         {

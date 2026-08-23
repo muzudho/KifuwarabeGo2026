@@ -12,9 +12,11 @@ using System.Text.Json;
 public sealed partial class GoAppSession
 {
     private bool _isGameOasisProjectedLocalGame;
+    private bool _isGameOasisLocalGame;
     private int _gameOasisProjectedMoveCount;
 
     public bool IsGameOasisProjectedLocalGame => _isGameOasisProjectedLocalGame;
+    public bool IsGameOasisLocalGame => _isGameOasisLocalGame;
 
     /// <summary>
     /// 現在のローカル対局をGame Oasisの表示投影へ切り替えます。
@@ -38,6 +40,7 @@ public sealed partial class GoAppSession
 
         var firstProjection = !_isGameOasisProjectedLocalGame;
         _matchSession = null;
+        _isGameOasisLocalGame = true;
         _isGameOasisProjectedLocalGame = true;
         _board = board;
         CurrentTurn = view.NextToPlay switch

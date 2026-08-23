@@ -1,7 +1,6 @@
 namespace KifuwarabeGo2026.Gui.Application.GameOasis;
 
 using KifuwarabeGo2026.GameOasis.Contracts.Common;
-using KifuwarabeGo2026.Reference.PlaySpace.Go.LegacyMatch;
 using KifuwarabeGo2026.Shared.Domain;
 using System;
 using System.Linq;
@@ -13,11 +12,11 @@ using System.Text.Json;
 /// </summary>
 public static class LocalMatchGameOasisConfiguration
 {
-    public static ContractDocument Create(MatchSnapshot initialSnapshot, decimal komi, TimeSpan mainTime)
+    public static ContractDocument Create(LocalMatchInitialPosition initialPosition, decimal komi, TimeSpan mainTime)
     {
-        ArgumentNullException.ThrowIfNull(initialSnapshot);
-        if (initialSnapshot.Revision != 0 || initialSnapshot.Actions.Count != 0)
-            throw new ArgumentException("Only an initial local-match snapshot can become a play-space configuration.", nameof(initialSnapshot));
+        ArgumentNullException.ThrowIfNull(initialPosition);
+        if (initialPosition.BoardSize is not (9 or 13 or 19))
+            throw new ArgumentOutOfRangeException(nameof(initialPosition), "Board size must be 9, 13, or 19.");
         if (komi is < -100m or > 100m)
             throw new ArgumentOutOfRangeException(nameof(komi), komi, "Komi must be between -100 and 100.");
         if (mainTime < TimeSpan.Zero)
@@ -25,11 +24,11 @@ public static class LocalMatchGameOasisConfiguration
 
         var document = new ConfigurationDocument(
             1,
-            initialSnapshot.BoardSize,
+            initialPosition.BoardSize,
             komi,
             "chinese-area",
-            FormatStone(initialSnapshot.CurrentTurn),
-            initialSnapshot.SetupStones
+            FormatStone(initialPosition.StartingTurn),
+            initialPosition.SetupStones
                 .Select(stone => new SetupStoneDocument(
                     stone.Point.X,
                     stone.Point.Y,
