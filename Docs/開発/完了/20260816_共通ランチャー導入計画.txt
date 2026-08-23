@@ -247,11 +247,11 @@ HTTP取得、バージョン比較、ZIP検証、設定保存、プロセス起�
 
 ■ 関連ファイル
 
-・KifuwarabeGo2026.GameOasis.Gui/Docs/続きはここから.md
+・Docs/続きはここから.md
 ・KifuwarabeGo2026.GameOasis.Gui/Application/Updates/GuiReleaseUpdater.cs
 ・KifuwarabeGo2026.GameOasis.Gui/Presentation/StationeryUI/MessageDialog/GuiUpdateProgressDialog.cs
-・KifuwarabeGo2026.GameOasis.Gui/Docs/開発/リリース手順.md
-・KifuwarabeGo2026.GameOasis.Gui/Docs/開発/Windows GUI手動スモークテスト手順.md
+・Docs/開発/リリース手順.md
+・Docs/開発/Windows GUI手動スモークテスト手順.md
 
 
 ■ 完了記録

@@ -230,7 +230,7 @@ GUI: 黒 D4 を盤へ反映
 ## 関連ファイル
 
 - [GTPエンジン連携実装計画.md](./GTPエンジン連携実装計画.md)
-- [../続きはここから.md](../続きはここから.md)
+- [続きはここから.md](../../続きはここから.md)
 - `KifuwarabeGo2026/Game1.cs`
 - `KifuwarabeGo2026/Application/GoAppSession.cs`
 - `KifuwarabeGo2026/Gtp/GtpEngineClient.cs`

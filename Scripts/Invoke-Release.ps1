@@ -104,7 +104,7 @@ if ([string]::IsNullOrWhiteSpace($ReleaseNotes)) {
     # Keep the script compatible with Windows PowerShell 5.1, which can decode a
     # UTF-8 script without BOM using the active ANSI code page. Avoid non-ASCII
     # path literals and discover the uniquely named release notes instead.
-    $releaseNoteMatches = @(Get-ChildItem -LiteralPath 'KifuwarabeGo2026.GameOasis.Gui\Docs' -Recurse -File -Filter "RELEASE_NOTES_v$Version.md")
+    $releaseNoteMatches = @(Get-ChildItem -LiteralPath 'Docs' -Recurse -File -Filter "RELEASE_NOTES_v$Version.md")
     if ($releaseNoteMatches.Count -ne 1) {
         throw "Expected exactly one release notes file for v$Version, found $($releaseNoteMatches.Count)."
     }

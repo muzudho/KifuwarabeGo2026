@@ -13,7 +13,7 @@ exeをダウンロードして使う方は、[利用者向けREADME](./README.md
 
 > [!Note]
 > 現在、作者が動作確認できる環境はWindowsだけです。Linux版やmacOS版への移植協力を歓迎しています。
-> 詳しくは [Linux・macOSへの移植の手引き](./KifuwarabeGo2026.GameOasis.Gui/Docs/設計/きふわらべの碁2026・移植の手引き.md) をご覧ください。
+> 詳しくは [Linux・macOSへの移植の手引き](./Docs/設計/きふわらべの碁2026・移植の手引き.md) をご覧ください。
 
 ## ソリューション構成
 
@@ -62,16 +62,16 @@ dotnet publish KifuwarabeGo2026.Reference.Communication.Gtp.Host\KifuwarabeGo202
 
 GUIのpublish時には、CGOS通信コンポーネントも `Tools\Cgos` 以下へ自動的にpublishされます。
 
-詳しい検査、ZIP作成、GitHub Release公開は、[リリース手順](./KifuwarabeGo2026.GameOasis.Gui/Docs/開発/リリース手順.md)に従ってください。
+詳しい検査、ZIP作成、GitHub Release公開は、[リリース手順](./Docs/開発/リリース手順.md)に従ってください。
 
 ## 開発文書
 
-- [共有ドキュメントの目次](./KifuwarabeGo2026.GameOasis.Gui/Docs/README.md)
-- [作業再開時の引き継ぎ](./KifuwarabeGo2026.GameOasis.Gui/Docs/続きはここから.md)
-- [基本方針](./KifuwarabeGo2026.GameOasis.Gui/Docs/設計/基本方針.md)
-- [ソースコード概要とCGOS接続フロー](./KifuwarabeGo2026.GameOasis.Gui/Docs/設計/ソースコード概要とCGOS接続フロー.md)
-- [きふわらべ式SGF形式仕様](./KifuwarabeGo2026.GameOasis.Gui/Docs/設計/きふわらべ式SGF形式仕様.md)
-- [Linux・macOSへの移植の手引き](./KifuwarabeGo2026.GameOasis.Gui/Docs/設計/きふわらべの碁2026・移植の手引き.md)
-- [Windows GUI手動スモークテスト](./KifuwarabeGo2026.GameOasis.Gui/Docs/開発/Windows GUI手動スモークテスト手順.md)
+- [共有ドキュメントの目次](./Docs/README.md)
+- [作業再開時の引き継ぎ](./Docs/続きはここから.md)
+- [基本方針](./Docs/設計/基本方針.md)
+- [ソースコード概要とCGOS接続フロー](./Docs/設計/ソースコード概要とCGOS接続フロー.md)
+- [きふわらべ式SGF形式仕様](./Docs/設計/きふわらべ式SGF形式仕様.md)
+- [Linux・macOSへの移植の手引き](./Docs/設計/きふわらべの碁2026・移植の手引き.md)
+- [Windows GUI手動スモークテスト](./Docs/開発/Windows GUI手動スモークテスト手順.md)
 
 Linux版やmacOS版への移植協力を歓迎しています。
