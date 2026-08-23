@@ -83,8 +83,8 @@ public sealed class PlayingScene : IDisposable
 
     public void Update()
     {
-        _gameOasisLocalMatchLifecycle?.Update();
-        _gameOasisPlayerBridge?.Update();
+        CompleteGameOasisLocalMatchOperation();
+        CompleteGameOasisPlayerOperation();
         CompletePendingEngineCommand();
         RequestComputerMoveIfReady();
     }
@@ -111,6 +111,49 @@ public sealed class PlayingScene : IDisposable
         if (_gameOasisLocalMatchLifecycle is not null && !ReferenceEquals(_gameOasisLocalMatchLifecycle, lifecycle))
             throw new InvalidOperationException("A different Game Oasis local-match lifecycle is already attached.");
         _gameOasisLocalMatchLifecycle = lifecycle;
+    }
+
+    /// <summary>現在の未進行ローカル局面からGame Oasis方式の対局開始を要求します。</summary>
+    public bool BeginGameOasisLocalMatch()
+    {
+        if (_gameOasisLocalMatchLifecycle is not { } lifecycle ||
+            _session.CurrentMode.Kind != GoAppModeKind.Playing ||
+            _session.CurrentMatchSnapshot is not { } snapshot)
+        {
+            return false;
+        }
+
+        _session.SetEngineReady(false);
+        if (lifecycle.BeginStart(snapshot, _session.Komi))
+            return true;
+        _session.SetEngineReady(true);
+        return false;
+    }
+
+    private void CompleteGameOasisLocalMatchOperation()
+    {
+        var lifecycle = _gameOasisLocalMatchLifecycle;
+        if (lifecycle is null || !lifecycle.Update())
+            return;
+        if (lifecycle.State == LocalMatchGameOasisState.Ready &&
+            lifecycle.Board is { } board &&
+            _session.CurrentMode.Kind == GoAppModeKind.Playing)
+        {
+            _session.ApplyGameOasisBoardProjection(board);
+        }
+    }
+
+    private void CompleteGameOasisPlayerOperation()
+    {
+        var bridge = _gameOasisPlayerBridge;
+        if (bridge is null || !bridge.Update())
+            return;
+        if (_session.IsGameOasisProjectedLocalGame &&
+            bridge.Board is { } board &&
+            _session.CurrentMode.Kind == GoAppModeKind.Playing)
+        {
+            _session.ApplyGameOasisBoardProjection(board);
+        }
     }
 
     /// <summary>
@@ -171,6 +214,12 @@ public sealed class PlayingScene : IDisposable
             return false;
         }
 
+        if (_session.IsGameOasisProjectedLocalGame)
+        {
+            TryHandleGameOasisLocalMatchClick(point);
+            return true;
+        }
+
         if (!_session.CanAcceptHumanMove)
         {
             // Engine turns and engine setup are handled from Update().
@@ -213,6 +262,31 @@ public sealed class PlayingScene : IDisposable
         }
 
         return false;
+    }
+
+    private void TryHandleGameOasisLocalMatchClick(Point point)
+    {
+        var lifecycle = _gameOasisLocalMatchLifecycle;
+        if (lifecycle is null || lifecycle.State != LocalMatchGameOasisState.Ready ||
+            lifecycle.IsBusy || lifecycle.Board is not { IsTerminal: false } ||
+            _session.GetPlayerKind(_session.CurrentTurn) != GoPlayerKind.Human)
+        {
+            return;
+        }
+
+        var rightSidePanel = LocalMatchPlayPage.Default.RightSidePanel;
+        if (rightSidePanel.PassButton.IsHit(point))
+        {
+            lifecycle.BeginPass();
+            return;
+        }
+        if (rightSidePanel.ResignButton.IsHit(point))
+        {
+            lifecycle.BeginResign();
+            return;
+        }
+        if (BoardRenderer.TryGetBoardIntersection(point, _session.BoardSize, out var intersection))
+            lifecycle.BeginPlay(intersection.X, intersection.Y);
     }
 
     public void SelectPreviousInitialPositionEngine() => SelectAdjacentInitialPositionEngine(-1);
