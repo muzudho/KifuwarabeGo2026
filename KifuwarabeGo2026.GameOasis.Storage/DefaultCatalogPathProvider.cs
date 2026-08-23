@@ -14,9 +14,17 @@ public sealed class DefaultCatalogPathProvider : ICatalogPathProvider
         GtpEngineListPath = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "KifuwarabeGo2026", "GtpEngines", "gtp-engine-list.json");
+        EntryListPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "KifuwarabeGo2026", "Players", "player-list.json");
+        ClientIdentityListPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "KifuwarabeGo2026", "Targets", "target-list.json");
     }
 
     public string GtpEngineListPath { get; }
+    public string EntryListPath { get; }
+    public string ClientIdentityListPath { get; }
 
     public string? FindDevelopmentGtpEngineListPath()
     {

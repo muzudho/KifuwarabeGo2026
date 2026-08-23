@@ -4,5 +4,7 @@ namespace KifuwarabeGo2026.GameOasis.Application.Storage;
 public interface ICatalogPathProvider
 {
     string GtpEngineListPath { get; }
+    string EntryListPath { get; }
+    string ClientIdentityListPath { get; }
     string? FindDevelopmentGtpEngineListPath();
 }

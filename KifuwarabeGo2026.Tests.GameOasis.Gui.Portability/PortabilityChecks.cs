@@ -110,8 +110,16 @@ internal static class PortabilityChecks
             "GameOasis.Storage must implement the Application-owned persistence boundary.");
         Require(typeof(GtpEngineCatalog).Assembly == applicationAssembly,
             "The persistent GTP engine catalog use cases must be owned by GameOasis.Application.");
+        Require(typeof(EntryCatalog).Assembly == applicationAssembly &&
+                typeof(ClientIdentityCatalog).Assembly == applicationAssembly,
+            "Persistent entry and client identity catalog use cases must be owned by GameOasis.Application.");
         Require(typeof(ICatalogPathProvider).Assembly == applicationAssembly,
             "The catalog path boundary must be owned by GameOasis.Application.");
+
+        var paths = CatalogDocumentStorage.Paths;
+        Require(paths.EntryListPath.EndsWith(Path.Combine("Players", "player-list.json"), StringComparison.Ordinal) &&
+                paths.ClientIdentityListPath.EndsWith(Path.Combine("Targets", "target-list.json"), StringComparison.Ordinal),
+            "GameOasis.Storage must provide the compatible entry and client identity catalog locations.");
     }
 
     private static void VerifyGameOasisProfilePolicies()

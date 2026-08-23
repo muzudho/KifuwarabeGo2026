@@ -246,8 +246,8 @@ public class Game1 : Game
         _tournamentRulesCatalog = TournamentRulesCatalog.LoadFromDefaultLocation();
         _gtpEngineCatalog = GtpEngineCatalogComposition.LoadFromDefaultLocation();
         _cgosConnectionCatalog = CgosConnectionCatalog.LoadFromDefaultLocation();
-        _playerCatalog = EntryCatalog.LoadFromDefaultLocation(_gtpEngineCatalog.Profiles);
-        _targetCatalog = ClientIdentityCatalog.LoadFromDefaultLocation(
+        _playerCatalog = EntryCatalogComposition.LoadEntries(_gtpEngineCatalog.Profiles);
+        _targetCatalog = EntryCatalogComposition.LoadClientIdentities(
             _playerCatalog.Profiles,
             _gtpEngineCatalog.Profiles,
             _cgosConnectionCatalog.Profiles);
