@@ -93,6 +93,23 @@ internal static class PortabilityChecks
 
     private static void VerifyGameOasisPlayerParticipation()
     {
+        var unavailableSession = new GoAppSession();
+        unavailableSession.SelectUseKind(GoAppUseKind.LocalPlay);
+        using (var unavailableScene = new PlayingScene(unavailableSession, (_, _, _) => { }, () => { }, () => { }))
+        {
+            var unavailableRejected = false;
+            try
+            {
+                unavailableScene.StartPlaying();
+            }
+            catch (InvalidOperationException)
+            {
+                unavailableRejected = true;
+            }
+            Require(unavailableRejected && unavailableSession.CurrentMode.Kind != GoAppModeKind.Playing,
+                "A normal local match must not fall back to the legacy path while Game Oasis is unavailable.");
+        }
+
         using var composition = GameOasisGuiComposition.CreateAsync().AsTask().GetAwaiter().GetResult();
         var projectedSession = new GoAppSession();
         using var playingScene = new PlayingScene(projectedSession, (_, _, _) => { }, () => { }, () => { });

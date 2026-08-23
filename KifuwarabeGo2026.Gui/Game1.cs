@@ -84,6 +84,7 @@ public class Game1 : Game
     private readonly GoAppSession _session = new();
     private Task<GameOasisGuiComposition>? _gameOasisCompositionTask;
     private GameOasisGuiComposition? _gameOasisComposition;
+    private bool _isLocalMatchStartPending;
     private readonly TournamentRulesCatalog _tournamentRulesCatalog;
     private readonly GtpEngineCatalog _gtpEngineCatalog;
     private readonly EntryCatalog _playerCatalog;
@@ -2567,6 +2568,26 @@ public class Game1 : Game
 
     private void StartLocalMatch()
     {
+        if (_gameOasisComposition is null)
+        {
+            if (_gameOasisCompositionTask is not null)
+            {
+                if (!_isLocalMatchStartPending)
+                    GuiOperationLog.User("Queued Local Match", "waiting for Game Oasis GUI connection");
+                _isLocalMatchStartPending = true;
+                return;
+            }
+
+            ShowMessage("Game Oasis could not be initialized. The local match was not started.", "LOCAL MATCH");
+            return;
+        }
+
+        StartLocalMatchCore();
+    }
+
+    private void StartLocalMatchCore()
+    {
+        _isLocalMatchStartPending = false;
         var seeds = _session.ApplyLocalMatchRandomSeedsAtStart();
         _playingScene.StartPlaying();
 
@@ -2590,10 +2611,17 @@ public class Game1 : Game
             _playingScene.AttachGameOasisPlayerBridge(_gameOasisComposition.SecondaryPlayerParticipationBridge);
             _playingScene.AttachGameOasisLocalMatchLifecycle(_gameOasisComposition.LocalMatchLifecycle);
             GuiOperationLog.App("Game Oasis GUI connected", $"playSpaces={_gameOasisComposition.Client.State.PlaySpaces.Count}");
+            if (_isLocalMatchStartPending)
+                StartLocalMatchCore();
         }
         else
         {
             GuiOperationLog.App("Game Oasis GUI connection failed", task.Exception?.GetBaseException().ToString() ?? "Unknown error");
+            if (_isLocalMatchStartPending)
+            {
+                _isLocalMatchStartPending = false;
+                ShowMessage("Game Oasis could not be initialized. The queued local match was not started.", "LOCAL MATCH");
+            }
         }
     }
 

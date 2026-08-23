@@ -193,11 +193,10 @@ public sealed class PlayingScene : IDisposable
         _gameOasisCloseRequested = false;
         _gameOasisComputerBridges.Clear();
         var computerStones = GetComputerPlayerStones();
-        var useGameOasis = _session.UseKind == GoAppUseKind.LocalPlay &&
-            _gameOasisLocalMatchLifecycle is not null &&
-            computerStones.Count <= _gameOasisPlayerBridges.Count;
-        if (useGameOasis)
+        if (_session.UseKind == GoAppUseKind.LocalPlay)
         {
+            if (_gameOasisLocalMatchLifecycle is null || computerStones.Count > _gameOasisPlayerBridges.Count)
+                throw new InvalidOperationException("A normal local match requires the Game Oasis lifecycle and one player bridge per computer player.");
             _session.StartPlayingForGameOasis();
             if (!BeginGameOasisLocalMatch())
                 throw new InvalidOperationException("The available Game Oasis local-match lifecycle could not begin a session.");
