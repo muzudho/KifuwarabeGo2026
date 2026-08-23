@@ -97,6 +97,8 @@ internal static class PortabilityChecks
         using var playingScene = new PlayingScene(new GoAppSession(), (_, _, _) => { }, () => { }, () => { });
         playingScene.AttachGameOasisPlayerBridge(composition.PlayerParticipationBridge);
         playingScene.AttachGameOasisPlayerBridge(composition.PlayerParticipationBridge);
+        playingScene.AttachGameOasisLocalMatchLifecycle(composition.LocalMatchLifecycle);
+        playingScene.AttachGameOasisLocalMatchLifecycle(composition.LocalMatchLifecycle);
         playingScene.Update();
 
         var localMatch = new MatchSession(new MatchConfiguration(
@@ -108,7 +110,12 @@ internal static class PortabilityChecks
             "The local-match lifecycle must begin opening its Protocol S play-space.");
         Require(!localLifecycle.BeginStart(localMatch.Snapshot, 6.5m),
             "The local-match lifecycle must reject a second start while opening.");
-        CompleteLocalMatchLifecycleOperation(localLifecycle);
+        Require(SpinWait.SpinUntil(() =>
+            {
+                playingScene.Update();
+                return !localLifecycle.IsBusy;
+            }, TimeSpan.FromSeconds(5)),
+            "PlayingScene must complete the Game Oasis local-match lifecycle from its frame update.");
         Require(localLifecycle.State == LocalMatchGameOasisState.Ready,
             "Protocol G must open a play-space before a Protocol P player joins.");
         Require(localLifecycle.Board is { White.Count: 1, NextToPlay: "black" },

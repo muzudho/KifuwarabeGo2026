@@ -41,6 +41,7 @@ public sealed class PlayingScene : IDisposable
     private bool _isInitialPositionConciergeActive;
     private GoStone? _selectedInitialPositionEngine;
     private GameOasisPlayerParticipationBridge? _gameOasisPlayerBridge;
+    private LocalMatchGameOasisLifecycle? _gameOasisLocalMatchLifecycle;
 
     public PlayingScene(
         GoAppSession session,
@@ -82,6 +83,7 @@ public sealed class PlayingScene : IDisposable
 
     public void Update()
     {
+        _gameOasisLocalMatchLifecycle?.Update();
         _gameOasisPlayerBridge?.Update();
         CompletePendingEngineCommand();
         RequestComputerMoveIfReady();
@@ -97,6 +99,18 @@ public sealed class PlayingScene : IDisposable
         if (_gameOasisPlayerBridge is not null && !ReferenceEquals(_gameOasisPlayerBridge, bridge))
             throw new InvalidOperationException("A different Game Oasis player bridge is already attached.");
         _gameOasisPlayerBridge = bridge;
+    }
+
+    /// <summary>
+    /// GUI起動後に完成するGame Oasis方式ローカル対局のライフサイクルを後付けします。
+    /// 接続しただけでは旧ローカル対局を開始・置換しません。
+    /// </summary>
+    public void AttachGameOasisLocalMatchLifecycle(LocalMatchGameOasisLifecycle lifecycle)
+    {
+        ArgumentNullException.ThrowIfNull(lifecycle);
+        if (_gameOasisLocalMatchLifecycle is not null && !ReferenceEquals(_gameOasisLocalMatchLifecycle, lifecycle))
+            throw new InvalidOperationException("A different Game Oasis local-match lifecycle is already attached.");
+        _gameOasisLocalMatchLifecycle = lifecycle;
     }
 
     /// <summary>
