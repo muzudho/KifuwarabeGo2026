@@ -19,6 +19,9 @@ public sealed class GameOasisGuiComposition : IDisposable
         BoardController = new(client);
         PlayingBridge = new(BoardController);
         PlayerCoordinator = new(concierge);
+        GameMasterCoordinator = new(concierge, PlayerCoordinator);
+        HumanGameMaster = new();
+        HumanGameMasterParticipation = new(GameMasterCoordinator, HumanGameMaster, client);
         PlayerParticipation = new(PlayerCoordinator, client);
         PlayerParticipationBridge = new(PlayerParticipation, BoardController);
         SecondaryPlayerParticipationBridge = new(PlayerParticipation, BoardController);
@@ -30,6 +33,9 @@ public sealed class GameOasisGuiComposition : IDisposable
     public GameOasisBoardController BoardController { get; }
     public GameOasisPlayingBridge PlayingBridge { get; }
     public GameOasisPlayerCoordinator PlayerCoordinator { get; }
+    public GameOasisGameMasterCoordinator GameMasterCoordinator { get; }
+    public HumanGameMasterProtocol HumanGameMaster { get; }
+    public GameOasisHumanGameMasterParticipation HumanGameMasterParticipation { get; }
     public GameOasisPlayerParticipation PlayerParticipation { get; }
     public GameOasisPlayerParticipationBridge PlayerParticipationBridge { get; }
     public GameOasisPlayerParticipationBridge SecondaryPlayerParticipationBridge { get; }
@@ -55,7 +61,9 @@ public sealed class GameOasisGuiComposition : IDisposable
         Require(await concierge.RegisterPlaySpaceAsync(new PonnukiPlaySpaceProtocol(), cancellationToken));
         var client = new GameOasisGuiClient(new GameOasisGuiProtocol(concierge));
         Require(await client.InitializeAsync(cancellationToken));
-        return new(concierge, client);
+        var composition = new GameOasisGuiComposition(concierge, client);
+        Require(await composition.GameMasterCoordinator.RegisterGameMasterAsync(composition.HumanGameMaster, cancellationToken));
+        return composition;
     }
 
     private static void Require<T>(ProtocolResponse<T> response)

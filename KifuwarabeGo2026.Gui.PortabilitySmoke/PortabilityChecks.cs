@@ -153,6 +153,29 @@ internal static class PortabilityChecks
             "A Protocol G projection must replace the legacy Match state used by the current board renderer.");
         Require(!projectedSession.TryPlaceStone(0, 0) && !projectedSession.Pass() && !projectedSession.Resign(),
             "Legacy local actions must remain closed after Protocol S becomes the only game-state authority.");
+
+        var humanGameMaster = composition.HumanGameMasterParticipation;
+        var gameMasterBound = humanGameMaster.BindAsync().AsTask().GetAwaiter().GetResult();
+        Require(gameMasterBound.IsSuccess && gameMasterBound.Value is not null,
+            "The GUI human game master must join the active local match through Protocol M.");
+        var pausedResponse = humanGameMaster.ExecuteAsync(
+            GameOasisGameMasterCoordinator.PauseCommand,
+            "portability-smoke-pause").AsTask().GetAwaiter().GetResult();
+        Require(pausedResponse.IsSuccess && pausedResponse.Value is not null,
+            "The GUI human game master must pause through Protocol M.");
+        var paused = pausedResponse.Value ?? throw new InvalidOperationException("The pause response did not contain a result.");
+        Require(paused.Result.WasAccepted &&
+                composition.Client.State.ActiveSnapshot?.OperationalState == GameOasisOperationalState.Paused,
+            "Protocol G must observe the pause selected by the GUI Protocol M adapter.");
+        var resumedResponse = humanGameMaster.ExecuteAsync(
+            GameOasisGameMasterCoordinator.ResumeCommand,
+            "portability-smoke-resume").AsTask().GetAwaiter().GetResult();
+        Require(resumedResponse.IsSuccess && resumedResponse.Value is not null,
+            "The GUI human game master must resume through Protocol M.");
+        var resumed = resumedResponse.Value ?? throw new InvalidOperationException("The resume response did not contain a result.");
+        Require(resumed.Result.WasAccepted &&
+                composition.Client.State.ActiveSnapshot?.OperationalState == GameOasisOperationalState.Running,
+            "Protocol G must observe the resume selected by the GUI Protocol M adapter.");
         var initialConfiguration = LocalMatchGameOasisConfiguration.Create(
             new LocalMatchInitialPosition(
                 19,
@@ -229,6 +252,9 @@ internal static class PortabilityChecks
         CompletePlayerBridgeOperation(playerBridge);
         Require(playerBridge.State == GameOasisPlayerParticipationState.Idle && playerBridge.BindingId is null,
             "The frame bridge must return to idle after player participation ends.");
+        var gameMasterUnbound = humanGameMaster.UnbindAsync("portability-smoke").AsTask().GetAwaiter().GetResult();
+        Require(gameMasterUnbound.IsSuccess,
+            "The GUI human game master must leave through Protocol M before the local match closes.");
         Require(localLifecycle.BeginResign(),
             "The Game Oasis local-match lifecycle must submit a terminal human action through Protocol G.");
         Require(SpinWait.SpinUntil(() =>
