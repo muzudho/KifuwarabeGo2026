@@ -14,6 +14,7 @@ public sealed partial class GoAppSession
     public void StartPlaying()
     {
         _isGameOasisProjectedLocalGame = false;
+        _gameOasisProjectedMoveCount = 0;
         ResetLiveChartAutoUpdate();
         IsLocalResultSgfSaved = false;
         if (CurrentMode.Kind == GoAppModeKind.GameOver)

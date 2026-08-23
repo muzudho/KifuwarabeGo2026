@@ -178,6 +178,29 @@ internal static class PortabilityChecks
             "PlayingScene must complete and project the human Protocol G action from its frame update.");
         Require(projectedSession.GetStone(1, 0) == GoStone.White && projectedSession.CurrentTurn == GoStone.Black,
             "The current board renderer must receive the Protocol G projection after a human action.");
+        Require(projectedSession.CurrentGameRecord.Moves.Count == 2 &&
+                projectedSession.CurrentGameRecord.Moves[0].Point == new GoPoint(0, 0) &&
+                projectedSession.CurrentGameRecord.Moves[1].Point == new GoPoint(1, 0),
+            "Protocol G move history must be appended once to the current game record.");
+
+        Require(localLifecycle.BeginPass(), "A Game Oasis pass must be submitted through Protocol G.");
+        Require(SpinWait.SpinUntil(() =>
+            {
+                playingScene.Update();
+                return !localLifecycle.IsBusy;
+            }, TimeSpan.FromSeconds(5)),
+            "PlayingScene must complete and project the Protocol G pass.");
+        Require(projectedSession.CurrentGameRecord.Moves.Count == 3 &&
+                projectedSession.CurrentGameRecord.Moves[2].Stone == GoStone.Black &&
+                projectedSession.CurrentGameRecord.Moves[2].IsPass,
+            "A Protocol G pass must appear exactly once in the current game record.");
+        var gameOasisSgf = SgfGameRecordConverter.ToSgf(projectedSession.CurrentGameRecord);
+        var gameOasisRoundTrip = SgfGameRecordConverter.FromSgf(gameOasisSgf);
+        Require(gameOasisSgf.Contains(";B[aa]", StringComparison.Ordinal) &&
+                gameOasisSgf.Contains(";W[ba]", StringComparison.Ordinal) &&
+                gameOasisSgf.Contains(";B[]", StringComparison.Ordinal) &&
+                gameOasisRoundTrip.Moves.Count == 3,
+            "Game Oasis play and pass history must survive the existing SGF save/load boundary.");
 
         Require(playerBridge.BeginUnbind("portability-smoke"),
             "The frame bridge must begin ending the Protocol P participation.");
@@ -193,9 +216,17 @@ internal static class PortabilityChecks
             }, TimeSpan.FromSeconds(5)),
             "PlayingScene must complete and project the terminal Protocol G action.");
         Require(projectedSession.CurrentMode.Kind == GoAppModeKind.GameOver &&
-                projectedSession.Winner == GoStone.White &&
+                projectedSession.Winner == GoStone.Black &&
                 projectedSession.GameOverReason == "RESIGNATION",
             "A terminal Game Oasis outcome must drive the current result screen without consulting legacy Match state.");
+        projectedSession.SeekLocalReviewTimeline(1);
+        Require(projectedSession.IsLocalReplayMode &&
+                projectedSession.GetDisplayStone(0, 0) == GoStone.Black &&
+                projectedSession.GetDisplayStone(1, 0) == GoStone.Empty,
+            "The existing local review must reconstruct an earlier Game Oasis move-history position.");
+        projectedSession.SeekLocalReviewTimeline(projectedSession.LocalReviewTimelineMaximum);
+        Require(projectedSession.IsLocalResultPosition,
+            "The existing local review must return from Game Oasis history to the result position.");
         playingScene.CloseGameOasisLocalMatchIfNeeded();
         Require(localLifecycle.State == LocalMatchGameOasisState.Closing,
             "Leaving the result screen must begin closing the Game Oasis local-match session.");
@@ -241,7 +272,7 @@ internal static class PortabilityChecks
                 new HashSet<string>(StringComparer.Ordinal) { GameOasisCapabilityIds.ActionPlayPoint }),
         ]);
         var externalBoard = new GuiBoardView(
-            new("external-session"), externalTypeId, 0, 9, [], [], "black", 0, 0, null, false, null);
+            new("external-session"), externalTypeId, 0, 9, [], [], "black", 0, 0, null, false, null, [], [], []);
         Require(externalAdapters.Supports(externalTypeId, GameOasisCapabilityIds.ActionPlayPoint) &&
                 !externalAdapters.Supports(externalTypeId, GameOasisCapabilityIds.ActionPass),
             "An external GUI action adapter must expose only its registered capabilities.");

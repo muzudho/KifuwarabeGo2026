@@ -34,6 +34,15 @@ public static class GameBoardProjection
             GuiBoardPoint? koPoint = root.TryGetProperty("koPoint", out var ko) && ko.ValueKind != JsonValueKind.Null
                 ? ReadPoint(ko, boardSize, "ko")
                 : null;
+            var setupBlack = root.TryGetProperty("setupBlack", out var setupBlackElement)
+                ? ReadPoints(setupBlackElement, boardSize, "setupBlack")
+                : [];
+            var setupWhite = root.TryGetProperty("setupWhite", out var setupWhiteElement)
+                ? ReadPoints(setupWhiteElement, boardSize, "setupWhite")
+                : [];
+            var moveHistory = root.TryGetProperty("moveHistory", out var moveHistoryElement)
+                ? ReadMoves(moveHistoryElement, boardSize)
+                : [];
             return ProtocolResponse<GuiBoardView>.Success(new(
                 snapshot.SessionId,
                 snapshot.PlaySpaceTypeId,
@@ -46,7 +55,10 @@ public static class GameBoardProjection
                 ReadOptionalInt(root, "whiteCaptures"),
                 koPoint,
                 snapshot.IsTerminal,
-                snapshot.Outcome));
+                snapshot.Outcome,
+                setupBlack,
+                setupWhite,
+                moveHistory));
         }
         catch (Exception exception) when (exception is JsonException or InvalidOperationException or KeyNotFoundException)
         {
@@ -56,6 +68,21 @@ public static class GameBoardProjection
 
     private static IReadOnlyList<GuiBoardPoint> ReadPoints(JsonElement array, int boardSize, string field) =>
         array.EnumerateArray().Select(value => ReadPoint(value, boardSize, field)).ToArray();
+
+    private static IReadOnlyList<GuiBoardMove> ReadMoves(JsonElement array, int boardSize) =>
+        array.EnumerateArray().Select(value =>
+        {
+            var player = value.GetProperty("player").GetString();
+            var type = value.GetProperty("type").GetString();
+            if (player is not ("black" or "white"))
+                throw new InvalidOperationException($"Move player '{player}' is invalid.");
+            if (type is not ("play" or "pass"))
+                throw new InvalidOperationException($"Move type '{type}' is invalid.");
+            GuiBoardPoint? point = type == "play"
+                ? ReadPoint(value, boardSize, "move")
+                : null;
+            return new GuiBoardMove(player, type, point);
+        }).ToArray();
 
     private static GuiBoardPoint ReadPoint(JsonElement value, int boardSize, string field)
     {
@@ -74,6 +101,8 @@ public static class GameBoardProjection
 
 public readonly record struct GuiBoardPoint(int X, int Y);
 
+public sealed record GuiBoardMove(string Player, string Type, GuiBoardPoint? Point);
+
 public sealed record GuiBoardView(
     GameOasisSessionId SessionId,
     PlaySpaceTypeId PlaySpaceTypeId,
@@ -86,4 +115,7 @@ public sealed record GuiBoardView(
     int WhiteCaptures,
     GuiBoardPoint? KoPoint,
     bool IsTerminal,
-    ContractDocument? Outcome);
+    ContractDocument? Outcome,
+    IReadOnlyList<GuiBoardPoint> SetupBlack,
+    IReadOnlyList<GuiBoardPoint> SetupWhite,
+    IReadOnlyList<GuiBoardMove> MoveHistory);

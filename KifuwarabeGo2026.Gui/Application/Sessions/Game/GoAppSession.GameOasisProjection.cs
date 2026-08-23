@@ -5,12 +5,14 @@ using KifuwarabeGo2026.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.Reference.GUI;
 using KifuwarabeGo2026.Shared.Domain;
 using System;
+using System.Linq;
 using System.Text.Json;
 
 /// <summary>Protocol Gの共通盤面を、移行中の現行描画モデルへ一方向に投影します。</summary>
 public sealed partial class GoAppSession
 {
     private bool _isGameOasisProjectedLocalGame;
+    private int _gameOasisProjectedMoveCount;
 
     public bool IsGameOasisProjectedLocalGame => _isGameOasisProjectedLocalGame;
 
@@ -34,6 +36,7 @@ public sealed partial class GoAppSession
         foreach (var point in view.White)
             SetProjectionStone(board, point, GoStone.White);
 
+        var firstProjection = !_isGameOasisProjectedLocalGame;
         _matchSession = null;
         _isGameOasisProjectedLocalGame = true;
         _board = board;
@@ -46,9 +49,52 @@ public sealed partial class GoAppSession
         BlackAgehama = view.BlackCaptures;
         WhiteAgehama = view.WhiteCaptures;
         KoPoint = view.KoPoint is { } ko ? new GoPoint(ko.X, ko.Y) : null;
+        ApplyGameOasisRecordProjection(view, firstProjection);
         ResetPositionHistory();
         if (view.IsTerminal)
             ApplyGameOasisOutcome(view.Outcome);
+    }
+
+    private void ApplyGameOasisRecordProjection(GuiBoardView view, bool firstProjection)
+    {
+        if (firstProjection)
+        {
+            CurrentGameRecord.SetupStones.Clear();
+            CurrentGameRecord.SetupStones.AddRange(view.SetupBlack.Select(point =>
+                new GoGameSetupStone(GoStone.Black, new GoPoint(point.X, point.Y))));
+            CurrentGameRecord.SetupStones.AddRange(view.SetupWhite.Select(point =>
+                new GoGameSetupStone(GoStone.White, new GoPoint(point.X, point.Y))));
+            CurrentGameRecord.Moves.Clear();
+            _gameOasisProjectedMoveCount = 0;
+        }
+        if (view.MoveHistory.Count < _gameOasisProjectedMoveCount)
+            throw new InvalidOperationException("The Game Oasis move history cannot shrink during an active local match.");
+        for (var index = 0; index < _gameOasisProjectedMoveCount; index++)
+        {
+            var projected = view.MoveHistory[index];
+            var recorded = CurrentGameRecord.Moves[index];
+            var projectedStone = projected.Player == "black" ? GoStone.Black : GoStone.White;
+            var samePoint = projected.Type == "pass"
+                ? recorded.Point is null
+                : projected.Point is { } point && recorded.Point == new GoPoint(point.X, point.Y);
+            if (recorded.Stone != projectedStone || !samePoint)
+                throw new InvalidOperationException($"The Game Oasis move history changed at index {index}.");
+        }
+
+        for (var index = _gameOasisProjectedMoveCount; index < view.MoveHistory.Count; index++)
+        {
+            var move = view.MoveHistory[index];
+            var stone = move.Player == "black" ? GoStone.Black : GoStone.White;
+            var point = move.Type == "play" && move.Point is { } played
+                ? new GoPoint(played.X, played.Y)
+                : (GoPoint?)null;
+            CurrentGameRecord.Moves.Add(new GoGameMove(
+                stone,
+                point,
+                timeLeftAfterMove: GetRemainingTimeAfterMove(stone)));
+        }
+        _gameOasisProjectedMoveCount = view.MoveHistory.Count;
+        PlayedMoveCount = _gameOasisProjectedMoveCount;
     }
 
     private void ApplyGameOasisOutcome(ContractDocument? outcome)
