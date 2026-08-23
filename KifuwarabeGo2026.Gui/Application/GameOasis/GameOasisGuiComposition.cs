@@ -18,12 +18,18 @@ public sealed class GameOasisGuiComposition : IDisposable
         Client = client;
         BoardController = new(client);
         PlayingBridge = new(BoardController);
+        PlayerCoordinator = new(concierge);
+        PlayerParticipation = new(PlayerCoordinator, client);
+        PlayerParticipationBridge = new(PlayerParticipation, BoardController);
     }
 
     public GameOasisConcierge Concierge { get; }
     public GameOasisGuiClient Client { get; }
     public GameOasisBoardController BoardController { get; }
     public GameOasisPlayingBridge PlayingBridge { get; }
+    public GameOasisPlayerCoordinator PlayerCoordinator { get; }
+    public GameOasisPlayerParticipation PlayerParticipation { get; }
+    public GameOasisPlayerParticipationBridge PlayerParticipationBridge { get; }
 
     public ProtocolResponse<GuiBoardView> GetActiveBoard()
     {
@@ -32,6 +38,7 @@ public sealed class GameOasisGuiComposition : IDisposable
 
     public void Dispose()
     {
+        PlayerParticipationBridge.Dispose();
         PlayingBridge.Dispose();
     }
 

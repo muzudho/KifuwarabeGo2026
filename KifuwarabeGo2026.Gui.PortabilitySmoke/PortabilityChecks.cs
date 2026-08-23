@@ -23,6 +23,7 @@ using KifuwarabeGo2026.GtpExtensions.Sgf;
 using KifuwarabeGo2026.GtpExtensions.Strategies;
 using KifuwarabeGo2026.Reference.PlaySpace.Go.LegacyMatch;
 using KifuwarabeGo2026.Reference.GUI;
+using KifuwarabeGo2026.Reference.PlayerEngine;
 using KifuwarabeGo2026.Shared.Domain;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
@@ -87,6 +88,41 @@ internal static class PortabilityChecks
         VerifyTournamentRulesJsonCompatibility();
         VerifyComposition();
         VerifyGameOasisGuiComposition();
+        VerifyGameOasisPlayerParticipation();
+    }
+
+    private static void VerifyGameOasisPlayerParticipation()
+    {
+        using var composition = GameOasisGuiComposition.CreateAsync().AsTask().GetAwaiter().GetResult();
+        var playSpaceTypeId = new PlaySpaceTypeId(GameOasisOfficialNames.Go);
+        var opened = composition.BoardController.OpenAsync(
+            playSpaceTypeId,
+            GameOasisSessionPresets.Create(playSpaceTypeId)).AsTask().GetAwaiter().GetResult();
+        Require(opened.IsSuccess, "Protocol G must open a play-space before a Protocol P player joins.");
+
+        var playerBridge = composition.PlayerParticipationBridge;
+        Require(playerBridge.BeginBind(new DeterministicPlayerProtocol(), "black"),
+            "The frame bridge must begin binding a Protocol P player to the active opaque session.");
+        Require(!playerBridge.BeginTurn(),
+            "The frame bridge must reject a turn while player binding is pending.");
+        CompletePlayerBridgeOperation(playerBridge);
+        Require(playerBridge.State == GameOasisPlayerParticipationState.Ready && playerBridge.BindingId is not null,
+            "The frame bridge must publish the Protocol P binding on the frame thread.");
+
+        Require(playerBridge.BeginTurn(), "The bound Protocol P player must begin selecting an action.");
+        Require(!playerBridge.BeginTurn(), "The frame bridge must reject duplicate turn requests.");
+        CompletePlayerBridgeOperation(playerBridge);
+        Require(playerBridge.State == GameOasisPlayerParticipationState.Ready &&
+                playerBridge.Board is { Black.Count: 1 } && playerBridge.LastError is null,
+            "Protocol P must change the play-space and the frame bridge must refresh it through Protocol G.");
+
+        Require(playerBridge.BeginUnbind("portability-smoke"),
+            "The frame bridge must begin ending the Protocol P participation.");
+        CompletePlayerBridgeOperation(playerBridge);
+        Require(playerBridge.State == GameOasisPlayerParticipationState.Idle && playerBridge.BindingId is null,
+            "The frame bridge must return to idle after player participation ends.");
+        Require(composition.BoardController.CloseAsync().AsTask().GetAwaiter().GetResult().IsSuccess,
+            "The shared Game Oasis session must close cleanly.");
     }
 
     private static void VerifyGameOasisGuiComposition()
@@ -215,6 +251,12 @@ internal static class PortabilityChecks
     {
         Require(SpinWait.SpinUntil(() => bridge.Update(), TimeSpan.FromSeconds(5)),
             "The GUI playing bridge operation did not complete within the smoke-test timeout.");
+    }
+
+    private static void CompletePlayerBridgeOperation(GameOasisPlayerParticipationBridge bridge)
+    {
+        Require(SpinWait.SpinUntil(() => bridge.Update(), TimeSpan.FromSeconds(5)),
+            "The GUI player participation bridge operation did not complete within the smoke-test timeout.");
     }
 
     private static void VerifyCgosResultReviewRecord()

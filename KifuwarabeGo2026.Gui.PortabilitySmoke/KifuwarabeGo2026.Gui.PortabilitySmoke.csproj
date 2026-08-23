@@ -8,5 +8,6 @@
     <ProjectReference Include="..\KifuwarabeGo2026.GtpExtensions\KifuwarabeGo2026.GtpExtensions.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.Gui\KifuwarabeGo2026.Gui.Core.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.GameOasis.Concierge\KifuwarabeGo2026.GameOasis.Concierge.csproj" />
+    <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlayerEngine\KifuwarabeGo2026.Reference.PlayerEngine.csproj" />
   </ItemGroup>
 </Project>
