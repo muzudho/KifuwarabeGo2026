@@ -52,7 +52,7 @@ public sealed class GtpEngineCatalog
                 Path.GetDirectoryName(ReleaseDefaultSettings.FilePath) ??
                 AppContext.BaseDirectory;
             var defaultProfiles = ReleaseDefaultSettings.Current.EngineSettings.GtpEngines
-                .Select(profile => Normalize(profile, defaultDirectory))
+                .Select(profile => GtpEngineProfilePolicy.Normalize(profile, defaultDirectory))
                 .ToList();
             new GtpEngineCatalog(listPath, defaultProfiles).Save(defaultProfiles);
         }
@@ -127,7 +127,7 @@ public sealed class GtpEngineCatalog
         var usedIds = new HashSet<string>(StringComparer.Ordinal);
         var normalizedProfiles = profiles
             .Where(profile => !string.IsNullOrWhiteSpace(profile.ExecutablePath))
-            .Select(profile => Normalize(profile, listDirectory))
+            .Select(profile => GtpEngineProfilePolicy.Normalize(profile, listDirectory))
             .Select(profile =>
             {
                 if (usedIds.Add(profile.Id)) return profile;
@@ -152,38 +152,11 @@ public sealed class GtpEngineCatalog
         var list = new GtpEngineProfileList
         {
             GtpEngines = profiles
-                .Select(profile => ToListEntry(Normalize(profile, listDirectory), listDirectory))
+                .Select(profile => ToListEntry(GtpEngineProfilePolicy.Normalize(profile, listDirectory), listDirectory))
                 .ToList(),
         };
 
         CatalogDocumentStorage.Default.WriteAllText(ListPath, JsonSerializer.Serialize(list, JsonOptions));
-    }
-
-    private static GtpEngineProfile Normalize(GtpEngineProfile profile, string baseDirectory)
-    {
-        var normalized = profile.Clone();
-        normalized.Id = string.IsNullOrWhiteSpace(normalized.Id)
-            ? Guid.NewGuid().ToString("N")
-            : normalized.Id;
-        normalized.DisplayName = string.IsNullOrWhiteSpace(normalized.DisplayName)
-            ? "Unnamed GTP Engine"
-            : normalized.DisplayName.Trim();
-        normalized.DefaultCgosLoginName = normalized.DefaultCgosLoginName?.Trim() ?? "";
-        normalized.DefaultCgosPlainTextPassword ??= "";
-        normalized.InitialPositionProfileId = string.IsNullOrWhiteSpace(normalized.InitialPositionProfileId)
-            ? "auto"
-            : normalized.InitialPositionProfileId.Trim();
-        normalized.InitialPositionDetectedEngineName ??= "";
-        normalized.InitialPositionDetectedEngineVersion ??= "";
-        normalized.InitialPositionDetectedProfileId ??= "";
-        normalized.ExecutablePath = ResolvePath(normalized.ExecutablePath, baseDirectory);
-        normalized.WorkingDirectoryModel = normalized.WorkingDirectoryModel.IsEmpty
-            ? WorkingDirectoryModel.FromString(Path.GetDirectoryName(normalized.ExecutablePath) ?? baseDirectory)
-            : WorkingDirectoryModel.FromString(ResolvePath(normalized.WorkingDirectoryModel.Value, baseDirectory));
-        normalized.GuiOptions ??= [];
-        foreach (var option in GtpEngineGuiOptions.Specs)
-            normalized.GuiOptions.TryAdd(option.Id, option.DefaultValue);
-        return normalized;
     }
 
     private static string CreateUniqueId(IEnumerable<GtpEngineProfile> profiles) =>
@@ -202,20 +175,6 @@ public sealed class GtpEngineCatalog
         return id;
     }
 
-    private static string ResolvePath(string path, string baseDirectory)
-    {
-        if (Path.IsPathFullyQualified(path) || !HasDirectoryPart(path))
-        {
-            return path;
-        }
-
-        return Path.GetFullPath(Path.Combine(baseDirectory, path));
-    }
-
-    private static bool HasDirectoryPart(string path) =>
-        path.Contains(Path.DirectorySeparatorChar) ||
-        path.Contains(Path.AltDirectorySeparatorChar);
-
     private static GtpEngineProfile ToListEntry(GtpEngineProfile profile, string listDirectory)
     {
         var entry = profile.Clone();
@@ -226,7 +185,7 @@ public sealed class GtpEngineCatalog
 
     private static string ToStoredPath(string path, string listDirectory)
     {
-        if (string.IsNullOrWhiteSpace(path) || !HasDirectoryPart(path))
+        if (string.IsNullOrWhiteSpace(path) || !GtpEngineProfilePolicy.HasDirectoryPart(path))
         {
             return path;
         }

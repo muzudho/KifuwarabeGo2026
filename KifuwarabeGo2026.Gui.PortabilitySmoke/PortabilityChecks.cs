@@ -125,6 +125,23 @@ internal static class PortabilityChecks
         var json = JsonSerializer.Serialize(normalized, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
         Require(json.Contains("\"targetProfileIds\"", StringComparison.Ordinal),
             "The Application-owned entry profile must preserve the existing targetProfileIds JSON key.");
+
+        var engine = GtpEngineProfilePolicy.Normalize(new GtpEngineProfile
+        {
+            Id = "engine-1",
+            DisplayName = "  Engine  ",
+            ExecutablePath = Path.Combine("bin", "engine.exe"),
+            WorkingDirectoryStr = "",
+            GuiOptions = [],
+        }, Path.GetTempPath());
+        Require(engine.DisplayName == "Engine" &&
+                engine.WorkingDirectoryModel.Value == Path.Combine(Path.GetTempPath(), "bin") &&
+                engine.GuiOptions.ContainsKey(GtpEngineGuiOptions.RandomMoveId),
+            "GameOasis.Application must normalize persistent GTP engine settings independently of the GUI.");
+        var engineJson = JsonSerializer.Serialize(engine, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+        Require(engineJson.Contains("\"workingDirectory\"", StringComparison.Ordinal) &&
+                !engineJson.Contains("workingDirectoryModel", StringComparison.OrdinalIgnoreCase),
+            "The Application-owned GTP engine profile must preserve the workingDirectory JSON schema.");
     }
 
     private static void VerifyGameOasisPlayerParticipation()
