@@ -2586,6 +2586,7 @@ public class Game1 : Game
         if (task.IsCompletedSuccessfully)
         {
             _gameOasisComposition = task.Result;
+            _playingScene.AttachGameOasisPlayerBridge(_gameOasisComposition.PlayerParticipationBridge);
             GuiOperationLog.App("Game Oasis GUI connected", $"playSpaces={_gameOasisComposition.Client.State.PlaySpaces.Count}");
         }
         else

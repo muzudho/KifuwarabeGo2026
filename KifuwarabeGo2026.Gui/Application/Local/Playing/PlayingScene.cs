@@ -4,6 +4,7 @@ using KifuwarabeGo2026.GtpExtensions.Capabilities;
 using KifuwarabeGo2026.GtpExtensions.Engines;
 using KifuwarabeGo2026.GtpExtensions.InitialPosition;
 using KifuwarabeGo2026.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.Watching;
+using KifuwarabeGo2026.Gui.Application.GameOasis;
 using KifuwarabeGo2026.Gui.Domain;
 using KifuwarabeGo2026.Shared.Domain;
 using KifuwarabeGo2026.Gui.Gtp;
@@ -39,6 +40,7 @@ public sealed class PlayingScene : IDisposable
     private bool _computerMoveAwaitingDraw;
     private bool _isInitialPositionConciergeActive;
     private GoStone? _selectedInitialPositionEngine;
+    private GameOasisPlayerParticipationBridge? _gameOasisPlayerBridge;
 
     public PlayingScene(
         GoAppSession session,
@@ -80,8 +82,21 @@ public sealed class PlayingScene : IDisposable
 
     public void Update()
     {
+        _gameOasisPlayerBridge?.Update();
         CompletePendingEngineCommand();
         RequestComputerMoveIfReady();
+    }
+
+    /// <summary>
+    /// GUI起動後に完成するGame Oasisのプレイヤー参加経路を後付けします。
+    /// 接続しただけでは現行ローカル対局の進行経路を変更しません。
+    /// </summary>
+    public void AttachGameOasisPlayerBridge(GameOasisPlayerParticipationBridge bridge)
+    {
+        ArgumentNullException.ThrowIfNull(bridge);
+        if (_gameOasisPlayerBridge is not null && !ReferenceEquals(_gameOasisPlayerBridge, bridge))
+            throw new InvalidOperationException("A different Game Oasis player bridge is already attached.");
+        _gameOasisPlayerBridge = bridge;
     }
 
     /// <summary>

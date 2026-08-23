@@ -94,6 +94,11 @@ internal static class PortabilityChecks
     private static void VerifyGameOasisPlayerParticipation()
     {
         using var composition = GameOasisGuiComposition.CreateAsync().AsTask().GetAwaiter().GetResult();
+        using var playingScene = new PlayingScene(new GoAppSession(), (_, _, _) => { }, () => { }, () => { });
+        playingScene.AttachGameOasisPlayerBridge(composition.PlayerParticipationBridge);
+        playingScene.AttachGameOasisPlayerBridge(composition.PlayerParticipationBridge);
+        playingScene.Update();
+
         var playSpaceTypeId = new PlaySpaceTypeId(GameOasisOfficialNames.Go);
         var opened = composition.BoardController.OpenAsync(
             playSpaceTypeId,
