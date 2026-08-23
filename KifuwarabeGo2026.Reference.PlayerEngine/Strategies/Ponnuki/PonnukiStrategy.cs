@@ -1,10 +1,9 @@
-namespace KifuwarabeGo2026.Engine.GoApps.Casual.Ponnuki;
+namespace KifuwarabeGo2026.Reference.PlayerEngine.Strategies.Ponnuki;
 
-using KifuwarabeGo2026.Reference.PlayerEngine.Strategies;
 using KifuwarabeGo2026.Shared.Domain;
 
 /// <summary>Casual App のポン抜き用着手戦略です。</summary>
-internal sealed class PonnukiStrategy : IGenerateMoveStrategy
+public sealed class PonnukiStrategy : IGenerateMoveStrategy
 {
     public GoPoint? GenerateMove(GenerateMoveRequest request)
         => GenerateMoveWithDecision(request)?.Move;
@@ -95,7 +94,7 @@ internal sealed class PonnukiStrategy : IGenerateMoveStrategy
     }
 }
 
-internal enum PonnukiDecisionReason
+public enum PonnukiDecisionReason
 {
     PriorityOneAtari,
     PriorityOneAtariThenPriorityTwoNobi,
@@ -106,7 +105,7 @@ internal enum PonnukiDecisionReason
     OtherPriorities,
 }
 
-internal readonly record struct PonnukiMoveDecision(
+public readonly record struct PonnukiMoveDecision(
     GoPoint Move,
     PonnukiMovePriority Priority,
     int SamePriorityCandidateCount,

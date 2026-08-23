@@ -4,7 +4,7 @@ using KifuwarabeGo2026.Gui;
 using KifuwarabeGo2026.Gui.Application;
 using KifuwarabeGo2026.Gui.Infrastructure.Windows;
 using KifuwarabeGo2026.Engine;
-using KifuwarabeGo2026.Engine.GoApps.Casual.Ponnuki;
+using KifuwarabeGo2026.Reference.PlayerEngine.Strategies.Ponnuki;
 using KifuwarabeGo2026.Gui.Gtp;
 using KifuwarabeGo2026.Gui.Presentation;
 using Microsoft.Xna.Framework;

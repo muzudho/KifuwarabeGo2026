@@ -1,13 +1,12 @@
-namespace KifuwarabeGo2026.Engine.GoApps.Casual.Ponnuki;
+namespace KifuwarabeGo2026.Reference.PlayerEngine.Strategies.Ponnuki;
 
-using KifuwarabeGo2026.Reference.PlayerEngine.Strategies;
 using KifuwarabeGo2026.Shared.Domain;
 using KifuwarabeGo2026.Shared.BoardLens.Strong;
 
 /// <summary>
 /// Board Lens と同じ連解析を使い、ポン抜きプレイヤーの候補手を優先度付けします。
 /// </summary>
-internal static class PonnukiMovePrioritizer
+public static class PonnukiMovePrioritizer
 {
     public static PonnukiMovePriority Evaluate(
         GoBoard boardAfterMove,
@@ -150,9 +149,9 @@ internal static class PonnukiMovePrioritizer
     }
 }
 
-internal readonly record struct PonnukiMoveCandidate(GoPoint Move, PonnukiMovePriority Priority);
+public readonly record struct PonnukiMoveCandidate(GoPoint Move, PonnukiMovePriority Priority);
 
-internal readonly record struct PonnukiNobiCandidate(
+public readonly record struct PonnukiNobiCandidate(
     LegalMoveCandidate LegalMove,
     int BoundaryEmptyCountAfterMove);
 
@@ -161,7 +160,7 @@ internal readonly record struct PonnukiNobiCandidate(
 /// </summary>
 /// <param name="CapturedStones"></param>
 /// <param name="ContestedContactPriority"></param>
-internal readonly record struct PonnukiMovePriority(int CapturedStones, int ContestedContactPriority)
+public readonly record struct PonnukiMovePriority(int CapturedStones, int ContestedContactPriority)
     : IComparable<PonnukiMovePriority>
 {
     public int CompareTo(PonnukiMovePriority other)
