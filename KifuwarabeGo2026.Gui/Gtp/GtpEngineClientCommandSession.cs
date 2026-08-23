@@ -1,6 +1,6 @@
 namespace KifuwarabeGo2026.Gui.Gtp;
 
-using KifuwarabeGo2026.GtpExtensions.Protocol;
+using KifuwarabeGo2026.Reference.Communication.Gtp.Protocol;
 using System;
 using System.Threading;
 using System.Threading.Tasks;

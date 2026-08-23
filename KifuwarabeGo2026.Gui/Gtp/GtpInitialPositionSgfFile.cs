@@ -1,7 +1,7 @@
 namespace KifuwarabeGo2026.Gui.Gtp;
 
-using KifuwarabeGo2026.GtpExtensions.InitialPosition;
-using KifuwarabeGo2026.GtpExtensions.Sgf;
+using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.InitialPosition;
+using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Sgf;
 using System;
 using System.IO;
 using System.Text;

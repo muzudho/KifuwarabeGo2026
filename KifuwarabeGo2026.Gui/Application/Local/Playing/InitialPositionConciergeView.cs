@@ -1,7 +1,7 @@
 namespace KifuwarabeGo2026.Gui.Application.Local.Playing;
 
 using System.Collections.Generic;
-using KifuwarabeGo2026.GtpExtensions.InitialPosition;
+using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.InitialPosition;
 using KifuwarabeGo2026.Shared.Domain;
 
 /// <summary>

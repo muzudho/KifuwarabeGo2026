@@ -1,7 +1,7 @@
 namespace KifuwarabeGo2026.Gui.Application;
 
 using KifuwarabeGo2026.Gui.Application.Local.Resting;
-using KifuwarabeGo2026.GtpExtensions.Engines;
+using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Engines;
 using KifuwarabeGo2026.Shared.Domain;
 
 /// <summary>アプリケーションセッションの共通初期化を行います。</summary>

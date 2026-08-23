@@ -1,6 +1,6 @@
 namespace KifuwarabeGo2026.Gui.Presentation.Pages.InitialPositionConcierge;
 
-using KifuwarabeGo2026.GtpExtensions.InitialPosition;
+using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.InitialPosition;
 using KifuwarabeGo2026.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.Shared.Domain;
 using Microsoft.Xna.Framework;

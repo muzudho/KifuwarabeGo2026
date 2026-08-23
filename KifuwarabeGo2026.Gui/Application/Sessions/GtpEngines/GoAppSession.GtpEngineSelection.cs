@@ -1,6 +1,6 @@
 namespace KifuwarabeGo2026.Gui.Application;
 
-using KifuwarabeGo2026.GtpExtensions.Engines;
+using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Engines;
 using KifuwarabeGo2026.Shared.Domain;
 using System;
 using System.Collections.Generic;

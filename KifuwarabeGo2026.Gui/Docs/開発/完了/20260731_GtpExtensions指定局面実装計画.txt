@@ -1,4 +1,4 @@
-KifuwarabeGo2026.GtpExtensions 指定局面実装計画
+KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions 指定局面実装計画
 =================================================
 
 作成日: 2026-07-31
@@ -8,7 +8,7 @@ KifuwarabeGo2026.GtpExtensions 指定局面実装計画
 1. 目的
 -------
 
-KifuwarabeGo2026.GtpExtensions を追加し、Matchが保持する指定局面を、
+KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions を追加し、Matchが保持する指定局面を、
 さまざまなGTP思考エンジンへ可能な限り自動で設定できるようにする。
 
 対象とする局面は次のとおり。
@@ -28,7 +28,7 @@ KifuwarabeGo2026.GtpExtensions を追加し、Matchが保持する指定局面�
 
 次の状態を、この計画の完成とする。
 
-・KifuwarabeGo2026.GtpExtensions が net8.0 クラスライブラリとして存在する。
+・KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions が net8.0 クラスライブラリとして存在する。
 ・Windows、MonoGame、GUI、Process、HTTP、WebSocketへ依存しない。
 ・MatchSnapshotの指定局面から、利用可能な設定方式を優先順に作れる。
 ・known_commandとlist_commandsを利用して、エンジン能力を調べられる。
@@ -48,7 +48,7 @@ KifuwarabeGo2026.Match
     初期配置、開始手番、盤サイズなど、対局そのものの情報を保持する。
     GTPコマンドや外部エンジンを知らない。
 
-KifuwarabeGo2026.GtpExtensions
+KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions
     指定局面を分類する。
     エンジン能力を調べる。
     利用可能なStrategyを選び、コマンドまたはSGF内容を組み立てる。
@@ -79,7 +79,7 @@ KifuwarabeGo2026.Engine
     KifuwarabeGo2026.Gui
               |
               v
-    KifuwarabeGo2026.GtpExtensions
+    KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions
           |                 |
           v                 v
     KifuwarabeGo2026.Match   KifuwarabeGo2026.Shared
@@ -108,7 +108,7 @@ GtpExtensionsは、GtpEngineClientそのものを受け取らない。
 5. 内部フォルダー構成
 ---------------------
 
-    KifuwarabeGo2026.GtpExtensions
+    KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions
     |
     +-- InitialPosition
     |   +-- InitialPositionConcierge.cs
@@ -440,7 +440,7 @@ VerifiedSuccess
 
 状態: 2026-08-01 実装完了。GUIの指定局面動作は変更していない。
 
-・KifuwarabeGo2026.GtpExtensions.csprojをnet8.0で追加する。
+・KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.csprojをnet8.0で追加する。
 ・MatchとSharedだけを参照する。
 ・ソリューション、GUI、移植性スモークから参照する。
 ・Windows、MonoGame、Process、GUIへの依存がないことを検査する。
@@ -451,7 +451,7 @@ VerifiedSuccess
     移植性スモーク成功。
 
 実施結果:
-    KifuwarabeGo2026.GtpExtensionsをnet8.0クラスライブラリとして追加した。
+    KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensionsをnet8.0クラスライブラリとして追加した。
     自作プロジェクト参照はMatchとSharedだけにした。
     ソリューション、GUI、移植性スモークから参照した。
     GtpExtensionsAssemblyを、機能を持たないアセンブリ識別子として追加した。
@@ -836,7 +836,7 @@ VerifiedSuccess
 18. 最初の一手
 --------------
 
-第1段階として空のKifuwarabeGo2026.GtpExtensionsプロジェクトを追加し、
+第1段階として空のKifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensionsプロジェクトを追加し、
 MatchとSharedだけを参照させる。
 
 その段階では現行GtpInitialPositionCommandBuilderを動かさない。

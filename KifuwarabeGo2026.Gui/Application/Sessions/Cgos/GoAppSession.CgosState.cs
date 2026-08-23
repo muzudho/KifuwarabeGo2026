@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using KifuwarabeGo2026.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.ConnectionTarget;
-using KifuwarabeGo2026.GtpExtensions.Engines;
+using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Engines;
 using KifuwarabeGo2026.Shared.Domain;
 
 /// <summary>CGOS 接続・管理・編集画面の状態を保持します。</summary>

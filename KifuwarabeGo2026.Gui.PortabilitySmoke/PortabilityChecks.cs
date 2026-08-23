@@ -18,13 +18,13 @@ using KifuwarabeGo2026.Gui.Application.Local.Resting.TournamentRule;
 using KifuwarabeGo2026.Gui.Gtp;
 using KifuwarabeGo2026.Gui.Presentation.StationeryUI.Controls;
 using KifuwarabeGo2026.Gui.Sgf;
-using KifuwarabeGo2026.GtpExtensions;
-using KifuwarabeGo2026.GtpExtensions.Capabilities;
-using KifuwarabeGo2026.GtpExtensions.Engines;
-using KifuwarabeGo2026.GtpExtensions.InitialPosition;
-using KifuwarabeGo2026.GtpExtensions.Protocol;
-using KifuwarabeGo2026.GtpExtensions.Sgf;
-using KifuwarabeGo2026.GtpExtensions.Strategies;
+using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions;
+using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Capabilities;
+using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Engines;
+using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.InitialPosition;
+using KifuwarabeGo2026.Reference.Communication.Gtp.Protocol;
+using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Sgf;
+using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Strategies;
 using KifuwarabeGo2026.Reference.PlaySpace.Go.LegacyMatch;
 using KifuwarabeGo2026.Reference.GUI;
 using KifuwarabeGo2026.Reference.PlayerEngine;
@@ -54,6 +54,7 @@ internal static class PortabilityChecks
     {
         var coreAssembly = typeof(Game1).Assembly;
         var gtpExtensionsAssembly = typeof(GtpExtensionsAssembly).Assembly;
+        var gtpCommunicationAssembly = typeof(IGtpCommandSession).Assembly;
         var legacyGoMatchAssembly = typeof(MatchSession).Assembly;
         var conciergeAssembly = typeof(GameOasisConcierge).Assembly;
         var gameOasisApplicationAssembly = typeof(ICatalogDocumentStore).Assembly;
@@ -62,7 +63,7 @@ internal static class PortabilityChecks
         VerifyTargetFramework(coreAssembly);
         VerifyAssemblyReferences(coreAssembly);
         VerifyNoPlatformInvokes(coreAssembly);
-        VerifyGtpExtensionsAssembly(gtpExtensionsAssembly);
+        VerifyGtpExtensionsAssembly(gtpExtensionsAssembly, gtpCommunicationAssembly);
         VerifyGtpExtensionsInitialPositionPlanning();
         VerifyGtpCapabilityProbe();
         VerifyStandardHandicapStrategies();
@@ -142,6 +143,12 @@ internal static class PortabilityChecks
         Require(engineJson.Contains("\"workingDirectory\"", StringComparison.Ordinal) &&
                 !engineJson.Contains("workingDirectoryModel", StringComparison.OrdinalIgnoreCase),
             "The Application-owned GTP engine profile must preserve the workingDirectory JSON schema.");
+
+        var catalogJson = GtpEngineCatalogDocumentCodec.Serialize([engine], Path.GetTempPath());
+        var catalogDocument = GtpEngineCatalogDocumentCodec.Deserialize(catalogJson, Path.GetTempPath());
+        Require(catalogDocument.Profiles.Count == 1 && catalogDocument.Profiles[0].Id == "engine-1" &&
+                catalogJson.Contains("\"gtpEngines\"", StringComparison.Ordinal),
+            "GameOasis.Application must own the GTP engine catalog JSON document conversion.");
     }
 
     private static void VerifyGameOasisPlayerParticipation()
@@ -799,7 +806,7 @@ internal static class PortabilityChecks
             "The concierge did not send the complete atomic command sequence.");
     }
 
-    private static void VerifyGtpExtensionsAssembly(Assembly gtpExtensionsAssembly)
+    private static void VerifyGtpExtensionsAssembly(Assembly gtpExtensionsAssembly, Assembly gtpCommunicationAssembly)
     {
         VerifyTargetFramework(gtpExtensionsAssembly, "GtpExtensions");
         VerifyNoPlatformInvokes(gtpExtensionsAssembly, "GtpExtensions");
@@ -822,6 +829,11 @@ internal static class PortabilityChecks
         Require(
             !references.Contains("System.Diagnostics.Process"),
             "GtpExtensions must not own external processes.");
+        Require(references.Contains("KifuwarabeGo2026.Reference.Communication.Gtp"),
+            "Go GTP extensions must consume the communication-owned GTP protocol boundary.");
+        Require(!gtpCommunicationAssembly.GetReferencedAssemblies().Any(reference =>
+                reference.Name == "KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions"),
+            "GTP communication must not depend back on Go play-space extensions.");
 
         foreach (var forbiddenReference in ForbiddenAssemblyReferences)
         {
@@ -895,13 +907,13 @@ internal static class PortabilityChecks
             "The migrated sequential-play strategy changed the existing command sequence.");
 
         Require(
-            global::KifuwarabeGo2026.GtpExtensions.Protocol.GtpCoordinate.FormatVertex(new GoPoint(8, 8), 9) == "J1",
+            global::KifuwarabeGo2026.Reference.Communication.Gtp.Protocol.GtpCoordinate.FormatVertex(new GoPoint(8, 8), 9) == "J1",
             "GTP formatting must skip the I column.");
         Require(
-            global::KifuwarabeGo2026.GtpExtensions.Protocol.GtpCoordinate.TryParseVertex("J1", 9, out var parsed) && parsed == new GoPoint(8, 8),
+            global::KifuwarabeGo2026.Reference.Communication.Gtp.Protocol.GtpCoordinate.TryParseVertex("J1", 9, out var parsed) && parsed == new GoPoint(8, 8),
             "GTP parsing must reverse formatted coordinates.");
         Require(
-            !global::KifuwarabeGo2026.GtpExtensions.Protocol.GtpCoordinate.TryParseVertex("I1", 9, out _),
+            !global::KifuwarabeGo2026.Reference.Communication.Gtp.Protocol.GtpCoordinate.TryParseVertex("I1", 9, out _),
             "The invalid GTP I column must be rejected.");
     }
 

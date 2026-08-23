@@ -11,7 +11,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\KifuwarabeGo2026.StationeryUI\KifuwarabeGo2026.StationeryUI.csproj" />
-    <ProjectReference Include="..\KifuwarabeGo2026.GtpExtensions\KifuwarabeGo2026.GtpExtensions.csproj" />
+    <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions\KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation\KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.Launcher.Core\KifuwarabeGo2026.Launcher.Core.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.GameOasis.Concierge\KifuwarabeGo2026.GameOasis.Concierge.csproj" />

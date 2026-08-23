@@ -7,22 +7,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 
 /// <summary>
 /// GTPプロトコルに対応した思考エンジンのカタログ
 /// </summary>
 public sealed class GtpEngineCatalog
 {
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNameCaseInsensitive = true,
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = true,
-        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) },
-    };
-
     private GtpEngineCatalog(string listPath, IReadOnlyList<GtpEngineProfile> profiles, bool requiresSave = false,
         bool duplicateIdsRepaired = false)
     {
@@ -121,42 +111,16 @@ public sealed class GtpEngineCatalog
         }
 
         var listDirectory = Path.GetDirectoryName(listPath) ?? AppContext.BaseDirectory;
-        var profiles = JsonSerializer.Deserialize<GtpEngineProfileList>(CatalogDocumentStorage.Default.ReadAllText(listPath), JsonOptions)?.GtpEngines ?? new();
-        var requiresSave = false;
-        var duplicateIdsRepaired = false;
-        var usedIds = new HashSet<string>(StringComparer.Ordinal);
-        var normalizedProfiles = profiles
-            .Where(profile => !string.IsNullOrWhiteSpace(profile.ExecutablePath))
-            .Select(profile => GtpEngineProfilePolicy.Normalize(profile, listDirectory))
-            .Select(profile =>
-            {
-                if (usedIds.Add(profile.Id)) return profile;
-
-                // 先に保存されている方の ID は EntryProfile の参照先として保護し、
-                // 重複している後方のプロファイルだけを安全に再採番する。
-                profile.Id = CreateUniqueId(usedIds);
-                requiresSave = true;
-                duplicateIdsRepaired = true;
-                return profile;
-            })
-            .ToList();
-
-        requiresSave |= profiles.Any(profile => string.IsNullOrWhiteSpace(profile.Id));
-
-        return new GtpEngineCatalog(listPath, normalizedProfiles, requiresSave, duplicateIdsRepaired);
+        var result = GtpEngineCatalogDocumentCodec.Deserialize(
+            CatalogDocumentStorage.Default.ReadAllText(listPath), listDirectory);
+        return new GtpEngineCatalog(listPath, result.Profiles, result.RequiresSave, result.DuplicateIdsRepaired);
     }
 
     public void Save(IEnumerable<GtpEngineProfile> profiles)
     {
         var listDirectory = Path.GetDirectoryName(ListPath) ?? AppContext.BaseDirectory;
-        var list = new GtpEngineProfileList
-        {
-            GtpEngines = profiles
-                .Select(profile => ToListEntry(GtpEngineProfilePolicy.Normalize(profile, listDirectory), listDirectory))
-                .ToList(),
-        };
-
-        CatalogDocumentStorage.Default.WriteAllText(ListPath, JsonSerializer.Serialize(list, JsonOptions));
+        CatalogDocumentStorage.Default.WriteAllText(
+            ListPath, GtpEngineCatalogDocumentCodec.Serialize(profiles, listDirectory));
     }
 
     private static string CreateUniqueId(IEnumerable<GtpEngineProfile> profiles) =>
@@ -175,33 +139,4 @@ public sealed class GtpEngineCatalog
         return id;
     }
 
-    private static GtpEngineProfile ToListEntry(GtpEngineProfile profile, string listDirectory)
-    {
-        var entry = profile.Clone();
-        entry.ExecutablePath = ToStoredPath(entry.ExecutablePath, listDirectory);
-        entry.WorkingDirectoryModel = WorkingDirectoryModel.FromString(ToStoredPath(entry.WorkingDirectoryModel.Value, listDirectory));
-        return entry;
-    }
-
-    private static string ToStoredPath(string path, string listDirectory)
-    {
-        if (string.IsNullOrWhiteSpace(path) || !GtpEngineProfilePolicy.HasDirectoryPart(path))
-        {
-            return path;
-        }
-
-        try
-        {
-            return Path.GetRelativePath(listDirectory, Path.GetFullPath(path));
-        }
-        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException)
-        {
-            return path;
-        }
-    }
-
-    private sealed class GtpEngineProfileList
-    {
-        public List<GtpEngineProfile> GtpEngines { get; set; } = new();
-    }
 }
