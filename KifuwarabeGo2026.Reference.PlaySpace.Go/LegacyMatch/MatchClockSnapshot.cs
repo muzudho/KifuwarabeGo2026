@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.GameOasis.Concierge.Match;
+namespace KifuwarabeGo2026.Reference.PlaySpace.Go.LegacyMatch;
 
 /// <summary>
 /// Exposes the latest authoritative clock synchronization to observers.

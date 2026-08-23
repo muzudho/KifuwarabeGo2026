@@ -1,7 +1,7 @@
 namespace KifuwarabeGo2026.Gui.Application;
 
 using KifuwarabeGo2026.Gui.Application.Local.Playing;
-using KifuwarabeGo2026.GameOasis.Concierge.Match;
+using KifuwarabeGo2026.Reference.PlaySpace.Go.LegacyMatch;
 using KifuwarabeGo2026.Shared.Domain;
 using System.Collections.Generic;
 

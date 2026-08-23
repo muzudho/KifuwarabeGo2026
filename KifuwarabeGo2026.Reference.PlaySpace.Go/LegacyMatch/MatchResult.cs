@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.GameOasis.Concierge.Match;
+namespace KifuwarabeGo2026.Reference.PlaySpace.Go.LegacyMatch;
 
 /// <summary>
 /// Represents a structured result without presentation-specific result text.

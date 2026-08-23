@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.GameOasis.Concierge.Match;
+namespace KifuwarabeGo2026.Reference.PlaySpace.Go.LegacyMatch;
 
 /// <summary>
 /// Identifies an action requested by the player whose turn it is.

@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.GameOasis.Concierge.Match;
+namespace KifuwarabeGo2026.Reference.PlaySpace.Go.LegacyMatch;
 
 /// <summary>
 /// Describes an agreed or adjudicated game outcome.

@@ -6,6 +6,7 @@ using KifuwarabeGo2026.Gui.Application.GameOasis;
 using KifuwarabeGo2026.Gui.Presentation.Pages.GameOasis;
 using KifuwarabeGo2026.Gui.Presentation.Pages.Title;
 using KifuwarabeGo2026.GameOasis.Contracts.Common;
+using KifuwarabeGo2026.GameOasis.Concierge;
 using KifuwarabeGo2026.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.ConnectionTarget;
 using KifuwarabeGo2026.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.Watching;
 using KifuwarabeGo2026.Gui.Application.Local.Playing;
@@ -20,7 +21,7 @@ using KifuwarabeGo2026.GtpExtensions.InitialPosition;
 using KifuwarabeGo2026.GtpExtensions.Protocol;
 using KifuwarabeGo2026.GtpExtensions.Sgf;
 using KifuwarabeGo2026.GtpExtensions.Strategies;
-using KifuwarabeGo2026.GameOasis.Concierge.Match;
+using KifuwarabeGo2026.Reference.PlaySpace.Go.LegacyMatch;
 using KifuwarabeGo2026.Reference.GUI;
 using KifuwarabeGo2026.Shared.Domain;
 using Microsoft.Xna.Framework;
@@ -48,7 +49,8 @@ internal static class PortabilityChecks
     {
         var coreAssembly = typeof(Game1).Assembly;
         var gtpExtensionsAssembly = typeof(GtpExtensionsAssembly).Assembly;
-        var conciergeAssembly = typeof(MatchSession).Assembly;
+        var legacyGoMatchAssembly = typeof(MatchSession).Assembly;
+        var conciergeAssembly = typeof(GameOasisConcierge).Assembly;
 
         VerifyTargetFramework(coreAssembly);
         VerifyAssemblyReferences(coreAssembly);
@@ -65,7 +67,8 @@ internal static class PortabilityChecks
         VerifyInitialPositionEngineProfiles();
         VerifyGoAppEngineSelectionCompatibility();
         VerifyKifuwarabeAtomicSetupStrategy();
-        VerifyConciergeMatchAssembly(conciergeAssembly);
+        VerifyLegacyGoMatchAssembly(legacyGoMatchAssembly);
+        VerifyGameAgnosticConciergeAssembly(conciergeAssembly);
         VerifyGuiMatchIntegration();
         VerifyGtpMatchAdapter();
         VerifyPortableFallbacks();
@@ -1124,12 +1127,12 @@ internal static class PortabilityChecks
     private static GtpCommandCapability Capability(string command, GtpCommandSupport support) =>
         new(command, support, GtpCapabilityEvidence.KnownCommand);
 
-    private static void VerifyConciergeMatchAssembly(Assembly conciergeAssembly)
+    private static void VerifyLegacyGoMatchAssembly(Assembly legacyGoMatchAssembly)
     {
-        VerifyTargetFramework(conciergeAssembly, "GameOasis.Concierge");
-        VerifyNoPlatformInvokes(conciergeAssembly, "GameOasis.Concierge");
+        VerifyTargetFramework(legacyGoMatchAssembly, "Reference.PlaySpace.Go");
+        VerifyNoPlatformInvokes(legacyGoMatchAssembly, "Reference.PlaySpace.Go");
 
-        var references = conciergeAssembly
+        var references = legacyGoMatchAssembly
             .GetReferencedAssemblies()
             .Select(reference => reference.Name)
             .Where(name => name is not null)
@@ -1137,22 +1140,38 @@ internal static class PortabilityChecks
 
         Require(
             references.Contains("KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation"),
-            "Concierge match support must reference the Go foundation assembly.");
+            "Legacy Go match support must reference the Go foundation assembly.");
         Require(
             !references.Contains("KifuwarabeGo2026.Gui.Core"),
-            "Concierge must not reference the GUI assembly.");
+            "Reference.PlaySpace.Go must not reference the GUI assembly.");
         Require(
             !references.Contains("MonoGame.Framework"),
-            "Concierge must not reference MonoGame.");
+            "Reference.PlaySpace.Go must not reference MonoGame.");
 
         foreach (var forbiddenReference in ForbiddenAssemblyReferences)
         {
             Require(
                 !references.Contains(forbiddenReference),
-                $"Concierge directly references Windows-only assembly '{forbiddenReference}'.");
+                $"Reference.PlaySpace.Go directly references Windows-only assembly '{forbiddenReference}'.");
         }
 
         VerifyMatchStateTransitions();
+    }
+
+    private static void VerifyGameAgnosticConciergeAssembly(Assembly conciergeAssembly)
+    {
+        var references = conciergeAssembly
+            .GetReferencedAssemblies()
+            .Select(reference => reference.Name)
+            .Where(name => name is not null)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        Require(!references.Contains("KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation"),
+            "Concierge must not know the Go foundation assembly.");
+        Require(!references.Contains("KifuwarabeGo2026.Reference.PlaySpace.Go"),
+            "Concierge must not know the Go play-space implementation.");
+        Require(!references.Contains("KifuwarabeGo2026.Reference.PlaySpace.Ponnuki"),
+            "Concierge must not know the Ponnuki play-space implementation.");
     }
 
     private static void VerifyMatchStateTransitions()
