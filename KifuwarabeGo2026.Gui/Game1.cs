@@ -3041,6 +3041,7 @@ public class Game1 : Game
         var controls = BoardAndReviewScreen.Default.Review;
         if (controls.BackToHomeButton.IsHit(point))
         {
+            _playingScene.CloseGameOasisLocalMatchIfNeeded();
             _session.ReturnToSetup();
             return true;
         }

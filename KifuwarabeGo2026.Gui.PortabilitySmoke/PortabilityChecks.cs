@@ -107,10 +107,12 @@ internal static class PortabilityChecks
             startingTurn: GoStone.Black,
             setupStones: [new MatchSetupStone(GoStone.White, new GoPoint(8, 8))]));
         var localLifecycle = composition.LocalMatchLifecycle;
-        projectedSession.StartPlaying();
-        Require(localLifecycle.BeginStart(localMatch.Snapshot, 6.5m),
-            "The local-match lifecycle must begin opening its Protocol S play-space.");
-        Require(!localLifecycle.BeginStart(localMatch.Snapshot, 6.5m),
+        projectedSession.SelectUseKind(GoAppUseKind.LocalPlay);
+        projectedSession.SetPlayerKind(GoStone.White, GoPlayerKind.Human);
+        playingScene.StartPlaying();
+        Require(localLifecycle.State == LocalMatchGameOasisState.Opening,
+            "A human local match must begin opening its Protocol S play-space from the current start path.");
+        Require(!playingScene.BeginGameOasisLocalMatch(),
             "The local-match lifecycle must reject a second start while opening.");
         Require(SpinWait.SpinUntil(() =>
             {
@@ -120,10 +122,9 @@ internal static class PortabilityChecks
             "PlayingScene must complete the Game Oasis local-match lifecycle from its frame update.");
         Require(localLifecycle.State == LocalMatchGameOasisState.Ready,
             "Protocol G must open a play-space before a Protocol P player joins.");
-        Require(localLifecycle.Board is { White.Count: 1, NextToPlay: "black" },
-            "The local-match initial position must cross the Protocol S configuration boundary without losing setup stones or turn.");
+        Require(localLifecycle.Board is { Black.Count: 0, White.Count: 0, NextToPlay: "black" },
+            "The local-match initial position must cross the Protocol S configuration boundary without losing the starting turn.");
         Require(!projectedSession.IsMatchBackedLocalGame &&
-                projectedSession.GetStone(8, 8) == GoStone.White &&
                 projectedSession.CurrentTurn == GoStone.Black,
             "A Protocol G projection must replace the legacy Match state used by the current board renderer.");
         Require(!projectedSession.TryPlaceStone(0, 0) && !projectedSession.Pass() && !projectedSession.Resign(),
@@ -193,7 +194,9 @@ internal static class PortabilityChecks
                 projectedSession.Winner == GoStone.White &&
                 projectedSession.GameOverReason == "RESIGNATION",
             "A terminal Game Oasis outcome must drive the current result screen without consulting legacy Match state.");
-        Require(localLifecycle.BeginClose(), "The Game Oasis local-match lifecycle must begin closing its session.");
+        playingScene.CloseGameOasisLocalMatchIfNeeded();
+        Require(localLifecycle.State == LocalMatchGameOasisState.Closing,
+            "Leaving the result screen must begin closing the Game Oasis local-match session.");
         CompleteLocalMatchLifecycleOperation(localLifecycle);
         Require(localLifecycle.State == LocalMatchGameOasisState.Idle && localLifecycle.Board is null,
             "The shared Game Oasis session must close cleanly and return the local-match lifecycle to idle.");

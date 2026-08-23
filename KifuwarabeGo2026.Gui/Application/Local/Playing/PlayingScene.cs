@@ -166,7 +166,19 @@ public sealed class PlayingScene : IDisposable
     {
         _computerMoveAwaitingDraw = false;
         _session.StartPlaying();
+        if (_session.UseKind == GoAppUseKind.LocalPlay && !HasComputerPlayer() && BeginGameOasisLocalMatch())
+            return;
         StartGtpGameIfNeeded();
+    }
+
+    /// <summary>Game Oasis方式のローカル対局セッションを非同期で終了します。</summary>
+    public void CloseGameOasisLocalMatchIfNeeded()
+    {
+        var lifecycle = _gameOasisLocalMatchLifecycle;
+        if (lifecycle is null || lifecycle.IsBusy)
+            return;
+        if (lifecycle.State is LocalMatchGameOasisState.Ready or LocalMatchGameOasisState.Faulted)
+            lifecycle.BeginClose();
     }
 
     public bool TryHandleMouseClick(Point point)
