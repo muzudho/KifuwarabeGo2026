@@ -5,7 +5,7 @@
   <Project Path="KifuwarabeGo2026.GameOasis.Application/KifuwarabeGo2026.GameOasis.Application.csproj" />
   <Project Path="KifuwarabeGo2026.GameOasis.Storage/KifuwarabeGo2026.GameOasis.Storage.csproj" />
   <Project Path="KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions/KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.csproj" />
-  <Project Path="KifuwarabeGo2026.Gui.PortabilitySmoke/KifuwarabeGo2026.Gui.PortabilitySmoke.csproj" />
+  <Project Path="KifuwarabeGo2026.Tests.GameOasis.Gui.Portability/KifuwarabeGo2026.Tests.GameOasis.Gui.Portability.csproj" />
   <Project Path="KifuwarabeGo2026.GameOasis.Gui.Windows/KifuwarabeGo2026.GameOasis.Gui.Windows.csproj" />
   <Project Path="KifuwarabeGo2026.Tests.GameOasis.Gui.Windows/KifuwarabeGo2026.Tests.GameOasis.Gui.Windows.csproj" />
   <Project Path="KifuwarabeGo2026.GameOasis.Gui/KifuwarabeGo2026.GameOasis.Gui.csproj" />
@@ -13,7 +13,7 @@
   <Project Path="KifuwarabeGo2026.Launcher.Core/KifuwarabeGo2026.Launcher.Core.csproj" />
   <Project Path="KifuwarabeGo2026.Launcher.Platform/KifuwarabeGo2026.Launcher.Platform.csproj" />
   <Project Path="KifuwarabeGo2026.Launcher.Presentation/KifuwarabeGo2026.Launcher.Presentation.csproj" />
-  <Project Path="KifuwarabeGo2026.LauncherSmoke/KifuwarabeGo2026.LauncherSmoke.csproj" />
+  <Project Path="KifuwarabeGo2026.Tests.Launcher/KifuwarabeGo2026.Tests.Launcher.csproj" />
   <Project Path="KifuwarabeGo2026.Reference.PlaySpace.Ponnuki/KifuwarabeGo2026.Reference.PlaySpace.Ponnuki.csproj" />
   <Project Path="KifuwarabeGo2026.Reference.PlaySpace.Go/KifuwarabeGo2026.Reference.PlaySpace.Go.csproj" />
   <Project Path="KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation/KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation.csproj" />

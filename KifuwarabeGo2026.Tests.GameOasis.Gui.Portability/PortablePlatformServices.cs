@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Gui.PortabilitySmoke;
+namespace KifuwarabeGo2026.Tests.GameOasis.Gui.Portability;
 
 using KifuwarabeGo2026.GameOasis.Gui.Application;
 using System;

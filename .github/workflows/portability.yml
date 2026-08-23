@@ -30,22 +30,22 @@ jobs:
           dotnet-version: 10.0.302
 
       - name: Restore portability smoke
-        run: dotnet restore KifuwarabeGo2026.Gui.PortabilitySmoke/KifuwarabeGo2026.Gui.PortabilitySmoke.csproj
+        run: dotnet restore KifuwarabeGo2026.Tests.GameOasis.Gui.Portability/KifuwarabeGo2026.Tests.GameOasis.Gui.Portability.csproj
 
       - name: Build Core and portability smoke
-        run: dotnet build KifuwarabeGo2026.Gui.PortabilitySmoke/KifuwarabeGo2026.Gui.PortabilitySmoke.csproj --configuration Release --no-restore
+        run: dotnet build KifuwarabeGo2026.Tests.GameOasis.Gui.Portability/KifuwarabeGo2026.Tests.GameOasis.Gui.Portability.csproj --configuration Release --no-restore
 
       - name: Run portability checks
-        run: dotnet run --project KifuwarabeGo2026.Gui.PortabilitySmoke/KifuwarabeGo2026.Gui.PortabilitySmoke.csproj --configuration Release --no-build
+        run: dotnet run --project KifuwarabeGo2026.Tests.GameOasis.Gui.Portability/KifuwarabeGo2026.Tests.GameOasis.Gui.Portability.csproj --configuration Release --no-build
 
       - name: Restore cross-platform launcher checks
-        run: dotnet restore KifuwarabeGo2026.LauncherSmoke/KifuwarabeGo2026.LauncherSmoke.csproj
+        run: dotnet restore KifuwarabeGo2026.Tests.Launcher/KifuwarabeGo2026.Tests.Launcher.csproj
 
       - name: Build launcher Core, Presentation, and platform adapters
         run: dotnet build KifuwarabeGo2026.Launcher.Presentation/KifuwarabeGo2026.Launcher.Presentation.csproj --configuration Release
 
       - name: Run launcher Core and OS adapter checks
-        run: dotnet run --project KifuwarabeGo2026.LauncherSmoke/KifuwarabeGo2026.LauncherSmoke.csproj --configuration Release
+        run: dotnet run --project KifuwarabeGo2026.Tests.Launcher/KifuwarabeGo2026.Tests.Launcher.csproj --configuration Release
 
   windows-distribution:
     name: Windows solution and GUI publish
@@ -74,7 +74,7 @@ jobs:
         run: dotnet run --project KifuwarabeGo2026.Tests.GameOasis.Gui.Windows/KifuwarabeGo2026.Tests.GameOasis.Gui.Windows.csproj --configuration Release --no-build
 
       - name: Run launcher checks
-        run: dotnet run --project KifuwarabeGo2026.LauncherSmoke/KifuwarabeGo2026.LauncherSmoke.csproj --configuration Release --no-build
+        run: dotnet run --project KifuwarabeGo2026.Tests.Launcher/KifuwarabeGo2026.Tests.Launcher.csproj --configuration Release --no-build
 
       - name: Restore Windows GUI for win-x64
         run: dotnet restore KifuwarabeGo2026.GameOasis.Gui.Windows/KifuwarabeGo2026.GameOasis.Gui.Windows.csproj --runtime win-x64

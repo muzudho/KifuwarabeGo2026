@@ -24,7 +24,7 @@ exeをダウンロードして使う方は、[利用者向けREADME](./README.md
 | `KifuwarabeGo2026.Engine` | GTP思考エンジン |
 | `KifuwarabeGo2026.Shared` | GUIとEngineの共有コード |
 | `KifuwarabeGo2026.Reference.Communication.Cgos.Host` | CGOS通信コンポーネント |
-| `KifuwarabeGo2026.Gui.PortabilitySmoke` | OS非依存部分の回帰検査 |
+| `KifuwarabeGo2026.Tests.GameOasis.Gui.Portability` | OS非依存部分の回帰検査 |
 | `KifuwarabeGo2026.Tests.GameOasis.Gui.Windows` | Windows固有部分の回帰検査 |
 
 ## ビルド
@@ -49,7 +49,7 @@ dotnet run --project KifuwarabeGo2026.GameOasis.Gui.Windows\KifuwarabeGo2026.Gam
 ## スモークテスト
 
 ```powershell
-dotnet run --project KifuwarabeGo2026.Gui.PortabilitySmoke\KifuwarabeGo2026.Gui.PortabilitySmoke.csproj
+dotnet run --project KifuwarabeGo2026.Tests.GameOasis.Gui.Portability\KifuwarabeGo2026.Tests.GameOasis.Gui.Portability.csproj
 dotnet run --project KifuwarabeGo2026.Tests.GameOasis.Gui.Windows\KifuwarabeGo2026.Tests.GameOasis.Gui.Windows.csproj
 ```
 
