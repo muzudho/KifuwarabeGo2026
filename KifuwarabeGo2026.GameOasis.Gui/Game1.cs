@@ -245,7 +245,7 @@ public class Game1 : Game
         _cgosAdminProcess = new CgosConnectionProcess(_desktopLauncher, _platformExecutableService, "Admin");
         _tournamentRulesCatalog = TournamentRulesCatalog.LoadFromDefaultLocation();
         _gtpEngineCatalog = GtpEngineCatalogComposition.LoadFromDefaultLocation();
-        _cgosConnectionCatalog = CgosConnectionCatalog.LoadFromDefaultLocation();
+        _cgosConnectionCatalog = CgosConnectionCatalogComposition.LoadFromDefaultLocation();
         _playerCatalog = EntryCatalogComposition.LoadEntries(_gtpEngineCatalog.Profiles);
         _targetCatalog = EntryCatalogComposition.LoadClientIdentities(
             _playerCatalog.Profiles,

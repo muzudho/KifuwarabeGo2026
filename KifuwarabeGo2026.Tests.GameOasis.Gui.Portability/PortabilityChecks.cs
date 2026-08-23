@@ -113,6 +113,9 @@ internal static class PortabilityChecks
         Require(typeof(EntryCatalog).Assembly == applicationAssembly &&
                 typeof(ClientIdentityCatalog).Assembly == applicationAssembly,
             "Persistent entry and client identity catalog use cases must be owned by GameOasis.Application.");
+        Require(typeof(CgosConnectionCatalog).Assembly == applicationAssembly &&
+                typeof(CgosConnectionProfile).Assembly == applicationAssembly,
+            "Persistent CGOS connection profiles and catalog use cases must be owned by GameOasis.Application.");
         Require(typeof(ICatalogPathProvider).Assembly == applicationAssembly,
             "The catalog path boundary must be owned by GameOasis.Application.");
 
@@ -161,6 +164,14 @@ internal static class PortabilityChecks
         Require(catalogDocument.Profiles.Count == 1 && catalogDocument.Profiles[0].Id == "engine-1" &&
                 catalogJson.Contains("\"gtpEngines\"", StringComparison.Ordinal),
             "GameOasis.Application must own the GTP engine catalog JSON document conversion.");
+
+        var connection = CgosConnectionProfilePolicy.Normalize(new CgosConnectionProfile(
+            "  Practice  ", " UEC-GO.COM. ", 70000, "  -  ", " note ") { Event = " event " });
+        Require(connection.Id.Length > 0 && connection.DisplayName == "Practice" &&
+                connection.Host == "UEC-GO.COM." && connection.Port == 65535 &&
+                connection.EndpointKey == "cgos://uec-go.com:65535" &&
+                connection.Event == "event" && connection.Note == "note",
+            "GameOasis.Application must normalize CGOS connection destinations independently of the GUI.");
     }
 
     private static void VerifyGameOasisPlayerParticipation()

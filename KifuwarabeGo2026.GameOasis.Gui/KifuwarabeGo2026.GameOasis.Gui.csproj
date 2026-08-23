@@ -7,6 +7,11 @@
     <TieredCompilation>false</TieredCompilation>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Remove="Docs\**" />
+    <EmbeddedResource Remove="Docs\**" />
+    <None Remove="Docs\**" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.*" />
   </ItemGroup>
   <ItemGroup>
@@ -35,8 +40,6 @@
     <Folder Include="Application\Sessions\VariationSession\" />
     <Folder Include="Application\Sessions\GameRecords\Go\" />
     <Folder Include="Application\Sessions\GameRecords\" />
-    <Folder Include="Docs\開発\ゲームオアシス構想\" />
-    <Folder Include="Docs\開発\中止\" />
     <Folder Include="Presentation\BoardLens\RenSystem\" />
     <Folder Include="Presentation\BoardLens\LibertySystem\" />
     <Folder Include="Presentation\BoardLens\GlassesSystem\" />
