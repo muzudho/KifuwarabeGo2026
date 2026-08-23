@@ -23,7 +23,7 @@ exeをダウンロードして使う方は、[利用者向けREADME](./README.md
 | `KifuwarabeGo2026.Gui.Windows` | Windows起動部分とWindows固有サービス |
 | `KifuwarabeGo2026.Engine` | GTP思考エンジン |
 | `KifuwarabeGo2026.Shared` | GUIとEngineの共有コード |
-| `KifuwarabeGo2026.Gui.Communication.Cgos` | CGOS通信コンポーネント |
+| `KifuwarabeGo2026.Reference.Communication.Cgos.Host` | CGOS通信コンポーネント |
 | `KifuwarabeGo2026.Gui.PortabilitySmoke` | OS非依存部分の回帰検査 |
 | `KifuwarabeGo2026.Gui.WindowsSmoke` | Windows固有部分の回帰検査 |
 

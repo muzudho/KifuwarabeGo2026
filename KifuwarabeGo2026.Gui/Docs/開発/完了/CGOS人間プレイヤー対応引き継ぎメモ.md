@@ -88,7 +88,7 @@ GUI -> 通信クライアント: move D4
 - `CgosLoginRenderer.cs`: プレイヤー1種別選択と `_human` の案内
 - `Game1.cs`: 人間着手の盤入力、接続元・ゲームID別イベント振り分け
 - `CgosConnectionProcess.cs`: 構造化イベントの受信と人間着手コマンドの送信
-- `KifuwarabeGo2026.Gui.Communication.Cgos/Program.cs`: 人間モード、`genmove`
+- `KifuwarabeGo2026.Reference.Communication.Cgos.Host/Program.cs`: 人間モード、`genmove`
   待機、着手応答、切断時の待機解除
 - `CgosGameObservation.cs`: 異なるゲームIDのイベントを混在させない防御
 

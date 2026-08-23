@@ -18,7 +18,7 @@
   - `KifuwarabeGo2026.Shared.dll`
   - `Content/Fonts/Ui.xnb`
   - `Content/Fonts/BoardCoordinate.xnb`
-  - `Tools/Cgos/KifuwarabeGo2026.Gui.Communication.Cgos.exe`
+  - `Tools/Cgos/KifuwarabeGo2026.Reference.Communication.Cgos.Host.exe`
 - 新WindowsプロジェクトのDebug版を起動できた。
 - プロセスが応答中で、ウィンドウタイトルは `Kifuwarabe Go 2026`。
 - Content読込後もタイトル画面を維持した。

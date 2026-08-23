@@ -23,4 +23,5 @@ public sealed class FileCatalogDocumentStore : ICatalogDocumentStore
 public static class CatalogDocumentStorage
 {
     public static ICatalogDocumentStore Default { get; } = new FileCatalogDocumentStore();
+    public static ICatalogPathProvider Paths { get; } = new DefaultCatalogPathProvider();
 }

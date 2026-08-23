@@ -45,7 +45,7 @@
   </ItemGroup>
   <Target Name="PublishCgosCommunication" AfterTargets="Publish">
     <PropertyGroup>
-      <CgosCommunicationProject>$(MSBuildProjectDirectory)\..\KifuwarabeGo2026.Gui.Communication.Cgos\KifuwarabeGo2026.Gui.Communication.Cgos.csproj</CgosCommunicationProject>
+      <CgosCommunicationProject>$(MSBuildProjectDirectory)\..\KifuwarabeGo2026.Reference.Communication.Cgos.Host\KifuwarabeGo2026.Reference.Communication.Cgos.Host.csproj</CgosCommunicationProject>
       <CgosCommunicationPublishDir>$(PublishDir)Tools\Cgos\</CgosCommunicationPublishDir>
     </PropertyGroup>
     <Message Text="Publishing CGOS communication component to $(CgosCommunicationPublishDir)" Importance="High" />

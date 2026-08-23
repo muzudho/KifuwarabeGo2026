@@ -221,7 +221,7 @@ UNEXPECTED GAME
   - ゲームID不一致イベントの拒否
   - 重複イベントの拒否
   - 切断終了と SGF 保存に必要な状態
-- `KifuwarabeGo2026.Gui.Communication.Cgos/Program.cs`
+- `KifuwarabeGo2026.Reference.Communication.Cgos.Host/Program.cs`
   - GUI が接続役割を識別できる出力
   - ゲームIDを伴う投了要求の検証
 

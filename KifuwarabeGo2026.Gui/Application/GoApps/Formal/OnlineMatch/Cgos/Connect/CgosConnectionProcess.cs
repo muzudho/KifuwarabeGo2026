@@ -947,7 +947,7 @@ public sealed class CgosConnectionProcess : IDisposable
         }
 
         throw new FileNotFoundException(
-            "CGOS communication executable is incomplete. Build KifuwarabeGo2026.Gui.Communication.Cgos first. Missing: " +
+            "CGOS communication executable is incomplete. Build KifuwarabeGo2026.Reference.Communication.Cgos.Host first. Missing: " +
             string.Join(", ", missingPaths.Select(Path.GetFileName)),
             missingPaths[0]);
     }
@@ -979,7 +979,7 @@ public sealed class CgosConnectionProcess : IDisposable
     private string GetCgosCommunicationExecutablePath(string repositoryRoot)
     {
         var executableFileName = _platformExecutableService.GetFileName(
-            "KifuwarabeGo2026.Gui.Communication.Cgos");
+            "KifuwarabeGo2026.Reference.Communication.Cgos.Host");
         var bundledExecutablePath = Path.Combine(
             AppContext.BaseDirectory,
             "Tools",
@@ -997,7 +997,7 @@ public sealed class CgosConnectionProcess : IDisposable
 #endif
         return Path.Combine(
             repositoryRoot,
-            "KifuwarabeGo2026.Gui.Communication.Cgos",
+            "KifuwarabeGo2026.Reference.Communication.Cgos.Host",
             "bin",
             buildConfiguration,
             "net8.0",

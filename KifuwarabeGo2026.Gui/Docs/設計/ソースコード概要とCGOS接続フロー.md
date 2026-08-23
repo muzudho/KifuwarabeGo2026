@@ -16,16 +16,16 @@ KifuwarabeGo2026 のソースコードを、次の開発作業へ入る前に短
 | --- | --- | --- |
 | `KifuwarabeGo2026` | MonoGame GUI | 画面表示、ローカル対局、設定編集、CGOS 接続画面、外部プロセス起動 |
 | `KifuwarabeGo2026.Engine` | コンソール GTP エンジン | 標準入力と標準出力で GTP を話すランダム合法手エンジン |
-| `KifuwarabeGo2026.Gui.Communication.Cgos` | コンソール通信クライアント | CGOS サーバーへ TCP 接続し、CGOS と GTP エンジンの間を中継 |
+| `KifuwarabeGo2026.Reference.Communication.Cgos.Host` | コンソール通信クライアント | CGOS サーバーへ TCP 接続し、CGOS と GTP エンジンの間を中継 |
 
 依存の向きは大まかに次の通り。
 
 ```text
 KifuwarabeGo2026
   -> Domain / Gtp / Application / Presentation
-  -> 外部プロセスとして KifuwarabeGo2026.Gui.Communication.Cgos.exe を起動
+  -> 外部プロセスとして KifuwarabeGo2026.Reference.Communication.Cgos.Host.exe を起動
 
-KifuwarabeGo2026.Gui.Communication.Cgos
+KifuwarabeGo2026.Reference.Communication.Cgos.Host
   -> TCP で CGOS サーバーへ接続
   -> 外部プロセスとして GTP エンジンを起動
 
@@ -177,7 +177,7 @@ CGOS 接続では、選択した `GtpEngineProfile` から `executablePath` と 
   -> GUI: Black / White の GTP エンジンを選ぶ
   -> GUI: Admin / Black / White の START を押す
   -> CgosConnectionProcess
-  -> KifuwarabeGo2026.Gui.Communication.Cgos.exe
+  -> KifuwarabeGo2026.Reference.Communication.Cgos.Host.exe
   -> TCP: CGOS サーバー
   -> CGOS の setup/play/genmove/gameover を処理
   -> GTP エンジンプロセスへ boardsize/komi/clear_board/play/genmove/quit
@@ -233,7 +233,7 @@ Black または White の `START` を押すと `Game1.ToggleCgosPlayerConnection
 内部では `CgosConnectionProcess.Start(...)` を呼び、以下を行う。
 
 1. リポジトリルートを探す。
-2. `KifuwarabeGo2026.Gui.Communication.Cgos/bin/{Debug|Release}/net8.0/KifuwarabeGo2026.Gui.Communication.Cgos.exe` を探す。
+2. `KifuwarabeGo2026.Reference.Communication.Cgos.Host/bin/{Debug|Release}/net8.0/KifuwarabeGo2026.Reference.Communication.Cgos.Host.exe` を探す。
 3. 実行ファイルがなければ `CGOS communication executable was not found. Build the solution first.` で失敗する。
 4. ログディレクトリを `Logs/Cgos/BlackPlayer`、`Logs/Cgos/WhitePlayer`、または `Logs/Cgos/Players` に決める。
 5. 通信 exe を `ProcessStartInfo` で起動する。
@@ -253,7 +253,7 @@ Admin の `START` では `CgosConnectionProcess.StartAdmin(...)` が呼ばれ、
 
 ### 6. 通信クライアントが起動オプションを解釈する
 
-`KifuwarabeGo2026.Gui.Communication.Cgos/Program.cs` の `CgosClientOptions.Parse(...)` がコマンドラインを読む。
+`KifuwarabeGo2026.Reference.Communication.Cgos.Host/Program.cs` の `CgosClientOptions.Parse(...)` がコマンドラインを読む。
 
 主な既定値:
 
@@ -306,7 +306,7 @@ CGOS からのログイン要求に対して、次のように応答する。
 
 ### 9. GTP エンジンプロセス
 
-`KifuwarabeGo2026.Gui.Communication.Cgos` 内の `GtpEngineProcess` が、`--engine-command` で受け取ったコマンドラインを起動する。
+`KifuwarabeGo2026.Reference.Communication.Cgos.Host` 内の `GtpEngineProcess` が、`--engine-command` で受け取ったコマンドラインを起動する。
 
 Windows では次の形になる。
 
@@ -364,7 +364,7 @@ GUI ローカル対局用の `GtpEngineClient` と、CGOS 通信クライアン�
 
 ### 通信 exe はビルド済みファイル前提
 
-GUI からは `KifuwarabeGo2026.Gui.Communication.Cgos.exe` を直接探して起動する。`dotnet run` ではなくビルド済み exe 前提なので、GUI から CGOS を試す前に対象構成でビルドが必要。
+GUI からは `KifuwarabeGo2026.Reference.Communication.Cgos.Host.exe` を直接探して起動する。`dotnet run` ではなくビルド済み exe 前提なので、GUI から CGOS を試す前に対象構成でビルドが必要。
 
 ### パスワードは固定
 
@@ -379,7 +379,7 @@ GUI からは `KifuwarabeGo2026.Gui.Communication.Cgos.exe` を直接探して�
 | GUI の接続先一覧を変える | `Application/Cgos/ConnectionTarget/CgosConnectionCatalog.cs`、`GoAppSession.cs`、`GoScreenRenderer.cs` |
 | GUI の接続開始画面を変える | `Game1.cs`、`GoAppSession.cs`、`GoScreenRenderer.cs` |
 | GUI から起動する通信プロセスの引数を変える | `Application/Cgos/Connect/CgosConnectionProcess.cs` |
-| CGOS のログインや TCP 接続を変える | `KifuwarabeGo2026.Gui.Communication.Cgos/Program.cs` の `CgosConnectionSession`、`CgosTcpConnector` |
-| CGOS コマンド対応を増やす | `KifuwarabeGo2026.Gui.Communication.Cgos/Program.cs` の `CgosClient.HandleLineAsync(...)` |
-| GTP エンジン起動・応答読み取りを変える | `KifuwarabeGo2026.Gui.Communication.Cgos/Program.cs` の `GtpEngineProcess` |
+| CGOS のログインや TCP 接続を変える | `KifuwarabeGo2026.Reference.Communication.Cgos.Host/Program.cs` の `CgosConnectionSession`、`CgosTcpConnector` |
+| CGOS コマンド対応を増やす | `KifuwarabeGo2026.Reference.Communication.Cgos.Host/Program.cs` の `CgosClient.HandleLineAsync(...)` |
+| GTP エンジン起動・応答読み取りを変える | `KifuwarabeGo2026.Reference.Communication.Cgos.Host/Program.cs` の `GtpEngineProcess` |
 | CGOS の局面を GUI へ反映する | まず `CgosConnectionProcess` の出力監視だけでは不足。通信結果を構造化して `GoAppSession` や対局画面へ渡す設計が必要 |

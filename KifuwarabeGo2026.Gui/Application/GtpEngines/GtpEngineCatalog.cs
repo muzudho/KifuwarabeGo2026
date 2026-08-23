@@ -33,9 +33,7 @@ public sealed class GtpEngineCatalog
 
     public static GtpEngineCatalog LoadFromDefaultLocation()
     {
-        var localApplicationData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        var directory = Path.Combine(localApplicationData, "KifuwarabeGo2026", "GtpEngines");
-        var listPath = Path.Combine(directory, "gtp-engine-list.json");
+        var listPath = CatalogDocumentStorage.Paths.GtpEngineListPath;
         if (!CatalogDocumentStorage.Default.Exists(listPath))
         {
             var defaultDirectory =
@@ -57,7 +55,7 @@ public sealed class GtpEngineCatalog
                 catalog = new GtpEngineCatalog(catalog.ListPath, catalog.Profiles,
                     catalog.RequiresSave, duplicateIdsRepaired: true);
         }
-        var developmentListPath = FindDevelopmentListPath();
+        var developmentListPath = CatalogDocumentStorage.Paths.FindDevelopmentGtpEngineListPath();
         if (developmentListPath is null) return catalog;
 
         var profiles = catalog.Profiles.ToList();
@@ -79,28 +77,6 @@ public sealed class GtpEngineCatalog
         if (!changed) return catalog;
         catalog.Save(profiles);
         return Load(listPath);
-    }
-
-    private static string? FindDevelopmentListPath()
-    {
-        var directory = new DirectoryInfo(AppContext.BaseDirectory);
-        while (directory is not null)
-        {
-            if (CatalogDocumentStorage.Default.Exists(Path.Combine(directory.FullName, "KifuwarabeGo2026.slnx")))
-            {
-                var path = Path.Combine(
-                    directory.FullName,
-                    "KifuwarabeGo2026.Gui",
-                    "Content",
-                    "GtpEngines",
-                    "gtp-engine-list.json");
-                return CatalogDocumentStorage.Default.Exists(path) ? path : null;
-            }
-
-            directory = directory.Parent;
-        }
-
-        return null;
     }
 
     public static GtpEngineCatalog Load(string listPath)
