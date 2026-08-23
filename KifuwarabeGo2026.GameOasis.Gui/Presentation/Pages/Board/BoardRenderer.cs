@@ -9,7 +9,7 @@ using KifuwarabeGo2026.GameOasis.Gui.Presentation.BoardLens.Shared.RenBoundaries
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.BoardAndReview;
 using KifuwarabeGo2026.Shared.Domain;
-using KifuwarabeGo2026.Reference.GUI;
+using KifuwarabeGo2026.Reference.Gui;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;

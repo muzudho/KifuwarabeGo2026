@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Reference.GUI;
+namespace KifuwarabeGo2026.Reference.Gui;
 
 using KifuwarabeGo2026.GameOasis.Contracts.Common;
 using KifuwarabeGo2026.GameOasis.Contracts.ProtocolG;

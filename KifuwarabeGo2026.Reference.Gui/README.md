@@ -1,4 +1,4 @@
-# KifuwarabeGo2026.Reference.GUI
+# KifuwarabeGo2026.Reference.Gui
 
 Protocol Gを利用する公式参照GUIの、描画技術に依存しないクライアント状態モデルです。`GameOasisGuiClient`はプレイスペースカタログ、一つの選択中セッション、最新スナップショット、直近エラーを保持します。
 

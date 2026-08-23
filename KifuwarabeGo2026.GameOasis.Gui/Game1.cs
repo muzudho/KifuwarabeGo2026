@@ -66,7 +66,7 @@ using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.LiveBoardPreview;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.RandomSeedRow;
 using KifuwarabeGo2026.GameOasis.Gui.Application.GameOasis;
 using KifuwarabeGo2026.GameOasis.Contracts.Common;
-using KifuwarabeGo2026.Reference.GUI;
+using KifuwarabeGo2026.Reference.Gui;
 
 public class Game1 : Game
 {

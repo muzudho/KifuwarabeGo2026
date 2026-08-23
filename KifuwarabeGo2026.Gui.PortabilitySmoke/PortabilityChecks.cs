@@ -26,7 +26,7 @@ using KifuwarabeGo2026.Reference.Communication.Gtp.Protocol;
 using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Sgf;
 using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Strategies;
 using KifuwarabeGo2026.Reference.PlaySpace.Go.LegacyMatch;
-using KifuwarabeGo2026.Reference.GUI;
+using KifuwarabeGo2026.Reference.Gui;
 using KifuwarabeGo2026.Reference.PlayerEngine;
 using KifuwarabeGo2026.Shared.Domain;
 using Microsoft.Xna.Framework;

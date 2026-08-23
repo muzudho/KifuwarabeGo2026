@@ -25,7 +25,7 @@ using KifuwarabeGo2026.GameOasis.Gui.Presentation.Title;
 using Microsoft.Xna.Framework;
 using KifuwarabeGo2026.Shared.Domain;
 using KifuwarabeGo2026.GameOasis.Contracts.Common;
-using KifuwarabeGo2026.Reference.GUI;
+using KifuwarabeGo2026.Reference.Gui;
 using KifuwarabeGo2026.GameOasis.Contracts.ProtocolG;
 using System.Collections.Generic;
 
