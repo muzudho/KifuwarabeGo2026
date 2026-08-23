@@ -21,6 +21,7 @@ public sealed class GameOasisGuiComposition : IDisposable
         PlayerCoordinator = new(concierge);
         PlayerParticipation = new(PlayerCoordinator, client);
         PlayerParticipationBridge = new(PlayerParticipation, BoardController);
+        SecondaryPlayerParticipationBridge = new(PlayerParticipation, BoardController);
         LocalMatchLifecycle = new(BoardController);
     }
 
@@ -31,6 +32,7 @@ public sealed class GameOasisGuiComposition : IDisposable
     public GameOasisPlayerCoordinator PlayerCoordinator { get; }
     public GameOasisPlayerParticipation PlayerParticipation { get; }
     public GameOasisPlayerParticipationBridge PlayerParticipationBridge { get; }
+    public GameOasisPlayerParticipationBridge SecondaryPlayerParticipationBridge { get; }
     public LocalMatchGameOasisLifecycle LocalMatchLifecycle { get; }
 
     public ProtocolResponse<GuiBoardView> GetActiveBoard()
@@ -42,6 +44,7 @@ public sealed class GameOasisGuiComposition : IDisposable
     {
         LocalMatchLifecycle.Dispose();
         PlayerParticipationBridge.Dispose();
+        SecondaryPlayerParticipationBridge.Dispose();
         PlayingBridge.Dispose();
     }
 

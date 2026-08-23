@@ -156,7 +156,7 @@ internal static class Program
         var session = new GoAppSession();
         session.SelectUseKind(GoAppUseKind.LocalPlay);
         session.SetPlayerKind(GoStone.Black, GoPlayerKind.Computer);
-        session.SetPlayerKind(GoStone.White, GoPlayerKind.Human);
+        session.SetPlayerKind(GoStone.White, GoPlayerKind.Computer);
         session.SetGtpEngineProfiles([
             new GtpEngineProfile
             {
@@ -169,20 +169,21 @@ internal static class Program
         ]);
         using var scene = new PlayingScene(session, (_, _, _) => { }, () => { }, () => { });
         scene.AttachGameOasisPlayerBridge(composition.PlayerParticipationBridge);
+        scene.AttachGameOasisPlayerBridge(composition.SecondaryPlayerParticipationBridge);
         scene.AttachGameOasisLocalMatchLifecycle(composition.LocalMatchLifecycle);
         scene.StartPlaying();
         Require(SpinWait.SpinUntil(() =>
             {
                 scene.Update();
-                return session.BlackStoneCount == 1 || !string.IsNullOrWhiteSpace(session.EngineErrorMessage);
+                return session.WhiteStoneCount >= 1 || !string.IsNullOrWhiteSpace(session.EngineErrorMessage);
             }, TimeSpan.FromSeconds(15)),
-            "The bundled computer did not complete its first Game Oasis Protocol P turn.");
+            "The bundled computers did not complete both Game Oasis Protocol P turns.");
         Require(string.IsNullOrWhiteSpace(session.EngineErrorMessage) &&
                 session.IsGameOasisProjectedLocalGame &&
                 !session.IsMatchBackedLocalGame &&
-                session.BlackStoneCount == 1 &&
-                session.CurrentTurn == GoStone.White,
-            "The bundled computer turn did not return through Protocol P, Protocol S, and the Protocol G board projection.");
+                session.BlackStoneCount >= 1 &&
+                session.WhiteStoneCount >= 1,
+            "The bundled computer turns did not return through two Protocol P participants, Protocol S, and the Protocol G board projection.");
         scene.CloseGameOasisLocalMatchIfNeeded();
         Require(SpinWait.SpinUntil(() =>
             {

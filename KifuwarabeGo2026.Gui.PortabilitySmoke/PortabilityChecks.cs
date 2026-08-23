@@ -98,6 +98,8 @@ internal static class PortabilityChecks
         using var playingScene = new PlayingScene(projectedSession, (_, _, _) => { }, () => { }, () => { });
         playingScene.AttachGameOasisPlayerBridge(composition.PlayerParticipationBridge);
         playingScene.AttachGameOasisPlayerBridge(composition.PlayerParticipationBridge);
+        playingScene.AttachGameOasisPlayerBridge(composition.SecondaryPlayerParticipationBridge);
+        playingScene.AttachGameOasisPlayerBridge(composition.SecondaryPlayerParticipationBridge);
         playingScene.AttachGameOasisLocalMatchLifecycle(composition.LocalMatchLifecycle);
         playingScene.AttachGameOasisLocalMatchLifecycle(composition.LocalMatchLifecycle);
         playingScene.Update();
