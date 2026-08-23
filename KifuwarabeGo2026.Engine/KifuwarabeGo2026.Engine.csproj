@@ -21,8 +21,4 @@
     <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlayerEngine\KifuwarabeGo2026.Reference.PlayerEngine.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="GoApps\Formal\OnlineMatch.Cgos\" />
-  </ItemGroup>
-
 </Project>
