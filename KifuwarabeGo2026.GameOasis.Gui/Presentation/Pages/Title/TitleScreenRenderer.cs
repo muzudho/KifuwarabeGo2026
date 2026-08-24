@@ -420,7 +420,7 @@ public sealed class TitleScreenRenderer
             DrawLine(new Vector2(board.Right - 17, board.Center.Y - 7), new Vector2(board.Right - 10, board.Center.Y), 3, color);
             DrawLine(new Vector2(board.Right - 17, board.Center.Y + 7), new Vector2(board.Right - 10, board.Center.Y), 3, color);
         }
-        DrawDynamicOptionText(label, new Rectangle(bounds.X + 56, bounds.Y + 15, bounds.Width - 62, 34), color, 0.23f);
+        DrawDynamicOptionText(label, new Rectangle(bounds.X + 56, bounds.Y + 11, bounds.Width - 62, 42), color, 0.38f);
     }
     #endregion
 
