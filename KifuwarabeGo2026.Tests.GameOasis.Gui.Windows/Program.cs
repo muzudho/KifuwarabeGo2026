@@ -23,17 +23,21 @@ using System.Collections.Generic;
 using System.Linq;
 using System.IO;
 using System.Threading;
+using System.Runtime.InteropServices;
 
 internal static class Program
 {
     private static readonly byte[] PngSignature =
         [137, 80, 78, 71, 13, 10, 26, 10];
 
+    [STAThread]
     private static int Main()
     {
         try
         {
             VerifyServiceComposition();
+            VerifyLauncherShortcutStore();
+            VerifyLauncherShortcutRewrite();
             VerifyExecutableNaming();
             VerifyGuiExecutableGuard();
             VerifyProviderSelectionEditingAndThirdComboChoice();
@@ -148,6 +152,100 @@ internal static class Program
         session.OpenGtpEngineRandomMoveSelectionDialog(boardSize);
         Require(KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.GtpEngine.GtpEngineRenderer.GetGtpEngineRandomMoveSelectionDialogItemHit(new Point(700, 520), session) == 2,
             "The third Provider combo choice was displayed but had no click hit target.");
+    }
+
+    private static void VerifyLauncherShortcutStore()
+    {
+        var temporaryRoot = Path.Combine(Path.GetTempPath(), "KifuwarabeGo2026-shortcut-store-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            var store = new WindowsLauncherShortcutStore(temporaryRoot);
+            var entries = Enumerable.Range(1, WindowsLauncherShortcutStore.MaximumCount)
+                .Select(index => new LauncherShortcutEntry(
+                    index.ToString(),
+                    Path.Combine(temporaryRoot, $"launcher-{index}.lnk"),
+                    $"Launcher {index}",
+                    Path.Combine(temporaryRoot, "old", "KifuwarabeGo2026.Launcher.exe")))
+                .ToList();
+            store.Save(entries);
+            var restored = store.Load();
+            Require(restored.Count == 5 && restored[4].DisplayName == "Launcher 5",
+                "The launcher shortcut registry did not persist five entries.");
+
+            var tooMany = entries.Append(entries[0] with { Id = "6", Path = Path.Combine(temporaryRoot, "launcher-6.lnk") }).ToList();
+            RequireThrows<InvalidOperationException>(() => store.Save(tooMany),
+                "The launcher shortcut registry accepted more than five entries.");
+            RequireThrows<InvalidOperationException>(() => store.Save([entries[0], entries[0] with { Id = "duplicate" }]),
+                "The launcher shortcut registry accepted a duplicate path.");
+        }
+        finally
+        {
+            if (Directory.Exists(temporaryRoot)) Directory.Delete(temporaryRoot, recursive: true);
+        }
+    }
+
+    private static void VerifyLauncherShortcutRewrite()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        var temporaryRoot = Path.Combine(Path.GetTempPath(), "KifuwarabeGo2026-shell-link-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(Path.Combine(temporaryRoot, "old"));
+        Directory.CreateDirectory(Path.Combine(temporaryRoot, "current"));
+        var oldTarget = Path.Combine(temporaryRoot, "old", "KifuwarabeGo2026.Launcher.exe");
+        var newTarget = Path.Combine(temporaryRoot, "current", "KifuwarabeGo2026.Launcher.exe");
+        var shortcutPath = Path.Combine(temporaryRoot, "Launcher.lnk");
+        File.WriteAllBytes(oldTarget, [0]);
+        File.WriteAllBytes(newTarget, [0]);
+        dynamic? shell = null;
+        dynamic? shortcut = null;
+        try
+        {
+            var shellType = Type.GetTypeFromProgID("WScript.Shell") ?? throw new PlatformNotSupportedException();
+            shell = Activator.CreateInstance(shellType) ?? throw new InvalidOperationException("Windows Script Host could not be started.");
+            shortcut = shell.CreateShortcut(shortcutPath);
+            shortcut.TargetPath = oldTarget;
+            shortcut.Arguments = "--smoke";
+            shortcut.WorkingDirectory = Path.GetDirectoryName(oldTarget)!;
+            shortcut.IconLocation = oldTarget + ",0";
+            shortcut.Save();
+            ReleaseCom(shortcut);
+            shortcut = null;
+
+            var service = new WindowsShellLinkService();
+            Require(string.Equals(service.ReadTarget(shortcutPath), oldTarget, StringComparison.OrdinalIgnoreCase),
+                "The registered launcher shortcut target could not be read.");
+            service.RewriteLauncherTarget(shortcutPath, oldTarget, newTarget);
+            Require(string.Equals(service.ReadTarget(shortcutPath), newTarget, StringComparison.OrdinalIgnoreCase),
+                "The launcher shortcut was not redirected to the managed launcher.");
+
+            shortcut = shell.CreateShortcut(shortcutPath);
+            Require((string)shortcut.Arguments == "--smoke" &&
+                    string.Equals((string)shortcut.WorkingDirectory, Path.GetDirectoryName(newTarget), StringComparison.OrdinalIgnoreCase),
+                "The shortcut rewrite did not preserve arguments or follow the launcher working directory.");
+        }
+        finally
+        {
+            ReleaseCom(shortcut);
+            ReleaseCom(shell);
+            if (Directory.Exists(temporaryRoot)) Directory.Delete(temporaryRoot, recursive: true);
+        }
+    }
+
+    private static void ReleaseCom(dynamic? instance)
+    {
+        if (instance is not null && Marshal.IsComObject(instance)) Marshal.FinalReleaseComObject(instance);
+    }
+
+    private static void RequireThrows<TException>(Action action, string message) where TException : Exception
+    {
+        try
+        {
+            action();
+        }
+        catch (TException)
+        {
+            return;
+        }
+        throw new InvalidOperationException(message);
     }
 
     private static void VerifyGameOasisComputerPlayerPipeline()

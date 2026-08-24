@@ -43,6 +43,9 @@
   <ItemGroup>
     <ProjectReference Include="..\KifuwarabeGo2026.GameOasis.Gui\KifuwarabeGo2026.GameOasis.Gui.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="KifuwarabeGo2026.Tests.GameOasis.Gui.Windows" />
+  </ItemGroup>
   <Target Name="PublishCgosCommunication" AfterTargets="Publish">
     <PropertyGroup>
       <CgosCommunicationProject>$(MSBuildProjectDirectory)\..\KifuwarabeGo2026.Reference.Communication.Cgos.Host\KifuwarabeGo2026.Reference.Communication.Cgos.Host.csproj</CgosCommunicationProject>

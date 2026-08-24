@@ -31,7 +31,8 @@ internal static class Program
                 new WindowsWindowIconService(),
                 new WindowsInitialWindowLayoutService(),
                 platformExecutableService,
-                new WindowsWindowScreenshotService());
+                new WindowsWindowScreenshotService(),
+                new WindowsLauncherMaintenanceService());
             textCompositionService.Attach(game.Window.Handle);
             try
             {

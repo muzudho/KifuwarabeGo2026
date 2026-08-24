@@ -65,6 +65,7 @@ using System.Threading.Tasks;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.LiveBoardPreview;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.RandomSeedRow;
 using KifuwarabeGo2026.GameOasis.Gui.Application.GameOasis;
+using KifuwarabeGo2026.GameOasis.Gui.Application.LauncherMaintenance;
 using KifuwarabeGo2026.GameOasis.Contracts.Common;
 using KifuwarabeGo2026.Reference.Gui;
 
@@ -81,6 +82,7 @@ public class Game1 : Game
     private readonly IInitialWindowLayoutService _initialWindowLayoutService;
     private readonly IPlatformExecutableService _platformExecutableService;
     private readonly IWindowScreenshotService _windowScreenshotService;
+    private readonly ILauncherMaintenanceService _launcherMaintenanceService;
     private readonly GoAppSession _session = new();
     private Task<GameOasisGuiComposition>? _gameOasisCompositionTask;
     private GameOasisGuiComposition? _gameOasisComposition;
@@ -226,7 +228,8 @@ public class Game1 : Game
         IWindowIconService windowIconService,
         IInitialWindowLayoutService initialWindowLayoutService,
         IPlatformExecutableService platformExecutableService,
-        IWindowScreenshotService windowScreenshotService)
+        IWindowScreenshotService windowScreenshotService,
+        ILauncherMaintenanceService? launcherMaintenanceService = null)
     {
         _clipboardService = clipboardService;
         _textCompositionService = textCompositionService;
@@ -239,6 +242,7 @@ public class Game1 : Game
         _initialWindowLayoutService = initialWindowLayoutService;
         _platformExecutableService = platformExecutableService;
         _windowScreenshotService = windowScreenshotService;
+        _launcherMaintenanceService = launcherMaintenanceService ?? UnsupportedLauncherMaintenanceService.Instance;
         _gameOasisCompositionTask = GameOasisGuiComposition.CreateAsync().AsTask();
         _cgosBlackConnectionProcess = new CgosConnectionProcess(_desktopLauncher, _platformExecutableService, "BlackPlayer");
         _cgosWhiteConnectionProcess = new CgosConnectionProcess(_desktopLauncher, _platformExecutableService, "PracticePlayer");
@@ -1310,7 +1314,16 @@ public class Game1 : Game
                 }
                 else if (ApplicationSettingsScreen.Default.UpdateButton.IsHit(point))
                 {
-                    BeginGuiReleaseUpdate();
+                    GuiOperationLog.User("Pressed Launcher update button");
+                    if (_launcherMaintenanceService.IsSupported)
+                    {
+                        _launcherMaintenanceService.ShowInteractiveUpdater();
+                    }
+                    else
+                    {
+                        _messageDialog = new MessageDialog("LAUNCHER UPDATE", _launcherMaintenanceService.UnsupportedReason, "CLOSE");
+                        _session.ActivateModalWindow(ActiveWindowId.MessageDialog);
+                    }
                 }
                 else if (ApplicationSettingsScreen.Default.SettingsButton.IsHit(point))
                 {
