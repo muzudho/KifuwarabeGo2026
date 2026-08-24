@@ -3,7 +3,8 @@
 Kifuwarabe Go 2026を、交換可能なプレイヤー、ゲームマスター、GUI、ゲームスペースから構成されるゲームプラットフォーム「Kifuwarabe Game Oasis」へ再構成する最初のメジャーリリースです。
 
 > [!IMPORTANT]
-> 通常利用者は `KifuwarabeGo2026.Launcher-v4.0.0-win-x64.zip` をダウンロードしてください。v4.x.xはv3.x.xからの移行期間です。GUI版・Engine版の公開資産名と既存設定の互換経路を維持します。
+> 通常利用者は `KifuwarabeGo2026.Launcher-v4.0.0-win-x64.zip` をダウンロードしてください。
+> v4.x.xはv3.x.xからの移行期間です。GUI版・Engine版の公開資産名と既存設定の互換経路を維持します。
 
 ## Game Oasis基盤
 
