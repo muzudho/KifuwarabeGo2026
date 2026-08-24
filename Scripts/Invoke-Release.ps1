@@ -44,6 +44,20 @@ function Assert-FileExists {
     }
 }
 
+function Clear-PublishDirectory {
+    param([Parameter(Mandatory)] [string] $LiteralPath)
+
+    $fullPath = [System.IO.Path]::GetFullPath((Join-Path $repositoryRoot $LiteralPath))
+    $expectedRoot = [System.IO.Path]::GetFullPath($repositoryRoot) + [System.IO.Path]::DirectorySeparatorChar
+    if (-not $fullPath.StartsWith($expectedRoot, [System.StringComparison]::OrdinalIgnoreCase) -or
+        -not $fullPath.EndsWith([System.IO.Path]::DirectorySeparatorChar + 'publish', [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw "Refusing to clear an unexpected publish directory: $fullPath"
+    }
+    if (Test-Path -LiteralPath $fullPath) {
+        Remove-Item -LiteralPath $fullPath -Recurse -Force
+    }
+}
+
 function Assert-ProjectVersion {
     param([Parameter(Mandatory)] [string] $ProjectPath)
 
@@ -96,7 +110,7 @@ $versionProjects = @(
     'KifuwarabeGo2026.Reference.PlayerEngine\KifuwarabeGo2026.Reference.PlayerEngine.csproj',
     'KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation\KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation.csproj',
     'KifuwarabeGo2026.StationeryUI\KifuwarabeGo2026.StationeryUI.csproj',
-    'KifuwarabeGo2026.GameOasis.Gui.Communication.Cgos\KifuwarabeGo2026.GameOasis.Gui.Communication.Cgos.csproj'
+    'KifuwarabeGo2026.Reference.Communication.Cgos.Host\KifuwarabeGo2026.Reference.Communication.Cgos.Host.csproj'
 )
 $versionProjects | ForEach-Object { Assert-ProjectVersion -ProjectPath $_ }
 
@@ -129,21 +143,34 @@ if (-not $SkipBuild) {
         Invoke-CheckedCommand -Command dotnet -Arguments @('run', '--project', 'KifuwarabeGo2026.Tests.GameOasis.Gui.Windows\KifuwarabeGo2026.Tests.GameOasis.Gui.Windows.csproj', '-c', 'Release', '--no-build')
     }
 
+    Clear-PublishDirectory -LiteralPath $launcherPublish
+    Clear-PublishDirectory -LiteralPath $guiPublish
+    Clear-PublishDirectory -LiteralPath $enginePublish
+
     Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.Launcher\KifuwarabeGo2026.Launcher.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false')
     Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.GameOasis.Gui.Windows\KifuwarabeGo2026.GameOasis.Gui.Windows.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false')
     Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.Reference.Communication.Gtp.Host\KifuwarabeGo2026.Reference.Communication.Gtp.Host.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false')
+
+    # v3 launchers start KifuwarabeGo2026.Gui.exe. Keep that public entry point
+    # as an alias of the v4 Windows host throughout the v4.x.x transition.
+    Copy-Item -LiteralPath "$guiPublish\KifuwarabeGo2026.GameOasis.Gui.Windows.exe" -Destination "$guiPublish\KifuwarabeGo2026.Gui.exe"
+    Copy-Item -LiteralPath "$guiPublish\KifuwarabeGo2026.GameOasis.Gui.Windows.deps.json" -Destination "$guiPublish\KifuwarabeGo2026.Gui.deps.json"
+    Copy-Item -LiteralPath "$guiPublish\KifuwarabeGo2026.GameOasis.Gui.Windows.runtimeconfig.json" -Destination "$guiPublish\KifuwarabeGo2026.Gui.runtimeconfig.json"
 }
 
 Assert-FileExists -LiteralPath @(
     "$launcherPublish\KifuwarabeGo2026.Launcher.exe",
-    "$guiPublish\KifuwarabeGo2026.GameOasis.Gui.exe",
+    "$guiPublish\KifuwarabeGo2026.GameOasis.Gui.Windows.exe",
+    "$guiPublish\KifuwarabeGo2026.Gui.exe",
+    "$guiPublish\KifuwarabeGo2026.Gui.deps.json",
+    "$guiPublish\KifuwarabeGo2026.Gui.runtimeconfig.json",
     "$guiPublish\KifuwarabeGo2026.GameOasis.Gui.dll",
     "$guiPublish\KifuwarabeGo2026.StationeryUI.dll",
     "$guiPublish\KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation.dll",
-    "$guiPublish\Tools\Cgos\KifuwarabeGo2026.GameOasis.Gui.Communication.Cgos.exe",
-    "$guiPublish\Tools\Cgos\KifuwarabeGo2026.GameOasis.Gui.Communication.Cgos.dll",
-    "$guiPublish\Tools\Cgos\KifuwarabeGo2026.GameOasis.Gui.Communication.Cgos.deps.json",
-    "$guiPublish\Tools\Cgos\KifuwarabeGo2026.GameOasis.Gui.Communication.Cgos.runtimeconfig.json",
+    "$guiPublish\Tools\Cgos\KifuwarabeGo2026.Reference.Communication.Cgos.Host.exe",
+    "$guiPublish\Tools\Cgos\KifuwarabeGo2026.Reference.Communication.Cgos.Host.dll",
+    "$guiPublish\Tools\Cgos\KifuwarabeGo2026.Reference.Communication.Cgos.Host.deps.json",
+    "$guiPublish\Tools\Cgos\KifuwarabeGo2026.Reference.Communication.Cgos.Host.runtimeconfig.json",
     "$enginePublish\KifuwarabeGo2026.Engine.exe",
     "$enginePublish\KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation.dll",
     "$enginePublish\KifuwarabeGo2026.Reference.PlayerEngine.dll",
@@ -159,6 +186,7 @@ $assets = @()
 $packages = @(
     @{ Name = 'Launcher'; Source = $launcherPublish },
     @{ Name = 'Gui'; Source = $guiPublish },
+    @{ Name = 'GameOasis.Gui'; Source = $guiPublish },
     @{ Name = 'Engine'; Source = $enginePublish }
 )
 
