@@ -1325,6 +1325,10 @@ public class Game1 : Game
                         _session.ActivateModalWindow(ActiveWindowId.MessageDialog);
                     }
                 }
+                else if (ApplicationSettingsScreen.Default.OpenLauncherButton.IsHit(point))
+                {
+                    BeginGuiReleaseUpdate();
+                }
                 else if (ApplicationSettingsScreen.Default.SettingsButton.IsHit(point))
                 {
                     GuiOperationLog.User("Pressed Settings button");

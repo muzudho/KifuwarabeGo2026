@@ -221,6 +221,14 @@ internal static class Program
             Require((string)shortcut.Arguments == "--smoke" &&
                     string.Equals((string)shortcut.WorkingDirectory, Path.GetDirectoryName(newTarget), StringComparison.OrdinalIgnoreCase),
                 "The shortcut rewrite did not preserve arguments or follow the launcher working directory.");
+            ReleaseCom(shortcut);
+            shortcut = null;
+
+            var desktopShortcut = Path.Combine(temporaryRoot, "Desktop Launcher.lnk");
+            service.CreateOrReplaceLauncherShortcut(desktopShortcut, newTarget);
+            Require(File.Exists(desktopShortcut) &&
+                    string.Equals(service.ReadTarget(desktopShortcut), newTarget, StringComparison.OrdinalIgnoreCase),
+                "The desktop launcher shortcut was not created with the managed launcher target.");
         }
         finally
         {

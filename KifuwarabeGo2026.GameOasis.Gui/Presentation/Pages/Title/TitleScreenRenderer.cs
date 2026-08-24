@@ -75,7 +75,7 @@ public sealed class TitleScreenRenderer
         DrawText(GetDisplayVersion(), new Vector2(panel.X + 790, panel.Y + 91), new Color(99, 223, 185), 0.38f);
         DrawLine(new Vector2(panel.X + 790, panel.Y + 126), new Vector2(panel.X + 958, panel.Y + 126), 2, new Color(99, 223, 185, 120));
         DrawTitleMenuContent(session, page, panel, mousePoint, appProviderTabIndex, isAppProviderLoading, gameOasisPlaySpaces);
-        DrawUpdateButton(mousePoint);
+        DrawLauncherButtons(mousePoint);
         ApplicationSettingsScreen.Default.DrawSettingsButton(_drawingContext, mousePoint);
     }
 
@@ -96,8 +96,10 @@ public sealed class TitleScreenRenderer
                 var entryProfilesHovered = _titleScreen.EntryProfilesButton.IsHit(mousePoint);
                 var settingsBounds = ApplicationSettingsScreen.Default.SettingsButton.Bounds;
                 var updateBounds = ApplicationSettingsScreen.Default.UpdateButton.Bounds;
+                var openLauncherBounds = ApplicationSettingsScreen.Default.OpenLauncherButton.Bounds;
                 var settingsHovered = settingsBounds.Contains(mousePoint);
                 var updateHovered = updateBounds.Contains(mousePoint);
+                var openLauncherHovered = openLauncherBounds.Contains(mousePoint);
                 _titleScreen.EntrySettingsLabel.Draw(_drawingContext);
                 _titleScreen.FormalAppsLabel.Draw(_drawingContext);
                 _titleScreen.CasualAppsLabel.Draw(_drawingContext);
@@ -117,8 +119,10 @@ public sealed class TitleScreenRenderer
                     DrawTitleHomeHint("CASUAL APPS", "独自実装で機能追加を進めます！", new Color(255, 190, 92));
                 else if (gamePlatformHovered)
                     DrawTitleHomeHint("GAME PLATFORM", "Replaceable play-spaces connect through Game Oasis.", new Color(178, 145, 255));
+                else if (openLauncherHovered)
+                    DrawStickyNote(StickyNoteKind.TitleUpdateHint, new Vector2(openLauncherBounds.Left, openLauncherBounds.Center.Y), new Color(99, 223, 185), new Color(82, 111, 114), "ランチャーを開くとは？", ["共通ランチャーを前面に開き、", "このGUIを閉じます。", "GUIとEngineの更新は", "ランチャーから行います！"]);
                 else if (updateHovered)
-                    DrawStickyNote(StickyNoteKind.TitleUpdateHint, new Vector2(updateBounds.Left, updateBounds.Center.Y), new Color(99, 223, 185), new Color(82, 111, 114), "ランチャーを開くとは？", ["共通ランチャーを前面に開き、", "このGUIを閉じます。", "GUIとEngineの更新は", "ランチャーから行います！"]);
+                    DrawStickyNote(StickyNoteKind.TitleUpdateHint, new Vector2(updateBounds.Left, updateBounds.Center.Y), new Color(125, 225, 255), new Color(82, 111, 114), "ランチャーを更新するとは？", ["ランチャーを最新版にします。", "更新後、デスクトップへ", "ショートカットを作れます。"]);
                 else if (settingsHovered)
                     DrawTitleHomeHint("SETTINGS", "アプリケーションを設定します！", new Color(147, 201, 190));
                 else if (localMatchHovered)
@@ -385,9 +389,14 @@ public sealed class TitleScreenRenderer
     /// ［ランチャーを開く］ボタンを描画します。
     /// </summary>
     /// <param name="mousePoint"></param>
-    private void DrawUpdateButton(Point mousePoint)
+    private void DrawLauncherButtons(Point mousePoint)
     {
-        var bounds = ApplicationSettingsScreen.Default.UpdateButton.Bounds;
+        DrawLauncherButton(ApplicationSettingsScreen.Default.UpdateButton.Bounds, "ランチャーを更新", mousePoint, drawBoardIcon: false);
+        DrawLauncherButton(ApplicationSettingsScreen.Default.OpenLauncherButton.Bounds, "ランチャーを開く", mousePoint, drawBoardIcon: true);
+    }
+
+    private void DrawLauncherButton(Rectangle bounds, string label, Point mousePoint, bool drawBoardIcon)
+    {
         var hovered = bounds.Contains(mousePoint);
         var color = hovered ? new Color(99, 223, 185) : new Color(180, 195, 195);
         FillRect(bounds, hovered ? new Color(36, 50, 58) : new Color(24, 31, 37));
@@ -400,9 +409,18 @@ public sealed class TitleScreenRenderer
             DrawLine(new Vector2(board.X + offset, board.Y), new Vector2(board.X + offset, board.Bottom), 1, color);
             DrawLine(new Vector2(board.X, board.Y + offset), new Vector2(board.Right, board.Y + offset), 1, color);
         }
-        DrawStone(new Vector2(board.X + 16, board.Y + 24), 5, true);
-        DrawStone(new Vector2(board.X + 31, board.Y + 16), 5, false);
-        DrawDynamicOptionText("ランチャーを開く", new Rectangle(bounds.X + 60, bounds.Y + 15, bounds.Width - 70, 34), color, 0.26f);
+        if (drawBoardIcon)
+        {
+            DrawStone(new Vector2(board.X + 16, board.Y + 24), 5, true);
+            DrawStone(new Vector2(board.X + 31, board.Y + 16), 5, false);
+        }
+        else
+        {
+            DrawLine(new Vector2(board.X + 11, board.Center.Y), new Vector2(board.Right - 10, board.Center.Y), 3, color);
+            DrawLine(new Vector2(board.Right - 17, board.Center.Y - 7), new Vector2(board.Right - 10, board.Center.Y), 3, color);
+            DrawLine(new Vector2(board.Right - 17, board.Center.Y + 7), new Vector2(board.Right - 10, board.Center.Y), 3, color);
+        }
+        DrawDynamicOptionText(label, new Rectangle(bounds.X + 56, bounds.Y + 15, bounds.Width - 62, 34), color, 0.23f);
     }
     #endregion
 

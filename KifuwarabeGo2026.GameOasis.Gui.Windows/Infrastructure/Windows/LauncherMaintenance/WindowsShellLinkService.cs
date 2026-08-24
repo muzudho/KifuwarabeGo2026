@@ -23,6 +23,33 @@ internal sealed class WindowsShellLinkService
         }
     }
 
+    public void CreateOrReplaceLauncherShortcut(string shortcutPath, string launcherTarget)
+    {
+        if (!string.Equals(Path.GetExtension(shortcutPath), ".lnk", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidDataException("The desktop shortcut must use the .lnk extension.");
+        if (!File.Exists(launcherTarget)) throw new FileNotFoundException("The installed launcher was not found.", launcherTarget);
+        Directory.CreateDirectory(Path.GetDirectoryName(shortcutPath)!);
+        var temporary = shortcutPath + ".creating.lnk";
+        if (File.Exists(temporary)) File.Delete(temporary);
+        dynamic? shortcut = null;
+        try
+        {
+            shortcut = CreateShortcut(temporary);
+            shortcut.TargetPath = launcherTarget;
+            shortcut.WorkingDirectory = Path.GetDirectoryName(launcherTarget)!;
+            shortcut.Description = "Kifuwarabe Go 2026 Launcher";
+            shortcut.IconLocation = launcherTarget + ",0";
+            shortcut.Save();
+        }
+        finally
+        {
+            Release(shortcut);
+        }
+        if (!string.Equals(ReadTarget(temporary), Path.GetFullPath(launcherTarget), StringComparison.OrdinalIgnoreCase))
+            throw new IOException("The desktop shortcut could not be verified.");
+        File.Move(temporary, shortcutPath, overwrite: true);
+    }
+
     public void RewriteLauncherTarget(string shortcutPath, string expectedOldTarget, string newTarget)
     {
         ValidateShortcutPath(shortcutPath);

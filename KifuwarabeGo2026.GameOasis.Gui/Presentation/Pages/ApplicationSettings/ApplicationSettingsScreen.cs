@@ -27,7 +27,8 @@ public sealed class ApplicationSettingsScreen
     private ApplicationSettingsScreen()
     {
         SettingsButton = new GearButton(new Rectangle(1780, 972, 70, 62));
-        UpdateButton = new Button(new Rectangle(1548, 972, 220, 62), "ランチャー更新", 0.22f);
+        UpdateButton = new Button(new Rectangle(1316, 972, 220, 62), "ランチャーを更新", 0.22f);
+        OpenLauncherButton = new Button(new Rectangle(1548, 972, 220, 62), "ランチャーを開く", 0.22f);
         BackButton = new Button(new Rectangle(1390, 138, 140, 52), "BACK", 0.32f);
         LogTabButton = new Button(new Rectangle(440, 242, 250, 52), "LOG", 0.34f);
         OtherFoldersTabButton = new Button(new Rectangle(702, 242, 360, 52), "OTHER FOLDERS", 0.34f);
@@ -49,6 +50,7 @@ public sealed class ApplicationSettingsScreen
 
     public GearButton SettingsButton { get; }
     public Button UpdateButton { get; }
+    public Button OpenLauncherButton { get; }
     public Button BackButton { get; }
     public Button LogTabButton { get; }
     public Button OtherFoldersTabButton { get; }
