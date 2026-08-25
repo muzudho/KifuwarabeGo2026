@@ -22,6 +22,7 @@ public sealed class LocalMatchGameOasisLifecycle(GameOasisBoardController boardC
     public GuiBoardView? Board { get; private set; }
     public ProtocolError? LastError { get; private set; }
     public bool IsBusy => _pending is not null;
+    public bool CanStart => CanBegin(LocalMatchGameOasisState.Idle);
 
     public bool BeginStart(LocalMatchInitialPosition initialPosition, decimal komi, TimeSpan mainTime)
     {

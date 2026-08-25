@@ -2605,8 +2605,14 @@ public class Game1 : Game
     private void StartLocalMatchCore()
     {
         _isLocalMatchStartPending = false;
+        if (!_playingScene.StartPlaying())
+        {
+            GuiOperationLog.App("Deferred Local Match start", "previous Game Oasis session is still closing");
+            ShowMessage("The previous local match is still closing. Please wait a moment and press START again.", "LOCAL MATCH");
+            return;
+        }
+
         var seeds = _session.ApplyLocalMatchRandomSeedsAtStart();
-        _playingScene.StartPlaying();
 
         var seedComment = $"LOCAL MATCH RANDOM SEEDS\nBlack: {FormatLocalMatchSeed(seeds.Black)}\nWhite: {FormatLocalMatchSeed(seeds.White)}";
         _session.CurrentGameRecord.RootComment = string.IsNullOrWhiteSpace(_session.CurrentGameRecord.RootComment)

@@ -232,7 +232,8 @@ internal static class PortabilityChecks
         var localLifecycle = composition.LocalMatchLifecycle;
         projectedSession.SelectUseKind(GoAppUseKind.LocalPlay);
         projectedSession.SetPlayerKind(GoStone.White, GoPlayerKind.Human);
-        playingScene.StartPlaying();
+        Require(playingScene.StartPlaying(),
+            "A human local match must be accepted while the shared lifecycle is idle.");
         Require(localLifecycle.State == LocalMatchGameOasisState.Opening,
             "A human local match must begin opening its Protocol S play-space from the current start path.");
         Require(!projectedSession.IsMatchBackedLocalGame,
@@ -382,9 +383,21 @@ internal static class PortabilityChecks
         playingScene.CloseGameOasisLocalMatchIfNeeded();
         Require(localLifecycle.State == LocalMatchGameOasisState.Closing,
             "Leaving the result screen must begin closing the Game Oasis local-match session.");
+        projectedSession.ReturnToSetup();
+        Require(!playingScene.StartPlaying() && projectedSession.CurrentMode.Kind == GoAppModeKind.Resting,
+            "START during the preceding session close must be rejected without moving the GUI out of the Lobby.");
         CompleteLocalMatchLifecycleOperation(localLifecycle);
-        Require(localLifecycle.State == LocalMatchGameOasisState.Idle && localLifecycle.Board is null,
+        Require(localLifecycle.State == LocalMatchGameOasisState.Idle && localLifecycle.Board is null && localLifecycle.CanStart,
             "The shared Game Oasis session must close cleanly and return the local-match lifecycle to idle.");
+        Require(playingScene.StartPlaying() && localLifecycle.State == LocalMatchGameOasisState.Opening,
+            "A second local match must start without restarting the GUI after the preceding close completes.");
+        CompleteLocalMatchLifecycleOperation(localLifecycle);
+        Require(localLifecycle.State == LocalMatchGameOasisState.Ready,
+            "The second local match must open through the reused Game Oasis lifecycle.");
+        playingScene.CloseGameOasisLocalMatchIfNeeded();
+        CompleteLocalMatchLifecycleOperation(localLifecycle);
+        Require(localLifecycle.State == LocalMatchGameOasisState.Idle,
+            "The reused Game Oasis lifecycle must close the second local match cleanly.");
     }
 
     private static void VerifyGameOasisGuiComposition()

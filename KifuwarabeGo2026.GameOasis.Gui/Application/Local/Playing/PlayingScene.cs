@@ -216,26 +216,34 @@ public sealed class PlayingScene : IDisposable
     /// </summary>
     public void MarkFrameDrawn() => _computerMoveAwaitingDraw = false;
 
-    public void StartPlaying()
+    public bool StartPlaying()
     {
         _computerMoveAwaitingDraw = false;
-        _gameOasisCloseRequested = false;
         _gameOasisComputerBridges.Clear();
         var computerStones = GetComputerPlayerStones();
         if (_session.UseKind == GoAppUseKind.LocalPlay)
         {
             if (_gameOasisLocalMatchLifecycle is null || computerStones.Count > _gameOasisPlayerBridges.Count)
                 throw new InvalidOperationException("A normal local match requires the Game Oasis lifecycle and one player bridge per computer player.");
+            if (!_gameOasisLocalMatchLifecycle.CanStart)
+                return false;
+
+            _gameOasisCloseRequested = false;
             _session.StartPlayingForGameOasis();
             if (!BeginGameOasisLocalMatch())
-                throw new InvalidOperationException("The available Game Oasis local-match lifecycle could not begin a session.");
+            {
+                _session.CancelPlaying();
+                return false;
+            }
             _gameOasisComputerBridges.Clear();
             for (var index = 0; index < computerStones.Count; index++)
                 _gameOasisComputerBridges[computerStones[index]] = _gameOasisPlayerBridges[index];
-            return;
+            return true;
         }
+        _gameOasisCloseRequested = false;
         _session.StartPlaying();
         StartGtpGameIfNeeded();
+        return true;
     }
 
     /// <summary>Game Oasis方式のローカル対局セッションを非同期で終了します。</summary>
