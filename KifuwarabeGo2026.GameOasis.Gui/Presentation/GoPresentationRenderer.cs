@@ -7,6 +7,7 @@ using KifuwarabeGo2026.GameOasis.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.Board;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.EditTournamentRule;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.GtpEngine;
+using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.LocalMatch.Intermission;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.GameOasis;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.MoveTrendChart;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.OnlineMatch.Cgos.Login;
@@ -95,7 +96,10 @@ public sealed class GoPresentationRenderer : System.IDisposable
                         session.IsGtpEngineSelectionDialogOpen || session.IsGtpEngineEditPanelOpen ||
                         session.IsAppProviderGameSettingsDialogOpen;
         var backgroundMousePoint = modalOpen ? new Point(-1, -1) : mousePoint;
-        _boardRenderer.Draw(_drawingContext, session, backgroundMousePoint);
+        if (session.CurrentMode.Kind == GoAppModeKind.Resting)
+            LocalMatchConciergePanel.Draw(_drawingContext, session);
+        else
+            _boardRenderer.Draw(_drawingContext, session, backgroundMousePoint);
         if (session.CurrentMode.Kind == GoAppModeKind.Playing && session.CanOpenLocalChartPopup)
             _cgosWatchingRenderer.DrawBroadcastStatusBadge(_drawingContext,
                 session.IsLocalReplayMode ? "REPLAY" : "CURRENT", session.IsReviewChartPopupOpen);

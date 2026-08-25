@@ -275,7 +275,8 @@ internal static class Program
                 EnableGtpLog = false,
             },
         ]);
-        using var scene = new PlayingScene(session, (_, _, _) => { }, () => { }, () => { });
+        var placedStoneSoundCount = 0;
+        using var scene = new PlayingScene(session, (_, _, _) => placedStoneSoundCount++, () => { }, () => { });
         scene.AttachGameOasisPlayerBridge(composition.PlayerParticipationBridge);
         scene.AttachGameOasisPlayerBridge(composition.SecondaryPlayerParticipationBridge);
         scene.AttachGameOasisLocalMatchLifecycle(composition.LocalMatchLifecycle);
@@ -290,7 +291,8 @@ internal static class Program
                 session.IsGameOasisProjectedLocalGame &&
                 !session.IsMatchBackedLocalGame &&
                 session.BlackStoneCount >= 1 &&
-                session.WhiteStoneCount >= 1,
+                session.WhiteStoneCount >= 1 &&
+                placedStoneSoundCount >= 2,
             "The bundled computer turns did not return through two Protocol P participants, Protocol S, and the Protocol G board projection.");
         scene.CloseGameOasisLocalMatchIfNeeded();
         Require(SpinWait.SpinUntil(() =>

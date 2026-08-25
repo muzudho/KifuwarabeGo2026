@@ -9,6 +9,7 @@ using KifuwarabeGo2026.GameOasis.Gui.Domain;
 using KifuwarabeGo2026.Shared.Domain;
 using KifuwarabeGo2026.Reference.Communication.Gtp;
 using KifuwarabeGo2026.Reference.Communication.Gtp.Protocol;
+using KifuwarabeGo2026.Reference.Gui;
 using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Integration;
 using KifuwarabeGo2026.GameOasis.Gui.Infrastructure.Logging;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation;
@@ -164,7 +165,11 @@ public sealed class PlayingScene : IDisposable
         {
             _session.ApplyGameOasisBoardProjection(board);
             BeginGameOasisComputerBindingsIfNeeded();
+            return;
         }
+
+        if (lifecycle.LastError is { } error && _session.CurrentMode.Kind == GoAppModeKind.Playing)
+            SetEngineError($"Game Oasis local match: {error.Message}", _session.CurrentTurn);
     }
 
     private void CompleteGameOasisPlayerOperation()
@@ -177,9 +182,32 @@ public sealed class PlayingScene : IDisposable
                 bridge.Board is { } board &&
                 _session.CurrentMode.Kind == GoAppModeKind.Playing)
             {
+                var previousMoveCount = _session.PlayedMoveCount;
                 _session.ApplyGameOasisBoardProjection(board);
+                PlayProjectedMoveSound(board, previousMoveCount);
+            }
+
+            if (bridge.LastError is { } error && _session.CurrentMode.Kind == GoAppModeKind.Playing)
+            {
+                var failedStone = _gameOasisComputerBridges
+                    .Where(pair => ReferenceEquals(pair.Value, bridge))
+                    .Select(pair => (GoStone?)pair.Key)
+                    .FirstOrDefault() ?? _session.CurrentTurn;
+                SetEngineError($"Computer player: {error.Message}", failedStone);
             }
         }
+    }
+
+    private void PlayProjectedMoveSound(GuiBoardView board, int previousMoveCount)
+    {
+        if (board.MoveHistory.Count <= previousMoveCount)
+            return;
+
+        var latestMove = board.MoveHistory[^1];
+        if (latestMove.Type == "play")
+            PlayPlaceStoneSound();
+        else if (latestMove.Type == "pass")
+            PlayPlaceStoneSound(0.45f, 0.25f, 0f);
     }
 
     /// <summary>
