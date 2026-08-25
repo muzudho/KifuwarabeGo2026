@@ -97,7 +97,19 @@ public sealed class LauncherScreen : IDisposable
         if (_settingsPage) DrawSettings(mouse); else if (_versionsPage) DrawVersions(mouse); else DrawMain(mouse);
         DrawStatus();
         if (_confirming) DrawConfirmation(mouse);
+        DrawBreadcrumb();
         _draw.End();
+    }
+
+    private void DrawBreadcrumb()
+    {
+        var path = _settingsPage
+            ? "LAUNCHER  >  SETTINGS"
+            : _versionsPage
+                ? "LAUNCHER  >  VERSIONS"
+                : "LAUNCHER";
+        _draw.FillRectangle(new Rectangle(24, 1036, 430, 36), new Color(0, 0, 0, 160));
+        _draw.DrawFittedText(path, new Rectangle(38, 1041, 402, 26), new Color(225, 240, 232), 0.40f);
     }
 
     private void DrawMain(Point mouse)
@@ -237,8 +249,8 @@ public sealed class LauncherScreen : IDisposable
     private void DrawStatus()
     {
         string text; lock (_stateGate) text = _status;
-        _draw.FillRectangle(new Rectangle(0, 1020, 1920, 60), new Color(12, 18, 23, 235));
-        _draw.DrawFittedText(text, new Rectangle(120, 1022, 1680, 54), _busy ? new Color(255, 225, 128) : new Color(151, 255, 215), 0.60f);
+        _draw.FillRectangle(new Rectangle(0, 960, 1920, 60), new Color(12, 18, 23, 235));
+        _draw.DrawFittedText(text, new Rectangle(120, 962, 1680, 54), _busy ? new Color(255, 225, 128) : new Color(151, 255, 215), 0.60f);
     }
 
     private void DrawConfirmation(Point mouse)

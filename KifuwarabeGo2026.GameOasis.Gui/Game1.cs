@@ -7126,27 +7126,30 @@ public class Game1 : Game
     private string GetScreenBreadcrumb()
     {
         if (_isApplicationSettingsOpen)
-            return "TITLE  >  SETTINGS";
+            return "LOBBY  >  SETTINGS";
+
+        if (_gameOasisComposition?.PlayingBridge.Board is not null)
+            return "PLAY ROOM  >  GAME OASIS";
 
         if (_session.UseKind is null)
         {
             return _titleMenuPage switch
             {
-                TitleMenuPage.Home => "TITLE",
-                TitleMenuPage.GameOasis => "TITLE  >  GAME OASIS  >  PLAY-SPACE SELECT",
-                TitleMenuPage.CaptureGame => "TITLE  >  CASUAL APPS  >  PONNUKI",
-                TitleMenuPage.Tsumego => "TITLE  >  CASUAL APPS  >  TSUMEGO",
-                TitleMenuPage.NextMove => "TITLE  >  CASUAL APPS  >  NEXT MOVE",
-                _ => "TITLE",
+                TitleMenuPage.Home => "LOBBY",
+                TitleMenuPage.GameOasis => "LOBBY  >  GAME OASIS  >  PLAY ROOM SELECT",
+                TitleMenuPage.CaptureGame => "LOBBY  >  CASUAL APPS  >  PONNUKI",
+                TitleMenuPage.Tsumego => "LOBBY  >  CASUAL APPS  >  TSUMEGO",
+                TitleMenuPage.NextMove => "LOBBY  >  CASUAL APPS  >  NEXT MOVE",
+                _ => "LOBBY",
             };
         }
 
         var breadcrumb = _session.UseKind switch
         {
             GoAppUseKind.LocalPlay => GetLocalPlayBreadcrumb(),
-            GoAppUseKind.LocalApps => "CASUAL APPS  >  LOCAL APPS",
+            GoAppUseKind.LocalApps => GetLocalAppsBreadcrumb(),
             GoAppUseKind.CgosClient => GetCgosBreadcrumb(),
-            _ => "FORMAL APPS",
+            _ => "LOBBY",
         };
 
         if (_session.IsReviewChartPopupOpen)
@@ -7174,36 +7177,47 @@ public class Game1 : Game
     private string GetLocalPlayBreadcrumb()
     {
         if (_playingScene.IsInitialPositionConciergeVisible)
-            return "FORMAL APPS  >  LOCAL MATCH  >  PLAY  >  INITIAL POSITION";
+            return "LOBBY  >  LOCAL MATCH  >  INITIAL POSITION";
 
         return _session.CurrentMode.Kind switch
         {
-            GoAppModeKind.Resting => "FORMAL APPS  >  LOCAL MATCH  >  INTERVAL",
-            GoAppModeKind.Playing => "FORMAL APPS  >  LOCAL MATCH  >  PLAY",
+            GoAppModeKind.Resting => "LOBBY  >  LOCAL MATCH",
+            GoAppModeKind.Playing => "PLAY ROOM  >  LOCAL MATCH  >  PLAY",
             GoAppModeKind.GameOver => _session.IsLocalResultPosition
-                ? "FORMAL APPS  >  LOCAL MATCH  >  PLAY  >  REVIEW  >  RESULT"
-                : "FORMAL APPS  >  LOCAL MATCH  >  PLAY  >  REVIEW",
-            GoAppModeKind.BoardEditing => "FORMAL APPS  >  LOCAL MATCH  >  PLAY  >  EDIT BOARD",
-            GoAppModeKind.VariationEditing => "FORMAL APPS  >  LOCAL MATCH  >  PLAY  >  EDIT BOARD",
-            GoAppModeKind.Reviewing => "FORMAL APPS  >  LOCAL MATCH  >  PLAY  >  REVIEW",
-            _ => "FORMAL APPS  >  LOCAL MATCH",
+                ? "PLAY ROOM  >  LOCAL MATCH  >  REVIEW  >  RESULT"
+                : "PLAY ROOM  >  LOCAL MATCH  >  REVIEW",
+            GoAppModeKind.BoardEditing => "PLAY ROOM  >  LOCAL MATCH  >  EDIT BOARD",
+            GoAppModeKind.VariationEditing => "PLAY ROOM  >  LOCAL MATCH  >  EDIT BOARD",
+            GoAppModeKind.Reviewing => "PLAY ROOM  >  LOCAL MATCH  >  REVIEW",
+            _ => "LOBBY  >  LOCAL MATCH",
         };
     }
+
+    private string GetLocalAppsBreadcrumb() => _session.CurrentMode.Kind switch
+    {
+        GoAppModeKind.Resting => "LOBBY  >  LOCAL APPS",
+        GoAppModeKind.Playing => "PLAY ROOM  >  LOCAL APPS  >  PLAY",
+        GoAppModeKind.GameOver => "PLAY ROOM  >  LOCAL APPS  >  RESULT",
+        GoAppModeKind.BoardEditing => "PLAY ROOM  >  LOCAL APPS  >  EDIT BOARD",
+        GoAppModeKind.VariationEditing => "PLAY ROOM  >  LOCAL APPS  >  EDIT BOARD",
+        GoAppModeKind.Reviewing => "PLAY ROOM  >  LOCAL APPS  >  REVIEW",
+        _ => "LOBBY  >  LOCAL APPS",
+    };
 
     private string GetCgosBreadcrumb()
     {
         if (_session.CurrentMode.Kind == GoAppModeKind.Reviewing)
             return _session.IsReviewResultPosition
-                ? "Formal Apps > Online Match (CGOS) > Watch > Review > Result"
-                : "Formal Apps > Online Match (CGOS) > Watch > Review";
+                ? "PLAY ROOM  >  ONLINE MATCH (CGOS)  >  REVIEW  >  RESULT"
+                : "PLAY ROOM  >  ONLINE MATCH (CGOS)  >  REVIEW";
 
         return _session.CgosConnectionFlowKind switch
         {
-            CgosConnectionFlowKind.ProfileSelection => "Formal Apps > Online Match (CGOS) > Select Connection",
-            CgosConnectionFlowKind.ConnectionStart => "Formal Apps > Online Match (CGOS) > Login",
-            CgosConnectionFlowKind.Watching => "Formal Apps > Online Match (CGOS) > Watch",
-            CgosConnectionFlowKind.Result => "Formal Apps > Online Match (CGOS) > Watch",
-            _ => "FORMAL APPS  >  ONLINE MATCH (CGOS)",
+            CgosConnectionFlowKind.ProfileSelection => "LOBBY  >  ONLINE MATCH (CGOS)  >  SELECT CONNECTION",
+            CgosConnectionFlowKind.ConnectionStart => "LOBBY  >  ONLINE MATCH (CGOS)  >  LOGIN",
+            CgosConnectionFlowKind.Watching => "PLAY ROOM  >  ONLINE MATCH (CGOS)  >  WATCH",
+            CgosConnectionFlowKind.Result => "PLAY ROOM  >  ONLINE MATCH (CGOS)  >  WATCH",
+            _ => "LOBBY  >  ONLINE MATCH (CGOS)",
         };
     }
 
