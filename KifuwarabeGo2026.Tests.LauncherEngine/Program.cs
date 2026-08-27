@@ -158,18 +158,35 @@ try
         Require(remoteState.CloseAfterStartingGui == engineBoundary.GetState().CloseAfterStartingGui, "JSON Lines state values");
         var remoteVersions = jsonLinesEngine.GetInstalledVersions();
         Require(remoteVersions.Count == engineBoundary.GetInstalledVersions().Count, "JSON Lines version list round trip");
+        Require(jsonLinesEngine.GetCurrentDirectory(LauncherProduct.Engine) is null, "JSON Lines current directory round trip");
+
+        var remoteScreenshotDirectory = Path.Combine(root, "remote-screenshots");
+        var remoteScreenshotChange = jsonLinesEngine.ChangeScreenshotDirectory(remoteScreenshotDirectory);
+        Require(remoteScreenshotChange.IsSuccess && remoteScreenshotChange.Value?.ScreenshotSaveDirectory == Path.GetFullPath(remoteScreenshotDirectory), "JSON Lines screenshot setting change");
+        var remoteCloseChange = jsonLinesEngine.ChangeCloseAfterStartingGui(false);
+        Require(remoteCloseChange.IsSuccess && remoteCloseChange.Value?.CloseAfterStartingGui == false, "JSON Lines launcher setting change");
+        var remoteBusinessFailure = jsonLinesEngine.ChangeScreenshotDirectory(" ");
+        Require(!remoteBusinessFailure.IsSuccess, "JSON Lines business failure result");
+        Require(jsonLinesEngine.CommunicationWarning is null, "business failure is not a communication failure: " + jsonLinesEngine.CommunicationWarning);
+
+        var remoteRemovalDirectory = Path.Combine(remoteState.InstallationRoot, "Packages", "Gui", "v6.0.0");
+        Directory.CreateDirectory(remoteRemovalDirectory);
+        var remoteRemovalTarget = jsonLinesEngine.GetInstalledVersions().Single(version => version.DirectoryPath == Path.GetFullPath(remoteRemovalDirectory));
+        var remoteUninstall = jsonLinesEngine.Uninstall(remoteRemovalTarget);
+        Require(remoteUninstall.IsSuccess && !Directory.Exists(remoteRemovalDirectory), "JSON Lines guarded uninstall");
+        var repeatedUninstall = jsonLinesEngine.Uninstall(remoteRemovalTarget);
+        Require(repeatedUninstall.IsSuccess, "JSON Lines uninstall retry safety");
+
+        var remoteInstallationDirectory = Path.Combine(root, "remote-installation");
+        var remoteInstallationChange = jsonLinesEngine.ChangeInstallationDirectory(remoteInstallationDirectory);
+        Require(remoteInstallationChange.IsSuccess && remoteInstallationChange.Value?.InstallationRoot == Path.GetFullPath(remoteInstallationDirectory), "JSON Lines installation setting change");
+        Require(engineBoundary.GetState().InstallationRoot == Path.GetFullPath(remoteInstallationDirectory), "fallback state synchronized after remote setting change");
     }
 
     var testAssembly = typeof(FakePlatformServices).Assembly.Location;
-    RequireThrows<InvalidDataException>(
-        () => ReadStateAndDispose(CreateFakeJsonLinesEngine(testAssembly, "invalid-json", engineBoundary)),
-        "JSON Lines invalid JSON response");
-    RequireThrows<IOException>(
-        () => ReadStateAndDispose(CreateFakeJsonLinesEngine(testAssembly, "exit", engineBoundary)),
-        "JSON Lines child process exit");
-    RequireThrows<TimeoutException>(
-        () => ReadStateAndDispose(CreateFakeJsonLinesEngine(testAssembly, "timeout", engineBoundary, TimeSpan.FromMilliseconds(200))),
-        "JSON Lines response timeout");
+    RequireCommunicationFallback(CreateFakeJsonLinesEngine(testAssembly, "invalid-json", engineBoundary), engineBoundary, "JSON Lines invalid JSON recovery");
+    RequireCommunicationFallback(CreateFakeJsonLinesEngine(testAssembly, "exit", engineBoundary), engineBoundary, "JSON Lines child process exit recovery");
+    RequireCommunicationFallback(CreateFakeJsonLinesEngine(testAssembly, "timeout", engineBoundary, TimeSpan.FromMilliseconds(200)), engineBoundary, "JSON Lines response timeout recovery");
 
     Console.WriteLine("PASS: launcher core, platform, in-process boundary, and JSON Lines protocol checks.");
     return 0;
@@ -179,13 +196,6 @@ finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
 static void Require(bool condition, string name)
 {
     if (!condition) throw new InvalidOperationException("FAILED: " + name);
-}
-
-static void RequireThrows<TException>(Action action, string name) where TException : Exception
-{
-    try { action(); }
-    catch (TException) { return; }
-    throw new InvalidOperationException("FAILED: " + name);
 }
 
 static JsonLinesLauncherEngine CreateFakeJsonLinesEngine(
@@ -201,9 +211,14 @@ static JsonLinesLauncherEngine CreateFakeJsonLinesEngine(
     return new JsonLinesLauncherEngine(startInfo, fallback, timeout);
 }
 
-static void ReadStateAndDispose(JsonLinesLauncherEngine engine)
+static void RequireCommunicationFallback(JsonLinesLauncherEngine engine, ILauncherEngine fallback, string name)
 {
-    using (engine) _ = engine.GetState();
+    using (engine)
+    {
+        var state = engine.GetState();
+        Require(state == fallback.GetState(), name + " state");
+        Require(!string.IsNullOrWhiteSpace(engine.CommunicationWarning), name + " warning");
+    }
 }
 
 static void CreateExecutable(LauncherPaths paths, LauncherProduct product, string version)

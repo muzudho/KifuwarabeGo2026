@@ -18,6 +18,11 @@ public interface ILauncherEngine
     LauncherOperationResult<LauncherState> ChangeCloseAfterStartingGui(bool value);
 }
 
+public interface ILauncherEngineCommunicationStatus
+{
+    string? CommunicationWarning { get; }
+}
+
 public sealed record LauncherState(
     string InstallationRoot,
     string? GuiCurrentVersion,

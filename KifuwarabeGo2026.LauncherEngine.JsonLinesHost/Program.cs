@@ -6,11 +6,17 @@ using KifuwarabeGo2026.LauncherEngine.Platform;
 var localApplicationData = ReadOption(args, "--local-application-data");
 var myPictures = ReadOption(args, "--my-pictures");
 var desktopPlatform = new DesktopLauncherEnginePlatform();
+var defaultLocalApplicationData = string.IsNullOrWhiteSpace(desktopPlatform.LocalApplicationData)
+    ? AppContext.BaseDirectory
+    : desktopPlatform.LocalApplicationData;
+var defaultMyPictures = string.IsNullOrWhiteSpace(desktopPlatform.MyPictures)
+    ? Path.Combine(defaultLocalApplicationData, "Pictures")
+    : desktopPlatform.MyPictures;
 ILauncherEnginePlatform platform = localApplicationData is null && myPictures is null
-    ? desktopPlatform
+    ? new HostPlatform(defaultLocalApplicationData, defaultMyPictures, desktopPlatform)
     : new HostPlatform(
-        localApplicationData ?? desktopPlatform.LocalApplicationData,
-        myPictures ?? desktopPlatform.MyPictures,
+        localApplicationData ?? defaultLocalApplicationData,
+        myPictures ?? defaultMyPictures,
         desktopPlatform);
 using var httpClient = new HttpClient { Timeout = TimeSpan.FromMinutes(15) };
 var engine = new InProcessLauncherEngine(platform, httpClient);
@@ -45,10 +51,20 @@ static LauncherEngineResponse Handle(LauncherEngineRequest request, ILauncherEng
         throw new InvalidDataException($"未対応のプロトコルバージョンです: {request.ProtocolVersion}");
     if (string.IsNullOrWhiteSpace(request.RequestId)) throw new InvalidDataException("requestId がありません。");
 
-    object result = request.Method switch
+    object? result = request.Method switch
     {
         LauncherEngineJsonLinesProtocol.GetStateMethod => engine.GetState(),
         LauncherEngineJsonLinesProtocol.GetInstalledVersionsMethod => engine.GetInstalledVersions(),
+        LauncherEngineJsonLinesProtocol.GetCurrentDirectoryMethod =>
+            engine.GetCurrentDirectory(ReadParameters<LauncherProductParameters>(request).Product),
+        LauncherEngineJsonLinesProtocol.UninstallMethod =>
+            engine.Uninstall(ReadParameters<UninstallParameters>(request).InstalledVersion),
+        LauncherEngineJsonLinesProtocol.ChangeInstallationDirectoryMethod =>
+            engine.ChangeInstallationDirectory(ReadParameters<InstallationDirectoryParameters>(request).Directory),
+        LauncherEngineJsonLinesProtocol.ChangeScreenshotDirectoryMethod =>
+            engine.ChangeScreenshotDirectory(ReadParameters<ScreenshotDirectoryParameters>(request).Directory),
+        LauncherEngineJsonLinesProtocol.ChangeCloseAfterStartingGuiMethod =>
+            engine.ChangeCloseAfterStartingGui(ReadParameters<CloseAfterStartingGuiParameters>(request).Value),
         _ => throw new InvalidDataException($"未対応のメソッドです: {request.Method}"),
     };
     return new LauncherEngineResponse(
@@ -57,6 +73,13 @@ static LauncherEngineResponse Handle(LauncherEngineRequest request, ILauncherEng
         true,
         JsonSerializer.SerializeToElement(result, LauncherEngineJsonLinesProtocol.JsonOptions),
         null);
+}
+
+static T ReadParameters<T>(LauncherEngineRequest request)
+{
+    if (request.Parameters is null) throw new InvalidDataException("parameters がありません。");
+    return request.Parameters.Value.Deserialize<T>(LauncherEngineJsonLinesProtocol.JsonOptions)
+        ?? throw new InvalidDataException("parameters を読み取れませんでした。");
 }
 
 static string TryReadRequestId(string json)

@@ -43,6 +43,7 @@ public sealed class LauncherScreen : IDisposable
     private bool _loadingVersions;
     private float _spinnerAngle;
     private string _status = "READY";
+    private string? _shownCommunicationWarning;
     private IReadOnlyList<InstalledVersion> _installed = [];
     private readonly HashSet<string> _markedForRemoval = new(StringComparer.OrdinalIgnoreCase);
     private int _selectedIndex;
@@ -58,6 +59,13 @@ public sealed class LauncherScreen : IDisposable
 
     public void Update()
     {
+        if (_engine is ILauncherEngineCommunicationStatus communication &&
+            communication.CommunicationWarning is { } warning &&
+            !string.Equals(warning, _shownCommunicationWarning, StringComparison.Ordinal))
+        {
+            _shownCommunicationWarning = warning;
+            SetStatus("ENGINE COMMUNICATION FAILED; USING IN-PROCESS FALLBACK: " + warning);
+        }
         if (_loadingVersions) _spinnerAngle = (_spinnerAngle + 0.11f) % MathHelper.TwoPi;
         var mouse = Mouse.GetState();
         var keyboard = Keyboard.GetState();

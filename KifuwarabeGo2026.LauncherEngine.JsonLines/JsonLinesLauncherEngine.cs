@@ -4,13 +4,16 @@ using System.Diagnostics;
 using System.Text.Json;
 using KifuwarabeGo2026.LauncherEngine;
 
-public sealed class JsonLinesLauncherEngine : ILauncherEngine, IDisposable
+public sealed class JsonLinesLauncherEngine : ILauncherEngine, ILauncherEngineCommunicationStatus, IDisposable
 {
     private readonly ILauncherEngine _fallback;
     private readonly Process _process;
     private readonly TimeSpan _timeout;
     private readonly object _gate = new();
     private bool _disposed;
+    private bool _useFallback;
+
+    public string? CommunicationWarning { get; private set; }
 
     public JsonLinesLauncherEngine(ProcessStartInfo hostStartInfo, ILauncherEngine fallback, TimeSpan? timeout = null)
     {
@@ -32,10 +35,16 @@ public sealed class JsonLinesLauncherEngine : ILauncherEngine, IDisposable
         _process.BeginErrorReadLine();
     }
 
-    public LauncherState GetState() => Send<LauncherState>(LauncherEngineJsonLinesProtocol.GetStateMethod);
+    public LauncherState GetState() => SendOrFallback(
+        LauncherEngineJsonLinesProtocol.GetStateMethod,
+        null,
+        _fallback.GetState);
 
     public IReadOnlyList<InstalledVersion> GetInstalledVersions() =>
-        Send<List<InstalledVersion>>(LauncherEngineJsonLinesProtocol.GetInstalledVersionsMethod);
+        SendOrFallback<List<InstalledVersion>>(
+            LauncherEngineJsonLinesProtocol.GetInstalledVersionsMethod,
+            null,
+            () => [.. _fallback.GetInstalledVersions()]);
 
     public Task<LauncherOperationResult<string>> UpdateAsync(
         LauncherProduct product,
@@ -43,12 +52,45 @@ public sealed class JsonLinesLauncherEngine : ILauncherEngine, IDisposable
         CancellationToken cancellationToken = default) =>
         _fallback.UpdateAsync(product, progress, cancellationToken);
 
-    public LauncherOperationResult Uninstall(InstalledVersion installedVersion) => _fallback.Uninstall(installedVersion);
+    public LauncherOperationResult Uninstall(InstalledVersion installedVersion) => SendOrFallback(
+        LauncherEngineJsonLinesProtocol.UninstallMethod,
+        new UninstallParameters(installedVersion),
+        () => _fallback.Uninstall(installedVersion));
     public LauncherOperationResult<LauncherLaunchDetails> StartGui() => _fallback.StartGui();
-    public string? GetCurrentDirectory(LauncherProduct product) => _fallback.GetCurrentDirectory(product);
-    public LauncherOperationResult<LauncherState> ChangeInstallationDirectory(string? directory) => _fallback.ChangeInstallationDirectory(directory);
-    public LauncherOperationResult<LauncherState> ChangeScreenshotDirectory(string directory) => _fallback.ChangeScreenshotDirectory(directory);
-    public LauncherOperationResult<LauncherState> ChangeCloseAfterStartingGui(bool value) => _fallback.ChangeCloseAfterStartingGui(value);
+    public string? GetCurrentDirectory(LauncherProduct product) => SendOrFallback<string?>(
+        LauncherEngineJsonLinesProtocol.GetCurrentDirectoryMethod,
+        new LauncherProductParameters(product),
+        () => _fallback.GetCurrentDirectory(product),
+        allowNull: true);
+    public LauncherOperationResult<LauncherState> ChangeInstallationDirectory(string? directory)
+    {
+        var result = SendOrFallback(
+            LauncherEngineJsonLinesProtocol.ChangeInstallationDirectoryMethod,
+            new InstallationDirectoryParameters(directory),
+            () => _fallback.ChangeInstallationDirectory(directory));
+        if (!_useFallback && result.IsSuccess) _ = _fallback.ChangeInstallationDirectory(directory);
+        return result;
+    }
+
+    public LauncherOperationResult<LauncherState> ChangeScreenshotDirectory(string directory)
+    {
+        var result = SendOrFallback(
+            LauncherEngineJsonLinesProtocol.ChangeScreenshotDirectoryMethod,
+            new ScreenshotDirectoryParameters(directory),
+            () => _fallback.ChangeScreenshotDirectory(directory));
+        if (!_useFallback && result.IsSuccess) _ = _fallback.ChangeScreenshotDirectory(directory);
+        return result;
+    }
+
+    public LauncherOperationResult<LauncherState> ChangeCloseAfterStartingGui(bool value)
+    {
+        var result = SendOrFallback(
+            LauncherEngineJsonLinesProtocol.ChangeCloseAfterStartingGuiMethod,
+            new CloseAfterStartingGuiParameters(value),
+            () => _fallback.ChangeCloseAfterStartingGui(value));
+        if (!_useFallback && result.IsSuccess) _ = _fallback.ChangeCloseAfterStartingGui(value);
+        return result;
+    }
 
     public void Dispose()
     {
@@ -68,7 +110,20 @@ public sealed class JsonLinesLauncherEngine : ILauncherEngine, IDisposable
         _process.Dispose();
     }
 
-    private T Send<T>(string method)
+    private T SendOrFallback<T>(string method, object? parameters, Func<T> fallback, bool allowNull = false)
+    {
+        if (_useFallback) return fallback();
+        try { return Send<T>(method, parameters, allowNull); }
+        catch (Exception exception) when (exception is IOException or InvalidDataException or TimeoutException or InvalidOperationException)
+        {
+            CommunicationWarning = exception.Message;
+            _useFallback = true;
+            StopFailedHost();
+            return fallback();
+        }
+    }
+
+    private T Send<T>(string method, object? parameters = null, bool allowNull = false)
     {
         lock (_gate)
         {
@@ -76,7 +131,11 @@ public sealed class JsonLinesLauncherEngine : ILauncherEngine, IDisposable
             if (_process.HasExited) throw new IOException("ランチャーエンジンホストが終了しています。");
 
             var requestId = Guid.NewGuid().ToString("N");
-            var request = new LauncherEngineRequest(LauncherEngineJsonLinesProtocol.Version, requestId, method);
+            var request = new LauncherEngineRequest(
+                LauncherEngineJsonLinesProtocol.Version,
+                requestId,
+                method,
+                parameters is null ? null : JsonSerializer.SerializeToElement(parameters, LauncherEngineJsonLinesProtocol.JsonOptions));
             _process.StandardInput.WriteLine(JsonSerializer.Serialize(request, LauncherEngineJsonLinesProtocol.JsonOptions));
             _process.StandardInput.Flush();
 
@@ -107,9 +166,23 @@ public sealed class JsonLinesLauncherEngine : ILauncherEngine, IDisposable
             if (!string.Equals(response.RequestId, requestId, StringComparison.Ordinal))
                 throw new InvalidDataException("応答の要求識別番号が一致しません。");
             if (!response.Success) throw new InvalidOperationException(response.Error ?? "ランチャーエンジンの処理に失敗しました。");
-            if (response.Result is null) throw new InvalidDataException("ランチャーエンジンの応答に結果がありません。");
-            return response.Result.Value.Deserialize<T>(LauncherEngineJsonLinesProtocol.JsonOptions)
-                ?? throw new InvalidDataException("ランチャーエンジンの応答結果を読み取れませんでした。");
+            if (response.Result is null)
+            {
+                if (allowNull) return default!;
+                throw new InvalidDataException("ランチャーエンジンの応答に結果がありません。");
+            }
+            var value = response.Result.Value.Deserialize<T>(LauncherEngineJsonLinesProtocol.JsonOptions);
+            if (value is null && !allowNull) throw new InvalidDataException("ランチャーエンジンの応答結果を読み取れませんでした。");
+            return value!;
         }
+    }
+
+    private void StopFailedHost()
+    {
+        try
+        {
+            if (!_process.HasExited) _process.Kill(entireProcessTree: true);
+        }
+        catch (InvalidOperationException) { }
     }
 }
