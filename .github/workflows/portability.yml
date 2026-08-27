@@ -39,13 +39,13 @@ jobs:
         run: dotnet run --project KifuwarabeGo2026.Tests.GameOasis.Gui.Portability/KifuwarabeGo2026.Tests.GameOasis.Gui.Portability.csproj --configuration Release --no-build
 
       - name: Restore cross-platform launcher checks
-        run: dotnet restore KifuwarabeGo2026.Tests.Launcher/KifuwarabeGo2026.Tests.Launcher.csproj
+        run: dotnet restore KifuwarabeGo2026.Tests.LauncherEngine/KifuwarabeGo2026.Tests.LauncherEngine.csproj
 
-      - name: Build launcher Core, Presentation, and platform adapters
-        run: dotnet build KifuwarabeGo2026.Launcher.Presentation/KifuwarabeGo2026.Launcher.Presentation.csproj --configuration Release
+      - name: Build launcher engine, presentation, and platform adapters
+        run: dotnet build KifuwarabeGo2026.LauncherGui.Presentation/KifuwarabeGo2026.LauncherGui.Presentation.csproj --configuration Release
 
       - name: Run launcher Core and OS adapter checks
-        run: dotnet run --project KifuwarabeGo2026.Tests.Launcher/KifuwarabeGo2026.Tests.Launcher.csproj --configuration Release
+        run: dotnet run --project KifuwarabeGo2026.Tests.LauncherEngine/KifuwarabeGo2026.Tests.LauncherEngine.csproj --configuration Release
 
   windows-distribution:
     name: Windows solution and GUI publish
@@ -64,7 +64,7 @@ jobs:
         run: dotnet restore KifuwarabeGo2026.slnx
 
       - name: Restore MonoGame content tools
-        working-directory: KifuwarabeGo2026.Launcher
+        working-directory: KifuwarabeGo2026.LauncherGui
         run: dotnet tool restore
 
       - name: Build all projects
@@ -74,7 +74,7 @@ jobs:
         run: dotnet run --project KifuwarabeGo2026.Tests.GameOasis.Gui.Windows/KifuwarabeGo2026.Tests.GameOasis.Gui.Windows.csproj --configuration Release --no-build
 
       - name: Run launcher checks
-        run: dotnet run --project KifuwarabeGo2026.Tests.Launcher/KifuwarabeGo2026.Tests.Launcher.csproj --configuration Release --no-build
+        run: dotnet run --project KifuwarabeGo2026.Tests.LauncherEngine/KifuwarabeGo2026.Tests.LauncherEngine.csproj --configuration Release --no-build
 
       - name: Restore Windows GUI for win-x64
         run: dotnet restore KifuwarabeGo2026.GameOasis.Gui.Windows/KifuwarabeGo2026.GameOasis.Gui.Windows.csproj --runtime win-x64
@@ -83,7 +83,10 @@ jobs:
         run: dotnet publish KifuwarabeGo2026.GameOasis.Gui.Windows/KifuwarabeGo2026.GameOasis.Gui.Windows.csproj --configuration Release --runtime win-x64 --self-contained false --no-restore
 
       - name: Publish Windows launcher
-        run: dotnet publish KifuwarabeGo2026.Launcher/KifuwarabeGo2026.Launcher.csproj --configuration Release --runtime win-x64 --self-contained false
+        run: dotnet publish KifuwarabeGo2026.LauncherGui/KifuwarabeGo2026.LauncherGui.csproj --configuration Release --runtime win-x64 --self-contained false
+
+      - name: Publish launcher JSON Lines host
+        run: dotnet publish KifuwarabeGo2026.LauncherEngine.JsonLinesHost/KifuwarabeGo2026.LauncherEngine.JsonLinesHost.csproj --configuration Release --runtime win-x64 --self-contained false --output KifuwarabeGo2026.LauncherGui/bin/Release/net8.0/win-x64/publish
 
       - name: Verify GUI distribution
         shell: pwsh

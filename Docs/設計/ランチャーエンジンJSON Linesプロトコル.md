@@ -86,7 +86,7 @@
 ランチャーへ `--engine-stdio` を指定した場合、上記の操作を `JsonLinesLauncherEngine` 経由で子プロセスへ依頼します。
 更新と管理対象ＧＵＩの起動は同一プロセスエンジンへ委譲します。更新は進捗、キャンセル、途中終了後の再実行設計が必要であり、ＧＵＩ起動はランチャー自身の更新・再起動経路を正しく引き継ぐ必要があるためです。
 
-ホストの既定位置はランチャーと同じディレクトリーの `KifuwarabeGo2026.LauncherEngine.JsonLinesHost.exe` です。
+ホストの既定位置はランチャーと同じディレクトリーの `KifuwarabeGo2026.LauncherEngine.JsonLinesHost.dll` です。アプリケーション制御ポリシーが補助 EXE を拒否する環境を考慮し、ランチャーと同じ .NET ランタイムの `dotnet` コマンドで DLL を起動します。
 開発時は環境変数 `KIFUWARABE_LAUNCHER_ENGINE_HOST` で別のホスト実行ファイルを指定できます。
 
 ## 他言語による実装

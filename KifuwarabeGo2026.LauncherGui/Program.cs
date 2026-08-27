@@ -28,13 +28,17 @@ internal static class Program
     private static ProcessStartInfo CreateEngineHostStartInfo()
     {
         var configuredPath = Environment.GetEnvironmentVariable("KIFUWARABE_LAUNCHER_ENGINE_HOST");
-        var executable = string.IsNullOrWhiteSpace(configuredPath)
-            ? Path.Combine(AppContext.BaseDirectory, "KifuwarabeGo2026.LauncherEngine.JsonLinesHost.exe")
+        var hostPath = string.IsNullOrWhiteSpace(configuredPath)
+            ? Path.Combine(AppContext.BaseDirectory, "KifuwarabeGo2026.LauncherEngine.JsonLinesHost.dll")
             : Path.GetFullPath(configuredPath);
-        if (!File.Exists(executable))
+        if (!File.Exists(hostPath))
             throw new FileNotFoundException(
                 "標準入出力版ランチャーエンジンホストが見つかりません。KIFUWARABE_LAUNCHER_ENGINE_HOST で場所を指定できます。",
-                executable);
-        return new ProcessStartInfo(executable);
+                hostPath);
+        if (!string.Equals(Path.GetExtension(hostPath), ".dll", StringComparison.OrdinalIgnoreCase))
+            return new ProcessStartInfo(hostPath);
+        var startInfo = new ProcessStartInfo("dotnet");
+        startInfo.ArgumentList.Add(hostPath);
+        return startInfo;
     }
 }
