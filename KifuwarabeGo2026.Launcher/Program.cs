@@ -9,7 +9,10 @@ internal static class Program
     {
         using var singleInstance = new Mutex(initiallyOwned: true, "KifuwarabeGo2026.Launcher", out var createdNew);
         if (!createdNew && !args.Contains("--allow-multiple", StringComparer.OrdinalIgnoreCase)) return;
-        using var game = new LauncherGame(new DesktopPlatformServices());
+        var platform = new DesktopPlatformServices();
+        using var httpClient = new HttpClient { Timeout = TimeSpan.FromMinutes(15) };
+        var engine = new InProcessLauncherEngine(platform, httpClient);
+        using var game = new LauncherGame(platform, engine);
         game.Run();
     }
 }

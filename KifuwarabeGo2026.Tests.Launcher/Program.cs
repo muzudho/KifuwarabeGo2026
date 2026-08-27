@@ -50,7 +50,46 @@ try
     Require(!string.IsNullOrWhiteSpace(platform.LocalApplicationData), "OS application-data path");
     Require(platform.IsProcessRunningFrom(AppContext.BaseDirectory), "running process detection");
 
-    Console.WriteLine("PASS: launcher core and platform checks, including safe extraction and SHA-256.");
+    var boundaryRoot = Path.Combine(root, "engine-boundary");
+    var boundaryPaths = new LauncherPaths(boundaryRoot);
+    var boundaryStore = new LauncherSettingsStore(boundaryPaths);
+    var boundarySettings = new LauncherSettings();
+    boundarySettings.Promote(LauncherProduct.Gui, "4.9.0");
+    boundarySettings.Promote(LauncherProduct.Gui, "5.0.0");
+    boundaryStore.Save(boundarySettings);
+    CreateExecutable(boundaryPaths, LauncherProduct.Gui, "4.9.0");
+    CreateExecutable(boundaryPaths, LauncherProduct.Gui, "5.0.0");
+    Directory.CreateDirectory(boundaryPaths.VersionDirectory(LauncherProduct.Gui, "4.8.0"));
+
+    var fakePlatform = new FakePlatformServices(boundaryRoot)
+    {
+        StartBehavior = executable => executable.Contains("v4.9.0", StringComparison.OrdinalIgnoreCase),
+    };
+    using var boundaryHttpClient = new HttpClient(new RejectNetworkHandler());
+    ILauncherEngine engineBoundary = new InProcessLauncherEngine(fakePlatform, boundaryHttpClient);
+    var boundaryState = engineBoundary.GetState();
+    Require(boundaryState.GuiCurrentVersion == "5.0.0", "engine boundary state");
+    Require(boundaryState.InstallationRoot == boundaryPaths.InstallationRoot, "engine boundary installation root");
+
+    var boundaryVersions = engineBoundary.GetInstalledVersions();
+    var removable = boundaryVersions.Single(version => version.Version == "v4.8.0");
+    engineBoundary.Uninstall(removable);
+    Require(!Directory.Exists(removable.DirectoryPath), "engine boundary uninstall");
+    var protectedVersion = boundaryVersions.Single(version => version.IsCurrent);
+    var protectedRejected = false;
+    try { engineBoundary.Uninstall(protectedVersion); }
+    catch (InvalidOperationException) { protectedRejected = true; }
+    Require(protectedRejected, "engine boundary protected uninstall rejection");
+
+    var launch = engineBoundary.StartGui();
+    Require(launch.Success && launch.UsedPrevious, "engine boundary previous-version fallback");
+    Require(fakePlatform.StartedExecutables.Count == 2, "engine boundary launch attempts");
+
+    var changedInstallation = Path.Combine(root, "changed-installation");
+    boundaryState = engineBoundary.ChangeInstallationDirectory(changedInstallation);
+    Require(boundaryState.InstallationRoot == Path.GetFullPath(changedInstallation), "engine boundary installation setting change");
+
+    Console.WriteLine("PASS: launcher core, platform, and in-process engine boundary checks.");
     return 0;
 }
 finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
@@ -58,4 +97,35 @@ finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
 static void Require(bool condition, string name)
 {
     if (!condition) throw new InvalidOperationException("FAILED: " + name);
+}
+
+static void CreateExecutable(LauncherPaths paths, LauncherProduct product, string version)
+{
+    var directory = paths.VersionDirectory(product, version);
+    Directory.CreateDirectory(directory);
+    File.WriteAllText(Path.Combine(directory, product.ExecutableName()), "test executable");
+}
+
+sealed class FakePlatformServices(string localApplicationData) : IPlatformServices
+{
+    public Func<string, bool> StartBehavior { get; init; } = _ => true;
+    public List<string> StartedExecutables { get; } = [];
+    public string LocalApplicationData { get; } = Path.GetFullPath(localApplicationData);
+
+    public bool Start(string executable, string workingDirectory)
+    {
+        StartedExecutables.Add(executable);
+        return StartBehavior(executable);
+    }
+
+    public bool OpenFolder(string directory) => false;
+    public bool OpenFile(string filePath) => false;
+    public string? SelectFolder(string title, string initialDirectory) => null;
+    public bool IsProcessRunningFrom(string directory) => false;
+}
+
+sealed class RejectNetworkHandler : HttpMessageHandler
+{
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
+        throw new InvalidOperationException("Network access is not expected in this test.");
 }

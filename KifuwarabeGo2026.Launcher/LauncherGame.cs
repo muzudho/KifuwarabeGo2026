@@ -15,6 +15,7 @@ internal sealed class LauncherGame : Game
 {
     private readonly GraphicsDeviceManager _graphics;
     private readonly IPlatformServices _platform;
+    private readonly ILauncherEngine _engine;
     private LauncherScreen? _screen;
     private KfwScreenCanvas? _canvas;
     private KfwStationeryDrawingTools? _stationery;
@@ -26,9 +27,10 @@ internal sealed class LauncherGame : Game
     private SoundEffect? _screenshotShutterSound;
     private SoundEffectInstance? _screenshotShutterSoundInstance;
 
-    public LauncherGame(IPlatformServices platform)
+    public LauncherGame(IPlatformServices platform, ILauncherEngine engine)
     {
         _platform = platform;
+        _engine = engine;
         _graphics = new GraphicsDeviceManager(this)
         {
             PreferredBackBufferWidth = 1280,
@@ -54,7 +56,7 @@ internal sealed class LauncherGame : Game
         _canvas = new KfwScreenCanvas(GraphicsDevice, Content);
         _stationery = new KfwStationeryDrawingTools(_canvas, new ApproximateTextRasterizer(),
             (center, radius, black) => _canvas.DrawCircle(center, radius, black ? new Color(20, 24, 28) : new Color(235, 235, 228)));
-        _screen = new LauncherScreen(_stationery, _platform, new HttpClient { Timeout = TimeSpan.FromMinutes(15) }, Exit);
+        _screen = new LauncherScreen(_stationery, _platform, _engine, Exit);
         _screenshotShutterSound = ScreenshotShutterSound.Create();
         _screenshotShutterSoundInstance = _screenshotShutterSound.CreateInstance();
     }
@@ -89,7 +91,7 @@ internal sealed class LauncherGame : Game
     {
         try
         {
-            var directory = ApplicationFamilySettings.ScreenshotSaveDirectory;
+            var directory = _engine.GetState().ScreenshotSaveDirectory;
             Directory.CreateDirectory(directory);
             var path = Path.Combine(directory, $"screenshot-{DateTime.Now:yyyyMMdd-HHmmss-fff}.png");
             var width = GraphicsDevice.PresentationParameters.BackBufferWidth;

@@ -9,13 +9,7 @@ using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls;
 public sealed class LauncherScreen : IDisposable
 {
     private readonly IPlatformServices _platform;
-    private LauncherPaths _paths;
-    private readonly LauncherSettingsStore _settings;
-    private InstalledVersionCatalog _catalog;
-    private ProductLauncher _launcher;
-    private LauncherUpdateService _updates;
-    private readonly HttpClient _httpClient;
-    private readonly LauncherLog _log;
+    private readonly ILauncherEngine _engine;
     private readonly KfwStationeryDrawingTools _draw;
     private readonly Action _exitApplication;
     private readonly object _stateGate = new();
@@ -53,21 +47,12 @@ public sealed class LauncherScreen : IDisposable
     private int _selectedIndex;
     private int _firstVisible;
 
-    public LauncherScreen(KfwStationeryDrawingTools drawingTools, IPlatformServices platform, HttpClient httpClient, Action exitApplication)
+    public LauncherScreen(KfwStationeryDrawingTools drawingTools, IPlatformServices platform, ILauncherEngine engine, Action exitApplication)
     {
         _draw = drawingTools;
         _exitApplication = exitApplication;
         _platform = platform;
-        _httpClient = httpClient;
-        var settingsPaths = new LauncherPaths(platform.LocalApplicationData);
-        _settings = new LauncherSettingsStore(settingsPaths);
-        _log = new LauncherLog(settingsPaths);
-        _paths = new LauncherPaths(platform.LocalApplicationData, _settings.Load().InstallationDirectory);
-        Directory.CreateDirectory(_paths.InstallationRoot);
-        _catalog = null!;
-        _launcher = null!;
-        _updates = null!;
-        RebuildInstallationServices();
+        _engine = engine;
     }
 
     public void Update()
@@ -114,9 +99,9 @@ public sealed class LauncherScreen : IDisposable
 
     private void DrawMain(Point mouse)
     {
-        var settings = _settings.Load();
-        DrawProductRow("GUI", settings.GuiCurrentVersion, 280);
-        DrawProductRow("ENGINE", settings.EngineCurrentVersion, 390);
+        var state = _engine.GetState();
+        DrawProductRow("GUI", state.GuiCurrentVersion, 280);
+        DrawProductRow("ENGINE", state.EngineCurrentVersion, 390);
         _draw.DrawText("COMMON OPERATIONS", new Vector2(480, 510), new Color(99, 223, 185), 0.38f);
         SetButtonsEnabled(!_busy, _start, _guiUpdate, _engineFolder, _engineUpdate, _allUpdate, _versionsButton);
         _start.Draw(mouse, _draw); _guiUpdate.Draw(mouse, _draw); _engineFolder.Draw(mouse, _draw);
@@ -130,24 +115,25 @@ public sealed class LauncherScreen : IDisposable
 
     private void DrawSettings(Point mouse)
     {
+        var state = _engine.GetState();
         _draw.DrawText("APPLICATION SETTINGS", new Vector2(120, 220), Color.White, 0.62f);
         _draw.DrawText("INSTALLATION FOLDER", new Vector2(180, 275), new Color(99, 223, 185), 0.42f);
         _draw.DrawDataRowFrame(new Rectangle(160, 305, 1360, 82));
-        _draw.DrawFittedText(_paths.InstallationRoot,
+        _draw.DrawFittedText(state.InstallationRoot,
             new Rectangle(190, 323, 500, 46), Color.White, 0.38f);
         _openInstall.Draw(mouse, _draw); _defaultInstall.Draw(mouse, _draw); _browseInstall.Draw(mouse, _draw);
         _draw.DrawText("SCREENSHOT FOLDER", new Vector2(180, 460), new Color(99, 223, 185), 0.42f);
         _draw.DrawDataRowFrame(new Rectangle(160, 490, 1360, 82));
-        _draw.DrawFittedText(ApplicationFamilySettings.ScreenshotSaveDirectory,
+        _draw.DrawFittedText(state.ScreenshotSaveDirectory,
             new Rectangle(190, 508, 770, 46), Color.White, 0.42f);
         _openScreenshots.Draw(mouse, _draw); _browseScreenshots.Draw(mouse, _draw);
         _draw.DrawText("SHARED SETTINGS FILE", new Vector2(180, 645), new Color(99, 223, 185), 0.42f);
         _draw.DrawDataRowFrame(new Rectangle(160, 675, 1360, 82));
-        _draw.DrawFittedText(ApplicationFamilySettings.FilePath,
+        _draw.DrawFittedText(state.SharedSettingsFile,
             new Rectangle(190, 693, 1040, 46), Color.White, 0.40f);
         _openSettingsFile.Draw(mouse, _draw);
         var closeBounds = new Rectangle(180, 800, 36, 36);
-        DrawCheckbox(closeBounds, ApplicationFamilySettings.CloseLauncherAfterStartingGui, enabled: true);
+        DrawCheckbox(closeBounds, state.CloseAfterStartingGui, enabled: true);
         _draw.DrawFittedText("CLOSE LAUNCHER AFTER STARTING GUI",
             new Rectangle(240, 788, 780, 60), Color.White, 0.54f);
         _settingsBack.Draw(mouse, _draw);
@@ -284,31 +270,31 @@ public sealed class LauncherScreen : IDisposable
         if ((click && _settingsBack.IsHit(point)) || Pressed(keyboard, Keys.Escape) || GamePadPressed(gamePad, Buttons.B)) { _settingsPage = false; return; }
         if (click && _browseInstall.IsHit(point))
         {
-            var selected = _platform.SelectFolder("Select the installation folder for Kifuwarabe Go 2026.", _paths.InstallationRoot);
+            var selected = _platform.SelectFolder("Select the installation folder for Kifuwarabe Go 2026.", _engine.GetState().InstallationRoot);
             if (selected is not null) ApplyInstallationDirectory(selected);
         }
         else if (click && _defaultInstall.IsHit(point)) ApplyInstallationDirectory(null);
         else if (click && _openInstall.IsHit(point))
-            SetStatus(_platform.OpenFolder(_paths.InstallationRoot) ? "INSTALLATION FOLDER OPENED" : "INSTALLATION FOLDER COULD NOT BE OPENED");
+            SetStatus(_platform.OpenFolder(_engine.GetState().InstallationRoot) ? "INSTALLATION FOLDER OPENED" : "INSTALLATION FOLDER COULD NOT BE OPENED");
         else if (click && _browseScreenshots.IsHit(point))
         {
-            var selected = _platform.SelectFolder("Select the folder for screenshots.", ApplicationFamilySettings.ScreenshotSaveDirectory);
+            var selected = _platform.SelectFolder("Select the folder for screenshots.", _engine.GetState().ScreenshotSaveDirectory);
             if (selected is not null)
             {
-                try { ApplicationFamilySettings.SaveScreenshotDirectory(selected); SetStatus("SCREENSHOT FOLDER SAVED: " + selected); }
+                try { _engine.ChangeScreenshotDirectory(selected); SetStatus("SCREENSHOT FOLDER SAVED: " + selected); }
                 catch (Exception exception) { SetStatus("SETTINGS SAVE FAILED: " + exception.Message); }
             }
         }
         else if (click && _openScreenshots.IsHit(point))
-            SetStatus(_platform.OpenFolder(ApplicationFamilySettings.ScreenshotSaveDirectory) ? "SCREENSHOT FOLDER OPENED" : "SCREENSHOT FOLDER COULD NOT BE OPENED");
+            SetStatus(_platform.OpenFolder(_engine.GetState().ScreenshotSaveDirectory) ? "SCREENSHOT FOLDER OPENED" : "SCREENSHOT FOLDER COULD NOT BE OPENED");
         else if (click && _openSettingsFile.IsHit(point))
-            SetStatus(_platform.OpenFile(ApplicationFamilySettings.FilePath) ? "SETTINGS FILE OPENED" : "SETTINGS FILE COULD NOT BE OPENED");
+            SetStatus(_platform.OpenFile(_engine.GetState().SharedSettingsFile) ? "SETTINGS FILE OPENED" : "SETTINGS FILE COULD NOT BE OPENED");
         else if (click && new Rectangle(170, 778, 870, 80).Contains(point))
         {
             try
             {
-                var value = !ApplicationFamilySettings.CloseLauncherAfterStartingGui;
-                ApplicationFamilySettings.SaveCloseLauncherAfterStartingGui(value);
+                var value = !_engine.GetState().CloseAfterStartingGui;
+                _engine.ChangeCloseAfterStartingGui(value);
                 SetStatus(value ? "LAUNCHER WILL CLOSE AFTER GUI START" : "LAUNCHER WILL REMAIN OPEN AFTER GUI START");
             }
             catch (Exception exception) { SetStatus("SETTINGS SAVE FAILED: " + exception.Message); }
@@ -319,26 +305,13 @@ public sealed class LauncherScreen : IDisposable
     {
         try
         {
-            var settings = _settings.Load();
-            settings.InstallationDirectory = string.IsNullOrWhiteSpace(directory) ? null : Path.GetFullPath(directory);
-            var nextPaths = new LauncherPaths(_platform.LocalApplicationData, settings.InstallationDirectory);
-            Directory.CreateDirectory(nextPaths.InstallationRoot);
-            _settings.Save(settings);
-            _paths = nextPaths;
-            RebuildInstallationServices();
+            var state = _engine.ChangeInstallationDirectory(directory);
             RefreshVersions();
-            SetStatus(settings.InstallationDirectory is null
-                ? "AUTOMATIC INSTALLATION FOLDER CREATED: " + _paths.InstallationRoot
-                : "INSTALLATION FOLDER SAVED: " + _paths.InstallationRoot);
+            SetStatus(string.IsNullOrWhiteSpace(directory)
+                ? "AUTOMATIC INSTALLATION FOLDER CREATED: " + state.InstallationRoot
+                : "INSTALLATION FOLDER SAVED: " + state.InstallationRoot);
         }
         catch (Exception exception) { SetStatus("INSTALLATION FOLDER SAVE FAILED: " + exception.Message); }
-    }
-
-    private void RebuildInstallationServices()
-    {
-        _catalog = new InstalledVersionCatalog(_paths, _settings, _platform);
-        _launcher = new ProductLauncher(_paths, _settings, _log, _platform);
-        _updates = new LauncherUpdateService(new GitHubReleaseClient(_httpClient), new PackageInstaller(_paths, _httpClient, _log), _settings, _log);
     }
 
     private void UpdateVersions(Point point, bool click, KeyboardState keyboard, GamePadState gamePad)
@@ -368,7 +341,7 @@ public sealed class LauncherScreen : IDisposable
             var failures = new List<string>();
             foreach (var target in targets)
             {
-                try { _catalog.Uninstall(target); }
+                try { _engine.Uninstall(target); }
                 catch (Exception exception) { failures.Add($"{target.ProductName} {target.Version}: {exception.Message}"); }
             }
             _markedForRemoval.Clear();
@@ -382,7 +355,12 @@ public sealed class LauncherScreen : IDisposable
     private async Task UpdateProductAsync(LauncherProduct product)
     {
         _busy = true;
-        try { var version = await _updates.UpdateAsync(product, SetStatus); SetStatus($"{product.DisplayName()} v{version} UPDATE COMPLETE"); }
+        try
+        {
+            var progress = new LauncherProgressReporter(SetStatus);
+            var version = await _engine.UpdateAsync(product, progress);
+            SetStatus($"{product.DisplayName()} v{version} UPDATE COMPLETE");
+        }
         catch (Exception exception) { SetStatus("UPDATE FAILED: " + exception.Message); }
         finally { _busy = false; RefreshVersions(); }
     }
@@ -395,7 +373,7 @@ public sealed class LauncherScreen : IDisposable
         SetStatus("SCANNING INSTALLED VERSIONS...");
         try
         {
-            var versions = await Task.Run(_catalog.ReadAll);
+            var versions = await Task.Run(_engine.GetInstalledVersions);
             _installed = versions;
             _markedForRemoval.IntersectWith(_installed.Where(item => item.CanUninstall).Select(Identity));
             Select(Math.Min(_selectedIndex, _installed.Count - 1));
@@ -406,10 +384,10 @@ public sealed class LauncherScreen : IDisposable
     }
 
     private async Task UpdateAllAsync() { await UpdateProductAsync(LauncherProduct.Gui); await UpdateProductAsync(LauncherProduct.Engine); }
-    private void StartGui() { var result = _launcher.StartGui(); SetStatus(result.Message); if (result.Success && ApplicationFamilySettings.CloseLauncherAfterStartingGui) _exitApplication(); }
-    private void OpenCurrentEngine() { var directory = _launcher.CurrentDirectory(LauncherProduct.Engine); SetStatus(directory is not null && _platform.OpenFolder(directory) ? "ENGINE FOLDER OPENED" : "ENGINE IS NOT INSTALLED"); }
+    private void StartGui() { var result = _engine.StartGui(); SetStatus(result.Message); if (result.Success && _engine.GetState().CloseAfterStartingGui) _exitApplication(); }
+    private void OpenCurrentEngine() { var directory = _engine.GetCurrentDirectory(LauncherProduct.Engine); SetStatus(directory is not null && _platform.OpenFolder(directory) ? "ENGINE FOLDER OPENED" : "ENGINE IS NOT INSTALLED"); }
     private void OpenSelected() { var item = Selected; if (item is not null) SetStatus(_platform.OpenFolder(item.DirectoryPath) ? "FOLDER OPENED" : "FOLDER COULD NOT BE OPENED"); }
-    private void RefreshVersions() { _installed = _catalog.ReadAll(); _markedForRemoval.IntersectWith(_installed.Where(item => item.CanUninstall).Select(Identity)); Select(Math.Min(_selectedIndex, _installed.Count - 1)); }
+    private void RefreshVersions() { _installed = _engine.GetInstalledVersions(); _markedForRemoval.IntersectWith(_installed.Where(item => item.CanUninstall).Select(Identity)); Select(Math.Min(_selectedIndex, _installed.Count - 1)); }
     private void ToggleMark() { var item = Selected; if (item?.CanUninstall != true) return; var key = Identity(item); if (!_markedForRemoval.Add(key)) _markedForRemoval.Remove(key); }
     private void Select(int index) { _selectedIndex = _installed.Count == 0 ? 0 : Math.Clamp(index, 0, _installed.Count - 1); if (_selectedIndex < _firstVisible) _firstVisible = _selectedIndex; if (_selectedIndex >= _firstVisible + 9) _firstVisible = _selectedIndex - 8; }
     private InstalledVersion? Selected => _installed.Count == 0 ? null : _installed[Math.Clamp(_selectedIndex, 0, _installed.Count - 1)];
@@ -422,4 +400,9 @@ public sealed class LauncherScreen : IDisposable
     private static void SetButtonsEnabled(bool enabled, params StationeryButton[] buttons) { foreach (var button in buttons) button.IsEnabled = enabled; }
     private static string FormatSize(long bytes) { string[] units = ["B", "KB", "MB", "GB", "TB"]; var value = (double)bytes; var unit = 0; while (value >= 1024 && unit < units.Length - 1) { value /= 1024; unit++; } return $"{value:0.#} {units[unit]}"; }
     public void Dispose() => _draw.Dispose();
+
+    private sealed class LauncherProgressReporter(Action<string> report) : IProgress<LauncherProgress>
+    {
+        public void Report(LauncherProgress value) => report(value.Message);
+    }
 }
