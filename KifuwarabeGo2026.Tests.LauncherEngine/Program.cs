@@ -1,6 +1,25 @@
 using System.IO.Compression;
 using KifuwarabeGo2026.LauncherEngine;
+using KifuwarabeGo2026.LauncherEngine.JsonLines;
 using KifuwarabeGo2026.LauncherEngine.Platform;
+using System.Diagnostics;
+
+if (args.FirstOrDefault() == "--fake-json-lines-host")
+{
+    _ = Console.ReadLine();
+    switch (args.ElementAtOrDefault(1))
+    {
+        case "invalid-json":
+            Console.WriteLine("this is not json");
+            break;
+        case "timeout":
+            await Task.Delay(TimeSpan.FromSeconds(30));
+            break;
+        case "exit":
+            break;
+    }
+    return 0;
+}
 
 var root = Path.Combine(Path.GetTempPath(), "KifuwarabeGo2026-LauncherSmoke-" + Guid.NewGuid().ToString("N"));
 Directory.CreateDirectory(root);
@@ -120,7 +139,39 @@ try
     var failedUpdate = await engineBoundary.UpdateAsync(LauncherProduct.Gui);
     Require(!failedUpdate.IsSuccess && !failedUpdate.IsCanceled, "engine boundary update failure result");
 
-    Console.WriteLine("PASS: launcher core, platform, and in-process engine boundary checks.");
+    var hostDll = Path.GetFullPath(Path.Combine(
+        AppContext.BaseDirectory,
+        "..", "..", "..", "..",
+        "KifuwarabeGo2026.LauncherEngine.JsonLinesHost", "bin", "Release", "net8.0",
+        "KifuwarabeGo2026.LauncherEngine.JsonLinesHost.dll"));
+    Require(File.Exists(hostDll), "JSON Lines host build output");
+    var hostStartInfo = new ProcessStartInfo("dotnet");
+    hostStartInfo.ArgumentList.Add(hostDll);
+    hostStartInfo.ArgumentList.Add("--local-application-data");
+    hostStartInfo.ArgumentList.Add(boundaryRoot);
+    hostStartInfo.ArgumentList.Add("--my-pictures");
+    hostStartInfo.ArgumentList.Add(Path.Combine(boundaryRoot, "Pictures"));
+    using (var jsonLinesEngine = new JsonLinesLauncherEngine(hostStartInfo, engineBoundary))
+    {
+        var remoteState = jsonLinesEngine.GetState();
+        Require(remoteState.InstallationRoot == engineBoundary.GetState().InstallationRoot, "JSON Lines state round trip");
+        Require(remoteState.CloseAfterStartingGui == engineBoundary.GetState().CloseAfterStartingGui, "JSON Lines state values");
+        var remoteVersions = jsonLinesEngine.GetInstalledVersions();
+        Require(remoteVersions.Count == engineBoundary.GetInstalledVersions().Count, "JSON Lines version list round trip");
+    }
+
+    var testAssembly = typeof(FakePlatformServices).Assembly.Location;
+    RequireThrows<InvalidDataException>(
+        () => ReadStateAndDispose(CreateFakeJsonLinesEngine(testAssembly, "invalid-json", engineBoundary)),
+        "JSON Lines invalid JSON response");
+    RequireThrows<IOException>(
+        () => ReadStateAndDispose(CreateFakeJsonLinesEngine(testAssembly, "exit", engineBoundary)),
+        "JSON Lines child process exit");
+    RequireThrows<TimeoutException>(
+        () => ReadStateAndDispose(CreateFakeJsonLinesEngine(testAssembly, "timeout", engineBoundary, TimeSpan.FromMilliseconds(200))),
+        "JSON Lines response timeout");
+
+    Console.WriteLine("PASS: launcher core, platform, in-process boundary, and JSON Lines protocol checks.");
     return 0;
 }
 finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
@@ -128,6 +179,31 @@ finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
 static void Require(bool condition, string name)
 {
     if (!condition) throw new InvalidOperationException("FAILED: " + name);
+}
+
+static void RequireThrows<TException>(Action action, string name) where TException : Exception
+{
+    try { action(); }
+    catch (TException) { return; }
+    throw new InvalidOperationException("FAILED: " + name);
+}
+
+static JsonLinesLauncherEngine CreateFakeJsonLinesEngine(
+    string testAssembly,
+    string behavior,
+    ILauncherEngine fallback,
+    TimeSpan? timeout = null)
+{
+    var startInfo = new ProcessStartInfo("dotnet");
+    startInfo.ArgumentList.Add(testAssembly);
+    startInfo.ArgumentList.Add("--fake-json-lines-host");
+    startInfo.ArgumentList.Add(behavior);
+    return new JsonLinesLauncherEngine(startInfo, fallback, timeout);
+}
+
+static void ReadStateAndDispose(JsonLinesLauncherEngine engine)
+{
+    using (engine) _ = engine.GetState();
 }
 
 static void CreateExecutable(LauncherPaths paths, LauncherProduct product, string version)

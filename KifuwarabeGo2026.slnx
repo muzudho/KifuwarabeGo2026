@@ -14,6 +14,8 @@
   <Project Path="KifuwarabeGo2026.LauncherGui.Presentation/KifuwarabeGo2026.LauncherGui.Presentation.csproj" />
   <Project Path="KifuwarabeGo2026.LauncherEngine/KifuwarabeGo2026.LauncherEngine.csproj" />
   <Project Path="KifuwarabeGo2026.LauncherEngine.Platform/KifuwarabeGo2026.LauncherEngine.Platform.csproj" />
+  <Project Path="KifuwarabeGo2026.LauncherEngine.JsonLines/KifuwarabeGo2026.LauncherEngine.JsonLines.csproj" />
+  <Project Path="KifuwarabeGo2026.LauncherEngine.JsonLinesHost/KifuwarabeGo2026.LauncherEngine.JsonLinesHost.csproj" />
   <Project Path="KifuwarabeGo2026.Tests.LauncherEngine/KifuwarabeGo2026.Tests.LauncherEngine.csproj" />
   <Project Path="KifuwarabeGo2026.Reference.PlaySpace.Ponnuki/KifuwarabeGo2026.Reference.PlaySpace.Ponnuki.csproj" />
   <Project Path="KifuwarabeGo2026.Reference.PlaySpace.Go/KifuwarabeGo2026.Reference.PlaySpace.Go.csproj" />

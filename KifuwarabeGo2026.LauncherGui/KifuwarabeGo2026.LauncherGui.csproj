@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\KifuwarabeGo2026.LauncherEngine\KifuwarabeGo2026.LauncherEngine.csproj" />
+    <ProjectReference Include="..\KifuwarabeGo2026.LauncherEngine.JsonLines\KifuwarabeGo2026.LauncherEngine.JsonLines.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.LauncherEngine.Platform\KifuwarabeGo2026.LauncherEngine.Platform.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.LauncherGui.Platform\KifuwarabeGo2026.LauncherGui.Platform.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.LauncherGui.Presentation\KifuwarabeGo2026.LauncherGui.Presentation.csproj" />

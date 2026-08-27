@@ -4,13 +4,12 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <AssemblyName>KifuwarabeGo2026.Tests.LauncherEngine</AssemblyName>
-    <RootNamespace>KifuwarabeGo2026.Tests.LauncherEngine</RootNamespace>
+    <AssemblyName>KifuwarabeGo2026.LauncherEngine.JsonLinesHost</AssemblyName>
+    <RootNamespace>KifuwarabeGo2026.LauncherEngine.JsonLinesHost</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\KifuwarabeGo2026.LauncherEngine\KifuwarabeGo2026.LauncherEngine.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.LauncherEngine.JsonLines\KifuwarabeGo2026.LauncherEngine.JsonLines.csproj" />
-    <ProjectReference Include="..\KifuwarabeGo2026.LauncherEngine.JsonLinesHost\KifuwarabeGo2026.LauncherEngine.JsonLinesHost.csproj" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\KifuwarabeGo2026.LauncherEngine.Platform\KifuwarabeGo2026.LauncherEngine.Platform.csproj" />
   </ItemGroup>
 </Project>

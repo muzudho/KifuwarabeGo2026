@@ -1,8 +1,10 @@
 namespace KifuwarabeGo2026.LauncherGui;
 
 using KifuwarabeGo2026.LauncherEngine;
+using KifuwarabeGo2026.LauncherEngine.JsonLines;
 using KifuwarabeGo2026.LauncherEngine.Platform;
 using KifuwarabeGo2026.LauncherGui.Platform;
+using System.Diagnostics;
 
 internal static class Program
 {
@@ -14,8 +16,25 @@ internal static class Program
         var enginePlatform = new DesktopLauncherEnginePlatform();
         var guiPlatform = new DesktopLauncherGuiPlatform();
         using var httpClient = new HttpClient { Timeout = TimeSpan.FromMinutes(15) };
-        var engine = new InProcessLauncherEngine(enginePlatform, httpClient);
+        var inProcessEngine = new InProcessLauncherEngine(enginePlatform, httpClient);
+        using var jsonLinesEngine = args.Contains("--engine-stdio", StringComparer.OrdinalIgnoreCase)
+            ? new JsonLinesLauncherEngine(CreateEngineHostStartInfo(), inProcessEngine)
+            : null;
+        ILauncherEngine engine = jsonLinesEngine is null ? inProcessEngine : jsonLinesEngine;
         using var game = new LauncherGame(guiPlatform, engine);
         game.Run();
+    }
+
+    private static ProcessStartInfo CreateEngineHostStartInfo()
+    {
+        var configuredPath = Environment.GetEnvironmentVariable("KIFUWARABE_LAUNCHER_ENGINE_HOST");
+        var executable = string.IsNullOrWhiteSpace(configuredPath)
+            ? Path.Combine(AppContext.BaseDirectory, "KifuwarabeGo2026.LauncherEngine.JsonLinesHost.exe")
+            : Path.GetFullPath(configuredPath);
+        if (!File.Exists(executable))
+            throw new FileNotFoundException(
+                "標準入出力版ランチャーエンジンホストが見つかりません。KIFUWARABE_LAUNCHER_ENGINE_HOST で場所を指定できます。",
+                executable);
+        return new ProcessStartInfo(executable);
     }
 }
