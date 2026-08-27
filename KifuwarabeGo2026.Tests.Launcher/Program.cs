@@ -57,6 +57,17 @@ try
     boundarySettings.Promote(LauncherProduct.Gui, "4.9.0");
     boundarySettings.Promote(LauncherProduct.Gui, "5.0.0");
     boundaryStore.Save(boundarySettings);
+    var legacyScreenshotDirectory = Path.Combine(root, "legacy-screenshots");
+    Directory.CreateDirectory(Path.GetDirectoryName(boundaryPaths.Root)!);
+    var sharedSettingsFile = Path.Combine(boundaryPaths.Root, "application-settings.json");
+    File.WriteAllText(sharedSettingsFile,
+        $$"""
+        {
+          "LogRootDirectory": "preserve-this-value",
+          "ScreenshotSaveDirectory": "{{legacyScreenshotDirectory.Replace("\\", "\\\\")}}",
+          "CloseLauncherAfterStartingGui": false
+        }
+        """);
     CreateExecutable(boundaryPaths, LauncherProduct.Gui, "4.9.0");
     CreateExecutable(boundaryPaths, LauncherProduct.Gui, "5.0.0");
     Directory.CreateDirectory(boundaryPaths.VersionDirectory(LauncherProduct.Gui, "4.8.0"));
@@ -70,24 +81,44 @@ try
     var boundaryState = engineBoundary.GetState();
     Require(boundaryState.GuiCurrentVersion == "5.0.0", "engine boundary state");
     Require(boundaryState.InstallationRoot == boundaryPaths.InstallationRoot, "engine boundary installation root");
+    Require(boundaryState.ScreenshotSaveDirectory == Path.GetFullPath(legacyScreenshotDirectory), "shared GUI screenshot setting");
+    Require(!boundaryState.CloseAfterStartingGui, "legacy launcher setting migration");
+    Require(boundaryStore.Load().CloseLauncherAfterStartingGui == false, "launcher setting migrated to launcher settings");
+
+    var changedScreenshotDirectory = Path.Combine(root, "changed-screenshots");
+    var screenshotChange = engineBoundary.ChangeScreenshotDirectory(changedScreenshotDirectory);
+    Require(screenshotChange.IsSuccess && screenshotChange.Value?.ScreenshotSaveDirectory == Path.GetFullPath(changedScreenshotDirectory), "shared GUI setting change");
+    Require(File.ReadAllText(sharedSettingsFile).Contains("preserve-this-value", StringComparison.Ordinal), "shared GUI unknown setting preservation");
+    var invalidScreenshotChange = engineBoundary.ChangeScreenshotDirectory(" ");
+    Require(!invalidScreenshotChange.IsSuccess, "shared GUI setting failure result");
+
+    var closeSettingChange = engineBoundary.ChangeCloseAfterStartingGui(true);
+    Require(closeSettingChange.IsSuccess && closeSettingChange.Value?.CloseAfterStartingGui == true, "launcher-only setting change");
+    Require(boundaryStore.Load().CloseLauncherAfterStartingGui == true, "launcher-only setting persistence");
 
     var boundaryVersions = engineBoundary.GetInstalledVersions();
     var removable = boundaryVersions.Single(version => version.Version == "v4.8.0");
-    engineBoundary.Uninstall(removable);
-    Require(!Directory.Exists(removable.DirectoryPath), "engine boundary uninstall");
+    var uninstall = engineBoundary.Uninstall(removable);
+    Require(uninstall.IsSuccess && !Directory.Exists(removable.DirectoryPath), "engine boundary uninstall");
     var protectedVersion = boundaryVersions.Single(version => version.IsCurrent);
-    var protectedRejected = false;
-    try { engineBoundary.Uninstall(protectedVersion); }
-    catch (InvalidOperationException) { protectedRejected = true; }
-    Require(protectedRejected, "engine boundary protected uninstall rejection");
+    var protectedResult = engineBoundary.Uninstall(protectedVersion);
+    Require(!protectedResult.IsSuccess, "engine boundary protected uninstall rejection");
 
     var launch = engineBoundary.StartGui();
-    Require(launch.Success && launch.UsedPrevious, "engine boundary previous-version fallback");
+    Require(launch.IsSuccess && launch.Value?.UsedPrevious == true, "engine boundary previous-version fallback");
     Require(fakePlatform.StartedExecutables.Count == 2, "engine boundary launch attempts");
 
     var changedInstallation = Path.Combine(root, "changed-installation");
-    boundaryState = engineBoundary.ChangeInstallationDirectory(changedInstallation);
-    Require(boundaryState.InstallationRoot == Path.GetFullPath(changedInstallation), "engine boundary installation setting change");
+    var installationChange = engineBoundary.ChangeInstallationDirectory(changedInstallation);
+    Require(installationChange.IsSuccess && installationChange.Value?.InstallationRoot == Path.GetFullPath(changedInstallation), "engine boundary installation setting change");
+    Require(!engineBoundary.StartGui().IsSuccess, "engine boundary launch failure result");
+
+    using var canceled = new CancellationTokenSource();
+    canceled.Cancel();
+    var canceledUpdate = await engineBoundary.UpdateAsync(LauncherProduct.Gui, cancellationToken: canceled.Token);
+    Require(canceledUpdate.IsCanceled, "engine boundary update cancellation result");
+    var failedUpdate = await engineBoundary.UpdateAsync(LauncherProduct.Gui);
+    Require(!failedUpdate.IsSuccess && !failedUpdate.IsCanceled, "engine boundary update failure result");
 
     Console.WriteLine("PASS: launcher core, platform, and in-process engine boundary checks.");
     return 0;
@@ -106,11 +137,12 @@ static void CreateExecutable(LauncherPaths paths, LauncherProduct product, strin
     File.WriteAllText(Path.Combine(directory, product.ExecutableName()), "test executable");
 }
 
-sealed class FakePlatformServices(string localApplicationData) : IPlatformServices
+sealed class FakePlatformServices(string localApplicationData) : ILauncherEnginePlatform
 {
     public Func<string, bool> StartBehavior { get; init; } = _ => true;
     public List<string> StartedExecutables { get; } = [];
     public string LocalApplicationData { get; } = Path.GetFullPath(localApplicationData);
+    public string MyPictures { get; } = Path.Combine(Path.GetFullPath(localApplicationData), "Pictures");
 
     public bool Start(string executable, string workingDirectory)
     {
@@ -118,9 +150,6 @@ sealed class FakePlatformServices(string localApplicationData) : IPlatformServic
         return StartBehavior(executable);
     }
 
-    public bool OpenFolder(string directory) => false;
-    public bool OpenFile(string filePath) => false;
-    public string? SelectFolder(string title, string initialDirectory) => null;
     public bool IsProcessRunningFrom(string directory) => false;
 }
 

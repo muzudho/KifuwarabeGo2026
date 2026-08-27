@@ -3,9 +3,10 @@ namespace KifuwarabeGo2026.Launcher.Platform;
 using KifuwarabeGo2026.Launcher;
 using System.Diagnostics;
 
-public sealed class DesktopPlatformServices : IPlatformServices
+public sealed class DesktopPlatformServices : ILauncherEnginePlatform, ILauncherGuiPlatform
 {
     public string LocalApplicationData => Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+    public string MyPictures => Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
 
     public bool Start(string executable, string workingDirectory)
     {

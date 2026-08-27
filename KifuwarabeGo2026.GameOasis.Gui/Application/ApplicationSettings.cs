@@ -26,7 +26,7 @@ public sealed class ApplicationSettings
             .ToList();
     }
 
-    public static string FilePath { get; } = ApplicationFamilySettings.FilePath;
+    public static string FilePath { get; } = SharedGuiSettings.FilePath;
 
     public static ApplicationSettings Current { get; private set; } = Load();
 
@@ -167,7 +167,7 @@ public sealed class ApplicationSettings
     private static string NormalizeScreenshotDirectory(string? directory) =>
         string.IsNullOrWhiteSpace(directory) ? GetDefaultScreenshotSaveDirectory() : Path.GetFullPath(directory);
 
-    private static string GetDefaultScreenshotSaveDirectory() => ApplicationFamilySettings.DefaultScreenshotSaveDirectory;
+    private static string GetDefaultScreenshotSaveDirectory() => SharedGuiSettings.DefaultScreenshotSaveDirectory;
 
     private static string GetDefaultLogRootDirectory()
     {

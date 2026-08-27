@@ -7,6 +7,7 @@ internal sealed class LauncherSettings
     public string? GuiPreviousVersion { get; set; }
     public string? EngineCurrentVersion { get; set; }
     public string? EnginePreviousVersion { get; set; }
+    public bool? CloseLauncherAfterStartingGui { get; set; }
 
     public string? Current(LauncherProduct product) => product == LauncherProduct.Gui ? GuiCurrentVersion : EngineCurrentVersion;
     public string? Previous(LauncherProduct product) => product == LauncherProduct.Gui ? GuiPreviousVersion : EnginePreviousVersion;

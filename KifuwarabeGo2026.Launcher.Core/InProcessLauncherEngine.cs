@@ -2,16 +2,17 @@ namespace KifuwarabeGo2026.Launcher;
 
 public sealed class InProcessLauncherEngine : ILauncherEngine
 {
-    private readonly IPlatformServices _platform;
+    private readonly ILauncherEnginePlatform _platform;
     private readonly HttpClient _httpClient;
     private readonly LauncherSettingsStore _settings;
+    private readonly SharedGuiSettingsStore _sharedGuiSettings;
     private readonly LauncherLog _log;
     private LauncherPaths _paths;
     private InstalledVersionCatalog _catalog = null!;
     private ProductLauncher _launcher = null!;
     private LauncherUpdateService _updates = null!;
 
-    public InProcessLauncherEngine(IPlatformServices platform, HttpClient httpClient)
+    public InProcessLauncherEngine(ILauncherEnginePlatform platform, HttpClient httpClient)
     {
         ArgumentNullException.ThrowIfNull(platform);
         ArgumentNullException.ThrowIfNull(httpClient);
@@ -20,6 +21,8 @@ public sealed class InProcessLauncherEngine : ILauncherEngine
         _httpClient = httpClient;
         var settingsPaths = new LauncherPaths(platform.LocalApplicationData);
         _settings = new LauncherSettingsStore(settingsPaths);
+        _sharedGuiSettings = new SharedGuiSettingsStore(platform.LocalApplicationData, platform.MyPictures);
+        MigrateLegacyLauncherSettings();
         _log = new LauncherLog(settingsPaths);
         _paths = new LauncherPaths(platform.LocalApplicationData, _settings.Load().InstallationDirectory);
         Directory.CreateDirectory(_paths.InstallationRoot);
@@ -33,47 +36,114 @@ public sealed class InProcessLauncherEngine : ILauncherEngine
             _paths.InstallationRoot,
             settings.GuiCurrentVersion,
             settings.EngineCurrentVersion,
-            ApplicationFamilySettings.ScreenshotSaveDirectory,
-            ApplicationFamilySettings.FilePath,
-            ApplicationFamilySettings.CloseLauncherAfterStartingGui);
+            _sharedGuiSettings.ScreenshotSaveDirectory,
+            _sharedGuiSettings.FilePath,
+            settings.CloseLauncherAfterStartingGui ?? true);
     }
 
-    public Task<string> UpdateAsync(
+    public async Task<LauncherOperationResult<string>> UpdateAsync(
         LauncherProduct product,
         IProgress<LauncherProgress>? progress = null,
-        CancellationToken cancellationToken = default) =>
-        _updates.UpdateAsync(product, message => progress?.Report(new LauncherProgress(message)), cancellationToken);
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var version = await _updates.UpdateAsync(
+                product,
+                message => progress?.Report(new LauncherProgress(message)),
+                cancellationToken);
+            return LauncherOperationResult<string>.Success(version, $"{product.DisplayName()} v{version} UPDATE COMPLETE");
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return LauncherOperationResult<string>.Canceled();
+        }
+        catch (Exception exception)
+        {
+            return LauncherOperationResult<string>.Failure(exception.Message);
+        }
+    }
 
     public IReadOnlyList<InstalledVersion> GetInstalledVersions() => _catalog.ReadAll();
 
-    public void Uninstall(InstalledVersion installedVersion) => _catalog.Uninstall(installedVersion);
+    public LauncherOperationResult Uninstall(InstalledVersion installedVersion)
+    {
+        try
+        {
+            _catalog.Uninstall(installedVersion);
+            return LauncherOperationResult.Success();
+        }
+        catch (Exception exception)
+        {
+            return LauncherOperationResult.Failure(exception.Message);
+        }
+    }
 
-    public LaunchResult StartGui() => _launcher.StartGui();
+    public LauncherOperationResult<LauncherLaunchDetails> StartGui()
+    {
+        var result = _launcher.StartGui();
+        return result.Success
+            ? LauncherOperationResult<LauncherLaunchDetails>.Success(new LauncherLaunchDetails(result.UsedPrevious), result.Message)
+            : LauncherOperationResult<LauncherLaunchDetails>.Failure(result.Message);
+    }
 
     public string? GetCurrentDirectory(LauncherProduct product) => _launcher.CurrentDirectory(product);
 
-    public LauncherState ChangeInstallationDirectory(string? directory)
+    public LauncherOperationResult<LauncherState> ChangeInstallationDirectory(string? directory)
+    {
+        try
+        {
+            var settings = _settings.Load();
+            settings.InstallationDirectory = string.IsNullOrWhiteSpace(directory) ? null : Path.GetFullPath(directory);
+            var nextPaths = new LauncherPaths(_platform.LocalApplicationData, settings.InstallationDirectory);
+            Directory.CreateDirectory(nextPaths.InstallationRoot);
+            _settings.Save(settings);
+            _paths = nextPaths;
+            RebuildInstallationServices();
+            return LauncherOperationResult<LauncherState>.Success(GetState());
+        }
+        catch (Exception exception)
+        {
+            return LauncherOperationResult<LauncherState>.Failure(exception.Message);
+        }
+    }
+
+    public LauncherOperationResult<LauncherState> ChangeScreenshotDirectory(string directory)
+    {
+        try
+        {
+            _sharedGuiSettings.SaveScreenshotDirectory(directory);
+            return LauncherOperationResult<LauncherState>.Success(GetState());
+        }
+        catch (Exception exception)
+        {
+            return LauncherOperationResult<LauncherState>.Failure(exception.Message);
+        }
+    }
+
+    public LauncherOperationResult<LauncherState> ChangeCloseAfterStartingGui(bool value)
+    {
+        try
+        {
+            var settings = _settings.Load();
+            settings.CloseLauncherAfterStartingGui = value;
+            _settings.Save(settings);
+            return LauncherOperationResult<LauncherState>.Success(GetState());
+        }
+        catch (Exception exception)
+        {
+            return LauncherOperationResult<LauncherState>.Failure(exception.Message);
+        }
+    }
+
+    private void MigrateLegacyLauncherSettings()
     {
         var settings = _settings.Load();
-        settings.InstallationDirectory = string.IsNullOrWhiteSpace(directory) ? null : Path.GetFullPath(directory);
-        var nextPaths = new LauncherPaths(_platform.LocalApplicationData, settings.InstallationDirectory);
-        Directory.CreateDirectory(nextPaths.InstallationRoot);
+        if (settings.CloseLauncherAfterStartingGui is not null) return;
+        var legacyValue = _sharedGuiSettings.ReadLegacyCloseLauncherAfterStartingGui();
+        if (legacyValue is null) return;
+        settings.CloseLauncherAfterStartingGui = legacyValue;
         _settings.Save(settings);
-        _paths = nextPaths;
-        RebuildInstallationServices();
-        return GetState();
-    }
-
-    public LauncherState ChangeScreenshotDirectory(string directory)
-    {
-        ApplicationFamilySettings.SaveScreenshotDirectory(directory);
-        return GetState();
-    }
-
-    public LauncherState ChangeCloseAfterStartingGui(bool value)
-    {
-        ApplicationFamilySettings.SaveCloseLauncherAfterStartingGui(value);
-        return GetState();
     }
 
     private void RebuildInstallationServices()
@@ -87,4 +157,3 @@ public sealed class InProcessLauncherEngine : ILauncherEngine
             _log);
     }
 }
-

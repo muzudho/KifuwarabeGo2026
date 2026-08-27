@@ -8,7 +8,7 @@ using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls;
 
 public sealed class LauncherScreen : IDisposable
 {
-    private readonly IPlatformServices _platform;
+    private readonly ILauncherGuiPlatform _platform;
     private readonly ILauncherEngine _engine;
     private readonly KfwStationeryDrawingTools _draw;
     private readonly Action _exitApplication;
@@ -47,7 +47,7 @@ public sealed class LauncherScreen : IDisposable
     private int _selectedIndex;
     private int _firstVisible;
 
-    public LauncherScreen(KfwStationeryDrawingTools drawingTools, IPlatformServices platform, ILauncherEngine engine, Action exitApplication)
+    public LauncherScreen(KfwStationeryDrawingTools drawingTools, ILauncherGuiPlatform platform, ILauncherEngine engine, Action exitApplication)
     {
         _draw = drawingTools;
         _exitApplication = exitApplication;
@@ -281,8 +281,8 @@ public sealed class LauncherScreen : IDisposable
             var selected = _platform.SelectFolder("Select the folder for screenshots.", _engine.GetState().ScreenshotSaveDirectory);
             if (selected is not null)
             {
-                try { _engine.ChangeScreenshotDirectory(selected); SetStatus("SCREENSHOT FOLDER SAVED: " + selected); }
-                catch (Exception exception) { SetStatus("SETTINGS SAVE FAILED: " + exception.Message); }
+                var result = _engine.ChangeScreenshotDirectory(selected);
+                SetStatus(result.IsSuccess ? "SCREENSHOT FOLDER SAVED: " + selected : "SETTINGS SAVE FAILED: " + result.Message);
             }
         }
         else if (click && _openScreenshots.IsHit(point))
@@ -291,27 +291,25 @@ public sealed class LauncherScreen : IDisposable
             SetStatus(_platform.OpenFile(_engine.GetState().SharedSettingsFile) ? "SETTINGS FILE OPENED" : "SETTINGS FILE COULD NOT BE OPENED");
         else if (click && new Rectangle(170, 778, 870, 80).Contains(point))
         {
-            try
-            {
-                var value = !_engine.GetState().CloseAfterStartingGui;
-                _engine.ChangeCloseAfterStartingGui(value);
-                SetStatus(value ? "LAUNCHER WILL CLOSE AFTER GUI START" : "LAUNCHER WILL REMAIN OPEN AFTER GUI START");
-            }
-            catch (Exception exception) { SetStatus("SETTINGS SAVE FAILED: " + exception.Message); }
+            var value = !_engine.GetState().CloseAfterStartingGui;
+            var result = _engine.ChangeCloseAfterStartingGui(value);
+            SetStatus(result.IsSuccess
+                ? value ? "LAUNCHER WILL CLOSE AFTER GUI START" : "LAUNCHER WILL REMAIN OPEN AFTER GUI START"
+                : "SETTINGS SAVE FAILED: " + result.Message);
         }
     }
 
     private void ApplyInstallationDirectory(string? directory)
     {
-        try
+        var result = _engine.ChangeInstallationDirectory(directory);
+        if (result.IsSuccess && result.Value is { } state)
         {
-            var state = _engine.ChangeInstallationDirectory(directory);
             RefreshVersions();
             SetStatus(string.IsNullOrWhiteSpace(directory)
                 ? "AUTOMATIC INSTALLATION FOLDER CREATED: " + state.InstallationRoot
                 : "INSTALLATION FOLDER SAVED: " + state.InstallationRoot);
         }
-        catch (Exception exception) { SetStatus("INSTALLATION FOLDER SAVE FAILED: " + exception.Message); }
+        else SetStatus("INSTALLATION FOLDER SAVE FAILED: " + result.Message);
     }
 
     private void UpdateVersions(Point point, bool click, KeyboardState keyboard, GamePadState gamePad)
@@ -341,8 +339,8 @@ public sealed class LauncherScreen : IDisposable
             var failures = new List<string>();
             foreach (var target in targets)
             {
-                try { _engine.Uninstall(target); }
-                catch (Exception exception) { failures.Add($"{target.ProductName} {target.Version}: {exception.Message}"); }
+                var result = _engine.Uninstall(target);
+                if (!result.IsSuccess) failures.Add($"{target.ProductName} {target.Version}: {result.Message}");
             }
             _markedForRemoval.Clear();
             SetStatus(failures.Count == 0
@@ -358,10 +356,9 @@ public sealed class LauncherScreen : IDisposable
         try
         {
             var progress = new LauncherProgressReporter(SetStatus);
-            var version = await _engine.UpdateAsync(product, progress);
-            SetStatus($"{product.DisplayName()} v{version} UPDATE COMPLETE");
+            var result = await _engine.UpdateAsync(product, progress);
+            SetStatus(result.IsSuccess ? result.Message : result.IsCanceled ? "UPDATE CANCELED" : "UPDATE FAILED: " + result.Message);
         }
-        catch (Exception exception) { SetStatus("UPDATE FAILED: " + exception.Message); }
         finally { _busy = false; RefreshVersions(); }
     }
 
@@ -384,7 +381,7 @@ public sealed class LauncherScreen : IDisposable
     }
 
     private async Task UpdateAllAsync() { await UpdateProductAsync(LauncherProduct.Gui); await UpdateProductAsync(LauncherProduct.Engine); }
-    private void StartGui() { var result = _engine.StartGui(); SetStatus(result.Message); if (result.Success && _engine.GetState().CloseAfterStartingGui) _exitApplication(); }
+    private void StartGui() { var result = _engine.StartGui(); SetStatus(result.Message); if (result.IsSuccess && _engine.GetState().CloseAfterStartingGui) _exitApplication(); }
     private void OpenCurrentEngine() { var directory = _engine.GetCurrentDirectory(LauncherProduct.Engine); SetStatus(directory is not null && _platform.OpenFolder(directory) ? "ENGINE FOLDER OPENED" : "ENGINE IS NOT INSTALLED"); }
     private void OpenSelected() { var item = Selected; if (item is not null) SetStatus(_platform.OpenFolder(item.DirectoryPath) ? "FOLDER OPENED" : "FOLDER COULD NOT BE OPENED"); }
     private void RefreshVersions() { _installed = _engine.GetInstalledVersions(); _markedForRemoval.IntersectWith(_installed.Where(item => item.CanUninstall).Select(Identity)); Select(Math.Min(_selectedIndex, _installed.Count - 1)); }

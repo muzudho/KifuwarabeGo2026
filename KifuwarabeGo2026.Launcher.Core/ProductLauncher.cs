@@ -34,4 +34,4 @@ internal sealed class ProductLauncher(LauncherPaths paths, LauncherSettingsStore
     }
 }
 
-public sealed record LaunchResult(bool Success, bool UsedPrevious, string Message);
+internal sealed record LaunchResult(bool Success, bool UsedPrevious, string Message);

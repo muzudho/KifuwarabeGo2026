@@ -14,7 +14,7 @@ using Microsoft.Xna.Framework.Audio;
 internal sealed class LauncherGame : Game
 {
     private readonly GraphicsDeviceManager _graphics;
-    private readonly IPlatformServices _platform;
+    private readonly ILauncherGuiPlatform _platform;
     private readonly ILauncherEngine _engine;
     private LauncherScreen? _screen;
     private KfwScreenCanvas? _canvas;
@@ -27,7 +27,7 @@ internal sealed class LauncherGame : Game
     private SoundEffect? _screenshotShutterSound;
     private SoundEffectInstance? _screenshotShutterSoundInstance;
 
-    public LauncherGame(IPlatformServices platform, ILauncherEngine engine)
+    public LauncherGame(ILauncherGuiPlatform platform, ILauncherEngine engine)
     {
         _platform = platform;
         _engine = engine;

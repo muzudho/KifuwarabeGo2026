@@ -3,6 +3,7 @@ namespace KifuwarabeGo2026.Launcher;
 public interface ILauncherPathProvider
 {
     string LocalApplicationData { get; }
+    string MyPictures { get; }
 }
 
 public interface IRunningProcessCatalog
@@ -13,13 +14,17 @@ public interface IRunningProcessCatalog
 public interface IPlatformProcessService
 {
     bool Start(string executable, string workingDirectory);
-    bool OpenFolder(string directory);
-    bool OpenFile(string filePath);
 }
 
-public interface IPlatformServices : ILauncherPathProvider, IRunningProcessCatalog, IPlatformProcessService
+public interface ILauncherEnginePlatform : ILauncherPathProvider, IRunningProcessCatalog, IPlatformProcessService
+{
+}
+
+public interface ILauncherGuiPlatform
 {
     string? SelectFolder(string title, string initialDirectory);
+    bool OpenFolder(string directory);
+    bool OpenFile(string filePath);
 }
 
 public interface IFileSystem
