@@ -1,9 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <AssemblyName>KifuwarabeGo2026.Launcher.Core</AssemblyName>
-    <RootNamespace>KifuwarabeGo2026.Launcher</RootNamespace>
-  </PropertyGroup>
-</Project>

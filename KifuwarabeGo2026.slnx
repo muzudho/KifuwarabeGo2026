@@ -9,11 +9,12 @@
   <Project Path="KifuwarabeGo2026.GameOasis.Gui.Windows/KifuwarabeGo2026.GameOasis.Gui.Windows.csproj" />
   <Project Path="KifuwarabeGo2026.Tests.GameOasis.Gui.Windows/KifuwarabeGo2026.Tests.GameOasis.Gui.Windows.csproj" />
   <Project Path="KifuwarabeGo2026.GameOasis.Gui/KifuwarabeGo2026.GameOasis.Gui.csproj" />
-  <Project Path="KifuwarabeGo2026.Launcher/KifuwarabeGo2026.Launcher.csproj" />
-  <Project Path="KifuwarabeGo2026.Launcher.Core/KifuwarabeGo2026.Launcher.Core.csproj" />
-  <Project Path="KifuwarabeGo2026.Launcher.Platform/KifuwarabeGo2026.Launcher.Platform.csproj" />
-  <Project Path="KifuwarabeGo2026.Launcher.Presentation/KifuwarabeGo2026.Launcher.Presentation.csproj" />
-  <Project Path="KifuwarabeGo2026.Tests.Launcher/KifuwarabeGo2026.Tests.Launcher.csproj" />
+  <Project Path="KifuwarabeGo2026.LauncherGui/KifuwarabeGo2026.LauncherGui.csproj" />
+  <Project Path="KifuwarabeGo2026.LauncherGui.Platform/KifuwarabeGo2026.LauncherGui.Platform.csproj" />
+  <Project Path="KifuwarabeGo2026.LauncherGui.Presentation/KifuwarabeGo2026.LauncherGui.Presentation.csproj" />
+  <Project Path="KifuwarabeGo2026.LauncherEngine/KifuwarabeGo2026.LauncherEngine.csproj" />
+  <Project Path="KifuwarabeGo2026.LauncherEngine.Platform/KifuwarabeGo2026.LauncherEngine.Platform.csproj" />
+  <Project Path="KifuwarabeGo2026.Tests.LauncherEngine/KifuwarabeGo2026.Tests.LauncherEngine.csproj" />
   <Project Path="KifuwarabeGo2026.Reference.PlaySpace.Ponnuki/KifuwarabeGo2026.Reference.PlaySpace.Ponnuki.csproj" />
   <Project Path="KifuwarabeGo2026.Reference.PlaySpace.Go/KifuwarabeGo2026.Reference.PlaySpace.Go.csproj" />
   <Project Path="KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation/KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation.csproj" />

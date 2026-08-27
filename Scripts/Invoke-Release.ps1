@@ -99,10 +99,11 @@ if ($status.Count -gt 0 -and -not $AllowDirty) {
 }
 
 $versionProjects = @(
-    'KifuwarabeGo2026.Launcher\KifuwarabeGo2026.Launcher.csproj',
-    'KifuwarabeGo2026.Launcher.Core\KifuwarabeGo2026.Launcher.Core.csproj',
-    'KifuwarabeGo2026.Launcher.Platform\KifuwarabeGo2026.Launcher.Platform.csproj',
-    'KifuwarabeGo2026.Launcher.Presentation\KifuwarabeGo2026.Launcher.Presentation.csproj',
+    'KifuwarabeGo2026.LauncherGui\KifuwarabeGo2026.LauncherGui.csproj',
+    'KifuwarabeGo2026.LauncherGui.Platform\KifuwarabeGo2026.LauncherGui.Platform.csproj',
+    'KifuwarabeGo2026.LauncherGui.Presentation\KifuwarabeGo2026.LauncherGui.Presentation.csproj',
+    'KifuwarabeGo2026.LauncherEngine\KifuwarabeGo2026.LauncherEngine.csproj',
+    'KifuwarabeGo2026.LauncherEngine.Platform\KifuwarabeGo2026.LauncherEngine.Platform.csproj',
     'KifuwarabeGo2026.GameOasis.Gui.Windows\KifuwarabeGo2026.GameOasis.Gui.Windows.csproj',
     'KifuwarabeGo2026.GameOasis.Gui\KifuwarabeGo2026.GameOasis.Gui.csproj',
     'KifuwarabeGo2026.Reference.Communication.Gtp.Host\KifuwarabeGo2026.Reference.Communication.Gtp.Host.csproj',
@@ -130,7 +131,7 @@ if ($releaseNotesText -notmatch "(?m)^# Kifuwarabe Go 2026 v$([regex]::Escape($V
     throw "Release notes do not contain the expected v$Version title: $ReleaseNotes"
 }
 
-$launcherPublish = 'KifuwarabeGo2026.Launcher\bin\Release\net8.0\win-x64\publish'
+$launcherPublish = 'KifuwarabeGo2026.LauncherGui\bin\Release\net8.0\win-x64\publish'
 $guiPublish = 'KifuwarabeGo2026.GameOasis.Gui.Windows\bin\Release\net8.0-windows\win-x64\publish'
 $enginePublish = 'KifuwarabeGo2026.Reference.Communication.Gtp.Host\bin\Release\net8.0\win-x64\publish'
 
@@ -138,7 +139,7 @@ if (-not $SkipBuild) {
     Invoke-CheckedCommand -Command dotnet -Arguments @('build', 'KifuwarabeGo2026.slnx', '-c', 'Release')
 
     if (-not $SkipSmokeTests) {
-        Invoke-CheckedCommand -Command dotnet -Arguments @('run', '--project', 'KifuwarabeGo2026.Tests.Launcher\KifuwarabeGo2026.Tests.Launcher.csproj', '-c', 'Release', '--no-build')
+        Invoke-CheckedCommand -Command dotnet -Arguments @('run', '--project', 'KifuwarabeGo2026.Tests.LauncherEngine\KifuwarabeGo2026.Tests.LauncherEngine.csproj', '-c', 'Release', '--no-build')
         Invoke-CheckedCommand -Command dotnet -Arguments @('run', '--project', 'KifuwarabeGo2026.Tests.GameOasis.Gui.Portability\KifuwarabeGo2026.Tests.GameOasis.Gui.Portability.csproj', '-c', 'Release', '--no-build')
         Invoke-CheckedCommand -Command dotnet -Arguments @('run', '--project', 'KifuwarabeGo2026.Tests.GameOasis.Gui.Windows\KifuwarabeGo2026.Tests.GameOasis.Gui.Windows.csproj', '-c', 'Release', '--no-build')
     }
@@ -147,7 +148,7 @@ if (-not $SkipBuild) {
     Clear-PublishDirectory -LiteralPath $guiPublish
     Clear-PublishDirectory -LiteralPath $enginePublish
 
-    Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.Launcher\KifuwarabeGo2026.Launcher.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false')
+    Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.LauncherGui\KifuwarabeGo2026.LauncherGui.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false')
     Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.GameOasis.Gui.Windows\KifuwarabeGo2026.GameOasis.Gui.Windows.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false')
     Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.Reference.Communication.Gtp.Host\KifuwarabeGo2026.Reference.Communication.Gtp.Host.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false')
 
