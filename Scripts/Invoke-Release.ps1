@@ -106,6 +106,8 @@ $versionProjects = @(
     'KifuwarabeGo2026.LauncherEngine.Platform\KifuwarabeGo2026.LauncherEngine.Platform.csproj',
     'KifuwarabeGo2026.LauncherEngine.JsonLines\KifuwarabeGo2026.LauncherEngine.JsonLines.csproj',
     'KifuwarabeGo2026.LauncherEngine.JsonLinesHost\KifuwarabeGo2026.LauncherEngine.JsonLinesHost.csproj',
+    'KifuwarabeGo2026.LobbyEngine.JsonLines\KifuwarabeGo2026.LobbyEngine.JsonLines.csproj',
+    'KifuwarabeGo2026.LobbyEngine.JsonLinesHost\KifuwarabeGo2026.LobbyEngine.JsonLinesHost.csproj',
     'KifuwarabeGo2026.GameOasis.Gui.Windows\KifuwarabeGo2026.GameOasis.Gui.Windows.csproj',
     'KifuwarabeGo2026.GameOasis.Gui\KifuwarabeGo2026.GameOasis.Gui.csproj',
     'KifuwarabeGo2026.Reference.Communication.Gtp.Host\KifuwarabeGo2026.Reference.Communication.Gtp.Host.csproj',
@@ -153,6 +155,7 @@ if (-not $SkipBuild) {
     Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.LauncherGui\KifuwarabeGo2026.LauncherGui.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false')
     Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.LauncherEngine.JsonLinesHost\KifuwarabeGo2026.LauncherEngine.JsonLinesHost.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false', '-o', $launcherPublish)
     Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.GameOasis.Gui.Windows\KifuwarabeGo2026.GameOasis.Gui.Windows.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false')
+    Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.LobbyEngine.JsonLinesHost\KifuwarabeGo2026.LobbyEngine.JsonLinesHost.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false', '-o', "$guiPublish\Tools\LobbyEngine")
     Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.Reference.Communication.Gtp.Host\KifuwarabeGo2026.Reference.Communication.Gtp.Host.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false')
 
     # v3 launchers start KifuwarabeGo2026.Gui.exe. Keep that public entry point
@@ -175,6 +178,10 @@ Assert-FileExists -LiteralPath @(
     "$guiPublish\Tools\Cgos\KifuwarabeGo2026.Reference.Communication.Cgos.Host.dll",
     "$guiPublish\Tools\Cgos\KifuwarabeGo2026.Reference.Communication.Cgos.Host.deps.json",
     "$guiPublish\Tools\Cgos\KifuwarabeGo2026.Reference.Communication.Cgos.Host.runtimeconfig.json",
+    "$guiPublish\Tools\LobbyEngine\KifuwarabeGo2026.LobbyEngine.JsonLinesHost.exe",
+    "$guiPublish\Tools\LobbyEngine\KifuwarabeGo2026.LobbyEngine.JsonLinesHost.dll",
+    "$guiPublish\Tools\LobbyEngine\KifuwarabeGo2026.LobbyEngine.JsonLinesHost.deps.json",
+    "$guiPublish\Tools\LobbyEngine\KifuwarabeGo2026.LobbyEngine.JsonLinesHost.runtimeconfig.json",
     "$enginePublish\KifuwarabeGo2026.Engine.exe",
     "$enginePublish\KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation.dll",
     "$enginePublish\KifuwarabeGo2026.Reference.PlayerEngine.dll",

@@ -2,6 +2,8 @@ using KifuwarabeGo2026.GameOasis.Application.Catalogs;
 using KifuwarabeGo2026.GameOasis.Application.Profiles;
 using KifuwarabeGo2026.GameOasis.Application.Storage;
 using KifuwarabeGo2026.LobbyEngine;
+using KifuwarabeGo2026.LobbyEngine.JsonLines;
+using System.Diagnostics;
 
 var documents = new MemoryDocumentStore();
 var paths = new TestCatalogPaths();
@@ -30,6 +32,36 @@ Require(state.ClientIdentities.Count > 0, "Client identities must be composed wi
 Require(state.CgosConnections.Count == 1 && state.CgosConnections[0].Id == "practice", "CGOS connections must load through the settings adapter.");
 Require(state.GtpEngineListPath == paths.GtpEngineListPath, "The GUI must receive the engine settings path as display state.");
 
+var repositoryRoot = FindRepositoryRoot();
+var hostPath = Path.Combine(repositoryRoot, "KifuwarabeGo2026.LobbyEngine.JsonLinesHost", "bin", "Release", "net8.0",
+    OperatingSystem.IsWindows() ? "KifuwarabeGo2026.LobbyEngine.JsonLinesHost.exe" : "KifuwarabeGo2026.LobbyEngine.JsonLinesHost");
+Require(File.Exists(hostPath), $"Lobby JSON Lines host must be built: {hostPath}");
+var protocolTestDirectory = Path.Combine(Path.GetTempPath(), "kifuwarabe-lobby-jsonlines-" + Guid.NewGuid().ToString("N"));
+Directory.CreateDirectory(protocolTestDirectory);
+try
+{
+    var remoteEntryPath = Path.Combine(protocolTestDirectory, "player-list.json");
+    File.WriteAllText(remoteEntryPath,
+        """{"players":[{"id":"remote-entry","displayName":"Remote Player","identifier":"remote","kind":"human","engineProfileId":"","targetProfileIds":[]}]}""");
+    var remoteEngine = new JsonLinesLobbyEngine(
+        () => new ProcessStartInfo(hostPath) { ArgumentList = { "--entry-list", remoteEntryPath } },
+        engine,
+        TimeSpan.FromSeconds(5));
+    var remoteState = remoteEngine.LoadState();
+    Require(remoteState.Entries.Count == 1 && remoteState.Entries[0].Id == "remote-entry" && remoteEngine.CommunicationWarning is null,
+        "Registered entries must make a real JSON Lines round trip through the lobby child process.");
+
+    var failedEngine = new JsonLinesLobbyEngine(
+        () => new ProcessStartInfo(Path.Combine(protocolTestDirectory, "missing-host.exe")), engine, TimeSpan.FromMilliseconds(200));
+    var recoveredState = failedEngine.LoadState();
+    Require(recoveredState.Entries.Count == state.Entries.Count && failedEngine.CommunicationWarning is not null,
+        "A lobby host failure must recover through the in-process engine without terminating the GUI path.");
+}
+finally
+{
+    Directory.Delete(protocolTestDirectory, recursive: true);
+}
+
 var changedEngines = state.GtpEngines.Select(profile => profile.Clone()).ToArray();
 changedEngines[0].DisplayName = "Changed Engine";
 engine.SaveGtpEngines(changedEngines);
@@ -55,6 +87,17 @@ catch (InvalidOperationException) { rejectedBeforeLoad = true; }
 Require(rejectedBeforeLoad, "Save before LoadState must be rejected deterministically.");
 
 Console.WriteLine("PASS: ILobbyEngine loaded and saved lobby catalogs without GUI or MonoGame dependencies.");
+
+static string FindRepositoryRoot()
+{
+    var directory = new DirectoryInfo(AppContext.BaseDirectory);
+    while (directory is not null)
+    {
+        if (File.Exists(Path.Combine(directory.FullName, "KifuwarabeGo2026.slnx"))) return directory.FullName;
+        directory = directory.Parent;
+    }
+    throw new DirectoryNotFoundException("Repository root was not found.");
+}
 
 static void Require(bool condition, string message)
 {

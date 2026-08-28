@@ -5,8 +5,10 @@ using KifuwarabeGo2026.GameOasis.Gui.Application;
 using KifuwarabeGo2026.GameOasis.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.ConnectionTarget;
 using KifuwarabeGo2026.GameOasis.Gui.Application.Local.Resting.TournamentRule;
 using KifuwarabeGo2026.LobbyEngine;
+using KifuwarabeGo2026.LobbyEngine.JsonLines;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 
@@ -27,10 +29,12 @@ public sealed class LobbyGuiController : ILobbyGuiCommands
     public static LobbyGuiController CreateDefault()
     {
         var releaseDefaultDirectory = Path.GetDirectoryName(ReleaseDefaultSettings.FilePath) ?? AppContext.BaseDirectory;
-        var engine = InProcessLobbyEngine.CreateDefault(
+        ILobbyEngine engine = InProcessLobbyEngine.CreateDefault(
             ApplicationSettingsCgosConnectionStore.Instance,
             ReleaseDefaultSettings.Current.EngineSettings.GtpEngines,
             releaseDefaultDirectory);
+        if (TryCreateHostStartInfo(out var hostStartInfoFactory))
+            engine = new JsonLinesLobbyEngine(hostStartInfoFactory, engine);
         return new LobbyGuiController(engine, TournamentRulesCatalog.LoadFromDefaultLocation());
     }
 
@@ -45,7 +49,8 @@ public sealed class LobbyGuiController : ILobbyGuiCommands
             state.CgosConnections.ToArray(),
             ApplicationSettings.FilePath,
             state.GtpEngineListPath,
-            state.DuplicateGtpEngineIdsRepaired);
+            state.DuplicateGtpEngineIdsRepaired,
+            (_engine as JsonLinesLobbyEngine)?.CommunicationWarning);
     }
 
     public void SaveGtpEngines(IEnumerable<GtpEngineProfile> profiles) => _engine.SaveGtpEngines(profiles);
@@ -54,4 +59,22 @@ public sealed class LobbyGuiController : ILobbyGuiCommands
     public void SaveEntriesAndClientIdentities(IEnumerable<EntryProfile> entries, IEnumerable<ClientIdentityProfile> clientIdentities) =>
         _engine.SaveEntriesAndClientIdentities(entries, clientIdentities);
     public void SaveCgosConnections(IEnumerable<CgosConnectionProfile> profiles) => _engine.SaveCgosConnections(profiles);
+
+    private static bool TryCreateHostStartInfo(out Func<ProcessStartInfo> factory)
+    {
+        var candidates = new[]
+        {
+            Path.Combine(AppContext.BaseDirectory, "Tools", "LobbyEngine", "KifuwarabeGo2026.LobbyEngine.JsonLinesHost.exe"),
+            Path.Combine(AppContext.BaseDirectory, "KifuwarabeGo2026.LobbyEngine.JsonLinesHost.exe"),
+        };
+        var executablePath = candidates.FirstOrDefault(File.Exists);
+        if (executablePath is null)
+        {
+            factory = null!;
+            return false;
+        }
+
+        factory = () => new ProcessStartInfo(executablePath);
+        return true;
+    }
 }

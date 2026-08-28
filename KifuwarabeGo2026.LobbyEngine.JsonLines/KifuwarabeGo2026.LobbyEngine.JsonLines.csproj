@@ -1,13 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\KifuwarabeGo2026.LobbyEngine\KifuwarabeGo2026.LobbyEngine.csproj" />
-    <ProjectReference Include="..\KifuwarabeGo2026.LobbyEngine.JsonLines\KifuwarabeGo2026.LobbyEngine.JsonLines.csproj" />
-    <ProjectReference Include="..\KifuwarabeGo2026.LobbyEngine.JsonLinesHost\KifuwarabeGo2026.LobbyEngine.JsonLinesHost.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
 </Project>

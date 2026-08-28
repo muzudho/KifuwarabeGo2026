@@ -6,8 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\KifuwarabeGo2026.LobbyEngine\KifuwarabeGo2026.LobbyEngine.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.LobbyEngine.JsonLines\KifuwarabeGo2026.LobbyEngine.JsonLines.csproj" />
-    <ProjectReference Include="..\KifuwarabeGo2026.LobbyEngine.JsonLinesHost\KifuwarabeGo2026.LobbyEngine.JsonLinesHost.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\KifuwarabeGo2026.GameOasis.Application\KifuwarabeGo2026.GameOasis.Application.csproj" />
+    <ProjectReference Include="..\KifuwarabeGo2026.GameOasis.Storage\KifuwarabeGo2026.GameOasis.Storage.csproj" />
   </ItemGroup>
 </Project>

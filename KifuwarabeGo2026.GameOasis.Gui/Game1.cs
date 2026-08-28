@@ -250,6 +250,8 @@ public class Game1 : Game
         _cgosAdminProcess = new CgosConnectionProcess(_desktopLauncher, _platformExecutableService, "Admin");
         _lobbyGuiController = LobbyGuiController.CreateDefault();
         _lobbyViewState = _lobbyGuiController.LoadViewState();
+        if (!string.IsNullOrWhiteSpace(_lobbyViewState.CommunicationWarning))
+            GuiOperationLog.App("Lobby engine communication fallback", _lobbyViewState.CommunicationWarning);
         _session.SetTournamentRules(_lobbyViewState.TournamentRules);
         _session.SetGtpEngineProfiles(_lobbyViewState.GtpEngines);
         _session.SetEntryProfiles(_lobbyViewState.Entries);

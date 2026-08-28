@@ -13,4 +13,5 @@ public sealed record LobbyViewState(
     IReadOnlyList<CgosConnectionProfile> CgosConnections,
     string ApplicationSettingsPath,
     string GtpEngineSettingsPath,
-    bool DuplicateGtpEngineIdsRepaired);
+    bool DuplicateGtpEngineIdsRepaired,
+    string? CommunicationWarning = null);

@@ -14,7 +14,9 @@
 ```text
 Game1 / ロビー画面
   -> LobbyGui.Application
-      -> LobbyEngine
+      -> LobbyEngine.JsonLines（登録済み参加者の読取。ホスト同梱時）
+          -> 標準入出力 JSON Lines -> LobbyEngine.JsonLinesHost
+      -> LobbyEngine（通信障害時の復旧および変更操作）
           -> GameOasis.Application の保存境界
           -> GameOasis.Storage の同一プロセス実装
 
