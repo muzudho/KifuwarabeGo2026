@@ -24,3 +24,9 @@ goodbye                  -> process exit
 参照ホストは`--play-space go`で通常囲碁、`--play-space ponnuki`でポン抜きを選びます。`--single-session`を指定したホストは、活動中セッションがある間、二つ目の生成を`single-session-busy`で拒否します。指定しないホストは同じプロセスで複数セッションを扱います。
 
 タイムアウト、不正応答、要求ID不一致、子プロセス終了はクライアント側の通信障害になります。Conciergeはこの障害をセッション失敗または再接続待ちへ変換し、Lobbyへ通知する責務を持ちます。今回の参照クライアントは障害を検出可能な例外として公開し、Lobby通知とログ永続化は後続のConcierge Host接続段階へ残します。
+
+## 外部実装SDKと適合性
+
+.NETの外部実装は`IPlaySpaceProtocol`を実装し、`PlaySpaceJsonLinesHost.RunAsync`へ渡すだけでこの通信仕様を公開できます。公式通常囲碁、公式ポン抜き、外部風Counterサンプルも同じホストSDKを利用します。
+
+`KifuwarabeGo2026.PlaySpace.Conformance`はマニフェストとJSONテストベクトルを受け取る偽Conciergeです。記述、スキーマ、設定検証、セッション、状態、行動、リビジョン競合、終了を、実装言語に依存せず検査します。

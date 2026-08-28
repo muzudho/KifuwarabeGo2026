@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "name": "official-go",
+  "expectedTypeId": "io.github.muzudho.kifuwarabego2026.games.go",
+  "configuration": {"mediaType":"application/json","schemaId":"io.github.muzudho.kifuwarabego2026.games.go.configuration.v1","content":"{\"version\":1,\"boardSize\":9,\"komi\":6.5,\"ruleset\":\"chinese-area\",\"startingPlayer\":\"black\",\"setupStones\":[]}"},
+  "invalidConfiguration": {"mediaType":"application/json","schemaId":"io.github.muzudho.kifuwarabego2026.games.go.configuration.v1","content":"{\"version\":1,\"boardSize\":8,\"komi\":6.5,\"ruleset\":\"chinese-area\",\"startingPlayer\":\"black\"}"},
+  "action": {"mediaType":"application/json","schemaId":"io.github.muzudho.kifuwarabego2026.games.go.action.v1","content":"{\"version\":1,\"type\":\"pass\",\"player\":\"black\"}"},
+  "expectedInitialRevision": 0,
+  "expectedAppliedRevision": 1,
+  "expectedTerminal": false
+}

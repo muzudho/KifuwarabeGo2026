@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "name": "official-ponnuki",
+  "expectedTypeId": "io.github.muzudho.kifuwarabego2026.games.ponnuki",
+  "configuration": {"mediaType":"application/json","schemaId":"io.github.muzudho.kifuwarabego2026.games.ponnuki.configuration.v1","content":"{\"version\":1,\"boardSize\":9,\"initialMoveCount\":0,\"randomSeed\":7,\"captureTarget\":20,\"startingPlayer\":\"black\",\"setupStones\":[]}"},
+  "invalidConfiguration": {"mediaType":"application/json","schemaId":"io.github.muzudho.kifuwarabego2026.games.ponnuki.configuration.v1","content":"{\"version\":1,\"boardSize\":8,\"initialMoveCount\":0,\"captureTarget\":20}"},
+  "action": {"mediaType":"application/json","schemaId":"io.github.muzudho.kifuwarabego2026.games.ponnuki.action.v1","content":"{\"version\":1,\"type\":\"pass\",\"player\":\"black\"}"},
+  "expectedInitialRevision": 0,
+  "expectedAppliedRevision": 1,
+  "expectedTerminal": false
+}

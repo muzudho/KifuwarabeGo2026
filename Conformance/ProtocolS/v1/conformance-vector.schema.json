@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "io.github.muzudho.kifuwarabego2026.protocol-s.conformance-vector.v1",
+  "type": "object",
+  "required": ["version", "name", "expectedTypeId", "configuration", "action", "expectedInitialRevision", "expectedAppliedRevision", "expectedTerminal"],
+  "properties": {
+    "version": {"const": 1},
+    "name": {"type": "string", "minLength": 1},
+    "expectedTypeId": {"type": "string", "minLength": 1},
+    "configuration": {"$ref": "#/$defs/document"},
+    "invalidConfiguration": {"$ref": "#/$defs/document"},
+    "action": {"$ref": "#/$defs/document"},
+    "expectedInitialRevision": {"type": "integer", "minimum": 0},
+    "expectedAppliedRevision": {"type": "integer", "minimum": 1},
+    "expectedTerminal": {"type": "boolean"}
+  },
+  "$defs": {
+    "document": {
+      "type": "object",
+      "required": ["mediaType", "schemaId", "content"],
+      "properties": {
+        "mediaType": {"type": "string"},
+        "schemaId": {"type": "string"},
+        "content": {"type": "string"}
+      }
+    }
+  },
+  "additionalProperties": true
+}

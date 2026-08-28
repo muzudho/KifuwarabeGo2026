@@ -63,7 +63,13 @@ public sealed class JsonLinesPlaySpaceProtocol : IPlaySpaceProtocol, IDisposable
         _process.StandardInput.Flush();
         var line = _process.StandardOutput.ReadLineAsync(cancellationToken).AsTask()
             .WaitAsync(_timeout, cancellationToken).GetAwaiter().GetResult();
-        if (line is null) throw new IOException("PlaySpace Hostが応答せずに終了しました。");
+        if (line is null)
+        {
+            var diagnostic = _process.StandardError.ReadToEnd();
+            throw new IOException(string.IsNullOrWhiteSpace(diagnostic)
+                ? "PlaySpace Hostが応答せずに終了しました。"
+                : $"PlaySpace Hostが応答せずに終了しました。{Environment.NewLine}{diagnostic.Trim()}");
+        }
         PlaySpaceProcessResponse response;
         try
         {

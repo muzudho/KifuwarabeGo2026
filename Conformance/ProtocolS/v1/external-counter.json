@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "name": "external-counter-sample",
+  "expectedTypeId": "example.external.games.counter",
+  "configuration": {"mediaType":"application/json","schemaId":"example.external.games.counter.configuration.v1","content":"{\"target\":1}"},
+  "invalidConfiguration": {"mediaType":"application/json","schemaId":"example.external.games.counter.configuration.v1","content":"{\"target\":0}"},
+  "action": {"mediaType":"application/json","schemaId":"example.external.games.counter.action.v1","content":"{\"amount\":1}"},
+  "expectedInitialRevision": 0,
+  "expectedAppliedRevision": 1,
+  "expectedTerminal": true
+}

@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "io.github.muzudho.kifuwarabego2026.protocol-s.host-manifest.v1",
+  "type": "object",
+  "required": ["version", "playSpaceTypeId", "command", "arguments", "supportsMultipleSessions"],
+  "properties": {
+    "version": {"const": 1},
+    "playSpaceTypeId": {"type": "string", "minLength": 1},
+    "command": {"type": "string", "minLength": 1},
+    "arguments": {"type": "array", "items": {"type": "string"}},
+    "supportsMultipleSessions": {"type": "boolean"}
+  },
+  "additionalProperties": true
+}
