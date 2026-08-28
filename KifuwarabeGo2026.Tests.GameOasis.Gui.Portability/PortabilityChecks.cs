@@ -15,6 +15,8 @@ using KifuwarabeGo2026.GameOasis.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.
 using KifuwarabeGo2026.GameOasis.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.Watching;
 using KifuwarabeGo2026.GameOasis.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.GameOasis.Gui.Application.Local.Resting.TournamentRule;
+using KifuwarabeGo2026.GameOasis.Gui.Application.Lobby;
+using KifuwarabeGo2026.LobbyEngine;
 using KifuwarabeGo2026.Reference.Communication.Gtp;
 using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Integration;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls;
@@ -85,6 +87,7 @@ internal static class PortabilityChecks
         VerifyLegacyGoMatchAssembly(legacyGoMatchAssembly);
         VerifyGameAgnosticConciergeAssembly(conciergeAssembly);
         VerifyGameOasisCatalogLayering(gameOasisApplicationAssembly, gameOasisStorageAssembly);
+        VerifyLobbyGuiBoundary();
         VerifyGuiMatchIntegration();
         VerifyGtpMatchAdapter();
         VerifyPortableFallbacks();
@@ -133,6 +136,79 @@ internal static class PortabilityChecks
         Require(paths.EntryListPath.EndsWith(Path.Combine("Players", "player-list.json"), StringComparison.Ordinal) &&
                 paths.ClientIdentityListPath.EndsWith(Path.Combine("Targets", "target-list.json"), StringComparison.Ordinal),
             "GameOasis.Storage must provide the compatible entry and client identity catalog locations.");
+    }
+
+    private static void VerifyLobbyGuiBoundary()
+    {
+        var engine = new FakeLobbyEngine();
+        var tournamentRules = new FakeTournamentRulesCatalog();
+        ILobbyGuiCommands controller = new LobbyGuiController(engine, tournamentRules);
+        var state = controller.LoadViewState();
+
+        Require(state.TournamentRules.Count == 1 && state.GtpEngines.Count == 1 &&
+                state.Entries.Count == 1 && state.ClientIdentities.Count == 1 &&
+                state.CgosConnections.Count == 1,
+            "Lobby GUI state must project all start-before catalogs through one boundary.");
+        Require(state.ApplicationSettingsPath == ApplicationSettings.FilePath &&
+                state.GtpEngineSettingsPath == "/catalog/engines.json",
+            "Lobby GUI state must expose settings paths without exposing storage implementations.");
+
+        controller.SaveGtpEngines(state.GtpEngines);
+        controller.SaveEntries(state.Entries);
+        controller.SaveClientIdentities(state.ClientIdentities);
+        controller.SaveEntriesAndClientIdentities(state.Entries, state.ClientIdentities);
+        controller.SaveCgosConnections(state.CgosConnections);
+        Require(engine.SaveCallCount == 5,
+            "Lobby GUI commands must delegate persistence to ILobbyEngine.");
+
+        var propertyTypes = typeof(LobbyViewState).GetProperties()
+            .Select(property => property.PropertyType.FullName ?? property.PropertyType.Name)
+            .ToArray();
+        Require(!propertyTypes.Any(type =>
+                type.Contains("MonoGame", StringComparison.Ordinal) ||
+                type.Contains("Microsoft.Xna", StringComparison.Ordinal) ||
+                type.Contains("GoBoard", StringComparison.Ordinal) ||
+                type.Contains("GoGameRecord", StringComparison.Ordinal) ||
+                type.Contains("CgosConnectionProcess", StringComparison.Ordinal)),
+            "Lobby view state must not expose drawing, board, record, or process types.");
+        Require(typeof(LobbyGuiController).GetFields(BindingFlags.Instance | BindingFlags.NonPublic)
+                .All(field => !field.FieldType.Name.Contains("GoAppSession", StringComparison.Ordinal)),
+            "Lobby GUI controller must not own the combined play-room session.");
+    }
+
+    private sealed class FakeLobbyEngine : ILobbyEngine
+    {
+        public int SaveCallCount { get; private set; }
+
+        public LobbyState LoadState() => new(
+            [new GtpEngineProfile { Id = "engine", DisplayName = "Engine" }],
+            [new EntryProfile { Id = "entry", DisplayName = "Player" }],
+            [new ClientIdentityProfile { Id = "identity", DisplayName = "Identity" }],
+            [new CgosConnectionProfile("Connection", "localhost", 6809, "1", "") { Id = "connection" }],
+            "/catalog/engines.json",
+            "/catalog/entries.json",
+            "/catalog/identities.json",
+            "/catalog/settings.json",
+            false);
+
+        public void SaveGtpEngines(IEnumerable<GtpEngineProfile> profiles) => SaveCallCount++;
+        public void SaveEntries(IEnumerable<EntryProfile> profiles) => SaveCallCount++;
+        public void SaveClientIdentities(IEnumerable<ClientIdentityProfile> profiles) => SaveCallCount++;
+        public void SaveEntriesAndClientIdentities(
+            IEnumerable<EntryProfile> entries,
+            IEnumerable<ClientIdentityProfile> clientIdentities) => SaveCallCount++;
+        public void SaveCgosConnections(IEnumerable<CgosConnectionProfile> profiles) => SaveCallCount++;
+    }
+
+    private sealed class FakeTournamentRulesCatalog : ITournamentRulesCatalog
+    {
+        public string ListPath => "/catalog/settings.json";
+        public IReadOnlyList<TournamentRules> Rules { get; } = [new TournamentRules { DisplayName = "Rules" }];
+        public void Save(TournamentRules rules) { }
+        public void Delete(TournamentRules rules) { }
+        public void SaveOrder(IEnumerable<TournamentRules> rules) { }
+        public TournamentRules CreateNew(TournamentRules source) => source.Clone();
+        public TournamentRules Duplicate(TournamentRules source) => source.Clone();
     }
 
     private static void VerifyGameOasisProfilePolicies()

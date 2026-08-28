@@ -9,7 +9,7 @@ using System.Linq;
 using System.Text.Json;
 
 /// <summary>Maps the legacy typed Go rules UI to the game-agnostic persistent configuration catalog.</summary>
-public sealed class TournamentRulesCatalog
+public sealed class TournamentRulesCatalog : ITournamentRulesCatalog
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     private readonly PlaySpaceConfigurationCatalog _catalog;

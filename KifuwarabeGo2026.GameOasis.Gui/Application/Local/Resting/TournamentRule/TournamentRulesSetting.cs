@@ -19,7 +19,7 @@ public sealed class TournamentRulesSetting
     private const int MaxDisplayNameLength = 80;
 
     private readonly GoAppSession _session;
-    private readonly TournamentRulesCatalog _catalog;
+    private readonly ITournamentRulesCatalog _catalog;
     private readonly Action _browseTournamentRules;
     private readonly Action _beginDiscardTransition;
     private readonly Func<Point, bool> _isSettingsFileHit;
@@ -59,7 +59,7 @@ public sealed class TournamentRulesSetting
 
     public TournamentRulesSetting(
         GoAppSession session,
-        TournamentRulesCatalog catalog,
+        ITournamentRulesCatalog catalog,
         Action browseTournamentRules,
         Action beginDiscardTransition,
         IClipboardService clipboardService,
