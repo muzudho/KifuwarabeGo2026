@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.GameOasis.Gui.Application.PlayRoom;
+namespace KifuwarabeGo2026.PlayRoom.Launching;
 
 using KifuwarabeGo2026.GameOasis.Contracts.PlayRoom;
 

@@ -15,7 +15,7 @@ using KifuwarabeGo2026.GameOasis.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.
 using KifuwarabeGo2026.GameOasis.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.Watching;
 using KifuwarabeGo2026.GameOasis.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.GameOasis.Gui.Application.Local.Resting.TournamentRule;
-using KifuwarabeGo2026.GameOasis.Gui.Application.Lobby;
+using KifuwarabeGo2026.LobbyGui.Application;
 using KifuwarabeGo2026.LobbyEngine;
 using KifuwarabeGo2026.Reference.Communication.Gtp;
 using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Integration;
@@ -140,6 +140,9 @@ internal static class PortabilityChecks
 
     private static void VerifyLobbyGuiBoundary()
     {
+        Require(typeof(LobbyGuiController).Namespace == "KifuwarabeGo2026.LobbyGui.Application" &&
+                typeof(ILobbyGuiCommands).Namespace == "KifuwarabeGo2026.LobbyGui.Application",
+            "Stable lobby GUI boundaries must be identifiable by the LobbyGui namespace.");
         var engine = new FakeLobbyEngine();
         var tournamentRules = new FakeTournamentRulesCatalog();
         ILobbyGuiCommands controller = new LobbyGuiController(engine, tournamentRules);

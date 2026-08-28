@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.GameOasis.Gui.Application.Lobby;
+namespace KifuwarabeGo2026.LobbyGui.Application;
 
 using KifuwarabeGo2026.GameOasis.Application.Profiles;
 using KifuwarabeGo2026.GameOasis.Gui.Application.Local.Resting.TournamentRule;

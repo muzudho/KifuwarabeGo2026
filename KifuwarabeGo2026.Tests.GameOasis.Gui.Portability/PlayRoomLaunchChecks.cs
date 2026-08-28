@@ -2,13 +2,15 @@ namespace KifuwarabeGo2026.Tests.GameOasis.Gui.Portability;
 
 using KifuwarabeGo2026.GameOasis.Contracts.Common;
 using KifuwarabeGo2026.GameOasis.Contracts.PlayRoom;
-using KifuwarabeGo2026.GameOasis.Gui.Application.PlayRoom;
+using KifuwarabeGo2026.PlayRoom.Launching;
 using System;
 
 internal static class PlayRoomLaunchChecks
 {
     public static void Run()
     {
+        Require(typeof(IPlayRoomLauncher).Namespace == "KifuwarabeGo2026.PlayRoom.Launching",
+            "The play-room launch boundary must be identifiable by its namespace.");
         var launcher = new InProcessPlayRoomLauncher();
         PlayRoomLaunchRequest? received = null;
         launcher.Register(PlayRoomIds.Match, GameOasisOfficialNames.Go, request =>

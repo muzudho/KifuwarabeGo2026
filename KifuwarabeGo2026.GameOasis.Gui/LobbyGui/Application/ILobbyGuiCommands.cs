@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.GameOasis.Gui.Application.Lobby;
+namespace KifuwarabeGo2026.LobbyGui.Application;
 
 using KifuwarabeGo2026.GameOasis.Application.Profiles;
 using System.Collections.Generic;
@@ -10,8 +10,6 @@ public interface ILobbyGuiCommands
     void SaveGtpEngines(IEnumerable<GtpEngineProfile> profiles);
     void SaveEntries(IEnumerable<EntryProfile> profiles);
     void SaveClientIdentities(IEnumerable<ClientIdentityProfile> profiles);
-    void SaveEntriesAndClientIdentities(
-        IEnumerable<EntryProfile> entries,
-        IEnumerable<ClientIdentityProfile> clientIdentities);
+    void SaveEntriesAndClientIdentities(IEnumerable<EntryProfile> entries, IEnumerable<ClientIdentityProfile> clientIdentities);
     void SaveCgosConnections(IEnumerable<CgosConnectionProfile> profiles);
 }

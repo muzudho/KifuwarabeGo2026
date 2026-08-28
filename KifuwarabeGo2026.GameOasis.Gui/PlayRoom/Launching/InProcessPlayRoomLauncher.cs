@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.GameOasis.Gui.Application.PlayRoom;
+namespace KifuwarabeGo2026.PlayRoom.Launching;
 
 using KifuwarabeGo2026.GameOasis.Contracts.PlayRoom;
 using System;
@@ -9,10 +9,7 @@ public sealed class InProcessPlayRoomLauncher : IPlayRoomLauncher
 {
     private readonly Dictionary<(string RoomTypeId, string GameId), Func<PlayRoomLaunchRequest, PlayRoomLaunchResult>> _handlers = new();
 
-    public void Register(
-        string roomTypeId,
-        string gameId,
-        Func<PlayRoomLaunchRequest, PlayRoomLaunchResult> handler)
+    public void Register(string roomTypeId, string gameId, Func<PlayRoomLaunchRequest, PlayRoomLaunchResult> handler)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(roomTypeId);
         ArgumentException.ThrowIfNullOrWhiteSpace(gameId);

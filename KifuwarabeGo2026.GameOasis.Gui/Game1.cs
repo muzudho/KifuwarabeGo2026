@@ -67,8 +67,8 @@ using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.RandomSeedRow;
 using KifuwarabeGo2026.GameOasis.Gui.Application.GameOasis;
 using KifuwarabeGo2026.GameOasis.Gui.Application.LauncherMaintenance;
 using KifuwarabeGo2026.GameOasis.Contracts.Common;
-using KifuwarabeGo2026.GameOasis.Gui.Application.Lobby;
-using KifuwarabeGo2026.GameOasis.Gui.Application.PlayRoom;
+using KifuwarabeGo2026.LobbyGui.Application;
+using KifuwarabeGo2026.PlayRoom.Launching;
 using KifuwarabeGo2026.GameOasis.Contracts.PlayRoom;
 using KifuwarabeGo2026.Reference.Gui;
 

@@ -1,8 +1,9 @@
-namespace KifuwarabeGo2026.GameOasis.Gui.Application.PlayRoom;
+namespace KifuwarabeGo2026.PlayRoom.Launching;
 
 using KifuwarabeGo2026.GameOasis.Application.Profiles;
 using KifuwarabeGo2026.GameOasis.Contracts.Common;
 using KifuwarabeGo2026.GameOasis.Contracts.PlayRoom;
+using KifuwarabeGo2026.GameOasis.Gui.Application;
 using KifuwarabeGo2026.GameOasis.Gui.Application.GameOasis;
 using KifuwarabeGo2026.GameOasis.Gui.Sgf;
 using KifuwarabeGo2026.Shared.Domain;

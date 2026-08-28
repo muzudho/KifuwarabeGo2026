@@ -1,6 +1,7 @@
-namespace KifuwarabeGo2026.GameOasis.Gui.Application.Lobby;
+namespace KifuwarabeGo2026.LobbyGui.Application;
 
 using KifuwarabeGo2026.GameOasis.Application.Profiles;
+using KifuwarabeGo2026.GameOasis.Gui.Application;
 using KifuwarabeGo2026.GameOasis.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.ConnectionTarget;
 using KifuwarabeGo2026.GameOasis.Gui.Application.Local.Resting.TournamentRule;
 using KifuwarabeGo2026.LobbyEngine;
@@ -50,9 +51,7 @@ public sealed class LobbyGuiController : ILobbyGuiCommands
     public void SaveGtpEngines(IEnumerable<GtpEngineProfile> profiles) => _engine.SaveGtpEngines(profiles);
     public void SaveEntries(IEnumerable<EntryProfile> profiles) => _engine.SaveEntries(profiles);
     public void SaveClientIdentities(IEnumerable<ClientIdentityProfile> profiles) => _engine.SaveClientIdentities(profiles);
-    public void SaveEntriesAndClientIdentities(
-        IEnumerable<EntryProfile> entries,
-        IEnumerable<ClientIdentityProfile> clientIdentities) =>
+    public void SaveEntriesAndClientIdentities(IEnumerable<EntryProfile> entries, IEnumerable<ClientIdentityProfile> clientIdentities) =>
         _engine.SaveEntriesAndClientIdentities(entries, clientIdentities);
     public void SaveCgosConnections(IEnumerable<CgosConnectionProfile> profiles) => _engine.SaveCgosConnections(profiles);
 }
