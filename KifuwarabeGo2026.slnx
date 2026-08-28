@@ -4,6 +4,7 @@
   <Project Path="KifuwarabeGo2026.GameOasis.Concierge/KifuwarabeGo2026.GameOasis.Concierge.csproj" />
   <Project Path="KifuwarabeGo2026.GameOasis.Application/KifuwarabeGo2026.GameOasis.Application.csproj" />
   <Project Path="KifuwarabeGo2026.GameOasis.Storage/KifuwarabeGo2026.GameOasis.Storage.csproj" />
+  <Project Path="KifuwarabeGo2026.LobbyEngine/KifuwarabeGo2026.LobbyEngine.csproj" />
   <Project Path="KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions/KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.csproj" />
   <Project Path="KifuwarabeGo2026.Tests.GameOasis.Gui.Portability/KifuwarabeGo2026.Tests.GameOasis.Gui.Portability.csproj" />
   <Project Path="KifuwarabeGo2026.GameOasis.Gui.Windows/KifuwarabeGo2026.GameOasis.Gui.Windows.csproj" />
@@ -17,6 +18,7 @@
   <Project Path="KifuwarabeGo2026.LauncherEngine.JsonLines/KifuwarabeGo2026.LauncherEngine.JsonLines.csproj" />
   <Project Path="KifuwarabeGo2026.LauncherEngine.JsonLinesHost/KifuwarabeGo2026.LauncherEngine.JsonLinesHost.csproj" />
   <Project Path="KifuwarabeGo2026.Tests.LauncherEngine/KifuwarabeGo2026.Tests.LauncherEngine.csproj" />
+  <Project Path="KifuwarabeGo2026.Tests.LobbyEngine/KifuwarabeGo2026.Tests.LobbyEngine.csproj" />
   <Project Path="KifuwarabeGo2026.Reference.PlaySpace.Ponnuki/KifuwarabeGo2026.Reference.PlaySpace.Ponnuki.csproj" />
   <Project Path="KifuwarabeGo2026.Reference.PlaySpace.Go/KifuwarabeGo2026.Reference.PlaySpace.Go.csproj" />
   <Project Path="KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation/KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation.csproj" />

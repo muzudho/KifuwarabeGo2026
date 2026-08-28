@@ -67,6 +67,7 @@ using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.RandomSeedRow;
 using KifuwarabeGo2026.GameOasis.Gui.Application.GameOasis;
 using KifuwarabeGo2026.GameOasis.Gui.Application.LauncherMaintenance;
 using KifuwarabeGo2026.GameOasis.Contracts.Common;
+using KifuwarabeGo2026.LobbyEngine;
 using KifuwarabeGo2026.Reference.Gui;
 
 public class Game1 : Game
@@ -88,10 +89,8 @@ public class Game1 : Game
     private GameOasisGuiComposition? _gameOasisComposition;
     private bool _isLocalMatchStartPending;
     private readonly TournamentRulesCatalog _tournamentRulesCatalog;
-    private readonly GtpEngineCatalog _gtpEngineCatalog;
-    private readonly EntryCatalog _playerCatalog;
-    private readonly ClientIdentityCatalog _targetCatalog;
-    private readonly CgosConnectionCatalog _cgosConnectionCatalog;
+    private readonly ILobbyEngine _lobbyEngine;
+    private readonly LobbyState _lobbyState;
     private readonly TournamentRulesSetting _tournamentRulesSetting;
     private readonly PlayingScene _playingScene;
     private readonly CgosConnectionProcess _cgosBlackConnectionProcess;
@@ -248,19 +247,16 @@ public class Game1 : Game
         _cgosWhiteConnectionProcess = new CgosConnectionProcess(_desktopLauncher, _platformExecutableService, "PracticePlayer");
         _cgosAdminProcess = new CgosConnectionProcess(_desktopLauncher, _platformExecutableService, "Admin");
         _tournamentRulesCatalog = TournamentRulesCatalog.LoadFromDefaultLocation();
-        _gtpEngineCatalog = GtpEngineCatalogComposition.LoadFromDefaultLocation();
-        _cgosConnectionCatalog = CgosConnectionCatalogComposition.LoadFromDefaultLocation();
-        _playerCatalog = EntryCatalogComposition.LoadEntries(_gtpEngineCatalog.Profiles);
-        _targetCatalog = EntryCatalogComposition.LoadClientIdentities(
-            _playerCatalog.Profiles,
-            _gtpEngineCatalog.Profiles,
-            _cgosConnectionCatalog.Profiles);
-        if (_targetCatalog.EntryProfilesChanged)
-            _playerCatalog.Save(_targetCatalog.EntryProfiles);
+        var releaseDefaultDirectory = Path.GetDirectoryName(ReleaseDefaultSettings.FilePath) ?? AppContext.BaseDirectory;
+        _lobbyEngine = InProcessLobbyEngine.CreateDefault(
+            ApplicationSettingsCgosConnectionStore.Instance,
+            ReleaseDefaultSettings.Current.EngineSettings.GtpEngines,
+            releaseDefaultDirectory);
+        _lobbyState = _lobbyEngine.LoadState();
         _session.SetTournamentRules(_tournamentRulesCatalog.Rules);
-        _session.SetGtpEngineProfiles(_gtpEngineCatalog.Profiles);
-        _session.SetEntryProfiles(_targetCatalog.EntryProfiles);
-        _session.SetClientIdentityProfiles(_targetCatalog.Profiles);
+        _session.SetGtpEngineProfiles(_lobbyState.GtpEngines);
+        _session.SetEntryProfiles(_lobbyState.Entries);
+        _session.SetClientIdentityProfiles(_lobbyState.ClientIdentities);
         ApplicationSettings.Current.LastSelectedAppProviderEnginePaths.TryGetValue("ponnuki", out var lastPonnukiProviderPath);
         if (_session.RestoreAppProviderEngine(lastPonnukiProviderPath) && _session.CanUseSelectedAppProvider)
         {
@@ -268,7 +264,7 @@ public class Game1 : Game
             _restoredAppProviderCheckPath = _session.SelectedAppProviderEngine.ExecutablePath;
             _restoredAppProviderCheckTask = PonnukiPositionProvider.CheckCapabilityAsync(_session.SelectedAppProviderEngine);
         }
-        _session.SetCgosConnectionProfiles(_cgosConnectionCatalog.Profiles);
+        _session.SetCgosConnectionProfiles(_lobbyState.CgosConnections);
         RefreshSgfAutoSaveState();
         _tournamentRulesSetting = new TournamentRulesSetting(
             _session,
@@ -281,7 +277,7 @@ public class Game1 : Game
         _playingScene = new PlayingScene(
             _session,
             PlayPlaceStoneSound,
-            () => _gtpEngineCatalog.Save(_session.GtpEngineProfiles),
+            () => _lobbyEngine.SaveGtpEngines(_session.GtpEngineProfiles),
             OpenGtpLog);
 
         _graphics = new GraphicsDeviceManager(this);
@@ -297,7 +293,7 @@ public class Game1 : Game
         Window.ClientSizeChanged += OnWindowClientSizeChanged;
         Deactivated += OnGameDeactivated;
         RefreshGuiLogFiles();
-        if (_gtpEngineCatalog.DuplicateIdsRepaired)
+        if (_lobbyState.DuplicateGtpEngineIdsRepaired)
         {
             _messageDialog = new MessageDialog(
                 "ENGINE PROFILE IDS REPAIRED",
@@ -832,7 +828,7 @@ public class Game1 : Game
             if (_presentationServices is not null)
             {
                 if (_isApplicationSettingsOpen)
-                    ApplicationSettingsScreen.Default.Draw(_presentationServices.Stationery, backgroundMousePosition, _applicationSettingsPage, ApplicationSettings.Current.LogRootDirectory, ApplicationSettings.Current.SgfSaveDirectory, ApplicationSettings.Current.ScreenshotSaveDirectory, ApplicationSettings.FilePath, _gtpEngineCatalog.ListPath, _guiLogFiles, _selectedGuiLogIndex, _applicationSettingsMessage);
+                    ApplicationSettingsScreen.Default.Draw(_presentationServices.Stationery, backgroundMousePosition, _applicationSettingsPage, ApplicationSettings.Current.LogRootDirectory, ApplicationSettings.Current.SgfSaveDirectory, ApplicationSettings.Current.ScreenshotSaveDirectory, ApplicationSettings.FilePath, _lobbyState.GtpEngineListPath, _guiLogFiles, _selectedGuiLogIndex, _applicationSettingsMessage);
                 else
                     _presentationServices.Presentation.DrawTitle(_session, backgroundMousePosition, _titleMenuPage,
                         _appProviderTabIndex, _appProviderSelectionLoadTask is not null,
@@ -1744,7 +1740,7 @@ public class Game1 : Game
                 else if (_session.CanDeleteSelectedCgosConnectionProfile && CgosSelectConnectionPage.Default.DeleteButton.IsHit(point))
                 {
                     _session.RemoveSelectedCgosConnectionProfile();
-                    _cgosConnectionCatalog.Save(_session.CgosConnectionProfiles);
+                    _lobbyEngine.SaveCgosConnections(_session.CgosConnectionProfiles);
                 }
                 else if (_session.CgosConnectionProfiles.Count > 1 &&
                          CgosSelectConnectionPage.Default.OrderButton.IsHit(point))
@@ -2734,7 +2730,7 @@ public class Game1 : Game
         try
         {
             var seeds = _session.ApplyPonnukiRandomSeedsAtStart();
-            _gtpEngineCatalog.Save(_session.GtpEngineProfiles);
+            _lobbyEngine.SaveGtpEngines(_session.GtpEngineProfiles);
             var provider = _session.GetPonnukiProviderProfileForStart(seeds.Provider);
             StopPonnukiProviderGame();
             _ponnukiProviderGameSession = new PonnukiProviderGameSession(provider);
@@ -3573,7 +3569,7 @@ public class Game1 : Game
 
         try
         {
-            _gtpEngineCatalog.Save(_session.GtpEngineProfiles);
+            _lobbyEngine.SaveGtpEngines(_session.GtpEngineProfiles);
             var status = process.Start(
                 _session.SelectedCgosConnectionProfile,
                 stone == GoStone.Black ? _session.GetCgosEngineProfileForStart(stone) : null,
@@ -4539,7 +4535,7 @@ public class Game1 : Game
         }
 
         _session.SaveCgosConnectionEditDraft(profile);
-        _cgosConnectionCatalog.Save(_session.CgosConnectionProfiles);
+        _lobbyEngine.SaveCgosConnections(_session.CgosConnectionProfiles);
         return true;
     }
 
@@ -5317,7 +5313,7 @@ public class Game1 : Game
     {
         _session.SaveClientIdentityProfileEditDraft();
         var profiles = _session.ClientIdentityProfiles.Select(profile => profile.Clone()).ToArray();
-        BeginCatalogSave("SAVING CLIENT IDENTITIES...", () => _targetCatalog.Save(profiles));
+        BeginCatalogSave("SAVING CLIENT IDENTITIES...", () => _lobbyEngine.SaveClientIdentities(profiles));
     }
 
     /// <summary>
@@ -5329,16 +5325,13 @@ public class Game1 : Game
         var clientIdentities = _session.ClientIdentityProfiles.Select(profile => profile.Clone()).ToArray();
         var players = _session.EntryProfiles.Select(profile => profile.Clone()).ToArray();
         BeginCatalogSave("SAVING PLAYER SETTINGS...", () =>
-        {
-            _targetCatalog.Save(clientIdentities);
-            _playerCatalog.Save(players);
-        });
+            _lobbyEngine.SaveEntriesAndClientIdentities(players, clientIdentities));
     }
 
     private void SavePlayerCatalog(IEnumerable<EntryProfile> profiles)
     {
         var snapshot = profiles.Select(profile => profile.Clone()).ToArray();
-        BeginCatalogSave("SAVING PLAYER SETTINGS...", () => _playerCatalog.Save(snapshot));
+        BeginCatalogSave("SAVING PLAYER SETTINGS...", () => _lobbyEngine.SaveEntries(snapshot));
     }
 
     private bool IsCatalogSaveInProgress => _catalogSaveTask is { IsCompleted: false };
@@ -5924,7 +5917,7 @@ public class Game1 : Game
             if (editor.HasChanges)
             {
                 var profiles = _session.CommitCgosConnectionOrderEditor();
-                _cgosConnectionCatalog.Save(profiles);
+                _lobbyEngine.SaveCgosConnections(profiles);
             }
             else _session.CancelCgosConnectionOrderEditor();
             return true;
@@ -5958,7 +5951,7 @@ public class Game1 : Game
             if (editor.HasChanges)
             {
                 var profiles = _session.CommitGtpEngineOrderEditor();
-                _gtpEngineCatalog.Save(profiles);
+                _lobbyEngine.SaveGtpEngines(profiles);
                 RefreshCurrentGtpEngineAppCompatibilities();
             }
             else _session.CancelGtpEngineOrderEditor();
@@ -5989,7 +5982,7 @@ public class Game1 : Game
         if (GtpEngineRenderer.GetGtpEngineDeleteConfirmationConfirmButtonHit(point))
         {
             _session.RemoveSelectedGtpEngine();
-            _gtpEngineCatalog.Save(_session.GtpEngineProfiles);
+            _lobbyEngine.SaveGtpEngines(_session.GtpEngineProfiles);
             RefreshCurrentGtpEngineAppCompatibilities();
             return true;
         }
@@ -6281,7 +6274,7 @@ public class Game1 : Game
             if (_session.IsGtpEngineGuiOptionsDialogDirty)
             {
                 var profiles = _session.CommitAppProviderGameSettingsDialog();
-                _gtpEngineCatalog.Save(profiles);
+                _lobbyEngine.SaveGtpEngines(profiles);
                 GuiOperationLog.User("Saved App Provider game settings", "app=ponnuki; role=provider");
             }
             else _session.CancelAppProviderGameSettingsDialog();
@@ -6692,7 +6685,7 @@ public class Game1 : Game
 
         _session.SaveGtpEngineEditDraft(profile);
         _session.CompleteNewEngineProfileForPlayerEdit(profile.Id);
-        _gtpEngineCatalog.Save(_session.GtpEngineProfiles);
+        _lobbyEngine.SaveGtpEngines(_session.GtpEngineProfiles);
         return true;
     }
 
@@ -6924,7 +6917,7 @@ public class Game1 : Game
 
         if (_applicationSettingsPage == ApplicationSettingsPage.Other && settingsScreen.EngineSettingsFileLink.IsHit(point))
         {
-            OpenSettingsFolder(_gtpEngineCatalog.ListPath, "engine settings");
+            OpenSettingsFolder(_lobbyState.GtpEngineListPath, "engine settings");
             return;
         }
 
