@@ -108,6 +108,8 @@ $versionProjects = @(
     'KifuwarabeGo2026.LauncherEngine.JsonLinesHost\KifuwarabeGo2026.LauncherEngine.JsonLinesHost.csproj',
     'KifuwarabeGo2026.LobbyEngine.JsonLines\KifuwarabeGo2026.LobbyEngine.JsonLines.csproj',
     'KifuwarabeGo2026.LobbyEngine.JsonLinesHost\KifuwarabeGo2026.LobbyEngine.JsonLinesHost.csproj',
+    'KifuwarabeGo2026.PlayRoom.JsonLines\KifuwarabeGo2026.PlayRoom.JsonLines.csproj',
+    'KifuwarabeGo2026.PlayRoom.BoardEditor.JsonLinesHost\KifuwarabeGo2026.PlayRoom.BoardEditor.JsonLinesHost.csproj',
     'KifuwarabeGo2026.GameOasis.Gui.Windows\KifuwarabeGo2026.GameOasis.Gui.Windows.csproj',
     'KifuwarabeGo2026.GameOasis.Gui\KifuwarabeGo2026.GameOasis.Gui.csproj',
     'KifuwarabeGo2026.Reference.Communication.Gtp.Host\KifuwarabeGo2026.Reference.Communication.Gtp.Host.csproj',
@@ -146,6 +148,7 @@ if (-not $SkipBuild) {
         Invoke-CheckedCommand -Command dotnet -Arguments @('run', '--project', 'KifuwarabeGo2026.Tests.LauncherEngine\KifuwarabeGo2026.Tests.LauncherEngine.csproj', '-c', 'Release', '--no-build')
         Invoke-CheckedCommand -Command dotnet -Arguments @('run', '--project', 'KifuwarabeGo2026.Tests.GameOasis.Gui.Portability\KifuwarabeGo2026.Tests.GameOasis.Gui.Portability.csproj', '-c', 'Release', '--no-build')
         Invoke-CheckedCommand -Command dotnet -Arguments @('run', '--project', 'KifuwarabeGo2026.Tests.GameOasis.Gui.Windows\KifuwarabeGo2026.Tests.GameOasis.Gui.Windows.csproj', '-c', 'Release', '--no-build')
+        Invoke-CheckedCommand -Command dotnet -Arguments @('run', '--project', 'KifuwarabeGo2026.Tests.PlayRoom.JsonLines\KifuwarabeGo2026.Tests.PlayRoom.JsonLines.csproj', '-c', 'Release', '--no-build')
     }
 
     Clear-PublishDirectory -LiteralPath $launcherPublish
@@ -156,6 +159,7 @@ if (-not $SkipBuild) {
     Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.LauncherEngine.JsonLinesHost\KifuwarabeGo2026.LauncherEngine.JsonLinesHost.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false', '-o', $launcherPublish)
     Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.GameOasis.Gui.Windows\KifuwarabeGo2026.GameOasis.Gui.Windows.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false')
     Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.LobbyEngine.JsonLinesHost\KifuwarabeGo2026.LobbyEngine.JsonLinesHost.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false', '-o', "$guiPublish\Tools\LobbyEngine")
+    Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.PlayRoom.BoardEditor.JsonLinesHost\KifuwarabeGo2026.PlayRoom.BoardEditor.JsonLinesHost.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false', '-o', "$guiPublish\Tools\PlayRoom\BoardEditor")
     Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.Reference.Communication.Gtp.Host\KifuwarabeGo2026.Reference.Communication.Gtp.Host.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false')
 
     # v3 launchers start KifuwarabeGo2026.Gui.exe. Keep that public entry point
@@ -182,6 +186,10 @@ Assert-FileExists -LiteralPath @(
     "$guiPublish\Tools\LobbyEngine\KifuwarabeGo2026.LobbyEngine.JsonLinesHost.dll",
     "$guiPublish\Tools\LobbyEngine\KifuwarabeGo2026.LobbyEngine.JsonLinesHost.deps.json",
     "$guiPublish\Tools\LobbyEngine\KifuwarabeGo2026.LobbyEngine.JsonLinesHost.runtimeconfig.json",
+    "$guiPublish\Tools\PlayRoom\BoardEditor\KifuwarabeGo2026.PlayRoom.BoardEditor.JsonLinesHost.exe",
+    "$guiPublish\Tools\PlayRoom\BoardEditor\KifuwarabeGo2026.PlayRoom.BoardEditor.JsonLinesHost.dll",
+    "$guiPublish\Tools\PlayRoom\BoardEditor\KifuwarabeGo2026.PlayRoom.BoardEditor.JsonLinesHost.deps.json",
+    "$guiPublish\Tools\PlayRoom\BoardEditor\KifuwarabeGo2026.PlayRoom.BoardEditor.JsonLinesHost.runtimeconfig.json",
     "$enginePublish\KifuwarabeGo2026.Engine.exe",
     "$enginePublish\KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation.dll",
     "$enginePublish\KifuwarabeGo2026.Reference.PlayerEngine.dll",
