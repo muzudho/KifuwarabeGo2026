@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "playSpaceTypeId": "io.github.muzudho.kifuwarabego2026.games.ponnuki",
+  "command": "dotnet",
+  "arguments": [
+    "KifuwarabeGo2026.Reference.PlaySpace.JsonLinesHost.dll",
+    "--play-space",
+    "ponnuki",
+    "--single-session"
+  ],
+  "supportsMultipleSessions": false
+}

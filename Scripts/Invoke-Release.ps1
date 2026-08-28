@@ -112,6 +112,8 @@ $versionProjects = @(
     'KifuwarabeGo2026.PlayRoom.BoardEditor.JsonLinesHost\KifuwarabeGo2026.PlayRoom.BoardEditor.JsonLinesHost.csproj',
     'KifuwarabeGo2026.PlayRoom.Review.JsonLinesHost\KifuwarabeGo2026.PlayRoom.Review.JsonLinesHost.csproj',
     'KifuwarabeGo2026.PlayRoom.Match.JsonLinesHost\KifuwarabeGo2026.PlayRoom.Match.JsonLinesHost.csproj',
+    'KifuwarabeGo2026.PlaySpace.JsonLines\KifuwarabeGo2026.PlaySpace.JsonLines.csproj',
+    'KifuwarabeGo2026.Reference.PlaySpace.JsonLinesHost\KifuwarabeGo2026.Reference.PlaySpace.JsonLinesHost.csproj',
     'KifuwarabeGo2026.GameOasis.Gui.Windows\KifuwarabeGo2026.GameOasis.Gui.Windows.csproj',
     'KifuwarabeGo2026.GameOasis.Gui\KifuwarabeGo2026.GameOasis.Gui.csproj',
     'KifuwarabeGo2026.Reference.Communication.Gtp.Host\KifuwarabeGo2026.Reference.Communication.Gtp.Host.csproj',
@@ -151,6 +153,7 @@ if (-not $SkipBuild) {
         Invoke-CheckedCommand -Command dotnet -Arguments @('run', '--project', 'KifuwarabeGo2026.Tests.GameOasis.Gui.Portability\KifuwarabeGo2026.Tests.GameOasis.Gui.Portability.csproj', '-c', 'Release', '--no-build')
         Invoke-CheckedCommand -Command dotnet -Arguments @('run', '--project', 'KifuwarabeGo2026.Tests.GameOasis.Gui.Windows\KifuwarabeGo2026.Tests.GameOasis.Gui.Windows.csproj', '-c', 'Release', '--no-build')
         Invoke-CheckedCommand -Command dotnet -Arguments @('run', '--project', 'KifuwarabeGo2026.Tests.PlayRoom.JsonLines\KifuwarabeGo2026.Tests.PlayRoom.JsonLines.csproj', '-c', 'Release', '--no-build')
+        Invoke-CheckedCommand -Command dotnet -Arguments @('run', '--project', 'KifuwarabeGo2026.Tests.PlaySpace.JsonLines\KifuwarabeGo2026.Tests.PlaySpace.JsonLines.csproj', '-c', 'Release', '--no-build')
     }
 
     Clear-PublishDirectory -LiteralPath $launcherPublish
@@ -164,6 +167,7 @@ if (-not $SkipBuild) {
     Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.PlayRoom.BoardEditor.JsonLinesHost\KifuwarabeGo2026.PlayRoom.BoardEditor.JsonLinesHost.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false', '-o', "$guiPublish\Tools\PlayRoom\BoardEditor")
     Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.PlayRoom.Review.JsonLinesHost\KifuwarabeGo2026.PlayRoom.Review.JsonLinesHost.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false', '-o', "$guiPublish\Tools\PlayRoom\Review")
     Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.PlayRoom.Match.JsonLinesHost\KifuwarabeGo2026.PlayRoom.Match.JsonLinesHost.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false', '-o', "$guiPublish\Tools\PlayRoom\Match")
+    Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.Reference.PlaySpace.JsonLinesHost\KifuwarabeGo2026.Reference.PlaySpace.JsonLinesHost.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false', '-o', "$guiPublish\Tools\PlaySpace")
     Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.Reference.Communication.Gtp.Host\KifuwarabeGo2026.Reference.Communication.Gtp.Host.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false')
 
     # v3 launchers start KifuwarabeGo2026.Gui.exe. Keep that public entry point
@@ -202,6 +206,12 @@ Assert-FileExists -LiteralPath @(
     "$guiPublish\Tools\PlayRoom\Match\KifuwarabeGo2026.PlayRoom.Match.JsonLinesHost.dll",
     "$guiPublish\Tools\PlayRoom\Match\KifuwarabeGo2026.PlayRoom.Match.JsonLinesHost.deps.json",
     "$guiPublish\Tools\PlayRoom\Match\KifuwarabeGo2026.PlayRoom.Match.JsonLinesHost.runtimeconfig.json",
+    "$guiPublish\Tools\PlaySpace\KifuwarabeGo2026.Reference.PlaySpace.JsonLinesHost.exe",
+    "$guiPublish\Tools\PlaySpace\KifuwarabeGo2026.Reference.PlaySpace.JsonLinesHost.dll",
+    "$guiPublish\Tools\PlaySpace\KifuwarabeGo2026.Reference.PlaySpace.JsonLinesHost.deps.json",
+    "$guiPublish\Tools\PlaySpace\KifuwarabeGo2026.Reference.PlaySpace.JsonLinesHost.runtimeconfig.json",
+    "$guiPublish\Tools\PlaySpace\go.playspace.json",
+    "$guiPublish\Tools\PlaySpace\ponnuki.playspace.json",
     "$enginePublish\KifuwarabeGo2026.Engine.exe",
     "$enginePublish\KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation.dll",
     "$enginePublish\KifuwarabeGo2026.Reference.PlayerEngine.dll",
