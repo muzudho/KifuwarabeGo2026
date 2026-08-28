@@ -24,6 +24,7 @@
   <Project Path="KifuwarabeGo2026.Reference.PlaySpace.Ponnuki/KifuwarabeGo2026.Reference.PlaySpace.Ponnuki.csproj" />
   <Project Path="KifuwarabeGo2026.PlayRoom.JsonLines/KifuwarabeGo2026.PlayRoom.JsonLines.csproj" />
   <Project Path="KifuwarabeGo2026.PlayRoom.BoardEditor.JsonLinesHost/KifuwarabeGo2026.PlayRoom.BoardEditor.JsonLinesHost.csproj" />
+  <Project Path="KifuwarabeGo2026.PlayRoom.Review.JsonLinesHost/KifuwarabeGo2026.PlayRoom.Review.JsonLinesHost.csproj" />
   <Project Path="KifuwarabeGo2026.Tests.PlayRoom.JsonLines/KifuwarabeGo2026.Tests.PlayRoom.JsonLines.csproj" />
   <Project Path="KifuwarabeGo2026.Reference.PlaySpace.Go/KifuwarabeGo2026.Reference.PlaySpace.Go.csproj" />
   <Project Path="KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation/KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation.csproj" />
