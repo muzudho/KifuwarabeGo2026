@@ -12,6 +12,9 @@ public static class PlayRoomJsonLinesProtocol
     public const string GoodbyeMethod = "goodbye";
     public const string NavigateMethod = "navigate";
     public const string UsePositionMethod = "usePosition";
+    public const string UpdateStateMethod = "updateState";
+    public const string SubmitActionMethod = "submitAction";
+    public const string CompleteMethod = "complete";
     public static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 }
 

@@ -33,3 +33,18 @@ open(PlayRoomLaunchRequest: roomTypeId = review)
 ```
 
 Reviewホストは起動時の棋譜文書を読み取り専用で保持し、`navigate`では表示手数だけを変更します。`usePosition`は表示中の手数と一致する局面文書コピーだけを`PositionSelected`として返します。元棋譜の内容は変更しません。
+
+## Match Play Room
+
+```text
+open(PlayRoomLaunchRequest: roomTypeId = match)
+  -> PlayRoomReady
+  -> updateState(MatchStateUpdate) | submitAction(MatchActionRequest)  0回以上
+  -> complete(MatchCompletionCommand) | goodbye
+  -> MatchCompletion
+  -> process exit
+```
+
+`updateState` は Concierge / Play Space が確定した、単調増加するリビジョン付きの局面文書を表示側へ渡します。`submitAction` は人間の `PlayPoint`、`Pass`、`Resign` を意味的な入力として返します。Matchホストは着手の合法性、手番、終局を判定せず、局面文書も更新しません。権威ある進行側が入力を裁定した後、新しい局面を `updateState` で通知します。
+
+`complete` は権威ある最終局面、勝者ロール、終了理由を受け取って `Finished` を返します。`goodbye` は途中退室として `Closed` を返します。この参照実装では人間対人間の最小ライフサイクルだけを扱い、コンピュータプレイヤー、対局時計、Protocol P / M 接続は後続段階へ残します。

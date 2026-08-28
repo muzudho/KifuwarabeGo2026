@@ -10,5 +10,6 @@
     <ProjectReference Include="..\KifuwarabeGo2026.PlayRoom.JsonLines\KifuwarabeGo2026.PlayRoom.JsonLines.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.PlayRoom.BoardEditor.JsonLinesHost\KifuwarabeGo2026.PlayRoom.BoardEditor.JsonLinesHost.csproj" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\KifuwarabeGo2026.PlayRoom.Review.JsonLinesHost\KifuwarabeGo2026.PlayRoom.Review.JsonLinesHost.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\KifuwarabeGo2026.PlayRoom.Match.JsonLinesHost\KifuwarabeGo2026.PlayRoom.Match.JsonLinesHost.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
 </Project>

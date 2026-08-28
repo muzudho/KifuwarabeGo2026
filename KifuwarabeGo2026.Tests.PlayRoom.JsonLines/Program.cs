@@ -85,7 +85,60 @@ using (var review = ReviewProcessSession.Open(abnormalReviewStart, CreateReviewL
     Require(returnedToLobby, "An abnormal Review exit must be detectable so the caller can return to the lobby.");
 }
 
-Console.WriteLine("PASS: Fake lobby scenarios passed for separate Board Editor and Review Play Rooms, including abnormal exits.");
+var matchHostPath = Path.Combine(root, "KifuwarabeGo2026.PlayRoom.Match.JsonLinesHost", "bin", "Release", "net8.0",
+    "KifuwarabeGo2026.PlayRoom.Match.JsonLinesHost.dll");
+Require(File.Exists(matchHostPath), $"Match host must be built: {matchHostPath}");
+RequireNoForbiddenReferences(matchHostPath, "Match");
+var matchLaunch = CreateMatchLaunch("match-human-versus-human");
+using (var match = MatchProcessSession.Open(CreateHostStartInfo(matchHostPath), matchLaunch))
+{
+    Require(match.Ready.RequestId == matchLaunch.RequestId && match.Ready.RoomTypeId == PlayRoomIds.Match,
+        "The separate Match must report ready for the launch request.");
+
+    var initialState = CreateMatchState(0, "black", []);
+    var initialView = match.UpdateState(new MatchStateUpdate(match.Ready.SessionId, 0, initialState));
+    Require(initialView.Revision == 0 && initialView.State.Content == initialState.Content,
+        "Match must display the authoritative initial state without interpreting it.");
+
+    var blackMove = match.SubmitAction(new MatchActionRequest(match.Ready.SessionId, "action-1", "black",
+        MatchActionKind.PlayPoint, 2, 3));
+    Require(blackMove.ActionId == "action-1", "A human point action must cross the process boundary.");
+    var afterBlack = CreateMatchState(1, "white", ["B[cd]"]);
+    Require(match.UpdateState(new MatchStateUpdate(match.Ready.SessionId, 1, afterBlack)).State.Content == afterBlack.Content,
+        "Only the authoritative caller must advance the displayed position after a submitted action.");
+
+    var whitePass = match.SubmitAction(new MatchActionRequest(match.Ready.SessionId, "action-2", "white",
+        MatchActionKind.Pass));
+    Require(whitePass.ActionId == "action-2", "A human pass action must cross the process boundary.");
+    var afterPass = CreateMatchState(2, "black", ["B[cd]", "W[]"]);
+    _ = match.UpdateState(new MatchStateUpdate(match.Ready.SessionId, 2, afterPass));
+
+    var resign = match.SubmitAction(new MatchActionRequest(match.Ready.SessionId, "action-3", "black",
+        MatchActionKind.Resign));
+    Require(resign.ActionId == "action-3", "A human resignation must cross the process boundary.");
+    var finalState = CreateMatchState(3, "finished", ["B[cd]", "W[]", "B[resign]"]);
+    var completion = match.Complete(new MatchCompletionCommand(match.Ready.SessionId, finalState, "white", "resignation"));
+    Require(completion.Status == MatchCompletionStatus.Finished && completion.WinnerRoleId == "white" &&
+            completion.Reason == "resignation" && completion.FinalState?.Content == finalState.Content,
+        "A completed human-versus-human match must return the authoritative final state unchanged.");
+}
+
+using (var match = MatchProcessSession.Open(CreateHostStartInfo(matchHostPath), CreateMatchLaunch("match-close")))
+{
+    _ = match.UpdateState(new MatchStateUpdate(match.Ready.SessionId, 0, CreateMatchState(0, "black", [])));
+}
+
+var abnormalMatchStart = CreateHostStartInfo(matchHostPath);
+abnormalMatchStart.ArgumentList.Add("--exit-after-open");
+using (var match = MatchProcessSession.Open(abnormalMatchStart, CreateMatchLaunch("match-abnormal")))
+{
+    var returnedToLobby = false;
+    try { _ = match.SubmitAction(new MatchActionRequest(match.Ready.SessionId, "action-abnormal", "black", MatchActionKind.Pass)); }
+    catch (IOException) { returnedToLobby = true; }
+    Require(returnedToLobby, "An abnormal Match exit must be detectable so the caller can return to the lobby.");
+}
+
+Console.WriteLine("PASS: Fake lobby scenarios passed for separate Board Editor, Review, and Match Play Rooms, including abnormal exits.");
 
 static PlayRoomLaunchRequest CreateLaunch(string requestId, ContractDocument initial) =>
     new(1, requestId, PlayRoomIds.BoardEditor, GameOasisOfficialNames.Go,
@@ -96,6 +149,17 @@ static PlayRoomLaunchRequest CreateReviewLaunch(string requestId, ContractDocume
     new(1, requestId, PlayRoomIds.Review, GameOasisOfficialNames.Go,
         new PlaySpaceTypeId(GameOasisOfficialNames.Go),
         new ContractDocument("application/json", GameOasisOfficialNames.Go + ".configuration.v1", "{}"), gameRecord, []);
+
+static PlayRoomLaunchRequest CreateMatchLaunch(string requestId) =>
+    new(1, requestId, PlayRoomIds.Match, GameOasisOfficialNames.Go,
+        new PlaySpaceTypeId(GameOasisOfficialNames.Go),
+        new ContractDocument("application/json", GameOasisOfficialNames.Go + ".configuration.v1", "{\"boardSize\":9}"), null,
+        [new PlayRoomParticipant("black", "human-black", "Black", "human", "", null),
+         new PlayRoomParticipant("white", "human-white", "White", "human", "", null)]);
+
+static ContractDocument CreateMatchState(long revision, string turn, string[] moves) =>
+    new("application/json", GameOasisOfficialNames.Go + ".match-state.v1",
+        System.Text.Json.JsonSerializer.Serialize(new { boardSize = 9, revision, turn, moves }));
 
 static void RequireNoForbiddenReferences(string executablePath, string roomName)
 {
