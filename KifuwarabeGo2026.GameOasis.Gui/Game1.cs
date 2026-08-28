@@ -68,6 +68,8 @@ using KifuwarabeGo2026.GameOasis.Gui.Application.GameOasis;
 using KifuwarabeGo2026.GameOasis.Gui.Application.LauncherMaintenance;
 using KifuwarabeGo2026.GameOasis.Contracts.Common;
 using KifuwarabeGo2026.GameOasis.Gui.Application.Lobby;
+using KifuwarabeGo2026.GameOasis.Gui.Application.PlayRoom;
+using KifuwarabeGo2026.GameOasis.Contracts.PlayRoom;
 using KifuwarabeGo2026.Reference.Gui;
 
 public class Game1 : Game
@@ -87,7 +89,8 @@ public class Game1 : Game
     private readonly GoAppSession _session = new();
     private Task<GameOasisGuiComposition>? _gameOasisCompositionTask;
     private GameOasisGuiComposition? _gameOasisComposition;
-    private bool _isLocalMatchStartPending;
+    private PlayRoomLaunchRequest? _pendingLocalMatchRequest;
+    private readonly IPlayRoomLauncher _playRoomLauncher;
     private readonly LobbyGuiController _lobbyGuiController;
     private readonly LobbyViewState _lobbyViewState;
     private readonly TournamentRulesSetting _tournamentRulesSetting;
@@ -273,6 +276,11 @@ public class Game1 : Game
             PlayPlaceStoneSound,
             () => _lobbyGuiController.SaveGtpEngines(_session.GtpEngineProfiles),
             OpenGtpLog);
+        var playRoomLauncher = new InProcessPlayRoomLauncher();
+        playRoomLauncher.Register(PlayRoomIds.Match, GameOasisOfficialNames.Go, LaunchLocalMatchInProcess);
+        playRoomLauncher.Register(PlayRoomIds.BoardEditor, GameOasisOfficialNames.Go, LaunchBoardEditorInProcess);
+        playRoomLauncher.Register(PlayRoomIds.Match, GameOasisOfficialNames.Ponnuki, LaunchPonnukiInProcess);
+        _playRoomLauncher = playRoomLauncher;
 
         _graphics = new GraphicsDeviceManager(this);
         _graphics.PreferredBackBufferWidth = VirtualScreen.Width;
@@ -2575,31 +2583,38 @@ public class Game1 : Game
 
     private void StartLocalMatch()
     {
+        HandlePlayRoomLaunchResult(
+            _playRoomLauncher.Launch(PlayRoomLaunchRequestFactory.CreateLocalMatch(_session)),
+            "LOCAL MATCH");
+    }
+
+    private PlayRoomLaunchResult LaunchLocalMatchInProcess(PlayRoomLaunchRequest request)
+    {
         if (_gameOasisComposition is null)
         {
             if (_gameOasisCompositionTask is not null)
             {
-                if (!_isLocalMatchStartPending)
+                if (_pendingLocalMatchRequest is null)
                     GuiOperationLog.User("Queued Local Match", "waiting for Game Oasis GUI connection");
-                _isLocalMatchStartPending = true;
-                return;
+                _pendingLocalMatchRequest = request;
+                return PlayRoomLaunchResult.Deferred(request.RequestId, "Waiting for the Game Oasis GUI connection.");
             }
 
-            ShowMessage("Game Oasis could not be initialized. The local match was not started.", "LOCAL MATCH");
-            return;
+            return PlayRoomLaunchResult.Rejected(request.RequestId, "game-oasis-unavailable",
+                "Game Oasis could not be initialized. The local match was not started.");
         }
 
-        StartLocalMatchCore();
+        return StartLocalMatchCore(request);
     }
 
-    private void StartLocalMatchCore()
+    private PlayRoomLaunchResult StartLocalMatchCore(PlayRoomLaunchRequest request)
     {
-        _isLocalMatchStartPending = false;
+        _pendingLocalMatchRequest = null;
         if (!_playingScene.StartPlaying())
         {
             GuiOperationLog.App("Deferred Local Match start", "previous Game Oasis session is still closing");
-            ShowMessage("The previous local match is still closing. Please wait a moment and press START again.", "LOCAL MATCH");
-            return;
+            return PlayRoomLaunchResult.Rejected(request.RequestId, "previous-session-closing",
+                "The previous local match is still closing. Please wait a moment and press START again.");
         }
 
         var seeds = _session.ApplyLocalMatchRandomSeedsAtStart();
@@ -2610,6 +2625,7 @@ public class Game1 : Game
             : $"{_session.CurrentGameRecord.RootComment}\n\n{seedComment}";
         GuiOperationLog.User("Started Local Match",
             $"blackSeed={FormatLocalMatchSeed(seeds.Black)}; whiteSeed={FormatLocalMatchSeed(seeds.White)}");
+        return PlayRoomLaunchResult.Started(request.RequestId);
     }
 
     private void CompleteGameOasisComposition()
@@ -2624,15 +2640,15 @@ public class Game1 : Game
             _playingScene.AttachGameOasisPlayerBridge(_gameOasisComposition.SecondaryPlayerParticipationBridge);
             _playingScene.AttachGameOasisLocalMatchLifecycle(_gameOasisComposition.LocalMatchLifecycle);
             GuiOperationLog.App("Game Oasis GUI connected", $"playSpaces={_gameOasisComposition.Client.State.PlaySpaces.Count}");
-            if (_isLocalMatchStartPending)
-                StartLocalMatchCore();
+            if (_pendingLocalMatchRequest is { } pendingRequest)
+                HandlePlayRoomLaunchResult(_playRoomLauncher.Launch(pendingRequest), "LOCAL MATCH");
         }
         else
         {
             GuiOperationLog.App("Game Oasis GUI connection failed", task.Exception?.GetBaseException().ToString() ?? "Unknown error");
-            if (_isLocalMatchStartPending)
+            if (_pendingLocalMatchRequest is not null)
             {
-                _isLocalMatchStartPending = false;
+                _pendingLocalMatchRequest = null;
                 ShowMessage("Game Oasis could not be initialized. The queued local match was not started.", "LOCAL MATCH");
             }
         }
@@ -2718,7 +2734,11 @@ public class Game1 : Game
 
     private static string FormatLocalMatchSeed(int? seed) => seed?.ToString() ?? "HUMAN";
 
-    private void StartPonnukiApp()
+    private void StartPonnukiApp() => HandlePlayRoomLaunchResult(
+        _playRoomLauncher.Launch(PlayRoomLaunchRequestFactory.CreatePonnukiMatch(_session)),
+        "PONNUKI APP");
+
+    private PlayRoomLaunchResult LaunchPonnukiInProcess(PlayRoomLaunchRequest request)
     {
         _session.ClearLocalAppsError();
         try
@@ -2738,6 +2758,7 @@ public class Game1 : Game
                 "Started Local App",
                 $"app=ponnuki; provider={provider.DisplayName}; board={record.BoardSize}; setupStones={record.SetupStones.Count}; seed={_ponnukiProviderGameSession.Seed}");
             _playingScene.StartPlaying();
+            return PlayRoomLaunchResult.Started(request.RequestId);
         }
         catch (Exception ex)
         {
@@ -2745,6 +2766,7 @@ public class Game1 : Game
             _session.SetLocalAppsError(ex.Message);
             ApplicationErrorLog.Write("PONNUKI APP", "Could not create the initial position with the App Provider engine.", ex);
             GuiOperationLog.App("Could not start Local App", $"app=ponnuki; error={ex.Message}");
+            return PlayRoomLaunchResult.Failed(request.RequestId, "ponnuki-start-failed", ex.Message);
         }
     }
 
@@ -3275,7 +3297,11 @@ public class Game1 : Game
         _session.ActivateModalWindow(ActiveWindowId.VariationEditing);
     }
 
-    private void StartWhiteboardFromLocalSetup()
+    private void StartWhiteboardFromLocalSetup() => HandlePlayRoomLaunchResult(
+        _playRoomLauncher.Launch(PlayRoomLaunchRequestFactory.CreateBoardEditor(_session)),
+        "WHITEBOARD");
+
+    private PlayRoomLaunchResult LaunchBoardEditorInProcess(PlayRoomLaunchRequest request)
     {
         var sourceRecord = _session.CurrentGameRecord.Clone();
         var variationSession = new GoAppSession();
@@ -3286,14 +3312,22 @@ public class Game1 : Game
                 GoAppModeKind.Resting,
                 out var warning))
         {
-            if (!string.IsNullOrWhiteSpace(warning))
-                ShowMessage(warning, "Whiteboard");
-            return;
+            return PlayRoomLaunchResult.Rejected(request.RequestId, "board-editor-start-failed",
+                string.IsNullOrWhiteSpace(warning) ? "The whiteboard could not be started." : warning);
         }
 
         variationSession.EnableVariationPositionAdoption();
         _variationSession = variationSession;
         _session.ActivateModalWindow(ActiveWindowId.VariationEditing);
+        return PlayRoomLaunchResult.Started(request.RequestId);
+    }
+
+    private void HandlePlayRoomLaunchResult(PlayRoomLaunchResult result, string title)
+    {
+        if (result.IsAccepted) return;
+        GuiOperationLog.App("Play-room launch failed",
+            $"request={result.RequestId}; code={result.ErrorCode}; status={result.Status}; message={result.Message}");
+        ShowMessage(result.Message ?? "The play-room could not be started.", title);
     }
 
     private bool TryHandleVariationEditingClick(Point point)

@@ -9,6 +9,7 @@ internal static class Program
         try
         {
             PortabilityChecks.Run();
+            PlayRoomLaunchChecks.Run();
             Console.WriteLine(
                 "PASS: Core, Go play-space, Go foundation, GtpExtensions, and portable platform composition are free of Windows-only dependencies.");
             return 0;
