@@ -200,7 +200,7 @@ Assert-FileExists -LiteralPath @(
     "$guiPublish\KifuwarabeGo2026.FormalAdapter.Gtp.dll",
     "$guiPublish\KifuwarabeGo2026.FormalAdapter.Sgf.dll",
     "$guiPublish\KifuwarabeGo2026.StationeryUI.dll",
-    "$guiPublish\KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation.dll",
+    "$guiPublish\KifuwarabeGo2026.Reference.PlayDomain.Go.dll",
     "$guiPublish\Tools\Cgos\KifuwarabeGo2026.Reference.Communication.Cgos.Host.exe",
     "$guiPublish\Tools\Cgos\KifuwarabeGo2026.Reference.Communication.Cgos.Host.dll",
     "$guiPublish\Tools\Cgos\KifuwarabeGo2026.Reference.Communication.Cgos.Host.deps.json",
@@ -242,8 +242,7 @@ Assert-FileExists -LiteralPath @(
     "$enginePublish\KifuwarabeGo2026.Reference.PlayDomain.Go.dll",
     "$enginePublish\KifuwarabeGo2026.FormalAdapter.Gtp.dll",
     "$enginePublish\KifuwarabeGo2026.Reference.PlayerEngine.dll",
-    "$enginePublish\KifuwarabeGo2026.Reference.PlayerEngine.Go.Gtp.dll",
-    "$enginePublish\KifuwarabeGo2026.FormalAdapter.Gtp.PlayerEngine.dll"
+    "$enginePublish\KifuwarabeGo2026.Reference.PlayerEngine.Go.Gtp.dll"
 )
 
 $uploads = Join-Path $repositoryRoot 'Uploads'
