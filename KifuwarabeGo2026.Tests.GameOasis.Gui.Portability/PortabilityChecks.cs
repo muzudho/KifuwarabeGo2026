@@ -74,8 +74,10 @@ internal static class PortabilityChecks
             "GTP protocol primitives must be owned by FormalAdapter.Gtp.");
         Require(typeof(KifuwarabeGo2026.FormalAdapter.Cgos.Protocol.CgosServerMessageParser).Assembly == cgosFormalAdapterAssembly &&
                 typeof(KifuwarabeGo2026.FormalAdapter.Cgos.Protocol.CgosClientCommandFormatter).Assembly == cgosFormalAdapterAssembly &&
-                typeof(KifuwarabeGo2026.FormalAdapter.Cgos.Client.CgosNetworkSession).Assembly == cgosFormalAdapterAssembly,
-            "CGOS protocol parsing, formatting, and network sessions must be owned by FormalAdapter.Cgos.");
+                typeof(KifuwarabeGo2026.FormalAdapter.Cgos.Client.CgosNetworkSession).Assembly == cgosFormalAdapterAssembly &&
+                typeof(KifuwarabeGo2026.FormalAdapter.Cgos.PlayerEngine.CgosPlayerStateMachine).Assembly == cgosFormalAdapterAssembly &&
+                typeof(KifuwarabeGo2026.FormalAdapter.Cgos.GameMasterEngine.CgosAdminStateMachine).Assembly == cgosFormalAdapterAssembly,
+            "CGOS protocol, network sessions, and player/admin state machines must be owned by FormalAdapter.Cgos.");
         Require(typeof(KifuwarabeGo2026.FormalAdapter.Sgf.Go.SgfCoordinate).Assembly == sgfFormalAdapterAssembly &&
                 typeof(KifuwarabeGo2026.FormalAdapter.Sgf.Go.SgfGoGameRecordConverter).Assembly == sgfFormalAdapterAssembly,
             "SGF Go coordinates and neutral game projection must be owned by FormalAdapter.Sgf.");

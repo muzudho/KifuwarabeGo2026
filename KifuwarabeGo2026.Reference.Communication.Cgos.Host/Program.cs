@@ -7,6 +7,8 @@ using System.Net.Sockets;
 using System.Text;
 using KifuwarabeGo2026.FormalAdapter.Cgos.Protocol;
 using KifuwarabeGo2026.FormalAdapter.Cgos.Client;
+using KifuwarabeGo2026.FormalAdapter.Cgos.PlayerEngine;
+using KifuwarabeGo2026.FormalAdapter.Cgos.GameMasterEngine;
 
 /// <summary>
 /// CGOS サーバーとの通信を行うプログラムです。
@@ -760,16 +762,15 @@ internal sealed class CgosAdminClient
     public async Task RunAsync(CancellationToken cancellationToken)
     {
         var session = CreateNetworkSession(_options, _account, Log);
-        var adminInputStarted = false;
+        var admin = new CgosAdminStateMachine();
         await session.RunAsync(
             (message, token) =>
             {
-                if (!adminInputStarted && message is CgosLoginAccepted)
+                if (admin.Handle(message))
                 {
-                    adminInputStarted = true;
                     Log("# Admin login accepted. Command input is ready.");
                     _ = CgosStandardInputRelay.Start(
-                        (command, relayToken) => RelayAdminCommandAsync(session, command, relayToken),
+                        (command, relayToken) => RelayAdminCommandAsync(session, admin, command, relayToken),
                         ex => Log("# Admin input relay failed: " + ex.Message),
                         token);
                 }
@@ -782,27 +783,21 @@ internal sealed class CgosAdminClient
 
     private async Task RelayAdminCommandAsync(
         CgosNetworkSession session,
+        CgosAdminStateMachine admin,
         string command,
         CancellationToken cancellationToken)
     {
-        if (CgosStandardInputRelay.IsExitCommand(command))
-        {
-            await session.SendQuitAsync();
-            return;
-        }
-
-        if (!command.Equals("who", StringComparison.OrdinalIgnoreCase) &&
-            !command.Equals("match", StringComparison.OrdinalIgnoreCase) &&
-            !command.StartsWith("match ", StringComparison.OrdinalIgnoreCase))
+        if (!admin.TryCreateCommand(command, out var typedCommand) || typedCommand is null)
         {
             Log("# Unsupported admin command ignored: " + command);
             return;
         }
-
-        await session.SendAsync(
-            command.Equals("who", StringComparison.OrdinalIgnoreCase)
-                ? new CgosWho()
-                : new CgosMatch(command.Length > 5 ? command[5..].Trim() : ""));
+        if (typedCommand is CgosQuit)
+        {
+            await session.SendQuitAsync();
+            return;
+        }
+        await session.SendAsync(typedCommand);
     }
 
     private void Log(string message)
@@ -832,10 +827,6 @@ internal sealed class CgosClient
     private readonly CgosPlayerControl _playerControl;
     private readonly object _logLock = new();
     private readonly string _logPath;
-    private GtpEngineProcess? _engine;
-    private string _engineColor = "black";
-    private bool _engineSupportsCgosAnalyze;
-    private int _gameId;
 
     public CgosClient(
         CgosClientOptions options,
@@ -850,154 +841,56 @@ internal sealed class CgosClient
 
     public async Task RunAsync(CancellationToken cancellationToken)
     {
+        await using var player = new CgosPlayerStateMachine(
+            _account.UserName,
+            _options.HumanMode ? null : CreatePlayerEngineAsync,
+            _options.HumanMode
+                ? async (gameId, color, token) =>
+                {
+                    Log($"# Waiting for GUI human move. game={gameId} color={color}");
+                    var move = await _playerControl.WaitForHumanMoveAsync(gameId, token);
+                    Log($"# GUI human move: {move}");
+                    return move;
+                }
+                : null,
+            gameId =>
+            {
+                var requested = _playerControl.ConsumeResignRequest(gameId);
+                if (requested) Log("# GUI requested resignation.");
+                return requested;
+            },
+            Log);
         var session = new CgosNetworkSession(
             new CgosConnectionOptions(_options.Host, _options.Port),
             new CgosCredentials(_account.UserName, _account.Password),
             Log);
+        await session.RunAsync(
+            async (message, token) =>
+            {
+                var command = await player.HandleAsync(message, session.ServerSupportsAnalyze, token);
+                if (command is not null) await session.SendAsync(command);
+            },
+            passwordSentAsync: null,
+            cancellationToken);
+    }
+
+    private async Task<ICgosPlayerEngine> CreatePlayerEngineAsync(
+        CgosPlayerEngineSetup setup,
+        CancellationToken cancellationToken)
+    {
+        var process = new GtpEngineProcess(_options.EngineCommand, _options.LogDirectory, _account.Label, Log);
         try
         {
-            await session.RunAsync(
-                (message, token) => HandleLineAsync(message, session, token),
-                passwordSentAsync: null,
-                cancellationToken);
+            await process.StartAsync(cancellationToken);
+            await ApplyEngineOptionsAsync(process, cancellationToken);
+            var supportsAnalyze = await SupportsCommandAsync(process, "cgos-genmove_analyze", cancellationToken);
+            return new CgosGtpPlayerEngineAdapter(process, setup.LocalColor, supportsAnalyze, Log);
         }
-        finally
+        catch
         {
-            await ShutdownEngineAsync();
+            await process.DisposeAsync();
+            throw;
         }
-    }
-
-    private async Task HandleLineAsync(CgosServerMessage message, CgosNetworkSession session, CancellationToken cancellationToken)
-    {
-        switch (message)
-        {
-            case CgosMatchSetup setup:
-                await HandleSetupAsync(setup, cancellationToken);
-                return;
-            case CgosMovePlayed play:
-                if (!_options.HumanMode)
-                    await RequireEngine().PlayAsync(
-                        [play.Color, play.Vertex, play.TimeLeftMilliseconds.ToString(CultureInfo.InvariantCulture)],
-                        cancellationToken);
-                return;
-            case CgosGenMoveRequested genmove:
-                var move = await HandleGenMoveAsync(
-                    [genmove.Color, genmove.TimeLeftMilliseconds.ToString(CultureInfo.InvariantCulture)],
-                    session.ServerSupportsAnalyze,
-                    cancellationToken);
-                await session.SendAsync(new CgosMove(move.Split(' ', 2)[0], move.Contains(' ') ? move[(move.IndexOf(' ') + 1)..] : null));
-                return;
-            case CgosGameOver gameOver:
-                Log("# Game over: " + gameOver.Result);
-                await ShutdownEngineAsync();
-                await session.SendAsync(new CgosReady());
-                return;
-            case CgosInfoMessage:
-                return;
-            case CgosUnknownServerMessage unknown:
-                throw new InvalidOperationException("Unsupported CGOS command: " + unknown.Command);
-            default:
-                throw new InvalidOperationException("Unexpected CGOS message after login: " + message.RawLine);
-        }
-    }
-
-    private async Task HandleSetupAsync(CgosMatchSetup setup, CancellationToken cancellationToken)
-    {
-        _gameId = setup.GameId;
-
-        await ShutdownEngineAsync();
-        if (!_options.HumanMode)
-        {
-            _engine = new GtpEngineProcess(_options.EngineCommand, _options.LogDirectory, _account.Label, Log);
-            await _engine.StartAsync(cancellationToken);
-            await ApplyEngineOptionsAsync(_engine, cancellationToken);
-            _engineSupportsCgosAnalyze = await SupportsCommandAsync(_engine, "cgos-genmove_analyze", cancellationToken);
-        }
-
-        var boardSize = setup.BoardSize.ToString(CultureInfo.InvariantCulture);
-        var komi = setup.Komi.ToString(CultureInfo.InvariantCulture);
-        var programA = setup.WhitePlayer;
-        var programB = setup.BlackPlayer;
-        _engineColor = string.Equals(_account.UserName, programA, StringComparison.OrdinalIgnoreCase) ? "white" : "black";
-
-        Log($"# Setup game. board={boardSize}, komi={komi}, localColor={_engineColor}, programA={programA}, programB={programB}");
-
-        if (_engine is not null)
-        {
-            await _engine.CommandAsync("boardsize " + boardSize, cancellationToken);
-            await _engine.CommandAsync("komi " + komi, cancellationToken);
-            await _engine.CommandAsync("clear_board", cancellationToken);
-        }
-
-        foreach (var historicalMove in setup.MoveHistory)
-        {
-            if (_engine is not null)
-                await _engine.PlayAsync(
-                    [historicalMove.Color, historicalMove.Vertex, historicalMove.TimeLeftMilliseconds.ToString(CultureInfo.InvariantCulture)],
-                    cancellationToken);
-        }
-    }
-
-    private async Task<string> HandleGenMoveAsync(string[] parameters, bool serverSupportsAnalyze, CancellationToken cancellationToken)
-    {
-        if (parameters.Length != 2)
-        {
-            throw new InvalidOperationException("CGOS genmove requires 2 parameters.");
-        }
-
-        if (_playerControl.ConsumeResignRequest(_gameId))
-        {
-            Log("# GUI requested resignation.");
-            return "resign";
-        }
-
-        if (_options.HumanMode)
-        {
-            Log($"# Waiting for GUI human move. game={_gameId} color={parameters[0]}");
-            var humanMove = await _playerControl.WaitForHumanMoveAsync(_gameId, cancellationToken);
-            Log($"# GUI human move: {humanMove}");
-            return humanMove.ToLowerInvariant();
-        }
-
-        var engine = RequireEngine();
-        var color = parameters[0];
-        var useAnalyze = serverSupportsAnalyze && _engineSupportsCgosAnalyze;
-        var response = await engine.CommandAsync((useAnalyze ? "cgos-genmove_analyze " : "genmove ") + color, cancellationToken);
-        if (_playerControl.ConsumeResignRequest(_gameId))
-        {
-            Log("# GUI requested resignation while the engine was thinking.");
-            return "resign";
-        }
-        if (useAnalyze)
-            return ParseAnalyzeResponse(response);
-
-        var move = response.FirstOrDefault();
-        if (string.IsNullOrWhiteSpace(move))
-        {
-            throw new InvalidOperationException("GTP engine returned an empty genmove response.");
-        }
-
-        Log($"# Generated {_engineColor} move: {move}");
-        return move.ToLowerInvariant();
-    }
-
-    private string ParseAnalyzeResponse(IReadOnlyList<string> response)
-    {
-        var json = response.FirstOrDefault(line => line.StartsWith('{'));
-        var play = response.FirstOrDefault(line => line.StartsWith("play ", StringComparison.OrdinalIgnoreCase));
-        if (json is null || play is null)
-            throw new InvalidOperationException("GTP engine returned an invalid cgos-genmove_analyze response.");
-
-        using var document = System.Text.Json.JsonDocument.Parse(json);
-        if (document.RootElement.ValueKind != System.Text.Json.JsonValueKind.Object)
-            throw new InvalidOperationException("GTP engine returned non-object analysis JSON.");
-
-        var move = play[5..].Trim();
-        if (move.Length == 0)
-            throw new InvalidOperationException("GTP engine returned an empty analyzed move.");
-
-        Log($"# Generated {_engineColor} move: {move} {json}");
-        return $"{move.ToLowerInvariant()} {json}";
     }
 
     private static async Task<bool> SupportsCommandAsync(GtpEngineProcess engine, string command, CancellationToken cancellationToken)
@@ -1164,21 +1057,6 @@ internal sealed class CgosClient
         }
     }
 
-    private GtpEngineProcess RequireEngine()
-    {
-        return _engine ?? throw new InvalidOperationException("CGOS sent a game command before setup.");
-    }
-
-    private async Task ShutdownEngineAsync()
-    {
-        if (_engine is not null)
-        {
-            await _engine.DisposeAsync();
-            _engine = null;
-        }
-        _engineSupportsCgosAnalyze = false;
-    }
-
     private void Log(string message)
     {
         var line = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff} [{_account.Label}] {message}";
@@ -1199,6 +1077,76 @@ internal sealed class CgosClient
         var rankIndex = programName.IndexOf('(');
         return rankIndex < 0 ? programName : programName[..rankIndex];
     }
+}
+
+internal sealed class CgosGtpPlayerEngineAdapter : ICgosPlayerEngine
+{
+    private readonly GtpEngineProcess _process;
+    private readonly string _localColor;
+    private readonly Action<string> _log;
+
+    public CgosGtpPlayerEngineAdapter(
+        GtpEngineProcess process,
+        string localColor,
+        bool supportsAnalyze,
+        Action<string> log)
+    {
+        _process = process;
+        _localColor = localColor;
+        SupportsAnalyze = supportsAnalyze;
+        _log = log;
+    }
+
+    public bool SupportsAnalyze { get; }
+
+    public async Task ConfigureAsync(int boardSize, decimal komi, CancellationToken cancellationToken = default)
+    {
+        await _process.CommandAsync("boardsize " + boardSize.ToString(CultureInfo.InvariantCulture), cancellationToken);
+        await _process.CommandAsync("komi " + komi.ToString(CultureInfo.InvariantCulture), cancellationToken);
+        await _process.CommandAsync("clear_board", cancellationToken);
+    }
+
+    public Task PlayAsync(
+        string color,
+        string vertex,
+        long timeLeftMilliseconds,
+        CancellationToken cancellationToken = default) =>
+        _process.PlayAsync(
+            [color, vertex, timeLeftMilliseconds.ToString(CultureInfo.InvariantCulture)],
+            cancellationToken);
+
+    public async Task<CgosGeneratedMove> GenerateMoveAsync(
+        string color,
+        bool includeAnalysis,
+        CancellationToken cancellationToken = default)
+    {
+        var response = await _process.CommandAsync(
+            (includeAnalysis ? "cgos-genmove_analyze " : "genmove ") + color,
+            cancellationToken);
+        if (!includeAnalysis)
+        {
+            var move = response.FirstOrDefault();
+            if (string.IsNullOrWhiteSpace(move))
+                throw new InvalidOperationException("GTP engine returned an empty genmove response.");
+            _log($"# Generated {_localColor} move: {move}");
+            return new CgosGeneratedMove(move.ToLowerInvariant());
+        }
+
+        var json = response.FirstOrDefault(line => line.StartsWith('{'));
+        var play = response.FirstOrDefault(line => line.StartsWith("play ", StringComparison.OrdinalIgnoreCase));
+        if (json is null || play is null)
+            throw new InvalidOperationException("GTP engine returned an invalid cgos-genmove_analyze response.");
+        using var document = System.Text.Json.JsonDocument.Parse(json);
+        if (document.RootElement.ValueKind != System.Text.Json.JsonValueKind.Object)
+            throw new InvalidOperationException("GTP engine returned non-object analysis JSON.");
+        var analyzedMove = play[5..].Trim();
+        if (analyzedMove.Length == 0)
+            throw new InvalidOperationException("GTP engine returned an empty analyzed move.");
+        _log($"# Generated {_localColor} move: {analyzedMove} {json}");
+        return new CgosGeneratedMove(analyzedMove.ToLowerInvariant(), json);
+    }
+
+    public ValueTask DisposeAsync() => _process.DisposeAsync();
 }
 
 internal sealed class GtpEngineProcess : IAsyncDisposable

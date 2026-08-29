@@ -430,7 +430,7 @@ CGOSサーバー行のパーサー、クライアントコマンドのフォー�
 
 ### 作業段階5：CGOS Hostを薄くする
 
-状態：接続セッション移行完了・プレイヤー／管理状態機械移行前（2026年8月29日）
+状態：接続セッションとプレイヤー状態機械実装完了・Hostエンジン適合前（2026年8月29日）
 
 `CgosConnectionSession`、`CgosClient`、`CgosAdminClient`を役割別にライブラリーへ移し、Hostにはコマンドライン、標準入出力、プロセス寿命、構成だけを残します。GTP子プロセス処理は`FormalAdapter.Gtp`を利用する構成点にします。
 
@@ -448,7 +448,30 @@ CGOSサーバー行のパーサー、クライアントコマンドのフォー�
 
 `Tests.FormalAdapter.Cgos`へループバックTCP縦試験を追加しました。外部ネットワークを使わず、protocol、username、password、okの交換、`genmove_analyze`能力、パスワード送信通知、ログへの資格情報非露出を検査して`PASS`しました。接続後の全ソリューションReleaseビルドも警告0件、エラー0件です。
 
-次の縦切りでは、GTP子プロセスを抽象化するプレイヤーエンジン契約を定め、`CgosClient`のsetup、play、genmove、gameover状態機械を`FormalAdapter.Cgos.PlayerEngine`へ移します。その後、`CgosAdminClient`を`GameMasterEngine`へ移し、Host内で未使用になった旧接続実装を削除します。
+#### 第2縦切りの実施記録
+
+`KifuwarabeGo2026.FormalAdapter.Cgos.PlayerEngine`へ次を実装しました。
+
+* `ICgosPlayerEngine`：盤設定、棋歴・相手着手、通常／解析付き着手生成、プロセス寿命を抽象化。
+* `CgosPlayerEngineFactory`と`CgosPlayerEngineSetup`：対局ごとのエンジン構成点。
+* `CgosGeneratedMove`：頂点と任意の解析JSON。
+* `CgosPlayerStateMachine`：setup、棋歴再現、play、genmove、解析能力の合意、人間着手、投了要求、gameover、ready。
+
+状態機械はTCP、標準入出力、具体的GTPプロセス、Host設定へ依存しません。偽エンジン試験で、9路・コミ設定、棋歴再現、相手着手、解析付き着手、投了優先、gameover時のエンジン破棄とreadyを検査して`PASS`しました。
+
+#### 第3縦切りの実施記録
+
+Hostに`CgosGtpPlayerEngineAdapter`を追加し、既存の`GtpEngineProcess`を`ICgosPlayerEngine`へ適合しました。エンジンの起動とGUIオプション適用はHostの構成責務として維持し、盤設定、棋歴再現、通常／解析付き着手生成、破棄はFormalAdapterの状態機械から抽象越しに呼び出します。
+
+現行`CgosClient`からsetup、play、genmove、gameoverの分岐と対局状態を除き、`CgosPlayerStateMachine`へ切り替えました。人間着手とGUI投了要求もデリゲートとして注入するため、状態機械はGUI型へ依存しません。エンジン生成途中の失敗時にも子プロセスを破棄します。
+
+全ソリューションReleaseビルドは警告0件、エラー0件です。`Tests.FormalAdapter.Cgos`、GTP・CGOS・SGF所有権を含むGUI移植性試験、Windows非対話プラットフォーム試験がすべて`PASS`しました。
+
+#### 第4縦切りの実施記録
+
+`FormalAdapter.Cgos.GameMasterEngine`へ`CgosAdminStateMachine`を追加しました。ログイン受理後の準備状態と、`who`、`match`、`quit`入力から型付きCGOSコマンドへの変換を所有します。Hostの`CgosAdminClient`は標準入力監視、ログ、送信だけを担当します。専用試験へログイン前拒否、準備遷移、管理コマンド変換、未知入力拒否を追加して`PASS`しました。
+
+次の縦切りでは、Host内で未使用になった旧`CgosConnectionSession`とその専用`CgosTcpConnector`を物理削除し、第5段階の最終回帰試験を行います。
 
 ### 作業段階6：CGOSとGUIのログ境界を置換する
 
@@ -493,9 +516,9 @@ CGOSサーバー行のパーサー、クライアントコマンドのフォー�
 ## 実装再開地点
 
 ```text
-現在の状態：作業段階0～4完了。作業段階5の接続セッション移行完了
-次の最小作業：GTP子プロセスを抽象化し、CGOSプレイヤー状態機械を移す
-次の実装候補：ICgosPlayerEngine、setup／play／genmove／gameover状態機械、CgosAdminClient
+現在の状態：作業段階0～4完了。作業段階5の接続、プレイヤー、Host側GTP適合、CgosClient置換、管理コマンド状態移行まで完了
+次の最小作業：Host内で未使用の旧CgosConnectionSessionとCgosTcpConnectorを物理削除する
+次の実装候補：第5段階の最終回帰試験
 移行先：KifuwarabeGo2026.FormalAdapter.Cgos.PlayerEngine、GameMasterEngine、Host構成点
 禁止事項：GTPプロジェクト全体の一括改名、CGOS Hostの一括分解、SgfGameRecordConverterの型ごとの単純移動を同時に行わない
 ```

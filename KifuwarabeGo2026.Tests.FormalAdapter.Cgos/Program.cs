@@ -3,6 +3,8 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using KifuwarabeGo2026.FormalAdapter.Cgos.Client;
+using KifuwarabeGo2026.FormalAdapter.Cgos.GameMasterEngine;
+using KifuwarabeGo2026.FormalAdapter.Cgos.PlayerEngine;
 using KifuwarabeGo2026.FormalAdapter.Cgos.Protocol;
 
 var protocol = RequireType<CgosProtocolAdvertised>(CgosServerMessageParser.Parse("protocol genmove_analyze"));
@@ -42,6 +44,15 @@ Require(CgosClientCommandFormatter.Format(password) == "secret" && CgosClientCom
 RequireThrows<ArgumentException>(() => CgosClientCommandFormatter.Format(new CgosMove("a9\nquit")), "Line injection must be rejected.");
 RequireThrows<CgosProtocolException>(() => CgosServerMessageParser.Parse("play x A1 100"), "Invalid colors must be rejected.");
 RequireThrows<CgosProtocolException>(() => CgosServerMessageParser.Parse("setup 1 9 bad 100 W B"), "Invalid komi must be rejected.");
+
+var admin = new CgosAdminStateMachine();
+Require(!admin.TryCreateCommand("who", out _), "Admin commands must not be accepted before login.");
+Require(admin.Handle(new CgosLoginAccepted("ok")) && admin.IsReady, "Admin login acceptance must make command input ready once.");
+Require(admin.TryCreateCommand("who", out var who) && who is CgosWho, "Admin who input must become a typed command.");
+Require(admin.TryCreateCommand("match white black", out var match) && match is CgosMatch { Arguments: "white black" },
+    "Admin match input must retain its arguments.");
+Require(admin.TryCreateCommand("quit", out var quit) && quit is CgosQuit && !admin.TryCreateCommand("future", out _),
+    "Admin quit must be typed and unsupported input rejected.");
 
 using (var baseline = JsonDocument.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Vectors", "cgos-baseline.json"))))
 {
@@ -92,6 +103,33 @@ Require(networkMessages.Single() is CgosLoginAccepted && networkSession.ServerSu
 Require(passwordNotifications == 1 && networkLogs.All(line => !line.Contains("top-secret", StringComparison.Ordinal)),
     "The password callback must run and logs must not expose credentials.");
 
+var fakeEngine = new FakePlayerEngine();
+await using (var player = new CgosPlayerStateMachine(
+    "WhiteBot",
+    (_, _) => Task.FromResult<ICgosPlayerEngine>(fakeEngine)))
+{
+    await player.HandleAsync(setup, serverSupportsAnalyze: true);
+    Require(fakeEngine.BoardSize == 9 && fakeEngine.Komi == 6.5m && fakeEngine.Played.Count == 2,
+        "The player state machine must configure and replay setup history.");
+    await player.HandleAsync(new CgosMovePlayed("play b C3 570000", "b", "C3", 570000), true);
+    var generated = await player.HandleAsync(new CgosGenMoveRequested("genmove w 560000", "w", 560000), true);
+    Require(generated is CgosMove { Vertex: "d4", AnalysisJson: "{\"moves\":[]}" } && fakeEngine.LastAnalyze,
+        "The player state machine must produce analyzed moves when both sides support them.");
+    Require(await player.HandleAsync(new CgosGameOver("gameover W+R", "W+R"), true) is CgosReady && fakeEngine.Disposed,
+        "Gameover must dispose the engine and return ready.");
+}
+var resignRequested = true;
+await using (var human = new CgosPlayerStateMachine(
+    "Human",
+    engineFactory: null,
+    humanMoveProvider: (_, _, _) => Task.FromResult("A9"),
+    consumeResignRequest: _ => resignRequested))
+{
+    await human.HandleAsync(new CgosMatchSetup("setup", 7, 9, 6.5m, 600000, "Human", "Other", []), false);
+    Require(await human.HandleAsync(new CgosGenMoveRequested("genmove b 1", "b", 1), false) is CgosResign,
+        "A queued resignation must take precedence over a human move.");
+}
+
 Console.WriteLine("PASS: CGOS protocol messages and commands parsed and formatted login, setup, play, genmove, gameover, errors, admin, analysis, and sensitive data.");
 
 static T RequireType<T>(object value) where T : class => value as T ?? throw new InvalidOperationException($"Expected {typeof(T).Name}.");
@@ -101,4 +139,21 @@ static void RequireThrows<T>(Action action, string message) where T : Exception
     try { action(); }
     catch (T) { return; }
     throw new InvalidOperationException(message);
+}
+
+sealed class FakePlayerEngine : ICgosPlayerEngine
+{
+    public bool SupportsAnalyze => true;
+    public int BoardSize { get; private set; }
+    public decimal Komi { get; private set; }
+    public List<(string Color, string Vertex, long Time)> Played { get; } = [];
+    public bool LastAnalyze { get; private set; }
+    public bool Disposed { get; private set; }
+    public Task ConfigureAsync(int boardSize, decimal komi, CancellationToken cancellationToken = default)
+    { BoardSize = boardSize; Komi = komi; return Task.CompletedTask; }
+    public Task PlayAsync(string color, string vertex, long timeLeftMilliseconds, CancellationToken cancellationToken = default)
+    { Played.Add((color, vertex, timeLeftMilliseconds)); return Task.CompletedTask; }
+    public Task<CgosGeneratedMove> GenerateMoveAsync(string color, bool includeAnalysis, CancellationToken cancellationToken = default)
+    { LastAnalyze = includeAnalysis; return Task.FromResult(new CgosGeneratedMove("D4", includeAnalysis ? "{\"moves\":[]}" : null)); }
+    public ValueTask DisposeAsync() { Disposed = true; return ValueTask.CompletedTask; }
 }
