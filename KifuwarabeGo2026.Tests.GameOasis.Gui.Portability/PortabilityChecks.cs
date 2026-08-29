@@ -163,14 +163,14 @@ internal static class PortabilityChecks
     private static void VerifyLobbyGuiBoundary()
     {
         Require(typeof(LobbyGuiController).Namespace == "KifuwarabeGo2026.LobbyGui.Application" &&
-                typeof(ILobbyGuiCommands).Namespace == "KifuwarabeGo2026.LobbyGui.Application",
-            "Stable lobby GUI boundaries must be identifiable by the LobbyGui namespace.");
+                typeof(ILobbyGuiCommands).Namespace == "KifuwarabeGo2026.LobbyGui.Application" &&
+                typeof(LobbyGuiController).Assembly.GetName().Name == "KifuwarabeGo2026.LobbyGui",
+            "Stable lobby GUI boundaries must be owned by the LobbyGui assembly and namespace.");
         var engine = new FakeLobbyEngine();
-        var tournamentRules = new FakeTournamentRulesCatalog();
-        ILobbyGuiCommands controller = new LobbyGuiController(engine, tournamentRules);
+        ILobbyGuiCommands controller = new LobbyGuiController(engine, ApplicationSettings.FilePath);
         var state = controller.LoadViewState();
 
-        Require(state.TournamentRules.Count == 1 && state.GtpEngines.Count == 1 &&
+        Require(state.GtpEngines.Count == 1 &&
                 state.Entries.Count == 1 && state.ClientIdentities.Count == 1 &&
                 state.CgosConnections.Count == 1,
             "Lobby GUI state must project all start-before catalogs through one boundary.");
@@ -223,17 +223,6 @@ internal static class PortabilityChecks
             IEnumerable<EntryProfile> entries,
             IEnumerable<ClientIdentityProfile> clientIdentities) => SaveCallCount++;
         public void SaveCgosConnections(IEnumerable<CgosConnectionProfile> profiles) => SaveCallCount++;
-    }
-
-    private sealed class FakeTournamentRulesCatalog : ITournamentRulesCatalog
-    {
-        public string ListPath => "/catalog/settings.json";
-        public IReadOnlyList<TournamentRules> Rules { get; } = [new TournamentRules { DisplayName = "Rules" }];
-        public void Save(TournamentRules rules) { }
-        public void Delete(TournamentRules rules) { }
-        public void SaveOrder(IEnumerable<TournamentRules> rules) { }
-        public TournamentRules CreateNew(TournamentRules source) => source.Clone();
-        public TournamentRules Duplicate(TournamentRules source) => source.Clone();
     }
 
     private static void VerifyGameOasisProfilePolicies()

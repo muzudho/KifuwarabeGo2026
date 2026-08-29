@@ -247,11 +247,12 @@ public class Game1 : Game
         _cgosBlackConnectionProcess = new CgosConnectionProcess(_desktopLauncher, _platformExecutableService, "BlackPlayer");
         _cgosWhiteConnectionProcess = new CgosConnectionProcess(_desktopLauncher, _platformExecutableService, "PracticePlayer");
         _cgosAdminProcess = new CgosConnectionProcess(_desktopLauncher, _platformExecutableService, "Admin");
-        _lobbyGuiController = LobbyGuiController.CreateDefault();
+        _lobbyGuiController = LobbyGuiComposition.CreateDefault();
         _lobbyViewState = _lobbyGuiController.LoadViewState();
         if (!string.IsNullOrWhiteSpace(_lobbyViewState.CommunicationWarning))
             GuiOperationLog.App("Lobby engine communication fallback", _lobbyViewState.CommunicationWarning);
-        _session.SetTournamentRules(_lobbyViewState.TournamentRules);
+        var tournamentRules = TournamentRulesCatalog.LoadFromDefaultLocation();
+        _session.SetTournamentRules(tournamentRules.Rules);
         _session.SetGtpEngineProfiles(_lobbyViewState.GtpEngines);
         _session.SetEntryProfiles(_lobbyViewState.Entries);
         _session.SetClientIdentityProfiles(_lobbyViewState.ClientIdentities);
@@ -266,7 +267,7 @@ public class Game1 : Game
         RefreshSgfAutoSaveState();
         _tournamentRulesSetting = new TournamentRulesSetting(
             _session,
-            _lobbyGuiController.TournamentRules,
+            tournamentRules,
             OpenTournamentRulesSelectionDialog,
             BeginDiscardTransition,
             _clipboardService,

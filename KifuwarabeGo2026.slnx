@@ -15,6 +15,7 @@
   <Project Path="KifuwarabeGo2026.LobbyEngine/KifuwarabeGo2026.LobbyEngine.csproj" />
   <Project Path="KifuwarabeGo2026.LobbyEngine.JsonLines/KifuwarabeGo2026.LobbyEngine.JsonLines.csproj" />
   <Project Path="KifuwarabeGo2026.LobbyEngine.JsonLinesHost/KifuwarabeGo2026.LobbyEngine.JsonLinesHost.csproj" />
+  <Project Path="KifuwarabeGo2026.LobbyGui/KifuwarabeGo2026.LobbyGui.csproj" />
   <Project Path="KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions/KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.csproj" />
   <Project Path="KifuwarabeGo2026.Tests.GameOasis.Gui.Portability/KifuwarabeGo2026.Tests.GameOasis.Gui.Portability.csproj" />
   <Project Path="KifuwarabeGo2026.GameOasis.Gui.Windows/KifuwarabeGo2026.GameOasis.Gui.Windows.csproj" />
