@@ -1,4 +1,13 @@
 # KifuwarabeGo2026.FormalAdapter.Sgf
 
-SGFとゲームオアシスの棋譜・局面契約を接続するフォーマル・アダプターのProjectFamily入口です。現在GUI CoreにあるSGF処理を棚卸しし、画面や対局状態へ依存しない文書解析、書出し、意味変換から段階的に移します。
+SGFとゲームオアシスの棋譜・局面契約を接続するフォーマル・アダプターのProjectFamily入口です。画面や対局状態へ依存しない文書解析、書出し、意味変換から段階的に集約します。
 
+`Document`名前空間には、ゲーム固有の意味を適用しないSGF Collectionモデルがあります。
+
+* `SgfDocument`は複数のゲーム木を順序どおり保持します。
+* `SgfGameTree`はノード列と、その後から分岐する変化図を保持します。
+* `SgfNode`はプロパティ順を保持します。
+* `SgfProperty`は未知の識別子を含め、複数値とその順序を保持します。
+* `SgfDocumentParser`と`SgfDocumentWriter`は、GUI、Go型、ファイルシステムに依存せず、SGFのエスケープとCollection全体を往復します。
+
+現行GUIの`GoGameRecord`への意味変換はまだ切り替えていません。囲碁座標や棋譜への縮約は、文書の損失なし往復とは別の`FormalAdapter.Sgf.Go`境界で行います。

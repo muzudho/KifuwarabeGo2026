@@ -1,6 +1,6 @@
 # GTP・CGOS・SGFのFormalAdapter移行調査・計画
 
-状態：作業段階0完了・作業段階1実装中（2026年8月29日）
+状態：作業段階0完了・作業段階1実装完了・作業段階2実装完了（2026年8月29日）
 
 ## 目的
 
@@ -282,7 +282,7 @@ dotnet KifuwarabeGo2026.Tests.GameOasis.Gui.Portability\bin\Release\net8.0\Kifuw
 
 ### 作業段階1：GTPプリミティブを移す
 
-状態：実装完了・Application Control解除後の最終再試験待ち（2026年8月29日）
+状態：完了（2026年8月29日）
 
 `GtpCommandArgument`、`GtpCommandResult`、`GtpFilePathArgumentStyle`、`IGtpCommandSession`を`FormalAdapter.Gtp.Protocol`へ移します。次にクライアントとプロセストランスポートを移します。
 
@@ -313,13 +313,44 @@ dotnet KifuwarabeGo2026.Tests.GameOasis.Gui.Portability\bin\Release\net8.0\Kifuw
 
 クライアントから参照される`GtpGuiOptionsDocument`、`GtpOptionSchemaDocument`、`GtpOptionEvaluationDocument`と関連定義は、逆依存を作らないよう同時に`KifuwarabeGo2026.FormalAdapter.Gtp.Options`へ移しました。GUI、GTP拡張、旧GTP通信、試験プロジェクトは新プロジェクトを直接参照します。Hostの実行ファイル名とサーバー実装は変更していません。
 
-移動後のソリューション全体Releaseビルドは警告0件、エラー0件で成功し、子プロセスを使う`Tests.Reference.Communication.Gtp`は`PASS`しました。GUI移植性試験とWindows試験は、今回の移動対象ではない再生成済み`StationeryUI.dll`をWindows Application Controlが`0x800711C7`で遮断したため、検査本体へ入る前で再試験待ちです。
+移動後のソリューション全体Releaseビルドは警告0件、エラー0件で成功しました。一時的に再生成済み`StationeryUI.dll`をWindows Application Controlが`0x800711C7`で遮断したため、ReleaseとDebugの両構成で再生成し、コード内に迂回処理を入れず再評価を待ちました。最終的に次の全試験が`PASS`しました。
+
+* 子プロセスを使う`Tests.Reference.Communication.Gtp`。
+* GTP、CGOS、SGFベースラインと所有権検査を含む`Tests.GameOasis.Gui.Portability`。
+* `Tests.GameOasis.Gui.Windows`の非対話Windowsプラットフォーム検査。
 
 ### 作業段階2：SGF文書モデルを作る
+
+状態：完了（2026年8月29日）
 
 `FormalAdapter.Sgf`へ、外部依存のない文書モデル、パーサー、ライター、例外を追加します。既存SGFを新モデルで読み書きし、未知プロパティ、値順序、変化図、複数ゲーム木を保持する試験を先に完成させます。
 
 完了条件：文書の損失なし往復ができ、まだGUIの保存経路を切り替えなくても単独で検査できる。
+
+#### 作業段階2の実施記録
+
+外部プロジェクトへ依存しない`KifuwarabeGo2026.FormalAdapter.Sgf.Document`を実装しました。
+
+| 型 | 責務 |
+|---|---|
+| `SgfDocument` | SGF Collectionに含まれる複数ゲーム木と順序の保持 |
+| `SgfGameTree` | ノード列と、その末尾から分岐する変化図の保持 |
+| `SgfNode` | プロパティと記載順の保持 |
+| `SgfProperty` | 未知識別子、複数値、値順序の保持 |
+| `SgfDocumentParser` | Collection全体、変化図、エスケープ、行継続の解析 |
+| `SgfDocumentWriter` | SGFエスケープと改行を正規化した損失なし書出し |
+| `SgfParseException` | 問題位置をオフセット付きで報告 |
+
+専用の`KifuwarabeGo2026.Tests.FormalAdapter.Sgf`を追加し、次をGUIやGo型なしで検査します。
+
+* 複数ゲーム木と左右の変化図。
+* 未知プロパティとプロパティ順。
+* 一プロパティの複数値と値順序。
+* `\]`、`\\`、行継続、CRLF正規化。
+* 作業段階0の通常SGFと旧KFAベクトルの再解析可能な往復。
+* 空Collection、未閉鎖値、小文字識別子、空ゲーム木の拒否とエラー位置。
+
+専用試験はReleaseで警告0件、エラー0件でビルドし、全項目が`PASS`しました。現行GUIの読込・保存経路はまだ切り替えず、次の作業段階3でGo変換とともに接続します。
 
 ### 作業段階3：SGFのGo変換を移す
 
@@ -382,9 +413,9 @@ CGOSサーバー行のパーサー、クライアントコマンドのフォー�
 ## 実装再開地点
 
 ```text
-現在の状態：作業段階0完了・作業段階1実装完了・Application Control解除後の最終再試験待ち
-次の最小作業：GUI移植性試験とWindows試験を再実行し、作業段階1を完了へ更新する
-次の実装候補：作業段階2のSGF文書モデル
-移行先：KifuwarabeGo2026.FormalAdapter.Sgf
+現在の状態：作業段階0、1、2完了。全回帰試験PASS
+次の最小作業：作業段階3としてSGF座標とGo棋譜変換の境界を設計する
+次の実装候補：SgfCoordinate、SGF文書と中立Go棋譜の変換
+移行先：KifuwarabeGo2026.FormalAdapter.Sgf.Go
 禁止事項：GTPプロジェクト全体の一括改名、CGOS Hostの一括分解、SgfGameRecordConverterの型ごとの単純移動を同時に行わない
 ```
