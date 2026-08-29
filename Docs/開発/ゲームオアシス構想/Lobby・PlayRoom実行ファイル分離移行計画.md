@@ -251,8 +251,8 @@ KifuwarabeGo2026.PlayRoom
 KifuwarabeGo2026.PlayRoom.Windows
 
 KifuwarabeGo2026.Reference.Gui
-KifuwarabeGo2026.Reference.PlaySpace.Go
-KifuwarabeGo2026.Reference.PlaySpace.Go.Host
+KifuwarabeGo2026.Reference.PlayRoomEngine.Go
+KifuwarabeGo2026.Reference.PlayRoomEngine.Go.Host
 ```
 
 依存方向は次を守ります。

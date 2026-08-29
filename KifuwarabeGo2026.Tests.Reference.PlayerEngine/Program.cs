@@ -2,7 +2,7 @@ using System.Text.Json;
 using KifuwarabeGo2026.GameOasis.Concierge;
 using KifuwarabeGo2026.GameOasis.Contracts.Common;
 using KifuwarabeGo2026.Reference.PlayerEngine;
-using KifuwarabeGo2026.Reference.PlaySpace.Go;
+using KifuwarabeGo2026.Reference.PlayRoomEngine.Go;
 using KifuwarabeGo2026.Reference.PlaySpace.Ponnuki;
 
 var concierge = new GameOasisConcierge();

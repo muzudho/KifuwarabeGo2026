@@ -27,7 +27,7 @@ using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Engines;
 using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.InitialPosition;
 using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Sgf;
 using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Strategies;
-using KifuwarabeGo2026.Reference.PlaySpace.Go.LegacyMatch;
+using KifuwarabeGo2026.Reference.PlayRoomEngine.Go.LegacyMatch;
 using KifuwarabeGo2026.Reference.PlayRoomGui.Common;
 using KifuwarabeGo2026.Reference.PlayerEngine;
 using KifuwarabeGo2026.Shared.Domain;
@@ -1586,7 +1586,7 @@ internal static class PortabilityChecks
 
         Require(!references.Contains("KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation"),
             "Concierge must not know the Go foundation assembly.");
-        Require(!references.Contains("KifuwarabeGo2026.Reference.PlaySpace.Go"),
+        Require(!references.Contains("KifuwarabeGo2026.Reference.PlayRoomEngine.Go"),
             "Concierge must not know the Go play-space implementation.");
         Require(!references.Contains("KifuwarabeGo2026.Reference.PlaySpace.Ponnuki"),
             "Concierge must not know the Ponnuki play-space implementation.");

@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Reference.PlaySpace.Go;
+namespace KifuwarabeGo2026.Reference.PlayRoomEngine.Go;
 
 /// <summary>通常囲碁参照実装が公開する文書スキーマIDです。</summary>
 public static class GoSchemas

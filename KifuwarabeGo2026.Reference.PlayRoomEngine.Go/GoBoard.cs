@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Reference.PlaySpace.Go;
+namespace KifuwarabeGo2026.Reference.PlayRoomEngine.Go;
 
 internal enum GoStone { Empty, Black, White }
 

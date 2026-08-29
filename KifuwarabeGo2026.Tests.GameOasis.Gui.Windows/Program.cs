@@ -15,7 +15,7 @@ using Microsoft.Xna.Framework;
 using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Capabilities;
 using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Engines;
 using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.InitialPosition;
-using KifuwarabeGo2026.Reference.PlaySpace.Go.LegacyMatch;
+using KifuwarabeGo2026.Reference.PlayRoomEngine.Go.LegacyMatch;
 using KifuwarabeGo2026.Shared.Domain;
 using System;
 using System.Buffers.Binary;

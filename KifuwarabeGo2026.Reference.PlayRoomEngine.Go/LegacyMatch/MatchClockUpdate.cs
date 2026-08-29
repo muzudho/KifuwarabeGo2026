@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Reference.PlaySpace.Go.LegacyMatch;
+namespace KifuwarabeGo2026.Reference.PlayRoomEngine.Go.LegacyMatch;
 
 /// <summary>
 /// Carries a complete clock state decided by a trusted server-side clock service.

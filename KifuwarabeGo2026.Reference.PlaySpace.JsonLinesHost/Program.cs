@@ -1,6 +1,6 @@
 using KifuwarabeGo2026.GameOasis.Contracts.ProtocolS;
 using KifuwarabeGo2026.PlaySpace.JsonLines;
-using KifuwarabeGo2026.Reference.PlaySpace.Go;
+using KifuwarabeGo2026.Reference.PlayRoomEngine.Go;
 using KifuwarabeGo2026.Reference.PlaySpace.Ponnuki;
 
 var implementation = ReadOption(args, "--play-space") ?? "go";

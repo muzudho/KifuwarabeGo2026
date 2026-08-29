@@ -8,7 +8,7 @@
   <ItemGroup>
     <ProjectReference Include="..\KifuwarabeGo2026.GameOasis.Contracts\KifuwarabeGo2026.GameOasis.Contracts.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.PlaySpace.JsonLines\KifuwarabeGo2026.PlaySpace.JsonLines.csproj" />
-    <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlaySpace.Go\KifuwarabeGo2026.Reference.PlaySpace.Go.csproj" />
+    <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlayRoomEngine.Go\KifuwarabeGo2026.Reference.PlayRoomEngine.Go.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlaySpace.Ponnuki\KifuwarabeGo2026.Reference.PlaySpace.Ponnuki.csproj" />
   </ItemGroup>
   <ItemGroup>

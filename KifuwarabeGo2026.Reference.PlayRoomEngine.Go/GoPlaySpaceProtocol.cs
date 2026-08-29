@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Reference.PlaySpace.Go;
+namespace KifuwarabeGo2026.Reference.PlayRoomEngine.Go;
 
 using System.Collections.Concurrent;
 using System.Text.Json;
@@ -19,7 +19,7 @@ public sealed class GoPlaySpaceProtocol : IPlaySpaceProtocol
             new PlaySpaceTypeId(GameOasisOfficialNames.Go),
             "通常囲碁",
             ContractVersion.V1_0,
-            "KifuwarabeGo2026.Reference.PlaySpace.Go",
+            "KifuwarabeGo2026.Reference.PlayRoomEngine.Go",
             typeof(GoPlaySpaceProtocol).Assembly.GetName().Version?.ToString() ?? "4.0.0",
             [GameOasisCapabilityIds.ActionPlayPoint, GameOasisCapabilityIds.ActionPass, GameOasisCapabilityIds.ActionResign,
                 "explicit-setup", "move-history-observation", "main-time-observation", "simple-ko", "positional-superko", "two-pass-scoring", "resignation", "chinese-area-scoring"])));

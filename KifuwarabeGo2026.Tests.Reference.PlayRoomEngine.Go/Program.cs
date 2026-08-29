@@ -1,7 +1,7 @@
 using System.Text.Json;
 using KifuwarabeGo2026.GameOasis.Contracts.Common;
 using KifuwarabeGo2026.GameOasis.Contracts.ProtocolS;
-using KifuwarabeGo2026.Reference.PlaySpace.Go;
+using KifuwarabeGo2026.Reference.PlayRoomEngine.Go;
 
 IPlaySpaceProtocol go = new GoPlaySpaceProtocol();
 var descriptor = RequireSuccess(await go.DescribeAsync());
