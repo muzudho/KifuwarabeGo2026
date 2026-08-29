@@ -29,6 +29,7 @@ using KifuwarabeGo2026.Reference.PlayerEngine.Go.GtpExtensions.Sgf;
 using KifuwarabeGo2026.Reference.PlayerEngine.Go.GtpExtensions.Strategies;
 using KifuwarabeGo2026.Reference.PlayRoomEngine.Go.LegacyMatch;
 using KifuwarabeGo2026.Reference.PlayRoomGui.Common;
+using KifuwarabeGo2026.Reference.PlayRoomGui.Go;
 using KifuwarabeGo2026.Reference.PlayerEngine;
 using KifuwarabeGo2026.Reference.PlayDomain.Go;
 using KifuwarabeGo2026.FormalAdapter.Cgos.Observability;
@@ -111,6 +112,7 @@ internal static class PortabilityChecks
         VerifyGameAgnosticConciergeAssembly(conciergeAssembly);
         VerifyGameOasisCatalogLayering(gameOasisApplicationAssembly, gameOasisStorageAssembly);
         VerifyLobbyGuiBoundary();
+        VerifyGoPlayRoomGuiBoundary();
         VerifyGuiMatchIntegration();
         VerifyGtpMatchAdapter();
         VerifyPortableFallbacks();
@@ -131,6 +133,50 @@ internal static class PortabilityChecks
         VerifyComposition();
         VerifyGameOasisGuiComposition();
         VerifyGameOasisPlayerParticipation();
+    }
+
+    private static void VerifyGoPlayRoomGuiBoundary()
+    {
+        var assembly = typeof(GoPlayRoomViewState).Assembly;
+        Require(assembly.GetName().Name == "KifuwarabeGo2026.Reference.PlayRoomGui.Go",
+            "The Go Play Room view state must be owned by Reference.PlayRoomGui.Go.");
+
+        var references = assembly.GetReferencedAssemblies()
+            .Select(reference => reference.Name)
+            .ToHashSet(StringComparer.Ordinal);
+        Require(!references.Contains("KifuwarabeGo2026.GameOasis.Gui") &&
+                !references.Contains("KifuwarabeGo2026.LobbyGui") &&
+                !references.Any(reference => reference?.StartsWith("MonoGame", StringComparison.Ordinal) == true),
+            "The Go Play Room view state must not depend on the compatibility GUI, Lobby GUI, or MonoGame.");
+
+        var state = GoPlayRoomViewState.Capture(
+            GoPlayRoomActivity.Reviewing,
+            3,
+            (x, y) => (x, y) switch
+            {
+                (0, 0) => GoStone.Black,
+                (2, 2) => GoStone.White,
+                _ => GoStone.Empty,
+            },
+            GoStone.White,
+            2,
+            1,
+            0,
+            new GoPoint(1, 1),
+            null,
+            "",
+            1,
+            3);
+
+        Require(state.Activity == GoPlayRoomActivity.Reviewing &&
+                state.GetStone(0, 0) == GoStone.Black &&
+                state.GetStone(2, 2) == GoStone.White &&
+                state.CurrentTurn == GoStone.White &&
+                state.BlackCaptures == 1 &&
+                state.KoPoint == new GoPoint(1, 1) &&
+                state.TimelineIndex == 1 &&
+                state.TimelineMaximum == 3,
+            "The Go Play Room view state must capture board, turn, result, and timeline display data.");
     }
 
     private static void VerifyGtpPlayerEngineSeparation(Assembly gtpFormalAdapterAssembly, Assembly playerEngineAdapterAssembly)

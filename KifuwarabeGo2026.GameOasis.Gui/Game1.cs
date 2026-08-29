@@ -4197,10 +4197,11 @@ public class Game1 : Game
         if (IsLocalPlayUseKind() &&
             _session.CurrentMode.Kind == GoAppModeKind.Playing)
         {
+            var playRoomView = _session.CreatePlayRoomViewState();
             var moves = _session.CurrentGameRecord.Moves;
             return new LiveBoardPreviewModel(
-                _session.BoardSize,
-                _session.GetStone,
+                playRoomView.BoardSize,
+                playRoomView.GetStone,
                 moves.Count == 0 ? null : moves[^1],
                 moves.Count,
                 _session.GetLocalPlayerName(GoStone.Black),
