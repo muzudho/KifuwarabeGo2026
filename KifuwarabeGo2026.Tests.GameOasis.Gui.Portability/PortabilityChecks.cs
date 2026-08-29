@@ -32,6 +32,8 @@ using KifuwarabeGo2026.Reference.PlaySpace.Go.LegacyMatch;
 using KifuwarabeGo2026.Reference.Gui;
 using KifuwarabeGo2026.Reference.PlayerEngine;
 using KifuwarabeGo2026.Shared.Domain;
+using KifuwarabeGo2026.FormalAdapter.Cgos.Observability;
+using KifuwarabeGo2026.FormalAdapter.Cgos.Protocol;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using System;
@@ -76,8 +78,10 @@ internal static class PortabilityChecks
                 typeof(KifuwarabeGo2026.FormalAdapter.Cgos.Protocol.CgosClientCommandFormatter).Assembly == cgosFormalAdapterAssembly &&
                 typeof(KifuwarabeGo2026.FormalAdapter.Cgos.Client.CgosNetworkSession).Assembly == cgosFormalAdapterAssembly &&
                 typeof(KifuwarabeGo2026.FormalAdapter.Cgos.PlayerEngine.CgosPlayerStateMachine).Assembly == cgosFormalAdapterAssembly &&
-                typeof(KifuwarabeGo2026.FormalAdapter.Cgos.GameMasterEngine.CgosAdminStateMachine).Assembly == cgosFormalAdapterAssembly,
-            "CGOS protocol, network sessions, and player/admin state machines must be owned by FormalAdapter.Cgos.");
+                typeof(KifuwarabeGo2026.FormalAdapter.Cgos.GameMasterEngine.CgosAdminStateMachine).Assembly == cgosFormalAdapterAssembly &&
+                typeof(KifuwarabeGo2026.FormalAdapter.Cgos.Observability.CgosNotificationJsonLines).Assembly == cgosFormalAdapterAssembly,
+            "CGOS protocol, network sessions, state machines, and notification transport must be owned by FormalAdapter.Cgos.");
+        VerifyCgosStructuredObservation();
         Require(typeof(KifuwarabeGo2026.FormalAdapter.Sgf.Go.SgfCoordinate).Assembly == sgfFormalAdapterAssembly &&
                 typeof(KifuwarabeGo2026.FormalAdapter.Sgf.Go.SgfGoGameRecordConverter).Assembly == sgfFormalAdapterAssembly,
             "SGF Go coordinates and neutral game projection must be owned by FormalAdapter.Sgf.");
@@ -2382,6 +2386,28 @@ internal static class PortabilityChecks
         var fitBesideTaskbar = preferred.ConstrainTo(new WindowClientSize(1840, 1040));
         Require(fitBesideTaskbar == new WindowClientSize(1840, 1040),
             "The initial window layout did not fit within a work area reduced by a vertical taskbar.");
+    }
+
+    private static void VerifyCgosStructuredObservation()
+    {
+        var observation = new CgosGameObservation();
+        var setup = CgosNotificationJsonLines.Format(new CgosSetupNotification(
+            "black", 81, 9, 6.5m, 600000, "White", "Black",
+            [new CgosHistoricalMove("b", "A9", 590000)]));
+        observation.ProcessLogLine(setup);
+        Require(observation.IsStarted && observation.GameId == 81 && observation.MoveCount == 1,
+            "CGOS structured setup must initialize the GUI observation and replay history.");
+
+        // Once the structured stream is present, the matching legacy line is compatibility noise.
+        observation.ProcessLogLine("2026-01-01 [black] > play w B9 580000");
+        Require(observation.MoveCount == 1,
+            "CGOS legacy protocol logs must be ignored after structured notifications begin.");
+        var play = CgosNotificationJsonLines.Format(new CgosPlayNotification("black", "w", "B9", 580000));
+        Require(observation.ProcessLogLine(play) && observation.MoveCount == 2,
+            "CGOS structured play must update the GUI observation exactly once.");
+        observation.ProcessLogLine(CgosNotificationJsonLines.Format(new CgosGameOverNotification("black", "W+R")));
+        Require(observation.IsFinished && observation.Result == "W+R",
+            "CGOS structured gameover must finish the GUI observation.");
     }
 
     private static void Require(bool condition, string message)

@@ -11,3 +11,5 @@ CGOSとゲームオアシスのカジュアル・コアを接続するフォー�
 `PlayerEngine`名前空間は、`ICgosPlayerEngine`越しにsetup、棋歴再現、play、genmove、解析付き着手、投了、人間着手、gameoverを処理する`CgosPlayerStateMachine`を所有します。GTPプロセスの起動方法とエンジン固有オプションはHost側の実装へ注入します。
 
 `GameMasterEngine`名前空間は、管理者ログインの準備状態と、標準的な`who`、`match`、`quit`入力から型付きCGOSコマンドへの変換を所有します。標準入力の監視方法はHost側に残します。
+
+`Observability`名前空間は、setup、play、解析付きの自分の着手、gameoverを運ぶversion 1 JSON Lines通知と、その損失のない読み書きを所有します。人間向けログの文言を機械契約にはしません。

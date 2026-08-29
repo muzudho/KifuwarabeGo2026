@@ -492,6 +492,16 @@ Host内で新しい`CgosNetworkSession`だけが接続を所有しているこ�
 
 最初の縦切りでは、既存の人間向け表示を残したまま、Hostが標準出力へ識別可能なversion 1 JSON Lines通知を併記します。通知DTOと読み書きは`FormalAdapter.Cgos`に置き、GUIは通知を優先し旧ログを互換入力として残します。setup、play、generated move、gameoverから始め、接続診断と実行状態は次の縦切りで分離します。これにより表示、棋譜保存、練習相手の重複抑止を一度に壊さず移行できます。
 
+#### 第1縦切りの実施記録
+
+`FormalAdapter.Cgos.Observability`へ、`CgosSetupNotification`、`CgosPlayNotification`、`CgosGameOverNotification`と`CgosNotificationJsonLines`を追加しました。各行は`@kifuwarabe-cgos-v1 `接頭辞、`version: 1`、`kind`を持ち、setupの棋歴、着手後の残り時間、任意の解析JSONを保持します。不正JSON、未知kind、通常の人間向けログは通知として受理しません。
+
+CGOS Hostは状態機械の処理結果からsetup、相手着手、自分の通常／解析付き着手、gameover通知を標準出力へ発行します。GUI Coreは`FormalAdapter.Cgos`を直接参照し、`CgosGameObservation`が通知を盤面へ適用します。最初の構造化通知を受信した後は旧ログのCGOS字句解析を停止するため、併記された着手を二重適用しません。通知未対応の旧Hostに対するログ互換入力は残しています。
+
+専用試験へ通知の往復、棋歴と解析JSONの保持、不正入力拒否を追加しました。GUI移植性試験へ、構造化setup、旧ログ抑止、構造化play、gameoverの一連の観戦状態試験と通知型の所有権検査を追加しました。
+
+次の縦切りでは、接続、ログイン、GTP待機、異常、終了の実行状態と診断を型付き通知へ追加し、`CgosConnectionProcess.DeriveRunningStatus`の人間向け部分文字列依存を置換します。
+
 完了条件：標準出力には機械向け通知だけ、標準エラーには診断だけが流れ、GUI表示と棋譜保存が従来どおり動く。Host異常終了でもGUIが復帰できる。
 
 ### 作業段階7：旧配置を整理する
@@ -531,9 +541,9 @@ Host内で新しい`CgosNetworkSession`だけが接続を所有しているこ�
 ## 実装再開地点
 
 ```text
-現在の状態：作業段階0～5完了
-次の最小作業：作業段階6のCGOS Host標準出力とGUIログ再解析箇所を再調査する
-次の実装候補：型付き通知／JSON Lines境界、FormalAdapter.Cgos.Go
-移行先：KifuwarabeGo2026.FormalAdapter.Cgos.Go、Host構成点、GUI受信境界
+現在の状態：作業段階0～5完了。作業段階6の対局通知JSON LinesとGUI観戦状態への接続完了
+次の最小作業：接続・ログイン・GTP待機・異常・終了の実行状態通知を追加する
+次の実装候補：CgosConnectionProcess.DeriveRunningStatusの部分文字列解析置換、FormalAdapter.Cgos.Go
+移行先：KifuwarabeGo2026.FormalAdapter.Cgos.Observability、FormalAdapter.Cgos.Go、Host構成点、GUI受信境界
 禁止事項：GTPプロジェクト全体の一括改名、CGOS Hostの一括分解、SgfGameRecordConverterの型ごとの単純移動を同時に行わない
 ```

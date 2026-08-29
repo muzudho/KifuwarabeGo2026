@@ -4,6 +4,7 @@ using System.Net.Sockets;
 using System.Text;
 using KifuwarabeGo2026.FormalAdapter.Cgos.Client;
 using KifuwarabeGo2026.FormalAdapter.Cgos.GameMasterEngine;
+using KifuwarabeGo2026.FormalAdapter.Cgos.Observability;
 using KifuwarabeGo2026.FormalAdapter.Cgos.PlayerEngine;
 using KifuwarabeGo2026.FormalAdapter.Cgos.Protocol;
 
@@ -53,6 +54,21 @@ Require(admin.TryCreateCommand("match white black", out var match) && match is C
     "Admin match input must retain its arguments.");
 Require(admin.TryCreateCommand("quit", out var quit) && quit is CgosQuit && !admin.TryCreateCommand("future", out _),
     "Admin quit must be typed and unsupported input rejected.");
+
+var setupNotificationLine = CgosNotificationJsonLines.Format(new CgosSetupNotification(
+    "black", 42, 9, 6.5m, 600000, "WhiteBot", "BlackBot",
+    [new CgosHistoricalMove("b", "A9", 590000)]));
+Require(CgosNotificationJsonLines.TryParse(setupNotificationLine, out var setupNotice) &&
+        setupNotice is CgosSetupNotification { GameId: 42, BoardSize: 9, MoveHistory.Count: 1 },
+    "Versioned setup notifications must round-trip with history.");
+var playNotificationLine = CgosNotificationJsonLines.Format(
+    new CgosPlayNotification("black", "w", "pass", 580000, "{\"moves\":[]}"));
+Require(CgosNotificationJsonLines.TryParse("prefix " + playNotificationLine, out var playNotice) &&
+        playNotice is CgosPlayNotification { Vertex: "pass", TimeLeftMilliseconds: 580000, AnalysisJson: "{\"moves\":[]}" },
+    "Versioned play notifications must parse through a display prefix.");
+Require(!CgosNotificationJsonLines.TryParse("@kifuwarabe-cgos-v1 {bad", out _) &&
+        !CgosNotificationJsonLines.TryParse("ordinary human log", out _),
+    "Malformed and human-readable lines must not become machine notifications.");
 
 using (var baseline = JsonDocument.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Vectors", "cgos-baseline.json"))))
 {

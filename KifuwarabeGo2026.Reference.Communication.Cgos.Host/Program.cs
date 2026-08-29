@@ -7,6 +7,7 @@ using KifuwarabeGo2026.FormalAdapter.Cgos.Protocol;
 using KifuwarabeGo2026.FormalAdapter.Cgos.Client;
 using KifuwarabeGo2026.FormalAdapter.Cgos.PlayerEngine;
 using KifuwarabeGo2026.FormalAdapter.Cgos.GameMasterEngine;
+using KifuwarabeGo2026.FormalAdapter.Cgos.Observability;
 
 /// <summary>
 /// CGOS サーバーとの通信を行うプログラムです。
@@ -639,10 +640,28 @@ internal sealed class CgosClient
             async (message, token) =>
             {
                 var command = await player.HandleAsync(message, session.ServerSupportsAnalyze, token);
+                EmitNotification(message, command);
                 if (command is not null) await session.SendAsync(command);
             },
             passwordSentAsync: null,
             cancellationToken);
+    }
+
+    private void EmitNotification(CgosServerMessage message, CgosClientCommand? command)
+    {
+        CgosNotification? notification = message switch
+        {
+            CgosMatchSetup setup => new CgosSetupNotification(
+                _account.Label, setup.GameId, setup.BoardSize, setup.Komi, setup.MainTimeMilliseconds,
+                setup.WhitePlayer, setup.BlackPlayer, setup.MoveHistory),
+            CgosMovePlayed play => new CgosPlayNotification(
+                _account.Label, play.Color, play.Vertex, play.TimeLeftMilliseconds),
+            CgosGenMoveRequested genmove when command is CgosMove move => new CgosPlayNotification(
+                _account.Label, genmove.Color, move.Vertex, null, move.AnalysisJson),
+            CgosGameOver gameOver => new CgosGameOverNotification(_account.Label, gameOver.Result),
+            _ => null,
+        };
+        if (notification is not null) Console.WriteLine(CgosNotificationJsonLines.Format(notification));
     }
 
     private async Task<ICgosPlayerEngine> CreatePlayerEngineAsync(

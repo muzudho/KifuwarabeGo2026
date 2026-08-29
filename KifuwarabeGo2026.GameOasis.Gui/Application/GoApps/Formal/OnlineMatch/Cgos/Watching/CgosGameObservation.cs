@@ -3,6 +3,7 @@ namespace KifuwarabeGo2026.GameOasis.Gui.Application.GoApps.Formal.OnlineMatch.C
 using KifuwarabeGo2026.GameOasis.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.Shared.Domain;
 using KifuwarabeGo2026.Reference.Communication.Gtp.Protocol;
+using KifuwarabeGo2026.FormalAdapter.Cgos.Observability;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -18,6 +19,7 @@ public sealed class CgosGameObservation
     private readonly List<GoGameMove> _moves = [];
     private int? _replayMoveIndex;
     private DateTimeOffset _lastClockSyncAt = DateTimeOffset.UtcNow;
+    private bool _receivedStructuredNotifications;
 
     public bool IsStarted { get; private set; }
     public bool IsFinished { get; private set; }
@@ -114,6 +116,7 @@ public sealed class CgosGameObservation
         BlackAgehama = 0;
         WhiteAgehama = 0;
         _lastClockSyncAt = DateTimeOffset.UtcNow;
+        _receivedStructuredNotifications = false;
     }
 
     /// <summary>
@@ -170,6 +173,14 @@ public sealed class CgosGameObservation
     /// </summary>
     public bool ProcessLogLine(string displayLine)
     {
+        if (CgosNotificationJsonLines.TryParse(displayLine, out var notification) && notification is not null)
+        {
+            _receivedStructuredNotifications = true;
+            return ProcessNotification(notification);
+        }
+
+        if (_receivedStructuredNotifications) return false;
+
         var marker = displayLine.IndexOf("] > ", StringComparison.Ordinal);
         if (marker >= 0)
             return ProcessServerCommand(displayLine[(marker + 4)..]);
@@ -182,6 +193,43 @@ public sealed class CgosGameObservation
             return ApplyMove(ParseStone(generated[0]), generated[2], null, generated.Length >= 4 ? generated[3] : null);
 
         return false;
+    }
+
+    private bool ProcessNotification(CgosNotification notification)
+    {
+        switch (notification)
+        {
+            case CgosSetupNotification setup:
+                ProcessSetup(setup);
+                return false;
+            case CgosPlayNotification play:
+                return ApplyMove(
+                    ParseStone(play.Color),
+                    play.Vertex,
+                    play.TimeLeftMilliseconds?.ToString(CultureInfo.InvariantCulture),
+                    play.AnalysisJson);
+            case CgosGameOverNotification gameOver:
+                IsFinished = true;
+                Result = string.IsNullOrWhiteSpace(gameOver.Result) ? "GAME OVER" : gameOver.Result;
+                ReturnToLive();
+                return false;
+            default:
+                return false;
+        }
+    }
+
+    private void ProcessSetup(CgosSetupNotification setup)
+    {
+        if (setup.BoardSize is not (9 or 13 or 19) || (IsStarted && GameId == setup.GameId)) return;
+        InitializeGame(
+            setup.GameId,
+            setup.BoardSize,
+            setup.Komi,
+            setup.MainTimeMilliseconds,
+            setup.WhitePlayer,
+            setup.BlackPlayer);
+        foreach (var move in setup.MoveHistory)
+            ApplyMove(ParseStone(move.Color), move.Vertex, move.TimeLeftMilliseconds.ToString(CultureInfo.InvariantCulture), null);
     }
 
     private bool ProcessServerCommand(string commandLine)
@@ -225,16 +273,33 @@ public sealed class CgosGameObservation
             return;
         }
 
+        var komi = decimal.TryParse(parts[3], NumberStyles.Number, CultureInfo.InvariantCulture, out var parsedKomi) ? parsedKomi : 0m;
+        var mainTimeMilliseconds = long.TryParse(parts[4], out var parsedMainTime) ? Math.Max(0, parsedMainTime) : 0;
+        InitializeGame(gameId, boardSize, komi, mainTimeMilliseconds, StripRank(parts[5]), StripRank(parts[6]));
+
+        for (var index = 7; index + 1 < parts.Length; index += 2)
+        {
+            ApplyMove(CurrentTurn, parts[index], parts[index + 1], null);
+        }
+    }
+
+    private void InitializeGame(
+        int gameId,
+        int boardSize,
+        decimal komi,
+        long mainTimeMilliseconds,
+        string whitePlayer,
+        string blackPlayer)
+    {
         _board = new GoBoard(boardSize);
         _koPoint = null;
         GameId = gameId;
-        Komi = decimal.TryParse(parts[3], NumberStyles.Number, CultureInfo.InvariantCulture, out var komi) ? komi : 0m;
-        WhitePlayerName = StripRank(parts[5]);
-        BlackPlayerName = StripRank(parts[6]);
+        Komi = komi;
+        WhitePlayerName = StripRank(whitePlayer);
+        BlackPlayerName = StripRank(blackPlayer);
         CurrentTurn = GoStone.Black;
         MoveCount = 0;
-        var mainTimeMilliseconds = long.TryParse(parts[4], out var parsedMainTime) ? Math.Max(0, parsedMainTime) : 0;
-        MainTime = TimeSpan.FromMilliseconds(mainTimeMilliseconds);
+        MainTime = TimeSpan.FromMilliseconds(Math.Max(0, mainTimeMilliseconds));
         BlackRemainingTime = MainTime;
         WhiteRemainingTime = MainTime;
         BlackAgehama = 0;
@@ -247,10 +312,6 @@ public sealed class CgosGameObservation
         StartedAt = DateTime.Now;
         _lastClockSyncAt = DateTimeOffset.UtcNow;
 
-        for (var index = 7; index + 1 < parts.Length; index += 2)
-        {
-            ApplyMove(CurrentTurn, parts[index], parts[index + 1], null);
-        }
     }
 
     /// <summary>

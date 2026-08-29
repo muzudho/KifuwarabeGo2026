@@ -15,6 +15,7 @@
     <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.*" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\KifuwarabeGo2026.FormalAdapter.Cgos\KifuwarabeGo2026.FormalAdapter.Cgos.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.FormalAdapter.Gtp\KifuwarabeGo2026.FormalAdapter.Gtp.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.FormalAdapter.Sgf\KifuwarabeGo2026.FormalAdapter.Sgf.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.StationeryUI\KifuwarabeGo2026.StationeryUI.csproj" />
