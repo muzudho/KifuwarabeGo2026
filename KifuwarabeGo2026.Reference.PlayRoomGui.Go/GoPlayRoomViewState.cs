@@ -32,7 +32,8 @@ public sealed class GoPlayRoomViewState
         GoStone? winner,
         string gameOverReason,
         int timelineIndex,
-        int timelineMaximum)
+        int timelineMaximum,
+        GoPoint? lastMovePoint)
     {
         Activity = activity;
         BoardSize = boardSize;
@@ -46,6 +47,7 @@ public sealed class GoPlayRoomViewState
         GameOverReason = gameOverReason;
         TimelineIndex = timelineIndex;
         TimelineMaximum = timelineMaximum;
+        LastMovePoint = lastMovePoint;
     }
 
     public GoPlayRoomActivity Activity { get; }
@@ -59,6 +61,7 @@ public sealed class GoPlayRoomViewState
     public string GameOverReason { get; }
     public int TimelineIndex { get; }
     public int TimelineMaximum { get; }
+    public GoPoint? LastMovePoint { get; }
 
     public GoStone GetStone(int x, int y)
     {
@@ -80,7 +83,8 @@ public sealed class GoPlayRoomViewState
         GoStone? winner,
         string? gameOverReason,
         int timelineIndex,
-        int timelineMaximum)
+        int timelineMaximum,
+        GoPoint? lastMovePoint = null)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(boardSize);
         ArgumentNullException.ThrowIfNull(getStone);
@@ -102,6 +106,7 @@ public sealed class GoPlayRoomViewState
             winner,
             gameOverReason ?? "",
             Math.Max(0, timelineIndex),
-            Math.Max(0, timelineMaximum));
+            Math.Max(0, timelineMaximum),
+            lastMovePoint);
     }
 }

@@ -73,9 +73,9 @@ public sealed class BoardRenderer : IDisposable
         var surface = DrawBoardSurface(drawingContext, session.BoardSize, whiteboard);
         var start = surface.Start;
         var cell = surface.Cell;
-        var presentation = GoBoardPresenter.Create(
-            session.CreatePlayRoomViewState(displayedPosition: true),
-            GetBoardGeometry(session.BoardSize));
+        var viewState = session.CreatePlayRoomViewState(displayedPosition: true);
+        var geometry = GetBoardGeometry(session.BoardSize);
+        var presentation = GoBoardPresenter.Create(viewState, geometry);
 
         // ［連解析］描画
         DrawBoardRenAnalysis(
@@ -93,13 +93,13 @@ public sealed class BoardRenderer : IDisposable
             ChippedSingleEyeGlassSeedLens.Default.Draw(_boardLensModel, session, start, cell);
 
         if (!session.IsRenParseDisplayEnabled)
-            DrawLastMoveMarker(GetLocalDisplayLastMove(session), start, cell);
+            DrawLastMoveMarker(presentation.LastMoveMarker);
 
         if (!session.IsLocalReplayMode)
         {
             DrawSuperKoMarks(session, start, cell);
             DrawKoMark(presentation);
-            DrawHoverStone(session, mousePoint, start, cell);
+            DrawHoverStone(session, viewState, geometry, mousePoint, start, cell);
         }
         DrawBoardFrameHighlights(surface.Outer);
     }
@@ -289,27 +289,32 @@ public sealed class BoardRenderer : IDisposable
         }
     }
 
-    private static GoGameMove? GetLocalDisplayLastMove(GoAppSession session)
-    {
-        if (session.CurrentMode.Kind == GoAppModeKind.Reviewing)
-            return session.ReviewCurrentMove;
-
-        var moveIndex = session.LocalDisplayMoveIndex;
-        return moveIndex > 0 && moveIndex <= session.CurrentGameRecord.Moves.Count
-            ? session.CurrentGameRecord.Moves[moveIndex - 1]
-            : null;
-    }
-
     /// <summary>
     /// 現在表示中の局面における最終着手を、石の上の発光リングで示します。
     /// </summary>
+    public void DrawLastMoveMarker(GoBoardMarkerVisual? marker)
+    {
+        if (marker is not { } value)
+            return;
+
+        var center = new Vector2(value.Center.X, value.Center.Y);
+        DrawLastMoveMarker(center, value.Radius, value.Cell);
+    }
+
+    /// <summary>CGOS観戦表示がGo用Presenterへ移るまでの互換入口です。</summary>
     public void DrawLastMoveMarker(GoGameMove? move, Vector2 start, float cell)
     {
         if (move?.Point is not { } point)
             return;
 
-        var center = BoardPoint(start, cell, point.X, point.Y);
-        var radius = Math.Max(9f, cell * 0.19f);
+        DrawLastMoveMarker(
+            BoardPoint(start, cell, point.X, point.Y),
+            Math.Max(9f, cell * 0.19f),
+            cell);
+    }
+
+    private void DrawLastMoveMarker(Vector2 center, float radius, float cell)
+    {
         var shadowColor = new Color(8, 24, 30, 185);
         var accentColor = new Color(91, 218, 211, 245);
         const int segmentCount = 20;
@@ -334,7 +339,13 @@ public sealed class BoardRenderer : IDisposable
     /// <param name="session"></param>
     /// <param name="mousePoint"></param>
     /// <param name="cell"></param>
-    private void DrawHoverStone(GoAppSession session, Point mousePoint, Vector2 start, float cell)
+    private void DrawHoverStone(
+        GoAppSession session,
+        GoPlayRoomViewState viewState,
+        GoBoardGeometry geometry,
+        Point mousePoint,
+        Vector2 start,
+        float cell)
     {
         if (session.CurrentMode.Kind == GoAppModeKind.BoardEditing ||
             (session.CurrentMode.Kind == GoAppModeKind.VariationEditing &&
@@ -352,21 +363,21 @@ public sealed class BoardRenderer : IDisposable
             return;
         }
 
-        if (session.CurrentMode.Kind is not (GoAppModeKind.Playing or GoAppModeKind.VariationEditing) ||
-            !session.CanAcceptHumanMove ||
-            !TryGetBoardIntersection(mousePoint, session.BoardSize, out var intersection) ||
-            session.GetStone(intersection.X, intersection.Y) != GoStone.Empty ||
-            (session.KoPoint is { } ko && ko.X == intersection.X && ko.Y == intersection.Y) ||
-            session.IsSuperKoPoint(intersection.X, intersection.Y))
+        if (!GoBoardPresenter.TryCreateMoveHover(
+                viewState,
+                geometry,
+                new GoBoardScreenPoint(mousePoint.X, mousePoint.Y),
+                session.CanAcceptHumanMove,
+                point => session.IsSuperKoPoint(point.X, point.Y),
+                out var hover))
         {
             return;
         }
 
-        var layout = GetBoardLayout(session.BoardSize);
-        var center = BoardPoint(layout.Start, layout.Cell, intersection.X, intersection.Y);
-        var black = session.CurrentTurn == GoStone.Black;
-        DrawCircle(center, cell * 0.55f, black ? new Color(8, 10, 14, 95) : new Color(255, 250, 232, 110));
-        DrawCircle(center, cell * 0.36f, black ? new Color(8, 10, 14, 90) : new Color(255, 250, 232, 95));
+        var center = new Vector2(hover.Center.X, hover.Center.Y);
+        var black = hover.Stone == GoStone.Black;
+        DrawCircle(center, hover.OuterRadius, black ? new Color(8, 10, 14, 95) : new Color(255, 250, 232, 110));
+        DrawCircle(center, hover.InnerRadius, black ? new Color(8, 10, 14, 90) : new Color(255, 250, 232, 95));
     }
 
     /// <summary>

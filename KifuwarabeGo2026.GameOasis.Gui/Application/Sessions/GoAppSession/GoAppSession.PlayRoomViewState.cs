@@ -31,6 +31,11 @@ public sealed partial class GoAppSession
             _ => PlayedMoveCount,
         };
         var showReplayPosition = displayedPosition && IsLocalReplayMode;
+        var lastMovePoint = activity == GoPlayRoomActivity.Reviewing
+            ? ReviewCurrentMove?.Point
+            : LocalDisplayMoveIndex > 0 && LocalDisplayMoveIndex <= CurrentGameRecord.Moves.Count
+                ? CurrentGameRecord.Moves[LocalDisplayMoveIndex - 1].Point
+                : null;
 
         return GoPlayRoomViewState.Capture(
             activity,
@@ -44,6 +49,7 @@ public sealed partial class GoAppSession
             Winner,
             GameOverReason,
             timelineIndex,
-            timelineMaximum);
+            timelineMaximum,
+            lastMovePoint);
     }
 }

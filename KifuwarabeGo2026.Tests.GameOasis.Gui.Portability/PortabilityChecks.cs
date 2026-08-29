@@ -166,7 +166,8 @@ internal static class PortabilityChecks
             null,
             "",
             1,
-            3);
+            3,
+            new GoPoint(2, 2));
 
         Require(state.Activity == GoPlayRoomActivity.Reviewing &&
                 state.GetStone(0, 0) == GoStone.Black &&
@@ -194,8 +195,53 @@ internal static class PortabilityChecks
                                                  !stone.UseWhiteboardStyle) &&
                 presentation.Stones.Any(stone => stone.Intersection == new GoPoint(2, 2) &&
                                                  stone.Stone == GoStone.White) &&
-                presentation.KoMarker?.Intersection == new GoPoint(1, 1),
-            "The Go board presenter must create framework-neutral stone and ko marker visuals.");
+                presentation.KoMarker?.Intersection == new GoPoint(1, 1) &&
+                presentation.LastMoveMarker?.Intersection == new GoPoint(2, 2),
+            "The Go board presenter must create framework-neutral stone, ko, and last-move visuals.");
+
+        var hoverTarget = new GoPoint(1, 0);
+        var smallGeometry = GoBoardGeometry.Create(3, new GoBoardViewport(0, 0, 200, 200));
+        var hoverPointer = smallGeometry.GetScreenPoint(hoverTarget);
+        var playingState = GoPlayRoomViewState.Capture(
+            GoPlayRoomActivity.Playing,
+            3,
+            state.GetStone,
+            GoStone.White,
+            2,
+            1,
+            0,
+            new GoPoint(1, 1),
+            null,
+            "",
+            2,
+            2,
+            new GoPoint(2, 2));
+        Require(GoBoardPresenter.TryCreateMoveHover(
+                    playingState,
+                    smallGeometry,
+                    hoverPointer,
+                    true,
+                    _ => false,
+                    out var hover) &&
+                hover.Intersection == hoverTarget &&
+                hover.Stone == GoStone.White,
+            "The Go board presenter must create a current-turn hover visual for an available intersection.");
+        Require(!GoBoardPresenter.TryCreateMoveHover(
+                    playingState,
+                    smallGeometry,
+                    hoverPointer,
+                    true,
+                    point => point == hoverTarget,
+                    out _),
+            "The Go board presenter must reject a hover visual for a supplied forbidden intersection.");
+        Require(!GoBoardPresenter.TryCreateMoveHover(
+                    playingState,
+                    smallGeometry,
+                    smallGeometry.GetScreenPoint(new GoPoint(1, 1)),
+                    true,
+                    _ => false,
+                    out _),
+            "The Go board presenter must reject a hover visual on the ko point.");
 
         var variationState = GoPlayRoomViewState.Capture(
             GoPlayRoomActivity.VariationEditing,

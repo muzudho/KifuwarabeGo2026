@@ -12,12 +12,21 @@ public readonly record struct GoStoneVisual(
 public readonly record struct GoBoardMarkerVisual(
     GoPoint Intersection,
     GoBoardScreenPoint Center,
-    float Radius);
+    float Radius,
+    float Cell);
+
+public readonly record struct GoHoverStoneVisual(
+    GoPoint Intersection,
+    GoBoardScreenPoint Center,
+    GoStone Stone,
+    float OuterRadius,
+    float InnerRadius);
 
 /// <summary>囲碁盤Rendererへ渡す、描画フレームワーク非依存の描画要素です。</summary>
 public sealed record GoBoardPresentation(
     IReadOnlyList<GoStoneVisual> Stones,
-    GoBoardMarkerVisual? KoMarker);
+    GoBoardMarkerVisual? KoMarker,
+    GoBoardMarkerVisual? LastMoveMarker);
 
 /// <summary>囲碁Play Room表示状態を盤面の描画要素へ変換します。</summary>
 public static class GoBoardPresenter
@@ -52,8 +61,49 @@ public static class GoBoardPresenter
             koMarker = new GoBoardMarkerVisual(
                 ko,
                 geometry.GetScreenPoint(ko),
-                Math.Max(12f, geometry.Cell * 0.26f));
+                Math.Max(12f, geometry.Cell * 0.26f),
+                geometry.Cell);
 
-        return new GoBoardPresentation(stones, koMarker);
+        GoBoardMarkerVisual? lastMoveMarker = null;
+        if (state.LastMovePoint is { } lastMove)
+            lastMoveMarker = new GoBoardMarkerVisual(
+                lastMove,
+                geometry.GetScreenPoint(lastMove),
+                Math.Max(9f, geometry.Cell * 0.19f),
+                geometry.Cell);
+
+        return new GoBoardPresentation(stones, koMarker, lastMoveMarker);
+    }
+
+    public static bool TryCreateMoveHover(
+        GoPlayRoomViewState state,
+        GoBoardGeometry geometry,
+        GoBoardScreenPoint pointer,
+        bool canAcceptHumanMove,
+        Func<GoPoint, bool>? isForbidden,
+        out GoHoverStoneVisual visual)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+        if (state.BoardSize != geometry.BoardSize)
+            throw new ArgumentException("View state and geometry must use the same board size.", nameof(geometry));
+
+        if (!canAcceptHumanMove ||
+            state.Activity is not (GoPlayRoomActivity.Playing or GoPlayRoomActivity.VariationEditing) ||
+            !geometry.TryGetIntersection(pointer, out var intersection) ||
+            state.GetStone(intersection.X, intersection.Y) != GoStone.Empty ||
+            state.KoPoint == intersection ||
+            isForbidden?.Invoke(intersection) == true)
+        {
+            visual = default;
+            return false;
+        }
+
+        visual = new GoHoverStoneVisual(
+            intersection,
+            geometry.GetScreenPoint(intersection),
+            state.CurrentTurn,
+            geometry.Cell * 0.55f,
+            geometry.Cell * 0.36f);
+        return true;
     }
 }
