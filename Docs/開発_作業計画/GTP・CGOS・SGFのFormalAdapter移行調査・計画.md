@@ -1,6 +1,6 @@
 # GTP・CGOS・SGFのFormalAdapter移行調査・計画
 
-状態：作業段階0・1・2完了、作業段階3実装中（2026年8月29日）
+状態：作業段階0・1・2・3完了（2026年8月29日）
 
 ## 目的
 
@@ -354,7 +354,7 @@ dotnet KifuwarabeGo2026.Tests.GameOasis.Gui.Portability\bin\Release\net8.0\Kifuw
 
 ### 作業段階3：SGFのGo変換を移す
 
-状態：中立Go境界と読込接続完了・GUI書出し移行前（2026年8月29日）
+状態：完了（2026年8月29日）
 
 `SgfCoordinate`、初期局面SGF生成、Go棋譜との変換を`FormalAdapter.Sgf.Go`へ集約します。GUI互換`GoGameRecord`を直接参照しない中立な棋譜投影、またはGUI側の薄い変換口を定めます。CGOS解析拡張は別の`Kifuwarabe`拡張層へ分けます。
 
@@ -372,7 +372,24 @@ dotnet KifuwarabeGo2026.Tests.GameOasis.Gui.Portability\bin\Release\net8.0\Kifuw
 
 専用`Tests.FormalAdapter.Sgf`は、座標、初期配置、主手順、パス、持ち時間、コメント、解析原文、変化図を含む投影で`PASS`しました。全ソリューションReleaseビルドも警告0件、エラー0件です。
 
-次の縦切りでは、GUI `GoGameRecord`と`SgfGoGameRecord`の薄い写像を完成させ、GUI側の独自SGFライターと使用されなくなった旧パーサーを削除します。その後、GUI移植性試験とReview経路を再確認して作業段階3を完了へ更新します。
+#### 第2縦切りの実施記録
+
+GUIの公開`SgfGameRecordConverter.ToSgf`と`FromSgf`を、`GoGameRecord`と`SgfGoGameRecord`の薄い双方向写像へ切り替えました。GUI側には次だけを残しました。
+
+* GUI互換`GoGameRecord`との値の写像。
+* CGOS解析JSONを表示モデルへ解釈する処理と、表示モデルをCC JSONへ直す処理。
+* 旧KFAをKFWへ文字列内の値を変えず更新する互換API。
+* 既存GUIが捕捉する`SgfParseException`への例外変換。
+
+GUI内の旧SGFパーサー、旧SGFライター、座標変換、プロパティ組立ては物理削除しました。保存、読込、自動保存、Review、PlayRoom Launch Requestは既存の公開APIを通して新FormalAdapterを利用するため、呼出し側を一括変更せず移行できました。
+
+最終検証結果：
+
+* ソリューション全体Releaseビルド：警告0件、エラー0件。
+* `Tests.FormalAdapter.Sgf`：`PASS`。
+* GTP、CGOS、SGFベースラインと所有権検査を含むGUI移植性試験：`PASS`。
+* Board Editor、Review、Match Play Roomと異常終了を含む`Tests.PlayRoom.JsonLines`：`PASS`。
+* Windows非対話プラットフォーム試験：`PASS`。
 
 ### 作業段階4：CGOS純粋プロトコルを抽出する
 
@@ -429,9 +446,9 @@ CGOSサーバー行のパーサー、クライアントコマンドのフォー�
 ## 実装再開地点
 
 ```text
-現在の状態：作業段階0、1、2完了。作業段階3の中立Go境界とGUI読込接続まで完了
-次の最小作業：GUI GoGameRecordとの薄い双方向写像へ書出し経路を切り替える
-次の整理対象：GUI内の旧SGFライターと未使用旧パーサー
-移行先：KifuwarabeGo2026.FormalAdapter.Sgf.Go、GUI側にはCGOS解析表示変換だけを残す
+現在の状態：作業段階0、1、2、3完了。全回帰試験PASS
+次の最小作業：作業段階4としてCGOSサーバー行とクライアントコマンドの純粋契約を固定する
+次の実装候補：CgosServerMessage、CgosClientCommand、純粋パーサー／フォーマッター
+移行先：KifuwarabeGo2026.FormalAdapter.Cgos.Protocol
 禁止事項：GTPプロジェクト全体の一括改名、CGOS Hostの一括分解、SgfGameRecordConverterの型ごとの単純移動を同時に行わない
 ```
