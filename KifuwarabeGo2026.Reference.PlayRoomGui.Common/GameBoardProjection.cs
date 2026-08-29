@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Reference.Gui;
+namespace KifuwarabeGo2026.Reference.PlayRoomGui.Common;
 
 using System.Text.Json;
 using KifuwarabeGo2026.GameOasis.Contracts.Common;

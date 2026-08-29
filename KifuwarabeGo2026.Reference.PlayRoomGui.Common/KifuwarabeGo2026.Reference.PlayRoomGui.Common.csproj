@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
-    <AssemblyName>KifuwarabeGo2026.Reference.Gui</AssemblyName>
-    <RootNamespace>KifuwarabeGo2026.Reference.Gui</RootNamespace>
+    <AssemblyName>KifuwarabeGo2026.Reference.PlayRoomGui.Common</AssemblyName>
+    <RootNamespace>KifuwarabeGo2026.Reference.PlayRoomGui.Common</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>

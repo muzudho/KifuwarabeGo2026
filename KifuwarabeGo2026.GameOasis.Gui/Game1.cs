@@ -69,7 +69,7 @@ using KifuwarabeGo2026.GameOasis.Contracts.Common;
 using KifuwarabeGo2026.LobbyGui.Application;
 using KifuwarabeGo2026.PlayRoom.Launching;
 using KifuwarabeGo2026.GameOasis.Contracts.PlayRoom;
-using KifuwarabeGo2026.Reference.Gui;
+using KifuwarabeGo2026.Reference.PlayRoomGui.Common;
 
 public class Game1 : Game
 {

@@ -3,7 +3,7 @@ namespace KifuwarabeGo2026.GameOasis.Gui.Application.GameOasis;
 using KifuwarabeGo2026.GameOasis.Concierge;
 using KifuwarabeGo2026.GameOasis.Contracts.Common;
 using KifuwarabeGo2026.GameOasis.Contracts.ProtocolM;
-using KifuwarabeGo2026.Reference.Gui;
+using KifuwarabeGo2026.Reference.PlayRoomGui.Common;
 using System.Threading;
 using System.Threading.Tasks;
 

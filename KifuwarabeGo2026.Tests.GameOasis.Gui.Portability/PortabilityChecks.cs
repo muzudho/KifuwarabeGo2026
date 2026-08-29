@@ -28,7 +28,7 @@ using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.InitialPosition;
 using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Sgf;
 using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Strategies;
 using KifuwarabeGo2026.Reference.PlaySpace.Go.LegacyMatch;
-using KifuwarabeGo2026.Reference.Gui;
+using KifuwarabeGo2026.Reference.PlayRoomGui.Common;
 using KifuwarabeGo2026.Reference.PlayerEngine;
 using KifuwarabeGo2026.Shared.Domain;
 using KifuwarabeGo2026.FormalAdapter.Cgos.Observability;

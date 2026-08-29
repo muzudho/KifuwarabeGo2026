@@ -1,7 +1,7 @@
 namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.GameOasis;
 
 using KifuwarabeGo2026.GameOasis.Contracts.Common;
-using KifuwarabeGo2026.Reference.Gui;
+using KifuwarabeGo2026.Reference.PlayRoomGui.Common;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.RightSidePanel;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
 using Microsoft.Xna.Framework;

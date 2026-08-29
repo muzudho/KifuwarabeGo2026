@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Reference.Gui;
+namespace KifuwarabeGo2026.Reference.PlayRoomGui.Common;
 
 using System.Text.Json;
 using System.Text.Json.Serialization;

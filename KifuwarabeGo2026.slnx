@@ -45,7 +45,9 @@
   <Project Path="KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation/KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation.csproj" />
   <Project Path="KifuwarabeGo2026.Reference.PlayerEngine/KifuwarabeGo2026.Reference.PlayerEngine.csproj" />
   <Project Path="KifuwarabeGo2026.Reference.Communication.Gtp/KifuwarabeGo2026.Reference.Communication.Gtp.csproj" />
-  <Project Path="KifuwarabeGo2026.Reference.Gui/KifuwarabeGo2026.Reference.Gui.csproj" />
+  <Project Path="KifuwarabeGo2026.Reference.PlayRoomGui.Common/KifuwarabeGo2026.Reference.PlayRoomGui.Common.csproj" />
+  <Project Path="KifuwarabeGo2026.Reference.PlayRoomGui.Go/KifuwarabeGo2026.Reference.PlayRoomGui.Go.csproj" />
+  <Project Path="KifuwarabeGo2026.Reference.PlayRoomEngine.Go/KifuwarabeGo2026.Reference.PlayRoomEngine.Go.csproj" />
   <Project Path="KifuwarabeGo2026.StationeryUI/KifuwarabeGo2026.StationeryUI.csproj" />
   <Project Path="KifuwarabeGo2026.Tests.Reference.PlaySpace.Ponnuki/KifuwarabeGo2026.Tests.Reference.PlaySpace.Ponnuki.csproj" />
   <Project Path="KifuwarabeGo2026.Tests.Reference.PlaySpace.Go/KifuwarabeGo2026.Tests.Reference.PlaySpace.Go.csproj" />

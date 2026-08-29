@@ -2,7 +2,7 @@ namespace KifuwarabeGo2026.GameOasis.Gui.Application.GameOasis;
 
 using KifuwarabeGo2026.GameOasis.Concierge;
 using KifuwarabeGo2026.GameOasis.Contracts.Common;
-using KifuwarabeGo2026.Reference.Gui;
+using KifuwarabeGo2026.Reference.PlayRoomGui.Common;
 using KifuwarabeGo2026.Reference.PlaySpace.Go;
 using KifuwarabeGo2026.Reference.PlaySpace.Ponnuki;
 using System;
