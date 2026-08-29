@@ -79,8 +79,10 @@ internal static class PortabilityChecks
                 typeof(KifuwarabeGo2026.FormalAdapter.Cgos.Client.CgosNetworkSession).Assembly == cgosFormalAdapterAssembly &&
                 typeof(KifuwarabeGo2026.FormalAdapter.Cgos.PlayerEngine.CgosPlayerStateMachine).Assembly == cgosFormalAdapterAssembly &&
                 typeof(KifuwarabeGo2026.FormalAdapter.Cgos.GameMasterEngine.CgosAdminStateMachine).Assembly == cgosFormalAdapterAssembly &&
-                typeof(KifuwarabeGo2026.FormalAdapter.Cgos.Observability.CgosNotificationJsonLines).Assembly == cgosFormalAdapterAssembly,
-            "CGOS protocol, network sessions, state machines, and notification transport must be owned by FormalAdapter.Cgos.");
+                typeof(KifuwarabeGo2026.FormalAdapter.Cgos.Observability.CgosNotificationJsonLines).Assembly == cgosFormalAdapterAssembly &&
+                typeof(KifuwarabeGo2026.FormalAdapter.Cgos.Go.CgosGoEventProjector).Assembly == cgosFormalAdapterAssembly &&
+                typeof(KifuwarabeGo2026.FormalAdapter.Cgos.Compatibility.CgosLegacyLogNotificationAdapter).Assembly == cgosFormalAdapterAssembly,
+            "CGOS protocol, sessions, state machines, notifications, Go projection, and legacy compatibility must be owned by FormalAdapter.Cgos.");
         VerifyCgosStructuredObservation();
         Require(typeof(KifuwarabeGo2026.FormalAdapter.Sgf.Go.SgfCoordinate).Assembly == sgfFormalAdapterAssembly &&
                 typeof(KifuwarabeGo2026.FormalAdapter.Sgf.Go.SgfGoGameRecordConverter).Assembly == sgfFormalAdapterAssembly,

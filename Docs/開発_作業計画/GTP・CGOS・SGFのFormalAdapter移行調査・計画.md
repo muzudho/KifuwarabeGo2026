@@ -514,6 +514,26 @@ GUIの`CgosConnectionProcess`は構造化通知から実行状態とGTP待機時
 
 次の縦切りでは、`CgosGameObservation`の囲碁向け状態投影を`FormalAdapter.Cgos.Go`へ分離し、GUIからCGOS固有通知の意味変換を減らします。その後、旧Host互換ログ解析を削除できる条件を整理します。
 
+#### 第3縦切りの実施記録
+
+`FormalAdapter.Cgos.Go`へ`CgosGoEventProjector`と中立な`CgosGoSetup`、`CgosGoMove`、`CgosGoGameOver`、`CgosGoColor`、`CgosGoVertex`を追加しました。プロジェクターはsetup後の盤サイズを保持し、CGOSの色表現、パス、I列を飛ばすGTP頂点、盤外座標、棋歴を検証して0始まりの囲碁座標へ変換します。GUI、共有盤面型、描画、ファイルシステムには依存しません。
+
+GUIの構造化通知経路は、通知を直接switchせず`CgosGoEventProjector`を通すよう変更しました。`CgosGameObservation`は中立な囲碁イベントを既存盤面へ写像するだけになり、新経路ではCGOS色文字列とGTP座標を解釈しません。旧Host互換ログ経路とGUIから送る人間着手の座標処理は、互換境界として残しています。
+
+専用試験へ棋歴座標、I列スキップ、パス、色変換、不正色拒否を追加し、GUI所有権試験へ`CgosGoEventProjector`を追加しました。
+
+次の縦切りでは、旧Host互換ログ解析を専用の互換アダプターへ隔離し、通常の`CgosGameObservation`から`ProcessServerCommand`、CGOS色解析、setup字句解析を除去します。
+
+#### 第4縦切りの実施記録
+
+`FormalAdapter.Cgos.Compatibility`へ`CgosLegacyLogNotificationAdapter`を追加しました。JSON Lines導入前のHost表示ログにあるsetup、play、generated move、gameoverを現行の型付き通知へ変換します。旧表示で使われた`black`／`white`色名も、この互換境界だけで正式なCGOS色へ正規化します。
+
+`CgosGameObservation`から`ProcessServerCommand`、旧setup字句解析、CGOS色文字列解析を物理削除しました。構造化通知と旧ログはどちらもFormalAdapterの通知と囲碁イベントを経由し、GUIは一つのイベント適用経路だけを持ちます。
+
+既存のCGOS結果レビュー、人間着手反映、練習対局状態を含むGUI移植性試験を通し、専用試験へ旧setupと解析付きgenerated moveの互換変換を追加しました。
+
+次の縦切りでは、`CgosConnectionProcess.DeriveRunningStatus`に残した旧Host状態ログ解析も互換境界へ移し、GUIから人間向けCGOSログの意味解析を完全に除去します。そのうえで第6段階の最終回帰試験を行います。
+
 完了条件：標準出力には機械向け通知だけ、標準エラーには診断だけが流れ、GUI表示と棋譜保存が従来どおり動く。Host異常終了でもGUIが復帰できる。
 
 ### 作業段階7：旧配置を整理する
@@ -553,9 +573,9 @@ GUIの`CgosConnectionProcess`は構造化通知から実行状態とGTP待機時
 ## 実装再開地点
 
 ```text
-現在の状態：作業段階0～5完了。作業段階6の対局通知と実行状態通知をGUIへ接続完了
-次の最小作業：CgosGameObservationのCGOS通知から囲碁状態への投影をFormalAdapter.Cgos.Goへ分離する
-次の実装候補：FormalAdapter.Cgos.Go、旧Host互換ログ解析の撤去条件整理
+現在の状態：作業段階0～5完了。作業段階6の対局・状態通知、囲碁投影、旧対局ログ互換隔離まで完了
+次の最小作業：旧Host状態ログ解析を互換境界へ移し、CgosConnectionProcessからCGOSログ意味解析を除去する
+次の実装候補：Legacy状態互換アダプター、第6段階の最終回帰試験
 移行先：KifuwarabeGo2026.FormalAdapter.Cgos.Observability、FormalAdapter.Cgos.Go、Host構成点、GUI受信境界
 禁止事項：GTPプロジェクト全体の一括改名、CGOS Hostの一括分解、SgfGameRecordConverterの型ごとの単純移動を同時に行わない
 ```

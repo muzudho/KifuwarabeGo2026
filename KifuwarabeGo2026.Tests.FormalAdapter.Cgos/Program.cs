@@ -5,6 +5,8 @@ using System.Text;
 using KifuwarabeGo2026.FormalAdapter.Cgos.Client;
 using KifuwarabeGo2026.FormalAdapter.Cgos.GameMasterEngine;
 using KifuwarabeGo2026.FormalAdapter.Cgos.Observability;
+using KifuwarabeGo2026.FormalAdapter.Cgos.Go;
+using KifuwarabeGo2026.FormalAdapter.Cgos.Compatibility;
 using KifuwarabeGo2026.FormalAdapter.Cgos.PlayerEngine;
 using KifuwarabeGo2026.FormalAdapter.Cgos.Protocol;
 
@@ -74,6 +76,27 @@ Require(CgosNotificationJsonLines.TryParse(runtimeNotificationLine, out var runt
 Require(!CgosNotificationJsonLines.TryParse("@kifuwarabe-cgos-v1 {bad", out _) &&
         !CgosNotificationJsonLines.TryParse("ordinary human log", out _),
     "Malformed and human-readable lines must not become machine notifications.");
+
+var goProjector = new CgosGoEventProjector();
+Require(goProjector.TryProject((CgosSetupNotification)setupNotice!, out var projectedSetup) &&
+        projectedSetup is CgosGoSetup { BoardSize: 9, MoveHistory.Count: 1 } goSetup &&
+        goSetup.MoveHistory[0].Vertex is { X: 0, Y: 0 },
+    "CGOS setup notifications must project history into neutral Go coordinates.");
+Require(goProjector.TryProject(new CgosPlayNotification("black", "w", "J1", 580000), out var projectedMove) &&
+        projectedMove is CgosGoMove { Color: CgosGoColor.White, Vertex.X: 8, Vertex.Y: 8 },
+    "CGOS play notifications must project colors and GTP vertices without GUI types.");
+Require(goProjector.TryProject(new CgosPlayNotification("black", "b", "pass", 570000), out var projectedPass) &&
+        projectedPass is CgosGoMove { Vertex.IsPass: true } &&
+        !goProjector.TryProject(new CgosPlayNotification("black", "x", "A1", 1), out _),
+    "CGOS Go projection must preserve pass and reject invalid colors.");
+Require(CgosLegacyLogNotificationAdapter.TryParse(
+        "2026-01-01 00:00:00.000 [black] > setup 9 9 6.5 600000 White(1d) Black(2d) A9 590000",
+        out var legacySetup) && legacySetup is CgosSetupNotification { GameId: 9, MoveHistory.Count: 1 },
+    "Legacy Host setup logs must be isolated behind the compatibility adapter.");
+Require(CgosLegacyLogNotificationAdapter.TryParse(
+        "2026-01-01 00:00:00.000 [black] # Generated black move: J1 {\"moves\":[]}",
+        out var legacyGenerated) && legacyGenerated is CgosPlayNotification { Vertex: "J1", IsGenerated: true },
+    "Legacy generated-move logs must retain analysis behind the compatibility adapter.");
 
 using (var baseline = JsonDocument.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Vectors", "cgos-baseline.json"))))
 {

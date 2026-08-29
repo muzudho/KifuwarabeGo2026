@@ -4,6 +4,8 @@ using KifuwarabeGo2026.GameOasis.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.Shared.Domain;
 using KifuwarabeGo2026.Reference.Communication.Gtp.Protocol;
 using KifuwarabeGo2026.FormalAdapter.Cgos.Observability;
+using KifuwarabeGo2026.FormalAdapter.Cgos.Go;
+using KifuwarabeGo2026.FormalAdapter.Cgos.Compatibility;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -20,6 +22,7 @@ public sealed class CgosGameObservation
     private int? _replayMoveIndex;
     private DateTimeOffset _lastClockSyncAt = DateTimeOffset.UtcNow;
     private bool _receivedStructuredNotifications;
+    private readonly CgosGoEventProjector _eventProjector = new();
 
     public bool IsStarted { get; private set; }
     public bool IsFinished { get; private set; }
@@ -117,6 +120,7 @@ public sealed class CgosGameObservation
         WhiteAgehama = 0;
         _lastClockSyncAt = DateTimeOffset.UtcNow;
         _receivedStructuredNotifications = false;
+        _eventProjector.Reset();
     }
 
     /// <summary>
@@ -179,38 +183,31 @@ public sealed class CgosGameObservation
             return ProcessNotification(notification);
         }
 
-        if (_receivedStructuredNotifications) return false;
-
-        var marker = displayLine.IndexOf("] > ", StringComparison.Ordinal);
-        if (marker >= 0)
-            return ProcessServerCommand(displayLine[(marker + 4)..]);
-
-        marker = displayLine.IndexOf("] # Generated ", StringComparison.Ordinal);
-        if (marker < 0) return false;
-
-        var generated = displayLine[(marker + 14)..].Split(' ', 4, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        if (generated.Length >= 3 && generated[1].Equals("move:", StringComparison.OrdinalIgnoreCase))
-            return ApplyMove(ParseStone(generated[0]), generated[2], null, generated.Length >= 4 ? generated[3] : null);
-
-        return false;
+        return !_receivedStructuredNotifications &&
+               CgosLegacyLogNotificationAdapter.TryParse(displayLine, out var legacyNotification) &&
+               legacyNotification is not null &&
+               ProcessNotification(legacyNotification);
     }
 
     private bool ProcessNotification(CgosNotification notification)
     {
-        switch (notification)
+        if (!_eventProjector.TryProject(notification, out var gameEvent) || gameEvent is null) return false;
+        switch (gameEvent)
         {
-            case CgosSetupNotification setup:
+            case CgosGoSetup setup:
                 ProcessSetup(setup);
                 return false;
-            case CgosPlayNotification play:
+            case CgosGoMove move:
                 return ApplyMove(
-                    ParseStone(play.Color),
-                    play.Vertex,
-                    play.TimeLeftMilliseconds?.ToString(CultureInfo.InvariantCulture),
-                    play.AnalysisJson);
-            case CgosGameOverNotification gameOver:
+                    move.Color == CgosGoColor.Black ? GoStone.Black : GoStone.White,
+                    move.Vertex.Text,
+                    move.TimeLeftMilliseconds?.ToString(CultureInfo.InvariantCulture),
+                    move.AnalysisJson,
+                    move.Vertex.IsPass ? null : new GoPoint(move.Vertex.X!.Value, move.Vertex.Y!.Value),
+                    vertexWasProjected: true);
+            case CgosGoGameOver gameOver:
                 IsFinished = true;
-                Result = string.IsNullOrWhiteSpace(gameOver.Result) ? "GAME OVER" : gameOver.Result;
+                Result = gameOver.Result;
                 ReturnToLive();
                 return false;
             default:
@@ -218,7 +215,7 @@ public sealed class CgosGameObservation
         }
     }
 
-    private void ProcessSetup(CgosSetupNotification setup)
+    private void ProcessSetup(CgosGoSetup setup)
     {
         if (setup.BoardSize is not (9 or 13 or 19) || (IsStarted && GameId == setup.GameId)) return;
         InitializeGame(
@@ -229,58 +226,13 @@ public sealed class CgosGameObservation
             setup.WhitePlayer,
             setup.BlackPlayer);
         foreach (var move in setup.MoveHistory)
-            ApplyMove(ParseStone(move.Color), move.Vertex, move.TimeLeftMilliseconds.ToString(CultureInfo.InvariantCulture), null);
-    }
-
-    private bool ProcessServerCommand(string commandLine)
-    {
-        var parts = commandLine.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        if (parts.Length == 0) return false;
-
-        if (parts[0].Equals("setup", StringComparison.OrdinalIgnoreCase))
-        {
-            ProcessSetup(parts);
-        }
-        else if (parts[0].Equals("play", StringComparison.OrdinalIgnoreCase) && parts.Length >= 3)
-        {
-            var playParts = commandLine.Split(' ', 5, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-            return ApplyMove(
-                ParseStone(playParts[1]),
-                playParts[2],
-                playParts.Length >= 4 ? playParts[3] : null,
-                playParts.Length >= 5 ? playParts[4] : null);
-        }
-        else if (parts[0].Equals("gameover", StringComparison.OrdinalIgnoreCase))
-        {
-            IsFinished = true;
-            Result = parts.Length > 1 ? string.Join(' ', parts[1..]) : "GAME OVER";
-            ReturnToLive();
-        }
-
-        return false;
-    }
-
-    private void ProcessSetup(string[] parts)
-    {
-        if (parts.Length < 7 || !int.TryParse(parts[1], out var gameId) ||
-            !int.TryParse(parts[2], out var boardSize) || boardSize is not (9 or 13 or 19))
-        {
-            return;
-        }
-
-        if (IsStarted && GameId == gameId)
-        {
-            return;
-        }
-
-        var komi = decimal.TryParse(parts[3], NumberStyles.Number, CultureInfo.InvariantCulture, out var parsedKomi) ? parsedKomi : 0m;
-        var mainTimeMilliseconds = long.TryParse(parts[4], out var parsedMainTime) ? Math.Max(0, parsedMainTime) : 0;
-        InitializeGame(gameId, boardSize, komi, mainTimeMilliseconds, StripRank(parts[5]), StripRank(parts[6]));
-
-        for (var index = 7; index + 1 < parts.Length; index += 2)
-        {
-            ApplyMove(CurrentTurn, parts[index], parts[index + 1], null);
-        }
+            ApplyMove(
+                move.Color == CgosGoColor.Black ? GoStone.Black : GoStone.White,
+                move.Vertex.Text,
+                move.TimeLeftMilliseconds?.ToString(CultureInfo.InvariantCulture),
+                move.AnalysisJson,
+                move.Vertex.IsPass ? null : new GoPoint(move.Vertex.X!.Value, move.Vertex.Y!.Value),
+                vertexWasProjected: true);
     }
 
     private void InitializeGame(
@@ -320,14 +272,22 @@ public sealed class CgosGameObservation
     /// <param name="stone"></param>
     /// <param name="vertex"></param>
     /// <returns></returns>
-    private bool ApplyMove(GoStone stone, string vertex, string? remainingTimeMilliseconds, string? analysisJson)
+    private bool ApplyMove(
+        GoStone stone,
+        string vertex,
+        string? remainingTimeMilliseconds,
+        string? analysisJson,
+        GoPoint? projectedPoint = null,
+        bool vertexWasProjected = false)
     {
         if (!IsStarted || IsFinished || stone == GoStone.Empty || stone != CurrentTurn) return false;
 
         GoPoint? movePoint = null;
-        if (!GtpCoordinate.IsPass(vertex))
+        var isPass = vertexWasProjected ? projectedPoint is null : GtpCoordinate.IsPass(vertex);
+        if (!isPass)
         {
-            if (!GtpCoordinate.TryParseVertex(vertex, BoardSize, out var point) ||
+            var point = projectedPoint ?? default;
+            if ((!vertexWasProjected && !GtpCoordinate.TryParseVertex(vertex, BoardSize, out point)) ||
                 !_board.TryPlaceStone(point.X, point.Y, stone, _koPoint, out var capturedStones, out var nextKoPoint))
                 return false;
 
@@ -405,13 +365,6 @@ public sealed class CgosGameObservation
 
         return board;
     }
-
-    private static GoStone ParseStone(string text) => text.ToLowerInvariant() switch
-    {
-        "b" or "black" => GoStone.Black,
-        "w" or "white" => GoStone.White,
-        _ => GoStone.Empty,
-    };
 
     private static string StripRank(string text)
     {
