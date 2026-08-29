@@ -30,7 +30,7 @@
   <Project Path="KifuwarabeGo2026.LauncherEngine.JsonLinesHost/KifuwarabeGo2026.LauncherEngine.JsonLinesHost.csproj" />
   <Project Path="KifuwarabeGo2026.Tests.LauncherEngine/KifuwarabeGo2026.Tests.LauncherEngine.csproj" />
   <Project Path="KifuwarabeGo2026.Tests.LobbyEngine/KifuwarabeGo2026.Tests.LobbyEngine.csproj" />
-  <Project Path="KifuwarabeGo2026.Reference.PlaySpace.Ponnuki/KifuwarabeGo2026.Reference.PlaySpace.Ponnuki.csproj" />
+  <Project Path="KifuwarabeGo2026.Reference.PlayRoomEngine.Ponnuki/KifuwarabeGo2026.Reference.PlayRoomEngine.Ponnuki.csproj" />
   <Project Path="KifuwarabeGo2026.PlaySpace.JsonLines/KifuwarabeGo2026.PlaySpace.JsonLines.csproj" />
   <Project Path="KifuwarabeGo2026.Reference.PlaySpace.JsonLinesHost/KifuwarabeGo2026.Reference.PlaySpace.JsonLinesHost.csproj" />
   <Project Path="KifuwarabeGo2026.Tests.PlaySpace.JsonLines/KifuwarabeGo2026.Tests.PlaySpace.JsonLines.csproj" />
@@ -48,7 +48,7 @@
   <Project Path="KifuwarabeGo2026.Reference.PlayRoomGui.Go/KifuwarabeGo2026.Reference.PlayRoomGui.Go.csproj" />
   <Project Path="KifuwarabeGo2026.Reference.PlayRoomEngine.Go/KifuwarabeGo2026.Reference.PlayRoomEngine.Go.csproj" />
   <Project Path="KifuwarabeGo2026.StationeryUI/KifuwarabeGo2026.StationeryUI.csproj" />
-  <Project Path="KifuwarabeGo2026.Tests.Reference.PlaySpace.Ponnuki/KifuwarabeGo2026.Tests.Reference.PlaySpace.Ponnuki.csproj" />
+  <Project Path="KifuwarabeGo2026.Tests.Reference.PlayRoomEngine.Ponnuki/KifuwarabeGo2026.Tests.Reference.PlayRoomEngine.Ponnuki.csproj" />
   <Project Path="KifuwarabeGo2026.Tests.Reference.PlayRoomEngine.Go/KifuwarabeGo2026.Tests.Reference.PlayRoomEngine.Go.csproj" />
   <Project Path="KifuwarabeGo2026.Tests.Reference.PlayerEngine/KifuwarabeGo2026.Tests.Reference.PlayerEngine.csproj" />
   <Project Path="KifuwarabeGo2026.Tests.Reference.Communication.Gtp/KifuwarabeGo2026.Tests.Reference.Communication.Gtp.csproj" />

@@ -10,6 +10,6 @@
     <ProjectReference Include="..\KifuwarabeGo2026.GameOasis.Concierge\KifuwarabeGo2026.GameOasis.Concierge.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlayerEngine\KifuwarabeGo2026.Reference.PlayerEngine.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlayRoomEngine.Go\KifuwarabeGo2026.Reference.PlayRoomEngine.Go.csproj" />
-    <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlaySpace.Ponnuki\KifuwarabeGo2026.Reference.PlaySpace.Ponnuki.csproj" />
+    <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlayRoomEngine.Ponnuki\KifuwarabeGo2026.Reference.PlayRoomEngine.Ponnuki.csproj" />
   </ItemGroup>
 </Project>

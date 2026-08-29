@@ -3,8 +3,8 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <RootNamespace>KifuwarabeGo2026.Reference.PlaySpace.Ponnuki</RootNamespace>
-    <AssemblyName>KifuwarabeGo2026.Reference.PlaySpace.Ponnuki</AssemblyName>
+    <RootNamespace>KifuwarabeGo2026.Reference.PlayRoomEngine.Ponnuki</RootNamespace>
+    <AssemblyName>KifuwarabeGo2026.Reference.PlayRoomEngine.Ponnuki</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\KifuwarabeGo2026.GameOasis.Contracts\KifuwarabeGo2026.GameOasis.Contracts.csproj" />

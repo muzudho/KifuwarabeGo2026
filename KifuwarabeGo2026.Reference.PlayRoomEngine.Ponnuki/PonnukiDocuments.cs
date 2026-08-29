@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Reference.PlaySpace.Ponnuki;
+namespace KifuwarabeGo2026.Reference.PlayRoomEngine.Ponnuki;
 
 internal sealed record PonnukiConfigurationDocument(
     int Version = 1,

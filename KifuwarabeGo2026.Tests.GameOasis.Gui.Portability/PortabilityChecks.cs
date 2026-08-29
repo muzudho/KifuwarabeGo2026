@@ -1588,7 +1588,7 @@ internal static class PortabilityChecks
             "Concierge must not know the Go foundation assembly.");
         Require(!references.Contains("KifuwarabeGo2026.Reference.PlayRoomEngine.Go"),
             "Concierge must not know the Go play-space implementation.");
-        Require(!references.Contains("KifuwarabeGo2026.Reference.PlaySpace.Ponnuki"),
+        Require(!references.Contains("KifuwarabeGo2026.Reference.PlayRoomEngine.Ponnuki"),
             "Concierge must not know the Ponnuki play-space implementation.");
     }
 

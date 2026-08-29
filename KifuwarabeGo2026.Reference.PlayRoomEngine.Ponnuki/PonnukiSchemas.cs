@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Reference.PlaySpace.Ponnuki;
+namespace KifuwarabeGo2026.Reference.PlayRoomEngine.Ponnuki;
 
 /// <summary>ポン抜き参照実装が公開する文書スキーマIDです。</summary>
 public static class PonnukiSchemas

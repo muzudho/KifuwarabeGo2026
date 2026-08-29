@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Reference.PlaySpace.Ponnuki;
+namespace KifuwarabeGo2026.Reference.PlayRoomEngine.Ponnuki;
 
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
@@ -21,7 +21,7 @@ public sealed class PonnukiPlaySpaceProtocol : IPlaySpaceProtocol
             new PlaySpaceTypeId(GameOasisOfficialNames.Ponnuki),
             "ポン抜き",
             ContractVersion.V1_0,
-            "KifuwarabeGo2026.Reference.PlaySpace.Ponnuki",
+            "KifuwarabeGo2026.Reference.PlayRoomEngine.Ponnuki",
             typeof(PonnukiPlaySpaceProtocol).Assembly.GetName().Version?.ToString() ?? "4.0.0",
             [GameOasisCapabilityIds.ActionPlayPoint, "deterministic-seed", "explicit-setup", "optimistic-revision", "capture-target"]
         )));

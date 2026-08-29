@@ -1,4 +1,4 @@
-# KifuwarabeGo2026.Reference.PlaySpace.Ponnuki
+# KifuwarabeGo2026.Reference.PlayRoomEngine.Ponnuki
 
 Protocol S v1.0を実装する、ポン抜きプレイスペースの公式参照実装です。
 

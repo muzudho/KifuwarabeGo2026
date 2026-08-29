@@ -30,7 +30,7 @@
     <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlayRoomGui.Common\KifuwarabeGo2026.Reference.PlayRoomGui.Common.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.Reference.Communication.Gtp\KifuwarabeGo2026.Reference.Communication.Gtp.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlayRoomEngine.Go\KifuwarabeGo2026.Reference.PlayRoomEngine.Go.csproj" />
-    <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlaySpace.Ponnuki\KifuwarabeGo2026.Reference.PlaySpace.Ponnuki.csproj" />
+    <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlayRoomEngine.Ponnuki\KifuwarabeGo2026.Reference.PlayRoomEngine.Ponnuki.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Update="default-settings.json">

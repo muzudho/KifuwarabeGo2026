@@ -3,7 +3,7 @@ using KifuwarabeGo2026.GameOasis.Concierge;
 using KifuwarabeGo2026.GameOasis.Contracts.Common;
 using KifuwarabeGo2026.GameOasis.Contracts.ProtocolP;
 using KifuwarabeGo2026.GameOasis.Contracts.ProtocolS;
-using KifuwarabeGo2026.Reference.PlaySpace.Ponnuki;
+using KifuwarabeGo2026.Reference.PlayRoomEngine.Ponnuki;
 
 var concierge = new GameOasisConcierge();
 var playSpace = RequireSuccess(await concierge.RegisterPlaySpaceAsync(new PonnukiPlaySpaceProtocol()));
