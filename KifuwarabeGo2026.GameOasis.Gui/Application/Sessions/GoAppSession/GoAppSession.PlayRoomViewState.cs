@@ -5,7 +5,7 @@ using KifuwarabeGo2026.Reference.PlayRoomGui.Go;
 public sealed partial class GoAppSession
 {
     /// <summary>現在の開始後状態を、囲碁Play Room GUI所有の表示状態として切り出します。</summary>
-    public GoPlayRoomViewState CreatePlayRoomViewState()
+    public GoPlayRoomViewState CreatePlayRoomViewState(bool displayedPosition = false)
     {
         var activity = CurrentMode.Kind switch
         {
@@ -16,18 +16,31 @@ public sealed partial class GoAppSession
             GoAppModeKind.Reviewing => GoPlayRoomActivity.Reviewing,
             _ => GoPlayRoomActivity.Resting,
         };
-        var timelineIndex = activity == GoPlayRoomActivity.Reviewing ? ReviewTimelineIndex : PlayedMoveCount;
-        var timelineMaximum = activity == GoPlayRoomActivity.Reviewing ? ReviewTimelineMaximum : PlayedMoveCount;
+        var timelineIndex = activity switch
+        {
+            GoPlayRoomActivity.Reviewing => ReviewTimelineIndex,
+            GoPlayRoomActivity.GameOver => LocalReviewTimelineIndex,
+            GoPlayRoomActivity.Playing => LocalDisplayMoveIndex,
+            _ => PlayedMoveCount,
+        };
+        var timelineMaximum = activity switch
+        {
+            GoPlayRoomActivity.Reviewing => ReviewTimelineMaximum,
+            GoPlayRoomActivity.GameOver => LocalReviewTimelineMaximum,
+            GoPlayRoomActivity.Playing => CurrentGameRecord.Moves.Count,
+            _ => PlayedMoveCount,
+        };
+        var showReplayPosition = displayedPosition && IsLocalReplayMode;
 
         return GoPlayRoomViewState.Capture(
             activity,
             BoardSize,
-            GetStone,
+            displayedPosition ? GetDisplayStone : GetStone,
             CurrentTurn,
             PlayedMoveCount,
             BlackAgehama,
             WhiteAgehama,
-            KoPoint,
+            showReplayPosition ? null : KoPoint,
             Winner,
             GameOverReason,
             timelineIndex,

@@ -73,6 +73,9 @@ public sealed class BoardRenderer : IDisposable
         var surface = DrawBoardSurface(drawingContext, session.BoardSize, whiteboard);
         var start = surface.Start;
         var cell = surface.Cell;
+        var presentation = GoBoardPresenter.Create(
+            session.CreatePlayRoomViewState(displayedPosition: true),
+            GetBoardGeometry(session.BoardSize));
 
         // ［連解析］描画
         DrawBoardRenAnalysis(
@@ -80,7 +83,7 @@ public sealed class BoardRenderer : IDisposable
             session.BoardSize,
             session.GetDisplayStone,
             session.ParseDisplayRens,
-            () => DrawPlacedStones(session, start, cell),
+            () => DrawPlacedStones(presentation),
             start,
             cell);
         if (session.RenParseDisplayMode == RenParseDisplayMode.Nobi)
@@ -95,7 +98,7 @@ public sealed class BoardRenderer : IDisposable
         if (!session.IsLocalReplayMode)
         {
             DrawSuperKoMarks(session, start, cell);
-            DrawKoMark(session, start, cell);
+            DrawKoMark(presentation);
             DrawHoverStone(session, mousePoint, start, cell);
         }
         DrawBoardFrameHighlights(surface.Outer);
@@ -228,22 +231,15 @@ public sealed class BoardRenderer : IDisposable
     /// <param name="session"></param>
     /// <param name="start"></param>
     /// <param name="cell"></param>
-    private void DrawPlacedStones(GoAppSession session, Vector2 start, float cell)
+    private void DrawPlacedStones(GoBoardPresentation presentation)
     {
-        for (var y = 0; y < session.BoardSize; y++)
+        foreach (var visual in presentation.Stones)
         {
-            for (var x = 0; x < session.BoardSize; x++)
-            {
-                var stone = session.GetDisplayStone(x, y);
-                if (stone != GoStone.Empty)
-                {
-                    var center = BoardPoint(start, cell, x, y);
-                    if (session.CurrentMode.Kind == GoAppModeKind.VariationEditing)
-                        DrawWhiteboardStone(center, cell * 0.4f, stone == GoStone.Black);
-                    else
-                        DrawStone(center, cell * 0.44f, stone == GoStone.Black);
-                }
-            }
+            var center = new Vector2(visual.Center.X, visual.Center.Y);
+            if (visual.UseWhiteboardStyle)
+                DrawWhiteboardStone(center, visual.Radius, visual.Stone == GoStone.Black);
+            else
+                DrawStone(center, visual.Radius, visual.Stone == GoStone.Black);
         }
     }
 
@@ -403,20 +399,25 @@ public sealed class BoardRenderer : IDisposable
     /// <param name="start"></param>
     /// <param name="cell"></param>
 
-    private void DrawKoMark(GoAppSession session, Vector2 start, float cell)
+    private void DrawKoMark(GoBoardPresentation presentation)
     {
-        if (session.KoPoint is not { } ko)
-        {
+        if (presentation.KoMarker is not { } marker)
             return;
-        }
 
-        DrawKoMark(ko.X, ko.Y, start, cell);
+        DrawKoMark(
+            new Vector2(marker.Center.X, marker.Center.Y),
+            marker.Radius);
     }
 
     private void DrawKoMark(int x, int y, Vector2 start, float cell)
     {
         var center = BoardPoint(start, cell, x, y);
         var radius = Math.Max(12f, cell * 0.26f);
+        DrawKoMark(center, radius);
+    }
+
+    private void DrawKoMark(Vector2 center, float radius)
+    {
         var bounds = new Rectangle((int)(center.X - radius), (int)(center.Y - radius), (int)(radius * 2), (int)(radius * 2));
         FillRect(bounds, new Color(143, 38, 38, 210));
         DrawRect(bounds, 2, new Color(255, 230, 160));

@@ -186,6 +186,35 @@ internal static class PortabilityChecks
             "The Go board geometry must map an intersection center back to its board coordinate.");
         Require(!geometry.TryGetIntersection(new GoBoardScreenPoint(110, 110), out _),
             "The Go board geometry must reject clicks outside the intersection hit radius.");
+
+        var presentation = GoBoardPresenter.Create(state, GoBoardGeometry.Create(3, new GoBoardViewport(0, 0, 200, 200)));
+        Require(presentation.Stones.Count == 2 &&
+                presentation.Stones.Any(stone => stone.Intersection == new GoPoint(0, 0) &&
+                                                 stone.Stone == GoStone.Black &&
+                                                 !stone.UseWhiteboardStyle) &&
+                presentation.Stones.Any(stone => stone.Intersection == new GoPoint(2, 2) &&
+                                                 stone.Stone == GoStone.White) &&
+                presentation.KoMarker?.Intersection == new GoPoint(1, 1),
+            "The Go board presenter must create framework-neutral stone and ko marker visuals.");
+
+        var variationState = GoPlayRoomViewState.Capture(
+            GoPlayRoomActivity.VariationEditing,
+            2,
+            (x, y) => x == 0 && y == 0 ? GoStone.Black : GoStone.Empty,
+            GoStone.Black,
+            0,
+            0,
+            0,
+            null,
+            null,
+            "",
+            0,
+            0);
+        var variationPresentation = GoBoardPresenter.Create(
+            variationState,
+            GoBoardGeometry.Create(2, new GoBoardViewport(0, 0, 200, 200)));
+        Require(variationPresentation.Stones.Single().UseWhiteboardStyle,
+            "The Go board presenter must retain the variation-editor stone style without using MonoGame types.");
     }
 
     private static void VerifyGtpPlayerEngineSeparation(Assembly gtpFormalAdapterAssembly, Assembly playerEngineAdapterAssembly)
