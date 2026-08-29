@@ -1,0 +1,5 @@
+# KifuwarabeGo2026.Reference.PlayRoomGui.Go.MonoGame
+
+`Reference.PlayRoomGui.Go`が生成したフレームワーク非依存の囲碁盤面描画要素を、MonoGameの描画命令へ変換する参照実装です。
+
+Lobby、互換`GameOasis.Gui`、Play Roomセッションには依存しません。ゲーム状態や表示判断を所有せず、MonoGame固有のフォント、色、プリミティブ描画だけを所有します。

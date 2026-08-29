@@ -11,6 +11,7 @@ using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.BoardAndReview;
 using KifuwarabeGo2026.Reference.PlayDomain.Go;
 using KifuwarabeGo2026.Reference.PlayRoomGui.Common;
 using KifuwarabeGo2026.Reference.PlayRoomGui.Go;
+using KifuwarabeGo2026.Reference.PlayRoomGui.Go.MonoGame;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -25,10 +26,10 @@ public sealed class BoardRenderer : IDisposable
     private readonly BoardLensModel _boardLensModel;
     private readonly SpriteBatch _spriteBatch;
     private readonly SpriteFont _font;
-    private readonly SpriteFont _boardCoordinateFont;
     private readonly Texture2D _softCircle;
     private readonly Texture2D _stoneLight;
     private readonly Texture2D _stoneDark;
+    private readonly GoBoardPrimitiveRenderer _primitiveRenderer;
     private KfwStationeryDrawingTools _drawingContext = null!;
 
     public BoardRenderer(BoardLensModel boardLensModel, SpriteBatch spriteBatch, SpriteFont font,
@@ -37,10 +38,10 @@ public sealed class BoardRenderer : IDisposable
         _boardLensModel = boardLensModel;
         _spriteBatch = spriteBatch;
         _font = font;
-        _boardCoordinateFont = boardCoordinateFont;
         _softCircle = softCircle;
         _stoneLight = stoneLight;
         _stoneDark = stoneDark;
+        _primitiveRenderer = new GoBoardPrimitiveRenderer(font, boardCoordinateFont);
     }
 
     public void Dispose()
@@ -100,7 +101,7 @@ public sealed class BoardRenderer : IDisposable
 
         if (!session.IsLocalReplayMode)
         {
-            DrawSuperKoMarkers(presentation.SuperKoMarkers);
+            _primitiveRenderer.DrawSuperKoMarkers(_drawingContext, presentation.SuperKoMarkers);
             DrawKoMarker(presentation);
             DrawHoverStone(session, viewState, geometry, mousePoint, start, cell);
         }
@@ -156,16 +157,7 @@ public sealed class BoardRenderer : IDisposable
         var staticPresentation = GoBoardStaticPresenter.Create(
             geometry,
             new GoBoardViewport(boardOuter.X, boardOuter.Y, boardOuter.Width, boardOuter.Height));
-        var lineColor = whiteboard ? new Color(67, 78, 80) : new Color(42, 31, 24);
-        foreach (var line in staticPresentation.Lines)
-            DrawLine(ToVector2(line.Start), ToVector2(line.End), line.IsOuter ? 4 : 2, lineColor);
-
-        var starColor = whiteboard ? new Color(67, 78, 80) : new Color(55, 38, 25);
-        foreach (var star in staticPresentation.Stars)
-            DrawCircle(ToVector2(star.Center), star.Radius, starColor);
-
-        foreach (var coordinate in staticPresentation.Coordinates)
-            DrawBoardCoordinateText(coordinate.Text, ToVector2(coordinate.Center), coordinate.Scale, coordinate.IsColumn);
+        _primitiveRenderer.DrawStaticBoard(drawingContext, _spriteBatch, staticPresentation, whiteboard);
 
         return (start, cell, boardOuter);
     }
@@ -173,29 +165,6 @@ public sealed class BoardRenderer : IDisposable
     /// <summary>
     /// 左下を A1 とし、I を飛ばした国際式の盤座標を下辺と左辺へ描画します。
     /// </summary>
-    private void DrawBoardCoordinateText(string text, Vector2 center, float scale, bool red)
-    {
-        var size = _boardCoordinateFont.MeasureString(text) * scale;
-        var position = center - size / 2f;
-        var farShadow = Color.FromNonPremultiplied(0, 0, 0, 18);
-        var nearShadow = Color.FromNonPremultiplied(0, 0, 0, 34);
-        var innerEdge = red
-            ? Color.FromNonPremultiplied(62, 33, 49, 42)
-            : Color.FromNonPremultiplied(24, 65, 61, 42);
-        var body = red
-            ? Color.FromNonPremultiplied(112, 67, 91, 84)
-            : Color.FromNonPremultiplied(62, 112, 105, 82);
-        var highlight = red
-            ? Color.FromNonPremultiplied(211, 151, 181, 34)
-            : Color.FromNonPremultiplied(147, 201, 190, 32);
-
-        _spriteBatch.DrawString(_boardCoordinateFont, text, position + new Vector2(5, 6), farShadow, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
-        _spriteBatch.DrawString(_boardCoordinateFont, text, position + new Vector2(3, 4), nearShadow, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
-        _spriteBatch.DrawString(_boardCoordinateFont, text, position + new Vector2(1, 1), innerEdge, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
-        _spriteBatch.DrawString(_boardCoordinateFont, text, position, body, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
-        _spriteBatch.DrawString(_boardCoordinateFont, text, position - new Vector2(1, 1), highlight, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
-    }
-
     /// <summary>
     /// ［置いている石］描画
     /// </summary>
@@ -345,28 +314,6 @@ public sealed class BoardRenderer : IDisposable
     /// <param name="session"></param>
     /// <param name="start"></param>
     /// <param name="cell"></param>
-    private void DrawSuperKoMarkers(IReadOnlyList<GoSuperKoMarkerVisual> markers)
-    {
-        foreach (var marker in markers)
-        {
-            var center = ToVector2(marker.Center);
-            var bounds = new Rectangle(
-                (int)(center.X - marker.Radius),
-                (int)(center.Y - marker.Radius),
-                (int)(marker.Radius * 2),
-                (int)(marker.Radius * 2));
-            FillRect(bounds, new Color(82, 39, 138, 198));
-            DrawRect(bounds, 2, new Color(235, 206, 255));
-
-            var size = _font.MeasureString(marker.Label) * marker.LabelScale;
-            DrawText(
-                marker.Label,
-                new Vector2(center.X - size.X / 2, center.Y - size.Y / 2),
-                Color.White,
-                marker.LabelScale);
-        }
-    }
-
     /// <summary>
     /// ［コウ印］描画
     /// </summary>

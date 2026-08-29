@@ -30,6 +30,7 @@ using KifuwarabeGo2026.Reference.PlayerEngine.Go.GtpExtensions.Strategies;
 using KifuwarabeGo2026.Reference.PlayRoomEngine.Go.LegacyMatch;
 using KifuwarabeGo2026.Reference.PlayRoomGui.Common;
 using KifuwarabeGo2026.Reference.PlayRoomGui.Go;
+using KifuwarabeGo2026.Reference.PlayRoomGui.Go.MonoGame;
 using KifuwarabeGo2026.Reference.PlayerEngine;
 using KifuwarabeGo2026.Reference.PlayDomain.Go;
 using KifuwarabeGo2026.FormalAdapter.Cgos.Observability;
@@ -148,6 +149,17 @@ internal static class PortabilityChecks
                 !references.Contains("KifuwarabeGo2026.LobbyGui") &&
                 !references.Any(reference => reference?.StartsWith("MonoGame", StringComparison.Ordinal) == true),
             "The Go Play Room view state must not depend on the compatibility GUI, Lobby GUI, or MonoGame.");
+
+        var monoGameAssembly = typeof(GoBoardPrimitiveRenderer).Assembly;
+        var monoGameReferences = monoGameAssembly.GetReferencedAssemblies()
+            .Select(reference => reference.Name)
+            .ToHashSet(StringComparer.Ordinal);
+        Require(monoGameAssembly.GetName().Name == "KifuwarabeGo2026.Reference.PlayRoomGui.Go.MonoGame" &&
+                monoGameReferences.Contains("KifuwarabeGo2026.Reference.PlayRoomGui.Go") &&
+                monoGameReferences.Contains("MonoGame.Framework") &&
+                !monoGameReferences.Contains("KifuwarabeGo2026.GameOasis.Gui") &&
+                !monoGameReferences.Contains("KifuwarabeGo2026.LobbyGui"),
+            "The MonoGame Go board renderer must depend inward on the Go presentation model without depending on the compatibility GUI or Lobby GUI.");
 
         var state = GoPlayRoomViewState.Capture(
             GoPlayRoomActivity.Reviewing,
