@@ -70,6 +70,7 @@ using KifuwarabeGo2026.LobbyGui.Application;
 using KifuwarabeGo2026.PlayRoom.Launching;
 using KifuwarabeGo2026.GameOasis.Contracts.PlayRoom;
 using KifuwarabeGo2026.Reference.PlayRoomGui.Common;
+using KifuwarabeGo2026.Reference.PlayRoomGui.Go;
 
 public class Game1 : Game
 {
@@ -2612,6 +2613,11 @@ public class Game1 : Game
     private PlayRoomLaunchResult StartLocalMatchCore(PlayRoomLaunchRequest request)
     {
         _pendingLocalMatchRequest = null;
+        if (!GoPlayRoomLaunchInterpreter.TryCreate(request, out var plan, out var errorCode, out var message) ||
+            plan is null)
+            return PlayRoomLaunchResult.Rejected(request.RequestId, errorCode, message);
+        if (!_session.TryApplyPlayRoomLaunchPlan(plan, out var applyWarning))
+            return PlayRoomLaunchResult.Rejected(request.RequestId, "go-launch-apply-failed", applyWarning);
         if (!_playingScene.StartPlaying())
         {
             GuiOperationLog.App("Deferred Local Match start", "previous Game Oasis session is still closing");
@@ -3305,9 +3311,14 @@ public class Game1 : Game
 
     private PlayRoomLaunchResult LaunchBoardEditorInProcess(PlayRoomLaunchRequest request)
     {
-        var sourceRecord = _session.CurrentGameRecord.Clone();
+        if (!GoPlayRoomLaunchInterpreter.TryCreate(request, out var plan, out var errorCode, out var message) ||
+            plan is null)
+            return PlayRoomLaunchResult.Rejected(request.RequestId, errorCode, message);
         var variationSession = new GoAppSession();
         variationSession.SelectUseKind(GoAppUseKind.LocalPlay);
+        if (!variationSession.TryApplyPlayRoomLaunchPlan(plan, out var applyWarning))
+            return PlayRoomLaunchResult.Rejected(request.RequestId, "go-launch-apply-failed", applyWarning);
+        var sourceRecord = variationSession.CurrentGameRecord.Clone();
         if (!variationSession.StartVariationEditing(
                 sourceRecord,
                 sourceRecord.Moves.Count,

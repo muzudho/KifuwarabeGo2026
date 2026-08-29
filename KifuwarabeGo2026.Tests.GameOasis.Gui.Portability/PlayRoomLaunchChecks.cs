@@ -3,7 +3,11 @@ namespace KifuwarabeGo2026.Tests.GameOasis.Gui.Portability;
 using KifuwarabeGo2026.GameOasis.Contracts.Common;
 using KifuwarabeGo2026.GameOasis.Contracts.PlayRoom;
 using KifuwarabeGo2026.PlayRoom.Launching;
+using KifuwarabeGo2026.GameOasis.Gui.Application;
+using KifuwarabeGo2026.Reference.PlayDomain.Go;
+using KifuwarabeGo2026.Reference.PlayRoomGui.Go;
 using System;
+using System.Text.Json;
 
 internal static class PlayRoomLaunchChecks
 {
@@ -31,6 +35,50 @@ internal static class PlayRoomLaunchChecks
         var unsupported = launcher.Launch(request with { Version = 2, RequestId = "request-3" });
         Require(unsupported.Status == PlayRoomLaunchStatus.Rejected && unsupported.ErrorCode == "unsupported-launch-version",
             "Unsupported launch contract version was accepted.");
+
+        VerifySavedGoLaunchRequest();
+    }
+
+    private static void VerifySavedGoLaunchRequest()
+    {
+        var configuration = new ContractDocument(
+            "application/json",
+            GameOasisOfficialNames.Go + ".configuration.v1",
+            """{"version":1,"boardSize":9,"komi":7.5,"ruleset":"chinese-area","startingPlayer":"white","setupStones":[{"x":2,"y":3,"color":"black"},{"x":4,"y":5,"color":"white"}],"mainTimeMilliseconds":90000}""");
+        var original = new PlayRoomLaunchRequest(
+            1,
+            "saved-go-request",
+            PlayRoomIds.Match,
+            GameOasisOfficialNames.Go,
+            new PlaySpaceTypeId(GameOasisOfficialNames.Go),
+            configuration,
+            null,
+            [new PlayRoomParticipant("black", "entry-black", "BLACK", "human", "", null)]);
+
+        var savedJson = JsonSerializer.Serialize(original);
+        var restored = JsonSerializer.Deserialize<PlayRoomLaunchRequest>(savedJson)
+            ?? throw new InvalidOperationException("The saved Go launch request was not restored.");
+        Require(GoPlayRoomLaunchInterpreter.TryCreate(restored, out var plan, out var errorCode, out var message) && plan is not null,
+            $"The restored Go launch request was not interpreted: {errorCode}: {message}");
+        var launchPlan = plan ?? throw new InvalidOperationException("The restored Go launch plan was null.");
+        Require(launchPlan.BoardSize == 9 && launchPlan.Komi == 7.5m && launchPlan.StartingPlayer == GoStone.White &&
+                launchPlan.SetupStones.Count == 2 && launchPlan.MainTime == TimeSpan.FromSeconds(90) &&
+                launchPlan.Participants.Count == 1,
+            "The restored Go launch plan did not preserve configuration and participant data.");
+
+        var session = new GoAppSession();
+        Require(session.TryApplyPlayRoomLaunchPlan(launchPlan, out var warning),
+            $"The restored Go launch plan was not applied to a fresh play-room session: {warning}");
+        var view = session.CreatePlayRoomViewState();
+        Require(view.BoardSize == 9 && view.CurrentTurn == GoStone.White &&
+                view.GetStone(2, 3) == GoStone.Black && view.GetStone(4, 5) == GoStone.White &&
+                session.Komi == 7.5m && session.MainTime == TimeSpan.FromSeconds(90),
+            "A fresh Go play-room session did not start from the restored launch request configuration.");
+
+        var wrongGame = restored with { GameId = GameOasisOfficialNames.Ponnuki };
+        Require(!GoPlayRoomLaunchInterpreter.TryCreate(wrongGame, out _, out errorCode, out _) &&
+                errorCode == "unsupported-go-launch-game",
+            "The Go launch interpreter accepted a request for another game.");
     }
 
     private static PlayRoomLaunchRequest CreateRequest(string requestId, string roomTypeId, string gameId) =>
