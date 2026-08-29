@@ -66,6 +66,11 @@ var playNotificationLine = CgosNotificationJsonLines.Format(
 Require(CgosNotificationJsonLines.TryParse("prefix " + playNotificationLine, out var playNotice) &&
         playNotice is CgosPlayNotification { Vertex: "pass", TimeLeftMilliseconds: 580000, AnalysisJson: "{\"moves\":[]}" },
     "Versioned play notifications must parse through a display prefix.");
+var runtimeNotificationLine = CgosNotificationJsonLines.Format(
+    new CgosRuntimeNotification("black", CgosRuntimeState.GtpWait, "genmove b"));
+Require(CgosNotificationJsonLines.TryParse(runtimeNotificationLine, out var runtimeNotice) &&
+        runtimeNotice is CgosRuntimeNotification { State: CgosRuntimeState.GtpWait, Detail: "genmove b" },
+    "Versioned runtime notifications must retain state and diagnostic detail.");
 Require(!CgosNotificationJsonLines.TryParse("@kifuwarabe-cgos-v1 {bad", out _) &&
         !CgosNotificationJsonLines.TryParse("ordinary human log", out _),
     "Malformed and human-readable lines must not become machine notifications.");
@@ -101,11 +106,13 @@ var serverTask = Task.Run(async () =>
 });
 var networkMessages = new List<CgosServerMessage>();
 var networkLogs = new List<string>();
+var networkEvents = new List<CgosNetworkEvent>();
 var passwordNotifications = 0;
 var networkSession = new CgosNetworkSession(
     new CgosConnectionOptions("127.0.0.1", port, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2)),
     new CgosCredentials("baseline-player", "top-secret"),
-    networkLogs.Add);
+    networkLogs.Add,
+    networkEvents.Add);
 await networkSession.RunAsync(
     (message, _) => { networkMessages.Add(message); return Task.CompletedTask; },
     _ => { passwordNotifications++; return Task.CompletedTask; },
@@ -118,6 +125,14 @@ Require(networkMessages.Single() is CgosLoginAccepted && networkSession.ServerSu
     "The network session must expose post-login messages and advertised capabilities.");
 Require(passwordNotifications == 1 && networkLogs.All(line => !line.Contains("top-secret", StringComparison.Ordinal)),
     "The password callback must run and logs must not expose credentials.");
+Require(networkEvents.Select(value => value.Kind).SequenceEqual([
+        CgosNetworkEventKind.Connecting,
+        CgosNetworkEventKind.Connected,
+        CgosNetworkEventKind.Protocol,
+        CgosNetworkEventKind.Login,
+        CgosNetworkEventKind.Ready,
+        CgosNetworkEventKind.Closed]),
+    "The network session must report its lifecycle without parsing human-readable logs.");
 
 var fakeEngine = new FakePlayerEngine();
 await using (var player = new CgosPlayerStateMachine(

@@ -10,14 +10,20 @@ public sealed class CgosNetworkSession
     private readonly CgosConnectionOptions _options;
     private readonly CgosCredentials _credentials;
     private readonly Action<string> _log;
+    private readonly Action<CgosNetworkEvent> _notify;
     private StreamWriter? _writer;
     private bool _quitSent;
 
-    public CgosNetworkSession(CgosConnectionOptions options, CgosCredentials credentials, Action<string>? log = null)
+    public CgosNetworkSession(
+        CgosConnectionOptions options,
+        CgosCredentials credentials,
+        Action<string>? log = null,
+        Action<CgosNetworkEvent>? notify = null)
     {
         _options = options ?? throw new ArgumentNullException(nameof(options));
         _credentials = credentials ?? throw new ArgumentNullException(nameof(credentials));
         _log = log ?? (_ => { });
+        _notify = notify ?? (_ => { });
         if (string.IsNullOrWhiteSpace(options.Host)) throw new ArgumentException("A CGOS host is required.", nameof(options));
         if (options.Port is < 1 or > 65535) throw new ArgumentOutOfRangeException(nameof(options), options.Port, "CGOS port is invalid.");
     }
@@ -33,8 +39,10 @@ public sealed class CgosNetworkSession
         var connectTimeout = _options.ConnectTimeout ?? TimeSpan.FromSeconds(15);
         var firstLineTimeout = _options.FirstServerLineTimeout ?? TimeSpan.FromSeconds(15);
         using var tcp = new TcpClient();
+        _notify(new CgosNetworkEvent(CgosNetworkEventKind.Connecting, _options.Host));
         _log($"# Connecting to {_options.Host}:{_options.Port}.");
         await tcp.ConnectAsync(_options.Host, _options.Port, cancellationToken).AsTask().WaitAsync(connectTimeout, cancellationToken);
+        _notify(new CgosNetworkEvent(CgosNetworkEventKind.Connected, _options.Host));
         await using var stream = tcp.GetStream();
         using var reader = new StreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: false, leaveOpen: true);
         await using var writer = new StreamWriter(stream, new UTF8Encoding(false), leaveOpen: true) { NewLine = "\n", AutoFlush = true };
@@ -46,7 +54,10 @@ public sealed class CgosNetworkSession
             {
                 var readTask = reader.ReadLineAsync(cancellationToken).AsTask();
                 var line = receivedAnyLine ? await readTask : await readTask.WaitAsync(firstLineTimeout, cancellationToken);
-                if (line is null) return;
+                if (line is null)
+                {
+                    return;
+                }
                 line = line.Trim();
                 if (line.Length == 0) continue;
                 receivedAnyLine = true;
@@ -68,6 +79,7 @@ public sealed class CgosNetworkSession
                 }
             }
             _writer = null;
+            _notify(new CgosNetworkEvent(CgosNetworkEventKind.Closed));
         }
     }
 
@@ -93,6 +105,7 @@ public sealed class CgosNetworkSession
         switch (message)
         {
             case CgosProtocolAdvertised protocol:
+                _notify(new CgosNetworkEvent(CgosNetworkEventKind.Protocol));
                 ServerSupportsAnalyze = protocol.SupportsGenMoveAnalyze;
                 await SendAsync(new CgosClientIdentity("e1", ServerSupportsAnalyze));
                 return true;
@@ -100,11 +113,19 @@ public sealed class CgosNetworkSession
                 await SendAsync(new CgosUsername(_credentials.Username));
                 return true;
             case CgosPasswordRequested:
+                _notify(new CgosNetworkEvent(CgosNetworkEventKind.Login));
                 await SendAsync(new CgosPassword(_credentials.Password));
                 if (passwordSentAsync is not null) await passwordSentAsync(cancellationToken);
                 return true;
+            case CgosLoginAccepted:
+                _notify(new CgosNetworkEvent(CgosNetworkEventKind.Ready));
+                return false;
             default:
                 return false;
         }
     }
 }
+
+public enum CgosNetworkEventKind { Connecting, Connected, Protocol, Login, Ready, Closed }
+
+public sealed record CgosNetworkEvent(CgosNetworkEventKind Kind, string? Detail = null);

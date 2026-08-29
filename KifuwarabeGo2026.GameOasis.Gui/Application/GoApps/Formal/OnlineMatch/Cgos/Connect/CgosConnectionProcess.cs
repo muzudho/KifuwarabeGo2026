@@ -2,6 +2,7 @@ namespace KifuwarabeGo2026.GameOasis.Gui.Application.GoApps.Formal.OnlineMatch.C
 
 using KifuwarabeGo2026.GameOasis.Gui.Application;
 using KifuwarabeGo2026.GameOasis.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.ConnectionTarget;
+using KifuwarabeGo2026.FormalAdapter.Cgos.Observability;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -29,6 +30,8 @@ public sealed class CgosConnectionProcess : IDisposable
     private int _gtpResponseWaitCount;
     private DateTime? _gtpResponseWaitStartedAt;
     private bool _isStopping;
+    private string? _structuredStatus;
+    private bool _receivedStructuredRuntime;
 
     public bool IsRunning => _isStopping || _processes.Any(process => !process.HasExited);
 
@@ -344,7 +347,7 @@ public sealed class CgosConnectionProcess : IDisposable
             return _status;
         }
 
-        _status = DeriveRunningStatus(GetRecentOutput());
+        _status = _structuredStatus ?? DeriveRunningStatus(GetRecentOutput());
         return _status;
     }
 
@@ -516,6 +519,8 @@ public sealed class CgosConnectionProcess : IDisposable
             _adminWaitingPlayers.Clear();
             _gtpResponseWaitCount = 0;
             _gtpResponseWaitStartedAt = null;
+            _structuredStatus = null;
+            _receivedStructuredRuntime = false;
         }
     }
 
@@ -589,9 +594,12 @@ public sealed class CgosConnectionProcess : IDisposable
             return;
         }
 
-        var displayLine = FormatDisplayLine(line.Trim(), isError);
+        var trimmedLine = line.Trim();
+        CgosNotificationJsonLines.TryParse(trimmedLine, out var notification);
+        var displayLine = FormatDisplayLine(trimmedLine, isError);
         lock (_outputLock)
         {
+            if (notification is not null) ApplyStructuredNotification(notification);
             UpdateGtpResponseWait(displayLine);
             TryAddAdminWaitingPlayer(displayLine);
             if (isError)
@@ -609,8 +617,53 @@ public sealed class CgosConnectionProcess : IDisposable
         }
     }
 
+    private void ApplyStructuredNotification(CgosNotification notification)
+    {
+        switch (notification)
+        {
+            case CgosSetupNotification:
+                _structuredStatus = "SETUP";
+                break;
+            case CgosPlayNotification { IsGenerated: true }:
+                _structuredStatus = "GENMOVE DONE";
+                break;
+            case CgosPlayNotification:
+                _structuredStatus = "PLAY";
+                break;
+            case CgosGameOverNotification:
+                _structuredStatus = "GAME OVER";
+                break;
+            case CgosRuntimeNotification runtime:
+                _receivedStructuredRuntime = true;
+                _structuredStatus = runtime.State switch
+                {
+                    CgosRuntimeState.Connecting => "CONNECTING",
+                    CgosRuntimeState.Connected => "CONNECTED",
+                    CgosRuntimeState.Protocol => "PROTOCOL",
+                    CgosRuntimeState.Login => "LOGIN",
+                    CgosRuntimeState.Ready => "RUNNING",
+                    CgosRuntimeState.GtpWait => "GTP WAIT",
+                    CgosRuntimeState.Running => "RUNNING",
+                    CgosRuntimeState.Closed => "CLOSED",
+                    CgosRuntimeState.Error => "ERROR",
+                    _ => _structuredStatus,
+                };
+                if (runtime.State == CgosRuntimeState.GtpWait)
+                {
+                    _gtpResponseWaitCount++;
+                    _gtpResponseWaitStartedAt = DateTime.Now;
+                }
+                else if (runtime.State == CgosRuntimeState.Running)
+                {
+                    _gtpResponseWaitStartedAt = null;
+                }
+                break;
+        }
+    }
+
     private void UpdateGtpResponseWait(string displayLine)
     {
+        if (_receivedStructuredRuntime) return;
         if (displayLine.Contains("GTP response wait started:", StringComparison.OrdinalIgnoreCase))
         {
             _gtpResponseWaitCount++;

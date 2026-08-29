@@ -12,4 +12,4 @@ CGOSとゲームオアシスのカジュアル・コアを接続するフォー�
 
 `GameMasterEngine`名前空間は、管理者ログインの準備状態と、標準的な`who`、`match`、`quit`入力から型付きCGOSコマンドへの変換を所有します。標準入力の監視方法はHost側に残します。
 
-`Observability`名前空間は、setup、play、解析付きの自分の着手、gameoverを運ぶversion 1 JSON Lines通知と、その損失のない読み書きを所有します。人間向けログの文言を機械契約にはしません。
+`Observability`名前空間は、setup、play、解析付きの自分の着手、gameoverに加え、接続、ログイン、GTP待機、終了、異常を運ぶversion 1 JSON Lines通知と、その損失のない読み書きを所有します。人間向けログの文言を機械契約にはしません。

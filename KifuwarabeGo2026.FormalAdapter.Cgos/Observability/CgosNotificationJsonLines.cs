@@ -21,9 +21,28 @@ public sealed record CgosPlayNotification(
     string Color,
     string Vertex,
     long? TimeLeftMilliseconds,
-    string? AnalysisJson = null) : CgosNotification(AccountLabel);
+    string? AnalysisJson = null,
+    bool IsGenerated = false) : CgosNotification(AccountLabel);
 
 public sealed record CgosGameOverNotification(string AccountLabel, string Result) : CgosNotification(AccountLabel);
+
+public enum CgosRuntimeState
+{
+    Connecting,
+    Connected,
+    Protocol,
+    Login,
+    Ready,
+    GtpWait,
+    Running,
+    Closed,
+    Error,
+}
+
+public sealed record CgosRuntimeNotification(
+    string AccountLabel,
+    CgosRuntimeState State,
+    string? Detail = null) : CgosNotification(AccountLabel);
 
 /// <summary>Versioned, one-record-per-line transport for CGOS machine notifications.</summary>
 public static class CgosNotificationJsonLines
@@ -48,11 +67,16 @@ public static class CgosNotificationJsonLines
             CgosPlayNotification value => new
             {
                 version = 1, kind = "play", value.AccountLabel, value.Color, value.Vertex,
-                value.TimeLeftMilliseconds, value.AnalysisJson,
+                value.TimeLeftMilliseconds, value.AnalysisJson, value.IsGenerated,
             },
             CgosGameOverNotification value => new
             {
                 version = 1, kind = "gameover", value.AccountLabel, value.Result,
+            },
+            CgosRuntimeNotification value => new
+            {
+                version = 1, kind = "runtime", value.AccountLabel,
+                state = value.State.ToString().ToLowerInvariant(), value.Detail,
             },
             _ => throw new ArgumentException("Unsupported CGOS notification type.", nameof(notification)),
         };
@@ -88,10 +112,16 @@ public static class CgosNotificationJsonLines
                     root.GetProperty("color").GetString() ?? "",
                     root.GetProperty("vertex").GetString() ?? "",
                     root.TryGetProperty("timeLeftMilliseconds", out var time) ? time.GetInt64() : null,
-                    root.TryGetProperty("analysisJson", out var analysis) ? analysis.GetString() : null),
+                    root.TryGetProperty("analysisJson", out var analysis) ? analysis.GetString() : null,
+                    root.TryGetProperty("isGenerated", out var generated) && generated.GetBoolean()),
                 "gameover" => new CgosGameOverNotification(
                     accountLabel,
                     root.GetProperty("result").GetString() ?? ""),
+                "runtime" when Enum.TryParse<CgosRuntimeState>(root.GetProperty("state").GetString(), true, out var state) =>
+                    new CgosRuntimeNotification(
+                        accountLabel,
+                        state,
+                        root.TryGetProperty("detail", out var detail) ? detail.GetString() : null),
                 _ => null,
             };
             return notification is not null;

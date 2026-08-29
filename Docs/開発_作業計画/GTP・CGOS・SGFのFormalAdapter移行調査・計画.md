@@ -502,6 +502,18 @@ CGOS Hostは状態機械の処理結果からsetup、相手着手、自分の通
 
 次の縦切りでは、接続、ログイン、GTP待機、異常、終了の実行状態と診断を型付き通知へ追加し、`CgosConnectionProcess.DeriveRunningStatus`の人間向け部分文字列依存を置換します。
 
+#### 第2縦切りの実施記録
+
+`CgosRuntimeNotification`と`CgosRuntimeState`をversion 1通知へ追加しました。接続中、TCP接続済み、プロトコル交換、ログイン、準備完了、GTP応答待機、通常実行、切断、異常を区別し、任意の詳細を保持します。`CgosPlayNotification`には自分で生成した着手かを示す`IsGenerated`を追加し、GUIの`PLAY`と`GENMOVE DONE`を文字列推測なしで区別します。
+
+`CgosNetworkSession`は`CgosNetworkEvent`で接続ライフサイクルを報告します。Hostはプレイヤーと管理者の両経路でこれをruntime JSON Linesへ投影し、GTPプロセスの応答待機開始／完了と例外も通知します。パスワードは通知詳細へ含めません。
+
+GUIの`CgosConnectionProcess`は構造化通知から実行状態とGTP待機時計を更新します。新Hostからruntime通知を一度受けた後は、人間向けGTP進捗ログを状態判定に使用しません。旧Hostとの互換性のため、通知が一度も来ない場合だけ`DeriveRunningStatus`をフォールバックとして残しています。
+
+専用試験へruntime通知の往復と、ループバックTCP上の`Connecting → Connected → Protocol → Login → Ready → Closed`イベント順序を追加しました。
+
+次の縦切りでは、`CgosGameObservation`の囲碁向け状態投影を`FormalAdapter.Cgos.Go`へ分離し、GUIからCGOS固有通知の意味変換を減らします。その後、旧Host互換ログ解析を削除できる条件を整理します。
+
 完了条件：標準出力には機械向け通知だけ、標準エラーには診断だけが流れ、GUI表示と棋譜保存が従来どおり動く。Host異常終了でもGUIが復帰できる。
 
 ### 作業段階7：旧配置を整理する
@@ -541,9 +553,9 @@ CGOS Hostは状態機械の処理結果からsetup、相手着手、自分の通
 ## 実装再開地点
 
 ```text
-現在の状態：作業段階0～5完了。作業段階6の対局通知JSON LinesとGUI観戦状態への接続完了
-次の最小作業：接続・ログイン・GTP待機・異常・終了の実行状態通知を追加する
-次の実装候補：CgosConnectionProcess.DeriveRunningStatusの部分文字列解析置換、FormalAdapter.Cgos.Go
+現在の状態：作業段階0～5完了。作業段階6の対局通知と実行状態通知をGUIへ接続完了
+次の最小作業：CgosGameObservationのCGOS通知から囲碁状態への投影をFormalAdapter.Cgos.Goへ分離する
+次の実装候補：FormalAdapter.Cgos.Go、旧Host互換ログ解析の撤去条件整理
 移行先：KifuwarabeGo2026.FormalAdapter.Cgos.Observability、FormalAdapter.Cgos.Go、Host構成点、GUI受信境界
 禁止事項：GTPプロジェクト全体の一括改名、CGOS Hostの一括分解、SgfGameRecordConverterの型ごとの単純移動を同時に行わない
 ```

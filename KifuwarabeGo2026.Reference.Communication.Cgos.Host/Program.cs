@@ -194,8 +194,10 @@ internal static class Program
         {
             await new CgosClient(options, account, playerControl).RunAsync(cancellation.Token);
         }
-        catch
+        catch (Exception ex)
         {
+            Console.WriteLine(CgosNotificationJsonLines.Format(
+                new CgosRuntimeNotification(account.Label, CgosRuntimeState.Error, ex.Message)));
             cancellation.Cancel();
             throw;
         }
@@ -533,24 +535,47 @@ internal sealed class CgosAdminClient
 
     public async Task RunAsync(CancellationToken cancellationToken)
     {
-        var session = CreateNetworkSession(_options, _account, Log);
-        var admin = new CgosAdminStateMachine();
-        await session.RunAsync(
-            (message, token) =>
-            {
-                if (admin.Handle(message))
+        var session = new CgosNetworkSession(
+            new CgosConnectionOptions(_options.Host, _options.Port),
+            new CgosCredentials(_account.UserName, _account.Password),
+            Log,
+            networkEvent => Console.WriteLine(CgosNotificationJsonLines.Format(
+                new CgosRuntimeNotification("admin", networkEvent.Kind switch
                 {
-                    Log("# Admin login accepted. Command input is ready.");
-                    _ = CgosStandardInputRelay.Start(
-                        (command, relayToken) => RelayAdminCommandAsync(session, admin, command, relayToken),
-                        ex => Log("# Admin input relay failed: " + ex.Message),
-                        token);
-                }
+                    CgosNetworkEventKind.Connecting => CgosRuntimeState.Connecting,
+                    CgosNetworkEventKind.Connected => CgosRuntimeState.Connected,
+                    CgosNetworkEventKind.Protocol => CgosRuntimeState.Protocol,
+                    CgosNetworkEventKind.Login => CgosRuntimeState.Login,
+                    CgosNetworkEventKind.Ready => CgosRuntimeState.Ready,
+                    CgosNetworkEventKind.Closed => CgosRuntimeState.Closed,
+                    _ => CgosRuntimeState.Running,
+                }, networkEvent.Detail))));
+        var admin = new CgosAdminStateMachine();
+        try
+        {
+            await session.RunAsync(
+                (message, token) =>
+                {
+                    if (admin.Handle(message))
+                    {
+                        Log("# Admin login accepted. Command input is ready.");
+                        _ = CgosStandardInputRelay.Start(
+                            (command, relayToken) => RelayAdminCommandAsync(session, admin, command, relayToken),
+                            ex => Log("# Admin input relay failed: " + ex.Message),
+                            token);
+                    }
 
-                return Task.CompletedTask;
-            },
-            passwordSentAsync: null,
-            cancellationToken);
+                    return Task.CompletedTask;
+                },
+                passwordSentAsync: null,
+                cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(CgosNotificationJsonLines.Format(
+                new CgosRuntimeNotification("admin", CgosRuntimeState.Error, ex.Message)));
+            throw;
+        }
     }
 
     private async Task RelayAdminCommandAsync(
@@ -582,11 +607,6 @@ internal sealed class CgosAdminClient
         }
     }
 
-    private static CgosNetworkSession CreateNetworkSession(CgosClientOptions options, CgosAccount account, Action<string> log) =>
-        new(
-            new CgosConnectionOptions(options.Host, options.Port),
-            new CgosCredentials(account.UserName, account.Password),
-            log);
 }
 
 internal sealed class CgosClient
@@ -635,10 +655,21 @@ internal sealed class CgosClient
         var session = new CgosNetworkSession(
             new CgosConnectionOptions(_options.Host, _options.Port),
             new CgosCredentials(_account.UserName, _account.Password),
-            Log);
+            Log,
+            networkEvent => EmitRuntime(networkEvent.Kind switch
+            {
+                CgosNetworkEventKind.Connecting => CgosRuntimeState.Connecting,
+                CgosNetworkEventKind.Connected => CgosRuntimeState.Connected,
+                CgosNetworkEventKind.Protocol => CgosRuntimeState.Protocol,
+                CgosNetworkEventKind.Login => CgosRuntimeState.Login,
+                CgosNetworkEventKind.Ready => CgosRuntimeState.Ready,
+                CgosNetworkEventKind.Closed => CgosRuntimeState.Closed,
+                _ => CgosRuntimeState.Running,
+            }, networkEvent.Detail));
         await session.RunAsync(
             async (message, token) =>
             {
+                if (message is CgosLoginAccepted) return;
                 var command = await player.HandleAsync(message, session.ServerSupportsAnalyze, token);
                 EmitNotification(message, command);
                 if (command is not null) await session.SendAsync(command);
@@ -646,6 +677,10 @@ internal sealed class CgosClient
             passwordSentAsync: null,
             cancellationToken);
     }
+
+    private void EmitRuntime(CgosRuntimeState state, string? detail = null) =>
+        Console.WriteLine(CgosNotificationJsonLines.Format(
+            new CgosRuntimeNotification(_account.Label, state, detail)));
 
     private void EmitNotification(CgosServerMessage message, CgosClientCommand? command)
     {
@@ -668,7 +703,12 @@ internal sealed class CgosClient
         CgosPlayerEngineSetup setup,
         CancellationToken cancellationToken)
     {
-        var process = new GtpEngineProcess(_options.EngineCommand, _options.LogDirectory, _account.Label, Log);
+        var process = new GtpEngineProcess(
+            _options.EngineCommand,
+            _options.LogDirectory,
+            _account.Label,
+            Log,
+            (waiting, command) => EmitRuntime(waiting ? CgosRuntimeState.GtpWait : CgosRuntimeState.Running, command));
         try
         {
             await process.StartAsync(cancellationToken);
@@ -944,15 +984,22 @@ internal sealed class GtpEngineProcess : IAsyncDisposable
     private readonly string _commandLine;
     private readonly string _logPath;
     private readonly Action<string> _progressLog;
+    private readonly Action<bool, string> _waitStateChanged;
     private Process? _process;
     private StreamWriter? _input;
     private StreamReader? _output;
 
-    public GtpEngineProcess(string commandLine, string logDirectory, string accountLabel, Action<string> progressLog)
+    public GtpEngineProcess(
+        string commandLine,
+        string logDirectory,
+        string accountLabel,
+        Action<string> progressLog,
+        Action<bool, string>? waitStateChanged = null)
     {
         _commandLine = commandLine;
         _logPath = Path.Combine(logDirectory, $"gtp-{accountLabel}-{DateTime.Now:yyyyMMdd-HHmmss}.log");
         _progressLog = progressLog;
+        _waitStateChanged = waitStateChanged ?? ((_, _) => { });
     }
 
     public Task StartAsync(CancellationToken cancellationToken)
@@ -1024,6 +1071,7 @@ internal sealed class GtpEngineProcess : IAsyncDisposable
         var response = new List<string>();
         string? error = null;
         var stopwatch = Stopwatch.StartNew();
+        _waitStateChanged(true, command);
         _progressLog("# GTP response wait started: " + command);
         try
         {
@@ -1065,6 +1113,7 @@ internal sealed class GtpEngineProcess : IAsyncDisposable
         {
             stopwatch.Stop();
             _progressLog($"# GTP response wait completed in {stopwatch.Elapsed.TotalSeconds:0.000} seconds: {command}");
+            _waitStateChanged(false, command);
         }
 
         if (error is not null)
