@@ -1,4 +1,4 @@
-# KifuwarabeGo2026.Reference.Communication.Gtp
+# KifuwarabeGo2026.FormalAdapter.Gtp.PlayerEngine
 
 Protocol PとGTPエンジンを接続する参照アダプターです。`IGtpCommandTransport`により、標準入出力プロセス、TCP、インメモリテストなどの配送方法を分離します。
 

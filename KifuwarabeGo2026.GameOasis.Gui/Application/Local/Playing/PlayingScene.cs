@@ -7,7 +7,7 @@ using KifuwarabeGo2026.GameOasis.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.
 using KifuwarabeGo2026.GameOasis.Gui.Application.GameOasis;
 using KifuwarabeGo2026.GameOasis.Gui.Domain;
 using KifuwarabeGo2026.Reference.PlayDomain.Go;
-using KifuwarabeGo2026.Reference.Communication.Gtp;
+using KifuwarabeGo2026.FormalAdapter.Gtp.PlayerEngine;
 using KifuwarabeGo2026.Reference.PlayRoomGui.Common;
 using KifuwarabeGo2026.Reference.PlayerEngine.Go.GtpExtensions.Integration;
 using KifuwarabeGo2026.GameOasis.Gui.Infrastructure.Logging;

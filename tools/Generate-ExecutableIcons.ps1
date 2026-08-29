@@ -80,4 +80,4 @@ $engineDraw = {
 }
 
 Write-Ico (Join-Path $RepositoryRoot 'KifuwarabeGo2026\GuiIcon.ico') $guiDraw
-Write-Ico (Join-Path $RepositoryRoot 'KifuwarabeGo2026.Reference.Communication.Gtp.Host\EngineIcon.ico') $engineDraw
+Write-Ico (Join-Path $RepositoryRoot 'KifuwarabeGo2026.Reference.PlayerEngine.Go.Gtp.Host\EngineIcon.ico') $engineDraw

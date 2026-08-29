@@ -7,7 +7,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\KifuwarabeGo2026.FormalAdapter.Gtp\KifuwarabeGo2026.FormalAdapter.Gtp.csproj" />
-    <ProjectReference Include="..\KifuwarabeGo2026.Reference.Communication.Gtp.Host\KifuwarabeGo2026.Reference.Communication.Gtp.Host.csproj" />
+    <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlayerEngine.Go.Gtp.Host\KifuwarabeGo2026.Reference.PlayerEngine.Go.Gtp.Host.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.GameOasis.Gui.Windows\KifuwarabeGo2026.GameOasis.Gui.Windows.csproj" />
   </ItemGroup>
 </Project>

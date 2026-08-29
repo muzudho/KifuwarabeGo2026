@@ -122,10 +122,11 @@ $versionProjects = @(
     'KifuwarabeGo2026.FormalAdapter.Cgos\KifuwarabeGo2026.FormalAdapter.Cgos.csproj',
     'KifuwarabeGo2026.FormalAdapter.Gtp\KifuwarabeGo2026.FormalAdapter.Gtp.csproj',
     'KifuwarabeGo2026.FormalAdapter.Sgf\KifuwarabeGo2026.FormalAdapter.Sgf.csproj',
-    'KifuwarabeGo2026.Reference.Communication.Gtp.Host\KifuwarabeGo2026.Reference.Communication.Gtp.Host.csproj',
-    'KifuwarabeGo2026.Reference.Communication.Gtp\KifuwarabeGo2026.Reference.Communication.Gtp.csproj',
+    'KifuwarabeGo2026.Reference.PlayerEngine.Go.Gtp.Host\KifuwarabeGo2026.Reference.PlayerEngine.Go.Gtp.Host.csproj',
+    'KifuwarabeGo2026.Reference.PlayerEngine.Go.Gtp\KifuwarabeGo2026.Reference.PlayerEngine.Go.Gtp.csproj',
+    'KifuwarabeGo2026.FormalAdapter.Gtp.PlayerEngine\KifuwarabeGo2026.FormalAdapter.Gtp.PlayerEngine.csproj',
     'KifuwarabeGo2026.Reference.PlayerEngine\KifuwarabeGo2026.Reference.PlayerEngine.csproj',
-    'KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation\KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation.csproj',
+    'KifuwarabeGo2026.Reference.PlayDomain.Go\KifuwarabeGo2026.Reference.PlayDomain.Go.csproj',
     'KifuwarabeGo2026.StationeryUI\KifuwarabeGo2026.StationeryUI.csproj',
     'KifuwarabeGo2026.Reference.Communication.Cgos.Host\KifuwarabeGo2026.Reference.Communication.Cgos.Host.csproj'
 )
@@ -149,7 +150,7 @@ if ($releaseNotesText -notmatch "(?m)^# Kifuwarabe Go 2026 v$([regex]::Escape($V
 
 $launcherPublish = 'KifuwarabeGo2026.LauncherGui\bin\Release\net8.0\win-x64\publish'
 $guiPublish = 'KifuwarabeGo2026.GameOasis.Gui.Windows\bin\Release\net8.0-windows\win-x64\publish'
-$enginePublish = 'KifuwarabeGo2026.Reference.Communication.Gtp.Host\bin\Release\net8.0\win-x64\publish'
+$enginePublish = 'KifuwarabeGo2026.Reference.PlayerEngine.Go.Gtp.Host\bin\Release\net8.0\win-x64\publish'
 
 if (-not $SkipBuild) {
     Invoke-CheckedCommand -Command dotnet -Arguments @('build', 'KifuwarabeGo2026.slnx', '-c', 'Release')
@@ -179,7 +180,7 @@ if (-not $SkipBuild) {
     Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.PlayRoomEngine.Conformance\KifuwarabeGo2026.PlayRoomEngine.Conformance.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false', '-o', "$guiPublish\Tools\Conformance\ProtocolS")
     Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'Samples\External.PlayRoomEngine.Counter\External.PlayRoomEngine.Counter.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false', '-o', "$guiPublish\Tools\Conformance\ProtocolS\Samples\Counter")
     Copy-Item -LiteralPath 'Conformance\ProtocolS\v1' -Destination "$guiPublish\Tools\Conformance\ProtocolS\Vectors" -Recurse
-    Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.Reference.Communication.Gtp.Host\KifuwarabeGo2026.Reference.Communication.Gtp.Host.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false')
+    Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.Reference.PlayerEngine.Go.Gtp.Host\KifuwarabeGo2026.Reference.PlayerEngine.Go.Gtp.Host.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false')
 
     # v3 launchers start KifuwarabeGo2026.Gui.exe. Keep that public entry point
     # as an alias of the v4 Windows host throughout the v4.x.x transition.
@@ -238,10 +239,11 @@ Assert-FileExists -LiteralPath @(
     "$guiPublish\Tools\Conformance\ProtocolS\Samples\Counter\External.PlayRoomEngine.Counter.dll",
     "$guiPublish\Tools\Conformance\ProtocolS\Samples\Counter\counter.playspace.json",
     "$enginePublish\KifuwarabeGo2026.Engine.exe",
-    "$enginePublish\KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation.dll",
+    "$enginePublish\KifuwarabeGo2026.Reference.PlayDomain.Go.dll",
     "$enginePublish\KifuwarabeGo2026.FormalAdapter.Gtp.dll",
     "$enginePublish\KifuwarabeGo2026.Reference.PlayerEngine.dll",
-    "$enginePublish\KifuwarabeGo2026.Reference.Communication.Gtp.dll"
+    "$enginePublish\KifuwarabeGo2026.Reference.PlayerEngine.Go.Gtp.dll",
+    "$enginePublish\KifuwarabeGo2026.FormalAdapter.Gtp.PlayerEngine.dll"
 )
 
 $uploads = Join-Path $repositoryRoot 'Uploads'

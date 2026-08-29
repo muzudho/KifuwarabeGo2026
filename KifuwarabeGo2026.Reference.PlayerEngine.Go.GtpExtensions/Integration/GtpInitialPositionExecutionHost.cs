@@ -2,7 +2,6 @@ namespace KifuwarabeGo2026.Reference.PlayerEngine.Go.GtpExtensions.Integration;
 
 using KifuwarabeGo2026.Reference.PlayerEngine.Go.GtpExtensions.Engines;
 using KifuwarabeGo2026.Reference.PlayerEngine.Go.GtpExtensions.InitialPosition;
-using KifuwarabeGo2026.Reference.Communication.Gtp;
 using KifuwarabeGo2026.Reference.PlayerEngine.Go.GtpExtensions.Sgf;
 using System;
 using System.Threading;

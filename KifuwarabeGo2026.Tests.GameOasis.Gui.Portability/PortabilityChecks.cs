@@ -17,7 +17,7 @@ using KifuwarabeGo2026.GameOasis.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.GameOasis.Gui.Application.Local.Resting.TournamentRule;
 using KifuwarabeGo2026.LobbyGui.Application;
 using KifuwarabeGo2026.LobbyEngine;
-using KifuwarabeGo2026.Reference.Communication.Gtp;
+using KifuwarabeGo2026.FormalAdapter.Gtp.PlayerEngine;
 using KifuwarabeGo2026.Reference.PlayerEngine.Go.GtpExtensions.Integration;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls;
 using KifuwarabeGo2026.GameOasis.Gui.Sgf;

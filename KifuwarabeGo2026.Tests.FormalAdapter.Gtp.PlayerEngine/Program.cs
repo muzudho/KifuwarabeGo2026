@@ -1,7 +1,7 @@
 using KifuwarabeGo2026.GameOasis.Concierge;
 using KifuwarabeGo2026.GameOasis.Contracts.Common;
 using KifuwarabeGo2026.GameOasis.Contracts.ProtocolP;
-using KifuwarabeGo2026.Reference.Communication.Gtp;
+using KifuwarabeGo2026.FormalAdapter.Gtp.PlayerEngine;
 using KifuwarabeGo2026.Reference.PlayRoomEngine.Go;
 
 if (args is ["--fake-gtp"])

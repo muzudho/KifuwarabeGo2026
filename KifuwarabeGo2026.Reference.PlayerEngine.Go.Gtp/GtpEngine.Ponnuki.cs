@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Reference.Communication.Gtp.Server;
+namespace KifuwarabeGo2026.Reference.PlayerEngine.Go.Gtp;
 
 using KifuwarabeGo2026.Reference.PlayDomain.Go;
 using System.Security.Cryptography;

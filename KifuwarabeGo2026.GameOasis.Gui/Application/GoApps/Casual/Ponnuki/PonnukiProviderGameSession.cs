@@ -1,5 +1,5 @@
 using KifuwarabeGo2026.GameOasis.Gui.Application.Local.Playing;
-using KifuwarabeGo2026.Reference.Communication.Gtp;
+using KifuwarabeGo2026.FormalAdapter.Gtp.PlayerEngine;
 using KifuwarabeGo2026.Reference.PlayDomain.Go;
 using System;
 using System.Text.Json;

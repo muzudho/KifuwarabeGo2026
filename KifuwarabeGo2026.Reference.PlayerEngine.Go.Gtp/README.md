@@ -1,0 +1,5 @@
+# KifuwarabeGo2026.Reference.PlayerEngine.Go.Gtp
+
+Kifuwarabe Go 2026の囲碁プレイヤーおよびポン抜きProviderを、GTPサーバーとして公開する参照実装です。
+
+純粋なGTP構文・クライアント部品は`KifuwarabeGo2026.FormalAdapter.Gtp`、外部GTPエンジンをProtocol Pへ接続するアダプターは`KifuwarabeGo2026.FormalAdapter.Gtp.PlayerEngine`が所有します。このプロジェクトは、公式参照プレイヤーに固有のGTPコマンドループと拡張コマンドだけを所有します。

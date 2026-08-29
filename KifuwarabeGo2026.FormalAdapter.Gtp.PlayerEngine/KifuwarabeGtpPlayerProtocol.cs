@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Reference.Communication.Gtp;
+namespace KifuwarabeGo2026.FormalAdapter.Gtp.PlayerEngine;
 
 using System.Globalization;
 using System.Text;
@@ -27,7 +27,7 @@ public sealed class KifuwarabeGtpPlayerProtocol(
             engineId,
             displayName,
             ContractVersion.V1_0,
-            "KifuwarabeGo2026.Reference.Communication.Gtp",
+            "KifuwarabeGo2026.FormalAdapter.Gtp.PlayerEngine",
             typeof(KifuwarabeGtpPlayerProtocol).Assembly.GetName().Version?.ToString() ?? "4.0.0",
             [GoTypeId],
             ["gtp", "kifuwarabe-atomic-position", "standard-static-position-fallback", "single-session"])));

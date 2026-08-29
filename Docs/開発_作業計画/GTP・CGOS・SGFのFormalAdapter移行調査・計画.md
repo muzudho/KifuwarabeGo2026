@@ -572,6 +572,16 @@ GUI、初期局面GTP拡張、ベースライン試験は新しい所有者を�
 
 Windows非対話試験だけは、再生成した試験DLLをWindowsアプリケーション制御が`0x800711C7`で再び拒否したため、起動前に停止しました。対象プロジェクトのRelease再ビルドは警告0件、エラー0件で成功しています。後続調査でWindows 11のSmart App Control強制モードによる未署名DLLの拒否と確定しました。再起動は恒久策ではないため、[Smart App Controlによる再生成DLLブロック調査](../トラブルシューティング/Smart%20App%20Controlによる再生成DLLブロック調査.md)に記載した開発用VM、信頼されたコード署名、またはSmart App Control無効化の方針決定後まで、第7段階の完了判定を保留します。
 
+### 作業段階8：GTP Protocol Pアダプターと参照サーバーを分離する
+
+状態：完了（2026年8月30日）
+
+旧`Reference.Communication.Gtp`に同居していた双方向の責務を分離しました。外部GTPエンジンをProtocol Pの`IPlayerProtocol`として利用する`KifuwarabeGtpPlayerProtocol`とloadsgf用一時SGFファイル処理は`KifuwarabeGo2026.FormalAdapter.Gtp.PlayerEngine`へ移しました。
+
+公式きふわらべプレイヤーをGTPサーバーとして公開する`GtpEngine`、原子的局面設定、ポン抜きProvider、独自オプション処理は`KifuwarabeGo2026.Reference.PlayerEngine.Go.Gtp`へ移しました。標準入出力へ接続する薄い構成点は`KifuwarabeGo2026.Reference.PlayerEngine.Go.Gtp.Host`へ改名し、配布互換名`KifuwarabeGo2026.Engine`は維持します。
+
+試験は`KifuwarabeGo2026.Tests.FormalAdapter.Gtp.PlayerEngine`へ改名しました。旧`Reference.Communication.Gtp`と`.Host`は廃止し、以降の文書で旧名称が現れる箇所は移行前の履歴を表します。
+
 ## 優先順位
 
 | 優先度 | 対象 | 理由 |

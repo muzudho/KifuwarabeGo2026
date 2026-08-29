@@ -9,7 +9,7 @@
     <ProjectReference Include="..\KifuwarabeGo2026.FormalAdapter.Gtp\KifuwarabeGo2026.FormalAdapter.Gtp.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.GameOasis.Contracts\KifuwarabeGo2026.GameOasis.Contracts.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.GameOasis.Concierge\KifuwarabeGo2026.GameOasis.Concierge.csproj" />
-    <ProjectReference Include="..\KifuwarabeGo2026.Reference.Communication.Gtp\KifuwarabeGo2026.Reference.Communication.Gtp.csproj" />
+    <ProjectReference Include="..\KifuwarabeGo2026.FormalAdapter.Gtp.PlayerEngine\KifuwarabeGo2026.FormalAdapter.Gtp.PlayerEngine.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlayRoomEngine.Go\KifuwarabeGo2026.Reference.PlayRoomEngine.Go.csproj" />
   </ItemGroup>
 </Project>

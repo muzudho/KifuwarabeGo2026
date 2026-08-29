@@ -43,7 +43,7 @@ dotnet run --project KifuwarabeGo2026.GameOasis.Gui.Windows\KifuwarabeGo2026.Gam
 
 ```powershell
 @('protocol_version','name','version','boardsize 9','clear_board','play black D4','genmove white','quit') |
-    dotnet run --project KifuwarabeGo2026.Reference.Communication.Gtp.Host\KifuwarabeGo2026.Reference.Communication.Gtp.Host.csproj
+    dotnet run --project KifuwarabeGo2026.Reference.PlayerEngine.Go.Gtp.Host\KifuwarabeGo2026.Reference.PlayerEngine.Go.Gtp.Host.csproj
 ```
 
 ## スモークテスト
@@ -57,7 +57,7 @@ dotnet run --project KifuwarabeGo2026.Tests.GameOasis.Gui.Windows\KifuwarabeGo20
 
 ```powershell
 dotnet publish KifuwarabeGo2026.GameOasis.Gui.Windows\KifuwarabeGo2026.GameOasis.Gui.Windows.csproj -c Release -r win-x64 --self-contained false
-dotnet publish KifuwarabeGo2026.Reference.Communication.Gtp.Host\KifuwarabeGo2026.Reference.Communication.Gtp.Host.csproj -c Release -r win-x64 --self-contained false
+dotnet publish KifuwarabeGo2026.Reference.PlayerEngine.Go.Gtp.Host\KifuwarabeGo2026.Reference.PlayerEngine.Go.Gtp.Host.csproj -c Release -r win-x64 --self-contained false
 ```
 
 GUIのpublish時には、CGOS通信コンポーネントも `Tools\Cgos` 以下へ自動的にpublishされます。

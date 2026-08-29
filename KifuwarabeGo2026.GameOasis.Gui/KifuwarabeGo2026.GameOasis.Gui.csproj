@@ -28,7 +28,7 @@
     <ProjectReference Include="..\KifuwarabeGo2026.LobbyEngine.JsonLines\KifuwarabeGo2026.LobbyEngine.JsonLines.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.LobbyGui\KifuwarabeGo2026.LobbyGui.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlayRoomGui.Common\KifuwarabeGo2026.Reference.PlayRoomGui.Common.csproj" />
-    <ProjectReference Include="..\KifuwarabeGo2026.Reference.Communication.Gtp\KifuwarabeGo2026.Reference.Communication.Gtp.csproj" />
+    <ProjectReference Include="..\KifuwarabeGo2026.FormalAdapter.Gtp.PlayerEngine\KifuwarabeGo2026.FormalAdapter.Gtp.PlayerEngine.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlayRoomEngine.Go\KifuwarabeGo2026.Reference.PlayRoomEngine.Go.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlayRoomEngine.Ponnuki\KifuwarabeGo2026.Reference.PlayRoomEngine.Ponnuki.csproj" />
   </ItemGroup>

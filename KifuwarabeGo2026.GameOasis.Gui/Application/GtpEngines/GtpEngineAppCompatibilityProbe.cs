@@ -1,6 +1,6 @@
 namespace KifuwarabeGo2026.GameOasis.Gui.Application;
 
-using KifuwarabeGo2026.Reference.Communication.Gtp;
+using KifuwarabeGo2026.FormalAdapter.Gtp.PlayerEngine;
 using System;
 using System.Collections.Generic;
 using System.Linq;
