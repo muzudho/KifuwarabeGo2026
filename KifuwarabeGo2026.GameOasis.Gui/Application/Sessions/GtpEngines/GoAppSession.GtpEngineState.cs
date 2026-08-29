@@ -2,7 +2,7 @@ namespace KifuwarabeGo2026.GameOasis.Gui.Application;
 
 using System.Collections.Generic;
 using System.Linq;
-using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Engines;
+using KifuwarabeGo2026.Reference.PlayerEngine.Go.GtpExtensions.Engines;
 using KifuwarabeGo2026.Reference.PlayDomain.Go;
 
 /// <summary>GTP エンジンのカタログ、選択、編集画面の状態を保持します。</summary>

@@ -8,7 +8,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\KifuwarabeGo2026.GameOasis.Contracts\KifuwarabeGo2026.GameOasis.Contracts.csproj" />
-    <ProjectReference Include="..\..\KifuwarabeGo2026.PlaySpace.JsonLines\KifuwarabeGo2026.PlaySpace.JsonLines.csproj" />
+    <ProjectReference Include="..\..\KifuwarabeGo2026.PlayRoomEngine.JsonLines\KifuwarabeGo2026.PlayRoomEngine.JsonLines.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Update="counter.playspace.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />

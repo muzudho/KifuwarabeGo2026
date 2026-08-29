@@ -1,8 +1,8 @@
 namespace KifuwarabeGo2026.GameOasis.Gui.Application;
 
 using KifuwarabeGo2026.GameOasis.Gui.Domain;
-using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Engines;
-using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.InitialPosition;
+using KifuwarabeGo2026.Reference.PlayerEngine.Go.GtpExtensions.Engines;
+using KifuwarabeGo2026.Reference.PlayerEngine.Go.GtpExtensions.InitialPosition;
 using KifuwarabeGo2026.Reference.PlayDomain.Go;
 using System.Collections.Generic;
 using System.Linq;

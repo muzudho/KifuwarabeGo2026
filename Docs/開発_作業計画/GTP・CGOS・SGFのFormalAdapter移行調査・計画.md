@@ -35,7 +35,7 @@ GTP
     ├─ クライアントと子プロセス
     ├─ Protocol Pへのプレイヤー変換
     └─ GTPサーバー
-  Reference.PlaySpace.Go.GtpExtensions
+  Reference.PlayerEngine.Go.GtpExtensions
     ├─ 能力調査と実装プロフィール
     ├─ 初期局面の再現方法
     └─ SGFを使うloadsgf経路
@@ -64,7 +64,7 @@ SGF
     ├─ SGF書出し
     ├─ GoGameRecord変換
     └─ CGOS解析拡張
-  Reference.PlaySpace.Go.GtpExtensions/Sgf
+  Reference.PlayerEngine.Go.GtpExtensions/Sgf
     └─ 初期局面SGFの別実装
   Reference.Communication.Gtp/GtpSgfFileStore.cs
     └─ loadsgf用一時ファイル
@@ -120,7 +120,7 @@ FormalAdapter.Gtp.Ponnuki
 
 ### `Go.GtpExtensions`の再分類
 
-`Reference.PlaySpace.Go.GtpExtensions`は、すべてを`FormalAdapter`へ移す対象ではありません。
+`Reference.PlayerEngine.Go.GtpExtensions`は、すべてを`FormalAdapter`へ移す対象ではありません。
 
 | 分類 | 主な型 | 方針 |
 |---|---|---|
@@ -292,7 +292,7 @@ dotnet KifuwarabeGo2026.Tests.GameOasis.Gui.Portability\bin\Release\net8.0\Kifuw
 
 `GtpCommandArgument`、`GtpCommandResult`、`GtpFilePathArgumentStyle`、`IGtpCommandSession`を`KifuwarabeGo2026.FormalAdapter.Gtp.Protocol`へ物理移動しました。旧プロジェクトに重複実装や互換型は残していません。
 
-`Reference.Communication.Gtp`と`Reference.PlaySpace.Go.GtpExtensions`は新しいProtocol契約を参照します。`GtpCoordinate`は囲碁の`GoPoint`へ依存するため旧配置に残し、将来の`FormalAdapter.Gtp.Go`移行対象としました。
+`Reference.Communication.Gtp`と`Reference.PlayerEngine.Go.GtpExtensions`は新しいProtocol契約を参照します。`GtpCoordinate`は囲碁の`GoPoint`へ依存するため旧配置に残し、将来の`FormalAdapter.Gtp.Go`移行対象としました。
 
 検証結果：
 

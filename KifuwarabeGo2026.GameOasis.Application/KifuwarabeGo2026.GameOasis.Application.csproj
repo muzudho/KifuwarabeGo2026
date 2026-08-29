@@ -5,6 +5,6 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions\KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.csproj" />
+    <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlayerEngine.Go.GtpExtensions\KifuwarabeGo2026.Reference.PlayerEngine.Go.GtpExtensions.csproj" />
   </ItemGroup>
 </Project>

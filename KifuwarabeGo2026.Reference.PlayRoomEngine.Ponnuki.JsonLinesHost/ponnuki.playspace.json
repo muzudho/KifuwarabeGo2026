@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "playSpaceTypeId": "io.github.muzudho.kifuwarabego2026.games.ponnuki",
+  "command": "dotnet",
+  "arguments": [
+    "KifuwarabeGo2026.Reference.PlayRoomEngine.Ponnuki.JsonLinesHost.dll"
+  ],
+  "supportsMultipleSessions": false
+}

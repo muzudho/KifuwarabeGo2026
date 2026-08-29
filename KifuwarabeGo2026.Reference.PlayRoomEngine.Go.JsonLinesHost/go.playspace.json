@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "playSpaceTypeId": "io.github.muzudho.kifuwarabego2026.games.go",
+  "command": "dotnet",
+  "arguments": [
+    "KifuwarabeGo2026.Reference.PlayRoomEngine.Go.JsonLinesHost.dll"
+  ],
+  "supportsMultipleSessions": true
+}

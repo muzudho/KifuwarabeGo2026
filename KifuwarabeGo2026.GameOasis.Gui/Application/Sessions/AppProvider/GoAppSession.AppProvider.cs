@@ -1,6 +1,6 @@
 namespace KifuwarabeGo2026.GameOasis.Gui.Application;
 
-using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Engines;
+using KifuwarabeGo2026.Reference.PlayerEngine.Go.GtpExtensions.Engines;
 using System;
 using System.IO;
 

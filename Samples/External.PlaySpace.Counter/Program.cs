@@ -1,9 +1,9 @@
 using KifuwarabeGo2026.GameOasis.Contracts.Common;
 using KifuwarabeGo2026.GameOasis.Contracts.ProtocolS;
-using KifuwarabeGo2026.PlaySpace.JsonLines;
+using KifuwarabeGo2026.PlayRoomEngine.JsonLines;
 using System.Text.Json;
 
-await PlaySpaceJsonLinesHost.RunAsync(new CounterPlaySpace());
+await PlayRoomEngineJsonLinesHost.RunAsync(new CounterPlaySpace());
 
 sealed class CounterPlaySpace : IPlaySpaceProtocol
 {

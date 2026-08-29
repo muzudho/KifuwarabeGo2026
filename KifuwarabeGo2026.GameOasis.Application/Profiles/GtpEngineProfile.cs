@@ -1,6 +1,6 @@
 namespace KifuwarabeGo2026.GameOasis.Application.Profiles;
 
-using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.InitialPosition;
+using KifuwarabeGo2026.Reference.PlayerEngine.Go.GtpExtensions.InitialPosition;
 using System.Text.Json.Serialization;
 
 public sealed class GtpEngineProfile

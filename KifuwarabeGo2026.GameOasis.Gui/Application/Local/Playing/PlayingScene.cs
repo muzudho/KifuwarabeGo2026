@@ -1,15 +1,15 @@
 namespace KifuwarabeGo2026.GameOasis.Gui.Application.Local.Playing;
 
-using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Capabilities;
-using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Engines;
-using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.InitialPosition;
+using KifuwarabeGo2026.Reference.PlayerEngine.Go.GtpExtensions.Capabilities;
+using KifuwarabeGo2026.Reference.PlayerEngine.Go.GtpExtensions.Engines;
+using KifuwarabeGo2026.Reference.PlayerEngine.Go.GtpExtensions.InitialPosition;
 using KifuwarabeGo2026.GameOasis.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.Watching;
 using KifuwarabeGo2026.GameOasis.Gui.Application.GameOasis;
 using KifuwarabeGo2026.GameOasis.Gui.Domain;
 using KifuwarabeGo2026.Reference.PlayDomain.Go;
 using KifuwarabeGo2026.Reference.Communication.Gtp;
 using KifuwarabeGo2026.Reference.PlayRoomGui.Common;
-using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Integration;
+using KifuwarabeGo2026.Reference.PlayerEngine.Go.GtpExtensions.Integration;
 using KifuwarabeGo2026.GameOasis.Gui.Infrastructure.Logging;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.LocalMatch;

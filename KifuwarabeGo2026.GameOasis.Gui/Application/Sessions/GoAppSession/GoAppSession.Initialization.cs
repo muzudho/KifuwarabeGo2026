@@ -1,7 +1,7 @@
 namespace KifuwarabeGo2026.GameOasis.Gui.Application;
 
 using KifuwarabeGo2026.GameOasis.Gui.Application.Local.Resting;
-using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Engines;
+using KifuwarabeGo2026.Reference.PlayerEngine.Go.GtpExtensions.Engines;
 using KifuwarabeGo2026.Reference.PlayDomain.Go;
 
 /// <summary>アプリケーションセッションの共通初期化を行います。</summary>

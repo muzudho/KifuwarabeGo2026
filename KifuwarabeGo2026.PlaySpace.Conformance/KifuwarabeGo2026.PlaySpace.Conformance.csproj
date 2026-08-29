@@ -7,8 +7,9 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\KifuwarabeGo2026.GameOasis.Contracts\KifuwarabeGo2026.GameOasis.Contracts.csproj" />
-    <ProjectReference Include="..\KifuwarabeGo2026.PlaySpace.JsonLines\KifuwarabeGo2026.PlaySpace.JsonLines.csproj" />
-    <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlaySpace.JsonLinesHost\KifuwarabeGo2026.Reference.PlaySpace.JsonLinesHost.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\KifuwarabeGo2026.PlayRoomEngine.JsonLines\KifuwarabeGo2026.PlayRoomEngine.JsonLines.csproj" />
+    <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlayRoomEngine.Go.JsonLinesHost\KifuwarabeGo2026.Reference.PlayRoomEngine.Go.JsonLinesHost.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlayRoomEngine.Ponnuki.JsonLinesHost\KifuwarabeGo2026.Reference.PlayRoomEngine.Ponnuki.JsonLinesHost.csproj" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\Samples\External.PlaySpace.Counter\External.PlaySpace.Counter.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
 </Project>

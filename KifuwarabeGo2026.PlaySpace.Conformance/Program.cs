@@ -1,6 +1,6 @@
 using KifuwarabeGo2026.GameOasis.Contracts.Common;
 using KifuwarabeGo2026.GameOasis.Contracts.ProtocolS;
-using KifuwarabeGo2026.PlaySpace.JsonLines;
+using KifuwarabeGo2026.PlayRoomEngine.JsonLines;
 using System.Text.Json;
 
 var cases = ReadOption(args, "--manifest") is { } manifest && ReadOption(args, "--vector") is { } vector
@@ -11,12 +11,12 @@ Console.WriteLine($"PASS: {cases.Length} Protocol S JSON Lines conformance case(
 
 static async Task RunAsync(string manifestPath, string vectorPath)
 {
-    var manifest = PlaySpaceHostManifest.Load(manifestPath);
-    var vector = JsonSerializer.Deserialize<ConformanceVector>(File.ReadAllText(vectorPath), PlaySpaceJsonLinesProtocol.JsonOptions)
+    var manifest = PlayRoomEngineHostManifest.Load(manifestPath);
+    var vector = JsonSerializer.Deserialize<ConformanceVector>(File.ReadAllText(vectorPath), PlayRoomEngineJsonLinesProtocol.JsonOptions)
         ?? throw new InvalidDataException($"Cannot read vector: {vectorPath}");
     Require(vector.Version == 1, "Unsupported conformance vector version.");
     Require(manifest.PlaySpaceTypeId == vector.ExpectedTypeId, "Manifest and vector type IDs must match.");
-    using var protocol = new JsonLinesPlaySpaceProtocol(manifest.CreateStartInfo(Path.GetDirectoryName(manifestPath)!));
+    using var protocol = new JsonLinesPlayRoomEngineProtocol(manifest.CreateStartInfo(Path.GetDirectoryName(manifestPath)!));
     var descriptor = Success(await protocol.DescribeAsync());
     Require(descriptor.TypeId.Value == vector.ExpectedTypeId, "Descriptor type ID did not match.");
     Require(descriptor.ProtocolVersion == ContractVersion.V1_0, "Protocol S 1.0 is required.");
@@ -43,12 +43,13 @@ static async Task RunAsync(string manifestPath, string vectorPath)
 
 static (string, string)[] DefaultCases(string root)
 {
-    var official = Path.Combine(root, "KifuwarabeGo2026.Reference.PlaySpace.JsonLinesHost", "bin", "Release", "net8.0");
+    var goOfficial = Path.Combine(root, "KifuwarabeGo2026.Reference.PlayRoomEngine.Go.JsonLinesHost", "bin", "Release", "net8.0");
+    var ponnukiOfficial = Path.Combine(root, "KifuwarabeGo2026.Reference.PlayRoomEngine.Ponnuki.JsonLinesHost", "bin", "Release", "net8.0");
     var external = Path.Combine(root, "Samples", "External.PlaySpace.Counter", "bin", "Release", "net8.0");
     var vectors = Path.Combine(root, "Conformance", "ProtocolS", "v1");
     return [
-        (Path.Combine(official, "go.playspace.json"), Path.Combine(vectors, "go.json")),
-        (Path.Combine(official, "ponnuki.playspace.json"), Path.Combine(vectors, "ponnuki.json")),
+        (Path.Combine(goOfficial, "go.playspace.json"), Path.Combine(vectors, "go.json")),
+        (Path.Combine(ponnukiOfficial, "ponnuki.playspace.json"), Path.Combine(vectors, "ponnuki.json")),
         (Path.Combine(external, "counter.playspace.json"), Path.Combine(vectors, "external-counter.json")),
     ];
 }

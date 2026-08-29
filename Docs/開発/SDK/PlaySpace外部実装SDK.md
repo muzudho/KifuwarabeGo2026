@@ -3,12 +3,12 @@
 外部PlaySpaceは、公式GUI、MonoGame、Concierge具象実装、通常囲碁実装を参照せずに作成できます。.NET実装で必要な参照は次の二つです。
 
 * `KifuwarabeGo2026.GameOasis.Contracts`: Protocol Sの要求、応答、自己記述文書。
-* `KifuwarabeGo2026.PlaySpace.JsonLines`: 標準入出力ホスト、クライアント、マニフェスト。
+* `KifuwarabeGo2026.PlayRoomEngine.JsonLines`: 標準入出力ホスト、クライアント、マニフェスト。
 
 ## 最小実装手順
 
 1. `IPlaySpaceProtocol`を実装する。
-2. 実行ファイルの入口から`PlaySpaceJsonLinesHost.RunAsync(protocol)`を呼ぶ。
+2. 実行ファイルの入口から`PlayRoomEngineJsonLinesHost.RunAsync(protocol)`を呼ぶ。
 3. `*.playspace.json`へ安定した種別ID、コマンド、引数、複数セッション能力を書く。
 4. ゲーム設定、行動、状態、イベント、結果を、それぞれ異なる`ContractDocument.SchemaId`を持つJSONとして公開する。
 5. 適合性ベクトルを作り、CLIランナーへマニフェストと共に渡す。
@@ -47,4 +47,4 @@ process start
 * [`ponnuki.json`](../../../Conformance/ProtocolS/v1/ponnuki.json)
 * [`external-counter.json`](../../../Conformance/ProtocolS/v1/external-counter.json)
 
-JSON Linesの詳細は[`PROTOCOL.md`](../../../KifuwarabeGo2026.PlaySpace.JsonLines/PROTOCOL.md)を参照してください。
+JSON Linesの詳細は[`PROTOCOL.md`](../../../KifuwarabeGo2026.PlayRoomEngine.JsonLines/PROTOCOL.md)を参照してください。

@@ -18,15 +18,15 @@ using KifuwarabeGo2026.GameOasis.Gui.Application.Local.Resting.TournamentRule;
 using KifuwarabeGo2026.LobbyGui.Application;
 using KifuwarabeGo2026.LobbyEngine;
 using KifuwarabeGo2026.Reference.Communication.Gtp;
-using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Integration;
+using KifuwarabeGo2026.Reference.PlayerEngine.Go.GtpExtensions.Integration;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls;
 using KifuwarabeGo2026.GameOasis.Gui.Sgf;
-using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions;
-using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Capabilities;
-using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Engines;
-using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.InitialPosition;
-using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Sgf;
-using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Strategies;
+using KifuwarabeGo2026.Reference.PlayerEngine.Go.GtpExtensions;
+using KifuwarabeGo2026.Reference.PlayerEngine.Go.GtpExtensions.Capabilities;
+using KifuwarabeGo2026.Reference.PlayerEngine.Go.GtpExtensions.Engines;
+using KifuwarabeGo2026.Reference.PlayerEngine.Go.GtpExtensions.InitialPosition;
+using KifuwarabeGo2026.Reference.PlayerEngine.Go.GtpExtensions.Sgf;
+using KifuwarabeGo2026.Reference.PlayerEngine.Go.GtpExtensions.Strategies;
 using KifuwarabeGo2026.Reference.PlayRoomEngine.Go.LegacyMatch;
 using KifuwarabeGo2026.Reference.PlayRoomGui.Common;
 using KifuwarabeGo2026.Reference.PlayerEngine;
@@ -94,7 +94,7 @@ internal static class PortabilityChecks
             "GTP client, process transport, and option documents must be owned by FormalAdapter.Gtp.");
         Require(typeof(GtpInitialPositionExecutionHost).Assembly == gtpExtensionsAssembly &&
                 typeof(GtpInitialPositionSgfFile).Assembly == gtpExtensionsAssembly,
-            "Go initial-position GTP adaptation must be owned by Reference.PlaySpace.Go.GtpExtensions.");
+            "Go initial-position GTP adaptation must be owned by Reference.PlayerEngine.Go.GtpExtensions.");
         VerifyGtpExtensionsInitialPositionPlanning();
         VerifyGtpCapabilityProbe();
         VerifyStandardHandicapStrategies();
@@ -979,7 +979,7 @@ internal static class PortabilityChecks
         Require(references.Contains("KifuwarabeGo2026.FormalAdapter.Gtp"),
             "Go GTP extensions must consume the FormalAdapter-owned GTP protocol boundary.");
         Require(!gtpCommunicationAssembly.GetReferencedAssemblies().Any(reference =>
-                reference.Name == "KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions"),
+                reference.Name == "KifuwarabeGo2026.Reference.PlayerEngine.Go.GtpExtensions"),
             "GTP communication must not depend back on Go play-space extensions.");
 
         foreach (var forbiddenReference in ForbiddenAssemblyReferences)

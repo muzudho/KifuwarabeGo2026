@@ -6,7 +6,7 @@ using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.LinkUnde
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
 
 using KifuwarabeGo2026.GameOasis.Gui.Application;
-using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.InitialPosition;
+using KifuwarabeGo2026.Reference.PlayerEngine.Go.GtpExtensions.InitialPosition;
 using KifuwarabeGo2026.Reference.PlayDomain.Go;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.SelectEntry;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.StickyNote;
