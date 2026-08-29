@@ -10,6 +10,7 @@ using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.BoardAndReview;
 using KifuwarabeGo2026.Reference.PlayDomain.Go;
 using KifuwarabeGo2026.Reference.PlayRoomGui.Common;
+using KifuwarabeGo2026.Reference.PlayRoomGui.Go;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
@@ -49,19 +50,15 @@ public sealed class BoardRenderer : IDisposable
     }
     public static bool TryGetBoardIntersection(Point point, int boardSize, out Point intersection)
     {
-        var layout = GetBoardLayout(boardSize);
-        var nearestX = (int)MathF.Round((point.X - layout.Start.X) / layout.Cell);
-        var nearestY = (int)MathF.Round((point.Y - layout.Start.Y) / layout.Cell);
-        if (nearestX < 0 || nearestX >= boardSize || nearestY < 0 || nearestY >= boardSize)
+        var geometry = GetBoardGeometry(boardSize);
+        if (!geometry.TryGetIntersection(new GoBoardScreenPoint(point.X, point.Y), out var boardPoint))
         {
             intersection = Point.Zero;
             return false;
         }
 
-        var center = BoardPoint(layout.Start, layout.Cell, nearestX, nearestY);
-        var closeEnough = Vector2.Distance(new Vector2(point.X, point.Y), center) <= Math.Max(16f, layout.Cell * 0.42f);
-        intersection = new Point(nearestX, nearestY);
-        return closeEnough;
+        intersection = new Point(boardPoint.X, boardPoint.Y);
+        return true;
     }
 
     /// <summary>
@@ -466,12 +463,14 @@ public sealed class BoardRenderer : IDisposable
 
     private static (Vector2 Start, float Cell) GetBoardLayout(int boardSize)
     {
-        var boardMargin = GetBoardMargin(boardSize);
-        var playable = BoardBounds.Width - boardMargin * 2;
-        var cell = playable / (boardSize - 1);
-        var start = new Vector2(BoardBounds.X + boardMargin, BoardBounds.Y + boardMargin);
-        return (start, cell);
+        var geometry = GetBoardGeometry(boardSize);
+        return (new Vector2(geometry.Start.X, geometry.Start.Y), geometry.Cell);
     }
+
+    private static GoBoardGeometry GetBoardGeometry(int boardSize) =>
+        GoBoardGeometry.Create(
+            boardSize,
+            new GoBoardViewport(BoardBounds.X, BoardBounds.Y, BoardBounds.Width, BoardBounds.Height));
 
     private static float GetBoardMargin(int boardSize) => boardSize switch
     {

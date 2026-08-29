@@ -177,6 +177,15 @@ internal static class PortabilityChecks
                 state.TimelineIndex == 1 &&
                 state.TimelineMaximum == 3,
             "The Go Play Room view state must capture board, turn, result, and timeline display data.");
+
+        var geometry = GoBoardGeometry.Create(19, new GoBoardViewport(88, 84, 912, 912));
+        Require(geometry.Start == new GoBoardScreenPoint(138, 134) && geometry.Cell == 812f / 18f,
+            "The Go board geometry must preserve the existing 19x19 board layout.");
+        Require(geometry.TryGetIntersection(geometry.GetScreenPoint(new GoPoint(3, 4)), out var hit) &&
+                hit == new GoPoint(3, 4),
+            "The Go board geometry must map an intersection center back to its board coordinate.");
+        Require(!geometry.TryGetIntersection(new GoBoardScreenPoint(110, 110), out _),
+            "The Go board geometry must reject clicks outside the intersection hit radius.");
     }
 
     private static void VerifyGtpPlayerEngineSeparation(Assembly gtpFormalAdapterAssembly, Assembly playerEngineAdapterAssembly)
