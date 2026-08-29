@@ -279,10 +279,10 @@ public class Game1 : Game
             PlayPlaceStoneSound,
             () => _lobbyGuiController.SaveGtpEngines(_session.GtpEngineProfiles),
             OpenGtpLog);
-        var playRoomLauncher = new InProcessPlayRoomLauncher();
-        playRoomLauncher.Register(PlayRoomIds.Match, GameOasisOfficialNames.Go, LaunchLocalMatchInProcess);
-        playRoomLauncher.Register(PlayRoomIds.BoardEditor, GameOasisOfficialNames.Go, LaunchBoardEditorInProcess);
-        playRoomLauncher.Register(PlayRoomIds.Review, GameOasisOfficialNames.Go, LaunchReviewInProcess);
+        var playRoomLauncher = GoPlayRoomComposition.CreateInProcessLauncher(
+            LaunchLocalMatchInProcess,
+            LaunchBoardEditorInProcess,
+            LaunchReviewInProcess);
         playRoomLauncher.Register(PlayRoomIds.Match, GameOasisOfficialNames.Ponnuki, LaunchPonnukiInProcess);
         _playRoomLauncher = playRoomLauncher;
 

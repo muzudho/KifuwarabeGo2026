@@ -10,6 +10,7 @@ using KifuwarabeGo2026.Reference.PlayDomain.Go;
 using KifuwarabeGo2026.Reference.PlayRoomGui.Go;
 using System;
 using System.Text.Json;
+using System.Linq;
 
 internal static class PlayRoomLaunchChecks
 {
@@ -17,6 +18,14 @@ internal static class PlayRoomLaunchChecks
     {
         Require(typeof(IPlayRoomLauncher).Namespace == "KifuwarabeGo2026.PlayRoom.Launching",
             "The play-room launch boundary must be identifiable by its namespace.");
+        Require(typeof(IPlayRoomLauncher).Assembly.GetName().Name == "KifuwarabeGo2026.Reference.PlayRoomGui.Common" &&
+                typeof(InProcessPlayRoomLauncher).Assembly == typeof(IPlayRoomLauncher).Assembly,
+            "The game-neutral play-room launcher boundary must be owned by Reference.PlayRoomGui.Common.");
+        var goCompositionAssembly = typeof(GoPlayRoomComposition).Assembly;
+        Require(goCompositionAssembly.GetName().Name == "KifuwarabeGo2026.Reference.PlayRoomGui.Go" &&
+                !goCompositionAssembly.GetReferencedAssemblies().Any(reference =>
+                    reference.Name is "KifuwarabeGo2026.LobbyGui" or "KifuwarabeGo2026.GameOasis.Gui"),
+            "The Go play-room composition must be owned by Reference.PlayRoomGui.Go without Lobby or compatibility-GUI references.");
         var launcher = new InProcessPlayRoomLauncher();
         PlayRoomLaunchRequest? received = null;
         launcher.Register(PlayRoomIds.Match, GameOasisOfficialNames.Go, request =>
@@ -37,6 +46,15 @@ internal static class PlayRoomLaunchChecks
         var unsupported = launcher.Launch(request with { Version = 2, RequestId = "request-3" });
         Require(unsupported.Status == PlayRoomLaunchStatus.Rejected && unsupported.ErrorCode == "unsupported-launch-version",
             "Unsupported launch contract version was accepted.");
+
+        var composedLauncher = GoPlayRoomComposition.CreateInProcessLauncher(
+            launchRequest => PlayRoomLaunchResult.Started(launchRequest.RequestId, "match"),
+            launchRequest => PlayRoomLaunchResult.Started(launchRequest.RequestId, "editor"),
+            launchRequest => PlayRoomLaunchResult.Started(launchRequest.RequestId, "review"));
+        Require(composedLauncher.Launch(CreateRequest("go-match", PlayRoomIds.Match, GameOasisOfficialNames.Go)).SessionId == "match" &&
+                composedLauncher.Launch(CreateRequest("go-editor", PlayRoomIds.BoardEditor, GameOasisOfficialNames.Go)).SessionId == "editor" &&
+                composedLauncher.Launch(CreateRequest("go-review", PlayRoomIds.Review, GameOasisOfficialNames.Go)).SessionId == "review",
+            "The Lobby-independent Go composition did not register all Go play-room handlers.");
 
         VerifySavedGoLaunchRequest();
         VerifySavedGoReviewLaunchRequest();

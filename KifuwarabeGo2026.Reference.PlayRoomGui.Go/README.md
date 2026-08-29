@@ -15,3 +15,5 @@ Protocol Gの`GuiBoardView`は公開GUI契約なので、このプロジェク�
 Review Roomでは、起動要求の`InitialPosition`にある公開SGF文書もPlanへ保持します。SGFの構文解釈は外側のFormalAdapter接続点が担当し、このプロジェクトはSGF実装へ依存しません。
 
 Computer参加者は、任意の公開`PlayerConnection`文書から解決済みGTPプロセス接続を`GoPlayerConnectionPlan`へ取り込みます。LobbyのEngine Profileを参照せず、保存済み要求だけから実行ファイル、作業ディレクトリ、引数、ログ設定、初期局面Profile、GUIオプションを再構成できます。
+
+`GoPlayRoomComposition`はMatch、Board Editor、Reviewの囲碁Handlerをゲーム非依存Launcherへ登録する構成点です。Lobby GUIや互換`Game1`を参照せず、外側から渡されたHandlerだけを公開Room種別へ結び付けます。
