@@ -11,3 +11,5 @@ SGFとゲームオアシスの棋譜・局面契約を接続するフォーマ�
 * `SgfDocumentParser`と`SgfDocumentWriter`は、GUI、Go型、ファイルシステムに依存せず、SGFのエスケープとCollection全体を往復します。
 
 現行GUIの`GoGameRecord`への意味変換はまだ切り替えていません。囲碁座標や棋譜への縮約は、文書の損失なし往復とは別の`FormalAdapter.Sgf.Go`境界で行います。
+
+`Go`名前空間は、共有の`GoPoint`と`GoStone`だけに依存する囲碁向け境界です。`SgfCoordinate`、中立な`SgfGoGameRecord`、セットアップ石、着手・パス、持ち時間、コメント、解析JSON原文を扱います。`SgfGoGameRecordConverter`は最初のゲーム木の主手順を明示的に中立棋譜へ縮約し、文書モデルそのものに保持された変化図を破壊しません。

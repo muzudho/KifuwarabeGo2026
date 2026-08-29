@@ -5,4 +5,7 @@
     <Nullable>enable</Nullable>
     <Description>Formal adapter boundary for Smart Game Format documents.</Description>
   </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation\KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation.csproj" />
+  </ItemGroup>
 </Project>

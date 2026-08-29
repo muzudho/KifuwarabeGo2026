@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.GameOasis.Gui.Sgf;
+namespace KifuwarabeGo2026.FormalAdapter.Sgf.Go;
 
 using KifuwarabeGo2026.Shared.Domain;
 using System;

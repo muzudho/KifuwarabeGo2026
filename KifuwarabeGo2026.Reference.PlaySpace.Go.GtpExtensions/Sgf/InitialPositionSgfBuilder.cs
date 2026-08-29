@@ -3,7 +3,6 @@ namespace KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Sgf;
 using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.InitialPosition;
 using KifuwarabeGo2026.Shared.Domain;
 using System.Globalization;
-using System.Text;
 
 /// <summary>
 /// Builds a minimal SGF root node for an initial position without performing file I/O.
@@ -14,53 +13,32 @@ public static class InitialPositionSgfBuilder
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var builder = new StringBuilder("(;GM[1]FF[4]CA[UTF-8]");
-        AppendProperty(builder, "SZ", request.BoardSize.ToString(CultureInfo.InvariantCulture));
-        AppendProperty(builder, "KM", request.Komi.ToString(CultureInfo.InvariantCulture));
-        AppendProperty(builder, "PL", request.StartingTurn == GoStone.Black ? "B" : "W");
-        AppendSetupStones(builder, request, GoStone.Black, "AB");
-        AppendSetupStones(builder, request, GoStone.White, "AW");
-        builder.Append(')').Append('\n');
-        return new InitialPositionDocument("initial-position.sgf", builder.ToString());
+        var document = new SgfDocument();
+        var tree = new SgfGameTree();
+        var root = new SgfNode();
+        root.Properties.Add(new SgfProperty("GM", ["1"]));
+        root.Properties.Add(new SgfProperty("FF", ["4"]));
+        root.Properties.Add(new SgfProperty("CA", ["UTF-8"]));
+        root.Properties.Add(new SgfProperty("SZ", [request.BoardSize.ToString(CultureInfo.InvariantCulture)]));
+        root.Properties.Add(new SgfProperty("KM", [request.Komi.ToString(CultureInfo.InvariantCulture)]));
+        root.Properties.Add(new SgfProperty("PL", [request.StartingTurn == GoStone.Black ? "B" : "W"]));
+        AddSetupStones(root, request, GoStone.Black, "AB");
+        AddSetupStones(root, request, GoStone.White, "AW");
+        tree.Sequence.Add(root);
+        document.GameTrees.Add(tree);
+        return new InitialPositionDocument("initial-position.sgf", SgfDocumentWriter.Write(document) + "\n");
     }
 
-    private static void AppendSetupStones(
-        StringBuilder builder,
+    private static void AddSetupStones(
+        SgfNode root,
         InitialPositionRequest request,
         GoStone stone,
         string propertyName)
     {
         var matchingStones = request.SetupStones.Where(setupStone => setupStone.Stone == stone).ToArray();
-        if (matchingStones.Length == 0)
-        {
-            return;
-        }
-
-        builder.Append(propertyName);
-        foreach (var setupStone in matchingStones)
-        {
-            builder.Append('[')
-                .Append(FormatPoint(setupStone.Point, request.BoardSize))
-                .Append(']');
-        }
+        if (matchingStones.Length > 0)
+            root.Properties.Add(new SgfProperty(
+                propertyName,
+                matchingStones.Select(setupStone => SgfCoordinate.FormatPoint(setupStone.Point, request.BoardSize))));
     }
-
-    private static string FormatPoint(GoPoint point, int boardSize)
-    {
-        if (point.X < 0 || point.X >= boardSize || point.Y < 0 || point.Y >= boardSize)
-        {
-            throw new ArgumentOutOfRangeException(nameof(point), point, "Point is outside the SGF board.");
-        }
-
-        return $"{(char)('a' + point.X)}{(char)('a' + point.Y)}";
-    }
-
-    private static void AppendProperty(StringBuilder builder, string name, string value)
-    {
-        builder.Append(name).Append('[').Append(EscapeValue(value)).Append(']');
-    }
-
-    private static string EscapeValue(string value) =>
-        value.Replace("\\", "\\\\", StringComparison.Ordinal)
-            .Replace("]", "\\]", StringComparison.Ordinal);
 }

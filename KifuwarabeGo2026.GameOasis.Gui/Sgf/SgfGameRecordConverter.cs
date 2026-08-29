@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.Json;
 
@@ -176,7 +177,16 @@ public static class SgfGameRecordConverter
     {
         ArgumentNullException.ThrowIfNull(sgf);
 
-        var nodes = new Parser(sgf).ParseMainSequence();
+        List<Dictionary<string, List<string>>> nodes;
+        try
+        {
+            var document = SgfDocumentParser.Parse(sgf);
+            nodes = document.GameTrees[0].Sequence.Select(ToPropertyDictionary).ToList();
+        }
+        catch (KifuwarabeGo2026.FormalAdapter.Sgf.Document.SgfParseException exception)
+        {
+            throw new SgfParseException(exception.Message);
+        }
         if (nodes.Count == 0)
         {
             throw new SgfParseException("SGF game tree has no nodes.");
@@ -485,6 +495,22 @@ public static class SgfGameRecordConverter
         }
     }
 
+    private static Dictionary<string, List<string>> ToPropertyDictionary(SgfNode node)
+    {
+        var properties = new Dictionary<string, List<string>>(StringComparer.Ordinal);
+        foreach (var property in node.Properties)
+        {
+            if (!properties.TryGetValue(property.Identifier, out var values))
+            {
+                values = [];
+                properties.Add(property.Identifier, values);
+            }
+            values.AddRange(property.Values);
+        }
+        return properties;
+    }
+
+    [Obsolete("GUI SGF parsing is provided by FormalAdapter.Sgf.Document.")]
     private sealed class Parser
     {
         private readonly string _text;

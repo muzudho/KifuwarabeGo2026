@@ -1,6 +1,6 @@
 # GTP・CGOS・SGFのFormalAdapter移行調査・計画
 
-状態：作業段階0完了・作業段階1実装完了・作業段階2実装完了（2026年8月29日）
+状態：作業段階0・1・2完了、作業段階3実装中（2026年8月29日）
 
 ## 目的
 
@@ -354,9 +354,25 @@ dotnet KifuwarabeGo2026.Tests.GameOasis.Gui.Portability\bin\Release\net8.0\Kifuw
 
 ### 作業段階3：SGFのGo変換を移す
 
+状態：中立Go境界と読込接続完了・GUI書出し移行前（2026年8月29日）
+
 `SgfCoordinate`、初期局面SGF生成、Go棋譜との変換を`FormalAdapter.Sgf.Go`へ集約します。GUI互換`GoGameRecord`を直接参照しない中立な棋譜投影、またはGUI側の薄い変換口を定めます。CGOS解析拡張は別の`Kifuwarabe`拡張層へ分けます。
 
 完了条件：GUI Coreの`Sgf`フォルダーから形式解析が消え、GUIは文書モデルと変換サービスだけを利用する。既存SGF回帰試験とReview Play Room試験がPASSする。
+
+#### 第1縦切りの実施記録
+
+* `SgfCoordinate`をGUI Coreから`KifuwarabeGo2026.FormalAdapter.Sgf.Go`へ物理移動した。
+* GUIやCGOS型に依存しない`SgfGoGameRecord`、`SgfGoSetupStone`、`SgfGoMove`を追加した。
+* `SgfGoGameRecordConverter`でルート情報、9・13・19路、コミ、持ち時間、初期配置、着手、パス、コメント、BL/WL、CC/KFW/KFA原文を文書モデルと相互変換できるようにした。
+* 解析JSONはフォーマル層で内容を決めつけず、プロパティ識別子と原文を保持する。GUI表示用解析は従来どおりGUI側に残した。
+* 中立棋譜への投影は最初のゲーム木の主手順だけに縮約する。複数ゲーム木と変化図は`SgfDocument`には残り、縮約操作と損失なし文書操作を区別した。
+* GTP `loadsgf`用の`InitialPositionSgfBuilder`を、文字列の手組みではなく共通`SgfDocumentWriter`利用へ切り替えた。
+* 現行GUIの読込入口を共通`SgfDocumentParser`へ接続した。意味変換、CGOS解析表示、互換例外はGUI側に維持した。
+
+専用`Tests.FormalAdapter.Sgf`は、座標、初期配置、主手順、パス、持ち時間、コメント、解析原文、変化図を含む投影で`PASS`しました。全ソリューションReleaseビルドも警告0件、エラー0件です。
+
+次の縦切りでは、GUI `GoGameRecord`と`SgfGoGameRecord`の薄い写像を完成させ、GUI側の独自SGFライターと使用されなくなった旧パーサーを削除します。その後、GUI移植性試験とReview経路を再確認して作業段階3を完了へ更新します。
 
 ### 作業段階4：CGOS純粋プロトコルを抽出する
 
@@ -413,9 +429,9 @@ CGOSサーバー行のパーサー、クライアントコマンドのフォー�
 ## 実装再開地点
 
 ```text
-現在の状態：作業段階0、1、2完了。全回帰試験PASS
-次の最小作業：作業段階3としてSGF座標とGo棋譜変換の境界を設計する
-次の実装候補：SgfCoordinate、SGF文書と中立Go棋譜の変換
-移行先：KifuwarabeGo2026.FormalAdapter.Sgf.Go
+現在の状態：作業段階0、1、2完了。作業段階3の中立Go境界とGUI読込接続まで完了
+次の最小作業：GUI GoGameRecordとの薄い双方向写像へ書出し経路を切り替える
+次の整理対象：GUI内の旧SGFライターと未使用旧パーサー
+移行先：KifuwarabeGo2026.FormalAdapter.Sgf.Go、GUI側にはCGOS解析表示変換だけを残す
 禁止事項：GTPプロジェクト全体の一括改名、CGOS Hostの一括分解、SgfGameRecordConverterの型ごとの単純移動を同時に行わない
 ```

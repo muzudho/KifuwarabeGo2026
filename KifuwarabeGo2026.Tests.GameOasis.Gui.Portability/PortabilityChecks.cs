@@ -58,6 +58,7 @@ internal static class PortabilityChecks
         var coreAssembly = typeof(Game1).Assembly;
         var gtpExtensionsAssembly = typeof(GtpExtensionsAssembly).Assembly;
         var gtpFormalAdapterAssembly = typeof(IGtpCommandSession).Assembly;
+        var sgfFormalAdapterAssembly = typeof(KifuwarabeGo2026.FormalAdapter.Sgf.Document.SgfDocument).Assembly;
         var gtpCommunicationAssembly = typeof(KifuwarabeGtpPlayerProtocol).Assembly;
         var legacyGoMatchAssembly = typeof(MatchSession).Assembly;
         var conciergeAssembly = typeof(GameOasisConcierge).Assembly;
@@ -70,6 +71,9 @@ internal static class PortabilityChecks
         VerifyGtpExtensionsAssembly(gtpExtensionsAssembly, gtpCommunicationAssembly);
         Require(gtpFormalAdapterAssembly.GetName().Name == "KifuwarabeGo2026.FormalAdapter.Gtp",
             "GTP protocol primitives must be owned by FormalAdapter.Gtp.");
+        Require(typeof(KifuwarabeGo2026.FormalAdapter.Sgf.Go.SgfCoordinate).Assembly == sgfFormalAdapterAssembly &&
+                typeof(KifuwarabeGo2026.FormalAdapter.Sgf.Go.SgfGoGameRecordConverter).Assembly == sgfFormalAdapterAssembly,
+            "SGF Go coordinates and neutral game projection must be owned by FormalAdapter.Sgf.");
         Require(typeof(GtpEngineClient).Assembly == gtpFormalAdapterAssembly &&
                 typeof(ProcessGtpCommandTransport).Assembly == gtpFormalAdapterAssembly &&
                 typeof(GtpOptionSchemaDocument).Assembly == gtpFormalAdapterAssembly,

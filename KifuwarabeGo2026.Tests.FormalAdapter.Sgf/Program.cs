@@ -1,4 +1,6 @@
 using KifuwarabeGo2026.FormalAdapter.Sgf.Document;
+using KifuwarabeGo2026.FormalAdapter.Sgf.Go;
+using KifuwarabeGo2026.Shared.Domain;
 
 var collection = SgfDocumentParser.Parse(
     "  (;FF[4]GM[1]XX[first][second]C[close\\] slash\\\\ line\\\r\njoined];B[aa](;W[bb]C[left])(;W[cc]C[right]))\r\n" +
@@ -47,7 +49,27 @@ created.GameTrees.Add(createdTree);
 Require(SgfDocumentWriter.Write(created) == "(;KFW[{\"future\":true}]C[first\nsecond])",
     "A document assembled through the public model must be writable with normalized line endings.");
 
-Console.WriteLine("PASS: SGF documents retained collections, variations, unknown properties, multiple values, and escaped content across canonical round trips.");
+var goRecord = SgfGoGameRecordConverter.Parse(
+    "(;GM[1]FF[4]SZ[9]KM[6.5]TM[600]PB[Black]PW[White]AB[aa][bb]C[root]" +
+    ";B[cc]BL[590]C[first]CC[{\"future\":true}];W[]WL[580](;B[dd])(;B[ee]))");
+Require(goRecord.BoardSize == 9 && goRecord.Komi == 6.5m && goRecord.TimeLimit == TimeSpan.FromSeconds(600),
+    "Go root settings must project from SGF.");
+Require(goRecord.SetupStones.SequenceEqual([
+    new SgfGoSetupStone(GoStone.Black, new GoPoint(0, 0)),
+    new SgfGoSetupStone(GoStone.Black, new GoPoint(1, 1))]),
+    "Go setup stones must project from SGF.");
+Require(goRecord.Moves.Count == 2 && goRecord.Moves[0].Point == new GoPoint(2, 2) && goRecord.Moves[1].Point is null,
+    "Moves and passes from the main sequence must project without following variations.");
+Require(goRecord.Moves[0].AnalysisPropertyIdentifier == "CC" && goRecord.Moves[0].AnalysisJson == "{\"future\":true}",
+    "Analysis JSON must remain opaque in the neutral Go projection.");
+var goRoundTrip = SgfGoGameRecordConverter.Parse(SgfGoGameRecordConverter.Write(goRecord, "FormalAdapterSgfTest:1"));
+Require(goRoundTrip.Moves.SequenceEqual(goRecord.Moves) && goRoundTrip.SetupStones.SequenceEqual(goRecord.SetupStones),
+    "The neutral Go record must round-trip through the SGF document model.");
+Require(SgfCoordinate.FormatPoint(new GoPoint(8, 8), 9) == "ii" &&
+        SgfCoordinate.TryParsePoint("", 9, out var pass) && pass is null,
+    "SGF Go coordinates and pass must use the FormalAdapter boundary.");
+
+Console.WriteLine("PASS: SGF documents and neutral Go records retained collections, variations, properties, setup stones, moves, passes, time, and opaque analysis.");
 
 static void RequireEquivalent(SgfDocument expected, SgfDocument actual)
 {
