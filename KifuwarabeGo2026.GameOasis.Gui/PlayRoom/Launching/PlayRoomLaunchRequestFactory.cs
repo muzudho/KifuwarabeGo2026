@@ -96,5 +96,19 @@ public static class PlayRoomLaunchRequestFactory
     private static PlayRoomParticipant CreateParticipant(string roleId, string entryId, string displayName, string kind, GtpEngineProfile? engine) =>
         new(roleId, entryId, displayName, kind, engine?.Id ?? "", engine is null ? null :
             new ContractDocument("application/json", GameOasisOfficialNames.Root + ".gtp-engine-options.v1",
-                JsonSerializer.Serialize(engine.GuiOptions, JsonOptions)));
+                JsonSerializer.Serialize(engine.GuiOptions, JsonOptions)), engine is null ? null :
+            new ContractDocument("application/json", PlayerConnectionSchemas.GtpProcessV1,
+                JsonSerializer.Serialize(new GtpProcessConnectionDocument(
+                    engine.ExecutablePath,
+                    engine.WorkingDirectoryModel.Value,
+                    engine.Arguments,
+                    engine.EnableGtpLog,
+                    engine.InitialPositionProfileId), JsonOptions)));
+
+    private sealed record GtpProcessConnectionDocument(
+        string ExecutablePath,
+        string WorkingDirectory,
+        string Arguments,
+        bool EnableGtpLog,
+        string InitialPositionProfileId);
 }

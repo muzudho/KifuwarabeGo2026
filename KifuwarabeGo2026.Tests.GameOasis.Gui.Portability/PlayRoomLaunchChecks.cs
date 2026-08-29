@@ -91,7 +91,20 @@ internal static class PlayRoomLaunchChecks
             new PlaySpaceTypeId(GameOasisOfficialNames.Go),
             configuration,
             null,
-            [new PlayRoomParticipant("black", "entry-black", "BLACK", "human", "", null)]);
+            [
+                new PlayRoomParticipant("black", "entry-black", "BLACK", "human", "", null),
+                new PlayRoomParticipant(
+                    "white",
+                    "entry-white",
+                    "WHITE ENGINE",
+                    "computer",
+                    "engine-white",
+                    new ContractDocument("application/json", GameOasisOfficialNames.Root + ".gtp-engine-options.v1", "{\"random-move\":\"star\"}"),
+                    new ContractDocument(
+                        "application/json",
+                        PlayerConnectionSchemas.GtpProcessV1,
+                        "{\"executablePath\":\"engines/white.exe\",\"workingDirectory\":\"engines\",\"arguments\":\"--gtp\",\"enableGtpLog\":true,\"initialPositionProfileId\":\"auto\"}")),
+            ]);
 
         var savedJson = JsonSerializer.Serialize(original);
         var restored = JsonSerializer.Deserialize<PlayRoomLaunchRequest>(savedJson)
@@ -101,7 +114,8 @@ internal static class PlayRoomLaunchChecks
         var launchPlan = plan ?? throw new InvalidOperationException("The restored Go launch plan was null.");
         Require(launchPlan.BoardSize == 9 && launchPlan.Komi == 7.5m && launchPlan.StartingPlayer == GoStone.White &&
                 launchPlan.SetupStones.Count == 2 && launchPlan.MainTime == TimeSpan.FromSeconds(90) &&
-                launchPlan.Participants.Count == 1,
+                launchPlan.Participants.Count == 2 && launchPlan.PlayerConnections.Count == 1 &&
+                launchPlan.PlayerConnections[0].ExecutablePath == "engines/white.exe",
             "The restored Go launch plan did not preserve configuration and participant data.");
 
         var session = new GoAppSession();
@@ -110,7 +124,10 @@ internal static class PlayRoomLaunchChecks
         var view = session.CreatePlayRoomViewState();
         Require(view.BoardSize == 9 && view.CurrentTurn == GoStone.White &&
                 view.GetStone(2, 3) == GoStone.Black && view.GetStone(4, 5) == GoStone.White &&
-                session.Komi == 7.5m && session.MainTime == TimeSpan.FromSeconds(90),
+                session.Komi == 7.5m && session.MainTime == TimeSpan.FromSeconds(90) &&
+                session.GetPlayerKind(GoStone.White) == GoPlayerKind.Computer &&
+                session.GetGtpEngineProfile(GoStone.White).ExecutablePath == "engines/white.exe" &&
+                session.GetGtpEngineProfile(GoStone.White).Arguments == "--gtp",
             "A fresh Go play-room session did not start from the restored launch request configuration.");
 
         var wrongGame = restored with { GameId = GameOasisOfficialNames.Ponnuki };

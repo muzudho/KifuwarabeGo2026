@@ -20,7 +20,13 @@ public sealed record PlayRoomParticipant(
     string DisplayName,
     string Kind,
     string EngineProfileId,
-    ContractDocument? EngineOptions);
+    ContractDocument? EngineOptions,
+    ContractDocument? PlayerConnection = null);
+
+public static class PlayerConnectionSchemas
+{
+    public const string GtpProcessV1 = GameOasisOfficialNames.Root + ".gtp-process-connection.v1";
+}
 
 public enum PlayRoomLaunchStatus
 {

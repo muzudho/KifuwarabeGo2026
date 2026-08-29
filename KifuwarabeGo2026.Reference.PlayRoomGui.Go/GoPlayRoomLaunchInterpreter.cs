@@ -7,6 +7,18 @@ using KifuwarabeGo2026.Reference.PlayDomain.Go;
 
 public sealed record GoLaunchSetupStone(GoPoint Point, GoStone Stone);
 
+public sealed record GoPlayerConnectionPlan(
+    string RoleId,
+    string EntryId,
+    string DisplayName,
+    string EngineProfileId,
+    string ExecutablePath,
+    string WorkingDirectory,
+    string Arguments,
+    bool EnableGtpLog,
+    string InitialPositionProfileId,
+    ContractDocument? EngineOptions);
+
 /// <summary>保存・転送可能な起動要求から得た、Lobby内部型に依存しない囲碁GUI開始Planです。</summary>
 public sealed record GoPlayRoomLaunchPlan(
     string RequestId,
@@ -19,6 +31,7 @@ public sealed record GoPlayRoomLaunchPlan(
     IReadOnlyList<GoLaunchSetupStone> SetupStones,
     TimeSpan MainTime,
     IReadOnlyList<PlayRoomParticipant> Participants,
+    IReadOnlyList<GoPlayerConnectionPlan> PlayerConnections,
     ContractDocument? InitialPosition);
 
 public static class GoPlayRoomLaunchInterpreter
@@ -95,6 +108,33 @@ public static class GoPlayRoomLaunchInterpreter
                 PlayRoomIds.Review => GoPlayRoomActivity.Reviewing,
                 _ => GoPlayRoomActivity.Playing,
             };
+            var playerConnections = new List<GoPlayerConnectionPlan>();
+            foreach (var participant in request.Participants)
+            {
+                if (!string.Equals(participant.Kind, "computer", StringComparison.OrdinalIgnoreCase))
+                    continue;
+                if (participant.PlayerConnection is not { } connection)
+                    continue;
+                if (connection.MediaType != "application/json" || connection.SchemaId != PlayerConnectionSchemas.GtpProcessV1)
+                    return Fail("unsupported-player-connection", $"Player connection for role '{participant.RoleId}' is not supported.", out errorCode, out message);
+
+                using var connectionDocument = JsonDocument.Parse(connection.Content);
+                var connectionRoot = connectionDocument.RootElement;
+                var executablePath = connectionRoot.GetProperty("executablePath").GetString() ?? "";
+                if (string.IsNullOrWhiteSpace(executablePath))
+                    return Fail("missing-player-executable", $"Player connection for role '{participant.RoleId}' has no executable path.", out errorCode, out message);
+                playerConnections.Add(new GoPlayerConnectionPlan(
+                    participant.RoleId,
+                    participant.EntryId,
+                    participant.DisplayName,
+                    participant.EngineProfileId,
+                    executablePath,
+                    connectionRoot.TryGetProperty("workingDirectory", out var workingDirectory) ? workingDirectory.GetString() ?? "" : "",
+                    connectionRoot.TryGetProperty("arguments", out var arguments) ? arguments.GetString() ?? "" : "",
+                    !connectionRoot.TryGetProperty("enableGtpLog", out var enableLog) || enableLog.GetBoolean(),
+                    connectionRoot.TryGetProperty("initialPositionProfileId", out var initialProfile) ? initialProfile.GetString() ?? "auto" : "auto",
+                    participant.EngineOptions));
+            }
             plan = new GoPlayRoomLaunchPlan(
                 request.RequestId,
                 request.RoomTypeId,
@@ -106,6 +146,7 @@ public static class GoPlayRoomLaunchInterpreter
                 setupStones,
                 TimeSpan.FromMilliseconds(mainTimeMilliseconds),
                 request.Participants.ToArray(),
+                playerConnections,
                 request.InitialPosition);
             return true;
         }
