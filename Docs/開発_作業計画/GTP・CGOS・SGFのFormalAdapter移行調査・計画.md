@@ -540,7 +540,7 @@ GUIの構造化通知経路は、通知を直接switchせず`CgosGoEventProjecto
 
 GUIの`CgosConnectionProcess`から、CGOSエラー、接続、ログイン、setup、play、genmove、gameover、Admin、GTP待機に関する部分文字列検索を物理削除しました。GUIは構造化通知を通常経路とし、旧Hostの場合だけ互換アダプターの結果を表示文字列へ写像します。人間向けログ自体は閲覧・保存用に従来どおり残します。
 
-全ソリューションReleaseビルドとFormalAdapter.Cgos専用試験は警告0件、エラー0件、`PASS`です。GUI移植性、Windows非対話、PlayRoom回帰試験は、生成DLLがWindowsアプリケーション制御ポリシーの`0x800711C7`で拒否され、対象再ビルド後の再試行でも起動前に停止しました。コード失敗ではないものの、第6段階の完了判定はこれらの再実行まで保留します。
+全ソリューションReleaseビルドとFormalAdapter.Cgos専用試験は警告0件、エラー0件、`PASS`です。GUI移植性、Windows非対話、PlayRoom回帰試験は、生成DLLがWindowsアプリケーション制御ポリシーの`0x800711C7`で拒否され、対象再ビルド後の再試行でも起動前に停止しました。Code Integrity Operationalログのイベント3033／3077で、ポリシーID`0283ac0f-fff1-49ae-ada1-8a933130cad6`によるEnterprise signing level未達が原因と確認しました。対象DLLにZone.Identifierや破損はなく、同一コピーのSHA-256も一致しています。コード失敗ではないものの、第6段階の完了判定は、管理者側で開発生成物を許可した後の再実行まで保留します。
 
 完了条件：標準出力には機械向け通知だけ、標準エラーには診断だけが流れ、GUI表示と棋譜保存が従来どおり動く。Host異常終了でもGUIが復帰できる。
 
