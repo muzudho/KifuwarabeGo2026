@@ -9,6 +9,7 @@ using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls;
 
 public sealed class LauncherScreen : IDisposable
 {
+    private const int VersionsPerPage = 8;
     private readonly ILauncherGuiPlatform _platform;
     private readonly ILauncherEngine _engine;
     private readonly KfwStationeryDrawingTools _draw;
@@ -21,8 +22,10 @@ public sealed class LauncherScreen : IDisposable
     private readonly StationeryButton _allUpdate = new(new Rectangle(960, 570, 480, 66), "CHECK GUI + ENGINE UPDATES", 0.27f);
     private readonly StationeryButton _versionsButton = new(new Rectangle(480, 570, 430, 66), "MANAGE INSTALLED VERSIONS", 0.27f);
     private readonly StationeryButton _back = new(new Rectangle(1310, 205, 170, 58), "BACK", 0.34f);
-    private readonly StationeryButton _open = new(new Rectangle(850, 930, 220, 58), "OPEN FOLDER", 0.28f);
-    private readonly StationeryButton _remove = new(new Rectangle(1100, 930, 300, 58), "UNINSTALL", 0.32f);
+    private readonly StationeryButton _previousPage = new(new Rectangle(560, 815, 220, 52), "PREVIOUS", 0.27f);
+    private readonly StationeryButton _nextPage = new(new Rectangle(1140, 815, 220, 52), "NEXT", 0.30f);
+    private readonly StationeryButton _open = new(new Rectangle(850, 895, 220, 58), "OPEN FOLDER", 0.28f);
+    private readonly StationeryButton _remove = new(new Rectangle(1100, 895, 300, 58), "UNINSTALL", 0.32f);
     private readonly StationeryButton _confirm = new(new Rectangle(1010, 700, 210, 58), "UNINSTALL", 0.28f);
     private readonly StationeryButton _cancel = new(new Rectangle(760, 700, 210, 58), "CANCEL", 0.34f);
     private readonly GearButton _settingsButton = new(new Rectangle(1740, 920, 90, 72));
@@ -199,8 +202,7 @@ public sealed class LauncherScreen : IDisposable
     private void DrawVersions(Point mouse)
     {
         _draw.DrawText("INSTALLED VERSIONS", new Vector2(120, 220), Color.White, 0.56f);
-        const int visible = 9;
-        for (var row = 0; row < visible; row++)
+        for (var row = 0; row < VersionsPerPage; row++)
         {
             var index = _firstVisible + row;
             if (index >= _installed.Count) break;
@@ -218,11 +220,21 @@ public sealed class LauncherScreen : IDisposable
                 new Rectangle(750, bounds.Y + 4, 210, 48), item.CanUninstall ? new Color(151, 255, 215) : new Color(255, 190, 150), 0.54f);
             _draw.DrawFittedText(item.DirectoryPath, new Rectangle(980, bounds.Y + 8, 470, 40), new Color(150, 171, 178), 0.24f);
         }
+        var pageCount = Math.Max(1, (_installed.Count + VersionsPerPage - 1) / VersionsPerPage);
+        var currentPage = Math.Min(pageCount, _firstVisible / VersionsPerPage + 1);
+        var firstItem = _installed.Count == 0 ? 0 : _firstVisible + 1;
+        var lastItem = Math.Min(_firstVisible + VersionsPerPage, _installed.Count);
+        _previousPage.IsEnabled = !_loadingVersions && _firstVisible > 0;
+        _nextPage.IsEnabled = !_loadingVersions && _firstVisible + VersionsPerPage < _installed.Count;
+        _previousPage.Draw(mouse, _draw);
+        _nextPage.Draw(mouse, _draw);
+        _draw.DrawFittedText($"PAGE {currentPage} / {pageCount}    {firstItem}-{lastItem} OF {_installed.Count}",
+            new Rectangle(800, 815, 320, 52), new Color(178, 219, 226), 0.48f);
         _back.Draw(mouse, _draw); _open.Draw(mouse, _draw);
         _remove.IsEnabled = RemovalTargets.Count > 0 && !_busy;
         _remove.Draw(mouse, _draw);
-        _draw.DrawFittedText("CLICK/SPACE: MARK   UP/DOWN: MOVE   O: OPEN   DELETE: UNINSTALL   ESC: BACK",
-            new Rectangle(120, 850, 1360, 58), new Color(150, 171, 178), 0.50f);
+        _draw.DrawFittedText("CLICK/SPACE: MARK   UP/DOWN: MOVE   LEFT/RIGHT: PAGE   O: OPEN   DELETE: UNINSTALL   ESC: BACK",
+            new Rectangle(120, 855, 1360, 36), new Color(150, 171, 178), 0.42f);
         if (_loadingVersions) DrawLoadingSpinner();
     }
 
@@ -328,9 +340,19 @@ public sealed class LauncherScreen : IDisposable
             if ((click && _back.IsHit(point)) || Pressed(keyboard, Keys.Escape) || GamePadPressed(gamePad, Buttons.B)) _versionsPage = false;
             return;
         }
-        for (var row = 0; row < 9; row++) if (click && new Rectangle(120, 290 + row * 65, 1360, 56).Contains(point)) { Select(_firstVisible + row); ToggleMark(); }
+        for (var row = 0; row < VersionsPerPage; row++)
+        {
+            var index = _firstVisible + row;
+            if (index < _installed.Count && click && new Rectangle(120, 290 + row * 65, 1360, 56).Contains(point))
+            {
+                Select(index);
+                ToggleMark();
+            }
+        }
         if (Pressed(keyboard, Keys.Up) || GamePadPressed(gamePad, Buttons.DPadUp)) Select(_selectedIndex - 1);
         if (Pressed(keyboard, Keys.Down) || GamePadPressed(gamePad, Buttons.DPadDown)) Select(_selectedIndex + 1);
+        if ((click && _previousPage.IsHit(point)) || Pressed(keyboard, Keys.PageUp) || Pressed(keyboard, Keys.Left) || GamePadPressed(gamePad, Buttons.DPadLeft)) NavigatePage(-1);
+        if ((click && _nextPage.IsHit(point)) || Pressed(keyboard, Keys.PageDown) || Pressed(keyboard, Keys.Right) || GamePadPressed(gamePad, Buttons.DPadRight)) NavigatePage(1);
         if (Pressed(keyboard, Keys.Space) || GamePadPressed(gamePad, Buttons.A)) ToggleMark();
         if ((click && _back.IsHit(point)) || Pressed(keyboard, Keys.Escape) || GamePadPressed(gamePad, Buttons.B)) _versionsPage = false;
         else if ((click && _open.IsHit(point)) || Pressed(keyboard, Keys.O)) OpenSelected();
@@ -395,7 +417,19 @@ public sealed class LauncherScreen : IDisposable
     private void OpenSelected() { var item = Selected; if (item is not null) SetStatus(_platform.OpenFolder(item.DirectoryPath) ? "FOLDER OPENED" : "FOLDER COULD NOT BE OPENED"); }
     private void RefreshVersions() { _installed = _engine.GetInstalledVersions(); _markedForRemoval.IntersectWith(_installed.Where(item => item.CanUninstall).Select(Identity)); Select(Math.Min(_selectedIndex, _installed.Count - 1)); }
     private void ToggleMark() { var item = Selected; if (item?.CanUninstall != true) return; var key = Identity(item); if (!_markedForRemoval.Add(key)) _markedForRemoval.Remove(key); }
-    private void Select(int index) { _selectedIndex = _installed.Count == 0 ? 0 : Math.Clamp(index, 0, _installed.Count - 1); if (_selectedIndex < _firstVisible) _firstVisible = _selectedIndex; if (_selectedIndex >= _firstVisible + 9) _firstVisible = _selectedIndex - 8; }
+    private void Select(int index)
+    {
+        _selectedIndex = _installed.Count == 0 ? 0 : Math.Clamp(index, 0, _installed.Count - 1);
+        _firstVisible = _installed.Count == 0 ? 0 : _selectedIndex / VersionsPerPage * VersionsPerPage;
+    }
+    private void NavigatePage(int direction)
+    {
+        if (_installed.Count == 0) return;
+        var pageCount = (_installed.Count + VersionsPerPage - 1) / VersionsPerPage;
+        var currentPage = _firstVisible / VersionsPerPage;
+        var targetPage = Math.Clamp(currentPage + direction, 0, pageCount - 1);
+        Select(targetPage * VersionsPerPage);
+    }
     private InstalledVersion? Selected => _installed.Count == 0 ? null : _installed[Math.Clamp(_selectedIndex, 0, _installed.Count - 1)];
     private IReadOnlyList<InstalledVersion> RemovalTargets => _installed.Where(item => item.CanUninstall && _markedForRemoval.Contains(Identity(item))).ToArray();
     private static string Identity(InstalledVersion item) => $"{item.Product}|{item.DirectoryPath}";
