@@ -572,6 +572,12 @@ GUI、初期局面GTP拡張、ベースライン試験は新しい所有者を�
 
 Windows非対話試験だけは、再生成した試験DLLをWindowsアプリケーション制御が`0x800711C7`で再び拒否したため、起動前に停止しました。対象プロジェクトのRelease再ビルドは警告0件、エラー0件で成功しています。後続調査でWindows 11のSmart App Control強制モードによる未署名DLLの拒否と確定しました。再起動は恒久策ではないため、[Smart App Controlによる再生成DLLブロック調査](../トラブルシューティング/Smart%20App%20Controlによる再生成DLLブロック調査.md)に記載した開発用VM、信頼されたコード署名、またはSmart App Control無効化の方針決定後まで、第7段階の完了判定を保留します。
 
+#### 2026年8月30日のWindows最終回帰再試行
+
+全ソリューションをReleaseで再ビルドし、警告0件、エラー0件を確認しました。GUI移植性およびGTP・CGOS・SGF基準ベクトル、PlayRoom GUIのBoard Editor・Review・Match正常／異常終了、PlayRoom Engineの複数／単一セッション・ライフサイクル・異常終了、Protocol S適合性3ケースはすべて`PASS`しました。
+
+Windows非対話試験だけは、再生成された`KifuwarabeGo2026.Tests.GameOasis.Gui.Windows.exe`がアプリケーション制御ポリシーによりプロセス起動時に遮断され、試験コードへ到達しませんでした。コード回帰を示す失敗ではなく、既知のSmart App Control環境制約が再現した結果です。セキュリティ設定は変更せず、第7段階の最終完了判定を引き続き対応方針決定待ちとします。
+
 ### 作業段階8：GTP Protocol Pアダプターと参照サーバーを分離する
 
 状態：完了（2026年8月30日）
