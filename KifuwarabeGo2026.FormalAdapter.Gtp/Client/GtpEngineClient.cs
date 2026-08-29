@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Reference.Communication.Gtp;
+namespace KifuwarabeGo2026.FormalAdapter.Gtp.Client;
 
 using System;
 using System.Collections.Generic;
@@ -9,6 +9,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using KifuwarabeGo2026.FormalAdapter.Gtp.Options;
 
 public sealed class GtpEngineClient : IAsyncDisposable, IGtpCommandTransport
 {

@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Reference.Communication.Gtp;
+namespace KifuwarabeGo2026.FormalAdapter.Gtp.Client;
 
 using System.Diagnostics;
 using System.Text;

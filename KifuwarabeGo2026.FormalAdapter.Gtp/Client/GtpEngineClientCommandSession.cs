@@ -1,6 +1,6 @@
-namespace KifuwarabeGo2026.Reference.Communication.Gtp;
+namespace KifuwarabeGo2026.FormalAdapter.Gtp.Client;
 
-using KifuwarabeGo2026.Reference.Communication.Gtp.Protocol;
+using KifuwarabeGo2026.FormalAdapter.Gtp.Protocol;
 using System;
 using System.Threading;
 using System.Threading.Tasks;

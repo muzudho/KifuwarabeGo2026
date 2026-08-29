@@ -282,7 +282,7 @@ dotnet KifuwarabeGo2026.Tests.GameOasis.Gui.Portability\bin\Release\net8.0\Kifuw
 
 ### 作業段階1：GTPプリミティブを移す
 
-状態：Protocolプリミティブ移行完了・Client移行前（2026年8月29日）
+状態：実装完了・Application Control解除後の最終再試験待ち（2026年8月29日）
 
 `GtpCommandArgument`、`GtpCommandResult`、`GtpFilePathArgumentStyle`、`IGtpCommandSession`を`FormalAdapter.Gtp.Protocol`へ移します。次にクライアントとプロセストランスポートを移します。
 
@@ -301,7 +301,19 @@ dotnet KifuwarabeGo2026.Tests.GameOasis.Gui.Portability\bin\Release\net8.0\Kifuw
 * GTP、CGOS、SGFベースラインを含む`Tests.GameOasis.Gui.Portability`が`PASS`した。
 * `Tests.GameOasis.Gui.Windows`の非対話Windowsプラットフォーム検査が`PASS`した。
 
-次は`GtpEngineClientCommandSession`、`GtpEngineClient`、`IGtpCommandTransport`、`ProcessGtpCommandTransport`の依存を確認し、実行ファイル名を変えずに`FormalAdapter.Gtp.Client`へ移します。
+#### ClientとOptionsの実施記録
+
+次を`KifuwarabeGo2026.FormalAdapter.Gtp.Client`へ物理移動しました。
+
+* `GtpEngineSettings`
+* `GtpEngineClient`
+* `GtpEngineClientCommandSession`
+* `IGtpCommandTransport`と`GtpCommandResponse`
+* `GtpProcessOptions`と`ProcessGtpCommandTransport`
+
+クライアントから参照される`GtpGuiOptionsDocument`、`GtpOptionSchemaDocument`、`GtpOptionEvaluationDocument`と関連定義は、逆依存を作らないよう同時に`KifuwarabeGo2026.FormalAdapter.Gtp.Options`へ移しました。GUI、GTP拡張、旧GTP通信、試験プロジェクトは新プロジェクトを直接参照します。Hostの実行ファイル名とサーバー実装は変更していません。
+
+移動後のソリューション全体Releaseビルドは警告0件、エラー0件で成功し、子プロセスを使う`Tests.Reference.Communication.Gtp`は`PASS`しました。GUI移植性試験とWindows試験は、今回の移動対象ではない再生成済み`StationeryUI.dll`をWindows Application Controlが`0x800711C7`で遮断したため、検査本体へ入る前で再試験待ちです。
 
 ### 作業段階2：SGF文書モデルを作る
 
@@ -370,9 +382,9 @@ CGOSサーバー行のパーサー、クライアントコマンドのフォー�
 ## 実装再開地点
 
 ```text
-現在の状態：作業段階0完了・作業段階1のProtocolプリミティブ移行完了
-次の最小作業：GTPクライアントとプロセストランスポートの依存境界を確認する
-次の移行候補：GtpEngineClientCommandSession、GtpEngineClient、IGtpCommandTransport、ProcessGtpCommandTransport
-移行先：KifuwarabeGo2026.FormalAdapter.Gtp.Client
+現在の状態：作業段階0完了・作業段階1実装完了・Application Control解除後の最終再試験待ち
+次の最小作業：GUI移植性試験とWindows試験を再実行し、作業段階1を完了へ更新する
+次の実装候補：作業段階2のSGF文書モデル
+移行先：KifuwarabeGo2026.FormalAdapter.Sgf
 禁止事項：GTPプロジェクト全体の一括改名、CGOS Hostの一括分解、SgfGameRecordConverterの型ごとの単純移動を同時に行わない
 ```

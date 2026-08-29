@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Reference.Communication.Gtp;
+namespace KifuwarabeGo2026.FormalAdapter.Gtp.Options;
 
 using System;
 using System.Collections.Generic;

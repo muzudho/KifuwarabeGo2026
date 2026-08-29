@@ -58,7 +58,7 @@ internal static class PortabilityChecks
         var coreAssembly = typeof(Game1).Assembly;
         var gtpExtensionsAssembly = typeof(GtpExtensionsAssembly).Assembly;
         var gtpFormalAdapterAssembly = typeof(IGtpCommandSession).Assembly;
-        var gtpCommunicationAssembly = typeof(GtpEngineClient).Assembly;
+        var gtpCommunicationAssembly = typeof(KifuwarabeGtpPlayerProtocol).Assembly;
         var legacyGoMatchAssembly = typeof(MatchSession).Assembly;
         var conciergeAssembly = typeof(GameOasisConcierge).Assembly;
         var gameOasisApplicationAssembly = typeof(ICatalogDocumentStore).Assembly;
@@ -70,9 +70,10 @@ internal static class PortabilityChecks
         VerifyGtpExtensionsAssembly(gtpExtensionsAssembly, gtpCommunicationAssembly);
         Require(gtpFormalAdapterAssembly.GetName().Name == "KifuwarabeGo2026.FormalAdapter.Gtp",
             "GTP protocol primitives must be owned by FormalAdapter.Gtp.");
-        Require(typeof(GtpEngineClient).Assembly == gtpCommunicationAssembly &&
-                typeof(GtpOptionSchemaDocument).Assembly == gtpCommunicationAssembly,
-            "GTP process communication and option documents must be owned by Reference.Communication.Gtp.");
+        Require(typeof(GtpEngineClient).Assembly == gtpFormalAdapterAssembly &&
+                typeof(ProcessGtpCommandTransport).Assembly == gtpFormalAdapterAssembly &&
+                typeof(GtpOptionSchemaDocument).Assembly == gtpFormalAdapterAssembly,
+            "GTP client, process transport, and option documents must be owned by FormalAdapter.Gtp.");
         Require(typeof(GtpInitialPositionExecutionHost).Assembly == gtpExtensionsAssembly &&
                 typeof(GtpInitialPositionSgfFile).Assembly == gtpExtensionsAssembly,
             "Go initial-position GTP adaptation must be owned by Reference.PlaySpace.Go.GtpExtensions.");

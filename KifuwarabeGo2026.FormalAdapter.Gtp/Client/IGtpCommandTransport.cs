@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Reference.Communication.Gtp;
+namespace KifuwarabeGo2026.FormalAdapter.Gtp.Client;
 
 /// <summary>GTPコマンドの配送方法をプロセス管理から分離する境界です。</summary>
 public interface IGtpCommandTransport
