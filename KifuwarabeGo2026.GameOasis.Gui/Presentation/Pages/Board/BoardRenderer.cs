@@ -147,27 +147,22 @@ public sealed class BoardRenderer : IDisposable
                 whiteboard ? new Color(165, 177, 173, 28) : new Color(246, 196, 113, 42));
         }
 
-        var layout = GetBoardLayout(boardSize);
-        var start = layout.Start;
-        var cell = layout.Cell;
-        var boardMargin = GetBoardMargin(boardSize);
-        var end = new Vector2(BoardBounds.Right - boardMargin, BoardBounds.Bottom - boardMargin);
+        var geometry = CreateBoardGeometry(boardSize);
+        var start = new Vector2(geometry.Start.X, geometry.Start.Y);
+        var cell = geometry.Cell;
+        var staticPresentation = GoBoardStaticPresenter.Create(
+            geometry,
+            new GoBoardViewport(boardOuter.X, boardOuter.Y, boardOuter.Width, boardOuter.Height));
+        var lineColor = whiteboard ? new Color(67, 78, 80) : new Color(42, 31, 24);
+        foreach (var line in staticPresentation.Lines)
+            DrawLine(ToVector2(line.Start), ToVector2(line.End), line.IsOuter ? 4 : 2, lineColor);
 
-        for (var i = 0; i < boardSize; i++)
-        {
-            var p = start.X + cell * i;
-            DrawLine(new Vector2(p, start.Y), new Vector2(p, end.Y), i == 0 || i == boardSize - 1 ? 4 : 2, whiteboard ? new Color(67, 78, 80) : new Color(42, 31, 24));
-            p = start.Y + cell * i;
-            DrawLine(new Vector2(start.X, p), new Vector2(end.X, p), i == 0 || i == boardSize - 1 ? 4 : 2, whiteboard ? new Color(67, 78, 80) : new Color(42, 31, 24));
-        }
+        var starColor = whiteboard ? new Color(67, 78, 80) : new Color(55, 38, 25);
+        foreach (var star in staticPresentation.Stars)
+            DrawCircle(ToVector2(star.Center), star.Radius, starColor);
 
-        foreach (var star in GetStarPoints(boardSize))
-        {
-            var center = BoardPoint(start, cell, star.X, star.Y);
-            DrawCircle(center, Math.Max(5, cell * 0.1f), whiteboard ? new Color(67, 78, 80) : new Color(55, 38, 25));
-        }
-
-        DrawBoardCoordinates(boardSize, start, cell, boardOuter);
+        foreach (var coordinate in staticPresentation.Coordinates)
+            DrawBoardCoordinateText(coordinate.Text, ToVector2(coordinate.Center), coordinate.Scale, coordinate.IsColumn);
 
         return (start, cell, boardOuter);
     }
@@ -175,24 +170,6 @@ public sealed class BoardRenderer : IDisposable
     /// <summary>
     /// 左下を A1 とし、I を飛ばした国際式の盤座標を下辺と左辺へ描画します。
     /// </summary>
-    private void DrawBoardCoordinates(int boardSize, Vector2 start, float cell, Rectangle boardOuter)
-    {
-        var scale = boardSize >= 19 ? 0.34f : boardSize >= 13 ? 0.38f : 0.42f;
-        var bottomY = boardOuter.Bottom - 40f;
-        var leftX = boardOuter.X + 50f;
-
-        for (var index = 0; index < boardSize; index++)
-        {
-            var column = GetBoardColumnLabel(index);
-            var x = start.X + cell * index;
-            DrawBoardCoordinateText(column, new Vector2(x, bottomY), scale, red: true);
-
-            var row = (boardSize - index).ToString();
-            var y = start.Y + cell * index;
-            DrawBoardCoordinateText(row, new Vector2(leftX, y), scale, red: false);
-        }
-    }
-
     private void DrawBoardCoordinateText(string text, Vector2 center, float scale, bool red)
     {
         var size = _boardCoordinateFont.MeasureString(text) * scale;
@@ -214,14 +191,6 @@ public sealed class BoardRenderer : IDisposable
         _spriteBatch.DrawString(_boardCoordinateFont, text, position + new Vector2(1, 1), innerEdge, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
         _spriteBatch.DrawString(_boardCoordinateFont, text, position, body, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
         _spriteBatch.DrawString(_boardCoordinateFont, text, position - new Vector2(1, 1), highlight, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
-    }
-
-    private static string GetBoardColumnLabel(int zeroBasedColumn)
-    {
-        const string columns = "ABCDEFGHJKLMNOPQRSTUVWXYZ";
-        return zeroBasedColumn >= 0 && zeroBasedColumn < columns.Length
-            ? columns[zeroBasedColumn].ToString()
-            : "?";
     }
 
     /// <summary>
@@ -466,39 +435,18 @@ public sealed class BoardRenderer : IDisposable
     /// <param name="boardSize"></param>
     /// <returns></returns>
 
-    private static (Vector2 Start, float Cell) GetBoardLayout(int boardSize)
-    {
-        var geometry = CreateBoardGeometry(boardSize);
-        return (new Vector2(geometry.Start.X, geometry.Start.Y), geometry.Cell);
-    }
-
     public static GoBoardGeometry CreateBoardGeometry(int boardSize) =>
         GoBoardGeometry.Create(
             boardSize,
             new GoBoardViewport(BoardBounds.X, BoardBounds.Y, BoardBounds.Width, BoardBounds.Height));
 
-    private static float GetBoardMargin(int boardSize) => boardSize switch
-    {
-        <= 9 => 82f,
-        <= 13 => 68f,
-        _ => 50f,
-    };
+    private static Vector2 ToVector2(GoBoardScreenPoint point) => new(point.X, point.Y);
 
     /// <summary>
     /// ［盤上の星］取得
     /// </summary>
     /// <param name="boardSize"></param>
     /// <returns></returns>
-    private static Point[] GetStarPoints(int boardSize)
-    {
-        return boardSize switch
-        {
-            9 => new[] { new Point(2, 2), new Point(6, 2), new Point(4, 4), new Point(2, 6), new Point(6, 6) },
-            13 => new[] { new Point(3, 3), new Point(9, 3), new Point(6, 6), new Point(3, 9), new Point(9, 9) },
-            _ => new[] { new Point(3, 3), new Point(9, 3), new Point(15, 3), new Point(3, 9), new Point(9, 9), new Point(15, 9), new Point(3, 15), new Point(9, 15), new Point(15, 15) },
-        };
-    }
-
     /// <summary>
     /// ［盤の枠のハイライト］描画
     /// </summary>

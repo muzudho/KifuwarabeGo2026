@@ -188,6 +188,26 @@ internal static class PortabilityChecks
         Require(!geometry.TryGetIntersection(new GoBoardScreenPoint(110, 110), out _),
             "The Go board geometry must reject clicks outside the intersection hit radius.");
 
+        var staticPresentation = GoBoardStaticPresenter.Create(
+            geometry,
+            new GoBoardViewport(54, 50, 980, 980));
+        Require(staticPresentation.Lines.Count == 38 &&
+                staticPresentation.Lines.Count(line => line.IsOuter) == 4 &&
+                staticPresentation.Stars.Count == 9 &&
+                staticPresentation.Stars.Any(star => star.Intersection == new GoPoint(9, 9)) &&
+                staticPresentation.Coordinates.Count == 38 &&
+                staticPresentation.Coordinates[0].Text == "A" &&
+                staticPresentation.Coordinates[1].Text == "19" &&
+                staticPresentation.Coordinates[14].Text == "H" &&
+                staticPresentation.Coordinates[16].Text == "J",
+            "The Go static board presenter must create lines, star points, and GTP-style coordinates without MonoGame types.");
+        var nineBoardStaticPresentation = GoBoardStaticPresenter.Create(
+            GoBoardGeometry.Create(9, new GoBoardViewport(0, 0, 400, 400)),
+            new GoBoardViewport(0, 0, 480, 480));
+        Require(nineBoardStaticPresentation.Stars.Count == 5 &&
+                nineBoardStaticPresentation.Coordinates.Last().Text == "1",
+            "The Go static board presenter must preserve the 9x9 star and row-label layout.");
+
         var presentation = GoBoardPresenter.Create(state, GoBoardGeometry.Create(3, new GoBoardViewport(0, 0, 200, 200)));
         Require(presentation.Stones.Count == 2 &&
                 presentation.Stones.Any(stone => stone.Intersection == new GoPoint(0, 0) &&
