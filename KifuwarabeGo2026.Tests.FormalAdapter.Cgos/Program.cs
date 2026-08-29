@@ -97,6 +97,16 @@ Require(CgosLegacyLogNotificationAdapter.TryParse(
         "2026-01-01 00:00:00.000 [black] # Generated black move: J1 {\"moves\":[]}",
         out var legacyGenerated) && legacyGenerated is CgosPlayNotification { Vertex: "J1", IsGenerated: true },
     "Legacy generated-move logs must retain analysis behind the compatibility adapter.");
+Require(CgosLegacyRuntimeLogAdapter.DeriveProcessState([
+        "[black] # Connecting to example.test:6809.",
+        "[black] # GTP response wait started: genmove b"]) == CgosLegacyProcessState.GtpWait &&
+        CgosLegacyRuntimeLogAdapter.GetGtpWaitTransition("# GTP response wait completed in 0.1 seconds") ==
+            CgosLegacyGtpWaitTransition.Completed,
+    "Legacy runtime status and GTP wait parsing must be isolated behind the compatibility adapter.");
+Require(CgosLegacyRuntimeLogAdapter.TryGetWaitingPlayer("[admin] > PlayerOne waiting", out var waitingPlayer) &&
+        waitingPlayer == "PlayerOne" &&
+        CgosLegacyRuntimeLogAdapter.DeriveProcessState(["# [StandardError] failed"]) == CgosLegacyProcessState.Error,
+    "Legacy admin waiting players and errors must be isolated behind the compatibility adapter.");
 
 using (var baseline = JsonDocument.Parse(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Vectors", "cgos-baseline.json"))))
 {

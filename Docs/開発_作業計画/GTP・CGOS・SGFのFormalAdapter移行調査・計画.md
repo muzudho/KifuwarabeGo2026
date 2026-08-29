@@ -534,6 +534,14 @@ GUIの構造化通知経路は、通知を直接switchせず`CgosGoEventProjecto
 
 次の縦切りでは、`CgosConnectionProcess.DeriveRunningStatus`に残した旧Host状態ログ解析も互換境界へ移し、GUIから人間向けCGOSログの意味解析を完全に除去します。そのうえで第6段階の最終回帰試験を行います。
 
+#### 第5縦切りの実施記録
+
+`FormalAdapter.Cgos.Compatibility`へ`CgosLegacyRuntimeLogAdapter`を追加しました。旧Hostログから実行状態、GTP待機開始／完了、Admin待機者を抽出する知識を集約し、中立な`CgosLegacyProcessState`と`CgosLegacyGtpWaitTransition`を返します。
+
+GUIの`CgosConnectionProcess`から、CGOSエラー、接続、ログイン、setup、play、genmove、gameover、Admin、GTP待機に関する部分文字列検索を物理削除しました。GUIは構造化通知を通常経路とし、旧Hostの場合だけ互換アダプターの結果を表示文字列へ写像します。人間向けログ自体は閲覧・保存用に従来どおり残します。
+
+全ソリューションReleaseビルドとFormalAdapter.Cgos専用試験は警告0件、エラー0件、`PASS`です。GUI移植性、Windows非対話、PlayRoom回帰試験は、生成DLLがWindowsアプリケーション制御ポリシーの`0x800711C7`で拒否され、対象再ビルド後の再試行でも起動前に停止しました。コード失敗ではないものの、第6段階の完了判定はこれらの再実行まで保留します。
+
 完了条件：標準出力には機械向け通知だけ、標準エラーには診断だけが流れ、GUI表示と棋譜保存が従来どおり動く。Host異常終了でもGUIが復帰できる。
 
 ### 作業段階7：旧配置を整理する
@@ -573,9 +581,9 @@ GUIの構造化通知経路は、通知を直接switchせず`CgosGoEventProjecto
 ## 実装再開地点
 
 ```text
-現在の状態：作業段階0～5完了。作業段階6の対局・状態通知、囲碁投影、旧対局ログ互換隔離まで完了
-次の最小作業：旧Host状態ログ解析を互換境界へ移し、CgosConnectionProcessからCGOSログ意味解析を除去する
-次の実装候補：Legacy状態互換アダプター、第6段階の最終回帰試験
+現在の状態：作業段階0～5完了。作業段階6の実装完了、最終回帰試験はWindowsアプリケーション制御解除待ち
+次の最小作業：GUI移植性、Windows非対話、PlayRoom回帰試験を再実行して第6段階を完了判定する
+次の実装候補：第6段階の最終回帰試験
 移行先：KifuwarabeGo2026.FormalAdapter.Cgos.Observability、FormalAdapter.Cgos.Go、Host構成点、GUI受信境界
 禁止事項：GTPプロジェクト全体の一括改名、CGOS Hostの一括分解、SgfGameRecordConverterの型ごとの単純移動を同時に行わない
 ```

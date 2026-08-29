@@ -3,6 +3,7 @@ namespace KifuwarabeGo2026.GameOasis.Gui.Application.GoApps.Formal.OnlineMatch.C
 using KifuwarabeGo2026.GameOasis.Gui.Application;
 using KifuwarabeGo2026.GameOasis.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.ConnectionTarget;
 using KifuwarabeGo2026.FormalAdapter.Cgos.Observability;
+using KifuwarabeGo2026.FormalAdapter.Cgos.Compatibility;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -664,37 +665,24 @@ public sealed class CgosConnectionProcess : IDisposable
     private void UpdateGtpResponseWait(string displayLine)
     {
         if (_receivedStructuredRuntime) return;
-        if (displayLine.Contains("GTP response wait started:", StringComparison.OrdinalIgnoreCase))
+        switch (CgosLegacyRuntimeLogAdapter.GetGtpWaitTransition(displayLine))
         {
-            _gtpResponseWaitCount++;
-            _gtpResponseWaitStartedAt = DateTime.Now;
-            return;
-        }
-
-        if (displayLine.Contains("GTP response wait completed", StringComparison.OrdinalIgnoreCase))
-        {
-            _gtpResponseWaitStartedAt = null;
+            case CgosLegacyGtpWaitTransition.Started:
+                _gtpResponseWaitCount++;
+                _gtpResponseWaitStartedAt = DateTime.Now;
+                break;
+            case CgosLegacyGtpWaitTransition.Completed:
+                _gtpResponseWaitStartedAt = null;
+                break;
         }
     }
 
     private void TryAddAdminWaitingPlayer(string displayLine)
     {
-        var messageStart = displayLine.IndexOf("] > ", StringComparison.Ordinal);
-        if (messageStart < 0)
+        if (CgosLegacyRuntimeLogAdapter.TryGetWaitingPlayer(displayLine, out var player) &&
+            !_adminWaitingPlayers.Contains(player, StringComparer.OrdinalIgnoreCase))
         {
-            return;
-        }
-
-        var parts = displayLine[(messageStart + 4)..]
-            .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        if (parts.Length < 2 || !parts[1].Equals("waiting", StringComparison.OrdinalIgnoreCase))
-        {
-            return;
-        }
-
-        if (!_adminWaitingPlayers.Contains(parts[0], StringComparer.OrdinalIgnoreCase))
-        {
-            _adminWaitingPlayers.Add(parts[0]);
+            _adminWaitingPlayers.Add(player);
         }
     }
 
@@ -799,99 +787,24 @@ public sealed class CgosConnectionProcess : IDisposable
 
     private static string DeriveRunningStatus(IReadOnlyList<string> output)
     {
-        foreach (var line in output.Reverse())
+        return CgosLegacyRuntimeLogAdapter.DeriveProcessState(output) switch
         {
-            if (line.Contains("CGOS error", StringComparison.OrdinalIgnoreCase) ||
-                line.Contains("[StandardError]", StringComparison.OrdinalIgnoreCase) ||
-                line.Contains("[Error]", StringComparison.OrdinalIgnoreCase) ||
-                line.Contains("Unhandled exception", StringComparison.OrdinalIgnoreCase) ||
-                line.Contains("Unsupported CGOS command", StringComparison.OrdinalIgnoreCase) ||
-                line.Contains("Could not connect", StringComparison.OrdinalIgnoreCase) ||
-                line.Contains("TCP connect timed out", StringComparison.OrdinalIgnoreCase) ||
-                line.Contains("TCP connect failed", StringComparison.OrdinalIgnoreCase))
-            {
-                return "ERROR";
-            }
-
-            if (line.Contains("CGOS connection closed", StringComparison.OrdinalIgnoreCase))
-            {
-                return "CLOSED";
-            }
-
-            if (line.Contains("Generated ", StringComparison.OrdinalIgnoreCase))
-            {
-                return "GENMOVE DONE";
-            }
-
-            if (line.Contains("GTP response wait started:", StringComparison.OrdinalIgnoreCase))
-            {
-                return "GTP WAIT";
-            }
-
-            if (line.Contains("> genmove", StringComparison.OrdinalIgnoreCase) ||
-                line.Contains("< genmove", StringComparison.OrdinalIgnoreCase))
-            {
-                return "GENMOVE";
-            }
-
-            if (line.Contains("> play", StringComparison.OrdinalIgnoreCase) ||
-                line.Contains("< play", StringComparison.OrdinalIgnoreCase))
-            {
-                return "PLAY";
-            }
-
-            if (line.Contains("Setup game", StringComparison.OrdinalIgnoreCase) ||
-                line.Contains("> setup", StringComparison.OrdinalIgnoreCase) ||
-                line.Contains("< setup", StringComparison.OrdinalIgnoreCase))
-            {
-                return "SETUP";
-            }
-
-            if (line.Contains("Game over", StringComparison.OrdinalIgnoreCase))
-            {
-                return "GAME OVER";
-            }
-
-            if (line.Contains("> username", StringComparison.OrdinalIgnoreCase) ||
-                line.Contains("> password", StringComparison.OrdinalIgnoreCase) ||
-                line.Contains("< (password)", StringComparison.OrdinalIgnoreCase) ||
-                line.Contains("< username", StringComparison.OrdinalIgnoreCase) ||
-                line.Contains("< password", StringComparison.OrdinalIgnoreCase) ||
-                line.Contains("> (password)", StringComparison.OrdinalIgnoreCase))
-            {
-                return "LOGIN";
-            }
-
-            if (line.Contains("Admin command input is ready", StringComparison.OrdinalIgnoreCase))
-            {
-                return "ADMIN READY";
-            }
-
-            if (line.Contains("Sent admin command", StringComparison.OrdinalIgnoreCase) ||
-                line.Contains("< who", StringComparison.OrdinalIgnoreCase) ||
-                line.Contains("< match", StringComparison.OrdinalIgnoreCase))
-            {
-                return "ADMIN COMMAND";
-            }
-
-            if (line.Contains("> protocol", StringComparison.OrdinalIgnoreCase) ||
-                line.Contains("< protocol", StringComparison.OrdinalIgnoreCase))
-            {
-                return "PROTOCOL";
-            }
-
-            if (line.Contains("Connecting to", StringComparison.OrdinalIgnoreCase))
-            {
-                return "CONNECTING";
-            }
-
-            if (line.Contains("Started CGOS communication process", StringComparison.OrdinalIgnoreCase))
-            {
-                return "STARTING";
-            }
-        }
-
-        return "RUNNING";
+            CgosLegacyProcessState.Starting => "STARTING",
+            CgosLegacyProcessState.Connecting => "CONNECTING",
+            CgosLegacyProcessState.Protocol => "PROTOCOL",
+            CgosLegacyProcessState.Login => "LOGIN",
+            CgosLegacyProcessState.AdminReady => "ADMIN READY",
+            CgosLegacyProcessState.AdminCommand => "ADMIN COMMAND",
+            CgosLegacyProcessState.Setup => "SETUP",
+            CgosLegacyProcessState.Play => "PLAY",
+            CgosLegacyProcessState.GenMove => "GENMOVE",
+            CgosLegacyProcessState.GtpWait => "GTP WAIT",
+            CgosLegacyProcessState.GenMoveDone => "GENMOVE DONE",
+            CgosLegacyProcessState.GameOver => "GAME OVER",
+            CgosLegacyProcessState.Closed => "CLOSED",
+            CgosLegacyProcessState.Error => "ERROR",
+            _ => "RUNNING",
+        };
     }
 
     private static string FormatDisplayLine(string line, bool isError)
