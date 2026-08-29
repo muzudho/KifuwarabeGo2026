@@ -1,4 +1,8 @@
 using System.Text.Json;
+using System.Net;
+using System.Net.Sockets;
+using System.Text;
+using KifuwarabeGo2026.FormalAdapter.Cgos.Client;
 using KifuwarabeGo2026.FormalAdapter.Cgos.Protocol;
 
 var protocol = RequireType<CgosProtocolAdvertised>(CgosServerMessageParser.Parse("protocol genmove_analyze"));
@@ -50,6 +54,43 @@ using (var baseline = JsonDocument.Parse(File.ReadAllText(Path.Combine(AppContex
     foreach (var command in baseline.RootElement.GetProperty("stdinCommands").EnumerateArray().Select(value => value.GetString()!))
         Require(!string.IsNullOrWhiteSpace(command), "Baseline client control commands must remain non-empty.");
 }
+
+var listener = new TcpListener(IPAddress.Loopback, 0);
+listener.Start();
+var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+var receivedCommands = new List<string>();
+var serverTask = Task.Run(async () =>
+{
+    using var client = await listener.AcceptTcpClientAsync();
+    await using var stream = client.GetStream();
+    using var reader = new StreamReader(stream, Encoding.UTF8, false, leaveOpen: true);
+    await using var writer = new StreamWriter(stream, new UTF8Encoding(false), leaveOpen: true) { NewLine = "\n", AutoFlush = true };
+    foreach (var prompt in new[] { "protocol genmove_analyze", "username", "password" })
+    {
+        await writer.WriteLineAsync(prompt);
+        receivedCommands.Add((await reader.ReadLineAsync())!);
+    }
+    await writer.WriteLineAsync("ok");
+});
+var networkMessages = new List<CgosServerMessage>();
+var networkLogs = new List<string>();
+var passwordNotifications = 0;
+var networkSession = new CgosNetworkSession(
+    new CgosConnectionOptions("127.0.0.1", port, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2)),
+    new CgosCredentials("baseline-player", "top-secret"),
+    networkLogs.Add);
+await networkSession.RunAsync(
+    (message, _) => { networkMessages.Add(message); return Task.CompletedTask; },
+    _ => { passwordNotifications++; return Task.CompletedTask; },
+    CancellationToken.None);
+await serverTask;
+listener.Stop();
+Require(receivedCommands.SequenceEqual(["e1 genmove_analyze", "baseline-player", "top-secret"]),
+    "The network session must perform the typed login exchange.");
+Require(networkMessages.Single() is CgosLoginAccepted && networkSession.ServerSupportsAnalyze,
+    "The network session must expose post-login messages and advertised capabilities.");
+Require(passwordNotifications == 1 && networkLogs.All(line => !line.Contains("top-secret", StringComparison.Ordinal)),
+    "The password callback must run and logs must not expose credentials.");
 
 Console.WriteLine("PASS: CGOS protocol messages and commands parsed and formatted login, setup, play, genmove, gameover, errors, admin, analysis, and sensitive data.");
 

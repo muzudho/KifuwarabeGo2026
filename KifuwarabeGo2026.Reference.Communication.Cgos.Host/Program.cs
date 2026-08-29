@@ -6,6 +6,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using KifuwarabeGo2026.FormalAdapter.Cgos.Protocol;
+using KifuwarabeGo2026.FormalAdapter.Cgos.Client;
 
 /// <summary>
 /// CGOS サーバーとの通信を行うプログラムです。
@@ -758,12 +759,12 @@ internal sealed class CgosAdminClient
 
     public async Task RunAsync(CancellationToken cancellationToken)
     {
-        var session = new CgosConnectionSession(_options, _account, Log, " for admin");
+        var session = CreateNetworkSession(_options, _account, Log);
         var adminInputStarted = false;
         await session.RunAsync(
-            (line, token) =>
+            (message, token) =>
             {
-                if (!adminInputStarted && line.Equals("ok", StringComparison.OrdinalIgnoreCase))
+                if (!adminInputStarted && message is CgosLoginAccepted)
                 {
                     adminInputStarted = true;
                     Log("# Admin login accepted. Command input is ready.");
@@ -780,7 +781,7 @@ internal sealed class CgosAdminClient
     }
 
     private async Task RelayAdminCommandAsync(
-        CgosConnectionSession session,
+        CgosNetworkSession session,
         string command,
         CancellationToken cancellationToken)
     {
@@ -813,6 +814,12 @@ internal sealed class CgosAdminClient
             File.AppendAllText(_logPath, line + Environment.NewLine, Encoding.UTF8);
         }
     }
+
+    private static CgosNetworkSession CreateNetworkSession(CgosClientOptions options, CgosAccount account, Action<string> log) =>
+        new(
+            new CgosConnectionOptions(options.Host, options.Port),
+            new CgosCredentials(account.UserName, account.Password),
+            log);
 }
 
 internal sealed class CgosClient
@@ -843,11 +850,14 @@ internal sealed class CgosClient
 
     public async Task RunAsync(CancellationToken cancellationToken)
     {
-        var session = new CgosConnectionSession(_options, _account, Log);
+        var session = new CgosNetworkSession(
+            new CgosConnectionOptions(_options.Host, _options.Port),
+            new CgosCredentials(_account.UserName, _account.Password),
+            Log);
         try
         {
             await session.RunAsync(
-                (line, token) => HandleLineAsync(line, session, token),
+                (message, token) => HandleLineAsync(message, session, token),
                 passwordSentAsync: null,
                 cancellationToken);
         }
@@ -857,9 +867,9 @@ internal sealed class CgosClient
         }
     }
 
-    private async Task HandleLineAsync(string line, CgosConnectionSession session, CancellationToken cancellationToken)
+    private async Task HandleLineAsync(CgosServerMessage message, CgosNetworkSession session, CancellationToken cancellationToken)
     {
-        switch (CgosServerMessageParser.Parse(line))
+        switch (message)
         {
             case CgosMatchSetup setup:
                 await HandleSetupAsync(setup, cancellationToken);
@@ -887,7 +897,7 @@ internal sealed class CgosClient
             case CgosUnknownServerMessage unknown:
                 throw new InvalidOperationException("Unsupported CGOS command: " + unknown.Command);
             default:
-                throw new InvalidOperationException("Unexpected CGOS message after login: " + line);
+                throw new InvalidOperationException("Unexpected CGOS message after login: " + message.RawLine);
         }
     }
 

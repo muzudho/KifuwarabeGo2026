@@ -1,6 +1,6 @@
 # GTP・CGOS・SGFのFormalAdapter移行調査・計画
 
-状態：作業段階0・1・2・3・4完了（2026年8月29日）
+状態：作業段階0・1・2・3・4完了、作業段階5実装中（2026年8月29日）
 
 ## 目的
 
@@ -430,9 +430,25 @@ CGOSサーバー行のパーサー、クライアントコマンドのフォー�
 
 ### 作業段階5：CGOS Hostを薄くする
 
+状態：接続セッション移行完了・プレイヤー／管理状態機械移行前（2026年8月29日）
+
 `CgosConnectionSession`、`CgosClient`、`CgosAdminClient`を役割別にライブラリーへ移し、Hostにはコマンドライン、標準入出力、プロセス寿命、構成だけを残します。GTP子プロセス処理は`FormalAdapter.Gtp`を利用する構成点にします。
 
 完了条件：既存Hostの実行ファイル名、オプション、発行場所を維持し、Hostが新ライブラリーを組み立てるだけになる。
+
+#### 第1縦切りの実施記録
+
+`KifuwarabeGo2026.FormalAdapter.Cgos.Client`へ次を実装しました。
+
+* `CgosConnectionOptions`：ホスト、ポート、接続タイムアウト、最初のサーバー行タイムアウト。
+* `CgosCredentials`：セッションへ注入する利用者名とパスワード。保存方法は所有しない。
+* `CgosNetworkSession`：TCP接続、UTF-8行送受信、ログイン交換、解析能力、型付きメッセージ通知、機密ログ、終了時quit。
+
+現行Hostのプレイヤー接続と管理接続を`CgosNetworkSession`利用へ切り替えました。Hostはコマンドライン設定とアカウントを新しい接続設定へ写し、型付きメッセージのコールバックを渡します。ネットワークセッションはHostのオプション型、ログファイル、GTPエンジン、GUIへ依存しません。
+
+`Tests.FormalAdapter.Cgos`へループバックTCP縦試験を追加しました。外部ネットワークを使わず、protocol、username、password、okの交換、`genmove_analyze`能力、パスワード送信通知、ログへの資格情報非露出を検査して`PASS`しました。接続後の全ソリューションReleaseビルドも警告0件、エラー0件です。
+
+次の縦切りでは、GTP子プロセスを抽象化するプレイヤーエンジン契約を定め、`CgosClient`のsetup、play、genmove、gameover状態機械を`FormalAdapter.Cgos.PlayerEngine`へ移します。その後、`CgosAdminClient`を`GameMasterEngine`へ移し、Host内で未使用になった旧接続実装を削除します。
 
 ### 作業段階6：CGOSとGUIのログ境界を置換する
 
@@ -477,9 +493,9 @@ CGOSサーバー行のパーサー、クライアントコマンドのフォー�
 ## 実装再開地点
 
 ```text
-現在の状態：作業段階0、1、2、3、4完了。全回帰試験PASS
-次の最小作業：作業段階5としてCGOS接続セッションとプレイヤー／管理状態機械をHostから分離する
-次の実装候補：CgosConnectionSession、CgosClient、CgosAdminClient
+現在の状態：作業段階0～4完了。作業段階5の接続セッション移行完了
+次の最小作業：GTP子プロセスを抽象化し、CGOSプレイヤー状態機械を移す
+次の実装候補：ICgosPlayerEngine、setup／play／genmove／gameover状態機械、CgosAdminClient
 移行先：KifuwarabeGo2026.FormalAdapter.Cgos.PlayerEngine、GameMasterEngine、Host構成点
 禁止事項：GTPプロジェクト全体の一括改名、CGOS Hostの一括分解、SgfGameRecordConverterの型ごとの単純移動を同時に行わない
 ```
