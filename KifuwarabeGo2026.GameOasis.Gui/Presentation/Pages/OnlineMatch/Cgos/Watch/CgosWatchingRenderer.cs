@@ -5,6 +5,7 @@ using KifuwarabeGo2026.GameOasis.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.
 using KifuwarabeGo2026.GameOasis.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.ConnectionTarget;
 using KifuwarabeGo2026.GameOasis.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.Reference.PlayDomain.Go;
+using KifuwarabeGo2026.Reference.PlayRoomGui.Go;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.Headline;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.OnlineMatch.Cgos.Watch;
 using Microsoft.Xna.Framework;
@@ -52,20 +53,22 @@ public sealed class CgosWatchingRenderer
 
         drawingContext.DrawBackground();
         var surface = _boardRenderer.DrawBoardSurface(drawingContext, observation.BoardSize);
+        var viewState = CgosPlayRoomViewStateAdapter.Create(observation);
+        var presentation = GoBoardPresenter.Create(
+            viewState,
+            BoardRenderer.CreateBoardGeometry(observation.BoardSize));
         _drawRenAnalysis(
             session.RenParseDisplayMode,
             observation.BoardSize,
             observation.GetStone,
             observation.ParseRens,
-            () => DrawCgosWatchingStones(observation, surface.Start, surface.Cell),
+            () => _boardRenderer.DrawStones(presentation),
             surface.Start,
             surface.Cell);
-        var displayMoveIndex = observation.DisplayMoveIndex;
-        GoGameMove? displayLastMove = displayMoveIndex > 0 && displayMoveIndex <= observation.Moves.Count
-            ? observation.Moves[displayMoveIndex - 1]
-            : null;
         if (!session.IsRenParseDisplayEnabled)
-            _boardRenderer.DrawLastMoveMarker(displayLastMove, surface.Start, surface.Cell);
+            _boardRenderer.DrawLastMoveMarker(presentation.LastMoveMarker);
+        if (!observation.IsReplayMode)
+            _boardRenderer.DrawKoMarker(presentation);
 
         _boardRenderer.DrawBoardFrameHighlights(surface.Outer);
         if (!observation.IsFinished)
@@ -97,24 +100,6 @@ public sealed class CgosWatchingRenderer
             _popupTrendChartRenderer.DrawCgos(_drawingContext, session, observation, mousePoint);
         }
         drawingContext.End();
-    }
-
-    /// <summary>
-    /// CGOS 観戦盤面の石を描画します。
-    /// </summary>
-    private void DrawCgosWatchingStones(CgosGameObservation observation, Vector2 start, float cell)
-    {
-        for (var y = 0; y < observation.BoardSize; y++)
-        {
-            for (var x = 0; x < observation.BoardSize; x++)
-            {
-                var stone = observation.GetStone(x, y);
-                if (stone != GoStone.Empty)
-                {
-                    _boardRenderer.DrawStone(BoardRenderer.BoardPoint(start, cell, x, y), cell * 0.44f, stone == GoStone.Black);
-                }
-            }
-        }
     }
 
     private void DrawCgosWatchingSidePanel(GoAppSession session, CgosGameObservation observation, Point mousePoint)

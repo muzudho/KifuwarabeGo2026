@@ -50,7 +50,7 @@ public sealed class BoardRenderer : IDisposable
     }
     public static bool TryGetBoardIntersection(Point point, int boardSize, out Point intersection)
     {
-        var geometry = GetBoardGeometry(boardSize);
+        var geometry = CreateBoardGeometry(boardSize);
         if (!geometry.TryGetIntersection(new GoBoardScreenPoint(point.X, point.Y), out var boardPoint))
         {
             intersection = Point.Zero;
@@ -74,7 +74,7 @@ public sealed class BoardRenderer : IDisposable
         var start = surface.Start;
         var cell = surface.Cell;
         var viewState = session.CreatePlayRoomViewState(displayedPosition: true);
-        var geometry = GetBoardGeometry(session.BoardSize);
+        var geometry = CreateBoardGeometry(session.BoardSize);
         var presentation = GoBoardPresenter.Create(viewState, geometry);
 
         // ［連解析］描画
@@ -83,7 +83,7 @@ public sealed class BoardRenderer : IDisposable
             session.BoardSize,
             session.GetDisplayStone,
             session.ParseDisplayRens,
-            () => DrawPlacedStones(presentation),
+            () => DrawStones(presentation),
             start,
             cell);
         if (session.RenParseDisplayMode == RenParseDisplayMode.Nobi)
@@ -98,7 +98,7 @@ public sealed class BoardRenderer : IDisposable
         if (!session.IsLocalReplayMode)
         {
             DrawSuperKoMarks(session, start, cell);
-            DrawKoMark(presentation);
+            DrawKoMarker(presentation);
             DrawHoverStone(session, viewState, geometry, mousePoint, start, cell);
         }
         DrawBoardFrameHighlights(surface.Outer);
@@ -231,7 +231,7 @@ public sealed class BoardRenderer : IDisposable
     /// <param name="session"></param>
     /// <param name="start"></param>
     /// <param name="cell"></param>
-    private void DrawPlacedStones(GoBoardPresentation presentation)
+    public void DrawStones(GoBoardPresentation presentation)
     {
         foreach (var visual in presentation.Stones)
         {
@@ -299,18 +299,6 @@ public sealed class BoardRenderer : IDisposable
 
         var center = new Vector2(value.Center.X, value.Center.Y);
         DrawLastMoveMarker(center, value.Radius, value.Cell);
-    }
-
-    /// <summary>CGOS観戦表示がGo用Presenterへ移るまでの互換入口です。</summary>
-    public void DrawLastMoveMarker(GoGameMove? move, Vector2 start, float cell)
-    {
-        if (move?.Point is not { } point)
-            return;
-
-        DrawLastMoveMarker(
-            BoardPoint(start, cell, point.X, point.Y),
-            Math.Max(9f, cell * 0.19f),
-            cell);
     }
 
     private void DrawLastMoveMarker(Vector2 center, float radius, float cell)
@@ -410,7 +398,7 @@ public sealed class BoardRenderer : IDisposable
     /// <param name="start"></param>
     /// <param name="cell"></param>
 
-    private void DrawKoMark(GoBoardPresentation presentation)
+    public void DrawKoMarker(GoBoardPresentation presentation)
     {
         if (presentation.KoMarker is not { } marker)
             return;
@@ -475,11 +463,11 @@ public sealed class BoardRenderer : IDisposable
 
     private static (Vector2 Start, float Cell) GetBoardLayout(int boardSize)
     {
-        var geometry = GetBoardGeometry(boardSize);
+        var geometry = CreateBoardGeometry(boardSize);
         return (new Vector2(geometry.Start.X, geometry.Start.Y), geometry.Cell);
     }
 
-    private static GoBoardGeometry GetBoardGeometry(int boardSize) =>
+    public static GoBoardGeometry CreateBoardGeometry(int boardSize) =>
         GoBoardGeometry.Create(
             boardSize,
             new GoBoardViewport(BoardBounds.X, BoardBounds.Y, BoardBounds.Width, BoardBounds.Height));

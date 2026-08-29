@@ -2583,9 +2583,36 @@ internal static class PortabilityChecks
         var play = CgosNotificationJsonLines.Format(new CgosPlayNotification("black", "w", "B9", 580000));
         Require(observation.ProcessLogLine(play) && observation.MoveCount == 2,
             "CGOS structured play must update the GUI observation exactly once.");
+
+        var liveView = CgosPlayRoomViewStateAdapter.Create(observation);
+        var livePresentation = GoBoardPresenter.Create(
+            liveView,
+            GoBoardGeometry.Create(9, new GoBoardViewport(0, 0, 400, 400)));
+        Require(liveView.Activity == GoPlayRoomActivity.Playing &&
+                liveView.TimelineIndex == 2 &&
+                livePresentation.Stones.Count == 2 &&
+                livePresentation.LastMoveMarker?.Intersection == new GoPoint(1, 0),
+            "The live CGOS observation must project through the Go Play Room view and presenter boundary.");
+
+        observation.SeekReplay(1);
+        var replayView = CgosPlayRoomViewStateAdapter.Create(observation);
+        var replayPresentation = GoBoardPresenter.Create(
+            replayView,
+            GoBoardGeometry.Create(9, new GoBoardViewport(0, 0, 400, 400)));
+        Require(replayView.Activity == GoPlayRoomActivity.Reviewing &&
+                replayView.TimelineIndex == 1 &&
+                replayPresentation.Stones.Count == 1 &&
+                replayPresentation.LastMoveMarker?.Intersection == new GoPoint(0, 0) &&
+                replayPresentation.KoMarker is null,
+            "The replaying CGOS observation must project its displayed position without a live ko marker.");
+        observation.ReturnToLive();
+
         observation.ProcessLogLine(CgosNotificationJsonLines.Format(new CgosGameOverNotification("black", "W+R")));
         Require(observation.IsFinished && observation.Result == "W+R",
             "CGOS structured gameover must finish the GUI observation.");
+        var resultView = CgosPlayRoomViewStateAdapter.Create(observation);
+        Require(resultView.Activity == GoPlayRoomActivity.GameOver && resultView.GameOverReason == "W+R",
+            "The finished CGOS observation must project its result through the Go Play Room view boundary.");
     }
 
     private static void Require(bool condition, string message)

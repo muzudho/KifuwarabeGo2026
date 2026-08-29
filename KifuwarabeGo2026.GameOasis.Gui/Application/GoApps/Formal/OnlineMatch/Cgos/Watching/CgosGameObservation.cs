@@ -31,6 +31,7 @@ public sealed class CgosGameObservation
     public string WhitePlayerName { get; private set; } = "-";
     public string BlackPlayerName { get; private set; } = "-";
     public GoStone CurrentTurn { get; private set; } = GoStone.Black;
+    public GoPoint? KoPoint => _koPoint;
     public int MoveCount { get; private set; }
     public string Result { get; private set; } = "";
     public DateTime StartedAt { get; private set; }
