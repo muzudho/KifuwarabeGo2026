@@ -1,6 +1,6 @@
 namespace KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.InitialPosition;
 
-using KifuwarabeGo2026.Shared.Domain;
+using KifuwarabeGo2026.Reference.PlayDomain.Go;
 
 /// <summary>
 /// Classifies a requested setup without using engine-specific behavior.

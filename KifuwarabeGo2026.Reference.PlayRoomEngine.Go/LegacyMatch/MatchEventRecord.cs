@@ -1,6 +1,6 @@
 namespace KifuwarabeGo2026.Reference.PlayRoomEngine.Go.LegacyMatch;
 
-using KifuwarabeGo2026.Shared.Domain;
+using KifuwarabeGo2026.Reference.PlayDomain.Go;
 
 /// <summary>
 /// Describes one revision of observable Match state without UI or network data.

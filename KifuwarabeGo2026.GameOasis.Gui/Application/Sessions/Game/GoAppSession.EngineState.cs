@@ -1,6 +1,6 @@
 namespace KifuwarabeGo2026.GameOasis.Gui.Application;
 
-using KifuwarabeGo2026.Shared.Domain;
+using KifuwarabeGo2026.Reference.PlayDomain.Go;
 
 /// <summary>ローカル対局で使用するGTPエンジンの準備・思考・エラー状態を管理します。</summary>
 public sealed partial class GoAppSession

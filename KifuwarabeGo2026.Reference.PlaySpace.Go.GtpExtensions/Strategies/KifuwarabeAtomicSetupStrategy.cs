@@ -2,7 +2,7 @@ namespace KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Strategies;
 
 using System.Globalization;
 using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.InitialPosition;
-using KifuwarabeGo2026.Shared.Domain;
+using KifuwarabeGo2026.Reference.PlayDomain.Go;
 
 /// <summary>
 /// Uses Kifuwarabe's transactional extension to reproduce an arbitrary setup position atomically.

@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Engines;
-using KifuwarabeGo2026.Shared.Domain;
+using KifuwarabeGo2026.Reference.PlayDomain.Go;
 
 /// <summary>GTP エンジンの GUI オプション編集ダイアログを管理します。</summary>
 public sealed partial class GoAppSession

@@ -1,7 +1,7 @@
 namespace KifuwarabeGo2026.GameOasis.Gui.Application;
 
 using KifuwarabeGo2026.GameOasis.Gui.Application.Local.Playing;
-using KifuwarabeGo2026.Shared.Domain;
+using KifuwarabeGo2026.Reference.PlayDomain.Go;
 
 /// <summary>盤面レンズと表示用の連解析結果を、盤面ハッシュごとにキャッシュします。</summary>
 public sealed partial class GoAppSession

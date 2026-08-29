@@ -9,7 +9,7 @@ using KifuwarabeGo2026.GameOasis.Gui.Application.GoApps.Casual.Ponnuki;
 using KifuwarabeGo2026.GameOasis.Gui.Application.Local.Resting.TournamentRule;
 using KifuwarabeGo2026.GameOasis.Gui.Application.Updates;
 using KifuwarabeGo2026.GameOasis.Gui.Domain;
-using KifuwarabeGo2026.Shared.Domain;
+using KifuwarabeGo2026.Reference.PlayDomain.Go;
 using KifuwarabeGo2026.GameOasis.Gui.Infrastructure.FileSystem;
 using KifuwarabeGo2026.GameOasis.Gui.Infrastructure.Logging;
 using KifuwarabeGo2026.GameOasis.Gui.Infrastructure;

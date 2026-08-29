@@ -1,7 +1,7 @@
 namespace KifuwarabeGo2026.GameOasis.Gui.Application;
 
 using KifuwarabeGo2026.GameOasis.Gui.Application.Local.Playing;
-using KifuwarabeGo2026.Shared.Domain;
+using KifuwarabeGo2026.Reference.PlayDomain.Go;
 using System;
 
 /// <summary>レビュー棋譜を指定手数まで再生し、表示用の盤面状態を作ります。</summary>

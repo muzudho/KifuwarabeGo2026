@@ -1,6 +1,6 @@
 namespace KifuwarabeGo2026.GameOasis.Gui.Application.Local.Playing;
 
-using KifuwarabeGo2026.Shared.Domain;
+using KifuwarabeGo2026.Reference.PlayDomain.Go;
 using System;
 
 public readonly record struct GoGameSetupStone

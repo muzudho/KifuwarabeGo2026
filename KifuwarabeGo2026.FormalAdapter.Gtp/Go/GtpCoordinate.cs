@@ -1,6 +1,6 @@
 namespace KifuwarabeGo2026.FormalAdapter.Gtp.Go;
 
-using KifuwarabeGo2026.Shared.Domain;
+using KifuwarabeGo2026.Reference.PlayDomain.Go;
 
 /// <summary>
 /// Converts between shared Go points and GTP vertices.

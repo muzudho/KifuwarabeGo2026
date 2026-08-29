@@ -3,7 +3,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <RootNamespace>KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation</RootNamespace>
-    <AssemblyName>KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation</AssemblyName>
+    <RootNamespace>KifuwarabeGo2026.Reference.PlayDomain.Go</RootNamespace>
+    <AssemblyName>KifuwarabeGo2026.Reference.PlayDomain.Go</AssemblyName>
   </PropertyGroup>
 </Project>

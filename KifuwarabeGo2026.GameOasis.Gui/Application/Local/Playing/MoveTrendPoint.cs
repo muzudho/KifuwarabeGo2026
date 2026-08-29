@@ -1,6 +1,6 @@
 namespace KifuwarabeGo2026.GameOasis.Gui.Application.Local.Playing;
 
-using KifuwarabeGo2026.Shared.Domain;
+using KifuwarabeGo2026.Reference.PlayDomain.Go;
 
 /// <summary>
 /// CGOS の一着分の評価値を、黒有利を正とする表示座標へ正規化したものです。

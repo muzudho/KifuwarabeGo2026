@@ -2,7 +2,7 @@ namespace KifuwarabeGo2026.FormalAdapter.Sgf.Go;
 
 using System.Globalization;
 using KifuwarabeGo2026.FormalAdapter.Sgf.Document;
-using KifuwarabeGo2026.Shared.Domain;
+using KifuwarabeGo2026.Reference.PlayDomain.Go;
 
 /// <summary>Projects the main sequence of the first SGF game tree to and from a neutral Go record.</summary>
 public static class SgfGoGameRecordConverter

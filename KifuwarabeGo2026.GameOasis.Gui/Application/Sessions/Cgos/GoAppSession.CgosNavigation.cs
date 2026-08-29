@@ -3,7 +3,7 @@ namespace KifuwarabeGo2026.GameOasis.Gui.Application;
 using System;
 using System.Collections.Generic;
 using CgosFlowKind = KifuwarabeGo2026.GameOasis.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.ConnectionTarget.CgosConnectionFlowKind;
-using KifuwarabeGo2026.Shared.Domain;
+using KifuwarabeGo2026.Reference.PlayDomain.Go;
 
 /// <summary>CGOSの接続プロファイル選択、画面遷移、接続開始要求を管理します。</summary>
 public sealed partial class GoAppSession

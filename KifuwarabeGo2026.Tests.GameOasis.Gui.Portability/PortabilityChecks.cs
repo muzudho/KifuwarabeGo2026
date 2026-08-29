@@ -30,7 +30,7 @@ using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Strategies;
 using KifuwarabeGo2026.Reference.PlayRoomEngine.Go.LegacyMatch;
 using KifuwarabeGo2026.Reference.PlayRoomGui.Common;
 using KifuwarabeGo2026.Reference.PlayerEngine;
-using KifuwarabeGo2026.Shared.Domain;
+using KifuwarabeGo2026.Reference.PlayDomain.Go;
 using KifuwarabeGo2026.FormalAdapter.Cgos.Observability;
 using KifuwarabeGo2026.FormalAdapter.Cgos.Protocol;
 using Microsoft.Xna.Framework;
@@ -1547,8 +1547,8 @@ internal static class PortabilityChecks
 
     private static void VerifyLegacyGoMatchAssembly(Assembly legacyGoMatchAssembly)
     {
-        VerifyTargetFramework(legacyGoMatchAssembly, "Reference.PlaySpace.Go");
-        VerifyNoPlatformInvokes(legacyGoMatchAssembly, "Reference.PlaySpace.Go");
+        VerifyTargetFramework(legacyGoMatchAssembly, "Reference.PlayRoomEngine.Go");
+        VerifyNoPlatformInvokes(legacyGoMatchAssembly, "Reference.PlayRoomEngine.Go");
 
         var references = legacyGoMatchAssembly
             .GetReferencedAssemblies()
@@ -1557,14 +1557,14 @@ internal static class PortabilityChecks
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         Require(
-            references.Contains("KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation"),
-            "Legacy Go match support must reference the Go foundation assembly.");
+            references.Contains("KifuwarabeGo2026.Reference.PlayDomain.Go"),
+            "Legacy Go match support must reference the Go play-domain assembly.");
         Require(
             !references.Contains("KifuwarabeGo2026.GameOasis.Gui"),
-            "Reference.PlaySpace.Go must not reference the GUI assembly.");
+            "Reference.PlayRoomEngine.Go must not reference the GUI assembly.");
         Require(
             !references.Contains("MonoGame.Framework"),
-            "Reference.PlaySpace.Go must not reference MonoGame.");
+            "Reference.PlayRoomEngine.Go must not reference MonoGame.");
 
         foreach (var forbiddenReference in ForbiddenAssemblyReferences)
         {
@@ -1584,7 +1584,7 @@ internal static class PortabilityChecks
             .Where(name => name is not null)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        Require(!references.Contains("KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation"),
+        Require(!references.Contains("KifuwarabeGo2026.Reference.PlayDomain.Go"),
             "Concierge must not know the Go foundation assembly.");
         Require(!references.Contains("KifuwarabeGo2026.Reference.PlayRoomEngine.Go"),
             "Concierge must not know the Go play-space implementation.");

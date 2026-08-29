@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Shared.Domain;
+namespace KifuwarabeGo2026.Reference.PlayDomain.Go;
 
 using System;
 using System.Collections.Generic;
@@ -46,6 +46,8 @@ public sealed class GoBoard
 
     public GoBoard Clone() => new(this);
 
+    public GoStone GetStone(GoPoint point) => GetStone(point.X, point.Y);
+
     public GoStone GetStone(int x, int y)
     {
         if (!IsOnBoard(x, y))
@@ -88,6 +90,9 @@ public sealed class GoBoard
         SetStone(x, y, stone);
         return true;
     }
+
+    public bool TrySetSetupStone(GoPoint point, GoStone stone) =>
+        TrySetSetupStone(point.X, point.Y, stone);
 
     public bool TrySetEditedStone(int x, int y, GoStone stone)
     {
@@ -188,6 +193,83 @@ public sealed class GoBoard
         }
 
         return true;
+    }
+
+    public bool TryPlaceStone(
+        GoPoint point,
+        GoStone stone,
+        GoPoint? forbiddenKoPoint,
+        out int capturedStones,
+        out GoPoint? koPoint) =>
+        TryPlaceStone(point.X, point.Y, stone, forbiddenKoPoint, out capturedStones, out koPoint);
+
+    public (int BlackArea, int WhiteArea) ScoreArea()
+    {
+        var black = CountStones(GoStone.Black);
+        var white = CountStones(GoStone.White);
+        var visited = new HashSet<GoPoint>();
+
+        for (var y = 0; y < Size; y++)
+        for (var x = 0; x < Size; x++)
+        {
+            var start = new GoPoint(x, y);
+            if (GetStone(start) != GoStone.Empty || !visited.Add(start))
+                continue;
+
+            var region = new List<GoPoint>();
+            var borders = new HashSet<GoStone>();
+            var queue = new Queue<GoPoint>();
+            queue.Enqueue(start);
+            while (queue.Count > 0)
+            {
+                var current = queue.Dequeue();
+                region.Add(current);
+                foreach (var neighbor in EnumerateNeighbors(current.X, current.Y))
+                {
+                    var neighborPoint = new GoPoint(neighbor.X, neighbor.Y);
+                    var neighborStone = GetStone(neighbor.X, neighbor.Y);
+                    if (neighborStone == GoStone.Empty)
+                    {
+                        if (visited.Add(neighborPoint))
+                            queue.Enqueue(neighborPoint);
+                    }
+                    else
+                    {
+                        borders.Add(neighborStone);
+                    }
+                }
+            }
+
+            if (borders.SetEquals([GoStone.Black])) black += region.Count;
+            else if (borders.SetEquals([GoStone.White])) white += region.Count;
+        }
+
+        return (black, white);
+    }
+
+    public string PositionKey()
+    {
+        var chars = new char[Size * Size];
+        for (var y = 0; y < Size; y++)
+        for (var x = 0; x < Size; x++)
+            chars[(y * Size) + x] = _stones[x, y] switch
+            {
+                GoStone.Black => 'B',
+                GoStone.White => 'W',
+                _ => '.',
+            };
+        return new string(chars);
+    }
+
+    public IEnumerable<(GoPoint Point, GoStone Stone)> EnumerateStones()
+    {
+        for (var y = 0; y < Size; y++)
+        for (var x = 0; x < Size; x++)
+        {
+            var stone = _stones[x, y];
+            if (stone != GoStone.Empty)
+                yield return (new GoPoint(x, y), stone);
+        }
     }
 
     private bool IsOnBoard(int x, int y) => x >= 0 && x < Size && y >= 0 && y < Size;

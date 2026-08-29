@@ -1,6 +1,6 @@
 namespace KifuwarabeGo2026.Reference.Communication.Gtp.Server;
 
-using KifuwarabeGo2026.Shared.Domain;
+using KifuwarabeGo2026.Reference.PlayDomain.Go;
 using KifuwarabeGo2026.Reference.PlayerEngine.Strategies.Ponnuki;
 using KifuwarabeGo2026.Reference.PlayerEngine.Strategies;
 using System.Reflection;

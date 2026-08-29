@@ -1,6 +1,6 @@
 namespace KifuwarabeGo2026.Reference.PlayerEngine.Strategies;
 
-using KifuwarabeGo2026.Shared.Domain;
+using KifuwarabeGo2026.Reference.PlayDomain.Go;
 
 /// <summary>アプリごとの着手生成戦略です。</summary>
 public interface IGenerateMoveStrategy

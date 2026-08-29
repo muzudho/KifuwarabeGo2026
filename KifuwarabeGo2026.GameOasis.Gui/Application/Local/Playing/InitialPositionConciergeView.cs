@@ -2,7 +2,7 @@ namespace KifuwarabeGo2026.GameOasis.Gui.Application.Local.Playing;
 
 using System.Collections.Generic;
 using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.InitialPosition;
-using KifuwarabeGo2026.Shared.Domain;
+using KifuwarabeGo2026.Reference.PlayDomain.Go;
 
 /// <summary>
 /// Provides a read-only GUI projection of two independent engine setup flows.

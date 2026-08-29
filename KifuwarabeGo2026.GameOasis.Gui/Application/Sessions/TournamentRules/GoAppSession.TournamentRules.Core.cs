@@ -1,7 +1,7 @@
 namespace KifuwarabeGo2026.GameOasis.Gui.Application;
 
 using KifuwarabeGo2026.GameOasis.Gui.Application.Local.Resting.TournamentRule;
-using KifuwarabeGo2026.Shared.Domain;
+using KifuwarabeGo2026.Reference.PlayDomain.Go;
 using System;
 
 /// <summary>大会規定の盤サイズ、ルール、コミ、持ち時間、手数制限を変更します。</summary>

@@ -3,7 +3,7 @@ namespace KifuwarabeGo2026.GameOasis.Gui.Application;
 using System;
 using System.Collections.Generic;
 using KifuwarabeGo2026.GameOasis.Gui.Application.Local.Resting.TournamentRule;
-using KifuwarabeGo2026.Shared.Domain;
+using KifuwarabeGo2026.Reference.PlayDomain.Go;
 
 /// <summary>大会ルール選択・編集画面の状態を保持します。</summary>
 public sealed partial class GoAppSession

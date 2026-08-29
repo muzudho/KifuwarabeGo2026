@@ -6,6 +6,6 @@
     <Description>Formal adapter boundary for the Go Text Protocol.</Description>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation\KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation.csproj" />
+    <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlayDomain.Go\KifuwarabeGo2026.Reference.PlayDomain.Go.csproj" />
   </ItemGroup>
 </Project>

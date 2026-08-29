@@ -1,6 +1,6 @@
 namespace KifuwarabeGo2026.GameOasis.Gui.Application;
 
-using KifuwarabeGo2026.Shared.Domain;
+using KifuwarabeGo2026.Reference.PlayDomain.Go;
 using System.Collections.Generic;
 
 /// <summary>局面に付随するアゲハマ、コウ、連続パス、勝敗とスーパーコウ判定を管理します。</summary>

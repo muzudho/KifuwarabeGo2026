@@ -1,6 +1,6 @@
 namespace KifuwarabeGo2026.GameOasis.Gui.Application.GameOasis;
 
-using KifuwarabeGo2026.Shared.Domain;
+using KifuwarabeGo2026.Reference.PlayDomain.Go;
 using System.Collections.Generic;
 
 /// <summary>Game Oasisセッション開始時だけ使う、現行GUIから独立した初期局面です。</summary>

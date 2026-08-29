@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Shared.Domain;
+namespace KifuwarabeGo2026.Reference.PlayDomain.Go;
 
 /// <summary>
 /// ［囲碁の石］

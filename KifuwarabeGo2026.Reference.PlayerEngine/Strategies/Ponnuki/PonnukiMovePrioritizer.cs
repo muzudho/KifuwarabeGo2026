@@ -1,7 +1,7 @@
 namespace KifuwarabeGo2026.Reference.PlayerEngine.Strategies.Ponnuki;
 
-using KifuwarabeGo2026.Shared.Domain;
-using KifuwarabeGo2026.Shared.BoardLens.Strong;
+using KifuwarabeGo2026.Reference.PlayDomain.Go;
+using KifuwarabeGo2026.Reference.PlayDomain.Go.Analysis;
 
 /// <summary>
 /// Board Lens と同じ連解析を使い、ポン抜きプレイヤーの候補手を優先度付けします。

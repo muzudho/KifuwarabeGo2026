@@ -7,7 +7,7 @@ using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.BoardAndReview;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.LocalMatch;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.LocalMatch.Intermission;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.LocalMatch.Play;
-using KifuwarabeGo2026.Shared.Domain;
+using KifuwarabeGo2026.Reference.PlayDomain.Go;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.BoardLens;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.LinkUnderline;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.Shared.Underline;

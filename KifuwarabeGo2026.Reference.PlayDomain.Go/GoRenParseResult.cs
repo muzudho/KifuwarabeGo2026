@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Shared.Domain;
+namespace KifuwarabeGo2026.Reference.PlayDomain.Go;
 
 using System;
 using System.Collections.Generic;

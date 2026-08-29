@@ -1,7 +1,7 @@
 namespace KifuwarabeGo2026.GameOasis.Gui.Application.GameOasis;
 
 using KifuwarabeGo2026.GameOasis.Contracts.Common;
-using KifuwarabeGo2026.Shared.Domain;
+using KifuwarabeGo2026.Reference.PlayDomain.Go;
 using System;
 using System.Linq;
 using System.Text.Json;

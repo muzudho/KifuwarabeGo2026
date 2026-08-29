@@ -5,7 +5,7 @@ using KifuwarabeGo2026.GameOasis.Gui.Presentation;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
 using KifuwarabeGo2026.GameOasis.Gui.Application.GoApps.Casual.Ponnuki;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.Button;
-using KifuwarabeGo2026.Shared.Domain;
+using KifuwarabeGo2026.Reference.PlayDomain.Go;
 using Microsoft.Xna.Framework;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.RightSidePanel;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.RandomSeedRow;

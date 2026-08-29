@@ -10,7 +10,7 @@ using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.GtpEngine;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Title;
 using KifuwarabeGo2026.GameOasis.Gui.Application;
 using KifuwarabeGo2026.GameOasis.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.ConnectionTarget;
-using KifuwarabeGo2026.Shared.Domain;
+using KifuwarabeGo2026.Reference.PlayDomain.Go;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.SelectEntry;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.StickyNote;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.Button;

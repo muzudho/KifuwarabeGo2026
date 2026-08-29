@@ -16,7 +16,7 @@ using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Capabilities;
 using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Engines;
 using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.InitialPosition;
 using KifuwarabeGo2026.Reference.PlayRoomEngine.Go.LegacyMatch;
-using KifuwarabeGo2026.Shared.Domain;
+using KifuwarabeGo2026.Reference.PlayDomain.Go;
 using System;
 using System.Buffers.Binary;
 using System.Collections.Generic;

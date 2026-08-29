@@ -1,7 +1,7 @@
 namespace KifuwarabeGo2026.GameOasis.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.Watching;
 
 using KifuwarabeGo2026.GameOasis.Gui.Application.Local.Playing;
-using KifuwarabeGo2026.Shared.Domain;
+using KifuwarabeGo2026.Reference.PlayDomain.Go;
 using KifuwarabeGo2026.FormalAdapter.Cgos.Observability;
 using KifuwarabeGo2026.FormalAdapter.Cgos.Go;
 using KifuwarabeGo2026.FormalAdapter.Cgos.Compatibility;

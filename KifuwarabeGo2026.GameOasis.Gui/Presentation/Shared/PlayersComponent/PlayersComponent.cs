@@ -5,7 +5,7 @@ using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.LocalMatch.Play;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
 
 using KifuwarabeGo2026.GameOasis.Gui.Application;
-using KifuwarabeGo2026.Shared.Domain;
+using KifuwarabeGo2026.Reference.PlayDomain.Go;
 using Microsoft.Xna.Framework;
 using System;
 

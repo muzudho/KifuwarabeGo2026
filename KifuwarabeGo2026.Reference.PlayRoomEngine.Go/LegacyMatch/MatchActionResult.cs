@@ -1,6 +1,6 @@
 namespace KifuwarabeGo2026.Reference.PlayRoomEngine.Go.LegacyMatch;
 
-using KifuwarabeGo2026.Shared.Domain;
+using KifuwarabeGo2026.Reference.PlayDomain.Go;
 
 /// <summary>
 /// Reports whether an action changed the match and exposes the resulting snapshot.

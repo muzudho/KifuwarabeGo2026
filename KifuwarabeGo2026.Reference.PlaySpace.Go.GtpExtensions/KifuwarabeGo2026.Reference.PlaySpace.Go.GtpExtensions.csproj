@@ -14,7 +14,7 @@
     <ProjectReference Include="..\KifuwarabeGo2026.FormalAdapter.Sgf\KifuwarabeGo2026.FormalAdapter.Sgf.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.Reference.Communication.Gtp\KifuwarabeGo2026.Reference.Communication.Gtp.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlayRoomEngine.Go\KifuwarabeGo2026.Reference.PlayRoomEngine.Go.csproj" />
-    <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation\KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation.csproj" />
+    <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlayDomain.Go\KifuwarabeGo2026.Reference.PlayDomain.Go.csproj" />
   </ItemGroup>
 
 </Project>

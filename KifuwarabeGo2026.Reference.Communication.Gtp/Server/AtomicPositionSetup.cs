@@ -1,6 +1,6 @@
 namespace KifuwarabeGo2026.Reference.Communication.Gtp.Server;
 
-using KifuwarabeGo2026.Shared.Domain;
+using KifuwarabeGo2026.Reference.PlayDomain.Go;
 
 /// <summary>
 /// Builds an edited position away from the live board and exposes it only after a successful commit.

@@ -1,6 +1,6 @@
 namespace KifuwarabeGo2026.Reference.PlayerEngine.Strategies.Ponnuki;
 
-using KifuwarabeGo2026.Shared.Domain;
+using KifuwarabeGo2026.Reference.PlayDomain.Go;
 
 /// <summary>Casual App のポン抜き用着手戦略です。</summary>
 public sealed class PonnukiStrategy : IGenerateMoveStrategy

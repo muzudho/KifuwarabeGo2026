@@ -1,7 +1,7 @@
 namespace KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Strategies;
 
 using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.InitialPosition;
-using KifuwarabeGo2026.Shared.Domain;
+using KifuwarabeGo2026.Reference.PlayDomain.Go;
 
 /// <summary>
 /// Reproduces explicitly positioned black setup stones with set_free_handicap.

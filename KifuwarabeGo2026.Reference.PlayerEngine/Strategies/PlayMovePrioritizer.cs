@@ -1,6 +1,6 @@
 namespace KifuwarabeGo2026.Reference.PlayerEngine.Strategies;
 
-using KifuwarabeGo2026.Shared.Domain;
+using KifuwarabeGo2026.Reference.PlayDomain.Go;
 using System.Collections.Generic;
 using System.Linq;
 

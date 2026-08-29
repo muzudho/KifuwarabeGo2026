@@ -41,7 +41,7 @@
   <Project Path="KifuwarabeGo2026.PlayRoom.Review.JsonLinesHost/KifuwarabeGo2026.PlayRoom.Review.JsonLinesHost.csproj" />
   <Project Path="KifuwarabeGo2026.PlayRoom.Match.JsonLinesHost/KifuwarabeGo2026.PlayRoom.Match.JsonLinesHost.csproj" />
   <Project Path="KifuwarabeGo2026.Tests.PlayRoom.JsonLines/KifuwarabeGo2026.Tests.PlayRoom.JsonLines.csproj" />
-  <Project Path="KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation/KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation.csproj" />
+  <Project Path="KifuwarabeGo2026.Reference.PlayDomain.Go/KifuwarabeGo2026.Reference.PlayDomain.Go.csproj" />
   <Project Path="KifuwarabeGo2026.Reference.PlayerEngine/KifuwarabeGo2026.Reference.PlayerEngine.csproj" />
   <Project Path="KifuwarabeGo2026.Reference.Communication.Gtp/KifuwarabeGo2026.Reference.Communication.Gtp.csproj" />
   <Project Path="KifuwarabeGo2026.Reference.PlayRoomGui.Common/KifuwarabeGo2026.Reference.PlayRoomGui.Common.csproj" />

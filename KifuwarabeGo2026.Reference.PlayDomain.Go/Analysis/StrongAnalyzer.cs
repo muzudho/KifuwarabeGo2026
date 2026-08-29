@@ -1,6 +1,6 @@
-namespace KifuwarabeGo2026.Shared.BoardLens.Strong;
+namespace KifuwarabeGo2026.Reference.PlayDomain.Go.Analysis;
 
-using KifuwarabeGo2026.Shared.Domain;
+using KifuwarabeGo2026.Reference.PlayDomain.Go;
 using System;
 using System.Collections.Generic;
 

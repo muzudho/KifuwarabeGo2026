@@ -1,6 +1,6 @@
 namespace KifuwarabeGo2026.FormalAdapter.Sgf.Go;
 
-using KifuwarabeGo2026.Shared.Domain;
+using KifuwarabeGo2026.Reference.PlayDomain.Go;
 
 /// <summary>A GUI-independent projection of one main Go game from an SGF document.</summary>
 public sealed class SgfGoGameRecord

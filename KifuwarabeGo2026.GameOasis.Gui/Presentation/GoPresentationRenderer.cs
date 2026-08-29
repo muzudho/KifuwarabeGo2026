@@ -24,7 +24,7 @@ using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.SelectEntry;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Title;
 using Microsoft.Xna.Framework;
-using KifuwarabeGo2026.Shared.Domain;
+using KifuwarabeGo2026.Reference.PlayDomain.Go;
 using KifuwarabeGo2026.GameOasis.Contracts.Common;
 using KifuwarabeGo2026.Reference.PlayRoomGui.Common;
 using KifuwarabeGo2026.GameOasis.Contracts.ProtocolG;

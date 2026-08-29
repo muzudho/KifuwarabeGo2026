@@ -4,6 +4,7 @@ using System.Collections.Concurrent;
 using System.Text.Json;
 using KifuwarabeGo2026.GameOasis.Contracts.Common;
 using KifuwarabeGo2026.GameOasis.Contracts.ProtocolS;
+using KifuwarabeGo2026.Reference.PlayDomain.Go;
 
 /// <summary>中国式面積計算を採用する通常囲碁のProtocol S参照実装です。</summary>
 public sealed class GoPlaySpaceProtocol : IPlaySpaceProtocol

@@ -2,8 +2,8 @@ namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.BoardLens.Shared.RenBounda
 
 using KifuwarabeGo2026.GameOasis.Gui.Application;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.BoardLens;
-using KifuwarabeGo2026.Shared.BoardLens.Strong;
-using KifuwarabeGo2026.Shared.Domain;
+using KifuwarabeGo2026.Reference.PlayDomain.Go.Analysis;
+using KifuwarabeGo2026.Reference.PlayDomain.Go;
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;

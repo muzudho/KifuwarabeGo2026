@@ -6,7 +6,7 @@ using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.LinkUnde
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
 using Microsoft.Xna.Framework;
 using System;
-using KifuwarabeGo2026.Shared.Domain;
+using KifuwarabeGo2026.Reference.PlayDomain.Go;
 
 /// <summary>Local Match と Ponnuki で共有するランダムシード入力行です。</summary>
 public sealed class RandomSeedRowComponent

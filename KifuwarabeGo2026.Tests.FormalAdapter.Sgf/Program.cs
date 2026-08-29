@@ -1,6 +1,6 @@
 using KifuwarabeGo2026.FormalAdapter.Sgf.Document;
 using KifuwarabeGo2026.FormalAdapter.Sgf.Go;
-using KifuwarabeGo2026.Shared.Domain;
+using KifuwarabeGo2026.Reference.PlayDomain.Go;
 
 var collection = SgfDocumentParser.Parse(
     "  (;FF[4]GM[1]XX[first][second]C[close\\] slash\\\\ line\\\r\njoined];B[aa](;W[bb]C[left])(;W[cc]C[right]))\r\n" +

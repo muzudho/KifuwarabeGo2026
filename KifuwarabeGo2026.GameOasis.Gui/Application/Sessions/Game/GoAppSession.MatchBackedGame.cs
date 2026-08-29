@@ -2,7 +2,7 @@ namespace KifuwarabeGo2026.GameOasis.Gui.Application;
 
 using KifuwarabeGo2026.GameOasis.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.Reference.PlayRoomEngine.Go.LegacyMatch;
-using KifuwarabeGo2026.Shared.Domain;
+using KifuwarabeGo2026.Reference.PlayDomain.Go;
 using System.Collections.Generic;
 
 /// <summary>対局ルールを MatchSession に委譲する着手・パス・終局処理を担当します。</summary>
