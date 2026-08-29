@@ -58,6 +58,7 @@ internal static class PortabilityChecks
         var coreAssembly = typeof(Game1).Assembly;
         var gtpExtensionsAssembly = typeof(GtpExtensionsAssembly).Assembly;
         var gtpFormalAdapterAssembly = typeof(IGtpCommandSession).Assembly;
+        var cgosFormalAdapterAssembly = typeof(KifuwarabeGo2026.FormalAdapter.Cgos.Protocol.CgosServerMessage).Assembly;
         var sgfFormalAdapterAssembly = typeof(KifuwarabeGo2026.FormalAdapter.Sgf.Document.SgfDocument).Assembly;
         var gtpCommunicationAssembly = typeof(KifuwarabeGtpPlayerProtocol).Assembly;
         var legacyGoMatchAssembly = typeof(MatchSession).Assembly;
@@ -71,6 +72,9 @@ internal static class PortabilityChecks
         VerifyGtpExtensionsAssembly(gtpExtensionsAssembly, gtpCommunicationAssembly);
         Require(gtpFormalAdapterAssembly.GetName().Name == "KifuwarabeGo2026.FormalAdapter.Gtp",
             "GTP protocol primitives must be owned by FormalAdapter.Gtp.");
+        Require(typeof(KifuwarabeGo2026.FormalAdapter.Cgos.Protocol.CgosServerMessageParser).Assembly == cgosFormalAdapterAssembly &&
+                typeof(KifuwarabeGo2026.FormalAdapter.Cgos.Protocol.CgosClientCommandFormatter).Assembly == cgosFormalAdapterAssembly,
+            "CGOS protocol parsing and formatting must be owned by FormalAdapter.Cgos.");
         Require(typeof(KifuwarabeGo2026.FormalAdapter.Sgf.Go.SgfCoordinate).Assembly == sgfFormalAdapterAssembly &&
                 typeof(KifuwarabeGo2026.FormalAdapter.Sgf.Go.SgfGoGameRecordConverter).Assembly == sgfFormalAdapterAssembly,
             "SGF Go coordinates and neutral game projection must be owned by FormalAdapter.Sgf.");

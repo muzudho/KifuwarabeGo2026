@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using KifuwarabeGo2026.FormalAdapter.Cgos.Protocol;
 
 /// <summary>
 /// CGOS サーバーとの通信を行うプログラムです。
@@ -660,12 +661,13 @@ internal sealed class CgosConnectionSession
                 }
 
                 _log("> " + line);
-                if (line.StartsWith("Error:", StringComparison.OrdinalIgnoreCase))
+                var serverMessage = CgosServerMessageParser.Parse(line);
+                if (serverMessage is CgosServerError serverError)
                 {
-                    throw new InvalidOperationException("CGOS error: " + line);
+                    throw new InvalidOperationException("CGOS error: " + serverError.Message);
                 }
 
-                if (await HandleLoginLineAsync(line, cancellationToken, passwordSentAsync))
+                if (await HandleLoginLineAsync(serverMessage, cancellationToken, passwordSentAsync))
                 {
                     continue;
                 }
@@ -698,6 +700,9 @@ internal sealed class CgosConnectionSession
         _log("< " + (maskInLog ? "(password)" : message));
     }
 
+    public Task SendAsync(CgosClientCommand command) =>
+        SendAsync(CgosClientCommandFormatter.Format(command), command.IsSensitive);
+
     public async Task SendQuitAsync()
     {
         if (_writer is null || _quitSent)
@@ -705,27 +710,26 @@ internal sealed class CgosConnectionSession
             return;
         }
 
-        await SendAsync("quit");
+        await SendAsync(new CgosQuit());
         _quitSent = true;
     }
 
     private async Task<bool> HandleLoginLineAsync(
-        string line,
+        CgosServerMessage message,
         CancellationToken cancellationToken,
         Func<CancellationToken, Task>? passwordSentAsync)
     {
-        var parts = line.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        switch (parts[0].ToLowerInvariant())
+        switch (message)
         {
-            case "protocol":
-                ServerSupportsAnalyze = parts.Length == 2 && parts[1].Contains("genmove_analyze", StringComparison.OrdinalIgnoreCase);
-                await SendAsync(CgosClient.GetClientId(ServerSupportsAnalyze));
+            case CgosProtocolAdvertised protocol:
+                ServerSupportsAnalyze = protocol.SupportsGenMoveAnalyze;
+                await SendAsync(new CgosClientIdentity("e1", ServerSupportsAnalyze));
                 return true;
-            case "username":
-                await SendAsync(_account.UserName);
+            case CgosUsernameRequested:
+                await SendAsync(new CgosUsername(_account.UserName));
                 return true;
-            case "password":
-                await SendAsync(_account.Password, maskInLog: true);
+            case CgosPasswordRequested:
+                await SendAsync(new CgosPassword(_account.Password));
                 if (passwordSentAsync is not null)
                 {
                     await passwordSentAsync(cancellationToken);
@@ -795,9 +799,9 @@ internal sealed class CgosAdminClient
         }
 
         await session.SendAsync(
-            command.StartsWith("match ", StringComparison.OrdinalIgnoreCase)
-                ? "match " + command[6..]
-                : command.ToLowerInvariant());
+            command.Equals("who", StringComparison.OrdinalIgnoreCase)
+                ? new CgosWho()
+                : new CgosMatch(command.Length > 5 ? command[5..].Trim() : ""));
     }
 
     private void Log(string message)
@@ -855,47 +859,41 @@ internal sealed class CgosClient
 
     private async Task HandleLineAsync(string line, CgosConnectionSession session, CancellationToken cancellationToken)
     {
-        var parts = line.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-        var command = parts[0].ToLowerInvariant();
-        var parameters = parts.Length == 2
-            ? parts[1].Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            : Array.Empty<string>();
-
-        switch (command)
+        switch (CgosServerMessageParser.Parse(line))
         {
-            case "setup":
-                await HandleSetupAsync(parameters, cancellationToken);
+            case CgosMatchSetup setup:
+                await HandleSetupAsync(setup, cancellationToken);
                 return;
-            case "play":
-                if (!_options.HumanMode) await RequireEngine().PlayAsync(parameters, cancellationToken);
+            case CgosMovePlayed play:
+                if (!_options.HumanMode)
+                    await RequireEngine().PlayAsync(
+                        [play.Color, play.Vertex, play.TimeLeftMilliseconds.ToString(CultureInfo.InvariantCulture)],
+                        cancellationToken);
                 return;
-            case "genmove":
-                var move = await HandleGenMoveAsync(parameters, session.ServerSupportsAnalyze, cancellationToken);
-                await session.SendAsync(move);
+            case CgosGenMoveRequested genmove:
+                var move = await HandleGenMoveAsync(
+                    [genmove.Color, genmove.TimeLeftMilliseconds.ToString(CultureInfo.InvariantCulture)],
+                    session.ServerSupportsAnalyze,
+                    cancellationToken);
+                await session.SendAsync(new CgosMove(move.Split(' ', 2)[0], move.Contains(' ') ? move[(move.IndexOf(' ') + 1)..] : null));
                 return;
-            case "gameover":
-                Log("# Game over: " + string.Join(' ', parameters));
+            case CgosGameOver gameOver:
+                Log("# Game over: " + gameOver.Result);
                 await ShutdownEngineAsync();
-                await session.SendAsync("ready");
+                await session.SendAsync(new CgosReady());
                 return;
-            case "info":
+            case CgosInfoMessage:
                 return;
+            case CgosUnknownServerMessage unknown:
+                throw new InvalidOperationException("Unsupported CGOS command: " + unknown.Command);
             default:
-                throw new InvalidOperationException("Unsupported CGOS command: " + command);
+                throw new InvalidOperationException("Unexpected CGOS message after login: " + line);
         }
     }
 
-    private async Task HandleSetupAsync(string[] parameters, CancellationToken cancellationToken)
+    private async Task HandleSetupAsync(CgosMatchSetup setup, CancellationToken cancellationToken)
     {
-        if (parameters.Length < 6)
-        {
-            throw new InvalidOperationException("CGOS setup requires at least 6 parameters.");
-        }
-
-        if (!int.TryParse(parameters[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out _gameId))
-        {
-            throw new InvalidOperationException("CGOS setup has an invalid game ID.");
-        }
+        _gameId = setup.GameId;
 
         await ShutdownEngineAsync();
         if (!_options.HumanMode)
@@ -906,10 +904,10 @@ internal sealed class CgosClient
             _engineSupportsCgosAnalyze = await SupportsCommandAsync(_engine, "cgos-genmove_analyze", cancellationToken);
         }
 
-        var boardSize = parameters[1];
-        var komi = parameters[2];
-        var programA = StripRank(parameters[4]);
-        var programB = StripRank(parameters[5]);
+        var boardSize = setup.BoardSize.ToString(CultureInfo.InvariantCulture);
+        var komi = setup.Komi.ToString(CultureInfo.InvariantCulture);
+        var programA = setup.WhitePlayer;
+        var programB = setup.BlackPlayer;
         _engineColor = string.Equals(_account.UserName, programA, StringComparison.OrdinalIgnoreCase) ? "white" : "black";
 
         Log($"# Setup game. board={boardSize}, komi={komi}, localColor={_engineColor}, programA={programA}, programB={programB}");
@@ -921,12 +919,12 @@ internal sealed class CgosClient
             await _engine.CommandAsync("clear_board", cancellationToken);
         }
 
-        var replayColor = "b";
-        for (var index = 6; index + 1 < parameters.Length; index += 2)
+        foreach (var historicalMove in setup.MoveHistory)
         {
             if (_engine is not null)
-                await _engine.PlayAsync(new[] { replayColor, parameters[index], parameters[index + 1] }, cancellationToken);
-            replayColor = replayColor == "b" ? "w" : "b";
+                await _engine.PlayAsync(
+                    [historicalMove.Color, historicalMove.Vertex, historicalMove.TimeLeftMilliseconds.ToString(CultureInfo.InvariantCulture)],
+                    cancellationToken);
         }
     }
 

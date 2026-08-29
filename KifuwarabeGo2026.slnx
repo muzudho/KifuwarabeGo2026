@@ -1,5 +1,6 @@
 <Solution>
   <Project Path="KifuwarabeGo2026.FormalAdapter.Cgos/KifuwarabeGo2026.FormalAdapter.Cgos.csproj" />
+  <Project Path="KifuwarabeGo2026.Tests.FormalAdapter.Cgos/KifuwarabeGo2026.Tests.FormalAdapter.Cgos.csproj" />
   <Project Path="KifuwarabeGo2026.FormalAdapter.Csa/KifuwarabeGo2026.FormalAdapter.Csa.csproj" />
   <Project Path="KifuwarabeGo2026.FormalAdapter.Gtp/KifuwarabeGo2026.FormalAdapter.Gtp.csproj" />
   <Project Path="KifuwarabeGo2026.FormalAdapter.Kif/KifuwarabeGo2026.FormalAdapter.Kif.csproj" />

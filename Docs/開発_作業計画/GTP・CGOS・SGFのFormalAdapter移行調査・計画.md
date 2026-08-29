@@ -1,6 +1,6 @@
 # GTP・CGOS・SGFのFormalAdapter移行調査・計画
 
-状態：作業段階0・1・2・3完了（2026年8月29日）
+状態：作業段階0・1・2・3・4完了（2026年8月29日）
 
 ## 目的
 
@@ -393,9 +393,40 @@ GUI内の旧SGFパーサー、旧SGFライター、座標変換、プロパテ�
 
 ### 作業段階4：CGOS純粋プロトコルを抽出する
 
+状態：完了（2026年8月29日）
+
 CGOSサーバー行のパーサー、クライアントコマンドのフォーマッター、ログイン状態を`FormalAdapter.Cgos.Protocol`へ追加します。最初はHostの既存状態機械から利用し、実行ファイルとGUI経路は変えません。
 
 完了条件：ネットワーク、GUI、ファイルシステムを使わないテストベクトルでCGOSメッセージを検査できる。
+
+#### 作業段階4の実施記録
+
+`KifuwarabeGo2026.FormalAdapter.Cgos.Protocol`へ、ネットワーク、GUI、囲碁盤に依存しない次の境界を実装しました。
+
+* `CgosServerMessage`を基底とするprotocol、username、password、ok、setup、play、genmove、gameover、info、error、unknownの型付きメッセージ。
+* setup棋歴の色、頂点、残り時間を保持する`CgosHistoricalMove`。
+* identity、username、password、move、resign、ready、quit、who、matchの型付きクライアントコマンド。
+* `CgosServerMessageParser`と`CgosClientCommandFormatter`。
+* 不正なフィールドと原文を報告する`CgosProtocolException`。
+
+未知サーバーコマンドは失敗させず、コマンド名、引数、原文を保持します。パスワードは送信用文字列を生成できますが、コマンド自体に機密フラグを持たせ、ログ用フォーマットでは`(password)`へ置換します。すべてのクライアントコマンドは改行とNULを拒否します。
+
+現行CGOS Hostも新しい境界へ接続しました。
+
+* 接続セッションは受信行を一度だけ純粋パーサーへ通し、型でログインを進める。
+* プレイヤー状態機械は型付きsetup、play、genmove、gameover、infoを受け取る。
+* setupの数値検査、ランク除去、棋歴の交互色復元はFormalAdapterが所有する。
+* identity、資格情報、着手、解析付き着手、ready、quit、who、matchは型付きフォーマッターを使う。
+* Hostのコマンドライン、TCP、エンジン子プロセス、ログ、実行ファイル名は変更していない。
+
+専用`KifuwarabeGo2026.Tests.FormalAdapter.Cgos`を追加し、匿名ベースラインと不正入力をネットワークなしで検査しました。
+
+検証結果：
+
+* ソリューション全体Releaseビルド：警告0件、エラー0件。
+* CGOS純粋プロトコル専用試験：`PASS`。
+* 実CGOS Hostの`--help`、GTP・CGOS・SGFベースライン、所有権検査を含むGUI移植性試験：`PASS`。
+* Windows非対話プラットフォーム試験：`PASS`。
 
 ### 作業段階5：CGOS Hostを薄くする
 
@@ -446,9 +477,9 @@ CGOSサーバー行のパーサー、クライアントコマンドのフォー�
 ## 実装再開地点
 
 ```text
-現在の状態：作業段階0、1、2、3完了。全回帰試験PASS
-次の最小作業：作業段階4としてCGOSサーバー行とクライアントコマンドの純粋契約を固定する
-次の実装候補：CgosServerMessage、CgosClientCommand、純粋パーサー／フォーマッター
-移行先：KifuwarabeGo2026.FormalAdapter.Cgos.Protocol
+現在の状態：作業段階0、1、2、3、4完了。全回帰試験PASS
+次の最小作業：作業段階5としてCGOS接続セッションとプレイヤー／管理状態機械をHostから分離する
+次の実装候補：CgosConnectionSession、CgosClient、CgosAdminClient
+移行先：KifuwarabeGo2026.FormalAdapter.Cgos.PlayerEngine、GameMasterEngine、Host構成点
 禁止事項：GTPプロジェクト全体の一括改名、CGOS Hostの一括分解、SgfGameRecordConverterの型ごとの単純移動を同時に行わない
 ```
