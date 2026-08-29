@@ -1,0 +1,6 @@
+# KifuwarabeGo2026.FormalAdapter.Gtp
+
+GTPとゲームオアシスのカジュアル・コアを接続するフォーマル・アダプターのProjectFamily入口です。
+
+現在のGTP実装は`KifuwarabeGo2026.Reference.Communication.Gtp`と`KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions`にあります。実行ファイル名、設定、発行物との互換性を維持しながら、外部仕様の解釈と意味変換に当たる部分だけを段階的にこの配下へ移します。このプレースホルダーには、まだ実装や旧プロジェクトへの参照を追加しません。
+

@@ -1,4 +1,10 @@
 <Solution>
+  <Project Path="KifuwarabeGo2026.FormalAdapter.Cgos/KifuwarabeGo2026.FormalAdapter.Cgos.csproj" />
+  <Project Path="KifuwarabeGo2026.FormalAdapter.Csa/KifuwarabeGo2026.FormalAdapter.Csa.csproj" />
+  <Project Path="KifuwarabeGo2026.FormalAdapter.Gtp/KifuwarabeGo2026.FormalAdapter.Gtp.csproj" />
+  <Project Path="KifuwarabeGo2026.FormalAdapter.Kif/KifuwarabeGo2026.FormalAdapter.Kif.csproj" />
+  <Project Path="KifuwarabeGo2026.FormalAdapter.Sgf/KifuwarabeGo2026.FormalAdapter.Sgf.csproj" />
+  <Project Path="KifuwarabeGo2026.FormalAdapter.Usi/KifuwarabeGo2026.FormalAdapter.Usi.csproj" />
   <Project Path="KifuwarabeGo2026.Reference.Communication.Gtp.Host/KifuwarabeGo2026.Reference.Communication.Gtp.Host.csproj" />
   <Project Path="KifuwarabeGo2026.GameOasis.Contracts/KifuwarabeGo2026.GameOasis.Contracts.csproj" />
   <Project Path="KifuwarabeGo2026.GameOasis.Concierge/KifuwarabeGo2026.GameOasis.Concierge.csproj" />
