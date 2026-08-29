@@ -8,7 +8,9 @@ using KifuwarabeGo2026.GameOasis.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.GameOasis.Gui.Sgf;
 using KifuwarabeGo2026.Reference.PlayDomain.Go;
 using KifuwarabeGo2026.Reference.PlayRoomGui.Go;
+using KifuwarabeGo2026.Reference.PlayRoomGui.Go.Windows;
 using System;
+using System.IO;
 using System.Text.Json;
 using System.Linq;
 
@@ -58,6 +60,50 @@ internal static class PlayRoomLaunchChecks
 
         VerifySavedGoLaunchRequest();
         VerifySavedGoReviewLaunchRequest();
+        VerifyGoWindowsHostStartup();
+    }
+
+    private static void VerifyGoWindowsHostStartup()
+    {
+        var assembly = typeof(GoPlayRoomHostStartup).Assembly;
+        var references = assembly.GetReferencedAssemblies()
+            .Select(reference => reference.Name)
+            .ToHashSet(StringComparer.Ordinal);
+        Require(assembly.GetName().Name == "KifuwarabeGo2026.Reference.PlayRoomGui.Go.Windows" &&
+                references.Contains("KifuwarabeGo2026.Reference.PlayRoomGui.Go") &&
+                !references.Contains("KifuwarabeGo2026.GameOasis.Gui") &&
+                !references.Contains("KifuwarabeGo2026.LobbyGui"),
+            "The Go Play Room Windows Host must not depend on the compatibility GUI or Lobby GUI.");
+
+        var request = CreateSavedMatchRequest("windows-host-request");
+        var path = Path.Combine(Path.GetTempPath(), $"kifuwarabe-go-host-{Guid.NewGuid():N}.json");
+        try
+        {
+            File.WriteAllText(path, JsonSerializer.Serialize(request));
+            var ready = GoPlayRoomHostStartup.Load(["--launch-request", path]);
+            Require(ready is { IsReady: true, ExitCode: GoPlayRoomHostExitCodes.Success, Code: "ready" } &&
+                    ready.Plan is { RequestId: "windows-host-request", RoomTypeId: PlayRoomIds.Match, BoardSize: 9 },
+                $"The Go Play Room Windows Host did not accept a saved Local Match request: {ready.Code}: {ready.Message}");
+
+            File.WriteAllText(path, "not json");
+            var unreadable = GoPlayRoomHostStartup.Load(["--launch-request", path]);
+            Require(unreadable.ExitCode == GoPlayRoomHostExitCodes.RequestReadFailed && !unreadable.IsReady,
+                "The Go Play Room Windows Host did not reject malformed JSON with the read-failure exit code.");
+
+            File.WriteAllText(path, JsonSerializer.Serialize(request with { RoomTypeId = PlayRoomIds.Review }));
+            var unsupported = GoPlayRoomHostStartup.Load(["--launch-request", path]);
+            Require(unsupported.ExitCode == GoPlayRoomHostExitCodes.RequestRejected &&
+                    unsupported.Code == "unsupported-host-room-type",
+                "The first Go Play Room Windows Host slice accepted a non-Match request.");
+        }
+        finally
+        {
+            if (File.Exists(path)) File.Delete(path);
+        }
+
+        var invalidArguments = GoPlayRoomHostStartup.Load([]);
+        Require(invalidArguments.ExitCode == GoPlayRoomHostExitCodes.InvalidArguments,
+            "The Go Play Room Windows Host did not reject missing command-line arguments.");
     }
 
     private static void VerifySavedGoReviewLaunchRequest()
@@ -97,32 +143,7 @@ internal static class PlayRoomLaunchChecks
 
     private static void VerifySavedGoLaunchRequest()
     {
-        var configuration = new ContractDocument(
-            "application/json",
-            GameOasisOfficialNames.Go + ".configuration.v1",
-            """{"version":1,"boardSize":9,"komi":7.5,"ruleset":"chinese-area","startingPlayer":"white","setupStones":[{"x":2,"y":3,"color":"black"},{"x":4,"y":5,"color":"white"}],"mainTimeMilliseconds":90000}""");
-        var original = new PlayRoomLaunchRequest(
-            1,
-            "saved-go-request",
-            PlayRoomIds.Match,
-            GameOasisOfficialNames.Go,
-            new PlaySpaceTypeId(GameOasisOfficialNames.Go),
-            configuration,
-            null,
-            [
-                new PlayRoomParticipant("black", "entry-black", "BLACK", "human", "", null),
-                new PlayRoomParticipant(
-                    "white",
-                    "entry-white",
-                    "WHITE ENGINE",
-                    "computer",
-                    "engine-white",
-                    new ContractDocument("application/json", GameOasisOfficialNames.Root + ".gtp-engine-options.v1", "{\"random-move\":\"star\"}"),
-                    new ContractDocument(
-                        "application/json",
-                        PlayerConnectionSchemas.GtpProcessV1,
-                        "{\"executablePath\":\"engines/white.exe\",\"workingDirectory\":\"engines\",\"arguments\":\"--gtp\",\"enableGtpLog\":true,\"initialPositionProfileId\":\"auto\"}")),
-            ]);
+        var original = CreateSavedMatchRequest("saved-go-request");
 
         var savedJson = JsonSerializer.Serialize(original);
         var restored = JsonSerializer.Deserialize<PlayRoomLaunchRequest>(savedJson)
@@ -152,6 +173,36 @@ internal static class PlayRoomLaunchChecks
         Require(!GoPlayRoomLaunchInterpreter.TryCreate(wrongGame, out _, out errorCode, out _) &&
                 errorCode == "unsupported-go-launch-game",
             "The Go launch interpreter accepted a request for another game.");
+    }
+
+    private static PlayRoomLaunchRequest CreateSavedMatchRequest(string requestId)
+    {
+        var configuration = new ContractDocument(
+            "application/json",
+            GameOasisOfficialNames.Go + ".configuration.v1",
+            """{"version":1,"boardSize":9,"komi":7.5,"ruleset":"chinese-area","startingPlayer":"white","setupStones":[{"x":2,"y":3,"color":"black"},{"x":4,"y":5,"color":"white"}],"mainTimeMilliseconds":90000}""");
+        return new PlayRoomLaunchRequest(
+            1,
+            requestId,
+            PlayRoomIds.Match,
+            GameOasisOfficialNames.Go,
+            new PlaySpaceTypeId(GameOasisOfficialNames.Go),
+            configuration,
+            null,
+            [
+                new PlayRoomParticipant("black", "entry-black", "BLACK", "human", "", null),
+                new PlayRoomParticipant(
+                    "white",
+                    "entry-white",
+                    "WHITE ENGINE",
+                    "computer",
+                    "engine-white",
+                    new ContractDocument("application/json", GameOasisOfficialNames.Root + ".gtp-engine-options.v1", "{\"random-move\":\"star\"}"),
+                    new ContractDocument(
+                        "application/json",
+                        PlayerConnectionSchemas.GtpProcessV1,
+                        "{\"executablePath\":\"engines/white.exe\",\"workingDirectory\":\"engines\",\"arguments\":\"--gtp\",\"enableGtpLog\":true,\"initialPositionProfileId\":\"auto\"}")),
+            ]);
     }
 
     private static PlayRoomLaunchRequest CreateRequest(string requestId, string roomTypeId, string gameId) =>
