@@ -471,11 +471,26 @@ Hostに`CgosGtpPlayerEngineAdapter`を追加し、既存の`GtpEngineProcess`を
 
 `FormalAdapter.Cgos.GameMasterEngine`へ`CgosAdminStateMachine`を追加しました。ログイン受理後の準備状態と、`who`、`match`、`quit`入力から型付きCGOSコマンドへの変換を所有します。Hostの`CgosAdminClient`は標準入力監視、ログ、送信だけを担当します。専用試験へログイン前拒否、準備遷移、管理コマンド変換、未知入力拒否を追加して`PASS`しました。
 
-次の縦切りでは、Host内で未使用になった旧`CgosConnectionSession`とその専用`CgosTcpConnector`を物理削除し、第5段階の最終回帰試験を行います。
+#### 第5縦切りの実施記録
+
+Host内で新しい`CgosNetworkSession`だけが接続を所有していることを参照検索で確認し、未使用になった旧`CgosConnectionSession`と専用`CgosTcpConnector`を物理削除しました。Hostから不要になったネットワーク名前空間の参照も除去しました。
+
+第5段階の最終検証として、全ソリューションReleaseビルドは警告0件、エラー0件でした。CGOS専用試験、実CGOS Hostの`--help`起動、GTP・CGOS・SGF所有権を含むGUI移植性試験、Windows非対話プラットフォーム試験、Board Editor・Review・Match Play Roomの正常／異常終了試験がすべて`PASS`しました。
+
+これにより作業段階5を完了とします。次は作業段階6として、CGOS Hostの人間向けログをGUIが再解析している境界を、型付き通知またはJSON Linesへ置換します。
 
 ### 作業段階6：CGOSとGUIのログ境界を置換する
 
 人間向けログの再解析を廃止し、型付き通知またはJSON Linesでsetup、play、analysis、gameover、診断を分けます。`CgosGameObservation`からCGOS字句解析を除き、Go向け投影を`FormalAdapter.Cgos.Go`へ移します。
+
+#### 開始時の再調査記録
+
+現在の境界は次の2系統が同じ標準出力文字列へ依存しています。
+
+* `CgosConnectionProcess.DeriveRunningStatus`が、接続、ログイン、setup、play、genmove、gameover、異常を部分文字列検索してプロセス状態を決定する。
+* `CgosGameObservation.ProcessLogLine`が、`"] > "`以降のCGOSサーバー原文と`"] # Generated "`以降のHost独自行を再解析し、setup、相手着手、自分の着手と解析JSON、gameoverを盤面へ反映する。
+
+最初の縦切りでは、既存の人間向け表示を残したまま、Hostが標準出力へ識別可能なversion 1 JSON Lines通知を併記します。通知DTOと読み書きは`FormalAdapter.Cgos`に置き、GUIは通知を優先し旧ログを互換入力として残します。setup、play、generated move、gameoverから始め、接続診断と実行状態は次の縦切りで分離します。これにより表示、棋譜保存、練習相手の重複抑止を一度に壊さず移行できます。
 
 完了条件：標準出力には機械向け通知だけ、標準エラーには診断だけが流れ、GUI表示と棋譜保存が従来どおり動く。Host異常終了でもGUIが復帰できる。
 
@@ -516,9 +531,9 @@ Hostに`CgosGtpPlayerEngineAdapter`を追加し、既存の`GtpEngineProcess`を
 ## 実装再開地点
 
 ```text
-現在の状態：作業段階0～4完了。作業段階5の接続、プレイヤー、Host側GTP適合、CgosClient置換、管理コマンド状態移行まで完了
-次の最小作業：Host内で未使用の旧CgosConnectionSessionとCgosTcpConnectorを物理削除する
-次の実装候補：第5段階の最終回帰試験
-移行先：KifuwarabeGo2026.FormalAdapter.Cgos.PlayerEngine、GameMasterEngine、Host構成点
+現在の状態：作業段階0～5完了
+次の最小作業：作業段階6のCGOS Host標準出力とGUIログ再解析箇所を再調査する
+次の実装候補：型付き通知／JSON Lines境界、FormalAdapter.Cgos.Go
+移行先：KifuwarabeGo2026.FormalAdapter.Cgos.Go、Host構成点、GUI受信境界
 禁止事項：GTPプロジェクト全体の一括改名、CGOS Hostの一括分解、SgfGameRecordConverterの型ごとの単純移動を同時に行わない
 ```
