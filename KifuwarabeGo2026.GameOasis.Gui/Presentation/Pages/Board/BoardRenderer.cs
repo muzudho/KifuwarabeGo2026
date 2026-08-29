@@ -108,15 +108,14 @@ public sealed class BoardRenderer : IDisposable
     {
         _drawingContext = drawingContext;
         var surface = DrawBoardSurface(drawingContext, board.BoardSize);
-        foreach (var point in board.Black)
-            DrawStone(BoardPoint(surface.Start, surface.Cell, point.X, point.Y), surface.Cell * 0.44f, black: true);
-        foreach (var point in board.White)
-            DrawStone(BoardPoint(surface.Start, surface.Cell, point.X, point.Y), surface.Cell * 0.44f, black: false);
-
-        if (board.KoPoint is { } ko)
-            DrawKoMark(ko.X, ko.Y, surface.Start, surface.Cell);
+        var viewState = GuiBoardViewAdapter.Create(board, GoPlayRoomActivity.Playing);
+        var geometry = CreateBoardGeometry(board.BoardSize);
+        var presentation = GoBoardPresenter.Create(viewState, geometry);
+        DrawStones(presentation);
+        DrawKoMarker(presentation);
+        DrawLastMoveMarker(presentation.LastMoveMarker);
         if (canAcceptInput)
-            DrawGameOasisHoverStone(board, mousePoint, surface.Start, surface.Cell);
+            DrawGameOasisHoverStone(viewState, geometry, mousePoint);
         DrawBoardFrameHighlights(surface.Outer);
     }
 
@@ -426,18 +425,24 @@ public sealed class BoardRenderer : IDisposable
         DrawText(label, new Vector2(center.X - size.X / 2, center.Y - size.Y / 2), Color.White, 0.34f);
     }
 
-    private void DrawGameOasisHoverStone(GuiBoardView board, Point mousePoint, Vector2 start, float cell)
+    private void DrawGameOasisHoverStone(
+        GoPlayRoomViewState viewState,
+        GoBoardGeometry geometry,
+        Point mousePoint)
     {
-        if (!TryGetBoardIntersection(mousePoint, board.BoardSize, out var intersection) ||
-            board.Black.Any(point => point.X == intersection.X && point.Y == intersection.Y) ||
-            board.White.Any(point => point.X == intersection.X && point.Y == intersection.Y) ||
-            board.KoPoint is { } ko && ko.X == intersection.X && ko.Y == intersection.Y)
+        if (!GoBoardPresenter.TryCreateMoveHover(
+                viewState,
+                geometry,
+                new GoBoardScreenPoint(mousePoint.X, mousePoint.Y),
+                canAcceptHumanMove: true,
+                isForbidden: null,
+                out var hover))
             return;
 
-        var center = BoardPoint(start, cell, intersection.X, intersection.Y);
-        var black = string.Equals(board.NextToPlay, "black", StringComparison.Ordinal);
-        DrawCircle(center, cell * 0.55f, black ? new Color(8, 10, 14, 95) : new Color(255, 250, 232, 110));
-        DrawCircle(center, cell * 0.36f, black ? new Color(8, 10, 14, 90) : new Color(255, 250, 232, 95));
+        var center = new Vector2(hover.Center.X, hover.Center.Y);
+        var black = hover.Stone == GoStone.Black;
+        DrawCircle(center, hover.OuterRadius, black ? new Color(8, 10, 14, 95) : new Color(255, 250, 232, 110));
+        DrawCircle(center, hover.InnerRadius, black ? new Color(8, 10, 14, 90) : new Color(255, 250, 232, 95));
     }
 
     /// <summary>

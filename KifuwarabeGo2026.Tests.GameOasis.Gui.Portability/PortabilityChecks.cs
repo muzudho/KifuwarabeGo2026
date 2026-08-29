@@ -261,6 +261,41 @@ internal static class PortabilityChecks
             GoBoardGeometry.Create(2, new GoBoardViewport(0, 0, 200, 200)));
         Require(variationPresentation.Stones.Single().UseWhiteboardStyle,
             "The Go board presenter must retain the variation-editor stone style without using MonoGame types.");
+
+        var protocolBoard = new GuiBoardView(
+            new GameOasisSessionId("gui-board-adapter"),
+            new PlaySpaceTypeId(GameOasisOfficialNames.Go),
+            4,
+            9,
+            [new GuiBoardPoint(0, 0)],
+            [new GuiBoardPoint(1, 0)],
+            "black",
+            2,
+            1,
+            new GuiBoardPoint(2, 0),
+            false,
+            null,
+            [],
+            [],
+            [
+                new GuiBoardMove("black", "play", new GuiBoardPoint(0, 0), null),
+                new GuiBoardMove("white", "play", new GuiBoardPoint(1, 0), null),
+            ],
+            null,
+            null,
+            null);
+        var protocolView = GuiBoardViewAdapter.Create(protocolBoard, GoPlayRoomActivity.BoardEditing);
+        var protocolPresentation = GoBoardPresenter.Create(
+            protocolView,
+            GoBoardGeometry.Create(9, new GoBoardViewport(0, 0, 400, 400)));
+        Require(protocolView.Activity == GoPlayRoomActivity.BoardEditing &&
+                protocolView.CurrentTurn == GoStone.Black &&
+                protocolView.BlackCaptures == 2 &&
+                protocolView.WhiteCaptures == 1 &&
+                protocolPresentation.Stones.Count == 2 &&
+                protocolPresentation.KoMarker?.Intersection == new GoPoint(2, 0) &&
+                protocolPresentation.LastMoveMarker?.Intersection == new GoPoint(1, 0),
+            "A Protocol G board must project through the Go Play Room state and presenter boundary.");
     }
 
     private static void VerifyGtpPlayerEngineSeparation(Assembly gtpFormalAdapterAssembly, Assembly playerEngineAdapterAssembly)
