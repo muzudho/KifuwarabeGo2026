@@ -1,11 +1,11 @@
 using KifuwarabeGo2026.GameOasis.Contracts.Common;
 using KifuwarabeGo2026.GameOasis.Contracts.PlayRoom;
-using KifuwarabeGo2026.PlayRoom.JsonLines;
+using KifuwarabeGo2026.PlayRoomGui.JsonLines;
 using System.Diagnostics;
 
 var root = FindRepositoryRoot();
-var hostPath = Path.Combine(root, "KifuwarabeGo2026.PlayRoom.BoardEditor.JsonLinesHost", "bin", "Release", "net8.0",
-    "KifuwarabeGo2026.PlayRoom.BoardEditor.JsonLinesHost.dll");
+var hostPath = Path.Combine(root, "KifuwarabeGo2026.Reference.PlayRoomGui.BoardEditor.JsonLinesHost", "bin", "Release", "net8.0",
+    "KifuwarabeGo2026.Reference.PlayRoomGui.BoardEditor.JsonLinesHost.dll");
 Require(File.Exists(hostPath), $"Board Editor host must be built: {hostPath}");
 var hostAssemblyPath = Path.ChangeExtension(hostPath, ".dll");
 var forbiddenReferences = System.Reflection.Assembly.LoadFile(hostAssemblyPath).GetReferencedAssemblies()
@@ -48,8 +48,8 @@ using (var room = BoardEditorProcessSession.Open(abnormalStart, CreateLaunch("la
     Require(returnedToLobby, "An abnormal Play Room exit must be detectable so the caller can return to the lobby.");
 }
 
-var reviewHostPath = Path.Combine(root, "KifuwarabeGo2026.PlayRoom.Review.JsonLinesHost", "bin", "Release", "net8.0",
-    "KifuwarabeGo2026.PlayRoom.Review.JsonLinesHost.dll");
+var reviewHostPath = Path.Combine(root, "KifuwarabeGo2026.Reference.PlayRoomGui.Review.JsonLinesHost", "bin", "Release", "net8.0",
+    "KifuwarabeGo2026.Reference.PlayRoomGui.Review.JsonLinesHost.dll");
 Require(File.Exists(reviewHostPath), $"Review host must be built: {reviewHostPath}");
 RequireNoForbiddenReferences(reviewHostPath, "Review");
 var gameRecord = new ContractDocument("application/x-go-sgf", GameOasisOfficialNames.Go + ".sgf.v1", "(;GM[1]SZ[9];B[aa];W[bb])");
@@ -85,8 +85,8 @@ using (var review = ReviewProcessSession.Open(abnormalReviewStart, CreateReviewL
     Require(returnedToLobby, "An abnormal Review exit must be detectable so the caller can return to the lobby.");
 }
 
-var matchHostPath = Path.Combine(root, "KifuwarabeGo2026.PlayRoom.Match.JsonLinesHost", "bin", "Release", "net8.0",
-    "KifuwarabeGo2026.PlayRoom.Match.JsonLinesHost.dll");
+var matchHostPath = Path.Combine(root, "KifuwarabeGo2026.Reference.PlayRoomGui.Match.JsonLinesHost", "bin", "Release", "net8.0",
+    "KifuwarabeGo2026.Reference.PlayRoomGui.Match.JsonLinesHost.dll");
 Require(File.Exists(matchHostPath), $"Match host must be built: {matchHostPath}");
 RequireNoForbiddenReferences(matchHostPath, "Match");
 var matchLaunch = CreateMatchLaunch("match-human-versus-human");

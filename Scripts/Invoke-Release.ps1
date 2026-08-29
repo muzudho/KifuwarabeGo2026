@@ -108,10 +108,10 @@ $versionProjects = @(
     'KifuwarabeGo2026.LauncherEngine.JsonLinesHost\KifuwarabeGo2026.LauncherEngine.JsonLinesHost.csproj',
     'KifuwarabeGo2026.LobbyEngine.JsonLines\KifuwarabeGo2026.LobbyEngine.JsonLines.csproj',
     'KifuwarabeGo2026.LobbyEngine.JsonLinesHost\KifuwarabeGo2026.LobbyEngine.JsonLinesHost.csproj',
-    'KifuwarabeGo2026.PlayRoom.JsonLines\KifuwarabeGo2026.PlayRoom.JsonLines.csproj',
-    'KifuwarabeGo2026.PlayRoom.BoardEditor.JsonLinesHost\KifuwarabeGo2026.PlayRoom.BoardEditor.JsonLinesHost.csproj',
-    'KifuwarabeGo2026.PlayRoom.Review.JsonLinesHost\KifuwarabeGo2026.PlayRoom.Review.JsonLinesHost.csproj',
-    'KifuwarabeGo2026.PlayRoom.Match.JsonLinesHost\KifuwarabeGo2026.PlayRoom.Match.JsonLinesHost.csproj',
+    'KifuwarabeGo2026.PlayRoomGui.JsonLines\KifuwarabeGo2026.PlayRoomGui.JsonLines.csproj',
+    'KifuwarabeGo2026.Reference.PlayRoomGui.BoardEditor.JsonLinesHost\KifuwarabeGo2026.Reference.PlayRoomGui.BoardEditor.JsonLinesHost.csproj',
+    'KifuwarabeGo2026.Reference.PlayRoomGui.Review.JsonLinesHost\KifuwarabeGo2026.Reference.PlayRoomGui.Review.JsonLinesHost.csproj',
+    'KifuwarabeGo2026.Reference.PlayRoomGui.Match.JsonLinesHost\KifuwarabeGo2026.Reference.PlayRoomGui.Match.JsonLinesHost.csproj',
     'KifuwarabeGo2026.PlayRoomEngine.JsonLines\KifuwarabeGo2026.PlayRoomEngine.JsonLines.csproj',
     'KifuwarabeGo2026.Reference.PlayRoomEngine.Go.JsonLinesHost\KifuwarabeGo2026.Reference.PlayRoomEngine.Go.JsonLinesHost.csproj',
     'KifuwarabeGo2026.Reference.PlayRoomEngine.Ponnuki.JsonLinesHost\KifuwarabeGo2026.Reference.PlayRoomEngine.Ponnuki.JsonLinesHost.csproj',
@@ -158,7 +158,7 @@ if (-not $SkipBuild) {
         Invoke-CheckedCommand -Command dotnet -Arguments @('run', '--project', 'KifuwarabeGo2026.Tests.LauncherEngine\KifuwarabeGo2026.Tests.LauncherEngine.csproj', '-c', 'Release', '--no-build')
         Invoke-CheckedCommand -Command dotnet -Arguments @('run', '--project', 'KifuwarabeGo2026.Tests.GameOasis.Gui.Portability\KifuwarabeGo2026.Tests.GameOasis.Gui.Portability.csproj', '-c', 'Release', '--no-build')
         Invoke-CheckedCommand -Command dotnet -Arguments @('run', '--project', 'KifuwarabeGo2026.Tests.GameOasis.Gui.Windows\KifuwarabeGo2026.Tests.GameOasis.Gui.Windows.csproj', '-c', 'Release', '--no-build')
-        Invoke-CheckedCommand -Command dotnet -Arguments @('run', '--project', 'KifuwarabeGo2026.Tests.PlayRoom.JsonLines\KifuwarabeGo2026.Tests.PlayRoom.JsonLines.csproj', '-c', 'Release', '--no-build')
+        Invoke-CheckedCommand -Command dotnet -Arguments @('run', '--project', 'KifuwarabeGo2026.Tests.PlayRoomGui.JsonLines\KifuwarabeGo2026.Tests.PlayRoomGui.JsonLines.csproj', '-c', 'Release', '--no-build')
         Invoke-CheckedCommand -Command dotnet -Arguments @('run', '--project', 'KifuwarabeGo2026.Tests.PlayRoomEngine.JsonLines\KifuwarabeGo2026.Tests.PlayRoomEngine.JsonLines.csproj', '-c', 'Release', '--no-build')
         Invoke-CheckedCommand -Command dotnet -Arguments @('run', '--project', 'KifuwarabeGo2026.PlayRoomEngine.Conformance\KifuwarabeGo2026.PlayRoomEngine.Conformance.csproj', '-c', 'Release', '--no-build')
     }
@@ -171,9 +171,9 @@ if (-not $SkipBuild) {
     Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.LauncherEngine.JsonLinesHost\KifuwarabeGo2026.LauncherEngine.JsonLinesHost.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false', '-o', $launcherPublish)
     Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.GameOasis.Gui.Windows\KifuwarabeGo2026.GameOasis.Gui.Windows.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false')
     Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.LobbyEngine.JsonLinesHost\KifuwarabeGo2026.LobbyEngine.JsonLinesHost.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false', '-o', "$guiPublish\Tools\LobbyEngine")
-    Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.PlayRoom.BoardEditor.JsonLinesHost\KifuwarabeGo2026.PlayRoom.BoardEditor.JsonLinesHost.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false', '-o', "$guiPublish\Tools\PlayRoom\BoardEditor")
-    Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.PlayRoom.Review.JsonLinesHost\KifuwarabeGo2026.PlayRoom.Review.JsonLinesHost.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false', '-o', "$guiPublish\Tools\PlayRoom\Review")
-    Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.PlayRoom.Match.JsonLinesHost\KifuwarabeGo2026.PlayRoom.Match.JsonLinesHost.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false', '-o', "$guiPublish\Tools\PlayRoom\Match")
+    Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.Reference.PlayRoomGui.BoardEditor.JsonLinesHost\KifuwarabeGo2026.Reference.PlayRoomGui.BoardEditor.JsonLinesHost.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false', '-o', "$guiPublish\Tools\PlayRoom\BoardEditor")
+    Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.Reference.PlayRoomGui.Review.JsonLinesHost\KifuwarabeGo2026.Reference.PlayRoomGui.Review.JsonLinesHost.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false', '-o', "$guiPublish\Tools\PlayRoom\Review")
+    Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.Reference.PlayRoomGui.Match.JsonLinesHost\KifuwarabeGo2026.Reference.PlayRoomGui.Match.JsonLinesHost.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false', '-o', "$guiPublish\Tools\PlayRoom\Match")
     Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.Reference.PlayRoomEngine.Go.JsonLinesHost\KifuwarabeGo2026.Reference.PlayRoomEngine.Go.JsonLinesHost.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false', '-o', "$guiPublish\Tools\PlaySpace")
     Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.Reference.PlayRoomEngine.Ponnuki.JsonLinesHost\KifuwarabeGo2026.Reference.PlayRoomEngine.Ponnuki.JsonLinesHost.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false', '-o', "$guiPublish\Tools\PlaySpace")
     Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.PlayRoomEngine.Conformance\KifuwarabeGo2026.PlayRoomEngine.Conformance.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false', '-o', "$guiPublish\Tools\Conformance\ProtocolS")
@@ -209,18 +209,18 @@ Assert-FileExists -LiteralPath @(
     "$guiPublish\Tools\LobbyEngine\KifuwarabeGo2026.LobbyEngine.JsonLinesHost.dll",
     "$guiPublish\Tools\LobbyEngine\KifuwarabeGo2026.LobbyEngine.JsonLinesHost.deps.json",
     "$guiPublish\Tools\LobbyEngine\KifuwarabeGo2026.LobbyEngine.JsonLinesHost.runtimeconfig.json",
-    "$guiPublish\Tools\PlayRoom\BoardEditor\KifuwarabeGo2026.PlayRoom.BoardEditor.JsonLinesHost.exe",
-    "$guiPublish\Tools\PlayRoom\BoardEditor\KifuwarabeGo2026.PlayRoom.BoardEditor.JsonLinesHost.dll",
-    "$guiPublish\Tools\PlayRoom\BoardEditor\KifuwarabeGo2026.PlayRoom.BoardEditor.JsonLinesHost.deps.json",
-    "$guiPublish\Tools\PlayRoom\BoardEditor\KifuwarabeGo2026.PlayRoom.BoardEditor.JsonLinesHost.runtimeconfig.json",
-    "$guiPublish\Tools\PlayRoom\Review\KifuwarabeGo2026.PlayRoom.Review.JsonLinesHost.exe",
-    "$guiPublish\Tools\PlayRoom\Review\KifuwarabeGo2026.PlayRoom.Review.JsonLinesHost.dll",
-    "$guiPublish\Tools\PlayRoom\Review\KifuwarabeGo2026.PlayRoom.Review.JsonLinesHost.deps.json",
-    "$guiPublish\Tools\PlayRoom\Review\KifuwarabeGo2026.PlayRoom.Review.JsonLinesHost.runtimeconfig.json",
-    "$guiPublish\Tools\PlayRoom\Match\KifuwarabeGo2026.PlayRoom.Match.JsonLinesHost.exe",
-    "$guiPublish\Tools\PlayRoom\Match\KifuwarabeGo2026.PlayRoom.Match.JsonLinesHost.dll",
-    "$guiPublish\Tools\PlayRoom\Match\KifuwarabeGo2026.PlayRoom.Match.JsonLinesHost.deps.json",
-    "$guiPublish\Tools\PlayRoom\Match\KifuwarabeGo2026.PlayRoom.Match.JsonLinesHost.runtimeconfig.json",
+    "$guiPublish\Tools\PlayRoom\BoardEditor\KifuwarabeGo2026.Reference.PlayRoomGui.BoardEditor.JsonLinesHost.exe",
+    "$guiPublish\Tools\PlayRoom\BoardEditor\KifuwarabeGo2026.Reference.PlayRoomGui.BoardEditor.JsonLinesHost.dll",
+    "$guiPublish\Tools\PlayRoom\BoardEditor\KifuwarabeGo2026.Reference.PlayRoomGui.BoardEditor.JsonLinesHost.deps.json",
+    "$guiPublish\Tools\PlayRoom\BoardEditor\KifuwarabeGo2026.Reference.PlayRoomGui.BoardEditor.JsonLinesHost.runtimeconfig.json",
+    "$guiPublish\Tools\PlayRoom\Review\KifuwarabeGo2026.Reference.PlayRoomGui.Review.JsonLinesHost.exe",
+    "$guiPublish\Tools\PlayRoom\Review\KifuwarabeGo2026.Reference.PlayRoomGui.Review.JsonLinesHost.dll",
+    "$guiPublish\Tools\PlayRoom\Review\KifuwarabeGo2026.Reference.PlayRoomGui.Review.JsonLinesHost.deps.json",
+    "$guiPublish\Tools\PlayRoom\Review\KifuwarabeGo2026.Reference.PlayRoomGui.Review.JsonLinesHost.runtimeconfig.json",
+    "$guiPublish\Tools\PlayRoom\Match\KifuwarabeGo2026.Reference.PlayRoomGui.Match.JsonLinesHost.exe",
+    "$guiPublish\Tools\PlayRoom\Match\KifuwarabeGo2026.Reference.PlayRoomGui.Match.JsonLinesHost.dll",
+    "$guiPublish\Tools\PlayRoom\Match\KifuwarabeGo2026.Reference.PlayRoomGui.Match.JsonLinesHost.deps.json",
+    "$guiPublish\Tools\PlayRoom\Match\KifuwarabeGo2026.Reference.PlayRoomGui.Match.JsonLinesHost.runtimeconfig.json",
     "$guiPublish\Tools\PlaySpace\KifuwarabeGo2026.Reference.PlayRoomEngine.Go.JsonLinesHost.exe",
     "$guiPublish\Tools\PlaySpace\KifuwarabeGo2026.Reference.PlayRoomEngine.Go.JsonLinesHost.dll",
     "$guiPublish\Tools\PlaySpace\KifuwarabeGo2026.Reference.PlayRoomEngine.Go.JsonLinesHost.deps.json",

@@ -1,11 +1,10 @@
 using KifuwarabeGo2026.GameOasis.Contracts.Common;
 using KifuwarabeGo2026.GameOasis.Contracts.PlayRoom;
-using KifuwarabeGo2026.PlayRoom.JsonLines;
+using KifuwarabeGo2026.PlayRoomGui.JsonLines;
 using System.Text.Json;
 
 string? sessionId = null;
-ContractDocument? gameRecord = null;
-var moveIndex = 0;
+ContractDocument? position = null;
 var completed = false;
 var exitAfterOpen = args.Contains("--exit-after-open", StringComparer.Ordinal);
 string? line;
@@ -16,7 +15,7 @@ while (!completed && (line = Console.ReadLine()) is not null)
     {
         var request = JsonSerializer.Deserialize<PlayRoomProcessRequest>(line, PlayRoomJsonLinesProtocol.JsonOptions)
             ?? throw new JsonException("要求が null です。");
-        (response, sessionId, gameRecord, moveIndex, completed) = Handle(request, sessionId, gameRecord, moveIndex);
+        (response, sessionId, position, completed) = Handle(request, sessionId, position);
     }
     catch (Exception exception)
     {
@@ -28,8 +27,8 @@ while (!completed && (line = Console.ReadLine()) is not null)
     if (exitAfterOpen && sessionId is not null) break;
 }
 
-static (PlayRoomProcessResponse Response, string? SessionId, ContractDocument? GameRecord, int MoveIndex, bool Completed) Handle(
-    PlayRoomProcessRequest request, string? sessionId, ContractDocument? gameRecord, int moveIndex)
+static (PlayRoomProcessResponse Response, string? SessionId, ContractDocument? Position, bool Completed) Handle(
+    PlayRoomProcessRequest request, string? sessionId, ContractDocument? position)
 {
     if (request.ProtocolVersion != PlayRoomJsonLinesProtocol.Version)
         throw new InvalidDataException($"未対応のPlay Roomプロトコル版です: {request.ProtocolVersion}");
@@ -41,30 +40,36 @@ static (PlayRoomProcessResponse Response, string? SessionId, ContractDocument? G
     {
         case PlayRoomJsonLinesProtocol.OpenMethod:
         {
-            if (sessionId is not null) throw new InvalidOperationException("Reviewは既に開いています。");
+            if (sessionId is not null) throw new InvalidOperationException("Board Editorは既に開いています。");
             var launch = Read<PlayRoomLaunchRequest>(request);
-            if (launch.Version != 1 || launch.RoomTypeId != PlayRoomIds.Review || launch.GameId != GameOasisOfficialNames.Go)
-                throw new InvalidDataException("この実装は囲碁Review起動要求だけを受理します。");
-            gameRecord = launch.InitialPosition ?? throw new InvalidDataException("Reviewの棋譜文書がありません。");
+            if (launch.Version != 1 || launch.RoomTypeId != PlayRoomIds.BoardEditor || launch.GameId != GameOasisOfficialNames.Go)
+                throw new InvalidDataException("この実装は囲碁Board Editor起動要求だけを受理します。");
+            position = launch.InitialPosition ?? throw new InvalidDataException("Board Editorの初期局面文書がありません。");
             sessionId = Guid.NewGuid().ToString("N");
-            result = new PlayRoomReady(launch.RequestId, sessionId, PlayRoomIds.Review);
+            result = new PlayRoomReady(launch.RequestId, sessionId, PlayRoomIds.BoardEditor);
             break;
         }
-        case PlayRoomJsonLinesProtocol.NavigateMethod:
+        case PlayRoomJsonLinesProtocol.ReplacePositionMethod:
         {
-            var navigation = Read<ReviewNavigation>(request);
-            RequireSession(sessionId, navigation.SessionId);
-            if (navigation.MoveIndex < 0) throw new InvalidDataException("moveIndexは0以上でなければなりません。");
-            moveIndex = navigation.MoveIndex;
-            result = new ReviewViewState(sessionId!, moveIndex, gameRecord!);
+            var update = Read<BoardEditorPositionUpdate>(request);
+            RequireSession(sessionId, update.SessionId);
+            position = update.Position;
+            result = new PlayRoomReady(request.RequestId, sessionId!, PlayRoomIds.BoardEditor);
             break;
         }
-        case PlayRoomJsonLinesProtocol.UsePositionMethod:
+        case PlayRoomJsonLinesProtocol.AdoptMethod:
         {
-            var selection = Read<ReviewPositionSelection>(request);
-            RequireSession(sessionId, selection.SessionId);
-            if (selection.MoveIndex != moveIndex) throw new InvalidDataException("表示中ではない手数の局面は採用できません。");
-            result = new ReviewCompletion(sessionId!, ReviewCompletionStatus.PositionSelected, moveIndex, selection.Position);
+            var command = Read<PlayRoomSessionCommand>(request);
+            RequireSession(sessionId, command.SessionId);
+            result = new BoardEditorCompletion(sessionId!, BoardEditorCompletionStatus.Adopted, position);
+            completed = true;
+            break;
+        }
+        case PlayRoomJsonLinesProtocol.DiscardMethod:
+        {
+            var command = Read<PlayRoomSessionCommand>(request);
+            RequireSession(sessionId, command.SessionId);
+            result = new BoardEditorCompletion(sessionId!, BoardEditorCompletionStatus.Discarded);
             completed = true;
             break;
         }
@@ -72,7 +77,7 @@ static (PlayRoomProcessResponse Response, string? SessionId, ContractDocument? G
         {
             var command = Read<PlayRoomSessionCommand>(request);
             RequireSession(sessionId, command.SessionId);
-            result = new ReviewCompletion(sessionId!, ReviewCompletionStatus.Closed);
+            result = new BoardEditorCompletion(sessionId!, BoardEditorCompletionStatus.Closed);
             completed = true;
             break;
         }
@@ -81,12 +86,13 @@ static (PlayRoomProcessResponse Response, string? SessionId, ContractDocument? G
     }
 
     return (new PlayRoomProcessResponse(PlayRoomJsonLinesProtocol.Version, request.RequestId, true,
-        JsonSerializer.SerializeToElement(result, PlayRoomJsonLinesProtocol.JsonOptions), null), sessionId, gameRecord, moveIndex, completed);
+        JsonSerializer.SerializeToElement(result, PlayRoomJsonLinesProtocol.JsonOptions), null), sessionId, position, completed);
 }
 
 static T Read<T>(PlayRoomProcessRequest request)
 {
-    if (request.Parameters is not { } parameters) throw new InvalidDataException("parametersがありません。");
+    if (request.Parameters is not { } parameters)
+        throw new InvalidDataException("parametersがありません。");
     return parameters.Deserialize<T>(PlayRoomJsonLinesProtocol.JsonOptions)
         ?? throw new InvalidDataException("parametersを読み取れませんでした。");
 }

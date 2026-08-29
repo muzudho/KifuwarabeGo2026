@@ -1,6 +1,6 @@
 using KifuwarabeGo2026.GameOasis.Contracts.Common;
 using KifuwarabeGo2026.GameOasis.Contracts.PlayRoom;
-using KifuwarabeGo2026.PlayRoom.JsonLines;
+using KifuwarabeGo2026.PlayRoomGui.JsonLines;
 using System.Text.Json;
 
 string? sessionId = null;

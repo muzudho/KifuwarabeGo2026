@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\KifuwarabeGo2026.GameOasis.Contracts\KifuwarabeGo2026.GameOasis.Contracts.csproj" />
+    <ProjectReference Include="..\KifuwarabeGo2026.PlayRoomGui.JsonLines\KifuwarabeGo2026.PlayRoomGui.JsonLines.csproj" />
+    <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlayRoomGui.BoardEditor.JsonLinesHost\KifuwarabeGo2026.Reference.PlayRoomGui.BoardEditor.JsonLinesHost.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlayRoomGui.Review.JsonLinesHost\KifuwarabeGo2026.Reference.PlayRoomGui.Review.JsonLinesHost.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlayRoomGui.Match.JsonLinesHost\KifuwarabeGo2026.Reference.PlayRoomGui.Match.JsonLinesHost.csproj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+</Project>

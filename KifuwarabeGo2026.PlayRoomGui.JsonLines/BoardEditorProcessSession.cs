@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.PlayRoom.JsonLines;
+namespace KifuwarabeGo2026.PlayRoomGui.JsonLines;
 
 using KifuwarabeGo2026.GameOasis.Contracts.PlayRoom;
 using System.Diagnostics;

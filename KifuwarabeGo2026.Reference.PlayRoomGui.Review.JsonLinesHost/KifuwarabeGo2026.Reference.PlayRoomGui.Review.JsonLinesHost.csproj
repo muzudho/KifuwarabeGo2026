@@ -7,6 +7,6 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\KifuwarabeGo2026.GameOasis.Contracts\KifuwarabeGo2026.GameOasis.Contracts.csproj" />
-    <ProjectReference Include="..\KifuwarabeGo2026.PlayRoom.JsonLines\KifuwarabeGo2026.PlayRoom.JsonLines.csproj" />
+    <ProjectReference Include="..\KifuwarabeGo2026.PlayRoomGui.JsonLines\KifuwarabeGo2026.PlayRoomGui.JsonLines.csproj" />
   </ItemGroup>
 </Project>

@@ -388,7 +388,7 @@ GUI内の旧SGFパーサー、旧SGFライター、座標変換、プロパテ�
 * ソリューション全体Releaseビルド：警告0件、エラー0件。
 * `Tests.FormalAdapter.Sgf`：`PASS`。
 * GTP、CGOS、SGFベースラインと所有権検査を含むGUI移植性試験：`PASS`。
-* Board Editor、Review、Match Play Roomと異常終了を含む`Tests.PlayRoom.JsonLines`：`PASS`。
+* Board Editor、Review、Match Play Roomと異常終了を含む`Tests.PlayRoomGui.JsonLines`：`PASS`。
 * Windows非対話プラットフォーム試験：`PASS`。
 
 ### 作業段階4：CGOS純粋プロトコルを抽出する

@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.PlayRoom.JsonLines;
+namespace KifuwarabeGo2026.PlayRoomGui.JsonLines;
 
 using System.Text.Json;
 
