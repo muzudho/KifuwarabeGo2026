@@ -570,7 +570,7 @@ GUI、初期局面GTP拡張、ベースライン試験は新しい所有者を�
 
 全ソリューションReleaseビルドは警告0件、エラー0件です。FormalAdapter.Cgos、FormalAdapter.Sgf、GTP Protocol P、GUI移植性、PlayRoom正常／異常終了、CGOS Hostの`--help`はすべて`PASS`し、リリーススクリプトもPowerShell構文検査を通過しました。旧GTP Protocol名前空間と`GtpCoordinate`の重複がないことも参照検索で確認しました。
 
-Windows非対話試験だけは、再生成した試験DLLをWindowsアプリケーション制御が`0x800711C7`で再び拒否したため、起動前に停止しました。対象プロジェクトのRelease再ビルドは警告0件、エラー0件で成功しています。コードによる迂回は追加せず、PC再起動後の再実行まで第7段階の完了判定を保留します。
+Windows非対話試験だけは、再生成した試験DLLをWindowsアプリケーション制御が`0x800711C7`で再び拒否したため、起動前に停止しました。対象プロジェクトのRelease再ビルドは警告0件、エラー0件で成功しています。後続調査でWindows 11のSmart App Control強制モードによる未署名DLLの拒否と確定しました。再起動は恒久策ではないため、[Smart App Controlによる再生成DLLブロック調査](../トラブルシューティング/Smart%20App%20Controlによる再生成DLLブロック調査.md)に記載した開発用VM、信頼されたコード署名、またはSmart App Control無効化の方針決定後まで、第7段階の完了判定を保留します。
 
 ## 優先順位
 
@@ -603,9 +603,9 @@ Windows非対話試験だけは、再生成した試験DLLをWindowsアプリケ
 ## 実装再開地点
 
 ```text
-現在の状態：作業段階0～6完了。作業段階7は実装完了、Windows非対話最終回帰試験だけアプリケーション制御解除待ち
-次の最小作業：PC再起動後にWindows非対話試験を再実行して第7段階を完了判定する
-次の実装候補：第7段階のWindows最終回帰試験
+現在の状態：作業段階0～6完了。作業段階7は実装完了、Windows非対話最終回帰試験だけSmart App Control対応方針の決定待ち
+次の最小作業：開発用VM、信頼されたコード署名、Smart App Control無効化のいずれかを選び、Windows非対話試験を再実行する
+次の実装候補：Smart App Control対応方針の決定後、第7段階のWindows最終回帰試験
 移行先：KifuwarabeGo2026.FormalAdapter.Gtp.Go、利用側、試験、発行スクリプト、開発者文書
 禁止事項：GTPプロジェクト全体の一括改名、CGOS Hostの一括分解、SgfGameRecordConverterの型ごとの単純移動を同時に行わない
 ```
