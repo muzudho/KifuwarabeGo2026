@@ -208,7 +208,8 @@ internal static class PortabilityChecks
                 nineBoardStaticPresentation.Coordinates.Last().Text == "1",
             "The Go static board presenter must preserve the 9x9 star and row-label layout.");
 
-        var presentation = GoBoardPresenter.Create(state, GoBoardGeometry.Create(3, new GoBoardViewport(0, 0, 200, 200)));
+        var presentationGeometry = GoBoardGeometry.Create(3, new GoBoardViewport(0, 0, 200, 200));
+        var presentation = GoBoardPresenter.Create(state, presentationGeometry, [new GoPoint(1, 0)]);
         Require(presentation.Stones.Count == 2 &&
                 presentation.Stones.Any(stone => stone.Intersection == new GoPoint(0, 0) &&
                                                  stone.Stone == GoStone.Black &&
@@ -216,8 +217,9 @@ internal static class PortabilityChecks
                 presentation.Stones.Any(stone => stone.Intersection == new GoPoint(2, 2) &&
                                                  stone.Stone == GoStone.White) &&
                 presentation.KoMarker?.Intersection == new GoPoint(1, 1) &&
-                presentation.LastMoveMarker?.Intersection == new GoPoint(2, 2),
-            "The Go board presenter must create framework-neutral stone, ko, and last-move visuals.");
+                presentation.LastMoveMarker?.Intersection == new GoPoint(2, 2) &&
+                presentation.SuperKoMarkers.Single() is { Intersection: { X: 1, Y: 0 }, Radius: 15f, Label: "S-KO", LabelScale: 0.24f },
+            "The Go board presenter must create framework-neutral stone, ko, last-move, and super-ko visuals.");
 
         var hoverTarget = new GoPoint(1, 0);
         var smallGeometry = GoBoardGeometry.Create(3, new GoBoardViewport(0, 0, 200, 200));

@@ -22,16 +22,27 @@ public readonly record struct GoHoverStoneVisual(
     float OuterRadius,
     float InnerRadius);
 
+public readonly record struct GoSuperKoMarkerVisual(
+    GoPoint Intersection,
+    GoBoardScreenPoint Center,
+    float Radius,
+    string Label,
+    float LabelScale);
+
 /// <summary>囲碁盤Rendererへ渡す、描画フレームワーク非依存の描画要素です。</summary>
 public sealed record GoBoardPresentation(
     IReadOnlyList<GoStoneVisual> Stones,
     GoBoardMarkerVisual? KoMarker,
-    GoBoardMarkerVisual? LastMoveMarker);
+    GoBoardMarkerVisual? LastMoveMarker,
+    IReadOnlyList<GoSuperKoMarkerVisual> SuperKoMarkers);
 
 /// <summary>囲碁Play Room表示状態を盤面の描画要素へ変換します。</summary>
 public static class GoBoardPresenter
 {
-    public static GoBoardPresentation Create(GoPlayRoomViewState state, GoBoardGeometry geometry)
+    public static GoBoardPresentation Create(
+        GoPlayRoomViewState state,
+        GoBoardGeometry geometry,
+        IEnumerable<GoPoint>? superKoPoints = null)
     {
         ArgumentNullException.ThrowIfNull(state);
         if (state.BoardSize != geometry.BoardSize)
@@ -72,7 +83,16 @@ public static class GoBoardPresenter
                 Math.Max(9f, geometry.Cell * 0.19f),
                 geometry.Cell);
 
-        return new GoBoardPresentation(stones, koMarker, lastMoveMarker);
+        var superKoMarkers = (superKoPoints ?? [])
+            .Select(point => new GoSuperKoMarkerVisual(
+                point,
+                geometry.GetScreenPoint(point),
+                Math.Max(15f, geometry.Cell * 0.32f),
+                "S-KO",
+                geometry.Cell < 55f ? 0.24f : 0.3f))
+            .ToArray();
+
+        return new GoBoardPresentation(stones, koMarker, lastMoveMarker, superKoMarkers);
     }
 
     public static bool TryCreateMoveHover(

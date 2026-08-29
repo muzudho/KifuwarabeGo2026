@@ -75,7 +75,10 @@ public sealed class BoardRenderer : IDisposable
         var cell = surface.Cell;
         var viewState = session.CreatePlayRoomViewState(displayedPosition: true);
         var geometry = CreateBoardGeometry(session.BoardSize);
-        var presentation = GoBoardPresenter.Create(viewState, geometry);
+        var presentation = GoBoardPresenter.Create(
+            viewState,
+            geometry,
+            session.IsLocalReplayMode ? null : session.EnumerateSuperKoPoints());
 
         // ［連解析］描画
         DrawBoardRenAnalysis(
@@ -97,7 +100,7 @@ public sealed class BoardRenderer : IDisposable
 
         if (!session.IsLocalReplayMode)
         {
-            DrawSuperKoMarks(session, start, cell);
+            DrawSuperKoMarkers(presentation.SuperKoMarkers);
             DrawKoMarker(presentation);
             DrawHoverStone(session, viewState, geometry, mousePoint, start, cell);
         }
@@ -342,20 +345,25 @@ public sealed class BoardRenderer : IDisposable
     /// <param name="session"></param>
     /// <param name="start"></param>
     /// <param name="cell"></param>
-    private void DrawSuperKoMarks(GoAppSession session, Vector2 start, float cell)
+    private void DrawSuperKoMarkers(IReadOnlyList<GoSuperKoMarkerVisual> markers)
     {
-        foreach (var point in session.EnumerateSuperKoPoints())
+        foreach (var marker in markers)
         {
-            var center = BoardPoint(start, cell, point.X, point.Y);
-            var radius = Math.Max(15f, cell * 0.32f);
-            var bounds = new Rectangle((int)(center.X - radius), (int)(center.Y - radius), (int)(radius * 2), (int)(radius * 2));
+            var center = ToVector2(marker.Center);
+            var bounds = new Rectangle(
+                (int)(center.X - marker.Radius),
+                (int)(center.Y - marker.Radius),
+                (int)(marker.Radius * 2),
+                (int)(marker.Radius * 2));
             FillRect(bounds, new Color(82, 39, 138, 198));
             DrawRect(bounds, 2, new Color(235, 206, 255));
 
-            const string label = "S-KO";
-            var scale = cell < 55 ? 0.24f : 0.3f;
-            var size = _font.MeasureString(label) * scale;
-            DrawText(label, new Vector2(center.X - size.X / 2, center.Y - size.Y / 2), Color.White, scale);
+            var size = _font.MeasureString(marker.Label) * marker.LabelScale;
+            DrawText(
+                marker.Label,
+                new Vector2(center.X - size.X / 2, center.Y - size.Y / 2),
+                Color.White,
+                marker.LabelScale);
         }
     }
 
