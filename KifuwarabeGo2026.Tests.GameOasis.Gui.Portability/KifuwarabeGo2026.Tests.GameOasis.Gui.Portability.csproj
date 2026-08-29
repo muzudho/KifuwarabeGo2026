@@ -6,12 +6,15 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\KifuwarabeGo2026.FormalAdapter.Gtp\KifuwarabeGo2026.FormalAdapter.Gtp.csproj" />
+    <ProjectReference Include="..\KifuwarabeGo2026.FormalAdapter.Gtp.PlayerEngine\KifuwarabeGo2026.FormalAdapter.Gtp.PlayerEngine.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.FormalAdapter.Cgos\KifuwarabeGo2026.FormalAdapter.Cgos.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.FormalAdapter.Sgf\KifuwarabeGo2026.FormalAdapter.Sgf.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlayerEngine.Go.GtpExtensions\KifuwarabeGo2026.Reference.PlayerEngine.Go.GtpExtensions.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.GameOasis.Gui\KifuwarabeGo2026.GameOasis.Gui.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.GameOasis.Concierge\KifuwarabeGo2026.GameOasis.Concierge.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlayerEngine\KifuwarabeGo2026.Reference.PlayerEngine.csproj" />
+    <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlayerEngine.Go.Gtp\KifuwarabeGo2026.Reference.PlayerEngine.Go.Gtp.csproj" />
+    <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlayerEngine.Go.Gtp.Host\KifuwarabeGo2026.Reference.PlayerEngine.Go.Gtp.Host.csproj" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\KifuwarabeGo2026.Reference.Communication.Cgos.Host\KifuwarabeGo2026.Reference.Communication.Cgos.Host.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
   <ItemGroup>

@@ -71,6 +71,7 @@ internal static class PortabilityChecks
         VerifyAssemblyReferences(coreAssembly);
         VerifyNoPlatformInvokes(coreAssembly);
         VerifyGtpExtensionsAssembly(gtpExtensionsAssembly, gtpCommunicationAssembly);
+        VerifyGtpPlayerEngineSeparation(gtpFormalAdapterAssembly, gtpCommunicationAssembly);
         Require(gtpFormalAdapterAssembly.GetName().Name == "KifuwarabeGo2026.FormalAdapter.Gtp" &&
                 typeof(KifuwarabeGo2026.FormalAdapter.Gtp.Go.GtpCoordinate).Assembly == gtpFormalAdapterAssembly,
             "GTP protocol primitives and Go coordinate conversion must be owned by FormalAdapter.Gtp.");
@@ -130,6 +131,61 @@ internal static class PortabilityChecks
         VerifyComposition();
         VerifyGameOasisGuiComposition();
         VerifyGameOasisPlayerParticipation();
+    }
+
+    private static void VerifyGtpPlayerEngineSeparation(Assembly gtpFormalAdapterAssembly, Assembly playerEngineAdapterAssembly)
+    {
+        var referenceServerAssembly = typeof(KifuwarabeGo2026.Reference.PlayerEngine.Go.Gtp.GtpEngine).Assembly;
+        Require(playerEngineAdapterAssembly.GetName().Name == "KifuwarabeGo2026.FormalAdapter.Gtp.PlayerEngine" &&
+                typeof(KifuwarabeGtpPlayerProtocol).Assembly == playerEngineAdapterAssembly,
+            "The Protocol P adapter for external GTP engines must be owned by FormalAdapter.Gtp.PlayerEngine.");
+        Require(referenceServerAssembly.GetName().Name == "KifuwarabeGo2026.Reference.PlayerEngine.Go.Gtp",
+            "The reference Go GTP server must be owned by Reference.PlayerEngine.Go.Gtp.");
+
+        var adapterReferences = playerEngineAdapterAssembly.GetReferencedAssemblies()
+            .Select(reference => reference.Name)
+            .ToHashSet(StringComparer.Ordinal);
+        var serverReferences = referenceServerAssembly.GetReferencedAssemblies()
+            .Select(reference => reference.Name)
+            .ToHashSet(StringComparer.Ordinal);
+        Require(adapterReferences.Contains(gtpFormalAdapterAssembly.GetName().Name) &&
+                !adapterReferences.Contains(referenceServerAssembly.GetName().Name),
+            "The GTP player adapter must use the GTP primitives without depending on the reference server.");
+        Require(!serverReferences.Contains(playerEngineAdapterAssembly.GetName().Name),
+            "The reference GTP server must not depend on the Protocol P adapter for external engines.");
+
+        var repositoryRoot = FindRepositoryRoot();
+        Require(!HasRetiredProjectSources(Path.Combine(repositoryRoot, "KifuwarabeGo2026.Reference.Communication.Gtp")) &&
+                !HasRetiredProjectSources(Path.Combine(repositoryRoot, "KifuwarabeGo2026.Reference.Communication.Gtp.Host")),
+            "Retired Reference.Communication.Gtp project files or sources must not return.");
+
+        var solution = File.ReadAllText(Path.Combine(repositoryRoot, "KifuwarabeGo2026.slnx"));
+        Require(solution.Contains("KifuwarabeGo2026.FormalAdapter.Gtp.PlayerEngine", StringComparison.Ordinal) &&
+                solution.Contains("KifuwarabeGo2026.Reference.PlayerEngine.Go.Gtp.Host", StringComparison.Ordinal) &&
+                !solution.Contains("KifuwarabeGo2026.Reference.Communication.Gtp", StringComparison.Ordinal),
+            "The solution must contain only the post-migration GTP adapter, server, and host project names.");
+    }
+
+    private static bool HasRetiredProjectSources(string projectDirectory)
+    {
+        if (!Directory.Exists(projectDirectory)) return false;
+        return Directory.EnumerateFiles(projectDirectory, "*", SearchOption.AllDirectories)
+            .Where(path => !path.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase) &&
+                           !path.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.OrdinalIgnoreCase))
+            .Any(path => path.EndsWith(".cs", StringComparison.OrdinalIgnoreCase) ||
+                         path.EndsWith(".csproj", StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static string FindRepositoryRoot()
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory is not null)
+        {
+            if (File.Exists(Path.Combine(directory.FullName, "KifuwarabeGo2026.slnx"))) return directory.FullName;
+            directory = directory.Parent;
+        }
+
+        throw new DirectoryNotFoundException("Could not locate the repository root.");
     }
 
     private static void VerifyGameOasisCatalogLayering(Assembly applicationAssembly, Assembly storageAssembly)

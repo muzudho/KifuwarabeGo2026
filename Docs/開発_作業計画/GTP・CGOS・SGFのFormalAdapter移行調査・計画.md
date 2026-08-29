@@ -1,6 +1,6 @@
 # GTP・CGOS・SGFのFormalAdapter移行調査・計画
 
-状態：作業段階0・1・2・3・4完了、作業段階5実装中（2026年8月29日）
+状態：作業段階0～6・8・9完了。作業段階7は実装完了、Windows最終回帰試験のみ方針決定待ち（2026年8月30日）
 
 ## 目的
 
@@ -582,6 +582,16 @@ Windows非対話試験だけは、再生成した試験DLLをWindowsアプリケ
 
 試験は`KifuwarabeGo2026.Tests.FormalAdapter.Gtp.PlayerEngine`へ改名しました。旧`Reference.Communication.Gtp`と`.Host`は廃止し、以降の文書で旧名称が現れる箇所は移行前の履歴を表します。
 
+### 作業段階9：移行後のGTP境界を回帰検査で固定する
+
+状態：完了（2026年8月30日）
+
+第8段階で分離した責務が旧配置へ戻らないよう、GUI移植性試験へ構造検査を追加しました。`FormalAdapter.Gtp.PlayerEngine`が外部GTPエンジン向けProtocol Pアダプターを所有すること、`Reference.PlayerEngine.Go.Gtp`が参照GTPサーバーを所有することをアセンブリ単位で検査します。
+
+さらに、アダプターが参照サーバーへ依存せず、参照サーバーもアダプターへ依存しないこと、旧`Reference.Communication.Gtp`のプロジェクトファイルとソースが復活していないこと、ソリューションが新しいアダプター・サーバー・Host名だけを含むことを検査します。旧フォルダー内に残る`bin`・`obj`生成物は実装ではないため検査対象外です。
+
+専用プロジェクトのReleaseビルドは警告0件、エラー0件です。GUI移植性およびGTP・CGOS・SGF基準ベクトルを含む試験は`PASS`しました。
+
 ## 優先順位
 
 | 優先度 | 対象 | 理由 |
@@ -613,9 +623,9 @@ Windows非対話試験だけは、再生成した試験DLLをWindowsアプリケ
 ## 実装再開地点
 
 ```text
-現在の状態：作業段階0～6完了。作業段階7は実装完了、Windows非対話最終回帰試験だけSmart App Control対応方針の決定待ち
+現在の状態：作業段階0～6・8・9完了。作業段階7は実装完了、Windows非対話最終回帰試験だけSmart App Control対応方針の決定待ち
 次の最小作業：開発用VM、信頼されたコード署名、Smart App Control無効化のいずれかを選び、Windows非対話試験を再実行する
-次の実装候補：Smart App Control対応方針の決定後、第7段階のWindows最終回帰試験
-移行先：KifuwarabeGo2026.FormalAdapter.Gtp.Go、利用側、試験、発行スクリプト、開発者文書
+次の実装候補：なし。機能移行と移行後境界の固定は完了。Smart App Control対応方針の決定後、第7段階のWindows最終回帰試験を行う
+移行先：KifuwarabeGo2026.FormalAdapter.Gtp、FormalAdapter.Gtp.PlayerEngine、利用側、試験、発行スクリプト、開発者文書
 禁止事項：GTPプロジェクト全体の一括改名、CGOS Hostの一括分解、SgfGameRecordConverterの型ごとの単純移動を同時に行わない
 ```
