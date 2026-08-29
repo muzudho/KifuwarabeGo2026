@@ -5,10 +5,12 @@ using KifuwarabeGo2026.GameOasis.Contracts.Common;
 using KifuwarabeGo2026.GameOasis.Contracts.PlayRoom;
 using KifuwarabeGo2026.GameOasis.Gui.Application;
 using KifuwarabeGo2026.GameOasis.Gui.Application.GameOasis;
+using KifuwarabeGo2026.GameOasis.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.GameOasis.Gui.Sgf;
 using KifuwarabeGo2026.Reference.PlayDomain.Go;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
 
 /// <summary>ロビーで選ばれた設定を、プレイルームが受け取れる起動契約へ写します。</summary>
@@ -21,6 +23,29 @@ public static class PlayRoomLaunchRequestFactory
 
     public static PlayRoomLaunchRequest CreateBoardEditor(GoAppSession session) =>
         CreateGoRequest(session, PlayRoomIds.BoardEditor, []);
+
+    public static PlayRoomLaunchRequest CreateReview(GoGameRecord record)
+    {
+        ArgumentNullException.ThrowIfNull(record);
+        var initialPosition = new LocalMatchInitialPosition(
+            record.BoardSize,
+            GoStone.Black,
+            record.SetupStones.Select(stone => new LocalMatchSetupStone(stone.Stone, stone.Point)).ToArray());
+        var configuration = LocalMatchGameOasisConfiguration.Create(initialPosition, record.Komi, record.TimeLimit);
+        var sgf = new ContractDocument(
+            "application/x-go-sgf",
+            GameOasisOfficialNames.Go + ".sgf.v1",
+            SgfGameRecordConverter.ToSgf(record));
+        return new PlayRoomLaunchRequest(
+            1,
+            Guid.NewGuid().ToString("N"),
+            PlayRoomIds.Review,
+            GameOasisOfficialNames.Go,
+            new PlaySpaceTypeId(GameOasisOfficialNames.Go),
+            configuration,
+            sgf,
+            []);
+    }
 
     public static PlayRoomLaunchRequest CreatePonnukiMatch(GoAppSession session)
     {

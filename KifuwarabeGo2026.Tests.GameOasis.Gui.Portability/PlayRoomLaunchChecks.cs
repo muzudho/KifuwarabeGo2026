@@ -4,6 +4,8 @@ using KifuwarabeGo2026.GameOasis.Contracts.Common;
 using KifuwarabeGo2026.GameOasis.Contracts.PlayRoom;
 using KifuwarabeGo2026.PlayRoom.Launching;
 using KifuwarabeGo2026.GameOasis.Gui.Application;
+using KifuwarabeGo2026.GameOasis.Gui.Application.Local.Playing;
+using KifuwarabeGo2026.GameOasis.Gui.Sgf;
 using KifuwarabeGo2026.Reference.PlayDomain.Go;
 using KifuwarabeGo2026.Reference.PlayRoomGui.Go;
 using System;
@@ -37,6 +39,42 @@ internal static class PlayRoomLaunchChecks
             "Unsupported launch contract version was accepted.");
 
         VerifySavedGoLaunchRequest();
+        VerifySavedGoReviewLaunchRequest();
+    }
+
+    private static void VerifySavedGoReviewLaunchRequest()
+    {
+        var record = new GoGameRecord
+        {
+            BoardSize = 9,
+            Komi = 6.5m,
+            TimeLimit = TimeSpan.FromMinutes(5),
+            BlackPlayerName = "BLACK",
+            WhitePlayerName = "WHITE",
+            RootComment = "saved review",
+        };
+        record.Moves.Add(new GoGameMove(GoStone.Black, new GoPoint(2, 2)));
+        record.Moves.Add(new GoGameMove(GoStone.White, new GoPoint(3, 3)));
+
+        var request = PlayRoomLaunchRequestFactory.CreateReview(record);
+        var restored = JsonSerializer.Deserialize<PlayRoomLaunchRequest>(JsonSerializer.Serialize(request))
+            ?? throw new InvalidOperationException("The saved Go review request was not restored.");
+        Require(GoPlayRoomLaunchInterpreter.TryCreate(restored, out var plan, out var errorCode, out var message) &&
+                plan?.Activity == GoPlayRoomActivity.Reviewing && plan.InitialPosition is not null,
+            $"The restored Go review request was not interpreted: {errorCode}: {message}");
+
+        var restoredRecord = SgfGameRecordConverter.FromSgf(plan!.InitialPosition!.Content);
+        var session = new GoAppSession();
+        Require(session.StartReviewingGameRecord(restoredRecord, out var warning) &&
+                session.CurrentMode.Kind == GoAppModeKind.Reviewing &&
+                session.ReviewMoveCount == 2 &&
+                session.ReviewRootComment == "saved review",
+            $"The restored Go review request did not start a fresh review session: {warning}");
+
+        var missingRecord = restored with { InitialPosition = null };
+        Require(!GoPlayRoomLaunchInterpreter.TryCreate(missingRecord, out _, out errorCode, out _) &&
+                errorCode == "missing-go-review-record",
+            "The Go review launch interpreter accepted a request without an SGF record.");
     }
 
     private static void VerifySavedGoLaunchRequest()

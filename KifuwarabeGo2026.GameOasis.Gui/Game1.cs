@@ -282,6 +282,7 @@ public class Game1 : Game
         var playRoomLauncher = new InProcessPlayRoomLauncher();
         playRoomLauncher.Register(PlayRoomIds.Match, GameOasisOfficialNames.Go, LaunchLocalMatchInProcess);
         playRoomLauncher.Register(PlayRoomIds.BoardEditor, GameOasisOfficialNames.Go, LaunchBoardEditorInProcess);
+        playRoomLauncher.Register(PlayRoomIds.Review, GameOasisOfficialNames.Go, LaunchReviewInProcess);
         playRoomLauncher.Register(PlayRoomIds.Match, GameOasisOfficialNames.Ponnuki, LaunchPonnukiInProcess);
         _playRoomLauncher = playRoomLauncher;
 
@@ -3502,9 +3503,10 @@ public class Game1 : Game
     /// </summary>
     private void StartReviewingGameRecord(GoGameRecord record, string messageTitle, string? sourceFilePath = null)
     {
-        if (!_session.StartReviewingGameRecord(record, out var warning) && !string.IsNullOrWhiteSpace(warning))
+        var result = _playRoomLauncher.Launch(PlayRoomLaunchRequestFactory.CreateReview(record));
+        if (!result.IsAccepted)
         {
-            ShowMessage(warning, messageTitle);
+            HandlePlayRoomLaunchResult(result, messageTitle);
         }
         else if (_session.CurrentMode.Kind == GoAppModeKind.Reviewing)
         {
@@ -3794,6 +3796,27 @@ public class Game1 : Game
         if (!practiceWasFinished && _cgosPracticeUnexpectedGame.IsFinished)
         {
             TryAutoSaveCgosPracticeUnexpectedGame();
+        }
+    }
+
+    private PlayRoomLaunchResult LaunchReviewInProcess(PlayRoomLaunchRequest request)
+    {
+        if (!GoPlayRoomLaunchInterpreter.TryCreate(request, out var plan, out var errorCode, out var message) ||
+            plan is null)
+            return PlayRoomLaunchResult.Rejected(request.RequestId, errorCode, message);
+        if (plan.InitialPosition is not { } initialPosition)
+            return PlayRoomLaunchResult.Rejected(request.RequestId, "missing-go-review-record", "The review SGF is missing.");
+
+        try
+        {
+            var record = SgfGameRecordConverter.FromSgf(initialPosition.Content);
+            if (!_session.StartReviewingGameRecord(record, out var warning))
+                return PlayRoomLaunchResult.Rejected(request.RequestId, "go-review-start-failed", warning);
+            return PlayRoomLaunchResult.Started(request.RequestId);
+        }
+        catch (Exception exception) when (exception is SgfParseException or ArgumentOutOfRangeException)
+        {
+            return PlayRoomLaunchResult.Rejected(request.RequestId, "invalid-go-review-record", exception.Message);
         }
     }
 

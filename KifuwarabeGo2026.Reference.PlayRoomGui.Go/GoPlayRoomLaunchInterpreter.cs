@@ -18,7 +18,8 @@ public sealed record GoPlayRoomLaunchPlan(
     GoStone StartingPlayer,
     IReadOnlyList<GoLaunchSetupStone> SetupStones,
     TimeSpan MainTime,
-    IReadOnlyList<PlayRoomParticipant> Participants);
+    IReadOnlyList<PlayRoomParticipant> Participants,
+    ContractDocument? InitialPosition);
 
 public static class GoPlayRoomLaunchInterpreter
 {
@@ -43,6 +44,11 @@ public static class GoPlayRoomLaunchInterpreter
         if (request.Configuration.MediaType != "application/json" ||
             request.Configuration.SchemaId != GameOasisOfficialNames.Go + ".configuration.v1")
             return Fail("unsupported-go-configuration", "The launch request does not contain a supported Go configuration.", out errorCode, out message);
+        if (request.RoomTypeId == PlayRoomIds.Review &&
+            (request.InitialPosition is null ||
+             request.InitialPosition.MediaType != "application/x-go-sgf" ||
+             request.InitialPosition.SchemaId != GameOasisOfficialNames.Go + ".sgf.v1"))
+            return Fail("missing-go-review-record", "A Go review launch requires a supported SGF initial-position document.", out errorCode, out message);
 
         try
         {
@@ -99,7 +105,8 @@ public static class GoPlayRoomLaunchInterpreter
                 startingPlayerText == "black" ? GoStone.Black : GoStone.White,
                 setupStones,
                 TimeSpan.FromMilliseconds(mainTimeMilliseconds),
-                request.Participants.ToArray());
+                request.Participants.ToArray(),
+                request.InitialPosition);
             return true;
         }
         catch (Exception exception) when (exception is JsonException or InvalidOperationException or KeyNotFoundException)

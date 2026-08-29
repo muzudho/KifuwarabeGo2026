@@ -11,3 +11,5 @@ Local Match、盤面編集、変化図、レビューに加え、CGOS観戦も�
 Protocol Gの`GuiBoardView`は公開GUI契約なので、このプロジェクトの`GuiBoardViewAdapter`が直接表示状態へ投影します。Board Editor、Review、Match等のHost実装やプロセス配置に依存せず、同じ盤面Presenterを利用できます。
 
 `GoPlayRoomLaunchInterpreter`は、保存・転送後の`PlayRoomLaunchRequest`から囲碁の盤サイズ、コミ、開始手番、初期石、持ち時間、参加者を`GoPlayRoomLaunchPlan`へ解釈します。Lobby GUIの画面型や保存型を参照せず、公開起動契約だけから新しい囲碁Play Roomセッションを準備できます。
+
+Review Roomでは、起動要求の`InitialPosition`にある公開SGF文書もPlanへ保持します。SGFの構文解釈は外側のFormalAdapter接続点が担当し、このプロジェクトはSGF実装へ依存しません。
