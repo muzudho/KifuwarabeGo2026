@@ -31,4 +31,4 @@ goodbye                  -> process exit
 
 .NETの外部実装は`IPlaySpaceProtocol`を実装し、`PlayRoomEngineJsonLinesHost.RunAsync`へ渡すだけでこの通信仕様を公開できます。公式通常囲碁、公式ポン抜き、外部風Counterサンプルも同じホストSDKを利用します。
 
-`KifuwarabeGo2026.PlaySpace.Conformance`はマニフェストとJSONテストベクトルを受け取る偽Conciergeです。記述、スキーマ、設定検証、セッション、状態、行動、リビジョン競合、終了を、実装言語に依存せず検査します。
+`KifuwarabeGo2026.PlayRoomEngine.Conformance`はマニフェストとJSONテストベクトルを受け取る偽Conciergeです。記述、スキーマ、設定検証、セッション、状態、行動、リビジョン競合、終了を、実装言語に依存せず検査します。

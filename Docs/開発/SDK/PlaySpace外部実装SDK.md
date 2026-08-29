@@ -18,7 +18,7 @@
 ## 適合性ランナー
 
 ```powershell
-dotnet run --project KifuwarabeGo2026.PlaySpace.Conformance -c Release -- `
+dotnet run --project KifuwarabeGo2026.PlayRoomEngine.Conformance -c Release -- `
   --manifest path\to\component.playspace.json `
   --vector path\to\conformance-vector.json
 ```
