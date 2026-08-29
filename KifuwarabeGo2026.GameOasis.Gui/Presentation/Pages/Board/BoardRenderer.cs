@@ -69,10 +69,14 @@ public sealed class BoardRenderer : IDisposable
         var cell = surface.Cell;
         var viewState = session.CreatePlayRoomViewState(displayedPosition: true);
         var geometry = CreateBoardGeometry(session.BoardSize);
-        var presentation = GoBoardPresenter.Create(
+        var frame = GoBoardFrameCoordinator.Create(
             viewState,
             geometry,
-            session.IsLocalReplayMode ? null : session.EnumerateSuperKoPoints());
+            session.IsLocalReplayMode ? null : session.EnumerateSuperKoPoints(),
+            new GoBoardScreenPoint(mousePoint.X, mousePoint.Y),
+            session.CanAcceptHumanMove,
+            point => session.IsSuperKoPoint(point.X, point.Y));
+        var presentation = frame.Board;
 
         // ［連解析］描画
         DrawBoardRenAnalysis(
@@ -96,7 +100,7 @@ public sealed class BoardRenderer : IDisposable
         {
             _primitiveRenderer.DrawSuperKoMarkers(_drawingContext, presentation.SuperKoMarkers);
             DrawKoMarker(presentation);
-            DrawHoverStone(session, viewState, geometry, mousePoint, start, cell);
+            DrawHoverStone(session, frame.Hover, mousePoint, start, cell);
         }
         DrawBoardFrameHighlights(surface.Outer);
     }
@@ -107,12 +111,17 @@ public sealed class BoardRenderer : IDisposable
         var surface = DrawBoardSurface(drawingContext, board.BoardSize);
         var viewState = GuiBoardViewAdapter.Create(board, GoPlayRoomActivity.Playing);
         var geometry = CreateBoardGeometry(board.BoardSize);
-        var presentation = GoBoardPresenter.Create(viewState, geometry);
+        var frame = GoBoardFrameCoordinator.Create(
+            viewState,
+            geometry,
+            pointer: new GoBoardScreenPoint(mousePoint.X, mousePoint.Y),
+            canAcceptHumanMove: canAcceptInput);
+        var presentation = frame.Board;
         DrawStones(presentation);
         DrawKoMarker(presentation);
         DrawLastMoveMarker(presentation.LastMoveMarker);
-        if (canAcceptInput)
-            DrawGameOasisHoverStone(viewState, geometry, mousePoint);
+        if (frame.Hover is { } hover)
+            GoBoardPrimitiveRenderer.DrawHoverStone(_drawingContext, hover);
         DrawBoardFrameHighlights(surface.Outer);
     }
 
@@ -154,8 +163,7 @@ public sealed class BoardRenderer : IDisposable
     /// <param name="cell"></param>
     private void DrawHoverStone(
         GoAppSession session,
-        GoPlayRoomViewState viewState,
-        GoBoardGeometry geometry,
+        GoHoverStoneVisual? hover,
         Point mousePoint,
         Vector2 start,
         float cell)
@@ -176,18 +184,8 @@ public sealed class BoardRenderer : IDisposable
             return;
         }
 
-        if (!GoBoardPresenter.TryCreateMoveHover(
-                viewState,
-                geometry,
-                new GoBoardScreenPoint(mousePoint.X, mousePoint.Y),
-                session.CanAcceptHumanMove,
-                point => session.IsSuperKoPoint(point.X, point.Y),
-                out var hover))
-        {
-            return;
-        }
-
-        GoBoardPrimitiveRenderer.DrawHoverStone(_drawingContext, hover);
+        if (hover is { } visual)
+            GoBoardPrimitiveRenderer.DrawHoverStone(_drawingContext, visual);
     }
 
     /// <summary>
@@ -205,23 +203,6 @@ public sealed class BoardRenderer : IDisposable
 
     public void DrawKoMarker(GoBoardPresentation presentation)
         => _primitiveRenderer.DrawKoMarker(_drawingContext, presentation.KoMarker);
-
-    private void DrawGameOasisHoverStone(
-        GoPlayRoomViewState viewState,
-        GoBoardGeometry geometry,
-        Point mousePoint)
-    {
-        if (!GoBoardPresenter.TryCreateMoveHover(
-                viewState,
-                geometry,
-                new GoBoardScreenPoint(mousePoint.X, mousePoint.Y),
-                canAcceptHumanMove: true,
-                isForbidden: null,
-                out var hover))
-            return;
-
-        GoBoardPrimitiveRenderer.DrawHoverStone(_drawingContext, hover);
-    }
 
     /// <summary>
     /// ［盤上の点］

@@ -259,6 +259,17 @@ internal static class PortabilityChecks
             2,
             2,
             new GoPoint(2, 2));
+        var forbiddenFrame = GoBoardFrameCoordinator.Create(
+            playingState,
+            smallGeometry,
+            [hoverTarget],
+            hoverPointer,
+            canAcceptHumanMove: true,
+            point => point == hoverTarget);
+        Require(forbiddenFrame.Geometry == smallGeometry &&
+                forbiddenFrame.Board.SuperKoMarkers.Single().Intersection == hoverTarget &&
+                forbiddenFrame.Hover is null,
+            "The Go board frame coordinator must combine board visuals and forbidden-point hover rules without GUI framework types.");
         Require(GoBoardPresenter.TryCreateMoveHover(
                     playingState,
                     smallGeometry,
