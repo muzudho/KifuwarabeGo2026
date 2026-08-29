@@ -1,3 +1,3 @@
 (;GM[1]FF[4]CA[UTF-8]AP[FormalAdapterBaseline:1]RU[Japanese]SZ[9]KM[6.5]TM[600]GN[Baseline game]PB[BlackBot]PW[WhiteBot]BR[2d]WR[1d]DT[2026-08-29]PC[Tokyo]RE[W+R]AB[aa][bb]AW[cc]C[root\] comment]
-;B[dd]BL[590]C[first move]CC[{"moves":[{"move":"D6","winrate":0.55,"score":1.5,"pv":"D6 E5","visits":123}]}]
+;B[dd]BL[590]C[first move]CC[{"moves":[{"move":"D6","winrate":0.55,"score":1.5,"pv":"D6 E5","visits":123}\]}]
 ;W[]WL[580]C[pass move])

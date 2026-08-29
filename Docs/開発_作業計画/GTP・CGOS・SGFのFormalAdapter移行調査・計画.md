@@ -1,12 +1,12 @@
 # GTP・CGOS・SGFのFormalAdapter移行調査・計画
 
-状態：作業段階0実装完了・Application Control解除後の再試験待ち（2026年8月29日）
+状態：作業段階0完了・作業段階1実装中（2026年8月29日）
 
 ## 目的
 
 リポジトリー内でGTP、CGOS、SGFを使用している場所を調査し、外部仕様の解釈、意味変換、実装差の吸収に当たる処理を`KifuwarabeGo2026.FormalAdapter.*`へ段階的に移す計画を定めます。
 
-今回は調査と計画だけを行います。ソースコード、名前空間、プロジェクト参照、実行ファイル、発行物は移動しません。USI、CSA、KIFは、対応するゲームをまだ実装していないため調査対象外です。
+調査結果を基準に段階的な移行を進めます。USI、CSA、KIFは、対応するゲームをまだ実装していないため今回の調査対象外です。
 
 ## 判断基準
 
@@ -236,7 +236,7 @@ SGF文書パーサーはGUI、MonoGame、ファイルシステムへ本質的に
 
 ### 作業段階0：基準を固定する
 
-状態：実装完了・Application Control解除後の再試験待ち（2026年8月29日）
+状態：完了（2026年8月29日）
 
 * 現行GTP単体試験、Windows実プロセス試験、GUI移植性試験を記録する。
 * CGOS Hostの`--help`、ログイン、setup、play、gameover、投了、人間着手のサンプル入出力を匿名化してテストベクトル化する。
@@ -268,7 +268,8 @@ SGF文書パーサーはGUI、MonoGame、ファイルシステムへ本質的に
 
 * ベースライン追加後の移植性試験プロジェクトはReleaseで警告0件、エラー0件でビルド成功した。
 * 既存`Tests.Reference.Communication.Gtp`は`PASS`し、現行GTPのProtocol P同期、拒否着手からの回復、相手着手中継が動作している。
-* 新ベースラインを含む移植性試験の実行は、再ビルドされた`Reference.Communication.Gtp.dll`をWindows Application Controlが`0x800711C7`で遮断したため、検査本体へ入る前に停止した。コード上のテスト失敗はまだ観測していない。
+* 当初は再ビルドされた`Reference.Communication.Gtp.dll`をWindows Application Controlが`0x800711C7`で遮断した。第1段階の新しい依存グラフで全生成物を再ビルドすると遮断は解消し、検査本体まで到達した。
+* 最初の実行で`sgf-baseline.sgf`のCC内JSONにある配列閉じ角括弧がSGF値として未エスケープだったことを検出した。`\]`へ修正後、GTP、CGOS、SGFの全ベースラインが`PASS`した。
 
 再試験コマンド：
 
@@ -277,13 +278,30 @@ dotnet build KifuwarabeGo2026.Tests.GameOasis.Gui.Portability\KifuwarabeGo2026.T
 dotnet KifuwarabeGo2026.Tests.GameOasis.Gui.Portability\bin\Release\net8.0\KifuwarabeGo2026.Tests.GameOasis.Gui.Portability.dll
 ```
 
-Application Control解除後に新ベースラインのPASSを確認し、この段階を完了へ更新します。それまでは作業段階1へ進みません。
+新ベースラインのPASSを確認したため、この段階は完了です。
 
 ### 作業段階1：GTPプリミティブを移す
+
+状態：Protocolプリミティブ移行完了・Client移行前（2026年8月29日）
 
 `GtpCommandArgument`、`GtpCommandResult`、`GtpFilePathArgumentStyle`、`IGtpCommandSession`を`FormalAdapter.Gtp.Protocol`へ移します。次にクライアントとプロセストランスポートを移します。
 
 完了条件：旧利用側を新プロジェクト参照へ切り替え、GTP試験、GUI移植性試験、Windows実プロセス試験がPASSする。旧名前空間を互換維持する必要がある場合は期限付きの薄い型転送またはアダプターだけを残す。
+
+#### Protocolプリミティブの実施記録
+
+`GtpCommandArgument`、`GtpCommandResult`、`GtpFilePathArgumentStyle`、`IGtpCommandSession`を`KifuwarabeGo2026.FormalAdapter.Gtp.Protocol`へ物理移動しました。旧プロジェクトに重複実装や互換型は残していません。
+
+`Reference.Communication.Gtp`と`Reference.PlaySpace.Go.GtpExtensions`は新しいProtocol契約を参照します。`GtpCoordinate`は囲碁の`GoPoint`へ依存するため旧配置に残し、将来の`FormalAdapter.Gtp.Go`移行対象としました。
+
+検証結果：
+
+* ソリューション全体のReleaseビルドが警告0件、エラー0件で成功した。
+* `Tests.Reference.Communication.Gtp`が`PASS`した。
+* GTP、CGOS、SGFベースラインを含む`Tests.GameOasis.Gui.Portability`が`PASS`した。
+* `Tests.GameOasis.Gui.Windows`の非対話Windowsプラットフォーム検査が`PASS`した。
+
+次は`GtpEngineClientCommandSession`、`GtpEngineClient`、`IGtpCommandTransport`、`ProcessGtpCommandTransport`の依存を確認し、実行ファイル名を変えずに`FormalAdapter.Gtp.Client`へ移します。
 
 ### 作業段階2：SGF文書モデルを作る
 
@@ -343,10 +361,8 @@ CGOSサーバー行のパーサー、クライアントコマンドのフォー�
 | 人間向けログ変更でGUIが壊れる | 機械向け通知と診断ログを分離し、旧ログ境界の縦試験を置いてから切り替える |
 | SGFの未知情報が失われる | 文書モデルの損失なし往復を、GoGameRecordへの縮約より先に完成させる |
 
-## 今回変更しなかったもの
+## Protocolプリミティブ移行で変更しなかったもの
 
-* 製品コードと名前空間。
-* プロジェクト参照とソリューション構成。
 * GTP、CGOSの実行ファイル名と発行物。
 * SGFの保存形式、保存場所、レビュー画面。
 * USI、CSA、KIFのプレースホルダーと将来実装。
@@ -354,9 +370,9 @@ CGOSサーバー行のパーサー、クライアントコマンドのフォー�
 ## 実装再開地点
 
 ```text
-現在の状態：作業段階0実装完了・Application Control解除後の再試験待ち
-次の最小作業：移植性試験を再実行し、GTP・CGOS・SGFベースラインがPASSすることを確認する
-最初の移行候補：GtpCommandArgument、GtpCommandResult、GtpFilePathArgumentStyle、IGtpCommandSession
-移行先：KifuwarabeGo2026.FormalAdapter.Gtp.Protocol
+現在の状態：作業段階0完了・作業段階1のProtocolプリミティブ移行完了
+次の最小作業：GTPクライアントとプロセストランスポートの依存境界を確認する
+次の移行候補：GtpEngineClientCommandSession、GtpEngineClient、IGtpCommandTransport、ProcessGtpCommandTransport
+移行先：KifuwarabeGo2026.FormalAdapter.Gtp.Client
 禁止事項：GTPプロジェクト全体の一括改名、CGOS Hostの一括分解、SgfGameRecordConverterの型ごとの単純移動を同時に行わない
 ```

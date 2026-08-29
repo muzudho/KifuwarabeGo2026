@@ -57,7 +57,8 @@ internal static class PortabilityChecks
     {
         var coreAssembly = typeof(Game1).Assembly;
         var gtpExtensionsAssembly = typeof(GtpExtensionsAssembly).Assembly;
-        var gtpCommunicationAssembly = typeof(IGtpCommandSession).Assembly;
+        var gtpFormalAdapterAssembly = typeof(IGtpCommandSession).Assembly;
+        var gtpCommunicationAssembly = typeof(GtpEngineClient).Assembly;
         var legacyGoMatchAssembly = typeof(MatchSession).Assembly;
         var conciergeAssembly = typeof(GameOasisConcierge).Assembly;
         var gameOasisApplicationAssembly = typeof(ICatalogDocumentStore).Assembly;
@@ -67,6 +68,8 @@ internal static class PortabilityChecks
         VerifyAssemblyReferences(coreAssembly);
         VerifyNoPlatformInvokes(coreAssembly);
         VerifyGtpExtensionsAssembly(gtpExtensionsAssembly, gtpCommunicationAssembly);
+        Require(gtpFormalAdapterAssembly.GetName().Name == "KifuwarabeGo2026.FormalAdapter.Gtp",
+            "GTP protocol primitives must be owned by FormalAdapter.Gtp.");
         Require(typeof(GtpEngineClient).Assembly == gtpCommunicationAssembly &&
                 typeof(GtpOptionSchemaDocument).Assembly == gtpCommunicationAssembly,
             "GTP process communication and option documents must be owned by Reference.Communication.Gtp.");

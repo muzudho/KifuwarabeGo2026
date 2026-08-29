@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Reference.Communication.Gtp.Protocol;
+namespace KifuwarabeGo2026.FormalAdapter.Gtp.Protocol;
 
 /// <summary>
 /// Formats command arguments while rejecting line injection.
