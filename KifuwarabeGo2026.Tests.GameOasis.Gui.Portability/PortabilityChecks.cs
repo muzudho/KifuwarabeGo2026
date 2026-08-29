@@ -160,6 +160,11 @@ internal static class PortabilityChecks
                 !monoGameReferences.Contains("KifuwarabeGo2026.GameOasis.Gui") &&
                 !monoGameReferences.Contains("KifuwarabeGo2026.LobbyGui"),
             "The MonoGame Go board renderer must depend inward on the Go presentation model without depending on the compatibility GUI or Lobby GUI.");
+        Require(typeof(GoBoardPrimitiveRenderer).GetMethod(nameof(GoBoardPrimitiveRenderer.DrawStones)) is not null &&
+                typeof(GoBoardPrimitiveRenderer).GetMethod(nameof(GoBoardPrimitiveRenderer.DrawKoMarker)) is not null &&
+                typeof(GoBoardPrimitiveRenderer).GetMethod(nameof(GoBoardPrimitiveRenderer.DrawLastMoveMarker)) is not null &&
+                typeof(GoBoardPrimitiveRenderer).GetMethod(nameof(GoBoardPrimitiveRenderer.DrawHoverStone)) is not null,
+            "Stone, ko, last-move, and hover MonoGame drawing must be owned by the Go board primitive renderer.");
 
         var state = GoPlayRoomViewState.Capture(
             GoPlayRoomActivity.Reviewing,

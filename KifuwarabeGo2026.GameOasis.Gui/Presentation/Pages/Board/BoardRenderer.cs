@@ -26,7 +26,6 @@ public sealed class BoardRenderer : IDisposable
     private readonly BoardLensModel _boardLensModel;
     private readonly SpriteBatch _spriteBatch;
     private readonly SpriteFont _font;
-    private readonly Texture2D _softCircle;
     private readonly Texture2D _stoneLight;
     private readonly Texture2D _stoneDark;
     private readonly GoBoardPrimitiveRenderer _primitiveRenderer;
@@ -38,10 +37,9 @@ public sealed class BoardRenderer : IDisposable
         _boardLensModel = boardLensModel;
         _spriteBatch = spriteBatch;
         _font = font;
-        _softCircle = softCircle;
         _stoneLight = stoneLight;
         _stoneDark = stoneDark;
-        _primitiveRenderer = new GoBoardPrimitiveRenderer(font, boardCoordinateFont);
+        _primitiveRenderer = new GoBoardPrimitiveRenderer(font, boardCoordinateFont, softCircle, stoneLight, stoneDark);
     }
 
     public void Dispose()
@@ -172,94 +170,13 @@ public sealed class BoardRenderer : IDisposable
     /// <param name="start"></param>
     /// <param name="cell"></param>
     public void DrawStones(GoBoardPresentation presentation)
-    {
-        foreach (var visual in presentation.Stones)
-        {
-            var center = new Vector2(visual.Center.X, visual.Center.Y);
-            if (visual.UseWhiteboardStyle)
-                DrawWhiteboardStone(center, visual.Radius, visual.Stone == GoStone.Black);
-            else
-                DrawStone(center, visual.Radius, visual.Stone == GoStone.Black);
-        }
-    }
-
-    private void DrawWhiteboardStone(Vector2 center, float radius, bool black)
-    {
-        // 扁平な碁石が盤へ落とす影。外側の柔らかい影と、石の直下の接地影を重ねる。
-        // 黒石は光を吸うため濃く冷たい影、白石は反射光を含むため薄く暖かい影にする。
-        var castShadowColor = black
-            ? new Color(13, 20, 24, 105)
-            : new Color(48, 54, 55, 120);
-        var contactShadowColor = black
-            ? new Color(5, 9, 12, 115)
-            : new Color(30, 35, 36, 145);
-        _spriteBatch.Draw(
-            _softCircle,
-            new Rectangle(
-                (int)(center.X - radius + 9),
-                (int)(center.Y - radius + 11),
-                (int)(radius * 2),
-                (int)(radius * 2)),
-            castShadowColor);
-        _spriteBatch.Draw(
-            _softCircle,
-            new Rectangle(
-                (int)(center.X - radius * 0.72f + 5),
-                (int)(center.Y - radius * 0.24f + 9),
-                (int)(radius * 1.44f),
-                (int)(radius * 0.48f)),
-            contactShadowColor);
-
-        var size = (int)(radius * 2);
-        var destination = new Rectangle((int)(center.X - radius), (int)(center.Y - radius), size, size);
-        _spriteBatch.Draw(black ? _stoneDark : _stoneLight, destination, Color.White);
-
-        var outlineColor = black ? new Color(14, 20, 23) : new Color(73, 83, 84);
-        var outlineRadius = radius * 0.96f;
-        const int segments = 24;
-        for (var index = 0; index < segments; index++)
-        {
-            var a = MathHelper.TwoPi * index / segments;
-            var b = MathHelper.TwoPi * (index + 1) / segments;
-            DrawLine(
-                center + new Vector2(MathF.Cos(a), MathF.Sin(a)) * outlineRadius,
-                center + new Vector2(MathF.Cos(b), MathF.Sin(b)) * outlineRadius,
-                2,
-                outlineColor);
-        }
-    }
+        => _primitiveRenderer.DrawStones(_drawingContext, _spriteBatch, presentation);
 
     /// <summary>
     /// 現在表示中の局面における最終着手を、石の上の発光リングで示します。
     /// </summary>
     public void DrawLastMoveMarker(GoBoardMarkerVisual? marker)
-    {
-        if (marker is not { } value)
-            return;
-
-        var center = new Vector2(value.Center.X, value.Center.Y);
-        DrawLastMoveMarker(center, value.Radius, value.Cell);
-    }
-
-    private void DrawLastMoveMarker(Vector2 center, float radius, float cell)
-    {
-        var shadowColor = new Color(8, 24, 30, 185);
-        var accentColor = new Color(91, 218, 211, 245);
-        const int segmentCount = 20;
-
-        for (var index = 0; index < segmentCount; index++)
-        {
-            var startAngle = MathHelper.TwoPi * index / segmentCount;
-            var endAngle = MathHelper.TwoPi * (index + 1) / segmentCount;
-            var segmentStart = center + new Vector2(MathF.Cos(startAngle), MathF.Sin(startAngle)) * radius;
-            var segmentEnd = center + new Vector2(MathF.Cos(endAngle), MathF.Sin(endAngle)) * radius;
-            DrawLine(segmentStart, segmentEnd, Math.Max(5f, cell * 0.09f), shadowColor);
-            DrawLine(segmentStart, segmentEnd, Math.Max(2f, cell * 0.045f), accentColor);
-        }
-
-        DrawCircle(center, Math.Max(3f, cell * 0.055f), shadowColor);
-        DrawCircle(center, Math.Max(2f, cell * 0.032f), accentColor);
-    }
+        => _primitiveRenderer.DrawLastMoveMarker(_drawingContext, marker);
 
     /// <summary>
     /// ［浮いている石］描画
@@ -302,10 +219,7 @@ public sealed class BoardRenderer : IDisposable
             return;
         }
 
-        var center = new Vector2(hover.Center.X, hover.Center.Y);
-        var black = hover.Stone == GoStone.Black;
-        DrawCircle(center, hover.OuterRadius, black ? new Color(8, 10, 14, 95) : new Color(255, 250, 232, 110));
-        DrawCircle(center, hover.InnerRadius, black ? new Color(8, 10, 14, 90) : new Color(255, 250, 232, 95));
+        GoBoardPrimitiveRenderer.DrawHoverStone(_drawingContext, hover);
     }
 
     /// <summary>
@@ -322,32 +236,7 @@ public sealed class BoardRenderer : IDisposable
     /// <param name="cell"></param>
 
     public void DrawKoMarker(GoBoardPresentation presentation)
-    {
-        if (presentation.KoMarker is not { } marker)
-            return;
-
-        DrawKoMark(
-            new Vector2(marker.Center.X, marker.Center.Y),
-            marker.Radius);
-    }
-
-    private void DrawKoMark(int x, int y, Vector2 start, float cell)
-    {
-        var center = BoardPoint(start, cell, x, y);
-        var radius = Math.Max(12f, cell * 0.26f);
-        DrawKoMark(center, radius);
-    }
-
-    private void DrawKoMark(Vector2 center, float radius)
-    {
-        var bounds = new Rectangle((int)(center.X - radius), (int)(center.Y - radius), (int)(radius * 2), (int)(radius * 2));
-        FillRect(bounds, new Color(143, 38, 38, 210));
-        DrawRect(bounds, 2, new Color(255, 230, 160));
-
-        const string label = "KO";
-        var size = _font.MeasureString(label) * 0.34f;
-        DrawText(label, new Vector2(center.X - size.X / 2, center.Y - size.Y / 2), Color.White, 0.34f);
-    }
+        => _primitiveRenderer.DrawKoMarker(_drawingContext, presentation.KoMarker);
 
     private void DrawGameOasisHoverStone(
         GoPlayRoomViewState viewState,
@@ -363,10 +252,7 @@ public sealed class BoardRenderer : IDisposable
                 out var hover))
             return;
 
-        var center = new Vector2(hover.Center.X, hover.Center.Y);
-        var black = hover.Stone == GoStone.Black;
-        DrawCircle(center, hover.OuterRadius, black ? new Color(8, 10, 14, 95) : new Color(255, 250, 232, 110));
-        DrawCircle(center, hover.InnerRadius, black ? new Color(8, 10, 14, 90) : new Color(255, 250, 232, 95));
+        GoBoardPrimitiveRenderer.DrawHoverStone(_drawingContext, hover);
     }
 
     /// <summary>
@@ -395,8 +281,6 @@ public sealed class BoardRenderer : IDisposable
             boardSize,
             new GoBoardViewport(BoardBounds.X, BoardBounds.Y, BoardBounds.Width, BoardBounds.Height));
 
-    private static Vector2 ToVector2(GoBoardScreenPoint point) => new(point.X, point.Y);
-
     /// <summary>
     /// ［盤上の星］取得
     /// </summary>
@@ -422,12 +306,7 @@ public sealed class BoardRenderer : IDisposable
     /// <param name="radius"></param>
     /// <param name="black"></param>
     public void DrawStone(Vector2 center, float radius, bool black)
-    {
-        var size = (int)(radius * 2);
-        var destination = new Rectangle((int)(center.X - radius), (int)(center.Y - radius), size, size);
-        _spriteBatch.Draw(_softCircle, new Rectangle(destination.X + 7, destination.Y + 10, destination.Width, destination.Height), new Color(0, 0, 0, 110));
-        _spriteBatch.Draw(black ? _stoneDark : _stoneLight, destination, Color.White);
-    }
+        => _primitiveRenderer.DrawStone(_spriteBatch, center, radius, black);
 
     public void DrawBoardRenAnalysis(RenParseDisplayMode displayMode, int boardSize,
         Func<int, int, GoStone> getStone, Func<GoRenParseResult> parseRens, Action drawPlacedStones,
