@@ -13,7 +13,7 @@
 4. ゲーム設定、行動、状態、イベント、結果を、それぞれ異なる`ContractDocument.SchemaId`を持つJSONとして公開する。
 5. 適合性ベクトルを作り、CLIランナーへマニフェストと共に渡す。
 
-実装例は[`Samples/External.PlaySpace.Counter`](../../../Samples/External.PlaySpace.Counter/)にあります。この例は公開二プロジェクトだけを参照し、値を増やして目標へ到達する最小ゲームを別プロセスで実行します。
+実装例は[`Samples/External.PlayRoomEngine.Counter`](../../../Samples/External.PlayRoomEngine.Counter/)にあります。この例は公開二プロジェクトだけを参照し、値を増やして目標へ到達する最小ゲームを別プロセスで実行します。
 
 ## 適合性ランナー
 

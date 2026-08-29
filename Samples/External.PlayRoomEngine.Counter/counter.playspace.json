@@ -2,6 +2,6 @@
   "version": 1,
   "playSpaceTypeId": "example.external.games.counter",
   "command": "dotnet",
-  "arguments": ["External.PlaySpace.Counter.dll"],
+  "arguments": ["External.PlayRoomEngine.Counter.dll"],
   "supportsMultipleSessions": true
 }

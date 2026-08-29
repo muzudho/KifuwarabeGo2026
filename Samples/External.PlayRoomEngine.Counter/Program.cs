@@ -15,7 +15,7 @@ sealed class CounterPlaySpace : IPlaySpaceProtocol
 
     public ValueTask<ProtocolResponse<PlaySpaceDescriptor>> DescribeAsync(CancellationToken cancellationToken = default) =>
         Success(new PlaySpaceDescriptor(new(TypeId), "External counter sample", ContractVersion.V1_0,
-            "External.PlaySpace.Counter", "1.0.0", ["increment-action"]));
+            "External.PlayRoomEngine.Counter", "1.0.0", ["increment-action"]));
 
     public ValueTask<ProtocolResponse<ContractDocument>> GetConfigurationSchemaAsync(CancellationToken cancellationToken = default) =>
         Success(Document(ConfigurationSchema,

@@ -36,7 +36,7 @@
   <Project Path="KifuwarabeGo2026.Reference.PlayRoomEngine.Ponnuki.JsonLinesHost/KifuwarabeGo2026.Reference.PlayRoomEngine.Ponnuki.JsonLinesHost.csproj" />
   <Project Path="KifuwarabeGo2026.Tests.PlayRoomEngine.JsonLines/KifuwarabeGo2026.Tests.PlayRoomEngine.JsonLines.csproj" />
   <Project Path="KifuwarabeGo2026.PlayRoomEngine.Conformance/KifuwarabeGo2026.PlayRoomEngine.Conformance.csproj" />
-  <Project Path="Samples/External.PlaySpace.Counter/External.PlaySpace.Counter.csproj" />
+  <Project Path="Samples/External.PlayRoomEngine.Counter/External.PlayRoomEngine.Counter.csproj" />
   <Project Path="KifuwarabeGo2026.PlayRoomGui.JsonLines/KifuwarabeGo2026.PlayRoomGui.JsonLines.csproj" />
   <Project Path="KifuwarabeGo2026.Reference.PlayRoomGui.BoardEditor.JsonLinesHost/KifuwarabeGo2026.Reference.PlayRoomGui.BoardEditor.JsonLinesHost.csproj" />
   <Project Path="KifuwarabeGo2026.Reference.PlayRoomGui.Review.JsonLinesHost/KifuwarabeGo2026.Reference.PlayRoomGui.Review.JsonLinesHost.csproj" />

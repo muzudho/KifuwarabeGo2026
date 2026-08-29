@@ -116,7 +116,7 @@ $versionProjects = @(
     'KifuwarabeGo2026.Reference.PlayRoomEngine.Go.JsonLinesHost\KifuwarabeGo2026.Reference.PlayRoomEngine.Go.JsonLinesHost.csproj',
     'KifuwarabeGo2026.Reference.PlayRoomEngine.Ponnuki.JsonLinesHost\KifuwarabeGo2026.Reference.PlayRoomEngine.Ponnuki.JsonLinesHost.csproj',
     'KifuwarabeGo2026.PlayRoomEngine.Conformance\KifuwarabeGo2026.PlayRoomEngine.Conformance.csproj',
-    'Samples\External.PlaySpace.Counter\External.PlaySpace.Counter.csproj',
+    'Samples\External.PlayRoomEngine.Counter\External.PlayRoomEngine.Counter.csproj',
     'KifuwarabeGo2026.GameOasis.Gui.Windows\KifuwarabeGo2026.GameOasis.Gui.Windows.csproj',
     'KifuwarabeGo2026.GameOasis.Gui\KifuwarabeGo2026.GameOasis.Gui.csproj',
     'KifuwarabeGo2026.FormalAdapter.Cgos\KifuwarabeGo2026.FormalAdapter.Cgos.csproj',
@@ -177,7 +177,7 @@ if (-not $SkipBuild) {
     Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.Reference.PlayRoomEngine.Go.JsonLinesHost\KifuwarabeGo2026.Reference.PlayRoomEngine.Go.JsonLinesHost.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false', '-o', "$guiPublish\Tools\PlaySpace")
     Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.Reference.PlayRoomEngine.Ponnuki.JsonLinesHost\KifuwarabeGo2026.Reference.PlayRoomEngine.Ponnuki.JsonLinesHost.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false', '-o', "$guiPublish\Tools\PlaySpace")
     Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.PlayRoomEngine.Conformance\KifuwarabeGo2026.PlayRoomEngine.Conformance.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false', '-o', "$guiPublish\Tools\Conformance\ProtocolS")
-    Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'Samples\External.PlaySpace.Counter\External.PlaySpace.Counter.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false', '-o', "$guiPublish\Tools\Conformance\ProtocolS\Samples\Counter")
+    Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'Samples\External.PlayRoomEngine.Counter\External.PlayRoomEngine.Counter.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false', '-o', "$guiPublish\Tools\Conformance\ProtocolS\Samples\Counter")
     Copy-Item -LiteralPath 'Conformance\ProtocolS\v1' -Destination "$guiPublish\Tools\Conformance\ProtocolS\Vectors" -Recurse
     Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.Reference.Communication.Gtp.Host\KifuwarabeGo2026.Reference.Communication.Gtp.Host.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false')
 
@@ -235,7 +235,7 @@ Assert-FileExists -LiteralPath @(
     "$guiPublish\Tools\Conformance\ProtocolS\KifuwarabeGo2026.PlayRoomEngine.Conformance.dll",
     "$guiPublish\Tools\Conformance\ProtocolS\Vectors\conformance-vector.schema.json",
     "$guiPublish\Tools\Conformance\ProtocolS\Vectors\playspace-host-manifest.schema.json",
-    "$guiPublish\Tools\Conformance\ProtocolS\Samples\Counter\External.PlaySpace.Counter.dll",
+    "$guiPublish\Tools\Conformance\ProtocolS\Samples\Counter\External.PlayRoomEngine.Counter.dll",
     "$guiPublish\Tools\Conformance\ProtocolS\Samples\Counter\counter.playspace.json",
     "$enginePublish\KifuwarabeGo2026.Engine.exe",
     "$enginePublish\KifuwarabeGo2026.Reference.PlaySpace.Go.Foundation.dll",

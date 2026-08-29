@@ -45,7 +45,7 @@ static (string, string)[] DefaultCases(string root)
 {
     var goOfficial = Path.Combine(root, "KifuwarabeGo2026.Reference.PlayRoomEngine.Go.JsonLinesHost", "bin", "Release", "net8.0");
     var ponnukiOfficial = Path.Combine(root, "KifuwarabeGo2026.Reference.PlayRoomEngine.Ponnuki.JsonLinesHost", "bin", "Release", "net8.0");
-    var external = Path.Combine(root, "Samples", "External.PlaySpace.Counter", "bin", "Release", "net8.0");
+    var external = Path.Combine(root, "Samples", "External.PlayRoomEngine.Counter", "bin", "Release", "net8.0");
     var vectors = Path.Combine(root, "Conformance", "ProtocolS", "v1");
     return [
         (Path.Combine(goOfficial, "go.playspace.json"), Path.Combine(vectors, "go.json")),
