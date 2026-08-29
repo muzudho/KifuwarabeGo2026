@@ -11,8 +11,13 @@ var output = JsonSerializer.Serialize(new
     roomTypeId = result.Plan?.RoomTypeId,
     boardSize = result.Plan?.BoardSize,
 });
-if (result.IsReady)
-    Console.Out.WriteLine(output);
-else
+if (!result.IsReady || result.Plan is null)
+{
     Console.Error.WriteLine(output);
-return result.ExitCode;
+    return result.ExitCode;
+}
+
+Console.Out.WriteLine(output);
+using var game = new GoInitialBoardGame(result.Plan);
+game.Run();
+return GoPlayRoomHostExitCodes.Success;

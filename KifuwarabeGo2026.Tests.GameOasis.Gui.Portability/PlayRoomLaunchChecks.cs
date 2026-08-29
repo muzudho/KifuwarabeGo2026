@@ -71,9 +71,10 @@ internal static class PlayRoomLaunchChecks
             .ToHashSet(StringComparer.Ordinal);
         Require(assembly.GetName().Name == "KifuwarabeGo2026.Reference.PlayRoomGui.Go.Windows" &&
                 references.Contains("KifuwarabeGo2026.Reference.PlayRoomGui.Go") &&
+                references.Contains("KifuwarabeGo2026.Reference.PlayRoomGui.Go.MonoGame") &&
                 !references.Contains("KifuwarabeGo2026.GameOasis.Gui") &&
                 !references.Contains("KifuwarabeGo2026.LobbyGui"),
-            "The Go Play Room Windows Host must not depend on the compatibility GUI or Lobby GUI.");
+            "The Go Play Room Windows Host must use its MonoGame adapter without depending on the compatibility GUI or Lobby GUI.");
 
         var request = CreateSavedMatchRequest("windows-host-request");
         var path = Path.Combine(Path.GetTempPath(), $"kifuwarabe-go-host-{Guid.NewGuid():N}.json");
