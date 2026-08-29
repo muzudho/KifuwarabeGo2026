@@ -25,7 +25,6 @@ using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions;
 using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Capabilities;
 using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Engines;
 using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.InitialPosition;
-using KifuwarabeGo2026.Reference.Communication.Gtp.Protocol;
 using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Sgf;
 using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Strategies;
 using KifuwarabeGo2026.Reference.PlaySpace.Go.LegacyMatch;
@@ -72,8 +71,9 @@ internal static class PortabilityChecks
         VerifyAssemblyReferences(coreAssembly);
         VerifyNoPlatformInvokes(coreAssembly);
         VerifyGtpExtensionsAssembly(gtpExtensionsAssembly, gtpCommunicationAssembly);
-        Require(gtpFormalAdapterAssembly.GetName().Name == "KifuwarabeGo2026.FormalAdapter.Gtp",
-            "GTP protocol primitives must be owned by FormalAdapter.Gtp.");
+        Require(gtpFormalAdapterAssembly.GetName().Name == "KifuwarabeGo2026.FormalAdapter.Gtp" &&
+                typeof(KifuwarabeGo2026.FormalAdapter.Gtp.Go.GtpCoordinate).Assembly == gtpFormalAdapterAssembly,
+            "GTP protocol primitives and Go coordinate conversion must be owned by FormalAdapter.Gtp.");
         Require(typeof(KifuwarabeGo2026.FormalAdapter.Cgos.Protocol.CgosServerMessageParser).Assembly == cgosFormalAdapterAssembly &&
                 typeof(KifuwarabeGo2026.FormalAdapter.Cgos.Protocol.CgosClientCommandFormatter).Assembly == cgosFormalAdapterAssembly &&
                 typeof(KifuwarabeGo2026.FormalAdapter.Cgos.Client.CgosNetworkSession).Assembly == cgosFormalAdapterAssembly &&
@@ -987,8 +987,8 @@ internal static class PortabilityChecks
         Require(
             !references.Contains("System.Diagnostics.Process"),
             "GtpExtensions must not own external processes.");
-        Require(references.Contains("KifuwarabeGo2026.Reference.Communication.Gtp"),
-            "Go GTP extensions must consume the communication-owned GTP protocol boundary.");
+        Require(references.Contains("KifuwarabeGo2026.FormalAdapter.Gtp"),
+            "Go GTP extensions must consume the FormalAdapter-owned GTP protocol boundary.");
         Require(!gtpCommunicationAssembly.GetReferencedAssemblies().Any(reference =>
                 reference.Name == "KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions"),
             "GTP communication must not depend back on Go play-space extensions.");
@@ -1065,13 +1065,13 @@ internal static class PortabilityChecks
             "The migrated sequential-play strategy changed the existing command sequence.");
 
         Require(
-            global::KifuwarabeGo2026.Reference.Communication.Gtp.Protocol.GtpCoordinate.FormatVertex(new GoPoint(8, 8), 9) == "J1",
+            global::KifuwarabeGo2026.FormalAdapter.Gtp.Go.GtpCoordinate.FormatVertex(new GoPoint(8, 8), 9) == "J1",
             "GTP formatting must skip the I column.");
         Require(
-            global::KifuwarabeGo2026.Reference.Communication.Gtp.Protocol.GtpCoordinate.TryParseVertex("J1", 9, out var parsed) && parsed == new GoPoint(8, 8),
+            global::KifuwarabeGo2026.FormalAdapter.Gtp.Go.GtpCoordinate.TryParseVertex("J1", 9, out var parsed) && parsed == new GoPoint(8, 8),
             "GTP parsing must reverse formatted coordinates.");
         Require(
-            !global::KifuwarabeGo2026.Reference.Communication.Gtp.Protocol.GtpCoordinate.TryParseVertex("I1", 9, out _),
+            !global::KifuwarabeGo2026.FormalAdapter.Gtp.Go.GtpCoordinate.TryParseVertex("I1", 9, out _),
             "The invalid GTP I column must be rejected.");
     }
 

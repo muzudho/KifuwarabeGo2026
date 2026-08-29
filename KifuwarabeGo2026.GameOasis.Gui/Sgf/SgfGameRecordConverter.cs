@@ -6,7 +6,6 @@ using System.Text;
 using System.Text.Json;
 using KifuwarabeGo2026.GameOasis.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.Watching;
 using KifuwarabeGo2026.GameOasis.Gui.Application.Local.Playing;
-using KifuwarabeGo2026.Reference.Communication.Gtp.Protocol;
 
 /// <summary>Compatibility entry point between the GUI record and the formal SGF adapter.</summary>
 public static class SgfGameRecordConverter

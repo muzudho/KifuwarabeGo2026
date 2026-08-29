@@ -8,7 +8,6 @@ using KifuwarabeGo2026.GameOasis.Gui.Application.GameOasis;
 using KifuwarabeGo2026.GameOasis.Gui.Domain;
 using KifuwarabeGo2026.Shared.Domain;
 using KifuwarabeGo2026.Reference.Communication.Gtp;
-using KifuwarabeGo2026.Reference.Communication.Gtp.Protocol;
 using KifuwarabeGo2026.Reference.Gui;
 using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Integration;
 using KifuwarabeGo2026.GameOasis.Gui.Infrastructure.Logging;

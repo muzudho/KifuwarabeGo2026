@@ -481,6 +481,8 @@ Host内で新しい`CgosNetworkSession`だけが接続を所有しているこ�
 
 ### 作業段階6：CGOSとGUIのログ境界を置換する
 
+状態：完了（2026年8月29日）
+
 人間向けログの再解析を廃止し、型付き通知またはJSON Linesでsetup、play、analysis、gameover、診断を分けます。`CgosGameObservation`からCGOS字句解析を除き、Go向け投影を`FormalAdapter.Cgos.Go`へ移します。
 
 #### 開始時の再調査記録
@@ -542,13 +544,33 @@ GUIの`CgosConnectionProcess`から、CGOSエラー、接続、ログイン、se
 
 全ソリューションReleaseビルドとFormalAdapter.Cgos専用試験は警告0件、エラー0件、`PASS`です。GUI移植性、Windows非対話、PlayRoom回帰試験は、生成DLLがWindowsアプリケーション制御ポリシーの`0x800711C7`で拒否され、対象再ビルド後の再試行でも起動前に停止しました。Code Integrity Operationalログのイベント3033／3077で、ポリシーID`0283ac0f-fff1-49ae-ada1-8a933130cad6`によるEnterprise signing level未達が原因と確認しました。対象DLLにZone.Identifierや破損はなく、同一コピーのSHA-256も一致しています。コード失敗ではないものの、第6段階の完了判定は、管理者側で開発生成物を許可した後の再実行まで保留します。
 
+#### 最終回帰試験の実施記録
+
+PC再起動後に保留していたGUI移植性、Windows非対話、PlayRoom正常／異常終了試験を再実行し、すべて`PASS`しました。Windowsアプリケーション制御の拒否は再発せず、構造化通知によるGUI状態復帰と旧Host互換経路を含む第6段階の回帰を確認できたため、作業段階6を完了とします。
+
 完了条件：標準出力には機械向け通知だけ、標準エラーには診断だけが流れ、GUI表示と棋譜保存が従来どおり動く。Host異常終了でもGUIが復帰できる。
 
 ### 作業段階7：旧配置を整理する
 
+状態：実装完了・Windows最終回帰試験保留（2026年8月29日）
+
 利用側、テスト、発行スクリプト、開発者文書を新ProjectFamilyへ追随させます。履歴文書内の過去名称は書き換えません。互換Host、実行ファイル名、保存形式を残す必要性を再評価します。
 
 完了条件：外部仕様固有の型がカジュアル・コアへ漏れず、旧プロジェクトに実装の重複が残らない。
+
+#### 第1縦切りの実施記録
+
+囲碁の共有`GoPoint`とGTP頂点を相互変換する`GtpCoordinate`を、旧`Reference.Communication.Gtp.Protocol`から`FormalAdapter.Gtp.Go`へ物理移動しました。純粋なGTPコマンド契約を置く`Protocol`と、囲碁型への意味変換を置く`Go`の境界を明確にし、旧名前空間と重複型は残していません。
+
+GUI、初期局面GTP拡張、ベースライン試験は新しい所有者を直接利用します。GUI移植性試験には`GtpCoordinate`のアセンブリ所有権検査を追加し、将来旧配置へ戻らないようにしました。
+
+開発者向けFormalAdapter READMEを現状へ更新し、SGFのGUI変換が既に中立棋譜境界へ切り替わっていることも反映しました。リリーススクリプトはFormalAdapter.Gtp、Cgos、Sgfを版管理対象に加え、GUI、CGOS Host、GTP Engineの発行物へ必要なFormalAdapter DLLが含まれることを明示検査します。
+
+互換性の再評価では、GTP Hostの出力名`KifuwarabeGo2026.Engine`、CGOS Hostの実行ファイル名、既存設定とSGF保存形式は外部利用者との契約なので維持します。GUIの旧CGOSログアダプターも旧Host利用時だけ動く期限付き互換境界として残します。一方、通常経路はversion 1 JSON Linesだけを意味入力として使用します。
+
+全ソリューションReleaseビルドは警告0件、エラー0件です。FormalAdapter.Cgos、FormalAdapter.Sgf、GTP Protocol P、GUI移植性、PlayRoom正常／異常終了、CGOS Hostの`--help`はすべて`PASS`し、リリーススクリプトもPowerShell構文検査を通過しました。旧GTP Protocol名前空間と`GtpCoordinate`の重複がないことも参照検索で確認しました。
+
+Windows非対話試験だけは、再生成した試験DLLをWindowsアプリケーション制御が`0x800711C7`で再び拒否したため、起動前に停止しました。対象プロジェクトのRelease再ビルドは警告0件、エラー0件で成功しています。コードによる迂回は追加せず、PC再起動後の再実行まで第7段階の完了判定を保留します。
 
 ## 優先順位
 
@@ -581,9 +603,9 @@ GUIの`CgosConnectionProcess`から、CGOSエラー、接続、ログイン、se
 ## 実装再開地点
 
 ```text
-現在の状態：作業段階0～5完了。作業段階6の実装完了、最終回帰試験はWindowsアプリケーション制御解除待ち
-次の最小作業：GUI移植性、Windows非対話、PlayRoom回帰試験を再実行して第6段階を完了判定する
-次の実装候補：第6段階の最終回帰試験
-移行先：KifuwarabeGo2026.FormalAdapter.Cgos.Observability、FormalAdapter.Cgos.Go、Host構成点、GUI受信境界
+現在の状態：作業段階0～6完了。作業段階7は実装完了、Windows非対話最終回帰試験だけアプリケーション制御解除待ち
+次の最小作業：PC再起動後にWindows非対話試験を再実行して第7段階を完了判定する
+次の実装候補：第7段階のWindows最終回帰試験
+移行先：KifuwarabeGo2026.FormalAdapter.Gtp.Go、利用側、試験、発行スクリプト、開発者文書
 禁止事項：GTPプロジェクト全体の一括改名、CGOS Hostの一括分解、SgfGameRecordConverterの型ごとの単純移動を同時に行わない
 ```

@@ -1,6 +1,5 @@
 namespace KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Engines;
 
-using KifuwarabeGo2026.Reference.Communication.Gtp.Protocol;
 using KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Strategies;
 
 /// <summary>

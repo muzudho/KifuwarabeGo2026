@@ -1,6 +1,5 @@
 namespace KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.Capabilities;
 
-using KifuwarabeGo2026.Reference.Communication.Gtp.Protocol;
 
 /// <summary>
 /// Probes command support while preserving unsupported, contradictory, and unavailable results.

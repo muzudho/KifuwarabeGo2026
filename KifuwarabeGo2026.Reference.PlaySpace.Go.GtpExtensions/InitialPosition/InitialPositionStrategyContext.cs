@@ -1,6 +1,5 @@
 namespace KifuwarabeGo2026.Reference.PlaySpace.Go.GtpExtensions.InitialPosition;
 
-using KifuwarabeGo2026.Reference.Communication.Gtp.Protocol;
 
 /// <summary>
 /// Supplies host-created artifacts and engine-specific command formatting to a strategy.
