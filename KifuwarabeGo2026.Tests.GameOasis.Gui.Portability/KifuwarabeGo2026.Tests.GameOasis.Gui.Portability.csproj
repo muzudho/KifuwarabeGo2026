@@ -9,5 +9,9 @@
     <ProjectReference Include="..\KifuwarabeGo2026.GameOasis.Gui\KifuwarabeGo2026.GameOasis.Gui.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.GameOasis.Concierge\KifuwarabeGo2026.GameOasis.Concierge.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlayerEngine\KifuwarabeGo2026.Reference.PlayerEngine.csproj" />
+    <ProjectReference Include="..\KifuwarabeGo2026.Reference.Communication.Cgos.Host\KifuwarabeGo2026.Reference.Communication.Cgos.Host.csproj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Conformance\FormalAdapters\v1\**\*" Link="Vectors\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

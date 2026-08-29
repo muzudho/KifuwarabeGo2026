@@ -10,8 +10,9 @@ internal static class Program
         {
             PortabilityChecks.Run();
             PlayRoomLaunchChecks.Run();
+            FormalAdapterBaselineChecks.Run();
             Console.WriteLine(
-                "PASS: Core, Go play-space, Go foundation, GtpExtensions, and portable platform composition are free of Windows-only dependencies.");
+                "PASS: Portability checks and GTP, CGOS, SGF pre-migration baseline vectors passed.");
             return 0;
         }
         catch (Exception ex)

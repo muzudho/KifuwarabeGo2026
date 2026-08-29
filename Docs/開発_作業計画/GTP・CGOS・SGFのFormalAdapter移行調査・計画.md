@@ -1,6 +1,6 @@
 # GTP・CGOS・SGFのFormalAdapter移行調査・計画
 
-状態：調査完了・実装未着手（2026年8月29日）
+状態：作業段階0実装完了・Application Control解除後の再試験待ち（2026年8月29日）
 
 ## 目的
 
@@ -236,11 +236,48 @@ SGF文書パーサーはGUI、MonoGame、ファイルシステムへ本質的に
 
 ### 作業段階0：基準を固定する
 
+状態：実装完了・Application Control解除後の再試験待ち（2026年8月29日）
+
 * 現行GTP単体試験、Windows実プロセス試験、GUI移植性試験を記録する。
 * CGOS Hostの`--help`、ログイン、setup、play、gameover、投了、人間着手のサンプル入出力を匿名化してテストベクトル化する。
 * SGFの読込、保存、コメント、解析、初期配置、時間、旧形式更新の代表文書を固定する。
 
 完了条件：移動後の互換性を機械的に比較できる。
+
+#### 作業段階0の実施記録
+
+言語非依存の匿名化ベクトルを`Conformance/FormalAdapters/v1`へ追加しました。
+
+| ベクトル | 固定した内容 |
+|---|---|
+| `gtp-baseline.json` | ファイルパス引数の引用、改行・引用符拒否、9路・19路の座標、pass、不正頂点 |
+| `cgos-baseline.json` | `--help`必須項目、匿名ログイン、setup、生成着手、play、gameover、人間着手、投了、quit |
+| `sgf-baseline.sgf` | 対局情報、9路、コミ、持ち時間、初期配置、着手、pass、BL/WL、コメント、CC解析JSON |
+| `sgf-legacy-kfa.sgf` | 旧KFAからKFWへの更新と、未解釈JSONの保持 |
+
+ベクトルの検査は既存の`KifuwarabeGo2026.Tests.GameOasis.Gui.Portability`へ`FormalAdapterBaselineChecks`として追加しました。移行前の実装に対して次を機械的に比較します。
+
+* `GtpCommandArgument`と`GtpCoordinate`の現行結果。
+* 実際のCGOS Hostを`--help`で起動した出力。
+* `CgosGameObservation`へ匿名化ログを順に適用した対局状態、棋譜、解析結果。
+* `SgfGameRecordConverter`による代表SGFの読込、現行モデル往復、コメント、解析JSON、旧形式更新。
+
+専用の新規テスト実行ファイルは作らず、既にGUI、GTP、Go基盤を参照している移植性試験へ統合しました。これにより、同じ製品DLLを複数の試験出力へ複製する量を増やさず、将来は利用側だけを新`FormalAdapter`へ切り替えて同じベクトルを継続利用できます。
+
+検証結果：
+
+* ベースライン追加後の移植性試験プロジェクトはReleaseで警告0件、エラー0件でビルド成功した。
+* 既存`Tests.Reference.Communication.Gtp`は`PASS`し、現行GTPのProtocol P同期、拒否着手からの回復、相手着手中継が動作している。
+* 新ベースラインを含む移植性試験の実行は、再ビルドされた`Reference.Communication.Gtp.dll`をWindows Application Controlが`0x800711C7`で遮断したため、検査本体へ入る前に停止した。コード上のテスト失敗はまだ観測していない。
+
+再試験コマンド：
+
+```powershell
+dotnet build KifuwarabeGo2026.Tests.GameOasis.Gui.Portability\KifuwarabeGo2026.Tests.GameOasis.Gui.Portability.csproj -c Release --no-restore
+dotnet KifuwarabeGo2026.Tests.GameOasis.Gui.Portability\bin\Release\net8.0\KifuwarabeGo2026.Tests.GameOasis.Gui.Portability.dll
+```
+
+Application Control解除後に新ベースラインのPASSを確認し、この段階を完了へ更新します。それまでは作業段階1へ進みません。
 
 ### 作業段階1：GTPプリミティブを移す
 
@@ -317,10 +354,9 @@ CGOSサーバー行のパーサー、クライアントコマンドのフォー�
 ## 実装再開地点
 
 ```text
-現在の状態：調査完了・実装未着手
-次の最小作業：作業段階0としてGTP・CGOS・SGFの回帰基準とテストベクトルを固定する
+現在の状態：作業段階0実装完了・Application Control解除後の再試験待ち
+次の最小作業：移植性試験を再実行し、GTP・CGOS・SGFベースラインがPASSすることを確認する
 最初の移行候補：GtpCommandArgument、GtpCommandResult、GtpFilePathArgumentStyle、IGtpCommandSession
 移行先：KifuwarabeGo2026.FormalAdapter.Gtp.Protocol
 禁止事項：GTPプロジェクト全体の一括改名、CGOS Hostの一括分解、SgfGameRecordConverterの型ごとの単純移動を同時に行わない
 ```
-

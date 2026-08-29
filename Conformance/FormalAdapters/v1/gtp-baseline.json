@@ -1,0 +1,23 @@
+{
+  "filePathCases": [
+    { "path": "engine.sgf", "style": "Auto", "expected": "engine.sgf" },
+    { "path": "positions/initial position.sgf", "style": "Auto", "expected": "\"positions/initial position.sgf\"" },
+    { "path": "positions/initial position.sgf", "style": "Unquoted", "expected": "positions/initial position.sgf" },
+    { "path": "engine.sgf", "style": "DoubleQuoted", "expected": "\"engine.sgf\"" }
+  ],
+  "rejectedFilePaths": [
+    "line\nbreak.sgf",
+    "contains\"quote.sgf"
+  ],
+  "vertexCases": [
+    { "boardSize": 9, "vertex": "A9", "x": 0, "y": 0, "isPass": false },
+    { "boardSize": 9, "vertex": "J1", "x": 8, "y": 8, "isPass": false },
+    { "boardSize": 19, "vertex": "T1", "x": 18, "y": 18, "isPass": false },
+    { "boardSize": 9, "vertex": "pass", "x": null, "y": null, "isPass": true }
+  ],
+  "rejectedVertices": [
+    { "boardSize": 9, "vertex": "I1" },
+    { "boardSize": 9, "vertex": "A0" },
+    { "boardSize": 9, "vertex": "T19" }
+  ]
+}

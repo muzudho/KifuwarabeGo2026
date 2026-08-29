@@ -1,0 +1,45 @@
+{
+  "requiredHelpFragments": [
+    "--host",
+    "--port",
+    "--account",
+    "--engine-command",
+    "--human",
+    "--admin",
+    "--parent-process-id"
+  ],
+  "loginTranscript": [
+    "> protocol genmove_analyze",
+    "< e1 genmove_analyze",
+    "> username",
+    "< baseline-player",
+    "> password",
+    "< (password)",
+    "> ok"
+  ],
+  "gameLogLines": [
+    "2026-08-29 10:00:00.000 [baseline] > setup 42 9 6.5 600000 WhiteBot(1d) BlackBot(2d)",
+    "2026-08-29 10:00:01.000 [baseline] # Generated b move: A9 {\"moves\":[{\"move\":\"A9\",\"winrate\":0.55,\"score\":1.5,\"pv\":\"A9 B8\",\"visits\":123}],\"comment\":\"baseline analysis\"}",
+    "2026-08-29 10:00:02.000 [baseline] > play w pass 580000",
+    "2026-08-29 10:00:03.000 [baseline] > gameover W+R"
+  ],
+  "stdinCommands": [
+    "move 42 A9",
+    "resign 42",
+    "quit"
+  ],
+  "expected": {
+    "gameId": 42,
+    "boardSize": 9,
+    "komi": 6.5,
+    "mainTimeMilliseconds": 600000,
+    "blackPlayerName": "BlackBot",
+    "whitePlayerName": "WhiteBot",
+    "moveCount": 2,
+    "result": "W+R",
+    "firstMoveVertex": "A9",
+    "firstMoveComment": "baseline analysis",
+    "firstMoveVisits": 123,
+    "secondMoveIsPass": true
+  }
+}
