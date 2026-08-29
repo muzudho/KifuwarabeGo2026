@@ -36,10 +36,13 @@ internal static class GoPresentationFactory
             (ren, value, color, start, cell, outline) => boardRenderer!.DrawRenMetricNumber(ren, value, color, start, cell, outline),
             (parse, metrics, start, cell) => boardRenderer!.DrawDeferredStrongMetrics(parse, metrics, start, cell));
         var coordinateFont = content.Load<SpriteFont>("Fonts/BoardCoordinate");
-        var stoneLight = BoardRenderer.CreateStoneTexture(graphicsDevice, 128, lightStone: true);
-        var stoneDark = BoardRenderer.CreateStoneTexture(graphicsDevice, 128, lightStone: false);
-        boardRenderer = new BoardRenderer(boardLensModel, canvas.SpriteBatch, canvas.Font, coordinateFont,
-            canvas.SoftCircle, stoneLight, stoneDark);
+        boardRenderer = new BoardRenderer(
+            boardLensModel,
+            canvas.SpriteBatch,
+            canvas.Font,
+            coordinateFont,
+            canvas.SoftCircle,
+            graphicsDevice);
 
         var stationery = new KfwStationeryDrawingTools(canvas, textRasterizer, boardRenderer.DrawStone,
             () => HeadUpDisplayComponent.Default.StickyNoteScreen);

@@ -165,6 +165,10 @@ internal static class PortabilityChecks
                 typeof(GoBoardPrimitiveRenderer).GetMethod(nameof(GoBoardPrimitiveRenderer.DrawLastMoveMarker)) is not null &&
                 typeof(GoBoardPrimitiveRenderer).GetMethod(nameof(GoBoardPrimitiveRenderer.DrawHoverStone)) is not null,
             "Stone, ko, last-move, and hover MonoGame drawing must be owned by the Go board primitive renderer.");
+        Require(typeof(IDisposable).IsAssignableFrom(typeof(GoBoardPrimitiveRenderer)) &&
+                typeof(GoBoardPrimitiveRenderer).GetMethod(nameof(GoBoardPrimitiveRenderer.DrawBoardSurface)) is not null &&
+                typeof(GoBoardPrimitiveRenderer).GetMethod(nameof(GoBoardPrimitiveRenderer.DrawBoardFrameHighlights)) is not null,
+            "The Go board primitive renderer must own its MonoGame resources, board surface, and frame drawing.");
 
         var state = GoPlayRoomViewState.Capture(
             GoPlayRoomActivity.Reviewing,

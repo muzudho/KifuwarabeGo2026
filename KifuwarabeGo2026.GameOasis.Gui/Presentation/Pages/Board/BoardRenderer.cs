@@ -26,26 +26,21 @@ public sealed class BoardRenderer : IDisposable
     private readonly BoardLensModel _boardLensModel;
     private readonly SpriteBatch _spriteBatch;
     private readonly SpriteFont _font;
-    private readonly Texture2D _stoneLight;
-    private readonly Texture2D _stoneDark;
     private readonly GoBoardPrimitiveRenderer _primitiveRenderer;
     private KfwStationeryDrawingTools _drawingContext = null!;
 
     public BoardRenderer(BoardLensModel boardLensModel, SpriteBatch spriteBatch, SpriteFont font,
-        SpriteFont boardCoordinateFont, Texture2D softCircle, Texture2D stoneLight, Texture2D stoneDark)
+        SpriteFont boardCoordinateFont, Texture2D softCircle, GraphicsDevice graphicsDevice)
     {
         _boardLensModel = boardLensModel;
         _spriteBatch = spriteBatch;
         _font = font;
-        _stoneLight = stoneLight;
-        _stoneDark = stoneDark;
-        _primitiveRenderer = new GoBoardPrimitiveRenderer(font, boardCoordinateFont, softCircle, stoneLight, stoneDark);
+        _primitiveRenderer = new GoBoardPrimitiveRenderer(font, boardCoordinateFont, softCircle, graphicsDevice);
     }
 
     public void Dispose()
     {
-        _stoneLight.Dispose();
-        _stoneDark.Dispose();
+        _primitiveRenderer.Dispose();
     }
     public static bool TryGetBoardIntersection(Point point, int boardSize, out Point intersection)
     {
@@ -130,34 +125,7 @@ public sealed class BoardRenderer : IDisposable
         bool whiteboard = false)
     {
         _drawingContext = drawingContext;
-        var boardOuter = new Rectangle(54, 50, 980, 980);
-
-        FillRect(new Rectangle(boardOuter.X + 18, boardOuter.Y + 22, boardOuter.Width, boardOuter.Height), new Color(0, 0, 0, 125));
-        FillRect(boardOuter, whiteboard ? new Color(105, 112, 114) : new Color(66, 42, 28));
-        FillRect(
-            new Rectangle(boardOuter.X + 8, boardOuter.Y + 8, boardOuter.Width - 16, boardOuter.Height - 16),
-            whiteboard ? new Color(210, 214, 211) : new Color(180, 126, 62));
-        FillRect(BoardBounds, whiteboard ? new Color(239, 241, 235) : new Color(221, 166, 82));
-
-        for (var i = 0; i < 24; i++)
-        {
-            var x = BoardBounds.X + i * 38;
-            DrawLine(
-                new Vector2(x, BoardBounds.Y),
-                new Vector2(x + 220, BoardBounds.Bottom),
-                1,
-                whiteboard ? new Color(165, 177, 173, 28) : new Color(246, 196, 113, 42));
-        }
-
-        var geometry = CreateBoardGeometry(boardSize);
-        var start = new Vector2(geometry.Start.X, geometry.Start.Y);
-        var cell = geometry.Cell;
-        var staticPresentation = GoBoardStaticPresenter.Create(
-            geometry,
-            new GoBoardViewport(boardOuter.X, boardOuter.Y, boardOuter.Width, boardOuter.Height));
-        _primitiveRenderer.DrawStaticBoard(drawingContext, _spriteBatch, staticPresentation, whiteboard);
-
-        return (start, cell, boardOuter);
+        return _primitiveRenderer.DrawBoardSurface(drawingContext, _spriteBatch, boardSize, whiteboard);
     }
 
     /// <summary>
@@ -268,7 +236,7 @@ public sealed class BoardRenderer : IDisposable
     public static Vector2 BoardPoint(Vector2 start, float cell, int x, int y) => new(start.X + cell * x, start.Y + cell * y);
 
 
-    public static readonly Rectangle BoardBounds = new(88, 84, 912, 912);
+    public static readonly Rectangle BoardBounds = GoBoardPrimitiveRenderer.BoardBounds;
 
     /// <summary>
     /// ［盤面のレイアウト］取得
@@ -292,12 +260,7 @@ public sealed class BoardRenderer : IDisposable
     /// <param name="boardOuter"></param>
 
     public void DrawBoardFrameHighlights(Rectangle boardOuter)
-    {
-        FillRect(new Rectangle(boardOuter.X, boardOuter.Y, boardOuter.Width, 5), new Color(255, 220, 128, 90));
-        FillRect(new Rectangle(boardOuter.X, boardOuter.Y, 5, boardOuter.Height), new Color(255, 220, 128, 70));
-        FillRect(new Rectangle(boardOuter.Right - 7, boardOuter.Y, 7, boardOuter.Height), new Color(31, 20, 15, 120));
-        FillRect(new Rectangle(boardOuter.X, boardOuter.Bottom - 7, boardOuter.Width, 7), new Color(31, 20, 15, 120));
-    }
+        => GoBoardPrimitiveRenderer.DrawBoardFrameHighlights(_drawingContext, boardOuter);
 
     /// <summary>
     /// ［石］描画
@@ -497,44 +460,6 @@ public sealed class BoardRenderer : IDisposable
     /// <param name="size"></param>
     /// <param name="lightStone"></param>
     /// <returns></returns>
-
-    public static Texture2D CreateStoneTexture(GraphicsDevice graphicsDevice, int size, bool lightStone)
-    {
-        return CreateTexture(graphicsDevice, size, size, (x, y) =>
-        {
-            var center = (size - 1) * 0.5f;
-            var nx = (x - center) / center;
-            var ny = (y - center) / center;
-            var distance = MathF.Sqrt(nx * nx + ny * ny);
-            if (distance > 0.96f)
-            {
-                return Color.Transparent;
-            }
-
-            var highlight = MathF.Max(0f, 1f - MathF.Sqrt((nx + 0.32f) * (nx + 0.32f) + (ny + 0.38f) * (ny + 0.38f)) * 2.2f);
-            var shade = 1f - MathHelper.Clamp(distance * 0.55f, 0f, 0.55f);
-            if (lightStone)
-            {
-                var value = (byte)MathHelper.Clamp(232 + highlight * 22 - distance * 22, 205, 255);
-                var blue = (byte)MathHelper.Clamp(value - 10, 195, 245);
-                return new Color(value, value, blue, (byte)255);
-            }
-
-            var baseValue = 18 + highlight * 72 - distance * 12;
-            return new Color((byte)MathHelper.Clamp(baseValue, 8, 92), (byte)MathHelper.Clamp(baseValue + 2, 9, 96), (byte)MathHelper.Clamp(baseValue + 7, 14, 105));
-        });
-    }
-
-    private static Texture2D CreateTexture(GraphicsDevice graphicsDevice, int width, int height, Func<int, int, Color> colorFactory)
-    {
-        var texture = new Texture2D(graphicsDevice, width, height);
-        var colors = new Color[width * height];
-        for (var y = 0; y < height; y++)
-        for (var x = 0; x < width; x++)
-            colors[y * width + x] = colorFactory(x, y);
-        texture.SetData(colors);
-        return texture;
-    }
 
     private void FillRect(Rectangle bounds, Color color) => _drawingContext.FillRectangle(bounds, color);
     private void DrawRect(Rectangle bounds, int thickness, Color color) => _drawingContext.DrawRectangle(bounds, thickness, color);
