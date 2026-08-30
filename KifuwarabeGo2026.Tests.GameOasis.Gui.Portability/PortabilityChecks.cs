@@ -494,6 +494,20 @@ internal static class PortabilityChecks
             "Lobby navigation must return to Home without a Play Room session.");
         Require(typeof(LobbyNavigationController).Assembly == typeof(LobbyGuiController).Assembly,
             "Lobby page state and transitions must be owned by the LobbyGui assembly.");
+
+        var home = LobbyHomePresenter.Create();
+        Require(home.Items.Count == 6 &&
+                home.GetItem(LobbyHomeTarget.LocalMatch).Caption == "PLAY / REVIEW" &&
+                home.GetItem(LobbyHomeTarget.GamePlatform).Accent == LobbyHomeAccent.Platform,
+            "Lobby Home presenter must own stable menu labels, captions, and semantic accents.");
+        Require(home.GetHint(LobbyHomeTarget.FormalApps).BodyLines.Count == 5 &&
+                home.GetHint(LobbyHomeTarget.EntryProfiles).Heading == "ENTRY PROFILES とは？",
+            "Lobby Home presenter must own section and menu guidance independently of its renderer.");
+        Require(typeof(LobbyHomePresentation).GetProperties()
+                .Select(property => property.PropertyType.FullName ?? property.PropertyType.Name)
+                .All(type => !type.Contains("MonoGame", StringComparison.Ordinal) &&
+                             !type.Contains("Microsoft.Xna", StringComparison.Ordinal)),
+            "Lobby Home presentation must not expose MonoGame drawing types.");
     }
 
     private sealed class FakeLobbyEngine : ILobbyEngine

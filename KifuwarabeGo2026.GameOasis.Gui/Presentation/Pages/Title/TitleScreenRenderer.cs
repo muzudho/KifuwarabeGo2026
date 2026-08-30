@@ -21,6 +21,8 @@ using System.Collections.Generic;
 
 public sealed class TitleScreenRenderer
 {
+    private static readonly LobbyHomePresentation LobbyHome = LobbyHomePresenter.Create();
+
     public void DrawScreen(KfwStationeryDrawingTools drawingContext, GtpEngineRenderer gtpEngineRenderer,
         GoAppSession session, Point mousePosition,
         LobbyPage page, int appProviderTabIndex, bool isAppProviderLoading,
@@ -85,6 +87,12 @@ public sealed class TitleScreenRenderer
         switch (page)
         {
             case LobbyPage.Home:
+                var engineProfiles = LobbyHome.GetItem(LobbyHomeTarget.EngineProfiles);
+                var entryProfiles = LobbyHome.GetItem(LobbyHomeTarget.EntryProfiles);
+                var localMatch = LobbyHome.GetItem(LobbyHomeTarget.LocalMatch);
+                var onlineMatch = LobbyHome.GetItem(LobbyHomeTarget.OnlineMatch);
+                var captureGame = LobbyHome.GetItem(LobbyHomeTarget.CaptureGame);
+                var gamePlatform = LobbyHome.GetItem(LobbyHomeTarget.GamePlatform);
                 var entrySettingsHovered = _titleScreen.EntrySettingsLabelBounds.Contains(mousePoint);
                 var formalAppsHovered = _titleScreen.FormalAppsLabelBounds.Contains(mousePoint);
                 var casualAppsHovered = _titleScreen.CasualAppsLabelBounds.Contains(mousePoint);
@@ -104,35 +112,35 @@ public sealed class TitleScreenRenderer
                 _titleScreen.FormalAppsLabel.Draw(_drawingContext);
                 _titleScreen.CasualAppsLabel.Draw(_drawingContext);
                 _titleScreen.GamePlatformLabel.Draw(_drawingContext);
-                DrawProfileChoice(_titleScreen.EngineProfilesButton.Bounds, "エンジン登録", "REGISTER ENGINES", mousePoint, true);
-                DrawProfileChoice(_titleScreen.EntryProfilesButton.Bounds, "エントリー登録", "REGISTER ENTRIES", mousePoint, false);
-                DrawHomeServiceChoice(_titleScreen.LocalMatchButton.Bounds, _titleScreen.LocalMatchButton.Label, "PLAY / REVIEW", new Color(99, 223, 185), mousePoint);
-                DrawHomeServiceChoice(_titleScreen.CgosClientButton.Bounds, _titleScreen.CgosClientButton.Label, "WATCH / CONNECT", new Color(99, 223, 185), mousePoint);
-                DrawAppChoice(_titleScreen.CaptureGameButton.Bounds, _titleScreen.CaptureGameButton.Label, "CAPTURE GAME", mousePoint);
-                DrawAppChoice(_titleScreen.GameOasisButton.Bounds, _titleScreen.GameOasisButton.Label, "REFERENCE PLAY-SPACES", mousePoint, new Color(178, 145, 255));
-                DrawDynamicOptionText("左で対局候補を準備し、利用するアプリを選べます。", new Rectangle(460, 676, 980, 30), new Color(180, 195, 195), 0.34f);
+                DrawProfileChoice(_titleScreen.EngineProfilesButton.Bounds, engineProfiles.Title, engineProfiles.Caption, mousePoint, true);
+                DrawProfileChoice(_titleScreen.EntryProfilesButton.Bounds, entryProfiles.Title, entryProfiles.Caption, mousePoint, false);
+                DrawHomeServiceChoice(_titleScreen.LocalMatchButton.Bounds, localMatch.Title, localMatch.Caption, ToColor(localMatch.Accent), mousePoint);
+                DrawHomeServiceChoice(_titleScreen.CgosClientButton.Bounds, onlineMatch.Title, onlineMatch.Caption, ToColor(onlineMatch.Accent), mousePoint);
+                DrawAppChoice(_titleScreen.CaptureGameButton.Bounds, captureGame.Title, captureGame.Caption, mousePoint);
+                DrawAppChoice(_titleScreen.GameOasisButton.Bounds, gamePlatform.Title, gamePlatform.Caption, mousePoint, ToColor(gamePlatform.Accent));
+                DrawDynamicOptionText(LobbyHome.Guidance, new Rectangle(460, 676, 980, 30), new Color(180, 195, 195), 0.34f);
                 if (entrySettingsHovered)
-                    DrawTitleHomeHint("ENTRY SETTINGS", "エンジンと対局候補を準備します！", new Color(125, 225, 255));
+                    DrawTitleHomeHint(LobbyHome.GetHint(LobbyHomeTarget.EntrySettings));
                 else if (formalAppsHovered)
-                    DrawTitleHomeHint("FORMAL APPS", "他のコンピュータ碁ソフトとできるだけ連携します！", new Color(99, 223, 185));
+                    DrawTitleHomeHint(LobbyHome.GetHint(LobbyHomeTarget.FormalApps));
                 else if (casualAppsHovered)
-                    DrawTitleHomeHint("CASUAL APPS", "独自実装で機能追加を進めます！", new Color(255, 190, 92));
+                    DrawTitleHomeHint(LobbyHome.GetHint(LobbyHomeTarget.CasualApps));
                 else if (gamePlatformHovered)
-                    DrawTitleHomeHint("GAME PLATFORM", "Replaceable play-spaces connect through Game Oasis.", new Color(178, 145, 255));
+                    DrawTitleHomeHint(LobbyHome.GetHint(LobbyHomeTarget.GamePlatform));
                 else if (openLauncherHovered)
                     DrawStickyNote(StickyNoteKind.TitleUpdateHint, new Vector2(openLauncherBounds.Left, openLauncherBounds.Center.Y), new Color(99, 223, 185), new Color(82, 111, 114), "ランチャーを開くとは？", ["共通ランチャーを前面に開き、", "このGUIを閉じます。", "GUIとEngineの更新は", "ランチャーから行います！"]);
                 else if (updateHovered)
                     DrawStickyNote(StickyNoteKind.TitleUpdateHint, new Vector2(updateBounds.Left, updateBounds.Center.Y), new Color(125, 225, 255), new Color(82, 111, 114), "ランチャーを更新するとは？", ["ランチャーを最新版にします。", "更新後、デスクトップへ", "ショートカットを作れます。"]);
                 else if (settingsHovered)
-                    DrawTitleHomeHint("SETTINGS", "アプリケーションを設定します！", new Color(147, 201, 190));
+                    DrawTitleHomeHint(LobbyHome.GetHint(LobbyHomeTarget.Settings));
                 else if (localMatchHovered)
-                    DrawTitleHomeHint("LOCAL MATCH", "ローカルPCで、人間や碁エンジンが対局！ など。", new Color(99, 223, 185));
+                    DrawTitleHomeHint(LobbyHome.GetHint(LobbyHomeTarget.LocalMatch));
                 else if (onlineMatchHovered)
-                    DrawTitleHomeHint("ONLINE MATCH", "インターネット上の碁サーバーにお邪魔して碁エンジンが対局！", new Color(99, 223, 185));
+                    DrawTitleHomeHint(LobbyHome.GetHint(LobbyHomeTarget.OnlineMatch));
                 else if (engineProfilesHovered)
-                    DrawTitleHomeHint("ENGINE PROFILES", "GTPエンジンの起動設定を管理します。", new Color(125, 225, 255));
+                    DrawTitleHomeHint(LobbyHome.GetHint(LobbyHomeTarget.EngineProfiles));
                 else if (entryProfilesHovered)
-                    DrawTitleHomeHint("ENTRY PROFILES", "対局へ参加させる候補を準備します。", new Color(147, 244, 200));
+                    DrawTitleHomeHint(LobbyHome.GetHint(LobbyHomeTarget.EntryProfiles));
                 else if (_titleScreen.CaptureGameButton.IsHit(mousePoint))
                 {
                     DrawCaptureGamePreview();
@@ -272,49 +280,44 @@ public sealed class TitleScreenRenderer
 #endif
     }
 
-    private void DrawTitleHomeHint(string heading, string message, Color accent)
+    private void DrawTitleHomeHint(LobbyHomeHint hint)
     {
-        var (kind, target) = heading switch
+        var accent = ToColor(hint.Accent);
+        var (kind, target) = hint.Target switch
         {
-            "ENTRY SETTINGS" =>
+            LobbyHomeTarget.EntrySettings =>
                 (StickyNoteKind.TitleSettingsHint, GetTitleSectionLabelConnectorTarget("ENTRY SETTINGS", new Vector2(460, 338), connectsToRight: false)),
-            "FORMAL APPS" =>
+            LobbyHomeTarget.FormalApps =>
                 (StickyNoteKind.TitleFormalAppsHint, GetTitleSectionLabelConnectorTarget("FORMAL APPS", new Vector2(800, 338), connectsToRight: false)),
-            "CASUAL APPS" =>
+            LobbyHomeTarget.CasualApps =>
                 (StickyNoteKind.TitleCasualAppsHint, GetTitleSectionLabelConnectorTarget("CASUAL APPS", new Vector2(1140, 338), connectsToRight: true)),
-            "GAME PLATFORM" =>
+            LobbyHomeTarget.GamePlatform =>
                 (StickyNoteKind.TitleFormalAppsHint, new Vector2(_titleScreen.GameOasisButton.Bounds.Left, _titleScreen.GameOasisButton.Bounds.Center.Y)),
-            "LOCAL MATCH" =>
+            LobbyHomeTarget.LocalMatch =>
                 (StickyNoteKind.TitleLocalMatchHint, new Vector2(_titleScreen.LocalMatchButton.Bounds.Left, _titleScreen.LocalMatchButton.Bounds.Center.Y)),
-            "ONLINE MATCH" =>
+            LobbyHomeTarget.OnlineMatch =>
                 (StickyNoteKind.TitleOnlineMatchHint, new Vector2(_titleScreen.CgosClientButton.Bounds.Left, _titleScreen.CgosClientButton.Bounds.Center.Y)),
             _ =>
                 (StickyNoteKind.TitleSettingsHint, new Vector2(ApplicationSettingsScreen.Default.SettingsButton.Bounds.Left - 14, ApplicationSettingsScreen.Default.SettingsButton.Bounds.Center.Y)),
-        };
-        var bodyLines = heading switch
-        {
-            "FORMAL APPS" => new[]
-            {
-                "他の人が作った GTP対応の",
-                "コンピュータ碁の思考エンジンを",
-                "動かせるよう、",
-                "有名なエンジンの拡張仕様は",
-                "取り込んでいます！",
-            },
-            "CASUAL APPS" => new[] { "独自実装で", "機能追加を進めます！" },
-            "ENTRY SETTINGS" => new[] { "エンジンを登録し、", "対局へ参加させる候補を準備します！" },
-            "LOCAL MATCH" => new[] { "ローカルPCで、人間や碁エンジンが", "対局！ など。" },
-            "ONLINE MATCH" => new[] { "インターネット上の碁サーバーにお邪魔して", "碁エンジンが対局！" },
-            _ => new[] { message },
         };
         DrawStickyNote(
             kind,
             target,
             accent,
             new Color(accent.R, accent.G, accent.B, (byte)190),
-            $"{heading} とは？",
-            bodyLines);
+            hint.Heading,
+            hint.BodyLines.ToArray());
     }
+
+    private static Color ToColor(LobbyHomeAccent accent) => accent switch
+    {
+        LobbyHomeAccent.Casual => new Color(255, 190, 92),
+        LobbyHomeAccent.Platform => new Color(178, 145, 255),
+        LobbyHomeAccent.Engine => new Color(125, 225, 255),
+        LobbyHomeAccent.Entry => new Color(147, 244, 200),
+        LobbyHomeAccent.Settings => new Color(147, 201, 190),
+        _ => new Color(99, 223, 185),
+    };
 
     private Vector2 GetTitleSectionLabelConnectorTarget(string label, Vector2 labelPosition, bool connectsToRight)
     {
