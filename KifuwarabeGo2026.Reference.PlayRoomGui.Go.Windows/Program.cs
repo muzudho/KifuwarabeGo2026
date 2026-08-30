@@ -19,6 +19,13 @@ if (!result.IsReady || result.Plan is null)
 
 Console.Out.WriteLine(output);
 Console.Out.Flush();
+if (args.Length == 3 && args[2] == "--contract-smoke-fail-after-ready")
+{
+    Console.Error.WriteLine("contract-smoke-failure-after-ready");
+    return GoPlayRoomHostExitCodes.ContractSmokeFailed;
+}
+if (args.Length == 3 && args[2] == "--contract-smoke")
+    return GoPlayRoomHostExitCodes.Success;
 using var game = new GoInitialBoardGame(result.Plan);
 game.Run();
 return GoPlayRoomHostExitCodes.Success;

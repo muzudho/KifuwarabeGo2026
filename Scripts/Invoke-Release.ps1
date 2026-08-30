@@ -112,6 +112,7 @@ $versionProjects = @(
     'KifuwarabeGo2026.Reference.PlayRoomGui.BoardEditor.JsonLinesHost\KifuwarabeGo2026.Reference.PlayRoomGui.BoardEditor.JsonLinesHost.csproj',
     'KifuwarabeGo2026.Reference.PlayRoomGui.Review.JsonLinesHost\KifuwarabeGo2026.Reference.PlayRoomGui.Review.JsonLinesHost.csproj',
     'KifuwarabeGo2026.Reference.PlayRoomGui.Match.JsonLinesHost\KifuwarabeGo2026.Reference.PlayRoomGui.Match.JsonLinesHost.csproj',
+    'KifuwarabeGo2026.Reference.PlayRoomGui.Go.Windows\KifuwarabeGo2026.Reference.PlayRoomGui.Go.Windows.csproj',
     'KifuwarabeGo2026.PlayRoomEngine.JsonLines\KifuwarabeGo2026.PlayRoomEngine.JsonLines.csproj',
     'KifuwarabeGo2026.Reference.PlayRoomEngine.Go.JsonLinesHost\KifuwarabeGo2026.Reference.PlayRoomEngine.Go.JsonLinesHost.csproj',
     'KifuwarabeGo2026.Reference.PlayRoomEngine.Ponnuki.JsonLinesHost\KifuwarabeGo2026.Reference.PlayRoomEngine.Ponnuki.JsonLinesHost.csproj',
@@ -171,6 +172,7 @@ if (-not $SkipBuild) {
     Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.LauncherGui\KifuwarabeGo2026.LauncherGui.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false')
     Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.LauncherEngine.JsonLinesHost\KifuwarabeGo2026.LauncherEngine.JsonLinesHost.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false', '-o', $launcherPublish)
     Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.GameOasis.Gui.Windows\KifuwarabeGo2026.GameOasis.Gui.Windows.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false')
+    Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.Reference.PlayRoomGui.Go.Windows\KifuwarabeGo2026.Reference.PlayRoomGui.Go.Windows.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false', '-o', $guiPublish)
     Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.LobbyEngine.JsonLinesHost\KifuwarabeGo2026.LobbyEngine.JsonLinesHost.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false', '-o', "$guiPublish\Tools\LobbyEngine")
     Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.Reference.PlayRoomGui.BoardEditor.JsonLinesHost\KifuwarabeGo2026.Reference.PlayRoomGui.BoardEditor.JsonLinesHost.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false', '-o', "$guiPublish\Tools\PlayRoom\BoardEditor")
     Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.Reference.PlayRoomGui.Review.JsonLinesHost\KifuwarabeGo2026.Reference.PlayRoomGui.Review.JsonLinesHost.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false', '-o', "$guiPublish\Tools\PlayRoom\Review")
@@ -196,6 +198,13 @@ Assert-FileExists -LiteralPath @(
     "$guiPublish\KifuwarabeGo2026.Gui.deps.json",
     "$guiPublish\KifuwarabeGo2026.Gui.runtimeconfig.json",
     "$guiPublish\KifuwarabeGo2026.GameOasis.Gui.dll",
+    "$guiPublish\KifuwarabeGo2026.Reference.PlayRoomGui.Go.Windows.exe",
+    "$guiPublish\KifuwarabeGo2026.Reference.PlayRoomGui.Go.Windows.dll",
+    "$guiPublish\KifuwarabeGo2026.Reference.PlayRoomGui.Go.Windows.deps.json",
+    "$guiPublish\KifuwarabeGo2026.Reference.PlayRoomGui.Go.Windows.runtimeconfig.json",
+    "$guiPublish\KifuwarabeGo2026.Reference.PlayRoomGui.Common.dll",
+    "$guiPublish\KifuwarabeGo2026.Reference.PlayRoomGui.Go.dll",
+    "$guiPublish\KifuwarabeGo2026.Reference.PlayRoomGui.Go.MonoGame.dll",
     "$guiPublish\KifuwarabeGo2026.FormalAdapter.Cgos.dll",
     "$guiPublish\KifuwarabeGo2026.FormalAdapter.Gtp.dll",
     "$guiPublish\KifuwarabeGo2026.FormalAdapter.Sgf.dll",
@@ -244,6 +253,10 @@ Assert-FileExists -LiteralPath @(
     "$enginePublish\KifuwarabeGo2026.Reference.PlayerEngine.dll",
     "$enginePublish\KifuwarabeGo2026.Reference.PlayerEngine.Go.Gtp.dll"
 )
+
+if (-not $SkipSmokeTests) {
+    & "$PSScriptRoot\Test-PublishedGoPlayRoom.ps1" -PublishDirectory $guiPublish
+}
 
 $uploads = Join-Path $repositoryRoot 'Uploads'
 if (-not (Test-Path -LiteralPath $uploads -PathType Container)) {

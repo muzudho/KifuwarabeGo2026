@@ -284,6 +284,12 @@ internal static class PlayRoomLaunchChecks
             Require(ready is { IsReady: true, ExitCode: GoPlayRoomHostExitCodes.Success, Code: "ready" } &&
                     ready.Plan is { RequestId: "windows-host-request", RoomTypeId: PlayRoomIds.Match, BoardSize: 9 },
                 $"The Go Play Room Windows Host did not accept a saved Local Match request: {ready.Code}: {ready.Message}");
+            var smokeReady = GoPlayRoomHostStartup.Load(["--launch-request", path, "--contract-smoke"]);
+            Require(smokeReady is { IsReady: true, ExitCode: GoPlayRoomHostExitCodes.Success },
+                "The published-layout contract smoke option did not preserve Host startup validation.");
+            var failingSmokeReady = GoPlayRoomHostStartup.Load(["--launch-request", path, "--contract-smoke-fail-after-ready"]);
+            Require(failingSmokeReady is { IsReady: true, ExitCode: GoPlayRoomHostExitCodes.Success },
+                "The post-readiness failure smoke option did not preserve Host startup validation.");
 
             File.WriteAllText(path, "not json");
             var unreadable = GoPlayRoomHostStartup.Load(["--launch-request", path]);

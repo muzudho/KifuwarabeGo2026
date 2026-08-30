@@ -10,6 +10,7 @@ public static class GoPlayRoomHostExitCodes
     public const int InvalidArguments = 2;
     public const int RequestReadFailed = 3;
     public const int RequestRejected = 4;
+    public const int ContractSmokeFailed = 5;
 }
 
 public sealed record GoPlayRoomHostStartupResult(
@@ -29,11 +30,14 @@ public static class GoPlayRoomHostStartup
 
     public static GoPlayRoomHostStartupResult Load(string[] args)
     {
-        if (args.Length != 2 || !string.Equals(args[0], "--launch-request", StringComparison.Ordinal))
+        if ((args.Length != 2 &&
+             (args.Length != 3 ||
+              (args[2] != "--contract-smoke" && args[2] != "--contract-smoke-fail-after-ready"))) ||
+            !string.Equals(args[0], "--launch-request", StringComparison.Ordinal))
             return Fail(
                 GoPlayRoomHostExitCodes.InvalidArguments,
                 "invalid-arguments",
-                "Usage: KifuwarabeGo2026.Reference.PlayRoomGui.Go.Windows --launch-request <json-file>");
+                "Usage: KifuwarabeGo2026.Reference.PlayRoomGui.Go.Windows --launch-request <json-file> [--contract-smoke|--contract-smoke-fail-after-ready]");
 
         PlayRoomLaunchRequest request;
         try
