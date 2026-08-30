@@ -2599,11 +2599,16 @@ public class Game1 : Game
             : _localMatchProcessLaunch.Start(request);
         HandlePlayRoomLaunchResult(result, "LOCAL MATCH");
         if (result.IsAccepted && _localMatchProcessLaunch is not null)
-            GuiOperationLog.User("Started Local Match Play Room process", $"request={request.RequestId}");
+            GuiOperationLog.User("Starting Local Match Play Room process", $"request={request.RequestId}");
     }
 
     private void CompleteLocalMatchProcessLaunch()
     {
+        if (_localMatchProcessLaunch?.TryTakeReady(out var ready) == true && ready is not null)
+            GuiOperationLog.App(
+                "Local Match Play Room process ready",
+                $"request={ready.RequestId}; code={ready.Code}; message={ready.Message}");
+
         if (_localMatchProcessLaunch is null ||
             !_localMatchProcessLaunch.TryTakeCompletion(out var completion) ||
             completion is null)

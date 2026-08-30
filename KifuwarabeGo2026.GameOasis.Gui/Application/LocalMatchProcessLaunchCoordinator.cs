@@ -10,6 +10,7 @@ public sealed class LocalMatchProcessLaunchCoordinator
 {
     private readonly IPlayRoomProcessLauncher _launcher;
     private Task<PlayRoomProcessCompletionResult>? _launchTask;
+    private PlayRoomProcessReadyNotification? _ready;
 
     public LocalMatchProcessLaunchCoordinator(IPlayRoomProcessLauncher launcher)
     {
@@ -28,8 +29,19 @@ public sealed class LocalMatchProcessLaunchCoordinator
                 "play-room-host-already-running",
                 "A Local Match Play Room is already running.");
 
-        _launchTask = _launcher.LaunchAsync(request);
-        return PlayRoomLaunchResult.Started(request.RequestId, request.RequestId);
+        _ready = null;
+        _launchTask = _launcher.LaunchAsync(request, new ReadyProgress(this));
+        return PlayRoomLaunchResult.Deferred(request.RequestId, "The Local Match Play Room is starting.");
+    }
+
+    public bool TryTakeReady(out PlayRoomProcessReadyNotification? ready)
+    {
+        lock (this)
+        {
+            ready = _ready;
+            _ready = null;
+            return ready is not null;
+        }
     }
 
     public bool TryTakeCompletion(out PlayRoomProcessCompletionResult? completion)
@@ -55,5 +67,13 @@ public sealed class LocalMatchProcessLaunchCoordinator
             ErrorCode: "play-room-host-task-failed",
             Message: exception?.Message ?? "The Local Match Play Room task failed.");
         return true;
+    }
+
+    private sealed class ReadyProgress(LocalMatchProcessLaunchCoordinator owner) : IProgress<PlayRoomProcessReadyNotification>
+    {
+        public void Report(PlayRoomProcessReadyNotification value)
+        {
+            lock (owner) owner._ready = value;
+        }
     }
 }

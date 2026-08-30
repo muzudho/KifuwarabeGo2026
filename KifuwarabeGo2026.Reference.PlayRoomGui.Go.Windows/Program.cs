@@ -18,6 +18,7 @@ if (!result.IsReady || result.Plan is null)
 }
 
 Console.Out.WriteLine(output);
+Console.Out.Flush();
 using var game = new GoInitialBoardGame(result.Plan);
 game.Run();
 return GoPlayRoomHostExitCodes.Success;

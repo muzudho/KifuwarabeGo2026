@@ -78,7 +78,7 @@ internal static class PlayRoomLaunchChecks
         var request = CreateSavedMatchRequest("coordinated-process-request");
 
         var started = coordinator.Start(request);
-        Require(started.Status == PlayRoomLaunchStatus.Started && coordinator.IsRunning,
+        Require(started.Status == PlayRoomLaunchStatus.Deferred && coordinator.IsRunning,
             "The Local Match process coordinator did not accept an asynchronous launch.");
         Require(!coordinator.TryTakeCompletion(out _),
             "The Local Match process coordinator blocked or completed before its child Host result.");
@@ -88,6 +88,9 @@ internal static class PlayRoomLaunchChecks
                 duplicate.ErrorCode == "play-room-host-already-running",
             "The Local Match process coordinator accepted a second child Host while one was running.");
 
+        launcher.ReportReady(new(request.RequestId, "ready", "test ready"));
+        Require(coordinator.TryTakeReady(out var ready) && ready?.RequestId == request.RequestId && coordinator.IsRunning,
+            "The Local Match process coordinator did not distinguish readiness from process completion.");
         launcher.Complete(new(PlayRoomProcessCompletionStatus.ExitedNormally, request.RequestId, 0));
         Require(coordinator.TryTakeCompletion(out var completion) &&
                 completion is { IsNormalExit: true, ExitCode: 0 } &&
@@ -104,7 +107,9 @@ internal static class PlayRoomLaunchChecks
                 _ => CreateCurrentTestProcessStartInfo("--play-room-child-normal-exit"),
                 requestDirectory);
             var request = CreateSavedMatchRequest("process-launch-request");
-            var result = launcher.LaunchAsync(request).GetAwaiter().GetResult();
+            PlayRoomProcessReadyNotification? reportedReady = null;
+            var result = launcher.LaunchAsync(request, new ActionProgress<PlayRoomProcessReadyNotification>(value => reportedReady = value))
+                .GetAwaiter().GetResult();
             Require(result is
                 {
                     Status: PlayRoomProcessCompletionStatus.ExitedNormally,
@@ -112,6 +117,8 @@ internal static class PlayRoomLaunchChecks
                     ExitCode: 0,
                     IsNormalExit: true,
                 }, "The process Play Room launcher did not report the child Host's normal exit.");
+            Require(reportedReady is { RequestId: "process-launch-request", Code: "ready" },
+                "The process Play Room launcher did not validate and forward the child Host readiness notification.");
             Require(!Directory.EnumerateFiles(requestDirectory).Any(),
                 "The process Play Room launcher did not remove its saved launch request.");
 
@@ -128,6 +135,24 @@ internal static class PlayRoomLaunchChecks
                     failed.ErrorCode == "play-room-host-start-failed" &&
                     !Directory.EnumerateFiles(requestDirectory).Any(),
                 "The process Play Room launcher did not structure a Host start failure or clean its request file.");
+
+            var invalidReadyHost = new ProcessPlayRoomLauncher(
+                _ => CreateCurrentTestProcessStartInfo("--play-room-child-invalid-ready"),
+                requestDirectory);
+            var invalidReady = invalidReadyHost.LaunchAsync(request).GetAwaiter().GetResult();
+            Require(invalidReady.Status == PlayRoomProcessCompletionStatus.StartFailed &&
+                    invalidReady.ErrorCode == "invalid-play-room-host-ready",
+                "The process Play Room launcher accepted a mismatched readiness notification.");
+
+            var silentHost = new ProcessPlayRoomLauncher(
+                _ => CreateCurrentTestProcessStartInfo("--play-room-child-no-ready"),
+                requestDirectory,
+                TimeSpan.FromMilliseconds(100));
+            var timeout = silentHost.LaunchAsync(request).GetAwaiter().GetResult();
+            Require(timeout.Status == PlayRoomProcessCompletionStatus.StartFailed &&
+                    timeout.ErrorCode == "play-room-host-ready-timeout" &&
+                    !Directory.EnumerateFiles(requestDirectory).Any(),
+                "The process Play Room launcher did not stop a Host that timed out before readiness.");
         }
         finally
         {
@@ -299,11 +324,27 @@ internal static class PlayRoomLaunchChecks
     {
         private readonly TaskCompletionSource<PlayRoomProcessCompletionResult> _completion =
             new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private IProgress<PlayRoomProcessReadyNotification>? _readyProgress;
 
         public Task<PlayRoomProcessCompletionResult> LaunchAsync(
             PlayRoomLaunchRequest request,
-            CancellationToken cancellationToken = default) => _completion.Task;
+            IProgress<PlayRoomProcessReadyNotification>? readyProgress = null,
+            CancellationToken cancellationToken = default)
+        {
+            _readyProgress = readyProgress;
+            return _completion.Task;
+        }
+
+        public void ReportReady(PlayRoomProcessReadyNotification ready)
+        {
+            _readyProgress?.Report(ready);
+        }
 
         public void Complete(PlayRoomProcessCompletionResult result) => _completion.SetResult(result);
+    }
+
+    private sealed class ActionProgress<T>(Action<T> action) : IProgress<T>
+    {
+        public void Report(T value) => action(value);
     }
 }

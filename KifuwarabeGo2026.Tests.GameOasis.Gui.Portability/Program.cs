@@ -1,12 +1,30 @@
 namespace KifuwarabeGo2026.Tests.GameOasis.Gui.Portability;
 
 using System;
+using System.IO;
+using System.Text.Json;
 
 internal static class Program
 {
     private static int Main(string[] args)
     {
-        if (args.Length > 0 && args[0] == "--play-room-child-normal-exit") return 0;
+        if (args.Length > 0 && args[0] == "--play-room-child-normal-exit")
+        {
+            var requestPath = args.Length == 3 && args[1] == "--launch-request" ? args[2] : "";
+            var requestId = JsonDocument.Parse(File.ReadAllText(requestPath)).RootElement.GetProperty("requestId").GetString();
+            Console.WriteLine(JsonSerializer.Serialize(new { ready = true, code = "ready", message = "test ready", requestId }));
+            return 0;
+        }
+        if (args.Length > 0 && args[0] == "--play-room-child-invalid-ready")
+        {
+            Console.WriteLine(JsonSerializer.Serialize(new { ready = true, code = "ready", message = "wrong request", requestId = "wrong-request" }));
+            return 0;
+        }
+        if (args.Length > 0 && args[0] == "--play-room-child-no-ready")
+        {
+            System.Threading.Thread.Sleep(TimeSpan.FromSeconds(5));
+            return 0;
+        }
 
         try
         {
