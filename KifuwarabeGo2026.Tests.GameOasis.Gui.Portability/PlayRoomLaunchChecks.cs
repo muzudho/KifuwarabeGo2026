@@ -145,6 +145,25 @@ internal static class PlayRoomLaunchChecks
                 completion is { IsNormalExit: true, ExitCode: 0 } &&
                 !coordinator.IsRunning,
             "The Local Match process coordinator did not return to an idle Lobby state after normal exit.");
+
+        var restarted = coordinator.Start(request with { RequestId = "restart-after-normal" });
+        Require(restarted.IsAccepted && coordinator.IsRunning,
+            "The Local Match process coordinator could not restart after normal exit.");
+        launcher.ReportReady(new("restart-after-normal", "ready", "test ready"));
+        launcher.Complete(new(
+            PlayRoomProcessCompletionStatus.ExitedAbnormally,
+            "restart-after-normal",
+            24,
+            "play-room-host-exited-abnormally",
+            "fixture failure",
+            WasReady: true,
+            Diagnostic: "fixture failed after ready"));
+        Require(coordinator.TryTakeCompletion(out var abnormal) &&
+                abnormal is { IsNormalExit: false, WasReady: true, Diagnostic: "fixture failed after ready" } &&
+                !coordinator.IsRunning,
+            "The Local Match process coordinator did not return to idle after a ready Host failed.");
+        Require(coordinator.Start(request with { RequestId = "restart-after-failure" }).IsAccepted,
+            "The Local Match process coordinator could not restart after abnormal exit.");
     }
 
     private static void VerifyProcessLauncher()
@@ -202,6 +221,32 @@ internal static class PlayRoomLaunchChecks
                     timeout.ErrorCode == "play-room-host-ready-timeout" &&
                     !Directory.EnumerateFiles(requestDirectory).Any(),
                 "The process Play Room launcher did not stop a Host that timed out before readiness.");
+
+            var beforeReadyHost = new ProcessPlayRoomLauncher(
+                _ => CreateCurrentTestProcessStartInfo("--play-room-child-fail-before-ready"),
+                requestDirectory);
+            var beforeReady = beforeReadyHost.LaunchAsync(request).GetAwaiter().GetResult();
+            Require(beforeReady is
+                {
+                    Status: PlayRoomProcessCompletionStatus.ExitedAbnormally,
+                    ExitCode: 23,
+                    WasReady: false,
+                    ErrorCode: "play-room-host-exited-before-ready",
+                    Diagnostic: "fixture failed before ready",
+                }, "The process launcher did not preserve a pre-ready Host failure and stderr diagnostic.");
+
+            var afterReadyHost = new ProcessPlayRoomLauncher(
+                _ => CreateCurrentTestProcessStartInfo("--play-room-child-fail-after-ready"),
+                requestDirectory);
+            var afterReady = afterReadyHost.LaunchAsync(request).GetAwaiter().GetResult();
+            Require(afterReady is
+                {
+                    Status: PlayRoomProcessCompletionStatus.ExitedAbnormally,
+                    ExitCode: 24,
+                    WasReady: true,
+                    ErrorCode: "play-room-host-exited-abnormally",
+                    Diagnostic: "fixture failed after ready",
+                }, "The process launcher did not preserve a post-ready Host failure and stderr diagnostic.");
         }
         finally
         {
@@ -371,8 +416,7 @@ internal static class PlayRoomLaunchChecks
 
     private sealed class ControllableProcessLauncher : IPlayRoomProcessLauncher
     {
-        private readonly TaskCompletionSource<PlayRoomProcessCompletionResult> _completion =
-            new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private TaskCompletionSource<PlayRoomProcessCompletionResult>? _completion;
         private IProgress<PlayRoomProcessReadyNotification>? _readyProgress;
 
         public Task<PlayRoomProcessCompletionResult> LaunchAsync(
@@ -380,6 +424,7 @@ internal static class PlayRoomLaunchChecks
             IProgress<PlayRoomProcessReadyNotification>? readyProgress = null,
             CancellationToken cancellationToken = default)
         {
+            _completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
             _readyProgress = readyProgress;
             return _completion.Task;
         }
@@ -389,7 +434,7 @@ internal static class PlayRoomLaunchChecks
             _readyProgress?.Report(ready);
         }
 
-        public void Complete(PlayRoomProcessCompletionResult result) => _completion.SetResult(result);
+        public void Complete(PlayRoomProcessCompletionResult result) => _completion!.SetResult(result);
     }
 
     private sealed class ActionProgress<T>(Action<T> action) : IProgress<T>

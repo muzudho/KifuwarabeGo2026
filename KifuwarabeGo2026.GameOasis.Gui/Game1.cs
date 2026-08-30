@@ -2616,9 +2616,21 @@ public class Game1 : Game
 
         GuiOperationLog.App(
             "Local Match Play Room process completed",
-            $"request={completion.RequestId}; status={completion.Status}; exitCode={completion.ExitCode}; code={completion.ErrorCode}; message={completion.Message}");
+            $"request={completion.RequestId}; ready={completion.WasReady}; status={completion.Status}; exitCode={completion.ExitCode}; code={completion.ErrorCode}; message={completion.Message}; diagnostic={completion.Diagnostic}");
         if (!completion.IsNormalExit)
-            ShowMessage(completion.Message ?? "The Local Match Play Room ended unexpectedly.", "LOCAL MATCH");
+        {
+            var phaseMessage = completion.WasReady
+                ? "The Local Match Play Room ended unexpectedly after its window started. You can start it again from the Lobby."
+                : "The Local Match Play Room could not finish starting. You can correct the problem and start it again from the Lobby.";
+            var displayMessage = phaseMessage;
+            if (!string.IsNullOrWhiteSpace(completion.Message))
+                displayMessage += $"\n\n{completion.Message}";
+            if (!string.IsNullOrWhiteSpace(completion.Diagnostic))
+                displayMessage += $"\n\nHOST DIAGNOSTIC\n{completion.Diagnostic}";
+            ShowMessage(
+                displayMessage,
+                completion.WasReady ? "LOCAL MATCH ENDED" : "LOCAL MATCH START FAILED");
+        }
     }
 
     private PlayRoomLaunchResult LaunchLocalMatchInProcess(PlayRoomLaunchRequest request)

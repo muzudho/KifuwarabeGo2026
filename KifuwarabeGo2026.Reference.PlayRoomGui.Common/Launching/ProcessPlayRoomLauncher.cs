@@ -39,6 +39,8 @@ public sealed class ProcessPlayRoomLauncher : IPlayRoomProcessLauncher
 
         string? requestPath = null;
         Process? process = null;
+        Task<string>? standardErrorTask = null;
+        var wasReady = false;
         try
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -55,9 +57,11 @@ public sealed class ProcessPlayRoomLauncher : IPlayRoomProcessLauncher
             startInfo.ArgumentList.Add(requestPath);
             startInfo.UseShellExecute = false;
             startInfo.RedirectStandardOutput = true;
+            startInfo.RedirectStandardError = true;
 
             process = Process.Start(startInfo)
                 ?? throw new InvalidOperationException("The Play Room Host process could not be started.");
+            standardErrorTask = process.StandardError.ReadToEndAsync();
 
             string? readyLine;
             using (var readyCancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
@@ -74,7 +78,8 @@ public sealed class ProcessPlayRoomLauncher : IPlayRoomProcessLauncher
                     return Failed(
                         request.RequestId,
                         "play-room-host-ready-timeout",
-                        $"The Play Room Host did not report readiness within {_readyTimeout.TotalSeconds:0.###} seconds.");
+                        $"The Play Room Host did not report readiness within {_readyTimeout.TotalSeconds:0.###} seconds.",
+                        diagnostic: await ReadDiagnosticAsync(standardErrorTask).ConfigureAwait(false));
                 }
             }
 
@@ -86,7 +91,8 @@ public sealed class ProcessPlayRoomLauncher : IPlayRoomProcessLauncher
                     request.RequestId,
                     process.ExitCode,
                     "play-room-host-exited-before-ready",
-                    $"The Play Room Host exited with code {process.ExitCode} before reporting readiness.");
+                    $"The Play Room Host exited with code {process.ExitCode} before reporting readiness.",
+                    Diagnostic: await ReadDiagnosticAsync(standardErrorTask).ConfigureAwait(false));
             }
 
             HostReadyMessage? ready;
@@ -95,7 +101,11 @@ public sealed class ProcessPlayRoomLauncher : IPlayRoomProcessLauncher
             {
                 TryKill(process);
                 await process.WaitForExitAsync().ConfigureAwait(false);
-                return Failed(request.RequestId, "invalid-play-room-host-ready", exception.Message);
+                return Failed(
+                    request.RequestId,
+                    "invalid-play-room-host-ready",
+                    exception.Message,
+                    diagnostic: await ReadDiagnosticAsync(standardErrorTask).ConfigureAwait(false));
             }
             if (ready is not { Ready: true } ||
                 !string.Equals(ready.RequestId, request.RequestId, StringComparison.Ordinal))
@@ -105,19 +115,24 @@ public sealed class ProcessPlayRoomLauncher : IPlayRoomProcessLauncher
                 return Failed(
                     request.RequestId,
                     "invalid-play-room-host-ready",
-                    "The Play Room Host returned an invalid or mismatched readiness notification.");
+                    "The Play Room Host returned an invalid or mismatched readiness notification.",
+                    diagnostic: await ReadDiagnosticAsync(standardErrorTask).ConfigureAwait(false));
             }
 
+            wasReady = true;
             readyProgress?.Report(new(request.RequestId, ready.Code ?? "ready", ready.Message ?? "The Play Room Host is ready."));
             await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
+            var diagnostic = await ReadDiagnosticAsync(standardErrorTask).ConfigureAwait(false);
             return process.ExitCode == 0
-                ? new(PlayRoomProcessCompletionStatus.ExitedNormally, request.RequestId, process.ExitCode)
+                ? new(PlayRoomProcessCompletionStatus.ExitedNormally, request.RequestId, process.ExitCode, WasReady: true, Diagnostic: diagnostic)
                 : new(
                     PlayRoomProcessCompletionStatus.ExitedAbnormally,
                     request.RequestId,
                     process.ExitCode,
                     "play-room-host-exited-abnormally",
-                    $"The Play Room Host exited with code {process.ExitCode}.");
+                    $"The Play Room Host exited with code {process.ExitCode} after reporting readiness.",
+                    WasReady: true,
+                    Diagnostic: diagnostic);
         }
         catch (OperationCanceledException)
         {
@@ -126,11 +141,24 @@ public sealed class ProcessPlayRoomLauncher : IPlayRoomProcessLauncher
                 PlayRoomProcessCompletionStatus.Cancelled,
                 request.RequestId,
                 ErrorCode: "play-room-host-cancelled",
-                Message: "The Play Room Host execution was cancelled.");
+                Message: "The Play Room Host execution was cancelled.",
+                WasReady: wasReady,
+                Diagnostic: await ReadDiagnosticAsync(standardErrorTask).ConfigureAwait(false));
         }
         catch (Exception exception)
         {
-            return Failed(request.RequestId, "play-room-host-start-failed", exception.Message);
+            TryKill(process);
+            if (process is not null)
+            {
+                try { await process.WaitForExitAsync().ConfigureAwait(false); }
+                catch (InvalidOperationException) { }
+            }
+            return Failed(
+                request.RequestId,
+                "play-room-host-start-failed",
+                exception.Message,
+                wasReady,
+                await ReadDiagnosticAsync(standardErrorTask).ConfigureAwait(false));
         }
         finally
         {
@@ -144,8 +172,28 @@ public sealed class ProcessPlayRoomLauncher : IPlayRoomProcessLauncher
         }
     }
 
-    private static PlayRoomProcessCompletionResult Failed(string requestId, string errorCode, string message) =>
-        new(PlayRoomProcessCompletionStatus.StartFailed, requestId, ErrorCode: errorCode, Message: message);
+    private static PlayRoomProcessCompletionResult Failed(
+        string requestId,
+        string errorCode,
+        string message,
+        bool wasReady = false,
+        string? diagnostic = null) =>
+        new(
+            PlayRoomProcessCompletionStatus.StartFailed,
+            requestId,
+            ErrorCode: errorCode,
+            Message: message,
+            WasReady: wasReady,
+            Diagnostic: diagnostic);
+
+    private static async Task<string?> ReadDiagnosticAsync(Task<string>? standardErrorTask)
+    {
+        if (standardErrorTask is null) return null;
+        var diagnostic = (await standardErrorTask.ConfigureAwait(false)).Trim();
+        if (diagnostic.Length == 0) return null;
+        const int maximumLength = 4000;
+        return diagnostic.Length <= maximumLength ? diagnostic : diagnostic[..maximumLength] + "…";
+    }
 
     private static void TryKill(Process? process)
     {

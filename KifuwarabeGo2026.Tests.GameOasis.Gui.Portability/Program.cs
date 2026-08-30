@@ -27,6 +27,20 @@ internal static class Program
         }
         if (args.Length > 0 && args[0] == "--play-room-gtp-test-engine")
             return RunPlayRoomGtpTestEngine();
+        if (args.Length > 0 && args[0] == "--play-room-child-fail-before-ready")
+        {
+            Console.Error.WriteLine("fixture failed before ready");
+            return 23;
+        }
+        if (args.Length > 0 && args[0] == "--play-room-child-fail-after-ready")
+        {
+            var requestPath = args.Length == 3 && args[1] == "--launch-request" ? args[2] : "";
+            var requestId = JsonDocument.Parse(File.ReadAllText(requestPath)).RootElement.GetProperty("requestId").GetString();
+            Console.WriteLine(JsonSerializer.Serialize(new { ready = true, code = "ready", message = "test ready", requestId }));
+            Console.Out.Flush();
+            Console.Error.WriteLine("fixture failed after ready");
+            return 24;
+        }
 
         try
         {
