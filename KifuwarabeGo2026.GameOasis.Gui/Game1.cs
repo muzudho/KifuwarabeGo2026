@@ -155,7 +155,7 @@ public class Game1 : Game
     private readonly TextBoxController _cgosCredentialTextBox = new(240);
     private bool _isApplicationSettingsOpen;
     private ApplicationSettingsPage _applicationSettingsPage = ApplicationSettingsPage.Log;
-    private readonly LobbyNavigationController _lobbyNavigation = new();
+    private readonly LobbyHomeInputCoordinator _lobbyInput = new(new LobbyNavigationController());
     private int _appProviderTabIndex;
     private readonly List<string> _guiLogFiles = new();
     private int _selectedGuiLogIndex = -1;
@@ -841,7 +841,7 @@ public class Game1 : Game
                 if (_isApplicationSettingsOpen)
                     ApplicationSettingsScreen.Default.Draw(_presentationServices.Stationery, backgroundMousePosition, _applicationSettingsPage, ApplicationSettings.Current.LogRootDirectory, ApplicationSettings.Current.SgfSaveDirectory, ApplicationSettings.Current.ScreenshotSaveDirectory, _lobbyViewState.ApplicationSettingsPath, _lobbyViewState.GtpEngineSettingsPath, _guiLogFiles, _selectedGuiLogIndex, _applicationSettingsMessage);
                 else
-                    _presentationServices.Presentation.DrawTitle(_session, backgroundMousePosition, _lobbyNavigation.CurrentPage,
+                    _presentationServices.Presentation.DrawTitle(_session, backgroundMousePosition, _lobbyInput.CurrentPage,
                         _appProviderTabIndex, _appProviderSelectionLoadTask is not null,
                         _gameOasisComposition?.Client.State.PlaySpaces ?? []);
             }
@@ -1973,7 +1973,7 @@ public class Game1 : Game
             else if (isLocalAppsIntermission && LocalMatchIntermissionPage.Default.ChangeAppProviderButton.IsHit(point))
             {
                 _session.ReturnToUseSelection();
-                _lobbyNavigation.TryOpenCasualApp(0);
+                _lobbyInput.TryOpenCasualApp(0);
                 GuiOperationLog.User("Returned to App Provider selection", "app=ponnuki");
             }
             else if (isLocalAppsIntermission &&
@@ -2926,57 +2926,47 @@ public class Game1 : Game
     {
         if (TitleScreen.Default.BackButton.IsHit(point))
         {
-            _lobbyNavigation.OpenHome();
-            GuiOperationLog.User("Pressed title menu Back button", $"page={_lobbyNavigation.CurrentPage}");
+            _lobbyInput.OpenHome();
+            GuiOperationLog.User("Pressed title menu Back button", $"page={_lobbyInput.CurrentPage}");
             return true;
         }
 
-        if (_lobbyNavigation.CurrentPage == LobbyPage.Home)
+        if (_lobbyInput.CurrentPage == LobbyPage.Home &&
+            TitleScreen.Default.GetHomeTargetHit(point) is { } homeTarget)
         {
-            if (TitleScreen.Default.LocalMatchButton.IsHit(point))
+            var action = _lobbyInput.Activate(homeTarget);
+            switch (action)
             {
-                GuiOperationLog.User("Pressed Local Match button", "Navigate from title to local-match setup");
-                _session.SelectUseKind(GoAppUseKind.LocalPlay);
-                return true;
+                case LobbyHomeAction.OpenLocalMatch:
+                    GuiOperationLog.User("Pressed Local Match button", "Navigate from title to local-match setup");
+                    _session.SelectUseKind(GoAppUseKind.LocalPlay);
+                    break;
+                case LobbyHomeAction.OpenOnlineMatch:
+                    GuiOperationLog.User("Pressed CGOS button", "Navigate from title to CGOS connection selection");
+                    _session.SelectUseKind(GoAppUseKind.CgosClient);
+                    break;
+                case LobbyHomeAction.ManageEngineProfiles:
+                    _session.OpenGtpEngineManagementDialog();
+                    GuiOperationLog.User("Opened engine profile management", "source=title");
+                    break;
+                case LobbyHomeAction.ManageEntryProfiles:
+                    _session.OpenEntryProfileManagementDialog();
+                    GuiOperationLog.User("Opened entry profile management", "source=title");
+                    break;
+                case LobbyHomeAction.OpenGameOasis:
+                    GuiOperationLog.User("Opened Game Oasis", "Navigate from title to play-space selection");
+                    break;
+                case LobbyHomeAction.OpenCaptureGame:
+                    GuiOperationLog.User("Opened Casual Apps entry", $"page={_lobbyInput.CurrentPage}");
+                    break;
+                default:
+                    return false;
             }
 
-            if (TitleScreen.Default.CgosClientButton.IsHit(point))
-            {
-                GuiOperationLog.User("Pressed CGOS button", "Navigate from title to CGOS connection selection");
-                _session.SelectUseKind(GoAppUseKind.CgosClient);
-                return true;
-            }
-
-            if (TitleScreen.Default.EngineProfilesButton.IsHit(point))
-            {
-                _session.OpenGtpEngineManagementDialog();
-                GuiOperationLog.User("Opened engine profile management", "source=title");
-                return true;
-            }
-
-            if (TitleScreen.Default.EntryProfilesButton.IsHit(point))
-            {
-                _session.OpenEntryProfileManagementDialog();
-                GuiOperationLog.User("Opened entry profile management", "source=title");
-                return true;
-            }
-
-            if (TitleScreen.Default.GameOasisButton.IsHit(point))
-            {
-                _lobbyNavigation.OpenGameOasis();
-                GuiOperationLog.User("Opened Game Oasis", "Navigate from title to play-space selection");
-                return true;
-            }
-
-            if (TitleScreen.Default.GetAppHit(point) is { } appIndex)
-            {
-                _lobbyNavigation.TryOpenCasualApp(appIndex);
-                GuiOperationLog.User("Opened Casual Apps entry", $"page={_lobbyNavigation.CurrentPage}");
-                return true;
-            }
+            return true;
         }
 
-        if (_lobbyNavigation.CurrentPage == LobbyPage.GameOasis)
+        if (_lobbyInput.CurrentPage == LobbyPage.GameOasis)
         {
             var playSpaces = _gameOasisComposition?.Client.State.PlaySpaces;
             if (playSpaces is not null &&
@@ -2984,7 +2974,7 @@ public class Game1 : Game
                 return BeginGameOasisSession(playSpaces[playSpaceIndex].TypeId);
         }
 
-        if (_lobbyNavigation.CurrentPage == LobbyPage.CaptureGame)
+        if (_lobbyInput.CurrentPage == LobbyPage.CaptureGame)
         {
             if (PonnukiProviderSelectionScreen.Default.IsProviderLinkHit(point))
             {
@@ -3013,7 +3003,7 @@ public class Game1 : Game
 
     private void UpdateAppProviderSelectionKeyboard(KeyboardState keyboard)
     {
-        if (!IsActive || !_inputArmed || _lobbyNavigation.CurrentPage != LobbyPage.CaptureGame ||
+        if (!IsActive || !_inputArmed || _lobbyInput.CurrentPage != LobbyPage.CaptureGame ||
             _session.IsGtpEngineSelectionDialogOpen || _session.IsGtpEngineEditPanelOpen)
         {
             return;
@@ -3064,7 +3054,7 @@ public class Game1 : Game
                 GuiOperationLog.User("Entered Local Apps intermission", "app=ponnuki; input=keyboard");
                 break;
             case 3:
-                _lobbyNavigation.OpenHome();
+                _lobbyInput.OpenHome();
                 GuiOperationLog.User("Pressed title menu Back button", "page=Home; input=keyboard");
                 break;
         }
@@ -5726,7 +5716,7 @@ public class Game1 : Game
         try
         {
             _session.SetGtpEngineAppCompatibilities(task.GetAwaiter().GetResult());
-            if (_session.UseKind is null && _lobbyNavigation.CurrentPage == LobbyPage.CaptureGame)
+            if (_session.UseKind is null && _lobbyInput.CurrentPage == LobbyPage.CaptureGame)
                 _session.OpenAppProviderGtpEngineSelectionDialog(_appProviderSelectionLoadAppId);
         }
         catch (Exception ex)
@@ -7174,7 +7164,7 @@ public class Game1 : Game
         var screen = _isApplicationSettingsOpen
             ? "Application settings"
             : _session.UseKind is null
-                ? $"Title/{_lobbyNavigation.CurrentPage}"
+                ? $"Title/{_lobbyInput.CurrentPage}"
                 : _session.UseKind == GoAppUseKind.LocalPlay
                     ? _playingScene.IsInitialPositionConciergeVisible
                         ? "Formal/LocalMatch/InitialPositionConcierge"
@@ -7214,7 +7204,7 @@ public class Game1 : Game
         if (_session.UseKind is not null || _isApplicationSettingsOpen)
             return StickyNoteScreenId.Unknown;
 
-        return _lobbyNavigation.CurrentPage switch
+        return _lobbyInput.CurrentPage switch
         {
             LobbyPage.Home => StickyNoteScreenId.TitleHome,
             LobbyPage.CaptureGame => StickyNoteScreenId.TitlePonnukiProviderSelection,
@@ -7232,7 +7222,7 @@ public class Game1 : Game
 
         if (_session.UseKind is null)
         {
-            return _lobbyNavigation.CurrentPage switch
+            return _lobbyInput.CurrentPage switch
             {
                 LobbyPage.Home => "LOBBY",
                 LobbyPage.GameOasis => "LOBBY  >  GAME OASIS  >  PLAY ROOM SELECT",

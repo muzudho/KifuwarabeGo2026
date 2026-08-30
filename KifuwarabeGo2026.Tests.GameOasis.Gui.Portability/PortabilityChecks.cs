@@ -508,6 +508,37 @@ internal static class PortabilityChecks
                 .All(type => !type.Contains("MonoGame", StringComparison.Ordinal) &&
                              !type.Contains("Microsoft.Xna", StringComparison.Ordinal)),
             "Lobby Home presentation must not expose MonoGame drawing types.");
+
+        var inputNavigation = new LobbyNavigationController();
+        var input = new LobbyHomeInputCoordinator(inputNavigation);
+        Require(input.Activate(LobbyHomeTarget.LocalMatch) == LobbyHomeAction.OpenLocalMatch &&
+                input.CurrentPage == LobbyPage.Home,
+            "Lobby Home input must return the Local Match intent without entering Play Room state.");
+        Require(input.Activate(LobbyHomeTarget.EngineProfiles) == LobbyHomeAction.ManageEngineProfiles,
+            "Lobby Home input must return the engine-management intent.");
+        Require(input.Activate(LobbyHomeTarget.GamePlatform) == LobbyHomeAction.OpenGameOasis &&
+                input.CurrentPage == LobbyPage.GameOasis,
+            "Lobby Home input must own the Game Oasis page transition.");
+        Require(input.Activate(LobbyHomeTarget.CaptureGame) == LobbyHomeAction.None,
+            "Lobby Home input must reject Home targets after leaving Home.");
+        input.OpenHome();
+        Require(input.Activate(LobbyHomeTarget.CaptureGame) == LobbyHomeAction.OpenCaptureGame &&
+                input.CurrentPage == LobbyPage.CaptureGame,
+            "Lobby Home input must own the Capture Game page transition.");
+        Require(typeof(LobbyHomeInputCoordinator).GetFields(BindingFlags.Instance | BindingFlags.NonPublic)
+                .All(field => !field.FieldType.FullName!.Contains("MonoGame", StringComparison.Ordinal) &&
+                              !field.FieldType.FullName.Contains("Microsoft.Xna", StringComparison.Ordinal)),
+            "Lobby Home input coordinator must not depend on MonoGame hit-test types.");
+
+        var title = TitleScreen.Default;
+        Require(title.GetHomeTargetHit(title.LocalMatchButton.Bounds.Center) == LobbyHomeTarget.LocalMatch &&
+                title.GetHomeTargetHit(title.CgosClientButton.Bounds.Center) == LobbyHomeTarget.OnlineMatch &&
+                title.GetHomeTargetHit(title.EngineProfilesButton.Bounds.Center) == LobbyHomeTarget.EngineProfiles &&
+                title.GetHomeTargetHit(title.EntryProfilesButton.Bounds.Center) == LobbyHomeTarget.EntryProfiles &&
+                title.GetHomeTargetHit(title.GameOasisButton.Bounds.Center) == LobbyHomeTarget.GamePlatform &&
+                title.GetHomeTargetHit(title.CaptureGameButton.Bounds.Center) == LobbyHomeTarget.CaptureGame &&
+                title.GetHomeTargetHit(Point.Zero) is null,
+            "The MonoGame Lobby adapter must translate Home geometry into semantic targets.");
     }
 
     private sealed class FakeLobbyEngine : ILobbyEngine

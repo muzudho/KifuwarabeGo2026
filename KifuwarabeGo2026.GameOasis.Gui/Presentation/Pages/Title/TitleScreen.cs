@@ -2,6 +2,7 @@ namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.Title;
 
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.Button;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.Headline;
+using KifuwarabeGo2026.LobbyGui.Application;
 using Microsoft.Xna.Framework;
 using System;
 
@@ -54,7 +55,16 @@ public sealed class TitleScreen
     public Button EngineProfilesButton { get; }
     public Button EntryProfilesButton { get; }
 
-    public int? GetAppHit(Point point) => CaptureGameButton.IsHit(point) ? 0 : null;
+    public LobbyHomeTarget? GetHomeTargetHit(Point point)
+    {
+        if (LocalMatchButton.IsHit(point)) return LobbyHomeTarget.LocalMatch;
+        if (CgosClientButton.IsHit(point)) return LobbyHomeTarget.OnlineMatch;
+        if (EngineProfilesButton.IsHit(point)) return LobbyHomeTarget.EngineProfiles;
+        if (EntryProfilesButton.IsHit(point)) return LobbyHomeTarget.EntryProfiles;
+        if (GameOasisButton.IsHit(point)) return LobbyHomeTarget.GamePlatform;
+        if (CaptureGameButton.IsHit(point)) return LobbyHomeTarget.CaptureGame;
+        return null;
+    }
 
     public static Rectangle GetGameOasisPlaySpaceBounds(int index)
     {
