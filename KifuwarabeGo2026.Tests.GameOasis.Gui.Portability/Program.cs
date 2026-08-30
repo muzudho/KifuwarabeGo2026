@@ -4,8 +4,10 @@ using System;
 
 internal static class Program
 {
-    private static int Main()
+    private static int Main(string[] args)
     {
+        if (args.Length > 0 && args[0] == "--play-room-child-normal-exit") return 0;
+
         try
         {
             PortabilityChecks.Run();

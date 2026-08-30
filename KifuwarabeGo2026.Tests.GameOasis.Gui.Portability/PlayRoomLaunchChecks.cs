@@ -13,6 +13,7 @@ using System;
 using System.IO;
 using System.Text.Json;
 using System.Linq;
+using System.Diagnostics;
 
 internal static class PlayRoomLaunchChecks
 {
@@ -23,6 +24,9 @@ internal static class PlayRoomLaunchChecks
         Require(typeof(IPlayRoomLauncher).Assembly.GetName().Name == "KifuwarabeGo2026.Reference.PlayRoomGui.Common" &&
                 typeof(InProcessPlayRoomLauncher).Assembly == typeof(IPlayRoomLauncher).Assembly,
             "The game-neutral play-room launcher boundary must be owned by Reference.PlayRoomGui.Common.");
+        Require(typeof(IPlayRoomProcessLauncher).Assembly == typeof(IPlayRoomLauncher).Assembly &&
+                typeof(ProcessPlayRoomLauncher).Assembly == typeof(IPlayRoomLauncher).Assembly,
+            "The Lobby-independent process launcher contract and adapter must be owned by Reference.PlayRoomGui.Common.");
         var goCompositionAssembly = typeof(GoPlayRoomComposition).Assembly;
         Require(goCompositionAssembly.GetName().Name == "KifuwarabeGo2026.Reference.PlayRoomGui.Go" &&
                 !goCompositionAssembly.GetReferencedAssemblies().Any(reference =>
@@ -61,6 +65,55 @@ internal static class PlayRoomLaunchChecks
         VerifySavedGoLaunchRequest();
         VerifySavedGoReviewLaunchRequest();
         VerifyGoWindowsHostStartup();
+        VerifyProcessLauncher();
+    }
+
+    private static void VerifyProcessLauncher()
+    {
+        var requestDirectory = Path.Combine(Path.GetTempPath(), $"kifuwarabe-process-launch-{Guid.NewGuid():N}");
+        try
+        {
+            var launcher = new ProcessPlayRoomLauncher(
+                _ => CreateCurrentTestProcessStartInfo("--play-room-child-normal-exit"),
+                requestDirectory);
+            var request = CreateSavedMatchRequest("process-launch-request");
+            var result = launcher.LaunchAsync(request).GetAwaiter().GetResult();
+            Require(result is
+                {
+                    Status: PlayRoomProcessCompletionStatus.ExitedNormally,
+                    RequestId: "process-launch-request",
+                    ExitCode: 0,
+                    IsNormalExit: true,
+                }, "The process Play Room launcher did not report the child Host's normal exit.");
+            Require(!Directory.EnumerateFiles(requestDirectory).Any(),
+                "The process Play Room launcher did not remove its saved launch request.");
+
+            var unsupported = launcher.LaunchAsync(request with { Version = 2 }).GetAwaiter().GetResult();
+            Require(unsupported.Status == PlayRoomProcessCompletionStatus.StartFailed &&
+                    unsupported.ErrorCode == "unsupported-launch-version",
+                "The process Play Room launcher accepted an unsupported launch contract version.");
+
+            var missingHost = new ProcessPlayRoomLauncher(
+                _ => new ProcessStartInfo(Path.Combine(requestDirectory, "missing-play-room-host.exe")),
+                requestDirectory);
+            var failed = missingHost.LaunchAsync(request).GetAwaiter().GetResult();
+            Require(failed.Status == PlayRoomProcessCompletionStatus.StartFailed &&
+                    failed.ErrorCode == "play-room-host-start-failed" &&
+                    !Directory.EnumerateFiles(requestDirectory).Any(),
+                "The process Play Room launcher did not structure a Host start failure or clean its request file.");
+        }
+        finally
+        {
+            if (Directory.Exists(requestDirectory)) Directory.Delete(requestDirectory, recursive: true);
+        }
+    }
+
+    private static ProcessStartInfo CreateCurrentTestProcessStartInfo(string firstArgument)
+    {
+        var startInfo = new ProcessStartInfo("dotnet");
+        startInfo.ArgumentList.Add(typeof(Program).Assembly.Location);
+        startInfo.ArgumentList.Add(firstArgument);
+        return startInfo;
     }
 
     private static void VerifyGoWindowsHostStartup()
