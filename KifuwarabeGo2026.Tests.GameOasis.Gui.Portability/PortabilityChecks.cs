@@ -554,13 +554,32 @@ internal static class PortabilityChecks
                 gameOasis.RemainingItemCount == 2 && !gameOasis.IsLoading,
             "The Lobby Game Oasis presenter must cap visible entries and preserve the remaining count.");
         Require(gameOasis.VisibleItems[0].DisplayName == "Game 0" &&
-                gameOasis.VisibleItems[3].ImplementationName == "Example.Implementation.3",
-            "The Lobby Game Oasis presenter must preserve public catalog display fields.");
+                gameOasis.VisibleItems[3].ImplementationFirstLine == "Example" &&
+                gameOasis.VisibleItems[3].ImplementationSecondLine == "Implementation.3" &&
+                gameOasis.VisibleItems[3].VersionLabel == "v1.0.0",
+            "The Lobby Game Oasis presenter must prepare catalog fields as complete display lines.");
+        Require(gameOasis.Breadcrumb == "GAME OASIS  >  SELECT PLAY-SPACE" &&
+                gameOasis.RemainingMessage == "+ 2 MORE PLAY-SPACES" &&
+                gameOasis.ImplementationLabel == "IMPLEMENTATION" &&
+                gameOasis.OpenLabel == "OPEN  >",
+            "The Lobby Game Oasis presenter must own page and item display labels.");
         Require(gameOasis.Select(1)?.PlaySpaceTypeId == new PlaySpaceTypeId("example.game-1") &&
                 gameOasis.Select(-1) is null && gameOasis.Select(4) is null,
             "The Lobby Game Oasis presentation must create selection intents only for visible entries.");
-        Require(LobbyGameOasisPresenter.Create([]).IsLoading,
-            "An empty Game Oasis catalog must remain an explicit loading presentation.");
+        var loadingGameOasis = LobbyGameOasisPresenter.Create([]);
+        Require(loadingGameOasis.IsLoading &&
+                loadingGameOasis.LoadingMessage == "CONNECTING TO GAME OASIS..." &&
+                loadingGameOasis.RemainingMessage is null,
+            "An empty Game Oasis catalog must remain an explicit loading presentation without a remaining label.");
+        var implementationNames = LobbyGameOasisPresenter.Create([
+            new GuiPlaySpaceEntry(new PlaySpaceTypeId("blank"), "Blank", " ", "1", []),
+            new GuiPlaySpaceEntry(new PlaySpaceTypeId("simple"), "Simple", "SimpleName", "1", []),
+        ]);
+        Require(implementationNames.VisibleItems[0].ImplementationFirstLine == "-" &&
+                implementationNames.VisibleItems[0].ImplementationSecondLine == "" &&
+                implementationNames.VisibleItems[1].ImplementationFirstLine == "SimpleName" &&
+                implementationNames.VisibleItems[1].ImplementationSecondLine == "",
+            "Implementation-name presentation must handle blank and unsplittable names deterministically.");
         Require(typeof(LobbyGameOasisPresentation).GetProperties()
                 .All(property => !property.PropertyType.Name.Contains(nameof(GuiPlaySpaceEntry), StringComparison.Ordinal) &&
                                  !(property.PropertyType.FullName ?? "").Contains("Microsoft.Xna", StringComparison.Ordinal)),

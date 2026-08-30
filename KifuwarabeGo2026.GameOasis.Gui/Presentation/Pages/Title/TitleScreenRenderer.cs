@@ -145,19 +145,20 @@ public sealed class TitleScreenRenderer
                 }
                 break;
             case LobbyPage.GameOasis:
-                DrawTitleBreadcrumb("GAME OASIS  >  SELECT PLAY-SPACE", panel);
+                DrawTitleBreadcrumb(gameOasis.Breadcrumb, panel);
                 for (var index = 0; index < gameOasis.VisibleItems.Count; index++)
                 {
                     var entry = gameOasis.VisibleItems[index];
                     DrawGameOasisPlaySpaceChoice(
                         TitleScreen.GetGameOasisPlaySpaceBounds(index),
+                        gameOasis,
                         entry,
                         mousePoint);
                 }
                 if (gameOasis.IsLoading)
-                    DrawFittedText("CONNECTING TO GAME OASIS...", new Rectangle(560, 500, 800, 52), new Color(180, 195, 195), 0.42f);
-                else if (gameOasis.RemainingItemCount > 0)
-                    DrawFittedText($"+ {gameOasis.RemainingItemCount} MORE PLAY-SPACES", new Rectangle(560, 790, 800, 32), new Color(180, 195, 195), 0.3f);
+                    DrawFittedText(gameOasis.LoadingMessage, new Rectangle(560, 500, 800, 52), new Color(180, 195, 195), 0.42f);
+                else if (gameOasis.RemainingMessage is { } remainingMessage)
+                    DrawFittedText(remainingMessage, new Rectangle(560, 790, 800, 32), new Color(180, 195, 195), 0.3f);
                 DrawTitleBackButton(mousePoint);
                 break;
             default:
@@ -178,7 +179,11 @@ public sealed class TitleScreenRenderer
         DrawFittedText("OPEN  >", new Rectangle(bounds.Right - 92, bounds.Y + 76, 68, 28), hovered ? accent : new Color(180, 195, 195), 0.28f);
     }
 
-    private void DrawGameOasisPlaySpaceChoice(Rectangle bounds, LobbyGameOasisItem entry, Point mousePoint)
+    private void DrawGameOasisPlaySpaceChoice(
+        Rectangle bounds,
+        LobbyGameOasisPresentation presentation,
+        LobbyGameOasisItem entry,
+        Point mousePoint)
     {
         var hovered = bounds.Contains(mousePoint);
         var accent = new Color(178, 145, 255);
@@ -189,33 +194,19 @@ public sealed class TitleScreenRenderer
 
         DrawDynamicOptionText(entry.DisplayName,
             new Rectangle(bounds.X + 28, bounds.Y + 14, bounds.Width - 126, 44), Color.White, 0.52f);
-        DrawDynamicOptionText($"v{entry.ImplementationVersion}",
+        DrawDynamicOptionText(entry.VersionLabel,
             new Rectangle(bounds.Right - 92, bounds.Y + 18, 68, 30), new Color(210, 198, 242), 0.3f);
 
-        DrawDynamicOptionText("IMPLEMENTATION",
+        DrawDynamicOptionText(presentation.ImplementationLabel,
             new Rectangle(bounds.X + 28, bounds.Y + 64, bounds.Width - 56, 22), new Color(148, 130, 194), 0.24f);
-        var (firstLine, secondLine) = SplitImplementationName(entry.ImplementationName);
-        DrawDynamicOptionText(firstLine,
+        DrawDynamicOptionText(entry.ImplementationFirstLine,
             new Rectangle(bounds.X + 28, bounds.Y + 87, bounds.Width - 56, 28), new Color(205, 213, 214), 0.31f);
-        if (secondLine.Length > 0)
-            DrawDynamicOptionText(secondLine,
+        if (entry.ImplementationSecondLine.Length > 0)
+            DrawDynamicOptionText(entry.ImplementationSecondLine,
                 new Rectangle(bounds.X + 28, bounds.Y + 113, bounds.Width - 130, 28), new Color(205, 213, 214), 0.31f);
 
-        DrawFittedText("OPEN  >", new Rectangle(bounds.Right - 92, bounds.Bottom - 40, 68, 28),
+        DrawFittedText(presentation.OpenLabel, new Rectangle(bounds.Right - 92, bounds.Bottom - 40, 68, 28),
             hovered ? new Color(220, 205, 255) : new Color(180, 195, 195), 0.28f);
-    }
-
-    internal static (string FirstLine, string SecondLine) SplitImplementationName(string value)
-    {
-        if (string.IsNullOrWhiteSpace(value)) return ("-", "");
-        var center = value.Length / 2;
-        var separators = value.Select((character, index) => (character, index))
-            .Where(item => item.character == '.' && item.index > 0 && item.index < value.Length - 1)
-            .Select(item => item.index)
-            .ToArray();
-        if (separators.Length == 0) return (value, "");
-        var split = separators.MinBy(index => Math.Abs(index - center));
-        return (value[..split], value[(split + 1)..]);
     }
 
     private void DrawTitleBreadcrumb(string text, Rectangle panel)
