@@ -1,7 +1,6 @@
 namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.Title;
 
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.StickyNote;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.TitleBackground;
 using KifuwarabeGo2026.LobbyGui.Application;
 using Microsoft.Xna.Framework;
 using System;
@@ -12,18 +11,15 @@ using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
 
 public sealed class TitleScreenRenderer
 {
-    private readonly TitleGoEquipment _titleGoEquipment = new();
+    private readonly TitleScreenShellRenderer _shellRenderer;
     private readonly TitleScreen _titleScreen = TitleScreen.Default;
-    private readonly Action<Vector2, float, float, Color, int, float> _drawEllipseWire;
-    private readonly Action<Vector2, float, float, Color, int, float, float, float> _drawCircumscribedCircleArc;
     private KfwStationeryDrawingTools _drawingContext = null!;
 
     public TitleScreenRenderer(
         Action<Vector2, float, float, Color, int, float> drawEllipseWire,
         Action<Vector2, float, float, Color, int, float, float, float> drawCircumscribedCircleArc)
     {
-        _drawEllipseWire = drawEllipseWire;
-        _drawCircumscribedCircleArc = drawCircumscribedCircleArc;
+        _shellRenderer = new TitleScreenShellRenderer(drawEllipseWire, drawCircumscribedCircleArc);
     }
 
     #region ［FORMAL APPS 区画］
@@ -36,22 +32,9 @@ public sealed class TitleScreenRenderer
         LobbyScreenPresentation lobby, Action drawProviderSelection)
     {
         _drawingContext = drawingContext;
-        // タイトル画面の囲碁用具ワイヤー装飾。
-        _titleGoEquipment.Draw(new TitleGoEquipmentDrawingCallbacks(_drawEllipseWire, _drawCircumscribedCircleArc));
-
-        var panel = _titleScreen.PanelBounds;
-        FillRect(new Rectangle(panel.X + 18, panel.Y + 20, panel.Width, panel.Height), new Color(0, 0, 0, 130));
-        FillRect(panel, new Color(21, 25, 32, 242));
-        DrawRect(panel, 2, new Color(82, 111, 114));
-
-        // 見出し（ヘッドライン）
-        _titleScreen.Headline.Position = new Vector2(panel.X + 58, panel.Y + 58);
-        _titleScreen.Headline.Draw(_drawingContext);
-        DrawText(GetDisplayVersion(), new Vector2(panel.X + 790, panel.Y + 91), new Color(99, 223, 185), 0.38f);
-        DrawLine(new Vector2(panel.X + 790, panel.Y + 126), new Vector2(panel.X + 958, panel.Y + 126), 2, new Color(99, 223, 185, 120));
+        var panel = _shellRenderer.DrawFrame(drawingContext);
         DrawTitleMenuContent(lobby, panel, mousePoint, drawProviderSelection);
-        DrawLauncherButtons(mousePoint);
-        ApplicationSettingsScreen.Default.DrawSettingsButton(_drawingContext, mousePoint);
+        _shellRenderer.DrawControls(drawingContext, mousePoint);
     }
 
     private void DrawTitleMenuContent(LobbyScreenPresentation lobby,
@@ -332,59 +315,12 @@ public sealed class TitleScreenRenderer
         TitleScreen.Default.BackButton.Draw(mousePoint, _drawingContext);
     }
 
-    private static string GetDisplayVersion()
-    {
-        var version = typeof(TitleScreenRenderer).Assembly.GetName().Version;
-        return version is null ? "VERSION" : $"v{version.Major}.{version.Minor}.{version.Build}";
-    }
-
-    #region ［ランチャーを開く］ボタン
-    /// <summary>
-    /// ［ランチャーを開く］ボタンを描画します。
-    /// </summary>
-    /// <param name="mousePoint"></param>
-    private void DrawLauncherButtons(Point mousePoint)
-    {
-        DrawLauncherButton(ApplicationSettingsScreen.Default.UpdateButton.Bounds, "ランチャーを更新", mousePoint, drawBoardIcon: false);
-        DrawLauncherButton(ApplicationSettingsScreen.Default.OpenLauncherButton.Bounds, "ランチャーを開く", mousePoint, drawBoardIcon: true);
-    }
-
-    private void DrawLauncherButton(Rectangle bounds, string label, Point mousePoint, bool drawBoardIcon)
-    {
-        var hovered = bounds.Contains(mousePoint);
-        var color = hovered ? new Color(99, 223, 185) : new Color(180, 195, 195);
-        FillRect(bounds, hovered ? new Color(36, 50, 58) : new Color(24, 31, 37));
-        DrawRect(bounds, 2, hovered ? new Color(178, 219, 226) : new Color(82, 111, 114));
-        var board = new Rectangle(bounds.X + 12, bounds.Y + 11, 40, 40);
-        DrawRect(board, 2, color);
-        for (var index = 1; index < 5; index++)
-        {
-            var offset = index * 8;
-            DrawLine(new Vector2(board.X + offset, board.Y), new Vector2(board.X + offset, board.Bottom), 1, color);
-            DrawLine(new Vector2(board.X, board.Y + offset), new Vector2(board.Right, board.Y + offset), 1, color);
-        }
-        if (drawBoardIcon)
-        {
-            DrawStone(new Vector2(board.X + 16, board.Y + 24), 5, true);
-            DrawStone(new Vector2(board.X + 31, board.Y + 16), 5, false);
-        }
-        else
-        {
-            DrawLine(new Vector2(board.X + 11, board.Center.Y), new Vector2(board.Right - 10, board.Center.Y), 3, color);
-            DrawLine(new Vector2(board.Right - 17, board.Center.Y - 7), new Vector2(board.Right - 10, board.Center.Y), 3, color);
-            DrawLine(new Vector2(board.Right - 17, board.Center.Y + 7), new Vector2(board.Right - 10, board.Center.Y), 3, color);
-        }
-        DrawDynamicOptionText(label, new Rectangle(bounds.X + 56, bounds.Y + 11, bounds.Width - 62, 42), color, 0.38f);
-    }
-    #endregion
-
     private void FillRect(Rectangle bounds, Color color) => _drawingContext.FillRectangle(bounds, color);
     private void DrawRect(Rectangle bounds, int thickness, Color color) => _drawingContext.DrawRectangle(bounds, thickness, color);
     private void DrawLine(Vector2 start, Vector2 end, float thickness, Color color) => _drawingContext.DrawLine(start, end, thickness, color);
     private void DrawText(string text, Vector2 position, Color color, float scale) => _drawingContext.DrawText(text, position, color, scale);
     private void DrawFittedText(string text, Rectangle bounds, Color color, float scale) => _drawingContext.DrawFittedText(text, bounds, color, scale);
     private void DrawDynamicOptionText(string text, Rectangle bounds, Color color, float scale) => _drawingContext.DrawDynamicText(text, bounds, color, scale);
-    private void DrawStone(Vector2 center, float radius, bool black) => _drawingContext.DrawStone(center, radius, black);
     private void DrawStickyNote(StickyNoteKind kind, Vector2 connectorStart, Color accent, Color borderColor,
         string heading, System.Collections.Generic.IReadOnlyList<string> bodyLines) =>
         _drawingContext.DrawStickyNote(kind, connectorStart, accent, borderColor, heading, bodyLines);

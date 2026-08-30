@@ -620,6 +620,15 @@ internal static class PortabilityChecks
                 typeof(PonnukiProviderSelectionRendererAdapter).GetMethod("Draw")!
                     .GetParameters().Any(parameter => parameter.ParameterType == typeof(GoAppSession)),
             "The compatible GUI adapter must own the legacy provider session connection.");
+        Require(typeof(TitleScreenShellRenderer).GetMethods(BindingFlags.Instance | BindingFlags.Public)
+                .SelectMany(method => method.GetParameters())
+                .All(parameter => parameter.ParameterType != typeof(LobbyScreenPresentation)),
+            "The compatible title shell must not depend on Lobby page content.");
+        Require(typeof(TitleScreenRenderer).GetField("_shellRenderer", BindingFlags.Instance | BindingFlags.NonPublic)
+                    ?.FieldType == typeof(TitleScreenShellRenderer) &&
+                typeof(TitleScreenRenderer).GetMethod("DrawLauncherButtons", BindingFlags.Instance | BindingFlags.NonPublic) is null &&
+                typeof(TitleScreenRenderer).GetMethod("GetDisplayVersion", BindingFlags.Static | BindingFlags.NonPublic) is null,
+            "The Lobby content renderer must delegate decoration, version, launcher, and settings drawing to the title shell.");
         var loadingGameOasis = LobbyGameOasisPresenter.Create([]);
         Require(loadingGameOasis.IsLoading &&
                 loadingGameOasis.LoadingMessage == "CONNECTING TO GAME OASIS..." &&
