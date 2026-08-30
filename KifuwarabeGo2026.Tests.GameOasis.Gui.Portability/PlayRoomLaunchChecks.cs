@@ -69,6 +69,55 @@ internal static class PlayRoomLaunchChecks
         VerifyGoWindowsHostStartup();
         VerifyProcessLauncher();
         VerifyLocalMatchProcessCoordinator();
+        VerifyDedicatedLocalMatchSession();
+        VerifyDedicatedHostGtpConnection();
+    }
+
+    private static void VerifyDedicatedLocalMatchSession()
+    {
+        var request = CreateSavedMatchRequest("dedicated-session-request");
+        Require(GoPlayRoomLaunchInterpreter.TryCreate(request, out var plan, out var errorCode, out var message) && plan is not null,
+            $"The dedicated Local Match plan was not created: {errorCode}: {message}");
+        var session = new GoLocalMatchSession(plan!);
+        Require(session.CurrentTurn == GoStone.White && session.IsComputerTurn && session.CaptureViewState().GetStone(2, 3) == GoStone.Black,
+            "The dedicated Local Match session did not restore its starting player, computer role, or setup stones.");
+        Require(session.TryPlay(new GoPoint(0, 0)) && session.CurrentTurn == GoStone.Black && !session.IsComputerTurn,
+            "The dedicated Local Match session did not apply a legal move and advance to the human turn.");
+        Require(session.Pass() && session.Pass() && session.IsGameOver && session.GameOverReason.Length > 0,
+            "The dedicated Local Match session did not finish after two consecutive passes.");
+        Require(GoLocalMatchGtpController.Vertex(new GoPoint(8, 0), 9) == "J9" &&
+                GoLocalMatchGtpController.TryParseVertex("J9", 9, out var parsed) && parsed == new GoPoint(8, 0),
+            "The dedicated Host GTP coordinate conversion did not skip the I column.");
+    }
+
+    private static void VerifyDedicatedHostGtpConnection()
+    {
+        var request = CreateSavedMatchRequest("dedicated-gtp-request");
+        Require(GoPlayRoomLaunchInterpreter.TryCreate(request, out var restored, out _, out _) && restored is not null,
+            "The dedicated GTP smoke plan was not created.");
+        var assemblyPath = typeof(Program).Assembly.Location;
+        var connection = restored!.PlayerConnections.Single() with
+        {
+            ExecutablePath = "dotnet",
+            WorkingDirectory = AppContext.BaseDirectory,
+            Arguments = $"\"{assemblyPath}\" --play-room-gtp-test-engine",
+            EngineOptions = null,
+        };
+        var plan = restored with { PlayerConnections = [connection] };
+        var controller = new GoLocalMatchGtpController(plan);
+        try
+        {
+            controller.InitializeAsync().GetAwaiter().GetResult();
+            Require(controller.HasEngine(GoStone.White),
+                "The dedicated Host did not create the saved white Player Engine connection.");
+            var action = controller.GenerateMoveAsync(GoStone.White).GetAwaiter().GetResult();
+            Require(action is { Kind: GoLocalMatchActionKind.Play, Stone: GoStone.White, Point: { X: 3, Y: 5 } },
+                "The dedicated Host did not obtain and parse genmove from the saved Player Engine connection.");
+        }
+        finally
+        {
+            controller.DisposeAsync().AsTask().GetAwaiter().GetResult();
+        }
     }
 
     private static void VerifyLocalMatchProcessCoordinator()

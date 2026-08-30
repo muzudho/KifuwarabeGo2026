@@ -25,6 +25,8 @@ internal static class Program
             System.Threading.Thread.Sleep(TimeSpan.FromSeconds(5));
             return 0;
         }
+        if (args.Length > 0 && args[0] == "--play-room-gtp-test-engine")
+            return RunPlayRoomGtpTestEngine();
 
         try
         {
@@ -40,5 +42,20 @@ internal static class Program
             Console.Error.WriteLine($"FAIL: {ex.Message}");
             return 1;
         }
+    }
+
+    private static int RunPlayRoomGtpTestEngine()
+    {
+        while (Console.ReadLine() is { } command)
+        {
+            if (command == "quit")
+            {
+                Console.WriteLine("=\n");
+                return 0;
+            }
+            Console.WriteLine(command.StartsWith("genmove ", StringComparison.Ordinal) ? "= D4\n" :
+                command.StartsWith("known_command ", StringComparison.Ordinal) ? "= false\n" : "=\n");
+        }
+        return 0;
     }
 }

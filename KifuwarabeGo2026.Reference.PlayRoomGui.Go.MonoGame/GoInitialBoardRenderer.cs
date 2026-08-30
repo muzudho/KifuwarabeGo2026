@@ -4,7 +4,7 @@ using KifuwarabeGo2026.Reference.PlayRoomGui.Go;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-/// <summary>Content資産に依存せず、起動Planの初期盤面だけを描く最小Rendererです。</summary>
+/// <summary>Content資産に依存せず、専用HostのLocal Match盤面を描くRendererです。</summary>
 public sealed class GoInitialBoardRenderer : IDisposable
 {
     private readonly Texture2D _pixel;
@@ -20,16 +20,24 @@ public sealed class GoInitialBoardRenderer : IDisposable
 
     public void Draw(SpriteBatch spriteBatch, GoPlayRoomLaunchPlan plan, Rectangle viewport)
     {
-        ArgumentNullException.ThrowIfNull(plan);
-        var boardSide = Math.Max(32, Math.Min(viewport.Width, viewport.Height) - 96);
-        var board = new Rectangle(viewport.X + (viewport.Width - boardSide) / 2, viewport.Y + (viewport.Height - boardSide) / 2, boardSide, boardSide);
+        var setup = plan.SetupStones.ToDictionary(value => value.Point, value => value.Stone);
+        Draw(spriteBatch, GoPlayRoomViewState.Capture(
+            plan.Activity, plan.BoardSize,
+            (x, y) => setup.GetValueOrDefault(new Reference.PlayDomain.Go.GoPoint(x, y)),
+            plan.StartingPlayer, 0, 0, 0, null, null, "", 0, 0), viewport);
+    }
+
+    public void Draw(SpriteBatch spriteBatch, GoPlayRoomViewState state, Rectangle viewport)
+    {
+        ArgumentNullException.ThrowIfNull(state);
+        var board = CreateBoardBounds(viewport);
         spriteBatch.Draw(_pixel, new Rectangle(board.X + 12, board.Y + 16, board.Width, board.Height), new Color(0, 0, 0, 90));
         spriteBatch.Draw(_pixel, board, new Color(215, 158, 76));
 
         var margin = Math.Clamp(board.Width * 0.055f, 4f, board.Width / 3f);
-        var cell = (board.Width - margin * 2) / (plan.BoardSize - 1);
+        var cell = (board.Width - margin * 2) / (state.BoardSize - 1);
         var lineThickness = Math.Max(2, board.Width / 480);
-        for (var index = 0; index < plan.BoardSize; index++)
+        for (var index = 0; index < state.BoardSize; index++)
         {
             var offset = margin + index * cell;
             DrawLine(spriteBatch, board.X + margin, board.Y + offset, board.Right - margin, board.Y + offset, lineThickness);
@@ -37,13 +45,35 @@ public sealed class GoInitialBoardRenderer : IDisposable
         }
 
         var stoneSize = Math.Max(20, (int)(cell * 0.88f));
-        foreach (var setup in plan.SetupStones)
+        for (var y = 0; y < state.BoardSize; y++)
+        for (var x = 0; x < state.BoardSize; x++)
         {
-            var centerX = board.X + margin + setup.Point.X * cell;
-            var centerY = board.Y + margin + setup.Point.Y * cell;
+            var stone = state.GetStone(x, y);
+            if (stone == Reference.PlayDomain.Go.GoStone.Empty) continue;
+            var centerX = board.X + margin + x * cell;
+            var centerY = board.Y + margin + y * cell;
             var destination = new Rectangle((int)(centerX - stoneSize / 2f), (int)(centerY - stoneSize / 2f), stoneSize, stoneSize);
-            spriteBatch.Draw(setup.Stone == Reference.PlayDomain.Go.GoStone.Black ? _blackStone : _whiteStone, destination, Color.White);
+            spriteBatch.Draw(stone == Reference.PlayDomain.Go.GoStone.Black ? _blackStone : _whiteStone, destination, Color.White);
         }
+
+        if (state.LastMovePoint is { } lastMove)
+        {
+            var centerX = board.X + margin + lastMove.X * cell;
+            var centerY = board.Y + margin + lastMove.Y * cell;
+            var marker = Math.Max(5, stoneSize / 7);
+            spriteBatch.Draw(_pixel, new Rectangle((int)centerX - marker / 2, (int)centerY - marker / 2, marker, marker), new Color(210, 64, 55));
+        }
+    }
+
+    public static GoBoardGeometry CreateGeometry(int boardSize, Rectangle viewport)
+    {
+        var board = CreateBoardBounds(viewport);
+        var margin = Math.Clamp(board.Width * 0.055f, 4f, board.Width / 3f);
+        return new GoBoardGeometry(
+            boardSize,
+            new GoBoardViewport(board.X, board.Y, board.Width, board.Height),
+            new GoBoardScreenPoint(board.X + margin, board.Y + margin),
+            (board.Width - margin * 2) / (boardSize - 1));
     }
 
     public void Dispose()
@@ -60,6 +90,16 @@ public sealed class GoInitialBoardRenderer : IDisposable
             ? new Rectangle((int)x1 - thickness / 2, (int)y1, thickness, Math.Max(1, (int)(y2 - y1)))
             : new Rectangle((int)x1, (int)y1 - thickness / 2, Math.Max(1, (int)(x2 - x1)), thickness);
         spriteBatch.Draw(_pixel, destination, new Color(49, 35, 25));
+    }
+
+    private static Rectangle CreateBoardBounds(Rectangle viewport)
+    {
+        var boardSide = Math.Max(32, Math.Min(viewport.Width, viewport.Height) - 96);
+        return new Rectangle(
+            viewport.X + (viewport.Width - boardSide) / 2,
+            viewport.Y + (viewport.Height - boardSide) / 2,
+            boardSide,
+            boardSide);
     }
 
     private static Texture2D CreateSolidTexture(GraphicsDevice graphicsDevice, Color color)
