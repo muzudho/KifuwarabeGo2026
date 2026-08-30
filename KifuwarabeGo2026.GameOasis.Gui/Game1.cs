@@ -91,6 +91,7 @@ public class Game1 : Game
     private GameOasisGuiComposition? _gameOasisComposition;
     private PlayRoomLaunchRequest? _pendingLocalMatchRequest;
     private readonly IPlayRoomLauncher _playRoomLauncher;
+    private readonly LocalMatchProcessLaunchCoordinator? _localMatchProcessLaunch;
     private readonly LobbyGuiController _lobbyGuiController;
     private readonly LobbyViewState _lobbyViewState;
     private readonly TournamentRulesSetting _tournamentRulesSetting;
@@ -230,7 +231,8 @@ public class Game1 : Game
         IInitialWindowLayoutService initialWindowLayoutService,
         IPlatformExecutableService platformExecutableService,
         IWindowScreenshotService windowScreenshotService,
-        ILauncherMaintenanceService? launcherMaintenanceService = null)
+        ILauncherMaintenanceService? launcherMaintenanceService = null,
+        IPlayRoomProcessLauncher? playRoomProcessLauncher = null)
     {
         _clipboardService = clipboardService;
         _textCompositionService = textCompositionService;
@@ -244,6 +246,9 @@ public class Game1 : Game
         _platformExecutableService = platformExecutableService;
         _windowScreenshotService = windowScreenshotService;
         _launcherMaintenanceService = launcherMaintenanceService ?? UnsupportedLauncherMaintenanceService.Instance;
+        _localMatchProcessLaunch = playRoomProcessLauncher is null
+            ? null
+            : new LocalMatchProcessLaunchCoordinator(playRoomProcessLauncher);
         _gameOasisCompositionTask = GameOasisGuiComposition.CreateAsync().AsTask();
         _cgosBlackConnectionProcess = new CgosConnectionProcess(_desktopLauncher, _platformExecutableService, "BlackPlayer");
         _cgosWhiteConnectionProcess = new CgosConnectionProcess(_desktopLauncher, _platformExecutableService, "PracticePlayer");
@@ -348,6 +353,7 @@ public class Game1 : Game
         CompleteCatalogSave();
         CompleteGameOasisComposition();
         CompleteGameOasisPlayingOperation();
+        CompleteLocalMatchProcessLaunch();
         var keyboard = Keyboard.GetState();
         var mouse = Mouse.GetState();
         SynchronizeOrArmWindowInput(keyboard, mouse);
@@ -2587,9 +2593,27 @@ public class Game1 : Game
 
     private void StartLocalMatch()
     {
-        HandlePlayRoomLaunchResult(
-            _playRoomLauncher.Launch(PlayRoomLaunchRequestFactory.CreateLocalMatch(_session)),
-            "LOCAL MATCH");
+        var request = PlayRoomLaunchRequestFactory.CreateLocalMatch(_session);
+        var result = _localMatchProcessLaunch is null
+            ? _playRoomLauncher.Launch(request)
+            : _localMatchProcessLaunch.Start(request);
+        HandlePlayRoomLaunchResult(result, "LOCAL MATCH");
+        if (result.IsAccepted && _localMatchProcessLaunch is not null)
+            GuiOperationLog.User("Started Local Match Play Room process", $"request={request.RequestId}");
+    }
+
+    private void CompleteLocalMatchProcessLaunch()
+    {
+        if (_localMatchProcessLaunch is null ||
+            !_localMatchProcessLaunch.TryTakeCompletion(out var completion) ||
+            completion is null)
+            return;
+
+        GuiOperationLog.App(
+            "Local Match Play Room process completed",
+            $"request={completion.RequestId}; status={completion.Status}; exitCode={completion.ExitCode}; code={completion.ErrorCode}; message={completion.Message}");
+        if (!completion.IsNormalExit)
+            ShowMessage(completion.Message ?? "The Local Match Play Room ended unexpectedly.", "LOCAL MATCH");
     }
 
     private PlayRoomLaunchResult LaunchLocalMatchInProcess(PlayRoomLaunchRequest request)

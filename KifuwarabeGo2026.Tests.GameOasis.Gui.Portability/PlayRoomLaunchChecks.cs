@@ -14,6 +14,8 @@ using System.IO;
 using System.Text.Json;
 using System.Linq;
 using System.Diagnostics;
+using System.Threading;
+using System.Threading.Tasks;
 
 internal static class PlayRoomLaunchChecks
 {
@@ -66,6 +68,31 @@ internal static class PlayRoomLaunchChecks
         VerifySavedGoReviewLaunchRequest();
         VerifyGoWindowsHostStartup();
         VerifyProcessLauncher();
+        VerifyLocalMatchProcessCoordinator();
+    }
+
+    private static void VerifyLocalMatchProcessCoordinator()
+    {
+        var launcher = new ControllableProcessLauncher();
+        var coordinator = new LocalMatchProcessLaunchCoordinator(launcher);
+        var request = CreateSavedMatchRequest("coordinated-process-request");
+
+        var started = coordinator.Start(request);
+        Require(started.Status == PlayRoomLaunchStatus.Started && coordinator.IsRunning,
+            "The Local Match process coordinator did not accept an asynchronous launch.");
+        Require(!coordinator.TryTakeCompletion(out _),
+            "The Local Match process coordinator blocked or completed before its child Host result.");
+
+        var duplicate = coordinator.Start(request with { RequestId = "duplicate-process-request" });
+        Require(duplicate.Status == PlayRoomLaunchStatus.Rejected &&
+                duplicate.ErrorCode == "play-room-host-already-running",
+            "The Local Match process coordinator accepted a second child Host while one was running.");
+
+        launcher.Complete(new(PlayRoomProcessCompletionStatus.ExitedNormally, request.RequestId, 0));
+        Require(coordinator.TryTakeCompletion(out var completion) &&
+                completion is { IsNormalExit: true, ExitCode: 0 } &&
+                !coordinator.IsRunning,
+            "The Local Match process coordinator did not return to an idle Lobby state after normal exit.");
     }
 
     private static void VerifyProcessLauncher()
@@ -266,5 +293,17 @@ internal static class PlayRoomLaunchChecks
     private static void Require(bool condition, string message)
     {
         if (!condition) throw new InvalidOperationException(message);
+    }
+
+    private sealed class ControllableProcessLauncher : IPlayRoomProcessLauncher
+    {
+        private readonly TaskCompletionSource<PlayRoomProcessCompletionResult> _completion =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public Task<PlayRoomProcessCompletionResult> LaunchAsync(
+            PlayRoomLaunchRequest request,
+            CancellationToken cancellationToken = default) => _completion.Task;
+
+        public void Complete(PlayRoomProcessCompletionResult result) => _completion.SetResult(result);
     }
 }

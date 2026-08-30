@@ -3,6 +3,7 @@ namespace KifuwarabeGo2026.GameOasis.Gui;
 using KifuwarabeGo2026.GameOasis.Gui.Infrastructure.Logging;
 using KifuwarabeGo2026.GameOasis.Gui.Infrastructure.Windows;
 using System;
+using KifuwarabeGo2026.PlayRoom.Launching;
 
 internal static class Program
 {
@@ -32,7 +33,8 @@ internal static class Program
                 new WindowsInitialWindowLayoutService(),
                 platformExecutableService,
                 new WindowsWindowScreenshotService(),
-                new WindowsLauncherMaintenanceService());
+                new WindowsLauncherMaintenanceService(),
+                new ProcessPlayRoomLauncher(GoPlayRoomHostProcessStartInfoFactory.Create));
             textCompositionService.Attach(game.Window.Handle);
             try
             {

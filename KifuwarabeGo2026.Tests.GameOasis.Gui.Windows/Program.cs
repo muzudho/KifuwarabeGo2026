@@ -24,6 +24,8 @@ using System.Linq;
 using System.IO;
 using System.Threading;
 using System.Runtime.InteropServices;
+using KifuwarabeGo2026.GameOasis.Contracts.Common;
+using KifuwarabeGo2026.GameOasis.Contracts.PlayRoom;
 
 internal static class Program
 {
@@ -39,6 +41,7 @@ internal static class Program
             VerifyLauncherShortcutStore();
             VerifyLauncherShortcutRewrite();
             VerifyExecutableNaming();
+            VerifyGoPlayRoomHostResolution();
             VerifyGuiExecutableGuard();
             VerifyProviderSelectionEditingAndThirdComboChoice();
             VerifyEngineManagementEditCloseReturnsToManagement();
@@ -60,6 +63,36 @@ internal static class Program
         {
             Console.Error.WriteLine($"FAIL: {ex.Message}");
             return 1;
+        }
+    }
+
+    private static void VerifyGoPlayRoomHostResolution()
+    {
+        var request = new PlayRoomLaunchRequest(
+            1,
+            "windows-host-resolution",
+            PlayRoomIds.Match,
+            GameOasisOfficialNames.Go,
+            new PlaySpaceTypeId(GameOasisOfficialNames.Go),
+            new ContractDocument("application/json", GameOasisOfficialNames.Go + ".configuration.v1", "{}"),
+            null,
+            []);
+        var startInfo = GoPlayRoomHostProcessStartInfoFactory.Create(request);
+        Require(
+            Path.GetFileName(startInfo.FileName) is "dotnet" or "dotnet.exe" ||
+            Path.GetFileName(startInfo.FileName) == "KifuwarabeGo2026.Reference.PlayRoomGui.Go.Windows.exe",
+            "The Windows Lobby did not resolve the Go Play Room Host command.");
+        if (Path.GetFileNameWithoutExtension(startInfo.FileName) == "dotnet")
+            Require(startInfo.ArgumentList.Count == 1 && File.Exists(startInfo.ArgumentList[0]),
+                "The Windows Lobby resolved a missing development Go Play Room Host assembly.");
+
+        try
+        {
+            GoPlayRoomHostProcessStartInfoFactory.Create(request with { RoomTypeId = PlayRoomIds.Review });
+            throw new InvalidOperationException("The Windows Lobby accepted an unregistered Review process Host.");
+        }
+        catch (InvalidOperationException exception) when (exception.Message.StartsWith("No process Play Room Host", StringComparison.Ordinal))
+        {
         }
     }
 
