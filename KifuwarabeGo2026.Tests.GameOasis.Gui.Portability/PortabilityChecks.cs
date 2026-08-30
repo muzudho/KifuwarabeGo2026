@@ -474,6 +474,26 @@ internal static class PortabilityChecks
         Require(typeof(LobbyGuiController).GetFields(BindingFlags.Instance | BindingFlags.NonPublic)
                 .All(field => !field.FieldType.Name.Contains("GoAppSession", StringComparison.Ordinal)),
             "Lobby GUI controller must not own the combined play-room session.");
+
+        var navigation = new LobbyNavigationController();
+        Require(navigation.CurrentPage == LobbyPage.Home,
+            "Lobby navigation must start on the Home page.");
+        navigation.OpenGameOasis();
+        Require(navigation.CurrentPage == LobbyPage.GameOasis,
+            "Lobby navigation must own the Game Oasis page transition.");
+        Require(navigation.TryOpenCasualApp(0) && navigation.CurrentPage == LobbyPage.CaptureGame,
+            "Lobby navigation must map the first casual app to Capture Game.");
+        Require(navigation.TryOpenCasualApp(1) && navigation.CurrentPage == LobbyPage.Tsumego,
+            "Lobby navigation must map the second casual app to Tsumego.");
+        Require(navigation.TryOpenCasualApp(2) && navigation.CurrentPage == LobbyPage.NextMove,
+            "Lobby navigation must map the third casual app to Next Move.");
+        Require(!navigation.TryOpenCasualApp(3) && navigation.CurrentPage == LobbyPage.NextMove,
+            "Lobby navigation must reject an unknown casual app without changing pages.");
+        navigation.OpenHome();
+        Require(navigation.CurrentPage == LobbyPage.Home,
+            "Lobby navigation must return to Home without a Play Room session.");
+        Require(typeof(LobbyNavigationController).Assembly == typeof(LobbyGuiController).Assembly,
+            "Lobby page state and transitions must be owned by the LobbyGui assembly.");
     }
 
     private sealed class FakeLobbyEngine : ILobbyEngine

@@ -7,7 +7,6 @@ using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.LinkUnde
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.GtpEngine;
 
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.Title;
 using KifuwarabeGo2026.GameOasis.Gui.Application;
 using KifuwarabeGo2026.GameOasis.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.ConnectionTarget;
 using KifuwarabeGo2026.Reference.PlayDomain.Go;

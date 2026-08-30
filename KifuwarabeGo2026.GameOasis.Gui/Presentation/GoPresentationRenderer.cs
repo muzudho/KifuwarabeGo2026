@@ -22,7 +22,7 @@ using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.LiveBoardPreview;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.RightSidePanel;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.SelectEntry;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.Title;
+using KifuwarabeGo2026.LobbyGui.Application;
 using Microsoft.Xna.Framework;
 using KifuwarabeGo2026.Reference.PlayDomain.Go;
 using KifuwarabeGo2026.GameOasis.Contracts.Common;
@@ -57,7 +57,7 @@ public sealed class GoPresentationRenderer : System.IDisposable
         _titleScreenRenderer = titleScreenRenderer;
     }
 
-    public void DrawTitle(GoAppSession session, Point mousePoint, TitleMenuPage page,
+    public void DrawTitle(GoAppSession session, Point mousePoint, LobbyPage page,
         int appProviderTabIndex, bool isAppProviderLoading, IReadOnlyList<GuiPlaySpaceEntry> gameOasisPlaySpaces) =>
         _titleScreenRenderer.DrawScreen(_drawingContext, _gtpEngineRenderer, session, mousePoint,
             page, appProviderTabIndex, isAppProviderLoading, gameOasisPlaySpaces);

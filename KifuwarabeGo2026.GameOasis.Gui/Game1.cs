@@ -32,7 +32,6 @@ using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.ApplicationSettings;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Audio;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.PonnukiProviderSelection;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.Title;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.Title;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.LocalMatch;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.LocalMatch.Intermission;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.PopupTrendChart.MoveCommentPanel;
@@ -156,7 +155,7 @@ public class Game1 : Game
     private readonly TextBoxController _cgosCredentialTextBox = new(240);
     private bool _isApplicationSettingsOpen;
     private ApplicationSettingsPage _applicationSettingsPage = ApplicationSettingsPage.Log;
-    private TitleMenuPage _titleMenuPage = TitleMenuPage.Home;
+    private readonly LobbyNavigationController _lobbyNavigation = new();
     private int _appProviderTabIndex;
     private readonly List<string> _guiLogFiles = new();
     private int _selectedGuiLogIndex = -1;
@@ -842,7 +841,7 @@ public class Game1 : Game
                 if (_isApplicationSettingsOpen)
                     ApplicationSettingsScreen.Default.Draw(_presentationServices.Stationery, backgroundMousePosition, _applicationSettingsPage, ApplicationSettings.Current.LogRootDirectory, ApplicationSettings.Current.SgfSaveDirectory, ApplicationSettings.Current.ScreenshotSaveDirectory, _lobbyViewState.ApplicationSettingsPath, _lobbyViewState.GtpEngineSettingsPath, _guiLogFiles, _selectedGuiLogIndex, _applicationSettingsMessage);
                 else
-                    _presentationServices.Presentation.DrawTitle(_session, backgroundMousePosition, _titleMenuPage,
+                    _presentationServices.Presentation.DrawTitle(_session, backgroundMousePosition, _lobbyNavigation.CurrentPage,
                         _appProviderTabIndex, _appProviderSelectionLoadTask is not null,
                         _gameOasisComposition?.Client.State.PlaySpaces ?? []);
             }
@@ -1974,7 +1973,7 @@ public class Game1 : Game
             else if (isLocalAppsIntermission && LocalMatchIntermissionPage.Default.ChangeAppProviderButton.IsHit(point))
             {
                 _session.ReturnToUseSelection();
-                _titleMenuPage = TitleMenuPage.CaptureGame;
+                _lobbyNavigation.TryOpenCasualApp(0);
                 GuiOperationLog.User("Returned to App Provider selection", "app=ponnuki");
             }
             else if (isLocalAppsIntermission &&
@@ -2927,12 +2926,12 @@ public class Game1 : Game
     {
         if (TitleScreen.Default.BackButton.IsHit(point))
         {
-            _titleMenuPage = TitleMenuPage.Home;
-            GuiOperationLog.User("Pressed title menu Back button", $"page={_titleMenuPage}");
+            _lobbyNavigation.OpenHome();
+            GuiOperationLog.User("Pressed title menu Back button", $"page={_lobbyNavigation.CurrentPage}");
             return true;
         }
 
-        if (_titleMenuPage == TitleMenuPage.Home)
+        if (_lobbyNavigation.CurrentPage == LobbyPage.Home)
         {
             if (TitleScreen.Default.LocalMatchButton.IsHit(point))
             {
@@ -2964,25 +2963,20 @@ public class Game1 : Game
 
             if (TitleScreen.Default.GameOasisButton.IsHit(point))
             {
-                _titleMenuPage = TitleMenuPage.GameOasis;
+                _lobbyNavigation.OpenGameOasis();
                 GuiOperationLog.User("Opened Game Oasis", "Navigate from title to play-space selection");
                 return true;
             }
 
             if (TitleScreen.Default.GetAppHit(point) is { } appIndex)
             {
-                _titleMenuPage = appIndex switch
-                {
-                    0 => TitleMenuPage.CaptureGame,
-                    1 => TitleMenuPage.Tsumego,
-                    _ => TitleMenuPage.NextMove,
-                };
-                GuiOperationLog.User("Opened Casual Apps entry", $"page={_titleMenuPage}");
+                _lobbyNavigation.TryOpenCasualApp(appIndex);
+                GuiOperationLog.User("Opened Casual Apps entry", $"page={_lobbyNavigation.CurrentPage}");
                 return true;
             }
         }
 
-        if (_titleMenuPage == TitleMenuPage.GameOasis)
+        if (_lobbyNavigation.CurrentPage == LobbyPage.GameOasis)
         {
             var playSpaces = _gameOasisComposition?.Client.State.PlaySpaces;
             if (playSpaces is not null &&
@@ -2990,7 +2984,7 @@ public class Game1 : Game
                 return BeginGameOasisSession(playSpaces[playSpaceIndex].TypeId);
         }
 
-        if (_titleMenuPage == TitleMenuPage.CaptureGame)
+        if (_lobbyNavigation.CurrentPage == LobbyPage.CaptureGame)
         {
             if (PonnukiProviderSelectionScreen.Default.IsProviderLinkHit(point))
             {
@@ -3019,7 +3013,7 @@ public class Game1 : Game
 
     private void UpdateAppProviderSelectionKeyboard(KeyboardState keyboard)
     {
-        if (!IsActive || !_inputArmed || _titleMenuPage != TitleMenuPage.CaptureGame ||
+        if (!IsActive || !_inputArmed || _lobbyNavigation.CurrentPage != LobbyPage.CaptureGame ||
             _session.IsGtpEngineSelectionDialogOpen || _session.IsGtpEngineEditPanelOpen)
         {
             return;
@@ -3070,7 +3064,7 @@ public class Game1 : Game
                 GuiOperationLog.User("Entered Local Apps intermission", "app=ponnuki; input=keyboard");
                 break;
             case 3:
-                _titleMenuPage = TitleMenuPage.Home;
+                _lobbyNavigation.OpenHome();
                 GuiOperationLog.User("Pressed title menu Back button", "page=Home; input=keyboard");
                 break;
         }
@@ -5732,7 +5726,7 @@ public class Game1 : Game
         try
         {
             _session.SetGtpEngineAppCompatibilities(task.GetAwaiter().GetResult());
-            if (_session.UseKind is null && _titleMenuPage == TitleMenuPage.CaptureGame)
+            if (_session.UseKind is null && _lobbyNavigation.CurrentPage == LobbyPage.CaptureGame)
                 _session.OpenAppProviderGtpEngineSelectionDialog(_appProviderSelectionLoadAppId);
         }
         catch (Exception ex)
@@ -7180,7 +7174,7 @@ public class Game1 : Game
         var screen = _isApplicationSettingsOpen
             ? "Application settings"
             : _session.UseKind is null
-                ? $"Title/{_titleMenuPage}"
+                ? $"Title/{_lobbyNavigation.CurrentPage}"
                 : _session.UseKind == GoAppUseKind.LocalPlay
                     ? _playingScene.IsInitialPositionConciergeVisible
                         ? "Formal/LocalMatch/InitialPositionConcierge"
@@ -7220,10 +7214,10 @@ public class Game1 : Game
         if (_session.UseKind is not null || _isApplicationSettingsOpen)
             return StickyNoteScreenId.Unknown;
 
-        return _titleMenuPage switch
+        return _lobbyNavigation.CurrentPage switch
         {
-            TitleMenuPage.Home => StickyNoteScreenId.TitleHome,
-            TitleMenuPage.CaptureGame => StickyNoteScreenId.TitlePonnukiProviderSelection,
+            LobbyPage.Home => StickyNoteScreenId.TitleHome,
+            LobbyPage.CaptureGame => StickyNoteScreenId.TitlePonnukiProviderSelection,
             _ => StickyNoteScreenId.Unknown,
         };
     }
@@ -7238,13 +7232,13 @@ public class Game1 : Game
 
         if (_session.UseKind is null)
         {
-            return _titleMenuPage switch
+            return _lobbyNavigation.CurrentPage switch
             {
-                TitleMenuPage.Home => "LOBBY",
-                TitleMenuPage.GameOasis => "LOBBY  >  GAME OASIS  >  PLAY ROOM SELECT",
-                TitleMenuPage.CaptureGame => "LOBBY  >  CASUAL APPS  >  PONNUKI",
-                TitleMenuPage.Tsumego => "LOBBY  >  CASUAL APPS  >  TSUMEGO",
-                TitleMenuPage.NextMove => "LOBBY  >  CASUAL APPS  >  NEXT MOVE",
+                LobbyPage.Home => "LOBBY",
+                LobbyPage.GameOasis => "LOBBY  >  GAME OASIS  >  PLAY ROOM SELECT",
+                LobbyPage.CaptureGame => "LOBBY  >  CASUAL APPS  >  PONNUKI",
+                LobbyPage.Tsumego => "LOBBY  >  CASUAL APPS  >  TSUMEGO",
+                LobbyPage.NextMove => "LOBBY  >  CASUAL APPS  >  NEXT MOVE",
                 _ => "LOBBY",
             };
         }

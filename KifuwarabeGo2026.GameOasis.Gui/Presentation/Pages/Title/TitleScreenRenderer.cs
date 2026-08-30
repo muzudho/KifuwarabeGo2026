@@ -3,7 +3,7 @@ namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.Title;
 using KifuwarabeGo2026.GameOasis.Gui.Application;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.StickyNote;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.TitleBackground;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.Title;
+using KifuwarabeGo2026.LobbyGui.Application;
 using Microsoft.Xna.Framework;
 using System;
 using System.Linq;
@@ -23,7 +23,7 @@ public sealed class TitleScreenRenderer
 {
     public void DrawScreen(KfwStationeryDrawingTools drawingContext, GtpEngineRenderer gtpEngineRenderer,
         GoAppSession session, Point mousePosition,
-        TitleMenuPage page, int appProviderTabIndex, bool isAppProviderLoading,
+        LobbyPage page, int appProviderTabIndex, bool isAppProviderLoading,
         IReadOnlyList<GuiPlaySpaceEntry> gameOasisPlaySpaces)
     {
         var mousePoint = drawingContext.ToVirtualPoint(mousePosition);
@@ -57,7 +57,7 @@ public sealed class TitleScreenRenderer
     #region ［CASUAL APPS 区画］
     #endregion
 
-    public void Draw(KfwStationeryDrawingTools drawingContext, GoAppSession session, Point mousePoint, TitleMenuPage page, int appProviderTabIndex, bool isAppProviderLoading,
+    public void Draw(KfwStationeryDrawingTools drawingContext, GoAppSession session, Point mousePoint, LobbyPage page, int appProviderTabIndex, bool isAppProviderLoading,
         IReadOnlyList<GuiPlaySpaceEntry> gameOasisPlaySpaces)
     {
         _drawingContext = drawingContext;
@@ -79,12 +79,12 @@ public sealed class TitleScreenRenderer
         ApplicationSettingsScreen.Default.DrawSettingsButton(_drawingContext, mousePoint);
     }
 
-    private void DrawTitleMenuContent(GoAppSession session, TitleMenuPage page, Rectangle panel, Point mousePoint, int appProviderTabIndex, bool isAppProviderLoading,
+    private void DrawTitleMenuContent(GoAppSession session, LobbyPage page, Rectangle panel, Point mousePoint, int appProviderTabIndex, bool isAppProviderLoading,
         IReadOnlyList<GuiPlaySpaceEntry> gameOasisPlaySpaces)
     {
         switch (page)
         {
-            case TitleMenuPage.Home:
+            case LobbyPage.Home:
                 var entrySettingsHovered = _titleScreen.EntrySettingsLabelBounds.Contains(mousePoint);
                 var formalAppsHovered = _titleScreen.FormalAppsLabelBounds.Contains(mousePoint);
                 var casualAppsHovered = _titleScreen.CasualAppsLabelBounds.Contains(mousePoint);
@@ -138,7 +138,7 @@ public sealed class TitleScreenRenderer
                     DrawCaptureGamePreview();
                 }
                 break;
-            case TitleMenuPage.GameOasis:
+            case LobbyPage.GameOasis:
                 DrawTitleBreadcrumb("GAME OASIS  >  SELECT PLAY-SPACE", panel);
                 for (var index = 0; index < Math.Min(gameOasisPlaySpaces.Count, 4); index++)
                 {
@@ -326,9 +326,9 @@ public sealed class TitleScreenRenderer
         return new Vector2(x, labelPosition.Y + 15);
     }
 
-    private void DrawAppPage(GoAppSession session, TitleMenuPage page, Rectangle panel, Point mousePoint, int appProviderTabIndex, bool isAppProviderLoading)
+    private void DrawAppPage(GoAppSession session, LobbyPage page, Rectangle panel, Point mousePoint, int appProviderTabIndex, bool isAppProviderLoading)
     {
-        if (page == TitleMenuPage.CaptureGame)
+        if (page == LobbyPage.CaptureGame)
         {
             DrawPonnukiProviderSelection(session, panel, mousePoint, appProviderTabIndex, isAppProviderLoading);
             return;
@@ -336,8 +336,8 @@ public sealed class TitleScreenRenderer
 
         var (title, caption) = page switch
         {
-            TitleMenuPage.CaptureGame => ("ポン抜きゲーム", "CAPTURE GAME"),
-            TitleMenuPage.Tsumego => ("詰碁", "LIFE & DEATH"),
+            LobbyPage.CaptureGame => ("ポン抜きゲーム", "CAPTURE GAME"),
+            LobbyPage.Tsumego => ("詰碁", "LIFE & DEATH"),
             _ => ("次の一手問題", "NEXT MOVE"),
         };
         DrawTitleBreadcrumb($"HOME  >  CASUAL APPS  >  {caption}", panel);
