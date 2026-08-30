@@ -13,7 +13,8 @@ public static class LobbyScreenPresenter
         return new(
             currentPage,
             LobbyHomePresenter.Create(),
-            LobbyGameOasisPresenter.Create(gameOasisEntries));
+            LobbyGameOasisPresenter.Create(gameOasisEntries),
+            LobbyCasualAppPresenter.Create(currentPage));
     }
 }
 
@@ -21,4 +22,5 @@ public static class LobbyScreenPresenter
 public sealed record LobbyScreenPresentation(
     LobbyPage CurrentPage,
     LobbyHomePresentation Home,
-    LobbyGameOasisPresentation GameOasis);
+    LobbyGameOasisPresentation GameOasis,
+    LobbyCasualAppPresentation? CasualApp);

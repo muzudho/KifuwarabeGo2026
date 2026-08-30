@@ -161,7 +161,7 @@ public sealed class TitleScreenRenderer
                 DrawTitleBackButton(mousePoint);
                 break;
             default:
-                DrawAppPage(session, lobby.CurrentPage, panel, mousePoint, appProviderTabIndex, isAppProviderLoading);
+                DrawCasualAppPage(session, lobby.CasualApp!, panel, mousePoint, appProviderTabIndex, isAppProviderLoading);
                 break;
         }
     }
@@ -317,24 +317,19 @@ public sealed class TitleScreenRenderer
         return new Vector2(x, labelPosition.Y + 15);
     }
 
-    private void DrawAppPage(GoAppSession session, LobbyPage page, Rectangle panel, Point mousePoint, int appProviderTabIndex, bool isAppProviderLoading)
+    private void DrawCasualAppPage(GoAppSession session, LobbyCasualAppPresentation presentation,
+        Rectangle panel, Point mousePoint, int appProviderTabIndex, bool isAppProviderLoading)
     {
-        if (page == LobbyPage.CaptureGame)
+        if (presentation.Content == LobbyCasualAppContent.ProviderSelection)
         {
             DrawPonnukiProviderSelection(session, panel, mousePoint, appProviderTabIndex, isAppProviderLoading);
             return;
         }
 
-        var (title, caption) = page switch
-        {
-            LobbyPage.CaptureGame => ("ポン抜きゲーム", "CAPTURE GAME"),
-            LobbyPage.Tsumego => ("詰碁", "LIFE & DEATH"),
-            _ => ("次の一手問題", "NEXT MOVE"),
-        };
-        DrawTitleBreadcrumb($"HOME  >  CASUAL APPS  >  {caption}", panel);
-        DrawDynamicOptionText(title, new Rectangle(panel.X + 150, panel.Y + 280, panel.Width - 300, 92), Color.White, 0.84f);
-        DrawFittedText("COMING SOON", new Rectangle(panel.X + 250, panel.Y + 430, panel.Width - 500, 70), new Color(99, 223, 185), 0.72f);
-        DrawDynamicOptionText("問題集と問題一覧は、ここからディレクトリーのように開いていく予定です。", new Rectangle(panel.X + 150, panel.Y + 530, panel.Width - 300, 54), new Color(180, 195, 195), 0.38f);
+        DrawTitleBreadcrumb(presentation.Breadcrumb, panel);
+        DrawDynamicOptionText(presentation.Title, new Rectangle(panel.X + 150, panel.Y + 280, panel.Width - 300, 92), Color.White, 0.84f);
+        DrawFittedText(presentation.StatusMessage!, new Rectangle(panel.X + 250, panel.Y + 430, panel.Width - 500, 70), new Color(99, 223, 185), 0.72f);
+        DrawDynamicOptionText(presentation.Description!, new Rectangle(panel.X + 150, panel.Y + 530, panel.Width - 300, 54), new Color(180, 195, 195), 0.38f);
         DrawTitleBackButton(mousePoint);
     }
 

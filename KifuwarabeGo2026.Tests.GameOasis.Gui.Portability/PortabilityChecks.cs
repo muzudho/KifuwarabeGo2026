@@ -569,13 +569,42 @@ internal static class PortabilityChecks
         var lobbyScreen = LobbyScreenPresenter.Create(LobbyPage.GameOasis, playSpaces);
         Require(lobbyScreen.CurrentPage == LobbyPage.GameOasis &&
                 ReferenceEquals(lobbyScreen.Home, home) &&
-                lobbyScreen.GameOasis.VisibleItems.Count == LobbyGameOasisPresenter.MaximumVisibleItems,
+                lobbyScreen.GameOasis.VisibleItems.Count == LobbyGameOasisPresenter.MaximumVisibleItems &&
+                lobbyScreen.CasualApp is null,
             "The Lobby screen presenter must compose page, Home, and Game Oasis state into one drawing input.");
         Require(typeof(LobbyScreenPresentation).GetProperties()
                 .Select(property => property.PropertyType.FullName ?? property.PropertyType.Name)
                 .All(type => !type.Contains("MonoGame", StringComparison.Ordinal) &&
                              !type.Contains("Microsoft.Xna", StringComparison.Ordinal)),
             "The Lobby screen presentation must not expose MonoGame drawing types.");
+        var captureGame = LobbyScreenPresenter.Create(LobbyPage.CaptureGame, []).CasualApp;
+        var tsumego = LobbyScreenPresenter.Create(LobbyPage.Tsumego, []).CasualApp;
+        var nextMove = LobbyScreenPresenter.Create(LobbyPage.NextMove, []).CasualApp;
+        Require(captureGame is
+                {
+                    Page: LobbyPage.CaptureGame,
+                    Title: "ポン抜きゲーム",
+                    Caption: "CAPTURE GAME",
+                    Content: LobbyCasualAppContent.ProviderSelection,
+                    StatusMessage: null,
+                },
+            "Capture Game must explicitly delegate its provider-selection content to the compatible host.");
+        Require(tsumego is
+                {
+                    Title: "詰碁",
+                    Caption: "LIFE & DEATH",
+                    Breadcrumb: "HOME  >  CASUAL APPS  >  LIFE & DEATH",
+                    Content: LobbyCasualAppContent.ComingSoon,
+                    StatusMessage: "COMING SOON",
+                } &&
+                nextMove is
+                {
+                    Title: "次の一手問題",
+                    Caption: "NEXT MOVE",
+                    Content: LobbyCasualAppContent.ComingSoon,
+                } &&
+                nextMove.Description?.Length > 0,
+            "Lobby Casual App presentations must own completed placeholder display content.");
         var loadingGameOasis = LobbyGameOasisPresenter.Create([]);
         Require(loadingGameOasis.IsLoading &&
                 loadingGameOasis.LoadingMessage == "CONNECTING TO GAME OASIS..." &&
