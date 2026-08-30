@@ -843,7 +843,7 @@ public class Game1 : Game
                 else
                     _presentationServices.Presentation.DrawTitle(_session, backgroundMousePosition, _lobbyInput.CurrentPage,
                         _appProviderTabIndex, _appProviderSelectionLoadTask is not null,
-                        _gameOasisComposition?.Client.State.PlaySpaces ?? []);
+                        LobbyGameOasisPresenter.Create(_gameOasisComposition?.Client.State.PlaySpaces ?? []));
             }
         }
         else if (_variationSession is not null)
@@ -2968,10 +2968,10 @@ public class Game1 : Game
 
         if (_lobbyInput.CurrentPage == LobbyPage.GameOasis)
         {
-            var playSpaces = _gameOasisComposition?.Client.State.PlaySpaces;
-            if (playSpaces is not null &&
-                TitleScreen.GetGameOasisPlaySpaceHit(point, playSpaces.Count) is { } playSpaceIndex)
-                return BeginGameOasisSession(playSpaces[playSpaceIndex].TypeId);
+            var presentation = LobbyGameOasisPresenter.Create(_gameOasisComposition?.Client.State.PlaySpaces ?? []);
+            if (TitleScreen.GetGameOasisPlaySpaceHit(point, presentation.VisibleItems.Count) is { } visibleIndex &&
+                presentation.Select(visibleIndex) is { } intent)
+                return BeginGameOasisSession(intent.PlaySpaceTypeId);
         }
 
         if (_lobbyInput.CurrentPage == LobbyPage.CaptureGame)

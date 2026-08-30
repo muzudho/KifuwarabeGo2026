@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\KifuwarabeGo2026.GameOasis.Contracts\KifuwarabeGo2026.GameOasis.Contracts.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.GameOasis.Application\KifuwarabeGo2026.GameOasis.Application.csproj" />
     <ProjectReference Include="..\KifuwarabeGo2026.LobbyEngine\KifuwarabeGo2026.LobbyEngine.csproj" />
   </ItemGroup>

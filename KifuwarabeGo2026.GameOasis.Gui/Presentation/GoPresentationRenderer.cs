@@ -27,8 +27,6 @@ using Microsoft.Xna.Framework;
 using KifuwarabeGo2026.Reference.PlayDomain.Go;
 using KifuwarabeGo2026.GameOasis.Contracts.Common;
 using KifuwarabeGo2026.Reference.PlayRoomGui.Common;
-using KifuwarabeGo2026.GameOasis.Contracts.ProtocolG;
-using System.Collections.Generic;
 
 /// <summary>各画面 Renderer の所有と、盤面・レビュー画面の描画順序を担当します。</summary>
 public sealed class GoPresentationRenderer : System.IDisposable
@@ -58,9 +56,9 @@ public sealed class GoPresentationRenderer : System.IDisposable
     }
 
     public void DrawTitle(GoAppSession session, Point mousePoint, LobbyPage page,
-        int appProviderTabIndex, bool isAppProviderLoading, IReadOnlyList<GuiPlaySpaceEntry> gameOasisPlaySpaces) =>
+        int appProviderTabIndex, bool isAppProviderLoading, LobbyGameOasisPresentation gameOasis) =>
         _titleScreenRenderer.DrawScreen(_drawingContext, _gtpEngineRenderer, session, mousePoint,
-            page, appProviderTabIndex, isAppProviderLoading, gameOasisPlaySpaces);
+            page, appProviderTabIndex, isAppProviderLoading, gameOasis);
 
     public void DrawCgosWatch(GoAppSession session, CgosGameObservation observation, Point mousePoint) =>
         CgosWatchPage.Default.Draw(_cgosWatchingRenderer, _drawingContext, session, observation, mousePoint);

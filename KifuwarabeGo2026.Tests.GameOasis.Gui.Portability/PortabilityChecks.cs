@@ -6,6 +6,7 @@ using KifuwarabeGo2026.GameOasis.Gui.Application.GameOasis;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.GameOasis;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.Title;
 using KifuwarabeGo2026.GameOasis.Contracts.Common;
+using KifuwarabeGo2026.GameOasis.Contracts.ProtocolG;
 using KifuwarabeGo2026.GameOasis.Concierge;
 using KifuwarabeGo2026.GameOasis.Application.Catalogs;
 using KifuwarabeGo2026.GameOasis.Application.Profiles;
@@ -539,6 +540,31 @@ internal static class PortabilityChecks
                 title.GetHomeTargetHit(title.CaptureGameButton.Bounds.Center) == LobbyHomeTarget.CaptureGame &&
                 title.GetHomeTargetHit(Point.Zero) is null,
             "The MonoGame Lobby adapter must translate Home geometry into semantic targets.");
+
+        var playSpaces = Enumerable.Range(0, 6)
+            .Select(index => new GuiPlaySpaceEntry(
+                new PlaySpaceTypeId($"example.game-{index}"),
+                $"Game {index}",
+                $"Example.Implementation.{index}",
+                "1.0.0",
+                ["play"]))
+            .ToArray();
+        var gameOasis = LobbyGameOasisPresenter.Create(playSpaces);
+        Require(gameOasis.VisibleItems.Count == LobbyGameOasisPresenter.MaximumVisibleItems &&
+                gameOasis.RemainingItemCount == 2 && !gameOasis.IsLoading,
+            "The Lobby Game Oasis presenter must cap visible entries and preserve the remaining count.");
+        Require(gameOasis.VisibleItems[0].DisplayName == "Game 0" &&
+                gameOasis.VisibleItems[3].ImplementationName == "Example.Implementation.3",
+            "The Lobby Game Oasis presenter must preserve public catalog display fields.");
+        Require(gameOasis.Select(1)?.PlaySpaceTypeId == new PlaySpaceTypeId("example.game-1") &&
+                gameOasis.Select(-1) is null && gameOasis.Select(4) is null,
+            "The Lobby Game Oasis presentation must create selection intents only for visible entries.");
+        Require(LobbyGameOasisPresenter.Create([]).IsLoading,
+            "An empty Game Oasis catalog must remain an explicit loading presentation.");
+        Require(typeof(LobbyGameOasisPresentation).GetProperties()
+                .All(property => !property.PropertyType.Name.Contains(nameof(GuiPlaySpaceEntry), StringComparison.Ordinal) &&
+                                 !(property.PropertyType.FullName ?? "").Contains("Microsoft.Xna", StringComparison.Ordinal)),
+            "The Lobby Game Oasis presentation must not expose Protocol G catalog or MonoGame drawing types.");
     }
 
     private sealed class FakeLobbyEngine : ILobbyEngine

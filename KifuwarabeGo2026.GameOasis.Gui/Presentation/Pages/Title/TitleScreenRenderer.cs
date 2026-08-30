@@ -16,8 +16,6 @@ using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.SelectEntry;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.EditEntryProfile;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.EntryProfiles;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.HeadUpDisplay;
-using KifuwarabeGo2026.GameOasis.Contracts.ProtocolG;
-using System.Collections.Generic;
 
 public sealed class TitleScreenRenderer
 {
@@ -26,12 +24,12 @@ public sealed class TitleScreenRenderer
     public void DrawScreen(KfwStationeryDrawingTools drawingContext, GtpEngineRenderer gtpEngineRenderer,
         GoAppSession session, Point mousePosition,
         LobbyPage page, int appProviderTabIndex, bool isAppProviderLoading,
-        IReadOnlyList<GuiPlaySpaceEntry> gameOasisPlaySpaces)
+        LobbyGameOasisPresentation gameOasis)
     {
         var mousePoint = drawingContext.ToVirtualPoint(mousePosition);
         drawingContext.Begin();
         drawingContext.DrawBackground();
-        Draw(drawingContext, session, mousePoint, page, appProviderTabIndex, isAppProviderLoading, gameOasisPlaySpaces);
+        Draw(drawingContext, session, mousePoint, page, appProviderTabIndex, isAppProviderLoading, gameOasis);
         SelectEntryPresenter.Default.Draw(drawingContext, session, mousePoint);
         EditEntryProfile.Default.Draw(drawingContext, session, mousePoint, HeadUpDisplayComponent.Default.StickyNoteScreen);
         EntryProfilesPresenter.Default.DrawPanels(drawingContext, session, mousePoint);
@@ -60,7 +58,7 @@ public sealed class TitleScreenRenderer
     #endregion
 
     public void Draw(KfwStationeryDrawingTools drawingContext, GoAppSession session, Point mousePoint, LobbyPage page, int appProviderTabIndex, bool isAppProviderLoading,
-        IReadOnlyList<GuiPlaySpaceEntry> gameOasisPlaySpaces)
+        LobbyGameOasisPresentation gameOasis)
     {
         _drawingContext = drawingContext;
         // タイトル画面の囲碁用具ワイヤー装飾。
@@ -76,13 +74,13 @@ public sealed class TitleScreenRenderer
         _titleScreen.Headline.Draw(_drawingContext);
         DrawText(GetDisplayVersion(), new Vector2(panel.X + 790, panel.Y + 91), new Color(99, 223, 185), 0.38f);
         DrawLine(new Vector2(panel.X + 790, panel.Y + 126), new Vector2(panel.X + 958, panel.Y + 126), 2, new Color(99, 223, 185, 120));
-        DrawTitleMenuContent(session, page, panel, mousePoint, appProviderTabIndex, isAppProviderLoading, gameOasisPlaySpaces);
+        DrawTitleMenuContent(session, page, panel, mousePoint, appProviderTabIndex, isAppProviderLoading, gameOasis);
         DrawLauncherButtons(mousePoint);
         ApplicationSettingsScreen.Default.DrawSettingsButton(_drawingContext, mousePoint);
     }
 
     private void DrawTitleMenuContent(GoAppSession session, LobbyPage page, Rectangle panel, Point mousePoint, int appProviderTabIndex, bool isAppProviderLoading,
-        IReadOnlyList<GuiPlaySpaceEntry> gameOasisPlaySpaces)
+        LobbyGameOasisPresentation gameOasis)
     {
         switch (page)
         {
@@ -148,18 +146,18 @@ public sealed class TitleScreenRenderer
                 break;
             case LobbyPage.GameOasis:
                 DrawTitleBreadcrumb("GAME OASIS  >  SELECT PLAY-SPACE", panel);
-                for (var index = 0; index < Math.Min(gameOasisPlaySpaces.Count, 4); index++)
+                for (var index = 0; index < gameOasis.VisibleItems.Count; index++)
                 {
-                    var entry = gameOasisPlaySpaces[index];
+                    var entry = gameOasis.VisibleItems[index];
                     DrawGameOasisPlaySpaceChoice(
                         TitleScreen.GetGameOasisPlaySpaceBounds(index),
                         entry,
                         mousePoint);
                 }
-                if (gameOasisPlaySpaces.Count == 0)
+                if (gameOasis.IsLoading)
                     DrawFittedText("CONNECTING TO GAME OASIS...", new Rectangle(560, 500, 800, 52), new Color(180, 195, 195), 0.42f);
-                else if (gameOasisPlaySpaces.Count > 4)
-                    DrawFittedText($"+ {gameOasisPlaySpaces.Count - 4} MORE PLAY-SPACES", new Rectangle(560, 790, 800, 32), new Color(180, 195, 195), 0.3f);
+                else if (gameOasis.RemainingItemCount > 0)
+                    DrawFittedText($"+ {gameOasis.RemainingItemCount} MORE PLAY-SPACES", new Rectangle(560, 790, 800, 32), new Color(180, 195, 195), 0.3f);
                 DrawTitleBackButton(mousePoint);
                 break;
             default:
@@ -180,7 +178,7 @@ public sealed class TitleScreenRenderer
         DrawFittedText("OPEN  >", new Rectangle(bounds.Right - 92, bounds.Y + 76, 68, 28), hovered ? accent : new Color(180, 195, 195), 0.28f);
     }
 
-    private void DrawGameOasisPlaySpaceChoice(Rectangle bounds, GuiPlaySpaceEntry entry, Point mousePoint)
+    private void DrawGameOasisPlaySpaceChoice(Rectangle bounds, LobbyGameOasisItem entry, Point mousePoint)
     {
         var hovered = bounds.Contains(mousePoint);
         var accent = new Color(178, 145, 255);
