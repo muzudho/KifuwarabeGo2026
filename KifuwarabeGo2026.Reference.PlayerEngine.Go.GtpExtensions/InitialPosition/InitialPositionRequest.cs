@@ -1,6 +1,6 @@
 namespace KifuwarabeGo2026.Reference.PlayerEngine.Go.GtpExtensions.InitialPosition;
 
-using KifuwarabeGo2026.Reference.PlayRoomEngine.Go.LegacyMatch;
+using KifuwarabeGo2026.Reference.PlayRoomEngine.Go.Match;
 using KifuwarabeGo2026.Reference.PlayDomain.Go;
 using System.Collections.ObjectModel;
 

@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Reference.PlayRoomEngine.Go.LegacyMatch;
+namespace KifuwarabeGo2026.Reference.PlayRoomEngine.Go.Match;
 
 /// <summary>
 /// Describes why a match action was rejected.

@@ -243,53 +243,6 @@ public sealed class EntryProfilesPresenter
     private static Vector2 PlayerEditUnderlineConnectorStart(Rectangle textBounds) =>
         ClientIdentityUnderlineConnectorStart(textBounds);
 
-#if false // Superseded by the independent EditEntryProfile component.
-    // Moved to Presentation/Shared/EditEntryProfile/EditEntryProfile.cs.
-    // Kept temporarily only as an inactive compatibility stub while this file is split further.
-    private void DrawPlayerEditStickyNoteLegacy(GoAppSession session, Point mousePoint)
-    {
-        var displayNameBounds = PlayerEditPanelFieldTextBounds(EntryProfileEditField.DisplayName);
-        var handleBounds = PlayerEditPanelClientIdentityTextBounds;
-        var engineBounds = PlayerEditPanelEngineTextBounds;
-        string? heading = null;
-        string[]? bodyLines = null;
-        Vector2 connectorStart = default;
-
-        if (PlayerEditFieldHoverBounds(displayNameBounds).Contains(mousePoint))
-        {
-            heading = "PLAYER NAME とは？";
-            bodyLines = ["画面に表示され、棋譜に書き込まれる、プレイヤーの呼び名。"];
-            connectorStart = PlayerEditUnderlineConnectorStart(displayNameBounds);
-        }
-        else if (PlayerEditFieldHoverBounds(handleBounds).Contains(mousePoint))
-        {
-            heading = "HANDLE とは？";
-            bodyLines = ["対局サービスにログインするときの、プレイヤー固有の名前。", "接続する相手の機械に入力できるフォーマットに合わせます。"];
-            connectorStart = PlayerEditUnderlineConnectorStart(handleBounds);
-        }
-        else if (session.PlayerEditDraft.Kind == EntryProfileKind.Computer && PlayerEditFieldHoverBounds(engineBounds).Contains(mousePoint))
-        {
-            heading = "ENGINE とは？";
-            bodyLines = ["コンピューターとして着手するための GTP エンジン。"];
-            connectorStart = PlayerEditUnderlineConnectorStart(engineBounds);
-        }
-
-        if (heading is null || bodyLines is null) return;
-        DrawStickyNote(
-            StickyNoteKind.EntryProfileFieldHint,
-            connectorStart,
-            new Color(185, 196, 255),
-            new Color(116, 145, 178),
-            heading,
-            bodyLines,
-            bodyLineSpacing: 26);
-    }
-
-    private static Vector2 PlayerEditUnderlineConnectorStartLegacy(Rectangle textBounds) =>
-        // アンダーラインの中心線へ、右端から少し内側で接続する。
-        new(textBounds.Right - 24, textBounds.Bottom + 4);
-
-#endif
     private void DrawPlayerEngineCycleButton(Rectangle bounds, bool pointsRight, Point mousePoint)
     {
         var hovered = bounds.Contains(mousePoint);
@@ -308,13 +261,6 @@ public sealed class EntryProfilesPresenter
                 new Rectangle(x, centerY - halfHeight, 1, halfHeight * 2 + 1),
                 new Color(220, 234, 230));
         }
-    }
-
-    private enum PlayerEditFieldIconKindLegacy
-    {
-        None,
-        PlayerName,
-        Engine,
     }
 
     private KfwStationeryDrawingTools _stationeryDrawingContext => _drawingContext;

@@ -27,7 +27,7 @@ using KifuwarabeGo2026.Reference.PlayerEngine.Go.GtpExtensions.Engines;
 using KifuwarabeGo2026.Reference.PlayerEngine.Go.GtpExtensions.InitialPosition;
 using KifuwarabeGo2026.Reference.PlayerEngine.Go.GtpExtensions.Sgf;
 using KifuwarabeGo2026.Reference.PlayerEngine.Go.GtpExtensions.Strategies;
-using KifuwarabeGo2026.Reference.PlayRoomEngine.Go.LegacyMatch;
+using KifuwarabeGo2026.Reference.PlayRoomEngine.Go.Match;
 using KifuwarabeGo2026.Reference.PlayRoomGui.Common;
 using KifuwarabeGo2026.Reference.PlayRoomGui.Go;
 using KifuwarabeGo2026.Reference.PlayRoomGui.Go.MonoGame;
@@ -64,7 +64,7 @@ internal static class PortabilityChecks
         var cgosFormalAdapterAssembly = typeof(KifuwarabeGo2026.FormalAdapter.Cgos.Protocol.CgosServerMessage).Assembly;
         var sgfFormalAdapterAssembly = typeof(KifuwarabeGo2026.FormalAdapter.Sgf.Document.SgfDocument).Assembly;
         var gtpCommunicationAssembly = typeof(KifuwarabeGtpPlayerProtocol).Assembly;
-        var legacyGoMatchAssembly = typeof(MatchSession).Assembly;
+        var goMatchAssembly = typeof(MatchSession).Assembly;
         var conciergeAssembly = typeof(GameOasisConcierge).Assembly;
         var gameOasisApplicationAssembly = typeof(ICatalogDocumentStore).Assembly;
         var gameOasisStorageAssembly = typeof(FileCatalogDocumentStore).Assembly;
@@ -109,7 +109,7 @@ internal static class PortabilityChecks
         VerifyInitialPositionEngineProfiles();
         VerifyGoAppEngineSelectionCompatibility();
         VerifyKifuwarabeAtomicSetupStrategy();
-        VerifyLegacyGoMatchAssembly(legacyGoMatchAssembly);
+        VerifyGoMatchAssembly(goMatchAssembly);
         VerifyGameAgnosticConciergeAssembly(conciergeAssembly);
         VerifyGameOasisCatalogLayering(gameOasisApplicationAssembly, gameOasisStorageAssembly);
         VerifyLobbyGuiBoundary();
@@ -1820,12 +1820,12 @@ internal static class PortabilityChecks
     private static GtpCommandCapability Capability(string command, GtpCommandSupport support) =>
         new(command, support, GtpCapabilityEvidence.KnownCommand);
 
-    private static void VerifyLegacyGoMatchAssembly(Assembly legacyGoMatchAssembly)
+    private static void VerifyGoMatchAssembly(Assembly goMatchAssembly)
     {
-        VerifyTargetFramework(legacyGoMatchAssembly, "Reference.PlayRoomEngine.Go");
-        VerifyNoPlatformInvokes(legacyGoMatchAssembly, "Reference.PlayRoomEngine.Go");
+        VerifyTargetFramework(goMatchAssembly, "Reference.PlayRoomEngine.Go");
+        VerifyNoPlatformInvokes(goMatchAssembly, "Reference.PlayRoomEngine.Go");
 
-        var references = legacyGoMatchAssembly
+        var references = goMatchAssembly
             .GetReferencedAssemblies()
             .Select(reference => reference.Name)
             .Where(name => name is not null)
@@ -1833,13 +1833,17 @@ internal static class PortabilityChecks
 
         Require(
             references.Contains("KifuwarabeGo2026.Reference.PlayDomain.Go"),
-            "Legacy Go match support must reference the Go play-domain assembly.");
+            "Go match support must reference the Go play-domain assembly.");
         Require(
             !references.Contains("KifuwarabeGo2026.GameOasis.Gui"),
             "Reference.PlayRoomEngine.Go must not reference the GUI assembly.");
         Require(
             !references.Contains("MonoGame.Framework"),
             "Reference.PlayRoomEngine.Go must not reference MonoGame.");
+        Require(
+            goMatchAssembly.GetTypes().All(type => type.Namespace is null ||
+                !type.Namespace.Contains(".LegacyMatch", StringComparison.Ordinal)),
+            "Reference.PlayRoomEngine.Go must not publish the retired LegacyMatch namespace.");
 
         foreach (var forbiddenReference in ForbiddenAssemblyReferences)
         {
