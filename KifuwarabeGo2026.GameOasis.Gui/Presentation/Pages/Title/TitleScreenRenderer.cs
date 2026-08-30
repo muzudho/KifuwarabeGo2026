@@ -6,7 +6,6 @@ using Microsoft.Xna.Framework;
 using System;
 using System.Linq;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.Title;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.ApplicationSettings;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
 
 public sealed class TitleScreenRenderer
@@ -34,7 +33,10 @@ public sealed class TitleScreenRenderer
         _drawingContext = drawingContext;
         var panel = _shellRenderer.DrawFrame(drawingContext);
         DrawTitleMenuContent(lobby, panel, mousePoint, drawProviderSelection);
-        _shellRenderer.DrawControls(drawingContext, mousePoint);
+        _shellRenderer.DrawControls(drawingContext, mousePoint,
+            lobby.CurrentPage == LobbyPage.Home,
+            connectorTarget => DrawTitleHomeHint(
+                lobby.Home.GetHint(LobbyHomeTarget.Settings), connectorTarget));
     }
 
     private void DrawTitleMenuContent(LobbyScreenPresentation lobby,
@@ -60,12 +62,6 @@ public sealed class TitleScreenRenderer
                 var onlineMatchHovered = _titleScreen.CgosClientButton.IsHit(mousePoint);
                 var engineProfilesHovered = _titleScreen.EngineProfilesButton.IsHit(mousePoint);
                 var entryProfilesHovered = _titleScreen.EntryProfilesButton.IsHit(mousePoint);
-                var settingsBounds = ApplicationSettingsScreen.Default.SettingsButton.Bounds;
-                var updateBounds = ApplicationSettingsScreen.Default.UpdateButton.Bounds;
-                var openLauncherBounds = ApplicationSettingsScreen.Default.OpenLauncherButton.Bounds;
-                var settingsHovered = settingsBounds.Contains(mousePoint);
-                var updateHovered = updateBounds.Contains(mousePoint);
-                var openLauncherHovered = openLauncherBounds.Contains(mousePoint);
                 _titleScreen.EntrySettingsLabel.Draw(_drawingContext);
                 _titleScreen.FormalAppsLabel.Draw(_drawingContext);
                 _titleScreen.CasualAppsLabel.Draw(_drawingContext);
@@ -85,12 +81,6 @@ public sealed class TitleScreenRenderer
                     DrawTitleHomeHint(home.GetHint(LobbyHomeTarget.CasualApps));
                 else if (gamePlatformHovered)
                     DrawTitleHomeHint(home.GetHint(LobbyHomeTarget.GamePlatform));
-                else if (openLauncherHovered)
-                    DrawStickyNote(StickyNoteKind.TitleUpdateHint, new Vector2(openLauncherBounds.Left, openLauncherBounds.Center.Y), new Color(99, 223, 185), new Color(82, 111, 114), "ランチャーを開くとは？", ["共通ランチャーを前面に開き、", "このGUIを閉じます。", "GUIとEngineの更新は", "ランチャーから行います！"]);
-                else if (updateHovered)
-                    DrawStickyNote(StickyNoteKind.TitleUpdateHint, new Vector2(updateBounds.Left, updateBounds.Center.Y), new Color(125, 225, 255), new Color(82, 111, 114), "ランチャーを更新するとは？", ["ランチャーを最新版にします。", "更新後、デスクトップへ", "ショートカットを作れます。"]);
-                else if (settingsHovered)
-                    DrawTitleHomeHint(home.GetHint(LobbyHomeTarget.Settings));
                 else if (localMatchHovered)
                     DrawTitleHomeHint(home.GetHint(LobbyHomeTarget.LocalMatch));
                 else if (onlineMatchHovered)
@@ -229,7 +219,7 @@ public sealed class TitleScreenRenderer
 #endif
     }
 
-    private void DrawTitleHomeHint(LobbyHomeHint hint)
+    private void DrawTitleHomeHint(LobbyHomeHint hint, Vector2? connectorTarget = null)
     {
         var accent = ToColor(hint.Accent);
         var (kind, target) = hint.Target switch
@@ -247,7 +237,7 @@ public sealed class TitleScreenRenderer
             LobbyHomeTarget.OnlineMatch =>
                 (StickyNoteKind.TitleOnlineMatchHint, new Vector2(_titleScreen.CgosClientButton.Bounds.Left, _titleScreen.CgosClientButton.Bounds.Center.Y)),
             _ =>
-                (StickyNoteKind.TitleSettingsHint, new Vector2(ApplicationSettingsScreen.Default.SettingsButton.Bounds.Left - 14, ApplicationSettingsScreen.Default.SettingsButton.Bounds.Center.Y)),
+                (StickyNoteKind.TitleSettingsHint, connectorTarget ?? _shellRenderer.SettingsHintConnectorTarget),
         };
         DrawStickyNote(
             kind,

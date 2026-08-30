@@ -3,6 +3,7 @@ namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.Title;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.ApplicationSettings;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.TitleBackground;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
+using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.StickyNote;
 using Microsoft.Xna.Framework;
 using System;
 
@@ -43,13 +44,47 @@ public sealed class TitleScreenShellRenderer
         return panel;
     }
 
-    public void DrawControls(KfwStationeryDrawingTools drawingContext, Point mousePoint)
+    public Vector2 SettingsHintConnectorTarget
     {
+        get
+        {
+            var bounds = ApplicationSettingsScreen.Default.SettingsButton.Bounds;
+            return new Vector2(bounds.Left - 14, bounds.Center.Y);
+        }
+    }
+
+    public void DrawControls(KfwStationeryDrawingTools drawingContext, Point mousePoint,
+        bool showHoverHints, Action<Vector2> drawSettingsHint)
+    {
+        if (showHoverHints)
+            DrawControlHint(drawingContext, mousePoint, drawSettingsHint);
         DrawLauncherButton(drawingContext, ApplicationSettingsScreen.Default.UpdateButton.Bounds,
             "ランチャーを更新", mousePoint, drawBoardIcon: false);
         DrawLauncherButton(drawingContext, ApplicationSettingsScreen.Default.OpenLauncherButton.Bounds,
             "ランチャーを開く", mousePoint, drawBoardIcon: true);
         ApplicationSettingsScreen.Default.DrawSettingsButton(drawingContext, mousePoint);
+    }
+
+    private void DrawControlHint(KfwStationeryDrawingTools drawingContext, Point mousePoint,
+        Action<Vector2> drawSettingsHint)
+    {
+        var openLauncherBounds = ApplicationSettingsScreen.Default.OpenLauncherButton.Bounds;
+        var updateBounds = ApplicationSettingsScreen.Default.UpdateButton.Bounds;
+        var settingsBounds = ApplicationSettingsScreen.Default.SettingsButton.Bounds;
+        if (openLauncherBounds.Contains(mousePoint))
+            drawingContext.DrawStickyNote(StickyNoteKind.TitleUpdateHint,
+                new Vector2(openLauncherBounds.Left, openLauncherBounds.Center.Y),
+                new Color(99, 223, 185), new Color(82, 111, 114),
+                "ランチャーを開くとは？",
+                ["共通ランチャーを前面に開き、", "このGUIを閉じます。", "GUIとEngineの更新は", "ランチャーから行います！"]);
+        else if (updateBounds.Contains(mousePoint))
+            drawingContext.DrawStickyNote(StickyNoteKind.TitleUpdateHint,
+                new Vector2(updateBounds.Left, updateBounds.Center.Y),
+                new Color(125, 225, 255), new Color(82, 111, 114),
+                "ランチャーを更新するとは？",
+                ["ランチャーを最新版にします。", "更新後、デスクトップへ", "ショートカットを作れます。"]);
+        else if (settingsBounds.Contains(mousePoint))
+            drawSettingsHint(SettingsHintConnectorTarget);
     }
 
     private static void DrawLauncherButton(KfwStationeryDrawingTools drawingContext,

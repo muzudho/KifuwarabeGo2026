@@ -629,6 +629,11 @@ internal static class PortabilityChecks
                 typeof(TitleScreenRenderer).GetMethod("DrawLauncherButtons", BindingFlags.Instance | BindingFlags.NonPublic) is null &&
                 typeof(TitleScreenRenderer).GetMethod("GetDisplayVersion", BindingFlags.Static | BindingFlags.NonPublic) is null,
             "The Lobby content renderer must delegate decoration, version, launcher, and settings drawing to the title shell.");
+        Require(typeof(TitleScreenShellRenderer).GetMethod("DrawControls")!
+                .GetParameters().Any(parameter => parameter.ParameterType == typeof(Action<Vector2>)) &&
+                typeof(TitleScreenRenderer).GetFields(BindingFlags.Instance | BindingFlags.NonPublic)
+                    .All(field => field.FieldType.Name != "ApplicationSettingsScreen"),
+            "The title shell must own compatible control hit testing and expose only a semantic settings-hint callback.");
         var loadingGameOasis = LobbyGameOasisPresenter.Create([]);
         Require(loadingGameOasis.IsLoading &&
                 loadingGameOasis.LoadingMessage == "CONNECTING TO GAME OASIS..." &&
