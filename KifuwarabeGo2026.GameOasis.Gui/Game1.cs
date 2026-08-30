@@ -841,9 +841,11 @@ public class Game1 : Game
                 if (_isApplicationSettingsOpen)
                     ApplicationSettingsScreen.Default.Draw(_presentationServices.Stationery, backgroundMousePosition, _applicationSettingsPage, ApplicationSettings.Current.LogRootDirectory, ApplicationSettings.Current.SgfSaveDirectory, ApplicationSettings.Current.ScreenshotSaveDirectory, _lobbyViewState.ApplicationSettingsPath, _lobbyViewState.GtpEngineSettingsPath, _guiLogFiles, _selectedGuiLogIndex, _applicationSettingsMessage);
                 else
-                    _presentationServices.Presentation.DrawTitle(_session, backgroundMousePosition, _lobbyInput.CurrentPage,
-                        _appProviderTabIndex, _appProviderSelectionLoadTask is not null,
-                        LobbyGameOasisPresenter.Create(_gameOasisComposition?.Client.State.PlaySpaces ?? []));
+                    _presentationServices.Presentation.DrawTitle(_session, backgroundMousePosition,
+                        LobbyScreenPresenter.Create(
+                            _lobbyInput.CurrentPage,
+                            _gameOasisComposition?.Client.State.PlaySpaces ?? []),
+                        _appProviderTabIndex, _appProviderSelectionLoadTask is not null);
             }
         }
         else if (_variationSession is not null)

@@ -55,10 +55,10 @@ public sealed class GoPresentationRenderer : System.IDisposable
         _titleScreenRenderer = titleScreenRenderer;
     }
 
-    public void DrawTitle(GoAppSession session, Point mousePoint, LobbyPage page,
-        int appProviderTabIndex, bool isAppProviderLoading, LobbyGameOasisPresentation gameOasis) =>
+    public void DrawTitle(GoAppSession session, Point mousePoint, LobbyScreenPresentation lobby,
+        int appProviderTabIndex, bool isAppProviderLoading) =>
         _titleScreenRenderer.DrawScreen(_drawingContext, _gtpEngineRenderer, session, mousePoint,
-            page, appProviderTabIndex, isAppProviderLoading, gameOasis);
+            lobby, appProviderTabIndex, isAppProviderLoading);
 
     public void DrawCgosWatch(GoAppSession session, CgosGameObservation observation, Point mousePoint) =>
         CgosWatchPage.Default.Draw(_cgosWatchingRenderer, _drawingContext, session, observation, mousePoint);

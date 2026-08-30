@@ -566,6 +566,16 @@ internal static class PortabilityChecks
         Require(gameOasis.Select(1)?.PlaySpaceTypeId == new PlaySpaceTypeId("example.game-1") &&
                 gameOasis.Select(-1) is null && gameOasis.Select(4) is null,
             "The Lobby Game Oasis presentation must create selection intents only for visible entries.");
+        var lobbyScreen = LobbyScreenPresenter.Create(LobbyPage.GameOasis, playSpaces);
+        Require(lobbyScreen.CurrentPage == LobbyPage.GameOasis &&
+                ReferenceEquals(lobbyScreen.Home, home) &&
+                lobbyScreen.GameOasis.VisibleItems.Count == LobbyGameOasisPresenter.MaximumVisibleItems,
+            "The Lobby screen presenter must compose page, Home, and Game Oasis state into one drawing input.");
+        Require(typeof(LobbyScreenPresentation).GetProperties()
+                .Select(property => property.PropertyType.FullName ?? property.PropertyType.Name)
+                .All(type => !type.Contains("MonoGame", StringComparison.Ordinal) &&
+                             !type.Contains("Microsoft.Xna", StringComparison.Ordinal)),
+            "The Lobby screen presentation must not expose MonoGame drawing types.");
         var loadingGameOasis = LobbyGameOasisPresenter.Create([]);
         Require(loadingGameOasis.IsLoading &&
                 loadingGameOasis.LoadingMessage == "CONNECTING TO GAME OASIS..." &&

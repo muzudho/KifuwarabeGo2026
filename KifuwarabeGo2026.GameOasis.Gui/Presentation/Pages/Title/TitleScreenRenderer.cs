@@ -19,17 +19,14 @@ using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.HeadUpDisplay;
 
 public sealed class TitleScreenRenderer
 {
-    private static readonly LobbyHomePresentation LobbyHome = LobbyHomePresenter.Create();
-
     public void DrawScreen(KfwStationeryDrawingTools drawingContext, GtpEngineRenderer gtpEngineRenderer,
         GoAppSession session, Point mousePosition,
-        LobbyPage page, int appProviderTabIndex, bool isAppProviderLoading,
-        LobbyGameOasisPresentation gameOasis)
+        LobbyScreenPresentation lobby, int appProviderTabIndex, bool isAppProviderLoading)
     {
         var mousePoint = drawingContext.ToVirtualPoint(mousePosition);
         drawingContext.Begin();
         drawingContext.DrawBackground();
-        Draw(drawingContext, session, mousePoint, page, appProviderTabIndex, isAppProviderLoading, gameOasis);
+        Draw(drawingContext, session, mousePoint, lobby, appProviderTabIndex, isAppProviderLoading);
         SelectEntryPresenter.Default.Draw(drawingContext, session, mousePoint);
         EditEntryProfile.Default.Draw(drawingContext, session, mousePoint, HeadUpDisplayComponent.Default.StickyNoteScreen);
         EntryProfilesPresenter.Default.DrawPanels(drawingContext, session, mousePoint);
@@ -57,8 +54,8 @@ public sealed class TitleScreenRenderer
     #region ［CASUAL APPS 区画］
     #endregion
 
-    public void Draw(KfwStationeryDrawingTools drawingContext, GoAppSession session, Point mousePoint, LobbyPage page, int appProviderTabIndex, bool isAppProviderLoading,
-        LobbyGameOasisPresentation gameOasis)
+    public void Draw(KfwStationeryDrawingTools drawingContext, GoAppSession session, Point mousePoint,
+        LobbyScreenPresentation lobby, int appProviderTabIndex, bool isAppProviderLoading)
     {
         _drawingContext = drawingContext;
         // タイトル画面の囲碁用具ワイヤー装飾。
@@ -74,23 +71,25 @@ public sealed class TitleScreenRenderer
         _titleScreen.Headline.Draw(_drawingContext);
         DrawText(GetDisplayVersion(), new Vector2(panel.X + 790, panel.Y + 91), new Color(99, 223, 185), 0.38f);
         DrawLine(new Vector2(panel.X + 790, panel.Y + 126), new Vector2(panel.X + 958, panel.Y + 126), 2, new Color(99, 223, 185, 120));
-        DrawTitleMenuContent(session, page, panel, mousePoint, appProviderTabIndex, isAppProviderLoading, gameOasis);
+        DrawTitleMenuContent(session, lobby, panel, mousePoint, appProviderTabIndex, isAppProviderLoading);
         DrawLauncherButtons(mousePoint);
         ApplicationSettingsScreen.Default.DrawSettingsButton(_drawingContext, mousePoint);
     }
 
-    private void DrawTitleMenuContent(GoAppSession session, LobbyPage page, Rectangle panel, Point mousePoint, int appProviderTabIndex, bool isAppProviderLoading,
-        LobbyGameOasisPresentation gameOasis)
+    private void DrawTitleMenuContent(GoAppSession session, LobbyScreenPresentation lobby,
+        Rectangle panel, Point mousePoint, int appProviderTabIndex, bool isAppProviderLoading)
     {
-        switch (page)
+        var home = lobby.Home;
+        var gameOasis = lobby.GameOasis;
+        switch (lobby.CurrentPage)
         {
             case LobbyPage.Home:
-                var engineProfiles = LobbyHome.GetItem(LobbyHomeTarget.EngineProfiles);
-                var entryProfiles = LobbyHome.GetItem(LobbyHomeTarget.EntryProfiles);
-                var localMatch = LobbyHome.GetItem(LobbyHomeTarget.LocalMatch);
-                var onlineMatch = LobbyHome.GetItem(LobbyHomeTarget.OnlineMatch);
-                var captureGame = LobbyHome.GetItem(LobbyHomeTarget.CaptureGame);
-                var gamePlatform = LobbyHome.GetItem(LobbyHomeTarget.GamePlatform);
+                var engineProfiles = home.GetItem(LobbyHomeTarget.EngineProfiles);
+                var entryProfiles = home.GetItem(LobbyHomeTarget.EntryProfiles);
+                var localMatch = home.GetItem(LobbyHomeTarget.LocalMatch);
+                var onlineMatch = home.GetItem(LobbyHomeTarget.OnlineMatch);
+                var captureGame = home.GetItem(LobbyHomeTarget.CaptureGame);
+                var gamePlatform = home.GetItem(LobbyHomeTarget.GamePlatform);
                 var entrySettingsHovered = _titleScreen.EntrySettingsLabelBounds.Contains(mousePoint);
                 var formalAppsHovered = _titleScreen.FormalAppsLabelBounds.Contains(mousePoint);
                 var casualAppsHovered = _titleScreen.CasualAppsLabelBounds.Contains(mousePoint);
@@ -116,29 +115,29 @@ public sealed class TitleScreenRenderer
                 DrawHomeServiceChoice(_titleScreen.CgosClientButton.Bounds, onlineMatch.Title, onlineMatch.Caption, ToColor(onlineMatch.Accent), mousePoint);
                 DrawAppChoice(_titleScreen.CaptureGameButton.Bounds, captureGame.Title, captureGame.Caption, mousePoint);
                 DrawAppChoice(_titleScreen.GameOasisButton.Bounds, gamePlatform.Title, gamePlatform.Caption, mousePoint, ToColor(gamePlatform.Accent));
-                DrawDynamicOptionText(LobbyHome.Guidance, new Rectangle(460, 676, 980, 30), new Color(180, 195, 195), 0.34f);
+                DrawDynamicOptionText(home.Guidance, new Rectangle(460, 676, 980, 30), new Color(180, 195, 195), 0.34f);
                 if (entrySettingsHovered)
-                    DrawTitleHomeHint(LobbyHome.GetHint(LobbyHomeTarget.EntrySettings));
+                    DrawTitleHomeHint(home.GetHint(LobbyHomeTarget.EntrySettings));
                 else if (formalAppsHovered)
-                    DrawTitleHomeHint(LobbyHome.GetHint(LobbyHomeTarget.FormalApps));
+                    DrawTitleHomeHint(home.GetHint(LobbyHomeTarget.FormalApps));
                 else if (casualAppsHovered)
-                    DrawTitleHomeHint(LobbyHome.GetHint(LobbyHomeTarget.CasualApps));
+                    DrawTitleHomeHint(home.GetHint(LobbyHomeTarget.CasualApps));
                 else if (gamePlatformHovered)
-                    DrawTitleHomeHint(LobbyHome.GetHint(LobbyHomeTarget.GamePlatform));
+                    DrawTitleHomeHint(home.GetHint(LobbyHomeTarget.GamePlatform));
                 else if (openLauncherHovered)
                     DrawStickyNote(StickyNoteKind.TitleUpdateHint, new Vector2(openLauncherBounds.Left, openLauncherBounds.Center.Y), new Color(99, 223, 185), new Color(82, 111, 114), "ランチャーを開くとは？", ["共通ランチャーを前面に開き、", "このGUIを閉じます。", "GUIとEngineの更新は", "ランチャーから行います！"]);
                 else if (updateHovered)
                     DrawStickyNote(StickyNoteKind.TitleUpdateHint, new Vector2(updateBounds.Left, updateBounds.Center.Y), new Color(125, 225, 255), new Color(82, 111, 114), "ランチャーを更新するとは？", ["ランチャーを最新版にします。", "更新後、デスクトップへ", "ショートカットを作れます。"]);
                 else if (settingsHovered)
-                    DrawTitleHomeHint(LobbyHome.GetHint(LobbyHomeTarget.Settings));
+                    DrawTitleHomeHint(home.GetHint(LobbyHomeTarget.Settings));
                 else if (localMatchHovered)
-                    DrawTitleHomeHint(LobbyHome.GetHint(LobbyHomeTarget.LocalMatch));
+                    DrawTitleHomeHint(home.GetHint(LobbyHomeTarget.LocalMatch));
                 else if (onlineMatchHovered)
-                    DrawTitleHomeHint(LobbyHome.GetHint(LobbyHomeTarget.OnlineMatch));
+                    DrawTitleHomeHint(home.GetHint(LobbyHomeTarget.OnlineMatch));
                 else if (engineProfilesHovered)
-                    DrawTitleHomeHint(LobbyHome.GetHint(LobbyHomeTarget.EngineProfiles));
+                    DrawTitleHomeHint(home.GetHint(LobbyHomeTarget.EngineProfiles));
                 else if (entryProfilesHovered)
-                    DrawTitleHomeHint(LobbyHome.GetHint(LobbyHomeTarget.EntryProfiles));
+                    DrawTitleHomeHint(home.GetHint(LobbyHomeTarget.EntryProfiles));
                 else if (_titleScreen.CaptureGameButton.IsHit(mousePoint))
                 {
                     DrawCaptureGamePreview();
@@ -162,7 +161,7 @@ public sealed class TitleScreenRenderer
                 DrawTitleBackButton(mousePoint);
                 break;
             default:
-                DrawAppPage(session, page, panel, mousePoint, appProviderTabIndex, isAppProviderLoading);
+                DrawAppPage(session, lobby.CurrentPage, panel, mousePoint, appProviderTabIndex, isAppProviderLoading);
                 break;
         }
     }
