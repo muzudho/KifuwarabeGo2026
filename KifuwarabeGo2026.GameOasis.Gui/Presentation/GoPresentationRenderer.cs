@@ -14,6 +14,7 @@ using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.OnlineMatch.Cgos.Login;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.OnlineMatch.Cgos.SelectConnection;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.OnlineMatch.Cgos.Watch;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.PopupTrendChart;
+using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.PonnukiProviderSelection;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.Title;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.EditEntryProfile;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.EntryProfiles;
@@ -39,6 +40,7 @@ public sealed class GoPresentationRenderer : System.IDisposable
     private readonly GtpEngineRenderer _gtpEngineRenderer;
     private readonly CgosLoginRenderer _cgosLoginRenderer;
     private readonly TitleScreenRenderer _titleScreenRenderer;
+    private readonly PonnukiProviderSelectionRendererAdapter _ponnukiProviderSelectionRenderer = new();
 
     public GoPresentationRenderer(KfwStationeryDrawingTools drawingContext, BoardRenderer boardRenderer,
         MoveTrendChartRenderer moveTrendChartRenderer, PopupTrendChartRenderer popupTrendChartRenderer,
@@ -55,10 +57,22 @@ public sealed class GoPresentationRenderer : System.IDisposable
         _titleScreenRenderer = titleScreenRenderer;
     }
 
-    public void DrawTitle(GoAppSession session, Point mousePoint, LobbyScreenPresentation lobby,
-        int appProviderTabIndex, bool isAppProviderLoading) =>
-        _titleScreenRenderer.DrawScreen(_drawingContext, _gtpEngineRenderer, session, mousePoint,
-            lobby, appProviderTabIndex, isAppProviderLoading);
+    public void DrawTitle(GoAppSession session, Point mousePosition, LobbyScreenPresentation lobby,
+        int appProviderTabIndex, bool isAppProviderLoading)
+    {
+        var mousePoint = _drawingContext.ToVirtualPoint(mousePosition);
+        _drawingContext.Begin();
+        _drawingContext.DrawBackground();
+        _titleScreenRenderer.Draw(_drawingContext, mousePoint, lobby,
+            () => _ponnukiProviderSelectionRenderer.Draw(
+                _drawingContext, session, mousePoint, appProviderTabIndex, isAppProviderLoading));
+        SelectEntryPresenter.Default.Draw(_drawingContext, session, mousePoint);
+        EditEntryProfile.Default.Draw(
+            _drawingContext, session, mousePoint, HeadUpDisplayComponent.Default.StickyNoteScreen);
+        EntryProfilesPresenter.Default.DrawPanels(_drawingContext, session, mousePoint);
+        _gtpEngineRenderer.Draw(_drawingContext, session, mousePoint);
+        _drawingContext.End();
+    }
 
     public void DrawCgosWatch(GoAppSession session, CgosGameObservation observation, Point mousePoint) =>
         CgosWatchPage.Default.Draw(_cgosWatchingRenderer, _drawingContext, session, observation, mousePoint);

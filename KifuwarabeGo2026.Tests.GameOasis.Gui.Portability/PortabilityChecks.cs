@@ -5,6 +5,7 @@ using KifuwarabeGo2026.GameOasis.Gui.Application;
 using KifuwarabeGo2026.GameOasis.Gui.Application.GameOasis;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.GameOasis;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.Title;
+using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.PonnukiProviderSelection;
 using KifuwarabeGo2026.GameOasis.Contracts.Common;
 using KifuwarabeGo2026.GameOasis.Contracts.ProtocolG;
 using KifuwarabeGo2026.GameOasis.Concierge;
@@ -605,6 +606,20 @@ internal static class PortabilityChecks
                 } &&
                 nextMove.Description?.Length > 0,
             "Lobby Casual App presentations must own completed placeholder display content.");
+        var titleDrawParameters = typeof(TitleScreenRenderer)
+            .GetMethod(nameof(TitleScreenRenderer.Draw))!
+            .GetParameters()
+            .Select(parameter => parameter.ParameterType)
+            .ToArray();
+        Require(!titleDrawParameters.Contains(typeof(GoAppSession)) &&
+                !titleDrawParameters.Contains(typeof(int)) &&
+                !titleDrawParameters.Contains(typeof(bool)) &&
+                typeof(TitleScreenRenderer).GetMethod("DrawScreen") is null,
+            "The common title renderer must receive host-specific provider drawing through one adapter callback.");
+        Require(typeof(PonnukiProviderSelectionRendererAdapter).Assembly == typeof(Game1).Assembly &&
+                typeof(PonnukiProviderSelectionRendererAdapter).GetMethod("Draw")!
+                    .GetParameters().Any(parameter => parameter.ParameterType == typeof(GoAppSession)),
+            "The compatible GUI adapter must own the legacy provider session connection.");
         var loadingGameOasis = LobbyGameOasisPresenter.Create([]);
         Require(loadingGameOasis.IsLoading &&
                 loadingGameOasis.LoadingMessage == "CONNECTING TO GAME OASIS..." &&

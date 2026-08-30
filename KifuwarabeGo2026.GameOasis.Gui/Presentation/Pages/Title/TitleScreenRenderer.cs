@@ -1,6 +1,5 @@
 namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.Title;
 
-using KifuwarabeGo2026.GameOasis.Gui.Application;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.StickyNote;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.TitleBackground;
 using KifuwarabeGo2026.LobbyGui.Application;
@@ -8,32 +7,11 @@ using Microsoft.Xna.Framework;
 using System;
 using System.Linq;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.Title;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.PonnukiProviderSelection;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.ApplicationSettings;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.GtpEngine;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.SelectEntry;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.EditEntryProfile;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.EntryProfiles;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.HeadUpDisplay;
 
 public sealed class TitleScreenRenderer
 {
-    public void DrawScreen(KfwStationeryDrawingTools drawingContext, GtpEngineRenderer gtpEngineRenderer,
-        GoAppSession session, Point mousePosition,
-        LobbyScreenPresentation lobby, int appProviderTabIndex, bool isAppProviderLoading)
-    {
-        var mousePoint = drawingContext.ToVirtualPoint(mousePosition);
-        drawingContext.Begin();
-        drawingContext.DrawBackground();
-        Draw(drawingContext, session, mousePoint, lobby, appProviderTabIndex, isAppProviderLoading);
-        SelectEntryPresenter.Default.Draw(drawingContext, session, mousePoint);
-        EditEntryProfile.Default.Draw(drawingContext, session, mousePoint, HeadUpDisplayComponent.Default.StickyNoteScreen);
-        EntryProfilesPresenter.Default.DrawPanels(drawingContext, session, mousePoint);
-        gtpEngineRenderer.Draw(drawingContext, session, mousePoint);
-        drawingContext.End();
-    }
-
     private readonly TitleGoEquipment _titleGoEquipment = new();
     private readonly TitleScreen _titleScreen = TitleScreen.Default;
     private readonly Action<Vector2, float, float, Color, int, float> _drawEllipseWire;
@@ -54,8 +32,8 @@ public sealed class TitleScreenRenderer
     #region ［CASUAL APPS 区画］
     #endregion
 
-    public void Draw(KfwStationeryDrawingTools drawingContext, GoAppSession session, Point mousePoint,
-        LobbyScreenPresentation lobby, int appProviderTabIndex, bool isAppProviderLoading)
+    public void Draw(KfwStationeryDrawingTools drawingContext, Point mousePoint,
+        LobbyScreenPresentation lobby, Action drawProviderSelection)
     {
         _drawingContext = drawingContext;
         // タイトル画面の囲碁用具ワイヤー装飾。
@@ -71,13 +49,13 @@ public sealed class TitleScreenRenderer
         _titleScreen.Headline.Draw(_drawingContext);
         DrawText(GetDisplayVersion(), new Vector2(panel.X + 790, panel.Y + 91), new Color(99, 223, 185), 0.38f);
         DrawLine(new Vector2(panel.X + 790, panel.Y + 126), new Vector2(panel.X + 958, panel.Y + 126), 2, new Color(99, 223, 185, 120));
-        DrawTitleMenuContent(session, lobby, panel, mousePoint, appProviderTabIndex, isAppProviderLoading);
+        DrawTitleMenuContent(lobby, panel, mousePoint, drawProviderSelection);
         DrawLauncherButtons(mousePoint);
         ApplicationSettingsScreen.Default.DrawSettingsButton(_drawingContext, mousePoint);
     }
 
-    private void DrawTitleMenuContent(GoAppSession session, LobbyScreenPresentation lobby,
-        Rectangle panel, Point mousePoint, int appProviderTabIndex, bool isAppProviderLoading)
+    private void DrawTitleMenuContent(LobbyScreenPresentation lobby,
+        Rectangle panel, Point mousePoint, Action drawProviderSelection)
     {
         var home = lobby.Home;
         var gameOasis = lobby.GameOasis;
@@ -161,7 +139,7 @@ public sealed class TitleScreenRenderer
                 DrawTitleBackButton(mousePoint);
                 break;
             default:
-                DrawCasualAppPage(session, lobby.CasualApp!, panel, mousePoint, appProviderTabIndex, isAppProviderLoading);
+                DrawCasualAppPage(lobby.CasualApp!, panel, mousePoint, drawProviderSelection);
                 break;
         }
     }
@@ -317,12 +295,12 @@ public sealed class TitleScreenRenderer
         return new Vector2(x, labelPosition.Y + 15);
     }
 
-    private void DrawCasualAppPage(GoAppSession session, LobbyCasualAppPresentation presentation,
-        Rectangle panel, Point mousePoint, int appProviderTabIndex, bool isAppProviderLoading)
+    private void DrawCasualAppPage(LobbyCasualAppPresentation presentation,
+        Rectangle panel, Point mousePoint, Action drawProviderSelection)
     {
         if (presentation.Content == LobbyCasualAppContent.ProviderSelection)
         {
-            DrawPonnukiProviderSelection(session, panel, mousePoint, appProviderTabIndex, isAppProviderLoading);
+            drawProviderSelection();
             return;
         }
 
@@ -331,16 +309,6 @@ public sealed class TitleScreenRenderer
         DrawFittedText(presentation.StatusMessage!, new Rectangle(panel.X + 250, panel.Y + 430, panel.Width - 500, 70), new Color(99, 223, 185), 0.72f);
         DrawDynamicOptionText(presentation.Description!, new Rectangle(panel.X + 150, panel.Y + 530, panel.Width - 300, 54), new Color(180, 195, 195), 0.38f);
         DrawTitleBackButton(mousePoint);
-    }
-
-    private void DrawPonnukiProviderSelection(GoAppSession session, Rectangle panel, Point mousePoint, int appProviderTabIndex, bool isAppProviderLoading)
-    {
-        PonnukiProviderSelectionScreen.Default.Draw(session, mousePoint, appProviderTabIndex, isAppProviderLoading,
-            new PonnukiProviderSelectionDrawingCallbacks(
-                _drawingContext, _drawingContext, _drawingContext, DrawText, DrawDynamicOptionText, DrawFittedText, DrawLine,
-                (kind, connectorStart, accent, borderColor, heading, bodyLines) =>
-                    DrawStickyNote(kind, connectorStart, accent, borderColor, heading, bodyLines),
-                DrawTabNavigationHint));
     }
 
     private void DrawProfileChoice(Rectangle bounds, string title, string englishTitle, Point mousePoint, bool engine)
@@ -421,16 +389,4 @@ public sealed class TitleScreenRenderer
         string heading, System.Collections.Generic.IReadOnlyList<string> bodyLines) =>
         _drawingContext.DrawStickyNote(kind, connectorStart, accent, borderColor, heading, bodyLines);
 
-    private void DrawTabNavigationHint(Rectangle bounds, int tabIndex, int activeIndex, int stopCount)
-    {
-        if (activeIndex < 0 || tabIndex == activeIndex || stopCount < 2) return;
-        var previous = tabIndex == (activeIndex + stopCount - 1) % stopCount;
-        var next = tabIndex == (activeIndex + 1) % stopCount;
-        if (!previous && !next) return;
-        var text = previous ? "SHIFT + TAB" : "TAB";
-        var width = previous ? 132 : 56;
-        var hint = new Rectangle(bounds.X - width - 6, bounds.Y - 34, width, 28);
-        _drawingContext.FillRoundedRectangle(hint, 6, new Color(4, 6, 8, 235));
-        DrawFittedText(text, new Rectangle(hint.X + 4, hint.Y + 2, hint.Width - 8, hint.Height - 4), Color.White, 0.32f);
-    }
 }
