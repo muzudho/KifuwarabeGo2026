@@ -5,18 +5,18 @@ using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
 using Microsoft.Xna.Framework;
 using System;
 
-/// <summary>共通ランチャーを開く工程を表示するモーダルダイアログ。</summary>
+/// <summary>共通インストーラーを開く工程を表示するモーダルダイアログ。</summary>
 public sealed class GuiUpdateProgressDialog
 {
     private static readonly (GuiReleaseUpdateStep Step, string Label)[] Steps =
     [
-        (GuiReleaseUpdateStep.CheckingRelease, "共通ランチャーを確認"),
-        (GuiReleaseUpdateStep.StartingLauncher, "共通ランチャーを前面に起動"),
+        (GuiReleaseUpdateStep.CheckingRelease, "共通インストーラーを確認"),
+        (GuiReleaseUpdateStep.StartingInstaller, "共通インストーラーを前面に起動"),
     ];
 
     public static readonly Rectangle Bounds = new(510, 260, 900, 560);
     public static readonly Rectangle CloseButtonBounds = new(1218, 742, 154, 48);
-    private volatile GuiReleaseUpdateProgress _progress = new(GuiReleaseUpdateStep.CheckingRelease, "共通ランチャーを探しています。");
+    private volatile GuiReleaseUpdateProgress _progress = new(GuiReleaseUpdateStep.CheckingRelease, "共通インストーラーを探しています。");
 
     public bool HasFailed { get; private set; }
     public string FailureMessage { get; private set; } = "";
@@ -27,7 +27,7 @@ public sealed class GuiUpdateProgressDialog
     public void Fail(string logPath, string? reason = null)
     {
         HasFailed = true;
-        FailureMessage = $"ランチャーを開けませんでした。\n{reason ?? "GitHub Releasesを確認してください。"}\nログファイル: {logPath}";
+        FailureMessage = $"インストーラーを開けませんでした。\n{reason ?? "GitHub Releasesを確認してください。"}\nログファイル: {logPath}";
     }
 
     public bool IsCloseHit(Point point) => CanClose && CloseButtonBounds.Contains(point);
@@ -40,7 +40,7 @@ public sealed class GuiUpdateProgressDialog
         drawingContext.FillRectangle(new Rectangle(Bounds.X + 14, Bounds.Y + 16, Bounds.Width, Bounds.Height), new Color(0, 0, 0, 120));
         drawingContext.FillRectangle(Bounds, new Color(21, 25, 32, 252));
         drawingContext.DrawRectangle(Bounds, 2, HasFailed ? new Color(255, 145, 151) : new Color(99, 223, 185));
-        drawingContext.DrawDynamicText(HasFailed ? "OPEN LAUNCHER FAILED" : "OPENING LAUNCHER",
+        drawingContext.DrawDynamicText(HasFailed ? "OPEN INSTALLER FAILED" : "OPENING INSTALLER",
             new Rectangle(Bounds.X + 42, Bounds.Y + 30, 700, 48), new Color(244, 238, 218), 0.58f);
         drawingContext.DrawLine(new Vector2(Bounds.X + 42, Bounds.Y + 94), new Vector2(Bounds.Right - 42, Bounds.Y + 94), 1, new Color(82, 111, 114));
 

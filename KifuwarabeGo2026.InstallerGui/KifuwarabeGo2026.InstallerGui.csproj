@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>KifuwarabeGo2026.Installer</AssemblyName>
+    <RootNamespace>KifuwarabeGo2026.InstallerGui</RootNamespace>
+    <RollForward>Major</RollForward>
+    <ApplicationIcon>..\KifuwarabeGo2026.GameOasis.Gui\GuiIcon.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.*" />
+    <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.*" />
+  </ItemGroup>
+  <ItemGroup>
+    <MonoGameContentReference Include="..\KifuwarabeGo2026.GameOasis.Gui\Content\Content.mgcb">
+      <Link>Content\Content.mgcb</Link>
+    </MonoGameContentReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\KifuwarabeGo2026.InstallerEngine\KifuwarabeGo2026.InstallerEngine.csproj" />
+    <ProjectReference Include="..\KifuwarabeGo2026.InstallerEngine.JsonLines\KifuwarabeGo2026.InstallerEngine.JsonLines.csproj" />
+    <ProjectReference Include="..\KifuwarabeGo2026.InstallerEngine.Platform\KifuwarabeGo2026.InstallerEngine.Platform.csproj" />
+    <ProjectReference Include="..\KifuwarabeGo2026.InstallerGui.Platform\KifuwarabeGo2026.InstallerGui.Platform.csproj" />
+    <ProjectReference Include="..\KifuwarabeGo2026.InstallerGui.Presentation\KifuwarabeGo2026.InstallerGui.Presentation.csproj" />
+    <ProjectReference Include="..\KifuwarabeGo2026.StationeryUI\KifuwarabeGo2026.StationeryUI.csproj" />
+  </ItemGroup>
+</Project>

@@ -626,7 +626,7 @@ internal static class PortabilityChecks
             "The compatible title shell must not depend on Lobby page content.");
         Require(typeof(TitleScreenRenderer).GetField("_shellRenderer", BindingFlags.Instance | BindingFlags.NonPublic)
                     ?.FieldType == typeof(TitleScreenShellRenderer) &&
-                typeof(TitleScreenRenderer).GetMethod("DrawLauncherButtons", BindingFlags.Instance | BindingFlags.NonPublic) is null &&
+                typeof(TitleScreenRenderer).GetMethod("DrawInstallerButtons", BindingFlags.Instance | BindingFlags.NonPublic) is null &&
                 typeof(TitleScreenRenderer).GetMethod("GetDisplayVersion", BindingFlags.Static | BindingFlags.NonPublic) is null,
             "The Lobby content renderer must delegate decoration, version, launcher, and settings drawing to the title shell.");
         Require(typeof(TitleScreenShellRenderer).GetMethod("DrawControls")!

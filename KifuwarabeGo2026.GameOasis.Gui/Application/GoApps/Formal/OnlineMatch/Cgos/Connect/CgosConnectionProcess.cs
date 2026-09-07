@@ -17,7 +17,7 @@ using System.Threading.Tasks;
 public sealed class CgosConnectionProcess : IDisposable
 {
     private readonly string _logFolderName;
-    private readonly IDesktopLauncher _desktopLauncher;
+    private readonly IDesktopLauncher _desktopInstaller;
     private readonly IPlatformExecutableService _platformExecutableService;
     private readonly object _outputLock = new();
     private readonly Queue<string> _recentOutput = new();
@@ -58,11 +58,11 @@ public sealed class CgosConnectionProcess : IDisposable
     }
 
     public CgosConnectionProcess(
-        IDesktopLauncher desktopLauncher,
+        IDesktopLauncher desktopInstaller,
         IPlatformExecutableService platformExecutableService,
         string logFolderName = "")
     {
-        _desktopLauncher = desktopLauncher;
+        _desktopInstaller = desktopInstaller;
         _platformExecutableService = platformExecutableService;
         _logFolderName = logFolderName.Trim();
     }
@@ -458,17 +458,17 @@ public sealed class CgosConnectionProcess : IDisposable
         string openedWith;
         if (!opensFile)
         {
-            _desktopLauncher.OpenDirectory(targetPath);
+            _desktopInstaller.OpenDirectory(targetPath);
             openedWith = "file manager";
         }
         else if (string.IsNullOrWhiteSpace(app))
         {
-            _desktopLauncher.OpenTextFile(targetPath);
+            _desktopInstaller.OpenTextFile(targetPath);
             openedWith = "text editor";
         }
         else
         {
-            var result = _desktopLauncher.OpenFileWithPreferredApplication(targetPath, app.Trim());
+            var result = _desktopInstaller.OpenFileWithPreferredApplication(targetPath, app.Trim());
             openedWith = result == DesktopOpenResult.PreferredApplication
                 ? app.Trim()
                 : "default application";
@@ -487,7 +487,7 @@ public sealed class CgosConnectionProcess : IDisposable
             targetPath = EnsureGuiLogFile();
         }
 
-        _desktopLauncher.TailTextFile(targetPath, "CGOS log tail");
+        _desktopInstaller.TailTextFile(targetPath, "CGOS log tail");
 
         AddOutput("# Tailing CGOS log with PowerShell: " + Path.GetFileName(targetPath));
         return openStandardError ? "TAIL STDERR LOG" : "TAIL LOG";

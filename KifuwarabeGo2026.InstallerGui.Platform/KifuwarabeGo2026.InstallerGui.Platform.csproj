@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>KifuwarabeGo2026.InstallerGui.Platform</AssemblyName>
+    <RootNamespace>KifuwarabeGo2026.InstallerGui.Platform</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\KifuwarabeGo2026.InstallerEngine.Platform\KifuwarabeGo2026.InstallerEngine.Platform.csproj" />
+    <ProjectReference Include="..\KifuwarabeGo2026.InstallerEngine\KifuwarabeGo2026.InstallerEngine.csproj" />
+  </ItemGroup>
+</Project>

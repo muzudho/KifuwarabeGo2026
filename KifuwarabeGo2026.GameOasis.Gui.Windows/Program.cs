@@ -33,7 +33,7 @@ internal static class Program
                 new WindowsInitialWindowLayoutService(),
                 platformExecutableService,
                 new WindowsWindowScreenshotService(),
-                new WindowsLauncherMaintenanceService(),
+                new WindowsInstallerMaintenanceService(),
                 new ProcessPlayRoomLauncher(GoPlayRoomHostProcessStartInfoFactory.Create));
             textCompositionService.Attach(game.Window.Handle);
             try

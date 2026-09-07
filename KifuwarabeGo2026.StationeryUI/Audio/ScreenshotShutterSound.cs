@@ -3,7 +3,7 @@ namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Audio;
 using Microsoft.Xna.Framework.Audio;
 using System;
 
-/// <summary>GUIとランチャーで共有する、動的生成のスクリーンショット用シャッター音です。</summary>
+/// <summary>GUIとインストーラーで共有する、動的生成のスクリーンショット用シャッター音です。</summary>
 public static class ScreenshotShutterSound
 {
     public static SoundEffect Create()

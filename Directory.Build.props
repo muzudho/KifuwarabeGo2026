@@ -1,6 +1,6 @@
 <Project>
   <PropertyGroup>
-    <!-- Launcher, GUI, Engine, and their current supporting projects share one release version. -->
+    <!-- Installer, GUI, Engine, and their current supporting projects share one release version. -->
     <Version>4.0.7</Version>
     <AssemblyVersion>4.0.7.0</AssemblyVersion>
     <FileVersion>4.0.7.0</FileVersion>

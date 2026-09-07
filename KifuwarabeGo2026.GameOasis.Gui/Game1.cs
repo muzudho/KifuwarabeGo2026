@@ -63,7 +63,7 @@ using System.Threading.Tasks;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.LiveBoardPreview;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.RandomSeedRow;
 using KifuwarabeGo2026.GameOasis.Gui.Application.GameOasis;
-using KifuwarabeGo2026.GameOasis.Gui.Application.LauncherMaintenance;
+using KifuwarabeGo2026.GameOasis.Gui.Application.InstallerMaintenance;
 using KifuwarabeGo2026.GameOasis.Contracts.Common;
 using KifuwarabeGo2026.LobbyGui.Application;
 using KifuwarabeGo2026.PlayRoom.Launching;
@@ -78,18 +78,18 @@ public class Game1 : Game
     private readonly IClipboardService _clipboardService;
     private readonly ITextCompositionService _textCompositionService;
     private readonly IFileDialogService _fileDialogService;
-    private readonly IDesktopLauncher _desktopLauncher;
+    private readonly IDesktopLauncher _desktopInstaller;
     private readonly ITextRasterizer _textRasterizer;
     private readonly IWindowIconService _windowIconService;
     private readonly IInitialWindowLayoutService _initialWindowLayoutService;
     private readonly IPlatformExecutableService _platformExecutableService;
     private readonly IWindowScreenshotService _windowScreenshotService;
-    private readonly ILauncherMaintenanceService _launcherMaintenanceService;
+    private readonly IInstallerMaintenanceService _launcherMaintenanceService;
     private readonly GoAppSession _session = new();
     private Task<GameOasisGuiComposition>? _gameOasisCompositionTask;
     private GameOasisGuiComposition? _gameOasisComposition;
     private PlayRoomLaunchRequest? _pendingLocalMatchRequest;
-    private readonly IPlayRoomLauncher _playRoomLauncher;
+    private readonly IPlayRoomLauncher _playRoomInstaller;
     private readonly LocalMatchProcessLaunchCoordinator? _localMatchProcessLaunch;
     private readonly LobbyGuiController _lobbyGuiController;
     private readonly LobbyViewState _lobbyViewState;
@@ -224,13 +224,13 @@ public class Game1 : Game
         IClipboardService clipboardService,
         ITextCompositionService textCompositionService,
         IFileDialogService fileDialogService,
-        IDesktopLauncher desktopLauncher,
+        IDesktopLauncher desktopInstaller,
         ITextRasterizer textRasterizer,
         IWindowIconService windowIconService,
         IInitialWindowLayoutService initialWindowLayoutService,
         IPlatformExecutableService platformExecutableService,
         IWindowScreenshotService windowScreenshotService,
-        ILauncherMaintenanceService? launcherMaintenanceService = null,
+        IInstallerMaintenanceService? launcherMaintenanceService = null,
         IPlayRoomProcessLauncher? playRoomProcessLauncher = null)
     {
         _clipboardService = clipboardService;
@@ -238,20 +238,20 @@ public class Game1 : Game
         _textCompositionService.CompositionChanged += OnTextCompositionChanged;
         _textCompositionService.DiagnosticsChanged += OnTextCompositionDiagnosticsChanged;
         _fileDialogService = fileDialogService;
-        _desktopLauncher = desktopLauncher;
+        _desktopInstaller = desktopInstaller;
         _textRasterizer = textRasterizer;
         _windowIconService = windowIconService;
         _initialWindowLayoutService = initialWindowLayoutService;
         _platformExecutableService = platformExecutableService;
         _windowScreenshotService = windowScreenshotService;
-        _launcherMaintenanceService = launcherMaintenanceService ?? UnsupportedLauncherMaintenanceService.Instance;
+        _launcherMaintenanceService = launcherMaintenanceService ?? UnsupportedInstallerMaintenanceService.Instance;
         _localMatchProcessLaunch = playRoomProcessLauncher is null
             ? null
             : new LocalMatchProcessLaunchCoordinator(playRoomProcessLauncher);
         _gameOasisCompositionTask = GameOasisGuiComposition.CreateAsync().AsTask();
-        _cgosBlackConnectionProcess = new CgosConnectionProcess(_desktopLauncher, _platformExecutableService, "BlackPlayer");
-        _cgosWhiteConnectionProcess = new CgosConnectionProcess(_desktopLauncher, _platformExecutableService, "PracticePlayer");
-        _cgosAdminProcess = new CgosConnectionProcess(_desktopLauncher, _platformExecutableService, "Admin");
+        _cgosBlackConnectionProcess = new CgosConnectionProcess(_desktopInstaller, _platformExecutableService, "BlackPlayer");
+        _cgosWhiteConnectionProcess = new CgosConnectionProcess(_desktopInstaller, _platformExecutableService, "PracticePlayer");
+        _cgosAdminProcess = new CgosConnectionProcess(_desktopInstaller, _platformExecutableService, "Admin");
         _lobbyGuiController = LobbyGuiComposition.CreateDefault();
         _lobbyViewState = _lobbyGuiController.LoadViewState();
         if (!string.IsNullOrWhiteSpace(_lobbyViewState.CommunicationWarning))
@@ -283,12 +283,12 @@ public class Game1 : Game
             PlayPlaceStoneSound,
             () => _lobbyGuiController.SaveGtpEngines(_session.GtpEngineProfiles),
             OpenGtpLog);
-        var playRoomLauncher = GoPlayRoomComposition.CreateInProcessLauncher(
+        var playRoomInstaller = GoPlayRoomComposition.CreateInProcessLauncher(
             LaunchLocalMatchInProcess,
             LaunchBoardEditorInProcess,
             LaunchReviewInProcess);
-        playRoomLauncher.Register(PlayRoomIds.Match, GameOasisOfficialNames.Ponnuki, LaunchPonnukiInProcess);
-        _playRoomLauncher = playRoomLauncher;
+        playRoomInstaller.Register(PlayRoomIds.Match, GameOasisOfficialNames.Ponnuki, LaunchPonnukiInProcess);
+        _playRoomInstaller = playRoomInstaller;
 
         _graphics = new GraphicsDeviceManager(this);
         _graphics.PreferredBackBufferWidth = VirtualScreen.Width;
@@ -1323,18 +1323,18 @@ public class Game1 : Game
                 }
                 else if (ApplicationSettingsScreen.Default.UpdateButton.IsHit(point))
                 {
-                    GuiOperationLog.User("Pressed Launcher update button");
+                    GuiOperationLog.User("Pressed Installer update button");
                     if (_launcherMaintenanceService.IsSupported)
                     {
                         _launcherMaintenanceService.ShowInteractiveUpdater();
                     }
                     else
                     {
-                        _messageDialog = new MessageDialog("LAUNCHER UPDATE", _launcherMaintenanceService.UnsupportedReason, "CLOSE");
+                        _messageDialog = new MessageDialog("INSTALLER UPDATE", _launcherMaintenanceService.UnsupportedReason, "CLOSE");
                         _session.ActivateModalWindow(ActiveWindowId.MessageDialog);
                     }
                 }
-                else if (ApplicationSettingsScreen.Default.OpenLauncherButton.IsHit(point))
+                else if (ApplicationSettingsScreen.Default.OpenInstallerButton.IsHit(point))
                 {
                     BeginGuiReleaseUpdate();
                 }
@@ -2583,20 +2583,20 @@ public class Game1 : Game
     private void OpenEngineLog()
     {
         var logPath = ApplicationErrorLog.FilePath;
-        _desktopLauncher.OpenTextFile(logPath);
+        _desktopInstaller.OpenTextFile(logPath);
     }
 
     private void OpenGtpLog()
     {
         var logPath = Path.Combine(AppContext.BaseDirectory, "logs", "gtp.log");
-        _desktopLauncher.OpenTextFile(logPath);
+        _desktopInstaller.OpenTextFile(logPath);
     }
 
     private void StartLocalMatch()
     {
         var request = PlayRoomLaunchRequestFactory.CreateLocalMatch(_session);
         var result = _localMatchProcessLaunch is null
-            ? _playRoomLauncher.Launch(request)
+            ? _playRoomInstaller.Launch(request)
             : _localMatchProcessLaunch.Start(request);
         HandlePlayRoomLaunchResult(result, "LOCAL MATCH");
         if (result.IsAccepted && _localMatchProcessLaunch is not null)
@@ -2692,7 +2692,7 @@ public class Game1 : Game
             _playingScene.AttachGameOasisLocalMatchLifecycle(_gameOasisComposition.LocalMatchLifecycle);
             GuiOperationLog.App("Game Oasis GUI connected", $"playSpaces={_gameOasisComposition.Client.State.PlaySpaces.Count}");
             if (_pendingLocalMatchRequest is { } pendingRequest)
-                HandlePlayRoomLaunchResult(_playRoomLauncher.Launch(pendingRequest), "LOCAL MATCH");
+                HandlePlayRoomLaunchResult(_playRoomInstaller.Launch(pendingRequest), "LOCAL MATCH");
         }
         else
         {
@@ -2786,7 +2786,7 @@ public class Game1 : Game
     private static string FormatLocalMatchSeed(int? seed) => seed?.ToString() ?? "HUMAN";
 
     private void StartPonnukiApp() => HandlePlayRoomLaunchResult(
-        _playRoomLauncher.Launch(PlayRoomLaunchRequestFactory.CreatePonnukiMatch(_session)),
+        _playRoomInstaller.Launch(PlayRoomLaunchRequestFactory.CreatePonnukiMatch(_session)),
         "PONNUKI APP");
 
     private PlayRoomLaunchResult LaunchPonnukiInProcess(PlayRoomLaunchRequest request)
@@ -2898,7 +2898,7 @@ public class Game1 : Game
         GuiOperationLog.User("Pressed open launcher button");
         _guiUpdateProgressDialog = new GuiUpdateProgressDialog();
         _session.ActivateModalWindow(ActiveWindowId.MessageDialog);
-        _guiReleaseUpdateTask = GuiReleaseUpdater.OpenLauncherAsync(_guiUpdateProgressDialog.Report);
+        _guiReleaseUpdateTask = GuiReleaseUpdater.OpenInstallerAsync(_guiUpdateProgressDialog.Report);
     }
 
     private void CompleteGuiReleaseUpdate()
@@ -2910,11 +2910,11 @@ public class Game1 : Game
         {
             var result = task.GetAwaiter().GetResult();
             GuiOperationLog.User("Open launcher completed", result.Message);
-            if (result.DidStartLauncher) Exit();
+            if (result.DidStartInstaller) Exit();
             else
             {
                 _guiUpdateProgressDialog = null;
-                ShowMessage(result.Message, "OPEN LAUNCHER");
+                ShowMessage(result.Message, "OPEN INSTALLER");
             }
         }
         catch (Exception ex)
@@ -3334,7 +3334,7 @@ public class Game1 : Game
     }
 
     private void StartWhiteboardFromLocalSetup() => HandlePlayRoomLaunchResult(
-        _playRoomLauncher.Launch(PlayRoomLaunchRequestFactory.CreateBoardEditor(_session)),
+        _playRoomInstaller.Launch(PlayRoomLaunchRequestFactory.CreateBoardEditor(_session)),
         "WHITEBOARD");
 
     private PlayRoomLaunchResult LaunchBoardEditorInProcess(PlayRoomLaunchRequest request)
@@ -3530,7 +3530,7 @@ public class Game1 : Game
     /// </summary>
     private void StartReviewingGameRecord(GoGameRecord record, string messageTitle, string? sourceFilePath = null)
     {
-        var result = _playRoomLauncher.Launch(PlayRoomLaunchRequestFactory.CreateReview(record));
+        var result = _playRoomInstaller.Launch(PlayRoomLaunchRequestFactory.CreateReview(record));
         if (!result.IsAccepted)
         {
             HandlePlayRoomLaunchResult(result, messageTitle);
@@ -7035,7 +7035,7 @@ public class Game1 : Game
         GuiOperationLog.User(action, Path.GetFileName(path));
         try
         {
-            var result = _desktopLauncher.OpenFileWithPreferredApplication(path, "code");
+            var result = _desktopInstaller.OpenFileWithPreferredApplication(path, "code");
             _applicationSettingsMessage = result == DesktopOpenResult.PreferredApplication
                 ? "OPENED IN CODE"
                 : "CODE NOT FOUND; OPENED WITH DEFAULT APP";
@@ -7058,7 +7058,7 @@ public class Game1 : Game
             }
 
             Directory.CreateDirectory(directory);
-            _desktopLauncher.RevealFile(filePath);
+            _desktopInstaller.RevealFile(filePath);
             _applicationSettingsMessage = $"OPENED {description.ToUpperInvariant()} FOLDER";
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException or System.ComponentModel.Win32Exception)
@@ -7072,7 +7072,7 @@ public class Game1 : Game
     {
         try
         {
-            var result = _desktopLauncher.OpenFileWithPreferredApplication(filePath, "code");
+            var result = _desktopInstaller.OpenFileWithPreferredApplication(filePath, "code");
             _session.SetTournamentRulesDisplayNameWarning(
                 result == DesktopOpenResult.PreferredApplication
                     ? "OPENED SETTINGS IN CODE"

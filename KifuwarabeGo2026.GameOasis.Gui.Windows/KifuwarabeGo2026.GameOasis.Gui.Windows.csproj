@@ -42,6 +42,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\KifuwarabeGo2026.GameOasis.Gui\KifuwarabeGo2026.GameOasis.Gui.csproj" />
+    <ProjectReference Include="..\KifuwarabeGo2026.InstallerEngine.Platform\KifuwarabeGo2026.InstallerEngine.Platform.csproj" />
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="KifuwarabeGo2026.Tests.GameOasis.Gui.Windows" />

@@ -55,13 +55,13 @@ internal static class PlayRoomLaunchChecks
         Require(unsupported.Status == PlayRoomLaunchStatus.Rejected && unsupported.ErrorCode == "unsupported-launch-version",
             "Unsupported launch contract version was accepted.");
 
-        var composedLauncher = GoPlayRoomComposition.CreateInProcessLauncher(
+        var composedInstaller = GoPlayRoomComposition.CreateInProcessLauncher(
             launchRequest => PlayRoomLaunchResult.Started(launchRequest.RequestId, "match"),
             launchRequest => PlayRoomLaunchResult.Started(launchRequest.RequestId, "editor"),
             launchRequest => PlayRoomLaunchResult.Started(launchRequest.RequestId, "review"));
-        Require(composedLauncher.Launch(CreateRequest("go-match", PlayRoomIds.Match, GameOasisOfficialNames.Go)).SessionId == "match" &&
-                composedLauncher.Launch(CreateRequest("go-editor", PlayRoomIds.BoardEditor, GameOasisOfficialNames.Go)).SessionId == "editor" &&
-                composedLauncher.Launch(CreateRequest("go-review", PlayRoomIds.Review, GameOasisOfficialNames.Go)).SessionId == "review",
+        Require(composedInstaller.Launch(CreateRequest("go-match", PlayRoomIds.Match, GameOasisOfficialNames.Go)).SessionId == "match" &&
+                composedInstaller.Launch(CreateRequest("go-editor", PlayRoomIds.BoardEditor, GameOasisOfficialNames.Go)).SessionId == "editor" &&
+                composedInstaller.Launch(CreateRequest("go-review", PlayRoomIds.Review, GameOasisOfficialNames.Go)).SessionId == "review",
             "The Lobby-independent Go composition did not register all Go play-room handlers.");
 
         VerifySavedGoLaunchRequest();

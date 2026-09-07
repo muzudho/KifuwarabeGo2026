@@ -33,13 +33,24 @@ internal static class Program
         [137, 80, 78, 71, 13, 10, 26, 10];
 
     [STAThread]
-    private static int Main()
+    private static int Main(string[] args)
     {
         try
         {
+            if (args.FirstOrDefault() == "--installer-upgrade")
+            {
+                InstallerUpgradeChecks.Run(Path.GetFullPath(args[1]), args[2]);
+                return 0;
+            }
+            if (args.FirstOrDefault() == "--installer-package")
+            {
+                WindowsInstallerPackageInstaller.ValidatePackage(Path.GetFullPath(args[1]), args[2]);
+                Console.WriteLine("PASS: installer package files and version validated.");
+                return 0;
+            }
             VerifyServiceComposition();
-            VerifyLauncherShortcutStore();
-            VerifyLauncherShortcutRewrite();
+            VerifyInstallerShortcutStore();
+            VerifyInstallerShortcutRewrite();
             VerifyExecutableNaming();
             VerifyGoPlayRoomHostResolution();
             VerifyGuiExecutableGuard();
@@ -61,7 +72,7 @@ internal static class Program
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"FAIL: {ex.Message}");
+            Console.Error.WriteLine($"FAIL: {ex}");
             return 1;
         }
     }
@@ -187,22 +198,22 @@ internal static class Program
             "The third Provider combo choice was displayed but had no click hit target.");
     }
 
-    private static void VerifyLauncherShortcutStore()
+    private static void VerifyInstallerShortcutStore()
     {
         var temporaryRoot = Path.Combine(Path.GetTempPath(), "KifuwarabeGo2026-shortcut-store-" + Guid.NewGuid().ToString("N"));
         try
         {
-            var store = new WindowsLauncherShortcutStore(temporaryRoot);
-            var entries = Enumerable.Range(1, WindowsLauncherShortcutStore.MaximumCount)
-                .Select(index => new LauncherShortcutEntry(
+            var store = new WindowsInstallerShortcutStore(temporaryRoot);
+            var entries = Enumerable.Range(1, WindowsInstallerShortcutStore.MaximumCount)
+                .Select(index => new InstallerShortcutEntry(
                     index.ToString(),
                     Path.Combine(temporaryRoot, $"launcher-{index}.lnk"),
-                    $"Launcher {index}",
-                    Path.Combine(temporaryRoot, "old", "KifuwarabeGo2026.Launcher.exe")))
+                    $"Installer {index}",
+                    Path.Combine(temporaryRoot, "old", "KifuwarabeGo2026.Installer.exe")))
                 .ToList();
             store.Save(entries);
             var restored = store.Load();
-            Require(restored.Count == 5 && restored[4].DisplayName == "Launcher 5",
+            Require(restored.Count == 5 && restored[4].DisplayName == "Installer 5",
                 "The launcher shortcut registry did not persist five entries.");
 
             var tooMany = entries.Append(entries[0] with { Id = "6", Path = Path.Combine(temporaryRoot, "launcher-6.lnk") }).ToList();
@@ -217,15 +228,15 @@ internal static class Program
         }
     }
 
-    private static void VerifyLauncherShortcutRewrite()
+    private static void VerifyInstallerShortcutRewrite()
     {
         if (!OperatingSystem.IsWindows()) return;
         var temporaryRoot = Path.Combine(Path.GetTempPath(), "KifuwarabeGo2026-shell-link-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(Path.Combine(temporaryRoot, "old"));
         Directory.CreateDirectory(Path.Combine(temporaryRoot, "current"));
-        var oldTarget = Path.Combine(temporaryRoot, "old", "KifuwarabeGo2026.Launcher.exe");
-        var newTarget = Path.Combine(temporaryRoot, "current", "KifuwarabeGo2026.Launcher.exe");
-        var shortcutPath = Path.Combine(temporaryRoot, "Launcher.lnk");
+        var oldTarget = Path.Combine(temporaryRoot, "old", "KifuwarabeGo2026.Installer.exe");
+        var newTarget = Path.Combine(temporaryRoot, "current", "KifuwarabeGo2026.Installer.exe");
+        var shortcutPath = Path.Combine(temporaryRoot, "Installer.lnk");
         File.WriteAllBytes(oldTarget, [0]);
         File.WriteAllBytes(newTarget, [0]);
         dynamic? shell = null;
@@ -246,7 +257,7 @@ internal static class Program
             var service = new WindowsShellLinkService();
             Require(string.Equals(service.ReadTarget(shortcutPath), oldTarget, StringComparison.OrdinalIgnoreCase),
                 "The registered launcher shortcut target could not be read.");
-            service.RewriteLauncherTarget(shortcutPath, oldTarget, newTarget);
+            service.RewriteInstallerTarget(shortcutPath, oldTarget, newTarget);
             Require(string.Equals(service.ReadTarget(shortcutPath), newTarget, StringComparison.OrdinalIgnoreCase),
                 "The launcher shortcut was not redirected to the managed launcher.");
 
@@ -257,11 +268,28 @@ internal static class Program
             ReleaseCom(shortcut);
             shortcut = null;
 
-            var desktopShortcut = Path.Combine(temporaryRoot, "Desktop Launcher.lnk");
-            service.CreateOrReplaceLauncherShortcut(desktopShortcut, newTarget);
+            var desktopShortcut = Path.Combine(temporaryRoot, "Desktop Installer.lnk");
+            service.CreateOrReplaceInstallerShortcut(desktopShortcut, newTarget);
             Require(File.Exists(desktopShortcut) &&
                     string.Equals(service.ReadTarget(desktopShortcut), newTarget, StringComparison.OrdinalIgnoreCase),
                 "The desktop launcher shortcut was not created with the managed launcher target.");
+            Require(service.ReadArguments(desktopShortcut) == "--launch-lobby", "The desktop shortcut must open the lobby without the management screen.");
+            service.CreateOrReplaceInstallerShortcut(desktopShortcut, newTarget);
+            Require(service.ReadArguments(desktopShortcut) == "--launch-lobby", "Repeated creation preserves the lobby arguments.");
+            RequireThrows<IOException>(() => service.CreateOrReplaceInstallerShortcut(shortcutPath, newTarget),
+                "A custom management shortcut must not be overwritten by the lobby shortcut.");
+
+            var legacyTarget = Path.Combine(temporaryRoot, "old", "KifuwarabeGo2026.Launcher.exe");
+            File.WriteAllText(legacyTarget, "legacy executable");
+            var legacyShortcut = Path.Combine(temporaryRoot, "Kifuwarabe Go 2026 Launcher.lnk");
+            shortcut = shell.CreateShortcut(legacyShortcut);
+            shortcut.TargetPath = legacyTarget;
+            shortcut.Save();
+            ReleaseCom(shortcut);
+            shortcut = null;
+            service.RewriteInstallerTarget(legacyShortcut, legacyTarget, newTarget);
+            Require(service.ReadArguments(legacyShortcut) == "--launch-lobby", "Old standard desktop entry migrates to lobby mode.");
+            Require(string.Equals(service.ReadTarget(legacyShortcut), newTarget, StringComparison.OrdinalIgnoreCase), "Old executable name migrates to Installer.");
         }
         finally
         {
@@ -651,7 +679,7 @@ internal static class Program
     {
         IClipboardService clipboard = new WindowsClipboardService();
         IFileDialogService fileDialog = new WindowsFileDialogService();
-        IDesktopLauncher desktopLauncher = new WindowsDesktopLauncher();
+        IDesktopLauncher desktopInstaller = new WindowsDesktopLauncher();
         ITextRasterizer textRasterizer = new WindowsTextRasterizer();
         IWindowIconService windowIcon = new WindowsWindowIconService();
         IInitialWindowLayoutService initialWindowLayout = new WindowsInitialWindowLayoutService();
@@ -660,7 +688,7 @@ internal static class Program
         Require(
             clipboard is not null
             && fileDialog is not null
-            && desktopLauncher is not null
+            && desktopInstaller is not null
             && textRasterizer is not null
             && windowIcon is not null
             && initialWindowLayout is not null

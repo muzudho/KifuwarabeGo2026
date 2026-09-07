@@ -99,13 +99,13 @@ if ($status.Count -gt 0 -and -not $AllowDirty) {
 }
 
 $versionProjects = @(
-    'KifuwarabeGo2026.LauncherGui\KifuwarabeGo2026.LauncherGui.csproj',
-    'KifuwarabeGo2026.LauncherGui.Platform\KifuwarabeGo2026.LauncherGui.Platform.csproj',
-    'KifuwarabeGo2026.LauncherGui.Presentation\KifuwarabeGo2026.LauncherGui.Presentation.csproj',
-    'KifuwarabeGo2026.LauncherEngine\KifuwarabeGo2026.LauncherEngine.csproj',
-    'KifuwarabeGo2026.LauncherEngine.Platform\KifuwarabeGo2026.LauncherEngine.Platform.csproj',
-    'KifuwarabeGo2026.LauncherEngine.JsonLines\KifuwarabeGo2026.LauncherEngine.JsonLines.csproj',
-    'KifuwarabeGo2026.LauncherEngine.JsonLinesHost\KifuwarabeGo2026.LauncherEngine.JsonLinesHost.csproj',
+    'KifuwarabeGo2026.InstallerGui\KifuwarabeGo2026.InstallerGui.csproj',
+    'KifuwarabeGo2026.InstallerGui.Platform\KifuwarabeGo2026.InstallerGui.Platform.csproj',
+    'KifuwarabeGo2026.InstallerGui.Presentation\KifuwarabeGo2026.InstallerGui.Presentation.csproj',
+    'KifuwarabeGo2026.InstallerEngine\KifuwarabeGo2026.InstallerEngine.csproj',
+    'KifuwarabeGo2026.InstallerEngine.Platform\KifuwarabeGo2026.InstallerEngine.Platform.csproj',
+    'KifuwarabeGo2026.InstallerEngine.JsonLines\KifuwarabeGo2026.InstallerEngine.JsonLines.csproj',
+    'KifuwarabeGo2026.InstallerEngine.JsonLinesHost\KifuwarabeGo2026.InstallerEngine.JsonLinesHost.csproj',
     'KifuwarabeGo2026.LobbyEngine.JsonLines\KifuwarabeGo2026.LobbyEngine.JsonLines.csproj',
     'KifuwarabeGo2026.LobbyEngine.JsonLinesHost\KifuwarabeGo2026.LobbyEngine.JsonLinesHost.csproj',
     'KifuwarabeGo2026.PlayRoomGui.JsonLines\KifuwarabeGo2026.PlayRoomGui.JsonLines.csproj',
@@ -149,7 +149,7 @@ if ($releaseNotesText -notmatch "(?m)^# Kifuwarabe Go 2026 v$([regex]::Escape($V
     throw "Release notes do not contain the expected v$Version title: $ReleaseNotes"
 }
 
-$launcherPublish = 'KifuwarabeGo2026.LauncherGui\bin\Release\net8.0\win-x64\publish'
+$launcherPublish = 'KifuwarabeGo2026.InstallerGui\bin\Release\net8.0\win-x64\publish'
 $guiPublish = 'KifuwarabeGo2026.GameOasis.Gui.Windows\bin\Release\net8.0-windows\win-x64\publish'
 $enginePublish = 'KifuwarabeGo2026.Reference.PlayerEngine.Go.Gtp.Host\bin\Release\net8.0\win-x64\publish'
 
@@ -157,7 +157,7 @@ if (-not $SkipBuild) {
     Invoke-CheckedCommand -Command dotnet -Arguments @('build', 'KifuwarabeGo2026.slnx', '-c', 'Release')
 
     if (-not $SkipSmokeTests) {
-        Invoke-CheckedCommand -Command dotnet -Arguments @('run', '--project', 'KifuwarabeGo2026.Tests.LauncherEngine\KifuwarabeGo2026.Tests.LauncherEngine.csproj', '-c', 'Release', '--no-build')
+        Invoke-CheckedCommand -Command dotnet -Arguments @('run', '--project', 'KifuwarabeGo2026.Tests.InstallerEngine\KifuwarabeGo2026.Tests.InstallerEngine.csproj', '-c', 'Release', '--no-build')
         Invoke-CheckedCommand -Command dotnet -Arguments @('run', '--project', 'KifuwarabeGo2026.Tests.GameOasis.Gui.Portability\KifuwarabeGo2026.Tests.GameOasis.Gui.Portability.csproj', '-c', 'Release', '--no-build')
         Invoke-CheckedCommand -Command dotnet -Arguments @('run', '--project', 'KifuwarabeGo2026.Tests.GameOasis.Gui.Windows\KifuwarabeGo2026.Tests.GameOasis.Gui.Windows.csproj', '-c', 'Release', '--no-build')
         Invoke-CheckedCommand -Command dotnet -Arguments @('run', '--project', 'KifuwarabeGo2026.Tests.PlayRoomGui.JsonLines\KifuwarabeGo2026.Tests.PlayRoomGui.JsonLines.csproj', '-c', 'Release', '--no-build')
@@ -169,8 +169,8 @@ if (-not $SkipBuild) {
     Clear-PublishDirectory -LiteralPath $guiPublish
     Clear-PublishDirectory -LiteralPath $enginePublish
 
-    Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.LauncherGui\KifuwarabeGo2026.LauncherGui.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false')
-    Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.LauncherEngine.JsonLinesHost\KifuwarabeGo2026.LauncherEngine.JsonLinesHost.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false', '-o', $launcherPublish)
+    Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.InstallerGui\KifuwarabeGo2026.InstallerGui.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false')
+    Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.InstallerEngine.JsonLinesHost\KifuwarabeGo2026.InstallerEngine.JsonLinesHost.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false', '-o', $launcherPublish)
     Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.GameOasis.Gui.Windows\KifuwarabeGo2026.GameOasis.Gui.Windows.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false')
     Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.Reference.PlayRoomGui.Go.Windows\KifuwarabeGo2026.Reference.PlayRoomGui.Go.Windows.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false', '-o', $guiPublish)
     Invoke-CheckedCommand -Command dotnet -Arguments @('publish', 'KifuwarabeGo2026.LobbyEngine.JsonLinesHost\KifuwarabeGo2026.LobbyEngine.JsonLinesHost.csproj', '-c', 'Release', '-r', 'win-x64', '--self-contained', 'false', '-o', "$guiPublish\Tools\LobbyEngine")
@@ -191,8 +191,24 @@ if (-not $SkipBuild) {
     Copy-Item -LiteralPath "$guiPublish\KifuwarabeGo2026.GameOasis.Gui.Windows.runtimeconfig.json" -Destination "$guiPublish\KifuwarabeGo2026.Gui.runtimeconfig.json"
 }
 
+# Old clients validate the Launcher-named files and request the Launcher ZIP.
+# The alias apphost still loads Installer.dll, included beside both entry points.
+foreach ($extension in @('exe', 'dll', 'deps.json', 'runtimeconfig.json')) {
+    Copy-Item -LiteralPath "$launcherPublish\KifuwarabeGo2026.Installer.$extension" -Destination "$launcherPublish\KifuwarabeGo2026.Launcher.$extension" -Force
+}
+
 Assert-FileExists -LiteralPath @(
+    "$launcherPublish\KifuwarabeGo2026.Installer.exe",
+    "$launcherPublish\KifuwarabeGo2026.Installer.dll",
+    "$launcherPublish\KifuwarabeGo2026.Installer.deps.json",
+    "$launcherPublish\KifuwarabeGo2026.Installer.runtimeconfig.json",
     "$launcherPublish\KifuwarabeGo2026.Launcher.exe",
+    "$launcherPublish\KifuwarabeGo2026.Launcher.dll",
+    "$launcherPublish\KifuwarabeGo2026.Launcher.deps.json",
+    "$launcherPublish\KifuwarabeGo2026.Launcher.runtimeconfig.json",
+    "$launcherPublish\KifuwarabeGo2026.InstallerEngine.JsonLinesHost.dll",
+    "$launcherPublish\KifuwarabeGo2026.InstallerEngine.JsonLinesHost.deps.json",
+    "$launcherPublish\KifuwarabeGo2026.InstallerEngine.JsonLinesHost.runtimeconfig.json",
     "$guiPublish\KifuwarabeGo2026.GameOasis.Gui.Windows.exe",
     "$guiPublish\KifuwarabeGo2026.Gui.exe",
     "$guiPublish\KifuwarabeGo2026.Gui.deps.json",
@@ -265,7 +281,8 @@ if (-not (Test-Path -LiteralPath $uploads -PathType Container)) {
 
 $assets = @()
 $packages = @(
-    @{ Name = 'Launcher'; Source = $launcherPublish },
+    @{ Name = 'Installer'; Source = $launcherPublish },
+    @{ Name = 'Launcher'; Source = $launcherPublish }, # Compatibility for existing update clients.
     @{ Name = 'Gui'; Source = $guiPublish },
     @{ Name = 'GameOasis.Gui'; Source = $guiPublish },
     @{ Name = 'Engine'; Source = $enginePublish }

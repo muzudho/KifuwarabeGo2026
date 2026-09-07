@@ -3,7 +3,7 @@ namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Effects;
 using Microsoft.Xna.Framework;
 using System;
 
-/// <summary>GUIとランチャーで共有するスクリーンショット撮影時の演出です。</summary>
+/// <summary>GUIとインストーラーで共有するスクリーンショット撮影時の演出です。</summary>
 public sealed class ScreenshotEffect
 {
     public void Draw(KfwStationeryDrawingTools drawingContext, float progress)

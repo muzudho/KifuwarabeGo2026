@@ -58,36 +58,36 @@ public sealed class TitleScreenShellRenderer
     {
         if (showHoverHints)
             DrawControlHint(drawingContext, mousePoint, drawSettingsHint);
-        DrawLauncherButton(drawingContext, ApplicationSettingsScreen.Default.UpdateButton.Bounds,
-            "ランチャーを更新", mousePoint, drawBoardIcon: false);
-        DrawLauncherButton(drawingContext, ApplicationSettingsScreen.Default.OpenLauncherButton.Bounds,
-            "ランチャーを開く", mousePoint, drawBoardIcon: true);
+        DrawInstallerButton(drawingContext, ApplicationSettingsScreen.Default.UpdateButton.Bounds,
+            "インストーラーを更新", mousePoint, drawBoardIcon: false);
+        DrawInstallerButton(drawingContext, ApplicationSettingsScreen.Default.OpenInstallerButton.Bounds,
+            "インストーラーを起動", mousePoint, drawBoardIcon: true);
         ApplicationSettingsScreen.Default.DrawSettingsButton(drawingContext, mousePoint);
     }
 
     private void DrawControlHint(KfwStationeryDrawingTools drawingContext, Point mousePoint,
         Action<Vector2> drawSettingsHint)
     {
-        var openLauncherBounds = ApplicationSettingsScreen.Default.OpenLauncherButton.Bounds;
+        var openInstallerBounds = ApplicationSettingsScreen.Default.OpenInstallerButton.Bounds;
         var updateBounds = ApplicationSettingsScreen.Default.UpdateButton.Bounds;
         var settingsBounds = ApplicationSettingsScreen.Default.SettingsButton.Bounds;
-        if (openLauncherBounds.Contains(mousePoint))
+        if (openInstallerBounds.Contains(mousePoint))
             drawingContext.DrawStickyNote(StickyNoteKind.TitleUpdateHint,
-                new Vector2(openLauncherBounds.Left, openLauncherBounds.Center.Y),
+                new Vector2(openInstallerBounds.Left, openInstallerBounds.Center.Y),
                 new Color(99, 223, 185), new Color(82, 111, 114),
-                "ランチャーを開くとは？",
-                ["共通ランチャーを前面に開き、", "このGUIを閉じます。", "GUIとEngineの更新は", "ランチャーから行います！"]);
+                "インストーラーを起動するとは？",
+                ["共通インストーラーを前面に開き、", "このGUIを閉じます。", "GUIとEngineの更新は", "インストーラーから行います！"]);
         else if (updateBounds.Contains(mousePoint))
             drawingContext.DrawStickyNote(StickyNoteKind.TitleUpdateHint,
                 new Vector2(updateBounds.Left, updateBounds.Center.Y),
                 new Color(125, 225, 255), new Color(82, 111, 114),
-                "ランチャーを更新するとは？",
-                ["ランチャーを最新版にします。", "更新後、デスクトップへ", "ショートカットを作れます。"]);
+                "インストーラーを更新するとは？",
+                ["インストーラーを最新版にします。", "更新後、デスクトップへ", "ショートカットを作れます。"]);
         else if (settingsBounds.Contains(mousePoint))
             drawSettingsHint(SettingsHintConnectorTarget);
     }
 
-    private static void DrawLauncherButton(KfwStationeryDrawingTools drawingContext,
+    private static void DrawInstallerButton(KfwStationeryDrawingTools drawingContext,
         Rectangle bounds, string label, Point mousePoint, bool drawBoardIcon)
     {
         var hovered = bounds.Contains(mousePoint);

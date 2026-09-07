@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
-using KifuwarabeGo2026.LauncherEngine;
+using KifuwarabeGo2026.InstallerEngine;
 
 public sealed class ApplicationSettings
 {
