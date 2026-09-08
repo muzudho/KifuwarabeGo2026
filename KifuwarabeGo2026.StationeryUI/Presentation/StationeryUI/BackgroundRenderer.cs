@@ -1,4 +1,5 @@
-namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
+using global::StationeryUI.MonoGame;
+namespace StationeryUI.MonoGame;
 
 using Microsoft.Xna.Framework;
 using System;
@@ -6,7 +7,7 @@ using System;
 /// <summary>アプリ共通の背景テーマを描画します。</summary>
 internal static class BackgroundRenderer
 {
-    public static void Draw(KfwScreenCanvas canvas)
+    public static void Draw(ScreenCanvas canvas)
     {
         var topLeft = canvas.ToVirtualPoint(Point.Zero);
         var bottomRight = canvas.ToVirtualPoint(new Point(canvas.GraphicsDevice.Viewport.Width, canvas.GraphicsDevice.Viewport.Height));

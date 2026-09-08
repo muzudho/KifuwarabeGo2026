@@ -1,7 +1,7 @@
 namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.PonnukiProviderSelection;
 
 using KifuwarabeGo2026.GameOasis.Gui.Application;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
+using StationeryUI.MonoGame;
 using Microsoft.Xna.Framework;
 
 /// <summary>互換Host固有のセッション状態をポン抜きProvider選択画面へ接続します。</summary>

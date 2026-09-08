@@ -1,3 +1,5 @@
+using global::StationeryUI.Windows;
+using global::StationeryUI.Platform;
 namespace KifuwarabeGo2026.Tests.GameOasis.Gui.Windows;
 
 using KifuwarabeGo2026.GameOasis.Gui;

@@ -1,3 +1,4 @@
+using global::StationeryUI.MonoGame;
 namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.CatalogOrder;
 
 using Microsoft.Xna.Framework;

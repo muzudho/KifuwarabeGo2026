@@ -1,6 +1,6 @@
 namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.SelectEntry;
 
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.Button;
+using StationeryUI.MonoGame.Controls.Button;
 using Microsoft.Xna.Framework;
 
 /// <summary>エントリーとクライアントIDを選択するダイアログのUIを所有します。</summary>

@@ -1,6 +1,6 @@
 namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.BoardLens;
 
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
+using StationeryUI.MonoGame;
 using Microsoft.Xna.Framework;
 using System;
 

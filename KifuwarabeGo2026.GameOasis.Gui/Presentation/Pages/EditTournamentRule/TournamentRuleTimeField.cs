@@ -1,9 +1,9 @@
 namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.EditTournamentRule;
 
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
+using StationeryUI.MonoGame;
 
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.SinglelineTextUnderline;
+using StationeryUI.MonoGame.Controls.Shared.Underline;
+using StationeryUI.MonoGame.Controls.SinglelineTextUnderline;
 using Microsoft.Xna.Framework;
 using System;
 

@@ -1,3 +1,4 @@
+using global::StationeryUI.MonoGame;
 namespace KifuwarabeGo2026.GameOasis.Gui.Infrastructure.Windows;
 
 using KifuwarabeGo2026.GameOasis.Gui.Application;

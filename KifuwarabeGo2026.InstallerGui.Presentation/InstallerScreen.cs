@@ -1,11 +1,11 @@
 namespace KifuwarabeGo2026.InstallerGui.Presentation;
 
 using KifuwarabeGo2026.InstallerEngine;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
-using StationeryButton = KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.Button.Button;
+using StationeryUI.MonoGame;
+using StationeryButton = StationeryUI.MonoGame.Controls.Button.Button;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls;
+using StationeryUI.MonoGame.Controls;
 
 public sealed class InstallerScreen : IDisposable
 {

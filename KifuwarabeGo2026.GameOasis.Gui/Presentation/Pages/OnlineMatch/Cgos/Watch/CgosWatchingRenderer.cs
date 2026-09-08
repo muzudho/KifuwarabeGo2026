@@ -6,7 +6,7 @@ using KifuwarabeGo2026.GameOasis.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.
 using KifuwarabeGo2026.GameOasis.Gui.Application.Local.Playing;
 using KifuwarabeGo2026.Reference.PlayDomain.Go;
 using KifuwarabeGo2026.Reference.PlayRoomGui.Go;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.Headline;
+using StationeryUI.MonoGame.Controls.Headline;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.OnlineMatch.Cgos.Watch;
 using Microsoft.Xna.Framework;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.RightSidePanel;
@@ -17,7 +17,7 @@ using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.Board;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.BoardLens;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.MoveTrendChart;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.PopupTrendChart;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
+using StationeryUI.MonoGame;
 
 /// <summary>
 /// CGOS 対局の観戦・結果画面を描画します。

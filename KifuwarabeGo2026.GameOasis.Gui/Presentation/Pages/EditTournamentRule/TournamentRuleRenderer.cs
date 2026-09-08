@@ -2,7 +2,7 @@ namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.GoApps.Formal.LocalMatch.I
 
 using KifuwarabeGo2026.GameOasis.Gui.Presentation;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.EditTournamentRule;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
+using StationeryUI.MonoGame;
 using Microsoft.Xna.Framework;
 
 public static class TournamentRuleRenderer

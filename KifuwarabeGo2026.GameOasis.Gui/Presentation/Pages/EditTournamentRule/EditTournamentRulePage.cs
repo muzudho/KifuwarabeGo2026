@@ -1,7 +1,7 @@
 namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.EditTournamentRule;
 
 using KifuwarabeGo2026.GameOasis.Gui.Application;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.Button;
+using StationeryUI.MonoGame.Controls.Button;
 using Microsoft.Xna.Framework;
 
 /// <summary>大会ルール設定画面の操作ボタンと、その選択・有効状態を所有します。</summary>

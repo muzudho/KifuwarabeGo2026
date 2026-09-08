@@ -1,7 +1,8 @@
+using global::StationeryUI.MonoGame;
 namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.EntryProfiles;
 
 using KifuwarabeGo2026.GameOasis.Gui.Application;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.StickyNote;
+using StationeryUI.MonoGame.Controls.StickyNote;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.SelectEntry;
 using KifuwarabeGo2026.Reference.PlayDomain.Go;
 using Microsoft.Xna.Framework;
@@ -9,8 +10,8 @@ using System;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.EntryProfiles;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.LocalMatch;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.RightSidePanel;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.ActionBadge;
+using StationeryUI.MonoGame;
+using StationeryUI.MonoGame.Controls.ActionBadge;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation;
 using static KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.EntryProfiles.EntryProfilesScreenBounds;
 

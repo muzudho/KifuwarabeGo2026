@@ -1,6 +1,6 @@
 namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.EntryProfiles;
 
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.Button;
+using StationeryUI.MonoGame.Controls.Button;
 using Microsoft.Xna.Framework;
 using KifuwarabeGo2026.GameOasis.Gui.Application;
 

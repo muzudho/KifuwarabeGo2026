@@ -1,13 +1,14 @@
+using global::StationeryUI.MonoGame;
 namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.EditTournamentRule;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.CatalogOrder;
 
 using KifuwarabeGo2026.GameOasis.Gui.Application;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.ActionBadge;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.LinkUnderline;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
+using StationeryUI.MonoGame;
+using StationeryUI.MonoGame.Controls.ActionBadge;
+using StationeryUI.MonoGame.Controls.LinkUnderline;
+using StationeryUI.MonoGame.Controls.Shared.Underline;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.PopupFilePathTooltip;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.StickyNote;
+using StationeryUI.MonoGame.Controls.StickyNote;
 using Microsoft.Xna.Framework;
 using System;
 using System.IO;

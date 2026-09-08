@@ -1,8 +1,9 @@
+using global::StationeryUI.Platform;
 namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.PopupTrendChart.MoveCommentPanel;
 
 using KifuwarabeGo2026.GameOasis.Gui.Application;
 using KifuwarabeGo2026.GameOasis.Gui.Application.Local.Playing;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
+using StationeryUI.MonoGame;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;

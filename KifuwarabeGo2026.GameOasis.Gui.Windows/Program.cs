@@ -1,3 +1,4 @@
+using global::StationeryUI.Windows;
 namespace KifuwarabeGo2026.GameOasis.Gui;
 
 using KifuwarabeGo2026.GameOasis.Gui.Infrastructure.Logging;

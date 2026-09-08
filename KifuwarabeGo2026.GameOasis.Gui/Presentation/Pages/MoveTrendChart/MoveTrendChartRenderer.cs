@@ -12,8 +12,8 @@ using System.Collections.Generic;
 using System.Globalization;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.PopupTrendChart;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.PopupTrendChart.MoveCommentPanel;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.SectionLabel;
+using StationeryUI.MonoGame;
+using StationeryUI.MonoGame.Controls.SectionLabel;
 
 public sealed class MoveTrendChartRenderer
 {

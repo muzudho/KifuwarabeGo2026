@@ -1,11 +1,11 @@
 namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.ApplicationSettings;
 
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.ActionBadge;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.Button;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.LinkUnderline;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
+using StationeryUI.MonoGame.Controls.ActionBadge;
+using StationeryUI.MonoGame.Controls.Button;
+using StationeryUI.MonoGame.Controls.LinkUnderline;
+using StationeryUI.MonoGame.Controls.Shared.Underline;
+using StationeryUI.MonoGame.Controls;
+using StationeryUI.MonoGame;
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;

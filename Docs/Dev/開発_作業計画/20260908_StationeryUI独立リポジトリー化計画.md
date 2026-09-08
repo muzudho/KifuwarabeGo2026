@@ -2,7 +2,11 @@
 
 作成日: 2026-09-08
 
-状態: 計画作成済み。新リポジトリー作成・コード移行・公開は未実施。
+状態: 2026-09-08、利用者からリポジトリー作成と計画実施の指示を受けて実装中。独立ライブラリー・サンプル・テストを作成し、両アプリを共通0.1.0パッケージ参照へ移行した。
+
+進捗の正本を新リポジトリーの [実装・引き継ぎ](https://github.com/muzudho/StationeryUI/blob/main/docs/implementation-plan.md) と [検証記録](https://github.com/muzudho/StationeryUI/blob/main/docs/validation.md) へ移す。ローカルは `D:\github.com\muzudho\StationeryUI\docs`。GitHub公開の実施結果もそちらへ記録する。
+
+以下のチェック欄と「2026-09-08時点」の表は着手前の計画として保存する。現在の実施状況は正本を参照する。
 
 ## 目的と合意した方向
 

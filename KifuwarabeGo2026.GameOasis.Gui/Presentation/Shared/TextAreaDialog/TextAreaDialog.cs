@@ -1,9 +1,9 @@
 namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.TextAreaDialog;
 
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.Button;
+using StationeryUI.MonoGame.Controls.Button;
 using Microsoft.Xna.Framework;
 using KifuwarabeGo2026.GameOasis.Gui.Application;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
+using StationeryUI.MonoGame;
 using System;
 
 /// <summary>コメント入力ダイアログの領域と操作 UI を所有します。</summary>

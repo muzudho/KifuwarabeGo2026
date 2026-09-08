@@ -1,7 +1,8 @@
-namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.MessageDialog;
+using global::StationeryUI.MonoGame;
+namespace StationeryUI.MonoGame.MessageDialog;
 
 using KifuwarabeGo2026.GameOasis.Gui.Application.Updates;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
+using StationeryUI.MonoGame;
 using Microsoft.Xna.Framework;
 using System;
 

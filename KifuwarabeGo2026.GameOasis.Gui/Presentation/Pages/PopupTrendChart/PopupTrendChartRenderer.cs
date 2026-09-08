@@ -8,7 +8,7 @@ using System;
 using System.Collections.Generic;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.PopupTrendChart;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.MoveTrendChart;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
+using StationeryUI.MonoGame;
 using static KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.PopupTrendChart.PopupTrendChartScreenBounds;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.PopupTrendChart.MoveCommentPanel;
 

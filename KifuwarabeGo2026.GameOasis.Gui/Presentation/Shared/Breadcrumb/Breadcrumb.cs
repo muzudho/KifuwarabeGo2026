@@ -2,7 +2,7 @@ namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.Breadcrumb;
 
 using Microsoft.Xna.Framework;
 using System;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
+using StationeryUI.MonoGame;
 
 /// <summary>画面下部に表示する現在位置パンくずのレイアウトを所有します。</summary>
 public sealed class Breadcrumb

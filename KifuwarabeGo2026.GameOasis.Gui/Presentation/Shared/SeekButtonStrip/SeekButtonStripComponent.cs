@@ -1,7 +1,7 @@
 namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.SeekButtonStrip;
 
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.Button;
+using StationeryUI.MonoGame;
+using StationeryUI.MonoGame.Controls.Button;
 using Microsoft.Xna.Framework;
 using System;
 

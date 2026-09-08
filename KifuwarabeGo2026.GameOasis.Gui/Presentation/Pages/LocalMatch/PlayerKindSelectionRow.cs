@@ -1,7 +1,7 @@
 namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.LocalMatch;
 
 using KifuwarabeGo2026.GameOasis.Gui.Application;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.Button;
+using StationeryUI.MonoGame.Controls.Button;
 using Microsoft.Xna.Framework;
 
 /// <summary>一方のプレイヤー種別と、人間プレイヤー名の入力領域を所有します。</summary>

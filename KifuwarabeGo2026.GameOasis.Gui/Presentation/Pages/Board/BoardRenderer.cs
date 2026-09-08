@@ -6,7 +6,7 @@ using KifuwarabeGo2026.GameOasis.Gui.Presentation.BoardLens.GlassesSystem;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.BoardLens;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.BoardLens.RenSystem;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.BoardLens.Shared.RenBoundaries;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
+using StationeryUI.MonoGame;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.BoardAndReview;
 using KifuwarabeGo2026.Reference.PlayDomain.Go;
 using KifuwarabeGo2026.Reference.PlayRoomGui.Common;

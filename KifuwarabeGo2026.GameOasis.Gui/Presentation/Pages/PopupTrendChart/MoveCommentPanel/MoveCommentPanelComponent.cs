@@ -3,10 +3,10 @@ namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.PopupTrendChart.Move
 using Microsoft.Xna.Framework;
 using System;
 using System.Diagnostics;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.Button;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.TableRowLabel;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.SectionLabel;
+using StationeryUI.MonoGame.Controls.Button;
+using StationeryUI.MonoGame.Controls.TableRowLabel;
+using StationeryUI.MonoGame;
+using StationeryUI.MonoGame.Controls.SectionLabel;
 
 /// <summary>［ポップアップトレンドチャート　＞　着手コメントパネル］</summary>
 public sealed class MoveCommentPanelComponent

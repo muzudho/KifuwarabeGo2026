@@ -2,8 +2,8 @@ namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.Title;
 
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.ApplicationSettings;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.TitleBackground;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.StickyNote;
+using StationeryUI.MonoGame;
+using StationeryUI.MonoGame.Controls.StickyNote;
 using Microsoft.Xna.Framework;
 using System;
 

@@ -2,7 +2,7 @@ namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.PlayersComponent;
 
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.RightSidePanel;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.LocalMatch.Play;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
+using StationeryUI.MonoGame;
 
 using KifuwarabeGo2026.GameOasis.Gui.Application;
 using KifuwarabeGo2026.Reference.PlayDomain.Go;

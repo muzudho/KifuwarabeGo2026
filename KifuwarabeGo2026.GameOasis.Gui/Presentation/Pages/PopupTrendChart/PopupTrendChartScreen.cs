@@ -2,8 +2,8 @@ namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.PopupTrendChart;
 
 using Microsoft.Xna.Framework;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.PopupTrendChart.MoveCommentPanel;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.ChartAxisSectionLabel;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.Button;
+using StationeryUI.MonoGame.Controls.ChartAxisSectionLabel;
+using StationeryUI.MonoGame.Controls.Button;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.SeekButtonStrip;
 
 /// <summary>検討チャートポップアップとリプレイ操作のレイアウトを所有します。</summary>

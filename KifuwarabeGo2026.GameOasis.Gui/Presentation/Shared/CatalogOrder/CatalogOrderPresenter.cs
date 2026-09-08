@@ -2,7 +2,7 @@ namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.CatalogOrder;
 
 using KifuwarabeGo2026.GameOasis.Gui.Application;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.CatalogOrder;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
+using StationeryUI.MonoGame;
 using Microsoft.Xna.Framework;
 using System;
 

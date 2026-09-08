@@ -1,8 +1,8 @@
 namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.OnlineMatch.Cgos.Login;
 
 using KifuwarabeGo2026.GameOasis.Gui.Application;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.Button;
+using StationeryUI.MonoGame;
+using StationeryUI.MonoGame.Controls.Button;
 using Microsoft.Xna.Framework;
 
 /// <summary>CGOS ログイン画面の描画と操作ボタンを所有します。</summary>

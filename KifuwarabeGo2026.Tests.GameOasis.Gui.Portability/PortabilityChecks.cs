@@ -1,3 +1,4 @@
+using global::StationeryUI.Platform;
 namespace KifuwarabeGo2026.Tests.GameOasis.Gui.Portability;
 
 using KifuwarabeGo2026.GameOasis.Gui;
@@ -21,7 +22,7 @@ using KifuwarabeGo2026.LobbyGui.Application;
 using KifuwarabeGo2026.LobbyEngine;
 using KifuwarabeGo2026.FormalAdapter.Gtp.PlayerEngine;
 using KifuwarabeGo2026.Reference.PlayerEngine.Go.GtpExtensions.Integration;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls;
+using StationeryUI.MonoGame.Controls;
 using KifuwarabeGo2026.GameOasis.Gui.Sgf;
 using KifuwarabeGo2026.Reference.PlayerEngine.Go.GtpExtensions;
 using KifuwarabeGo2026.Reference.PlayerEngine.Go.GtpExtensions.Capabilities;

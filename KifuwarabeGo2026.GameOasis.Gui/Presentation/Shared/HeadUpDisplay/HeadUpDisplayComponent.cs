@@ -2,13 +2,13 @@ namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.HeadUpDisplay;
 
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.ReviewUnsavedChangesConfirmation;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.ScreenTransition;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Effects;
+using StationeryUI.MonoGame.Effects;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.Breadcrumb;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.PopupFilePathTooltip;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.PopupNumberUnderline;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.PopupTimeUnderline;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.SinglelineTextUnderline;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.StickyNote;
+using StationeryUI.MonoGame.Controls.PopupNumberUnderline;
+using StationeryUI.MonoGame.Controls.PopupTimeUnderline;
+using StationeryUI.MonoGame.Controls.SinglelineTextUnderline;
+using StationeryUI.MonoGame.Controls.StickyNote;
 
 /// <summary>
 /// ページに依存せず、画面の前面へ表示する共通 UI とその状態を所有します。

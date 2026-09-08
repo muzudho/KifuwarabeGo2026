@@ -2,7 +2,7 @@ namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.ScreenTransition;
 
 using Microsoft.Xna.Framework;
 using System;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
+using StationeryUI.MonoGame;
 
 /// <summary>画面遷移時に表示する稲妻付きの分割フレーム演出です。</summary>
 public sealed class ScreenTransition

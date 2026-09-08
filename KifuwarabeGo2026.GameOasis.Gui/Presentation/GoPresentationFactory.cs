@@ -1,3 +1,5 @@
+using global::StationeryUI.MonoGame;
+using global::StationeryUI.Platform;
 namespace KifuwarabeGo2026.GameOasis.Gui.Presentation;
 
 using KifuwarabeGo2026.GameOasis.Gui.Application;
@@ -12,7 +14,7 @@ using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.PopupTrendChart.MoveComm
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.Title;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.EditEntryProfile;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.HeadUpDisplay;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
+using StationeryUI.MonoGame;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -22,7 +24,7 @@ internal static class GoPresentationFactory
     public static GoPresentationServices Create(GraphicsDevice graphicsDevice, ContentManager content,
         ITextRasterizer textRasterizer)
     {
-        var canvas = new KfwScreenCanvas(graphicsDevice, content);
+        var canvas = new ScreenCanvas(graphicsDevice, content);
         BoardRenderer? boardRenderer = null;
         var boardLensModel = new BoardLensModel(
             BoardRenderer.BoardPoint,
@@ -65,7 +67,7 @@ internal static class GoPresentationFactory
 }
 
 internal sealed record GoPresentationServices(
-    KfwScreenCanvas Canvas,
+    ScreenCanvas Canvas,
     KfwStationeryDrawingTools Stationery,
     GoPresentationRenderer Presentation) : System.IDisposable
 {

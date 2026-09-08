@@ -1,6 +1,6 @@
 namespace KifuwarabeGo2026.Reference.PlayRoomGui.Go.MonoGame;
 
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
+using StationeryUI.MonoGame;
 using KifuwarabeGo2026.Reference.PlayDomain.Go;
 using KifuwarabeGo2026.Reference.PlayRoomGui.Go;
 using Microsoft.Xna.Framework;

@@ -7,8 +7,8 @@ using System;
 using System.Collections.Generic;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.SelectEntry;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.CatalogOrder;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.Button;
+using StationeryUI.MonoGame;
+using StationeryUI.MonoGame.Controls.Button;
 using static KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.SelectEntry.SelectEntryScreenBounds;
 
 /// <summary>［SELECT ENTRY］画面の表示と操作判定を担当します。</summary>

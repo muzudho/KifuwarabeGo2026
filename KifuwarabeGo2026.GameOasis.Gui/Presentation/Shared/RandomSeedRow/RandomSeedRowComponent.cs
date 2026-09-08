@@ -1,9 +1,9 @@
 namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.RandomSeedRow;
 
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.ActionBadge;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.LinkUnderline;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
+using StationeryUI.MonoGame;
+using StationeryUI.MonoGame.Controls.ActionBadge;
+using StationeryUI.MonoGame.Controls.LinkUnderline;
+using StationeryUI.MonoGame.Controls.Shared.Underline;
 using Microsoft.Xna.Framework;
 using System;
 using KifuwarabeGo2026.Reference.PlayDomain.Go;

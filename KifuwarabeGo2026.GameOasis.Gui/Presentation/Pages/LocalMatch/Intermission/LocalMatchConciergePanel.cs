@@ -1,7 +1,7 @@
 namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.LocalMatch.Intermission;
 
 using KifuwarabeGo2026.GameOasis.Gui.Application;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
+using StationeryUI.MonoGame;
 using KifuwarabeGo2026.Reference.PlayDomain.Go;
 using Microsoft.Xna.Framework;
 

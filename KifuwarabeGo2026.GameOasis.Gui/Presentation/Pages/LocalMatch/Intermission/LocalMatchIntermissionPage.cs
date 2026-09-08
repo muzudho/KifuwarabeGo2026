@@ -2,9 +2,9 @@ namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.LocalMatch.Intermiss
 
 using KifuwarabeGo2026.GameOasis.Gui.Application;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
+using StationeryUI.MonoGame;
 using KifuwarabeGo2026.GameOasis.Gui.Application.GoApps.Casual.Ponnuki;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.Button;
+using StationeryUI.MonoGame.Controls.Button;
 using KifuwarabeGo2026.Reference.PlayDomain.Go;
 using Microsoft.Xna.Framework;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.RightSidePanel;

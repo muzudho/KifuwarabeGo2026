@@ -1,3 +1,4 @@
+using global::StationeryUI.Platform;
 namespace KifuwarabeGo2026.GameOasis.Gui.Application.Local.Resting.TournamentRule;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.CatalogOrder;
 
@@ -5,7 +6,7 @@ using KifuwarabeGo2026.GameOasis.Gui.Application;
 using KifuwarabeGo2026.GameOasis.Gui.Infrastructure.Logging;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.EditTournamentRule;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls;
+using StationeryUI.MonoGame.Controls;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using System;

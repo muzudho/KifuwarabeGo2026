@@ -1,9 +1,10 @@
-namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.SinglelineTextUnderline;
+using global::StationeryUI.MonoGame;
+namespace StationeryUI.MonoGame.Controls.SinglelineTextUnderline;
 
 using KifuwarabeGo2026.GameOasis.Gui.Application;
 using Microsoft.Xna.Framework;
 using System;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
+using StationeryUI.MonoGame;
 
 /// <summary>一行テキスト入力ダイアログのレイアウトと操作領域を所有します。</summary>
 public sealed class TextInputDialog

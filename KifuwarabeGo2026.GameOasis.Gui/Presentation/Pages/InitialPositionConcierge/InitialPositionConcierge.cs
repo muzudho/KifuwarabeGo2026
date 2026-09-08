@@ -6,7 +6,7 @@ using KifuwarabeGo2026.Reference.PlayDomain.Go;
 using Microsoft.Xna.Framework;
 using System;
 using System.Linq;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
+using StationeryUI.MonoGame;
 
 /// <summary>エンジンの初期局面設定を確認し、操作を案内するページです。</summary>
 public sealed class InitialPositionConcierge

@@ -22,7 +22,7 @@ using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.HeadUpDisplay;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.LiveBoardPreview;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.RightSidePanel;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.SelectEntry;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
+using StationeryUI.MonoGame;
 using KifuwarabeGo2026.LobbyGui.Application;
 using Microsoft.Xna.Framework;
 using KifuwarabeGo2026.Reference.PlayDomain.Go;

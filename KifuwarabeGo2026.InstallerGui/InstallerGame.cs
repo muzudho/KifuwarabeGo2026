@@ -1,10 +1,11 @@
+using global::StationeryUI.MonoGame;
+using global::StationeryUI.Platform;
 namespace KifuwarabeGo2026.InstallerGui;
 
 using KifuwarabeGo2026.GameOasis.Gui.Application;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Effects;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Audio;
+using StationeryUI.MonoGame;
+using StationeryUI.MonoGame.Effects;
+using StationeryUI.MonoGame.Audio;
 using KifuwarabeGo2026.InstallerEngine;
 using KifuwarabeGo2026.InstallerGui.Presentation;
 using Microsoft.Xna.Framework;
@@ -20,7 +21,7 @@ internal sealed class InstallerGame : Game
     private readonly string? _startupMessage;
     private readonly EventWaitHandle? _activation;
     private InstallerScreen? _screen;
-    private KfwScreenCanvas? _canvas;
+    private ScreenCanvas? _canvas;
     private KfwStationeryDrawingTools? _stationery;
     private KeyboardState _previousKeyboard;
     private bool _screenshotRequested;
@@ -58,7 +59,7 @@ internal sealed class InstallerGame : Game
 
     protected override void LoadContent()
     {
-        _canvas = new KfwScreenCanvas(GraphicsDevice, Content);
+        _canvas = new ScreenCanvas(GraphicsDevice, Content);
         _stationery = new KfwStationeryDrawingTools(_canvas, new ApproximateTextRasterizer(),
             (center, radius, black) => _canvas.DrawCircle(center, radius, black ? new Color(20, 24, 28) : new Color(235, 235, 228)));
         _screen = new InstallerScreen(_stationery, _platform, _engine, Exit);

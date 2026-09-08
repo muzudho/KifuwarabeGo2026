@@ -1,7 +1,7 @@
 namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.Title;
 
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.Button;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.Headline;
+using StationeryUI.MonoGame.Controls.Button;
+using StationeryUI.MonoGame.Controls.Headline;
 using KifuwarabeGo2026.LobbyGui.Application;
 using Microsoft.Xna.Framework;
 using System;

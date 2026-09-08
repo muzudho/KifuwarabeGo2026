@@ -1,12 +1,12 @@
 namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.Title;
 
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.StickyNote;
+using StationeryUI.MonoGame.Controls.StickyNote;
 using KifuwarabeGo2026.LobbyGui.Application;
 using Microsoft.Xna.Framework;
 using System;
 using System.Linq;
 using KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.Title;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
+using StationeryUI.MonoGame;
 
 public sealed class TitleScreenRenderer
 {

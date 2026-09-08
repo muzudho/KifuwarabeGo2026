@@ -1,14 +1,14 @@
 namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.Shared.EditEntryProfile;
 
 using KifuwarabeGo2026.GameOasis.Gui.Application;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.Button;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.ActionBadge;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.LinkUnderline;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.Shared.Underline;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.SinglelineTextUnderline;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.StickyNote;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.TableRowLabel;
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
+using StationeryUI.MonoGame.Controls.Button;
+using StationeryUI.MonoGame.Controls.ActionBadge;
+using StationeryUI.MonoGame.Controls.LinkUnderline;
+using StationeryUI.MonoGame.Controls.Shared.Underline;
+using StationeryUI.MonoGame.Controls.SinglelineTextUnderline;
+using StationeryUI.MonoGame.Controls.StickyNote;
+using StationeryUI.MonoGame.Controls.TableRowLabel;
+using StationeryUI.MonoGame;
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;

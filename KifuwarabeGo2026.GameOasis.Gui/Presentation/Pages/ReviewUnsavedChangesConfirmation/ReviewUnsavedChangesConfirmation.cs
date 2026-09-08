@@ -1,8 +1,8 @@
 namespace KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.ReviewUnsavedChangesConfirmation;
 
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI;
+using StationeryUI.MonoGame;
 
-using KifuwarabeGo2026.GameOasis.Gui.Presentation.StationeryUI.Controls.Button;
+using StationeryUI.MonoGame.Controls.Button;
 using Microsoft.Xna.Framework;
 using System;
 
