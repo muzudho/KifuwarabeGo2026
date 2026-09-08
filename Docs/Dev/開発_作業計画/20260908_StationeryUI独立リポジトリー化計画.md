@@ -2,7 +2,7 @@
 
 作成日: 2026-09-08
 
-状態: 2026-09-08、利用者からリポジトリー作成と計画実施の指示を受けて実装中。独立ライブラリー・サンプル・テストを作成し、両アプリを共通0.1.0パッケージ参照へ移行した。
+状態: 2026-09-08、独立ライブラリー・サンプル・テストを作成し、両アプリを共通0.1.0パッケージ参照へ移行した。[MIT公開リポジトリー](https://github.com/muzudho/StationeryUI) と [v0.1.0 Release](https://github.com/muzudho/StationeryUI/releases/tag/v0.1.0) を公開済み。Windows/Linux CI、両アプリのビルド・自動検査が成功。実IME・DPIの手動確認とNuGet.org公開は未実施。
 
 進捗の正本を新リポジトリーの [実装・引き継ぎ](https://github.com/muzudho/StationeryUI/blob/main/docs/implementation-plan.md) と [検証記録](https://github.com/muzudho/StationeryUI/blob/main/docs/validation.md) へ移す。ローカルは `D:\github.com\muzudho\StationeryUI\docs`。GitHub公開の実施結果もそちらへ記録する。
 
