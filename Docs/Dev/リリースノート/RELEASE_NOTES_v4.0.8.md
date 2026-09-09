@@ -2,9 +2,10 @@
 
 ランチャーを「インストーラー」に改名し、普段はデスクトップからロビーを直接開けるようにしました。
 
-## ダウンロードと始め方
+> [!IMPORTANT]
+> 通常利用する方は **`KifuwarabeGo2026.Installer-v4.0.8-win-x64.zip`** をダウンロードしてください。
 
-通常利用する方は **`KifuwarabeGo2026.Installer-v4.0.8-win-x64.zip`** をダウンロードしてください。
+## ダウンロードと始め方
 
 1. ZIPをすべて展開し、`KifuwarabeGo2026.Installer.exe` を起動します。
 2. ［CHECK GUI + ENGINE UPDATES］でGUIとEngineを取得します。
