@@ -574,7 +574,7 @@ GUI、初期局面GTP拡張、ベースライン試験は新しい所有者を�
 
 全ソリューションReleaseビルドは警告0件、エラー0件です。FormalAdapter.Cgos、FormalAdapter.Sgf、GTP Protocol P、GUI移植性、PlayRoom正常／異常終了、CGOS Hostの`--help`はすべて`PASS`し、リリーススクリプトもPowerShell構文検査を通過しました。旧GTP Protocol名前空間と`GtpCoordinate`の重複がないことも参照検索で確認しました。
 
-Windows非対話試験だけは、再生成した試験DLLをWindowsアプリケーション制御が`0x800711C7`で再び拒否したため、起動前に停止しました。対象プロジェクトのRelease再ビルドは警告0件、エラー0件で成功しています。後続調査でWindows 11のSmart App Control強制モードによる未署名DLLの拒否と確定しました。再起動は恒久策ではないため、[Smart App Controlによる再生成DLLブロック調査](../トラブルシューティング/Smart%20App%20Controlによる再生成DLLブロック調査.md)に記載した開発用VM、信頼されたコード署名、またはSmart App Control無効化の方針決定後まで、第7段階の完了判定を保留します。
+Windows非対話試験だけは、再生成した試験DLLをWindowsアプリケーション制御が`0x800711C7`で再び拒否したため、起動前に停止しました。対象プロジェクトのRelease再ビルドは警告0件、エラー0件で成功しています。後続調査でWindows 11のSmart App Control強制モードによる未署名DLLの拒否と確定しました。再起動は恒久策ではないため、[Smart App Controlによる再生成DLLブロック調査](../Troubleshooting/Smart%20App%20Controlによる再生成DLLブロック調査.md)に記載した開発用VM、信頼されたコード署名、またはSmart App Control無効化の方針決定後まで、第7段階の完了判定を保留します。
 
 #### 2026年8月30日のWindows最終回帰再試行
 

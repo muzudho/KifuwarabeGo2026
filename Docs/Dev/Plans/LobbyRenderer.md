@@ -22,7 +22,7 @@
 * ランチャーからLobbyを起動し、Lobbyから各Play Roomを開始・終了する手動試験。
 * 発行物に必要なHost、マニフェスト、契約DLLが含まれること。
 
-WindowsのSmart App Controlが未署名の再生成DLLを`0x800711C7`で拒否した場合は、[`Smart App Controlによる再生成DLLブロック調査.md`](../トラブルシューティング/Smart%20App%20Controlによる再生成DLLブロック調査.md)に従い、コード失敗とOS拒否を分けて記録します。PC再起動を通常の試験手順にはしません。
+WindowsのSmart App Controlが未署名の再生成DLLを`0x800711C7`で拒否した場合は、[`Smart App Controlによる再生成DLLブロック調査.md`](../Troubleshooting/Smart%20App%20Controlによる再生成DLLブロック調査.md)に従い、コード失敗とOS拒否を分けて記録します。PC再起動を通常の試験手順にはしません。
 
 ## 実施原則
 

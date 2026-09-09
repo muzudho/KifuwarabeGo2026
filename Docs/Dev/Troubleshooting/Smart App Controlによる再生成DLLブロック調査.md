@@ -2,6 +2,21 @@
 
 調査日：2026年8月29日
 
+## 2026-09-09 追記：CircleSpaceCoordinator の開発用署名を照合
+
+ユーザーの提案により、`D:\github.com\muzudho\CircleSpaceCoordinator` のローカルファイルを読み取り調査した。
+
+* `scripts/ForSmartAppControl/New-DevelopmentCodeSigningCertificate.ps1` は RSA 3072 bit / SHA-256 の自己署名コード署名証明書を CurrentUser の My に作成し、公開証明書を Root と TrustedPublisher に登録する。秘密鍵はリポジトリーに保存しない。
+* `CircleSpaceCoordinator.Desktop.Windows/CircleSpaceCoordinator.Desktop.Windows.csproj` は Windows の Debug ビルドで `AfterTargets="Build"` から `Sign-BuildOutput.ps1` を呼ぶ。ソリューション全体の全ビルドに無条件で署名する設定ではなく、Desktop.Windows の出力フォルダーが対象である。
+* `Sign-BuildOutput.ps1` は CurrentUser の有効な開発用証明書を選び、`Sign-ReleaseArtifacts.ps1` が指定フォルダー内の EXE / DLL を再帰的に列挙する。ネイティブ DLL も対象に、`Set-AuthenticodeSignature` で SHA-256 署名し、各ファイルの `Get-AuthenticodeSignature` が `Valid` であることを確認する。
+* Release の publish 出力には、別途 `Publish-AndSign.ps1` から署名する。
+
+ただし、同リポジトリーの `Docs/Dev/配布/コード署名.md` の 2026-09-09 記録には、自己署名と信頼ストアへの登録が済み、署名検証も Valid である `CircleSpaceCoordinator.EditorClient.dll` が `0x800711C7` で拒否され、F5 起動が未解決とある。これは参照先の調査記録であり、今回そのアプリを再ビルド・起動して再現確認した結果ではない。参照先の Desktop.Windows/bin は今回のチェックアウトには存在しなかった。
+
+[Microsoft の署名ガイド](https://learn.microsoft.com/en-us/windows/apps/develop/smart-app-control/code-signing-for-smart-app-control)も、SAC が考慮する証明書は信頼されたプロバイダーが発行したものとしている（今回再確認）。ローカルの Authenticode 検証成功だけでは SAC の起動許可を確認したことにならない。
+
+したがって、自動署名の実装例としては参考になるが、本リポジトリーの起動拒否を解決する実証済みの対策としては採用しない。今回の調査では署名スクリプトの移植、証明書の作成・信頼登録、OS 設定の変更は行っていない。ロビーの実操作確認は引き続き未完了である。
+
 ## 結論
 
 この端末で再生成した.NET DLLが`0x800711C7`で読み込めない原因は、Codex、.NET SDK、リポジトリーのアクセス権ではなく、Windows 11のSmart App Controlが強制モードで動作していることです。
