@@ -5,6 +5,7 @@ using KifuwarabeGo2026.GameOasis.Gui.Infrastructure.Logging;
 using KifuwarabeGo2026.GameOasis.Gui.Infrastructure.Windows;
 using System;
 using KifuwarabeGo2026.PlayRoom.Launching;
+using KifuwarabeGo2026.Reference.MatchRunner.Go;
 
 internal static class Program
 {
@@ -35,7 +36,7 @@ internal static class Program
                 platformExecutableService,
                 new WindowsWindowScreenshotService(),
                 new WindowsInstallerMaintenanceService(),
-                new ProcessPlayRoomLauncher(GoPlayRoomHostProcessStartInfoFactory.Create));
+                new GoStdioMatchLauncher(GoPlayRoomHostProcessStartInfoFactory.CreateStdio));
             textCompositionService.Attach(game.Window.Handle);
             try
             {

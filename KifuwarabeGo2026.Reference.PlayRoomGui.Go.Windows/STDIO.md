@@ -41,6 +41,8 @@ Event IDs increase within the session. `closed` events use the same eventId/type
 
 ## Reference caller and tests
 
+The official Windows Lobby now uses this route through [Reference.MatchRunner.Go](../KifuwarabeGo2026.Reference.MatchRunner.Go/README.md). That runner connects Protocol G/S authority and GTP players, advances legal moves, scores two passes, handles resignation, and returns the result to the Lobby. The Python caller below remains a transport-only demonstration.
+
 ```powershell
 python Samples/External.PlayRoomClient/window_client.py -- dotnet KifuwarabeGo2026.Reference.PlayRoomGui.Go.Windows/bin/Release/net8.0/KifuwarabeGo2026.Reference.PlayRoomGui.Go.Windows.dll --stdio
 ```

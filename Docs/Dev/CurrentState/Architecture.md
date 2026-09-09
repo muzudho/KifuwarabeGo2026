@@ -8,6 +8,7 @@
 | `GameOasis.Concierge` | 公開契約を介したセッション・参加者の調停 |
 | `LobbyGui` | 開始前のページ状態、表示モデル、意味入力 |
 | `LobbyEngine` 系列 | カタログ、保存、構成、開始準備 |
+| `Reference.MatchRunner.Go` | 公式Lobbyの通常囲碁対局進行。Protocol G/S、GTP参加者と公開標準入出力画面を接続 |
 | `Reference.PlayRoomGui.Go` | 囲碁表示状態、幾何モデル、Presenter、公開起動要求の解釈 |
 | `Reference.PlayRoomEngine.Go` / `.Ponnuki` | 各ゲームの状態、行動、終局。Goの `Match` は互換GUIが利用する現役モデル |
 | `Reference.PlayDomain.Go` | 囲碁の共有ドメイン |

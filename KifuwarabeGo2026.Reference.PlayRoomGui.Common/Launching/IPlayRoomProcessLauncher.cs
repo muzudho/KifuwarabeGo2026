@@ -18,7 +18,8 @@ public sealed record PlayRoomProcessCompletionResult(
     string? ErrorCode = null,
     string? Message = null,
     bool WasReady = false,
-    string? Diagnostic = null)
+    string? Diagnostic = null,
+    MatchCompletion? Match = null)
 {
     public bool IsNormalExit => Status == PlayRoomProcessCompletionStatus.ExitedNormally;
 }

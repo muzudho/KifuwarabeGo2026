@@ -14,6 +14,7 @@
     <ApplicationIcon>..\KifuwarabeGo2026.GameOasis.Gui\GuiIcon.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\KifuwarabeGo2026.Reference.MatchRunner.Go\KifuwarabeGo2026.Reference.MatchRunner.Go.csproj" />
     <EmbeddedResource Include="..\KifuwarabeGo2026.GameOasis.Gui\Icon.ico">
       <Link>Icon.ico</Link>
       <LogicalName>Icon.ico</LogicalName>

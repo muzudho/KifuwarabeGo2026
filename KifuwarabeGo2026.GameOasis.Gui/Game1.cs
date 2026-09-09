@@ -2620,6 +2620,17 @@ public class Game1 : Game
         GuiOperationLog.App(
             "Local Match Play Room process completed",
             $"request={completion.RequestId}; ready={completion.WasReady}; status={completion.Status}; exitCode={completion.ExitCode}; code={completion.ErrorCode}; message={completion.Message}; diagnostic={completion.Diagnostic}");
+        if (completion.IsNormalExit && completion.Match is { Status: MatchCompletionStatus.Finished } match)
+        {
+            var outcome = match.WinnerRoleId switch { "black" => "Black wins", "white" => "White wins", _ => "Draw" };
+            var reason = match.Reason switch
+            {
+                "resignation" => "Resignation",
+                "two-passes-area-score" => "Two consecutive passes (Chinese area scoring)",
+                _ => match.Reason,
+            };
+            ShowMessage($"{outcome}\n{reason}", "LOCAL MATCH FINISHED");
+        }
         if (!completion.IsNormalExit)
         {
             var phaseMessage = completion.WasReady
@@ -7323,6 +7334,7 @@ public class Game1 : Game
             _textCompositionService.DiagnosticsChanged -= OnTextCompositionDiagnosticsChanged;
             Window.ClientSizeChanged -= OnWindowClientSizeChanged;
             Deactivated -= OnGameDeactivated;
+            _localMatchProcessLaunch?.Dispose();
             _cgosBlackConnectionProcess.Dispose();
             _cgosWhiteConnectionProcess.Dispose();
             _cgosAdminProcess.Dispose();

@@ -11,6 +11,13 @@ internal static class GoPlayRoomHostProcessStartInfoFactory
 {
     private const string HostName = "KifuwarabeGo2026.Reference.PlayRoomGui.Go.Windows";
 
+    public static ProcessStartInfo CreateStdio(PlayRoomLaunchRequest request)
+    {
+        var start = Create(request);
+        start.ArgumentList.Add("--stdio");
+        return start;
+    }
+
     public static ProcessStartInfo Create(PlayRoomLaunchRequest request)
     {
         if (request.RoomTypeId != PlayRoomIds.Match || request.GameId != GameOasisOfficialNames.Go)

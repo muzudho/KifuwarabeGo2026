@@ -1,4 +1,4 @@
-namespace KifuwarabeGo2026.Reference.PlayRoomGui.Go.Windows;
+namespace KifuwarabeGo2026.Reference.MatchRunner.Go;
 
 using System.Globalization;
 using System.Text.Json;
@@ -10,7 +10,7 @@ public enum GoLocalMatchActionKind { Play, Pass, Resign }
 
 public sealed record GoLocalMatchAction(GoLocalMatchActionKind Kind, GoStone Stone, GoPoint? Point = null);
 
-/// <summary>保存済みPlayer Engine接続を専用HostのLocal Matchへ接続します。</summary>
+/// <summary>公開起動PlanのGTP接続を対局進行役と従来のファイル起動Hostで共用します。</summary>
 public sealed class GoLocalMatchGtpController : IAsyncDisposable
 {
     private readonly GoPlayRoomLaunchPlan _plan;

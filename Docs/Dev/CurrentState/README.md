@@ -23,6 +23,7 @@
 - [Installer改名・ロビー起動の実装状況](./Installer.md)
 - [インストーラーエンジン JSON Lines プロトコル](./InstallerJsonLines.md)
 - [Lobby・Play Room分離の到達点](./LobbyPlayRoomSeparation.md)
+- [公式Lobbyから公開通信で囲碁対局を進める](./LobbyGoStdioMatch.md)
 - [開発状況の入口](./Overview.md)
 - [Player・Client Identityの実装状況](./PlayerProfiles.md)
 - [GUI移植用の構成と検査範囲](./PortingGuide.md)

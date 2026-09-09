@@ -109,6 +109,7 @@ $versionProjects = @(
     'KifuwarabeGo2026.LobbyEngine.JsonLines\KifuwarabeGo2026.LobbyEngine.JsonLines.csproj',
     'KifuwarabeGo2026.LobbyEngine.JsonLinesHost\KifuwarabeGo2026.LobbyEngine.JsonLinesHost.csproj',
     'KifuwarabeGo2026.PlayRoomGui.JsonLines\KifuwarabeGo2026.PlayRoomGui.JsonLines.csproj',
+    'KifuwarabeGo2026.Reference.MatchRunner.Go\KifuwarabeGo2026.Reference.MatchRunner.Go.csproj',
     'KifuwarabeGo2026.Reference.PlayRoomGui.BoardEditor.JsonLinesHost\KifuwarabeGo2026.Reference.PlayRoomGui.BoardEditor.JsonLinesHost.csproj',
     'KifuwarabeGo2026.Reference.PlayRoomGui.Review.JsonLinesHost\KifuwarabeGo2026.Reference.PlayRoomGui.Review.JsonLinesHost.csproj',
     'KifuwarabeGo2026.Reference.PlayRoomGui.Match.JsonLinesHost\KifuwarabeGo2026.Reference.PlayRoomGui.Match.JsonLinesHost.csproj',
@@ -161,6 +162,7 @@ if (-not $SkipBuild) {
         Invoke-CheckedCommand -Command dotnet -Arguments @('run', '--project', 'KifuwarabeGo2026.Tests.GameOasis.Gui.Portability\KifuwarabeGo2026.Tests.GameOasis.Gui.Portability.csproj', '-c', 'Release', '--no-build')
         Invoke-CheckedCommand -Command dotnet -Arguments @('run', '--project', 'KifuwarabeGo2026.Tests.GameOasis.Gui.Windows\KifuwarabeGo2026.Tests.GameOasis.Gui.Windows.csproj', '-c', 'Release', '--no-build')
         Invoke-CheckedCommand -Command dotnet -Arguments @('run', '--project', 'KifuwarabeGo2026.Tests.PlayRoomGui.JsonLines\KifuwarabeGo2026.Tests.PlayRoomGui.JsonLines.csproj', '-c', 'Release', '--no-build')
+        Invoke-CheckedCommand -Command dotnet -Arguments @('run', '--project', 'KifuwarabeGo2026.Tests.Reference.MatchRunner.Go\KifuwarabeGo2026.Tests.Reference.MatchRunner.Go.csproj', '-c', 'Release', '--no-build')
         Invoke-CheckedCommand -Command dotnet -Arguments @('run', '--project', 'KifuwarabeGo2026.Tests.PlayRoomEngine.JsonLines\KifuwarabeGo2026.Tests.PlayRoomEngine.JsonLines.csproj', '-c', 'Release', '--no-build')
         Invoke-CheckedCommand -Command dotnet -Arguments @('run', '--project', 'KifuwarabeGo2026.PlayRoomEngine.Conformance\KifuwarabeGo2026.PlayRoomEngine.Conformance.csproj', '-c', 'Release', '--no-build')
     }
@@ -219,6 +221,8 @@ Assert-FileExists -LiteralPath @(
     "$guiPublish\KifuwarabeGo2026.Reference.PlayRoomGui.Go.Windows.deps.json",
     "$guiPublish\KifuwarabeGo2026.Reference.PlayRoomGui.Go.Windows.runtimeconfig.json",
     "$guiPublish\KifuwarabeGo2026.Reference.PlayRoomGui.Common.dll",
+    "$guiPublish\KifuwarabeGo2026.Reference.MatchRunner.Go.dll",
+    "$guiPublish\KifuwarabeGo2026.PlayRoomGui.JsonLines.dll",
     "$guiPublish\KifuwarabeGo2026.Reference.PlayRoomGui.Go.dll",
     "$guiPublish\KifuwarabeGo2026.Reference.PlayRoomGui.Go.MonoGame.dll",
     "$guiPublish\KifuwarabeGo2026.FormalAdapter.Cgos.dll",
@@ -272,6 +276,7 @@ Assert-FileExists -LiteralPath @(
 
 if (-not $SkipSmokeTests) {
     & "$PSScriptRoot\Test-PublishedGoPlayRoom.ps1" -PublishDirectory $guiPublish
+    Invoke-CheckedCommand -Command dotnet -Arguments @('run', '--project', 'KifuwarabeGo2026.Tests.Reference.MatchRunner.Go\KifuwarabeGo2026.Tests.Reference.MatchRunner.Go.csproj', '-c', 'Release', '--no-build', '--', '--real-host', "$guiPublish\KifuwarabeGo2026.Reference.PlayRoomGui.Go.Windows.dll")
 }
 
 $uploads = Join-Path $repositoryRoot 'Uploads'

@@ -92,6 +92,9 @@ internal static class Program
             null,
             []);
         var startInfo = GoPlayRoomHostProcessStartInfoFactory.Create(request);
+        var stdioStart = GoPlayRoomHostProcessStartInfoFactory.CreateStdio(request);
+        Require(stdioStart.ArgumentList.Last() == "--stdio" && !stdioStart.ArgumentList.Contains("--launch-request"),
+            "The Windows Lobby must start the public stdio Match route.");
         Require(
             Path.GetFileName(startInfo.FileName) is "dotnet" or "dotnet.exe" ||
             Path.GetFileName(startInfo.FileName) == "KifuwarabeGo2026.Reference.PlayRoomGui.Go.Windows.exe",

@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\KifuwarabeGo2026.GameOasis.Concierge\KifuwarabeGo2026.GameOasis.Concierge.csproj" />
+    <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlayRoomEngine.Go\KifuwarabeGo2026.Reference.PlayRoomEngine.Go.csproj" />
+    <ProjectReference Include="..\KifuwarabeGo2026.Reference.PlayRoomGui.Go\KifuwarabeGo2026.Reference.PlayRoomGui.Go.csproj" />
+    <ProjectReference Include="..\KifuwarabeGo2026.PlayRoomGui.JsonLines\KifuwarabeGo2026.PlayRoomGui.JsonLines.csproj" />
+    <ProjectReference Include="..\KifuwarabeGo2026.FormalAdapter.Gtp\KifuwarabeGo2026.FormalAdapter.Gtp.csproj" />
+  </ItemGroup>
+</Project>

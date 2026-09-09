@@ -2,15 +2,17 @@ namespace KifuwarabeGo2026.GameOasis.Gui.Application;
 
 using System;
 using System.Threading.Tasks;
+using System.Threading;
 using KifuwarabeGo2026.GameOasis.Contracts.PlayRoom;
 using KifuwarabeGo2026.PlayRoom.Launching;
 
 /// <summary>Lobbyの画面ループを止めずにLocal Match子Hostの完了を受け取ります。</summary>
-public sealed class LocalMatchProcessLaunchCoordinator
+public sealed class LocalMatchProcessLaunchCoordinator : IDisposable
 {
     private readonly IPlayRoomProcessLauncher _launcher;
     private Task<PlayRoomProcessCompletionResult>? _launchTask;
     private PlayRoomProcessReadyNotification? _ready;
+    private readonly CancellationTokenSource _stop = new();
 
     public LocalMatchProcessLaunchCoordinator(IPlayRoomProcessLauncher launcher)
     {
@@ -30,7 +32,7 @@ public sealed class LocalMatchProcessLaunchCoordinator
                 "A Local Match Play Room is already running.");
 
         _ready = null;
-        _launchTask = _launcher.LaunchAsync(request, new ReadyProgress(this));
+        _launchTask = _launcher.LaunchAsync(request, new ReadyProgress(this), _stop.Token);
         return PlayRoomLaunchResult.Deferred(request.RequestId, "The Local Match Play Room is starting.");
     }
 
@@ -67,6 +69,14 @@ public sealed class LocalMatchProcessLaunchCoordinator
             ErrorCode: "play-room-host-task-failed",
             Message: exception?.Message ?? "The Local Match Play Room task failed.");
         return true;
+    }
+
+    public void Dispose()
+    {
+        _stop.Cancel();
+        try { _launchTask?.GetAwaiter().GetResult(); }
+        catch (Exception) { }
+        _stop.Dispose();
     }
 
     private sealed class ReadyProgress(LocalMatchProcessLaunchCoordinator owner) : IProgress<PlayRoomProcessReadyNotification>

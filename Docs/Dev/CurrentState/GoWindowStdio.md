@@ -1,5 +1,7 @@
 # 囲碁ウィンドウの標準入出力接続
 
+後続更新：[公式Lobbyとの対局接続](LobbyGoStdioMatch.md)。以下は第2段階実装時点の記録です。
+
 2026-09-09、第2段階のMatch接続を実装しました。[通信仕様と起動手順](../../../KifuwarabeGo2026.Reference.PlayRoomGui.Go.Windows/STDIO.md)。
 
 ## 実装した境界

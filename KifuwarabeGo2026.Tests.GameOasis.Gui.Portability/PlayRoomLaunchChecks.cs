@@ -9,6 +9,7 @@ using KifuwarabeGo2026.GameOasis.Gui.Sgf;
 using KifuwarabeGo2026.Reference.PlayDomain.Go;
 using KifuwarabeGo2026.Reference.PlayRoomGui.Go;
 using KifuwarabeGo2026.Reference.PlayRoomGui.Go.Windows;
+using KifuwarabeGo2026.Reference.MatchRunner.Go;
 using System;
 using System.IO;
 using System.Text.Json;
