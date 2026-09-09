@@ -449,7 +449,7 @@ internal static class PortabilityChecks
         var layout = new TitleScreenLayoutAdapter();
         foreach (var target in new[] { LobbyHomeTarget.EngineProfiles, LobbyHomeTarget.EntryProfiles,
                      LobbyHomeTarget.LocalMatch, LobbyHomeTarget.OnlineMatch,
-                     LobbyHomeTarget.CaptureGame, LobbyHomeTarget.GamePlatform })
+                     LobbyHomeTarget.CaptureGame, LobbyHomeTarget.ReferenceGo })
             Require(TitleScreen.Default.GetHomeTargetHit(layout.GetItemBounds(target).Center) == target,
                 "Extracted Lobby drawing and host input must share home item geometry.");
         for (var index = 0; index < 4; index++)
@@ -515,8 +515,8 @@ internal static class PortabilityChecks
 
         var home = LobbyHomePresenter.Create();
         Require(home.Items.Count == 6 &&
-                home.GetItem(LobbyHomeTarget.LocalMatch).Caption == "PLAY / REVIEW" &&
-                home.GetItem(LobbyHomeTarget.GamePlatform).Accent == LobbyHomeAccent.Platform,
+                home.GetItem(LobbyHomeTarget.LocalMatch).Caption == "GTP対応エンジンや人間で対局" &&
+                home.GetItem(LobbyHomeTarget.ReferenceGo).Accent == LobbyHomeAccent.Platform,
             "Lobby Home presenter must own stable menu labels, captions, and semantic accents.");
         Require(home.GetHint(LobbyHomeTarget.FormalApps).BodyLines.Count == 5 &&
                 home.GetHint(LobbyHomeTarget.EntryProfiles).Heading == "ENTRY PROFILES とは？",
@@ -553,7 +553,7 @@ internal static class PortabilityChecks
                 title.GetHomeTargetHit(title.CgosClientButton.Bounds.Center) == LobbyHomeTarget.OnlineMatch &&
                 title.GetHomeTargetHit(title.EngineProfilesButton.Bounds.Center) == LobbyHomeTarget.EngineProfiles &&
                 title.GetHomeTargetHit(title.EntryProfilesButton.Bounds.Center) == LobbyHomeTarget.EntryProfiles &&
-                title.GetHomeTargetHit(title.GameOasisButton.Bounds.Center) == LobbyHomeTarget.GamePlatform &&
+                title.GetHomeTargetHit(title.GameOasisButton.Bounds.Center) == LobbyHomeTarget.ReferenceGo &&
                 title.GetHomeTargetHit(title.CaptureGameButton.Bounds.Center) == LobbyHomeTarget.CaptureGame &&
                 title.GetHomeTargetHit(Point.Zero) is null,
             "The MonoGame Lobby adapter must translate Home geometry into semantic targets.");
@@ -583,7 +583,7 @@ internal static class PortabilityChecks
         Require(gameOasis.Select(1)?.PlaySpaceTypeId == new PlaySpaceTypeId("example.game-1") &&
                 gameOasis.Select(-1) is null && gameOasis.Select(4) is null,
             "The Lobby Game Oasis presentation must create selection intents only for visible entries.");
-        var lobbyScreen = LobbyScreenPresenter.Create(LobbyPage.GameOasis, playSpaces);
+        var lobbyScreen = LobbyScreenPresenter.Create(LobbyPage.GameOasis, playSpaces, home);
         Require(lobbyScreen.CurrentPage == LobbyPage.GameOasis &&
                 ReferenceEquals(lobbyScreen.Home, home) &&
                 lobbyScreen.GameOasis.VisibleItems.Count == LobbyGameOasisPresenter.MaximumVisibleItems &&

@@ -19,6 +19,7 @@ public sealed class TitleScreenLayoutAdapter : ILobbyPageLayout
         LobbyHomeTarget.OnlineMatch => _screen.CgosClientButton.Bounds,
         LobbyHomeTarget.CaptureGame => _screen.CaptureGameButton.Bounds,
         LobbyHomeTarget.GamePlatform => _screen.GameOasisButton.Bounds,
+        LobbyHomeTarget.ReferenceGo => _screen.GameOasisButton.Bounds,
         _ => throw new ArgumentOutOfRangeException(nameof(target), target, "Not a home item."),
     };
 

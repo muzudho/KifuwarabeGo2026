@@ -6,7 +6,7 @@ using StationeryUI.MonoGame;
 using StationeryUI.MonoGame.Controls.StickyNote;
 
 /// <summary>ロビーのページ内容を描画します。旧GUIのコントロールやセッションは参照しません。</summary>
-public sealed class LobbyPageRenderer(ILobbyPageLayout layout)
+public sealed partial class LobbyPageRenderer(ILobbyPageLayout layout)
 {
     private readonly ILobbyPageLayout _layout = layout;
     private KfwStationeryDrawingTools _drawingContext = null!;
@@ -23,49 +23,7 @@ public sealed class LobbyPageRenderer(ILobbyPageLayout layout)
         switch (lobby.CurrentPage)
         {
             case LobbyPage.Home:
-                var engineProfiles = home.GetItem(LobbyHomeTarget.EngineProfiles);
-                var entryProfiles = home.GetItem(LobbyHomeTarget.EntryProfiles);
-                var localMatch = home.GetItem(LobbyHomeTarget.LocalMatch);
-                var onlineMatch = home.GetItem(LobbyHomeTarget.OnlineMatch);
-                var captureGame = home.GetItem(LobbyHomeTarget.CaptureGame);
-                var gamePlatform = home.GetItem(LobbyHomeTarget.GamePlatform);
-                var entrySettingsHovered = _layout.GetSectionBounds(LobbyHomeTarget.EntrySettings).Contains(mousePoint);
-                var formalAppsHovered = _layout.GetSectionBounds(LobbyHomeTarget.FormalApps).Contains(mousePoint);
-                var casualAppsHovered = _layout.GetSectionBounds(LobbyHomeTarget.CasualApps).Contains(mousePoint);
-                var gamePlatformHovered = _layout.GetSectionBounds(LobbyHomeTarget.GamePlatform).Contains(mousePoint) ||
-                    _layout.GetItemBounds(LobbyHomeTarget.GamePlatform).Contains(mousePoint);
-                var localMatchHovered = _layout.GetItemBounds(LobbyHomeTarget.LocalMatch).Contains(mousePoint);
-                var onlineMatchHovered = _layout.GetItemBounds(LobbyHomeTarget.OnlineMatch).Contains(mousePoint);
-                var engineProfilesHovered = _layout.GetItemBounds(LobbyHomeTarget.EngineProfiles).Contains(mousePoint);
-                var entryProfilesHovered = _layout.GetItemBounds(LobbyHomeTarget.EntryProfiles).Contains(mousePoint);
-                _layout.DrawHomeLabels(_drawingContext);
-                DrawProfileChoice(_layout.GetItemBounds(LobbyHomeTarget.EngineProfiles), engineProfiles.Title, engineProfiles.Caption, mousePoint, true);
-                DrawProfileChoice(_layout.GetItemBounds(LobbyHomeTarget.EntryProfiles), entryProfiles.Title, entryProfiles.Caption, mousePoint, false);
-                DrawHomeServiceChoice(_layout.GetItemBounds(LobbyHomeTarget.LocalMatch), localMatch.Title, localMatch.Caption, ToColor(localMatch.Accent), mousePoint);
-                DrawHomeServiceChoice(_layout.GetItemBounds(LobbyHomeTarget.OnlineMatch), onlineMatch.Title, onlineMatch.Caption, ToColor(onlineMatch.Accent), mousePoint);
-                DrawAppChoice(_layout.GetItemBounds(LobbyHomeTarget.CaptureGame), captureGame.Title, captureGame.Caption, mousePoint);
-                DrawAppChoice(_layout.GetItemBounds(LobbyHomeTarget.GamePlatform), gamePlatform.Title, gamePlatform.Caption, mousePoint, ToColor(gamePlatform.Accent));
-                DrawDynamicOptionText(home.Guidance, new Rectangle(460, 676, 980, 30), new Color(180, 195, 195), 0.34f);
-                if (entrySettingsHovered)
-                    DrawHomeHint(home.GetHint(LobbyHomeTarget.EntrySettings));
-                else if (formalAppsHovered)
-                    DrawHomeHint(home.GetHint(LobbyHomeTarget.FormalApps));
-                else if (casualAppsHovered)
-                    DrawHomeHint(home.GetHint(LobbyHomeTarget.CasualApps));
-                else if (gamePlatformHovered)
-                    DrawHomeHint(home.GetHint(LobbyHomeTarget.GamePlatform));
-                else if (localMatchHovered)
-                    DrawHomeHint(home.GetHint(LobbyHomeTarget.LocalMatch));
-                else if (onlineMatchHovered)
-                    DrawHomeHint(home.GetHint(LobbyHomeTarget.OnlineMatch));
-                else if (engineProfilesHovered)
-                    DrawHomeHint(home.GetHint(LobbyHomeTarget.EngineProfiles));
-                else if (entryProfilesHovered)
-                    DrawHomeHint(home.GetHint(LobbyHomeTarget.EntryProfiles));
-                else if (_layout.GetItemBounds(LobbyHomeTarget.CaptureGame).Contains(mousePoint))
-                {
-                    DrawCaptureGamePreview();
-                }
+                DrawPortal(home, mousePoint);
                 break;
             case LobbyPage.GameOasis:
                 DrawTitleBreadcrumb(gameOasis.Breadcrumb, panel);

@@ -3,15 +3,20 @@ namespace KifuwarabeGo2026.LobbyGui.Application;
 /// <summary>Lobby Homeの文言と意味上の強調を、描画フレームワークに依存せず構成します。</summary>
 public static class LobbyHomePresenter
 {
+    public const int PageSize = 4;
+    public static IReadOnlyList<LobbyHomeItem> Catalog { get; } = Array.AsReadOnly(new LobbyHomeItem[]
+    {
+        new(LobbyHomeTarget.LocalMatch, "囲碁ローカルマッチ", "GTP対応エンジンや人間で対局", LobbyHomeAccent.Formal),
+        new(LobbyHomeTarget.OnlineMatch, "囲碁オンラインマッチ（CGOS）", "GTP対応エンジンをCGOSへ接続・観戦", LobbyHomeAccent.Formal),
+        new(LobbyHomeTarget.CaptureGame, "ポン抜き", "石を取る囲碁ゲーム", LobbyHomeAccent.Casual),
+        new(LobbyHomeTarget.ReferenceGo, "コンピューター囲碁サンプル", "開発者向けのプレイルーム・リファレンス実装", LobbyHomeAccent.Platform),
+    });
     private static readonly LobbyHomePresentation Presentation = new(
-        "左で対局候補を準備し、利用するアプリを選べます。",
+        "遊ぶプレイルームを選んでください。参加するエンジンやエントリーは上のメニューで準備できます。",
         [
             new(LobbyHomeTarget.EngineProfiles, "エンジン登録", "REGISTER ENGINES", LobbyHomeAccent.Engine),
             new(LobbyHomeTarget.EntryProfiles, "エントリー登録", "REGISTER ENTRIES", LobbyHomeAccent.Entry),
-            new(LobbyHomeTarget.LocalMatch, "Local Match", "PLAY / REVIEW", LobbyHomeAccent.Formal),
-            new(LobbyHomeTarget.OnlineMatch, "Online Match (CGOS)", "WATCH / CONNECT", LobbyHomeAccent.Formal),
-            new(LobbyHomeTarget.CaptureGame, "ポン抜きゲーム", "CAPTURE GAME", LobbyHomeAccent.Casual),
-            new(LobbyHomeTarget.GamePlatform, "Kifuwarabe Game Oasis", "REFERENCE PLAY-SPACES", LobbyHomeAccent.Platform),
+            .. Catalog,
         ],
         [
             new(LobbyHomeTarget.EntrySettings, "ENTRY SETTINGS とは？", ["エンジンを登録し、", "対局へ参加させる候補を準備します！"], LobbyHomeAccent.Engine),
@@ -25,7 +30,12 @@ public static class LobbyHomePresenter
             new(LobbyHomeTarget.EntryProfiles, "ENTRY PROFILES とは？", ["対局へ参加させる候補を準備します。"], LobbyHomeAccent.Entry),
         ]);
 
-    public static LobbyHomePresentation Create() => Presentation;
+    public static LobbyHomePresentation Create(int pageIndex = 0, IReadOnlyList<LobbyHomeItem>? catalog = null)
+    {
+        var entries = (catalog ?? Catalog).ToArray();
+        var pageCount = Math.Max(1, (entries.Length + PageSize - 1) / PageSize);
+        return Presentation with { Catalog = entries, PageIndex = Math.Clamp(pageIndex, 0, pageCount - 1) };
+    }
 }
 
 public sealed record LobbyHomePresentation(
@@ -33,6 +43,14 @@ public sealed record LobbyHomePresentation(
     IReadOnlyList<LobbyHomeItem> Items,
     IReadOnlyList<LobbyHomeHint> Hints)
 {
+    public IReadOnlyList<LobbyHomeItem> Catalog { get; init; } = [];
+    public int PageIndex { get; init; }
+    public int PageCount => Math.Max(1, (Catalog.Count + LobbyHomePresenter.PageSize - 1) / LobbyHomePresenter.PageSize);
+    public bool CanPrevious => PageIndex > 0;
+    public bool CanNext => PageIndex + 1 < PageCount;
+    public IReadOnlyList<LobbyHomeItem> VisibleItems => Catalog.Skip(PageIndex * LobbyHomePresenter.PageSize).Take(LobbyHomePresenter.PageSize).ToArray();
+    public LobbyHomeTarget? Select(int visibleIndex) => visibleIndex >= 0 && visibleIndex < VisibleItems.Count ? VisibleItems[visibleIndex].Target : null;
+
     public LobbyHomeItem GetItem(LobbyHomeTarget target) =>
         Items.First(item => item.Target == target);
 
@@ -64,6 +82,7 @@ public enum LobbyHomeTarget
     EntryProfiles,
     CaptureGame,
     Settings,
+    ReferenceGo,
 }
 
 public enum LobbyHomeAccent

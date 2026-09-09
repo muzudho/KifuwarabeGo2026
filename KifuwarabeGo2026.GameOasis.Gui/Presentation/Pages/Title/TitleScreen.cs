@@ -5,6 +5,7 @@ using StationeryUI.MonoGame.Controls.Headline;
 using KifuwarabeGo2026.LobbyGui.Application;
 using Microsoft.Xna.Framework;
 using System;
+using KifuwarabeGo2026.LobbyGui.MonoGame;
 
 /// <summary>タイトル画面のレイアウトと操作コントロールを所有します。</summary>
 public sealed class TitleScreen
@@ -17,11 +18,11 @@ public sealed class TitleScreen
         EntrySettingsLabel = new Headline("ENTRY SETTINGS", new Vector2(460, 338), new Color(125, 225, 255), 0.43f);
         FormalAppsLabel = new Headline("FORMAL APPS", new Vector2(800, 338), new Color(99, 223, 185), 0.43f);
         CasualAppsLabel = new Headline("CASUAL APPS", new Vector2(1140, 338), new Color(255, 190, 92), 0.43f);
-        EngineProfilesButton = new Button(new Rectangle(460, 390, 300, 126), "エンジン登録", 0.38f);
-        EntryProfilesButton = new Button(new Rectangle(460, 536, 300, 126), "エントリー登録", 0.38f);
-        LocalMatchButton = new Button(new Rectangle(800, 390, 300, 126), "Local Match", 0.46f);
-        CgosClientButton = new Button(new Rectangle(800, 536, 300, 126), "Online Match (CGOS)", 0.42f);
-        CaptureGameButton = new Button(new Rectangle(1140, 390, 300, 126), "ポン抜きゲーム", 0.40f);
+        EngineProfilesButton = new Button(LobbyPortalLayout.Engine, "エンジン登録", 0.38f);
+        EntryProfilesButton = new Button(LobbyPortalLayout.Entry, "エントリー登録", 0.38f);
+        LocalMatchButton = new Button(LobbyPortalLayout.Card(0), "囲碁ローカルマッチ", 0.46f);
+        CgosClientButton = new Button(LobbyPortalLayout.Card(1), "囲碁オンラインマッチ（CGOS）", 0.42f);
+        CaptureGameButton = new Button(LobbyPortalLayout.Card(2), "ポン抜き", 0.40f);
         BackButton = new Button(new Rectangle(1260, 316, 152, 54), "BACK", 0.36f);
         UpdateButton = new Button(new Rectangle(1548, 972, 220, 62), "インストーラーを起動", 0.20f);
         SettingsButton = new Button(new Rectangle(1780, 972, 70, 62), string.Empty, 0.1f);
@@ -49,21 +50,19 @@ public sealed class TitleScreen
     public Headline GamePlatformLabel { get; } = new("GAME PLATFORM", new Vector2(460, 716), new Color(178, 145, 255), 0.43f);
 
     public Button CaptureGameButton { get; }
-    public Button GameOasisButton { get; } = new(new Rectangle(460, 758, 980, 74), "Kifuwarabe Game Oasis", 0.44f);
+    public Button GameOasisButton { get; } = new(LobbyPortalLayout.Card(3), "コンピューター囲碁サンプル", 0.44f);
     public Button GameOasisGoButton { get; } = new(new Rectangle(560, 430, 380, 180), "GO", 0.62f);
     public Button GameOasisPonnukiButton { get; } = new(new Rectangle(980, 430, 380, 180), "PONNUKI", 0.52f);
     public Button EngineProfilesButton { get; }
     public Button EntryProfilesButton { get; }
 
-    public LobbyHomeTarget? GetHomeTargetHit(Point point)
+    public LobbyHomeTarget? GetHomeTargetHit(Point point, LobbyHomePresentation? home = null)
     {
-        if (LocalMatchButton.IsHit(point)) return LobbyHomeTarget.LocalMatch;
-        if (CgosClientButton.IsHit(point)) return LobbyHomeTarget.OnlineMatch;
         if (EngineProfilesButton.IsHit(point)) return LobbyHomeTarget.EngineProfiles;
         if (EntryProfilesButton.IsHit(point)) return LobbyHomeTarget.EntryProfiles;
-        if (GameOasisButton.IsHit(point)) return LobbyHomeTarget.GamePlatform;
-        if (CaptureGameButton.IsHit(point)) return LobbyHomeTarget.CaptureGame;
-        return null;
+        var presentation = home ?? LobbyHomePresenter.Create();
+        return LobbyPortalLayout.HitCard(point, presentation.VisibleItems.Count) is { } slot
+            ? presentation.Select(slot) : null;
     }
 
     public static Rectangle GetGameOasisPlaySpaceBounds(int index)

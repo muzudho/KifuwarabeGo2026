@@ -68,6 +68,7 @@ using KifuwarabeGo2026.GameOasis.Gui.Application.GameOasis;
 using KifuwarabeGo2026.GameOasis.Gui.Application.InstallerMaintenance;
 using KifuwarabeGo2026.GameOasis.Contracts.Common;
 using KifuwarabeGo2026.LobbyGui.Application;
+using LobbyPortalLayout = KifuwarabeGo2026.LobbyGui.MonoGame.LobbyPortalLayout;
 using KifuwarabeGo2026.PlayRoom.Launching;
 using KifuwarabeGo2026.GameOasis.Contracts.PlayRoom;
 using KifuwarabeGo2026.Reference.PlayRoomGui.Common;
@@ -403,6 +404,13 @@ public class Game1 : Game
 
         if (_session.UseKind is null)
         {
+            if (acceptsInput && _inputArmed && _lobbyInput.CurrentPage == LobbyPage.Home &&
+                _session.ActiveWindowId == ActiveWindowId.None && !_isApplicationSettingsOpen &&
+                _gameOasisComposition?.PlayingBridge.Board is null && _gameOasisComposition?.PlayingBridge.IsBusy != true)
+            {
+                if (keyboard.IsKeyDown(Keys.PageUp) && _previousKeyboard.IsKeyUp(Keys.PageUp)) _lobbyInput.ChangePage(-1);
+                if (keyboard.IsKeyDown(Keys.PageDown) && _previousKeyboard.IsKeyUp(Keys.PageDown)) _lobbyInput.ChangePage(1);
+            }
             UpdateAppProviderSelectionKeyboard(keyboard);
             UpdatePlayerEditTextBox(keyboard, gameTime);
             UpdateClientIdentityProfileEditTextBox(keyboard, gameTime);
@@ -846,7 +854,7 @@ public class Game1 : Game
                     _presentationServices.Presentation.DrawTitle(_session, backgroundMousePosition,
                         LobbyScreenPresenter.Create(
                             _lobbyInput.CurrentPage,
-                            _gameOasisComposition?.Client.State.PlaySpaces ?? []),
+                            _gameOasisComposition?.Client.State.PlaySpaces ?? [], _lobbyInput.Home),
                         _appProviderTabIndex, _appProviderSelectionLoadTask is not null);
             }
         }
@@ -1323,7 +1331,7 @@ public class Game1 : Game
                 else if (TryHandleTitleMenuClick(point))
                 {
                 }
-                else if (ApplicationSettingsScreen.Default.UpdateButton.IsHit(point))
+                else if ((_lobbyInput.CurrentPage == LobbyPage.Home ? LobbyPortalLayout.UpdateInstaller : ApplicationSettingsScreen.Default.UpdateButton.Bounds).Contains(point))
                 {
                     GuiOperationLog.User("Pressed Installer update button");
                     if (_launcherMaintenanceService.IsSupported)
@@ -1336,11 +1344,11 @@ public class Game1 : Game
                         _session.ActivateModalWindow(ActiveWindowId.MessageDialog);
                     }
                 }
-                else if (ApplicationSettingsScreen.Default.OpenInstallerButton.IsHit(point))
+                else if ((_lobbyInput.CurrentPage == LobbyPage.Home ? LobbyPortalLayout.OpenInstaller : ApplicationSettingsScreen.Default.OpenInstallerButton.Bounds).Contains(point))
                 {
                     BeginGuiReleaseUpdate();
                 }
-                else if (ApplicationSettingsScreen.Default.SettingsButton.IsHit(point))
+                else if ((_lobbyInput.CurrentPage == LobbyPage.Home ? LobbyPortalLayout.Settings : ApplicationSettingsScreen.Default.SettingsButton.Bounds).Contains(point))
                 {
                     GuiOperationLog.User("Pressed Settings button");
                     _isApplicationSettingsOpen = true;
@@ -2939,15 +2947,22 @@ public class Game1 : Game
 
     private bool TryHandleTitleMenuClick(Point point)
     {
-        if (TitleScreen.Default.BackButton.IsHit(point))
+        if (_lobbyInput.CurrentPage != LobbyPage.Home && TitleScreen.Default.BackButton.IsHit(point))
         {
             _lobbyInput.OpenHome();
             GuiOperationLog.User("Pressed title menu Back button", $"page={_lobbyInput.CurrentPage}");
             return true;
         }
 
+        if (_lobbyInput.CurrentPage == LobbyPage.Home)
+        {
+            if (LobbyPortalLayout.Previous.Contains(point))
+            { _lobbyInput.ChangePage(-1); return true; }
+            if (LobbyPortalLayout.Next.Contains(point))
+            { _lobbyInput.ChangePage(1); return true; }
+        }
         if (_lobbyInput.CurrentPage == LobbyPage.Home &&
-            TitleScreen.Default.GetHomeTargetHit(point) is { } homeTarget)
+            TitleScreen.Default.GetHomeTargetHit(point, _lobbyInput.Home) is { } homeTarget)
         {
             var action = _lobbyInput.Activate(homeTarget);
             switch (action)
@@ -2970,6 +2985,10 @@ public class Game1 : Game
                     break;
                 case LobbyHomeAction.OpenGameOasis:
                     GuiOperationLog.User("Opened Game Oasis", "Navigate from title to play-space selection");
+                    break;
+                case LobbyHomeAction.OpenReferenceGo:
+                    GuiOperationLog.User("Opened reference Go sample", "source=lobby portal");
+                    BeginGameOasisSession(new PlaySpaceTypeId(GameOasisOfficialNames.Go));
                     break;
                 case LobbyHomeAction.OpenCaptureGame:
                     GuiOperationLog.User("Opened Casual Apps entry", $"page={_lobbyInput.CurrentPage}");

@@ -21,10 +21,10 @@ public sealed class TitleScreenRenderer
     public void Draw(KfwStationeryDrawingTools drawingContext, Point mousePoint,
         LobbyScreenPresentation lobby, Action drawProviderSelection)
     {
-        var panel = _shellRenderer.DrawFrame(drawingContext);
+        var panel = _shellRenderer.DrawFrame(drawingContext, lobby.CurrentPage == LobbyPage.Home);
         _pageRenderer.Draw(lobby, drawingContext, panel, mousePoint,
             _shellRenderer.SettingsHintConnectorTarget, drawProviderSelection);
-        _shellRenderer.DrawControls(drawingContext, mousePoint,
+        if (lobby.CurrentPage != LobbyPage.Home) _shellRenderer.DrawControls(drawingContext, mousePoint,
             lobby.CurrentPage == LobbyPage.Home,
             connectorTarget => _pageRenderer.DrawHomeHint(
                 lobby.Home.GetHint(LobbyHomeTarget.Settings), connectorTarget));

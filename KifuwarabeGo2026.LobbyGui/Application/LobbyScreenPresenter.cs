@@ -7,12 +7,13 @@ public static class LobbyScreenPresenter
 {
     public static LobbyScreenPresentation Create(
         LobbyPage currentPage,
-        IReadOnlyList<GuiPlaySpaceEntry> gameOasisEntries)
+        IReadOnlyList<GuiPlaySpaceEntry> gameOasisEntries,
+        LobbyHomePresentation? home = null)
     {
         ArgumentNullException.ThrowIfNull(gameOasisEntries);
         return new(
             currentPage,
-            LobbyHomePresenter.Create(),
+            home ?? LobbyHomePresenter.Create(),
             LobbyGameOasisPresenter.Create(gameOasisEntries),
             LobbyCasualAppPresenter.Create(currentPage));
     }

@@ -6,6 +6,7 @@ using StationeryUI.MonoGame;
 using StationeryUI.MonoGame.Controls.StickyNote;
 using Microsoft.Xna.Framework;
 using System;
+using KifuwarabeGo2026.LobbyGui.MonoGame;
 
 /// <summary>Lobbyページ内容の外側にある互換タイトル画面の装飾と共通操作を描画します。</summary>
 public sealed class TitleScreenShellRenderer
@@ -22,8 +23,10 @@ public sealed class TitleScreenShellRenderer
         _drawCircumscribedCircleArc = drawCircumscribedCircleArc;
     }
 
-    public Rectangle DrawFrame(KfwStationeryDrawingTools drawingContext)
+    public Rectangle DrawFrame(KfwStationeryDrawingTools drawingContext, bool portal = false)
     {
+        if (portal)
+            return LobbyPortalFrame.Draw(drawingContext, GetDisplayVersion());
         _titleGoEquipment.Draw(new TitleGoEquipmentDrawingCallbacks(
             _drawEllipseWire, _drawCircumscribedCircleArc));
 

@@ -44,7 +44,14 @@ internal static class Program
 
         try
         {
+            if (args.Length == 1 && args[0] == "--lobby-portal")
+            {
+                LobbyPortalChecks.Run();
+                Console.WriteLine("PASS: Lobby portal navigation, pagination and geometry checks.");
+                return 0;
+            }
             PortabilityChecks.Run();
+            LobbyPortalChecks.Run();
             PlayRoomLaunchChecks.Run();
             FormalAdapterBaselineChecks.Run();
             Console.WriteLine(
