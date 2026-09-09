@@ -1,0 +1,942 @@
+# ロビーのＧＵＩとエンジン分割計画
+
+> 過去の記録です。「現在」「未着手」「次回」は記録当時を指します。[現状の入口](../CurrentState/LobbyPlayRoomSeparation.md)を参照してください。
+
+
+状態：作業段階１０完了（2026年8月29日）
+
+## 今回の決定
+
+2026年8月28日、次の順番で進めることを決定しました。
+
+1. 現在のロビーとプレイルームを同じ実行ファイル、同じプロセスに残したまま、ＧＵＩとエンジンの責務を分ける。
+2. 同一プロセス内で、ロビーＧＵＩ、ロビーエンジン、プレイルームＧＵＩ、プレイルームエンジンの論理境界を作る。
+3. 要求、応答、通知の契約を安定させる。
+4. その後、必要性と境界の安定を確認してから、ロビーとプレイルームの別実行ファイル化を別計画として進める。
+
+最初から標準入出力と JSON Lines による別実行ファイル化は行いません。先に責務を分けることで、画面分割、状態所有、通信、プロセス管理を同時に変更することを避けます。
+
+今回の作業範囲は、原則として作業段階０から作業段階４までです。作業段階５以降は将来の接続可能性を確認するために記載していますが、今回の分割完了条件には含めません。
+
+## 目的
+
+現在のゲームオアシスＧＵＩに同居している［ロビーＧＵＩ］、［ロビーエンジン］、［プレイルームＧＵＩ］の責務を段階的に分けます。
+
+最終的には、利用者がゲーム、プレイスペース、プレイヤー、ゲームマスター、対局条件を選ぶ入口を `LobbyGui`、登録・接続・セッション準備を統括するコンシェルジュを `LobbyEngine` として判別できる構成を目指します。
+
+この計画では一括改名や一括移動を行いません。現在の実行ファイルと保存データを維持し、責務境界、同一プロセス境界、物理プロジェクト、プロセス間通信の順に進めます。
+
+## 今回の完了像
+
+利用者から見た実行ファイルと操作の流れは変えず、内部を次のように整理します。
+
+```text
+KifuwarabeGo2026.GameOasis.Gui.exe
+  ├─ ロビーＧＵＩ
+  │    ↓ ILobbyEngine
+  ├─ ロビーエンジン
+  │    ↓ プレイルーム起動契約
+  ├─ プレイルームＧＵＩ
+  │    ↓ IPlayRoomEngine または既存 Protocol S 境界
+  └─ プレイルームエンジン
+```
+
+ここでいう「分割」は、直ちに４個の `.csproj` や４個の実行ファイルを作ることではありません。責務、状態の正本、依存方向、契約がコード上で判別でき、具象実装を同一プロセス用アダプターの内側へ隠せた状態を指します。
+
+### 今回変更しないもの
+
+* 利用者が起動する既存のゲームオアシスＧＵＩ実行ファイル。
+* ランチャーからゲームオアシスＧＵＩを起動する経路。
+* 利用者設定、カタログ、棋譜などの保存場所と既存形式。
+* 画面の見た目と通常の操作手順。
+* 標準入出力、JSON Lines、gRPC によるプロセス間通信。
+* ロビーとプレイルームの独立配布。
+
+## 用語
+
+* ［ロビーＧＵＩ］：ゲーム開始前の選択、登録、編集、設定を利用者が操作する画面。
+* ［ロビーエンジン］：いわゆる［コンシェルジュ］。カタログ、参加者、接続、構成、セッション準備を統括する。
+* ［プレイルームＧＵＩ］：対局開始後の盤、着手、観戦、棋譜、レビューなど、ゲーム固有の画面。
+* ［プレイルームエンジン］：ゲームの局面、合法手、進行、終局を所有する。
+
+## 現行プロジェクトの調査結果
+
+### `KifuwarabeGo2026.GameOasis.Contracts`
+
+Game Oasis の公開識別子、共通応答、Protocol G、Protocol M、Protocol P、Protocol S を所有します。ＧＵＩやＯＳへ依存していません。
+
+ロビーエンジンだけの内部実装ではなく、ロビー、プレイルーム、プレイヤー、ゲームマスターが共有する公開契約です。将来名は `KifuwarabeGo2026.LobbyEngine.Contracts` の候補ですが、Protocol S/P/M までロビー所有と呼ぶことが適切かを先に整理します。契約の意味を変えずに名前だけ先行変更しません。
+
+### `KifuwarabeGo2026.GameOasis.Concierge`
+
+プレイスペース、プレイヤーエンジン、ゲームマスターエンジンの登録、互換性確認、割り当て、セッション対応付け、通知、運営状態を所有します。参照先は `GameOasis.Contracts` だけです。
+
+現時点で最も明瞭な［ロビーエンジン中核］です。将来の主な移行先は `KifuwarabeGo2026.LobbyEngine` とします。
+
+### `KifuwarabeGo2026.GameOasis.Application`
+
+GTPエンジン、エントリー、接続先、利用者識別、プレイスペース構成などのプロフィール、カタログ、正規化、編集、読込・保存ユースケースを所有します。ＧＵＩや Storage 実装へ依存していません。
+
+主としてロビーエンジンのアプリケーション層です。ただし現在 `Reference.PlayerEngine.Go.GtpExtensions` を参照する囲碁固有項目があり、汎用ロビー契約との分離を確認します。将来の候補は `KifuwarabeGo2026.LobbyEngine.Application` です。
+
+### `KifuwarabeGo2026.GameOasis.Storage`
+
+カタログ保存先と UTF-8 文書ストアのファイルシステム実装を所有し、`GameOasis.Application` だけを参照します。
+
+ロビーエンジンの永続化アダプターに相当します。将来の候補は `KifuwarabeGo2026.LobbyEngine.Storage` です。
+
+### `KifuwarabeGo2026.GameOasis.Gui`
+
+MonoGame による描画と入力だけでなく、巨大な `Game1`、`GoAppSession`、カタログ構成、GTP制御、CGOS、盤、対局、棋譜、レビューを同居させています。ロビーとプレイルームの最大の混在箇所です。
+
+このプロジェクトをそのまま `LobbyGui` へ改名すると、囲碁プレイルーム固有処理までロビー所有に見えてしまうため不適切です。先に画面とセッションを分類し、依存境界を作ります。
+
+### `KifuwarabeGo2026.GameOasis.Gui.Windows`
+
+Windows 用起動口と、ランチャー保守、ショートカット、WinForms ダイアログなどの Windows アダプターを所有します。将来は `KifuwarabeGo2026.LobbyGui.Windows` の候補ですが、プレイルーム起動口が分かれるまでは既存の実行ファイル名を維持します。
+
+## 現在の依存関係
+
+```text
+GameOasis.Contracts
+  ↑
+GameOasis.Concierge
+
+Reference.PlayerEngine.Go.GtpExtensions
+  ↑
+GameOasis.Application
+  ↑
+GameOasis.Storage
+
+GameOasis.Gui
+  ├─ Concierge
+  ├─ Application
+  ├─ Storage
+  ├─ LauncherEngine
+  ├─ StationeryUI
+  └─ 囲碁・ポン抜き・GTPの参照実装群
+  ↑
+GameOasis.Gui.Windows
+```
+
+`GameOasis.Gui` が結線、ロビー、プレイルーム、ゲーム固有処理をまとめて参照していることが、分割の中心課題です。
+
+## 画面と機能の暫定分類
+
+### ロビーＧＵＩへ寄せるもの
+
+* タイトルとホーム画面。
+* アプリケーション設定。
+* ゲーム／プレイスペース選択。
+* GTPエンジンの登録、編集、オプション選択。
+* プレイヤー、エントリー、接続先、利用者識別の登録と選択。
+* 大会・対局条件の編集。
+* ランチャーを開く、ランチャー更新、ショートカット保守。
+* プレイルームへ渡す起動構成の確認と起動。
+
+### プレイルームＧＵＩへ寄せるもの
+
+* 盤と着手入力。
+* 対局中、局間、観戦の画面。
+* 棋譜、レビュー、変化図、盤面編集。
+* 着手分析、形勢・着手傾向チャート、コメント。
+* CGOS の対局・観戦セッション。
+* 囲碁およびポン抜き固有の表示。
+
+### 分解して両側へ分けるもの
+
+* `Game1`：起動・画面遷移・結線をロビーへ、ゲームループと盤表示をプレイルームへ分ける。
+* `GoAppSession`：開始前のプロフィール選択と起動構成をロビーへ、開始後の局面・棋譜・対局状態をプレイルームへ分ける。
+* `LocalMatch` と `OnlineMatch`：条件選択はロビー、開始後のプレイ・観戦はプレイルームへ分ける。
+* `GameOasis` 画面：登録・接続状態はロビー、進行中セッションのゲーム表示はプレイルームへ分ける。
+
+## 目標プロジェクト構成
+
+責務確定後の候補は以下です。実際の改名は作業段階４で再確認します。
+
+```text
+KifuwarabeGo2026.LobbyGui
+KifuwarabeGo2026.LobbyGui.Windows
+KifuwarabeGo2026.LobbyGui.Presentation        （必要な場合）
+
+KifuwarabeGo2026.LobbyEngine
+KifuwarabeGo2026.LobbyEngine.Application
+KifuwarabeGo2026.LobbyEngine.Storage
+KifuwarabeGo2026.LobbyEngine.Contracts        （契約所有者の整理後）
+```
+
+プレイルーム側は別計画で、次の役割名へ移します。
+
+```text
+KifuwarabeGo2026.Reference.PlayRoomGui.Go
+KifuwarabeGo2026.Reference.PlayRoomEngine.Go
+KifuwarabeGo2026.Reference.PlayRoomGui.Ponnuki
+KifuwarabeGo2026.Reference.PlayRoomEngine.Ponnuki
+```
+
+## 作業段階０：基準状態を固定する
+
+状態：完了（2026年8月28日）
+
+目的：現在動いているロビー、対局、設定、更新の経路を、分割後の回帰基準として固定する。
+
+作業：
+
+* 起動からタイトル、設定、登録、対局準備、対局開始、終了までの画面遷移を記録する。
+* 保存ファイル、既定値、移行処理、Windows 固有機能を一覧化する。
+* ロビー相当画面とプレイルーム相当画面の手動スモーク項目を分ける。
+* `Game1` と `GoAppSession` の状態所有と構成箇所を機械的に検査できる一覧にする。
+
+完了条件：既存挙動と保存データを壊したか判断できる基準がある。
+
+### 作業段階０の実施記録
+
+#### 基準ビルドと自動テスト
+
+実行環境：
+
+```text
+ＯＳ：Windows
+.NET SDK：10.0.400
+対象フレームワーク：net8.0／net8.0-windows
+構成：Release
+ソリューション内プロジェクト数：35
+```
+
+実行したビルド：
+
+```powershell
+dotnet build KifuwarabeGo2026.slnx -c Release
+```
+
+結果：成功。警告０件、エラー０件。
+
+実行した自動テスト：
+
+```powershell
+dotnet run --project KifuwarabeGo2026.Tests.GameOasis.Gui.Portability\KifuwarabeGo2026.Tests.GameOasis.Gui.Portability.csproj -c Release --no-build
+dotnet run --project KifuwarabeGo2026.Tests.GameOasis.Gui.Windows\KifuwarabeGo2026.Tests.GameOasis.Gui.Windows.csproj -c Release --no-build
+dotnet run --project KifuwarabeGo2026.Tests.GameOasis.Contracts\KifuwarabeGo2026.Tests.GameOasis.Contracts.csproj -c Release --no-build
+dotnet run --project KifuwarabeGo2026.Tests.GameOasis.Concierge\KifuwarabeGo2026.Tests.GameOasis.Concierge.csproj -c Release --no-build
+dotnet run --project KifuwarabeGo2026.Tests.GameOasis.Integration.ProtocolG\KifuwarabeGo2026.Tests.GameOasis.Integration.ProtocolG.csproj -c Release --no-build
+dotnet run --project KifuwarabeGo2026.Tests.GameOasis.Integration.ProtocolM\KifuwarabeGo2026.Tests.GameOasis.Integration.ProtocolM.csproj -c Release --no-build
+dotnet run --project KifuwarabeGo2026.Tests.GameOasis.Integration.ProtocolP\KifuwarabeGo2026.Tests.GameOasis.Integration.ProtocolP.csproj -c Release --no-build
+```
+
+結果：７本すべて `PASS`。
+
+現在、自動確認できている基準は次の通りです。
+
+* OS 非依存 GUI Core、囲碁プレイスペース、囲碁基盤、GTP 拡張に Windows 専用依存がない。
+* Windows 用プラットフォームサービスを非対話で構成できる。
+* Contracts の裁定文書を外部依存なしで検証できる。
+* Concierge が Protocol S 実装を具象型へ密結合せず登録し、セッションを管理できる。
+* Protocol G の参照 GUI クライアントが交換可能なプレイスペースを選択、操作できる。
+* Protocol M の停止、再開、裁定、通知、終了を実行できる。
+* Protocol P の外部形式プレイヤーが選んだ行動を Concierge から Protocol S へ適用できる。
+
+実画面を開く手動確認は、この段階では実施していません。以下の手動スモーク表を、責務境界を変更する段階の確認基準として使用します。
+
+#### 現在の画面状態と遷移基準
+
+現在の画面識別は主に `Game1.GetCurrentScreenState()`、`GetScreenBreadcrumb()`、`GoAppSession.UseKind`、`GoAppSession.CurrentMode.Kind` の組合せです。
+
+```text
+起動
+  ↓
+Title/Home
+  ├─ Settings ──────────────────────────────> Application settings ─> Title/Home
+  ├─ Game Oasis ────────────────────────────> Play Room選択・登録
+  ├─ Capture Game ──────────────────────────> ポン抜きProvider選択
+  └─ Local Match
+       ↓
+     Resting（参加者・ルール・初期局面の準備）
+       ├─ InitialPositionConcierge／BoardEditing ─> 採用または取消 ─> Resting
+       ├─ START ─────────────────────────────> Playing
+       │                                        ├─ 終局 ─> GameOver ─> Resting
+       │                                        └─ 中断 ────────────> Resting
+       └─ SGF読込 ───────────────────────────> Reviewing
+                                                ├─ VariationEditing ─> Reviewing
+                                                └─ 保存／破棄／取消 ─> RestingまたはReviewing
+
+CGOS
+  ProfileSelection ─> ConnectionStart ─> Watching ─> Result ─> Lobby側へ復帰
+```
+
+画面分類の基準：
+
+| 現在の状態・画面 | 暫定分類 | 回帰時に維持する動作 |
+|---|---|---|
+| `TitleMenuPage.Home`、`GameOasis`、`CaptureGame`、`Tsumego`、`NextMove` | ロビーＧＵＩ | 選択、戻る、設定や登録画面への遷移 |
+| `ApplicationSettings` | ロビーＧＵＩ | 設定表示、保存、キャンセル |
+| `Resting`、Local Match の Intermission | ロビーＧＵＩ | 参加者、エンジン、ルール、初期局面、開始可否の設定 |
+| GTP、Entry、ClientIdentity、TournamentRules、CatalogOrder の選択・編集ウィンドウ | ロビーＧＵＩ | 登録、編集、削除、並び替え、選択の保存 |
+| `InitialPositionConcierge` | 境界 | 起動要求はロビー、盤面編集と局面採用はプレイルーム |
+| `Playing`、`GameOver` | プレイルームＧＵＩ | 盤表示、着手、時計、パス、投了、結果、復帰 |
+| `BoardEditing`、`VariationEditing` | プレイルームＧＵＩ | 石の配置、Undo／Redo、採用、破棄 |
+| `Reviewing`、Review chart、コメント編集 | プレイルームＧＵＩ | 棋譜移動、コメント、変化図、保存、復帰 |
+| CGOS `ProfileSelection`、`ConnectionStart` | 主にロビーＧＵＩ | 接続先、資格情報、参加者、接続開始 |
+| CGOS `Watching`、`Result` | 主にプレイルームＧＵＩ | 盤、棋譜、観戦、結果、退出 |
+| `MessageDialog`、テキスト／数値入力 | 呼出元に従う共有ＧＵＩ | 最前面だけが入力を受け、閉じると呼出元へ戻る |
+
+#### ロビー相当の手動スモーク基準
+
+* Windows 実行ファイルを起動し、タイトル画面を表示できる。
+* アプリケーション設定を開き、保存または取消してタイトルへ戻れる。
+* ゲーム、プレイスペース、GTP エンジン、参加者、接続先、利用者識別を選択できる。
+* GTP エンジン、参加者、大会ルール、CGOS 接続先を登録、編集、削除、並び替えできる。
+* Local Match の休憩画面で黒白、ルール、初期局面を設定できる。
+* 構成不正時は開始せず理由を表示し、正常な構成ではプレイルームへ進める。
+* プレイルーム終了後にロビー相当画面へ戻れる。
+* ランチャーを開く、更新、ショートカット保守の既存導線が動く。
+
+#### プレイルーム相当の手動スモーク基準
+
+* 人間対人間のローカル対局を開始し、着手、パス、投了、終局、結果表示を行える。
+* 人間対コンピューターまたはコンピューター対人間で GTP エンジンを起動し、終了時に後片付けできる。
+* 盤面編集で石の配置、Undo／Redo、採用、破棄を行える。
+* SGF を読み込み、レビュー、コメント編集、変化図編集、保存または破棄を行える。
+* ポン抜きを開始し、Provider 選択から終局と復帰まで進められる。
+* CGOS は接続、対局または観戦、結果、退出まで進められる。
+* プレイルーム中の異常やキャンセルでアプリケーション全体が不正終了せず、戻れる経路を表示する。
+
+#### `Game1` と `GoAppSession` の状態所有基準
+
+調査時点で `Game1.cs` は 7,398 行、`GoAppSession` は `Application/Sessions` 配下の 54 個の partial class ファイルから構成されています。機械的な再調査には次を使用できます。
+
+```powershell
+(Get-Content KifuwarabeGo2026.GameOasis.Gui\Game1.cs).Count
+rg --files KifuwarabeGo2026.GameOasis.Gui\Application\Sessions | Select-String 'GoAppSession.*\.cs$'
+rg -n "GoAppSession|GameOasisGuiComposition|CurrentMode|UseKind|ActiveWindowId" KifuwarabeGo2026.GameOasis.Gui
+```
+
+| 現在の所有場所 | 現在所有している主な状態 | 将来の扱い |
+|---|---|---|
+| `Game1` | MonoGame ループ、入力、描画、画面遷移、ダイアログ、`GoAppSession`、`GameOasisGuiComposition` の生成と寿命 | GUIループを残し、ロビーの構成・保存・セッション準備を境界外へ出す |
+| `GoAppSession` の TournamentRules、GtpEngines、EntryProfiles、ClientIdentity、AppProvider | 開始前カタログ、編集状態、選択、起動構成 | ロビー状態および `ILobbyEngine` の要求・応答へ寄せる |
+| `GoAppSession` の BoardState、Game、GameRecords、BoardEditing、Variation、Review、MoveInformation | 盤面、手番、棋譜、対局、編集、レビュー、チャート | プレイルームＧＵＩとプレイルームエンジンの境界で再分類する |
+| `GoAppSession` の Cgos | 接続設定、資格情報、接続フロー、観戦・結果 | 接続準備はロビー、接続後の盤・棋譜はプレイルームへ分ける |
+| `GameOasisGuiComposition` | Concierge、GUI client、参照 PlaySpace の生成と破棄 | 第1段階で同一プロセスロビーエンジンの構成点候補とする |
+| `ActiveWindowStack` | 選択、編集、確認、コメント、盤面編集などの最前面入力所有 | GUI共有機構として維持し、開いた側の責務へ分類する |
+
+現在の最大の混在は、開始前の選択・保存状態と、開始後の盤面・棋譜・対局状態が同じ `GoAppSession` にあり、その全体を `Game1` と多数の描画クラスが直接参照していることです。第1段階では `GoAppSession` 全体を一括分割せず、まずロビーエンジンの具象利用を１つの境界へ集約します。
+
+#### 保存ファイル、既定値、移行処理
+
+| データ | 現在の場所 | 互換性基準 |
+|---|---|---|
+| GUI共有設定 | `%LOCALAPPDATA%\KifuwarabeGo2026\application-settings.json` | ファイル名、場所、既存プロパティを維持する |
+| 旧GUI設定 | 実行ファイル隣の `application-settings.json` | 現行の読込と新しい共有設定への書出し移行を維持する |
+| リリース既定値 | 実行ファイル隣、または開発ツリーの `default-settings.json` | 新規環境の初期値としてのみ利用する現行動作を維持する |
+| GTPエンジン一覧 | `%LOCALAPPDATA%\KifuwarabeGo2026\GtpEngines\gtp-engine-list.json` | UTF-8文書と開発用初期一覧の探索を維持する |
+| 参加者一覧 | `%LOCALAPPDATA%\KifuwarabeGo2026\Players\player-list.json` | ファイル名、場所、読書き形式を維持する |
+| 利用者識別一覧 | `%LOCALAPPDATA%\KifuwarabeGo2026\Targets\target-list.json` | ファイル名、場所、読書き形式を維持する |
+| 大会ルール、CGOS接続先 | GUI共有設定内 | 既存配列と既定値補完を維持する |
+| SGF | 利用者が設定した `SgfSaveDirectory` | 空の場合を含む現在の選択・保存動作を維持する |
+| スクリーンショット | 利用者設定、既定は `%USERPROFILE%\Pictures\KifuwarabeGo2026\Screenshots` | ランチャーとGUI群で共有する |
+| ログ | 開発ツリーでは `Logs`、配布環境では実行ファイル隣の `Logs` が既定 | 設定した `LogRootDirectory` と CGOS 下位構造を維持する |
+
+壊れた GUI 設定、読取専用または一時的に利用できない保存先が、アプリケーション起動を妨げない現行のフォールバックも維持します。
+
+#### Windows 固有機能
+
+Windows 起動プロジェクトは、`Program.cs` で次のアダプターを組み立てて `Game1` へ渡しています。
+
+* クリップボード。
+* ファイル／フォルダーダイアログ。
+* Explorer や関連付けアプリケーションの起動。
+* 文字ラスタライズと文字入力合成。
+* ウィンドウアイコン、初期配置、スクリーンショット。
+* プラットフォーム実行ファイルの起動。
+* ランチャーの更新、保守、ショートカット作成。
+
+これらは `KifuwarabeGo2026.GameOasis.Gui.Windows/Infrastructure/Windows` に隔離され、OS 非依存 GUI Core 側のインターフェースを実装しています。第1段階では物理移動せず、ロビーＧＵＩ用、プレイルームＧＵＩ用、エンジン用のどこから利用されるかを明確にします。
+
+#### 分割前の主な依存関係
+
+```text
+GameOasis.Contracts
+  ↑
+GameOasis.Concierge
+
+Reference.PlayerEngine.Go.GtpExtensions
+  ↑
+GameOasis.Application
+  ↑
+GameOasis.Storage
+
+GameOasis.Gui
+  ├─ GameOasis.Concierge
+  ├─ GameOasis.Application
+  ├─ GameOasis.Storage
+  ├─ LauncherEngine
+  ├─ StationeryUI
+  ├─ Reference.Gui
+  ├─ FormalAdapter.Gtp.PlayerEngine
+  ├─ Reference.PlayerEngine.Go.Gtp
+  ├─ Reference.PlayerEngine.Go.Gtp.Host
+  ├─ Reference.PlaySpace.Go
+  ├─ Reference.PlayDomain.Go
+  ├─ Reference.PlayerEngine.Go.GtpExtensions
+  └─ Reference.PlaySpace.Ponnuki
+  ↑
+GameOasis.Gui.Windows
+```
+
+`GameOasis.Contracts` はリポジトリー内プロジェクトを参照しません。`GameOasis.Concierge` は Contracts だけを参照し、`GameOasis.Storage` は Application だけを参照します。分割前の問題は循環参照ではなく、`GameOasis.Gui` がロビーエンジン候補とゲーム固有参照実装を同時に直接参照し、`Game1` が構成点にもなっていることです。
+
+#### 第0段階完了時の判断
+
+既存挙動、保存データ、画面分類、状態所有、Windows 固有機能、依存関係、基準ビルドと自動テストを記録できたため、第0段階を完了とします。製品コード、プロジェクト名、保存形式、画面表示は変更していません。
+
+第1段階の最小作業は、既存の `GameOasisGuiComposition`、カタログ構成、保存ユースケースを調べ、GUIが必要とする最小の `ILobbyEngine` 操作一覧を作ることです。最初から `GoAppSession` 全体を移動または改名しません。
+
+## 作業段階１：同一プロセスのロビーエンジン境界を作る
+
+状態：完了（2026年8月28日）
+
+目的：ＧＵＩが `Concierge`、`Application`、`Storage` の具象型を直接組み合わせず、１つの役割境界へ依頼できるようにする。
+
+作業：
+
+* `ILobbyEngine` と `InProcessLobbyEngine` を追加する。
+* 状態、カタログ、構成検証、登録、選択、セッション準備の結果型を定める。
+* 成功、業務失敗、キャンセルを区別する。
+* 既存のカタログ保存形式と `GameOasisConcierge` の動作を維持する。
+
+対象外：プロジェクト改名、別プロセス化、プレイルームの実行ファイル分離。
+
+完了条件：主要なロビー操作をＧＵＩなしで検査でき、ＧＵＩは `ILobbyEngine` を介して利用できる。
+
+### 作業段階１の実施記録
+
+#### 追加した境界
+
+```text
+Game1
+  ↓ ILobbyEngine
+InProcessLobbyEngine
+  ├─ GtpEngineCatalog
+  ├─ EntryCatalog
+  ├─ ClientIdentityCatalog
+  ├─ CgosConnectionCatalog
+  └─ CatalogDocumentStorage
+```
+
+新しい `KifuwarabeGo2026.LobbyEngine` プロジェクトへ次を追加しました。
+
+* `ILobbyEngine`：GUIがロビーカタログの読込と保存を依頼する境界。
+* `LobbyState`：GTPエンジン、参加者、利用者識別、CGOS接続先、保存場所、補正結果をまとめた起動時状態。
+* `InProcessLobbyEngine`：既存の Application と Storage を同一プロセス内で組み合わせる実装。
+
+`ILobbyEngine` が現在提供する操作：
+
+* ロビー起動時状態の読込。
+* GTPエンジン一覧の保存。
+* 参加者一覧の保存。
+* 利用者識別一覧の保存。
+* 参加者と利用者識別の一括保存。
+* CGOS接続先一覧の保存。
+
+参加者と利用者識別の一括保存では、未保存の利用者識別を参加者が参照する瞬間を避けるため、従来どおり利用者識別を先に保存します。
+
+#### GUI側の変更
+
+`Game1` は、次の具象カタログを生成または保持しなくなりました。
+
+```text
+GtpEngineCatalog
+EntryCatalog
+ClientIdentityCatalog
+CgosConnectionCatalog
+CatalogDocumentStorage
+```
+
+起動時は `InProcessLobbyEngine.CreateDefault()` を構成し、`ILobbyEngine.LoadState()` の結果を `GoAppSession` の表示・編集状態へ投影します。編集後の保存もすべて `ILobbyEngine` を通します。
+
+GUI側に残した `ApplicationSettingsCgosConnectionStore` は、既存の共有設定ファイルとロビーエンジンの `ICgosConnectionProfileStore` を接続する薄いアダプターです。保存形式と保存場所は変更していません。
+
+不要になった次のGUI内構成クラスを削除しました。
+
+* `GtpEngineCatalogComposition`
+* `EntryCatalogComposition`
+* `CgosConnectionCatalogComposition`
+
+これにより、`KifuwarabeGo2026.GameOasis.Gui` から `KifuwarabeGo2026.GameOasis.Storage` への直接プロジェクト参照も削除できました。
+
+#### 今回の境界へ含めなかったもの
+
+大会ルールは、現在の `TournamentRules` がGUIプロジェクト内の型であり、`ApplicationSettings` 内の既存形式との変換も持つため、第2段階で表示モデルと保存責務を整理してからロビーエンジンへ移します。
+
+`GameOasisGuiComposition` は、ロビーの登録・選択だけでなく、プレイルームの盤制御、プレイヤー参加、ゲームマスター参加、対局ライフサイクルまで所有しています。これを `ILobbyEngine` へそのまま入れるとプレイルーム責務までロビーエンジンへ流入するため、第3段階のプレイルーム起動契約で分解します。
+
+現在の保存操作は同期処理で、従来と同じ例外通知を維持しています。成功、業務失敗、キャンセルを表す共通結果型は、非同期の構成検証とセッション準備を追加する際に定めます。同期カタログ保存へ形だけのキャンセル結果を加えることはしません。
+
+#### 追加した回帰テスト
+
+`KifuwarabeGo2026.Tests.LobbyEngine` を追加し、GUI、MonoGame、実ファイルシステムを使わずに次を確認しました。
+
+* リリース既定値からGTPエンジンを読み込める。
+* GTPエンジンからコンピューター参加者を補完できる。
+* 利用者識別を補完できる。
+* 設定アダプターからCGOS接続先を読み込める。
+* 保存場所を `LobbyState` としてGUIへ返せる。
+* GTPエンジン、参加者、利用者識別、CGOS接続先を保存し、新しいロビーエンジンインスタンスから再読込できる。
+* `LoadState()` より前の保存を決定的に拒否できる。
+
+#### 検証結果
+
+```powershell
+dotnet build KifuwarabeGo2026.slnx -c Release
+dotnet KifuwarabeGo2026.Tests.LobbyEngine\bin\Release\net8.0\KifuwarabeGo2026.Tests.LobbyEngine.dll
+```
+
+* ソリューション全体の Release ビルドに成功した。
+* ビルド結果は警告０件、エラー０件だった。
+* ロビーエンジン境界テストは `PASS` した。
+* 新規テストEXEはWindowsのアプリケーション制御ポリシーに遮断されたため、同じ成果物のDLLを `dotnet` ホストから実行した。
+* 第0段階で記録した Game Oasis 関連テスト７本は、変更後もすべて `PASS` した。
+* GUI移植性テストとWindowsプラットフォームテストは、旧構成クラス削除後の最終ビルドでも再度 `PASS` した。
+* 実画面による手動スモークテストは実施していない。
+
+製品の実行ファイル名、画面、設定ファイル、カタログ文書、ランチャー起動経路、プレイルーム処理は変更していません。
+
+## 作業段階２：ロビーＧＵＩの境界を作る
+
+状態：完了（2026年8月28日）
+
+目的：描画・入力・画面遷移と、ロビー状態・保存・セッション準備を分ける。
+
+作業：
+
+* ロビー画面が使用する表示モデルとコマンドを定める。
+* ファイル選択、フォルダー表示、ランチャー保守などのＧＵＩ用ＯＳ境界を整理する。
+* `Game1` からロビー構成を抽出する。
+* `GoAppSession` の開始前状態をロビー用モデルへ移し、ゲーム開始後状態との共有を減らす。
+
+完了条件：ロビーＧＵＩがゲーム局面、合法手、棋譜内部、GTPプロセスの具象実装を所有しない。
+
+### 作業段階２の実施記録
+
+#### 追加したロビーGUI境界
+
+```text
+Game1
+  ↓ LobbyGuiController
+LobbyViewState              ILobbyGuiCommands
+  ├─ 大会ルール               ├─ 起動時状態の読込
+  ├─ GTPエンジン              ├─ GTPエンジン保存
+  ├─ 参加者                   ├─ 参加者保存
+  ├─ 利用者識別               ├─ 利用者識別保存
+  ├─ CGOS接続先               └─ CGOS接続先保存
+  └─ 設定ファイル表示用パス
+          ↓
+      ILobbyEngine
+```
+
+GUI Coreへ次を追加しました。
+
+* `LobbyViewState`：ロビー画面へ渡す開始前の表示状態。
+* `ILobbyGuiCommands`：ロビー画面から実行する永続化コマンド境界。
+* `LobbyGuiController`：ロビーエンジンとGUI固有の大会ルールアダプターを組み合わせる、ロビーGUIの構成点。
+* `ITournamentRulesCatalog`：大会ルール画面から具象カタログを隠す既存設定形式の保存境界。
+
+`LobbyViewState` に含めるものは、次に限定しました。
+
+* 大会ルール。
+* GTPエンジンプロフィール。
+* 参加者プロフィール。
+* 利用者識別プロフィール。
+* CGOS接続先プロフィール。
+* アプリケーション設定とGTPエンジン設定の表示用パス。
+* 重複GTPエンジンIDの補正通知。
+
+次の型や状態は含めていません。
+
+* MonoGameおよびWindowsの型。
+* 盤面、石、手番、合法手、勝敗。
+* 棋譜、レビュー、変化図。
+* GTPまたはCGOSのプロセス実装。
+* `GoAppSession`。
+* プレイルームの対局ライフサイクル。
+
+#### `Game1` から抽出した構成
+
+`Game1` は `InProcessLobbyEngine`、リリース既定値、CGOS設定ストア、大会ルール具象カタログを個別に組み立てなくなりました。現在は `LobbyGuiController.CreateDefault()` を１つ生成し、`LoadViewState()` の結果を既存画面へ投影します。
+
+カタログ保存の呼出しも `ILobbyEngine` ではなく、GUI側の `ILobbyGuiCommands` を通すようにしました。これにより、`Game1` はロビーエンジンの実装方式を知りません。
+
+大会ルール編集画面の `TournamentRulesSetting` は、具象 `TournamentRulesCatalog` ではなく `ITournamentRulesCatalog` を受け取ります。大会ルールの既存JSON形式と画面操作は変更していません。
+
+#### OS依存処理
+
+ファイル選択、フォルダー表示、クリップボード、文字入力、ランチャー保守などは、すでに Windows 起動プロジェクトからGUI Coreの小さなインターフェースへ注入されています。第2段階ではこの境界を維持し、`LobbyViewState` と `LobbyGuiController` へWindows型を追加していません。
+
+#### `GoAppSession` の扱い
+
+現在の画面描画と入力は引き続き既存 `GoAppSession` を利用します。ただし、開始前カタログの正本と保存コマンドは `LobbyGuiController` 側へ移し、`GoAppSession` へは描画・編集のためのコピーを投影する形にしました。
+
+`GoAppSession` から盤面や棋譜を物理的に移す作業は、プレイルームGUIとプレイルームエンジンの境界を同時に定める必要があります。第2段階で一括移動せず、第3段階のプレイルーム起動契約を作った後に扱います。
+
+#### 追加した回帰検査
+
+移植性テストへ次を追加しました。
+
+* `LobbyGuiController` が `ILobbyEngine` と `ITournamentRulesCatalog` から開始前状態を作れる。
+* GTPエンジン、参加者、利用者識別、CGOS接続先の保存コマンドが `ILobbyEngine` へ委譲される。
+* `LobbyViewState` の公開プロパティに MonoGame、盤面、棋譜、プロセス型が含まれない。
+* `LobbyGuiController` が `GoAppSession` をフィールドとして所有しない。
+
+#### 検証結果
+
+```powershell
+dotnet build KifuwarabeGo2026.slnx -c Release
+dotnet KifuwarabeGo2026.Tests.LobbyEngine\bin\Release\net8.0\KifuwarabeGo2026.Tests.LobbyEngine.dll
+dotnet run --project KifuwarabeGo2026.Tests.GameOasis.Gui.Portability\KifuwarabeGo2026.Tests.GameOasis.Gui.Portability.csproj -c Release --no-build
+dotnet run --project KifuwarabeGo2026.Tests.GameOasis.Gui.Windows\KifuwarabeGo2026.Tests.GameOasis.Gui.Windows.csproj -c Release --no-build
+```
+
+* ソリューション全体の Release ビルドに成功した。
+* ビルド結果は警告０件、エラー０件だった。
+* ロビーエンジン境界テストは `PASS` した。
+* ロビーGUI境界検査を含む移植性テストは `PASS` した。
+* Windowsプラットフォームテストは `PASS` した。
+* 第0段階で記録した残りの Game Oasis 関連テスト５本もすべて `PASS` した。
+* 実画面による手動スモークテストは実施していない。
+
+製品の実行ファイル、画面、保存形式、ランチャー起動経路、プレイルーム処理は変更していません。
+
+## 作業段階３：プレイルーム起動契約を作る
+
+状態：完了（2026年8月28日）
+
+目的：ロビーがゲーム固有実装を直接生成せず、言語非依存にできる起動構成を渡せるようにする。
+
+作業：
+
+* ゲーム、プレイスペース、参加者、エンジンオプション、ルールを含む起動要求を定める。
+* 起動成功、構成不正、プロセス起動失敗、終了通知を区別する。
+* 最初は同一プロセスアダプターで既存プレイルームを起動する。
+* Protocol G/S/P/M と重複する情報を新しい独自型へ複製しない。
+
+完了条件：ロビー側の呼出箇所が、囲碁・ポン抜きの具象セッション生成を知らない。
+
+### 作業段階３の実施記録
+
+* `GameOasis.Contracts` に、ゲーム、プレイスペース、参加者、エンジンオプション、ルール構成、初期局面を運ぶ `PlayRoomLaunchRequest` と、開始・待機・拒否・取消・失敗を区別する `PlayRoomLaunchResult` を追加した。
+* 既存の `PlaySpaceTypeId` と `ContractDocument` を再利用し、囲碁のルール構成は既存の Protocol S 用構成文書、初期局面は SGF 文書として格納した。
+* `IPlayRoomLauncher` と `InProcessPlayRoomLauncher` を追加し、別プロセス化まで既存プレイルーム処理へ接続する同一プロセスアダプターとした。
+* `START`、`EDIT BOARD`、ポン抜き開始の呼出箇所を起動契約経由へ変更した。ローカル対局の Game Oasis 接続待ちでは、真偽値ではなく保留中の起動要求を保持して再開する。
+* 登録済みハンドラーへの引渡し、未登録プレイルームの構造化拒否、未対応契約版の拒否を検査する回帰テストを追加した。
+
+検証結果：
+
+* `dotnet build KifuwarabeGo2026.slnx -c Release` は警告０件、エラー０件で成功した。
+* Game Oasis Contracts テストは `PASS` した。
+* 追加した移植性テストプロジェクト単体の Release ビルドは警告０件、エラー０件で成功した。
+* LobbyEngine、移植性、Windowsプラットフォームの実行は、生成 DLL が Windows のアプリケーション制御ポリシー `0x800711C7` に遮断され、今回は実行完了できなかった。コード上のテスト失敗は観測していない。
+* 実画面による手動スモークテストは実施していない。
+
+## 作業段階４：プロジェクト名と物理配置を整理する
+
+状態：実装完了（2026年8月28日）
+
+目的：責務が安定した領域だけを `LobbyGui` と `LobbyEngine` の名前へ合わせる。
+
+作業：
+
+* `GameOasis.Concierge`、`Application`、`Storage` の移行先を確定する。
+* Contracts がロビー所有か Game Oasis 全体所有かを決定する。
+* ロビーだけになったＧＵＩコードを `LobbyGui` へ移す。
+* ソリューション、テスト、CI、発行、ランチャーの製品名参照を更新する。
+* 既存の `KifuwarabeGo2026.GameOasis.Gui.Windows.exe` と設定ファイルの互換経路を維持する。
+
+完了条件：名前または配置から役割を判別でき、循環参照がなく、既存利用者の起動・更新・設定が壊れていない。
+
+この段階では、責務が明確なら既存プロジェクト名を維持しても構いません。改名による差分が責務分離の検証を妨げる場合は、改名を別作業へ延期します。
+
+### 作業段階４の実施記録
+
+移行先の判断：
+
+* `GameOasis.Application` と `GameOasis.Storage` は、ロビーのカタログ・永続化だけでなくプレイルーム側からも利用するため、Game Oasis共有の名前と配置を維持した。
+* `GameOasis.Concierge` と `GameOasis.Contracts` は Protocol G/S/P/M とプレイルーム起動契約を共有するため、ロビー所有へ変更しなかった。
+* `LobbyEngine` は既に責務とプロジェクト名が一致しているため、そのまま維持した。
+* 現在の `GameOasis.Gui` はロビーとプレイルームを同じ実行ファイルに収める移行用シェルである。別実行ファイル化前の一括改名は行わず、安定済み境界を物理配置と名前空間で識別できるようにした。
+
+実装した整理：
+
+* ロビーGUI境界を `LobbyGui/Application` へ移し、名前空間を `KifuwarabeGo2026.LobbyGui.Application` とした。
+* プレイルーム起動境界を `PlayRoom/Launching` へ移し、名前空間を `KifuwarabeGo2026.PlayRoom.Launching` とした。
+* `RESPONSIBILITIES.md` を追加し、同一アセンブリ内のロビー、プレイルーム、共有シェルの所有責務と依存方向を記録した。
+* 境界テストへ名前空間検査を追加した。
+* ソリューション、発行スクリプト、ランチャーの製品名は変更しなかった。`KifuwarabeGo2026.GameOasis.Gui.Windows.exe`、設定場所、発行時の互換別名 `KifuwarabeGo2026.Gui.exe` は従来どおりである。
+
+検証結果：
+
+* `dotnet build KifuwarabeGo2026.slnx -c Release` は警告０件、エラー０件で成功した。プロジェクト参照の循環はない。
+* Game Oasis Contracts、LobbyEngine、LobbyGui境界とプレイルーム起動境界を含む移植性テストは `PASS` した。
+* LauncherEngineテストは、GUI実行ファイル名の互換検査を通過した後、環境依存の実行中プロセス検出で失敗した。
+* Windows GUIテストは、今回変更していない同梱エンジンの役割別Go App一覧検査で失敗した。
+* 実画面でロビーから代表的なプレイルームへ入り、ロビーへ戻る手動スモーク確認は未実施である。この確認までは今回の分割作業全体を運用確認済みとはしない。
+
+## 今回の分割作業の完了条件
+
+次をすべて満たした時点で、今回の「ロビーとプレイルームがくっついた状態でのＧＵＩとエンジンの分割」を完了とします。
+
+* 利用者は従来どおり既存の１つのゲームオアシスＧＵＩ実行ファイルから操作できる。
+* ロビーＧＵＩは、保存、登録、互換性判定、セッション準備の具象実装を直接生成しない。
+* ロビーエンジンは MonoGame、画面部品、マウス、キーボード、ゲームパッドへ依存しない。
+* ロビー側は囲碁やポン抜きの具象プレイルームセッションを直接生成せず、プレイルーム起動契約を介する。
+* プレイルームＧＵＩとプレイルームエンジンの状態所有と依存方向が文書またはコードで判別できる。
+* 要求、応答、通知の型に MonoGame 型、Windows 型、画面部品型を含めない。
+* 既存の設定、カタログ、棋譜、ランチャー起動経路に互換性がある。
+* Release ビルド、関連する自動テスト、ロビーから代表的なプレイルームへ入って戻る手動確認が成功する。
+
+完了後、標準入出力と JSON Lines を使う別実行ファイル化へ進むかを改めて判断します。
+
+## 作業段階５：標準入出力と JSON Lines を試験導入する
+
+状態：完了（2026年8月28日）
+
+目的：ランチャーで検証した通信方式を、ロビーの安全な読み取り操作から再利用する。
+
+最初の候補：
+
+* 登録済みプレイスペース一覧。
+* 登録済みプレイヤー一覧。
+* 選択中の構成と互換性検査結果。
+
+作業：
+
+* ロビー固有プロトコル版とメッセージ仕様を定める。
+* 標準出力と標準エラー出力を分離する。
+* タイムアウト、子プロセス終了、不正応答、同一プロセス版への復旧を実装する。
+* 変更操作は再実行安全性を確認してから追加する。
+
+完了条件：少なくとも１つの読み取り操作が実子プロセスと往復し、通信障害でもロビーＧＵＩが終了しない。
+
+### 作業段階５の実施記録
+
+再計画の結果、最初の操作を登録済み参加者一覧の `listEntries` に限定しました。カタログ変更操作は再実行安全性をまだ定めていないため、従来の同一プロセス実装に残しています。
+
+実装：
+
+* `LobbyEngine.JsonLines` にプロトコル版1、要求、成功・失敗応答、構造化エラー、参加者一覧結果を追加した。
+* `JsonLinesLobbyEngine` はロビー全体状態を同一プロセス版から読み、参加者一覧だけを子プロセスから取得して差し替える。通信できない場合は同一プロセス版の状態をそのまま返す。
+* `LobbyEngine.JsonLinesHost` を追加し、標準入力から要求を1行ずつ読み、応答だけを標準出力へ、例外診断を標準エラーへ出すようにした。
+* 応答待ちタイムアウト、子プロセス終了、起動失敗、不正JSON、プロトコル版不一致、要求ID不一致、エラー応答を通信失敗として扱う。
+* ロビーGUIは発行物の `Tools/LobbyEngine` にホストが存在する場合だけ子プロセス版を利用し、存在しなければ従来の `InProcessLobbyEngine` を利用する。
+* 発行スクリプトへロビーホストの発行と必須成果物検査を追加した。
+* `PROTOCOL.md` にメッセージ形式、標準出力・標準エラーの規則、復旧条件を記録した。
+
+検証結果：
+
+* Releaseソリューションビルドは警告０件、エラー０件で成功した。
+* LobbyEngineテストで、実際の `LobbyEngine.JsonLinesHost` 子プロセスへ参加者一覧要求を送り、応答を復元できることを確認した。
+* 同テストで存在しないホストの起動失敗後も、同一プロセス版の状態へ復旧することを確認した。
+* Game Oasis ContractsテストとLobbyGui・PlayRoom境界を含む移植性テストは `PASS` した。
+* 変更操作、ロビー全状態の通信化、常駐ホスト化は実施していない。
+
+## 作業段階６：プレイルームを別実行ファイルへ分離する
+
+状態：完了（2026年8月28日）
+
+目的：ロビーとプレイルームを独立して開発・配布できる構成へ進める。
+
+作業：
+
+* まず１種類のプレイルームを独立実行ファイルにする。
+* 起動構成の受け渡し、準備完了、終了、異常終了、ロビー復帰を確認する。
+* プレイルームがロビーの Storage やＧＵＩ内部状態を直接参照しないようにする。
+* 成功後、囲碁、ポン抜き、盤面編集などへ同じ境界を適用する。
+
+完了条件：ロビーだけ、または特定プレイルームだけを独立して開発・起動・検査できる。
+
+### 作業段階６の実施記録
+
+再計画の結果、最初の独立対象を `board-editor` としました。対局時計、Player手番要求、終局処理を必要とせず、局面コピー、採用、破棄、終了という小さい境界で別プロセス化を検証できるためです。
+
+実装：
+
+* `GameOasis.Contracts` に準備完了、編集局面更新、`Adopted`、`Discarded`、`Closed` のライフサイクル契約を追加した。
+* `PlayRoomGui.JsonLines` にProtocol版1の要求・応答・構造化エラーと、独立プロセスの起動から終了までを所有する `BoardEditorProcessSession` を追加した。
+* `Reference.PlayRoomGui.BoardEditor.JsonLinesHost` を独立実行ファイルとして追加した。このホストは囲碁Board Editorの起動要求と初期局面文書を受け、局面コピーだけを所有する。
+* `open`、`replacePosition`、`adopt`、`discard`、`goodbye` を実装した。採用時だけ編集後の局面文書を返し、破棄または通常終了では局面を返さない。
+* ホストはLobby、Storage、旧GameOasis GUI、MonoGameを参照しない。
+* 発行スクリプトへ `Tools/PlayRoom/BoardEditor` の独立成果物を追加した。
+* `PROTOCOL.md` にメッセージ順序、標準出力・標準エラーの分離、セッションID検査、異常終了時の扱いを記録した。
+
+検証結果：
+
+* Releaseソリューションビルドは警告０件、エラー０件で成功した。
+* 偽ロビーから実際のBoard Editor子プロセスを起動し、起動要求、準備完了、編集局面更新、採用結果、プロセス終了を往復できた。
+* 別セッションで破棄を行い、元局面を変更せずロビーへ戻れることを確認した。
+* 準備完了直後に子プロセスを異常終了させ、呼出側が終了を検出してロビー復帰を判断できることを確認した。
+* 独立ホストがLobby、Storage、旧GUI、MonoGameを参照しないことを検査した。
+* Game Oasis ContractsテストとLobbyGui・PlayRoom境界を含む移植性テストは `PASS` した。
+
+現在の公式MonoGame `EDIT BOARD` 画面は互換経路として同一プロセスに残しています。今回独立したのは、外部UIまたは将来の公式Board Editor UIが利用できるプロセス契約、クライアント、局面ワークスペース所有、参照ホストです。公式画面をこのホストへ接続する作業は、将来計画の「Board Editor Play Roomの抽出」で行います。
+
+## 作業段階７：Review Play Roomを独立実行ファイルへ分離する
+
+状態：完了（2026年8月28日）
+
+目的：棋譜レビューの読み取り専用状態と局面採用境界を、Lobby、Storage、旧GUIから独立して起動・検査できるようにする。
+
+この段階は、第６段階完了後の利用者指示により、将来計画の「Review Play Roomの抽出」を本計画へ追補したものです。
+
+実装：
+
+* `GameOasis.Contracts` に棋譜上の表示手数移動、Review表示状態、局面選択、`PositionSelected`、`Closed` の契約を追加した。
+* 共通 `PlayRoomGui.JsonLines` に `navigate` と `usePosition`、独立Reviewプロセスを所有する `ReviewProcessSession` を追加した。
+* `Reference.PlayRoomGui.Review.JsonLinesHost` を独立実行ファイルとして追加した。起動時に受け取った棋譜文書を読み取り専用で保持し、表示手数だけを状態として所有する。
+* `USE POSITION`では、現在表示中の手数と一致する局面文書コピーだけをロビーへ返す。元棋譜文書は変更しない。
+* 通常終了、途中終了、プロトコル不正を呼出側で検出できるようにした。
+* 発行スクリプトへ `Tools/PlayRoom/Review` の独立成果物を追加し、共通プロトコル文書へReviewのメッセージ順序を追記した。
+
+検証結果：
+
+* 偽ロビーから実際のReview子プロセスを起動し、準備完了、棋譜表示手数の移動、局面採用、終了を往復できた。
+* `goodbye`による局面未採用の終了と、準備完了直後の異常終了検出を確認した。
+* Reviewが元棋譜文書を変更しないことを確認した。
+* 独立ReviewホストがLobby、Storage、旧GUI、MonoGameを参照しないことを検査した。
+
+現在の公式MonoGameレビュー画面は互換経路として同一プロセスに残しています。今回独立したのは、外部UIまたは将来の公式Review UIが利用できるプロセス契約、クライアント、読み取り専用棋譜状態、参照ホストです。
+
+## 作業段階８：Match Play Roomを独立実行ファイルへ分離する
+
+状態：完了（2026年8月28日）
+
+目的：人間対人間の対局に必要な最小ライフサイクルを、ゲームルールの正本を複製せず、Lobby、Storage、旧GUIから独立して起動・検査できるようにする。
+
+この段階では Match Play Room を「権威ある局面を表示し、人間の意味的な操作を進行側へ返す境界」としました。合法手、手番、局面遷移、終局判定の正本は Concierge / Play Space 側に残します。
+
+実装：
+
+* `GameOasis.Contracts` に `PlayPoint`、`Pass`、`Resign` の操作要求と受理応答、リビジョン付き局面投影、正常終局・途中終了の契約を追加した。
+* 共通 `PlayRoomGui.JsonLines` に `updateState`、`submitAction`、`complete` と、独立Matchプロセスを所有する `MatchProcessSession` を追加した。
+* `Reference.PlayRoomGui.Match.JsonLinesHost` を独立実行ファイルとして追加した。このホストは自己記述的な `ContractDocument` をそのまま保持・返却し、囲碁の局面型やルール実装を参照しない。
+* 局面リビジョンの単調増加、セッションID、操作ID、参加者ロールID、盤上点操作の座標有無だけを通信境界として検査する。着手の合法性や手番は検査しない。
+* 発行スクリプトへ `Tools/PlayRoom/Match` の独立成果物を追加し、共通プロトコル文書へMatchのメッセージ順序と状態所有を追記した。
+
+検証結果：
+
+* 偽ロビー / 偽Conciergeから実際のMatch子プロセスを起動し、準備完了、初期局面投影、黒の着手、白のパス、黒の投了、白勝ちの正常終局を往復できた。
+* 操作送信だけでは局面が変化せず、権威ある側が次のリビジョンを送った時だけ表示局面が進むことを確認した。
+* `goodbye`による途中終了と、準備完了直後の異常終了検出を確認した。
+* 独立MatchホストがLobby、Storage、旧GUI、MonoGameを参照しないことを検査した。
+
+現在の公式MonoGame対局画面は互換経路として同一プロセスに残しています。今回独立したのは、外部UIまたは将来の公式Match UIが利用できるプロセス契約、クライアント、局面投影、参照ホストです。コンピュータプレイヤー、対局時計、Protocol P / M、公式画面の接続は後続段階で扱います。
+
+## 作業段階９：PlaySpace Hostを独立実行ファイルにする
+
+状態：完了（2026年8月28日）
+
+目的：既存Protocol Sを標準入出力境界へ載せ、通常囲碁とポン抜きのゲーム状態の正本を、呼出側から独立した子プロセスで所有できるようにする。
+
+この段階は将来計画の「PlaySpace Hostの独立」を、本計画の連番に合わせて第９段階として追補したものです。
+
+実装：
+
+* `PlayRoomEngine.JsonLines` を追加し、既存の `IPlaySpaceProtocol` 全操作をJSON Linesで往復する `JsonLinesPlayRoomEngineProtocol` を実装した。
+* `describe`、`getConfigurationSchema`、`validateConfiguration`、`createSession`、`getSnapshot`、`applyAction`、`closeSession`、`goodbye` をProtocol Sの型のまま通信境界へ載せた。
+* `Reference.PlayRoomEngine.<GAME>.JsonLinesHost` を追加し、起動引数から通常囲碁またはポン抜き参照実装を選択できるようにした。
+* 通常囲碁用とポン抜き用の `*.playspace.json` マニフェストを追加した。呼出側は具象実装を参照せず、安定したPlaySpace種別ID、起動方法、複数セッション能力を読み取れる。
+* 通常囲碁マニフェストは同一プロセス複数セッション、ポン抜きマニフェストは1プロセス1活動セッションとして検証した。後者は二重生成を `single-session-busy` で明示的に拒否し、終了後は次のセッションを生成できる。
+* 発行スクリプトへ `Tools/PlaySpace` のホスト、依存DLL、二つのマニフェストを追加した。
+
+検証結果：
+
+* 通常囲碁の記述、設定スキーマ、設定検証、同一プロセス内の二セッション生成、パス、状態取得、終了を実子プロセスで往復した。
+* ポン抜きの設定検証、単一セッション制約、石の捕獲、終局結果、終了後の再生成を実子プロセスで往復した。
+* PlaySpaceが返したリビジョンと自己記述状態が通信後も一致し、ゲーム状態の正本が子プロセス内のPlaySpaceだけにあることを確認した。
+* ホストの突然終了をクライアントが通信障害として検出できることを確認した。
+* `PlayRoomEngine.JsonLines` と既存 `GameOasis.Concierge` が通常囲碁・ポン抜きの具象PlaySpaceアセンブリを参照しないことを検査した。
+
+今回追加したのは独立ホスト、マニフェスト、通信クライアント、適合性テストです。公式Concierge Hostによるマニフェスト探索、セッション失敗のLobby通知、診断ログの永続化はまだ接続していません。既存の公式MonoGame経路と同一プロセスProtocol Sは互換経路として維持します。
+
+## 作業段階１０：外部実装SDKと適合性テストを追加する
+
+状態：完了（2026年8月29日）
+
+目的：外部PlaySpace実装者が公開Contractsと小さな標準入出力SDKだけを使い、公式実装と同じコマンドライン適合性試験を受けられるようにする。
+
+この段階は将来計画の「外部実装SDKと適合性テスト」のうち、前段で通信境界が完成したPlaySpace SDKを最初の縦方向対象としました。Lobby SDK、Play Room SDK、診断画面、Launcherでのインストール・更新・削除は後続へ残します。
+
+実装：
+
+* `PlayRoomEngine.JsonLines` にサーバー側SDKの `PlayRoomEngineJsonLinesHost.RunAsync` を追加した。外部実装は `IPlaySpaceProtocol` を渡すだけでProtocol S JSON Linesホストを公開できる。
+* 公式通常囲碁・ポン抜きホストも、独自の通信ループを廃止して同じサーバー側SDKを利用するようにした。
+* `Samples/External.PlayRoomEngine.Counter` を追加した。この外部風サンプルはContractsとPlaySpace JSON Lines SDKだけを参照し、公式GUI、Concierge、公式PlaySpaceを参照しない。
+* `PlayRoomEngine.Conformance` を偽ConciergeのCLI適合性ランナーとして追加した。任意のマニフェストとJSONベクトルを指定して、記述、Protocol版、設定スキーマ、正常・不正設定、セッション、状態、行動、リビジョン競合、終了を検査する。
+* 通常囲碁、ポン抜き、外部Counterの言語非依存JSONベクトルと、ホストマニフェスト・ベクトル自身のJSON Schemaを追加した。
+* 外部実装手順、状態遷移、CLI使用法を `Docs/Dev/SDK/PlaySpace外部実装SDK.md` に記録した。
+* 発行スクリプトへ適合性ランナー、JSON Schema、公式ベクトル、外部Counterサンプルを追加した。
+
+検証結果：
+
+* 外部Counterサンプルは実子プロセスでCLI適合性ランナーへ合格した。
+* Counterの設定検証、セッション生成、目標到達、終局、古いリビジョンの拒否、終了後のセッション消滅を確認した。
+* 公式通常囲碁・ポン抜きの従来Protocol S単体テストは第９段階でPASSした。第１０段階の再実行ではポン抜き、PlayRoom、ConciergeがPASSした。
+* この端末では、再ビルド後にWindows Application Controlが `Reference.PlaySpace.Go.dll` の読込を拒否した。公式囲碁ホスト、囲碁単体テスト、同DLLを読む移植性テストが同じOSエラー `0x800711C7` で停止した。クライアントが子プロセスの標準エラー診断をIOExceptionへ含めるよう改善したが、公式二ベクトル一括CLIと囲碁回帰試験は環境側許可後の確認待ちである。
+* 2026年8月29日の再実行ではWindows Application Controlの拒否は再現せず、引数なしのCLI適合性ランナーで公式通常囲碁、公式ポン抜き、外部Counterの3ベクトルがすべて `PASS` した。
+* 再実行後のReleaseソリューションビルドは警告0件、エラー0件で成功した。PlaySpace JSON Lines、通常囲碁、ポン抜き、Game Oasis Contracts、PlayRoom JSON Lines、Concierge、GUI移植性の回帰テスト7本もすべて `PASS` した。
+
+この段階では外部PlaySpace SDKの最小縦方向だけを完成させました。別リポジトリーへのパッケージ配布、Lobby / Play Room SDK、コンポーネント診断画面、Launcherによる導入・無効化・更新・削除は未実装です。
+
+## 実施原則
+
+* 一度に１つの作業段階だけを実施する。
+* 責務を分けてから改名する。
+* ロビーとプレイルームの別 EXE 化を前提にする。
+* 保存形式、実行ファイル、ランチャー更新経路の互換性を優先する。
+* 同一プロセス実装を復旧経路として安定させてから別プロセス化する。
+* gRPC は標準入出力と JSON Lines の運用結果を確認した後に判断する。
+
+## 関連文書
+
+* リポジトリー全体の構想：[`【むずでょ個人用】このリポジトリーのストーリー.md`](../../【むずでょ個人用】/プロンプトコーディング/【むずでょ個人用】このリポジトリーのストーリー.md)
+* 完了済みの先行事例：[`ランチャーのＧＵＩとエンジン分割計画.md`](LauncherSeparation.md)
+* 将来の別実行ファイル化：[`Lobby・PlayRoom実行ファイル分離移行計画.md`](IndependentComponentsProposal.md)
+
+将来の別実行ファイル化文書は、今回の作業へ前倒しして適用しません。今回安定させた同一プロセス境界を、後から通信アダプターへ差し替える際に使用します。
+
+## 中断・再開の記録
+
+### 現在の再開地点
+
+```text
+現在の段階：作業段階１０
+現在の状態：完了
+次に行う作業：未解決事項から次の作業段階を利用者と選定し、目的、対象範囲、完了条件を追記してから一段階だけ着手する
+最後に成功した検証：2026年8月29日、引数なしのPlayRoomEngine.Conformanceで公式囲碁・公式ポン抜き・外部Counterの3ベクトルがPASS。Release全体ビルドは警告0・エラー0。PlaySpace JSON Lines、通常囲碁、ポン抜き、Game Oasis Contracts、PlayRoom JSON Lines、Concierge、GUI移植性の回帰テスト7本もPASS
+現在有効な経路：外部実装はContractsとPlayRoomEngine.JsonLinesだけでホストを作り、マニフェストとJSONベクトルをCLI適合性ランナーへ渡せる。公式ホストも同じサーバーSDKを使用する
+ロールバック：PlayRoomEngineJsonLinesHost、PlayRoomEngine.Conformance、Samples/External.PlayRoomEngine.Counter、Conformance/ProtocolS/v1、SDK文書、公式ホストProgramのSDK化、ソリューション・発行スクリプトの第10段階追加を除く。第9段階のクライアント・マニフェスト境界は維持できる
+未解決事項：別リポジトリー向けパッケージ配布、Lobby / Play Room SDK、コンポーネント診断画面、Launcherによる導入・無効化・更新・削除、公式Concierge Hostのマニフェスト探索とLobby通知
+```
+
+### 各作業終了時に更新する項目
+
+作業を中断する前に、この節の［現在の再開地点］を必ず更新します。また、実施した作業段階の末尾へ次の形式で記録を追加します。
+
+```text
+実施日：
+完了した項目：
+変更した主なファイル：
+現在有効な実装経路：
+最後に成功したビルド：
+最後に成功した自動テスト：
+実施した手動確認：
+既知の未完了・不具合：
+次に行う最小作業：
+安全なロールバック方法：
+```
+
+### 再開時の確認手順
+
+1. この文書の［現在の再開地点］を読む。
+2. `git status --short` で作業中の変更を確認し、利用者の変更を上書きしない。
+3. 記録された最後のビルドとテストを再実行できるか確認する。
+4. 現在有効な実装経路とロールバック方法を確認する。
+5. ［次に行う最小作業］だけを行い、段階をまたいだ一括移動や改名をしない。

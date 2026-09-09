@@ -1,0 +1,882 @@
+# 【むずでょ個人用】ランチャーのＧＵＩとエンジン分割計画
+
+> 過去の記録です。「現在」「未着手」「次回」は記録当時を指します。[現状の入口](../CurrentState/InstallerJsonLines.md)を参照してください。
+
+
+## 目的
+
+現在の［ランチャー］を、利用者との入出力を担当する［ランチャーＧＵＩ］と、インストール、更新、管理、起動などの処理を担当する［ランチャーエンジン］へ段階的に分ける。
+
+最初から別プロセスにはせず、まず同一プロセス内に明確なインターフェース境界を作る。
+その後、必要な箇所から標準入出力と JSON Lines を用いたプロセス間通信へ進められる構成にする。
+
+この計画では、一度に大規模な移動や改名を行わない。
+各段階でビルドとテストを行い、ランチャーが引き続き使用できることを確認してから次へ進む。
+
+## 現在の構成
+
+現在のランチャーは、以下の４プロジェクトに分かれている。
+
+```text
+KifuwarabeGo2026.Launcher
+KifuwarabeGo2026.Launcher.Core
+KifuwarabeGo2026.Launcher.Platform
+KifuwarabeGo2026.Launcher.Presentation
+```
+
+プロジェクト単位では、すでに［実行ファイル］、［中核処理］、［ＯＳ依存処理］、［画面］へある程度分かれている。
+一方、`LauncherScreen` が画面の描画と入力だけでなく、中核クラスの生成、設定の保存、更新、アンインストール、アプリケーション起動なども直接扱っている。
+そのため、ＧＵＩとエンジンの境界はまだ確立していない。
+
+## 現在のファイルの分類
+
+### ランチャーＧＵＩに分類するもの
+
+```text
+KifuwarabeGo2026.Launcher/Program.cs
+KifuwarabeGo2026.Launcher/LauncherGame.cs
+KifuwarabeGo2026.Launcher.Presentation/LauncherScreen.cs の描画、入力、画面状態
+```
+
+主な責務は以下の通り。
+
+* ユーザーが直接起動するエントリーポイント。
+* MonoGame のウィンドウ、描画ループ、入力ループ。
+* ボタン、一覧、設定画面、確認画面、進捗、結果の表示。
+* マウス、キーボード、ゲームパッドからの入力。
+* スクリーンショットや効果音など、画面固有の機能。
+* ユーザーの指示をランチャーエンジンへ渡す。
+
+### ランチャーエンジンに分類するもの
+
+```text
+KifuwarabeGo2026.Launcher.Core/GitHubReleaseClient.cs
+KifuwarabeGo2026.Launcher.Core/InstalledVersion.cs
+KifuwarabeGo2026.Launcher.Core/InstalledVersionCatalog.cs
+KifuwarabeGo2026.Launcher.Core/LauncherLog.cs
+KifuwarabeGo2026.Launcher.Core/LauncherPaths.cs
+KifuwarabeGo2026.Launcher.Core/LauncherProduct.cs
+KifuwarabeGo2026.Launcher.Core/LauncherSettings.cs
+KifuwarabeGo2026.Launcher.Core/LauncherSettingsStore.cs
+KifuwarabeGo2026.Launcher.Core/LauncherUpdateService.cs
+KifuwarabeGo2026.Launcher.Core/PackageInstaller.cs
+KifuwarabeGo2026.Launcher.Core/ProductLauncher.cs
+```
+
+主な責務は以下の通り。
+
+* GitHub Releases の確認。
+* パッケージのダウンロード、SHA-256 検証、安全な展開、内容検証。
+* インストール済みバージョンの列挙、保護、削除。
+* 現在版と直前版の管理。
+* 設定の読み書き。
+* ログの記録。
+* ロビーＧＵＩなど、管理対象アプリケーションの起動。
+* 現在版を起動できない場合の直前版へのフォールバック。
+
+### ＯＳ依存処理として分けるもの
+
+現在の `DesktopPlatformServices` には、ＧＵＩ向けとエンジン向けの処理が同居している。
+
+ＧＵＩ寄りの処理：
+
+* フォルダー選択ダイアログを開く。
+* フォルダーをファイル管理アプリケーションで開く。
+* ファイルを関連付けられたアプリケーションで開く。
+
+エンジン寄りの処理：
+
+* 管理対象の実行ファイルを起動する。
+* 指定ディレクトリーから起動中のプロセスを調べる。
+* ローカルアプリケーションデータの場所を取得する。
+
+最初はプロジェクトを分割せず、インターフェースをＧＵＩ用とエンジン用に分ける。
+必要になった段階で、以下のようなプロジェクトへ分けることを検討する。
+
+```text
+KifuwarabeGo2026.LauncherGui.Platform
+KifuwarabeGo2026.LauncherEngine.Platform
+```
+
+### 共有設定から分けるもの
+
+現在の `ApplicationFamilySettings` には、性質の異なる設定が同居している。
+
+* スクリーンショット保存先は、ゲームオアシスのＧＵＩ群で共有する設定。
+* ＧＵＩ起動後にランチャーを閉じるかどうかは、ランチャー固有の設定。
+
+将来的には、前者をＧＵＩ群の共有設定、後者をランチャーの設定として分ける。
+ただし、設定ファイルの互換性を保つ必要があるため、分離はインターフェース境界を作った後に行う。
+
+## 目標とする依存関係
+
+第１段階の目標は、同一プロセス内で以下の依存関係にすることである。
+
+```text
+ユーザー
+  ↓
+LauncherGui.exe
+  ├─ LauncherGame
+  ├─ LauncherScreen
+  └─ ILauncherEngine
+       ↓
+     LauncherEngine.dll
+       ├─ 更新
+       ├─ インストール
+       ├─ バージョン管理
+       ├─ 設定管理
+       └─ アプリケーション起動
+```
+
+以下の規則を満たすことを目指す。
+
+* ランチャーエンジンは MonoGame、画面部品、マウス、キーボード、ゲームパッドへ依存しない。
+* `LauncherScreen` は GitHub、ZIP、SHA-256、設定ファイル形式、インストール先の内部構造を知らない。
+* `LauncherScreen` はエンジンの具象クラスを生成しない。
+* ＧＵＩは `ILauncherEngine` と要求・応答・通知用のデータ型を通してエンジンを利用する。
+* エンジンの生成と依存関係の組み立ては、ＧＵＩのエントリーポイント付近で行う。
+
+## 境界となるインターフェース案
+
+実際のメソッド名とデータ型は実装時に既存機能を確認して決定するが、概念上は以下の操作を用意する。
+
+```csharp
+public interface ILauncherEngine
+{
+    LauncherState GetState();
+
+    Task<UpdateResult> UpdateAsync(
+        ManagedProduct product,
+        IProgress<LauncherProgress>? progress,
+        CancellationToken cancellationToken);
+
+    IReadOnlyList<InstalledVersionInfo> GetInstalledVersions();
+
+    UninstallResult Uninstall(InstalledVersionId version);
+
+    LaunchResult LaunchLobbyGui();
+
+    ChangeSettingsResult ChangeInstallationDirectory(string? directory);
+}
+```
+
+この例は最終仕様ではない。
+例外をそのままＧＵＩへ漏らすか、結果型に変換するか、進捗通知をどの粒度にするかなどは、第１段階の実装時に決める。
+
+## 用語上の注意
+
+現在の `LauncherProduct.Gui` と `LauncherProduct.Engine` は、ランチャー自身のＧＵＩとエンジンではなく、ランチャーが管理しているゲームオアシス側の配布物を表している。
+［ランチャーＧＵＩ］と［ランチャーエンジン］を導入すると意味が紛らわしくなるため、境界を作った後で、実際の配布単位に合わせて以下のような名前へ変更することを検討する。
+
+```text
+ManagedProduct.GameOasisGui
+ManagedProduct.GameOasisEngine
+```
+
+将来、ロビーとプレイルームの配布単位が分かれた場合は、その構成に合わせて列挙値を再検討する。
+
+## 段階的な実装計画
+
+### 作業段階０：現在の動作を基準として固定する
+
+状態：完了（2026年8月27日）
+
+目的：分割作業による機能退行を検出できるようにする。
+
+作業：
+
+* ソリューション全体をビルドする。
+* 既存のランチャーテストを実行する。
+* 更新、インストール、起動、直前版へのフォールバック、バージョン一覧、アンインストール、設定変更の現在の動作を確認する。
+* 自動テストが不足しているエンジン処理を洗い出す。
+* 分割前の依存関係を記録する。
+
+完了条件：
+
+* 分割前のビルド結果とテスト結果が記録されている。
+* 以降の各段階で確認するべき主要動作が一覧になっている。
+
+#### 作業段階０の実施記録
+
+実行環境：
+
+```text
+ＯＳ：Windows
+.NET SDK：10.0.400
+対象フレームワーク：net8.0／net8.0-windows
+構成：Release
+```
+
+実行したコマンド：
+
+```powershell
+dotnet build KifuwarabeGo2026.slnx -c Release
+dotnet run --project KifuwarabeGo2026.Tests.Launcher\KifuwarabeGo2026.Tests.Launcher.csproj -c Release --no-build
+```
+
+結果：
+
+* ソリューション全体の復元と Release ビルドに成功した。
+* ビルド結果は警告０件、エラー０件だった。
+* 既存のランチャースモークテストは `PASS` した。
+* この段階では製品コードを変更していない。
+* 実際の GitHub Release の更新、利用者環境へのインストール、アンインストール、ＧＵＩの手動操作は行っていない。
+
+#### 分割前のプロジェクト依存関係
+
+```text
+KifuwarabeGo2026.Launcher
+  ├─ KifuwarabeGo2026.Launcher.Core
+  ├─ KifuwarabeGo2026.Launcher.Presentation
+  ├─ KifuwarabeGo2026.Launcher.Platform
+  └─ KifuwarabeGo2026.StationeryUI
+
+KifuwarabeGo2026.Launcher.Presentation
+  ├─ KifuwarabeGo2026.Launcher.Core
+  └─ KifuwarabeGo2026.StationeryUI
+
+KifuwarabeGo2026.Launcher.Platform
+  └─ KifuwarabeGo2026.Launcher.Core
+
+KifuwarabeGo2026.Launcher.Core
+  └─ 他のリポジトリー内プロジェクトへの参照なし
+
+KifuwarabeGo2026.Tests.Launcher
+  ├─ KifuwarabeGo2026.Launcher.Core
+  └─ KifuwarabeGo2026.Launcher.Platform
+```
+
+現在の主な問題は、`Launcher.Presentation` が `Launcher.Core` を参照すること自体ではなく、`LauncherScreen` が複数のエンジン内部クラスを直接生成して使用していることである。
+作業段階１では、プロジェクト参照をすぐに変更するのではなく、この直接依存を `ILauncherEngine` へ集約する。
+
+#### 現在、自動確認できている動作
+
+既存の `KifuwarabeGo2026.Tests.Launcher` は以下を確認している。
+
+* 現在版と直前版の繰り上げ、および設定への保存。
+* 設定保存後に一時ファイルが残らないこと。
+* カスタムインストール先と設定ファイル保存先の分離。
+* GUI版とEngine版の配布アセット名、およびGUI実行ファイル名。
+* 正常な ZIP の展開。
+* ZIP Slip を行う不正なエントリーの拒否。
+* SHA-256 の一致と不一致。
+* ＯＳのアプリケーションデータパス取得。
+* 指定ディレクトリーから実行中のプロセスを検出できること。
+
+#### 今後も確認する主要動作と、自動テストの不足
+
+| 主要動作 | 現在の確認状況 | 作業段階１以降で必要な確認 |
+|---|---|---|
+| 設定の現在版・直前版と原子的保存 | 既存テストあり | 境界導入後も同じテストを維持する |
+| ZIP Slip 防止と SHA-256 検証 | 既存テストあり | 境界導入後も同じテストを維持する |
+| GitHub Releases の応答解析とアセット選択 | 自動テストなし | 偽の HTTP 応答によるテストを追加する |
+| ダウンロードから検証、展開、配置までの完全なインストール | 部分テストのみ | 一時ディレクトリーと偽の HTTP 応答による結合テストを追加する |
+| 更新後の現在版・直前版の切り替え | 設定単体のみ | 更新サービスを通したテストを追加する |
+| 更新処理の二重実行拒否、失敗、キャンセル | 自動テストなし | エンジン境界の非同期テストを追加する |
+| 現在版の起動 | 自動テストなし | 偽のプロセスサービスによるテストを追加する |
+| 現在版失敗時の直前版へのフォールバック | 自動テストなし | 偽のプロセスサービスによる成功・失敗テストを追加する |
+| インストール済みバージョン一覧と保護状態 | 自動テストなし | 一時ディレクトリーと偽の実行中プロセス一覧によるテストを追加する |
+| アンインストール対象の安全性検査 | 自動テストなし | 管理外、現在版、直前版、実行中を拒否するテストを追加する |
+| ランチャー固有設定と共有アプリケーション設定 | 一部の設定のみ | 正常、欠損、不正 JSON、保存互換性を確認する |
+| フォルダー選択、ファイル・フォルダーを開く操作 | 自動テストなし | ＯＳアダプター分割後に可能な範囲をテストする |
+| ボタン、一覧、確認画面、進捗表示 | 自動テストなし | エンジン境界導入後に手動スモークまたは画面状態テストを行う |
+
+作業段階１では、現在の見た目と保存形式を変えず、少なくとも既存の自動確認項目をすべて維持する。
+不足しているテストをすべて一度に追加するのではなく、新しい `ILauncherEngine` の各操作を作るときに、その操作の回帰テストを追加する。
+
+### 作業段階１：同一プロセス内にエンジン境界を作る
+
+状態：完了（2026年8月27日）
+
+目的：ゲームオアシス全体の通信方針における［第１段階］を、ランチャーで達成する。
+
+作業：
+
+* `ILauncherEngine` を追加する。
+* ＧＵＩとエンジンの間で使用する要求、応答、進捗、状態のデータ型を追加する。
+* 既存の中核クラスをまとめて呼び出す、同一プロセス用の `LauncherEngine` 実装を追加する。
+* `LauncherScreen` が中核クラスを直接生成しないようにする。
+* エントリーポイント側でエンジンを生成し、`LauncherScreen` へ注入する。
+* 現在の見た目と操作方法は変更しない。
+
+完了条件：
+
+* `LauncherScreen` が `ILauncherEngine` を通して更新、一覧取得、削除、起動、設定変更を行っている。
+* `LauncherScreen` が `GitHubReleaseClient`、`PackageInstaller`、`LauncherSettingsStore`、`ProductLauncher` などを直接参照していない。
+* ランチャーは従来通り１つの実行ファイルとして起動する。
+* ビルドと既存テストが成功する。
+
+#### 作業段階１の実施記録
+
+追加した境界：
+
+```text
+LauncherGame／LauncherScreen
+  ↓ ILauncherEngine
+InProcessLauncherEngine
+  ├─ LauncherSettingsStore
+  ├─ InstalledVersionCatalog
+  ├─ ProductLauncher
+  └─ LauncherUpdateService
+       ├─ GitHubReleaseClient
+       └─ PackageInstaller
+```
+
+`ILauncherEngine` には、現在の画面が必要とする以下の操作を定義した。
+
+* ランチャーの表示用状態を取得する。
+* 製品を更新し、進捗を通知する。
+* インストール済みバージョンを取得する。
+* 指定されたバージョンをアンインストールする。
+* 管理対象ＧＵＩを起動する。
+* 現在版のディレクトリーを取得する。
+* インストール先を変更する。
+* スクリーンショット保存先を変更する。
+* ＧＵＩ起動後にランチャーを閉じる設定を変更する。
+
+実装内容：
+
+* `ILauncherEngine`、`LauncherState`、`LauncherProgress` を `Launcher.Core` に追加した。
+* 既存の中核クラスをまとめる `InProcessLauncherEngine` を `Launcher.Core` に追加した。
+* `LaunchResult` をＧＵＩとの境界で利用できる公開結果型にした。
+* `Program` で `DesktopPlatformServices`、`HttpClient`、`InProcessLauncherEngine` を組み立てるようにした。
+* `LauncherGame` を経由して、`ILauncherEngine` を `LauncherScreen` へ注入するようにした。
+* `LauncherScreen` から、エンジン内部クラスのフィールド、生成、再構築を取り除いた。
+* `LauncherScreen` の更新、一覧、削除、起動、設定変更をすべて `ILauncherEngine` 経由にした。
+* スクリーンショット保存先の取得も `LauncherGame` からエンジン境界を通して行うようにした。
+* 更新進捗は `IProgress<LauncherProgress>` で通知し、将来の JSON 通知へ置き換えやすい形にした。
+
+`LauncherScreen` は、以下の具象クラスを直接参照しなくなった。
+
+```text
+LauncherPaths
+LauncherSettingsStore
+InstalledVersionCatalog
+ProductLauncher
+LauncherUpdateService
+GitHubReleaseClient
+PackageInstaller
+```
+
+段階２へ残したもの：
+
+* フォルダー選択ダイアログ。
+* ファイルやフォルダーをＯＳのアプリケーションで開く処理。
+* ＧＵＩ用とエンジン用が同居している `IPlatformServices` の分割。
+* ランチャー固有設定と、ゲームオアシスＧＵＩ群の共有設定の物理的な分割。
+* 各操作の成功、失敗、キャンセルを表す結果型の統一。
+
+追加した回帰確認：
+
+* `ILauncherEngine` から表示用状態を取得できる。
+* `ILauncherEngine` からインストール済みバージョンを取得できる。
+* 削除可能な旧バージョンを境界経由でアンインストールできる。
+* 現在版などの保護対象を境界経由でもアンインストールできない。
+* 現在版の起動に失敗したとき、直前版へフォールバックできる。
+* インストール先を境界経由で変更できる。
+* テスト中に外部ネットワークへ接続しない。
+
+検証結果：
+
+```powershell
+dotnet build KifuwarabeGo2026.slnx -c Release
+dotnet run --project KifuwarabeGo2026.Tests.Launcher\KifuwarabeGo2026.Tests.Launcher.csproj -c Release --no-build
+```
+
+* ソリューション全体の Release ビルドに成功した。
+* ビルド結果は警告０件、エラー０件だった。
+* ランチャーの既存検査と、追加した同一プロセス境界検査は `PASS` した。
+* ランチャーの `OutputType` は `WinExe` のままであり、ユーザーが起動する実行ファイルは従来通り１つである。
+* プロジェクト名、保存形式、インストールディレクトリー構造、画面の見た目と操作方法は変更していない。
+* 実画面を使った手動スモークテストは、この段階では実施していない。
+
+### 作業段階２：ＧＵＩ、エンジン、ＯＳ依存処理の責務を整える
+
+状態：完了（2026年8月27日）
+
+目的：作業段階１で作った境界の内側を整理し、依存方向を明確にする。
+
+作業：
+
+* `LauncherScreen` から残っているファイル操作、設定保存、プロセス操作を取り除く。
+* `IPlatformServices` を、ＧＵＩ用とエンジン用の小さなインターフェースへ分ける。
+* `ApplicationFamilySettings` のランチャー固有設定とＧＵＩ共有設定を整理する。
+* エンジンの各操作について、成功、失敗、キャンセル、進捗の表現を統一する。
+* エンジン単体テストを追加し、ＧＵＩなしで主要処理を検証できるようにする。
+
+完了条件：
+
+* エンジン側が MonoGame と画面部品へ依存していない。
+* ＧＵＩ側が設定ファイルやインストールディレクトリーの内部構造へ依存していない。
+* ＯＳ依存処理の利用者が、ＧＵＩとエンジンのどちらであるか明確になっている。
+* エンジンの主要操作をＧＵＩなしでテストできる。
+
+#### 作業段階２の実施記録
+
+ＯＳ依存処理の境界を、以下のように分けた。
+
+```text
+ILauncherGuiPlatform
+  ├─ フォルダー選択ダイアログ
+  ├─ フォルダーを開く
+  └─ ファイルを開く
+
+ILauncherEnginePlatform
+  ├─ ローカルアプリケーションデータと画像フォルダーの取得
+  ├─ 管理対象プロセスの起動
+  └─ 指定ディレクトリーから実行中のプロセスを調査
+```
+
+`DesktopPlatformServices` は同一プロセス構成のため両方を実装するが、利用者側は必要なインターフェースだけを受け取る。
+
+```text
+LauncherGame／LauncherScreen
+  → ILauncherGuiPlatform
+
+InProcessLauncherEngine
+  → ILauncherEnginePlatform
+```
+
+これにより、旧 `IPlatformServices` は廃止した。
+`LauncherScreen` は、具体的なファイル、ディレクトリー、プロセス、設定ストアを直接操作しない。フォルダー選択やファイルを開くなどの利用者操作は、ＧＵＩ用ＯＳ境界へ依頼する。
+
+設定は以下のように分けた。
+
+```text
+application-settings.json
+  └─ SharedGuiSettings
+       └─ スクリーンショット保存先など、ゲームオアシスＧＵＩ群の共有設定
+
+launcher-settings.json
+  └─ LauncherSettings
+       ├─ インストール先と現在版・直前版
+       └─ ＧＵＩ起動後にランチャーを閉じるか
+```
+
+旧 `ApplicationFamilySettings` は廃止し、共有ＧＵＩ設定の場所を表す `SharedGuiSettings` と、読み書きを担当する `SharedGuiSettingsStore` に分けた。
+共有設定を書き換える際は、ゲームオアシスＧＵＩが保存している未知の項目を保持する。
+旧 `application-settings.json` に `CloseLauncherAfterStartingGui` がある場合は、初回起動時に `launcher-settings.json` へ移行する。保存ファイル名と既存値の互換性は維持する。
+
+エンジンの変更操作について、以下の共通結果を追加した。
+
+```text
+LauncherOperationStatus.Success
+LauncherOperationStatus.Failure
+LauncherOperationStatus.Canceled
+
+LauncherOperationResult
+LauncherOperationResult<T>
+```
+
+以下の操作は、通常の業務上の失敗を例外としてＧＵＩへ投げず、共通結果型で返す。
+
+* 更新。
+* アンインストール。
+* 管理対象ＧＵＩの起動。
+* インストール先の変更。
+* スクリーンショット保存先の変更。
+* ＧＵＩ起動後にランチャーを閉じる設定の変更。
+
+更新の進捗は引き続き `IProgress<LauncherProgress>` で通知する。
+更新のキャンセルは `Canceled`、通信や検証などの失敗は `Failure` として区別する。
+
+#### ＧＵＩなしで追加確認した項目
+
+* 旧共有設定からランチャー固有設定を移行できる。
+* ランチャー固有設定を `launcher-settings.json` へ保存できる。
+* 共有ＧＵＩ設定を変更しても、未知の既存項目を保持できる。
+* 不正な設定変更が `Failure` になる。
+* 更新のキャンセルが `Canceled` になる。
+* 更新の通信失敗が `Failure` になる。
+* 起動可能なバージョンがない場合、起動結果が `Failure` になる。
+* 状態取得、一覧取得、アンインストール、保護対象の拒否、直前版へのフォールバック、インストール先変更は引き続き成功する。
+* テスト中に実際の外部ネットワークや利用者の設定領域を使用しない。
+
+#### 構造検査
+
+* `Launcher.Core` は MonoGame、画面部品、入力機器へ依存していない。
+* `LauncherScreen` は、ファイル、ディレクトリー、プロセス、設定ストアの具象実装へ依存していない。
+* 旧 `IPlatformServices` の参照は残っていない。
+* 旧 `ApplicationFamilySettings` の参照は残っていない。
+* プロジェクトの物理的な分割と改名は、計画通り作業段階３へ残した。
+
+#### 検証結果
+
+```powershell
+dotnet build KifuwarabeGo2026.slnx -c Release
+dotnet run --project KifuwarabeGo2026.Tests.Launcher\KifuwarabeGo2026.Tests.Launcher.csproj -c Release --no-build
+dotnet run --project KifuwarabeGo2026.Tests.GameOasis.Gui.Portability\KifuwarabeGo2026.Tests.GameOasis.Gui.Portability.csproj -c Release --no-build
+dotnet run --project KifuwarabeGo2026.Tests.GameOasis.Gui.Windows\KifuwarabeGo2026.Tests.GameOasis.Gui.Windows.csproj -c Release --no-build
+```
+
+* ソリューション全体の Release ビルドに成功した。
+* ビルド結果は警告０件、エラー０件だった。
+* ランチャーの中核、ＯＳ境界、同一プロセスエンジン境界の検査は `PASS` した。
+* ゲームオアシスＧＵＩの移植性検査は `PASS` した。
+* Windowsプラットフォームサービスの非対話検査は `PASS` した。
+* 2026年8月27日、利用者が実際にランチャーを起動し、従来通り動作することを確認した。
+
+### 作業段階３：プロジェクト名と物理配置を目標構成へ近づける
+
+状態：完了（2026年8月27日）
+
+目的：責務が安定してから、プロジェクト名とディレクトリー名を概念モデルに合わせる。
+
+想定する構成：
+
+```text
+KifuwarabeGo2026.LauncherGui
+KifuwarabeGo2026.LauncherGui.Presentation
+KifuwarabeGo2026.LauncherEngine
+```
+
+必要であれば、以下も追加する。
+
+```text
+KifuwarabeGo2026.LauncherGui.Platform
+KifuwarabeGo2026.LauncherEngine.Platform
+KifuwarabeGo2026.LauncherEngine.Contracts
+```
+
+作業：
+
+* プロジェクト名、アセンブリー名、ルート名前空間を整理する。
+* プロジェクト参照とソリューションファイルを更新する。
+* テストプロジェクト名と参照先を更新する。
+* 発行物、GitHub Releases のアセット名、更新処理との互換性を確認する。
+* 保存済み設定やインストール済みバージョンを利用できることを確認する。
+
+完了条件：
+
+* プロジェクト名からランチャーＧＵＩとランチャーエンジンの位置付けを判別できる。
+* 循環参照がない。
+* 既存利用者の設定、インストール済み製品、更新経路を壊していない。
+* ビルド、テスト、発行確認が成功する。
+
+#### 作業段階３の実施記録
+
+責務を表すプロジェクト名と物理ディレクトリーを、以下のように変更した。
+
+```text
+KifuwarabeGo2026.Launcher.Core
+  → KifuwarabeGo2026.LauncherEngine
+
+KifuwarabeGo2026.Launcher.Platform
+  → KifuwarabeGo2026.LauncherEngine.Platform
+  ＋ KifuwarabeGo2026.LauncherGui.Platform
+
+KifuwarabeGo2026.Launcher.Presentation
+  → KifuwarabeGo2026.LauncherGui.Presentation
+
+KifuwarabeGo2026.Launcher
+  → KifuwarabeGo2026.LauncherGui
+
+KifuwarabeGo2026.Tests.Launcher
+  → KifuwarabeGo2026.Tests.LauncherEngine
+```
+
+旧プラットフォームプロジェクトに同居していた実装は、利用者に合わせて物理的にも分けた。
+
+```text
+DesktopLauncherGuiPlatform
+  └─ フォルダー選択、フォルダーを開く、ファイルを開く
+
+DesktopLauncherEnginePlatform
+  └─ 特別フォルダーの取得、管理対象プロセスの起動、実行中プロセスの調査
+```
+
+`LauncherEngine.Contracts` は、現在のインターフェースとデータ型が小規模であり、独立させても依存関係が明瞭になる効果がまだ小さいため、この段階では追加しなかった。
+
+利用者との互換性を守るため、プロジェクト名とルート名前空間を `LauncherGui` へ変更しても、実行アセンブリー名は `KifuwarabeGo2026.Launcher` のままとした。したがって、既存のショートカット、ＧＵＩ更新処理、リリーススクリプトが参照する以下の名前は変わらない。
+
+```text
+KifuwarabeGo2026.Launcher.exe
+KifuwarabeGo2026.Launcher-win-x64.zip
+```
+
+保存済み設定のファイル名、キー、保存場所、製品のインストール先構造も変更していない。
+
+#### 作業段階３の依存関係
+
+```text
+LauncherGui
+  ├─ LauncherGui.Presentation
+  ├─ LauncherGui.Platform
+  ├─ LauncherEngine
+  └─ LauncherEngine.Platform
+
+LauncherGui.Presentation
+  └─ LauncherEngine
+
+LauncherGui.Platform
+  └─ LauncherEngine
+
+LauncherEngine.Platform
+  └─ LauncherEngine
+
+LauncherEngine
+  └─ ランチャーＧＵＩには依存しない
+```
+
+循環参照はなく、エンジンからＧＵＩへの参照もない。
+
+#### 作業段階３の検証結果
+
+```powershell
+dotnet build KifuwarabeGo2026.slnx -c Release
+dotnet run --project KifuwarabeGo2026.Tests.LauncherEngine\KifuwarabeGo2026.Tests.LauncherEngine.csproj -c Release --no-build
+dotnet run --project KifuwarabeGo2026.Tests.GameOasis.Gui.Portability\KifuwarabeGo2026.Tests.GameOasis.Gui.Portability.csproj -c Release --no-build
+dotnet run --project KifuwarabeGo2026.Tests.GameOasis.Gui.Windows\KifuwarabeGo2026.Tests.GameOasis.Gui.Windows.csproj -c Release --no-build
+dotnet publish KifuwarabeGo2026.LauncherGui\KifuwarabeGo2026.LauncherGui.csproj -c Release -r win-x64 --self-contained false
+```
+
+* ソリューション全体の Release ビルドに成功した。警告０件、エラー０件だった。
+* ランチャーエンジン、プラットフォーム境界、同一プロセス境界の検査は `PASS` した。
+* ゲームオアシスＧＵＩの移植性検査は `PASS` した。
+* Windowsプラットフォームサービスの非対話検査は `PASS` した。
+* 発行先に互換名 `KifuwarabeGo2026.Launcher.exe` と実行に必要なファイルが出力されることを確認した。
+* 2026年8月27日、利用者が改名後のランチャーを実際に起動し、従来通り動作することを確認した。
+
+### 作業段階４：標準入出力と JSON Lines の試験実装を作る
+
+状態：完了（2026年8月27日）
+
+目的：ゲームオアシス全体の通信方針における［第２段階］を、適した小さな操作から試す。
+
+最初の候補：
+
+* ランチャーエンジンの状態取得。
+* インストール済みバージョン一覧の取得。
+* 更新の有無の確認。
+
+最初から更新、削除、起動のすべてを別プロセス化せず、読み取り専用で危険の少ない操作から始める。
+
+作業：
+
+* 言語に依存しない JSON メッセージ仕様を定める。
+* １行に１メッセージの JSON Lines とする。
+* 要求識別番号、メッセージ種類、プロトコルバージョンを定める。
+* 標準出力はプロトコル専用、標準エラー出力はログ専用とする。
+* `ILauncherEngine` を実装する標準入出力クライアントを作る。
+* 子プロセスとして動作するランチャーエンジンホストを作る。
+* タイムアウト、キャンセル、子プロセス終了、不正な JSON の扱いを定める。
+
+完了条件：
+
+* 同一プロセス版と標準入出力版を、ＧＵＩの大きな変更なしに切り替えられる。
+* 少なくとも１つの読み取り操作が標準入出力と JSON Lines で往復する。
+* プロトコルの自動テストがある。
+* C# 以外の言語でも実装できる仕様として文書化されている。
+
+#### 作業段階４の実施記録
+
+以下の２プロジェクトを追加した。
+
+```text
+KifuwarabeGo2026.LauncherEngine.JsonLines
+  ├─ プロトコル要求・応答
+  └─ ILauncherEngine を実装する標準入出力クライアント
+
+KifuwarabeGo2026.LauncherEngine.JsonLinesHost
+  └─ 子プロセスとして要求を処理するエンジンホスト
+```
+
+プロトコル第１版では、以下の読み取り専用操作を別プロセスへ通す。
+
+```text
+getState
+getInstalledVersions
+```
+
+要求と応答は UTF-8 の JSON Lines とし、`protocolVersion`、`requestId`、操作名、成功状態、結果またはエラーを持つ。標準出力はプロトコル専用、標準エラー出力は診断ログ専用とした。詳細は `Docs/Dev/CurrentState/InstallerJsonLines.md` に記載した。
+
+`JsonLinesLauncherEngine` は `ILauncherEngine` を実装する。第１版の対象である状態と一覧は子プロセスへ問い合わせ、更新、削除、起動、設定変更は既存の `InProcessLauncherEngine` へ委譲する。このためＧＵＩ画面側の変更なしに試験導入できる。
+
+通常起動は安全性を優先して従来の同一プロセス版を使用する。`--engine-stdio` を指定した場合だけ標準入出力版を使用する。ホストはランチャーと同じ発行物へ含める。
+
+#### 作業段階４の障害処理
+
+* 応答待ちの既定タイムアウトを10秒とした。
+* 子プロセス終了、応答なし、不正 JSON、プロトコルバージョン不一致、要求識別番号不一致を通信障害として検出する。
+* クライアント破棄時に標準入力を閉じ、ホストが終了しない場合は子プロセスツリーを停止する。
+* 第１版の同期読み取り操作には要求単位のキャンセルを設けず、クライアント破棄を終了境界とした。
+
+#### 作業段階４の検証結果
+
+```powershell
+dotnet build KifuwarabeGo2026.slnx -c Release
+dotnet run --project KifuwarabeGo2026.Tests.LauncherEngine\KifuwarabeGo2026.Tests.LauncherEngine.csproj -c Release --no-build
+dotnet run --project KifuwarabeGo2026.Tests.GameOasis.Gui.Portability\KifuwarabeGo2026.Tests.GameOasis.Gui.Portability.csproj -c Release --no-build
+dotnet run --project KifuwarabeGo2026.Tests.GameOasis.Gui.Windows\KifuwarabeGo2026.Tests.GameOasis.Gui.Windows.csproj -c Release --no-build
+```
+
+* ソリューション全体の Release ビルドに成功した。警告０件、エラー０件だった。
+* 実際の子プロセスとの状態取得とインストール済み一覧の往復は `PASS` した。
+* 不正 JSON、子プロセス終了、応答タイムアウトの検査は `PASS` した。
+* 従来の同一プロセス境界、移植性、Windowsプラットフォームサービスの検査も引き続き `PASS` した。
+* 空の発行先へランチャーとホストを発行し、互換名のランチャー本体、JSON Lines ホスト、プロトコル DLL が同じ配布物へ揃うことを確認した。
+* 2026年8月27日、利用者が第４段階実装後のランチャーを通常起動し、従来通り動作することを確認した。
+
+### 作業段階５：安全な操作から別プロセス化を広げる
+
+状態：完了（2026年8月27日）
+
+目的：試験実装の結果を確認し、効果がある操作だけを段階的に別プロセス化する。
+
+検討する順序：
+
+1. 状態と一覧の取得。
+2. 更新の確認。
+3. ダウンロードとインストール。
+4. 管理対象アプリケーションの起動。
+5. アンインストールや設定変更。
+
+削除、上書き、更新などの変更操作では、要求対象の検証、処理中断時の整合性、再実行の安全性を特に確認する。
+
+完了条件：
+
+* 別プロセス化する利点がある操作と、同一プロセスに残す操作が明記されている。
+* 別プロセス終了時にもＧＵＩが異常終了しない。
+* 通信障害と業務処理上の失敗を区別して表示できる。
+* 通常利用、更新、復旧の経路が確認されている。
+
+#### 作業段階５の実施記録
+
+別プロセス化する操作を、以下まで広げた。
+
+```text
+読み取り
+  ├─ 状態取得
+  ├─ インストール済み一覧取得
+  └─ 現在版ディレクトリー取得
+
+設定変更
+  ├─ インストール先変更
+  ├─ スクリーンショット保存先変更
+  └─ ＧＵＩ起動後にランチャーを閉じる設定の変更
+
+削除
+  └─ 保護状態と管理フォルダー境界を再検証するアンインストール
+```
+
+アンインストールは、同じ対象が既に削除済みの場合も成功するため再実行できる。現在版、直前版、実行中、管理フォルダー外の拒否は従来通りエンジン側で行う。
+
+以下は同一プロセスに残した。
+
+```text
+更新
+  └─ 進捗通知、キャンセル、途中終了後の整合性をプロトコルとして設計してから移す
+
+管理対象ＧＵＩの起動
+  └─ ランチャー自身の更新・再起動先を子プロセスのパスと取り違えない設計が必要
+```
+
+設定変更に成功した場合は、通信障害後の復旧先になる同一プロセスエンジンにも設定を同期し、インストール先などのキャッシュを一致させる。
+
+#### 通信障害からの復旧
+
+`JsonLinesLauncherEngine` は、タイムアウト、子プロセス終了、不正 JSON、応答不整合を検出すると、異常なホストを停止し、以後の操作を同一プロセスエンジンへ切り替える。`ILauncherEngineCommunicationStatus` を通じてＧＵＩへ警告を渡し、画面には通信失敗とフォールバック使用中であることを表示する。
+
+プロトコルの要求処理に成功し、その中の `LauncherOperationResult` が失敗を表す場合は業務上の失敗である。これは通信障害とせず、フォールバックも開始しない。
+
+#### 作業段階５の検証項目
+
+* 読み取り３操作の子プロセス往復。
+* 設定変更３操作の子プロセス往復と同一プロセス側の同期。
+* 管理対象内のアンインストールと同じ要求の安全な再実行。
+* 不正な設定値による業務失敗と通信障害の区別。
+* 不正 JSON、子プロセス終了、タイムアウトからの同一プロセス版への復旧。
+* 復旧後の状態取得と警告状態。
+
+#### 作業段階５の検証結果
+
+```powershell
+dotnet build KifuwarabeGo2026.slnx -c Release
+dotnet run --project KifuwarabeGo2026.Tests.LauncherEngine\KifuwarabeGo2026.Tests.LauncherEngine.csproj -c Release --no-build
+dotnet run --project KifuwarabeGo2026.Tests.GameOasis.Gui.Portability\KifuwarabeGo2026.Tests.GameOasis.Gui.Portability.csproj -c Release --no-build
+dotnet run --project KifuwarabeGo2026.Tests.GameOasis.Gui.Windows\KifuwarabeGo2026.Tests.GameOasis.Gui.Windows.csproj -c Release --no-build
+```
+
+* ソリューション全体の Release ビルドに成功した。警告０件、エラー０件だった。
+* 拡張した JSON Lines 操作、再実行安全性、業務失敗の区別、通信障害からの復旧は `PASS` した。
+* 従来の同一プロセス境界、移植性、Windowsプラットフォームサービスの検査も引き続き `PASS` した。
+
+### 作業段階６：ランチャー分割を完了し、ロビーへ進む
+
+状態：完了（2026年8月27日）
+
+目的：ランチャーで得た境界設計と通信方式を、次の［ロビーＧＵＩ］と［ロビーエンジン］の分割へ活用する。
+
+ランチャー完了の判定条件：
+
+* ＧＵＩとエンジンの責務が文書とコードの両方で一致している。
+* 同一プロセス版が安定して動作している。
+* 標準入出力版について、採用した範囲が安定して動作している。
+* ビルド、テスト、発行、既存環境からの更新を確認している。
+* 未実施事項が、ランチャーの完了を妨げない将来課題として整理されている。
+
+次に、以下の順でロビーを調査する。
+
+1. 現在の `GameOasis.Gui`、`GameOasis.Concierge`、`Application`、`Contracts`、`Storage` の責務を調べる。
+2. ［ロビーＧＵＩ］と［ロビーエンジン］へ分類する。
+3. ランチャーで作ったインターフェース境界、結果型、進捗通知、標準入出力プロトコルの知見を再利用する。
+4. ロビー用の独立した分割計画を作ってから、１段階ずつ実装する。
+
+#### 作業段階６の実施記録
+
+2026年8月27日、利用者が第５段階実装後のランチャーを通常起動し、従来通り動作することを確認した。`--engine-stdio` を付けた実機確認では DLL がブロックされているように見える事象があり、この回は通常起動だけを確認した。調査時点ではランチャーと JSON Lines ホストの実行中プロセス、および発行先 DLL の `Zone.Identifier` 代替データストリームは見つからなかった。
+
+その後の全体検査で、別のテスト用 apphost EXE に対して「アプリケーション制御ポリシーによってこのファイルがブロックされました」を再現した。同じアセンブリーは `dotnet <assembly.dll>` で正常に起動できた。このため JSON Lines ホストの既定起動を補助 EXE の直接実行から `dotnet KifuwarabeGo2026.LauncherEngine.JsonLinesHost.dll` へ変更した。ファイルの強制解除やポリシー変更は行わず、利用者環境の制御方針を維持する。
+
+ランチャー分割の完了判定は以下の通りとした。
+
+| 判定項目 | 結果 |
+|---|---|
+| ＧＵＩとエンジンの責務 | プロジェクト、名前空間、文書で一致 |
+| 同一プロセス版 | 自動検査と複数回の利用者手動起動に成功 |
+| 標準入出力版 | 採用した操作の実子プロセス自動検査、異常系、復旧検査に成功 |
+| 発行 | ランチャー互換名、ホスト、プロトコル DLL の同梱を確認 |
+| 既存設定とインストール | ファイル名、キー、保存場所、製品配置を維持 |
+| 循環参照 | なし |
+
+標準入出力版の利用者環境での再確認は、通常起動を妨げず、通信失敗時には同一プロセス版へ復旧できるため、ランチャー分割の完了を妨げない運用確認課題として残す。
+
+ランチャーで確立した再利用項目は以下である。
+
+* ＧＵＩが具象エンジンではなく役割インターフェースを参照する。
+* 同一プロセス実装を先に安定させてから通信実装を追加する。
+* ＧＵＩ用とエンジン用のＯＳ境界を分ける。
+* 成功、業務失敗、キャンセル、通信障害を区別する。
+* JSON Lines はプロトコル版、要求識別番号、標準出力専用、標準エラー出力ログを基本とする。
+* 変更操作は再実行安全性と復旧先の状態同期を確認してから別プロセス化する。
+
+現行ロビー領域の調査結果と段階計画は、`Docs/Dev/Archive/LobbyLogicalSeparation.md` へ分離した。以後の実装は同文書を基準に１段階ずつ進める。
+
+#### 作業段階６の検証結果
+
+```powershell
+dotnet build KifuwarabeGo2026.slnx -c Release
+dotnet run --project KifuwarabeGo2026.Tests.LauncherEngine\KifuwarabeGo2026.Tests.LauncherEngine.csproj -c Release --no-build
+dotnet run --project KifuwarabeGo2026.Tests.GameOasis.Contracts\KifuwarabeGo2026.Tests.GameOasis.Contracts.csproj -c Release --no-build
+dotnet run --project KifuwarabeGo2026.Tests.GameOasis.Concierge\KifuwarabeGo2026.Tests.GameOasis.Concierge.csproj -c Release --no-build
+dotnet run --project KifuwarabeGo2026.Tests.GameOasis.Integration.ProtocolG\KifuwarabeGo2026.Tests.GameOasis.Integration.ProtocolG.csproj -c Release --no-build
+dotnet KifuwarabeGo2026.Tests.GameOasis.Integration.ProtocolP\bin\Release\net8.0\KifuwarabeGo2026.Tests.GameOasis.Integration.ProtocolP.dll
+dotnet run --project KifuwarabeGo2026.Tests.GameOasis.Integration.ProtocolM\KifuwarabeGo2026.Tests.GameOasis.Integration.ProtocolM.csproj -c Release --no-build
+dotnet run --project KifuwarabeGo2026.Tests.GameOasis.Gui.Portability\KifuwarabeGo2026.Tests.GameOasis.Gui.Portability.csproj -c Release --no-build
+dotnet run --project KifuwarabeGo2026.Tests.GameOasis.Gui.Windows\KifuwarabeGo2026.Tests.GameOasis.Gui.Windows.csproj -c Release --no-build
+```
+
+* ソリューション全体の Release ビルドは警告０件、エラー０件で成功した。
+* ランチャー、Contracts、Concierge、Protocol G/P/M、移植性、Windows の各検査は `PASS` した。
+* ビルド時には DLL またはランチャー成果物のファイル占有を再現しなかった。
+* CI に残っていた改名前のランチャー、Presentation、テストの各パスを更新し、JSON Lines ホストもランチャー発行先へ同梱するようにした。
+
+## 実装を進めるときの原則
+
+* 一度に複数の作業段階を実施しない。
+* 各段階の開始時に、対象としない変更を明確にする。
+* 各段階の終了時に、完了条件を確認する。
+* 既存の動作、設定、発行物、更新経路を優先して保護する。
+* 改名だけを先行させず、先に責務と依存関係を整える。
+* 第２段階のプロセス間通信は、読み取り専用の小さな操作から始める。
+* gRPC は現時点の実装対象にせず、標準入出力と JSON Lines の運用後に必要性を判断する。

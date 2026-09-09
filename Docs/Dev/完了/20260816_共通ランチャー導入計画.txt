@@ -247,7 +247,7 @@ HTTP取得、バージョン比較、ZIP検証、設定保存、プロセス起�
 
 ■ 関連ファイル
 
-・Docs/Dev/続きはここから.md
+・Docs/Dev/Archive/HandoffHistory.md
 ・KifuwarabeGo2026.GameOasis.Gui/Application/Updates/GuiReleaseUpdater.cs
 ・KifuwarabeGo2026.GameOasis.Gui/Presentation/StationeryUI/MessageDialog/GuiUpdateProgressDialog.cs
 ・Docs/Dev/リリース手順.md

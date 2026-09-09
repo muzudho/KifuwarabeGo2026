@@ -13,7 +13,7 @@ exeをダウンロードして使う方は、[利用者向けREADME](./README.md
 
 > [!Note]
 > 現在、作者が動作確認できる環境はWindowsだけです。Linux版やmacOS版への移植協力を歓迎しています。
-> 詳しくは [Linux・macOSへの移植の手引き](./Docs/Dev/設計/きふわらべの碁2026・移植の手引き.md) をご覧ください。
+> 詳しくは [Linux・macOSへの移植の手引き](Docs/Dev/CurrentState/PortingGuide.md) をご覧ください。
 
 ## ソリューション構成
 
@@ -69,11 +69,12 @@ GUIのpublish時には、CGOS通信コンポーネントも `Tools\Cgos` 以下�
 - [共有ドキュメントの目次](./Docs/README.md)
 - [開発者向けドキュメントの目次](./Docs/Dev/README.md)
 - [開発日誌](./Docs/Dev/Log/README.md)
-- [作業再開時の引き継ぎ](./Docs/Dev/続きはここから.md)
-- [基本方針](./Docs/Dev/設計/基本方針.md)
-- [ソースコード概要とCGOS接続フロー](./Docs/Dev/設計/ソースコード概要とCGOS接続フロー.md)
-- [きふわらべ式SGF形式仕様](./Docs/Dev/設計/きふわらべ式SGF形式仕様.md)
-- [Linux・macOSへの移植の手引き](./Docs/Dev/設計/きふわらべの碁2026・移植の手引き.md)
+- [現在の開発状況](Docs/Dev/CurrentState/Overview.md)
+- [後続作業・将来構想](Docs/Dev/Plans/README.md)
+- [構成と責務の入口](Docs/Dev/CurrentState/Architecture.md)
+- [CGOS・GTP・SGFの境界と移行状況](Docs/Dev/CurrentState/FormalAdapterMigration.md)
+- [きふわらべ式SGF形式仕様](Docs/Dev/CurrentState/SgfAnalysisFormat.md)
+- [Linux・macOSへの移植の手引き](Docs/Dev/CurrentState/PortingGuide.md)
 - [Windows GUI手動スモークテスト](./Docs/Dev/Windows%20GUI手動スモークテスト手順.md)
 
 Linux版やmacOS版への移植協力を歓迎しています。

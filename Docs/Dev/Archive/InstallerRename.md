@@ -1,0 +1,175 @@
+# インストーラー改名とロビー起動導線変更計画
+
+> 過去の計画・調査記録。本文の「現在」「次回」、旧名称、チェック欄は記録当時のものです。
+> 現状と後続作業は [Installer改名・ロビー起動の実装状況](../CurrentState/Installer.md) を参照してください。
+
+
+作成日: 2026-09-07  
+状態: 実装・ローカル検証済み。GitHub公開と公開版を使う移行確認は未実施。
+
+## 目的と合意事項
+
+現在の［ランチャー］を、主な責務である導入・更新・バージョン管理を表す［インストーラー］へ改名する。GUIとエンジンの分離は維持する。
+
+日常利用の入口はロビーにする。デスクトップに作成する標準ショートカットは、管理画面を経由せずロビーGUIを開くものに変更する。
+
+| 対象 | 変更後 |
+|---|---|
+| ランチャー／Launcher | インストーラー／Installer |
+| ランチャーGUI／LauncherGui | インストーラーGUI／InstallerGui |
+| ランチャーエンジン／LauncherEngine | インストーラーエンジン／InstallerEngine |
+| デスクトップの標準ショートカット | ［きふわらべの碁２０２６］からロビーGUIを起動 |
+| ロビーの［ランチャーを起動］ボタン | ［インストーラーを起動］ |
+| インストーラーの［GUIを起動］相当のボタン | ［ロビーを起動］ |
+
+英語表示では `OPEN INSTALLER` と `START LOBBY` を基本とする。現行インストーラー画面の起動ボタンは実装上 `START` なので、文字列の一括置換だけでなく、操作の役割を確認して変更する。
+
+2026-09-07にコード・文書・リリーススクリプトを変更し、ローカルの配布用出力とWindows実画面まで確認した。利用者のデスクトップや導入済みパッケージは置き換えていない。チェック項目にはローカルで確認した範囲を記し、公開GitHubと公開済み旧クライアントを使う最終確認は次回リリース時に行う。
+
+## 起動の設計
+
+この節は[内容別の文書](../CurrentState/Installer.md)へ移しました。
+
+## 2026-09-07時点で確認した実装箇所
+
+以下は改名前のパス。実装で移動した場合は、この表にも新しいパスを追記する。
+
+実装後の対応: 下表の `LauncherGui` は `InstallerGui`、`LauncherEngine` は `InstallerEngine`、`LauncherMaintenance` は `InstallerMaintenance`、各ファイル名のLauncherはInstallerへ変更済み。汎用の `ProductLauncher` とPlay Room／Desktopの起動サービス名は維持した。
+
+| 箇所 | 調査・変更内容 |
+|---|---|
+| `KifuwarabeGo2026.LauncherGui/Program.cs` | エントリーポイント。現行Mutexは `KifuwarabeGo2026.Launcher`。`--allow-multiple`、`--engine-stdio` があり、起動専用モードは未実装 |
+| `KifuwarabeGo2026.LauncherGui/LauncherGame.cs` | ウィンドウと画面の生成、終了処理 |
+| `KifuwarabeGo2026.LauncherGui.Presentation/LauncherScreen.cs` | `START`、`LAUNCHER`、パンくず、キーボード案内、起動後に画面を閉じる設定の表記 |
+| `KifuwarabeGo2026.LauncherEngine/ProductLauncher.cs` | `StartGui()` と現在版・直前版の起動処理。管理画面と起動専用モードから共用 |
+| `KifuwarabeGo2026.LauncherEngine/LauncherPaths.cs`、`LauncherSettingsStore.cs`、`LauncherProduct.cs` | 配置先、設定、製品ID、管理対象exe名とパッケージ識別 |
+| `KifuwarabeGo2026.LauncherEngine.Platform/DesktopLauncherEnginePlatform.cs` | 子プロセス起動と `KIFUWARABE_LAUNCHER_PATH` の引き渡し |
+| `KifuwarabeGo2026.GameOasis.Gui/Application/Updates/GuiReleaseUpdater.cs` | ロビーからの管理画面起動、環境変数と旧exe名による探索 |
+| `KifuwarabeGo2026.GameOasis.Gui/Game1.cs`、`Presentation/StationeryUI/MessageDialog/GuiUpdateProgressDialog.cs` | ロビーの起動導線と進捗・失敗ダイアログ。関連ボタン定義も検索する |
+| `KifuwarabeGo2026.GameOasis.Gui.Windows/Infrastructure/Windows/LauncherMaintenance/` | 導入、更新、ショートカット作成・移行、旧exe名の検証がまとまっている |
+| 同フォルダーの `WindowsLauncherMaintenanceService.cs` | 更新完了後に `Kifuwarabe Go 2026 Launcher.lnk` を作る現行経路 |
+| 同フォルダーの `WindowsShellLinkService.cs` | 現在の新規リンクは起動引数なし。既存リンク移行は引数などを保存するため、新用途への引数更新を明示する必要あり |
+| `Scripts/Invoke-Release.ps1` | publish先、exeの必須ファイル検査、ZIP名、GUI旧名エイリアスの配布 |
+| `KifuwarabeGo2026.Tests.LauncherEngine/`、`KifuwarabeGo2026.Tests.GameOasis.Gui.Windows/`、`KifuwarabeGo2026.Tests.GameOasis.Gui.Portability/` | 起動・更新・ショートカット・OS境界の既存検査 |
+
+現在のWindows GUI配布には `KifuwarabeGo2026.GameOasis.Gui.Windows.exe` と旧名 `KifuwarabeGo2026.Gui.exe` の互換入口がある。概念上の「ロビーGUI」と物理exe名を混同しない。本作業ではロビー・プレイルームの追加分割は行わず、既存のロビー入口を使用する。
+
+## 改名範囲と互換方針
+
+### 新しい正規名
+
+- `KifuwarabeGo2026.LauncherGui[.*]` → `KifuwarabeGo2026.InstallerGui[.*]`
+- `KifuwarabeGo2026.LauncherEngine[.*]` → `KifuwarabeGo2026.InstallerEngine[.*]`
+- 対象にはPlatform、Presentation、JsonLines、JsonLinesHost、対応テストを含む。
+- 対応するフォルダー、csproj、名前空間、型名、参照、slnx、AssemblyName、実行ホスト探索を更新する。
+- 利用者向け正規exe名は `KifuwarabeGo2026.Installer.exe`、正規配布ZIP名は `KifuwarabeGo2026.Installer-v{version}-win-x64.zip` とする。
+- 既存の `PackageInstaller` のように役割がすでに正しく表れている名前や、汎用的な「プロセス起動」を表す名前まで機械的に置換しない。
+
+### 互換維持が必要な識別子
+
+| 対象 | 方針 |
+|---|---|
+| 旧 `KifuwarabeGo2026.Launcher.exe` | 移行期間は引数なしで管理画面を開く互換入口を提供。必要なDLL・deps・runtimeconfigを含めて配布テストする |
+| 旧LauncherのZIP名・更新検索 | 旧クライアントが新しい正規名を探せない場合に備え、互換アセットまたは段階的な更新を提供。具体方式を公開前に決定・記録 |
+| 設定ファイル、保存ディレクトリ、現在版・直前版 | 初期段階では既存保存形式と場所を維持し、改名で初期化しない。変更が必要なら読み取り互換・一度だけの移行・失敗時復元を先に実装 |
+| `KIFUWARABE_LAUNCHER_PATH`、`KIFUWARABE_LAUNCHER_ENGINE_HOST` | 新しいINSTALLER名を正規とし、旧名をフォールバックで受け付ける。旧ロビーへは必要な旧変数も引き渡す |
+| Mutex・プロセス間通信 | 新旧プロセスの同時管理で競合しないよう設計。JsonLinesの識別子・コマンドは互換性を確認して扱う |
+| GUI／Engineの製品ID・配布名 | Installer改名だけを理由に変更しない。ロビー起動の表示名と配布識別子は分ける |
+
+互換名を残す場所には理由と撤去条件を記録する。旧語がゼロになることを完了条件にしない。互換対応の撤去時期とリリース番号は、実装時に配布状況を確認して決める。
+
+## 実装順序と中断点
+
+各段階はビルド・対象検査を通した状態で区切る。中断時には、未完了の変更と次の一手を末尾へ記録する。
+
+### 第1段階: 影響範囲と基準状態
+
+- [x] Git差分を確認し、既存の利用者編集を維持する。
+- [x] `Launcher`、`ランチャー`、旧exe名、ZIP名、環境変数、設定キー、ショートカット処理をソース・テスト・スクリプト・文書から検索する。bin/objなど生成物は除外する。
+- [x] 現行ビルドと関連検査を実行し、既存失敗があれば変更起因と区別して記録する。
+- [x] 固定配置先、更新の切り替え単位、旧クライアントのアセット検索条件を確認し、互換配布方式を記録する。
+
+中断点: 変更対象一覧と基準検査結果がそろった状態。
+
+### 第2段階: ロビー起動専用モード
+
+- [x] 旧プロジェクト名のままでも検証できるよう、まず `--launch-lobby` と管理画面起動の分岐を追加する。
+- [x] エンジンの起動処理を共用し、成功時終了、未導入時案内、フォールバック、オフライン起動を実装する。
+- [x] 単一起動制御、更新中の起動、引数の解釈、管理画面が開いている場合を検査する。
+
+中断点: 起動専用モードからロビーへ到達でき、従来の管理画面も開ける状態。
+
+### 第3段階: Installerへの改名と表示変更
+
+- [x] GUI、Engine、各派生プロジェクト、テスト、参照をまとまりごとに改名してビルドする。
+- [x] 正規exeとホスト名、環境変数、互換入口を整備する。
+- [x] ロビーのボタンを［インストーラーを起動］、インストーラーのボタンを［ロビーを起動］にする。
+- [x] タイトル、ダイアログ、ツールチップ、更新説明、設定説明、キーボード案内も役割に合わせる。
+- [x] 長くなったボタン文字列がはみ出さず、既存の入力操作が維持されることを確認する。
+
+中断点: 新名称でビルド・起動でき、新旧の管理画面起動経路が使える状態。
+
+### 第4段階: ショートカットの作成・移行
+
+- [x] 固定exe + `--launch-lobby` の標準ショートカット作成を実装する。
+- [x] 新規導入とロビー内更新の両経路で、作成の案内を確認する。
+- [x] 既存の登録済みリンク移行・ターゲット検証を、新旧exe名と用途別Argumentsに対応させる。
+- [x] 管理画面を開く既存リンクとの区別、キャンセル、作成失敗、再実行、別用途の同名リンクを検査する。
+
+中断点: デスクトップから直接ロビーを開け、そこから管理画面へ移れる状態。
+
+### 第5段階: 配布・文書・完了確認
+
+- [x] リリーススクリプトのpublish、必須ファイル、ZIP、SHA-256生成・検証と新旧アセットを対応させる。
+- [x] 新規導入、旧版から更新、インストーラー自身の更新、GUI更新後と旧GUI削除後の起動をローカル配布物・更新応答fixtureで検査する。公開GitHub上の最新版を取得する確認は次回リリース時に行う。
+- [x] 用語整理、開発者向け案内、リリース手順、Products、Installationを新名称と起動導線へ更新する。
+- [x] 過去の日誌・完了記録は当時の名称を維持し、現行仕様を案内する文書を優先して更新する。
+- [x] 開発日誌とリリースノートに変更を記録し、下の完了条件と引き継ぎ欄を埋める。
+
+## 検査と完了条件
+
+実装前は既存名、改名後は新名のプロジェクトで検査する。代表的な基準コマンドは次のとおり。
+
+```powershell
+dotnet build KifuwarabeGo2026.slnx -c Release
+dotnet run --project KifuwarabeGo2026.Tests.LauncherEngine -c Release
+dotnet run --project KifuwarabeGo2026.Tests.GameOasis.Gui.Windows -c Release
+dotnet run --project KifuwarabeGo2026.Tests.GameOasis.Gui.Portability -c Release
+```
+
+自動検査では起動先・引数・現在版/直前版選択・失敗結果をプロセスサービス境界で確認する。Windows固有の `.lnk` 検査では一時ディレクトリを使う。実デスクトップへの作成や配布物の画面確認は手動スモークテストとして記録する。
+
+- [x] 新規導入後、デスクトップの標準ショートカットからロビーが開く。
+- [x] ロビー→インストーラー→ロビーの往復ができ、ボタン名が要求どおりになっている。
+- [x] インストーラー表示中もショートカットからロビーを開ける。
+- [x] 未導入・破損・現在版起動失敗が無言の終了にならず、復旧経路がある。
+- [x] 更新・旧版削除後もショートカットが有効で、オフラインでも導入済みロビーを開ける（ローカル配布物とプロセス境界の自動検査）。
+- [x] 旧設定、旧名exeからの管理画面・ロビー起動、旧ショートカット、旧Launcher名アセットの取得経路をローカルで確認した。公開済みの旧ロビー・旧更新クライアントからGitHubを使う最終確認は公開時に行う。
+- [x] 新旧exeの必要ファイルとホストがZIPに含まれ、改名後の配布物単体で起動できる。
+- [x] 自動検査とWindows上の表示・操作確認結果を記録した。環境制約で未確認なら完了扱いにしない。
+- [x] 現行文書の案内とリンクが新しい名称・導線に一致する。
+
+失敗時は、最後に検査が通った段階を基準に修正する。保存設定・導入済み版・既存リンクを先に削除しない。公開・実端末の移行前に、旧版を起動できる経路と設定・ショートカットの復元方法を確認する。
+
+## 引き継ぎ欄
+
+- 最終更新: 2026-09-07
+- 完了した段階: 第1〜4段階、第5段階の配布スクリプト・ローカルZIP検査・文書更新。
+- 現在の作業: コード変更とローカル確認を完了。未コミット・未公開。
+- 次の一手: 次回リリースを行う際にバージョン番号を決め、正規Installerと互換Launcherの両ZIP・チェックサムを同時に用意する。公開版での新規取得・旧クライアントからの更新・インストーラー自身の更新を確認する。
+- 変更済みコード: Installer系8プロジェクト、ロビーの管理画面起動、Windowsの更新・ショートカット処理、配布スクリプト、関連テスト。
+- 互換配布の決定: 同一内容のInstaller／Launcher ZIPを提供。exe・dll・deps.json・runtimeconfig.jsonは新旧名を同梱し、旧名apphostもInstaller.dllを読む。設定キーとファイル名、`Launcher/Current`、JSON Lines第1版は維持する。
+- 実行した検査: 下記「実装結果と検証」を参照。
+- 未確定事項: 互換撤去時期と公開バージョン番号。現在の検査用ビルドは既存の4.0.7を使用しており、4.0.7の公開物を更新したという意味ではない。
+- 中断時に追記する情報: 作業ブランチ/コミット、変更ファイル、最後に成功したコマンドと結果、失敗の再現手順、残作業、次に編集する箇所。
+
+## 実装結果と検証
+
+この節は[内容別の文書](../CurrentState/Installer.md)へ移しました。
+
+## 関連文書
+
+- [ゲーム構成要素と境界の用語整理](GameOasisTerminologyProposals.md)
+- [ランチャーのGUIとエンジン分割計画](LauncherSeparation.md)
+- [ランチャー更新機能実装計画](LauncherMaintenance.md)
+- [開発者向け目次](../README.md)

@@ -41,17 +41,11 @@ GameOasis Concierge
 * GTP、CGOS、SGF等の外部仕様を画面状態へ直接漏らすこと。FormalAdapterまたは中立契約を利用します。
 * 特定のPlay Room Engine具象アセンブリを直接参照すること。
 
-## この文書へ今後追加する内容
+## 文書の拡充計画
 
-* Protocol Gの状態遷移とメッセージ一覧。
-* Play Room GUIマニフェストと探索方法。
-* MonoGameを使う参照GUIと、別言語GUIの最小例。
-* Match、Board Editor、Review、Watchの共通点と差分。
-* 入力、描画、通知、切断、再接続の適合性試験。
-* アクセシビリティ、ローカライズ、画面サイズの最低要件。
+予定項目は[SDK整備計画](../Plans/SdkDevelopment.md)で管理します。
 
 ## 関連文書
 
-* [`ロビー・プレイルーム4役物理分割計画.md`](../開発_作業計画/ロビー・プレイルーム４役物理分割計画.md)
+* [Lobby・Play Room分離の到達点](../CurrentState/LobbyPlayRoomSeparation.md)
 * [`PlaySpace外部実装SDK.md`](./PlaySpace外部実装SDK.md)
-
