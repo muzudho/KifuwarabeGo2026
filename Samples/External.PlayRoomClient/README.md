@@ -1,5 +1,7 @@
 # External Play Room Client
 
+画面付き囲碁ホストの第2段階サンプルは`window_client.py`です。[通信仕様・起動方法](../../KifuwarabeGo2026.Reference.PlayRoomGui.Go.Windows/STDIO.md)を参照してください。`GO_WINDOW_HOST`にビルド済みGo WindowsホストDLLの絶対パスを設定すると、unittestに画面なしの通信検査4件を追加できます。
+
 公式LobbyのDLLを参照せず、別プロセスのプレイルームを呼び出す最小CLIです。Python 3.10以降の標準ライブラリだけを使用します。任意の実行ファイルと引数を指定できるため、他の作者の互換ホストにも接続できます。
 
 現段階の対象は画面のないBoard Editor / Review / Match参照ホストです。画面付き囲碁Windowsホストの `--launch-request` 経路とは異なります。このサンプルはカタログ・設定画面・ゲーム進行を備えた完成版Lobbyではなく、Lobby作者が接続を実装する際の最小例です。

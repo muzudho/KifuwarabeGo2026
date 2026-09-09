@@ -51,6 +51,7 @@ internal static class Program
                 return 0;
             }
             VerifyServiceComposition();
+            GoStdioChecks.Run();
             VerifyInstallerShortcutStore();
             VerifyInstallerShortcutRewrite();
             VerifyExecutableNaming();

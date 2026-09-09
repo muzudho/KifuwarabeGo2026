@@ -1,6 +1,9 @@
 using System.Text.Json;
 using KifuwarabeGo2026.Reference.PlayRoomGui.Go.Windows;
 
+if (args.SequenceEqual(new[] { "--stdio" }) || args.SequenceEqual(new[] { "--stdio-contract-smoke" }))
+    return GoStdioHost.Run(args[0] == "--stdio-contract-smoke");
+
 var result = GoPlayRoomHostStartup.Load(args);
 var output = JsonSerializer.Serialize(new
 {

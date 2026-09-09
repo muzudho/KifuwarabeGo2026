@@ -51,3 +51,9 @@ public sealed record MatchCompletion(
     ContractDocument? FinalState = null,
     string? WinnerRoleId = null,
     string? Reason = null);
+
+/// <summary>poll-input-events.v1能力で返す、セッション内で連番を持つ画面イベント。</summary>
+public sealed record MatchInputEvent(long EventId, string Type, long Revision,
+    MatchActionRequest? Action = null, MatchCompletion? Completion = null);
+
+public sealed record MatchInputEvents(string SessionId, IReadOnlyList<MatchInputEvent> Events, bool Closed);
