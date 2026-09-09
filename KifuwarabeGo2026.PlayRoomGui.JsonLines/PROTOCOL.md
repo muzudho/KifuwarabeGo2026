@@ -1,5 +1,7 @@
 # Board Editor Play Room JSON Lines Protocol v1
 
+他言語で実装する呼出元の例は[External.PlayRoomClient](../Samples/External.PlayRoomClient/README.md)です。実際のJSON形式、数値列挙値、起動手順、適合性の最小試験を含みます。この仕様の参照ホストは画面のないライフサイクル実装であり、画面付き囲碁Windowsホストへの接続は後続作業です。
+
 標準入力と標準出力はUTF-8のJSON Linesです。標準出力はプロトコル応答専用、標準エラーは診断専用です。
 
 ライフサイクル：

@@ -1,10 +1,12 @@
 # Lobby描画境界の後続分離
 
-段階2の第12縦切りから再開する計画です。完了済みの段階3〜7を最初から繰り返しません。[現在の到達点](../CurrentState/LobbyPlayRoomSeparation.md)。
+2026-09-09追記：利用者の目的に対する主計画は[外部アプリからのプレイルーム利用](ExternalPlayRoomIntegration.md)です。本作業は補助となるDLL分離です。第12縦切りの描画Portと`LobbyGui.MonoGame`への内容Renderer抽出を実装し、ReleaseビルドとGUI移植性試験は成功しました。手動の表示・操作確認は残っています。
+
+段階2の第12縦切りを進めた記録です。完了済みの段階3〜7を最初から繰り返しません。[現在の到達点](../CurrentState/LobbyPlayRoomSeparation.md)。
 
 ## 次の最小作業
 
-作業段階2の第12縦切りとして、`TitleScreen`に残るMonoGame座標・Control参照を描画Portとして整理し、Lobbyページ内容Rendererの物理移動境界を作ります。
+描画抽出後の見た目・hover・BACK操作を手動確認します。通信分離の主作業は[画面付きプレイルームへの接続](ExternalPlayRoomIntegration.md)へ進みます。
 
 一括改名・一括移動、既存実行ファイル名と保存形式の先行変更はしません。
 

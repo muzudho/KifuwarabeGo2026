@@ -1,0 +1,7 @@
+# LobbyGui.MonoGame
+
+Lobbyのページ内容Rendererと、ホスト側の座標・共通Controlを利用する`ILobbyPageLayout`を所有します。描画フレームワーク非依存の状態・Presenterは`LobbyGui`にあります。
+
+互換GUIの`TitleScreenRenderer`が装飾ShellとページRendererを合成します。`TitleScreenLayoutAdapter`が描画と入力で同じ座標を共有し、旧Provider画面は描画Callbackとして渡されます。本Assemblyは互換GUIやPlay Roomを参照しません。
+
+これは公式ロビー内部の描画部品です。外部作者がロビーやプレイルームを作る際に必要なプロセス間契約ではありません。

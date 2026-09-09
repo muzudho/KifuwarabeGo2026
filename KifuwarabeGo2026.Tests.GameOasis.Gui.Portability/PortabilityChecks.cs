@@ -440,6 +440,21 @@ internal static class PortabilityChecks
 
     private static void VerifyLobbyGuiBoundary()
     {
+        var renderingAssembly = typeof(KifuwarabeGo2026.LobbyGui.MonoGame.LobbyPageRenderer).Assembly;
+        Require(renderingAssembly.GetName().Name == "KifuwarabeGo2026.LobbyGui.MonoGame" &&
+                renderingAssembly.GetReferencedAssemblies().All(reference =>
+                    reference.Name != "KifuwarabeGo2026.GameOasis.Gui" &&
+                    !(reference.Name?.Contains("PlayRoom", StringComparison.Ordinal) ?? false)),
+            "Lobby page drawing must live in its own assembly without legacy GUI or Play Room dependencies.");
+        var layout = new TitleScreenLayoutAdapter();
+        foreach (var target in new[] { LobbyHomeTarget.EngineProfiles, LobbyHomeTarget.EntryProfiles,
+                     LobbyHomeTarget.LocalMatch, LobbyHomeTarget.OnlineMatch,
+                     LobbyHomeTarget.CaptureGame, LobbyHomeTarget.GamePlatform })
+            Require(TitleScreen.Default.GetHomeTargetHit(layout.GetItemBounds(target).Center) == target,
+                "Extracted Lobby drawing and host input must share home item geometry.");
+        for (var index = 0; index < 4; index++)
+            Require(TitleScreen.GetGameOasisPlaySpaceHit(layout.GetGameOasisItemBounds(index).Center, 4) == index,
+                "Extracted Lobby drawing and host input must share catalog geometry.");
         Require(typeof(LobbyGuiController).Namespace == "KifuwarabeGo2026.LobbyGui.Application" &&
                 typeof(ILobbyGuiCommands).Namespace == "KifuwarabeGo2026.LobbyGui.Application" &&
                 typeof(LobbyGuiController).Assembly.GetName().Name == "KifuwarabeGo2026.LobbyGui",

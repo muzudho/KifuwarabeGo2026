@@ -61,4 +61,5 @@
   <Project Path="KifuwarabeGo2026.Tests.GameOasis.Integration.ProtocolM/KifuwarabeGo2026.Tests.GameOasis.Integration.ProtocolM.csproj" />
   <Project Path="KifuwarabeGo2026.Tests.GameOasis.Integration.ProtocolG/KifuwarabeGo2026.Tests.GameOasis.Integration.ProtocolG.csproj" />
   <Project Path="KifuwarabeGo2026.Tests.GameOasis.Integration.ProtocolP/KifuwarabeGo2026.Tests.GameOasis.Integration.ProtocolP.csproj" />
+  <Project Path="KifuwarabeGo2026.LobbyGui.MonoGame/KifuwarabeGo2026.LobbyGui.MonoGame.csproj" />
 </Solution>

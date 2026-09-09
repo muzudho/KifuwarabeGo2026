@@ -1,0 +1,265 @@
+namespace KifuwarabeGo2026.LobbyGui.MonoGame;
+
+using KifuwarabeGo2026.LobbyGui.Application;
+using Microsoft.Xna.Framework;
+using StationeryUI.MonoGame;
+using StationeryUI.MonoGame.Controls.StickyNote;
+
+/// <summary>ロビーのページ内容を描画します。旧GUIのコントロールやセッションは参照しません。</summary>
+public sealed class LobbyPageRenderer(ILobbyPageLayout layout)
+{
+    private readonly ILobbyPageLayout _layout = layout;
+    private KfwStationeryDrawingTools _drawingContext = null!;
+    private Vector2 _settingsHintConnectorTarget;
+
+    public void Draw(LobbyScreenPresentation lobby,
+        KfwStationeryDrawingTools drawingContext, Rectangle panel, Point mousePoint,
+        Vector2 settingsHintConnectorTarget, Action drawProviderSelection)
+    {
+        _drawingContext = drawingContext;
+        _settingsHintConnectorTarget = settingsHintConnectorTarget;
+        var home = lobby.Home;
+        var gameOasis = lobby.GameOasis;
+        switch (lobby.CurrentPage)
+        {
+            case LobbyPage.Home:
+                var engineProfiles = home.GetItem(LobbyHomeTarget.EngineProfiles);
+                var entryProfiles = home.GetItem(LobbyHomeTarget.EntryProfiles);
+                var localMatch = home.GetItem(LobbyHomeTarget.LocalMatch);
+                var onlineMatch = home.GetItem(LobbyHomeTarget.OnlineMatch);
+                var captureGame = home.GetItem(LobbyHomeTarget.CaptureGame);
+                var gamePlatform = home.GetItem(LobbyHomeTarget.GamePlatform);
+                var entrySettingsHovered = _layout.GetSectionBounds(LobbyHomeTarget.EntrySettings).Contains(mousePoint);
+                var formalAppsHovered = _layout.GetSectionBounds(LobbyHomeTarget.FormalApps).Contains(mousePoint);
+                var casualAppsHovered = _layout.GetSectionBounds(LobbyHomeTarget.CasualApps).Contains(mousePoint);
+                var gamePlatformHovered = _layout.GetSectionBounds(LobbyHomeTarget.GamePlatform).Contains(mousePoint) ||
+                    _layout.GetItemBounds(LobbyHomeTarget.GamePlatform).Contains(mousePoint);
+                var localMatchHovered = _layout.GetItemBounds(LobbyHomeTarget.LocalMatch).Contains(mousePoint);
+                var onlineMatchHovered = _layout.GetItemBounds(LobbyHomeTarget.OnlineMatch).Contains(mousePoint);
+                var engineProfilesHovered = _layout.GetItemBounds(LobbyHomeTarget.EngineProfiles).Contains(mousePoint);
+                var entryProfilesHovered = _layout.GetItemBounds(LobbyHomeTarget.EntryProfiles).Contains(mousePoint);
+                _layout.DrawHomeLabels(_drawingContext);
+                DrawProfileChoice(_layout.GetItemBounds(LobbyHomeTarget.EngineProfiles), engineProfiles.Title, engineProfiles.Caption, mousePoint, true);
+                DrawProfileChoice(_layout.GetItemBounds(LobbyHomeTarget.EntryProfiles), entryProfiles.Title, entryProfiles.Caption, mousePoint, false);
+                DrawHomeServiceChoice(_layout.GetItemBounds(LobbyHomeTarget.LocalMatch), localMatch.Title, localMatch.Caption, ToColor(localMatch.Accent), mousePoint);
+                DrawHomeServiceChoice(_layout.GetItemBounds(LobbyHomeTarget.OnlineMatch), onlineMatch.Title, onlineMatch.Caption, ToColor(onlineMatch.Accent), mousePoint);
+                DrawAppChoice(_layout.GetItemBounds(LobbyHomeTarget.CaptureGame), captureGame.Title, captureGame.Caption, mousePoint);
+                DrawAppChoice(_layout.GetItemBounds(LobbyHomeTarget.GamePlatform), gamePlatform.Title, gamePlatform.Caption, mousePoint, ToColor(gamePlatform.Accent));
+                DrawDynamicOptionText(home.Guidance, new Rectangle(460, 676, 980, 30), new Color(180, 195, 195), 0.34f);
+                if (entrySettingsHovered)
+                    DrawHomeHint(home.GetHint(LobbyHomeTarget.EntrySettings));
+                else if (formalAppsHovered)
+                    DrawHomeHint(home.GetHint(LobbyHomeTarget.FormalApps));
+                else if (casualAppsHovered)
+                    DrawHomeHint(home.GetHint(LobbyHomeTarget.CasualApps));
+                else if (gamePlatformHovered)
+                    DrawHomeHint(home.GetHint(LobbyHomeTarget.GamePlatform));
+                else if (localMatchHovered)
+                    DrawHomeHint(home.GetHint(LobbyHomeTarget.LocalMatch));
+                else if (onlineMatchHovered)
+                    DrawHomeHint(home.GetHint(LobbyHomeTarget.OnlineMatch));
+                else if (engineProfilesHovered)
+                    DrawHomeHint(home.GetHint(LobbyHomeTarget.EngineProfiles));
+                else if (entryProfilesHovered)
+                    DrawHomeHint(home.GetHint(LobbyHomeTarget.EntryProfiles));
+                else if (_layout.GetItemBounds(LobbyHomeTarget.CaptureGame).Contains(mousePoint))
+                {
+                    DrawCaptureGamePreview();
+                }
+                break;
+            case LobbyPage.GameOasis:
+                DrawTitleBreadcrumb(gameOasis.Breadcrumb, panel);
+                for (var index = 0; index < gameOasis.VisibleItems.Count; index++)
+                {
+                    var entry = gameOasis.VisibleItems[index];
+                    DrawGameOasisPlaySpaceChoice(
+                        _layout.GetGameOasisItemBounds(index),
+                        gameOasis,
+                        entry,
+                        mousePoint);
+                }
+                if (gameOasis.IsLoading)
+                    DrawFittedText(gameOasis.LoadingMessage, new Rectangle(560, 500, 800, 52), new Color(180, 195, 195), 0.42f);
+                else if (gameOasis.RemainingMessage is { } remainingMessage)
+                    DrawFittedText(remainingMessage, new Rectangle(560, 790, 800, 32), new Color(180, 195, 195), 0.3f);
+                DrawTitleBackButton(mousePoint);
+                break;
+            default:
+                DrawCasualAppPage(lobby.CasualApp!, panel, mousePoint, drawProviderSelection);
+                break;
+        }
+    }
+
+    private void DrawHomeServiceChoice(Rectangle bounds, string title, string caption, Color accent, Point mousePoint)
+    {
+        var hovered = bounds.Contains(mousePoint);
+        FillRect(new Rectangle(bounds.X + 6, bounds.Y + 8, bounds.Width, bounds.Height), new Color(0, 0, 0, 95));
+        FillRect(bounds, hovered ? new Color(36, 50, 58) : new Color(24, 31, 37));
+        DrawRect(bounds, 2, hovered ? new Color(178, 219, 226) : new Color(88, 102, 112));
+        FillRect(new Rectangle(bounds.X, bounds.Y, 6, bounds.Height), hovered ? accent : new Color(accent.R, accent.G, accent.B, (byte)100));
+        DrawFittedText(title, new Rectangle(bounds.X + 28, bounds.Y + 20, bounds.Width - 56, 42), Color.White, 0.52f);
+        DrawFittedText(caption, new Rectangle(bounds.X + 28, bounds.Y + 74, bounds.Width - 120, 30), new Color(204, 241, 226), 0.34f);
+        DrawFittedText("OPEN  >", new Rectangle(bounds.Right - 92, bounds.Y + 76, 68, 28), hovered ? accent : new Color(180, 195, 195), 0.28f);
+    }
+
+    private void DrawGameOasisPlaySpaceChoice(
+        Rectangle bounds,
+        LobbyGameOasisPresentation presentation,
+        LobbyGameOasisItem entry,
+        Point mousePoint)
+    {
+        var hovered = bounds.Contains(mousePoint);
+        var accent = new Color(178, 145, 255);
+        FillRect(new Rectangle(bounds.X + 6, bounds.Y + 8, bounds.Width, bounds.Height), new Color(0, 0, 0, 95));
+        FillRect(bounds, hovered ? new Color(42, 45, 60) : new Color(24, 31, 37));
+        DrawRect(bounds, 2, hovered ? new Color(212, 194, 255) : new Color(103, 87, 142));
+        FillRect(new Rectangle(bounds.X, bounds.Y, 6, bounds.Height), hovered ? accent : new Color(126, 96, 192));
+
+        DrawDynamicOptionText(entry.DisplayName,
+            new Rectangle(bounds.X + 28, bounds.Y + 14, bounds.Width - 126, 44), Color.White, 0.52f);
+        DrawDynamicOptionText(entry.VersionLabel,
+            new Rectangle(bounds.Right - 92, bounds.Y + 18, 68, 30), new Color(210, 198, 242), 0.3f);
+
+        DrawDynamicOptionText(presentation.ImplementationLabel,
+            new Rectangle(bounds.X + 28, bounds.Y + 64, bounds.Width - 56, 22), new Color(148, 130, 194), 0.24f);
+        DrawDynamicOptionText(entry.ImplementationFirstLine,
+            new Rectangle(bounds.X + 28, bounds.Y + 87, bounds.Width - 56, 28), new Color(205, 213, 214), 0.31f);
+        if (entry.ImplementationSecondLine.Length > 0)
+            DrawDynamicOptionText(entry.ImplementationSecondLine,
+                new Rectangle(bounds.X + 28, bounds.Y + 113, bounds.Width - 130, 28), new Color(205, 213, 214), 0.31f);
+
+        DrawFittedText(presentation.OpenLabel, new Rectangle(bounds.Right - 92, bounds.Bottom - 40, 68, 28),
+            hovered ? new Color(220, 205, 255) : new Color(180, 195, 195), 0.28f);
+    }
+
+    private void DrawTitleBreadcrumb(string text, Rectangle panel)
+    {
+        DrawText(text, new Vector2(panel.X + 62, panel.Y + 142), new Color(180, 195, 195), 0.46f);
+        DrawLine(new Vector2(panel.X + 62, panel.Y + 184), new Vector2(panel.Right - 62, panel.Y + 184), 1, new Color(82, 111, 114));
+    }
+
+    private void DrawAppChoice(Rectangle bounds, string title, string caption, Point mousePoint, Color? accentOverride = null)
+    {
+        var accent = accentOverride ?? new Color(255, 190, 92);
+        var hovered = bounds.Contains(mousePoint);
+        FillRect(new Rectangle(bounds.X + 7, bounds.Y + 9, bounds.Width, bounds.Height), new Color(0, 0, 0, 90));
+        FillRect(bounds, hovered ? new Color(42, 55, 63) : new Color(24, 31, 37));
+        DrawRect(bounds, 2, hovered ? accent : new Color(accent.R, accent.G, accent.B, (byte)135));
+        FillRect(new Rectangle(bounds.X, bounds.Y, bounds.Width, 7), hovered ? accent : new Color(accent.R, accent.G, accent.B, (byte)105));
+        DrawDynamicOptionText(title, new Rectangle(bounds.X + 18, bounds.Y + 12, 250, 38), Color.White, 0.43f);
+        DrawFittedText(caption, new Rectangle(bounds.X + 18, bounds.Y + 52, 260, 22), accent, 0.27f);
+        DrawFittedText("OPEN  >", new Rectangle(bounds.Right - 92, bounds.Y + 28, 68, 28), new Color(180, 195, 195), 0.28f);
+    }
+
+    /// <summary>
+    /// ［ポン抜きゲーム］へカーソルを合わせたときの紹介ポップアップ
+    /// </summary>
+    private void DrawCaptureGamePreview()
+    {
+        var accent = new Color(255, 190, 92);
+        DrawStickyNote(
+            StickyNoteKind.TitlePonnukiPreview,
+            new Vector2(1390, 432),
+            accent,
+            new Color(142, 105, 57),
+            "ポン抜きゲームとは？",
+            ["とにかく相手よりアゲハマを", "多く取った方が勝ち！"]);
+
+    }
+
+    public void DrawHomeHint(LobbyHomeHint hint, Vector2? connectorTarget = null)
+    {
+        var accent = ToColor(hint.Accent);
+        var (kind, target) = hint.Target switch
+        {
+            LobbyHomeTarget.EntrySettings =>
+                (StickyNoteKind.TitleSettingsHint, GetTitleSectionLabelConnectorTarget("ENTRY SETTINGS", new Vector2(460, 338), connectsToRight: false)),
+            LobbyHomeTarget.FormalApps =>
+                (StickyNoteKind.TitleFormalAppsHint, GetTitleSectionLabelConnectorTarget("FORMAL APPS", new Vector2(800, 338), connectsToRight: false)),
+            LobbyHomeTarget.CasualApps =>
+                (StickyNoteKind.TitleCasualAppsHint, GetTitleSectionLabelConnectorTarget("CASUAL APPS", new Vector2(1140, 338), connectsToRight: true)),
+            LobbyHomeTarget.GamePlatform =>
+                (StickyNoteKind.TitleFormalAppsHint, new Vector2(_layout.GetItemBounds(LobbyHomeTarget.GamePlatform).Left, _layout.GetItemBounds(LobbyHomeTarget.GamePlatform).Center.Y)),
+            LobbyHomeTarget.LocalMatch =>
+                (StickyNoteKind.TitleLocalMatchHint, new Vector2(_layout.GetItemBounds(LobbyHomeTarget.LocalMatch).Left, _layout.GetItemBounds(LobbyHomeTarget.LocalMatch).Center.Y)),
+            LobbyHomeTarget.OnlineMatch =>
+                (StickyNoteKind.TitleOnlineMatchHint, new Vector2(_layout.GetItemBounds(LobbyHomeTarget.OnlineMatch).Left, _layout.GetItemBounds(LobbyHomeTarget.OnlineMatch).Center.Y)),
+            _ =>
+                (StickyNoteKind.TitleSettingsHint, connectorTarget ?? _settingsHintConnectorTarget),
+        };
+        DrawStickyNote(
+            kind,
+            target,
+            accent,
+            new Color(accent.R, accent.G, accent.B, (byte)190),
+            hint.Heading,
+            hint.BodyLines.ToArray());
+    }
+
+    private static Color ToColor(LobbyHomeAccent accent) => accent switch
+    {
+        LobbyHomeAccent.Casual => new Color(255, 190, 92),
+        LobbyHomeAccent.Platform => new Color(178, 145, 255),
+        LobbyHomeAccent.Engine => new Color(125, 225, 255),
+        LobbyHomeAccent.Entry => new Color(147, 244, 200),
+        LobbyHomeAccent.Settings => new Color(147, 201, 190),
+        _ => new Color(99, 223, 185),
+    };
+
+    private Vector2 GetTitleSectionLabelConnectorTarget(string label, Vector2 labelPosition, bool connectsToRight)
+    {
+        const float labelScale = 0.48f;
+        const int gap = 14;
+        var x = connectsToRight
+            ? labelPosition.X + _drawingContext.MeasureText(label).X * labelScale + gap
+            : labelPosition.X - gap;
+        return new Vector2(x, labelPosition.Y + 15);
+    }
+
+    private void DrawCasualAppPage(LobbyCasualAppPresentation presentation,
+        Rectangle panel, Point mousePoint, Action drawProviderSelection)
+    {
+        if (presentation.Content == LobbyCasualAppContent.ProviderSelection)
+        {
+            drawProviderSelection();
+            return;
+        }
+
+        DrawTitleBreadcrumb(presentation.Breadcrumb, panel);
+        DrawDynamicOptionText(presentation.Title, new Rectangle(panel.X + 150, panel.Y + 280, panel.Width - 300, 92), Color.White, 0.84f);
+        DrawFittedText(presentation.StatusMessage!, new Rectangle(panel.X + 250, panel.Y + 430, panel.Width - 500, 70), new Color(99, 223, 185), 0.72f);
+        DrawDynamicOptionText(presentation.Description!, new Rectangle(panel.X + 150, panel.Y + 530, panel.Width - 300, 54), new Color(180, 195, 195), 0.38f);
+        DrawTitleBackButton(mousePoint);
+    }
+
+    private void DrawProfileChoice(Rectangle bounds, string title, string englishTitle, Point mousePoint, bool engine)
+    {
+        var hovered = bounds.Contains(mousePoint);
+        var accent = engine ? new Color(125, 225, 255) : new Color(147, 244, 200);
+        FillRect(new Rectangle(bounds.X + 6, bounds.Y + 8, bounds.Width, bounds.Height), new Color(0, 0, 0, 95));
+        FillRect(bounds, hovered ? new Color(36, 50, 58) : new Color(24, 31, 37));
+        DrawRect(bounds, 2, hovered ? new Color(178, 219, 226) : new Color(88, 102, 112));
+        FillRect(new Rectangle(bounds.X, bounds.Y, 6, bounds.Height), hovered ? accent : new Color(accent.R, accent.G, accent.B, (byte)100));
+        DrawDynamicOptionText(title, new Rectangle(bounds.X + 22, bounds.Y + 18, bounds.Width - 76, 44), Color.White, 0.43f);
+        DrawFittedText(englishTitle, new Rectangle(bounds.X + 22, bounds.Y + 72, bounds.Width - 44, 30), accent, 0.30f);
+        var center = new Vector2(bounds.Right - 36, bounds.Y + 42);
+        if (engine) _drawingContext.DrawEngineIcon(center);
+        else _drawingContext.DrawEntryIcon(center);
+    }
+
+    private void DrawTitleBackButton(Point mousePoint, bool focused = false)
+    {
+        _layout.DrawBackButton(mousePoint, _drawingContext, focused);
+    }
+
+    private void FillRect(Rectangle bounds, Color color) => _drawingContext.FillRectangle(bounds, color);
+    private void DrawRect(Rectangle bounds, int thickness, Color color) => _drawingContext.DrawRectangle(bounds, thickness, color);
+    private void DrawLine(Vector2 start, Vector2 end, float thickness, Color color) => _drawingContext.DrawLine(start, end, thickness, color);
+    private void DrawText(string text, Vector2 position, Color color, float scale) => _drawingContext.DrawText(text, position, color, scale);
+    private void DrawFittedText(string text, Rectangle bounds, Color color, float scale) => _drawingContext.DrawFittedText(text, bounds, color, scale);
+    private void DrawDynamicOptionText(string text, Rectangle bounds, Color color, float scale) => _drawingContext.DrawDynamicText(text, bounds, color, scale);
+    private void DrawStickyNote(StickyNoteKind kind, Vector2 connectorStart, Color accent, Color borderColor,
+        string heading, System.Collections.Generic.IReadOnlyList<string> bodyLines) =>
+        _drawingContext.DrawStickyNote(kind, connectorStart, accent, borderColor, heading, bodyLines);
+
+}

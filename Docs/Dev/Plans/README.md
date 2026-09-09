@@ -2,7 +2,7 @@
 
 構想、未実施の作業、検証待ち、仕様導入手順を置きます。着手済み部分の状態は[CurrentState](../CurrentState/README.md)で確認します。
 
-直近の入口は[StationeryUI](StationeryUi.md)、[Installer公開確認](InstallerRelease.md)、[Lobby描画境界](LobbyRenderer.md)、[FormalAdapter最終検証](FormalAdapterValidation.md)です。長期構想と作業の優先順位は同じではありません。
+直近の入口は[外部アプリからのプレイルーム利用](ExternalPlayRoomIntegration.md)、[StationeryUI](StationeryUi.md)、[Installer公開確認](InstallerRelease.md)、[Lobby描画境界](LobbyRenderer.md)、[FormalAdapter最終検証](FormalAdapterValidation.md)です。長期構想と作業の優先順位は同じではありません。
 
 - [Button 所有・ヒット判定の残作業](./ButtonOwnership.md)
 - [CGOS評価値チャート追加改善計画](./CgosChart.md)

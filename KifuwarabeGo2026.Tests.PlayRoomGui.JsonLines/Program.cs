@@ -3,6 +3,35 @@ using KifuwarabeGo2026.GameOasis.Contracts.PlayRoom;
 using KifuwarabeGo2026.PlayRoomGui.JsonLines;
 using System.Diagnostics;
 
+// Allow an independently implemented host to be checked by the official .NET client.
+// Example: --external-board-editor python Samples/External.PlayRoomClient/board_editor_host.py
+if (args.Length >= 2 && args[0] == "--external-board-editor")
+{
+    ProcessStartInfo ExternalStart()
+    {
+        var start = new ProcessStartInfo(args[1]);
+        foreach (var argument in args.Skip(2)) start.ArgumentList.Add(argument);
+        return start;
+    }
+    var original = new ContractDocument("application/x-go-sgf", GameOasisOfficialNames.Go + ".sgf.v1", "(;GM[1]SZ[9]C[外部実装])");
+    using (var room = BoardEditorProcessSession.Open(ExternalStart(), CreateLaunch("external-adopt", original)))
+    {
+        var edited = original with { Content = "(;GM[1]SZ[9]AB[aa]C[採用])" };
+        room.ReplacePosition(new BoardEditorPositionUpdate(room.Ready.SessionId, edited));
+        var completion = room.Adopt();
+        Require(completion.Status == BoardEditorCompletionStatus.Adopted && completion.Position == edited,
+            "An independent host must return the edited document through the official client.");
+    }
+    using (var room = BoardEditorProcessSession.Open(ExternalStart(), CreateLaunch("external-discard", original)))
+    {
+        var completion = room.Discard();
+        Require(completion.Status == BoardEditorCompletionStatus.Discarded && completion.Position is null,
+            "An independent host must discard without returning a position.");
+    }
+    Console.WriteLine("PASS: Official .NET client used an independent Board Editor host.");
+    return;
+}
+
 var root = FindRepositoryRoot();
 var hostPath = Path.Combine(root, "KifuwarabeGo2026.Reference.PlayRoomGui.BoardEditor.JsonLinesHost", "bin", "Release", "net8.0",
     "KifuwarabeGo2026.Reference.PlayRoomGui.BoardEditor.JsonLinesHost.dll");

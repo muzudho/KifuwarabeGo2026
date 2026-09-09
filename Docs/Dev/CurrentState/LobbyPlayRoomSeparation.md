@@ -1,10 +1,14 @@
 # Lobby・Play Room分離の到達点
 
+2026-09-09追記：以下は過去の段階ごとの完了記録です。[外部アプリから利用する境界の現状](ExternalPlayRoomIntegration.md)と[次の計画](../Plans/ExternalPlayRoomIntegration.md)を別途確認してください。標準入出力ホストの存在と、外部アプリから画面付きプレイルームを操作できることは別の完了条件です。
+
 2026-08-30の末尾の再開記録を基準に整理。段階2は第11縦切りまで、段階3・4・5・6・7は完了。冒頭に残っていた「第1／第2縦切り」の状態表示は古い記録です。
 
 Lobbyのページ状態・Presenter・意味入力は専用Assemblyへ抽出済み。互換GUIにはMonoGameシェル、構成点、旧セッションとのAdapterが残ります。[次の作業](../Plans/LobbyRenderer.md)。
 
 ## Lobby描画の現在の境界
+
+2026-09-09：`ILobbyPageLayout`を介して旧`TitleScreen`の座標・共通Controlを利用する形にし、ページ内容を`LobbyGui.MonoGame.LobbyPageRenderer`へ抽出しました。`TitleScreenRenderer`はShellとの合成を担当します。新DLLから互換GUI・Play Roomへの参照がないこと、および描画座標と入力判定の一致をGUI移植性試験で検査しています。Releaseビルドと同試験はPASS、手動の表示確認は未実施です。
 
 互換タイトルShell固有操作とLobbyページ内容は別Rendererとなり、両者は設定説明の意味的描画Callbackだけで接続されます。内容Rendererは `ApplicationSettingsScreen` を参照しません。
 

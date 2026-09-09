@@ -2,6 +2,8 @@
 
 状態：プレースホルダー
 
+2026-09-09：標準入出力による画面なしの接続例は[External.PlayRoomClient](../../../Samples/External.PlayRoomClient/README.md)を参照してください。外部Pythonクライアント→公式ホストと、公式.NETクライアント→外部Python Board Editorの両方向を試験できます。以下のProtocol Gによる画面付きGUI全体の構想とは到達範囲が異なります。
+
 ## この文書の読者
 
 Kifuwarabe Go 2026へ新しい［プレイルームGUI］、いわゆる［ゲームのGUI］を追加したい開発者を対象とします。ゲームの状態を表示し、人間の入力をゲームオアシスへ渡す実装を扱います。

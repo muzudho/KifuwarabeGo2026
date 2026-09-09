@@ -1,5 +1,7 @@
 # Lobby・Play Roomの独立実装構想
 
+2026-09-09の優先順位：[外部アプリから公式プレイルームを利用する計画](ExternalPlayRoomIntegration.md)を先に進めます。以下の全面的な独立交換・チケット方式は長期案であり、その全実装を外部利用の前提にはしません。
+
 外部作者がLobby・Play Room・各Engineを独立交換できるようにする長期構想です。旧計画の第0段階を現在の再開地点とは扱いません。[実装済みの境界](../CurrentState/LobbyPlayRoomSeparation.md)と[直近の作業](LobbyRenderer.md)を先に確認します。記載のプロセス名・入室チケットは将来案です。
 
 ## 目標
