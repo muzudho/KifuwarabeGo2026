@@ -7,6 +7,10 @@
 	<Message Text="Smart App Control diagnostic: automatic signing is $(SmartAppControlSigningEnabled)." Importance="High" />
   </Target>
 
+	<Target Name="SetSmartAppControlSigningCertificateThumbprint" BeforeTargets="CoreCompile" Condition="'$(OS)' == 'Windows_NT' and '$(Configuration)' == 'Debug' and ('$(OutputType)' == 'Exe' or '$(OutputType)' == 'WinExe') and '$(SmartAppControlSigningEnabled)' == 'true'">
+	<Exec Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -Command &quot;[Environment]::SetEnvironmentVariable('KIFUWARABEGO2026_SAC_SIGNING_CERTIFICATE_THUMBPRINT', '811AE86677999B18E466A3038AA575AB6BD97847', 'User')&quot;" />
+  </Target>
+
   <Target Name="SignSmartAppControlDevelopmentOutput" AfterTargets="Build" Condition="'$(OS)' == 'Windows_NT' and '$(Configuration)' == 'Debug' and ('$(OutputType)' == 'Exe' or '$(OutputType)' == 'WinExe') and '$(SmartAppControlSigningEnabled)' == 'true'">
 	<Exec Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory)Scripts\ForSmartAppControl\Sign-SmartAppControlDevelopmentOutput.ps1&quot; -Path &quot;$(TargetDir).&quot; -CertificateThumbprint &quot;$(KIFUWARABEGO2026_SAC_SIGNING_CERTIFICATE_THUMBPRINT)&quot;" ConsoleToMSBuild="true" StandardOutputImportance="High" StandardErrorImportance="High" />
   </Target>

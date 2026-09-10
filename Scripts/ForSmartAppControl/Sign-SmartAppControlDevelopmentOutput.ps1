@@ -10,6 +10,10 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+if ([string]::IsNullOrWhiteSpace($CertificateThumbprint)) {
+	$CertificateThumbprint = [Environment]::GetEnvironmentVariable('KIFUWARABEGO2026_SAC_SIGNING_CERTIFICATE_THUMBPRINT', 'User')
+}
+
 if ($Help) {
 	Write-Host 'Usage: Sign-SmartAppControlDevelopmentOutput.ps1 -Path <output-directory> [-CertificateThumbprint <thumbprint>]'
 	Write-Host 'The certificate must be in Cert:\CurrentUser\My, have an accessible private key, and permit code signing.'
