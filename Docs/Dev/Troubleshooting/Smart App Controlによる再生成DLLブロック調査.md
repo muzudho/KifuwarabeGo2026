@@ -15,7 +15,17 @@
 
 [Microsoft の署名ガイド](https://learn.microsoft.com/en-us/windows/apps/develop/smart-app-control/code-signing-for-smart-app-control)も、SAC が考慮する証明書は信頼されたプロバイダーが発行したものとしている（今回再確認）。ローカルの Authenticode 検証成功だけでは SAC の起動許可を確認したことにならない。
 
-したがって、自動署名の実装例としては参考になるが、本リポジトリーの起動拒否を解決する実証済みの対策としては採用しない。今回の調査では署名スクリプトの移植、証明書の作成・信頼登録、OS 設定の変更は行っていない。ロビーの実操作確認は引き続き未完了である。
+したがって、自動署名の実装例としては参考になるが、本リポジトリーの起動拒否を解決する実証済みの対策としては採用しない。自己署名の開発用実装は、Authenticode署名と診断情報を一貫して取得するために導入するが、SACの起動許可を保証するものではない。ロビーの実操作確認は引き続き未完了である。
+
+## 2026-09-10 追記：開発用の署名・診断実装
+
+`Scripts/ForSmartAppControl/New-DevelopmentCodeSigningCertificate.ps1` は、CurrentUser の My に RSA 3072 bit / SHA-256 の非エクスポート可能な自己署名コード署名証明書を作成し、その公開証明書を CurrentUser の Root と TrustedPublisher に登録する。既存の同一 Subject の有効な証明書がある場合は再利用する。秘密鍵と証明書ファイルをリポジトリーに保存しない。
+
+スクリプトが表示するサムプリントを `KIFUWARABEGO2026_SAC_SIGNING_CERTIFICATE_THUMBPRINT` に設定すると、`Directory.Build.targets` は Windows の Debug `Exe` / `WinExe` 出力について、ビルド完了後に `Sign-SmartAppControlDevelopmentOutput.ps1` を実行する。このスクリプトは出力ディレクトリー以下の EXE と DLL を署名し、Authenticode 状態が `Valid` であることを確認する。
+
+`Save-SmartAppControlDiagnostic.ps1` は署名状態、ハッシュ、SACポリシー状態、Code Integrity イベントを JSON として保存する。`-?` は3つのスクリプトすべてで使用法だけを表示して成功終了するため、引数未指定のヘルプ確認が後続の診断処理を停止させない。
+
+この実装はローカルの署名状態を可視化して開発診断を整えるものであり、SAC強制環境でのブロック回避を保証しない。SACでの起動確認には、信頼されたプロバイダーの証明書またはTrusted Signingで、依存DLLを含む実行成果物すべてにタイムスタンプ付き署名を行う必要がある。
 
 ## 結論
 
