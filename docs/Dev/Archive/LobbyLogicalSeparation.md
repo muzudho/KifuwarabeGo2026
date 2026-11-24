@@ -871,7 +871,7 @@ dotnet run --project KifuwarabeGo2026.Tests.GameOasis.Gui.Windows\KifuwarabeGo20
 * `Samples/External.PlayRoomEngine.Counter` を追加した。この外部風サンプルはContractsとPlaySpace JSON Lines SDKだけを参照し、公式GUI、Concierge、公式PlaySpaceを参照しない。
 * `PlayRoomEngine.Conformance` を偽ConciergeのCLI適合性ランナーとして追加した。任意のマニフェストとJSONベクトルを指定して、記述、Protocol版、設定スキーマ、正常・不正設定、セッション、状態、行動、リビジョン競合、終了を検査する。
 * 通常囲碁、ポン抜き、外部Counterの言語非依存JSONベクトルと、ホストマニフェスト・ベクトル自身のJSON Schemaを追加した。
-* 外部実装手順、状態遷移、CLI使用法を `Docs/Dev/SDK/PlaySpace外部実装SDK.md` に記録した。
+* 外部実装手順、状態遷移、CLI使用法を `docs/Dev/SDK/PlaySpace外部実装SDK.md` に記録した。
 * 発行スクリプトへ適合性ランナー、JSON Schema、公式ベクトル、外部Counterサンプルを追加した。
 
 検証結果：

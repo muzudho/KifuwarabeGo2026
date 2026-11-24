@@ -688,7 +688,7 @@ getState
 getInstalledVersions
 ```
 
-要求と応答は UTF-8 の JSON Lines とし、`protocolVersion`、`requestId`、操作名、成功状態、結果またはエラーを持つ。標準出力はプロトコル専用、標準エラー出力は診断ログ専用とした。詳細は `Docs/Dev/CurrentState/InstallerJsonLines.md` に記載した。
+要求と応答は UTF-8 の JSON Lines とし、`protocolVersion`、`requestId`、操作名、成功状態、結果またはエラーを持つ。標準出力はプロトコル専用、標準エラー出力は診断ログ専用とした。詳細は `docs/Dev/CurrentState/InstallerJsonLines.md` に記載した。
 
 `JsonLinesLauncherEngine` は `ILauncherEngine` を実装する。第１版の対象である状態と一覧は子プロセスへ問い合わせ、更新、削除、起動、設定変更は既存の `InProcessLauncherEngine` へ委譲する。このためＧＵＩ画面側の変更なしに試験導入できる。
 
@@ -850,7 +850,7 @@ dotnet run --project KifuwarabeGo2026.Tests.GameOasis.Gui.Windows\KifuwarabeGo20
 * JSON Lines はプロトコル版、要求識別番号、標準出力専用、標準エラー出力ログを基本とする。
 * 変更操作は再実行安全性と復旧先の状態同期を確認してから別プロセス化する。
 
-現行ロビー領域の調査結果と段階計画は、`Docs/Dev/Archive/LobbyLogicalSeparation.md` へ分離した。以後の実装は同文書を基準に１段階ずつ進める。
+現行ロビー領域の調査結果と段階計画は、`docs/Dev/Archive/LobbyLogicalSeparation.md` へ分離した。以後の実装は同文書を基準に１段階ずつ進める。
 
 #### 作業段階６の検証結果
 

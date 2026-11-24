@@ -39,7 +39,23 @@ public sealed partial class GoAppSession
         CgosConnectionStatusMessage = "READY";
     }
 
-    public void OpenCgosWatchingScreen() => CgosConnectionFlowKind = CgosFlowKind.Watching;
+    public bool IsCgosWatchingScreen =>
+        CgosConnectionFlowKind == CgosFlowKind.Watching && CurrentMode.Kind != GoAppModeKind.Reviewing;
+
+    public void OpenCgosWatchingScreen()
+    {
+        if (CurrentMode.Kind == GoAppModeKind.Reviewing)
+            ReturnFromReviewingToResting();
+        CgosConnectionFlowKind = CgosFlowKind.Watching;
+    }
+
+    /// <summary>終局図を表示したまま待っている場合は、次の対局の生中継へ戻ります。</summary>
+    public void FollowNextCgosGame()
+    {
+        if (CgosConnectionFlowKind == CgosFlowKind.Watching &&
+            CurrentMode.Kind == GoAppModeKind.Reviewing && IsReviewResultPosition)
+            OpenCgosWatchingScreen();
+    }
     public void OpenCgosResultScreen() => CgosConnectionFlowKind = CgosFlowKind.Result;
     public void ReturnToCgosConnectionScreen() => CgosConnectionFlowKind = CgosFlowKind.ConnectionStart;
 

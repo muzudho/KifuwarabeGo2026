@@ -83,4 +83,4 @@ dotnet run --project .\KifuwarabeGo2026.Tests.GameOasis.Gui.Windows\KifuwarabeGo
 - [x] `GoScreenRenderer` に Board Lens 固有処理が残っていない。
 - [x] 全画面の描画経路を所有クラスから追跡できる。
 - [x] Core、Windows、関連 Smoke の検証が成功している。
-- [x] 本文書を `Docs/Dev/完了` に移動した。
+- [x] 本文書を `docs/Dev/完了` に移動した。

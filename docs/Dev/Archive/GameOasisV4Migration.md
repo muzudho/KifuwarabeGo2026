@@ -631,7 +631,7 @@ PlayerEngine ──×──→ GUI
 6. CGOS、SGF、棋譜レビュー、保存設定などの既存機能を、どのv4プロジェクトへ置くか決めて移行します。
 7. C#版の意味契約が安定してから、言語を問わないProtocol P、M、G、Sのテキスト形式、プロセス起動、メッセージID、タイムアウトなどを仕様化します。
 8. v3系の参照がなくなった段階で旧プロジェクトを廃止し、ソリューション、Launcher、配布物をv4名へ切り替えます。
-9. 全移行と回帰確認が完了してから、この文書を`Docs/Dev/完了/`へ移動します。
+9. 全移行と回帰確認が完了してから、この文書を`docs/Dev/完了/`へ移動します。
 
 ### 次回の再開地点
 
@@ -655,7 +655,7 @@ GUIコンポジションには、選択中の不透明なセッションIDへPro
 
 ローカル対局の初期`MatchSnapshot`を通常囲碁Protocol S設定へ変換する境界と、そのセッションを非同期で開始・終了する`LocalMatchGameOasisLifecycle`まで完成しました。次回はこのライフサイクルを`PlayingScene`へ接続し、開始完了前の入力を止めた上で、Game Oasis方式を選んだ対局だけがProtocol Sをゲーム状態の唯一の正本として使う経路を作ります。`PlayingScene`はプレイヤー割り当てを保持し、コンピューター手番を新しい参加窓口へ切り替えます。旧`MatchSession`は一度に全廃せず、描画・棋譜など残る読み取り用途をProtocol G端点の表示用投影へ段階的に置換します。
 
-作業開始時には、上記4本のビルド・スモーク検証を基準線として再利用します。利用者所有の`Docs/【むずでょ個人用】/`以下は編集対象および差分検査対象に含めません。
+作業開始時には、上記4本のビルド・スモーク検証を基準線として再利用します。利用者所有の`docs/【むずでょ個人用】/`以下は編集対象および差分検査対象に含めません。
 
 ### 2026年8月23日の継続作業
 
@@ -763,7 +763,7 @@ Game Oasis全体図に合わせ、旧`KifuwarabeGo2026.Gui.Core`を`KifuwarabeGo
 
 略語のPascalCase表記を`Gtp`、`Cgos`、`Sgf`、`Gui`で統一するため、`KifuwarabeGo2026.Reference.GUI`を`KifuwarabeGo2026.Reference.Gui`へ改名しました。Windowsのケース非区別ファイルシステム上でもGitが変更を確実に記録できるよう、`Reference.Gui2`を中間名とする二段階の`git mv`を使用しました。フォルダー、csproj、名前空間、プロジェクト参照、ソリューション、関連文書を更新し、csprojへ`AssemblyName`と`RootNamespace`を明示して`KifuwarabeGo2026.Reference.Gui.dll`の生成を固定しました。
 
-リポジトリー全体の設計・開発・運用文書がGameOasis.Gui配下に埋もれていたため、`Docs`と`PublicDocs`をリポジトリールートへ移しました。設計、調査、運用、開発履歴、引き継ぎ、個人用メモは`Docs`、利用者および外部エンジン作者が参照する確定仕様は`PublicDocs`に置きます。ルートREADMEへ両目次のリンクを追加し、開発者README、リリーススクリプト、関連文書の旧パスを更新しました。Markdownのローカルリンクを全件検査し、既存の完了フォルダー移動に伴う3件のリンク切れも修正しました。
+リポジトリー全体の設計・開発・運用文書がGameOasis.Gui配下に埋もれていたため、`docs`と`PublicDocs`をリポジトリールートへ移しました。設計、調査、運用、開発履歴、引き継ぎ、個人用メモは`docs`、利用者および外部エンジン作者が参照する確定仕様は`PublicDocs`に置きます。ルートREADMEへ両目次のリンクを追加し、開発者README、リリーススクリプト、関連文書の旧パスを更新しました。Markdownのローカルリンクを全件検査し、既存の完了フォルダー移動に伴う3件のリンク切れも修正しました。
 
 テスト実行プロジェクトであることを名前から判別できるよう、旧`KifuwarabeGo2026.Gui.PortabilitySmoke`を`KifuwarabeGo2026.Tests.GameOasis.Gui.Portability`、旧`KifuwarabeGo2026.LauncherSmoke`を`KifuwarabeGo2026.Tests.Launcher`へ改名・移動しました。ソリューション、CI、リリーススクリプト、開発文書、名前空間、内部公開先を新名称へ追随させました。Releaseビルドは警告0・エラー0で、移植性、Windows GUI、Launcherの各スモークテストはすべてPASSしました。
 

@@ -919,7 +919,7 @@ public class Game1 : Game
                 notificationOpacity,
                 notificationOpacity,
                 buttonsEnabled,
-                _session.CgosConnectionFlowKind != CgosConnectionFlowKind.Watching);
+                !_session.IsCgosWatchingScreen);
         }
 
         if (_presentationServices is not null)
@@ -3842,6 +3842,7 @@ public class Game1 : Game
         {
             _session.ResetLiveChartAutoUpdate();
             _session.SetCgosResultSgfSaved(false);
+            _session.FollowNextCgosGame();
             BeginCgosMatchNotification();
         }
 
@@ -4397,7 +4398,7 @@ public class Game1 : Game
         if (_cgosMatchNotificationMode == CgosMatchNotificationMode.None)
             return;
 
-        if (_session.CgosConnectionFlowKind == CgosConnectionFlowKind.Watching &&
+        if (_session.IsCgosWatchingScreen &&
             _cgosMatchNotificationGameId == _cgosGameObservation.GameId)
         {
             CloseCgosMatchNotification();
@@ -4405,6 +4406,7 @@ public class Game1 : Game
         }
 
         if (_cgosGameObservation.IsFinished &&
+            _session.CurrentMode.Kind != GoAppModeKind.Reviewing &&
             _session.CgosConnectionFlowKind is CgosConnectionFlowKind.Watching or CgosConnectionFlowKind.Result)
         {
             CloseCgosMatchNotification();
@@ -4432,7 +4434,7 @@ public class Game1 : Game
 
         if (_cgosMatchNotificationMode == CgosMatchNotificationMode.Deferred)
         {
-            if (_session.CgosConnectionFlowKind == CgosConnectionFlowKind.Watching)
+            if (_session.IsCgosWatchingScreen)
                 return CgosMatchNotification.IsDeferredBannerHit(point);
 
             if (!CgosMatchNotification.Default.DeferredWatchButton.IsHit(point))

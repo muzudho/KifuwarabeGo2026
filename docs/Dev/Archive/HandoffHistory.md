@@ -42,7 +42,7 @@ v3.15.0公開後は実利用でランチャーの更新・削除・ロールバ�
 5. [20260815_GTP連携残検証・改善.md](../Plans/GtpIntegration.md) の異常系・長時間対局検証を厚くする。
 6. MatchとGUIの二重状態、SGF文書モデル、CGOSチャート、Linux／macOS移植、Web囲碁サーバーは、それぞれの開発計画から必要な案件を選ぶ。
 
-以下の古い節は過去の詳細な引き継ぎ記録として残す。現在の着手順は、この先頭のロードマップと各 `Docs/Dev` 文書を優先する。
+以下の古い節は過去の詳細な引き継ぎ記録として残す。現在の着手順は、この先頭のロードマップと各 `docs/Dev` 文書を優先する。
 
 ## v3.6.0リリース時点
 
@@ -136,7 +136,7 @@ v3.4.0では、ポン抜きProvider連携、スクリーンショット、結果
 - ポン抜きゲームは、Provider選択、黒白プレイヤー選択、9路盤の初期局面作成、対局、アゲハマ20個での終局、結果表示まで動作する。
 - 独自GTP拡張の正式な接頭辞は `kfw-`。旧 `gui_` 系とsnake_case系は互換エイリアスとして受理する。
 - 初期局面の自動シードは `RandomNumberGenerator.GetInt32` で生成し、GUIログに記録する。明示シードによる再現も可能。
-- Provider／プレイヤー作者向け資料は `Docs/Dev/エンジン開発` に置いた。
+- Provider／プレイヤー作者向け資料は `docs/Dev/エンジン開発` に置いた。
 - タイトル背景の碁笥と碁石は `Presentation/Title/GoScreenRenderer.TitleBackground.cs` で調整できる。
 - v3.0.0のReleaseビルドは警告0・エラー0。移植性スモークとWindowsスモークはともに `PASS`。
 - v3.0.0 GUI版ZIP SHA-256: `FA539A3015DB9A997E102FC4F9F754FB010D5AE318A8093643A5443007B7A828`。
@@ -234,7 +234,7 @@ v3.4.0では、ポン抜きProvider連携、スクリーンショット、結果
 
 - 今後のトップ `README.md` は、配布ZIPを展開してexeをダブルクリックする利用者向けに書く。
 - ビルド、テスト、設計、移植、リリースは、トップの `README.developer.md` と共有開発文書へ分離する。
-- 開発日誌とリリースノートは「ユーザー向けの説明」を先に置き、「開発者向けの説明」を別節にする。詳細は `Docs/Dev/運用/文書の読者分離ルール.md`。
+- 開発日誌とリリースノートは「ユーザー向けの説明」を先に置き、「開発者向けの説明」を別節にする。詳細は `docs/Dev/運用/文書の読者分離ルール.md`。
 - v2.8.2では、CGOS観戦退出後の再入場通知、テキストボックスのダブルクリック全選択、小型トレンドチャートの3段階Y軸ラベルを追加した。
 - v2.8.2のReleaseビルド、移植性／Windowsスモーク、GUI／Engine publish、ZIP構成検査まで完了した。
 - v2.8.2 GUI版ZIP SHA-256: `9E12883117FFCF69D26766E47EC6D9DBAF115F42BFD3CC27A308F5CCBF3FD14E`。
@@ -383,4 +383,4 @@ CGOSとSharedを個別にpublishしないこと。
 - ソリューション構成: `KifuwarabeGo2026.slnx`
 - 共通盤面と座標表示: `KifuwarabeGo2026.GameOasis.Gui/Presentation/Shared/Board/GoScreenRenderer.Board.cs`
 - 座標専用フォント: `KifuwarabeGo2026.GameOasis.Gui/Content/Fonts/BoardCoordinate.spritefont`
-- 2026年7月の作業記録: `Docs/Dev/Log/2026/07.md`
+- 2026年7月の作業記録: `docs/Dev/Log/2026/07.md`

@@ -5,7 +5,7 @@
 ## 進捗を知りたいとき
 
 今後はこの文書を進捗の正本とする。完了した項目は
-`Docs/Dev/完了/GoScreenRenderer構造化・完了記録.md` へ移す。
+`docs/Dev/完了/GoScreenRenderer構造化・完了記録.md` へ移す。
 
 ## 目標
 

@@ -39,8 +39,8 @@ bld/
 [Ll]ogs/
 
 # Keep development journals under version control.
-!/Docs/Dev/Log/
-!/Docs/Dev/Log/**
+!/docs/Dev/Log/
+!/docs/Dev/Log/**
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/

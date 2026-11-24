@@ -1112,11 +1112,31 @@ internal static class PortabilityChecks
             "The CGOS result review record did not preserve the result, moves, or clock.");
 
         var session = new GoAppSession();
+        session.OpenCgosWatchingScreen();
         Require(session.StartReviewingGameRecord(record, out var warning),
             $"The CGOS result record could not start a review: {warning}");
         Require(session.MoveReview(session.ReviewTimelineMaximum - session.ReviewTimelineIndex, out warning) &&
                 session.IsReviewResultPosition && session.ReviewResult == "B+R",
             $"The CGOS review did not reach its terminal RESULT position: {warning}");
+        Require(!session.IsCgosWatchingScreen,
+            "A CGOS result review must not hide the next game's watch notification.");
+        session.FollowNextCgosGame();
+        Require(session.IsCgosWatchingScreen && session.CurrentMode.Kind != GoAppModeKind.Reviewing,
+            "The terminal CGOS result must yield to the next live game.");
+        Require(session.StartReviewingGameRecord(record, out warning), warning);
+        session.FollowNextCgosGame();
+        Require(!session.IsCgosWatchingScreen && session.CurrentMode.Kind == GoAppModeKind.Reviewing,
+            "Reviewing earlier moves must stay open when the next game begins.");
+        session.OpenCgosWatchingScreen();
+        Require(session.IsCgosWatchingScreen && session.CurrentMode.Kind != GoAppModeKind.Reviewing,
+            "Opening a notified CGOS game must leave the previous game's review.");
+        observation.ProcessLogLine("[CGOS] > setup 124 9 7.0 300000 WhitePlayer BlackPlayer");
+        Require(!observation.IsFinished && observation.MoveCount == 0 &&
+                observation.GetStone(3, 5) == GoStone.Empty,
+            "The next CGOS setup must clear the previous final board before gameover.");
+        Require(observation.ProcessLogLine("[CGOS] > play black E5 290000") &&
+                observation.GetStone(4, 4) == GoStone.Black && !observation.IsFinished,
+            "The next CGOS game's moves must be available while it is still live.");
     }
 
     private static void VerifyCgosHumanMoveReflection()

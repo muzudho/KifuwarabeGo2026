@@ -3,7 +3,7 @@
 最終更新: 2026-08-14
 
 この文書は完了済み作業の履歴である。現在の残作業は
-`Docs/Dev/Plans/RendererRefactoring.md` を参照する。
+`docs/Dev/Plans/RendererRefactoring.md` を参照する。
 
 ## 完了した画面移管
 

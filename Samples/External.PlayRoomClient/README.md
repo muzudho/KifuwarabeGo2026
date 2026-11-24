@@ -30,7 +30,7 @@ Review / Matchはホスト名と `--room review` / `--room match` を変更し�
 
 v1では列挙値は文字列でなく数値です。Board EditorのAdopted/Discarded/Closedは0/1/2、ReviewのPositionSelected/Closedは0/1、MatchのFinished/Closedは0/1、操作PlayPoint/Pass/Resignは0/1/2です。`playSpaceTypeId` は文字列ではなく `{"value":"…"}`、`ContractDocument.content` はJSONやSGFを格納した**文字列**です。
 
-[操作の仕様](../../KifuwarabeGo2026.PlayRoomGui.JsonLines/PROTOCOL.md) / [外部利用の実装計画](../../Docs/Dev/Plans/ExternalPlayRoomIntegration.md)
+[操作の仕様](../../KifuwarabeGo2026.PlayRoomGui.JsonLines/PROTOCOL.md) / [外部利用の実装計画](../../docs/Dev/Plans/ExternalPlayRoomIntegration.md)
 
 ## 試験
 

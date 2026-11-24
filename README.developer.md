@@ -13,7 +13,7 @@ exeをダウンロードして使う方は、[利用者向けREADME](./README.md
 
 > [!Note]
 > 現在、作者が動作確認できる環境はWindowsだけです。Linux版やmacOS版への移植協力を歓迎しています。
-> 詳しくは [Linux・macOSへの移植の手引き](Docs/Dev/CurrentState/PortingGuide.md) をご覧ください。
+> 詳しくは [Linux・macOSへの移植の手引き](docs/Dev/CurrentState/PortingGuide.md) をご覧ください。
 
 ## ソリューション構成
 
@@ -62,19 +62,19 @@ dotnet publish KifuwarabeGo2026.Reference.PlayerEngine.Go.Gtp.Host\KifuwarabeGo2
 
 GUIのpublish時には、CGOS通信コンポーネントも `Tools\Cgos` 以下へ自動的にpublishされます。
 
-詳しい検査、ZIP作成、GitHub Release公開は、[リリース手順](./Docs/Dev/リリース手順.md)に従ってください。
+詳しい検査、ZIP作成、GitHub Release公開は、[リリース手順](./docs/Dev/リリース手順.md)に従ってください。
 
 ## 開発文書
 
-- [共有ドキュメントの目次](./Docs/README.md)
-- [開発者向けドキュメントの目次](./Docs/Dev/README.md)
-- [開発日誌](./Docs/Dev/Log/README.md)
-- [現在の開発状況](Docs/Dev/CurrentState/Overview.md)
-- [後続作業・将来構想](Docs/Dev/Plans/README.md)
-- [構成と責務の入口](Docs/Dev/CurrentState/Architecture.md)
-- [CGOS・GTP・SGFの境界と移行状況](Docs/Dev/CurrentState/FormalAdapterMigration.md)
-- [きふわらべ式SGF形式仕様](Docs/Dev/CurrentState/SgfAnalysisFormat.md)
-- [Linux・macOSへの移植の手引き](Docs/Dev/CurrentState/PortingGuide.md)
-- [Windows GUI手動スモークテスト](./Docs/Dev/Windows%20GUI手動スモークテスト手順.md)
+- [共有ドキュメントの目次](./docs/README.md)
+- [開発者向けドキュメントの目次](./docs/Dev/README.md)
+- [開発日誌](./docs/Dev/Log/README.md)
+- [現在の開発状況](docs/Dev/CurrentState/Overview.md)
+- [後続作業・将来構想](docs/Dev/Plans/README.md)
+- [構成と責務の入口](docs/Dev/CurrentState/Architecture.md)
+- [CGOS・GTP・SGFの境界と移行状況](docs/Dev/CurrentState/FormalAdapterMigration.md)
+- [きふわらべ式SGF形式仕様](docs/Dev/CurrentState/SgfAnalysisFormat.md)
+- [Linux・macOSへの移植の手引き](docs/Dev/CurrentState/PortingGuide.md)
+- [Windows GUI手動スモークテスト](./docs/Dev/Windows%20GUI手動スモークテスト手順.md)
 
 Linux版やmacOS版への移植協力を歓迎しています。
