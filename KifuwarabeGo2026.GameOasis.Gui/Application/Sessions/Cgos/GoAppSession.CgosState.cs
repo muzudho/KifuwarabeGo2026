@@ -29,6 +29,8 @@ public sealed partial class GoAppSession
     public IReadOnlyList<string> CgosBlackConnectionRecentOutput { get; private set; } = Array.Empty<string>();
     public bool IsCgosBlackConnectionRunning { get; private set; }
     public string CgosBlackConnectionElapsedDisplay => FormatCgosConnectionElapsedDisplay(_cgosBlackConnectionStartedAt, IsCgosBlackConnectionRunning);
+    public string CgosBlackEngineDescription { get; private set; } = "";
+    public string CgosWhiteEngineDescription { get; private set; } = "";
     public string CgosBlackGtpResponseWaitDisplay { get; private set; } = "";
     public string CgosWhiteConnectionStatusMessage { get; private set; } = "READY";
     public string CgosWhiteConnectionLogDirectory { get; private set; } = "";

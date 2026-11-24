@@ -37,6 +37,7 @@ public enum CgosRuntimeState
     Running,
     Closed,
     Error,
+    EngineDescription,
 }
 
 public sealed record CgosRuntimeNotification(

@@ -708,7 +708,8 @@ internal sealed class CgosClient
             _options.LogDirectory,
             _account.Label,
             Log,
-            (waiting, command) => EmitRuntime(waiting ? CgosRuntimeState.GtpWait : CgosRuntimeState.Running, command));
+            (waiting, command) => EmitRuntime(waiting ? CgosRuntimeState.GtpWait : CgosRuntimeState.Running, command),
+            ReportEngineDescription);
         try
         {
             await process.StartAsync(cancellationToken);
@@ -720,6 +721,24 @@ internal sealed class CgosClient
         {
             await process.DisposeAsync();
             throw;
+        }
+    }
+
+    private void ReportEngineDescription(string line)
+    {
+        const string descriptionPrefix = "GTP engine description: ";
+        const string slotPrefix = "GTP engine slot ";
+        if (line.StartsWith(descriptionPrefix, StringComparison.Ordinal))
+        {
+            EmitRuntime(CgosRuntimeState.EngineDescription, line[descriptionPrefix.Length..].Trim());
+        }
+        // Also recognize the startup message emitted by the installed slot wrapper.
+        else if (line.StartsWith(slotPrefix, StringComparison.Ordinal) &&
+                 line.Length > slotPrefix.Length + 1 &&
+                 line[slotPrefix.Length] is >= '1' and <= '3' &&
+                 line[slotPrefix.Length + 1] == ':')
+        {
+            EmitRuntime(CgosRuntimeState.EngineDescription, $"{line[slotPrefix.Length]}系");
         }
     }
 
@@ -985,6 +1004,7 @@ internal sealed class GtpEngineProcess : IAsyncDisposable
     private readonly string _logPath;
     private readonly Action<string> _progressLog;
     private readonly Action<bool, string> _waitStateChanged;
+    private readonly Action<string>? _reportEngineDescription;
     private Process? _process;
     private StreamWriter? _input;
     private StreamReader? _output;
@@ -994,12 +1014,14 @@ internal sealed class GtpEngineProcess : IAsyncDisposable
         string logDirectory,
         string accountLabel,
         Action<string> progressLog,
-        Action<bool, string>? waitStateChanged = null)
+        Action<bool, string>? waitStateChanged = null,
+        Action<string>? reportEngineDescription = null)
     {
         _commandLine = commandLine;
         _logPath = Path.Combine(logDirectory, $"gtp-{accountLabel}-{DateTime.Now:yyyyMMdd-HHmmss}.log");
         _progressLog = progressLog;
         _waitStateChanged = waitStateChanged ?? ((_, _) => { });
+        _reportEngineDescription = reportEngineDescription;
     }
 
     public Task StartAsync(CancellationToken cancellationToken)
@@ -1028,6 +1050,7 @@ internal sealed class GtpEngineProcess : IAsyncDisposable
             if (!string.IsNullOrWhiteSpace(e.Data))
             {
                 Log("# [StandardError] " + e.Data);
+                _reportEngineDescription?.Invoke(e.Data);
             }
         };
 

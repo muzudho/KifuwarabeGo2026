@@ -93,7 +93,7 @@ public sealed partial class GoAppSession
         CgosConnectionRecentOutput = recentOutput;
     }
 
-    public void SetCgosBlackConnectionProcessStatus(string statusMessage, bool isRunning, string logDirectory, IReadOnlyList<string> recentOutput, string gtpResponseWaitDisplay = "")
+    public void SetCgosBlackConnectionProcessStatus(string statusMessage, bool isRunning, string logDirectory, IReadOnlyList<string> recentOutput, string gtpResponseWaitDisplay = "", string engineDescription = "")
     {
         if (isRunning && !IsCgosBlackConnectionRunning)
             _cgosBlackConnectionStartedAt = DateTime.Now;
@@ -102,9 +102,10 @@ public sealed partial class GoAppSession
         CgosBlackConnectionLogDirectory = logDirectory;
         CgosBlackConnectionRecentOutput = recentOutput;
         CgosBlackGtpResponseWaitDisplay = gtpResponseWaitDisplay;
+        CgosBlackEngineDescription = isRunning ? engineDescription : "";
     }
 
-    public void SetCgosWhiteConnectionProcessStatus(string statusMessage, bool isRunning, string logDirectory, IReadOnlyList<string> recentOutput, string gtpResponseWaitDisplay = "")
+    public void SetCgosWhiteConnectionProcessStatus(string statusMessage, bool isRunning, string logDirectory, IReadOnlyList<string> recentOutput, string gtpResponseWaitDisplay = "", string engineDescription = "")
     {
         if (isRunning && !IsCgosWhiteConnectionRunning)
             _cgosWhiteConnectionStartedAt = DateTime.Now;
@@ -113,6 +114,7 @@ public sealed partial class GoAppSession
         CgosWhiteConnectionLogDirectory = logDirectory;
         CgosWhiteConnectionRecentOutput = recentOutput;
         CgosWhiteGtpResponseWaitDisplay = gtpResponseWaitDisplay;
+        CgosWhiteEngineDescription = isRunning ? engineDescription : "";
     }
 
     public void SetCgosAdminProcessStatus(string statusMessage, bool isRunning, string logDirectory, IReadOnlyList<string> recentOutput)

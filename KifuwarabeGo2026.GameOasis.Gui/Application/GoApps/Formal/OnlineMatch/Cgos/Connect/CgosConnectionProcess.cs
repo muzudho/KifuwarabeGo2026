@@ -33,12 +33,21 @@ public sealed class CgosConnectionProcess : IDisposable
     private bool _isStopping;
     private string? _structuredStatus;
     private bool _receivedStructuredRuntime;
+    private string _engineDescription = "";
 
     public bool IsRunning => _isStopping || _processes.Any(process => !process.HasExited);
 
     public bool IsStopping => _isStopping;
 
     public string LogDirectory { get; private set; } = "";
+
+    public string EngineDescription
+    {
+        get
+        {
+            lock (_outputLock) return _engineDescription;
+        }
+    }
 
     public string GtpResponseWaitDisplay
     {
@@ -521,6 +530,7 @@ public sealed class CgosConnectionProcess : IDisposable
             _gtpResponseWaitCount = 0;
             _gtpResponseWaitStartedAt = null;
             _structuredStatus = null;
+            _engineDescription = "";
             _receivedStructuredRuntime = false;
         }
     }
@@ -632,9 +642,15 @@ public sealed class CgosConnectionProcess : IDisposable
                 _structuredStatus = "PLAY";
                 break;
             case CgosGameOverNotification:
+                _engineDescription = "";
                 _structuredStatus = "GAME OVER";
                 break;
+            case CgosRuntimeNotification { State: CgosRuntimeState.EngineDescription } description:
+                _engineDescription = description.Detail ?? "";
+                break;
             case CgosRuntimeNotification runtime:
+                if (runtime.State is CgosRuntimeState.Closed or CgosRuntimeState.Error)
+                    _engineDescription = "";
                 _receivedStructuredRuntime = true;
                 _structuredStatus = runtime.State switch
                 {

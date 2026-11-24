@@ -377,6 +377,7 @@ public sealed class CgosLoginRenderer
             page.BlackResignButton.Draw(mousePoint, _drawingContext);
         }
         DrawCgosCredentialFields(session, GoStone.Black, mousePoint);
+        DrawCgosEngineDescription(CgosBlackProcessPanelBounds, session.CgosBlackEngineDescription);
 
         DrawCgosProcessPanel(
             CgosWhiteProcessPanelBounds,
@@ -410,6 +411,7 @@ public sealed class CgosLoginRenderer
             DrawFittedText($"VS {session.CgosPracticeUnexpectedOpponent}  {session.CgosPracticeUnexpectedTimeDisplay}", new Rectangle(CgosWhiteProcessPanelBounds.X + 18, CgosWhiteProcessPanelBounds.Y + 278, CgosWhiteProcessPanelBounds.Width - 36, 28), Color.White, 0.24f);
         }
         DrawCgosCredentialFields(session, GoStone.White, mousePoint);
+        DrawCgosEngineDescription(CgosWhiteProcessPanelBounds, session.CgosWhiteEngineDescription);
         RandomSeedRowComponent.Cgos.DrawCgos(_drawingContext, mousePoint,
             session.SupportsCgosRandomSeed(GoStone.Black), session.GetCgosRandomSeedText(GoStone.Black), !session.IsCgosBlackConnectionRunning,
             session.IsCgosPlayer2InputEnabled && session.SupportsCgosRandomSeed(GoStone.White), session.GetCgosRandomSeedText(GoStone.White), !session.IsCgosWhiteConnectionRunning);
@@ -494,6 +496,15 @@ public sealed class CgosLoginRenderer
             if (field == CgosPlayerCredentialField.Password)
                 DrawCgosPasswordEyeButton(CgosPasswordVisibilityBounds(stone), passwordVisible, mousePoint);
         }
+    }
+
+    private void DrawCgosEngineDescription(Rectangle panel, string description)
+    {
+        var row = new Rectangle(panel.X + 16, panel.Bottom - 54, panel.Width - 32, 34);
+        _drawingContext.DrawDynamicText("説明", new Rectangle(row.X + 16, row.Y, 104, row.Height),
+            new Color(180, 195, 195), 0.28f);
+        _drawingContext.DrawDynamicText(string.IsNullOrWhiteSpace(description) ? "-" : description,
+            new Rectangle(row.X + 132, row.Y, row.Width - 148, row.Height), Color.White, 0.32f);
     }
 
     private void DrawCgosPasswordEyeButton(Rectangle bounds, bool visible, Point mousePoint)
