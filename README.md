@@ -13,7 +13,7 @@
     - **[始め方](./docs/User/Installation/README.md)** — ダウンロードからアプリのウィンドウを開くまでの手順はこちら。
         - **[最新版のダウンロード](https://github.com/muzudho/KifuwarabeGo2026/releases/latest)** — GitHubのリリースページ。
 - **開発したい**
-    - **[開発日誌](./docs/Dev/Log/2026/09.md)** — 最新の開発日誌（2026年9月）。
+    - **[開発日誌](./docs/Dev/Log/2026/11.md)** — 最新の開発日誌（2026年11月）。
     - **[開発者向けドキュメント](./docs/Dev/README.md)** — 開発環境、設計、実装計画などはこちら。
 
 ## ライセンス
