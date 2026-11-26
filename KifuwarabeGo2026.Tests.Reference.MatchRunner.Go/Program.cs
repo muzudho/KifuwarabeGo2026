@@ -14,7 +14,7 @@ internal static class Program
     private static async Task<int> Main(string[] args)
     {
         if (args.FirstOrDefault() == "--window") return Window(args[1]);
-        if (args.FirstOrDefault() == "--gtp") return Gtp();
+        if (args.FirstOrDefault() == "--gtp") return Gtp(args.Contains("--analysis"));
         try
         {
             if (args.FirstOrDefault() is "--real-host" or "--real-window")
@@ -27,17 +27,17 @@ internal static class Program
                     return start;
                 });
                 using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(60));
-                var completed = await launcher.LaunchAsync(Request(ai: true), cancellationToken: deadline.Token);
+                var completed = await launcher.LaunchAsync(Request(ai: true, analysis: true), cancellationToken: deadline.Token);
                 Check(completed.IsNormalExit && completed.Match is { Status: MatchCompletionStatus.Finished, WinnerRoleId: "white" },
                     completed.Message + " " + completed.Diagnostic);
                 Console.WriteLine("PASS official runner -> official host -> two GTP players -> scored completion");
                 return 0;
             }
-            foreach (var scenario in new[] { "passes", "capture", "resign", "close", "stale", "wrong-role", "bad-id", "crash", "no-exit", "ai", "cancel" })
+            foreach (var scenario in new[] { "passes", "capture", "resign", "close", "stale", "wrong-role", "bad-id", "crash", "no-exit", "ai", "analysis", "cancel" })
             {
                 var launcher = new GoStdioMatchLauncher(_ => Child("--window", scenario));
                 using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(scenario == "cancel" ? 3 : 30));
-                var result = await launcher.LaunchAsync(Request(scenario == "ai"), cancellationToken: timeout.Token);
+                var result = await launcher.LaunchAsync(Request(scenario is "ai" or "analysis", scenario == "analysis"), cancellationToken: timeout.Token);
                 if (scenario == "cancel")
                     Check(result.Status == PlayRoomProcessCompletionStatus.Cancelled, "cancellation must close the session");
                 else if (scenario is "bad-id" or "crash" or "no-exit")
@@ -70,11 +70,11 @@ internal static class Program
         return start;
     }
 
-    private static PlayRoomLaunchRequest Request(bool ai = false)
+    private static PlayRoomLaunchRequest Request(bool ai = false, bool analysis = false)
     {
         var computer = new ContractDocument("application/json", PlayerConnectionSchemas.GtpProcessV1,
             JsonSerializer.Serialize(new { executablePath = "dotnet", workingDirectory = AppContext.BaseDirectory,
-                arguments = "\"" + Assembly.GetExecutingAssembly().Location + "\" --gtp", enableGtpLog = false }, Json));
+                arguments = "\"" + Assembly.GetExecutingAssembly().Location + "\" --gtp" + (analysis ? " --analysis" : ""), enableGtpLog = false }, Json));
         return new(1, Guid.NewGuid().ToString("N"), "match", Game, new(Game),
             new("application/json", Game + ".configuration.v1",
                 "{\"version\":1,\"boardSize\":9,\"komi\":6.5,\"ruleset\":\"chinese-area\",\"startingPlayer\":\"black\",\"setupStones\":[]}"),
@@ -117,6 +117,21 @@ internal static class Program
                         using (var doc = JsonDocument.Parse(displayed.Content))
                         {
                             turn = doc.RootElement.GetProperty("currentTurn").GetString()!;
+                            if (scenario is "ai" or "analysis")
+                            {
+                                var moveCount = doc.RootElement.GetProperty("moveCount").GetInt32();
+                                var evaluations = doc.RootElement.GetProperty("evaluations");
+                                Check(evaluations.GetArrayLength() == (scenario == "analysis" ? moveCount : 0),
+                                    "Only analyzed moves must have chart samples.");
+                                if (scenario == "analysis" && moveCount > 0)
+                                {
+                                    var sample = evaluations[moveCount - 1];
+                                    Check(sample.GetProperty("moveNumber").GetInt32() == moveCount &&
+                                        sample.GetProperty("blackWinRate").GetDouble() == (moveCount == 1 ? 0.75 : 0.25) &&
+                                        sample.GetProperty("blackScore").GetDouble() == (moveCount == 1 ? 2 : -2),
+                                        "The chart must use Black's perspective for both players' evaluations.");
+                                }
+                            }
                             if (scenario == "passes" && actionIndex == 2)
                                 Check(doc.RootElement.GetProperty("stones").GetArrayLength() == 1 && turn == "white", "occupied move must be rejected");
                             if (scenario == "capture" && actionIndex == 3)
@@ -135,7 +150,7 @@ internal static class Program
                                 Completion: new(session, MatchCompletionStatus.Closed, displayed))], true);
                             exit = true;
                         }
-                        else if (scenario == "ai" || actionIndex >= (scenario == "resign" ? 1 : scenario == "passes" ? 4 : scenario == "capture" ? 5 : 3))
+                        else if (scenario is "ai" or "analysis" || actionIndex >= (scenario == "resign" ? 1 : scenario == "passes" ? 4 : scenario == "capture" ? 5 : 3))
                             result = new MatchInputEvents(session, [], false);
                         else
                         {
@@ -172,14 +187,23 @@ internal static class Program
         catch (Exception ex) { Console.Error.WriteLine(ex); return 8; }
     }
 
-    private static int Gtp()
+    private static int Gtp(bool analysis)
     {
         while (Console.ReadLine() is { } line)
         {
             var tokens = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
             var id = int.TryParse(tokens[0], out _) ? tokens[0] : "";
             var command = tokens[id.Length > 0 ? 1 : 0];
-            var payload = command switch { "genmove" => "pass", "name" => "Test", "version" => "1", "protocol_version" => "2", _ => "" };
+            var payload = command switch
+            {
+                "known_command" => analysis && tokens[^1] == "cgos-genmove_analyze" ? "true" : "false",
+                "cgos-genmove_analyze" when analysis => "\n{\"moves\":[{\"move\":\"pass\",\"winrate\":0.75,\"score\":2}]}\nplay pass",
+                "genmove" => "pass",
+                "name" => "Test",
+                "version" => "1",
+                "protocol_version" => "2",
+                _ => "",
+            };
             Console.WriteLine($"={id} {payload}\n");
             Console.Out.Flush();
             if (command == "quit") return 0;

@@ -20,6 +20,7 @@ internal static class GoStdioChecks
         ContractDocument State(string stones = "[]") => new("application/json", GoStdioSession.StateSchema,
             "{\"version\":1,\"boardSize\":9,\"currentTurn\":\"black\",\"stones\":" + stones + "}");
         room.Update(new(room.SessionId, 0, State()));
+        Check(room.CaptureDisplay().Evaluations.Count == 0, "Legacy board updates must work without evaluation fields.");
         Check(room.SubmitInput(MatchActionKind.PlayPoint, 2, 3), "Click must enqueue input.");
         Check(room.View.GetStone(2, 3) == GoStone.Empty, "Input must not mutate authoritative state.");
         Check(!room.SubmitInput(MatchActionKind.Pass), "Only one input may await adjudication.");
@@ -36,7 +37,25 @@ internal static class GoStdioChecks
         Check(room.View.GetStone(2, 3) == GoStone.Black, "Only updateState may change displayed stones.");
         Check(room.SubmitInput(MatchActionKind.Pass), "An update must release the pending input.");
         room.ReadEvents(room.SessionId);
-        room.Update(new(room.SessionId, 2, State()));
+        var evaluated = State() with
+        {
+            Content = """
+                {"version":1,"boardSize":9,"currentTurn":"black","stones":[],"moveCount":3,
+                 "evaluations":[{"moveNumber":1,"blackWinRate":0.75},{"moveNumber":3,"blackScore":-2.5}]}
+                """,
+        };
+        try
+        {
+            room.Update(new(room.SessionId, 2, evaluated with { Content = evaluated.Content.Replace("0.75", "1.25") }));
+            throw new Exception("Invalid evaluation accepted.");
+        }
+        catch (InvalidDataException) { }
+        room.Update(new(room.SessionId, 2, evaluated));
+        var display = room.CaptureDisplay();
+        Check(display.Board.PlayedMoveCount == 3 && display.Evaluations.Count == 2 &&
+            display.Evaluations[0] == new GoMatchEvaluation(1, 0.75, null) &&
+            display.Evaluations[1] == new GoMatchEvaluation(3, null, -2.5),
+            "Board and sparse chart samples must come from the same accepted revision.");
         Check(room.SubmitInput(MatchActionKind.Resign), "Resignation must use the same event boundary.");
         room.Close(room.SessionId);
         Check(room.ShouldExit && !room.SubmitInput(MatchActionKind.Pass), "Closed rooms must reject input.");

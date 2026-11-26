@@ -3,20 +3,28 @@ namespace KifuwarabeGo2026.Reference.MatchRunner.Go;
 using System.Globalization;
 using System.Text.Json;
 using KifuwarabeGo2026.FormalAdapter.Gtp.Client;
+using KifuwarabeGo2026.FormalAdapter.Gtp.Protocol;
 using KifuwarabeGo2026.Reference.PlayDomain.Go;
 using KifuwarabeGo2026.Reference.PlayRoomGui.Go;
 
 public enum GoLocalMatchActionKind { Play, Pass, Resign }
 
-public sealed record GoLocalMatchAction(GoLocalMatchActionKind Kind, GoStone Stone, GoPoint? Point = null);
+public sealed record GoLocalMatchAction(GoLocalMatchActionKind Kind, GoStone Stone, GoPoint? Point = null,
+    CgosGtpMoveAnalysis? Analysis = null);
 
 /// <summary>公開起動PlanのGTP接続を対局進行役と従来のファイル起動Hostで共用します。</summary>
 public sealed class GoLocalMatchGtpController : IAsyncDisposable
 {
     private readonly GoPlayRoomLaunchPlan _plan;
     private readonly Dictionary<GoStone, GtpEngineClient> _engines = [];
+    private readonly bool _collectAnalysis;
+    private readonly HashSet<GoStone> _analysisEngines = [];
 
-    public GoLocalMatchGtpController(GoPlayRoomLaunchPlan plan) => _plan = plan;
+    public GoLocalMatchGtpController(GoPlayRoomLaunchPlan plan, bool collectAnalysis = false)
+    {
+        _plan = plan;
+        _collectAnalysis = collectAnalysis;
+    }
 
     public bool HasEngine(GoStone stone) => _engines.ContainsKey(stone);
 
@@ -38,6 +46,12 @@ public sealed class GoLocalMatchGtpController : IAsyncDisposable
                 "player"), TimeSpan.FromSeconds(10));
             _engines.Add(stone.Value, engine);
             await engine.StartAsync(cancellationToken);
+            if (_collectAnalysis)
+            {
+                var supportsAnalysis = await engine.SendCommandAsync("known_command cgos-genmove_analyze", cancellationToken);
+                if (supportsAnalysis.IsSuccess && supportsAnalysis.Payload.Trim().Equals("true", StringComparison.OrdinalIgnoreCase))
+                    _analysisEngines.Add(stone.Value);
+            }
             await engine.SendCommandExpectSuccessAsync($"boardsize {_plan.BoardSize}", cancellationToken);
             await engine.SendCommandExpectSuccessAsync("clear_board", cancellationToken);
             await engine.SendCommandExpectSuccessAsync($"komi {_plan.Komi.ToString(CultureInfo.InvariantCulture)}", cancellationToken);
@@ -71,9 +85,13 @@ public sealed class GoLocalMatchGtpController : IAsyncDisposable
     {
         if (!_engines.TryGetValue(stone, out var engine))
             throw new InvalidOperationException($"No GTP Player Engine is connected for {stone}.");
-        var response = await engine.SendCommandAsync($"genmove {Color(stone)}", cancellationToken);
-        response.ThrowIfError("genmove");
-        var move = response.Payload.Trim();
+        var includeAnalysis = _analysisEngines.Contains(stone);
+        var command = includeAnalysis ? "cgos-genmove_analyze" : "genmove";
+        var response = await engine.SendCommandAsync($"{command} {Color(stone)}", cancellationToken);
+        response.ThrowIfError(command);
+        var (move, analysisJson) = includeAnalysis
+            ? CgosGtpMoveAnalysisParser.ParseResponse(response.Payload)
+            : (response.Payload.Trim(), null);
         var action = move.Equals("pass", StringComparison.OrdinalIgnoreCase)
             ? new GoLocalMatchAction(GoLocalMatchActionKind.Pass, stone)
             : move.Equals("resign", StringComparison.OrdinalIgnoreCase)
@@ -90,7 +108,7 @@ public sealed class GoLocalMatchGtpController : IAsyncDisposable
         };
         if (synchronizationCommand is not null)
             await SendToAllExceptAsync(stone, synchronizationCommand, cancellationToken);
-        return action;
+        return action with { Analysis = CgosGtpMoveAnalysisParser.Parse(analysisJson, move) };
     }
 
     public async ValueTask DisposeAsync()
@@ -98,6 +116,7 @@ public sealed class GoLocalMatchGtpController : IAsyncDisposable
         foreach (var engine in _engines.Values)
             await engine.DisposeAsync();
         _engines.Clear();
+        _analysisEngines.Clear();
     }
 
     private async Task SendToAllAsync(string command, CancellationToken cancellationToken)

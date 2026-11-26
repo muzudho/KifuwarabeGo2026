@@ -15,6 +15,8 @@ public sealed class GoStdioSession
     private long _eventId;
     private long _revision = -1;
     private GoPlayRoomViewState _view;
+    private IReadOnlyList<GoMatchEvaluation> _evaluations = [];
+    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     private ContractDocument? _state;
     private bool _pendingInput;
     private bool _closed;
@@ -22,6 +24,11 @@ public sealed class GoStdioSession
     public GoPlayRoomLaunchPlan Plan { get; }
     public bool ShouldExit { get { lock (_gate) return _closed; } }
     public GoPlayRoomViewState View { get { lock (_gate) return _view; } }
+
+    public (GoPlayRoomViewState Board, IReadOnlyList<GoMatchEvaluation> Evaluations) CaptureDisplay()
+    {
+        lock (_gate) return (_view, _evaluations);
+    }
 
     public GoStdioSession(GoPlayRoomLaunchPlan plan)
     {
@@ -37,8 +44,7 @@ public sealed class GoStdioSession
         {
             RequireSession(update.SessionId);
             if (_closed || update.Revision <= _revision) throw new InvalidDataException("Closed session or stale revision.");
-            var view = Decode(update.State);
-            _view = view;
+            (_view, _evaluations) = Decode(update.State);
             _state = update.State;
             _revision = update.Revision;
             _pendingInput = false;
@@ -78,7 +84,7 @@ public sealed class GoStdioSession
         {
             RequireSession(command.SessionId);
             if (_closed) throw new InvalidDataException("Session is closed.");
-            _view = Decode(command.FinalState);
+            (_view, _evaluations) = Decode(command.FinalState);
             _state = command.FinalState;
             _closed = true;
             return new(SessionId, MatchCompletionStatus.Finished, _state, command.WinnerRoleId, command.Reason);
@@ -105,7 +111,7 @@ public sealed class GoStdioSession
         if (id != SessionId) throw new InvalidDataException("sessionId mismatch.");
     }
 
-    private GoPlayRoomViewState Decode(ContractDocument state)
+    private (GoPlayRoomViewState Board, IReadOnlyList<GoMatchEvaluation> Evaluations) Decode(ContractDocument state)
     {
         if (state.MediaType != "application/json" || state.SchemaId != StateSchema)
             throw new InvalidDataException("Unsupported display state schema.");
@@ -132,7 +138,23 @@ public sealed class GoStdioSession
                 throw new InvalidDataException("Invalid or duplicate intersection.");
         }
         var over = root.TryGetProperty("gameOver", out var value) && value.GetBoolean();
-        return GoPlayRoomViewState.Capture(over ? GoPlayRoomActivity.GameOver : GoPlayRoomActivity.Playing,
-            Plan.BoardSize, (x, y) => stones.GetValueOrDefault((x, y)), turn, 0, 0, 0, null, null, "", 0, 0);
+        var moveCount = root.TryGetProperty("moveCount", out var count) ? count.GetInt32() : 0;
+        if (moveCount < 0) throw new InvalidDataException("Invalid move count.");
+        var evaluations = root.TryGetProperty("evaluations", out var series)
+            ? series.Deserialize<GoMatchEvaluation[]>(JsonOptions) ?? throw new InvalidDataException("Expected an evaluation array.")
+            : [];
+        var previousMove = 0;
+        foreach (var evaluation in evaluations)
+        {
+            if (evaluation is null || evaluation.MoveNumber <= previousMove || evaluation.MoveNumber > moveCount ||
+                evaluation.BlackWinRate is < 0 or > 1 ||
+                evaluation.BlackScore is { } score && !double.IsFinite(score) ||
+                evaluation.BlackWinRate is null && evaluation.BlackScore is null)
+                throw new InvalidDataException("Invalid match evaluation.");
+            previousMove = evaluation.MoveNumber;
+        }
+        var board = GoPlayRoomViewState.Capture(over ? GoPlayRoomActivity.GameOver : GoPlayRoomActivity.Playing,
+            Plan.BoardSize, (x, y) => stones.GetValueOrDefault((x, y)), turn, moveCount, 0, 0, null, null, "", moveCount, moveCount);
+        return (board, Array.AsReadOnly(evaluations));
     }
 }

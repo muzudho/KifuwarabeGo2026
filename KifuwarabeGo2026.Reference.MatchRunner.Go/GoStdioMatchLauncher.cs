@@ -47,7 +47,7 @@ public sealed class GoStdioMatchLauncher(Func<PlayRoomLaunchRequest, ProcessStar
                     throw new InvalidDataException($"Missing computer connection for {participant.RoleId}.");
             Require(await concierge.RegisterPlaySpaceAsync(new GoPlaySpaceProtocol(), ct));
             snapshot = Require(await protocol.OpenSessionAsync(new(request.PlaySpaceTypeId, request.Configuration), ct)).InitialSnapshot;
-            players = new GoLocalMatchGtpController(plan);
+            players = new GoLocalMatchGtpController(plan, collectAnalysis: true);
             await players.InitializeAsync(stop.Token);
 
             // Configuration contains the authoritative setup. The display has no engine connections or Lobby storage.
@@ -59,7 +59,9 @@ public sealed class GoStdioMatchLauncher(Func<PlayRoomLaunchRequest, ProcessStar
             var start = startInfoFactory(displayRequest);
             window = await PollingMatchProcessSession.OpenAsync(start, displayRequest, ct);
             long revision = 0, lastEvent = 0;
-            await window.UpdateAsync(new(window.Ready.SessionId, revision, Display(snapshot)), ct);
+            var moveCount = 0;
+            var evaluations = new List<GoMatchEvaluation>();
+            await window.UpdateAsync(new(window.Ready.SessionId, revision, Display(snapshot, moveCount, evaluations)), ct);
             wasReady = true;
             progress?.Report(new(request.RequestId, "ready", "Go Match is ready through standard I/O."));
             MatchCompletion? completion = null;
@@ -93,6 +95,7 @@ public sealed class GoStdioMatchLauncher(Func<PlayRoomLaunchRequest, ProcessStar
                             snapshot = applied.Snapshot;
                             if (applied.IsAccepted)
                             {
+                                if (action.Kind is MatchActionKind.PlayPoint or MatchActionKind.Pass) moveCount++;
                                 if (action.Kind == MatchActionKind.PlayPoint)
                                     await players.PlayHumanAsync(Stone(turn), new(action.X!.Value, action.Y!.Value), stop.Token);
                                 else if (action.Kind == MatchActionKind.Pass)
@@ -100,7 +103,7 @@ public sealed class GoStdioMatchLauncher(Func<PlayRoomLaunchRequest, ProcessStar
                             }
                         }
                         // Rejections also release pending display input with a fresh projection revision.
-                        await window.UpdateAsync(new(window.Ready.SessionId, ++revision, Display(snapshot)), ct);
+                        await window.UpdateAsync(new(window.Ready.SessionId, ++revision, Display(snapshot, moveCount, evaluations)), ct);
                     }
                     else throw new InvalidDataException("Unsupported input event.");
                 }
@@ -114,7 +117,7 @@ public sealed class GoStdioMatchLauncher(Func<PlayRoomLaunchRequest, ProcessStar
                     using var outcome = JsonDocument.Parse(snapshot.Outcome!.Content);
                     var winner = outcome.RootElement.GetProperty("winner").GetString();
                     var reason = outcome.RootElement.GetProperty("reason").GetString();
-                    completion = await window.CompleteAsync(new(window.Ready.SessionId, Display(snapshot), winner, reason), ct);
+                    completion = await window.CompleteAsync(new(window.Ready.SessionId, Display(snapshot, moveCount, evaluations), winner, reason), ct);
                     break;
                 }
                 var current = Turn(snapshot);
@@ -133,7 +136,19 @@ public sealed class GoStdioMatchLauncher(Func<PlayRoomLaunchRequest, ProcessStar
                             Action(action), snapshot.Revision), ct));
                         if (!applied.IsAccepted) throw new InvalidDataException("Computer returned an illegal move: " + applied.Rejection?.Message);
                         snapshot = applied.Snapshot;
-                        await window.UpdateAsync(new(window.Ready.SessionId, ++revision, Display(snapshot)), ct);
+                        if (move.Kind is GoLocalMatchActionKind.Play or GoLocalMatchActionKind.Pass)
+                        {
+                            moveCount++;
+                            if (move.Analysis is { } analysis && (analysis.WinRate.HasValue || analysis.Score.HasValue))
+                            {
+                                // GTP analysis describes the player who moved. Keep both chart axes in black's perspective.
+                                var black = move.Stone == GoStone.Black;
+                                evaluations.Add(new(moveCount,
+                                    black ? analysis.WinRate : 1d - analysis.WinRate,
+                                    black ? analysis.Score : -analysis.Score));
+                            }
+                        }
+                        await window.UpdateAsync(new(window.Ready.SessionId, ++revision, Display(snapshot, moveCount, evaluations)), ct);
                     }
                 }
                 await Task.Delay(100, ct);
@@ -187,7 +202,7 @@ public sealed class GoStdioMatchLauncher(Func<PlayRoomLaunchRequest, ProcessStar
             { MatchActionKind.PlayPoint => "play", MatchActionKind.Pass => "pass", MatchActionKind.Resign => "resign", _ => "invalid" },
             player = action.PlayerRoleId, x = action.X, y = action.Y }, JsonOptions));
 
-    private static ContractDocument Display(GuiGameSnapshot snapshot)
+    private static ContractDocument Display(GuiGameSnapshot snapshot, int moveCount, IReadOnlyList<GoMatchEvaluation> evaluations)
     {
         using var state = JsonDocument.Parse(snapshot.State.Content);
         var root = state.RootElement;
@@ -197,6 +212,6 @@ public sealed class GoStdioMatchLauncher(Func<PlayRoomLaunchRequest, ProcessStar
                 stones.Add(new { x = point.GetProperty("x").GetInt32(), y = point.GetProperty("y").GetInt32(), color });
         return new("application/json", GameOasisOfficialNames.Go + ".display-state.v1",
             JsonSerializer.Serialize(new { version = 1, boardSize = root.GetProperty("boardSize").GetInt32(),
-                currentTurn = root.GetProperty("nextToPlay").GetString(), stones, gameOver = snapshot.IsTerminal }, JsonOptions));
+                currentTurn = root.GetProperty("nextToPlay").GetString(), stones, gameOver = snapshot.IsTerminal, moveCount, evaluations }, JsonOptions));
     }
 }

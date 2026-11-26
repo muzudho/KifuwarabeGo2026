@@ -25,6 +25,8 @@ Stdout is reserved for responses; stderr carries diagnostics. No unsolicited std
 
 Board size must match the launch (9, 13 or 19). Coordinates start at zero at the top left. Stone colors and currentTurn are `black` or `white`. Duplicate or out-of-bounds intersections are rejected. `gameOver` is optional and defaults to false. This is a minimal display projection; clocks, captures, last move and outcome decorations are not yet exposed.
 
+`moveCount` is optional and defaults to zero. An optional `evaluations` array may contain entries like `{"moveNumber":2,"blackWinRate":0.55,"blackScore":1.5}`. Entries are ordered by increasing move number, from one through `moveCount`. Either estimate can be omitted or null. Win rate is a fraction from zero to one, and score is a signed lead in points. Both estimates use Black's perspective. Moves without engine estimates are omitted from the array. The window can show or hide both charts with Tab or the Analysis button.
+
 Revision starts at 0 or greater and strictly increases for every accepted projection, including rejection of a pending action with an unchanged board. It is a **display revision**, not necessarily the rule Engine's revision. Invalid documents do not consume a revision or release pending input.
 
 ## Input events
