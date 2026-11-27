@@ -50,6 +50,12 @@ internal static class Program
                 Console.WriteLine("PASS: Lobby portal navigation, pagination and geometry checks.");
                 return 0;
             }
+            if (args.Length == 1 && args[0] == "--play-room-launch")
+            {
+                PlayRoomLaunchChecks.Run();
+                Console.WriteLine("PASS: Play-room launch checks.");
+                return 0;
+            }
             PortabilityChecks.Run();
             LobbyPortalChecks.Run();
             PlayRoomLaunchChecks.Run();

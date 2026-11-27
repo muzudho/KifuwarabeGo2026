@@ -48,3 +48,7 @@ Useful options:
 
 Authentication tokens are not stored in the script. Sign in separately with
 `gh auth login`.
+
+## Archived scripts
+
+- [Smart App Control](Archive/SmartAppControl/README.md): retired development signing and diagnostic scripts. Not invoked by normal builds; the current development workflow keeps SAC off.

@@ -28,6 +28,8 @@ if ([string]::IsNullOrWhiteSpace($CertificateThumbprint)) {
 	throw 'Set KIFUWARABEGO2026_SAC_SIGNING_CERTIFICATE_THUMBPRINT to the thumbprint of a code-signing certificate in Cert:\CurrentUser\My.'
 }
 
+Import-Module Microsoft.PowerShell.Security -ErrorAction Stop
+
 $certificateThumbprint = $CertificateThumbprint -replace '\s', ''
 $certificate = Get-Item -Path "Cert:\CurrentUser\My\$certificateThumbprint" -ErrorAction Stop
 

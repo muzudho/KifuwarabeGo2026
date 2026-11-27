@@ -20,6 +20,8 @@ public sealed class LocalMatchProcessLaunchCoordinator : IDisposable
         _launcher = launcher;
     }
 
+    public bool IsStarting { get; private set; }
+
     public bool IsRunning => _launchTask is not null;
 
     public PlayRoomLaunchResult Start(PlayRoomLaunchRequest request)
@@ -32,6 +34,7 @@ public sealed class LocalMatchProcessLaunchCoordinator : IDisposable
                 "A Local Match Play Room is already running.");
 
         _ready = null;
+        IsStarting = true;
         _launchTask = _launcher.LaunchAsync(request, new ReadyProgress(this), _stop.Token);
         return PlayRoomLaunchResult.Deferred(request.RequestId, "The Local Match Play Room is starting.");
     }
@@ -41,6 +44,7 @@ public sealed class LocalMatchProcessLaunchCoordinator : IDisposable
         lock (this)
         {
             ready = _ready;
+            if (ready is not null) IsStarting = false;
             _ready = null;
             return ready is not null;
         }
@@ -56,6 +60,7 @@ public sealed class LocalMatchProcessLaunchCoordinator : IDisposable
         }
 
         _launchTask = null;
+        IsStarting = false;
         if (task.IsCompletedSuccessfully)
         {
             completion = task.Result;

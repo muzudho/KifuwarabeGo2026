@@ -100,7 +100,11 @@ public sealed partial class GoAppSession
     public void SetHumanPlayerNameSelection(int start, int length) =>
         (HumanPlayerNameSelectionStart, HumanPlayerNameSelectionLength) = (start, length);
 
+    public bool IsLocalMatchStarting { get; set; }
+    public bool IsLocalMatchProcessRunning { get; set; }
+
     public bool CanStartPlaying =>
+        !IsLocalMatchProcessRunning && !IsLocalMatchStarting &&
         IsPlayerLaunchConfigurationValid(GoStone.Black) &&
         IsPlayerLaunchConfigurationValid(GoStone.White);
 

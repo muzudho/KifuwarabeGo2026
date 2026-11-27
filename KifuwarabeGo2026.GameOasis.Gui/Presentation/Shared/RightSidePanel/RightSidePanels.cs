@@ -224,10 +224,27 @@ public sealed class SetupRightSidePanel
         boardAndReviewScreen.StartReviewingButton.IsEnabled = session.HasReviewGameRecord;
         boardAndReviewScreen.StartReviewingButton.Draw(mousePoint, drawingContext);
         boardAndReviewScreen.StartBoardEditingButton.Draw(mousePoint, drawingContext);
-        screen.StartPlayingButton.Label = session.CanStartPlaying ? "START" : "ENGINE REQUIRED";
+        screen.StartPlayingButton.Label = session.IsLocalMatchStarting ? "STARTING..." :
+            session.IsLocalMatchProcessRunning ? "RUNNING" : session.CanStartPlaying ? "START" : "ENGINE REQUIRED";
         screen.StartPlayingButton.LabelScale = session.CanStartPlaying ? 0.48f : 0.28f;
         screen.StartPlayingButton.IsEnabled = session.CanStartPlaying;
         screen.StartPlayingButton.Draw(mousePoint, drawingContext);
+        if (session.IsLocalMatchStarting)
+        {
+            var bounds = screen.StartPlayingButton.Bounds;
+            var center = new Vector2(bounds.Left + 13, bounds.Center.Y);
+            const int segments = 12;
+            var head = (int)(System.Environment.TickCount64 / 70 % segments);
+            for (var index = 0; index < segments; index++)
+            {
+                var angle = System.MathF.Tau * index / segments;
+                var direction = new Vector2(System.MathF.Cos(angle), System.MathF.Sin(angle));
+                var distance = (head - index + segments) % segments;
+                var alpha = System.Math.Clamp(235 - distance * 15, 70, 235);
+                drawingContext.DrawLine(center + direction * 4, center + direction * 9, 2,
+                    new Color(91, 218, 211, alpha));
+            }
+        }
     }
 
 }

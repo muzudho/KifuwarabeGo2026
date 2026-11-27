@@ -1,0 +1,18 @@
+<Project>
+  <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
+    <KIFUWARABEGO2026_SAC_SIGNING_CERTIFICATE_THUMBPRINT Condition="'$(KIFUWARABEGO2026_SAC_SIGNING_CERTIFICATE_THUMBPRINT)' == ''">$([MSBuild]::GetRegistryValue('HKEY_CURRENT_USER\Environment', 'KIFUWARABEGO2026_SAC_SIGNING_CERTIFICATE_THUMBPRINT', ''))</KIFUWARABEGO2026_SAC_SIGNING_CERTIFICATE_THUMBPRINT>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(OS)' == 'Windows_NT' and '$(Configuration)' == 'Debug' and ('$(OutputType)' == 'Exe' or '$(OutputType)' == 'WinExe') and '$(SmartAppControlSigningEnabled)' == ''">
+    <SmartAppControlSigningEnabled>false</SmartAppControlSigningEnabled>
+  </PropertyGroup>
+
+  <Target Name="ReportSmartAppControlSigning" BeforeTargets="CoreCompile" Condition="'$(OS)' == 'Windows_NT' and '$(Configuration)' == 'Debug' and ('$(OutputType)' == 'Exe' or '$(OutputType)' == 'WinExe')">
+    <Message Text="Smart App Control diagnostic: automatic signing is $(SmartAppControlSigningEnabled)." Importance="High" />
+    <Message Text="Smart App Control diagnostic: signing is opt-in. Configure a code-signing certificate and set SmartAppControlSigningEnabled=true to enable it." Importance="High" Condition="'$(SmartAppControlSigningEnabled)' != 'true'" />
+  </Target>
+
+  <Target Name="SignSmartAppControlDevelopmentOutput" AfterTargets="Build" Condition="'$(OS)' == 'Windows_NT' and '$(Configuration)' == 'Debug' and ('$(OutputType)' == 'Exe' or '$(OutputType)' == 'WinExe') and '$(SmartAppControlSigningEnabled)' == 'true'">
+    <Exec Command="powershell.exe -NoProfile -ExecutionPolicy Bypass -File &quot;$(MSBuildThisFileDirectory)Sign-SmartAppControlDevelopmentOutput.ps1&quot; -Path &quot;$(TargetDir).&quot; -CertificateThumbprint &quot;$(KIFUWARABEGO2026_SAC_SIGNING_CERTIFICATE_THUMBPRINT)&quot;" ConsoleToMSBuild="true" StandardOutputImportance="High" StandardErrorImportance="High" />
+  </Target>
+</Project>
