@@ -356,6 +356,7 @@ public class Game1 : Game
         CompleteGameOasisComposition();
         CompleteGameOasisPlayingOperation();
         CompleteLocalMatchProcessLaunch();
+        UpdateLocalMatchLaunchState();
         var keyboard = Keyboard.GetState();
         var mouse = Mouse.GetState();
         SynchronizeOrArmWindowInput(keyboard, mouse);
@@ -2604,13 +2605,21 @@ public class Game1 : Game
 
     private void StartLocalMatch()
     {
+        if (_localMatchProcessLaunch?.IsRunning == true || _pendingLocalMatchRequest is not null) return;
         var request = PlayRoomLaunchRequestFactory.CreateLocalMatch(_session);
         var result = _localMatchProcessLaunch is null
             ? _playRoomInstaller.Launch(request)
             : _localMatchProcessLaunch.Start(request);
+        UpdateLocalMatchLaunchState();
         HandlePlayRoomLaunchResult(result, "LOCAL MATCH");
         if (result.IsAccepted && _localMatchProcessLaunch is not null)
             GuiOperationLog.User("Starting Local Match Play Room process", $"request={request.RequestId}");
+    }
+
+    private void UpdateLocalMatchLaunchState()
+    {
+        _session.IsLocalMatchStarting = _localMatchProcessLaunch?.IsStarting == true || _pendingLocalMatchRequest is not null;
+        _session.IsLocalMatchProcessRunning = _localMatchProcessLaunch?.IsRunning == true;
     }
 
     private void CompleteLocalMatchProcessLaunch()

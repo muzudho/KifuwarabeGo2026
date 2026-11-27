@@ -128,7 +128,7 @@ internal static class PlayRoomLaunchChecks
         var request = CreateSavedMatchRequest("coordinated-process-request");
 
         var started = coordinator.Start(request);
-        Require(started.Status == PlayRoomLaunchStatus.Deferred && coordinator.IsRunning,
+        Require(started.Status == PlayRoomLaunchStatus.Deferred && coordinator.IsRunning && coordinator.IsStarting,
             "The Local Match process coordinator did not accept an asynchronous launch.");
         Require(!coordinator.TryTakeCompletion(out _),
             "The Local Match process coordinator blocked or completed before its child Host result.");
@@ -139,12 +139,12 @@ internal static class PlayRoomLaunchChecks
             "The Local Match process coordinator accepted a second child Host while one was running.");
 
         launcher.ReportReady(new(request.RequestId, "ready", "test ready"));
-        Require(coordinator.TryTakeReady(out var ready) && ready?.RequestId == request.RequestId && coordinator.IsRunning,
+        Require(coordinator.TryTakeReady(out var ready) && ready?.RequestId == request.RequestId && coordinator.IsRunning && !coordinator.IsStarting,
             "The Local Match process coordinator did not distinguish readiness from process completion.");
         launcher.Complete(new(PlayRoomProcessCompletionStatus.ExitedNormally, request.RequestId, 0));
         Require(coordinator.TryTakeCompletion(out var completion) &&
                 completion is { IsNormalExit: true, ExitCode: 0 } &&
-                !coordinator.IsRunning,
+                !coordinator.IsRunning && !coordinator.IsStarting,
             "The Local Match process coordinator did not return to an idle Lobby state after normal exit.");
 
         var restarted = coordinator.Start(request with { RequestId = "restart-after-normal" });
