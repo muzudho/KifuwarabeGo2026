@@ -794,7 +794,9 @@ internal sealed class CgosClient
         {
             var definition = definitions.EnumerateArray().FirstOrDefault(candidate =>
                 candidate.TryGetProperty("id", out var id) && id.GetString() == option.Key);
-            if (definition.ValueKind == System.Text.Json.JsonValueKind.Undefined) continue;
+            if (definition.ValueKind == System.Text.Json.JsonValueKind.Undefined ||
+                definition.TryGetProperty("externallyManaged", out var managed) && managed.ValueKind == System.Text.Json.JsonValueKind.True)
+                continue;
 
             var type = definition.TryGetProperty("type", out var typeProperty)
                 ? typeProperty.GetString()
@@ -845,7 +847,9 @@ internal sealed class CgosClient
         {
             var definition = definitions.EnumerateArray().FirstOrDefault(candidate =>
                 candidate.TryGetProperty("id", out var id) && id.GetString() == option.Key);
-            if (definition.ValueKind == System.Text.Json.JsonValueKind.Undefined) continue;
+            if (definition.ValueKind == System.Text.Json.JsonValueKind.Undefined ||
+                definition.TryGetProperty("externallyManaged", out var managed) && managed.ValueKind == System.Text.Json.JsonValueKind.True)
+                continue;
 
             var type = definition.TryGetProperty("type", out var typeProperty)
                 ? typeProperty.GetString()?.ToLowerInvariant()

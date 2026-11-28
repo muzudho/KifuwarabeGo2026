@@ -33,7 +33,9 @@ public sealed class GtpGuiOptionDefinition
 
     public string Default { get; set; } = "";
 
-    public string Value { get; set; } = "";
+    public string? Value { get; set; }
+
+    public bool ExternallyManaged { get; set; }
 
     public int? Min { get; set; }
 
@@ -106,4 +108,6 @@ public sealed class GtpOptionSchemaDefinition
     public string Apply { get; set; } = "";
 
     public string Binding { get; set; } = "";
+
+    public bool ExternallyManaged { get; set; }
 }

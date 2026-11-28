@@ -126,6 +126,7 @@ internal static class PortabilityChecks
         VerifyGameOasisProfilePolicies();
         VerifyCgosWifiCheck();
         VerifyEntryEngineOptions();
+        VerifyExternallyManagedEngineOptions();
         VerifyEngineSlotOptions();
         VerifyCgosConnectionOrder();
         VerifyOptionalCgosInputs();
@@ -739,6 +740,37 @@ internal static class PortabilityChecks
         Require(session.GetSelectedPlayerEngineProfile(GoStone.Black)?.GuiOptions[option.Id] == "２系" &&
             session.GetCgosEngineProfileForStart(GoStone.Black)?.GuiOptions[option.Id] == "２系", "Local and CGOS launches must receive the fixed slot.");
         Require(session.GtpEngineProfiles[0].GetGuiOption(option.Id, option.DefaultValue) == "要求ファイルに従う", "Entry override must not alter the registered engine default.");
+    }
+
+    public static void VerifyExternallyManagedEngineOptions()
+    {
+        var runtime = new DirectoryInfo(System.Runtime.InteropServices.RuntimeEnvironment.GetRuntimeDirectory());
+        var process = Path.Combine(runtime.Parent!.Parent!.Parent!.FullName, OperatingSystem.IsWindows() ? "dotnet.exe" : "dotnet");
+        var assembly = $"\"{Assembly.GetExecutingAssembly().Location}\"";
+        foreach (var format in new[] { "legacy", "modern" })
+        {
+            var engine = new GtpEngineProfile
+            {
+                Id = format, ExecutablePath = process, Arguments = assembly + " --externally-managed-options-fixture " + format,
+                GuiOptions = new() { ["Threads"] = "2", ["UseBook"] = "true" },
+            };
+            var session = new GoAppSession();
+            session.SetGtpEngineProfiles([engine]);
+            Require(session.OpenGtpEngineEditPanelForProfileId(engine.Id), "Engine editor must open.");
+            session.OpenGtpEngineGuiOptionsDialog();
+            Require(session.EngineOptionDiscoveryError.Length == 0, $"{format}: {session.EngineOptionDiscoveryError}");
+            var option = session.ActiveGtpEngineGuiOptionSpecs.Single(item => item.Id == "Threads");
+            Require(option.ExternallyManaged && session.GetGtpEngineGuiOptionDraft(option) == "8",
+                "Read-only options should show the engine's value instead of a previously saved override.");
+            session.SetGtpEngineGuiOptionDraft(option, "16");
+            session.ResetGtpEngineGuiOptionDraft(option);
+            Require(!session.IsGtpEngineGuiOptionsDialogDirty, "Editing and resetting an external option must do nothing.");
+            (int Index, int Action)? Hit(Point point) =>
+                KifuwarabeGo2026.GameOasis.Gui.Presentation.Pages.GtpEngine.GtpEngineRenderer.GetGtpEngineGuiOptionControlHit(point, session);
+            Require(Hit(new Point(800, 350)) is null && Hit(new Point(1210, 350)) is null &&
+                    Hit(new Point(800, 418)) is { Index: 1 },
+                "The external row must block clicks while the regular option remains editable.");
+        }
     }
 
     private static void VerifyEntryEngineOptions()

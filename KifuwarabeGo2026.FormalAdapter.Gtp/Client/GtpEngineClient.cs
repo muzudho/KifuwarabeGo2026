@@ -198,6 +198,7 @@ public sealed class GtpEngineClient : IAsyncDisposable, IGtpCommandTransport
             var definition = document.Options.FirstOrDefault(option => !handled.Contains(option.Id) && _settings.GuiOptions.ContainsKey(option.Id));
             if (definition is null) break;
             handled.Add(definition.Id);
+            if (definition.ExternallyManaged) continue;
             string value = _settings.GuiOptions[definition.Id];
             if (definition.Type.Equals("button", StringComparison.OrdinalIgnoreCase))
             {
@@ -232,7 +233,7 @@ public sealed class GtpEngineClient : IAsyncDisposable, IGtpCommandTransport
         foreach (var savedOption in _settings.GuiOptions!)
         {
             var definition = schema.Options.FirstOrDefault(option => option.Id.Equals(savedOption.Key, StringComparison.Ordinal));
-            if (definition is null) continue;
+            if (definition is null || definition.ExternallyManaged) continue;
             if (definition.Type.Equals("action", StringComparison.OrdinalIgnoreCase))
             {
                 if (bool.TryParse(savedOption.Value, out var queued) && queued)

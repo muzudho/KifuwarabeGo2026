@@ -3,7 +3,8 @@ namespace KifuwarabeGo2026.GameOasis.Application.Profiles;
 public sealed record GtpEngineGuiOptionChoice(string Value, bool IsEnabled = true, string DisabledReason = "");
 public sealed record GtpEngineGuiOptionSpec(string Id, string Label, string Type, string DefaultValue, int? Min = null,
     int? Max = null, IReadOnlyList<string>? Values = null, string Binding = "",
-    IReadOnlyList<GtpEngineGuiOptionChoice>? Choices = null);
+    IReadOnlyList<GtpEngineGuiOptionChoice>? Choices = null, bool ExternallyManaged = false,
+    string? ExternalValue = null);
 
 public static class GtpEngineGuiOptions
 {

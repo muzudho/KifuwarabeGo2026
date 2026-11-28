@@ -11,6 +11,7 @@ public sealed partial class GoAppSession
 {
     public void OpenGtpEngineRandomMoveSelectionDialog(GtpEngineGuiOptionSpec option)
     {
+        if (option.ExternallyManaged) return;
         ActiveGtpEngineComboOption = option;
         var choices = GetActiveGtpEngineComboChoices();
         var current = GetGtpEngineGuiOptionDraft(option);
@@ -41,13 +42,13 @@ public sealed partial class GoAppSession
     public void CommitGtpEngineRandomMoveSelectionDialog()
     {
         var choices = GetActiveGtpEngineComboChoices();
-        if (ActiveGtpEngineComboOption is { } option && GtpEngineRandomMoveSelectionIndex >= 0 && GtpEngineRandomMoveSelectionIndex < choices.Count && choices[GtpEngineRandomMoveSelectionIndex].IsEnabled)
+        if (ActiveGtpEngineComboOption is { ExternallyManaged: false } option && GtpEngineRandomMoveSelectionIndex >= 0 && GtpEngineRandomMoveSelectionIndex < choices.Count && choices[GtpEngineRandomMoveSelectionIndex].IsEnabled)
         {
             GtpEngineGuiOptionsDialogDraft[option.Id] = choices[GtpEngineRandomMoveSelectionIndex].Value;
             if (IsGtpEngineGuiOptionsDialogOpen && !IsAppProviderGameSettingsDialogOpen)
             {
                 DiscoverEngineOptions(GtpEngineGuiOptionsDialogDraft);
-                foreach (var discovered in ActiveGtpEngineGuiOptionSpecs)
+                foreach (var discovered in ActiveGtpEngineGuiOptionSpecs.Where(option => !option.ExternallyManaged))
                     GtpEngineGuiOptionsDialogDraft.TryAdd(discovered.Id, discovered.DefaultValue);
             }
         }
@@ -62,26 +63,33 @@ public sealed partial class GoAppSession
     }
 
     public string GtpEngineRandomMoveDraft => GtpEngineGuiOptionsDialogDraft.GetValueOrDefault(GtpEngineGuiOptions.RandomMoveId, GtpEngineGuiOptions.ChebyshevDistanceFromStarRandomMove);
-    public string GetGtpEngineGuiOptionDraft(GtpEngineGuiOptionSpec option) => GtpEngineGuiOptionsDialogDraft.GetValueOrDefault(option.Id, option.DefaultValue);
+    public string GetGtpEngineGuiOptionDraft(GtpEngineGuiOptionSpec option) => option.ExternallyManaged
+        ? option.ExternalValue ?? "—"
+        : GtpEngineGuiOptionsDialogDraft.GetValueOrDefault(option.Id, option.DefaultValue);
 
     public void ToggleGtpEngineCheckOption(GtpEngineGuiOptionSpec option)
     {
         var current = bool.TryParse(GetGtpEngineGuiOptionDraft(option), out var value) && value;
-        GtpEngineGuiOptionsDialogDraft[option.Id] = (!current).ToString().ToLowerInvariant();
+        SetGtpEngineGuiOptionDraft(option, (!current).ToString().ToLowerInvariant());
     }
 
     public void StepGtpEngineSpinOption(GtpEngineGuiOptionSpec option, int step)
     {
         _ = int.TryParse(GetGtpEngineGuiOptionDraft(option), out var current);
-        GtpEngineGuiOptionsDialogDraft[option.Id] = Math.Clamp((long)current + step, option.Min ?? int.MinValue, option.Max ?? int.MaxValue).ToString();
+        SetGtpEngineGuiOptionDraft(option, Math.Clamp((long)current + step, option.Min ?? int.MinValue, option.Max ?? int.MaxValue).ToString());
     }
 
-    public void SetGtpEngineGuiOptionDraft(GtpEngineGuiOptionSpec option, string value) => GtpEngineGuiOptionsDialogDraft[option.Id] = value.Length <= GtpEngineGuiOptions.MaximumTextLength ? value : value[..GtpEngineGuiOptions.MaximumTextLength];
+    public void SetGtpEngineGuiOptionDraft(GtpEngineGuiOptionSpec option, string value)
+    {
+        if (option.ExternallyManaged) return;
+        GtpEngineGuiOptionsDialogDraft[option.Id] = value.Length <= GtpEngineGuiOptions.MaximumTextLength
+            ? value : value[..GtpEngineGuiOptions.MaximumTextLength];
+    }
 
     public void ToggleGtpEngineButtonOption(GtpEngineGuiOptionSpec option)
     {
         var queued = bool.TryParse(GetGtpEngineGuiOptionDraft(option), out var value) && value;
-        GtpEngineGuiOptionsDialogDraft[option.Id] = (!queued).ToString().ToLowerInvariant();
+        SetGtpEngineGuiOptionDraft(option, (!queued).ToString().ToLowerInvariant());
     }
 
     public bool ConsumeQueuedGtpEngineButtonsForComputerPlayers()
@@ -114,6 +122,7 @@ public sealed partial class GoAppSession
 
     public void ResetGtpEngineGuiOptionDraft(GtpEngineGuiOptionSpec option)
     {
+        if (option.ExternallyManaged) return;
         var index = IsEntryEngineOptionsDialogOpen ? FindGtpEngineIndex(PlayerEditDraft.EngineProfileId) : -1;
         if (index >= 0) _entryOptionsReset.Add(option.Id);
         SetGtpEngineGuiOptionDraft(option, index >= 0
@@ -126,7 +135,7 @@ public sealed partial class GoAppSession
     {
         DiscoverEngineOptions(values);
         GtpEngineGuiOptionsDialogDraft = new Dictionary<string, string>(values);
-        foreach (var option in ActiveGtpEngineGuiOptionSpecs)
+        foreach (var option in ActiveGtpEngineGuiOptionSpecs.Where(option => !option.ExternallyManaged))
             GtpEngineGuiOptionsDialogDraft.TryAdd(option.Id, option.DefaultValue);
         GtpEngineGuiOptionsDialogOriginalDraft = new Dictionary<string, string>(GtpEngineGuiOptionsDialogDraft);
         IsGtpEngineRandomMoveSelectionDialogOpen = false;
@@ -188,7 +197,7 @@ public sealed partial class GoAppSession
             if (index >= 0)
             {
                 var engine = _gtpEngineProfiles[index];
-                foreach (var option in EntryEngineOptionSpecs)
+                foreach (var option in EntryEngineOptionSpecs.Where(option => !option.ExternallyManaged))
                 {
                     var value = GetGtpEngineGuiOptionDraft(option);
                     if (_entryOptionsReset.Contains(option.Id) || value != GtpEngineGuiOptionsDialogOriginalDraft[option.Id])

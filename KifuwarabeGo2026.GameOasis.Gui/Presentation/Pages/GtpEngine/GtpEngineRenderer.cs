@@ -142,6 +142,7 @@ public sealed class GtpEngineRenderer
             var index = start + slot;
             if (index >= session.ActiveGtpEngineGuiOptionSpecs.Count) break;
             var option = session.ActiveGtpEngineGuiOptionSpecs[index];
+            if (option.ExternallyManaged) continue;
             if (CanResetOption(session, option) && GtpEngineGuiOptionDefaultButtonBounds(slot).Contains(point)) return (index, 3);
             if (GtpEngineGuiOptionValueBounds(slot).Contains(point)) return (index, option.Type == "spin" ? 2 : 0);
         }
@@ -488,6 +489,15 @@ public sealed class GtpEngineRenderer
         var valueBounds = GtpEngineGuiOptionValueBounds(slot);
         var hovered = valueBounds.Contains(mousePoint);
         DrawDynamicOptionText(option.Label, new Rectangle(row.X + 16, row.Y + 8, valueBounds.X - row.X - 28, row.Height - 16), new Color(180, 195, 195), 0.36f);
+        if (option.ExternallyManaged)
+        {
+            FillRect(valueBounds, new Color(37, 46, 54));
+            var shown = option.Type == "button" ? "—" : string.IsNullOrEmpty(value) ? "<empty>" : AbbreviateOptionValue(value, 28);
+            DrawDynamicOptionText(shown, new Rectangle(valueBounds.X + 8, valueBounds.Y, valueBounds.Width - 16, valueBounds.Height),
+                new Color(182, 196, 202), 0.34f);
+            DrawDynamicOptionText("［外部管理］", GtpEngineGuiOptionWideButtonBounds(slot), new Color(185, 204, 215), 0.32f);
+            return;
+        }
         if (option.Type == "button")
         {
             var queued = bool.TryParse(value, out var isQueued) && isQueued;
@@ -532,17 +542,33 @@ public sealed class GtpEngineRenderer
             var index = startIndex + slot;
             if (index >= session.ActiveGtpEngineGuiOptionSpecs.Count) break;
             var option = session.ActiveGtpEngineGuiOptionSpecs[index];
+            if (option.ExternallyManaged && GtpEngineGuiOptionRowBounds(slot).Contains(mousePoint))
+            {
+                var bounds = GtpEngineGuiOptionTooltipBounds;
+                DrawGtpEngineGuiOptionTooltipFrame();
+                DrawDynamicOptionText("このエンジンオプションは、別のアプリケーションに管理されています。",
+                    new Rectangle(bounds.X + 18, bounds.Y + 16, bounds.Width - 36, 30), Color.White, 0.38f);
+                DrawDynamicOptionText("この GUI からは編集できません。",
+                    new Rectangle(bounds.X + 18, bounds.Y + 51, bounds.Width - 36, 30), Color.White, 0.38f);
+                return;
+            }
             if (option.Type is not ("string" or "filename") || !GtpEngineGuiOptionValueBounds(slot).Contains(mousePoint)) continue;
             var value = session.GetGtpEngineGuiOptionDraft(option);
             if (value.Length <= 28) continue;
 
-            FillRect(new Rectangle(GtpEngineGuiOptionTooltipBounds.X + 8, GtpEngineGuiOptionTooltipBounds.Y + 10, GtpEngineGuiOptionTooltipBounds.Width, GtpEngineGuiOptionTooltipBounds.Height), new Color(0, 0, 0, 150));
-            FillRect(GtpEngineGuiOptionTooltipBounds, new Color(30, 36, 43, 252));
-            DrawRect(GtpEngineGuiOptionTooltipBounds, 2, new Color(147, 244, 200));
+            DrawGtpEngineGuiOptionTooltipFrame();
             DrawText(option.Label, new Vector2(GtpEngineGuiOptionTooltipBounds.X + 18, GtpEngineGuiOptionTooltipBounds.Y + 12), new Color(180, 195, 195), 0.32f);
             DrawDynamicOptionText(string.IsNullOrEmpty(value) ? "<empty>" : AbbreviateOptionValue(value, 100), new Rectangle(GtpEngineGuiOptionTooltipBounds.X + 18, GtpEngineGuiOptionTooltipBounds.Y + 42, GtpEngineGuiOptionTooltipBounds.Width - 36, 42), Color.White, 0.38f);
             return;
         }
+    }
+
+    private void DrawGtpEngineGuiOptionTooltipFrame()
+    {
+        var bounds = GtpEngineGuiOptionTooltipBounds;
+        FillRect(new Rectangle(bounds.X + 8, bounds.Y + 10, bounds.Width, bounds.Height), new Color(0, 0, 0, 150));
+        FillRect(bounds, new Color(30, 36, 43, 252));
+        DrawRect(bounds, 2, new Color(147, 244, 200));
     }
 
     private static string AbbreviateOptionValue(string value, int maximumCharacters) =>

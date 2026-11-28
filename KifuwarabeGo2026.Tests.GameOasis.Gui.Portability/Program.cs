@@ -8,6 +8,8 @@ internal static class Program
 {
     private static int Main(string[] args)
     {
+        if (args is ["--externally-managed-options-fixture", var format])
+            return RunExternallyManagedOptionsFixture(format == "modern");
         if (args.Length > 0 && args[0] == "--play-room-child-normal-exit")
         {
             var requestPath = args.Length == 3 && args[1] == "--launch-request" ? args[2] : "";
@@ -44,6 +46,12 @@ internal static class Program
 
         try
         {
+            if (args is ["--externally-managed-options"])
+            {
+                PortabilityChecks.VerifyExternallyManagedEngineOptions();
+                Console.WriteLine("PASS externally managed engine options: legacy and modern");
+                return 0;
+            }
             if (args is ["--optional-audio"])
             {
                 var method = typeof(KifuwarabeGo2026.GameOasis.Gui.Game1).GetMethod("TryInitializeOptionalAudio",
@@ -102,6 +110,32 @@ internal static class Program
             Console.Error.WriteLine($"FAIL: {ex.Message}");
             return 1;
         }
+    }
+
+    private static int RunExternallyManagedOptionsFixture(bool modern)
+    {
+        while (Console.ReadLine() is { } command)
+        {
+            var response = command switch
+            {
+                "known_command kfw-options" => modern ? "false" : "true",
+                "known_command kfw-describe-options" => modern ? "true" : "false",
+                "known_command gui_options" => "false",
+                "kfw-options" =>
+                    """{"version":1,"options":[{"id":"Threads","label":"Threads","type":"spin","default":"1","value":"8","externallyManaged":true},{"id":"UseBook","label":"UseBook","type":"check","default":"false"}]}""",
+                "kfw-describe-options play player" =>
+                    """{"version":1,"app":"play","role":"player","options":[{"id":"Threads","label":"Threads","type":"integer","default":1,"externallyManaged":true},{"id":"UseBook","label":"UseBook","type":"boolean","default":false}]}""",
+                "kfw-get-options play player" =>
+                    """{"version":1,"app":"play","role":"player","values":{"Threads":8,"UseBook":true}}""",
+                _ => "",
+            };
+            var attemptsManagedWrite = (command.StartsWith("kfw-set-option ", StringComparison.Ordinal) ||
+                command.StartsWith("kfw-patch-options ", StringComparison.Ordinal)) && command.Contains("Threads", StringComparison.Ordinal);
+            Console.WriteLine(attemptsManagedWrite ? "? externally managed\n" : $"= {response}\n");
+            Console.Out.Flush();
+            if (command == "quit") break;
+        }
+        return 0;
     }
 
     private static int RunPlayRoomGtpTestEngine()
