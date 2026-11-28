@@ -1,6 +1,7 @@
 namespace KifuwarabeGo2026.GameOasis.Gui.Application;
 
 using KifuwarabeGo2026.Reference.PlayDomain.Go;
+using KifuwarabeGo2026.GameOasis.Application.Profiles;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -29,7 +30,7 @@ public sealed partial class GoAppSession
 
     /// <summary>Entry Profile または表示中の Client Identity に、開始時からの変更があるかを返します。</summary>
     public bool HasPlayerEditChanges =>
-        !AreSame(PlayerEditDraft, PlayerEditOriginalProfile) ||
+        !EntryProfilePolicy.AreEqual(PlayerEditDraft, PlayerEditOriginalProfile) ||
         !AreSame(PlayerEditClientIdentityDraft, PlayerEditOriginalClientIdentityProfile) ||
         PlayerEditOriginalClientIdentities.Any(original =>
             _clientIdentityProfiles.FirstOrDefault(item => item.Id == original.Id) is not { } current || !AreSame(current, original));
@@ -126,6 +127,8 @@ public sealed partial class GoAppSession
     {
         if (PlayerEditDraft.Kind != EntryProfileKind.Computer || FindGtpEngineIndex(engineProfileId) < 0)
             return false;
+        if (PlayerEditDraft.EngineProfileId != engineProfileId)
+            PlayerEditDraft.EngineOptionOverrides.Clear();
         PlayerEditDraft.EngineProfileId = engineProfileId;
         IsPlayerEditDirty = true;
         return true;
@@ -253,7 +256,7 @@ public sealed partial class GoAppSession
             return false;
 
         CommitPlayerEditClientIdentityDraft();
-        _playerProfiles[PlayerEditProfileIndex] = draft;
+        _playerProfiles[PlayerEditProfileIndex] = EntryProfilePolicy.Normalize(draft);
         var referencedIds = _playerProfiles.SelectMany(profile => profile.ClientIdentityProfileIds).ToHashSet(StringComparer.Ordinal);
         _clientIdentityProfiles.RemoveAll(profile => !referencedIds.Contains(profile.Id));
         IsPlayerEditDirty = false;
@@ -269,6 +272,7 @@ public sealed partial class GoAppSession
 
     public void CancelPlayerEditPanel()
     {
+        if (IsEntryEngineOptionsDialogOpen) CancelGtpEngineGuiOptionsDialog();
         foreach (var original in PlayerEditOriginalClientIdentities)
         {
             var index = _clientIdentityProfiles.FindIndex(item => item.Id == original.Id);
@@ -299,14 +303,6 @@ public sealed partial class GoAppSession
         PlayerEditClientIdentityDraft = profile.Clone();
         return true;
     }
-
-    private static bool AreSame(EntryProfile left, EntryProfile right) =>
-        left.Id == right.Id &&
-        left.DisplayName == right.DisplayName &&
-        left.Identifier == right.Identifier &&
-        left.Kind == right.Kind &&
-        left.EngineProfileId == right.EngineProfileId &&
-        left.ClientIdentityProfileIds.SequenceEqual(right.ClientIdentityProfileIds, StringComparer.Ordinal);
 
     private static bool AreSame(ClientIdentityProfile left, ClientIdentityProfile right) =>
         left.Id == right.Id &&

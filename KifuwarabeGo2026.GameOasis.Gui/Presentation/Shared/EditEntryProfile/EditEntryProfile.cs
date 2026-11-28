@@ -80,6 +80,7 @@ public sealed class EditEntryProfile
     TableRowLabel EntryTypeLabel { get; init; } = new("ENTRY TYPE", new Rectangle(FieldLabelX, EntryTypeHumanButtonBounds.Y + 7, 180, 32), new Color(180, 195, 195));
     public Button HumanTypeButton { get; } = new(EntryTypeHumanButtonBounds, "HUMAN", 0.34f);
     public Button EngineTypeButton { get; } = new(EntryTypeEngineButtonBounds, "ENGINE", 0.34f);
+    public Button EngineOptionsButton { get; } = new(new Rectangle(1149, 365, 211, 46), "ENGINE OPTIONS", 0.29f);
 
     #endregion
 
@@ -223,7 +224,11 @@ public sealed class EditEntryProfile
         DrawPlayerNameField(session, mousePoint, draw);
         DrawEntryTypeField(session, mousePoint, draw);
         if (session.PlayerEditDraft.Kind == EntryProfileKind.Computer)
+        {
             DrawPopupField(EngineLabel, session.PlayerEditEngineDisplayName, EngineTextBounds, mousePoint, FieldIcon.Engine, draw);
+            EngineOptionsButton.IsEnabled = session.CanEditEntryEngineOptions;
+            EngineOptionsButton.Draw(mousePoint, draw.KfwStationeryDrawingTools);
+        }
         DrawClientIdentitySection(session, mousePoint, draw);
 
         // 付箋（一番前景に描画するために、最後に描画します）

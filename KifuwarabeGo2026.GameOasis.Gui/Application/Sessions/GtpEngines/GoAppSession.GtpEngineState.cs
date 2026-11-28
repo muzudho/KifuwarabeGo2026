@@ -40,9 +40,14 @@ public sealed partial class GoAppSession
     public GtpEngineProfile GtpEngineEditDraft { get; private set; } = new();
     public bool IsGtpEngineGuiOptionsDialogOpen { get; private set; }
     public bool IsAppProviderGameSettingsDialogOpen { get; private set; }
+    public bool IsEntryEngineOptionsDialogOpen { get; private set; }
+    private static readonly IReadOnlyList<GtpEngineGuiOptionSpec> EntryEngineOptionSpecs =
+        GtpEngineGuiOptions.Specs.Where(option => option.Type != "button").ToArray();
+    private readonly HashSet<string> _entryOptionsReset = new(System.StringComparer.Ordinal);
     public Dictionary<string, string> GtpEngineGuiOptionsDialogDraft { get; private set; } = [];
     private Dictionary<string, string> GtpEngineGuiOptionsDialogOriginalDraft { get; set; } = [];
     public bool IsGtpEngineGuiOptionsDialogDirty =>
+        _entryOptionsReset.Any(PlayerEditDraft.EngineOptionOverrides.ContainsKey) ||
         GtpEngineGuiOptionsDialogDraft.Count != GtpEngineGuiOptionsDialogOriginalDraft.Count ||
         GtpEngineGuiOptionsDialogDraft.Any(pair => !GtpEngineGuiOptionsDialogOriginalDraft.TryGetValue(pair.Key, out var value) || value != pair.Value);
     public bool IsGtpEngineRandomMoveSelectionDialogOpen { get; private set; }
@@ -50,7 +55,9 @@ public sealed partial class GoAppSession
     public GtpEngineGuiOptionSpec? ActiveGtpEngineComboOption { get; private set; }
     public int GtpEngineGuiOptionsPageIndex { get; private set; }
     private IReadOnlyList<GtpEngineGuiOptionSpec> _appProviderGameSettingSpecs = GtpEngineGuiOptions.PonnukiProviderSpecs;
-    public IReadOnlyList<GtpEngineGuiOptionSpec> ActiveGtpEngineGuiOptionSpecs => IsAppProviderGameSettingsDialogOpen ? _appProviderGameSettingSpecs : GtpEngineGuiOptions.Specs;
+    public IReadOnlyList<GtpEngineGuiOptionSpec> ActiveGtpEngineGuiOptionSpecs => IsAppProviderGameSettingsDialogOpen
+        ? _appProviderGameSettingSpecs
+        : IsEntryEngineOptionsDialogOpen ? EntryEngineOptionSpecs : GtpEngineGuiOptions.Specs;
     public int GtpEngineRandomMoveSelectionPageIndex { get; private set; }
     public const int GtpEngineGuiOptionsPageSize = 4;
     public const int GtpEngineComboSelectionPageSize = 4;

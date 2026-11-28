@@ -124,6 +124,7 @@ internal static class PortabilityChecks
         VerifyCommentNavigation();
         VerifyCatalogOrderEditor();
         VerifyGameOasisProfilePolicies();
+        VerifyEntryEngineOptions();
         VerifyCgosConnectionOrder();
         VerifyOptionalCgosInputs();
         VerifyTextBoxEditing();
@@ -692,6 +693,59 @@ internal static class PortabilityChecks
             IEnumerable<EntryProfile> entries,
             IEnumerable<ClientIdentityProfile> clientIdentities) => SaveCallCount++;
         public void SaveCgosConnections(IEnumerable<CgosConnectionProfile> profiles) => SaveCallCount++;
+    }
+
+    private static void VerifyEntryEngineOptions()
+    {
+        var engine = new GtpEngineProfile
+        {
+            Id = "shared",
+            GuiOptions = new Dictionary<string, string>
+            {
+                [GtpEngineGuiOptions.EngineTagId] = "base",
+                [GtpEngineGuiOptions.RandomSeedId] = "10",
+            },
+        };
+        var session = new GoAppSession();
+        session.SetGtpEngineProfiles([engine]);
+        session.SetClientIdentityProfiles([new ClientIdentityProfile { Id = "identity" }]);
+        session.SetEntryProfiles([
+            new EntryProfile { Id = "first", Kind = EntryProfileKind.Computer, EngineProfileId = engine.Id, ClientIdentityProfileIds = ["identity"] },
+            new EntryProfile { Id = "second", Kind = EntryProfileKind.Computer, EngineProfileId = engine.Id, ClientIdentityProfileIds = ["identity"] },
+        ]);
+        session.OpenEntryProfileManagementDialog();
+        Require(session.OpenSelectedPlayerEditPanel(), "An entry must open for editing.");
+        session.OpenEntryEngineOptionsDialog();
+        var tag = session.ActiveGtpEngineGuiOptionSpecs.Single(option => option.Id == GtpEngineGuiOptions.EngineTagId);
+        session.SetGtpEngineGuiOptionDraft(tag, "entry-one");
+        session.CommitGtpEngineGuiOptionsDialog();
+        Require(session.HasPlayerEditChanges && session.SavePlayerEditDraft(), "An option-only edit must be savable.");
+
+        Require(session.TrySelectEntryProfile(GoStone.Black, "first") &&
+                session.TrySelectEntryProfile(GoStone.White, "second") &&
+                session.TrySelectCgosEntryProfile(GoStone.Black, "first") &&
+                session.TrySelectCgosEntryProfile(GoStone.White, "second"),
+            "Both entries must be selectable with the same registered engine.");
+        var request = KifuwarabeGo2026.PlayRoom.Launching.PlayRoomLaunchRequestFactory.CreateLocalMatch(session);
+        using var black = JsonDocument.Parse(request.Participants[0].EngineOptions!.Content);
+        using var white = JsonDocument.Parse(request.Participants[1].EngineOptions!.Content);
+        Require(black.RootElement.GetProperty(tag.Id).GetString() == "entry-one" &&
+                white.RootElement.GetProperty(tag.Id).GetString() == "base" &&
+                session.GetCgosEngineProfileForStart(GoStone.Black)?.GuiOptions[tag.Id] == "entry-one" &&
+                session.GetCgosEngineProfileForStart(GoStone.White)?.GuiOptions[tag.Id] == "base" &&
+                session.GtpEngineProfiles[0].GuiOptions[tag.Id] == "base",
+            "Local Match and CGOS must both merge options independently without modifying the registered engine.");
+
+        var copy = JsonSerializer.Deserialize<EntryProfile>(JsonSerializer.Serialize(session.EntryProfiles[0]))!;
+        Require(EntryProfilePolicy.AreEqual(copy, session.EntryProfiles[0]),
+            "An entry's overrides must survive JSON storage.");
+        Require(session.OpenSelectedPlayerEditPanel(), "The saved entry must reopen.");
+        session.OpenEntryEngineOptionsDialog();
+        session.ResetGtpEngineGuiOptionDraft(tag);
+        session.CommitGtpEngineGuiOptionsDialog();
+        Require(session.HasPlayerEditChanges && session.SavePlayerEditDraft() &&
+                session.GetSelectedPlayerEngineProfile(GoStone.Black)?.GuiOptions[tag.Id] == "base",
+            "Inherit must remove the stored override.");
     }
 
     private static void VerifyGameOasisProfilePolicies()

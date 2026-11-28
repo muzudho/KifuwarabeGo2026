@@ -92,9 +92,31 @@ public sealed partial class GoAppSession
 
         return consumed;
     }
-    public void OpenGtpEngineGuiOptionsDialog()
+    public bool CanEditEntryEngineOptions => IsPlayerEditPanelOpen && PlayerEditDraft.Kind == EntryProfileKind.Computer &&
+        FindGtpEngineIndex(PlayerEditDraft.EngineProfileId) >= 0;
+
+    public void OpenEntryEngineOptionsDialog()
     {
-        GtpEngineGuiOptionsDialogDraft = new Dictionary<string, string>(GtpEngineEditDraft.GuiOptions);
+        if (!CanEditEntryEngineOptions) return;
+        EndPlayerEditField();
+        IsEntryEngineOptionsDialogOpen = true;
+        var engine = _gtpEngineProfiles[FindGtpEngineIndex(PlayerEditDraft.EngineProfileId)];
+        OpenGtpEngineGuiOptionsDialog(CloneEngineWithEntryOptions(engine, PlayerEditDraft).GuiOptions);
+    }
+
+    public void ResetGtpEngineGuiOptionDraft(GtpEngineGuiOptionSpec option)
+    {
+        var index = IsEntryEngineOptionsDialogOpen ? FindGtpEngineIndex(PlayerEditDraft.EngineProfileId) : -1;
+        if (index >= 0) _entryOptionsReset.Add(option.Id);
+        SetGtpEngineGuiOptionDraft(option, index >= 0
+            ? _gtpEngineProfiles[index].GetGuiOption(option.Id, option.DefaultValue) : option.DefaultValue);
+    }
+
+    public void OpenGtpEngineGuiOptionsDialog() => OpenGtpEngineGuiOptionsDialog(GtpEngineEditDraft.GuiOptions);
+
+    private void OpenGtpEngineGuiOptionsDialog(Dictionary<string, string> values)
+    {
+        GtpEngineGuiOptionsDialogDraft = new Dictionary<string, string>(values);
         foreach (var option in ActiveGtpEngineGuiOptionSpecs)
             GtpEngineGuiOptionsDialogDraft.TryAdd(option.Id, option.DefaultValue);
         GtpEngineGuiOptionsDialogOriginalDraft = new Dictionary<string, string>(GtpEngineGuiOptionsDialogDraft);
@@ -139,6 +161,8 @@ public sealed partial class GoAppSession
 
     public void CancelGtpEngineGuiOptionsDialog()
     {
+        IsEntryEngineOptionsDialogOpen = false;
+        _entryOptionsReset.Clear();
         IsGtpEngineRandomMoveSelectionDialogOpen = false;
         DeactivateWindow(ActiveWindowId.GtpEngineComboSelection);
         IsGtpEngineGuiOptionsDialogOpen = false;
@@ -149,6 +173,27 @@ public sealed partial class GoAppSession
 
     public void CommitGtpEngineGuiOptionsDialog()
     {
+        if (IsEntryEngineOptionsDialogOpen)
+        {
+            var index = FindGtpEngineIndex(PlayerEditDraft.EngineProfileId);
+            if (index >= 0)
+            {
+                var engine = _gtpEngineProfiles[index];
+                foreach (var option in EntryEngineOptionSpecs)
+                {
+                    var value = GetGtpEngineGuiOptionDraft(option);
+                    if (_entryOptionsReset.Contains(option.Id) || value != GtpEngineGuiOptionsDialogOriginalDraft[option.Id])
+                    {
+                        if (value == engine.GetGuiOption(option.Id, option.DefaultValue))
+                            PlayerEditDraft.EngineOptionOverrides.Remove(option.Id);
+                        else
+                            PlayerEditDraft.EngineOptionOverrides[option.Id] = value;
+                    }
+                }
+            }
+            CancelGtpEngineGuiOptionsDialog();
+            return;
+        }
         GtpEngineEditDraft.GuiOptions = new Dictionary<string, string>(GtpEngineGuiOptionsDialogDraft);
         IsGtpEngineRandomMoveSelectionDialogOpen = false;
         DeactivateWindow(ActiveWindowId.GtpEngineComboSelection);

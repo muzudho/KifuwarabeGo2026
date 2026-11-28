@@ -142,7 +142,7 @@ public sealed class GtpEngineRenderer
             var index = start + slot;
             if (index >= session.ActiveGtpEngineGuiOptionSpecs.Count) break;
             var option = session.ActiveGtpEngineGuiOptionSpecs[index];
-            if (option.Type is not ("button" or "string") && GtpEngineGuiOptionDefaultButtonBounds(slot).Contains(point)) return (index, 3);
+            if (CanResetOption(session, option) && GtpEngineGuiOptionDefaultButtonBounds(slot).Contains(point)) return (index, 3);
             if (GtpEngineGuiOptionValueBounds(slot).Contains(point)) return (index, option.Type == "spin" ? 2 : 0);
         }
         return null;
@@ -452,7 +452,10 @@ public sealed class GtpEngineRenderer
         DrawRect(GtpEngineGuiOptionsDialogBounds, 2, new Color(116, 145, 146));
 
         DrawText(session.IsAppProviderGameSettingsDialogOpen ? "GAME SETTINGS" : "ENGINE OPTIONS", new Vector2(GtpEngineGuiOptionsDialogBounds.X + 30, GtpEngineGuiOptionsDialogBounds.Y + 24), new Color(244, 238, 218), 0.72f);
-        DrawText(session.IsAppProviderGameSettingsDialogOpen ? "PONNUKI / PROVIDER settings are sent when the game starts." : "Settings are sent when the engine starts.", new Vector2(GtpEngineGuiOptionsDialogBounds.X + 32, GtpEngineGuiOptionsDialogBounds.Y + 82), new Color(180, 195, 195), 0.4f);
+        var help = session.IsAppProviderGameSettingsDialogOpen ? "PONNUKI / PROVIDER settings are sent when the game starts."
+            : session.IsEntryEngineOptionsDialogOpen ? "Entry overrides. INHERIT uses the registered engine value."
+            : "Settings are sent when the engine starts.";
+        DrawText(help, new Vector2(GtpEngineGuiOptionsDialogBounds.X + 32, GtpEngineGuiOptionsDialogBounds.Y + 82), new Color(180, 195, 195), 0.4f);
         DrawText("Text values (max 10000 characters)", new Vector2(GtpEngineGuiOptionsDialogBounds.X + 32, GtpEngineGuiOptionsDialogBounds.Y + 116), new Color(118, 139, 143), 0.3f);
 
         var startIndex = session.GtpEngineGuiOptionsPageIndex * GoAppSession.GtpEngineGuiOptionsPageSize;
@@ -504,9 +507,12 @@ public sealed class GtpEngineRenderer
         _gtpEngineOptionLinkUnderline.Draw(_drawingContext);
         if (option.Type == "spin" && option.Min is { } min && option.Max is { } max)
             DrawFittedText($"{min} .. {max}", new Rectangle(valueBounds.Right + 12, valueBounds.Y + 10, 126, 28), new Color(118, 139, 143), 0.24f);
-        if (option.Type is not ("button" or "string") && row.Contains(mousePoint))
-            DrawButton(GtpEngineGuiOptionDefaultButtonBounds(slot), "DEFAULT", false, mousePoint, scale: 0.3f);
+        if (CanResetOption(session, option) && row.Contains(mousePoint))
+            DrawButton(GtpEngineGuiOptionDefaultButtonBounds(slot), session.IsEntryEngineOptionsDialogOpen ? "INHERIT" : "DEFAULT", false, mousePoint, scale: 0.3f);
     }
+
+    private static bool CanResetOption(GoAppSession session, GtpEngineGuiOptionSpec option) =>
+        option.Type != "button" && (session.IsEntryEngineOptionsDialogOpen || option.Type != "string");
 
     private static string GetGtpEngineOptionActionLabel(GtpEngineGuiOptionSpec option) => option.Type switch
     {

@@ -19,16 +19,25 @@ public static class EntryProfilePolicy
             .Where(id => !string.IsNullOrWhiteSpace(id))
             .Distinct(StringComparer.Ordinal)
             .ToList();
-        if (normalized.Kind == EntryProfileKind.Human) normalized.EngineProfileId = "";
+        if (normalized.Kind == EntryProfileKind.Human)
+        {
+            normalized.EngineProfileId = "";
+            normalized.EngineOptionOverrides.Clear();
+        }
         return normalized;
     }
 
     public static bool ListsAreEqual(IReadOnlyList<EntryProfile> left, IReadOnlyList<EntryProfile> right) =>
-        left.Count == right.Count && left.Zip(right).All(pair =>
-            pair.First.Id == pair.Second.Id &&
-            pair.First.DisplayName == pair.Second.DisplayName &&
-            pair.First.Identifier == pair.Second.Identifier &&
-            pair.First.Kind == pair.Second.Kind &&
-            pair.First.EngineProfileId == pair.Second.EngineProfileId &&
-            pair.First.ClientIdentityProfileIds.SequenceEqual(pair.Second.ClientIdentityProfileIds, StringComparer.Ordinal));
+        left.Count == right.Count && left.Zip(right).All(pair => AreEqual(pair.First, pair.Second));
+
+    public static bool AreEqual(EntryProfile left, EntryProfile right) =>
+        left.Id == right.Id &&
+        left.DisplayName == right.DisplayName &&
+        left.Identifier == right.Identifier &&
+        left.Kind == right.Kind &&
+        left.EngineProfileId == right.EngineProfileId &&
+        left.ClientIdentityProfileIds.SequenceEqual(right.ClientIdentityProfileIds, StringComparer.Ordinal) &&
+        left.EngineOptionOverrides.Count == right.EngineOptionOverrides.Count &&
+        left.EngineOptionOverrides.All(pair =>
+            right.EngineOptionOverrides.TryGetValue(pair.Key, out var value) && value == pair.Value);
 }

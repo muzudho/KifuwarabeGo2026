@@ -164,7 +164,19 @@ public sealed partial class GoAppSession
             return null;
 
         var index = FindGtpEngineIndex(player.EngineProfileId);
-        return index >= 0 ? _gtpEngineProfiles[index].Clone() : null;
+        return index >= 0 ? CloneEngineWithEntryOptions(_gtpEngineProfiles[index], player) : null;
+    }
+
+    private static bool UsesEngine(EntryProfile? entry, GtpEngineProfile engine) =>
+        entry?.Kind == EntryProfileKind.Computer && entry.EngineProfileId == engine.Id;
+
+    private static GtpEngineProfile CloneEngineWithEntryOptions(GtpEngineProfile engine, EntryProfile? entry)
+    {
+        var clone = engine.Clone();
+        if (UsesEngine(entry, engine))
+            foreach (var (id, value) in entry!.EngineOptionOverrides)
+                clone.GuiOptions[id] = value;
+        return clone;
     }
 
     private void ApplySelectedEntryProfile(GoStone stone)

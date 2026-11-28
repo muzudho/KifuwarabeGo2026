@@ -12,6 +12,7 @@ public sealed class EntryProfile
     public string Identifier { get; set; } = "";
     public EntryProfileKind Kind { get; set; } = EntryProfileKind.Human;
     public string EngineProfileId { get; set; } = "";
+    public Dictionary<string, string> EngineOptionOverrides { get; set; } = new(StringComparer.Ordinal);
 
     // 既存player-list.jsonとの互換性を維持する永続キーです。
     [JsonPropertyName("targetProfileIds")]
@@ -24,6 +25,7 @@ public sealed class EntryProfile
         Identifier = Identifier,
         Kind = Kind,
         EngineProfileId = EngineProfileId,
+        EngineOptionOverrides = new Dictionary<string, string>(EngineOptionOverrides ?? [], StringComparer.Ordinal),
         ClientIdentityProfileIds = new List<string>(ClientIdentityProfileIds ?? []),
     };
 }

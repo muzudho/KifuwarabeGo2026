@@ -976,8 +976,8 @@ public class Game1 : Game
                 new PopupNumberUnderlineOptions(
                     Caption: _activeLocalMatchRandomSeedStone is null && _activePonnukiRandomSeedRole is null && _activeCgosRandomSeedStone is null ? null : "RANDOM SEED INPUT",
                     ShowTitle: _activeLocalMatchRandomSeedStone is null && _activePonnukiRandomSeedRole is null && _activeCgosRandomSeedStone is null,
-                    AllowEmpty: _activeLocalMatchRandomSeedStone is not null || _activePonnukiRandomSeedRole is not null || _activeCgosRandomSeedStone is not null,
-                    ShowClearButton: _activeLocalMatchRandomSeedStone is not null || _activePonnukiRandomSeedRole is not null || _activeCgosRandomSeedStone is not null));
+                    AllowEmpty: IsEditingRandomSeed,
+                    ShowClearButton: IsEditingRandomSeed));
 
         // ［大会ルール設定　＞　コミ］
         if (_presentationServices is not null && _tournamentRulesSetting.IsMoveLimitInputOpen)
@@ -2317,6 +2317,8 @@ public class Game1 : Game
             else if (_session.PlayerEditDraft.Kind == EntryProfileKind.Computer &&
                       EditEntryProfile.Default.IsEngineChangeHit(point))
                 _session.OpenPlayerEditGtpEngineSelectionDialog();
+            else if (_session.CanEditEntryEngineOptions && entryEditor.EngineOptionsButton.IsHit(point))
+                _session.OpenEntryEngineOptionsDialog();
             else if (entryEditor.GetClientIdentityFieldHit(point, identities.Count) is { } identityField)
             {
                 _session.SelectPlayerEditClientIdentity(identityField.Index);
@@ -6127,7 +6129,7 @@ public class Game1 : Game
 
     private bool TryHandleGtpEngineEditPanelClick(Point point)
     {
-        if (!_session.IsGtpEngineEditPanelOpen)
+        if (!_session.IsGtpEngineEditPanelOpen && !_session.IsEntryEngineOptionsDialogOpen)
         {
             return false;
         }
@@ -6170,10 +6172,10 @@ public class Game1 : Game
 
             if (GtpEngineRenderer.GetGtpEngineGuiOptionControlHit(point, _session) is { } optionHit)
             {
-                var option = GtpEngineGuiOptions.Specs[optionHit.Index];
+                var option = _session.ActiveGtpEngineGuiOptionSpecs[optionHit.Index];
                 if (optionHit.Action == 3)
                 {
-                    _session.SetGtpEngineGuiOptionDraft(option, option.DefaultValue);
+                    _session.ResetGtpEngineGuiOptionDraft(option);
                     return true;
                 }
                 switch (option.Type)
@@ -6713,10 +6715,22 @@ public class Game1 : Game
         _previousGtpEngineIntegerKeyboard = keyboard;
     }
 
+    private bool IsEditingEntryRandomSeed => _session.IsEntryEngineOptionsDialogOpen &&
+        _activeGtpEngineIntegerOption?.Id == GtpEngineGuiOptions.RandomSeedId;
+
+    private bool IsEditingRandomSeed => _activeLocalMatchRandomSeedStone is not null ||
+        _activePonnukiRandomSeedRole is not null || _activeCgosRandomSeedStone is not null || IsEditingEntryRandomSeed;
+
     private void CommitGtpEngineIntegerInput()
     {
         if (_activeGtpEngineIntegerOption is not { } option)
             return;
+        if (IsEditingEntryRandomSeed && string.IsNullOrWhiteSpace(_gtpEngineIntegerOptionTextBox.Text))
+        {
+            _session.SetGtpEngineGuiOptionDraft(option, "");
+            CancelGtpEngineIntegerInput();
+            return;
+        }
         if (_activeLocalMatchRandomSeedStone is { } stone && string.IsNullOrWhiteSpace(_gtpEngineIntegerOptionTextBox.Text))
         {
             _session.SetLocalMatchRandomSeedText(stone, "");

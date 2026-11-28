@@ -15,12 +15,18 @@ public sealed partial class GoAppSession
 
     public string GetLocalMatchRandomSeedText(GoStone stone) =>
         SupportsLocalMatchRandomSeed(stone)
-            ? GetGtpEngineProfile(stone).GuiOptions.GetValueOrDefault(GtpEngineGuiOptions.RandomSeedId, "")
+            ? GetLocalMatchOptionsWithEntryOverrides(stone).GuiOptions.GetValueOrDefault(GtpEngineGuiOptions.RandomSeedId, "")
             : "";
 
     public void SetLocalMatchRandomSeedText(GoStone stone, string value)
     {
         if (!SupportsLocalMatchRandomSeed(stone)) return;
+        var entry = GetSelectedEntryProfile(stone);
+        if (UsesEngine(entry, GetGtpEngineProfile(stone)))
+        {
+            entry!.EngineOptionOverrides[GtpEngineGuiOptions.RandomSeedId] = value;
+            return;
+        }
         var index = stone == GoStone.Black ? SelectedBlackGtpEngineIndex : SelectedWhiteGtpEngineIndex;
         _gtpEngineProfiles[Math.Clamp(index, 0, _gtpEngineProfiles.Count - 1)]
             .GuiOptions[GtpEngineGuiOptions.RandomSeedId] = value;
@@ -36,12 +42,15 @@ public sealed partial class GoAppSession
 
     public IReadOnlyDictionary<string, string> GetLocalMatchEngineGuiOptions(GoStone stone)
     {
-        var options = new Dictionary<string, string>(GetGtpEngineProfile(stone).GuiOptions);
+        var options = GetLocalMatchOptionsWithEntryOverrides(stone).GuiOptions;
         var seed = stone == GoStone.Black ? _localMatchRandomSeeds.Black : _localMatchRandomSeeds.White;
         if (seed is { } value)
             options[GtpEngineGuiOptions.RandomSeedId] = value.ToString();
         return options;
     }
+
+    private GtpEngineProfile GetLocalMatchOptionsWithEntryOverrides(GoStone stone) =>
+        CloneEngineWithEntryOptions(GetGtpEngineProfile(stone), GetSelectedEntryProfile(stone));
 
     private LocalMatchRandomSeedSnapshot _localMatchRandomSeeds;
 
