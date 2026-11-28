@@ -1,5 +1,7 @@
 namespace KifuwarabeGo2026.GameOasis.Gui.Application;
 
+using KifuwarabeGo2026.GameOasis.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.Connect;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -117,6 +119,7 @@ public sealed partial class GoAppSession
         IsCgosPracticeResignRequested = true;
     }
     public int SelectedCgosConnectionProfileIndex { get; private set; }
+    public WifiConnectionSnapshot CgosWifiConnection { get; set; } = WifiConnectionSnapshot.Unavailable;
     public CgosConnectionProfile SelectedCgosConnectionProfile => _cgosConnectionProfiles[SelectedCgosConnectionProfileIndex];
     public bool IsCgosConnectionEditPanelOpen { get; private set; }
     public bool IsCgosConnectionAddPanelMode { get; private set; }

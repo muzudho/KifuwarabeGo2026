@@ -86,6 +86,8 @@ public class Game1 : Game
     private readonly IWindowIconService _windowIconService;
     private readonly IInitialWindowLayoutService _initialWindowLayoutService;
     private readonly IPlatformExecutableService _platformExecutableService;
+    private readonly Func<WifiConnectionSnapshot> _readWifiConnection;
+    private DateTime _nextWifiRefreshUtc;
     private readonly IWindowScreenshotService _windowScreenshotService;
     private readonly IInstallerMaintenanceService _launcherMaintenanceService;
     private readonly GoAppSession _session = new();
@@ -234,7 +236,8 @@ public class Game1 : Game
         IPlatformExecutableService platformExecutableService,
         IWindowScreenshotService windowScreenshotService,
         IInstallerMaintenanceService? launcherMaintenanceService = null,
-        IPlayRoomProcessLauncher? playRoomProcessLauncher = null)
+        IPlayRoomProcessLauncher? playRoomProcessLauncher = null,
+        Func<WifiConnectionSnapshot>? readWifiConnection = null)
     {
         _clipboardService = clipboardService;
         _textCompositionService = textCompositionService;
@@ -246,6 +249,7 @@ public class Game1 : Game
         _windowIconService = windowIconService;
         _initialWindowLayoutService = initialWindowLayoutService;
         _platformExecutableService = platformExecutableService;
+        _readWifiConnection = readWifiConnection ?? (() => WifiConnectionSnapshot.Unavailable);
         _windowScreenshotService = windowScreenshotService;
         _launcherMaintenanceService = launcherMaintenanceService ?? UnsupportedInstallerMaintenanceService.Instance;
         _localMatchProcessLaunch = playRoomProcessLauncher is null
@@ -3680,6 +3684,7 @@ public class Game1 : Game
             return;
         }
 
+        if (!CheckWifiBeforeCgosConnect()) return;
         try
         {
             _lobbyGuiController.SaveGtpEngines(_session.GtpEngineProfiles);
@@ -3704,6 +3709,8 @@ public class Game1 : Game
         {
             return;
         }
+
+        if (DateTime.UtcNow >= _nextWifiRefreshUtc) RefreshCgosWifiConnection();
 
         var blackStatus = _cgosBlackConnectionProcess.RefreshStatus();
         _session.SetCgosBlackConnectionProcessStatus(blackStatus, _cgosBlackConnectionProcess.IsRunning, _cgosBlackConnectionProcess.LogDirectory, _cgosBlackConnectionProcess.GetRecentOutput(), _cgosBlackConnectionProcess.GtpResponseWaitDisplay, _cgosBlackConnectionProcess.EngineDescription);
@@ -3760,6 +3767,7 @@ public class Game1 : Game
             return;
         }
 
+        if (!CheckWifiBeforeCgosConnect()) return;
         try
         {
             var status = _cgosAdminProcess.StartAdmin(_session.SelectedCgosConnectionProfile);
@@ -3769,6 +3777,23 @@ public class Game1 : Game
         {
             _session.SetCgosAdminProcessStatus("ERROR: " + ex.Message, false, _cgosAdminProcess.LogDirectory, _cgosAdminProcess.GetRecentOutput());
         }
+    }
+
+    private void RefreshCgosWifiConnection()
+    {
+        _session.CgosWifiConnection = _readWifiConnection();
+        _nextWifiRefreshUtc = DateTime.UtcNow.AddSeconds(2);
+    }
+
+    private bool CheckWifiBeforeCgosConnect()
+    {
+        RefreshCgosWifiConnection();
+        var expected = _session.SelectedCgosConnectionProfile.ExpectedWifiSsid;
+        var wifi = _session.CgosWifiConnection;
+        if (wifi.AllowsConnection(expected)) return true;
+        ShowMessage($"CGOS connection was not started.\nCurrent Wi-Fi: {wifi.DisplayName}\nExpected Wi-Fi: {expected}",
+            "CHECK WI-FI");
+        return false;
     }
 
     /// <summary>
@@ -4693,6 +4718,13 @@ public class Game1 : Game
             Round = draft.Round.Trim(),
             Note = draft.Note.Trim(),
         };
+
+        if (profile.ExpectedWifiSsid.Any(char.IsControl) ||
+            System.Text.Encoding.UTF8.GetByteCount(profile.ExpectedWifiSsid) > 32)
+        {
+            warning = "The Wi-Fi SSID must be at most 32 UTF-8 bytes and contain no control characters.";
+            return false;
+        }
 
         if (string.IsNullOrWhiteSpace(profile.DisplayName))
         {

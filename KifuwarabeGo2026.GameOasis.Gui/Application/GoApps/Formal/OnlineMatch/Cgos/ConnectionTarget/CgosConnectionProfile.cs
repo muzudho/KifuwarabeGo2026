@@ -8,6 +8,7 @@ public enum CgosConnectionProfileEditField
     Event,
     Round,
     Note,
+    ExpectedWifiSsid,
 }
 
 public enum CgosPlayerCredentialField

@@ -22,6 +22,7 @@ public static class CgosConnectionProfilePolicy
             Event = profile.Event?.Trim() ?? "",
             Round = round,
             Note = profile.Note?.Trim() ?? "",
+            ExpectedWifiSsid = profile.ExpectedWifiSsid ?? "",
         };
     }
 

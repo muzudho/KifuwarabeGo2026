@@ -12,6 +12,7 @@ public sealed record CgosConnectionProfile(
     public ConnectionProfileKind Kind { get; init; } = ConnectionProfileKind.Cgos;
     public string EndpointKey { get; init; } = "";
     public string Event { get; init; } = "";
+    public string ExpectedWifiSsid { get; init; } = "";
 }
 
 public enum ConnectionProfileKind { Cgos }

@@ -68,6 +68,7 @@ public sealed partial class GoAppSession
             CgosConnectionProfileEditField.Event => CgosConnectionEditDraft with { Event = text },
             CgosConnectionProfileEditField.Round => CgosConnectionEditDraft with { Round = text },
             CgosConnectionProfileEditField.Note => CgosConnectionEditDraft with { Note = text },
+            CgosConnectionProfileEditField.ExpectedWifiSsid => CgosConnectionEditDraft with { ExpectedWifiSsid = text },
             _ => throw new ArgumentOutOfRangeException(nameof(field), field, "CGOS connection edit field is out of range."),
         };
         if (field == CgosConnectionProfileEditField.Port) CgosConnectionPortDraft = text;

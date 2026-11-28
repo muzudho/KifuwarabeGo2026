@@ -36,7 +36,8 @@ internal static class Program
                 platformExecutableService,
                 new WindowsWindowScreenshotService(),
                 new WindowsInstallerMaintenanceService(),
-                new GoStdioMatchLauncher(GoPlayRoomHostProcessStartInfoFactory.CreateStdio));
+                new GoStdioMatchLauncher(GoPlayRoomHostProcessStartInfoFactory.CreateStdio),
+                WindowsWifiConnection.Read);
             textCompositionService.Attach(game.Window.Handle);
             try
             {

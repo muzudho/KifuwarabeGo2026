@@ -124,6 +124,7 @@ internal static class PortabilityChecks
         VerifyCommentNavigation();
         VerifyCatalogOrderEditor();
         VerifyGameOasisProfilePolicies();
+        VerifyCgosWifiCheck();
         VerifyEntryEngineOptions();
         VerifyCgosConnectionOrder();
         VerifyOptionalCgosInputs();
@@ -746,6 +747,31 @@ internal static class PortabilityChecks
         Require(session.HasPlayerEditChanges && session.SavePlayerEditDraft() &&
                 session.GetSelectedPlayerEngineProfile(GoStone.Black)?.GuiOptions[tag.Id] == "base",
             "Inherit must remove the stored override.");
+    }
+
+    private static void VerifyCgosWifiCheck()
+    {
+        const string tournament = "Tournament Wi-Fi";
+        var connected = new KifuwarabeGo2026.GameOasis.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.Connect.WifiConnectionSnapshot(
+            KifuwarabeGo2026.GameOasis.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.Connect.WifiConnectionKind.Connected,
+            tournament);
+        Require(connected.AllowsConnection(tournament) && !connected.AllowsConnection("Web Wi-Fi") &&
+                !connected.AllowsConnection("tournament Wi-Fi"),
+            "CGOS must require an exact SSID match when configured.");
+        foreach (var kind in new[] {
+            KifuwarabeGo2026.GameOasis.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.Connect.WifiConnectionKind.Disconnected,
+            KifuwarabeGo2026.GameOasis.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.Connect.WifiConnectionKind.Multiple,
+            KifuwarabeGo2026.GameOasis.Gui.Application.GoApps.Formal.OnlineMatch.Cgos.Connect.WifiConnectionKind.Unavailable })
+        {
+            var uncertain = connected with { Kind = kind };
+            Require(!uncertain.AllowsConnection(tournament) && uncertain.AllowsConnection(""),
+                "Unknown connections must block configured checks only.");
+        }
+
+        var profile = CgosConnectionProfilePolicy.Normalize(new CgosConnectionProfile("Tournament", "localhost", 6809, "", "")
+            { ExpectedWifiSsid = tournament });
+        var reloaded = JsonSerializer.Deserialize<CgosConnectionProfile>(JsonSerializer.Serialize(profile));
+        Require(reloaded?.ExpectedWifiSsid == tournament, "The required network name must persist with the CGOS service profile.");
     }
 
     private static void VerifyGameOasisProfilePolicies()

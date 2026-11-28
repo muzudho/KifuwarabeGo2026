@@ -323,6 +323,7 @@ public sealed class CgosLoginRenderer
         page.BackButton.Draw(mousePoint, _drawingContext);
 
         DrawCgosSelectedProfileBar(profile);
+        DrawWifiStatus(session, profile.ExpectedWifiSsid);
         DrawCgosProcessPanel(
             CgosAdminProcessPanelBounds,
             "ADMIN CONNECTION",
@@ -453,6 +454,17 @@ public sealed class CgosLoginRenderer
         DrawUiLabel(UiLabel.InCompactRow("CLIENT IDENTITY", CgosSelectedProfileBarBounds));
         var text = $"{profile.DisplayName} / {profile.Host}:{profile.Port} / {profile.Event} / {profile.Round}";
         DrawFittedText(text, new Rectangle(CgosSelectedProfileBarBounds.X + 152, CgosSelectedProfileBarBounds.Y + 7, CgosSelectedProfileBarBounds.Width - 168, 38), Color.White, 0.42f);
+    }
+
+    private void DrawWifiStatus(GoAppSession session, string expected)
+    {
+        var wifi = session.CgosWifiConnection;
+        var shown = string.IsNullOrEmpty(expected) ? "Not required"
+            : wifi.AllowsConnection(expected) ? $"{expected} [MATCH]" : $"{expected} [CHECK]";
+        var color = string.IsNullOrEmpty(expected) ? new Color(180, 195, 195)
+            : wifi.AllowsConnection(expected) ? new Color(99, 223, 185) : new Color(255, 183, 146);
+        _drawingContext.DrawDynamicText($"Wi-Fi now: {wifi.DisplayName}", new Rectangle(288, 244, 495, 48), color, 0.38f);
+        _drawingContext.DrawDynamicText($"Required: {shown}", new Rectangle(800, 244, 490, 48), color, 0.38f);
     }
 
     private void DrawCgosAdminPlayerSelector(Rectangle bounds, string label, string playerName, Point mousePoint)
@@ -836,6 +848,7 @@ public sealed class CgosLoginRenderer
         DrawCgosConnectionEditField(session, CgosConnectionProfileEditField.Event, "EVENT", mousePoint);
         DrawCgosConnectionEditField(session, CgosConnectionProfileEditField.Round, "ROUND", mousePoint);
         DrawCgosConnectionEditField(session, CgosConnectionProfileEditField.Note, "NOTE", mousePoint);
+        DrawCgosConnectionEditField(session, CgosConnectionProfileEditField.ExpectedWifiSsid, "WI-FI SSID", mousePoint);
 
         if (!string.IsNullOrWhiteSpace(session.CgosConnectionEditWarning))
         {
@@ -864,7 +877,10 @@ public sealed class CgosLoginRenderer
             CgosConnectionEditFields.Length);
         if (active)
             DrawTextBoxSelection(text, session.CgosConnectionEditSelectionStart, session.CgosConnectionEditSelectionLength, textBounds, 0.42f);
-        DrawFittedText(string.IsNullOrEmpty(text) ? "-" : text, textBounds, Color.White, 0.42f);
+        if (field == CgosConnectionProfileEditField.ExpectedWifiSsid)
+            _drawingContext.DrawDynamicText(string.IsNullOrEmpty(text) ? "Optional" : text, textBounds, Color.White, 0.42f);
+        else
+            DrawFittedText(string.IsNullOrEmpty(text) ? "-" : text, textBounds, Color.White, 0.42f);
         if (active)
         {
             DrawTextBoxCaret(text, session.CgosConnectionEditCaretIndex, textBounds, 0.42f);
@@ -1033,6 +1049,7 @@ public sealed class CgosLoginRenderer
         CgosConnectionProfileEditField.Event,
         CgosConnectionProfileEditField.Round,
         CgosConnectionProfileEditField.Note,
+        CgosConnectionProfileEditField.ExpectedWifiSsid,
     };
 
 
@@ -1044,6 +1061,7 @@ public sealed class CgosLoginRenderer
         CgosConnectionProfileEditField.Event => new Rectangle(AddPanelControlX, 460, 668, 56),
         CgosConnectionProfileEditField.Round => new Rectangle(AddPanelControlX, 530, 668, 56),
         CgosConnectionProfileEditField.Note => new Rectangle(AddPanelControlX, 600, 668, 56),
+        CgosConnectionProfileEditField.ExpectedWifiSsid => new Rectangle(AddPanelControlX, 670, 668, 56),
         _ => Rectangle.Empty,
     };
 
