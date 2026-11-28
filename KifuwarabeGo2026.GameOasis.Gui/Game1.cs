@@ -334,14 +334,38 @@ public class Game1 : Game
     {
         _windowIconService.TryApply(Window.Handle);
         _presentationServices = GoPresentationFactory.Create(GraphicsDevice, Content, _textRasterizer);
-        _placeStoneSound = CreatePlaceStoneSound();
-        _placeStoneSoundInstance = _placeStoneSound.CreateInstance();
-        _upcomingMatchChime = CreateUpcomingMatchChime();
-        _upcomingMatchChimeInstance = _upcomingMatchChime.CreateInstance();
-        _screenshotShutterSound = ScreenshotShutterSound.Create();
-        _screenshotShutterSoundInstance = _screenshotShutterSound.CreateInstance();
-        _screenTransitionSound = CreateScreenTransitionSound();
-        _screenTransitionSoundInstance = _screenTransitionSound.CreateInstance();
+        TryInitializeOptionalAudio(() =>
+        {
+            _placeStoneSound = CreatePlaceStoneSound();
+            _placeStoneSoundInstance = _placeStoneSound.CreateInstance();
+            _upcomingMatchChime = CreateUpcomingMatchChime();
+            _upcomingMatchChimeInstance = _upcomingMatchChime.CreateInstance();
+            _screenshotShutterSound = ScreenshotShutterSound.Create();
+            _screenshotShutterSoundInstance = _screenshotShutterSound.CreateInstance();
+            _screenTransitionSound = CreateScreenTransitionSound();
+            _screenTransitionSoundInstance = _screenTransitionSound.CreateInstance();
+        }, () =>
+        {
+            _placeStoneSoundInstance?.Dispose(); _placeStoneSoundInstance = null;
+            _placeStoneSound?.Dispose(); _placeStoneSound = null;
+            _upcomingMatchChimeInstance?.Dispose(); _upcomingMatchChimeInstance = null;
+            _upcomingMatchChime?.Dispose(); _upcomingMatchChime = null;
+            _screenshotShutterSoundInstance?.Dispose(); _screenshotShutterSoundInstance = null;
+            _screenshotShutterSound?.Dispose(); _screenshotShutterSound = null;
+            _screenTransitionSoundInstance?.Dispose(); _screenTransitionSoundInstance = null;
+            _screenTransitionSound?.Dispose(); _screenTransitionSound = null;
+        });
+    }
+
+    // 音声が使えなくても対局画面の起動は継続する。
+    internal static bool TryInitializeOptionalAudio(Action initialize, Action disable)
+    {
+        try { initialize(); return true; }
+        catch (NoAudioHardwareException)
+        {
+            disable();
+            return false;
+        }
     }
 
     protected override void Update(GameTime gameTime)

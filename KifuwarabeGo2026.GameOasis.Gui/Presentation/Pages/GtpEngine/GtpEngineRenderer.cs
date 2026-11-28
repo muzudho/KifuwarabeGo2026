@@ -487,7 +487,7 @@ public sealed class GtpEngineRenderer
         var value = session.GetGtpEngineGuiOptionDraft(option);
         var valueBounds = GtpEngineGuiOptionValueBounds(slot);
         var hovered = valueBounds.Contains(mousePoint);
-        DrawText(option.Label, new Vector2(row.X + 16, row.Y + 17), new Color(180, 195, 195), 0.36f);
+        DrawDynamicOptionText(option.Label, new Rectangle(row.X + 16, row.Y + 8, valueBounds.X - row.X - 28, row.Height - 16), new Color(180, 195, 195), 0.36f);
         if (option.Type == "button")
         {
             var queued = bool.TryParse(value, out var isQueued) && isQueued;
@@ -578,7 +578,7 @@ public sealed class GtpEngineRenderer
         FillRect(GtpEngineRandomMoveSelectionDialogBounds, new Color(24, 29, 36, 252));
         DrawRect(GtpEngineRandomMoveSelectionDialogBounds, 2, new Color(116, 145, 146));
         DrawText("SELECT ITEM", new Vector2(GtpEngineRandomMoveSelectionDialogBounds.X + 30, GtpEngineRandomMoveSelectionDialogBounds.Y + 24), new Color(244, 238, 218), 0.68f);
-        DrawText(session.ActiveGtpEngineComboOption?.Label ?? "OPTION", new Vector2(GtpEngineRandomMoveSelectionDialogBounds.X + 48, GtpEngineRandomMoveSelectionDialogBounds.Y + 80), new Color(180, 195, 195), 0.4f);
+        DrawDynamicOptionText(session.ActiveGtpEngineComboOption?.Label ?? "OPTION", new Rectangle(GtpEngineRandomMoveSelectionDialogBounds.X + 48, GtpEngineRandomMoveSelectionDialogBounds.Y + 76, GtpEngineRandomMoveSelectionDialogBounds.Width - 96, 28), new Color(180, 195, 195), 0.4f);
 
         var choices = session.GetActiveGtpEngineComboChoices();
         var startIndex = session.GtpEngineRandomMoveSelectionPageIndex * GoAppSession.GtpEngineComboSelectionPageSize;
@@ -592,9 +592,9 @@ public sealed class GtpEngineRenderer
             var hovered = choice.IsEnabled && bounds.Contains(mousePoint);
             FillRect(bounds, selected ? new Color(38, 103, 86) : hovered ? new Color(43, 52, 62) : choice.IsEnabled ? new Color(15, 20, 26) : new Color(31, 31, 33));
             DrawRect(bounds, 1, selected ? new Color(147, 244, 200) : choice.IsEnabled ? new Color(67, 84, 92) : new Color(75, 63, 65));
-            DrawFittedText(choice.Value, new Rectangle(bounds.X + 24, bounds.Y + 7, bounds.Width - 48, 32), choice.IsEnabled ? Color.White : new Color(145, 145, 145), 0.46f);
+            DrawDynamicOptionText(choice.Value, new Rectangle(bounds.X + 24, bounds.Y + 7, bounds.Width - 48, 32), choice.IsEnabled ? Color.White : new Color(145, 145, 145), 0.46f);
             if (!choice.IsEnabled)
-                DrawFittedText(choice.DisabledReason, new Rectangle(bounds.X + 24, bounds.Y + 42, bounds.Width - 48, 24), new Color(255, 145, 151), 0.25f);
+                DrawDynamicOptionText(choice.DisabledReason, new Rectangle(bounds.X + 24, bounds.Y + 42, bounds.Width - 48, 24), new Color(255, 145, 151), 0.25f);
         }
 
         DrawPager(

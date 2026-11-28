@@ -44,6 +44,27 @@ internal static class Program
 
         try
         {
+            if (args is ["--optional-audio"])
+            {
+                var method = typeof(KifuwarabeGo2026.GameOasis.Gui.Game1).GetMethod("TryInitializeOptionalAudio",
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!;
+                bool disabled = false;
+                object? result = method.Invoke(null, new object[] {
+                    (Action)(() => throw new Microsoft.Xna.Framework.Audio.NoAudioHardwareException("No device: regression fixture")),
+                    (Action)(() => disabled = true) });
+                if (!disabled || result is not false) throw new Exception("Missing audio must continue silently.");
+                disabled = false;
+                result = method.Invoke(null, new object[] { (Action)(() => {}), (Action)(() => disabled = true) });
+                if (disabled || result is not true) throw new Exception("Working audio must remain enabled.");
+                try
+                {
+                    method.Invoke(null, new object[] { (Action)(() => throw new InvalidOperationException("unrelated")), (Action)(() => {}) });
+                    throw new Exception("Unrelated initialization error was swallowed.");
+                }
+                catch (System.Reflection.TargetInvocationException error) when (error.InnerException is InvalidOperationException) { }
+                Console.WriteLine("PASS optional audio: no-device fallback, working audio, unrelated errors preserved");
+                return 0;
+            }
             if (args is ["--engine-option-discovery", var executable])
             {
                 PortabilityChecks.VerifyEngineOptionDiscovery(executable);
