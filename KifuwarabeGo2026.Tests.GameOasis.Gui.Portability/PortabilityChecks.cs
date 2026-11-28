@@ -126,6 +126,7 @@ internal static class PortabilityChecks
         VerifyGameOasisProfilePolicies();
         VerifyCgosWifiCheck();
         VerifyEntryEngineOptions();
+        VerifyEngineSlotOptions();
         VerifyCgosConnectionOrder();
         VerifyOptionalCgosInputs();
         VerifyTextBoxEditing();
@@ -694,6 +695,50 @@ internal static class PortabilityChecks
             IEnumerable<EntryProfile> entries,
             IEnumerable<ClientIdentityProfile> clientIdentities) => SaveCallCount++;
         public void SaveCgosConnections(IEnumerable<CgosConnectionProfile> profiles) => SaveCallCount++;
+    }
+
+    public static void VerifyEngineOptionDiscovery(string executable)
+    {
+        var engine = new GtpEngineProfile { Id = "dynamic", ExecutablePath = executable,
+            GuiOptions = new() { ["MaxThinkingTimePerMoveSeconds"] = "0.125" } };
+        var session = new GoAppSession();
+        session.SetGtpEngineProfiles([engine]);
+        Require(session.OpenGtpEngineEditPanelForProfileId(engine.Id), "Engine editor must open.");
+        session.OpenGtpEngineGuiOptionsDialog();
+        Require(session.EngineOptionDiscoveryError.Length == 0, session.EngineOptionDiscoveryError);
+        var option = session.ActiveGtpEngineGuiOptionSpecs.Single(o => o.Id == "MaxThinkingTimePerMoveSeconds");
+        Require(option.DefaultValue == "7.5" && option.Type == "string", "Runtime option schema must be used.");
+        Require(session.GetGtpEngineGuiOptionDraft(option) == "0.125", "Fractional override must survive discovery.");
+    }
+
+    public static void VerifyEngineSlotOptions()
+    {
+        var discovered = new GtpEngineGuiOptionSpec("EngineSlot", "Wrapper: ｎ系", "combo", "要求ファイルに従う",
+            Values: ["要求ファイルに従う", "１系", "２系", "３系"]);
+        var engine = new GtpEngineProfile { Id = "slot-wrapper", ExecutablePath = "any-engine.exe", DiscoveredGuiOptions = [discovered] };
+        Require(!GtpEngineGuiOptions.ForProfile(new GtpEngineProfile()).Any(x => x.Id == "EngineSlot"),
+            "Other engines must not expose the wrapper slot selector.");
+        var option = GtpEngineGuiOptions.ForProfile(engine).Single(x => x.Id == "EngineSlot");
+        Require(option.Label == "Wrapper: ｎ系" && option.Type == "combo" && option.DefaultValue == "要求ファイルに従う" &&
+            option.Values!.SequenceEqual(new[] { "要求ファイルに従う", "１系", "２系", "３系" }), "Slot dropdown must have the four requested choices.");
+        var session = new GoAppSession();
+        session.SetGtpEngineProfiles([engine]);
+        session.SetClientIdentityProfiles([new ClientIdentityProfile { Id = "identity" }]);
+        session.SetEntryProfiles([new EntryProfile { Id = "slot-entry", Kind = EntryProfileKind.Computer,
+            EngineProfileId = engine.Id, ClientIdentityProfileIds = ["identity"] }]);
+        session.OpenEntryProfileManagementDialog();
+        Require(session.OpenSelectedPlayerEditPanel(), "Slot entry must open.");
+        session.OpenEntryEngineOptionsDialog();
+        Require(session.ActiveGtpEngineGuiOptionSpecs[0].Id == option.Id, "Slot selector must appear first in wrapper entry options.");
+        session.SetGtpEngineGuiOptionDraft(option, "２系");
+        session.CommitGtpEngineGuiOptionsDialog();
+        Require(session.SavePlayerEditDraft(), "Slot override must save.");
+        var copy = JsonSerializer.Deserialize<EntryProfile>(JsonSerializer.Serialize(session.EntryProfiles[0]))!;
+        Require(copy.EngineOptionOverrides[option.Id] == "２系", "Slot override must survive storage.");
+        Require(session.TrySelectEntryProfile(GoStone.Black, "slot-entry") && session.TrySelectCgosEntryProfile(GoStone.Black, "slot-entry"), "Slot entry must be selectable.");
+        Require(session.GetSelectedPlayerEngineProfile(GoStone.Black)?.GuiOptions[option.Id] == "２系" &&
+            session.GetCgosEngineProfileForStart(GoStone.Black)?.GuiOptions[option.Id] == "２系", "Local and CGOS launches must receive the fixed slot.");
+        Require(session.GtpEngineProfiles[0].GetGuiOption(option.Id, option.DefaultValue) == "要求ファイルに従う", "Entry override must not alter the registered engine default.");
     }
 
     private static void VerifyEntryEngineOptions()

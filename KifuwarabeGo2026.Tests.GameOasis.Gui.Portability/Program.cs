@@ -44,6 +44,18 @@ internal static class Program
 
         try
         {
+            if (args is ["--engine-option-discovery", var executable])
+            {
+                PortabilityChecks.VerifyEngineOptionDiscovery(executable);
+                Console.WriteLine("PASS common engine option discovery: direct/wrapped schema and fractional setting");
+                return 0;
+            }
+            if (args is ["--engine-slot-options"])
+            {
+                PortabilityChecks.VerifyEngineSlotOptions();
+                Console.WriteLine("PASS engine slot options: dropdown, entry storage, local/CGOS launch merge, default isolation");
+                return 0;
+            }
             if (args.Length == 1 && args[0] == "--lobby-portal")
             {
                 LobbyPortalChecks.Run();

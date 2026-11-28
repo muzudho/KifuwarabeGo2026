@@ -7,6 +7,9 @@ public sealed record GtpEngineGuiOptionSpec(string Id, string Label, string Type
 
 public static class GtpEngineGuiOptions
 {
+    public static IReadOnlyList<GtpEngineGuiOptionSpec> ForProfile(GtpEngineProfile profile) =>
+        profile.DiscoveredGuiOptions ?? Specs;
+
     public const int MaximumTextLength = 10_000;
     public const string AvoidEyesId = "AvoidEyes", RandomSeedId = "RandomSeed", RandomMoveId = "RandomMove";
     public const string EngineTagId = "EngineTag", DebugLogFileId = "DebugLogFile", ClearCacheId = "ClearCache";

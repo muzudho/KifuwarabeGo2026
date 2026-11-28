@@ -18,7 +18,7 @@ public static class GtpEngineProfilePolicy
             ? WorkingDirectoryModel.FromString(Path.GetDirectoryName(normalized.ExecutablePath) ?? baseDirectory)
             : WorkingDirectoryModel.FromString(ResolvePath(normalized.WorkingDirectoryModel.Value, baseDirectory));
         normalized.GuiOptions ??= [];
-        foreach (var option in GtpEngineGuiOptions.Specs) normalized.GuiOptions.TryAdd(option.Id, option.DefaultValue);
+        foreach (var option in GtpEngineGuiOptions.ForProfile(normalized)) normalized.GuiOptions.TryAdd(option.Id, option.DefaultValue);
         return normalized;
     }
 

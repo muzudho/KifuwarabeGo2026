@@ -42,7 +42,15 @@ public sealed partial class GoAppSession
     {
         var choices = GetActiveGtpEngineComboChoices();
         if (ActiveGtpEngineComboOption is { } option && GtpEngineRandomMoveSelectionIndex >= 0 && GtpEngineRandomMoveSelectionIndex < choices.Count && choices[GtpEngineRandomMoveSelectionIndex].IsEnabled)
+        {
             GtpEngineGuiOptionsDialogDraft[option.Id] = choices[GtpEngineRandomMoveSelectionIndex].Value;
+            if (IsGtpEngineGuiOptionsDialogOpen && !IsAppProviderGameSettingsDialogOpen)
+            {
+                DiscoverEngineOptions(GtpEngineGuiOptionsDialogDraft);
+                foreach (var discovered in ActiveGtpEngineGuiOptionSpecs)
+                    GtpEngineGuiOptionsDialogDraft.TryAdd(discovered.Id, discovered.DefaultValue);
+            }
+        }
         IsGtpEngineRandomMoveSelectionDialogOpen = false;
         DeactivateWindow(ActiveWindowId.GtpEngineComboSelection);
     }
@@ -116,6 +124,7 @@ public sealed partial class GoAppSession
 
     private void OpenGtpEngineGuiOptionsDialog(Dictionary<string, string> values)
     {
+        DiscoverEngineOptions(values);
         GtpEngineGuiOptionsDialogDraft = new Dictionary<string, string>(values);
         foreach (var option in ActiveGtpEngineGuiOptionSpecs)
             GtpEngineGuiOptionsDialogDraft.TryAdd(option.Id, option.DefaultValue);

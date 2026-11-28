@@ -18,7 +18,7 @@ internal static class SwitchControl
     private static readonly string ConfigurationPath = Path.Combine(Root, "engine-switch.json");
     private static readonly string RequestPath = Path.Combine(Root, "request-primary.json");
 
-    public static EngineLaunch Start()
+    public static EngineLaunch Start(int? fixedPrimary = null, bool consumeRequest = true)
     {
         // Serialize next-game selection, request consumption, and configuration updates across wrappers.
         using var gate = AcquireGate();
@@ -26,6 +26,14 @@ internal static class SwitchControl
             ?? throw new InvalidDataException("engine-switch.json must be an object.");
         int current = configuration["primary"]?.GetValue<int>() ?? 0;
         ValidateSlot(current);
+        // 固定指定・能力問い合わせ用の仮起動では、共通主系と未処理要求に触れない。
+        if (fixedPrimary.HasValue || !consumeRequest)
+        {
+            int selectedPrimary = fixedPrimary ?? current;
+            ValidateSlot(selectedPrimary);
+            var fixedEngine = Resolve(configuration, selectedPrimary);
+            return RecordLaunch(StartProcess(fixedEngine), selectedPrimary, fixedEngine.Executable);
+        }
         string? claimed = null;
         if (File.Exists(RequestPath))
         {
@@ -90,13 +98,13 @@ internal static class SwitchControl
 
     private static void ValidateSlot(int primary)
     {
-        if (primary is < 1 or > 3) throw new InvalidDataException("Primary must be 1, 2, or 3.");
+        if (primary is < 1 or > 9) throw new InvalidDataException("Primary must be between 1 and 9.");
     }
 
     private static (string Executable, string[] Arguments) Resolve(JsonObject configuration, int primary)
     {
-        if (configuration["engines"] is not JsonArray { Count: 3 } engines || engines[primary - 1] is not JsonObject slot)
-            throw new InvalidDataException("engine-switch.json must contain three engine slots.");
+        if (configuration["engines"] is not JsonArray engines || engines.Count is < 1 or > 9 || primary > engines.Count || engines[primary - 1] is not JsonObject slot)
+            throw new InvalidDataException("Requested slot is not configured (up to nine engine slots supported).");
         var path = slot["path"]?.GetValue<string>();
         if (string.IsNullOrWhiteSpace(path)) throw new InvalidDataException("Engine path is required.");
         var executable = Path.GetFullPath(path, Root);

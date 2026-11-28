@@ -187,31 +187,29 @@ public sealed class GtpEngineClient : IAsyncDisposable, IGtpCommandTransport
             if (!knownCommand.IsSuccess || !knownCommand.Payload.Equals("true", StringComparison.OrdinalIgnoreCase)) return;
         }
 
-        var optionsResponse = await SendCommandAsync(optionsCommand, cancellationToken);
-        optionsResponse.ThrowIfError(optionsCommand);
-        var document = GtpGuiOptionsDocument.Parse(optionsResponse.Payload);
-        if (document.Version != 1) throw new InvalidOperationException($"Unsupported {optionsCommand} version: {document.Version}");
-
-        foreach (var savedOption in _settings.GuiOptions)
+        var handled = new HashSet<string>(StringComparer.Ordinal);
+        while (true)
         {
-            var definition = document.Options.FirstOrDefault(option => option.Id.Equals(savedOption.Key, StringComparison.Ordinal));
-            if (definition is null) continue;
+            var optionsResponse = await SendCommandAsync(optionsCommand, cancellationToken);
+            optionsResponse.ThrowIfError(optionsCommand);
+            var document = GtpGuiOptionsDocument.Parse(optionsResponse.Payload);
+            if (document.Version != 1) throw new InvalidOperationException($"Unsupported {optionsCommand} version: {document.Version}");
+            // 公開順で適用し、そのたびに再取得する。選択肢によって項目が変わる一般のエンジンにも対応。
+            var definition = document.Options.FirstOrDefault(option => !handled.Contains(option.Id) && _settings.GuiOptions.ContainsKey(option.Id));
+            if (definition is null) break;
+            handled.Add(definition.Id);
+            string value = _settings.GuiOptions[definition.Id];
             if (definition.Type.Equals("button", StringComparison.OrdinalIgnoreCase))
             {
-                if (bool.TryParse(savedOption.Value, out var queued) && queued)
-                    await SendCommandExpectSuccessAsync($"{setOptionCommand} {savedOption.Key}", cancellationToken);
+                if (bool.TryParse(value, out var queued) && queued)
+                    await SendCommandExpectSuccessAsync($"{setOptionCommand} {definition.Id}", cancellationToken);
                 continue;
             }
-            if (definition.Type.Equals("combo", StringComparison.OrdinalIgnoreCase) &&
-                !definition.Vars.Contains(savedOption.Value, StringComparer.Ordinal))
-                continue;
-            if (definition.Type.Equals("check", StringComparison.OrdinalIgnoreCase) &&
-                !bool.TryParse(savedOption.Value, out _)) continue;
+            if (definition.Type.Equals("combo", StringComparison.OrdinalIgnoreCase) && !definition.Vars.Contains(value, StringComparer.Ordinal)) continue;
+            if (definition.Type.Equals("check", StringComparison.OrdinalIgnoreCase) && !bool.TryParse(value, out _)) continue;
             if (definition.Type.Equals("spin", StringComparison.OrdinalIgnoreCase) &&
-                (!int.TryParse(savedOption.Value, out var number) ||
-                 number < (definition.Min ?? int.MinValue) || number > (definition.Max ?? int.MaxValue))) continue;
-
-            await SendCommandExpectSuccessAsync($"{setOptionCommand} {savedOption.Key} {savedOption.Value}", cancellationToken);
+                (!int.TryParse(value, out var number) || number < (definition.Min ?? int.MinValue) || number > (definition.Max ?? int.MaxValue))) continue;
+            await SendCommandExpectSuccessAsync($"{setOptionCommand} {definition.Id} {value}", cancellationToken);
         }
     }
 

@@ -41,8 +41,9 @@ public sealed partial class GoAppSession
     public bool IsGtpEngineGuiOptionsDialogOpen { get; private set; }
     public bool IsAppProviderGameSettingsDialogOpen { get; private set; }
     public bool IsEntryEngineOptionsDialogOpen { get; private set; }
-    private static readonly IReadOnlyList<GtpEngineGuiOptionSpec> EntryEngineOptionSpecs =
-        GtpEngineGuiOptions.Specs.Where(option => option.Type != "button").ToArray();
+    private IReadOnlyList<GtpEngineGuiOptionSpec> EntryEngineOptionSpecs =>
+        GtpEngineGuiOptions.ForProfile(FindGtpEngineIndex(PlayerEditDraft.EngineProfileId) is var index && index >= 0
+            ? _gtpEngineProfiles[index] : GtpEngineEditDraft).Where(option => option.Type != "button").ToArray();
     private readonly HashSet<string> _entryOptionsReset = new(System.StringComparer.Ordinal);
     public Dictionary<string, string> GtpEngineGuiOptionsDialogDraft { get; private set; } = [];
     private Dictionary<string, string> GtpEngineGuiOptionsDialogOriginalDraft { get; set; } = [];
@@ -57,7 +58,7 @@ public sealed partial class GoAppSession
     private IReadOnlyList<GtpEngineGuiOptionSpec> _appProviderGameSettingSpecs = GtpEngineGuiOptions.PonnukiProviderSpecs;
     public IReadOnlyList<GtpEngineGuiOptionSpec> ActiveGtpEngineGuiOptionSpecs => IsAppProviderGameSettingsDialogOpen
         ? _appProviderGameSettingSpecs
-        : IsEntryEngineOptionsDialogOpen ? EntryEngineOptionSpecs : GtpEngineGuiOptions.Specs;
+        : IsEntryEngineOptionsDialogOpen ? EntryEngineOptionSpecs : GtpEngineGuiOptions.ForProfile(GtpEngineEditDraft);
     public int GtpEngineRandomMoveSelectionPageIndex { get; private set; }
     public const int GtpEngineGuiOptionsPageSize = 4;
     public const int GtpEngineComboSelectionPageSize = 4;

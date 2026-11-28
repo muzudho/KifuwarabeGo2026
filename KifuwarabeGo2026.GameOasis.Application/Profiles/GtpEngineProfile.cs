@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 
 public sealed class GtpEngineProfile
 {
+    [JsonIgnore] public IReadOnlyList<GtpEngineGuiOptionSpec>? DiscoveredGuiOptions { get; set; }
     public string Id { get; set; } = Guid.NewGuid().ToString("N");
     public string DisplayName { get; set; } = "Kifuwarabe Star Random GTP";
     public string DefaultCgosLoginName { get; set; } = "";
@@ -28,7 +29,7 @@ public sealed class GtpEngineProfile
         Arguments=Arguments, EnableGtpLog=EnableGtpLog, InitialPositionProfileId=InitialPositionProfileId,
         InitialPositionManualPreferredMethod=InitialPositionManualPreferredMethod, InitialPositionDetectedMethod=InitialPositionDetectedMethod,
         InitialPositionDetectedEngineName=InitialPositionDetectedEngineName, InitialPositionDetectedEngineVersion=InitialPositionDetectedEngineVersion,
-        InitialPositionDetectedProfileId=InitialPositionDetectedProfileId, GuiOptions=new(GuiOptions ?? []), LogPrefix=LogPrefix };
+        InitialPositionDetectedProfileId=InitialPositionDetectedProfileId, GuiOptions=new(GuiOptions ?? []), DiscoveredGuiOptions=DiscoveredGuiOptions, LogPrefix=LogPrefix };
     public string GetGuiOption(string id, string fallback) => GuiOptions.TryGetValue(id, out var value) ? value : fallback;
     public bool HasMatchingInitialPositionDetection(string? name, string? version) => InitialPositionDetectedMethod is not null &&
         string.Equals(InitialPositionDetectedEngineName, name ?? "", StringComparison.OrdinalIgnoreCase) &&
