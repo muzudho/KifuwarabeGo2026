@@ -8,7 +8,7 @@ internal sealed class SlotOptionProxy
     private EngineLaunch? launch;
     private int selection;
     private bool gameStarted;
-    private readonly List<string> acceptedOptions = new();
+    private readonly List<(string Id, string Command)> acceptedOptions = new();
 
     public async Task<int> RunAsync()
     {
@@ -55,17 +55,13 @@ internal sealed class SlotOptionProxy
                     {
                         await StopAsync();
                         launch = SwitchControl.Start(selection == 0 ? null : selection);
-                        foreach (string option in acceptedOptions)
-                        {
-                            var applied = await ForwardAsync(option);
-                            if (!applied[0].StartsWith('=')) throw new IOException("Selected engine rejected saved option: " + applied[0]);
-                        }
+                        await ReplayEditableOptionsAsync();
                         gameStarted = true;
                     }
                     EnsurePreview();
                     response = await ForwardAsync(line);
-                    if (command == "kfw-set-option" && response[0].StartsWith('=') && !gameStarted)
-                        acceptedOptions.Add(string.Join(' ', words));
+                    if (command == "kfw-set-option" && args.Length > 0 && response[0].StartsWith('=') && !gameStarted)
+                        acceptedOptions.Add((args[0], string.Join(' ', words)));
                     if (command == "list_commands" && response[0].StartsWith('='))
                         response = response.Concat(OptionCommands).Distinct().ToArray();
                 }
@@ -87,24 +83,46 @@ internal sealed class SlotOptionProxy
             ["id"] = "EngineSlot", ["label"] = "Wrapper: ｎ系", ["type"] = "combo",
             ["default"] = Choices[0], ["value"] = Choices[selection],
             ["vars"] = new JsonArray(Choices.Select(value => (JsonNode?)JsonValue.Create(value)).ToArray()) } };
-        var known = await ForwardAsync("known_command kfw-options");
-        if (known[0].StartsWith('=') && Payload(known).Equals("true", StringComparison.OrdinalIgnoreCase))
+        var ids = new HashSet<string>(StringComparer.Ordinal) { "EngineSlot" };
+        foreach (var child in await ReadChildOptionsAsync())
         {
-            var response = await ForwardAsync("kfw-options");
-            if (!response[0].StartsWith('=')) throw new IOException("Selected engine rejected kfw-options.");
-            var document = JsonNode.Parse(Payload(response));
-            if (document?["version"]?.GetValue<int>() != 1 || document["options"] is not JsonArray children)
-                throw new InvalidDataException("Selected engine returned an unsupported option document.");
-            var ids = new HashSet<string>(StringComparer.Ordinal) { "EngineSlot" };
-            foreach (var child in children)
-            {
-                string optionId = child?["id"]?.GetValue<string>() ?? "";
-                if (optionId.Length == 0 || !ids.Add(optionId))
-                    throw new InvalidDataException("Duplicate or reserved option ID: " + optionId);
-                options.Add(child!.DeepClone());
-            }
+            string optionId = child?["id"]?.GetValue<string>() ?? "";
+            if (optionId.Length == 0 || !ids.Add(optionId))
+                throw new InvalidDataException("Duplicate or reserved option ID: " + optionId);
+            options.Add(child!.DeepClone());
         }
         return new JsonObject { ["version"] = 1, ["options"] = options }.ToJsonString();
+    }
+
+    private async Task ReplayEditableOptionsAsync()
+    {
+        if (acceptedOptions.Count == 0) return;
+
+        // A preview can be a different slot, or an older executable in the same slot.
+        var managedIds = (await ReadChildOptionsAsync())
+            .Where(option => option?["externallyManaged"] is JsonValue managed &&
+                managed.TryGetValue<bool>(out var readOnly) && readOnly)
+            .Select(option => option!["id"]?.GetValue<string>())
+            .ToHashSet(StringComparer.Ordinal);
+        foreach (var option in acceptedOptions)
+        {
+            if (managedIds.Contains(option.Id)) continue;
+            var applied = await ForwardAsync(option.Command);
+            if (!applied[0].StartsWith('=')) throw new IOException("Selected engine rejected saved option: " + applied[0]);
+        }
+    }
+
+    private async Task<JsonArray> ReadChildOptionsAsync()
+    {
+        var known = await ForwardAsync("known_command kfw-options");
+        if (!known[0].StartsWith('=') || !Payload(known).Equals("true", StringComparison.OrdinalIgnoreCase))
+            return new JsonArray();
+        var response = await ForwardAsync("kfw-options");
+        if (!response[0].StartsWith('=')) throw new IOException("Selected engine rejected kfw-options.");
+        var document = JsonNode.Parse(Payload(response));
+        if (document?["version"]?.GetValue<int>() != 1 || document["options"] is not JsonArray children)
+            throw new InvalidDataException("Selected engine returned an unsupported option document.");
+        return children;
     }
 
     private static string Payload(string[] response) => string.Join('\n', response)[1..].TrimStart();
