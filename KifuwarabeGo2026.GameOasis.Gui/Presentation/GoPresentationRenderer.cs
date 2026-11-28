@@ -108,10 +108,10 @@ public sealed class GoPresentationRenderer : System.IDisposable
                         session.IsGtpEngineSelectionDialogOpen || session.IsGtpEngineEditPanelOpen ||
                         session.IsAppProviderGameSettingsDialogOpen;
         var backgroundMousePoint = modalOpen ? new Point(-1, -1) : mousePoint;
-        if (session.CurrentMode.Kind == GoAppModeKind.Resting)
-            LocalMatchConciergePanel.Draw(_drawingContext, session);
-        else
+        if (session.CurrentMode.Kind != GoAppModeKind.Resting)
             _boardRenderer.Draw(_drawingContext, session, backgroundMousePoint);
+        else if (session.UseKind != GoAppUseKind.LocalPlay)
+            LocalMatchConciergePanel.Draw(_drawingContext, session);
         if (session.CurrentMode.Kind == GoAppModeKind.Playing && session.CanOpenLocalChartPopup)
             _cgosWatchingRenderer.DrawBroadcastStatusBadge(_drawingContext,
                 session.IsLocalReplayMode ? "REPLAY" : "CURRENT", session.IsReviewChartPopupOpen);
